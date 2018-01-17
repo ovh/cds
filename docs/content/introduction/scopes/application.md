@@ -1,10 +1,6 @@
 +++
 title = "Application"
-weight = 3
-
-[menu.main]
-parent = "scopes"
-identifier = "scopes.job"
+weight = 2
 
 +++
 

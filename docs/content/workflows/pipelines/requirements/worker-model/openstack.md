@@ -1,10 +1,6 @@
 +++
-title = "Setup Openstack Worker Model"
-weight = 4
-
-[menu.main]
-parent = "worker-model"
-identifier = "worker-model.openstack"
+title = "Openstack Worker Model"
+weight = 3
 
 +++
 

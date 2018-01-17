@@ -66,7 +66,9 @@ type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
 func (cfg WorkflowNodeHookConfig) Values() map[string]string {
 	r := make(map[string]string)
 	for k, v := range cfg {
-		r[k] = v.Value
+		if v.Configurable {
+			r[k] = v.Value
+		}
 	}
 	return r
 }

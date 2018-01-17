@@ -2,10 +2,6 @@
 title = "Write a Plugin"
 weight = 10
 
-[menu.main]
-parent = "plugins"
-identifier = "plugins-write_plugin"
-
 +++
 
 A CDS worker executes job, and job is composed of steps.

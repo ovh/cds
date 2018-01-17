@@ -1,10 +1,6 @@
 +++
 title = "plugin-group-tmpl"
 
-[menu.main]
-parent = "actions-plugins"
-identifier = "plugin-group-tmpl"
-
 +++
 
 This actions helps you generate a marathon group application file.

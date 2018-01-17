@@ -1,10 +1,6 @@
 +++
 title = "Project"
-weight = 2
-
-[menu.main]
-parent = "scopes"
-identifier = "scopes.project"
+weight = 1
 
 +++
 

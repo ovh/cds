@@ -1,10 +1,6 @@
 +++
 title = "cds-publish-ovh-metrics"
 
-[menu.main]
-parent = "actions-user"
-identifier = "cds-publish-ovh-metrics"
-
 +++
 
 Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/

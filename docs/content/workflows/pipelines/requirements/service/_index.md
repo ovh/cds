@@ -2,10 +2,6 @@
 title = "Service Link"
 weight = 1
 
-[menu.main]
-parent = "requirements"
-identifier = "requirements.service"
-
 +++
 
 ### Purpose

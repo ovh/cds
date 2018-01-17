@@ -2,10 +2,6 @@
 title = "Hatchery Vsphere"
 weight = 5
 
-[menu.main]
-parent = "hatchery"
-identifier = "hatchery.vsphere"
-
 +++
 
 CDS build using VMWare Vsphere infrastructure to spawn each CDS Workers inside dedicated VM.

@@ -2,10 +2,6 @@
 title = "Job"
 weight = 3
 
-[menu.main]
-parent = "concepts"
-identifier = "concepts.job"
-
 +++
 
 A Job is an important concept in CDS. A job is composed of **steps** which will be run sequentially. A Job is executed in a dedicated workspace and each new run of a job will have a new dedicated workspace. This means that you cannot share a workspace between jobs or between two runs of the same job.

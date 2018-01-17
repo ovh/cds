@@ -2,10 +2,6 @@
 title = "Hatchery Openstack"
 weight = 3
 
-[menu.main]
-parent = "hatchery"
-identifier = "hatchery.openstack"
-
 +++
 
 ![Hatchery Openstack](/images/hatchery.openstack.png)

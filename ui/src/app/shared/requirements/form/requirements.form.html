@@ -1,114 +1,77 @@
 <form class="ui form requirementForm" #formAddRequirement="ngForm">
     <div class="fields">
-            <div class="three wide field">
-                <div class="field">
-                    <sm-select class="search"
-                        *ngIf="availableRequirements.length > 0"
-                        (onChange)="selectType()"
-                        [(model)]="newRequirement.type"
-                        [options]="{'fullTextSearch': true}"
-                        placeholder="{{ 'requirement_type' | translate }}">
-                        <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
-                    </sm-select>
-                </div>
+        <div class="three wide field">
+            <div class="field">
+                <sm-select class="search" *ngIf="availableRequirements.length > 0" (onChange)="selectType()" [(model)]="newRequirement.type" [options]="{'fullTextSearch': true}" placeholder="{{ 'requirement_type' | translate }}">
+                    <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
+                </sm-select>
             </div>
-            <div class="ten wide field">
-                <div class="field" *ngIf="!loading && (newRequirement.type === 'service')">
-                    <label for="requirementname">
+        </div>
+        <div class="ten wide field">
+            <div class="field" *ngIf="!loading && (newRequirement.type === 'service')">
+                <label for="requirementname">
                         {{ 'requirement_hostname_service' | translate }}
                     </label>
-                    <input
-                        name="name"
-                        [disabled]="newRequirement.type !== 'service'"
-                        auto-complete
-                        autocomplete="off"
-                        type="text"
-                        required
-                        pattern="[a-zA-Z0-9\-\._]*"
-                        placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}"
-                        [source]="suggest"
-                        [min-chars]="3"
-                        [(ngModel)]="newRequirement.name"
-                        [no-match-found-text]="false">
-                        <div *ngIf="!formAddRequirement.valid && !formAddRequirement.pristine" class="ui error message">
-                            <p>{{'requirement_hostname_error' | translate}}</p>
-                        </div>
+                <input name="name" [disabled]="newRequirement.type !== 'service'" auto-complete autocomplete="off" type="text" required pattern="[a-zA-Z0-9\-\._]*" placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}" [source]="suggest"
+                    [min-chars]="3" [(ngModel)]="newRequirement.name" [no-match-found-text]="false">
+                <div *ngIf="!formAddRequirement.valid && !formAddRequirement.pristine" class="ui error message">
+                    <p>{{'requirement_hostname_error' | translate}}</p>
                 </div>
-                <div *ngIf="newRequirement.type !== 'model'">
-                    <label for="value" *ngIf="!loading && (newRequirement.type === 'service')">
+            </div>
+            <div class="field" *ngIf="!loading && (newRequirement.type === 'os-architecture')">
+                <input name="name" [disabled]="newRequirement.type !== 'os-architecture'" auto-complete autocomplete="off" type="text" required placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}" [source]="suggestWithOsArch" [min-chars]="0"
+                    [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)">
+                <div *ngIf="!formAddRequirement.valid && !formAddRequirement.pristine" class="ui error message">
+                    <p>{{'requirement_os-architecture_error' | translate}}</p>
+                </div>
+            </div>
+            <div *ngIf="newRequirement.type !== 'model' && newRequirement.type !== 'os-architecture'">
+                <label for="value" *ngIf="!loading && (newRequirement.type === 'service')">
                         {{ 'requirement_value_service' | translate }}
                     </label>
-                    <div class="field">
-                        <input
-                            name="value"
-                            auto-complete
-                            autocomplete="off"
-                            type="text"
-                            [source]="suggest"
-                            [min-chars]="3"
-                            [(ngModel)]="newRequirement.value"
-                            (keyup)="setName(formAddRequirement)"
-                            placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
-                            [no-match-found-text]="false">
-                    </div>
-                </div>
-                <div *ngIf="!loading && newRequirement.type === 'model' && workerModels != null">
-                    <input
-                        name="value-workermodel"
-                        auto-complete
-                        autocomplete="off"
-                        type="text"
-                        [source]="suggestWithWorkerModel"
-                        [min-chars]="0"
-                        [(ngModel)]="newRequirement.value"
-                        (keyup)="setName(formAddRequirement)"
-                        (blur)="setName(formAddRequirement)"
-                        placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
+                <div class="field">
+                    <input name="value" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
                         [no-match-found-text]="false">
-                    <p *ngIf="workerModelLinked != null">
-                        <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" (click)="closeModal()">
+                </div>
+            </div>
+
+            <div *ngIf="!loading && newRequirement.type === 'model' && workerModels != null">
+                <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
+                    [no-match-found-text]="false">
+                <p *ngIf="workerModelLinked != null">
+                    <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" (click)="closeModal()">
                             {{ 'requirement_settings_worker_model' | translate }} {{ newRequirement.value }}
                         </a>
-                    </p>
-                    <label for="opts">
+                </p>
+                <label for="opts">
                         {{ 'requirement_options' | translate }}
                     </label>
-                    <textarea
-                        name="opts"
-                        [(ngModel)]="newRequirement.opts"
-                        rows="3"
-                        placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
-                </div>
-                <div *ngIf="!loading && (newRequirement.type === 'service')">
-                    <label for="opts">
+                <textarea name="opts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
+            </div>
+            <div *ngIf="!loading && (newRequirement.type === 'service')">
+                <label for="opts">
                         {{ 'requirement_options' | translate }}
                     </label>
-                    <textarea
-                        name="opts"
-                        [(ngModel)]="newRequirement.opts"
-                        rows="3"
-                        placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
-                </div>
+                <textarea name="opts" [(ngModel)]="newRequirement.opts" rows="3" placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
             </div>
-            <div class="one wide center mtop8" *ngIf="newRequirement.type === 'model' && workerModelLinked != null">
-                <div *ngIf="workerModelLinked.group.name === 'shared.infra'"
-                    [smDirTooltip]="'worker_model_official' | translate" smDirPosition="top center">
-                    <i class="check circle outline icon large green">
+        </div>
+        <div class="one wide center mtop8" *ngIf="newRequirement.type === 'model' && workerModelLinked != null">
+            <div *ngIf="workerModelLinked.group.name === 'shared.infra'" [smDirTooltip]="'worker_model_official' | translate" smDirPosition="top center">
+                <i class="check circle outline icon large green">
                     </i>
-                </div>
-                <div *ngIf="workerModelLinked.group.name !== 'shared.infra'"
-                    [smDirTooltip]="'worker_model_unofficial' | translate" smDirPosition="top center">
-                    <i class="remove circle outline icon large red">
+            </div>
+            <div *ngIf="workerModelLinked.group.name !== 'shared.infra'" [smDirTooltip]="'worker_model_unofficial' | translate" smDirPosition="top center">
+                <i class="remove circle outline icon large red">
                     </i>
-                </div>
             </div>
-            <div class="two wide center field">
-                <button class="ui blue icon button" [disabled]="!isFormValid" (click)="onSubmitAddRequirement(formAddRequirement)"><i class="plus icon"></i></button>
-            </div>
+        </div>
+        <div class="two wide center field">
+            <button class="ui blue icon button" [disabled]="!isFormValid" (click)="onSubmitAddRequirement(formAddRequirement)"><i class="plus icon"></i></button>
+        </div>
     </div>
     <p>
         <i class="fa fa-book"></i>
-        <a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.requirements/" target="_blank">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/" target="_blank">
         {{ 'requirement_documentation' | translate }} </a>
     </p>
     <p [innerHtml]="getHelp()"></p>

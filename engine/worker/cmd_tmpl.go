@@ -20,8 +20,28 @@ import (
 func cmdTmpl(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "tmpl",
-		Short: "worker tmpl <input file> <output file>",
-		Run:   tmplCmd(w),
+		Short: "worker tmpl inputFile outputFile",
+		Long: `
+
+Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+
+	# create a file
+	cat << EOF > myFile
+	this a a line in the file, with a CDS variable {{.cds.version}}
+	EOF
+
+	# worker tmpl <input file> <output file>
+	worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile
+
+
+The file ` + "`outputFile`" + ` will contain the string:
+
+	this a a line in the file, with a CDS variable 2
+
+
+if it's the RUN n°2 of the current workflow.
+		`,
+		Run: tmplCmd(w),
 	}
 	return c
 }

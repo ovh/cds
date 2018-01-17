@@ -69,7 +69,7 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	m.Capabilities = make([]sdk.Requirement, len(capabilities))
+	m.Capabilities = make(sdk.RequirementList, len(capabilities))
 	for i, c := range capabilities {
 		m.Capabilities[i] = sdk.Requirement{
 			Name:  c.Name,

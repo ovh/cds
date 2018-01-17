@@ -2,10 +2,6 @@
 title = "Hatchery Local"
 weight = 1
 
-[menu.main]
-parent = "hatchery"
-identifier = "hatchery.local"
-
 +++
 
 ## Use case

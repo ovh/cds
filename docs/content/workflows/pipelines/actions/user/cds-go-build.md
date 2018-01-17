@@ -1,10 +1,6 @@
 +++
 title = "cds-go-build"
 
-[menu.main]
-parent = "actions-user"
-identifier = "cds-go-build"
-
 +++
 
 Go Build: compile a go program

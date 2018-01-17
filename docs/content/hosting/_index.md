@@ -2,10 +2,6 @@
 title = "Hosting your own instance"
 weight = 6
 
-[menu.main]
-parent = ""
-identifier = "hosting"
-
 +++
 
 

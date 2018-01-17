@@ -97,7 +97,6 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 	}
 
 	// compute payload
-	errm := &sdk.MultiError{}
 	e := dump.NewDefaultEncoder(new(bytes.Buffer))
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
@@ -107,7 +106,6 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 	tmpVars, errdump := e.ToStringMap(payload)
 	if errdump != nil {
 		log.Error("GetNodeBuildParameters> do-dump error: %v", errdump)
-		errm.Append(errdump)
 	}
 
 	//Merge the dumped payload with vars
@@ -126,11 +124,7 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 		sdk.AddParameter(&params, k, sdk.StringParameter, v)
 	}
 
-	if errm.IsEmpty() {
-		return params, nil
-	}
-
-	return params, errm
+	return params, errdump
 }
 
 func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {

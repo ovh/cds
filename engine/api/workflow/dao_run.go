@@ -205,7 +205,7 @@ func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, withArtifacts bool) (*
 
 //LoadRuns loads all runs
 //It retuns runs, offset, limit count and an error
-func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int) ([]sdk.WorkflowRun, int, int, int, error) {
+func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRun, int, int, int, error) {
 	queryCount := `select count(workflow_run.id)
 	from workflow_run
 	join project on workflow_run.project_id = project.id
@@ -221,6 +221,8 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 		return nil, 0, 0, 0, nil
 	}
 
+	var args = []interface{}{projectkey, workflowname, limit, offset}
+
 	query := `select workflow_run.*
 	from workflow_run
 	join project on workflow_run.project_id = project.id
@@ -230,8 +232,39 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 	order by workflow_run.start desc
 	limit $3 offset $4`
 
+	if len(tagFilter) > 0 {
+		// Posgres operator: '<@' means 'is contained by' eg. 'ARRAY[2,7] <@ ARRAY[1,7,4,2,6]' ==> returns true
+		query = `select workflow_run.*
+		from workflow_run
+		join project on workflow_run.project_id = project.id
+		join workflow on workflow_run.workflow_id = workflow.id
+		join (
+			select workflow_run_id, string_agg(all_tags, ',') as tags
+			from (
+				select workflow_run_id, tag || '=' || value "all_tags"
+				from workflow_run_tag
+				order by tag
+			) as all_wr_tags
+			group by workflow_run_id
+		) as tags on workflow_run.id = tags.workflow_run_id
+		where project.projectkey = $1
+		and workflow.name = $2
+		and string_to_array($5, ',') <@ string_to_array(tags.tags, ',')
+		order by workflow_run.start desc
+		limit $3 offset $4`
+
+		var tags []string
+		for k, v := range tagFilter {
+			tags = append(tags, k+"="+v)
+		}
+
+		log.Debug("tags=%v", tags)
+
+		args = append(args, strings.Join(tags, ","))
+	}
+
 	runs := []Run{}
-	if _, err := db.Select(&runs, query, projectkey, workflowname, limit, offset); err != nil {
+	if _, err := db.Select(&runs, query, args...); err != nil {
 		return nil, 0, 0, 0, sdk.WrapError(errc, "LoadRuns> unable to load runs")
 	}
 	wruns := make([]sdk.WorkflowRun, len(runs))

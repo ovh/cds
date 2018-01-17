@@ -97,6 +97,8 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		log.Debug("workflow.execute> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status.String() == "" {
+			stage.Status = sdk.StatusWaiting
+
 			if stageIndex == 0 {
 				newStatus = sdk.StatusWaiting.String()
 			}
@@ -104,16 +106,16 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 			if len(stage.Jobs) == 0 {
 				newStatus = sdk.StatusSuccess.String()
 				stage.Status = sdk.StatusSuccess
+			} else {
+				//Add job to Queue
+				//Insert data in workflow_node_run_job
+				log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
+				if err := addJobsToQueue(db, stage, n, chanEvent); err != nil {
+					return err
+				}
 			}
 
-			stage.Status = sdk.StatusWaiting
-			//Add job to Queue
-			//Insert data in workflow_node_run_job
-			log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
-			if err := addJobsToQueue(db, stage, n, chanEvent); err != nil {
-				return err
-			}
-			if stage.Status == sdk.StatusSkipped || stage.Status == sdk.StatusDisabled {
+			if sdk.StatusIsTerminated(stage.Status.String()) {
 				stagesTerminated++
 				continue
 			}
@@ -144,16 +146,24 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 				if stage.Status == sdk.StatusFail {
 					n.Done = time.Now()
 					newStatus = sdk.StatusFail.String()
+					stagesTerminated++
 					break
 				}
 				if stage.Status == sdk.StatusStopped {
 					n.Done = time.Now()
 					newStatus = sdk.StatusStopped.String()
+					stagesTerminated++
 					break
 				}
+
+				if sdk.StatusIsTerminated(stage.Status.String()) {
+					n.Done = time.Now()
+				}
+
 				if stageIndex == len(n.Stages)-1 {
 					n.Done = time.Now()
 					newStatus = sdk.StatusSuccess.String()
+					stagesTerminated++
 					break
 				}
 				if stageIndex != len(n.Stages)-1 {
@@ -163,12 +173,14 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		}
 	}
 
-	if stagesTerminated == len(n.Stages)-1 {
-		var success, building, fail, stop int
-		for _, stage := range n.Stages {
-			computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop)
+	if stagesTerminated >= len(n.Stages) || (stagesTerminated >= len(n.Stages)-1 && (n.Stages[len(n.Stages)-1].Status == sdk.StatusDisabled || n.Stages[len(n.Stages)-1].Status == sdk.StatusSkipped)) {
+		var success, building, fail, stop, skipped, disabled int
+		if len(n.Stages) > 0 {
+			for _, stage := range n.Stages {
+				computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop, &skipped, &disabled)
+			}
+			newStatus = getRunStatus(success, building, fail, stop, skipped, disabled)
 		}
-		newStatus = getRunStatus(success, building, fail, stop)
 	}
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
@@ -209,7 +221,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		//Try to find one node run of the same node from the same workflow at status Waiting
 		if node != nil && node.Context != nil && node.Context.Mutex {
 			mutexQuery := `select workflow_node_run.id
-			from workflow_node_run 
+			from workflow_node_run
 			join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
 			join workflow on workflow.id = workflow_run.workflow_id
 			where workflow.id = $1
@@ -604,10 +616,15 @@ func SyncNodeRunRunJob(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJo
 	return found, nil
 }
 
-func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun) (repository string, branch string, hash string, err error) {
+func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun) (repository string, branch string, hash string, author string, err error) {
 	repository = gitValues[tagGitRepository]
 	branch = gitValues[tagGitBranch]
 	hash = gitValues[tagGitHash]
+	author = gitValues[tagGitAuthor]
+
+	if node.Context == nil || node.Context.Application == nil || node.Context.Application.VCSServer == "" {
+		return repository, branch, hash, author, nil
+	}
 
 	// Set default values
 	if repository == "" {
@@ -616,32 +633,44 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValu
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
 	if vcsServer == nil {
-		return repository, branch, hash, nil
+		return repository, branch, hash, author, nil
 	}
 
 	//Get the RepositoriesManager Client
 	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
 	if errclient != nil {
-		return repository, branch, hash, sdk.WrapError(errclient, "computeVCSInfos> Cannot get client")
+		return repository, branch, hash, author, sdk.WrapError(errclient, "computeVCSInfos> Cannot get client")
 	}
 
 	if branch == "" {
 		branches, errR := client.Branches(repository)
 		if errR != nil {
-			return repository, branch, hash, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", repository)
+			return repository, branch, hash, author, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", repository)
 		}
 		branch = sdk.GetDefaultBranch(branches).DisplayID
 	}
 
 	if hash != "" {
-		return repository, branch, hash, nil
+		commit, errCm := client.Commit(repository, hash)
+		if errCm != nil {
+			return repository, branch, hash, author, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", repository, hash)
+		}
+		author = commit.Author.DisplayName
+
+		return repository, branch, hash, author, nil
 	}
 
 	branchInfos, errBr := client.Branch(repository, branch)
 	if errBr != nil {
-		return repository, branch, hash, sdk.WrapError(errBr, "computeVCSInfos> cannot get branch infos for %s and branch %s", repository, branch)
+		return repository, branch, hash, author, sdk.WrapError(errBr, "computeVCSInfos> cannot get branch infos for %s and branch %s", repository, branch)
 	}
 	hash = branchInfos.LatestCommit
 
-	return repository, branch, hash, nil
+	commit, errCm := client.Commit(repository, hash)
+	if errCm != nil {
+		return repository, branch, hash, author, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", repository, hash)
+	}
+	author = commit.Author.DisplayName
+
+	return repository, branch, hash, author, nil
 }

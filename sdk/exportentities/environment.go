@@ -46,6 +46,9 @@ func (e *Environment) Environment() (env *sdk.Environment) {
 	env.Variable = make([]sdk.Variable, len(e.Values))
 	var i int
 	for k, v := range e.Values {
+		if v.Type == "" {
+			v.Type = sdk.StringVariable
+		}
 		env.Variable[i] = sdk.Variable{
 			Name:  k,
 			Type:  v.Type,
