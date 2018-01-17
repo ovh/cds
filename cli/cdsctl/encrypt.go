@@ -6,11 +6,10 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	encryptCmd = cli.Command{
-		Name:  "encrypt",
-		Short: "Encrypt variable into your CDS project",
-		Long:  `To be able to write secret in the CDS yaml files, you have to encrypt data with the project GPG key.
+var encryptCmd = cli.Command{
+	Name:  "encrypt",
+	Short: "Encrypt variable into your CDS project",
+	Long: `To be able to write secret in the CDS yaml files, you have to encrypt data with the project GPG key.
 
 Create a secret variable:
 
@@ -18,7 +17,7 @@ Create a secret variable:
     $ cdsctl encrypt MYPROJECT my-data my-super-secret-value
     my-data: 01234567890987654321
 
-The command returns the value: `01234567890987654321`. You can use this value in a configuration file.
+The command returns the value: 01234567890987654321. You can use this value in a configuration file.
 
 Example of use case: Import an environment with a secret.
 
@@ -42,22 +41,20 @@ Then, import then environment:
 
 Or push your workflow
 
-    cds workflow push MYPROJECT *.yml
+	cds workflow push MYPROJECT *.yml
 `,
-		
-		Example: `cdsctl encrypt MYPROJECT my-data my-super-secret-value
+	Example: `cdsctl encrypt MYPROJECT my-data my-super-secret-value
 my-data: 01234567890987654321`,
-		Args: []cli.Arg{
-			{Name: "project-key"},
-			{Name: "variable-name"},
-		},
-		OptionalArgs: []cli.Arg{
-			{Name: "secret-value"},
-		},
-	}
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "variable-name"},
+	},
+	OptionalArgs: []cli.Arg{
+		{Name: "secret-value"},
+	},
+}
 
-	encrypt = cli.NewCommand(encryptCmd, encryptRun, nil)
-)
+var encrypt = cli.NewCommand(encryptCmd, encryptRun, nil)
 
 func encryptRun(v cli.Values) error {
 	secretValue := v.GetString("secret-value")
