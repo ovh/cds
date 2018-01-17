@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>workflow :: CDS - Continuous Delivery Service</title>
+    <title>encrypt :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/workflow/">
+  <body class="" data-url="/cli/cdsctl/encrypt/">
     <nav id="sidebar" class="">
 
 
@@ -599,7 +599,7 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/cli/cdsctl/encrypt/" class="dd-item">
+      <li data-nav-id="/cli/cdsctl/encrypt/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/cdsctl/encrypt/">
           <span>encrypt</span>
         </a>
@@ -988,10 +988,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item parent active">
+    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">
-        <span>workflow</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>workflow</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/workflow/artifact/" class="dd-item">
@@ -1310,7 +1309,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/workflow/_index.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/encrypt.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1333,7 +1332,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > workflow
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > encrypt
 
  
 
@@ -1350,9 +1349,10 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-workflow">cdsctl workflow</a>
+<li><a href="#cdsctl-encrypt">cdsctl encrypt</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
+<li><a href="#examples">Examples</a></li>
 <li><a href="#options">Options</a></li>
 <li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
 <li><a href="#see-also">SEE ALSO</a></li>
@@ -1369,7 +1369,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>workflow</h1>
+                <h1>encrypt</h1>
                 <p></p>
             </div>
           
@@ -1379,17 +1379,60 @@
 
 
 
-<h2 id="cdsctl-workflow">cdsctl workflow</h2>
+<h2 id="cdsctl-encrypt">cdsctl encrypt</h2>
 
-<p>Manage CDS workflow</p>
+<p>Encrypt variable into your CDS project</p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Manage CDS workflow</p>
+<p>To be able to write secret in the CDS yaml files, you have to encrypt data with the project GPG key.</p>
+
+<p>Create a secret variable:</p>
+
+<pre><code>$ cdsctl encrypt MYPROJECT my-data my-super-secret-value
+my-data: 01234567890987654321
+</code></pre>
+
+<p>The command returns the value: 01234567890987654321. You can use this value in a configuration file.</p>
+
+<p>Example of use case: Import an environment with a secret.</p>
+
+<p>Create an environment file to import :</p>
+
+<pre><code>$ cat &lt;&lt; EOF &gt; your-environment.yml
+name: your-environment
+values:
+a-readable-variable:
+    type: string
+    value: registry.ovh.net/engine/http2kafka
+my-data:
+    type: password
+    value: 01234567890987654321
+EOF
+</code></pre>
+
+<p>Then, import then environment:</p>
+
+<pre><code>cds environment import MYPROJECT your-environment.yml
+</code></pre>
+
+<p>Or push your workflow</p>
+
+<pre><code>cds workflow push MYPROJECT *.yml
+</code></pre>
+
+<pre><code>cdsctl encrypt PROJECT-KEY VARIABLE-NAME [SECRET-VALUE] [flags]
+</code></pre>
+
+<h3 id="examples">Examples</h3>
+
+<pre><code>cdsctl encrypt MYPROJECT my-data my-super-secret-value
+my-data: 01234567890987654321
+</code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>  -h, --help   help for workflow
+<pre><code>  -h, --help   help for encrypt
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
@@ -1404,25 +1447,12 @@
 
 <ul>
 <li><a href="https://ovh.github.io/cds/cli/cdsctl/cdsctl/">cdsctl</a>  - CDS Command line utility</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/">cdsctl workflow artifact</a>     - Manage Workflow Artifact</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/delete/">cdsctl workflow delete</a>     - Delete a CDS workflow</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/export/">cdsctl workflow export</a>     - Export a workflow</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/history/">cdsctl workflow history</a>   - History of a CDS workflow</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/import/">cdsctl workflow import</a>     - Import a workflow</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/">cdsctl workflow list</a>     - List CDS workflows</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/pull/">cdsctl workflow pull</a>     - Pull a workflow</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/push/">cdsctl workflow push</a>     - Push a workflow</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/run/">cdsctl workflow run</a>   - Run a CDS workflow</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/show/">cdsctl workflow show</a>     - Show a CDS workflow</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/stop/">cdsctl workflow stop</a>     - Stop a CDS workflow or a specific node name</li>
 </ul>
 
 
 <footer class=" footline" >
 	
 </footer>
-
-
 
 
 
@@ -1437,8 +1467,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/worker/model/list/" title="list"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/" title="artifact" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/application/variable/update/" title="update"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/environment/" title="environment" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -1458,3 +1488,4 @@
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
+

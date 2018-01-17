@@ -1001,6 +1001,20 @@ cdsctl workflow artifact download PROJECT-KEY WORKFLOW NUMBER [ARTEFACT-NAME] [f
     </item>
     
     <item>
+      <title>encrypt</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/encrypt/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/encrypt/</guid>
+      <description>cdsctl encrypt Encrypt variable into your CDS project
+Synopsis To be able to write secret in the CDS yaml files, you have to encrypt data with the project GPG key.
+Create a secret variable:
+$ cdsctl encrypt MYPROJECT my-data my-super-secret-value my-data: 01234567890987654321  The command returns the value: 01234567890987654321. You can use this value in a configuration file.
+Example of use case: Import an environment with a secret.
+Create an environment file to import :</description>
+    </item>
+    
+    <item>
       <title>exit</title>
       <link>https://ovh.github.io/cds/cli/worker/exit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
