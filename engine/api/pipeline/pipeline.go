@@ -75,6 +75,12 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 		if err := loadPipelineDependencies(db, &p); err != nil {
 			return nil, err
 		}
+	} else {
+		parameters, err := GetAllParametersInPipeline(db, p.ID)
+		if err != nil {
+			return nil, err
+		}
+		p.Parameter = parameters
 	}
 
 	return &p, nil
@@ -102,6 +108,12 @@ func LoadPipelineByID(db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pi
 		if err := loadPipelineDependencies(db, &p); err != nil {
 			return nil, err
 		}
+	} else {
+		parameters, err := GetAllParametersInPipeline(db, p.ID)
+		if err != nil {
+			return nil, err
+		}
+		p.Parameter = parameters
 	}
 
 	return &p, nil
@@ -297,15 +309,17 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 			if err := LoadPipelineStage(db, &p); err != nil {
 				return nil, err
 			}
-
-			params, err := GetAllParametersInPipeline(db, p.ID)
-			if err != nil {
-				return nil, err
-			}
-			p.Parameter = params
 		}
 
 		pip = append(pip, p)
+	}
+
+	for i := range pip {
+		params, err := GetAllParametersInPipeline(db, pip[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		pip[i].Parameter = params
 	}
 
 	return pip, nil

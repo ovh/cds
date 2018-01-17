@@ -32,6 +32,7 @@ func Test_postWorkflowImportHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
+	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
 
 	//Prepare request
@@ -47,6 +48,8 @@ version: v1.0
 workflow:
   pip1:
     pipeline: pip1
+    parameters:
+      name: value
   pip1_2:
     depends_on:
       - pip1
@@ -67,10 +70,14 @@ workflow:
 
 	assert.NotNil(t, w)
 
+	dump.Dump(w)
+
 	m, _ := dump.ToStringMap(w)
 	assert.Equal(t, "test_1", m["Workflow.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Pipeline.Name"])
+	assert.Equal(t, "name", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Name"])
+	assert.Equal(t, "value", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Value"])
 	assert.Equal(t, "pip1_2", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.Pipeline.Name"])
 

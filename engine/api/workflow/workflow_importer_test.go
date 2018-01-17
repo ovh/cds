@@ -29,6 +29,16 @@ func TestImport(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
+	//Pipeline
+	pipparam := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pipeline-with-param",
+		Type:       sdk.BuildPipeline,
+	}
+	sdk.AddParameter(&pipparam.Parameter, "name", sdk.StringParameter, "value")
+
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pipparam, u))
 	//Application
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
@@ -321,6 +331,56 @@ func TestImport(t *testing.T) {
 							},
 							Environment: &sdk.Environment{
 								Name: "env-error",
+							},
+						},
+					},
+				},
+				force: false,
+			},
+			wantErr: true,
+		},
+		{
+			name: "workflow insertion with pipeline parameter",
+			args: args{
+				w: &sdk.Workflow{
+					Name: "test-6",
+					Root: &sdk.WorkflowNode{
+						Name: "pipeline",
+						Ref:  "pipeline",
+						Pipeline: sdk.Pipeline{
+							Name: "pipeline-with-param",
+						},
+						Context: &sdk.WorkflowNodeContext{
+							DefaultPipelineParameters: []sdk.Parameter{
+								{
+									Name:  "name",
+									Value: "value",
+								},
+							},
+						},
+					},
+				},
+				force: false,
+			},
+			wantErr: true,
+		},
+		{
+			name: "simple workflow insertion with wrong parameter",
+			args: args{
+				w: &sdk.Workflow{
+					Name: "test-1",
+					Root: &sdk.WorkflowNode{
+						Name: "pipeline",
+						Ref:  "pipeline",
+						Pipeline: sdk.Pipeline{
+							Name: "pipeline",
+						},
+						Context: &sdk.WorkflowNodeContext{
+							DefaultPipelineParameters: []sdk.Parameter{
+								{
+									Name:  "name",
+									Value: "value",
+								},
 							},
 						},
 					},
