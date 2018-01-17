@@ -99,7 +99,7 @@ The public key have to be granted on your repository`,
 	checkoutApplication := sdk.NewAction(sdk.CheckoutApplication)
 	checkoutApplication.Type = sdk.BuiltinAction
 	checkoutApplication.Description = `CDS Builtin Action.
-Clone a repository into a new directory.`
+Checkout a repository into a new directory.`
 
 	checkoutApplication.Parameter(sdk.Parameter{
 		Name:        "directory",

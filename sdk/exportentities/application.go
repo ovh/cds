@@ -6,15 +6,21 @@ import (
 
 // Application represents exported sdk.Application
 type Application struct {
-	Version        string                   `json:"version,omitempty" yaml:"version,omitempty"`
-	Name           string                   `json:"name" yaml:"name"`
-	VCSServer      string                   `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
-	RepositoryName string                   `json:"repo,omitempty" yaml:"repo,omitempty"`
-	Permissions    map[string]int           `json:"permissions,omitempty" yaml:"permissions,omitempty"`
-	Variables      map[string]VariableValue `json:"variables,omitempty" yaml:"variables,omitempty"`
-	Keys           map[string]VariableValue `json:"keys,omitempty" yaml:"keys,omitempty"`
+	Version           string                   `json:"version,omitempty" yaml:"version,omitempty"`
+	Name              string                   `json:"name" yaml:"name"`
+	VCSServer         string                   `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
+	RepositoryName    string                   `json:"repo,omitempty" yaml:"repo,omitempty"`
+	Permissions       map[string]int           `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	Variables         map[string]VariableValue `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Keys              map[string]VariableValue `json:"keys,omitempty" yaml:"keys,omitempty"`
+	VCSConnectionType string                   `json:"vcs_connection_type,omitempty" yaml:"vcs_connection_type,omitempty"`
+	VCSSSHKey         string                   `json:"vcs_ssh_key,omitempty" yaml:"vcs_ssh_key,omitempty"`
+	VCSUser           string                   `json:"vcs_user,omitempty" yaml:"vcs_user,omitempty"`
+	VCSPassword       string                   `json:"vcs_password,omitempty" yaml:"vcs_password,omitempty"`
+	VCSBranch         string                   `json:"vcs_branch,omitempty" yaml:"vcs_branch,omitempty"`
+	VCSDefaultBranch  string                   `json:"vcs_default_branch,omitempty" yaml:"vcs_default_branch,omitempty"`
+	VCSPGPKey         string                   `json:"vcs_pgp_key,omitempty" yaml:"vcs_pgp_key,omitempty"`
 }
-
 type ApplicationVersion string
 
 const ApplicationVersion1 = "v1.0"
@@ -48,9 +54,11 @@ func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedK
 		}
 	}
 
-	a.Permissions = make(map[string]int, len(app.ApplicationGroups))
-	for _, p := range app.ApplicationGroups {
-		a.Permissions[p.Group.Name] = p.Permission
+	if withPermissions {
+		a.Permissions = make(map[string]int, len(app.ApplicationGroups))
+		for _, p := range app.ApplicationGroups {
+			a.Permissions[p.Group.Name] = p.Permission
+		}
 	}
 
 	a.Keys = make(map[string]VariableValue, len(keys))
@@ -60,5 +68,14 @@ func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedK
 			Value: e.Content,
 		}
 	}
+
+	a.VCSBranch = app.RepositoryStrategy.Branch
+	a.VCSConnectionType = app.RepositoryStrategy.ConnectionType
+	a.VCSDefaultBranch = app.RepositoryStrategy.DefaultBranch
+	a.VCSPGPKey = app.RepositoryStrategy.PGPKey
+	a.VCSSSHKey = app.RepositoryStrategy.SSHKey
+	a.VCSUser = app.RepositoryStrategy.User
+	a.VCSPassword = app.RepositoryStrategy.Password
+
 	return a, nil
 }

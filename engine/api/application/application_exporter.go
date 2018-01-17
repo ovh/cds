@@ -22,7 +22,9 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, 
 		return 0, sdk.WrapError(errload, "application.Export> Cannot load application %s", appName)
 	}
 
-	// load clear key
+	if errD := DecryptVCSStrategyPassword(app); errD != nil {
+		return 0, sdk.WrapError(errD, "application.Export> Cannot decrypt vcs password")
+	}
 
 	// Load permissions
 	if withPermissions {
@@ -70,6 +72,14 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 			Content: content,
 		}
 		keys = append(keys, ek)
+	}
+
+	if app.RepositoryStrategy.Password != "" {
+		content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s", app.ID, "vcs:password"), app.RepositoryStrategy.Password)
+		if err != nil {
+			return 0, sdk.WrapError(err, "application.Export> Unable to encrypt password")
+		}
+		app.RepositoryStrategy.Password = content
 	}
 
 	eapp, err := exportentities.NewApplication(app, withPermissions, keys)

@@ -43,7 +43,9 @@ export class ProjectForPipelineCreateResolver implements Resolve<Project> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
         let opts = [
+          new LoadOpts('withApplicationNames', 'application_names'),
           new LoadOpts('withPipelineNames', 'pipeline_names'),
+          new LoadOpts('withWorkflowNames', 'workflow_names'),
           new LoadOpts('withApplications', 'applications'),
         ];
 
