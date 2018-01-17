@@ -220,19 +220,19 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 
 	fileForMD5, errop := os.Open(filePath)
 	if errop != nil {
-		return false, 0, fmt.Errorf("error on os.Open(filePath), errop:%s", errop)
+		return false, 0, fmt.Errorf("unable on open file %s (%v)", filePath, errop)
 	}
 
 	//File stat
 	stat, errst := fileForMD5.Stat()
 	if errst != nil {
-		return false, 0, fmt.Errorf("error on fileForMD5.Stat(), errst: %s", errst)
+		return false, 0, fmt.Errorf("unable to get file info (%v)", errst)
 	}
 
 	//Compute md5sum
 	hash := md5.New()
 	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
-		return false, 0, fmt.Errorf("error on io.Copy, errcopy:%s", errcopy)
+		return false, 0, fmt.Errorf("unable to read file content (%v)", errcopy)
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
@@ -241,7 +241,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	//Reopen the file because we already read it for md5
 	fileContent, erro := ioutil.ReadFile(filePath)
 	if erro != nil {
-		return false, 0, fmt.Errorf("error os.Open(filePath), erro:%s", erro)
+		return false, 0, fmt.Errorf("unable to read file %s (%v)", filePath, erro)
 	}
 	_, name := filepath.Split(filePath)
 
@@ -253,7 +253,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		if store.TemporaryURLSupported {
 			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileContent, stat, md5sumStr)
 			if err == nil {
-				return tempURL, dur, fmt.Errorf("error on uploadArtifactWithTempURL err:%s", err)
+				return tempURL, dur, fmt.Errorf("unable to upload to objectstore (%v)", err)
 			}
 		}
 	}
@@ -263,11 +263,11 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
 	if errc != nil {
-		return false, 0, fmt.Errorf("error on writer.CreateFormFile() errc:%s", errc)
+		return false, 0, fmt.Errorf("unable to create multipart form file (%v)", errc)
 	}
 
 	if _, err := io.Copy(part, bytes.NewReader(fileContent)); err != nil {
-		return false, 0, fmt.Errorf("error on io.Copy(part, bytes.NewReader(fileContent)), err: %s", err)
+		return false, 0, fmt.Errorf("unable to read file content (%v)", err)
 	}
 
 	writer.WriteField("env", env)
@@ -276,7 +276,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer.WriteField("md5sum", md5sumStr)
 
 	if err := writer.Close(); err != nil {
-		return false, 0, fmt.Errorf("error on write.Close(), err:%s", err)
+		return false, 0, fmt.Errorf("unable to close multipart form writer (%v)", err)
 	}
 
 	var bodyReader io.Reader
