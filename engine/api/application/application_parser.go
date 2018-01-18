@@ -86,6 +86,29 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		app.Keys = append(app.Keys, k)
 	}
 
+	// VCS Strategy
+	app.RepositoryStrategy = sdk.RepositoryStrategy{
+		ConnectionType: eapp.VCSConnectionType,
+		User:           eapp.VCSUser,
+		SSHKey:         eapp.VCSSSHKey,
+		PGPKey:         eapp.VCSPGPKey,
+		DefaultBranch:  eapp.VCSDefaultBranch,
+		Branch:         eapp.VCSBranch,
+	}
+	if app.RepositoryStrategy.ConnectionType == "" {
+		app.RepositoryStrategy.ConnectionType = "https"
+	}
+	if eapp.VCSPassword != "" {
+		clearPWD, err := decryptFunc(db, proj.ID, eapp.VCSPassword)
+		if err != nil {
+			return nil, sdk.WrapError(err, "ParseAndImport> Unable to decrypt vcs password")
+		}
+		app.RepositoryStrategy.Password = clearPWD
+		if errE := EncryptVCSStrategyPassword(app); errE != nil {
+			return nil, sdk.WrapError(errE, "ParseAndImport> Cannot encrypt vcs password")
+		}
+	}
+
 	done := new(sync.WaitGroup)
 	done.Add(1)
 	msgChan := make(chan sdk.Message)

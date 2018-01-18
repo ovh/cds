@@ -28,6 +28,7 @@ var LoadOptions = struct {
 	WithHooks                      LoadOptionFunc
 	WithNotifs                     LoadOptionFunc
 	WithKeys                       LoadOptionFunc
+	WithClearKeys                  LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,
 	WithVariables:                  &loadVariables,
@@ -38,6 +39,7 @@ var LoadOptions = struct {
 	WithHooks:                      &loadHooks,
 	WithNotifs:                     &loadNotifs,
 	WithKeys:                       &loadKeys,
+	WithClearKeys:                  &loadClearKeys,
 }
 
 // Exists checks if an application given its name exists

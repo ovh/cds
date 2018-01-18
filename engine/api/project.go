@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
@@ -141,27 +142,27 @@ func (api *API) addProjectHandler() Handler {
 		//Unmarshal data
 		p := &sdk.Project{}
 		if err := UnmarshalBody(r, p); err != nil {
-			return sdk.WrapError(err, "AddProject> Unable to unmarshal body")
+			return sdk.WrapError(err, "addProjectHandler> Unable to unmarshal body")
 		}
 
 		// check projectKey pattern
 		if rgxp := regexp.MustCompile(sdk.ProjectKeyPattern); !rgxp.MatchString(p.Key) {
-			return sdk.WrapError(sdk.ErrInvalidProjectKey, "AddProject> Project key %s do not respect pattern %s")
+			return sdk.WrapError(sdk.ErrInvalidProjectKey, "addProjectHandler> Project key %s do not respect pattern %s")
 		}
 
 		//check project Name
 		if p.Name == "" {
-			return sdk.WrapError(sdk.ErrInvalidProjectName, "AddProject> Project name must no be empty")
+			return sdk.WrapError(sdk.ErrInvalidProjectName, "addProjectHandler> Project name must no be empty")
 		}
 
 		// Check that project does not already exists
 		exist, errExist := project.Exist(api.mustDB(), p.Key)
 		if errExist != nil {
-			return sdk.WrapError(errExist, "AddProject>  Cannot check if project %s exist", p.Key)
+			return sdk.WrapError(errExist, "addProjectHandler>  Cannot check if project %s exist", p.Key)
 		}
 
 		if exist {
-			return sdk.WrapError(sdk.ErrConflict, "AddProject> Project %s already exists", p.Key)
+			return sdk.WrapError(sdk.ErrConflict, "addProjectHandler> Project %s already exists", p.Key)
 		}
 
 		var groupAttached bool
@@ -183,10 +184,10 @@ func (api *API) addProjectHandler() Handler {
 					}
 					p.ProjectGroups = append(p.ProjectGroups, permG)
 				} else {
-					return sdk.WrapError(errl, "AddProject> Cannot check if group already exists")
+					return sdk.WrapError(errl, "addProjectHandler> Cannot check if group already exists")
 				}
 			} else {
-				return sdk.WrapError(sdk.ErrGroupPresent, "AddProject> Group %s already exists", p.Name)
+				return sdk.WrapError(sdk.ErrGroupPresent, "addProjectHandler> Group %s already exists", p.Name)
 			}
 		}
 
@@ -194,11 +195,11 @@ func (api *API) addProjectHandler() Handler {
 		tx, errBegin := api.mustDB().Begin()
 		defer tx.Rollback()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "AddProject> Cannot start tx")
+			return sdk.WrapError(errBegin, "addProjectHandler> Cannot start tx")
 		}
 
 		if err := project.Insert(tx, api.Cache, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "AddProject> Cannot insert project")
+			return sdk.WrapError(err, "addProjectHandler> Cannot insert project")
 		}
 
 		// Add group
@@ -214,32 +215,46 @@ func (api *API) addProjectHandler() Handler {
 
 			// Add group on project
 			if err := group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission); err != nil {
-				return sdk.WrapError(err, "addProject> Cannot add group %s in project %s", groupPermission.Group.Name, p.Name)
+				return sdk.WrapError(err, "addProjectHandler> Cannot add group %s in project %s", groupPermission.Group.Name, p.Name)
 			}
 
 			// Add user in group
 			if new {
 				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, getUser(ctx).ID, true); err != nil {
-					return sdk.WrapError(err, "addProject> Cannot add user %s in group %s", getUser(ctx).Username, groupPermission.Group.Name)
+					return sdk.WrapError(err, "addProjectHandler> Cannot add user %s in group %s", getUser(ctx).Username, groupPermission.Group.Name)
 				}
 			}
 		}
 
 		for _, v := range p.Variable {
-			var errVar error
-			switch v.Type {
-			case sdk.KeyVariable:
-				errVar = project.AddKeyPair(tx, p, v.Name, getUser(ctx))
-			default:
-				errVar = project.InsertVariable(tx, p, &v, getUser(ctx))
+			if errVar := project.InsertVariable(tx, p, &v, getUser(ctx)); errVar != nil {
+				return sdk.WrapError(errVar, "addProjectHandler> Cannot add variable %s in project %s", v.Name, p.Name)
 			}
-			if errVar != nil {
-				return sdk.WrapError(errVar, "addProject> Cannot add variable %s in project %s", v.Name, p.Name)
+		}
+
+		for _, k := range p.Keys {
+			k.ProjectID = p.ID
+			switch k.Type {
+			case sdk.KeyTypeSSH:
+				kTemp, errK := keys.GenerateSSHKey(k.Name)
+				if errK != nil {
+					return sdk.WrapError(errK, "addProjectHandler> Cannot generate ssh key for project %s", p.Name)
+				}
+				k.Key = kTemp
+			case sdk.KeyTypePGP:
+				kTemp, errK := keys.GeneratePGPKeyPair(k.Name)
+				if errK != nil {
+					return sdk.WrapError(errK, "addProjectHandler> Cannot generate pgp key for project %s", p.Name)
+				}
+				k.Key = kTemp
+			}
+			if errK := project.InsertKey(tx, &k); errK != nil {
+				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name)
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addProject> Cannot commit transaction")
+			return sdk.WrapError(err, "addProjectHandler> Cannot commit transaction")
 		}
 
 		return WriteJSON(w, r, p, http.StatusCreated)

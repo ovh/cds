@@ -1,7 +1,6 @@
 package api
 
 import (
-	"io/ioutil"
 	"testing"
 
 	"github.com/loopfz/gadgeto/iffy"
@@ -42,17 +41,12 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	pub, _ := ioutil.ReadAll(pubR)
-	priv, _ := ioutil.ReadAll(privR)
-
-	k.Public = string(pub)
-	k.Private = string(priv)
-	k.KeyID = kid
+	k.Key = pgpK
 
 	if err := application.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 
 	"github.com/ovh/cds/sdk"
 	"golang.org/x/crypto/openpgp"
@@ -20,12 +21,12 @@ func GetOpenPGPEntity(r io.Reader) (*openpgp.Entity, error) {
 	}
 
 	if len(entityList) != 1 {
-		return nil, errors.New("Invalid PGP entity list")
+		return nil, errors.New("GetOpenPGPEntity> Invalid PGP entity list")
 	}
 
 	keys := entityList.DecryptionKeys()
 	if len(keys) != 1 {
-		return nil, errors.New("Invalid PGP decryption keys")
+		return nil, errors.New("GetOpenPGPEntity> Invalid PGP decryption keys")
 	}
 
 	return entityList[0], nil
@@ -59,51 +60,66 @@ func NewOpenPGPEntity(keyname string) (*openpgp.Entity, error) {
 	return key, nil
 }
 
-// GeneratePGPPrivateKey generates a private key
-func GeneratePGPPrivateKey(key *openpgp.Entity) (io.Reader, error) {
+// generatePGPPrivateKey generates a private key
+func generatePGPPrivateKey(key *openpgp.Entity) (io.Reader, error) {
 	bufPrivate := new(bytes.Buffer)
 	w, errPrivEncode := armor.Encode(bufPrivate, openpgp.PrivateKeyType, nil)
 	if errPrivEncode != nil {
-		return nil, sdk.WrapError(errPrivEncode, "GeneratePGPPrivateKey> Cannot encode private key")
+		return nil, sdk.WrapError(errPrivEncode, "generatePGPPrivateKey> Cannot encode private key")
 	}
 	defer w.Close()
 	if err := key.SerializePrivate(w, &packet.Config{}); err != nil {
-		return nil, sdk.WrapError(err, "GeneratePGPPrivateKey> Cannot serialize private key")
+		return nil, sdk.WrapError(err, "generatePGPPrivateKey> Cannot serialize private key")
 	}
 	return bufPrivate, nil
 }
 
-// GeneratePGPPublicKey generates a public key
-func GeneratePGPPublicKey(key *openpgp.Entity) (io.Reader, error) {
+// generatePGPPublicKey generates a public key
+func generatePGPPublicKey(key *openpgp.Entity) (io.Reader, error) {
 	bufPublic := new(bytes.Buffer)
 	w, errEncode := armor.Encode(bufPublic, openpgp.PublicKeyType, nil)
 	if errEncode != nil {
-		return nil, sdk.WrapError(errEncode, "GeneratePGPPublicKey> Cannot encode public key")
+		return nil, sdk.WrapError(errEncode, "generatePGPPublicKey> Cannot encode public key")
 	}
 	defer w.Close()
 	if err := key.Serialize(w); err != nil {
-		return nil, sdk.WrapError(err, "GeneratePGPPublicKey> Cannot serialize public key")
+		return nil, sdk.WrapError(err, "generatePGPPublicKey> Cannot serialize public key")
 	}
 	return bufPublic, nil
 }
 
 // GeneratePGPKeyPair generates a private / public PGP key
-func GeneratePGPKeyPair(name string) (id string, pub io.Reader, priv io.Reader, err error) {
+func GeneratePGPKeyPair(name string) (sdk.Key, error) {
+	k := sdk.Key{
+		Name: name,
+		Type: sdk.KeyTypePGP,
+	}
 	key, err := NewOpenPGPEntity(name)
 	if err != nil {
-		return id, nil, nil, err
+		return k, err
 	}
-	id = key.PrimaryKey.KeyIdShortString()
+	k.KeyID = key.PrimaryKey.KeyIdShortString()
 
-	bufPrivate, err := GeneratePGPPrivateKey(key)
+	bufPrivate, err := generatePGPPrivateKey(key)
 	if err != nil {
-		return id, nil, nil, err
+		return k, err
 	}
 
-	bufPublic, err := GeneratePGPPublicKey(key)
+	bufPublic, err := generatePGPPublicKey(key)
 	if err != nil {
-		return id, nil, nil, err
+		return k, err
 	}
 
-	return id, bufPublic, bufPrivate, err
+	pub, errPub := ioutil.ReadAll(bufPublic)
+	if errPub != nil {
+		return k, sdk.WrapError(errPub, "GeneratePGPKeyPair> Unable to read public key")
+	}
+
+	priv, errPriv := ioutil.ReadAll(bufPrivate)
+	if errPriv != nil {
+		return k, sdk.WrapError(errPriv, "GeneratePGPKeyPair>  Unable to read private key")
+	}
+	k.Private = string(priv)
+	k.Public = string(pub)
+	return k, err
 }

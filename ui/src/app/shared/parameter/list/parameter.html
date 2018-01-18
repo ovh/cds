@@ -48,7 +48,7 @@
             <app-parameter-value [project]="project"
                  [suggest]="suggest"
                  [ref]="getRef(p)"
-                 [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'"
+                 [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'" [keys]="keys"
                  [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true; sendEvent()"></app-parameter-value>
             </td>
             <td *ngIf="mode !== 'launcher' && mode !== 'job'">

@@ -3,7 +3,10 @@
         <div class="fields">
             <div class="seven wide field">
                 <label>{{ 'keys_name' | translate}}</label>
-                <input type="text" name="name" [(ngModel)]="newKey.name">
+                <div class="ui labeled input">
+                    <div class="ui label">{{prefix}}</div>
+                    <input type="text" name="name" [(ngModel)]="newKey.name">
+                </div>
             </div>
             <div class="seven wide field">
                 <label>{{ 'keys_type' | translate }}</label>

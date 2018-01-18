@@ -64,7 +64,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			if err := sdk.DownloadArtifacts(project, application, pipeline, tag, path, environment); err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifacts: %s", err)
+				log.Warning("Cannot download artifacts %s %s %s %s %s %s: %s", project, application, pipeline, tag, path, environment, err)
 				sendLog(res.Reason)
 				return res
 			}

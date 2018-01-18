@@ -89,6 +89,10 @@ var (
 		return LoadAllKeys(db, app)
 	}
 
+	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		return LoadAllDecryptedKeys(db, app)
+	}
+
 	loadGroups = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		if err := LoadGroupByApplication(db, app); err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadGroups> Unable to load group permission for application %d", app.ID)

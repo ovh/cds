@@ -114,6 +114,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", r.GET(api.getVariableAuditInProjectHandler))
 	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler), r.POST(api.addApplicationHandler))
 	r.Handle("/project/{permProjectKey}/notifications", r.GET(api.getProjectNotificationsHandler))
+	r.Handle("/project/{permProjectKey}/all/keys", r.GET(api.getAllKeysProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys", r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys/{name}", r.DELETE(api.deleteKeyInProjectHandler))
 	// Import Application

@@ -22,7 +22,7 @@
                 <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
                     <i class="plug icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'keys'" id="ApplicationKeysTab" (click)="showTab('keys')" *ngIf="currentUser.admin"><i class="privacy icon"></i>
+                <a sm-item [class.active]="selectedTab === 'keys'" id="ApplicationKeysTab" (click)="showTab('keys')"><i class="privacy icon"></i>
                     {{ 'common_keys' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="application.permission === 7">

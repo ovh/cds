@@ -94,6 +94,10 @@ var (
 		return LoadAllKeys(db, proj)
 	}
 
+	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		return LoadAllDecryptedKeys(db, proj)
+	}
+
 	loadWorkflows = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		workflows, errW := workflow.LoadAll(db, proj.Key)
 		if errW != nil {

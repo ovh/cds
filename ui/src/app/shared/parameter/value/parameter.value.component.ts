@@ -7,6 +7,7 @@ import {RepoManagerService} from '../../../service/repomanager/project.repomanag
 import {cloneDeep} from 'lodash';
 import {Parameter} from '../../../model/parameter.model';
 import {first} from 'rxjs/operators';
+import {AllKeys} from '../../../model/keys.model';
 
 declare var CodeMirror: any;
 
@@ -19,7 +20,7 @@ export class ParameterValueComponent implements OnInit {
 
     editableValue: string | number | boolean;
     @Input() type: string;
-
+    @Input() keys: AllKeys;
     @Input('value')
     set value(data: string | number | boolean) {
         this.castValue(data);
@@ -31,12 +32,13 @@ export class ParameterValueComponent implements OnInit {
     @Input() projectKey: string;
 
     @Input('ref')
-    set ref(data: Parameter) {
-        if (data && data.type === 'list') {
+    set ref(data: Parameter|Array<string>) {
+        if (data && data instanceof Parameter && data.type === 'list') {
             this.refValue = (<string>data.value).split(';');
+        } else if (data && Array.isArray(data)) {
+            this.list = data;
         }
     }
-
     refValue: Array<string>;
 
     @Input('project')

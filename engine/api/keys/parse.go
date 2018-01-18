@@ -30,7 +30,7 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 			if errPGPEntity != nil {
 				return nil, sdk.WrapError(errPGPEntity, "keys.Parse> Unable to read PGP Entity from private key")
 			}
-			pubReader, errPub := GeneratePGPPublicKey(pgpEntity)
+			pubReader, errPub := generatePGPPublicKey(pgpEntity)
 			if errPub != nil {
 				return nil, sdk.WrapError(errPub, "keys.Parse> Unable to generate pgp public key")
 			}
@@ -42,11 +42,11 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 			k.KeyID = pgpEntity.PrimaryKey.KeyIdShortString()
 		//Compute SSH Keys
 		case sdk.KeyTypeSSH:
-			privKey, errPrivKey := GetSSHPrivateKey(strings.NewReader(privateKey))
+			privKey, errPrivKey := getSSHPrivateKey(strings.NewReader(privateKey))
 			if errPrivKey != nil {
 				return nil, sdk.WrapError(errPrivKey, "keys.Parse> Unable to read RSA private key")
 			}
-			pubReader, errPub := GetSSHPublicKey(kname, privKey)
+			pubReader, errPub := getSSHPublicKey(kname, privKey)
 			if errPub != nil {
 				return nil, sdk.WrapError(errPub, "keys.Parse> Unable to generate ssh public key")
 			}
@@ -62,39 +62,18 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 		switch k.Type {
 		//Compute PGP Keys
 		case sdk.KeyTypePGP:
-			id, pubR, privR, err := GeneratePGPKeyPair(kname)
+			kTemp, err := GeneratePGPKeyPair(kname)
 			if err != nil {
 				return nil, sdk.WrapError(err, "keys.Parse> Unable to generate PGP key pair")
 			}
-			pub, errPub := ioutil.ReadAll(pubR)
-			if errPub != nil {
-				return nil, sdk.WrapError(errPub, "keys.Parse> Unable to read public key")
-			}
-
-			priv, errPriv := ioutil.ReadAll(privR)
-			if errPriv != nil {
-				return nil, sdk.WrapError(errPriv, "keys.Parse>t>  Unable to read private key")
-			}
-			k.KeyID = id
-			k.Private = string(priv)
-			k.Public = string(pub)
+			k = &kTemp
 		//Compute SSH Keys
 		case sdk.KeyTypeSSH:
-			pubR, privR, err := GenerateSSHKeyPair(kname)
+			kTemp, err := GenerateSSHKey(kname)
 			if err != nil {
 				return nil, sdk.WrapError(err, "keys.Parse> Unable to generate SSH key pair")
 			}
-			pub, errPub := ioutil.ReadAll(pubR)
-			if errPub != nil {
-				return nil, sdk.WrapError(errPub, "keys.Parse> Unable to read public key")
-			}
-
-			priv, errPriv := ioutil.ReadAll(privR)
-			if errPriv != nil {
-				return nil, sdk.WrapError(errPriv, "keys.Parse>t>  Unable to read private key")
-			}
-			k.Private = string(priv)
-			k.Public = string(pub)
+			k = &kTemp
 		default:
 			return nil, sdk.ErrUnknownKeyType
 		}

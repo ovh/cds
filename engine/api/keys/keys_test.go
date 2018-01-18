@@ -12,7 +12,7 @@ import (
 )
 
 func TestGenerateSSHKeyPair(t *testing.T) {
-	pub, priv, err := GenerateSSHKeyPair("foo")
+	pub, priv, err := generateSSHKeyPair("foo")
 	if err != nil {
 		t.Fatalf("cannot generate keypair: %s\n", err)
 	}
@@ -20,9 +20,9 @@ func TestGenerateSSHKeyPair(t *testing.T) {
 	t.Logf("Pub key:\n%s\n", pub)
 	t.Logf("Priv key:\n%s\n", priv)
 
-	priv2, err := GetSSHPrivateKey(priv)
+	priv2, err := getSSHPrivateKey(priv)
 	test.NoError(t, err)
-	pub2, err := GetSSHPublicKey("foo", priv2)
+	pub2, err := getSSHPublicKey("foo", priv2)
 	test.NoError(t, err)
 
 	pubBytes, err := ioutil.ReadAll(pub)
@@ -35,16 +35,13 @@ func TestGenerateSSHKeyPair(t *testing.T) {
 }
 
 func TestGenerateGPGKeyPair(t *testing.T) {
-	_, pubR, privR, err := GeneratePGPKeyPair("mykey")
+	k, err := GeneratePGPKeyPair("mykey")
 	if err != nil {
 		t.Fatalf("cannot generate keypair: %s\n", err)
 	}
 
-	priv, _ := ioutil.ReadAll(privR)
-	pub, _ := ioutil.ReadAll(pubR)
-
 	stringToEncode := "I am a secret"
-	entityList, err := openpgp.ReadArmoredKeyRing(bytes.NewBuffer(pub))
+	entityList, err := openpgp.ReadArmoredKeyRing(bytes.NewBuffer([]byte(k.Public)))
 
 	// encrypt string
 
@@ -68,7 +65,7 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 
 	//Decrypt string
 
-	entityPrivate, errE := openpgp.ReadArmoredKeyRing(bytes.NewBuffer(priv))
+	entityPrivate, errE := openpgp.ReadArmoredKeyRing(bytes.NewBuffer([]byte(k.Private)))
 	if errE != nil {
 		t.Fatalf("Cannot read private key: %s\n", errE)
 	}
@@ -91,15 +88,15 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 	assert.Equal(t, stringToEncode, decStr)
 
 	//Open PGP Entity
-	entity, err := GetOpenPGPEntity(bytes.NewBuffer(priv))
+	entity, err := GetOpenPGPEntity(bytes.NewBuffer([]byte(k.Private)))
 	assert.NoError(t, err)
 	assert.NotNil(t, entity)
 
 	//Regenerate public key from the private key
-	pubReader, err := GeneratePGPPublicKey(entity)
+	pubReader, err := generatePGPPublicKey(entity)
 	assert.NoError(t, err)
 
 	pub2, _ := ioutil.ReadAll(pubReader)
 	t.Logf(string(pub2))
-	assert.Equal(t, string(pub), string(pub2))
+	assert.Equal(t, string([]byte(k.Public)), string(pub2))
 }
