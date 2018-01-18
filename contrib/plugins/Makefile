@@ -49,7 +49,7 @@ build: clean $(TARGET_DIR)
 		for GOARCH in $(TARGET_ARCH); do \
 			for plugin in plugin-*; do \
 				EXTENSION=""; \
-				if [ $$GOOS == "windows" ]; then EXTENSION=".exe"; fi; \
+				if [ "$$GOOS" == "windows" ]; then EXTENSION=".exe"; fi; \
 				echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
 				cd $$plugin; \
 				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o ../$(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH$$EXTENSION; \
