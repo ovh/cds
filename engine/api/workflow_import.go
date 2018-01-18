@@ -58,7 +58,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 		switch contentType {
 		case "application/json":
 			errw = json.Unmarshal(body, ew)
-		case "application/x-yaml", "text/x-yam":
+		case "application/x-yaml", "text/x-yaml":
 			errw = yaml.Unmarshal(body, ew)
 		default:
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
