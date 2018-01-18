@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -455,5 +456,16 @@ func (api *API) importUsersHandler() Handler {
 		}
 
 		return WriteJSON(w, r, errors, http.StatusOK)
+	}
+}
+
+func (api *API) getUserTokenListHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx).ID)
+		if err != nil {
+			return sdk.WrapError(err, "getUserTokenListHandler> cannot load group for user %s", getUser(ctx).Username)
+		}
+
+		return WriteJSON(w, r, tokens, http.StatusOK)
 	}
 }

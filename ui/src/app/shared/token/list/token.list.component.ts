@@ -22,6 +22,7 @@ export class TokenListComponent extends Table {
     set maxPerPage(data: number) {
         this.nbElementsByPage = data;
     };
+    @Input() displayAdd: boolean;
 
     @Output() event = new EventEmitter<TokenEvent>();
 

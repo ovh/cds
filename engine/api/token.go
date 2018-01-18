@@ -58,6 +58,7 @@ func (api *API) generateTokenHandler() Handler {
 			Created:     now,
 			Description: tokenPostInfos.Description,
 			Creator:     getUser(ctx).Fullname,
+			GroupName:   groupName,
 		}
 		return WriteJSON(w, r, token, http.StatusOK)
 	}
@@ -80,17 +81,6 @@ func (api *API) getGroupTokenListHandler() Handler {
 		tokens, err := group.LoadTokens(api.mustDB(), groupName)
 		if err != nil {
 			return sdk.WrapError(err, "getGroupTokenListHandler> cannot load group '%s'", groupName)
-		}
-
-		return WriteJSON(w, r, tokens, http.StatusOK)
-	}
-}
-
-func (api *API) getUserTokenListHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx).ID)
-		if err != nil {
-			return sdk.WrapError(err, "getUserTokenListHandler> cannot load group for user %s", getUser(ctx).Username)
 		}
 
 		return WriteJSON(w, r, tokens, http.StatusOK)

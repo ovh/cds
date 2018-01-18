@@ -33,12 +33,14 @@ A group permission is also attached to [cli]({{< relref "cli/_index.md" >}}), [w
 
 When you need to use the CDS CLI in a script and don't want to store password you can use the CLI with an **authentication token**. Or when you start an [hatchery]({{< relref "hatchery/_index.md" >}}) you need an authentication token to contact the CDS API.
 
-In order to list, generate or remove tokens linked to a group permission you can do it with the `cdsctl group token` command ([documentation available here]({{< relref "cli/cdsctl/group/token/_index.md" >}})).
+In order to list, generate or remove tokens linked to a group permission you can do it with the `cdsctl group token` command ([documentation available here]({{< relref "cli/cdsctl/token/_index.md" >}})).
 
 You can do the same via the user interface in the group administration view.
 
 ![Job](/images/groups_menu.png)
 
-And then on a group edition view you can handle all your generated tokens and generate new ones.
+And then on a group edition view you can handle all your generated tokens for this group and generate new ones.
 
 ![Job](/images/group_view.png)
+
+If you want to list all the tokens that you can use or access you can go on the profile page to see a list of all tokens between different groups.

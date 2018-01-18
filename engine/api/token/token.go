@@ -91,11 +91,12 @@ func LoadTokens(db gorp.SqlExecutor, userID int64) ([]sdk.Token, error) {
 	tokens := []sdk.Token{}
 
 	query := `
-		SELECT token.id, token.token, token.creator, token.description, token.expiration, token.created, "group".name
-		FROM token
-		JOIN "group" ON "group".id = token.group_id
+		SELECT DISTINCT(token.id), token.token, token.creator, token.description, token.expiration, token.created, "group".name
+		FROM "group"
+		JOIN token ON "group".id = token.group_id
 		JOIN group_user ON group_user.user_id = $1
 		WHERE group_user.group_admin = true
+		ORDER BY "group".name
 	`
 	rows, err := db.Query(query, userID)
 	if err == sql.ErrNoRows {

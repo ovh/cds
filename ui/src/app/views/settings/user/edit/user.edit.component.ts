@@ -1,8 +1,11 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {finalize, first} from 'rxjs/operators';
 import {User} from '../../../../model/user.model';
+import {Token} from '../../../../model/token.model';
 import {Group} from '../../../../model/group.model';
 import {UserService} from '../../../../service/user/user.service';
+import {GroupService} from '../../../../service/group/group.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
@@ -15,10 +18,12 @@ import {AuthentificationStore} from '../../../../service/auth/authentification.s
 export class UserEditComponent implements OnInit {
     loading = false;
     deleteLoading = false;
+    tokensLoading = true;
     user: User;
     currentUser: User;
     groups: Array<Group>;
     groupsAdmin: Array<Group>;
+    tokens: Array<Token>;
 
     private username: string;
     private usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
@@ -27,8 +32,13 @@ export class UserEditComponent implements OnInit {
     constructor(private _userService: UserService,
                 private _toast: ToastService, private _translate: TranslateService,
                 private _route: ActivatedRoute, private _router: Router,
-                private _authentificationStore: AuthentificationStore) {
+                private _authentificationStore: AuthentificationStore,
+                private _groupService: GroupService) {
         this.currentUser = this._authentificationStore.getUser();
+        this.tokensLoading = true;
+        this._userService.getTokens()
+            .pipe(finalize(() => this.tokensLoading = false))
+            .subscribe((tokens) => this.tokens = tokens);
     }
 
     ngOnInit() {
@@ -65,7 +75,7 @@ export class UserEditComponent implements OnInit {
           this._toast.success('', this._translate.instant('user_deleted'));
           this._router.navigate(['../'], { relativeTo: this._route });
       }, () => {
-          this.loading = false;
+          this.deleteLoading = false;
       });
     }
 
@@ -90,5 +100,43 @@ export class UserEditComponent implements OnInit {
         });
       }
 
+    }
+
+    tokenEvent(event: TokenEvent): void {
+        if (!event) {
+            return;
+        }
+        switch (event.type) {
+            case 'delete':
+                this._groupService.removeToken(event.token.group_name, event.token.id)
+                    .pipe(
+                        first(),
+                        finalize(() => event.token.updating = false)
+                    )
+                    .subscribe(() => {
+                        this.tokens = this.tokens.filter((token) => token.id !== event.token.id);
+                        this._toast.success('', this._translate.instant('token_deleted'));
+                    });
+                    break;
+            case 'add':
+                this._groupService.addToken(event.token.group_name, event.token.expirationString, event.token.description)
+                    .pipe(
+                        first(),
+                        finalize(() => {
+                            event.token.expirationString = null;
+                            event.token.description = null;
+                            event.token.updating = false;
+                        })
+                    )
+                    .subscribe((token) => {
+                        if (!Array.isArray(this.tokens)) {
+                            this.tokens = [token];
+                        } else {
+                            this.tokens.push(token);
+                        }
+                        this._toast.success('', this._translate.instant('token_added'));
+                    });
+                    break;
+        }
     }
 }

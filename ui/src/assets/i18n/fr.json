@@ -266,6 +266,8 @@
   "token_added": "Token généré avec succès",
   "token_no": "Aucun token n'est lié à ce groupe",
   "token_title_handling": "Gestion des tokens du groupe",
+  "token_loading": "Chargement des tokens",
+  "token_group_name": "Groupe",
 
   "hook_create_label": "Créer un hook",
   "hook_deleted": "Hook supprimé",
