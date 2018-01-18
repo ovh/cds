@@ -83,6 +83,16 @@ func ParameterFind(vars *[]Parameter, s string) *Parameter {
 	return nil
 }
 
+// ParameterAddOrSetValue add a new parameter or update a value
+func ParameterAddOrSetValue(vars *[]Parameter, name string, parameterType string, value string) {
+	p := ParameterFind(vars, name)
+	if p == nil {
+		AddParameter(vars, name, parameterType, value)
+	} else {
+		p.Value = value
+	}
+}
+
 // ParameterValue return a parameter value given its name if it exists in array, else it returns empty string
 func ParameterValue(vars []Parameter, s string) string {
 	p := ParameterFind(&vars, s)

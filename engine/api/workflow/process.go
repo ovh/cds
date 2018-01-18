@@ -492,58 +492,17 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	}
 
 	//If git values doesn't exist in jobparams, they doesn't exist in gitValues; inject them from VCSInfos in run.BuildParameters
-	if v, has := gitValues[tagGitRepository]; v == "" {
-		if has {
-			p := sdk.ParameterFind(&run.BuildParameters, tagGitRepository)
-			if p != nil {
-				p.Value = run.VCSRepository
-			} else {
-				has = false
-			}
-		}
-
-		if !has {
-			sdk.AddParameter(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
-		}
+	if v := gitValues[tagGitRepository]; v == "" {
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
 	}
-	if v, has := gitValues[tagGitBranch]; v == "" {
-		if has {
-			p := sdk.ParameterFind(&run.BuildParameters, tagGitBranch)
-			if p != nil {
-				p.Value = run.VCSBranch
-			} else {
-				has = false
-			}
-		}
-		if !has {
-			sdk.AddParameter(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
-		}
+	if v := gitValues[tagGitBranch]; v == "" {
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
 	}
-	if v, has := gitValues[tagGitHash]; v == "" {
-		if has {
-			p := sdk.ParameterFind(&run.BuildParameters, tagGitHash)
-			if p != nil {
-				p.Value = run.VCSHash
-			} else {
-				has = false
-			}
-		}
-		if !has {
-			sdk.AddParameter(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
-		}
+	if v := gitValues[tagGitHash]; v == "" {
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
 	}
-	if v, has := gitValues[tagGitAuthor]; v == "" {
-		if has {
-			p := sdk.ParameterFind(&run.BuildParameters, tagGitAuthor)
-			if p != nil {
-				p.Value = vcsAuthor
-			} else {
-				has = false
-			}
-		}
-		if !has {
-			sdk.AddParameter(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsAuthor)
-		}
+	if v := gitValues[tagGitAuthor]; v == "" {
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsAuthor)
 	}
 
 	//Tag VCS infos
