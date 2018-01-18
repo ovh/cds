@@ -253,7 +253,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		if store.TemporaryURLSupported {
 			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileContent, stat, md5sumStr)
 			if err == nil {
-				return tempURL, dur, fmt.Errorf("unable to upload to objectstore (%v)", err)
+				return tempURL, dur, err // do not wrap error here, could be nil
 			}
 		}
 	}
