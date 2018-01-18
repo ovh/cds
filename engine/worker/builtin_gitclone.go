@@ -17,14 +17,14 @@ import (
 
 func runGitClone(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		url := sdk.ParameterFind(a.Parameters, "url")
-		privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
-		user := sdk.ParameterFind(a.Parameters, "user")
-		password := sdk.ParameterFind(a.Parameters, "password")
-		branch := sdk.ParameterFind(a.Parameters, "branch")
+		url := sdk.ParameterFind(&a.Parameters, "url")
+		privateKey := sdk.ParameterFind(&a.Parameters, "privateKey")
+		user := sdk.ParameterFind(&a.Parameters, "user")
+		password := sdk.ParameterFind(&a.Parameters, "password")
+		branch := sdk.ParameterFind(&a.Parameters, "branch")
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
-		commit := sdk.ParameterFind(a.Parameters, "commit")
-		directory := sdk.ParameterFind(a.Parameters, "directory")
+		commit := sdk.ParameterFind(&a.Parameters, "commit")
+		directory := sdk.ParameterFind(&a.Parameters, "directory")
 
 		if url == nil {
 			res := sdk.Result{
@@ -220,7 +220,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	}
 	v.Pre = append(v.Pre, pr)
 
-	cdsVersion := sdk.ParameterFind(*params, "cds.version")
+	cdsVersion := sdk.ParameterFind(params, "cds.version")
 	if cdsVersion != nil {
 		v.Build = append(v.Build, cdsVersion.Value, "cds")
 	}
