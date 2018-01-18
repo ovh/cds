@@ -493,16 +493,16 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 
 	//If git values doesn't exist in jobparams, they doesn't exist in gitValues; inject them from VCSInfos in run.BuildParameters
 	if v := gitValues[tagGitRepository]; v == "" {
-		sdk.AddParameter(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
 	}
 	if v := gitValues[tagGitBranch]; v == "" {
-		sdk.AddParameter(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
 	}
 	if v := gitValues[tagGitHash]; v == "" {
-		sdk.AddParameter(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
 	}
 	if v := gitValues[tagGitAuthor]; v == "" {
-		sdk.AddParameter(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsAuthor)
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsAuthor)
 	}
 
 	//Tag VCS infos

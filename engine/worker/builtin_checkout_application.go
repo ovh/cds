@@ -12,14 +12,14 @@ import (
 func runCheckoutApplication(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		// Load action param
-		directory := sdk.ParameterFind(a.Parameters, "directory")
+		directory := sdk.ParameterFind(&a.Parameters, "directory")
 
 		// Load build param
-		branch := sdk.ParameterFind(*params, "git.branch")
+		branch := sdk.ParameterFind(params, "git.branch")
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
-		commit := sdk.ParameterFind(*params, "git.commit")
+		commit := sdk.ParameterFind(params, "git.commit")
 
-		gitUrl, auth, err := extractVCSInformations(*params)
+		gitURL, auth, err := extractVCSInformations(*params)
 		if err != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
@@ -57,6 +57,6 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 			dir = directory.Value
 		}
 
-		return gitClone(w, params, gitUrl, dir, auth, clone, sendLog)
+		return gitClone(w, params, gitURL, dir, auth, clone, sendLog)
 	}
 }

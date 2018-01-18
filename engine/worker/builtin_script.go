@@ -30,7 +30,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 
 			// Get script content
 			var scriptContent string
-			a := sdk.ParameterFind(a.Parameters, "script")
+			a := sdk.ParameterFind(&a.Parameters, "script")
 			scriptContent = a.Value
 
 			// Check that script content is there

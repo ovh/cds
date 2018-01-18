@@ -30,7 +30,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 				path = "."
 			}
 
-			tag := sdk.ParameterFind(a.Parameters, "tag")
+			tag := sdk.ParameterFind(&a.Parameters, "tag")
 			if tag == nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = fmt.Sprintf("tag variable is empty. aborting")
@@ -98,7 +98,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			path = "."
 		}
 
-		tag := sdk.ParameterFind(a.Parameters, "tag")
+		tag := sdk.ParameterFind(&a.Parameters, "tag")
 		if tag == nil {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("tag variable is empty. aborting")

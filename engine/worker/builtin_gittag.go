@@ -16,12 +16,12 @@ import (
 
 func runGitTag(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		tagName := sdk.ParameterFind(a.Parameters, "tagName")
-		tagMessage := sdk.ParameterFind(a.Parameters, "tagMessage")
-		path := sdk.ParameterFind(a.Parameters, "path")
+		tagName := sdk.ParameterFind(&a.Parameters, "tagName")
+		tagMessage := sdk.ParameterFind(&a.Parameters, "tagMessage")
+		path := sdk.ParameterFind(&a.Parameters, "path")
 
 		if tagName == nil || tagName.Value == "" {
-			tagName = sdk.ParameterFind(*params, "cds.semver")
+			tagName = sdk.ParameterFind(params, "cds.semver")
 			if tagName == nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
@@ -32,7 +32,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			}
 		}
 
-		gitUrl, auth, errR := extractVCSInformations(*params)
+		gitURL, auth, errR := extractVCSInformations(*params)
 		if errR != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
@@ -60,11 +60,11 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		v.Pre = nil
 
 		var userTag string
-		userTrig := sdk.ParameterFind(*params, "cds.triggered_by.username")
+		userTrig := sdk.ParameterFind(params, "cds.triggered_by.username")
 		if userTrig != nil && userTrig.Value != "" {
 			userTag = userTrig.Value
 		} else {
-			gitAuthor := sdk.ParameterFind(*params, "git.author")
+			gitAuthor := sdk.ParameterFind(params, "git.author")
 			if gitAuthor != nil && gitAuthor.Value != "" {
 				userTag = gitAuthor.Value
 			}
@@ -127,7 +127,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		}
 
 		//Perform the git tag
-		err := git.TagCreate(gitUrl, auth, tagOpts, output)
+		err := git.TagCreate(gitURL, auth, tagOpts, output)
 
 		//Send the logs
 		if len(stdOut.Bytes()) > 0 {
