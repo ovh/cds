@@ -484,9 +484,9 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 	}
 
-	var vcsAuthor string
+	var vcsAuthor, vcsMessage string
 	var errVcs error
-	run.VCSRepository, run.VCSBranch, run.VCSHash, vcsAuthor, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
+	run.VCSRepository, run.VCSBranch, run.VCSHash, vcsAuthor, vcsMessage, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
 	if errVcs != nil {
 		log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
 	}
@@ -504,6 +504,9 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	if v := gitValues[tagGitAuthor]; v == "" {
 		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsAuthor)
 	}
+	if v := gitValues[tagGitMessage]; v == "" {
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsMessage)
+	}
 
 	//Tag VCS infos
 	w.Tag(tagGitRepository, run.VCSRepository)
@@ -514,6 +517,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		w.Tag(tagGitHash, run.VCSHash)
 	}
 	w.Tag(tagGitAuthor, vcsAuthor)
+	w.Tag(tagGitMessage, vcsMessage)
 
 	// Add env tag
 	if n.Context != nil && n.Context.Environment != nil {

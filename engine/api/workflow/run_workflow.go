@@ -17,6 +17,7 @@ const (
 	tagGitBranch     = "git.branch"
 	tagGitTag        = "git.tag"
 	tagGitAuthor     = "git.author"
+	tagGitMessage    = "git.message"
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
