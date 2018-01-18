@@ -1,0 +1,15 @@
+@import '../../../../common';
+
+.token-content {
+  word-break: break-all;
+}
+td {
+  &.center{
+    vertical-align: middle !important;
+  }
+  .focus {
+    input {
+      border: 1px solid rgba(34, 36, 38, 0.15) !important;
+    }
+  }
+}

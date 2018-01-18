@@ -1,0 +1,56 @@
+name: Token Command TestSuite with CDS ctl
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP --force
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP2 --force
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP2
+
+- name: token generate
+  steps:
+  - script: {{.cds.build.cdsctl}} token generate ITCLIAPP_GRP persistent "this is a test token"
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring ITCLIAPP_GRP
+      - result.systemout ShouldContainSubstring persistent
+      - result.systemout ShouldContainSubstring this is a test token
+
+- name: token generate without description
+  steps:
+  - script: {{.cds.build.cdsctl}} token generate ITCLIAPP_GRP daily
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring ITCLIAPP_GRP
+      - result.systemout ShouldContainSubstring daily
+
+- name: token list in a group
+  steps:
+  - script: {{.cds.build.cdsctl}} token list ITCLIAPP_GRP
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring ITCLIAPP_GRP
+      - result.systemout ShouldContainSubstring daily
+      - result.systemout ShouldContainSubstring persistent
+      - result.systemout ShouldContainSubstring this is a test token
+
+- name: token generate in another group
+  steps:
+  - script: {{.cds.build.cdsctl}} token generate ITCLIAPP_GRP2 session "this is another test token"
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring ITCLIAPP_GRP2
+      - result.systemout ShouldContainSubstring session
+
+- name: token list for user
+  steps:
+  - script: {{.cds.build.cdsctl}} token list
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring ITCLIAPP_GRP
+      - result.systemout ShouldContainSubstring ITCLIAPP_GRP2
+      - result.systemout ShouldContainSubstring daily
+      - result.systemout ShouldContainSubstring persistent
+      - result.systemout ShouldContainSubstring session
+      - result.systemout ShouldContainSubstring this is a test token
+      - result.systemout ShouldContainSubstring this is another test token

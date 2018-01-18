@@ -47,6 +47,7 @@ func main() {
 			health,
 			version,
 			encrypt,
+			token,
 		},
 	)
 
@@ -87,7 +88,7 @@ You'll find last release of ` + "`cdsctl`" + ` on [Github Releases](https://gith
 Per default, the command line ` + "`cdsctl`" + ` uses your keychain on your os:
 
 * OSX: Keychain Access
-* Linux System: Secret-tool (libsecret) 
+* Linux System: Secret-tool (libsecret)
 * Windows: Windows Credentials service
 
 You can bypass keychain tools by using environment variables:

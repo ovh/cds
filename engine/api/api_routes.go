@@ -76,7 +76,8 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/user", r.POST(api.addUserInGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}", r.DELETE(api.removeUserFromGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}/admin", r.POST(api.setUserGroupAdminHandler), r.DELETE(api.removeUserGroupAdminHandler))
-	r.Handle("/group/{permGroupName}/token/{expiration}", r.POST(api.generateTokenHandler))
+	r.Handle("/group/{permGroupName}/token", r.GET(api.getGroupTokenListHandler), r.POST(api.generateTokenHandler))
+	r.Handle("/group/{permGroupName}/token/{tokenid}", r.DELETE(api.deleteTokenHandler))
 
 	// Hatchery
 	r.Handle("/hatchery", r.POST(api.registerHatcheryHandler, Auth(false)))
@@ -352,6 +353,7 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
+	r.Handle("/user/tokens", r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
 	r.Handle("/user/import", r.POST(api.importUsersHandler, NeedAdmin(true)))
 	r.Handle("/user/{username}", r.GET(api.getUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.updateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.deleteUserHandler, NeedUsernameOrAdmin(true)))

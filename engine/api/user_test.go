@@ -390,3 +390,68 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	assert.Equal(t, 0, len(res["groups_admin"]))
 
 }
+
+// Test_getUserTokenListHandlerOK checks call on /user/tokens
+func Test_getUserTokenListHandlerOK(t *testing.T) {
+	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	u1, pass1 := assets.InsertAdminUser(api.mustDB())
+	assert.NotZero(t, u1)
+	assert.NotZero(t, pass1)
+
+	gr := &sdk.Group{
+		Admins: []sdk.User{*u1},
+		Name:   "testGroup" + sdk.RandomString(10),
+	}
+	grID, _, err := group.AddGroup(api.mustDB(), gr)
+	assert.NoError(t, err)
+
+	err = group.InsertUserInGroup(api.mustDB(), grID, u1.ID, true)
+	assert.NoError(t, err)
+
+	uriGenerateToken := api.Router.GetRoute("POST", api.generateTokenHandler, map[string]string{"permGroupName": gr.Name})
+	params := struct {
+		Expiration  string `json:"expiration"`
+		Description string `json:"description"`
+	}{Expiration: "persistent", Description: "this is a test token"}
+	reqGenerateToken := assets.NewAuthentifiedRequest(t, u1, pass1, "POST", uriGenerateToken, params)
+
+	//Do the request to generate token
+	wGen := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wGen, reqGenerateToken)
+	assert.Equal(t, 200, wGen.Code)
+
+	resGen := sdk.Token{}
+	if err := json.Unmarshal(wGen.Body.Bytes(), &resGen); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, params.Description, resGen.Description)
+	assert.Equal(t, gr.Name, resGen.GroupName)
+	assert.NotZero(t, resGen.Token)
+
+	uri := api.Router.GetRoute("GET", api.getUserTokenListHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	t.Logf("Body: %s", w.Body.String())
+
+	res := []sdk.Token{}
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+
+	found := false
+	for _, tok := range res {
+		if tok.Description == params.Description && gr.Name == tok.GroupName {
+			found = true
+			break
+		}
+	}
+
+	assert.Equal(t, true, found, "Token created is not in the list")
+}

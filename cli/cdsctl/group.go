@@ -21,7 +21,6 @@ var (
 			cli.NewGetCommand(groupShowCmd, groupShowRun, nil),
 			cli.NewCommand(groupCreateCmd, groupCreateRun, nil),
 			cli.NewDeleteCommand(groupDeleteCmd, groupDeleteRun, nil),
-			groupToken,
 			groupUser,
 		})
 )

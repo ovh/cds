@@ -4,6 +4,7 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {TranslateModule} from '@ngx-translate/core';
 import {NgSemanticModule} from 'ng-semantic/ng-semantic';
 import {NgForNumber} from './pipes/ngfor.number.pipe';
+import {TokenListComponent} from './token/list/token.list.component';
 import {VariableValueComponent} from './variable/value/variable.value.component';
 import {VariableFormComponent} from './variable/form/variable.form';
 import {SharedService} from './shared.service';
@@ -93,6 +94,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         KeysFormComponent,
         KeysListComponent,
         NgForNumber,
+        TokenListComponent,
         NgxAutoScroll,
         ParameterDescriptionComponent,
         ParameterListComponent,
@@ -169,6 +171,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         MarkdownModule,
         MomentModule,
         NgForNumber,
+        TokenListComponent,
         NgSemanticModule,
         NgxAutoScroll,
         ParameterDescriptionComponent,

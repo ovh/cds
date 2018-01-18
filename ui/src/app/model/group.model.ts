@@ -1,4 +1,5 @@
 import {User} from './user.model';
+import {Token} from './token.model';
 
 export const adminGroupName = 'shared.infra';
 
@@ -7,11 +8,13 @@ export class Group {
     name: string;
     admins: Array<User>;
     users: Array<User>;
+    tokens: Array<Token>;
 
     constructor() {
         this.name = '';
         this.admins = [];
         this.users = [];
+        this.tokens = [];
     }
 }
 

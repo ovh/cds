@@ -105,3 +105,12 @@ func (c *client) UserConfirm(username, token string) (bool, string, error) {
 	}
 	return true, res.Password, nil
 }
+
+// Get all tokens that an user can access
+func (c *client) ListAllTokens() ([]sdk.Token, error) {
+	tokens := []sdk.Token{}
+	if _, err := c.GetJSON("/user/tokens", &tokens); err != nil {
+		return tokens, err
+	}
+	return tokens, nil
+}

@@ -1,5 +1,6 @@
 import {Injectable} from '@angular/core';
 import {User} from '../../model/user.model';
+import {Token} from '../../model/token.model';
 import {Groups} from '../../model/group.model';
 import {Observable} from 'rxjs/Observable';
 import {AuthentificationStore} from '../auth/authentification.store';
@@ -86,6 +87,14 @@ export class UserService {
      */
     getUsers(): Observable<User[]> {
         return this._http.get<User[]>('/user');
+    }
+
+    /**
+     * Get the list of all tokens for a user.
+     * @returns {Observable<Token[]>}
+     */
+    getTokens(): Observable<Token[]> {
+        return this._http.get<Token[]>('/user/tokens');
     }
 
     /**

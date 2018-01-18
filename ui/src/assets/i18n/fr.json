@@ -259,6 +259,17 @@
   "group_btn_set_admin": "administrateur",
   "group_btn_unset_admin": "administrateur",
 
+  "token_description": "Description",
+  "token_value": "Token",
+  "token_type": "Type",
+  "token_created": "Date de création",
+  "token_deleted": "Le token a bien été supprimé",
+  "token_added": "Token généré avec succès",
+  "token_no": "Aucun token n'est lié à ce groupe",
+  "token_title_handling": "Gestion des tokens du groupe",
+  "token_loading": "Chargement des tokens",
+  "token_group_name": "Groupe",
+
   "hook_create_label": "Créer un hook",
   "hook_deleted": "Hook supprimé",
   "hook_edit_title": "Édition du hook : {{app}} / {{pip}}",
