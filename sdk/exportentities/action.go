@@ -28,74 +28,74 @@ func newSteps(a sdk.Action) []Step {
 		case sdk.BuiltinAction:
 			switch act.Name {
 			case sdk.ScriptAction:
-				script := sdk.ParameterFind(act.Parameters, "script")
+				script := sdk.ParameterFind(&act.Parameters, "script")
 				if script != nil {
 					s["script"] = strings.SplitN(script.Value, "\n", -1)
 				}
 			case sdk.ArtifactDownload:
 				artifactDownloadArgs := map[string]string{}
-				path := sdk.ParameterFind(act.Parameters, "path")
+				path := sdk.ParameterFind(&act.Parameters, "path")
 				if path != nil {
 					artifactDownloadArgs["path"] = path.Value
 				}
-				tag := sdk.ParameterFind(act.Parameters, "tag")
+				tag := sdk.ParameterFind(&act.Parameters, "tag")
 				if tag != nil {
 					artifactDownloadArgs["tag"] = tag.Value
 				}
-				application := sdk.ParameterFind(act.Parameters, "application")
+				application := sdk.ParameterFind(&act.Parameters, "application")
 				if application != nil {
 					artifactDownloadArgs["application"] = application.Value
 				}
-				pipeline := sdk.ParameterFind(act.Parameters, "pipeline")
+				pipeline := sdk.ParameterFind(&act.Parameters, "pipeline")
 				if pipeline != nil {
 					artifactDownloadArgs["pipeline"] = pipeline.Value
 				}
 				s["artifactDownload"] = artifactDownloadArgs
 			case sdk.ArtifactUpload:
 				artifactUploadArgs := map[string]string{}
-				path := sdk.ParameterFind(act.Parameters, "path")
+				path := sdk.ParameterFind(&act.Parameters, "path")
 				if path != nil {
 					artifactUploadArgs["path"] = path.Value
 				}
-				tag := sdk.ParameterFind(act.Parameters, "tag")
+				tag := sdk.ParameterFind(&act.Parameters, "tag")
 				if tag != nil {
 					artifactUploadArgs["tag"] = tag.Value
 				}
 				s["artifactUpload"] = artifactUploadArgs
 			case sdk.GitCloneAction:
 				gitCloneArgs := map[string]string{}
-				branch := sdk.ParameterFind(act.Parameters, "branch")
+				branch := sdk.ParameterFind(&act.Parameters, "branch")
 				if branch != nil {
 					gitCloneArgs["branch"] = branch.Value
 				}
-				commit := sdk.ParameterFind(act.Parameters, "commit")
+				commit := sdk.ParameterFind(&act.Parameters, "commit")
 				if commit != nil {
 					gitCloneArgs["commit"] = commit.Value
 				}
-				directory := sdk.ParameterFind(act.Parameters, "directory")
+				directory := sdk.ParameterFind(&act.Parameters, "directory")
 				if directory != nil {
 					gitCloneArgs["directory"] = directory.Value
 				}
-				password := sdk.ParameterFind(act.Parameters, "password")
+				password := sdk.ParameterFind(&act.Parameters, "password")
 				if password != nil {
 					gitCloneArgs["password"] = password.Value
 				}
-				privateKey := sdk.ParameterFind(act.Parameters, "privateKey")
+				privateKey := sdk.ParameterFind(&act.Parameters, "privateKey")
 				if privateKey != nil {
 					gitCloneArgs["privateKey"] = privateKey.Value
 				}
-				url := sdk.ParameterFind(act.Parameters, "url")
+				url := sdk.ParameterFind(&act.Parameters, "url")
 				if url != nil {
 					gitCloneArgs["url"] = url.Value
 				}
-				user := sdk.ParameterFind(act.Parameters, "user")
+				user := sdk.ParameterFind(&act.Parameters, "user")
 				if user != nil {
 					gitCloneArgs["user"] = user.Value
 				}
 
 				s["gitClone"] = gitCloneArgs
 			case sdk.JUnitAction:
-				path := sdk.ParameterFind(act.Parameters, "path")
+				path := sdk.ParameterFind(&act.Parameters, "path")
 				if path != nil {
 					s["jUnitReport"] = path.Value
 				}
