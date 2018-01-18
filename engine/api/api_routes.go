@@ -48,27 +48,6 @@ func (api *API) InitRouter() {
 	r.Handle("/download", r.GET(api.downloadsHandler))
 	r.Handle("/download/{name}/{os}/{arch}", r.GET(api.downloadHandler, Auth(false)))
 
-	r.ServeAbsoluteFile("/download/cli/x86_64", path.Join(api.Config.Directories.Download, "cds-linux-amd64"), "cds")
-	r.ServeAbsoluteFile("/download/worker/x86_64", path.Join(api.Config.Directories.Download, "cds-worker-linux-amd64"), "worker")
-	r.ServeAbsoluteFile("/download/worker/windows_x86_64", path.Join(api.Config.Directories.Download, "cds-worker-windows-amd64"), "worker.exe")
-	r.ServeAbsoluteFile("/download/worker/i386", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
-	r.ServeAbsoluteFile("/download/worker/i686", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
-
-	r.ServeAbsoluteFile("/download/cdsctl-windows-amd64", path.Join(api.Config.Directories.Download, "cdsctl-windows-amd64"), "cdsctl-windows-amd64")
-	r.ServeAbsoluteFile("/download/cdsctl-linux-amd64", path.Join(api.Config.Directories.Download, "cdsctl-linux-amd64"), "cdsctl-linux-amd64")
-	r.ServeAbsoluteFile("/download/cdsctl-freebsd-amd64", path.Join(api.Config.Directories.Download, "cdsctl-freebsd-amd64"), "cdsctl-freebsd-amd64")
-	r.ServeAbsoluteFile("/download/cdsctl-darwin-amd64", path.Join(api.Config.Directories.Download, "cdsctl-darwin-amd64"), "cdsctl-darwin-amd64")
-
-	r.ServeAbsoluteFile("/download/cds-engine-darwin-amd64", path.Join(api.Config.Directories.Download, "cds-engine-darwin-amd64"), "cds-engine-darwin-amd64")
-	r.ServeAbsoluteFile("/download/cds-engine-windows-amd64", path.Join(api.Config.Directories.Download, "cds-engine-windows-amd64"), "cds-engine-windows-amd64")
-	r.ServeAbsoluteFile("/download/cds-engine-linux-amd64", path.Join(api.Config.Directories.Download, "cds-engine-linux-amd64"), "cds-engine-linux-amd64")
-
-	r.ServeAbsoluteFile("/download/cds-worker-windows-amd64", path.Join(api.Config.Directories.Download, "cds-worker-windows-amd64"), "cds-worker-windows-amd64")
-	r.ServeAbsoluteFile("/download/cds-worker-linux-amd64", path.Join(api.Config.Directories.Download, "cds-worker-linux-amd64"), "cds-worker-linux-amd64")
-	r.ServeAbsoluteFile("/download/cds-worker-linux-386", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "cds-worker-linux-386")
-	r.ServeAbsoluteFile("/download/cds-worker-freebsd-amd64", path.Join(api.Config.Directories.Download, "cds-worker-freebsd-amd64"), "cds-worker-freebsd-amd64")
-	r.ServeAbsoluteFile("/download/cds-worker-darwin-amd64", path.Join(api.Config.Directories.Download, "cds-worker-darwin-amd64"), "cds-worker-darwin-amd64")
-
 	// Group
 	r.Handle("/group", r.GET(api.getGroupsHandler), r.POST(api.addGroupHandler))
 	r.Handle("/group/public", r.GET(api.getPublicGroupsHandler))
