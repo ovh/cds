@@ -121,11 +121,12 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			singleUse = false
 		}
 
+		log.Initialize(&log.Conf{})
+
 		if autoUpdate {
 			updateCmd(w)(cmd, args)
 		}
 
-		log.Info("running worker CDS_SINGLE_USE:%t...", singleUse)
 		for {
 			execWorker()
 			if singleUse {
