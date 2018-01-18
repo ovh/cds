@@ -128,6 +128,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	assert.Equal(t, int64(1), history[0].SubNumber)
 	assert.Equal(t, int64(0), history[1].SubNumber)
 }
+
 func Test_getWorkflowRunsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -224,6 +225,25 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 	assert.Equal(t, "0-10/10", rec.Header().Get("Content-Range"))
 
+	//Prepare request
+	vars = map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri = router.GetRoute("GET", api.getWorkflowAllRunsHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, "0-10/10", rec.Header().Get("Content-Range"))
+
+	//Prepare request
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
 	uri = router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)

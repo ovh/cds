@@ -48,7 +48,7 @@ build: clean $(TARGET_DIR)
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
-			if [ $$GOOS == "windows" ]; then EXTENSION=".exe"; fi; \
+			if [ "$$GOOS" == "windows" ]; then EXTENSION=".exe"; fi; \
 			echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
 			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
