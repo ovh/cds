@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>token :: CDS - Continuous Delivery Service</title>
+    <title>delete :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/group/token/">
+  <body class="" data-url="/cli/cdsctl/token/delete/">
     <nav id="sidebar" class="">
 
 
@@ -118,6 +118,11 @@
       <li data-nav-id="/introduction/scopes/environment/" class="dd-item">
         <a href="https://ovh.github.io/cds/introduction/scopes/environment/">
           <span>Environment</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/scopes/permissions/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/permissions/">
+          <span>Permissions</span>
         </a>
     </li>
         </ul>
@@ -685,10 +690,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/group/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/group/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/group/">
-        <span>group</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/group/create/" class="dd-item">
@@ -710,19 +714,6 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/show/">
           <span>show</span>
         </a>
-    </li>
-    <li data-nav-id="/cli/cdsctl/group/token/" class="dd-item parent active">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/group/token/">
-        <span>token</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/group/token/generate/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/group/token/generate/">
-          <span>generate</span>
-        </a>
-    </li>
-        </ul>
     </li>
     <li data-nav-id="/cli/cdsctl/group/user/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/group/user/">
@@ -921,6 +912,29 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/signup/">
           <span>signup</span>
         </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/token/" class="dd-item parent">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/token/">
+        <span>token</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/token/delete/" class="dd-item active">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/token/generate/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/generate/">
+          <span>generate</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/token/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/update/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/update/">
@@ -1309,7 +1323,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/group/token/_index.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/token/delete.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1335,7 +1349,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/group/'>group</a> > token
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/token/'>token</a> > delete
 
  
 
@@ -1354,7 +1368,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-group-token">cdsctl group token</a>
+<li><a href="#cdsctl-token-delete">cdsctl token delete</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#options">Options</a></li>
@@ -1373,7 +1387,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>token</h1>
+                <h1>delete</h1>
                 <p></p>
             </div>
           
@@ -1383,17 +1397,23 @@
 
 
 
-<h2 id="cdsctl-group-token">cdsctl group token</h2>
+<h2 id="cdsctl-token-delete">cdsctl token delete</h2>
 
-<p>Manage CDS group token</p>
+<p>Delete a token linked to a group</p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Manage CDS group token</p>
+<p>Delete a token from a group and so revoke it to unauthorize future connection.</p>
+
+<p>Pay attention you must be an administrator of the group to launch this command.</p>
+
+<pre><code>cdsctl token delete GROUPNAME TOKENID [flags]
+</code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>  -h, --help   help for token
+<pre><code>      --force   Force delete without confirmation and exit 0 if resource does not exist
+  -h, --help    help for delete
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
@@ -1407,16 +1427,13 @@
 <h3 id="see-also">SEE ALSO</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/group/">cdsctl group</a>     - Manage CDS group</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/group/token/generate/">cdsctl group token generate</a>   - Generate a new token</li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/token/">cdsctl token</a>     - Manage CDS group token</li>
 </ul>
 
 
 <footer class=" footline" >
 	
 </footer>
-
-
 
 
 
@@ -1431,8 +1448,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/group/show/" title="show"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/group/token/generate/" title="generate" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/token/" title="token"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/token/generate/" title="generate" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -1452,3 +1469,4 @@
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
+

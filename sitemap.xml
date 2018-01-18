@@ -167,6 +167,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/introduction/scopes/permissions/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/design/pipeline-context/</loc>
   </url>
   
@@ -470,6 +474,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/token/delete/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/delete/</loc>
   </url>
   
@@ -518,7 +526,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/group/token/generate/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/token/generate/</loc>
   </url>
   
   <url>
@@ -639,6 +647,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/project/variable/list/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/token/list/</loc>
   </url>
   
   <url>
@@ -798,7 +810,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/group/token/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/token/</loc>
   </url>
   
   <url>

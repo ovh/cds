@@ -324,6 +324,18 @@ We will create a model called docker:
     </item>
     
     <item>
+      <title>Permissions</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/permissions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/permissions/</guid>
+      <description>Permissions in CDS are managed by group and not on a single user.
+You have 3 types of permissions:
+ Read Read / Execute Read / Write / Execute  You can attach a group permission at different scopes:
+ On project On application On environment On pipeline On workflow  Thanks to these different scopes you can for example have group to read, group to execute and group to write.</description>
+    </item>
+    
+    <item>
       <title>Pipeline Context</title>
       <link>https://ovh.github.io/cds/workflows/design/pipeline-context/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -959,6 +971,18 @@ cdsctl project variable delete PROJECT-KEY ENV-NAME VARIABLE-NAME [flags]  Optio
     
     <item>
       <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/token/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/token/delete/</guid>
+      <description>cdsctl token delete Delete a token linked to a group
+Synopsis Delete a token from a group and so revoke it to unauthorize future connection.
+Pay attention you must be an administrator of the group to launch this command.
+cdsctl token delete GROUPNAME TOKENID [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>delete</title>
       <link>https://ovh.github.io/cds/cli/cdsctl/workflow/delete/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
@@ -1074,13 +1098,17 @@ echo &amp;quot;{{.cds.build.foo}}&amp;quot;  Scope You can use the build variabl
     
     <item>
       <title>generate</title>
-      <link>https://ovh.github.io/cds/cli/cdsctl/group/token/generate/</link>
+      <link>https://ovh.github.io/cds/cli/cdsctl/token/generate/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/cli/cdsctl/group/token/generate/</guid>
-      <description> cdsctl group token generate Generate a new token
-Synopsis Generate a new token
-cdsctl group token generate GROUPNAME EXPIRATION [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for generate  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl group token - Manage CDS group token  </description>
+      <guid>https://ovh.github.io/cds/cli/cdsctl/token/generate/</guid>
+      <description>cdsctl token generate Generate a new token
+Synopsis Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, uservices.
+The expiration must be [daily|persistent|session].
+Daily expirate after one day.
+Persistent doesn&amp;rsquo;t expirate until you revoke them.
+Pay attention you must be an administrator of the group to launch this command.
+cdsctl token generate GROUPNAME EXPIRATION [DESCRIPTION] [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for generate  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -1309,6 +1337,18 @@ cdsctl project list [flags]  Options  --fields string Only display specified obj
       <description>cdsctl project variable list List CDS project variables
 Synopsis List CDS project variables
 cdsctl project variable list PROJECT-KEY ENV-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/token/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/token/list/</guid>
+      <description>cdsctl token list List tokens from group
+Synopsis You can list tokens linked to a groups to know the id of a token to delete it or know the creator of this token.
+Pay attention, if you mention a group, you must be an administrator of the group to launch this command
+cdsctl token list [GROUPNAME] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>

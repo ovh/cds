@@ -120,6 +120,11 @@
           <span>Environment</span>
         </a>
     </li>
+      <li data-nav-id="/introduction/scopes/permissions/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/permissions/">
+          <span>Permissions</span>
+        </a>
+    </li>
         </ul>
     </li>
         </ul>
@@ -708,18 +713,6 @@
           <span>show</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/group/token/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/group/token/">
-        <span>token</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/group/token/generate/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/group/token/generate/">
-          <span>generate</span>
-        </a>
-    </li>
-        </ul>
-    </li>
     <li data-nav-id="/cli/cdsctl/group/user/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/group/user/">
         <span>user</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -917,6 +910,28 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/signup/">
           <span>signup</span>
         </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/token/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/token/">
+        <span>token</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/token/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/token/generate/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/generate/">
+          <span>generate</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/token/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/update/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/update/">
@@ -1399,10 +1414,10 @@
 </ul>
 
 <pre><code class="language-bash">cd ${CDS_SOURCES}/docs/content/cli
-rm -rf cdsctl engine worker; 
-cdsctl doc  # generate cdsctl documentation inside ${CDS_SOURCES}/docs/content/cli/cdsctl
-engine doc  # generate engine documentation
-worker doc  # generate worker documentation
+rm -rf cdsctl engine worker;
+cdsctl doc  # generate cdsctl directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
+engine doc  # generate engine directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
+worker doc  # generate worker directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
 cd ${CDS_SOURCES}/docs
 hugo server
 </code></pre>
