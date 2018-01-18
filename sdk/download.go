@@ -101,7 +101,7 @@ func GetArtifactFilename(name, os, arch string) string {
 
 func getDefaultArch() []OSArch {
 	return []OSArch{
-		{OS: "windows", Archs: []Arch{{Arch: "amd64"}}, Extension: ".exe"},
+		{OS: "windows", Archs: []Arch{{Arch: "386"}, {Arch: "amd64"}}, Extension: ".exe"},
 		{OS: "linux", Archs: []Arch{{Arch: "386"}, {Arch: "amd64"}, {Arch: "arm"}}},
 		{OS: "darwin", Archs: []Arch{{Arch: "amd64"}}},
 		{OS: "freebsd", Archs: []Arch{{Arch: "amd64"}}},

@@ -12,6 +12,7 @@ import (
 func runCheckoutApplication(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		// Load action param
+<<<<<<< HEAD
 		directory := sdk.ParameterFind(&a.Parameters, "directory")
 
 		// Load build param
@@ -20,6 +21,16 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 		commit := sdk.ParameterFind(params, "git.commit")
 
 		gitURL, auth, err := extractVCSInformations(*params)
+=======
+		directory := sdk.ParameterFind(a.Parameters, "directory")
+
+		// Load build param
+		branch := sdk.ParameterFind(*params, "git.branch")
+		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
+		commit := sdk.ParameterFind(*params, "git.commit")
+
+		gitUrl, auth, err := extractVCSInformations(*params)
+>>>>>>> master
 		if err != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
@@ -57,6 +68,10 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 			dir = directory.Value
 		}
 
+<<<<<<< HEAD
 		return gitClone(w, params, gitURL, dir, auth, clone, sendLog)
+=======
+		return gitClone(w, params, gitUrl, dir, auth, clone, sendLog)
+>>>>>>> master
 	}
 }
