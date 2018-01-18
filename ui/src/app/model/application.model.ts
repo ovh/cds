@@ -9,6 +9,7 @@ import {Usage} from './usage.model';
 import {WorkflowItem} from './application.workflow.model';
 import {Scheduler} from './scheduler.model';
 import {Key} from './keys.model';
+import {VCSStrategy} from './vcs.model';
 
 export class Application {
     id: number;
@@ -29,6 +30,7 @@ export class Application {
     workflow_migration: string;
     usage: Usage;
     keys: Array<Key>;
+    vcs_strategy: VCSStrategy;
 
     project_key: string; // project unique key
 

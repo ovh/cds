@@ -4,6 +4,6 @@
         <app-keys-list [keys]="keys" [edit]="project.permission" (deleteEvent)="manageKeyEvent($event)"></app-keys-list>
     </ng-container>
     <h3>{{ 'keys_add_title' | translate }}</h3>
-    <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)"></app-keys-form>
+    <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="proj-"></app-keys-form>
 </div>
 <div class="ui text active loader" *ngIf="!ready">{{ 'keys_loading' | translate}}</div>

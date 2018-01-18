@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -181,17 +182,17 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 
 	for _, k := range p.Keys {
 		params = append(params, sdk.Parameter{
-			Name:  "cds.proj." + k.Name + ".pub",
+			Name:  "cds.key." + k.Name + ".pub",
 			Type:  "string",
 			Value: k.Public,
 		})
 		params = append(params, sdk.Parameter{
-			Name:  "cds.proj." + k.Name + ".id",
+			Name:  "cds.key." + k.Name + ".id",
 			Type:  "string",
 			Value: k.KeyID,
 		})
 		secrets = append(secrets, sdk.Variable{
-			Name:  "cds.proj." + k.Name + ".priv",
+			Name:  "cds.key." + k.Name + ".priv",
 			Type:  "string",
 			Value: k.Private,
 		})
@@ -200,52 +201,62 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 	//Load node definition
 	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
 	if n == nil {
-		return nil, nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+		return nil, nil, sdk.WrapError(fmt.Errorf("LoadNodeJobRunKeys> Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
 	}
 	if n.Context != nil && n.Context.Application != nil {
-		a, errA := application.LoadByID(db, store, n.Context.Application.ID, nil, application.LoadOptions.WithKeys)
-		if errA != nil {
-			return nil, nil, sdk.WrapError(errA, "loadActionBuildKeys> Cannot load application keys")
-		}
-		for _, k := range a.Keys {
+		for _, k := range n.Context.Application.Keys {
 			params = append(params, sdk.Parameter{
-				Name:  "cds.app." + k.Name + ".pub",
+				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
 			})
 			params = append(params, sdk.Parameter{
-				Name:  "cds.app." + k.Name + ".id",
+				Name:  "cds.key." + k.Name + ".id",
 				Type:  "string",
 				Value: k.KeyID,
 			})
+
+			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
+			if err64 != nil {
+				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot app decode key %s", k.Name)
+			}
+			decrypted, errD := secret.Decrypt([]byte(unBase64))
+			if errD != nil {
+				log.Error("LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", n.Context.Application.Name, k.Name, errD)
+			}
 			secrets = append(secrets, sdk.Variable{
-				Name:  "cds.app." + k.Name + ".priv",
+				Name:  "cds.key." + k.Name + ".priv",
 				Type:  "string",
-				Value: k.Private,
+				Value: string(decrypted),
 			})
 		}
 	}
 
 	if n.Context != nil && n.Context.Environment != nil && n.Context.Environment.ID != sdk.DefaultEnv.ID {
-		e, errE := environment.LoadEnvironmentByID(db, n.Context.Environment.ID)
-		if errE != nil {
-			return nil, nil, sdk.WrapError(errE, "loadActionBuildKeys> Cannot load environment keys")
-		}
-		for _, k := range e.Keys {
+		for _, k := range n.Context.Environment.Keys {
 			params = append(params, sdk.Parameter{
-				Name:  "cds.env." + k.Name + ".pub",
+				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
 			})
 			params = append(params, sdk.Parameter{
-				Name:  "cds.env." + k.Name + ".id",
+				Name:  "cds.key." + k.Name + ".id",
 				Type:  "string",
 				Value: k.KeyID,
 			})
+
+			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
+			if err64 != nil {
+				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot decode env key %s", k.Name)
+			}
+			decrypted, errD := secret.Decrypt([]byte(unBase64))
+			if errD != nil {
+				log.Error("LoadNodeJobRunKeys> Unable to decrypt env private key %s/%s: %v", n.Context.Environment.Name, k.Name, errD)
+			}
 			secrets = append(secrets, sdk.Variable{
-				Name:  "cds.env." + k.Name + ".priv",
+				Name:  "cds.key." + k.Name + ".priv",
 				Type:  "string",
-				Value: k.Private,
+				Value: string(decrypted),
 			})
 		}
 

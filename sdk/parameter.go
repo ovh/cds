@@ -14,6 +14,8 @@ const (
 	StringParameter      = "string"
 	TextParameter        = "text"
 	BooleanParameter     = "boolean"
+	KeySSHParameter      = "ssh-key"
+	KeyPGPParameter      = "pgp-key"
 	KeyParameter         = "key"
 )
 
@@ -27,7 +29,8 @@ var (
 		BooleanParameter,
 		ListParameter,
 		PipelineParameter,
-		KeyParameter,
+		KeySSHParameter,
+		KeyPGPParameter,
 	}
 )
 

@@ -64,7 +64,7 @@ func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exp
 		}
 		app.Variable = vars
 
-		if errk := application.LoadAllKeys(db, app); errk != nil {
+		if errk := application.LoadAllDecryptedKeys(db, app); errk != nil {
 			return sdk.WrapError(errk, "workflow.Pull> Cannot load application keys %s", app.Name)
 		}
 	}
@@ -78,7 +78,7 @@ func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exp
 		}
 		env.Variable = vars
 
-		if errk := environment.LoadAllKeys(db, env); errk != nil {
+		if errk := environment.LoadAllDecryptedKeys(db, env); errk != nil {
 			return sdk.WrapError(errk, "workflow.Pull> Cannot load environment keys %s", env.Name)
 		}
 	}

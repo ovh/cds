@@ -73,6 +73,7 @@ import {DiffComponent} from './diff/diff.component';
 import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
 import {KeysFormComponent} from './keys/form/keys.form.component';
 import {KeysListComponent} from './keys/list/keys.list.component';
+import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -136,7 +137,8 @@ import {KeysListComponent} from './keys/list/keys.list.component';
         UsageEnvironmentsComponent,
         UsageComponent,
         DiffComponent,
-        SpanColoredComponent
+        SpanColoredComponent,
+        VCSStrategyComponent
     ],
     entryComponents: [SpanColoredComponent],
     providers: [
@@ -211,7 +213,8 @@ import {KeysListComponent} from './keys/list/keys.list.component';
         UsageEnvironmentsComponent,
         UsageComponent,
         DiffComponent,
-        SpanColoredComponent
+        SpanColoredComponent,
+        VCSStrategyComponent
     ]
 })
 export class SharedModule {

@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -383,25 +382,15 @@ func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 // AddKeyPairToApplication generate a ssh key pair and add them as application variables
 // DEPCRECATED
 func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, keyname string, u *sdk.User) error {
-	pubR, privR, errGenerate := keys.GenerateSSHKeyPair(keyname)
+	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return sdk.WrapError(errGenerate, "AddKeyPairToApplication> Cannot generate key")
-	}
-
-	pub, errPub := ioutil.ReadAll(pubR)
-	if errPub != nil {
-		return sdk.WrapError(errPub, "AddKeyPairToApplication> Unable to read public key")
-	}
-
-	priv, errPriv := ioutil.ReadAll(privR)
-	if errPriv != nil {
-		return sdk.WrapError(errPriv, "AddKeyPairToApplication> Unable to read private key")
 	}
 
 	v := sdk.Variable{
 		Name:  keyname,
 		Type:  sdk.KeyVariable,
-		Value: string(priv),
+		Value: k.Private,
 	}
 
 	if err := InsertVariable(db, store, app, v, u); err != nil {
@@ -411,7 +400,7 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Ap
 	p := sdk.Variable{
 		Name:  keyname + ".pub",
 		Type:  sdk.TextVariable,
-		Value: string(pub),
+		Value: k.Public,
 	}
 
 	return InsertVariable(db, store, app, p, u)

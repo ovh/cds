@@ -87,6 +87,7 @@
   "application_repoman_cant": "First, you must connect a repository manager to your project: ",
   "application_repoman_cant_link": "here",
   "application_repo_title": "Link application to a repository: ",
+  "application_repo_strat_title" : "Configuration",
   "application_new_title" : "New application",
   "application_update_name_error": "Application name is mandatory and must respect the alphanumeric pattern + the following characters: .-_ ([a-zA-Z0-9._-]*)",
   "application_update_ok": "Application has been updated",
@@ -553,6 +554,15 @@
   "user_list_title": "Users",
   "user_edit_title": "Edit user",
   "user_none": "No user",
+
+  "vcs_connection" : "Connection:",
+  "vcs_user" : "User: ",
+  "vcs_password" : "Password: ",
+  "vcs_branch" : "Branch: ",
+  "vcs_default_branch" : "Default branch: ",
+  "vcs_ssh_key" : "SSH key",
+  "vcs_pgp_key" : "PGP key",
+
 
   "warning_goto_application_variables": "application variables",
   "warning_goto_job": "job",

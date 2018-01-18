@@ -5,6 +5,7 @@ import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../parameter.event.model';
 import {ParameterService} from '../../../service/parameter/parameter.service';
 import {Project} from '../../../model/project.model';
+import {AllKeys} from '../../../model/keys.model';
 
 @Component({
     selector: 'app-parameter-list',
@@ -30,6 +31,7 @@ export class ParameterListComponent extends Table {
     @Input() paramsRef: Array<Parameter>;
     @Input() project: Project;
     @Input() suggest: Array<string>;
+    @Input() keys: AllKeys;
 
     // edit/launcher/ro/job
     @Input() mode = 'edit';

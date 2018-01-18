@@ -59,7 +59,7 @@ If your application is linked to a repository, you can use {{.git.url}} (clone o
 		Description: `Set the private key to be able to git clone from ssh.
 You can create an application variable named 'key' of type 'key' and use it as {{.cds.app.key}} in this action.
 The public key have to be granted on your repository`,
-		Type: sdk.KeyParameter,
+		Type: sdk.StringParameter,
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "user",
@@ -95,40 +95,30 @@ The public key have to be granted on your repository`,
 		return err
 	}
 
+	// ----------------------------------- Checkout Application    -----------------------
+	checkoutApplication := sdk.NewAction(sdk.CheckoutApplication)
+	checkoutApplication.Type = sdk.BuiltinAction
+	checkoutApplication.Description = `CDS Builtin Action.
+Checkout a repository into a new directory.`
+
+	checkoutApplication.Parameter(sdk.Parameter{
+		Name:        "directory",
+		Description: "The name of a directory to clone into.",
+		Value:       "{{.cds.workspace}}",
+		Type:        sdk.StringParameter,
+	})
+	checkoutApplication.Requirement("git", sdk.BinaryRequirement, "git")
+
+	if err := checkBuiltinAction(db, checkoutApplication); err != nil {
+		return err
+	}
+
 	// ----------------------------------- Git tag    -----------------------
 	gittag := sdk.NewAction(sdk.GitTagAction)
 	gittag.Type = sdk.BuiltinAction
 	gittag.Description = `CDS Builtin Action.
 Tag the current branch and push it.`
 
-	gittag.Parameter(sdk.Parameter{
-		Name:        "url",
-		Description: "URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.",
-		Value:       "{{.git.http_url}}",
-		Type:        sdk.StringParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
-		Name:        "authPrivateKey",
-		Value:       "",
-		Description: "Set the private key to be able to git push to the remote",
-		Type:        sdk.KeyParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
-		Name:        "user",
-		Description: "Set the user to be able to git clone from https with authentication",
-		Type:        sdk.StringParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
-		Name:        "password",
-		Description: "Set the password to be able to git clone from https with authentication",
-		Type:        sdk.StringParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
-		Name:        "signKey",
-		Value:       "",
-		Description: "Set the key to be able to sign the tag",
-		Type:        sdk.KeyParameter,
-	})
 	gittag.Parameter(sdk.Parameter{
 		Name:        "tagName",
 		Description: "Set the name of the tag. Must match semver. If empty CDS will make a patch version",

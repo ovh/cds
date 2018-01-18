@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -95,38 +94,17 @@ func (api *API) addKeyInApplicationHandler() Handler {
 
 		switch newKey.Type {
 		case sdk.KeyTypeSSH:
-			pubR, privR, errGenerate := keys.GenerateSSHKeyPair(newKey.Name)
-			if errGenerate != nil {
-				return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate sshKey")
+			k, errK := keys.GenerateSSHKey(newKey.Name)
+			if errK != nil {
+				return sdk.WrapError(errK, "addKeyInApplicationHandler> Cannot generate ssh key")
 			}
-			pub, errPub := ioutil.ReadAll(pubR)
-			if errPub != nil {
-				return sdk.WrapError(errPub, "addKeyInApplicationHandler> Unable to read public key")
-			}
-
-			priv, errPriv := ioutil.ReadAll(privR)
-			if errPriv != nil {
-				return sdk.WrapError(errPriv, "addKeyInApplicationHandler>  Unable to read private key")
-			}
-			newKey.Private = string(priv)
-			newKey.Public = string(pub)
+			newKey.Key = k
 		case sdk.KeyTypePGP:
-			keyID, pubR, privR, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
+			k, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate pgpKey")
 			}
-			pub, errPub := ioutil.ReadAll(pubR)
-			if errPub != nil {
-				return sdk.WrapError(errPub, "addKeyInApplicationHandler> Unable to read public key")
-			}
-
-			priv, errPriv := ioutil.ReadAll(privR)
-			if errPriv != nil {
-				return sdk.WrapError(errPriv, "addKeyInApplicationHandler>  Unable to read private key")
-			}
-			newKey.Private = string(priv)
-			newKey.Public = string(pub)
-			newKey.KeyID = keyID
+			newKey.Key = k
 		default:
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInApplicationHandler> unknown key of type: %s", newKey.Type)
 		}

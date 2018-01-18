@@ -3,7 +3,6 @@ package environment
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -449,25 +448,15 @@ func LoadEnvironmentByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Environme
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
 func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.User) error {
-	pubR, privR, errGenerate := keys.GenerateSSHKeyPair(keyname)
+	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return errGenerate
-	}
-
-	pub, errPub := ioutil.ReadAll(pubR)
-	if errPub != nil {
-		return sdk.WrapError(errPub, "AddKeyPairToEnvironment> Unable to read public key")
-	}
-
-	priv, errPriv := ioutil.ReadAll(privR)
-	if errPriv != nil {
-		return sdk.WrapError(errPriv, "AddKeyPairToEnvironment> Unable to read private key")
 	}
 
 	v := &sdk.Variable{
 		Name:  keyname,
 		Type:  sdk.KeyVariable,
-		Value: string(priv),
+		Value: k.Private,
 	}
 
 	if err := InsertVariable(db, envID, v, u); err != nil {
@@ -477,7 +466,7 @@ func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u
 	p := &sdk.Variable{
 		Name:  keyname + ".pub",
 		Type:  sdk.TextVariable,
-		Value: string(pub),
+		Value: k.Public,
 	}
 
 	return InsertVariable(db, envID, p, u)

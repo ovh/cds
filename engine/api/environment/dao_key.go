@@ -2,6 +2,7 @@ package environment
 
 import (
 	"database/sql"
+	"encoding/base64"
 
 	"github.com/go-gorp/gorp"
 
@@ -27,6 +28,30 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
 	return nil
 }
 
+// LoadAllEnvironmentKeysByProject Load all environment key for the given project
+func LoadAllEnvironmentKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.EnvironmentKey, error) {
+	var res []dbEnvironmentKey
+	query := `
+	SELECT DISTINCT ON (environment_key.name, environment_key.type) environment_key.name as d, environment_key.* FROM environment_key
+	JOIN environment ON environment.id = environment_key.environment_id
+	JOIN project ON project.id = environment.project_id
+	WHERE project.id = $1;
+	`
+	if _, err := db.Select(&res, query, projID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadAllEnvironmentKeysByProject> Cannot load keys")
+	}
+
+	keys := make([]sdk.EnvironmentKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.EnvironmentKey(p)
+	}
+	return keys, nil
+}
+
 // LoadAllKeys load all keys for the given environment
 func LoadAllKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 	var res []dbEnvironmentKey
@@ -41,9 +66,49 @@ func LoadAllKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 	for i := range res {
 		p := res[i]
 		keys[i] = sdk.EnvironmentKey(p)
+		keys[i].Private = sdk.PasswordPlaceholder
+	}
+	env.Keys = keys
+	return nil
+}
+
+// LoadAllBase64Keys Load environment key with encrypted secret
+func LoadAllBase64Keys(db gorp.SqlExecutor, env *sdk.Environment) error {
+	var res []dbEnvironmentKey
+	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "LoadAllBase64Keys> Cannot load keys")
+	}
+
+	keys := make([]sdk.EnvironmentKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.EnvironmentKey(p)
+		keys[i].Private = base64.StdEncoding.EncodeToString([]byte(keys[i].Private))
+	}
+	env.Keys = keys
+	return nil
+}
+
+// LoadAllDecryptedKeys load all keys for the given environment
+func LoadAllDecryptedKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
+	var res []dbEnvironmentKey
+	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "LoadAllDecryptedKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.EnvironmentKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.EnvironmentKey(p)
 		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
 		if err != nil {
-			log.Error("LoadAllKeys> Unable to decrypt private key %s/%s: %v", env.Name, keys[i].Name, err)
+			log.Error("LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", env.Name, keys[i].Name, err)
 		}
 		keys[i].Private = string(decrypted)
 	}

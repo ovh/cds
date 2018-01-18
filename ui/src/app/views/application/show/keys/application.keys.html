@@ -4,5 +4,5 @@
         <app-keys-list [keys]="application.keys" [loading]="loading" [edit]="application.permission" (deleteEvent)="manageKeyEvent($event)"></app-keys-list>
     </ng-container>
     <h3>{{ 'keys_add_title' | translate }}</h3>
-    <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)"></app-keys-form>
+    <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="app-"></app-keys-form>
 </div>
