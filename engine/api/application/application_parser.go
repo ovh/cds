@@ -105,7 +105,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		}
 		app.RepositoryStrategy.Password = clearPWD
 		if errE := EncryptVCSStrategyPassword(app); errE != nil {
-			return nil, sdk.WrapError(err, "ParseAndImport> Cannot encrypt vcs password")
+			return nil, sdk.WrapError(errE, "ParseAndImport> Cannot encrypt vcs password")
 		}
 	}
 
