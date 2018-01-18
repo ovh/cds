@@ -87,6 +87,7 @@
   "application_repoman_cant": "Vous devez d'abord connecter un gestionnaire de dépôt à votre projet : ",
   "application_repoman_cant_link": "ici",
   "application_repo_title": "Lier l'application à un repository : ",
+  "application_repo_strat_title" : "Configuration",
   "application_new_title" : "Nouvelle application",
   "application_update_name_error": "Le nom de l'application est obligatoire et doit être au format alphanumérique + .-_ ([a-zA-Z0-9._-]*)",
   "application_update_ok": "L'application a été mise à jour",
@@ -564,6 +565,14 @@
   "user_list_title": "Utilisateurs",
   "user_edit_title": "Édition de l'utisateur",
   "user_none": "Aucun utilisateur",
+
+  "vcs_connection" : "Connexion : ",
+  "vcs_user" : "Utilisateur : ",
+  "vcs_password" : "Mot de passe : ",
+  "vcs_branch" : "Branche : ",
+  "vcs_default_branch" : "Branche par défaut : ",
+  "vcs_ssh_key" : "Clé SSH",
+  "vcs_pgp_key" : "Clé PGP",
 
   "warning_goto_application_variables": "variables de l'application",
   "warning_goto_job": "job",

@@ -13,7 +13,7 @@ import (
 func SetupSSHKey(vars []sdk.Variable, path string, key *sdk.Parameter) error {
 	if key == nil {
 		for _, v := range vars {
-			if v.Type != sdk.KeyVariable {
+			if v.Type != sdk.KeyVariable && v.Type != sdk.KeySSHParameter {
 				continue
 			}
 			if err := write(path, v.Name, v.Value); err != nil {
@@ -29,6 +29,14 @@ func SetupSSHKey(vars []sdk.Variable, path string, key *sdk.Parameter) error {
 type SSHKey struct {
 	Filename string
 	Content  []byte
+}
+
+// PGPKey is a type for a pgp key
+type PGPKey struct {
+	Name    string
+	Public  string
+	Private string
+	ID      string
 }
 
 // GetSSHKey get a key in the path. If the key is nil, it will choose a default key among project, application and env variables

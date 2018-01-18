@@ -19,6 +19,11 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, 
 		return 0, sdk.WrapError(errload, "environment.Export> Cannot load %s", envName)
 	}
 
+	// Reload key
+	if errE := LoadAllDecryptedKeys(db, env); errE != nil {
+		return 0, sdk.WrapError(errE, "environment.Export> Cannot load env %s keys", envName)
+	}
+
 	// Load permissions
 	if withPermissions {
 		perms, err := group.LoadGroupsByEnvironment(db, env.ID)

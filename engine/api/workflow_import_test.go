@@ -32,6 +32,7 @@ func Test_postWorkflowImportHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
+	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
 	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
 
 	//Prepare request
@@ -47,6 +48,8 @@ version: v1.0
 workflow:
   pip1:
     pipeline: pip1
+    parameters:
+      name: value
   pip1_2:
     depends_on:
       - pip1
@@ -67,10 +70,14 @@ workflow:
 
 	assert.NotNil(t, w)
 
+	dump.Dump(w)
+
 	m, _ := dump.ToStringMap(w)
 	assert.Equal(t, "test_1", m["Workflow.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Pipeline.Name"])
+	assert.Equal(t, "name", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Name"])
+	assert.Equal(t, "value", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Value"])
 	assert.Equal(t, "pip1_2", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.Pipeline.Name"])
 
@@ -144,14 +151,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
 	test.NoError(t, err)
-	pub, _ := ioutil.ReadAll(pubR)
-	priv, _ := ioutil.ReadAll(privR)
 
-	k.Public = string(pub)
-	k.Private = string(priv)
-	k.KeyID = kid
+	k.Public = kpgp.Public
+	k.Private = kpgp.Private
+	k.KeyID = kpgp.KeyID
 	test.NoError(t, application.InsertKey(api.mustDB(), k))
 
 	k2 := &sdk.ApplicationKey{
@@ -161,14 +166,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		},
 		ApplicationID: app.ID,
 	}
-	pubR, privR, err = keys.GenerateSSHKeyPair(k2.Name)
-	test.NoError(t, err)
-	pub, _ = ioutil.ReadAll(pubR)
-	priv, _ = ioutil.ReadAll(privR)
+	kssh, errK := keys.GenerateSSHKey(k2.Name)
+	test.NoError(t, errK)
 
-	k2.Public = string(pub)
-	k2.Private = string(priv)
-	k2.KeyID = kid
+	k2.Public = kssh.Public
+	k2.Private = kssh.Private
+	k2.KeyID = kssh.KeyID
 	test.NoError(t, application.InsertKey(api.mustDB(), k2))
 
 	w := sdk.Workflow{

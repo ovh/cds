@@ -346,6 +346,12 @@ func (e *NodeEntry) getNode(name string) (*sdk.WorkflowNode, error) {
 		node.Context.Conditions = *e.Conditions
 	}
 
+	mapPipelineParameters := sdk.ParametersFromMap(e.Parameters)
+	if node.Context == nil {
+		node.Context = new(sdk.WorkflowNodeContext)
+	}
+	node.Context.DefaultPipelineParameters = mapPipelineParameters
+
 	for _, w := range e.When {
 		if node.Context == nil {
 			node.Context = new(sdk.WorkflowNodeContext)

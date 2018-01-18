@@ -8,8 +8,9 @@ import {TranslateService} from '@ngx-translate/core';
 import {Router} from '@angular/router';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {GroupService} from '../../../service/group/group.service';
-import {Variable} from '../../../model/variable.model';
 import {first} from 'rxjs/operators';
+import {Key, KeyType} from '../../../model/keys.model';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-project-add',
@@ -22,7 +23,7 @@ export class ProjectAddComponent {
     newGroup: Group = new Group();
     group: Group = new Group();
     addSshKey = false;
-    sshKeyVar: Variable;
+    sshKey: Key;
 
     loading = false;
     nameError = false;
@@ -37,8 +38,8 @@ export class ProjectAddComponent {
     constructor(private _projectStore: ProjectStore, private _toast: ToastService, private _translate: TranslateService,
                 private _router: Router, private _groupService: GroupService, private _permissionService: PermissionService) {
         this.project = new Project();
-        this.sshKeyVar = new Variable();
-        this.sshKeyVar.type = 'key';
+        this.sshKey = new Key();
+        this.sshKey.type = KeyType.SSH;
         this.loadGroups(null);
     }
 
@@ -55,7 +56,7 @@ export class ProjectAddComponent {
         }
         this.project.key = name.toUpperCase();
         this.project.key = this.project.key.replace(/([.,; *`§%&#_\-'+?^=!:$\\"{}()|\[\]\/\\])/g, '').substr(0, 5);
-        this.sshKeyVar.name = 'cds.' + this.project.key.toLowerCase() + '.key';
+        this.sshKey.name = 'sshkey';
     }
 
     /**
@@ -86,14 +87,19 @@ export class ProjectAddComponent {
           this.project.groups.push(gp);
         }
 
-        if (this.addSshKey && (!this.sshKeyVar.name || this.sshKeyVar.name === '')) {
+        if (this.addSshKey && (!this.sshKey.name || this.sshKey.name === '')) {
             this.sshError = true;
         }
 
         if (!this.nameError && !this.keyError && !this.sshError) {
             if (this.addSshKey) {
-                this.project.variables = new Array<Variable>();
-                this.project.variables.push(this.sshKeyVar);
+                this.project.keys = new Array<Key>();
+
+                let sshKeyCloned = cloneDeep(this.sshKey);
+                if (sshKeyCloned.name.indexOf('proj-') !== 0) {
+                    sshKeyCloned.name = 'proj-' + sshKeyCloned.name;
+                }
+                this.project.keys.push(sshKeyCloned);
             }
 
             this._projectStore.createProject(this.project).subscribe(p => {

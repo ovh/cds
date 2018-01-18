@@ -5,24 +5,17 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	"github.com/blang/semver"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/vcs"
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
 func runGitTag(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		url := sdk.ParameterFind(a.Parameters, "url")
-		authPrivateKey := sdk.ParameterFind(a.Parameters, "authPrivateKey")
-		user := sdk.ParameterFind(a.Parameters, "user")
-		password := sdk.ParameterFind(a.Parameters, "password")
-		signKey := sdk.ParameterFind(a.Parameters, "signKey")
 		tagName := sdk.ParameterFind(a.Parameters, "tagName")
 		tagMessage := sdk.ParameterFind(a.Parameters, "tagMessage")
 		path := sdk.ParameterFind(a.Parameters, "path")
@@ -39,76 +32,14 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			}
 		}
 
-		if url == nil {
+		gitUrl, auth, errR := extractVCSInformations(*params)
+		if errR != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
-				Reason: "Git repository URL is not set. Nothing to perform.",
+				Reason: errR.Error(),
 			}
 			sendLog(res.Reason)
 			return res
-		}
-
-		var username string
-		if user == nil || user.Value == "" {
-			u := sdk.ParameterFind(*params, "cds.triggered_by.username")
-			if u == nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: "Git user is not set. Nothing to perform.",
-				}
-				sendLog(res.Reason)
-				return res
-			}
-			username = u.Value
-		} else {
-			username = user.Value
-		}
-
-		if authPrivateKey != nil {
-			//Setup the key
-			if err := vcs.SetupSSHKey(nil, keysDirectory, authPrivateKey); err != nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-		}
-
-		//Get the key
-		key, errK := vcs.GetSSHKey(*params, keysDirectory, authPrivateKey)
-		if errK != nil && errK != sdk.ErrKeyNotFound {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
-			}
-			sendLog(res.Reason)
-			return res
-		}
-
-		//If url is not http(s), a key must be found
-		if !strings.HasPrefix(url.Value, "http") {
-			if errK == sdk.ErrKeyNotFound || key == nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("SSH Key not found. Unable to perform git tag"),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-		}
-
-		//Prepare all options - credentials
-		var auth *git.AuthOpts
-		if user != nil || password != nil {
-			auth = new(git.AuthOpts)
-			if user != nil {
-				auth.Username = user.Value
-			}
-			if password != nil {
-				auth.Password = password.Value
-			}
 		}
 
 		var msg = ""
@@ -120,7 +51,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		if errT != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Tag name is not semver compatible"),
+				Reason: "Tag name is not semver compatible",
 			}
 			sendLog(res.Reason)
 			return res
@@ -128,41 +59,42 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		v.Build = nil
 		v.Pre = nil
 
+		var userTag string
+		userTrig := sdk.ParameterFind(*params, "cds.triggered_by.username")
+		if userTrig != nil && userTrig.Value != "" {
+			userTag = userTrig.Value
+		} else {
+			gitAuthor := sdk.ParameterFind(*params, "git.author")
+			if gitAuthor != nil && gitAuthor.Value != "" {
+				userTag = gitAuthor.Value
+			}
+		}
+
+		if userTag == "" {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: "No user find to perform tag",
+			}
+			sendLog(res.Reason)
+			return res
+		}
+
 		//Prepare all options - tag options
 		var tagOpts = &git.TagOpts{
 			Message:  msg,
 			Name:     v.String(),
-			Username: username,
+			Username: userTag,
 		}
 
-		if signKey != nil && signKey.Value != "" {
-			privateKey := sdk.ParameterFind(*params, fmt.Sprintf("%s.priv", signKey.Value))
-			publicKey := sdk.ParameterFind(*params, fmt.Sprintf("%s.pub", signKey.Value))
-			keyID := sdk.ParameterFind(*params, fmt.Sprintf("%s.id", signKey.Value))
+		if auth.SignKey.ID != "" {
 
-			if privateKey == nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Cannot find pgp private key."),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-			if keyID == nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Cannot find pgp key id."),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-			tagOpts.SignKey = privateKey.Value
-			tagOpts.SignID = keyID.Value
+			tagOpts.SignKey = auth.SignKey.Private
+			tagOpts.SignID = auth.SignKey.ID
 
-			if err := ioutil.WriteFile("pgp.pub.key", []byte(publicKey.Value), 0600); err != nil {
+			if err := ioutil.WriteFile("pgp.pub.key", []byte(auth.SignKey.Public), 0600); err != nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Cannot create pgp key file."),
+					Reason: "Cannot create pgp key file.",
 				}
 				sendLog(res.Reason)
 				return res
@@ -170,19 +102,14 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			if err := ioutil.WriteFile("pgp.key", []byte(tagOpts.SignKey), 0600); err != nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Cannot create pgp key file."),
+					Reason: "Cannot create pgp key file.",
 				}
 				sendLog(res.Reason)
 				return res
 			}
 		}
 
-		if key != nil {
-			if auth == nil {
-				auth = new(git.AuthOpts)
-			}
-			auth.PrivateKey = *key
-		}
+		// Run Git command
 
 		//Prepare all options - logs
 		stdErr := new(bytes.Buffer)
@@ -200,7 +127,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		}
 
 		//Perform the git tag
-		err := git.TagCreate(url.Value, auth, tagOpts, output)
+		err := git.TagCreate(gitUrl, auth, tagOpts, output)
 
 		//Send the logs
 		if len(stdOut.Bytes()) > 0 {

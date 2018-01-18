@@ -421,7 +421,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		}
 
 		if wNode == nil || errW != nil {
-			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, name, nodeName)
+			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, name, nodeName, workflow.LoadOptions{})
 			if errCtx != nil {
 				return sdk.WrapError(errCtx, "getWorkflowCommitsHandler> Unable to load workflow node context")
 			}
@@ -597,6 +597,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			var errl error
 			options := workflow.LoadOptions{
 				DeepPipeline: true,
+				Base64Keys:   true,
 			}
 			wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 			if errl != nil {

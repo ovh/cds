@@ -39,7 +39,10 @@ export class ApplicationService {
                 params = params.append('remote', filter.remote);
             }
         }
-        return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params});
+        return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params}).map(a => {
+            a.vcs_strategy.password = '**********';
+            return a;
+        });
     }
 
     /**
@@ -48,10 +51,8 @@ export class ApplicationService {
      * @param application Application to update
      * @returns {Observable<Application>}
      */
-    renameApplication(key: string, appOldName: string, appNewName: string): Observable<Application> {
-        let appRenamed = new Application();
-        appRenamed.name = appNewName;
-        return this._http.put<Application>('/project/' + key + '/application/' + appOldName, appRenamed);
+    updateApplication(key: string, appOldName: string, app: Application): Observable<Application> {
+        return this._http.put<Application>('/project/' + key + '/application/' + appOldName, app);
     }
 
     /**

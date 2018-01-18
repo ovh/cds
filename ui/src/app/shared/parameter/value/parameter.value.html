@@ -9,6 +9,30 @@
         <input type="checkbox" [(ngModel)]="editableValue" (change)="valueChanged();sendValueChanged()" name="value">
         <label>{{ ' '}}</label>
     </div>
+    <div *ngSwitchCase="'ssh-key'">
+        <ng-container *ngIf="keys">
+            <sm-select class="search fluid"
+                       [(model)]="editableValue"
+                       [options]="{'fullTextSearch': true}"
+                       (modelChange)="valueChanged();sendValueChanged()"
+                       (keydown)="sendValueChanged()"
+                       name="value">
+                    <option *ngFor="let v of keys.ssh" [value]="v">{{v}}</option>
+            </sm-select>
+        </ng-container>
+    </div>
+    <div *ngSwitchCase="'pgp-key'">
+        <ng-container *ngIf="keys">
+            <sm-select class="search fluid"
+                       [(model)]="editableValue"
+                       [options]="{'fullTextSearch': true}"
+                       (modelChange)="valueChanged();sendValueChanged()"
+                       (keydown)="sendValueChanged()"
+                       name="value">
+                <option *ngFor="let v of keys.pgp" [value]="v">{{v}}</option>
+            </sm-select>
+        </ng-container>
+    </div>
     <div *ngSwitchCase="'list'">
         <div class="ui fluid input" *ngIf="editList">
             <input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="value1;value2;value3">
