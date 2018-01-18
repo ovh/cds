@@ -1,4 +1,4 @@
-// +build dragonfly freebsd netbsd openbsd linux,386
+// +build dragonfly freebsd netbsd openbsd linux,386 windows,386
 
 package main
 
