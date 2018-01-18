@@ -206,14 +206,24 @@ func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, withArtifacts bool) (*
 //LoadRuns loads all runs
 //It retuns runs, offset, limit count and an error
 func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int, tagFilter map[string]string) ([]sdk.WorkflowRun, int, int, int, error) {
+	var args = []interface{}{projectkey}
 	queryCount := `select count(workflow_run.id)
-	from workflow_run
-	join project on workflow_run.project_id = project.id
-	join workflow on workflow_run.workflow_id = workflow.id
-	where project.projectkey = $1
-	and workflow.name = $2`
+				from workflow_run
+				join project on workflow_run.project_id = project.id
+				join workflow on workflow_run.workflow_id = workflow.id
+				where project.projectkey = $1`
 
-	count, errc := db.SelectInt(queryCount, projectkey, workflowname)
+	if workflowname != "" {
+		args = []interface{}{projectkey, workflowname}
+		queryCount = `select count(workflow_run.id)
+					from workflow_run
+					join project on workflow_run.project_id = project.id
+					join workflow on workflow_run.workflow_id = workflow.id
+					where project.projectkey = $1
+					and workflow.name = $2`
+	}
+
+	count, errc := db.SelectInt(queryCount, args...)
 	if errc != nil {
 		return nil, 0, 0, 0, sdk.WrapError(errc, "LoadRuns> unable to load runs")
 	}
@@ -221,16 +231,26 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 		return nil, 0, 0, 0, nil
 	}
 
-	var args = []interface{}{projectkey, workflowname, limit, offset}
-
+	args = []interface{}{projectkey, limit, offset}
 	query := `select workflow_run.*
 	from workflow_run
 	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
 	where project.projectkey = $1
-	and workflow.name = $2
 	order by workflow_run.start desc
-	limit $3 offset $4`
+	limit $2 offset $3`
+
+	if workflowname != "" {
+		args = []interface{}{projectkey, workflowname, limit, offset}
+		query = `select workflow_run.*
+			from workflow_run
+			join project on workflow_run.project_id = project.id
+			join workflow on workflow_run.workflow_id = workflow.id
+			where project.projectkey = $1
+			and workflow.name = $2
+			order by workflow_run.start desc
+			limit $3 offset $4`
+	}
 
 	if len(tagFilter) > 0 {
 		// Posgres operator: '<@' means 'is contained by' eg. 'ARRAY[2,7] <@ ARRAY[1,7,4,2,6]' ==> returns true
