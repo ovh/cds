@@ -18,3 +18,13 @@ export enum ExpirationTokenType {
 }
 
 export const ExpirationToString = ['', 'session', 'daily', 'persistent'];
+
+export class TokenEvent {
+    type: string;
+    token: Token;
+
+    constructor(type: string, t: Token) {
+        this.type = type;
+        this.token = t;
+    }
+}

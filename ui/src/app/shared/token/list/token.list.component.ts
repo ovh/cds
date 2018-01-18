@@ -1,7 +1,6 @@
 import {Component, Input, EventEmitter, Output} from '@angular/core';
-import {Token, ExpirationToString} from '../../../model/token.model';
+import {Token, TokenEvent, ExpirationToString} from '../../../model/token.model';
 import {Table} from '../../table/table';
-import {TokenEvent} from '../token.event.model';
 
 @Component({
     selector: 'app-token-list',

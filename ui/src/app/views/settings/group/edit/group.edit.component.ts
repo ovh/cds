@@ -4,9 +4,9 @@ import {first, finalize} from 'rxjs/operators';
 import {Group} from '../../../../model/group.model';
 import {GroupService} from '../../../../service/group/group.service';
 import {User} from '../../../../model/user.model';
+import {TokenEvent} from '../../../../model/token.model';
 import {UserService} from '../../../../service/user/user.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TokenEvent} from '../../../../shared/token/token.event.model';
 import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 

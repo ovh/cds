@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {finalize, first} from 'rxjs/operators';
 import {User} from '../../../../model/user.model';
-import {Token} from '../../../../model/token.model';
+import {Token, TokenEvent} from '../../../../model/token.model';
 import {Group} from '../../../../model/group.model';
 import {UserService} from '../../../../service/user/user.service';
 import {GroupService} from '../../../../service/group/group.service';
