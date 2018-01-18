@@ -5,6 +5,7 @@ export class Token {
   created: string;
   description: string;
   creator: string;
+  group_name: string;
 
   // useful for ui
   updating: boolean;
