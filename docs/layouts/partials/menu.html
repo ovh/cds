@@ -1,13 +1,11 @@
 <nav id="sidebar" class="{{if $.Site.Params.showVisitedLinks }}showVisitedLinks{{end}}">
 
-
-
 {{ $currentNode := . }}
 {{ $showvisitedlinks := .Site.Params.showVisitedLinks }}
 <div class="highlightable">
   <div id="header-wrapper">
     <div id="header">
-      {{ partial "logo.html" . }}
+      <a href="/" title="CDS Documentation Home Page">{{ partial "logo.html" . }}</a>
     </div>
     {{if not .Site.Params.noSearch}}
         {{ partial "search.html" . }}

@@ -1,6 +1,6 @@
 +++
 title = "Update your worker"
-weight = 1
+weight = 2
 
 +++
 
