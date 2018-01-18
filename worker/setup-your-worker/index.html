@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Worker :: CDS - Continuous Delivery Service</title>
+    <title>Setup your worker :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,21 +31,19 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/introduction/concepts/worker/">
+  <body class="" data-url="/worker/setup-your-worker/">
     <nav id="sidebar" class="">
-
-
 
 
 
 <div class="highlightable">
   <div id="header-wrapper">
     <div id="header">
-       
+      <a href="https://ovh.github.io/cds/" title="CDS Documentation Home Page"> 
 	<p><img src="https://ovh.github.io/cds/images/cds-transparent.png?width=40px" alt="CDS" /></p>
  
 
-
+</a>
     </div>
     
         <div class="searchbox">
@@ -70,16 +68,14 @@
         
           
           
-    <li data-nav-id="/introduction/" class="dd-item parent">
+    <li data-nav-id="/introduction/" class="dd-item">
       <a href="https://ovh.github.io/cds/introduction/">
-        <span>Introduction</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Introduction</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/introduction/concepts/" class="dd-item parent">
+    <li data-nav-id="/introduction/concepts/" class="dd-item">
       <a href="https://ovh.github.io/cds/introduction/concepts/">
-        <span>Concepts</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Concepts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/introduction/concepts/pipeline/" class="dd-item">
@@ -90,11 +86,6 @@
       <li data-nav-id="/introduction/concepts/stage/" class="dd-item">
         <a href="https://ovh.github.io/cds/introduction/concepts/stage/">
           <span>Stage</span>
-        </a>
-    </li>
-      <li data-nav-id="/introduction/concepts/worker/" class="dd-item active">
-        <a href="https://ovh.github.io/cds/introduction/concepts/worker/">
-          <span>Worker</span>
         </a>
     </li>
       <li data-nav-id="/introduction/concepts/job/" class="dd-item">
@@ -406,11 +397,17 @@
     </li>
           
           
-    <li data-nav-id="/worker/" class="dd-item">
+    <li data-nav-id="/worker/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/worker/">
-        <span>Worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Worker</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/worker/setup-your-worker/" class="dd-item active">
+        <a href="https://ovh.github.io/cds/worker/setup-your-worker/">
+          <span>Setup your worker</span>
+        </a>
+    </li>
       <li data-nav-id="/worker/update/" class="dd-item">
         <a href="https://ovh.github.io/cds/worker/update/">
           <span>Update your worker</span>
@@ -1309,7 +1306,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/introduction/concepts/worker.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/worker/setup-your-worker.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1329,12 +1326,7 @@
 
 
 
-
-
-
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/introduction/'>Introduction</a> > <a href='https://ovh.github.io/cds/introduction/concepts/'>Concepts</a> > Worker
-
- 
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/worker/'>Worker</a> > Setup your worker
 
  
 
@@ -1349,14 +1341,24 @@
 <ul>
 <li>
 <ul>
-<li><a href="#what-is-a-worker">What is a worker</a></li>
-<li><a href="#worker-life-cycle">Worker life cycle</a>
+<li>
 <ul>
 <li>
 <ul>
 <li><a href="#why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</a></li>
 </ul></li>
 <li><a href="#how-does-this-work">How does this work ?</a></li>
+<li><a href="#linux-setup">Linux Setup</a>
+<ul>
+<li><a href="#download-the-binary">Download the binary</a></li>
+<li><a href="#startup-the-worker">Startup the worker</a></li>
+</ul></li>
+<li><a href="#windows-setup">Windows Setup</a>
+<ul>
+<li><a href="#download-the-binary-1">Download the binary</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#trigger-your-pipeline-on-your-host">Trigger your pipeline on your Host</a></li>
+</ul></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1370,7 +1372,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Worker</h1>
+                <h1>Setup your worker</h1>
                 <p></p>
             </div>
           
@@ -1380,25 +1382,9 @@
 
 
 
-<p>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.</p>
-
-<p>Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing <code>npm</code> tools, importing <code>bower</code> packages (these are <code>nodeJs</code> tools), building webfonts with <code>fontforge</code>&hellip;</p>
-
-<h2 id="what-is-a-worker">What is a worker</h2>
-
-<p>Basically, a worker is a binary. This binary can be launched inside a Docker Container, or on a Host (as an Openstack VM).</p>
-
-<h2 id="worker-life-cycle">Worker life cycle</h2>
-
-<p><img src="https://ovh.github.io/cds/images/concepts_worker_flow.png" alt="Pipeline" /></p>
-
-<p>If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contain a sane installation of &ldquo;curl&rdquo;.</p>
-
-<p>So, in the case of a worker model of type &ldquo;docker&rdquo;, the docker image must have <code>curl</code> available in the PATH.</p>
-
 <h4 id="why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</h4>
 
-<p>There are several cases where one would need to setup his own worker:</p>
+<p>There is several cases where one would need to setup his own worker:</p>
 
 <ul>
 <li>Perform incremental build</li>
@@ -1410,12 +1396,69 @@
 
 <p>Workers authenticate on CDS with a token and have the same permissions as the user who generated it.</p>
 
-<p>Bottom line: if you can access the application, your worker will too.</p>
-
-<p>To generate a token, run the following command, replace yourgroup with your group</p>
+<p>Generate a token with the following cdsctl command:</p>
 
 <pre><code class="language-bash">$ cdsctl generate token -g yourgroup -e persistent
 </code></pre>
+
+<h3 id="linux-setup">Linux Setup</h3>
+
+<h4 id="download-the-binary">Download the binary</h4>
+
+<p>Simple enough, run</p>
+
+<pre><code class="language-bash">$ wget -nv https://your-cds-api/download/worker/`uname -m` -O worker
+</code></pre>
+
+<p>or download from <a href="https://github.com/ovh/cds/releases">https://github.com/ovh/cds/releases</a></p>
+
+<h4 id="startup-the-worker">Startup the worker</h4>
+
+<p>Mandatory parameters are <strong>&ndash;api</strong> and <strong>&ndash;token</strong>.</p>
+
+<p>The most basic way to start a worker is as following:</p>
+
+<pre><code>$ worker --api http://localhost:8081 --token 5459c00e70f31f4bd2c9762660983fff641a5e6b8cffc322a68586a95ed65c7f
+INFO[0000] running worker CDS_SINGLE_USE:false...
+INFO[0000] Current binary: /home/cds/worker
+2018-01-17 22:27:40 [INFO] CDS Worker starting
+2018-01-17 22:27:40 [INFO] version: 0.25.1-snapshot+1693.cds
+2018-01-17 22:27:40 [INFO] hostname: localhost.local
+2018-01-17 22:27:40 [INFO] auto-update: false
+2018-01-17 22:27:40 [INFO] single-use: false
+2018-01-17 22:27:40 [INFO] Export variable HTTP server: 127.0.0.1:64781
+2018-01-17 22:27:40 [INFO] Registering on CDS engine Version:0.25.1-snapshot+1693.cds
+2018-01-17 22:27:40 [INFO] Registering localhost.local on http://localhost:8081
+2018-01-17 22:27:40 [INFO] localhost.local Registered on http://localhost:8081
+</code></pre>
+
+<p>That&rsquo;s it, you are done here.</p>
+
+<h3 id="windows-setup">Windows Setup</h3>
+
+<h4 id="download-the-binary-1">Download the binary</h4>
+
+<p>Download the windows binary from <a href="https://github.com/ovh/cds/releases">https://github.com/ovh/cds/releases</a></p>
+
+<h4 id="prerequisites">Prerequisites</h4>
+
+<p>CDS Worker will launch Microsoft Powershell command. Please check Powershell is correctly installed and configured on your host.
+Every command CDS Worker will launch should be in the %PATH% variable.</p>
+
+<p>Do the following steps with the target User whom will run the CDS Worker.</p>
+
+<p>To be able to operate git clone commands, you have to follow next steps :</p>
+
+<ul>
+<li>Install Git <code>https://git-scm.com/download/win</code></li>
+<li>Setup your system %PATH%, and add <code>C:\Program Files\Git\mingw32\bin;C:\Program Files\Git\usr\bin</code></li>
+<li>In a Powsershell Prompt, run <code>PS Set-ExecutionPolicy Unrestricted</code></li>
+<li>You may want to improve your Git Experience on your windows host : have a look to posh-git : <a href="https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell">https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell</a></li>
+</ul>
+
+<h4 id="trigger-your-pipeline-on-your-host">Trigger your pipeline on your Host</h4>
+
+<p>If you want to force you pipeline execution on your host, add a &ldquo;hostname&rdquo; requirement on you pipeline and set it to the hostname of your windows host.</p>
 
 
 <footer class=" footline" >
@@ -1435,8 +1478,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/introduction/concepts/stage/" title="Stage"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/introduction/concepts/job/" title="Job" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/worker/" title="Worker"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/worker/update/" title="Update your worker" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

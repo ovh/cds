@@ -91,6 +91,17 @@ curl -v -X GET http://mynginx  Execute Pipeline</description>
     </item>
     
     <item>
+      <title>Setup your worker</title>
+      <link>https://ovh.github.io/cds/worker/setup-your-worker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/worker/setup-your-worker/</guid>
+      <description>Why would you need to setup your own worker ? There is several cases where one would need to setup his own worker:
+ Perform incremental build Build on a specific architecture Perform integration tests in a specific network  How does this work ? Workers authenticate on CDS with a token and have the same permissions as the user who generated it.
+Generate a token with the following cdsctl command:</description>
+    </item>
+    
+    <item>
       <title>Update a Workflow run number</title>
       <link>https://ovh.github.io/cds/workflows/design/advanced/update-run-number/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -98,19 +109,6 @@ curl -v -X GET http://mynginx  Execute Pipeline</description>
       <guid>https://ovh.github.io/cds/workflows/design/advanced/update-run-number/</guid>
       <description>workflow -&amp;gt; advanced section. You can edit the run number to set you old cds.version value.
 {{cds.version}} is always usable, and equals to {{.cds.run.number}}</description>
-    </item>
-    
-    <item>
-      <title>Update your worker</title>
-      <link>https://ovh.github.io/cds/worker/update/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/worker/update/</guid>
-      <description>Manual Update If you run manually a worker, you problably want to update it when CDS Engine is updated with a new Release.
-Update your worker from CDS API:
-./worker update --api https://your.cds.instance  Update your worker from latest Release from Github:
-./worker update --from-github  Auto Update If you use a dedicated worker, you launch it with the command:
-./worker --api https://your.cds.instance  You can add auto-update flag, to auto update the worker, without restart it.</description>
     </item>
     
     <item>
@@ -225,6 +223,19 @@ You can define trigger conditions on a stage, to enable/disable it under given c
     </item>
     
     <item>
+      <title>Update your worker</title>
+      <link>https://ovh.github.io/cds/worker/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/worker/update/</guid>
+      <description>Manual Update If you run manually a worker, you problably want to update it when CDS Engine is updated with a new Release.
+Update your worker from CDS API:
+./worker update --api https://your.cds.instance  Update your worker from latest Release from Github:
+./worker update --from-github  Auto Update If you use a dedicated worker, you launch it with the command:
+./worker --api https://your.cds.instance  You can add auto-update flag, to auto update the worker, without restart it.</description>
+    </item>
+    
+    <item>
       <title>Webhook</title>
       <link>https://ovh.github.io/cds/workflows/design/hooks/webhook/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -232,16 +243,6 @@ You can define trigger conditions on a stage, to enable/disable it under given c
       <guid>https://ovh.github.io/cds/workflows/design/hooks/webhook/</guid>
       <description>On a Root Pipeline, you can add a &amp;ldquo;Webhook&amp;rdquo;. Click on the created icon to get the WebHook URL.
 In order to trigger this one you just have to make a curl on the given url with the selected method.</description>
-    </item>
-    
-    <item>
-      <title>Worker</title>
-      <link>https://ovh.github.io/cds/introduction/concepts/worker/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/introduction/concepts/worker/</guid>
-      <description>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
-Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge&amp;hellip;</description>
     </item>
     
     <item>

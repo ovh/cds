@@ -51,11 +51,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/workflows/design/advanced/update-run-number/</loc>
+    <loc>https://ovh.github.io/cds/worker/setup-your-worker/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/worker/update/</loc>
+    <loc>https://ovh.github.io/cds/workflows/design/advanced/update-run-number/</loc>
   </url>
   
   <url>
@@ -123,11 +123,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/workflows/design/hooks/webhook/</loc>
+    <loc>https://ovh.github.io/cds/worker/update/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/concepts/worker/</loc>
+    <loc>https://ovh.github.io/cds/workflows/design/hooks/webhook/</loc>
   </url>
   
   <url>

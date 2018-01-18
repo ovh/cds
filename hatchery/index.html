@@ -36,16 +36,14 @@
 
 
 
-
-
 <div class="highlightable">
   <div id="header-wrapper">
     <div id="header">
-       
+      <a href="https://ovh.github.io/cds/" title="CDS Documentation Home Page"> 
 	<p><img src="https://ovh.github.io/cds/images/cds-transparent.png?width=40px" alt="CDS" /></p>
  
 
-
+</a>
     </div>
     
         <div class="searchbox">
@@ -88,11 +86,6 @@
       <li data-nav-id="/introduction/concepts/stage/" class="dd-item">
         <a href="https://ovh.github.io/cds/introduction/concepts/stage/">
           <span>Stage</span>
-        </a>
-    </li>
-      <li data-nav-id="/introduction/concepts/worker/" class="dd-item">
-        <a href="https://ovh.github.io/cds/introduction/concepts/worker/">
-          <span>Worker</span>
         </a>
     </li>
       <li data-nav-id="/introduction/concepts/job/" class="dd-item">
@@ -409,6 +402,11 @@
         <span>Worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/worker/setup-your-worker/" class="dd-item">
+        <a href="https://ovh.github.io/cds/worker/setup-your-worker/">
+          <span>Setup your worker</span>
+        </a>
+    </li>
       <li data-nav-id="/worker/update/" class="dd-item">
         <a href="https://ovh.github.io/cds/worker/update/">
           <span>Update your worker</span>
@@ -1338,14 +1336,6 @@
 <ul>
 <li>
 <ul>
-<li>
-<ul>
-<li><a href="#local-mode">Local mode</a></li>
-<li><a href="#marathon-mode">Marathon mode</a></li>
-<li><a href="#openstack-mode">Openstack mode</a></li>
-<li><a href="#vsphere-mode">VSphere mode</a></li>
-<li><a href="#swarm-mode">Swarm mode</a></li>
-</ul></li>
 <li><a href="#admin-hatchery">Admin hatchery</a></li>
 </ul></li>
 </ul>
@@ -1378,32 +1368,12 @@
 <p>There are 5 modes for hatcheries:</p>
 
 <ul>
-<li>Local (Start local workers on a single host)</li>
-<li>Marathon (Start worker model instances on a mesos cluster with marathon framework)</li>
-<li>Swarm (Start worker on a docker swarm cluster)</li>
-<li>Openstack (Start virtual machines on an openstack cluster)</li>
-<li>VSphere (Start virtual machines on an VSphere cluster)</li>
+<li><a href="https://ovh.github.io/cds/hatchery/local/">Local</a> : Hatchery starts workers directly as local process.</li>
+<li><a href="https://ovh.github.io/cds/hatchery/marathon/">Marathon</a> : Hatchery starts workers inside containers on a mesos cluster using Marathon API.</li>
+<li><a href="https://ovh.github.io/cds/hatchery/swarm/">Swarm</a> : The hatchery connects to a Docker Swarm cluster and starts workers inside containers.</li>
+<li><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">Openstack</a> : Hatchery starts workers on Openstack virtual machines using Openstack Nova.</li>
+<li><a href="https://ovh.github.io/cds/hatchery/vsphere/">VSphere</a> : Hatchery starts workers on VSphere datacenter using VMWare VSphere.</li>
 </ul>
-
-<h3 id="local-mode">Local mode</h3>
-
-<p>Hatchery starts workers directly as local process.</p>
-
-<h3 id="marathon-mode">Marathon mode</h3>
-
-<p>Hatchery starts workers inside containers on a mesos cluster using Marathon API.</p>
-
-<h3 id="openstack-mode">Openstack mode</h3>
-
-<p>Hatchery starts workers on Openstack virtual machines using Openstack Nova.</p>
-
-<h3 id="vsphere-mode">VSphere mode</h3>
-
-<p>Hatchery starts workers on VSphere datacenter using VMWare VSphere.</p>
-
-<h3 id="swarm-mode">Swarm mode</h3>
-
-<p>The hatchery connects to a Docker Swarm cluster and starts workers inside containers.</p>
 
 <h2 id="admin-hatchery">Admin hatchery</h2>
 
