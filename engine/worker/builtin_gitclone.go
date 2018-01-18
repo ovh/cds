@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/blang/semver"
@@ -25,6 +26,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
 		commit := sdk.ParameterFind(a.Parameters, "commit")
 		directory := sdk.ParameterFind(a.Parameters, "directory")
+		recursive := sdk.ParameterFind(a.Parameters, "recursive")
 		cdsVersion := sdk.ParameterFind(*params, "cds.version")
 
 		if url == nil {
@@ -90,9 +92,19 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			auth.PrivateKey = *key
 		}
 
+		recursiveB, err := strconv.ParseBool(recursive.Value)
+		if err != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable to parse recursive boolean. %s", err),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+
 		//Prepare all options - clone options
 		var clone = &git.CloneOpts{
-			Recursive:               true,
+			Recursive:               recursiveB,
 			NoStrictHostKeyChecking: true,
 		}
 		if branch != nil {
@@ -130,7 +142,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		git.LogFunc = log.Info
 
 		//Perform the git clone
-		err := git.Clone(url.Value, dir, auth, clone, output)
+		err = git.Clone(url.Value, dir, auth, clone, output)
 
 		//Send the logs
 		if len(stdOut.Bytes()) > 0 {
