@@ -18,17 +18,17 @@ import (
 
 func runGitTag(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		url := sdk.ParameterFind(a.Parameters, "url")
-		authPrivateKey := sdk.ParameterFind(a.Parameters, "authPrivateKey")
-		user := sdk.ParameterFind(a.Parameters, "user")
-		password := sdk.ParameterFind(a.Parameters, "password")
-		signKey := sdk.ParameterFind(a.Parameters, "signKey")
-		tagName := sdk.ParameterFind(a.Parameters, "tagName")
-		tagMessage := sdk.ParameterFind(a.Parameters, "tagMessage")
-		path := sdk.ParameterFind(a.Parameters, "path")
+		url := sdk.ParameterFind(&a.Parameters, "url")
+		authPrivateKey := sdk.ParameterFind(&a.Parameters, "authPrivateKey")
+		user := sdk.ParameterFind(&a.Parameters, "user")
+		password := sdk.ParameterFind(&a.Parameters, "password")
+		signKey := sdk.ParameterFind(&a.Parameters, "signKey")
+		tagName := sdk.ParameterFind(&a.Parameters, "tagName")
+		tagMessage := sdk.ParameterFind(&a.Parameters, "tagMessage")
+		path := sdk.ParameterFind(&a.Parameters, "path")
 
 		if tagName == nil || tagName.Value == "" {
-			tagName = sdk.ParameterFind(*params, "cds.semver")
+			tagName = sdk.ParameterFind(params, "cds.semver")
 			if tagName == nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
@@ -50,7 +50,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 
 		var username string
 		if user == nil || user.Value == "" {
-			u := sdk.ParameterFind(*params, "cds.triggered_by.username")
+			u := sdk.ParameterFind(params, "cds.triggered_by.username")
 			if u == nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
@@ -136,9 +136,9 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		}
 
 		if signKey != nil && signKey.Value != "" {
-			privateKey := sdk.ParameterFind(*params, fmt.Sprintf("%s.priv", signKey.Value))
-			publicKey := sdk.ParameterFind(*params, fmt.Sprintf("%s.pub", signKey.Value))
-			keyID := sdk.ParameterFind(*params, fmt.Sprintf("%s.id", signKey.Value))
+			privateKey := sdk.ParameterFind(params, fmt.Sprintf("%s.priv", signKey.Value))
+			publicKey := sdk.ParameterFind(params, fmt.Sprintf("%s.pub", signKey.Value))
+			keyID := sdk.ParameterFind(params, fmt.Sprintf("%s.id", signKey.Value))
 
 			if privateKey == nil {
 				res := sdk.Result{
