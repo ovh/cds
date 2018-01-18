@@ -23,13 +23,8 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		password := sdk.ParameterFind(&a.Parameters, "password")
 		branch := sdk.ParameterFind(&a.Parameters, "branch")
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
-<<<<<<< HEAD
 		commit := sdk.ParameterFind(&a.Parameters, "commit")
 		directory := sdk.ParameterFind(&a.Parameters, "directory")
-=======
-		commit := sdk.ParameterFind(a.Parameters, "commit")
-		directory := sdk.ParameterFind(a.Parameters, "directory")
->>>>>>> master
 
 		if url == nil {
 			res := sdk.Result{
@@ -225,11 +220,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	}
 	v.Pre = append(v.Pre, pr)
 
-<<<<<<< HEAD
 	cdsVersion := sdk.ParameterFind(params, "cds.version")
-=======
-	cdsVersion := sdk.ParameterFind(*params, "cds.version")
->>>>>>> master
 	if cdsVersion != nil {
 		v.Build = append(v.Build, cdsVersion.Value, "cds")
 	}
