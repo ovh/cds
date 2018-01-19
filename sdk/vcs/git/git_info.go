@@ -22,7 +22,7 @@ func ExtractInfo(dir string) Info {
 	info := Info{}
 	cmdHash := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "HEAD"}}}
 	cmdDescribe := []cmd{{dir: dir, cmd: "git", args: []string{"describe", "--tags"}}}
-	cmdMessage := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%s", "-1"}}}
+	cmdMessage := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%B", "-1"}}}
 	cmdAuthor := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%an", "-1"}}}
 	cmdAuthorEmail := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%ae", "-1"}}}
 	cmdCurrentBranch := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "--abbrev-ref", "HEAD"}}}
