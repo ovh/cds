@@ -331,7 +331,8 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
-	r.Handle("/user/tokens", r.GET(api.getUserTokenListHandler))
+	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
+	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
 	r.Handle("/user/import", r.POST(api.importUsersHandler, NeedAdmin(true)))
 	r.Handle("/user/{username}", r.GET(api.getUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.updateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.deleteUserHandler, NeedUsernameOrAdmin(true)))
