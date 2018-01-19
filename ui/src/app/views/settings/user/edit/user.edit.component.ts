@@ -35,15 +35,19 @@ export class UserEditComponent implements OnInit {
                 private _authentificationStore: AuthentificationStore,
                 private _groupService: GroupService) {
         this.currentUser = this._authentificationStore.getUser();
-        this.tokensLoading = true;
-        this._userService.getTokens()
-            .pipe(finalize(() => this.tokensLoading = false))
-            .subscribe((tokens) => this.tokens = tokens);
     }
 
     ngOnInit() {
         this._route.params.subscribe(params => {
             this.username = params['username'];
+
+            if (this.username === this.currentUser.username) {
+              this.tokensLoading = true;
+              this._userService.getTokens()
+                  .pipe(finalize(() => this.tokensLoading = false))
+                  .subscribe((tokens) => this.tokens = tokens);
+            }
+
             this._userService.getUser(this.username).subscribe( u => {
                 this.user = u;
                 this.username = this.user.username;
