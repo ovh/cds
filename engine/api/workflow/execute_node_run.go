@@ -657,6 +657,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValu
 			return repository, branch, hash, author, message, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", repository, hash)
 		}
 		author = commit.Author.DisplayName
+		message = commit.Message
 
 		return repository, branch, hash, author, message, nil
 	}
