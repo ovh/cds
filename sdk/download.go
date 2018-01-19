@@ -59,7 +59,7 @@ func IsBinaryOSArchValid(directoriesDownload, name, osBinary, arch string) (stri
 			for _, a := range o.Archs {
 				if a.Arch == fixedArch {
 					// name, os, arch found, it's valid
-					if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("%s%s-%s-%s%s", getPrefix(name), name, osBinary, fixedArch, o.Extension))); err == nil {
+					if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("%s%s-%s-%s%s", DownloadGetPrefix(name), name, osBinary, fixedArch, o.Extension))); err == nil {
 						return fixedArch, o.Extension, nil
 					}
 					return fixedArch, "", ErrDownloadDoesNotExist
@@ -74,7 +74,8 @@ func IsBinaryOSArchValid(directoriesDownload, name, osBinary, arch string) (stri
 	return fixedArch, "", ErrDownloadInvalidArch
 }
 
-func getPrefix(name string) string {
+// DownloadGetPrefix returns "" for cdsctl name, "cds-" otherwise
+func DownloadGetPrefix(name string) string {
 	if name == "cdsctl" {
 		return ""
 	}
@@ -135,7 +136,7 @@ func GetStaticDownloadsWithAvailability(directoriesDownload string) []Download {
 	for k, d := range downloads {
 		for ks, o := range downloads[k].OSArchs {
 			for ka, a := range downloads[k].OSArchs[ks].Archs {
-				if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("%s%s-%s-%s%s", getPrefix(d.Name), d.Name, o.OS, a.Arch, o.Extension))); err == nil {
+				if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("%s%s-%s-%s%s", DownloadGetPrefix(d.Name), d.Name, o.OS, a.Arch, o.Extension))); err == nil {
 					downloads[k].OSArchs[ks].Archs[ka].Available = true
 				}
 			}
