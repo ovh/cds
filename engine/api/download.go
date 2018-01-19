@@ -32,7 +32,7 @@ func (api *API) downloadHandler() Handler {
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment;filename="%s%s"`, name, extension))
 
-		path := path.Join(api.Config.Directories.Download, fmt.Sprintf("%s%s-%s-%s", sdk.DownloadGetPrefix(name), name, os, arch))
+		path := path.Join(api.Config.Directories.Download, fmt.Sprintf("%s%s-%s-%s%s", sdk.DownloadGetPrefix(name), name, os, arch, extension))
 
 		http.ServeFile(w, r, path)
 		return nil
