@@ -73,8 +73,8 @@ func main() {
 	// hidden command, generateDocumentation, only used to generate hugo documentation
 	// run with ./engine generateDocumentation
 	osArgs := os.Args[1:]
-	if len(osArgs) == 1 && osArgs[0] == "generateDocumentation" {
-		if err := doc.GenerateDocumentation(mainCmd); err != nil {
+	if len(osArgs) == 3 && osArgs[0] == "generateDocumentation" {
+		if err := doc.GenerateDocumentation(mainCmd, osArgs[1], osArgs[2]); err != nil {
 			sdk.Exit(err.Error())
 		}
 		os.Exit(0)
@@ -110,11 +110,16 @@ var versionCmd = &cobra.Command{
 }
 
 var docCmd = &cobra.Command{
-	Use:    "doc",
+	Use:    "doc <generation-path> <git-directory>",
 	Short:  "generate hugo doc for building http://ovh.github.com/cds",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := doc.GenerateDocumentation(mainCmd); err != nil {
+		fmt.Printf("%+v", args)
+		if len(args) != 2 {
+			cmd.Usage()
+			os.Exit(1)
+		}
+		if err := doc.GenerateDocumentation(mainCmd, args[0], args[1]); err != nil {
 			sdk.Exit(err.Error())
 		}
 	},

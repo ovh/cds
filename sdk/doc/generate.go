@@ -2,23 +2,27 @@ package doc
 
 import (
 	"fmt"
+	"go/ast"
+	godoc "go/doc"
+	"go/parser"
+	"go/token"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
 
 // GenerateDocumentation generates hugo documentation for a command line
-func GenerateDocumentation(root *cobra.Command) error {
+func GenerateDocumentation(root *cobra.Command, genPath, gitPath string) error {
 	const fmTemplate = `+++
 title = "%s"
 +++
 `
-
 	rootName := root.Name()
 	filePrepender := func(filename string) string {
 		name := filepath.Base(filename)
@@ -33,11 +37,16 @@ title = "%s"
 		return fmt.Sprintf("/cli/%s/%s/", rootName, strings.Replace(strings.ToLower(base), "_", "/", -1))
 	}
 
-	if err := os.MkdirAll(rootName, os.ModePerm); err != nil {
+	fmt.Printf("%s\n", rootName)
+	if err := os.MkdirAll(genPath+"/"+rootName, os.ModePerm); err != nil {
 		return err
 	}
 
-	return genMarkdownTreeCustom(root, "./"+rootName, filePrepender, linkHandler)
+	if gitPath != "" {
+		GetAllRouteInfo(gitPath + "/engine/api")
+	}
+
+	return genMarkdownTreeCustom(root, genPath+"/"+rootName, filePrepender, linkHandler)
 }
 
 // genMarkdownTreeCustom is the the same as GenMarkdownTree, but
@@ -98,4 +107,223 @@ func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, li
 	}
 	cmd.DisableAutoGenTag = true
 	return doc.GenMarkdownCustom(cmd, f, linkHandler)
+}
+
+const (
+	title       = "@title"
+	description = "@description"
+	queryParam  = "@params"
+	body        = "@body"
+)
+
+// Method Represent data on a method
+type Method struct {
+	Doc  string
+	Name string
+}
+
+// Doc represents elements wanted in the documentation
+type Doc struct {
+	Title         string
+	Description   string
+	Method        string
+	URL           string
+	QueryParams   []string
+	Body          string
+	Middleware    []Middleware
+	HTTPOperation string
+}
+
+// RouteInfo Information on a route
+type RouteInfo struct {
+	URL           string
+	URLParams     []string
+	Method        string
+	Middleware    []Middleware
+	HTTPOperation string
+}
+
+// Middleware Represente a middleware
+type Middleware struct {
+	Name  string
+	Value []string
+}
+
+type visitor struct {
+	processingNewRoute bool
+
+	allRoutes map[string]RouteInfo
+}
+
+var newHandle bool
+var currentRouteInfo RouteInfo
+
+// Generate the api documentation
+func GetAllRouteInfo(path string) []Doc {
+	fset := token.NewFileSet() // positions are relative to fset
+	dm, err := parser.ParseDir(fset, path, filterFile, parser.ParseComments)
+	if err != nil {
+		sdk.Exit(err.Error())
+	}
+
+	// Get all method and documentation
+	var methods map[string]Method
+	for _, f := range dm {
+		p := godoc.New(f, "./", 1)
+		for _, t := range p.Types {
+			if t.Name == "API" {
+				methods = make(map[string]Method)
+				for _, f := range t.Methods {
+					methods[f.Name] = Method{
+						Name: f.Name,
+						Doc:  f.Doc,
+					}
+				}
+				break
+			}
+		}
+	}
+
+	// Get all Handlers
+	d, err := parser.ParseFile(fset, path+"/api_routes.go", nil, parser.AllErrors)
+	v := newVisitor()
+	ast.Walk(v, d)
+
+	allDocs := []Doc{}
+	for _, m := range methods {
+		routeInfo, ok := v.allRoutes[m.Name]
+		if !ok {
+			continue
+		}
+		d := Doc{}
+		extractFromMethod(&d, m)
+		extractFromRouteInfo(&d, routeInfo)
+		allDocs = append(allDocs, d)
+	}
+	return allDocs
+}
+
+func extractFromMethod(doc *Doc, m Method) {
+	docSliptted := strings.Split(m.Doc, "\n")
+	for _, dLine := range docSliptted {
+		if strings.Contains(dLine, title) {
+			doc.Title = strings.Trim(strings.Replace(dLine, title, "", -1), " ")
+		}
+		if strings.Contains(dLine, description) {
+			doc.Description = strings.Trim(strings.Replace(dLine, description, "", -1), " ")
+		}
+		if strings.Contains(dLine, queryParam) {
+			doc.QueryParams = append(doc.QueryParams, strings.Trim(strings.Replace(dLine, queryParam, "", -1), " "))
+		}
+		if strings.Contains(dLine, body) {
+			doc.Body = strings.Trim(strings.Replace(dLine, body, "", -1), " ")
+		}
+	}
+}
+func extractFromRouteInfo(doc *Doc, routeInfo RouteInfo) {
+	doc.Method = routeInfo.Method
+	doc.HTTPOperation = routeInfo.HTTPOperation
+	doc.Middleware = routeInfo.Middleware
+	doc.URL = buildURL(routeInfo.URL)
+}
+
+func buildURL(url string) string {
+	url = strings.Replace(url, "\"", "", -1)
+	urlSplitted := strings.Split(url, "/")
+	for i, u := range urlSplitted {
+		u = strings.Replace(strings.Replace(u, "{", "<", 1), "}", ">", 1)
+		switch u {
+		case "<key>", "<permProjectKey>":
+			u = "<project-key>"
+		case "<app>", "<permApplicationName>":
+			u = "<application-name>"
+		case "<pip>", "<permPipelineKey>":
+			u = "<pipeline-name>"
+		case "<permWorkflowName>":
+			u = "<workflow-name>"
+		case "<permEnvironmentName>":
+			u = "<environment-name>"
+		case "<permID>":
+			u = "<token>"
+		case "<permGroupName>", "<groupName>":
+			u = "<group-name>"
+		case "<nodeRunID>":
+			u = "node-run-id"
+		case "<user>":
+			u = "<user-name>"
+		}
+		urlSplitted[i] = u
+	}
+	return strings.Join(urlSplitted, "/")
+}
+
+func filterFile(f os.FileInfo) bool {
+	if strings.HasSuffix(f.Name(), "_test.go") {
+		return false
+	}
+	return true
+}
+
+func newVisitor() visitor {
+	return visitor{
+		allRoutes: make(map[string]RouteInfo),
+	}
+}
+
+func (v visitor) Visit(n ast.Node) ast.Visitor {
+	if n == nil {
+		return nil
+	}
+
+	switch d := n.(type) {
+	case *ast.SelectorExpr:
+		if d.Sel.Name == "Handle" {
+			// Save previous operation
+			if currentRouteInfo.Method != "" && currentRouteInfo.HTTPOperation != "" {
+				v.allRoutes[currentRouteInfo.Method] = currentRouteInfo
+			}
+			currentRouteInfo = RouteInfo{}
+		} else if isHttpOperation(d.Sel.Name) {
+			// new Route
+			if currentRouteInfo.HTTPOperation != "" && currentRouteInfo.Method != "" {
+				v.allRoutes[currentRouteInfo.Method] = currentRouteInfo
+			}
+			url := currentRouteInfo.URL
+			currentRouteInfo = RouteInfo{
+				URL:           url,
+				HTTPOperation: d.Sel.Name,
+			}
+		} else {
+			currentRouteInfo.Method = d.Sel.Name
+		}
+	case *ast.CallExpr:
+		setMiddleWare(d)
+	case *ast.BasicLit:
+		if currentRouteInfo.URL == "" {
+			currentRouteInfo.URL = d.Value
+		}
+	}
+	return v
+}
+
+func isHttpOperation(op string) bool {
+	switch op {
+	case "GET", "POST", "PUT", "DELETE", "POSTEXECUTE":
+		return true
+	}
+	return false
+}
+
+func setMiddleWare(callExpr *ast.CallExpr) {
+	switch fmt.Sprintf("%s", callExpr.Fun) {
+	case "NeedAdmin", "NeedUsernameOrAdmin", "Auth", "NeedHatchery", "NeedService", "NeedWorker", "AllowServices":
+		m := Middleware{
+			Name:  fmt.Sprintf("%s", callExpr.Fun),
+			Value: make([]string, len(callExpr.Args)),
+		}
+		for i, a := range callExpr.Args {
+			m.Value[i] = fmt.Sprintf("%s", a)
+		}
+		currentRouteInfo.Middleware = append(currentRouteInfo.Middleware, m)
+	}
 }
