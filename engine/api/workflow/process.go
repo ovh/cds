@@ -517,7 +517,6 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		w.Tag(tagGitHash, run.VCSHash)
 	}
 	w.Tag(tagGitAuthor, vcsAuthor)
-	w.Tag(tagGitMessage, vcsMessage)
 
 	// Add env tag
 	if n.Context != nil && n.Context.Environment != nil {
