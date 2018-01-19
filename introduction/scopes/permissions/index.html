@@ -1382,9 +1382,7 @@
 
 
 
-<p>Permissions in CDS are managed by group and not on a single user.</p>
-
-<p>You have 3 types of permissions:</p>
+<p>In CDS, there are 3 types of permissions:</p>
 
 <ul>
 <li>Read</li>
@@ -1392,7 +1390,7 @@
 <li>Read / Write / Execute</li>
 </ul>
 
-<p>You can attach a group permission at different scopes:</p>
+<p>These permissions can be attached to different objects:</p>
 
 <ul>
 <li>On project</li>
@@ -1402,29 +1400,29 @@
 <li>On workflow</li>
 </ul>
 
-<p>Thanks to these different scopes you can for example have group to read, group to execute and group to write. If the permission group on the workflow, pipelines, environments and applications linked is <code>Read / Execute</code> then the users in this group can read and execute the workflow and pipeline inside but cannot edit the pipeline or workflow.</p>
+<p>In CDS, permissions cannot be attached directly to users. Permissions need to be attached to groups of users. Users inherit their permissions from the groups they are belonging to.</p>
 
-<p>A good use case to identify the flexibility of the group permission at different scope is when you have a workflow with different pipelines and 2 pipelines used to deploy your application. One in the pre-production environment and another on the production environment. If you want to permit  all people to deploy on your <code>pre-production</code> environment but let specific users to deploy on your <code>production</code> environment because you want to control your deployment in <code>production</code>. It&rsquo;s possible thanks to these different scopes of group permission if you don&rsquo;t give <code>Read / Execute</code> permission on the <code>production</code> environment then this group won&rsquo;t be able to execute the pipeline linked to the environment <code>production</code>.</p>
+<p>Example usage: Enforce a strict separation of duties by allowing a group of people to view/inspect a workflow, a second group will be able to push it to a <code>staging</code> environment and a third group will be allowed to push it to a <code>production</code> environment. You can have a fourth group responsible of editing the workflow if needed.</p>
 
-<p><strong>Pay attention</strong>, a common mistake when you add a new group permission on a workflow scope, make sure to give the permission on all linked scopes (project, environments, applications, pipelines).</p>
+<p>A more common scenario consists in giving <code>Read / Execute</code> permissions on the <code>staging</code> environment to everyone in your development team while restricting the <code>production</code> deployments and the pipeline edition to a smaller group of users.</p>
+
+<p><strong>Warning:</strong> when you add a new group permission on a workflow scope, make sure to give the permission on all linked scopes (project, environments, applications, pipelines).</p>
 
 <h1 id="tokens">Tokens</h1>
 
 <p>A group permission is also attached to <a href="https://ovh.github.io/cds/cli/">CLI</a>, <a href="https://ovh.github.io/cds/worker/">workers</a>, <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">worker models</a>, <a href="https://ovh.github.io/cds/hatchery/">hatchery</a> and all different services in CDS.</p>
 
-<p>When you need to use the CDS <a href="https://ovh.github.io/cds/cli/">CLI</a> in a script and don&rsquo;t want to store password you can use the <a href="https://ovh.github.io/cds/cli/">CLI</a> with an <strong>authentication token</strong>. Or when you start an <a href="https://ovh.github.io/cds/hatchery/">hatchery</a> you need an authentication token to contact the CDS API.</p>
+<p>When using the CDS <a href="https://ovh.github.io/cds/cli/">CLI</a> in a script, instead of providing your own passwords, you want to generate and use an <a href="https://ovh.github.io/cds/cli/">CLI</a> <strong>authentication token</strong>. Similarly, when you start a <a href="https://ovh.github.io/cds/hatchery/">hatchery</a> you will need an authentication token to contact the CDS API.</p>
 
-<p>In order to list, generate or remove tokens linked to a group permission you can do it with the <code>cdsctl group token</code> command (<a href="https://ovh.github.io/cds/cli/cdsctl/token/">documentation available here</a>).</p>
+<p>The <code>cdsctl group token</code> command allows to list, generate and remove tokens linked to a group permission (<a href="https://ovh.github.io/cds/cli/cdsctl/token/">documentation available here</a>). Alternatively, you can do it via the user interface in the group administration view.</p>
 
-<p>You can do the same via the user interface in the group administration view.</p>
+<p>Click on the <code>Groups</code> entry in the menu
+<img src="https://ovh.github.io/cds/images/groups_menu.png" alt="Job" /></p>
 
-<p><img src="https://ovh.github.io/cds/images/groups_menu.png" alt="Job" /></p>
+<p>And then in the group edition view, you can manage all your generated tokens for this group and generate new ones.
+<img src="https://ovh.github.io/cds/images/group_view.png" alt="Job" /></p>
 
-<p>And then on a group edition view you can handle all your generated tokens for this group and generate new ones.</p>
-
-<p><img src="https://ovh.github.io/cds/images/group_view.png" alt="Job" /></p>
-
-<p>If you want to list all the tokens that you can use or access you can go on the profile page to see a list of all tokens between different groups.</p>
+<p>If you want to list all the tokens that you can use go to your profile page and you will find a list of all the tokens associated to your groups.</p>
 
 
 <footer class=" footline" >

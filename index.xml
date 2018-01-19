@@ -329,10 +329,10 @@ We will create a model called docker:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/introduction/scopes/permissions/</guid>
-      <description>Permissions in CDS are managed by group and not on a single user.
-You have 3 types of permissions:
- Read Read / Execute Read / Write / Execute  You can attach a group permission at different scopes:
- On project On application On environment On pipeline On workflow  Thanks to these different scopes you can for example have group to read, group to execute and group to write.</description>
+      <description>In CDS, there are 3 types of permissions:
+ Read Read / Execute Read / Write / Execute  These permissions can be attached to different objects:
+ On project On application On environment On pipeline On workflow  In CDS, permissions cannot be attached directly to users. Permissions need to be attached to groups of users. Users inherit their permissions from the groups they are belonging to.
+Example usage: Enforce a strict separation of duties by allowing a group of people to view/inspect a workflow, a second group will be able to push it to a staging environment and a third group will be allowed to push it to a production environment.</description>
     </item>
     
     <item>
@@ -1687,9 +1687,10 @@ Synopsis Start CDS Engine Services
 API This is the core component of CDS.
 Hatcheries They are the components responsible for spawning workers. Supported platforms/orchestrators are:
  Local machine Openstack Docker Swarm Openstack Vsphere  Hooks This component operates CDS workflow hooks
+Repositories This component operates CDS workflow repositories
 VCS This component operates CDS VCS connectivity
 Start all of this with a single command:
-$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]  All the services are using the same configuration file format.</description>
+$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs] [repositories]  All the services are using the same configuration file format.</description>
     </item>
     
     <item>
