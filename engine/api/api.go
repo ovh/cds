@@ -190,7 +190,7 @@ func DirectoryExists(path string) (bool, error) {
 func (a *API) CheckConfiguration(config interface{}) error {
 	aConfig, ok := config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return fmt.Errorf("Invalid API configuration")
 	}
 
 	if aConfig.URL.API == "" {

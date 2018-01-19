@@ -46,7 +46,7 @@ type Configuration struct {
 		Token                string `toml:"token" default:"************"`
 		RequestTimeout       int    `toml:"requestTimeout" default:"10"`
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10"`
-	} `toml:"api" comment:"######################\n CDS API Settings \n######################`
+	} `toml:"api" comment:"######################\n CDS API Settings \n######################"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {

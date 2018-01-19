@@ -25,6 +25,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/doc"
@@ -143,6 +144,7 @@ Comming soon...`,
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
+		conf.Repositories.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
 		conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
@@ -269,12 +271,15 @@ They are the components responsible for spawning workers. Supported platforms/or
 #### Hooks
 This component operates CDS workflow hooks
 
+#### Repositories
+This component operates CDS workflow repositories
+
 #### VCS
 This component operates CDS VCS connectivity
 
 Start all of this with a single command:
 
-	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
+	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs] [repositories]
 
 All the services are using the same configuration file format.
 
@@ -356,6 +361,9 @@ See $ engine config command for more details.
 			case "vcs":
 				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: conf.VCS})
 				names = append(names, conf.VCS.Name)
+			case "repositories":
+				services = append(services, serviceConf{arg: a, service: repositories.New(), cfg: conf.Repositories})
+				names = append(names, conf.Repositories.Name)
 			default:
 				fmt.Printf("Error: service '%s' unknown\n", a)
 				os.Exit(1)

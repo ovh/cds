@@ -2,12 +2,12 @@ import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {Project} from '../../../../model/project.model';
 import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
-import {Pipeline} from '../../../../model/pipeline.model';
-import {cloneDeep} from 'lodash';
+import {cloneDeep, unionBy} from 'lodash';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {VariableService} from '../../../../service/variable/variable.service';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {ParameterEvent} from '../../../parameter/parameter.event.model';
 import {Subscription} from 'rxjs/Subscription';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
@@ -93,7 +93,7 @@ export class WorkflowNodeContextComponent {
                 if (pip) {
                     this.pipParamsReady = true;
                     this.editableNode.context.default_pipeline_parameters =
-                        Pipeline.mergeParams(pip.parameters, this.editableNode.context.default_pipeline_parameters);
+                        unionBy(pip.parameters, this.editableNode.context.default_pipeline_parameters, 'name');
                     try {
                         this.editableNode.context.default_payload = JSON.parse(this.payloadString);
                         this.invalidJSON = false;
@@ -164,5 +164,15 @@ export class WorkflowNodeContextComponent {
             payloadCompletionList: this.branches,
             specialChars: ''
         });
+    }
+
+    parameterEvent(event: ParameterEvent) {
+        switch (event.type) {
+            case 'delete':
+            this.editableNode.context.default_pipeline_parameters =
+                this.editableNode.context.default_pipeline_parameters.filter((param) => param.name !== event.parameter.name);
+            event.parameter.updating = false;
+            break;
+        }
     }
 }

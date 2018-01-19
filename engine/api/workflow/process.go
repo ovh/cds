@@ -479,14 +479,14 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	gitValues := map[string]string{}
 	for _, param := range jobParams {
 		switch param.Name {
-		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitRepository:
+		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository:
 			gitValues[param.Name] = param.Value
 		}
 	}
 
-	var vcsAuthor string
+	var vcsAuthor, vcsMessage string
 	var errVcs error
-	run.VCSRepository, run.VCSBranch, run.VCSHash, vcsAuthor, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
+	run.VCSRepository, run.VCSBranch, run.VCSHash, vcsAuthor, vcsMessage, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
 	if errVcs != nil {
 		log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
 	}
@@ -503,6 +503,9 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	}
 	if v := gitValues[tagGitAuthor]; v == "" {
 		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsAuthor)
+	}
+	if v := gitValues[tagGitMessage]; v == "" {
+		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsMessage)
 	}
 
 	//Tag VCS infos

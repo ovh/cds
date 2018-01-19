@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/vcs"
 )
 
@@ -42,8 +43,9 @@ type Configuration struct {
 		Swarm     swarm.HatcheryConfiguration     `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
 		VSphere   vsphere.HatcheryConfiguration   `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
 	} `toml:"hatchery"`
-	Hooks hooks.Configuration `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################"`
-	VCS   vcs.Configuration   `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################"`
+	Hooks        hooks.Configuration        `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################"`
+	VCS          vcs.Configuration          `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################"`
+	Repositories repositories.Configuration `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################"`
 }
 
 type ServiceServeOptions struct {

@@ -32,6 +32,7 @@ export class ParameterListComponent extends Table {
     @Input() project: Project;
     @Input() suggest: Array<string>;
     @Input() keys: AllKeys;
+    @Input() canDelete: boolean;
 
     // edit/launcher/ro/job
     @Input() mode = 'edit';
@@ -77,6 +78,9 @@ export class ParameterListComponent extends Table {
 
     getColspan(): number {
         if (this.mode && this.mode === 'launcher') {
+            if (this.canDelete) {
+                return 3;
+            }
             return 2;
         }
         return 4;

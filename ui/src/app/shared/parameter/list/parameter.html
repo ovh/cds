@@ -1,13 +1,13 @@
 <div class="parameter" *ngIf="ready">
     <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead [hidden]="mode === 'launcher' || mode === 'job'">
-        <tr>
-            <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_name' | translate }}</th>
-            <th class="two wide" *ngIf="mode !=='launcher' && mode !== 'job'">{{ 'parameter_type' | translate }}</th>
-            <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_value' | translate }}</th>
-            <th class="four wide" *ngIf="mode !== 'launcher' && mode !== 'job'">{{ 'parameter_description' | translate }}</th>
-            <th class="two wide"></th>
-        </tr>
+          <tr>
+              <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_name' | translate }}</th>
+              <th class="two wide" *ngIf="mode !=='launcher' && mode !== 'job'">{{ 'parameter_type' | translate }}</th>
+              <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_value' | translate }}</th>
+              <th class="four wide" *ngIf="mode !== 'launcher' && mode !== 'job'">{{ 'parameter_description' | translate }}</th>
+              <th class="two wide"></th>
+          </tr>
         </thead>
         <tbody>
         <tr *ngFor="let p of getDataForCurrentPage()" class="ui form">
@@ -76,6 +76,9 @@
                         <app-delete-button (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
                     </ng-template>
                 </ng-container>
+            </td>
+            <td class="center" *ngIf="mode === 'launcher' && canDelete">
+              <app-delete-button (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
             </td>
         </tr>
         </tbody>

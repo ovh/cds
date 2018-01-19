@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -30,6 +31,9 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	nbWorkflowNodeRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
 	nbWorkflowNodeRunJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_run_jobs", Help: "metrics nb_workflow_node_run_jobs", ConstLabels: labels})
 
+	nbOldPipelineBuilds := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_old_pipeline_builds", Help: "metrics nb_old_pipeline_builds", ConstLabels: labels})
+	nbOldPipelineBuildJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_old_pipeline_build_jobs", Help: "metrics nb_old_pipeline_build_jobs", ConstLabels: labels})
+
 	registry.MustRegister(nbUsers)
 	registry.MustRegister(nbApplications)
 	registry.MustRegister(nbProjects)
@@ -41,6 +45,8 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	registry.MustRegister(nbWorkflowRuns)
 	registry.MustRegister(nbWorkflowNodeRuns)
 	registry.MustRegister(nbWorkflowNodeRunJobs)
+	registry.MustRegister(nbOldPipelineBuilds)
+	registry.MustRegister(nbOldPipelineBuildJobs)
 
 	tick := time.NewTicker(30 * time.Second).C
 
@@ -62,8 +68,10 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				count(DBFunc(), "SELECT COUNT(1) FROM artifact", nbArtifacts)
 				count(DBFunc(), "SELECT COUNT(1) FROM worker_model", nbWorkerModels)
 				count(DBFunc(), "SELECT MAX(id) FROM workflow_run", nbWorkflowRuns)
-				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run", nbWorkflowRuns)
+				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run", nbWorkflowNodeRuns)
 				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run_job", nbWorkflowNodeRunJobs)
+				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build", nbOldPipelineBuilds)
+				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build_job", nbOldPipelineBuildJobs)
 			}
 		}
 	}(c, DBFunc)
@@ -73,12 +81,15 @@ func count(db *gorp.DbMap, query string, v prometheus.Summary) {
 	if db == nil {
 		return
 	}
-	var n int64
+	var n sql.NullInt64
 	if err := db.QueryRow(query).Scan(&n); err != nil {
 		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
 		return
 	}
-	v.Observe(float64(n))
+	if n.Valid {
+		v.Observe(float64(n.Int64))
+	}
+
 }
 
 // GetGatherer returns CDS API gatherer
