@@ -15,7 +15,6 @@
         <thead>
         <tr>
             <th class="four wide center">{{ 'token_description' | translate }}</th>
-            <th class="three wide center">{{ 'token_value' | translate }}</th>
             <th class="three wide center">{{ 'token_type' | translate }}</th>
             <th class="three wide center">{{ 'token_group_name' | translate }}</th>
             <th class="five wide center">{{ 'token_created' | translate }}</th>
@@ -26,12 +25,6 @@
         <tr *ngFor="let t of getDataForCurrentPage()">
             <td class="border center">
                 {{t.description}}
-            </td>
-            <td class="border token-content center">
-                <button class="ui circular icon button" *ngIf="!showToken[t.token]" (click)="showToken[t.token] = true">
-                    <i class="unhide icon"></i>
-                </button>
-                <span *ngIf="showToken[t.token]">{{t.token}}</span>
             </td>
             <td class="border center">
                 {{expirationToString[t.expiration]}}
@@ -50,11 +43,6 @@
             <td class="border center">
                 <div class="ui fluid input focus">
                     <input class="ui input" placeholder="Description" [(ngModel)]="newToken.description">
-                </div>
-            </td>
-            <td class="border token-content center">
-                <div class="ui fluid input focus disabled">
-                    <input class="ui input">
                 </div>
             </td>
             <td class="border center">
@@ -86,7 +74,7 @@
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
         <tr>
-            <th colspan="6">
+            <th colspan="5">
                 <div class="ui right floated pagination menu" >
                     <a class="icon item" (click)="downPage()">
                         <i class="left chevron icon"></i>
