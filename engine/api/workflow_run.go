@@ -77,8 +77,6 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", (limit - offset))
 	}
 
-	fmt.Println(runs)
-
 	code := http.StatusOK
 
 	//RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"

@@ -290,7 +290,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, workflowName, nodeName string, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	query := `
-		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id 
+		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id
 		FROM workflow_node_context
 		JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
 		JOIN workflow ON workflow.id = workflow_node.workflow_id

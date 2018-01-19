@@ -26,7 +26,7 @@
                         <label>{{'user_label_admin' | translate}}</label>
                     </div>
                 </div>
-                <div class="field">
+                <div class="field inline">
                     <app-delete-button *ngIf="user && user.id && currentUser.admin && user.username !== currentUser.username" class="left floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
                     <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
                       <i class="save icon"></i>{{ 'btn_save' | translate }}
@@ -68,9 +68,8 @@
               </div>
             </div>
         </div>
-        <div class="ui row">
+        <div class="ui row" *ngIf="username === this.currentUser.username">
           <div class="sixteen wide column">
-              <!-- TODO ADD token list attached to user -->
               <h3>{{'token_title_handling' | translate}}</h3>
               <ng-container *ngIf="!tokensLoading">
                 <app-token-list [tokens]="tokens" [displayAdd]="false" (event)="tokenEvent($event)"></app-token-list>
