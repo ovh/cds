@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"path"
 	"sync"
 )
 
