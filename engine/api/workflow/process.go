@@ -479,7 +479,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	gitValues := map[string]string{}
 	for _, param := range jobParams {
 		switch param.Name {
-		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitRepository:
+		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository:
 			gitValues[param.Name] = param.Value
 		}
 	}
