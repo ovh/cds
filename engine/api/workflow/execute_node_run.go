@@ -529,11 +529,13 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 			runj := &stag.RunJobs[iR]
 			if !sdk.StatusIsTerminated(runj.Status) {
 				runj.Status = sdk.StatusStopped.String()
+				runj.Done = time.Now()
 			}
 			for iStep := range runj.Job.StepStatus {
 				stepStat := &runj.Job.StepStatus[iStep]
 				if !sdk.StatusIsTerminated(stepStat.Status) {
 					stepStat.Status = sdk.StatusStopped.String()
+					stepStat.Done = time.Now()
 				}
 			}
 		}
@@ -543,6 +545,7 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 	}
 
 	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Done = time.Now()
 	if errU := UpdateNodeRun(db, &nodeRun); errU != nil {
 		return sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
 	}
