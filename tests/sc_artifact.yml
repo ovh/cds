@@ -6,6 +6,7 @@ testcases:
   - script: {{.cds.build.cds}} project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
   - script: {{.cds.build.cds}} application add ITSCARTIFACT TestApp
   - script: {{.cds.build.cds}} environment add ITSCARTIFACT TestEnv
+  - script: {{.cds.build.cds}} action remove --force IT_SC_cdsartifacttest
 
 - name: test artifact
   steps:
