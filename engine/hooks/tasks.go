@@ -464,7 +464,7 @@ func executeWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 			e.ExtraFields.Len = false
 			e.ExtraFields.Type = false
 			m, err := e.ToStringMap(bodyJSON)
-			if err == nil {
+			if err != nil {
 				return nil, sdk.WrapError(err, "Hooks> Unable to dump body %s", t.WebHook.RequestBody)
 			}
 
