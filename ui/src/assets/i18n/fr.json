@@ -263,6 +263,7 @@
   "token_value": "Token",
   "token_type": "Type",
   "token_created": "Date de création",
+  "token_creator": "Createur",
   "token_deleted": "Le token a bien été supprimé",
   "token_added": "Token généré avec succès",
   "token_no": "Aucun token n'est lié à ce groupe",

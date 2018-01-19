@@ -263,6 +263,7 @@
   "token_value": "Token",
   "token_type": "Type",
   "token_created": "Creation date",
+  "token_creator": "Creator",
   "token_deleted": "Token removed with success",
   "token_added": "Token generated with success",
   "token_no": "No token linked to this group",

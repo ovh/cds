@@ -15,9 +15,10 @@
         <thead>
         <tr>
             <th class="four wide center">{{ 'token_description' | translate }}</th>
-            <th class="three wide center">{{ 'token_type' | translate }}</th>
+            <th class="two wide center">{{ 'token_type' | translate }}</th>
             <th class="three wide center">{{ 'token_group_name' | translate }}</th>
-            <th class="five wide center">{{ 'token_created' | translate }}</th>
+            <th class="three wide center">{{ 'token_creator' | translate }}</th>
+            <th class="three wide center">{{ 'token_created' | translate }}</th>
             <th class="three wide"></th>
         </tr>
         </thead>
@@ -31,6 +32,9 @@
             </td>
             <td class="border center">
                 {{t.group_name}}
+            </td>
+            <td class="border center">
+                {{t.creator}}
             </td>
             <td class="border center">
                 {{t.created | date}}
@@ -66,6 +70,11 @@
                 </div>
             </td>
             <td class="border center">
+                <div class="ui fluid input focus disabled">
+                    <input class="ui input">
+                </div>
+            </td>
+            <td class="border center">
                 <button class="ui blue button" (click)="sendEvent('add', newToken)" [class.loading]="newToken.updating" [class.disabled]="newToken.expirationString == null">
                     <i class="plus icon"></i>{{ 'btn_add' | translate}}
                 </button>
@@ -74,7 +83,7 @@
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
         <tr>
-            <th colspan="5">
+            <th colspan="6">
                 <div class="ui right floated pagination menu" >
                     <a class="icon item" (click)="downPage()">
                         <i class="left chevron icon"></i>
