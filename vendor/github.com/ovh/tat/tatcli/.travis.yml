@@ -1,0 +1,32 @@
+language: go
+go:
+- 1.6
+env:
+  global:
+  - URL_UPDATE_SNAPSHOT=""
+  - PROJECT_NAME="tatcli"
+  - PROJECT_PATH="github.com/ovh"
+
+install: true
+
+script: chmod +x package.sh && ./package.sh
+
+before_deploy:
+  - gem install mime-types -v 2.6.2
+
+deploy:
+  provider: releases
+  api_key:
+    secure: o7I8QKlnHLi0Wl9mBbz24CiMkFMLShAculD1w6Y5XBLQ/+PlHfZ8r9DGvi/3El0pJvqJY1OOvN1yh5d1cCDnhZYpZoMIsEKHhUss/CSNsHBalPiOyvaADDPpPGyLZwsNTvtmTXHZcJZ2Z1IC45lMANMCLzERjAAkacfv79GCIWMURWqd76Fa7uY8wX5k6kYLQeu2CL3TsVE6oM2YZvC9GE96qS2H0Z3Qo4nuuto2XJ6ihutOGkYwF0lnywuuxRz6PkyIFVqMhXJVJLJ0ygZKYRQ9AmH6WUe8KBAizmwH8ZN+6C1xakUut6ynhFlcAINtKahQ/Qr6ZPIbOK3rytCZKeyUaRVZ72p01nZMOOU2dRktkEiRLFaSZ9AQXqoQMMQmZLi6t1cptRMQw8znoZ6c/g63FsE6RchXqTr/QjNHKunoW8LYb4FYsXZ8yJAtrC3btJP1t/dG7iKs98oCUPGegu5fX0pd7wU5BBjg0CJOVhIpZB1qkPlkiQ004IzvQPKhJN1a8qGAULobRFMYwcJRLwDHOmaX2UmeF/r3R8cdBB1LZm4/YTI+T1tPs+RZK5wHqgsk47nhodSvfUcApJ525MlBWbypmwcvTEY4rjZ9mr1aIgpLzzfsrP2G2nbiPjuvwd2bE0Fhaitq0UPYB/8xIWOv9GpfW+fMvkMfCqYgQJg=
+  file:
+    - bin/tatcli-darwin-386
+    - bin/tatcli-darwin-amd64
+    - bin/tatcli-freebsd-386
+    - bin/tatcli-freebsd-amd64
+    - bin/tatcli-linux-386
+    - bin/tatcli-linux-amd64
+    - bin/tatcli-linux-arm
+    - bin/tatcli-windows-386
+    - bin/tatcli-windows-amd64
+  on:
+    tags: true

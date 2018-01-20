@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="generator" content="Hugo 0.19-DEV" />
+    <meta name="description" content="">
+
+
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/ovh/tat/master/tat.png" type="image/x-icon" />
+
+    
+    <title>Monitoring View</title>
+    <link href="https://ovh.github.io/tat/css/nucleus.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/hybrid.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/featherlight.min.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/perfect-scrollbar.min.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/horsey.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/theme.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/hugo-theme.css" rel="stylesheet">
+    <script src="https://ovh.github.io/tat/js/jquery-2.x.min.js"></script>
+    <style type="text/css">:root #header + #content > #left > #rlblock_left
+    {display:none !important;}</style>
+    <link href="https://ovh.github.io/tat/css/style.css" rel="stylesheet">
+
+  </head>
+  <body class="" data-url="/tatwebui/monitoringview/">
+    <nav id="sidebar">
+  <div id="header-wrapper">
+    <div id="header">
+      <img src="https://raw.githubusercontent.com/ovh/tat/master/tat.png" width="25%" style="margin-top: -15px;">
+
+    </div>
+    
+      <div class="searchbox">
+    <label for="search-by"><i class="fa fa-search"></i></label>
+    <input id="search-by" type="text" placeholder="Search">
+</div>
+<script type="text/javascript" src="https://ovh.github.io/tat/js/lunr.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/tat/js/horsey.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/tat";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/tat/js/search.js"></script>
+
+    
+</div>
+
+
+  <div class="highlightable">
+    <ul class="topics">
+      
+      
+        
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+      
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/overview/">
+        <a href="https://ovh.github.io/tat/overview/">
+          <span>
+            
+              <b>1. </b>
+            
+             Overview
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/introduction/">
+              <a href="https://ovh.github.io/tat/overview/introduction/">
+                <span>Introduction     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/concepts/">
+              <a href="https://ovh.github.io/tat/overview/concepts/">
+                <span>Concepts     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/lifecycle/">
+              <a href="https://ovh.github.io/tat/overview/lifecycle/">
+                <span>DevOps LifeCycle / Feedback Loop     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/architecture/">
+              <a href="https://ovh.github.io/tat/overview/architecture/">
+                <span>Architecture     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/contribute/">
+              <a href="https://ovh.github.io/tat/overview/contribute/">
+                <span>Contribute     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  parent" data-nav-id="/tatwebui/">
+        <a href="https://ovh.github.io/tat/tatwebui/">
+          <span>
+            
+              <b>2. </b>
+            
+             Tat Webui
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/introduction/">
+              <a href="https://ovh.github.io/tat/tatwebui/introduction/">
+                <span>Introduction     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/standardview/">
+              <a href="https://ovh.github.io/tat/tatwebui/standardview/">
+                <span>Standard View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/notificationsview/">
+              <a href="https://ovh.github.io/tat/tatwebui/notificationsview/">
+                <span>Notifications View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item active" data-nav-id="/tatwebui/monitoringview/">
+              <a href="https://ovh.github.io/tat/tatwebui/monitoringview/">
+                <span>Monitoring View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/pastatview/">
+              <a href="https://ovh.github.io/tat/tatwebui/pastatview/">
+                <span>Pastat View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/dashingview/">
+              <a href="https://ovh.github.io/tat/tatwebui/dashingview/">
+                <span>Dashing View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/releaseview/">
+              <a href="https://ovh.github.io/tat/tatwebui/releaseview/">
+                <span>Release View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/cdsview/">
+              <a href="https://ovh.github.io/tat/tatwebui/cdsview/">
+                <span>CDS View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/development/">
+              <a href="https://ovh.github.io/tat/tatwebui/development/">
+                <span>Development     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/engine/">
+        <a href="https://ovh.github.io/tat/engine/">
+          <span>
+            
+              <b>3. </b>
+            
+             Tat Engine Reference
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/general/">
+              <a href="https://ovh.github.io/tat/engine/general/">
+                <span>General     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-messages/">
+              <a href="https://ovh.github.io/tat/engine/api-messages/">
+                <span>API - Messages     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-topics/">
+              <a href="https://ovh.github.io/tat/engine/api-topics/">
+                <span>API - Topics     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-users/">
+              <a href="https://ovh.github.io/tat/engine/api-users/">
+                <span>API - Users     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-groups/">
+              <a href="https://ovh.github.io/tat/engine/api-groups/">
+                <span>API - Groups     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-presences/">
+              <a href="https://ovh.github.io/tat/engine/api-presences/">
+                <span>API - Presences     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-system/">
+              <a href="https://ovh.github.io/tat/engine/api-system/">
+                <span>API - System     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/simple-installation/">
+              <a href="https://ovh.github.io/tat/engine/simple-installation/">
+                <span>Simple Installation     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/production-installation/">
+              <a href="https://ovh.github.io/tat/engine/production-installation/">
+                <span>Installation - Production Way     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/tatcli/">
+        <a href="https://ovh.github.io/tat/tatcli/">
+          <span>
+            
+              <b>4. </b>
+            
+             Tat CLI Reference
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/general/">
+              <a href="https://ovh.github.io/tat/tatcli/general/">
+                <span>General     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-config/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-config/">
+                <span>tatcli config -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-group/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-group/">
+                <span>tatcli group -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-message/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-message/">
+                <span>tatcli message -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-presence/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-presence/">
+                <span>tatcli presence -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-stats/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-stats/">
+                <span>tatcli stats -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-system/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-system/">
+                <span>tatcli system -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-topic/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-topic/">
+                <span>tatcli topic -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-ui/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-ui/">
+                <span>tatcli ui -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-update/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-update/">
+                <span>tatcli update -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-user/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-user/">
+                <span>tatcli users -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-version/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-version/">
+                <span>tatcli version -h     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/sdk/">
+        <a href="https://ovh.github.io/tat/sdk/">
+          <span>
+            
+              <b>5. </b>
+            
+             Tat SDK
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/sdk/golang-simple-main/">
+              <a href="https://ovh.github.io/tat/sdk/golang-simple-main/">
+                <span>Golang - A simple main example     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/sdk/golang-full-example/">
+              <a href="https://ovh.github.io/tat/sdk/golang-full-example/">
+                <span>Golang - Full Example     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/ecosystem/">
+        <a href="https://ovh.github.io/tat/ecosystem/">
+          <span>
+            
+              <b>6. </b>
+            
+             Ecosystem
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/al2tat/">
+              <a href="https://ovh.github.io/tat/ecosystem/al2tat/">
+                <span>al2tat     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/mail2tat/">
+              <a href="https://ovh.github.io/tat/ecosystem/mail2tat/">
+                <span>mail2tat     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/tat2es/">
+              <a href="https://ovh.github.io/tat/ecosystem/tat2es/">
+                <span>tat2es     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/tat2xmpp/">
+              <a href="https://ovh.github.io/tat/ecosystem/tat2xmpp/">
+                <span>tat2xmpp     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/tatdashing/">
+              <a href="https://ovh.github.io/tat/ecosystem/tatdashing/">
+                <span>tatdashing     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/tatnhack/">
+        <a href="https://ovh.github.io/tat/tatnhack/">
+          <span>
+            
+              <b>7. </b>
+            
+             Tat&#39;n Hack
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatnhack/monitoring-process/">
+              <a href="https://ovh.github.io/tat/tatnhack/monitoring-process/">
+                <span>Monitoring a process with al2tat     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatnhack/visual-feedback/">
+              <a href="https://ovh.github.io/tat/tatnhack/visual-feedback/">
+                <span>Visual Feedback     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+    </ul>
+    <hr>
+     
+    <section id="footer">
+      <p>Built with <a href="http://gohugo.io/">Hugo</a> and <a href="https://github.com/matcornic/hugo-theme-learn">learn theme</a></i></p>
+      <p>Tat is an <a href="https://github.com/ovh">OVH OSS</a></p>
+      <p><a href="https://ovh.com"><img src="https://ovh.github.io/tat/imgs/ovh-logo.png"></a></p>
+    </section>
+  </div>
+</nav>
+
+        <section id="body">
+        <div id="overlay"></div>
+
+        <div class="padding highlightable">
+
+            <div id="top-bar">
+              
+              <div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+                  <span id="sidebar-toggle-span">
+                      <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                        <i class="fa fa-bars"></i>
+                      </a>
+                  </span>
+                
+                <span id="toc-menu"><a href=""><i class="fa fa-list-alt"></i></a></span>
+                
+                
+                
+                
+                  
+                
+                  
+                
+                  
+                
+                  
+                
+                  
+                
+                  
+                
+                  
+                    
+                    
+                <a href="https://ovh.github.io/tat/tatwebui/" itemprop="url"><span itemprop="title">Tat Webui</span></a> <i class="fa fa-angle-right"></i>
+                    
+                  
+                
+                <span itemprop="title"> Monitoring View</span>
+              </div>
+              
+                  <div class="progress">
+    <div class="wrapper">
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#screenshot">Screenshot</a></li>
+<li><a href="#using">Using</a>
+<ul>
+<li><a href="#send-to-tat-engine">Send to Tat Engine</a></li>
+<li><a href="#production-way-with-al2tat">Production Way with al2tat</a></li>
+</ul></li>
+<li><a href="#configuration">Configuration</a></li>
+<li><a href="#source">Source</a></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+</div>
+
+              
+
+            </div>
+            
+    	        <div id="body-inner">
+                
+                <h1>Monitoring View</h1>
+                
+
+
+
+<h2 id="screenshot">Screenshot</h2>
+
+<p><img src="https://ovh.github.io/tat/imgs/tatwebui-monitoring-view.png?width=80%" alt="Monitoring View" /></p>
+
+<h2 id="using">Using</h2>
+
+<h3 id="send-to-tat-engine">Send to Tat Engine</h3>
+
+<p>The screenshot above was created with these messages:</p>
+
+<pre><code class="language-bash">
+tatcli topic truncate /Private/yesnault/Monitoring --force
+for i in {1..99}; do
+  for j in {1..20}; do
+     MTYPE=&quot;UP&quot;;
+     COLOR=&quot;#6C6&quot;;
+     if [ ${j} -eq 7 ]; then MTYPE=&quot;AL&quot;; COLOR=&quot;d9534f&quot;; fi;
+     tatcli msg add /Private/yesnault/Monitoring &quot;#monitoring #myService #item:myItem${i}${j}&quot; --label=&quot;$COLOR;$MTYPE&quot;
+  done
+done
+
+</code></pre>
+
+<h3 id="production-way-with-al2tat">Production Way with al2tat</h3>
+
+<p>Send a monitoring message to al2tat microservice on path /monitoring.
+See <a href="https://github.com/ovh/al2tat">https://github.com/ovh/al2tat</a></p>
+
+<h2 id="configuration">Configuration</h2>
+
+<p>In plugin.tpl.json file, add this line :</p>
+
+<pre><code>&quot;tatwebui-plugin-monitoringview&quot;: &quot;git+https://github.com/ovh/tatwebui-plugin-monitoringview.git&quot;
+</code></pre>
+
+<h2 id="source">Source</h2>
+
+<p><a href="https://github.com/ovh/tatwebui-plugin-monitoringview">https://github.com/ovh/tatwebui-plugin-monitoringview</a></p>
+
+
+      
+      </div>
+    </div>
+
+    <div id="navigation">
+        <a class="nav nav-prev" href="https://ovh.github.io/tat/tatwebui/notificationsview"> <i class="fa fa-chevron-left"></i></a>
+        <a class="nav nav-next" href="https://ovh.github.io/tat/tatwebui/pastatview" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
+    </div>
+
+    </section>
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>
+    <script src="https://ovh.github.io/tat/js/clipboard.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/perfect-scrollbar.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/perfect-scrollbar.jquery.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/jquery.sticky-kit.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/featherlight.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/html5shiv-printshiv.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="https://ovh.github.io/tat/js/modernizr.custom.71422.js"></script>
+    <script src="https://ovh.github.io/tat/js/learn.js"></script>
+    <script src="https://ovh.github.io/tat/js/hugo-learn.js"></script>
+    
+
+  </body>
+</html>
+

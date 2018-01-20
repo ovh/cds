@@ -1,0 +1,700 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ecosystems on TAT - TextAndTag Documentation</title>
+    <link>https://ovh.github.io/tat/ecosystem/index.xml</link>
+    <description>Recent content in Ecosystems on TAT - TextAndTag Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://ovh.github.io/tat/ecosystem/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Ecosystem</title>
+      <link>https://ovh.github.io/tat/ecosystem/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/ecosystem/</guid>
+      <description>
+
+&lt;h3 id=&#34;chapter-6&#34;&gt;Chapter 6&lt;/h3&gt;
+
+&lt;h1 id=&#34;ecosystem&#34;&gt;Ecosystem&lt;/h1&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>al2tat</title>
+      <link>https://ovh.github.io/tat/ecosystem/al2tat/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/ecosystem/al2tat/</guid>
+      <description>
+
+&lt;p&gt;&lt;img align=&#34;right&#34; src=&#34;https://raw.githubusercontent.com/ovh/tat/master/tat.png&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;This microservice can be used :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;to send alerts to Tat (&lt;a href=&#34;https://github.com/ovh/tat&#34;&gt;https://github.com/ovh/tat&lt;/a&gt;).&lt;/li&gt;
+&lt;li&gt;to send monitoring events to Tat.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;alerts&#34;&gt;Alerts&lt;/h2&gt;
+
+&lt;p&gt;An alert is an event with a &amp;lsquo;AL&amp;rsquo; status. An alert can be replayed, al2tat attach
+this on a root message. If there is a new occurrence with same summary with
+&amp;lsquo;UP&amp;rsquo; status, alert will be closed.
+Best Tat view for theses: StandardView (&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview&#34;&gt;https://github.com/ovh/tatwebui-plugin-standardview&lt;/a&gt;)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Compute Replay: if alarm already exists, the replay will be a reply of root alarm&lt;/li&gt;
+&lt;li&gt;Pre-select Label :
+
+&lt;ul&gt;
+&lt;li&gt;a new alarm &amp;ldquo;AL&amp;rdquo; will receive label &amp;ldquo;open&amp;rdquo; with red color on tat&lt;/li&gt;
+&lt;li&gt;a new alarm &amp;ldquo;UP&amp;rdquo; will receive label &amp;ldquo;done&amp;rdquo; with green color on tat&lt;/li&gt;
+&lt;li&gt;A new alarm &amp;ldquo;AL&amp;rdquo; will close previous &amp;ldquo;AL&amp;rdquo; in same thread&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;monitoring-events&#34;&gt;Monitoring Events&lt;/h2&gt;
+
+&lt;p&gt;An event monitoring is attached to one item (host, soft, person&amp;hellip; whatever), all events are held three days, and only 30 events are retained after 3d. Best Tat view for theses: Monitoring View (&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-monitoringview&#34;&gt;https://github.com/ovh/tatwebui-plugin-monitoringview&lt;/a&gt;)&lt;/p&gt;
+
+&lt;h1 id=&#34;usage&#34;&gt;Usage&lt;/h1&gt;
+
+&lt;h2 id=&#34;alert&#34;&gt;Alert&lt;/h2&gt;
+
+&lt;h3 id=&#34;store-new-alert&#34;&gt;Store new alert&lt;/h3&gt;
+
+&lt;p&gt;If &lt;code&gt;Tat_topic == &amp;quot;&amp;quot;&lt;/code&gt;, default value is &lt;code&gt;/Internal/Alerts&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: yourTatUser&amp;quot; \
+    -H &amp;quot;Tat_password: yourTatPassword&amp;quot; \
+    -H &amp;quot;Tat_topic: /Internal/Alerts&amp;quot; \
+    -d &#39;{
+    &amp;quot;status&amp;quot;: &amp;quot;AL&amp;quot;,
+    &amp;quot;nbAlert&amp;quot;: 1,
+    &amp;quot;service&amp;quot;: &amp;quot;YourService&amp;quot;,
+    &amp;quot;summary&amp;quot;: &amp;quot;your alert description here&amp;quot;
+}&#39; http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;nbAlert&lt;/code&gt; can be used to represent the number of elements impacted by your alert.
+It is not used to compute alert&amp;rsquo;s repetitions.&lt;/p&gt;
+
+&lt;h3 id=&#34;store-new-alert-with-a-label&#34;&gt;Store new alert with a label&lt;/h3&gt;
+
+&lt;p&gt;If &lt;code&gt;Tat_topic == &amp;quot;&amp;quot;&lt;/code&gt;, default value is &lt;code&gt;/Internal/Alerts&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: tatusername&amp;quot; \
+    -H &amp;quot;Tat_password: tatpassword&amp;quot; \
+    -H &amp;quot;Tat_topic: /Internal/Alerts&amp;quot; \
+    -d &#39;{
+    &amp;quot;status&amp;quot;: &amp;quot;AL&amp;quot;,
+    &amp;quot;nbAlert&amp;quot;: 3,
+    &amp;quot;service&amp;quot;: &amp;quot;YourService&amp;quot;,
+    &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;critical:high&amp;quot;, &amp;quot;color&amp;quot;:&amp;quot;#d04437&amp;quot;}],
+    &amp;quot;summary&amp;quot;: &amp;quot; your alert description here&amp;quot;
+}&#39; http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;sync-vs-async&#34;&gt;Sync vs Async&lt;/h3&gt;
+
+&lt;p&gt;POST on &lt;code&gt;http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert&lt;/code&gt;: send asynchronous to tat engine.&lt;/p&gt;
+
+&lt;p&gt;POST on &lt;code&gt;http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert/sync&lt;/code&gt;: send synchronous to tat engine, and return message&lt;/p&gt;
+
+&lt;h3 id=&#34;purge-alerts&#34;&gt;Purge alerts&lt;/h3&gt;
+
+&lt;p&gt;You have to call endpoint: &lt;code&gt;/purge/:skip/:limit&lt;/code&gt; to purge Tat_topic, for keeping
+30 replies on each alerts.&lt;/p&gt;
+
+&lt;p&gt;Purge example the last 100 alerts on tat :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: tatusername&amp;quot; \
+    -H &amp;quot;Tat_password: tatpassword&amp;quot; \
+    -H &amp;quot;Tat_topic: /Internal/Alerts&amp;quot;
+}&#39; http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/purge/0/100
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;monitoring&#34;&gt;Monitoring&lt;/h2&gt;
+
+&lt;h3 id=&#34;store-a-new-event&#34;&gt;Store a new event&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: yourTatUser&amp;quot; \
+    -H &amp;quot;Tat_password: yourTatPassword&amp;quot; \
+    -H &amp;quot;Tat_topic: /Internal/Monitoring&amp;quot; \
+    -d &#39;{
+    &amp;quot;status&amp;quot;: &amp;quot;AL&amp;quot;,
+    &amp;quot;item&amp;quot;: &amp;quot;yourApplication&amp;quot;,
+    &amp;quot;service&amp;quot;: &amp;quot;SERVICE&amp;quot;,
+    &amp;quot;summary&amp;quot;: &amp;quot;your description&amp;quot;,
+    &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;critical:high&amp;quot;, &amp;quot;color&amp;quot;:&amp;quot;#d04437&amp;quot;}]
+}&#39; http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/monitoring
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;with :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;status: AL or UP
+service: your service
+summary: description of event
+item: your application name, or host...
+labels: facultative, add labels to message root, the first message sent for an item.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;sync-vs-async-1&#34;&gt;Sync vs Async&lt;/h3&gt;
+
+&lt;p&gt;POST on &lt;code&gt;http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/monitoring&lt;/code&gt;: send asynchronous to tat engine.&lt;/p&gt;
+
+&lt;p&gt;POST on &lt;code&gt;http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/monitoring/sync&lt;/code&gt;: send synchronous to tat engine, and return message&lt;/p&gt;
+
+&lt;h2 id=&#34;system&#34;&gt;System&lt;/h2&gt;
+
+&lt;h3 id=&#34;version&#34;&gt;Version&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XGET http://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/version
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;usage-1&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;h3 id=&#34;building&#34;&gt;Building&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;mkdir -p $GOPATH/src/github.com/ovh
+cd $GOPATH/src/github.com/ovh
+git clone git@github.com:ovh/tat-contrib.git
+cd tat-contrib/al2tat
+go build
+./al2tat -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;flags&#34;&gt;Flags&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;./al2tat -h
+Run Al2Tat
+
+Usage:
+  al2tat [flags]
+  al2tat [command]
+
+Available Commands:
+  version     Print the version.
+
+Flags:
+      --listen-port string      Tat Engine Listen Port (default &amp;quot;8082&amp;quot;)
+      --log-level string        Log Level : debug, info or warn
+      --production              Production mode
+      --url-tat-engine string   URL Tat Engine (default &amp;quot;http://localhost:8080&amp;quot;)
+
+Use &amp;quot;al2tat [command] --help&amp;quot; for more information about a command.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;environment&#34;&gt;Environment&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;AL2TAT_LISTEN_PORT&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Example :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;export AL2TAT_LISTEN_PORT=8181 &amp;amp;&amp;amp; ./al2tat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;is same than&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;./al2tat --listen-port=&amp;quot;8181&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;examples-for-posting-an-alert&#34;&gt;Examples for POSTing an alert&lt;/h1&gt;
+
+&lt;h2 id=&#34;perl-version&#34;&gt;Perl version&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-perl&#34;&gt;package AL2TAT;
+
+use Exporter qw(import);
+
+our @EXPORT_OK = qw(run getMessage);
+
+use strict;
+use warnings;
+use LWP::UserAgent;
+
+sub run
+{
+  my &amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert&amp;quot;;
+  my $TAT_TOPIC_KEY = &amp;quot;/Private/yourTopic&amp;quot;;
+  my $TAT_USER_KEY = &amp;quot;yourUsernameOnTat&amp;quot;;
+  my $TAT_PASSWORD_KEY = &amp;quot;yourTatVeryLongPasswordHere&amp;quot;;
+
+  my $message = getMessage();
+  sendMessage($TAT_URL_KEY, $TAT_TOPIC_KEY, $TAT_USER_KEY, $TAT_PASSWORD_KEY, $message);
+}
+
+sub sendMessage
+{
+    my $url = $_[0];
+    my $topic = $_[1];
+    my $user = $_[2];
+    my $password = $_[3];
+    my $message = $_[4];
+
+    my $req = HTTP::Request-&amp;gt;new(POST =&amp;gt; $url);
+    $req-&amp;gt;header(&#39;Content-Type&#39; =&amp;gt; &#39;application/json&#39;);
+    $req-&amp;gt;header(&#39;Tat_username&#39; =&amp;gt; $user);
+    $req-&amp;gt;header(&#39;Tat_password&#39; =&amp;gt; $password);
+    $req-&amp;gt;header(&#39;Tat_topic&#39; =&amp;gt; $topic);
+
+    my $post_data = &#39;{&amp;quot;status&amp;quot;: &amp;quot;AL&amp;quot;, &amp;quot;nbAlert&amp;quot;: 1, &amp;quot;service&amp;quot;: &amp;quot;TEST&amp;quot;, &amp;quot;summary&amp;quot;: &amp;quot;&#39;.$message.&#39;&amp;quot;}&#39;;
+    $req-&amp;gt;content($post_data);
+
+    my $ua = LWP::UserAgent-&amp;gt;new;
+    my $resp = $ua-&amp;gt;request($req);
+
+    print &amp;quot;Response Status: &amp;quot;, $resp-&amp;gt;code, &amp;quot;\n&amp;quot;;
+    if ($resp-&amp;gt;is_success) {
+        my $message = $resp-&amp;gt;decoded_content;
+        print &amp;quot;Received reply: $message\n&amp;quot;;
+    } else {
+        print &amp;quot;HTTP POST error message: &amp;quot;, $resp-&amp;gt;message, &amp;quot;\n&amp;quot;;
+    }
+}
+
+sub getMessage
+{
+    return &amp;quot;Message from perl &amp;quot;;
+}
+
+run()
+
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>mail2tat</title>
+      <link>https://ovh.github.io/tat/ecosystem/mail2tat/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/ecosystem/mail2tat/</guid>
+      <description>
+
+&lt;p&gt;Create a message on Tat by sending a mail. Mail2tat check an imap account
+and create a message for each mail received.&lt;/p&gt;
+
+&lt;h2 id=&#34;tat-configuration&#34;&gt;Tat Configuration&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Add Read Write to user tat.system.mail on your destination topic&lt;/li&gt;
+&lt;li&gt;Check option : &amp;ldquo;System User can force dateCreation of message ?&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;simple-usage&#34;&gt;Simple usage&lt;/h2&gt;
+
+&lt;p&gt;Send a mail to tat@your-domain with&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;subjet : &amp;lt;topicName&amp;gt;
+Body : text of message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Example of subject : &lt;code&gt;/Internal/YourTopic&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;thread-on-tat&#34;&gt;Thread on Tat&lt;/h2&gt;
+
+&lt;p&gt;Send a mail to tat@your-domain with :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;subjet : &amp;lt;topicName&amp;gt;,&amp;lt;idGroup&amp;gt;
+Body: text of message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Example of subject: &lt;code&gt;/Internal/YourTopic,something&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;
+
+&lt;p&gt;Time between sending mail and post on tat ? Each minute : check mail and send on tat.
+Restriction on From ? Yes, see arg  : only @your-domain. All mail received from another domain are not send on tat.&lt;/p&gt;
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;h3 id=&#34;building&#34;&gt;Building&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;mkdir -p $GOPATH/src/github.com/ovh
+cd $GOPATH/src/github.com/ovh
+git clone git@github.com:ovh/tat-contrib.git
+cd tat-contrib/mail2tat/api
+go build
+./api -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;flags&#34;&gt;Flags&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;./api -h
+MAIL2TAT - Mail to Tat
+
+Usage:
+  mail2tat [flags]
+
+Flags:
+      --activate-cron                Activate Cron (default true)
+      --imap-host string             IMAP Host
+      --imap-password string         IMAP Password
+      --imap-username string         IMAP Username
+      --listen-port string           RunKPI Listen Port (default &amp;quot;8084&amp;quot;)
+      --log-level string             Log Level : debug, info or warn
+      --password-tat-engine string   Password Tat Engine
+      --production                   Production mode
+      --url-tat-engine string        URL Tat Engine (default &amp;quot;http://localhost:8080&amp;quot;)
+      --username-tat-engine string   Username Tat Engine
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tat2es</title>
+      <link>https://ovh.github.io/tat/ecosystem/tat2es/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/ecosystem/tat2es/</guid>
+      <description>
+
+&lt;p&gt;Get messages from TAT and send them to ElasticSearch.&lt;/p&gt;
+
+&lt;h2 id=&#34;tat2es-configuration&#34;&gt;TAT2ES Configuration&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;export TAT2ES_LISTEN_PORT=&amp;quot;8080&amp;quot;
+export TAT2ES_USERNAME_TAT_ENGINE=&amp;quot;tat.system.jabber&amp;quot;
+export TAT2ES_PRODUCTION=true
+export TAT2ES_PASSWORD_TAT_ENGINE=&amp;quot;very-long-tat-password-of-tat.system.jabber&amp;quot;
+export TAT2ES_URL_TAT_ENGINE=&amp;quot;http://tat.your-domain&amp;quot;
+export TAT2ES_TOPICS_INDEXES=&amp;quot;/Topic/Sub-Topic1:ES_Index1,/Topic/Sub-Topic2:ES_Index2&amp;quot;
+
+# Run TAT2ES
+./api -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;h3 id=&#34;building&#34;&gt;Building&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;mkdir -p $GOPATH/src/github.com/ovh
+cd $GOPATH/src/github.com/ovh
+git clone git@github.com:ovh/tat-contrib.git
+cd tat-contrib/tat2es/api
+go build
+./api -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;flags&#34;&gt;Flags&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;
+./api -h
+TAT To ElasticSearch
+
+Usage:
+  tat2es [flags]
+  tat2es [command]
+
+Available Commands:
+  version     Print the version.
+
+Flags:
+      --cron-schedule string         Cron Schedule, see https://godoc.org/github.com/robfig/cron (default &amp;quot;@every 3h&amp;quot;)
+      --host-es string               Host ElasticSearch
+      --listen-port string           Tat2ES Listen Port (default &amp;quot;8086&amp;quot;)
+      --log-level string             Log Level: debug, info or warn
+      --messages-limit int           messages-limit is used by MessageCriteria.Limit for requesting TAT (default 1478642112)
+      --password-es string           Password ElasticSearch
+      --password-tat-engine string   Password Tat Engine
+      --port-es string               Port ElasticSearch (default &amp;quot;9200&amp;quot;)
+      --production                   Production mode
+      --timestamp int                from: timestamp unix format (default 1478642112)
+      --topics-indexes string        /Topic/Sub-Topic1:ES_Index1,/Topic/Sub-Topic2:ES_Index2
+      --url-tat-engine string        URL Tat Engine (default &amp;quot;http://localhost:8080&amp;quot;)
+      --user-es string               User ElasticSearch
+      --username-tat-engine string   Username Tat Engine
+
+Use &amp;quot;tat2es [command] --help&amp;quot; for more information about a command.
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tat2xmpp</title>
+      <link>https://ovh.github.io/tat/ecosystem/tat2xmpp/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/ecosystem/tat2xmpp/</guid>
+      <description>
+
+&lt;h2 id=&#34;what-s-for&#34;&gt;What&amp;rsquo;s for?&lt;/h2&gt;
+
+&lt;p&gt;tat2xmpp allow you to:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;sync XMPP conference with a Tat topic, from conference to tat, from tat to conference, or both.&lt;/li&gt;
+&lt;li&gt;request Tat over XMPP&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;On your XMPP Client:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;/tat help
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;will returns:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Begin conversation with &amp;quot;tat,&amp;quot; or &amp;quot;/tat&amp;quot;
+
+Simple request: &amp;quot;tat, ping&amp;quot;
+
+Request tat:
+ &amp;quot;/tat COUNT /Internal/Alerts?tag=NETWORK,label=open&amp;quot;
+ &amp;quot;/tat GET /Internal/Alerts?tag=PUBCLOUD-serv,PUBCLOUD-host&amp;amp;label=open&amp;quot;
+
+Request tat and format output:
+ &amp;quot;/tat COUNT /Internal/Alerts?tag=NETWORK,label=open format:dateUpdate,username,text&amp;quot;
+
+Default format:dateUpdate,username,text,labels
+
+You can use:
+id,text,topic,inReplyOfID,inReplyOfIDRoot,nbLikes,labels,
+votersUP,votersDown,nbVotesUP,nbVotesDown,userMentions,
+urls,tags,dateCreation,dateUpdate,username,fullname,nbReplies,tatwebuiURL
+
+User tat.system.jabber have to be RO on tat topic for requesting tat.
+
+Get aliases : &amp;quot;/tat aliases&amp;quot;, same as &amp;quot;/tat aliases common&amp;quot;
+Get aliases with a specific tag : &amp;quot;/tat aliases atag&amp;quot;
+
+Execute an alias : &amp;quot;/tat !myAlias arg1 arg2&amp;quot;
+
+If you add a tat message, with label &amp;quot;common&amp;quot; and text:
+&amp;quot;#tatbot #alias #alias:alert #get:/Internal/Alerts?tag=%s&amp;amp;label=%s #format:dateUpdate,text&amp;quot;
+you can execute it over XMPP as : &amp;quot;/tat !alert CD open&amp;quot;
+
+For a count request:
+&amp;quot;#tatbot #alias #alias:alert.count #count:/Internal/Alerts?tag=%s&amp;amp;label=%s&amp;quot;
+you can execute it over XMPP as : &amp;quot;/tat !alert.count CD open&amp;quot;
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;tat-configuration&#34;&gt;TAT configuration&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;
+[...]
+# TAT 2 XMPP Configuration
+exportTAT_TAT2XMPP_USERNAME=tat.system.jabber
+exportTAT_TAT2XMPP_URL=http://tat2xmpp.your-domain
+exportTAT_TAT2XMPP_KEY=a-key-used-by-tat2xmpp
+[...]
+
+# Running TAT Engine
+./api
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;tat2xmpp-configuration&#34;&gt;TAT2XMPP Configuration&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;export TAT2XMPP_LISTEN_PORT=8080
+export TAT2XMPP_HOOK_KEY=a-key-used-by-tat2xmpp
+export TAT2XMPP_USERNAME_TAT_ENGINE=tat.system.jabber
+export TAT2XMPP_XMPP_BOT_PASSWORD=password-of-bot-user-on-xmpp
+export TAT2XMPP_PRODUCTION=true
+export TAT2XMPP_PASSWORD_TAT_ENGINE=very-long-tat-password-of-tat.system.jabber
+export TAT2XMPP_XMPP_BOT_JID=robot.tat@your-domain
+export TAT2XMPP_XMPP_SERVER=your-jabber-server:5222
+export TAT2XMPP_URL_TAT_ENGINE=http://tat.your-domain
+export TAT2XMPP_URL_TATWEBUI=https://tatwebui.your-domain/standardview/list
+export TAT2XMPP_MORE_HELP=&amp;quot;TatBot doc: https://ovh.github.io/tat/ecosystem/tat2xmpp&amp;quot;
+export TAT2XMPP_ADMIN_TAT2XMPP=&amp;quot;usera@jabber.your-domain.net,userb@jabber.your-domain.net,userc@jabber.your-domain.net&amp;quot;,
+
+# Running TAT2XMPP
+./tat2xmpp
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;h3 id=&#34;building&#34;&gt;Building&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;mkdir -p $GOPATH/src/github.com/ovh
+cd $GOPATH/src/github.com/ovh
+git clone git@github.com:ovh/tat-contrib.git
+cd tat-contrib/tat2xmpp/api
+go build
+./api -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;flags&#34;&gt;Flags&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;
+./api -h
+Tat2XMPP
+
+Usage:
+  tat2xmpp [flags]
+  tat2xmpp [command]
+
+Available Commands:
+  version     Print the version.
+
+Flags:
+      --admin-tat2xmpp string        Admin tat2xmpp admina@jabber.xxx.net,adminb@jabber.xxx.net,
+  -c, --configFile string            configuration file
+      --hook-key string              Hook Key, for using POST http://&amp;lt;url&amp;gt;/hook endpoint, with Header TAT2XMPPKEY
+      --listen-port string           Tat2XMPP Listen Port (default &amp;quot;8088&amp;quot;)
+      --log-level string             Log Level : debug, info or warn
+      --password-tat-engine string   Password Tat Engine
+      --production                   Production mode
+      --url-tat-engine string        URL Tat Engine (default &amp;quot;http://localhost:8080&amp;quot;)
+      --url-tatwebui string          TatwebUI base URL
+      --username-tat-engine string   Username Tat Engine (default &amp;quot;tat.system.xmpp&amp;quot;)
+      --xmpp-bot-jid string          XMPP Bot JID (default &amp;quot;tat@localhost&amp;quot;)
+      --xmpp-bot-password string     XMPP Bot Password
+      --xmpp-debug                   XMPP Debug
+      --xmpp-delay int               Delay between two sent messages (default 5)
+      --xmpp-hello-world string      Sending Hello World message to this jabber id
+      --xmpp-insecure-skip-verify    XMPP InsecureSkipVerify (default true)
+      --xmpp-notls                   XMPP No TLS (default true)
+      --xmpp-server string           XMPP Server
+      --xmpp-session                 XMPP Session (default true)
+      --xmpp-starttls                XMPP Start TLS
+
+Use &amp;quot;tat2xmpp [command] --help&amp;quot; for more information about a command.
+
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatdashing</title>
+      <link>https://ovh.github.io/tat/ecosystem/tatdashing/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/ecosystem/tatdashing/</guid>
+      <description>
+
+&lt;h2 id=&#34;overview&#34;&gt;Overview&lt;/h2&gt;
+
+&lt;p&gt;Each 30seconds, tatDashing computes dashboard. This uService gets information on tat and &amp;ldquo;relabel&amp;rdquo; messages on your dashing topic.&lt;/p&gt;
+
+&lt;h2 id=&#34;build-and-run&#34;&gt;Build And Run&lt;/h2&gt;
+
+&lt;h3 id=&#34;configuration&#34;&gt;Configuration&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;
+export TATDASHING_PRODUCTION=true
+export TATDASHING_LISTEN_PORT=8080
+export TATDASHING_PASSWORD_TAT_ENGINE=&amp;quot;very-long-tat-password-of-tat.system.dashing&amp;quot;
+export TATDASHING_URL_TAT_ENGINE=&amp;quot;http://tat.your-domain&amp;quot;
+export TATDASHING_USERNAME_TAT_ENGINE=&amp;quot;tat.system.dashing&amp;quot;
+
+# Run TatDashing
+./api -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;build&#34;&gt;Build&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;mkdir -p $GOPATH/src/github.com/ovh
+cd $GOPATH/src/github.com/ovh
+git clone git@github.com:ovh/tat-contrib.git
+cd tat-contrib/tatdashing/api
+go build
+./api -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;flags&#34;&gt;Flags&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ ./api -h
+
+Tat Dashing
+
+Usage:
+  tatdashing [flags]
+
+Flags:
+      --listen-port string           Listen Port (default &amp;quot;8085&amp;quot;)
+      --log-level string             Log Level : debug, info or warn
+      --password-tat-engine string   Password Tat Engine
+      --production                   Production mode
+      --url-tat-engine string        URL Tat Engine (default &amp;quot;http://localhost:8080&amp;quot;)
+      --username-tat-engine string   Username Tat Engine (default &amp;quot;tat.system.dashing&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;p&gt;To use it, you have to :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Add user tat.system.dashing read write on your dashing topic&lt;/li&gt;
+&lt;li&gt;Add user tat.system.dashing read only on topics where you have your data. For example, in examples below, tat.system.dashing is Read Only on topics /Internal/Alerts and /Internal/PullRequests&lt;/li&gt;
+&lt;li&gt;Create initial root message with like &amp;ldquo;#monitoring #item:Alerts&amp;rdquo;, see full documentation about that on &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/dashingview/&#34;&gt;https://ovh.github.io/tat/tatwebui/dashingview/&lt;/a&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Add labels on this root message, like &amp;ldquo;order:12&amp;rdquo;, &amp;ldquo;url&lt;/li&gt;
+&lt;li&gt;Add reply for each label you want to rewrite&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;compute-color-and-bg-color&#34;&gt;Compute color and bg-color&lt;/h3&gt;
+
+&lt;p&gt;Example for compute label &amp;ldquo;color&amp;rdquo;:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;#label:color:08f1f4:0:10,ce352c&lt;/code&gt; : if value is &amp;gt;= 0 and value &amp;lt;= 10, color will be #08f1f4, else color will be #ce352c&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;#label:color:08f1f4:0:10,ce352c:11:20,fa6800&lt;/code&gt; : if value is &amp;gt;= 0 and value &amp;lt;= 10, color will be #08f1f4, else if value is &amp;gt;=11 and value &amp;lt;= 20, color will be #ce352c, else  color will be #fa6800&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;compute-value-s&#34;&gt;Compute value(s)&lt;/h3&gt;
+
+&lt;p&gt;This reply : #TatDashing #label:0:value #value:0:/Internal/Alerts?tag=CD&amp;amp;notLabel=done&amp;amp;onlyMsgRoot=true will :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;compute label &amp;ldquo;value&amp;rdquo; by&lt;/li&gt;
+&lt;li&gt;count messages from /Internal/Alerts with tag=CD and notLabel=done and onlyMsgRoot=true to avoid counting exclude alert replay.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;compute-value-s-with-label-value&#34;&gt;Compute value(s) with label value&lt;/h3&gt;
+
+&lt;p&gt;This reply : #TatDashing #label:0:value #valuelabel:0:qos/Internal/Alerts?tag=CD will :&lt;/p&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;compute &amp;ldquo;value&amp;rdquo; with&lt;/li&gt;
+&lt;li&gt;value of the label &amp;ldquo;qos:xxx&amp;rdquo; from /Internal/Alerts with tag=CD.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;examples&#34;&gt;Examples&lt;/h2&gt;
+
+&lt;p&gt;Display alerts from /Internal/Alerts with tag=CD and notLabel=done. Don&amp;rsquo;t forget onlyMsgRoot for exclude alert replay&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatdashing-alerts-view.png?width=50%&#34; alt=&#34;View Alerts&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Labels color, bg-color and value are computed by TatDashing uService.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatdashing-alerts-details.png?width=50%&#34; alt=&#34;Details Alerts&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Display Opened and Approved Pull Requests for projects TEXTANDTAGS, CDS and CD,&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatdashing-pullRequest-view.png?width=50%&#34; alt=&#34;View PullRequests&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Labels color, bg-color and value are computed by TatDashing uService.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatdashing-pullRequest-details.png?width=50%&#34; alt=&#34;Details PullRequests&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;A graph with Chartist (see. &lt;a href=&#34;https://gionkunz.github.io/chartist-js/examples.html&#34;&gt;https://gionkunz.github.io/chartist-js/examples.html&lt;/a&gt; )&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatdashing-complex-view.png?width=50%&#34; alt=&#34;View Advanced Graph&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Label widget-data-series is computed by TatDashing uService. value:0 is first point, value:1 is second point, etc&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatdashing-complex-details.png?width=50%&#34; alt=&#34;Details Advanced Graph&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

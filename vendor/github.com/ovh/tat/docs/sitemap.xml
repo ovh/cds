@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/general/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/general/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/sdk/golang-simple-main/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/overview/introduction/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/introduction/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/ecosystem/al2tat/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/api-messages/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/overview/concepts/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/sdk/golang-full-example/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/standardview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/ecosystem/mail2tat/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-config/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/api-topics/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/overview/lifecycle/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/notificationsview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/ecosystem/tat2es/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-group/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/api-users/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/overview/architecture/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/monitoringview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/ecosystem/tat2xmpp/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-message/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/ecosystem/tatdashing/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/api-groups/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/overview/contribute/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/pastatview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-presence/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/api-presences/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/api-system/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/dashingview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-stats/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/releaseview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-system/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-topic/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-ui/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-update/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-user/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/tatcli-version/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/cdsview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/development/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatnhack/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatnhack/monitoring-process/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatnhack/visual-feedback/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/simple-installation/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/production-installation/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/ecosystem/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/ecosystem/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/overview/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/overview/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/sdk/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/engine/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/sdk/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatcli/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatnhack/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/tat/tatwebui/</loc>
+    <priority>0</priority>
+  </url>
+  
+</urlset>

@@ -338,11 +338,7 @@ func (c *Client) Start() (addr net.Addr, err error) {
 	stderr_r, stderr_w := io.Pipe()
 
 	cmd := c.config.Cmd
-	//This has been modified in the vendor sources to avoid leaking all env variables in subprocesses if they are explicitly set in c.config.Cmd
-	if len(cmd.Env) == 0 {
-		cmd.Env = os.Environ()
-	}
-
+	cmd.Env = append(cmd.Env, os.Environ()...)
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = stderr_w

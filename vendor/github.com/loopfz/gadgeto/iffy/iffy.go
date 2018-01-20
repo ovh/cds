@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+
 	"testing"
 	"text/template"
 )
@@ -20,12 +21,14 @@ type Tester struct {
 	values Values
 }
 
+type Headers map[string]string
+
 type Call struct {
 	Name       string
 	Method     string
 	QueryStr   string
-	Body       interface{}
-	headers    http.Header
+	Body       string
+	headers    Headers
 	respObject interface{}
 	checkers   []Checker
 }
@@ -35,7 +38,7 @@ func (c *Call) ResponseObject(respObject interface{}) *Call {
 	return c
 }
 
-func (c *Call) Headers(h http.Header) *Call {
+func (c *Call) Headers(h Headers) *Call {
 	c.headers = h
 	return c
 }
@@ -57,11 +60,7 @@ func NewTester(t *testing.T, r http.Handler, calls ...*Call) *Tester {
 	}
 }
 
-func (t *Tester) Reset() {
-	t.Calls = []*Call{}
-}
-
-func (t *Tester) AddCall(name, method, querystr string, body interface{}) *Call {
+func (t *Tester) AddCall(name, method, querystr, body string) *Call {
 	c := &Call{
 		Name:     name,
 		Method:   method,
@@ -75,22 +74,8 @@ func (t *Tester) AddCall(name, method, querystr string, body interface{}) *Call 
 func (t *Tester) Run() {
 	for _, c := range t.Calls {
 		var body io.Reader
-
-		if c.Body != nil {
-			switch c.Body.(type) {
-			case string:
-				body = bytes.NewBuffer([]byte(t.applyTemplate(c.Body.(string))))
-			case []byte:
-				body = bytes.NewBuffer(c.Body.([]byte))
-			default:
-				jsonBtes, err := json.Marshal(c.Body)
-				if err != nil {
-					t.t.Log(err)
-				}
-				if jsonBtes != nil {
-					body = bytes.NewBuffer(jsonBtes)
-				}
-			}
+		if c.Body != "" {
+			body = bytes.NewBuffer([]byte(t.applyTemplate(c.Body)))
 		}
 		req, err := http.NewRequest(c.Method, t.applyTemplate(c.QueryStr), body)
 		if err != nil {
@@ -101,8 +86,7 @@ func (t *Tester) Run() {
 			req.Header.Set("content-type", "application/json")
 		}
 		if c.headers != nil {
-			for k := range c.headers {
-				v := c.headers.Get(k)
+			for k, v := range c.headers {
 				req.Header.Set(t.applyTemplate(k), t.applyTemplate(v))
 			}
 		}
@@ -221,19 +205,6 @@ func ExpectStatus(st int) Checker {
 	}
 }
 
-func DumpResponse(t *testing.T) Checker {
-	return func(r *http.Response, body string, respObject interface{}) error {
-		t.Log(body)
-		return nil
-	}
-}
-
-func UnmarshalResponse(i interface{}) Checker {
-	return func(r *http.Response, body string, respObject interface{}) error {
-		return json.Unmarshal([]byte(body), i)
-	}
-}
-
 func ExpectJSONFields(fields ...string) Checker {
 	return func(r *http.Response, body string, respObject interface{}) error {
 		m := map[string]interface{}{}
@@ -295,7 +266,7 @@ func ExpectJSONBranch(nodes ...string) Checker {
 				// and there's only one more node to check
 				// test last child against last provided node
 				lastNode := nodes[i+1]
-				if v != lastNode {
+				if fmt.Sprintf("%v", v) != lastNode {
 					return fmt.Errorf("Wrong value: expected '%v', got '%v'", lastNode, v)
 				}
 				return nil

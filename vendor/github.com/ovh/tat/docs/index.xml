@@ -1,0 +1,1977 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>TAT - TextAndTag Documentation</title>
+    <link>https://ovh.github.io/tat/index.xml</link>
+    <description>Recent content on TAT - TextAndTag Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://ovh.github.io/tat/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>General</title>
+      <link>https://ovh.github.io/tat/engine/general/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/engine/general/</guid>
+      <description>
+
+&lt;h2 id=&#34;general-specifications&#34;&gt;General Specifications&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Topic
+
+&lt;ul&gt;
+&lt;li&gt;Contains 0 or n messages&lt;/li&gt;
+&lt;li&gt;Administrator(s) of Topic can create Topic inside it&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Message
+
+&lt;ul&gt;
+&lt;li&gt;Consists of text, tags and labels&lt;/li&gt;
+&lt;li&gt;Can not be deleted or modified (by default)&lt;/li&gt;
+&lt;li&gt;Is limited in characters (topic setting)&lt;/li&gt;
+&lt;li&gt;Is always attached to one topic&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Tag
+
+&lt;ul&gt;
+&lt;li&gt;Within the message content&lt;/li&gt;
+&lt;li&gt;Can not be added after message creation (by default)&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Label
+
+&lt;ul&gt;
+&lt;li&gt;Can be added or removed freely&lt;/li&gt;
+&lt;li&gt;Have a color&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Group
+
+&lt;ul&gt;
+&lt;li&gt;Managed by an administrator(s): adding or removing users from the group&lt;/li&gt;
+&lt;li&gt;Without prior authorization, a group or user has no access to topics&lt;/li&gt;
+&lt;li&gt;A group or a user can be read-only or read-write on a topic&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Task
+
+&lt;ul&gt;
+&lt;li&gt;A &lt;em&gt;task&lt;/em&gt; is a message that is both in the topic task of a user and in the original topic&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Administrator(s)
+
+&lt;ul&gt;
+&lt;li&gt;Tat Administrator: all configuration access&lt;/li&gt;
+&lt;li&gt;On Group(s): can add/remove member(s)&lt;/li&gt;
+&lt;li&gt;On Topic(s): can create Topic inside it, update parameters&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;some-rules-and-rules-exception&#34;&gt;Some rules and rules exception&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Deleting a message is possible in the private topics, or can be granted on other topic&lt;/li&gt;
+&lt;li&gt;Modification of a message is possible in private topics, or can be granted on other topic&lt;/li&gt;
+&lt;li&gt;The default length of a message is 140 characters, this limit can be modified by topic&lt;/li&gt;
+&lt;li&gt;A date creation of a message can be explicitly set by a system user&lt;/li&gt;
+&lt;li&gt;message.dateCreation and message.dateUpdate are in timestamp format, ex:
+
+&lt;ul&gt;
+&lt;li&gt;1436912447: 1436912447 seconds&lt;/li&gt;
+&lt;li&gt;1436912447.345678: 1436912447 seconds and 345678 milliseconds&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;detailed-specifications&#34;&gt;Detailed Specifications&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Topic
+
+&lt;ul&gt;
+&lt;li&gt;addAdminGroup     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#add-an-admin-group-to-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#add-an-admin-group-to-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAddAdminGroups&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addAdminUser      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#add-an-admin-user-to-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#add-an-admin-user-to-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAddAdminUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;addParameter      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#add-a-parameter-to-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAddParameter&#34;&gt;Go-SDK&lt;/a&gt;&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;addRoGroup        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#add-a-read-only-group-to-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#add-a-read-only-group-to-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAddRoGroups&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addRoUser         &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#add-a-read-only-user-to-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#add-a-read-only-user-to-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAddRoUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addRwGroup        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#add-a-read-write-group-to-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#add-a-read-write-group-to-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAddRwGroups&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addRwUser         &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#add-a-read-write-user-to-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#add-a-read-write-user-to-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAddRwUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;allcomputelabels  &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#compute-labels-on-all-topics&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAllComputeLabels&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;allcomputereplies [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAllComputeReplies&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;allcomputetags    &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#compute-tags-on-all-topics&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAllComputeTags&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;allsetparam       &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#set-a-param-on-all-topics&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicAllSetParam&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;computelabels     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#compute-labels-on-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicComputeLabels&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;computetags       &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#compute-tags-on-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicComputeTags&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;create            &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#create-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#create-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicCreate&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;delete            &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#delete-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#delete-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicDelete&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteAdminGroup  &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#delete-an-admin-group-from-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#delete-an-admin-group-from-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicDeleteAdminGroups&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteAdminUser   &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#delete-an-admin-user-from-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#delete-an-admin-user-from-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicDeleteAdminUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteParameter   &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#remove-a-parameter-to-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicDeleteParameters&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteRoGroup     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#delete-a-read-only-group-from-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#delete-a-read-only-group-from-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicDeleteRoGroups&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteRoUser      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#delete-a-read-only-user-from-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#add-a-read-only-user-to-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicDeleteRoUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteRwGroup     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#delete-a-read-write-group-from-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#delete-a-read-write-group-from-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicDeleteRwGroups&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteRwUser      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#delete-a-read-write-user-from-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#delete-a-read-write-user-from-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicDeleteRwUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;list              &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#getting-topics-list&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#getting-topics-list&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicList&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;oneTopic          &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#getting-one-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicOne&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;parameter         &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#update-param-on-one-topic-admin-or-admin-on-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicParameter&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;removeFilter      [Engine]() &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicRemoveFilter&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;truncate          &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#truncate-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#truncate-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicTruncate&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;truncatelabels    &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#truncate-cached-labels-on-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicTruncateLabels&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;truncatetags      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-topics/#truncate-cached-tags-on-a-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicTruncateTags&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;updateFilter      [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-topic/#tatcli-topic-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.TopicUpdateFilter&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Message
+
+&lt;ul&gt;
+&lt;li&gt;add         &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#store-a-new-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#create-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageAdd&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addbulk     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#store-some-messages&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#tatcli-message-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageAddBulk&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;concat      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#concat-a-message-adding-additional-text-to-one-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#update-a-message-by-adding-additional-text-at-the-end-of-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageConcat&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;count       &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#parameters&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#tatcli-message-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageCount&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;delete      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#delete-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#tatcli-message-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageDelete&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deletebulk  &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#delete-a-list-of-messages&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#tatcli-message-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessagesDeleteBulk&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;label       &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#add-a-label-to-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#add-a-label-to-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageLabel&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;like        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#like-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#like-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageLike&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;list        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#getting-messages-list&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#getting-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageList&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;move        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#move-a-message-to-another-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#move-a-message-to-another-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageMove&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;relabel     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#remove-all-labels-and-add-new-ones&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#remove-all-labels-and-add-new-ones-to-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageRelabel&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;relabelorcreate     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#remove-all-labels-and-add-new-ones-on-existing-message-create-message-otherwise&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageRelabelOrCreate&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;reply       &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#reply-to-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#reply-to-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageReply&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;task        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#create-a-task-from-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#create-a-task-from-one-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageTask&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;unlabel     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#remove-a-label-from-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#remove-a-label-from-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageUnlabel&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;unlike      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#unlike-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#unlike-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageUnlike&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;untask      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#remove-a-message-from-tasks&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#remove-a-message-from-tasks&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageUntask&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;unvotedown  &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#remove-vote-down-from-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#remove-a-vote-down-from-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageUnVoteDown&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;unvoteup    &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#remove-a-vote-up-from-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#remove-a-vote-up-from-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageUnVoteUP&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;update      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#update-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#tatcli-message-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageUpdate&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;votedown    &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#vote-down-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#vote-down-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageVoteDown&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;voteup      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-messages/#vote-up-a-message&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-message/#vote-up-a-message&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.MessageVoteUP&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Group
+
+&lt;ul&gt;
+&lt;li&gt;addAdminUser     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-groups/#delete-an-admin-user-from-a-group&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-group/#tatcli-group-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.GroupAddAdminUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addUser          &lt;a href=&#34;https://ovh.github.io/tat/engine/api-groups/#add-a-user-to-a-group&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-group/#add-user-to-a-group&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.GroupAddUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;create           &lt;a href=&#34;https://ovh.github.io/tat/engine/api-groups/#create-a-group&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-group/#create-a-group-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.GroupCreate&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;delete           &lt;a href=&#34;https://ovh.github.io/tat/engine/api-groups/#delete-a-group&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-group/#delete-a-group-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.GroupDelete&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteAdminUser  &lt;a href=&#34;https://ovh.github.io/tat/engine/api-groups/#add-an-admin-user-to-a-group&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-group/#tatcli-group-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.GroupDeleteAdminUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;deleteUser       &lt;a href=&#34;https://ovh.github.io/tat/engine/api-groups/#delete-a-user-from-a-group&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-group/#delete-a-user-from-a-group&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.GroupDeleteUsers&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;list             &lt;a href=&#34;https://ovh.github.io/tat/engine/api-groups/#getting-groups-list&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-group/#tatcli-group-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.GroupList&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;update           &lt;a href=&#34;https://ovh.github.io/tat/engine/api-groups/#update-a-group&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-group/#update-a-group-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.GroupUpdate&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;User
+
+&lt;ul&gt;
+&lt;li&gt;add                           &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#create-a-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#create-a-user&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserAdd&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addContact                    &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#add-a-contact&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#tatcli-user-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserAddContact&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addFavoriteTag                &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#add-a-favorite-tag&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#add-a-favorite-tag&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserAddFavoriteTag&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;addFavoriteTopic              &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#add-a-favorite-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#add-a-favorite-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserAddFavoriteTopic&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;archive                       &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#archive-a-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#archive-a-user-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserArchive&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;check                         &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#check-private-topics-and-default-group-on-one-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#check-a-user-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserCheck&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;contacts                      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#get-contacts&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#get-contacts-presences-since-n-seconds-tatcli-user-contacts-seconds&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserContacts&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;convert                       &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#convert-a-user-to-a-system-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#convert-to-a-system-user-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserConvertToSystem&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;disableNotificationsAllTopics &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#disable-notifications-on-all-topics-except-private&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#disable-notifications-on-all-topics&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserDisableNotificationsAllTopics&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;disableNotificationsTopic     &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#disable-notifications-on-one-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#disable-notifications-on-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserDisableNotificationsTopic&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;enableNotificationsAllTopics  &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#enable-notifications-on-all-topics&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#enable-notifications-on-all-topics&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserEnableNotificationsAllTopics&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;enableNotificationsTopic      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#enable-notifications-on-one-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#enable-notifications-on-a-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserEnableNotificationsTopic&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;list                          &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#getting-users-list&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#list-users&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserList&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;me                            &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#get-information-about-current-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#get-information-about-me&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserMe&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;removeContact                 &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#remove-a-contact&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#tatcli-user-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserRemoveContact&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;removeFavoriteTag             &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#remove-a-favorite-tag&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#remove-a-favorite-tag&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserRemoveFavoriteTag&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;removeFavoriteTopic           &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#remove-a-favorite-topic&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#remove-a-favorite-topic&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserRemoveFavoriteTopic&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;rename                        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#rename-a-username&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#rename-a-username-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserRename&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;reset                         &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#ask-for-reset-a-password&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#ask-for-reset-password&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserReset&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;resetSystemUser               &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#reset-a-password-for-system-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#tatcli-user-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserResetSystem&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;setAdmin                      &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#grant-a-user-to-an-admin-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#grant-a-user-to-tat-admin-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserSetAdmin&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;update                        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#update-fullname-or-email&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#update-fullname-and-email-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserUpdate&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;updateSystemUser              &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#update-flags-on-system-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#update-a-system-user-admin-only&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserUpdateSystem&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;verify                        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-users/#verify-a-user&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-user/#verify-account&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.UserVerify&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Presence
+
+&lt;ul&gt;
+&lt;li&gt;add                           &lt;a href=&#34;https://ovh.github.io/tat/engine/api-presences/#add-presence&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-presence/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.PresenceAddAndGet&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;delete                        &lt;a href=&#34;https://ovh.github.io/tat/engine/api-presences/#delete-presence&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-presence/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.PresenceDelete&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;list                          &lt;a href=&#34;https://ovh.github.io/tat/engine/api-presences/#getting-presences&#34;&gt;Engine&lt;/a&gt; &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-presence/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.PresenceList&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Stats
+
+&lt;ul&gt;
+&lt;li&gt;count              [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsCount&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;dbCollections      [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsDBCollections&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;dbReplSetGetConfig [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsDBReplSetGetConfig&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;dbReplSetGetStatus [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsDBReplSetGetStatus&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;dbServerStatus     [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsDBServerStatus&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;dbSlowestQueries   [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsDBSlowestQueries&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;dbstats            [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsDBStats&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;distribution       [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsDistribution&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;instance           [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-stats/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.StatsInstance&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;System
+
+&lt;ul&gt;
+&lt;li&gt;cacheclean   [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-system/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.SystemCacheClean&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;cacheinfo    [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-system/&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.SystemCacheInfo&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Version
+
+&lt;ul&gt;
+&lt;li&gt;version [Engine]() &lt;a href=&#34;https://ovh.github.io/tat/tatcli/tatcli-version/#tatcli-version-h&#34;&gt;Tatcli&lt;/a&gt; &lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client.Version&#34;&gt;Go-SDK&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;
+
+&lt;p&gt;&lt;em&gt;What about attachment (sound, image, etc&amp;hellip;) ?&lt;/em&gt;
+Tat Engine stores only &lt;em&gt;text&lt;/em&gt;. Use other application, like Plik (&lt;a href=&#34;https://github.com/root-gg/plik&#34;&gt;https://github.com/root-gg/plik&lt;/a&gt;)
+to upload file and store URL on Tat. This workflow should be done by UI.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;In / Out Format&lt;/em&gt;
+Tat Engine communicates only with JSON format with its API, even for messages sent above with kafka Hook on a topic.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>General</title>
+      <link>https://ovh.github.io/tat/tatcli/general/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/general/</guid>
+      <description>
+
+&lt;p&gt;&lt;img align=&#34;right&#34; src=&#34;https://raw.githubusercontent.com/ovh/tat/master/tat.png&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;Tatcli, a Tat Command Line Interface.&lt;/p&gt;
+
+&lt;p&gt;See Tat Engine for more information: &lt;a href=&#34;https://github.com/ovh/tat&#34;&gt;https://github.com/ovh/tat&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;download&#34;&gt;Download&lt;/h2&gt;
+
+&lt;p&gt;Download latest binary on release page &lt;a href=&#34;https://github.com/ovh/tat/releases&#34;&gt;https://github.com/ovh/tat/releases&lt;/a&gt;
+then &lt;code&gt;chmod +x tatcli&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;If you have already installed tatcli, you can update it with &lt;code&gt;tatcli update&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;usage-general-rules&#34;&gt;Usage - General Rules&lt;/h2&gt;
+
+&lt;p&gt;A successful command will give you no feedback. If you want one, you can use &lt;code&gt;-v&lt;/code&gt; argument.
+After each command, the exit code can be found in the &lt;code&gt;$?&lt;/code&gt; variable. No error if exit code equals 0.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Golang - A simple main example</title>
+      <link>https://ovh.github.io/tat/sdk/golang-simple-main/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/sdk/golang-simple-main/</guid>
+      <description>
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt; cd &amp;lt;directory-containing-main.go&amp;gt;/
+ go get -u github.com/ovh/tat
+ build &amp;amp;&amp;amp; ./mycli-minimal -url=http://url-tat-engine -username=&amp;lt;tatUsername&amp;gt; -password=&amp;lt;tatPassword&amp;gt; /Internal/your/topic your message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;file-main-go&#34;&gt;File main.go&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+import (
+	&amp;quot;flag&amp;quot;
+	&amp;quot;fmt&amp;quot;
+	&amp;quot;os&amp;quot;
+	&amp;quot;strings&amp;quot;
+
+	&amp;quot;github.com/ovh/tat&amp;quot;
+)
+
+// taturl, username / password of tat engine
+var (
+	taturl   string
+	username string
+	password string
+)
+
+func main() {
+	flag.StringVar(&amp;amp;taturl, &amp;quot;url&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;URL of Tat Engine&amp;quot;)
+	flag.StringVar(&amp;amp;username, &amp;quot;username&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;tat username&amp;quot;)
+	flag.StringVar(&amp;amp;password, &amp;quot;password&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;tat password&amp;quot;)
+	flag.Parse()
+
+	client, err := tat.NewClient(tat.Options{
+		URL:      taturl,
+		Username: username,
+		Password: password,
+		Referer:  &amp;quot;mycli-minimal.v0&amp;quot;,
+	})
+
+	if err != nil {
+		fmt.Printf(&amp;quot;Error while create new Tat Client: %s\n&amp;quot;, err)
+		os.Exit(1)
+	}
+
+	args := flag.Args()
+	text := strings.Join(args[1:], &amp;quot; &amp;quot;)
+	topic := args[0]
+	m := tat.MessageJSON{
+		Text:  text,
+		Topic: topic,
+	}
+
+	fmt.Printf(&amp;quot;Send on topic %s this message: %s\n&amp;quot;, topic, text)
+
+	msgCreated, err := client.MessageAdd(m)
+	if err != nil {
+		fmt.Printf(&amp;quot;Error:%s\n&amp;quot;, err)
+		os.Exit(1)
+	}
+	fmt.Printf(&amp;quot;ID Message Created: %s\n&amp;quot;, msgCreated.Message.ID)
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;notice&#34;&gt;Notice&lt;/h2&gt;
+
+&lt;p&gt;This is just a simple example. Please do not use tat password in argument of your binary.
+Please check next chapter &lt;a href=&#34;../golang-full-example&#34;&gt;&amp;ldquo;Full Example&amp;rdquo;&lt;/a&gt; for a real example.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Introduction</title>
+      <link>https://ovh.github.io/tat/overview/introduction/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/introduction/</guid>
+      <description>&lt;p&gt;Tat, aka Text And Tags, is a communication tool - Human &amp;amp; Robot all together.&lt;/p&gt;
+
+&lt;p&gt;Some use cases:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Viewing Pull Requests, Build And Deployment in one place&lt;/li&gt;
+&lt;li&gt;Alerting &amp;amp; Monitoring Overview&lt;/li&gt;
+&lt;li&gt;Agile view as simple as a whiteboard with post-it&lt;/li&gt;
+&lt;li&gt;Team Communication &amp;amp; Reporting facilities
+&amp;hellip;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Tat Engine exposes only an HTTP REST API. You can manipulate this API with Tat Command Line Interface, aka tatcli, see &lt;a href=&#34;https://github.com/ovh/tat/tatcli&#34;&gt;https://github.com/ovh/tat/tatcli&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;A WebUI is also available, see &lt;a href=&#34;https://github.com/ovh/tatwebui&#34;&gt;https://github.com/ovh/tatwebui&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Tat Engine:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Uses MongoDB as backend&lt;/li&gt;
+&lt;li&gt;Is fully stateless, scale as you want&lt;/li&gt;
+&lt;li&gt;Is the central Hub of Tat microservices ecosystem&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The initial goal of TAT was to make an overview on Continuous Delivery Pipeline, with some pre-requisites:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Scalable, High Availability, Self-Hosted&lt;/li&gt;
+&lt;li&gt;API, CLI&lt;/li&gt;
+&lt;li&gt;Simple Usage&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tat-cd-overview.png?width=700px&#34; alt=&#34;DevOps LifeCycle&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Introduction</title>
+      <link>https://ovh.github.io/tat/tatwebui/introduction/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/introduction/</guid>
+      <description>&lt;p&gt;Tatwebui is a web application, with a nodejs HTTP Server for serving js/html/css files.
+This application requests Tat Engine for all actions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Rights Controls, Users &amp;amp; Groups&lt;/li&gt;
+&lt;li&gt;Topics management, parameters, ACLs&lt;/li&gt;
+&lt;li&gt;Manipulate messages&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The views are used to display messages in different ways. Views are plugins, see
+&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview&#34;&gt;Standard View&lt;/a&gt; for example.
+Some OVH views are opensourced like:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/standardview&#34;&gt;Standard View&lt;/a&gt;: standard view with all features on messages&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/notificationsview&#34;&gt;Notifications View&lt;/a&gt;: display user notifications in /Private/username/Notifications topic&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/monitoringview&#34;&gt;Monitoring View&lt;/a&gt;: quick look on many items, UP or Down&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/releaseview&#34;&gt;Release View&lt;/a&gt;: Plan, Changelog, Release&amp;hellip; communicate with others teams&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/dashingview&#34;&gt;Dashing View&lt;/a&gt;: widgets, graph&amp;hellip; one way to create dashing about everything&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/pastatview&#34;&gt;Pastat View&lt;/a&gt;: a Gist like&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/cdsview&#34;&gt;CDS View&lt;/a&gt;: Display &lt;a href=&#34;https://github.com/ovh/cds&#34;&gt;CDS&lt;/a&gt; Notifications&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>al2tat</title>
+      <link>https://ovh.github.io/tat/ecosystem/al2tat/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/ecosystem/al2tat/</guid>
+      <description>
+
+&lt;p&gt;&lt;img align=&#34;right&#34; src=&#34;https://raw.githubusercontent.com/ovh/tat/master/tat.png&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;This microservice can be used :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;to send alerts to Tat (&lt;a href=&#34;https://github.com/ovh/tat&#34;&gt;https://github.com/ovh/tat&lt;/a&gt;).&lt;/li&gt;
+&lt;li&gt;to send monitoring events to Tat.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;alerts&#34;&gt;Alerts&lt;/h2&gt;
+
+&lt;p&gt;An alert is an event with a &amp;lsquo;AL&amp;rsquo; status. An alert can be replayed, al2tat attach
+this on a root message. If there is a new occurrence with same summary with
+&amp;lsquo;UP&amp;rsquo; status, alert will be closed.
+Best Tat view for theses: StandardView (&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview&#34;&gt;https://github.com/ovh/tatwebui-plugin-standardview&lt;/a&gt;)&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Compute Replay: if alarm already exists, the replay will be a reply of root alarm&lt;/li&gt;
+&lt;li&gt;Pre-select Label :
+
+&lt;ul&gt;
+&lt;li&gt;a new alarm &amp;ldquo;AL&amp;rdquo; will receive label &amp;ldquo;open&amp;rdquo; with red color on tat&lt;/li&gt;
+&lt;li&gt;a new alarm &amp;ldquo;UP&amp;rdquo; will receive label &amp;ldquo;done&amp;rdquo; with green color on tat&lt;/li&gt;
+&lt;li&gt;A new alarm &amp;ldquo;AL&amp;rdquo; will close previous &amp;ldquo;AL&amp;rdquo; in same thread&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;monitoring-events&#34;&gt;Monitoring Events&lt;/h2&gt;
+
+&lt;p&gt;An event monitoring is attached to one item (host, soft, person&amp;hellip; whatever), all events are held three days, and only 30 events are retained after 3d. Best Tat view for theses: Monitoring View (&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-monitoringview&#34;&gt;https://github.com/ovh/tatwebui-plugin-monitoringview&lt;/a&gt;)&lt;/p&gt;
+
+&lt;h1 id=&#34;usage&#34;&gt;Usage&lt;/h1&gt;
+
+&lt;h2 id=&#34;alert&#34;&gt;Alert&lt;/h2&gt;
+
+&lt;h3 id=&#34;store-new-alert&#34;&gt;Store new alert&lt;/h3&gt;
+
+&lt;p&gt;If &lt;code&gt;Tat_topic == &amp;quot;&amp;quot;&lt;/code&gt;, default value is &lt;code&gt;/Internal/Alerts&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: yourTatUser&amp;quot; \
+    -H &amp;quot;Tat_password: yourTatPassword&amp;quot; \
+    -H &amp;quot;Tat_topic: /Internal/Alerts&amp;quot; \
+    -d &#39;{
+    &amp;quot;status&amp;quot;: &amp;quot;AL&amp;quot;,
+    &amp;quot;nbAlert&amp;quot;: 1,
+    &amp;quot;service&amp;quot;: &amp;quot;YourService&amp;quot;,
+    &amp;quot;summary&amp;quot;: &amp;quot;your alert description here&amp;quot;
+}&#39; http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;nbAlert&lt;/code&gt; can be used to represent the number of elements impacted by your alert.
+It is not used to compute alert&amp;rsquo;s repetitions.&lt;/p&gt;
+
+&lt;h3 id=&#34;store-new-alert-with-a-label&#34;&gt;Store new alert with a label&lt;/h3&gt;
+
+&lt;p&gt;If &lt;code&gt;Tat_topic == &amp;quot;&amp;quot;&lt;/code&gt;, default value is &lt;code&gt;/Internal/Alerts&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: tatusername&amp;quot; \
+    -H &amp;quot;Tat_password: tatpassword&amp;quot; \
+    -H &amp;quot;Tat_topic: /Internal/Alerts&amp;quot; \
+    -d &#39;{
+    &amp;quot;status&amp;quot;: &amp;quot;AL&amp;quot;,
+    &amp;quot;nbAlert&amp;quot;: 3,
+    &amp;quot;service&amp;quot;: &amp;quot;YourService&amp;quot;,
+    &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;critical:high&amp;quot;, &amp;quot;color&amp;quot;:&amp;quot;#d04437&amp;quot;}],
+    &amp;quot;summary&amp;quot;: &amp;quot; your alert description here&amp;quot;
+}&#39; http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;sync-vs-async&#34;&gt;Sync vs Async&lt;/h3&gt;
+
+&lt;p&gt;POST on &lt;code&gt;http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert&lt;/code&gt;: send asynchronous to tat engine.&lt;/p&gt;
+
+&lt;p&gt;POST on &lt;code&gt;http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert/sync&lt;/code&gt;: send synchronous to tat engine, and return message&lt;/p&gt;
+
+&lt;h3 id=&#34;purge-alerts&#34;&gt;Purge alerts&lt;/h3&gt;
+
+&lt;p&gt;You have to call endpoint: &lt;code&gt;/purge/:skip/:limit&lt;/code&gt; to purge Tat_topic, for keeping
+30 replies on each alerts.&lt;/p&gt;
+
+&lt;p&gt;Purge example the last 100 alerts on tat :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: tatusername&amp;quot; \
+    -H &amp;quot;Tat_password: tatpassword&amp;quot; \
+    -H &amp;quot;Tat_topic: /Internal/Alerts&amp;quot;
+}&#39; http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/purge/0/100
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;monitoring&#34;&gt;Monitoring&lt;/h2&gt;
+
+&lt;h3 id=&#34;store-a-new-event&#34;&gt;Store a new event&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: yourTatUser&amp;quot; \
+    -H &amp;quot;Tat_password: yourTatPassword&amp;quot; \
+    -H &amp;quot;Tat_topic: /Internal/Monitoring&amp;quot; \
+    -d &#39;{
+    &amp;quot;status&amp;quot;: &amp;quot;AL&amp;quot;,
+    &amp;quot;item&amp;quot;: &amp;quot;yourApplication&amp;quot;,
+    &amp;quot;service&amp;quot;: &amp;quot;SERVICE&amp;quot;,
+    &amp;quot;summary&amp;quot;: &amp;quot;your description&amp;quot;,
+    &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;critical:high&amp;quot;, &amp;quot;color&amp;quot;:&amp;quot;#d04437&amp;quot;}]
+}&#39; http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/monitoring
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;with :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;status: AL or UP
+service: your service
+summary: description of event
+item: your application name, or host...
+labels: facultative, add labels to message root, the first message sent for an item.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;sync-vs-async-1&#34;&gt;Sync vs Async&lt;/h3&gt;
+
+&lt;p&gt;POST on &lt;code&gt;http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/monitoring&lt;/code&gt;: send asynchronous to tat engine.&lt;/p&gt;
+
+&lt;p&gt;POST on &lt;code&gt;http://&amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/monitoring/sync&lt;/code&gt;: send synchronous to tat engine, and return message&lt;/p&gt;
+
+&lt;h2 id=&#34;system&#34;&gt;System&lt;/h2&gt;
+
+&lt;h3 id=&#34;version&#34;&gt;Version&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;curl -XGET http://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/version
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;usage-1&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;h3 id=&#34;building&#34;&gt;Building&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;mkdir -p $GOPATH/src/github.com/ovh
+cd $GOPATH/src/github.com/ovh
+git clone git@github.com:ovh/tat-contrib.git
+cd tat-contrib/al2tat
+go build
+./al2tat -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;flags&#34;&gt;Flags&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;./al2tat -h
+Run Al2Tat
+
+Usage:
+  al2tat [flags]
+  al2tat [command]
+
+Available Commands:
+  version     Print the version.
+
+Flags:
+      --listen-port string      Tat Engine Listen Port (default &amp;quot;8082&amp;quot;)
+      --log-level string        Log Level : debug, info or warn
+      --production              Production mode
+      --url-tat-engine string   URL Tat Engine (default &amp;quot;http://localhost:8080&amp;quot;)
+
+Use &amp;quot;al2tat [command] --help&amp;quot; for more information about a command.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;environment&#34;&gt;Environment&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;AL2TAT_LISTEN_PORT&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Example :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;export AL2TAT_LISTEN_PORT=8181 &amp;amp;&amp;amp; ./al2tat
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;is same than&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;./al2tat --listen-port=&amp;quot;8181&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;examples-for-posting-an-alert&#34;&gt;Examples for POSTing an alert&lt;/h1&gt;
+
+&lt;h2 id=&#34;perl-version&#34;&gt;Perl version&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-perl&#34;&gt;package AL2TAT;
+
+use Exporter qw(import);
+
+our @EXPORT_OK = qw(run getMessage);
+
+use strict;
+use warnings;
+use LWP::UserAgent;
+
+sub run
+{
+  my &amp;lt;hostname&amp;gt;:&amp;lt;port&amp;gt;/alert&amp;quot;;
+  my $TAT_TOPIC_KEY = &amp;quot;/Private/yourTopic&amp;quot;;
+  my $TAT_USER_KEY = &amp;quot;yourUsernameOnTat&amp;quot;;
+  my $TAT_PASSWORD_KEY = &amp;quot;yourTatVeryLongPasswordHere&amp;quot;;
+
+  my $message = getMessage();
+  sendMessage($TAT_URL_KEY, $TAT_TOPIC_KEY, $TAT_USER_KEY, $TAT_PASSWORD_KEY, $message);
+}
+
+sub sendMessage
+{
+    my $url = $_[0];
+    my $topic = $_[1];
+    my $user = $_[2];
+    my $password = $_[3];
+    my $message = $_[4];
+
+    my $req = HTTP::Request-&amp;gt;new(POST =&amp;gt; $url);
+    $req-&amp;gt;header(&#39;Content-Type&#39; =&amp;gt; &#39;application/json&#39;);
+    $req-&amp;gt;header(&#39;Tat_username&#39; =&amp;gt; $user);
+    $req-&amp;gt;header(&#39;Tat_password&#39; =&amp;gt; $password);
+    $req-&amp;gt;header(&#39;Tat_topic&#39; =&amp;gt; $topic);
+
+    my $post_data = &#39;{&amp;quot;status&amp;quot;: &amp;quot;AL&amp;quot;, &amp;quot;nbAlert&amp;quot;: 1, &amp;quot;service&amp;quot;: &amp;quot;TEST&amp;quot;, &amp;quot;summary&amp;quot;: &amp;quot;&#39;.$message.&#39;&amp;quot;}&#39;;
+    $req-&amp;gt;content($post_data);
+
+    my $ua = LWP::UserAgent-&amp;gt;new;
+    my $resp = $ua-&amp;gt;request($req);
+
+    print &amp;quot;Response Status: &amp;quot;, $resp-&amp;gt;code, &amp;quot;\n&amp;quot;;
+    if ($resp-&amp;gt;is_success) {
+        my $message = $resp-&amp;gt;decoded_content;
+        print &amp;quot;Received reply: $message\n&amp;quot;;
+    } else {
+        print &amp;quot;HTTP POST error message: &amp;quot;, $resp-&amp;gt;message, &amp;quot;\n&amp;quot;;
+    }
+}
+
+sub getMessage
+{
+    return &amp;quot;Message from perl &amp;quot;;
+}
+
+run()
+
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>API - Messages</title>
+      <link>https://ovh.github.io/tat/engine/api-messages/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/engine/api-messages/</guid>
+      <description>
+
+&lt;h2 id=&#34;store-a-new-message&#34;&gt;Store a new message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;text&amp;quot;: &amp;quot;text&amp;quot; }&#39; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can add labels from the creation&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;text&amp;quot;: &amp;quot;text&amp;quot;, &amp;quot;dateCreation&amp;quot;: 11123232, &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;labelA&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#eeeeee&amp;quot;}, {&amp;quot;text&amp;quot;: &amp;quot;labelB&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#ffffff&amp;quot;}] }&#39; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can add replies from the creation&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+  -d &#39;{ &amp;quot;text&amp;quot;: &amp;quot;text&amp;quot;, &amp;quot;replies&amp;quot;:[&amp;quot;reply A&amp;quot;, &amp;quot;reply B&amp;quot;] }&#39; \
+  https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can add replies, with labels, from the creation&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+  -d &#39;{ &amp;quot;text&amp;quot;: &amp;quot;text msg root&amp;quot;, &amp;quot;messages&amp;quot;: [{ &amp;quot;text&amp;quot;: &amp;quot;text reply&amp;quot;, &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;labelA&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#eeeeee&amp;quot;}] }] }&#39; \
+  https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you use a &lt;code&gt;system user&lt;/code&gt;, you can force message&amp;rsquo;s date&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;text&amp;quot;: &amp;quot;text&amp;quot;, &amp;quot;dateCreation&amp;quot;: 11123232 }&#39; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Return HTTP 201 if OK&lt;/p&gt;
+
+&lt;h2 id=&#34;store-some-messages&#34;&gt;Store some messages&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;[{ &amp;quot;text&amp;quot;: &amp;quot;text message A&amp;quot; },{ &amp;quot;text&amp;quot;: &amp;quot;text message B&amp;quot;, &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;labelA&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#eeeeee&amp;quot;}] }]&#39; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;action-on-a-existing-message&#34;&gt;Action on a existing message&lt;/h2&gt;
+
+&lt;p&gt;Reply, Like, Unlike, Add Label, Remove Label, etc&amp;hellip; use idReference but it&amp;rsquo;s possible to use :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;TagReference&lt;/li&gt;
+&lt;li&gt;StartTagReference&lt;/li&gt;
+&lt;li&gt;LabelReference&lt;/li&gt;
+&lt;li&gt;StartLabelReference&lt;/li&gt;
+&lt;li&gt;OnlyRootReference (true by default)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;text&amp;quot;: &amp;quot;text&amp;quot;, &amp;quot;startTagReference&amp;quot;: &amp;quot;keyTag:&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;reply&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If several messages match to your request, Tat gives you a HTTP Bad Request.&lt;/p&gt;
+
+&lt;h2 id=&#34;reply-to-a-message&#34;&gt;Reply to a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;text&amp;quot;: &amp;quot;text&amp;quot;, &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;reply&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;reply-to-a-message-with-create-root-message-if-necessary&#34;&gt;Reply to a message, with create root message if necessary&lt;/h2&gt;
+
+&lt;p&gt;This request will :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Create the root message with text &lt;code&gt;the root message #aaa&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;If a message with a tag &lt;code&gt;#aaa&lt;/code&gt; already exists, this message will be used to add replies on it&lt;/li&gt;
+&lt;li&gt;Add two replies &lt;code&gt;reply A&lt;/code&gt; and &lt;code&gt;reply B&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+  -d &#39;{ &amp;quot;text&amp;quot;: &amp;quot;the root message #aaa&amp;quot;, &amp;quot;replies&amp;quot;:[&amp;quot;reply A&amp;quot;, &amp;quot;reply B&amp;quot;], &amp;quot;tagReference&amp;quot;: &amp;quot;aaa&amp;quot;}&#39; \
+  https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;like-a-message&#34;&gt;Like a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;like&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;unlike-a-message&#34;&gt;Unlike a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;unlike&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-a-label-to-a-message&#34;&gt;Add a label to a message&lt;/h2&gt;
+
+&lt;p&gt;&lt;em&gt;option&lt;/em&gt; is the background color of the label.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;label&amp;quot;, &amp;quot;text&amp;quot;: &amp;quot;myLabel&amp;quot;, &amp;quot;option&amp;quot;: &amp;quot;rgba(143,199,148,0.61)&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;remove-a-label-from-a-message&#34;&gt;Remove a label from a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;unlabel&amp;quot;, &amp;quot;text&amp;quot;: &amp;quot;myLabel&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;remove-all-labels-and-add-new-ones&#34;&gt;Remove all labels and add new ones&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;relabel&amp;quot;, &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;labelA&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#eeeeee&amp;quot;}, {&amp;quot;text&amp;quot;: &amp;quot;labelB&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#ffffff&amp;quot;}]}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Return HTTP 201 if OK&lt;/p&gt;
+
+&lt;h2 id=&#34;remove-some-labels-and-add-new-ones&#34;&gt;Remove some labels and add new ones&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;relabel&amp;quot;, &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;labelA&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#eeeeee&amp;quot;}, {&amp;quot;text&amp;quot;: &amp;quot;labelB&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#ffffff&amp;quot;}], &amp;quot;options&amp;quot;: [&amp;quot;labelAToRemove&amp;quot;, &amp;quot;labelAToRemove&amp;quot;] }&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;remove-all-labels-and-add-new-ones-on-existing-message-create-message-otherwise&#34;&gt;Remove all labels and add new ones on existing message, create message otherwise&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;tagReference&amp;quot;: &amp;quot;foo&amp;quot;, &amp;quot;text&amp;quot;: &amp;quot;a text with #foo&amp;quot; &amp;quot;action&amp;quot;: &amp;quot;relabelorcreate&amp;quot;, &amp;quot;labels&amp;quot;: [{&amp;quot;text&amp;quot;: &amp;quot;labelA&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#eeeeee&amp;quot;}, {&amp;quot;text&amp;quot;: &amp;quot;labelB&amp;quot;, &amp;quot;color&amp;quot;: &amp;quot;#ffffff&amp;quot;}]}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If a message with tag &lt;code&gt;foo&lt;/code&gt; already exists on topic, apply new labels. If message does not exist, a new message will be created.&lt;/p&gt;
+
+&lt;h2 id=&#34;update-a-message&#34;&gt;Update a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;tagReference&amp;quot;: &amp;quot;aaa&amp;quot;, &amp;quot;onlyRootReference&amp;quot;: &amp;quot;false&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;update&amp;quot;, &amp;quot;text&amp;quot;: &amp;quot;my New Mesage updated&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;concat-a-message-adding-additional-text-to-one-message&#34;&gt;Concat a message : adding additional text to one message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;concat&amp;quot;, &amp;quot;text&amp;quot;: &amp;quot; additional text&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;move-a-message-to-another-topic&#34;&gt;Move a message to another topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;move&amp;quot;, &amp;quot;option&amp;quot;: &amp;quot;/newTopic/subNewTopic&amp;quot;}&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/oldTOpic/oldSubTopic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-message&#34;&gt;Delete a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XDELETE \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/nocascade/9797q87KJhqsfO7Usdqd/topic/subTopic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-message-and-its-replies&#34;&gt;Delete a message and its replies&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XDELETE \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/cascade/9797q87KJhqsfO7Usdqd/topic/subTopic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-message-and-its-replies-even-if-it-s-in-tasks-topic-of-one-user&#34;&gt;Delete a message and its replies, even if it&amp;rsquo;s in Tasks Topic of one user&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XDELETE \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/cascadeforce/9797q87KJhqsfO7Usdqd/topic/subTopic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-list-of-messages&#34;&gt;Delete a list of messages&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XDELETE \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/nocascade/topic/subTopic?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt;&amp;amp;argName=valName&amp;amp;arg2Name=val2Name
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;see &lt;a href=&#34;https://github.com/ovh/tat#parameters&#34;&gt;https://github.com/ovh/tat#parameters&lt;/a&gt; for all parameters&lt;/p&gt;
+
+&lt;h2 id=&#34;delete-a-list-of-messages-and-its-replies&#34;&gt;Delete a list of messages and its replies&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XDELETE \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/cascade/topic/subTopic?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt;&amp;amp;argName=valName&amp;amp;arg2Name=val2Name
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;see &lt;a href=&#34;https://github.com/ovh/tat#parameters&#34;&gt;https://github.com/ovh/tat#parameters&lt;/a&gt; for all parameters&lt;/p&gt;
+
+&lt;h2 id=&#34;delete-a-list-of-messages-and-its-replies-even-if-it-s-a-reply-or-it-s-in-tasks-topic-of-one-user&#34;&gt;Delete a list of messages and its replies, even if it&amp;rsquo;s a reply or it&amp;rsquo;s in Tasks Topic of one user&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XDELETE \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/cascadeforce/topic/subTopic?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt;&amp;amp;argName=valName&amp;amp;arg2Name=val2Name
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;see &lt;a href=&#34;https://github.com/ovh/tat#parameters&#34;&gt;https://github.com/ovh/tat#parameters&lt;/a&gt; for all parameters&lt;/p&gt;
+
+&lt;h2 id=&#34;create-a-task-from-a-message&#34;&gt;Create a task from a message&lt;/h2&gt;
+
+&lt;p&gt;Add a message to topic: &lt;code&gt;/Private/username/Tasks&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;task&amp;quot; }&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/Private/username/Tasks
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;remove-a-message-from-tasks&#34;&gt;Remove a message from tasks&lt;/h2&gt;
+
+&lt;p&gt;Remove a message from the topic: /Private/username/Tasks&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;untask&amp;quot; }&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/Private/username/Tasks
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;vote-up-a-message&#34;&gt;Vote UP a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;voteup&amp;quot; }&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;remove-a-vote-up-from-a-message&#34;&gt;Remove a Vote UP from a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;unvoteup&amp;quot; }&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;vote-down-a-message&#34;&gt;Vote Down a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;votedown&amp;quot; }&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;remove-vote-down-from-a-message&#34;&gt;Remove Vote Down from a message&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &#39;Content-Type: application/json&#39; \
+    -H &amp;quot;Tat_username: username&amp;quot; \
+    -H &amp;quot;Tat_password: passwordOfUser&amp;quot; \
+	-d &#39;{ &amp;quot;idReference&amp;quot;: &amp;quot;9797q87KJhqsfO7Usdqd&amp;quot;, &amp;quot;action&amp;quot;: &amp;quot;unvotedown&amp;quot; }&#39;\
+	https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/message/a-topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;getting-messages-list&#34;&gt;Getting Messages List&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/&amp;lt;topic&amp;gt;?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt;
+curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/&amp;lt;topic&amp;gt;?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt;&amp;amp;argName=valName&amp;amp;arg2Name=val2Name
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Getting messages on one Public Topic (Read Only):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/read/&amp;lt;topic&amp;gt;?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt;
+curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/read/&amp;lt;topic&amp;gt;?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt;&amp;amp;argName=valName&amp;amp;arg2Name=val2Name
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;parameters&#34;&gt;Parameters&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;allIDMessage&lt;/code&gt;          Search in All ID Message (idMessage, idReply, idRoot)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;andLabel&lt;/code&gt;              Search by label (and) : could be labelA,labelB&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;andTag&lt;/code&gt;                Search by tag (and) : could be tagA,tagB&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;idMessage&lt;/code&gt;             Search by IDMessage&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;inReplyOfID&lt;/code&gt;           Search by IDMessage InReply&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;inReplyOfIDRoot&lt;/code&gt;       Search by IDMessage IdRoot&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;label&lt;/code&gt;                 Search by label: could be labelA,labelB&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateMaxCreation&lt;/code&gt;       Search by dateCreation (timestamp), select messages where dateCreation &amp;lt;= dateMaxCreation&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateMaxUpdate&lt;/code&gt;         Search by dateUpdate (timestamp), select messages where dateUpdate &amp;lt;= dateMaxUpdate&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateMinCreation&lt;/code&gt;       Search by dateCreation (timestamp), select messages where dateCreation &amp;gt;= dateMinCreation&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateMinUpdate&lt;/code&gt;         Search by dateUpdate (timestamp), select messages where dateUpdate &amp;gt;= dateMinUpdate&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateRefCreation&lt;/code&gt;            This have to be used with dateRefDeltaMinCreation and / or dateRefDeltaMaxCreation. This could be BeginningOfMinute, BeginningOfHour, BeginningOfDay, BeginningOfWeek, BeginningOfMonth, BeginningOfQuarter, BeginningOfYear&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateRefDeltaMaxCreation&lt;/code&gt;    Add seconds to dateRefCreation flag&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateRefDeltaMaxUpdate&lt;/code&gt;      Add seconds to dateRefUpdate flag&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateRefDeltaMinCreation&lt;/code&gt;    Add seconds to dateRefCreation flag&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateRefDeltaMinUpdate&lt;/code&gt;      Add seconds to dateRefUpdate flag&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dateRefUpdate&lt;/code&gt;              This have to be used with dateRefDeltaMinUpdate and / or dateRefDeltaMaxUpdate. This could be BeginningOfMinute, BeginningOfHour, BeginningOfDay, BeginningOfWeek, BeginningOfMonth, BeginningOfQuarter, BeginningOfYear&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastHourMaxCreation&lt;/code&gt;   Search by dateCreation, select messages where dateCreation &amp;lt;= Now Beginning Of Hour - (60 * lastHourMaxCreation)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastHourMaxUpdate&lt;/code&gt;     Search by dateUpdate, select messages where dateUpdate &amp;lt;= Now Beginning Of Hour - (60 * lastHourMaxCreation)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastHourMinCreation&lt;/code&gt;   Search by dateCreation, select messages where dateCreation &amp;gt;= Now Beginning Of Hour - (60 * lastHourMinCreation)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastHourMinUpdate&lt;/code&gt;     Search by dateUpdate, select messages where dateUpdate &amp;gt;= Now Beginning Of Hour - (60 * lastHourMinCreation)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastMaxCreation&lt;/code&gt;       Search by dateCreation (duration in second), select messages where dateCreation &amp;lt;= now - lastMaxCreation&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastMaxCreation&lt;/code&gt;       Search by dateCreation (duration in second), select messages where dateCreation &amp;lt;= now - lastMaxCreation&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastMaxUpdate&lt;/code&gt;         Search by dateUpdate (duration in second), select messages where dateUpdate &amp;lt;= now - lastMaxCreation&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastMinCreation&lt;/code&gt;       Search by dateCreation (duration in second), select messages where dateCreation &amp;gt;= now - lastMinCreation&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lastMinUpdate&lt;/code&gt;         Search by dateUpdate (duration in second), select messages where dateUpdate &amp;gt;= now - lastMinCreation&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;limitMaxNbReplies&lt;/code&gt;     In onetree mode, filter root messages with min or equals maxNbReplies&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;limitMaxNbVotesDown&lt;/code&gt;   Search by nbVotesDown&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;limitMaxNbVotesUP&lt;/code&gt;     Search by nbVotesUP&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;limitMinNbReplies&lt;/code&gt;     In onetree mode, filter root messages with more or equals minNbReplies&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;limitMinNbVotesDown&lt;/code&gt;   Search by nbVotesDown&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;limitMinNbVotesUP&lt;/code&gt;     Search by nbVotesUP&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;notLabel&lt;/code&gt;              Search by label (exclude): could be labelA,labelB&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;notTag&lt;/code&gt;                Search by tag (exclude) : could be tagA,tagB&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;onlyCount&lt;/code&gt;             onlyCount=true: only count messages, without retrieve msg. limit, skip, treeview criterias are ignored.
+onlyMsgRoot string           onlyMsgRoot=true: restricts to root message only (inReplyOfIDRoot empty). If treeView is used, limit search criteria to root * &lt;code&gt;message&lt;/code&gt; are still given, independently of search criteria.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;startLabel&lt;/code&gt;            Search by a label prefix: startLabel=&amp;lsquo;mykey:,myKey2:&amp;rsquo;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;startTag&lt;/code&gt;              Search by a tag prefix: startTag=&amp;lsquo;mykey:,myKey2:&amp;rsquo;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tag&lt;/code&gt;                   Search by tag : could be tagA,tagB&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;text&lt;/code&gt;                  Search by text&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;topic&lt;/code&gt;                 Search by topic&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;treeView&lt;/code&gt;              Tree View of messages: onetree or fulltree. Default: notree&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;username&lt;/code&gt;              Search by username : could be usernameA,usernameB&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sortBy&lt;/code&gt;                Sort message. Use &amp;lsquo;-&amp;rsquo; to reverse sort. Default is &amp;ndash;sortBy=-dateCreation. You can use: text, topic, inReplyOfID, inReplyOfIDRoot, nbLikes, labels, likers, votersUP, votersDown, nbVotesUP, nbVotesDown, userMentions, urls, tags, dateCreation, dateUpdate, author, nbReplies&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;examples&#34;&gt;Examples&lt;/h3&gt;
+
+&lt;h4 id=&#34;get-100-last-created-messages-messages&#34;&gt;GET 100 last created messages messages&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/topicA?skip=0&amp;amp;limit=100
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;filter-by-date-creation&#34;&gt;Filter by date Creation&lt;/h4&gt;
+
+&lt;p&gt;This will return 100 messages created between 16/7/2014, 22:55:46 and 16/8/2014, 22:55:46&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;1405544146 is 16/7/2014, 22:55:46&lt;/li&gt;
+&lt;li&gt;1408222546 is 16/8/2014, 22:55:46&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/topicA/subTopic?skip=0&amp;amp;limit=100&amp;amp;dateMinCreation=1405544146&amp;amp;dateMaxCreation=1408222546
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;count-messages-created-since-8-hours&#34;&gt;Count messages created since 8 hours&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/topicA?onlyCount=true&amp;amp;lastHourMinCreation=8
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;count-messages-created-since-3-days&#34;&gt;Count messages created since 3 days&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;lastHourMinCreation : 24hours x 3 days = 72&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/topicA?onlyCount=true&amp;amp;lastHourMinCreation=72
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;count-messages-created-since-beginning-of-month&#34;&gt;Count messages created since Beginning Of Month&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;dateRefCreation : Select beginning of month with &amp;ldquo;BeginningOfMonth&amp;rdquo; pattern. Start at monday.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/topicA?onlyCount=true&amp;amp;dateRefCreation=BeginningOfMonth
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;count-messages-created-on-tuesday-of-current-week&#34;&gt;Count messages created on Tuesday of current week&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;dateRefCreation : Select beginning of week with &amp;ldquo;BeginningOfWeek&amp;rdquo; pattern. Start at monday.&lt;/li&gt;
+&lt;li&gt;dateRefDeltaMinCreation : add seconds to dateRefCreation, to 60seconds x 60minutes x 24hours = 86400&lt;/li&gt;
+&lt;li&gt;dateRefDeltaMaxCreation : add seconds to dateRefCreation, to 60seconds x 60minutes x 48hours = 172800&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/messages/topicA?onlyCount=true&amp;amp;dateRefCreation=BeginningOfWeek&amp;amp;dateRefDeltaMinCreation=86400&amp;amp;dateRefDeltaMaxCreation=172800
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Concepts</title>
+      <link>https://ovh.github.io/tat/overview/concepts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/concepts/</guid>
+      <description>
+
+&lt;h2 id=&#34;four-concepts-topic-message-tag-label&#34;&gt;Four Concepts: Topic / Message / Tag / Label&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Topic
+
+&lt;ul&gt;
+&lt;li&gt;Contains 0 or n messages&lt;/li&gt;
+&lt;li&gt;Administrator(s) of Topic can create Topic inside it&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Message
+
+&lt;ul&gt;
+&lt;li&gt;Consists of text, tags and labels&lt;/li&gt;
+&lt;li&gt;Can not be deleted or modified (by default)&lt;/li&gt;
+&lt;li&gt;Is limited in characters (topic setting)&lt;/li&gt;
+&lt;li&gt;Is always attached to one topic&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Tag
+
+&lt;ul&gt;
+&lt;li&gt;Within the message content&lt;/li&gt;
+&lt;li&gt;Can not be added after message creation (by default)&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Label
+
+&lt;ul&gt;
+&lt;li&gt;Can be added or removed freely&lt;/li&gt;
+&lt;li&gt;Have a color&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Think about messages as plain information pieces, their meaning are contextualized through microservices using those messages and views you plug on their topics.&lt;/p&gt;
+
+&lt;h2 id=&#34;users-groups-and-administrators&#34;&gt;Users, Groups and Administrators&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Group
+
+&lt;ul&gt;
+&lt;li&gt;Managed by an administrator(s): adding or removing users from the group&lt;/li&gt;
+&lt;li&gt;Without prior authorization, a group or user has no access to topics&lt;/li&gt;
+&lt;li&gt;A group or a user can be read-only or read-write on a topic&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Administrator(s)
+
+&lt;ul&gt;
+&lt;li&gt;First user created is an administrator&lt;/li&gt;
+&lt;li&gt;Tat Administrator: all configuration access&lt;/li&gt;
+&lt;li&gt;On Group(s): can add/remove member(s)&lt;/li&gt;
+&lt;li&gt;On Topic(s): can create sub-topics, update rights parameters and default view&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;some-rules-and-rules-exception&#34;&gt;Some rules and rules exception&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Deleting a message is possible in the private topics, or can be granted on other topic&lt;/li&gt;
+&lt;li&gt;Modification of a message is possible in private topics, or can be granted on other topic&lt;/li&gt;
+&lt;li&gt;The default length of a message is 140 characters, this limit can be modified by topic&lt;/li&gt;
+&lt;li&gt;A date creation of a message can be explicitly set by a system user&lt;/li&gt;
+&lt;li&gt;message.dateCreation and message.dateUpdate are in timestamp format, ex:
+
+&lt;ul&gt;
+&lt;li&gt;1436912447: 1436912447 seconds&lt;/li&gt;
+&lt;li&gt;1436912447.345678: 1436912447 seconds and 345678 milliseconds&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;
+
+&lt;p&gt;&lt;em&gt;What about attachment (sound, image, etc&amp;hellip;) ?&lt;/em&gt;
+Tat Engine stores only &lt;em&gt;text&lt;/em&gt;. Use other application, like &lt;a href=&#34;https://github.com/root-gg/plik&#34;&gt;Plik&lt;/a&gt;
+to upload file and store URL on Tat.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Golang - Full Example</title>
+      <link>https://ovh.github.io/tat/sdk/golang-full-example/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/sdk/golang-full-example/</guid>
+      <description>
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;p&gt;This example uses &lt;a href=&#34;https://github.com/spf13/viper&#34;&gt;viper&lt;/a&gt;, &lt;a href=&#34;https://github.com/spf13/cobra&#34;&gt;cobra&lt;/a&gt; and &lt;a href=&#34;https://ovh.github.io/tat/tatcli/general/&#34;&gt;tatcli&lt;/a&gt; config file.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Usage:
+ go build &amp;amp;&amp;amp; ./mycli-full demo /YouTopic/subTopic your message
+
+with a config file:
+ go build &amp;amp;&amp;amp; ./mycli-full --configFile $HOME/.tatcli/config.local.json demo /YouTopic/subTopic your message
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;file-main-go&#34;&gt;File main.go&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+import (
+	&amp;quot;fmt&amp;quot;
+	&amp;quot;os&amp;quot;
+
+	log &amp;quot;github.com/Sirupsen/logrus&amp;quot;
+	&amp;quot;github.com/ovh/tat&amp;quot;
+	&amp;quot;github.com/spf13/cobra&amp;quot;
+	&amp;quot;github.com/spf13/viper&amp;quot;
+)
+
+var rootCmd = &amp;amp;cobra.Command{
+	Use:  &amp;quot;mycli-full&amp;quot;,
+	Long: `SDK Use Demo`,
+}
+
+// URL of tat engine, tat username and tat password
+var (
+	home     = os.Getenv(&amp;quot;HOME&amp;quot;)
+	taturl   string
+	username string
+	password string
+
+	// ConfigFile is $HOME/.tatcli/config.json per default
+	// contains user, password and url of tat
+	configFile string
+)
+
+func main() {
+	addCommands()
+
+	rootCmd.PersistentFlags().StringVarP(&amp;amp;taturl, &amp;quot;url&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;URL Tat Engine, facultative if you have a &amp;quot;+home+&amp;quot;/.tatcli/config.json file&amp;quot;)
+	rootCmd.PersistentFlags().StringVarP(&amp;amp;username, &amp;quot;username&amp;quot;, &amp;quot;u&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;username, facultative if you have a &amp;quot;+home+&amp;quot;/.tatcli/config.json file&amp;quot;)
+	rootCmd.PersistentFlags().StringVarP(&amp;amp;password, &amp;quot;password&amp;quot;, &amp;quot;p&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;password, facultative if you have a &amp;quot;+home+&amp;quot;/.tatcli/config.json file&amp;quot;)
+	rootCmd.PersistentFlags().StringVarP(&amp;amp;configFile, &amp;quot;configFile&amp;quot;, &amp;quot;c&amp;quot;, home+&amp;quot;/.tatcli/config.json&amp;quot;, &amp;quot;configuration file, default is &amp;quot;+home+&amp;quot;/.tatcli/config.json&amp;quot;)
+
+	viper.BindPFlag(&amp;quot;url&amp;quot;, rootCmd.PersistentFlags().Lookup(&amp;quot;url&amp;quot;))
+	viper.BindPFlag(&amp;quot;username&amp;quot;, rootCmd.PersistentFlags().Lookup(&amp;quot;username&amp;quot;))
+	viper.BindPFlag(&amp;quot;password&amp;quot;, rootCmd.PersistentFlags().Lookup(&amp;quot;password&amp;quot;))
+
+	log.SetLevel(log.DebugLevel)
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+}
+
+//AddCommands adds child commands to the root command rootCmd.
+func addCommands() {
+	rootCmd.AddCommand(cmdDemo)
+}
+
+var cmdDemo = &amp;amp;cobra.Command{
+	Use:   &amp;quot;demo &amp;lt;topic&amp;gt; &amp;lt;msg&amp;gt;&amp;quot;,
+	Short: &amp;quot;Demo Post Msg&amp;quot;,
+	Run: func(cmd *cobra.Command, args []string) {
+		create(args[0], args[1])
+	},
+}
+
+// create creates a message in specified topic
+func create(topic, message string) {
+	readConfig()
+	m := tat.MessageJSON{Text: message, Topic: topic}
+	msgCreated, err := getClient().MessageAdd(m)
+	if err != nil {
+		log.Errorf(&amp;quot;Error:%s&amp;quot;, err)
+		return
+	}
+	log.Debugf(&amp;quot;ID Message Created: %d&amp;quot;, msgCreated.Message.ID)
+}
+
+func getClient() *tat.Client {
+	tc, err := tat.NewClient(tat.Options{
+		URL:      viper.GetString(&amp;quot;url&amp;quot;),
+		Username: viper.GetString(&amp;quot;username&amp;quot;),
+		Password: viper.GetString(&amp;quot;password&amp;quot;),
+		Referer:  &amp;quot;mycli.v0&amp;quot;,
+	})
+
+	if err != nil {
+		log.Fatalf(&amp;quot;Error while create new Tat Client: %s&amp;quot;, err)
+	}
+
+	tat.DebugLogFunc = log.Debugf
+	return tc
+}
+
+// readConfig reads config in .tatcli/config per default
+func readConfig() {
+	if configFile != &amp;quot;&amp;quot; {
+		viper.SetConfigFile(configFile)
+		viper.ReadInConfig() // Find and read the config file
+	}
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;notice&#34;&gt;Notice&lt;/h2&gt;
+
+&lt;p&gt;You should split this file into many files.&lt;/p&gt;
+
+&lt;p&gt;See &lt;a href=&#34;https://github.com/ovh/tat/tatcli&#34;&gt;https://github.com/ovh/tat/tatcli&lt;/a&gt; for CLI with many subcommands.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Standard View</title>
+      <link>https://ovh.github.io/tat/tatwebui/standardview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/standardview/</guid>
+      <description>
+
+&lt;h2 id=&#34;screenshots&#34;&gt;Screenshots&lt;/h2&gt;
+
+&lt;h3 id=&#34;messages-list&#34;&gt;Messages - List&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-standard-view-list.png?width=80%&#34; alt=&#34;Standard View&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;messages-edit&#34;&gt;Messages - Edit&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-standard-view-details.png?width=80%&#34; alt=&#34;Standard View&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-standardview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-standardview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview&#34;&gt;https://github.com/ovh/tatwebui-plugin-standardview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>mail2tat</title>
+      <link>https://ovh.github.io/tat/ecosystem/mail2tat/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/ecosystem/mail2tat/</guid>
+      <description>
+
+&lt;p&gt;Create a message on Tat by sending a mail. Mail2tat check an imap account
+and create a message for each mail received.&lt;/p&gt;
+
+&lt;h2 id=&#34;tat-configuration&#34;&gt;Tat Configuration&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Add Read Write to user tat.system.mail on your destination topic&lt;/li&gt;
+&lt;li&gt;Check option : &amp;ldquo;System User can force dateCreation of message ?&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;simple-usage&#34;&gt;Simple usage&lt;/h2&gt;
+
+&lt;p&gt;Send a mail to tat@your-domain with&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;subjet : &amp;lt;topicName&amp;gt;
+Body : text of message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Example of subject : &lt;code&gt;/Internal/YourTopic&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;thread-on-tat&#34;&gt;Thread on Tat&lt;/h2&gt;
+
+&lt;p&gt;Send a mail to tat@your-domain with :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;subjet : &amp;lt;topicName&amp;gt;,&amp;lt;idGroup&amp;gt;
+Body: text of message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Example of subject: &lt;code&gt;/Internal/YourTopic,something&lt;/code&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;
+
+&lt;p&gt;Time between sending mail and post on tat ? Each minute : check mail and send on tat.
+Restriction on From ? Yes, see arg  : only @your-domain. All mail received from another domain are not send on tat.&lt;/p&gt;
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;h3 id=&#34;building&#34;&gt;Building&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;mkdir -p $GOPATH/src/github.com/ovh
+cd $GOPATH/src/github.com/ovh
+git clone git@github.com:ovh/tat-contrib.git
+cd tat-contrib/mail2tat/api
+go build
+./api -h
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;flags&#34;&gt;Flags&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;./api -h
+MAIL2TAT - Mail to Tat
+
+Usage:
+  mail2tat [flags]
+
+Flags:
+      --activate-cron                Activate Cron (default true)
+      --imap-host string             IMAP Host
+      --imap-password string         IMAP Password
+      --imap-username string         IMAP Username
+      --listen-port string           RunKPI Listen Port (default &amp;quot;8084&amp;quot;)
+      --log-level string             Log Level : debug, info or warn
+      --password-tat-engine string   Password Tat Engine
+      --production                   Production mode
+      --url-tat-engine string        URL Tat Engine (default &amp;quot;http://localhost:8080&amp;quot;)
+      --username-tat-engine string   Username Tat Engine
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli config -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-config/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-config/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-config-h&#34;&gt;tatcli config -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;Config commands: tatcli config &amp;lt;command&amp;gt;
+
+Usage:
+  tatcli config [command]
+
+Aliases:
+  config, c
+
+
+Available Commands:
+  template    Write a template configuration file in $HOME/.tatcli/config.json: tatcli config template
+  show        Show Configuration: tatcli config show
+
+Flags:
+  -h, --help=false: help for config
+
+Global Flags: see tatcli -h
+
+Use &amp;quot;tatcli config [command] --help&amp;quot; for more information about a command.
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;h3 id=&#34;credentials&#34;&gt;Credentials&lt;/h3&gt;
+
+&lt;p&gt;Config file is under $HOME/.tatcli/config.json
+You can create it with this command:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli config template
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Template is:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+  &amp;quot;username&amp;quot;:&amp;quot;myUsername&amp;quot;,
+  &amp;quot;password&amp;quot;:&amp;quot;myPassword&amp;quot;,
+  &amp;quot;url&amp;quot;:&amp;quot;http://urltat:port&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>API - Topics</title>
+      <link>https://ovh.github.io/tat/engine/api-topics/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/engine/api-topics/</guid>
+      <description>
+
+&lt;h2 id=&#34;create-a-topic&#34;&gt;Create a Topic&lt;/h2&gt;
+
+&lt;p&gt;Rules:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;User can create a root topic if he is a Tat Admin.&lt;/li&gt;
+&lt;li&gt;User can create topics under &lt;code&gt;/Private/username/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;User can create topics if he is an admin on the Parent Topic or belong to an admin group on the Parent topic.
+Example:  Create /AAA/BBB: Parent Topic is /AAA&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPOST \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;description&amp;quot;: &amp;quot;Topic Description&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-topic&#34;&gt;Delete a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XDELETE \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/subtopic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;truncate-a-topic&#34;&gt;Truncate a topic&lt;/h2&gt;
+
+&lt;p&gt;Only for Tat Admin and administrators on topic.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/truncate
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;compute-tags-on-a-topic&#34;&gt;Compute tags on a topic&lt;/h2&gt;
+
+&lt;p&gt;Only for Tat Admin and administrators on topic.&lt;/p&gt;
+
+&lt;p&gt;Set &amp;ldquo;tags&amp;rdquo; attribute on topic, with an array of all tags used in this topic.
+One entry in &amp;ldquo;tags&amp;rdquo; attribute per text of tag.&lt;/p&gt;
+
+&lt;p&gt;Topic&amp;rsquo;s tags are showed with :
+GET https://&lt;tatHostname&gt;:&lt;tatPort&gt;/topic/topicName&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/compute/tags
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Example of usage of tags attribute: autocompletion of tag on UI when written new message on a topic&lt;/p&gt;
+
+&lt;h2 id=&#34;compute-labels-on-a-topic&#34;&gt;Compute labels on a topic&lt;/h2&gt;
+
+&lt;p&gt;Only for Tat Admin and administrators on topic.&lt;/p&gt;
+
+&lt;p&gt;Set &amp;ldquo;labels&amp;rdquo; attribute on topic, with an array of all labels used in this topic.
+One entry in &amp;ldquo;labels&amp;rdquo; attribute per text &amp;amp; color of label.&lt;/p&gt;
+
+&lt;p&gt;Topic&amp;rsquo;s labels are showed with :
+GET https://&lt;tatHostname&gt;:&lt;tatPort&gt;/topic/topicName&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/compute/labels
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Example of usage of labels attribute: label autocompletion on UI when adding new label&lt;/p&gt;
+
+&lt;h2 id=&#34;compute-tags-on-all-topics&#34;&gt;Compute tags on all topics&lt;/h2&gt;
+
+&lt;p&gt;Only for Tat Admin.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topics/compute/tags
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;compute-labels-on-all-topics&#34;&gt;Compute labels on all topics&lt;/h2&gt;
+
+&lt;p&gt;Only for Tat Admin.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topics/compute/labels
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;set-a-param-on-all-topics&#34;&gt;Set a param on all topics&lt;/h2&gt;
+
+&lt;p&gt;Only for Tat Admin and for attributes isAutoComputeTags and isAutoComputeLabels.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;paramName&amp;quot;:&amp;quot;isAutoComputeLabels&amp;quot;,&amp;quot;paramValue&amp;quot;:&amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topics/param
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;truncate-cached-tags-on-a-topic&#34;&gt;Truncate cached tags on a topic&lt;/h2&gt;
+
+&lt;p&gt;Only for Tat Admin and administrators on topic.&lt;/p&gt;
+
+&lt;p&gt;Truncate &amp;ldquo;tags&amp;rdquo; attribute on topic.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/tags/truncate
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;truncate-cached-labels-on-a-topic&#34;&gt;Truncate cached labels on a topic&lt;/h2&gt;
+
+&lt;p&gt;Only for Tat Admin and administrators on topic.&lt;/p&gt;
+
+&lt;p&gt;Truncate &amp;ldquo;labels&amp;rdquo; attribute on topic.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/labels/truncate
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;getting-one-topic&#34;&gt;Getting one Topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/topicName | python -m json.tool
+curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/topicName/subTopic | python -m json.tool
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;getting-topics-list&#34;&gt;Getting Topics List&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topics?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt; | python -m json.tool
+curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topics?skip=&amp;lt;skip&amp;gt;&amp;amp;limit=&amp;lt;limit&amp;gt;&amp;amp;argName=valName&amp;amp;arg2Name=val2Name | python -m json.tool
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;parameters&#34;&gt;Parameters&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;skip: Skip skips over the n initial documents from the query results&lt;/li&gt;
+&lt;li&gt;limit: Limit restricts the maximum number of documents retrieved&lt;/li&gt;
+&lt;li&gt;topic: Topic name, example: /topicA&lt;/li&gt;
+&lt;li&gt;topicPath: Topic start path, example: /topicA will return /topicA/subA, /topicA/subB&lt;/li&gt;
+&lt;li&gt;idTopic: id of topic&lt;/li&gt;
+&lt;li&gt;description: description of topic&lt;/li&gt;
+&lt;li&gt;dateMinCreation: filter result on dateCreation, timestamp Unix format&lt;/li&gt;
+&lt;li&gt;dateMaxCreation: filter result on dateCreation, timestamp Unix Format&lt;/li&gt;
+&lt;li&gt;getNbMsgUnread: if true, add new array to return, topicsMsgUnread with topic:flag. flag can be -1 if unknown, 0 or 1 if there is one or more messages unread&lt;/li&gt;
+&lt;li&gt;onlyFavorites: if true, return only favorites topics, except /Private/*. All privates topics are returned.&lt;/li&gt;
+&lt;li&gt;getForTatAdmin: if true, and requester is a Tat Admin, returns all topics (except /Private/*) without checking user access&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;example&#34;&gt;Example&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XGET https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topics?skip=0&amp;amp;limit=100 | python -m json.tool
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-a-parameter-to-a-topic&#34;&gt;Add a parameter to a topic&lt;/h2&gt;
+
+&lt;p&gt;For admin of topic or on &lt;code&gt;/Private/username/*&lt;/code&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;key&amp;quot;: &amp;quot;keyOfParameter&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;valueOfParameter&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/add/parameter
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;remove-a-parameter-to-a-topic&#34;&gt;Remove a parameter to a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;key&amp;quot;: &amp;quot;keyOfParameter&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/remove/parameter
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-a-read-only-user-to-a-topic&#34;&gt;Add a read only user to a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;username&amp;quot;: &amp;quot;usernameToAdd&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/add/rouser
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-a-read-write-user-to-a-topic&#34;&gt;Add a read write user to a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;username&amp;quot;: &amp;quot;usernameToAdd&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/add/rwuser
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-an-admin-user-to-a-topic&#34;&gt;Add an admin user to a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;username&amp;quot;: &amp;quot;usernameToAdd&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/add/adminuser
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-read-only-user-from-a-topic&#34;&gt;Delete a read only user from a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;username&amp;quot;: &amp;quot;usernameToRemove&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/remove/rouser
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-read-write-user-from-a-topic&#34;&gt;Delete a read write user from a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;username&amp;quot;: &amp;quot;usernameToRemove&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/remove/wuser
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-an-admin-user-from-a-topic&#34;&gt;Delete an admin user from a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;username&amp;quot;: &amp;quot;usernameToRemove&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/remove/adminuser
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-a-read-only-group-to-a-topic&#34;&gt;Add a read only group to a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;groupname&amp;quot;: &amp;quot;groupnameToAdd&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/add/rogroup
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-a-read-write-group-to-a-topic&#34;&gt;Add a read write group to a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;groupname&amp;quot;: &amp;quot;groupnameToAdd&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/add/rwgroup
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-an-admin-group-to-a-topic&#34;&gt;Add an admin group to a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;groupname&amp;quot;: &amp;quot;groupnameToAdd&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/add/admingroup
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-read-only-group-from-a-topic&#34;&gt;Delete a read only group from a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;groupname&amp;quot;: &amp;quot;groupnameToRemove&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/remove/rogroup
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-a-read-write-group-from-a-topic&#34;&gt;Delete a read write group from a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;groupname&amp;quot;: &amp;quot;groupnameToRemove&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/remove/rwgroup
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;delete-an-admin-group-from-a-topic&#34;&gt;Delete an admin group from a topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;groupname&amp;quot;: &amp;quot;groupnameToRemove&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/remove/rwgroup
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;update-param-on-one-topic-admin-or-admin-on-topic&#34;&gt;Update param on one topic: admin or admin on topic&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;: &amp;quot;/topicA&amp;quot;, &amp;quot;recursive&amp;quot;: &amp;quot;false&amp;quot;, &amp;quot;maxlength&amp;quot;: 140, &amp;quot;maxreplies&amp;quot;: 30, &amp;quot;canForceDate&amp;quot;: false, &amp;quot;canUpdateMsg&amp;quot;: false, &amp;quot;canDeleteMsg&amp;quot;: false, &amp;quot;canUpdateAllMsg&amp;quot;: false, &amp;quot;canDeleteAllMsg&amp;quot;: false, &amp;quot;adminCanUpdateAllMsg&amp;quot;: false, &amp;quot;adminCanDeleteAllMsg&amp;quot;: false}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/param
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Parameters key is optional.&lt;/p&gt;
+
+&lt;p&gt;Example with key parameters :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;curl -XPUT \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: admin&amp;quot; \
+    -H &amp;quot;Tat_password: passwordAdmin&amp;quot; \
+    -d &#39;{&amp;quot;topic&amp;quot;:&amp;quot;/Internal/Alerts&amp;quot;,&amp;quot;recursive&amp;quot;:false,&amp;quot;maxlength&amp;quot;:300,&amp;quot;maxreplies&amp;quot;:30,&amp;quot;canForceDate&amp;quot;:false,&amp;quot;canUpdateMsg&amp;quot;:false,&amp;quot;canDeleteMsg&amp;quot;:true,&amp;quot;canUpdateAllMsg&amp;quot;:false,&amp;quot;canDeleteAllMsg&amp;quot;:false,&amp;quot;adminCanUpdateAllMsg&amp;quot;:false,&amp;quot;adminCanDeleteAllMsg&amp;quot;:false,&amp;quot;parameters&amp;quot;:[{&amp;quot;key&amp;quot;:&amp;quot;agileview&amp;quot;,&amp;quot;value&amp;quot;:&amp;quot;qsdf#qsdf&amp;quot;},{&amp;quot;key&amp;quot;:&amp;quot;tatwebui.view.default&amp;quot;,&amp;quot;value&amp;quot;:&amp;quot;standardview-list&amp;quot;},{&amp;quot;key&amp;quot;:&amp;quot;tatwebui.view.forced&amp;quot;,&amp;quot;value&amp;quot;:&amp;quot;&amp;quot;}]}&#39; \
+    https://&amp;lt;tatHostname&amp;gt;:&amp;lt;tatPort&amp;gt;/topic/param
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>DevOps LifeCycle / Feedback Loop</title>
+      <link>https://ovh.github.io/tat/overview/lifecycle/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/lifecycle/</guid>
+      <description>
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle.png?width=50%&#34; alt=&#34;DevOps LifeCycle&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;feedback-everywhere&#34;&gt;Feedback everywhere&lt;/h2&gt;
+
+&lt;p&gt;We want feedback, not only when applications are in production, but everywhere.
+PullRequest, build, Release, Monitoring, etc&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;Following examples show how we are using Tat through our DevOps lifecycle @ OVH.&lt;/p&gt;
+
+&lt;p&gt;First of all, TaT was designed to be a hub of all Continuous Delivery and DevOps communcation. By plugin all the software running in Plug all the software running in your DevOps ecosystem to Tat, you&amp;rsquo;ll be able to follow all the things in TaT and improve as well team and machines collaboration]&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Plan :
+
+Code :
+
+Build And Tests :
+
+Release :
+
+Monitor :
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;plan&#34;&gt;Plan&lt;/h2&gt;
+
+&lt;p&gt;Starting the DevOps lifcycle with an agile view designed to plan your next release/iteration&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-plan.png?width=250px&#34; alt=&#34;DevOps LifeCycle Plan&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-plan-agile.png?width=750px&#34; alt=&#34;DevOps LifeCycle Plan&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-plan-roadmap.png?width=750px&#34; alt=&#34;DevOps LifeCycle Plan&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;code&#34;&gt;Code&lt;/h2&gt;
+
+&lt;p&gt;Follow Pull Request, and share pieces of Code&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-code.png?width=250px&#34; alt=&#34;DevOps LifeCycle Code&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-code-gist.png?width=750px&#34; alt=&#34;DevOps LifeCycle Code&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-code-pull-request.png?width=750px&#34; alt=&#34;DevOps LifeCycle Code&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;build-test&#34;&gt;Build &amp;amp; Test&lt;/h2&gt;
+
+&lt;p&gt;Follow Continuous Integration, Continuous Delivery Pipelines through a pipeline views. Here shown with CDS (lien vers CDS).&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-build.png?width=250px&#34; alt=&#34;DevOps LifeCycle Build&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-build-cds.png?width=750px&#34; alt=&#34;DevOps LifeCycle Build&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;release&#34;&gt;Release&lt;/h2&gt;
+
+&lt;p&gt;End of your cycle commitment: build automatically your release note from your git repository, JIRA &amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-release.png?width=250px&#34; alt=&#34;DevOps LifeCycle Release&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-release-changelog-1.png?width=750px&#34; alt=&#34;DevOps LifeCycle Release&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-release-changelog-2.png?width=750px&#34; alt=&#34;DevOps LifeCycle Release&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;deploy&#34;&gt;Deploy&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-deploy.png?width=250px&#34; alt=&#34;DevOps LifeCycle Deploy&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-build-cds.png?width=750px&#34; alt=&#34;DevOps LifeCycle Deploy&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;monitor&#34;&gt;Monitor&lt;/h2&gt;
+
+&lt;p&gt;Build your own dashing view, monitor things with a light Terminal UI, showing resources heatmap of planning your interventions..&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor.png?width=250px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor-dashboard.png?width=750px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor-tatcli.png?width=750px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor-multiple.png?width=750px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor-oncall.png?width=750px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;feedback&#34;&gt;Feedback&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-feedback.png?width=250px&#34; alt=&#34;DevOps LifeCycle Feedback&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-feedback-kpi.png?width=750px&#34; alt=&#34;DevOps LifeCycle Feedback&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notifications View</title>
+      <link>https://ovh.github.io/tat/tatwebui/notificationsview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/notificationsview/</guid>
+      <description>
+
+&lt;p&gt;When a message contains a mention for someone, a other message is created by Tat Engine in topic
+/Private/username/Notifications, where username is the user mentioned.&lt;/p&gt;
+
+&lt;p&gt;Example :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;a message &amp;ldquo;a first notification for @yesnault&amp;rdquo; in topic /Internal/App&lt;/li&gt;
+&lt;li&gt;a other message &amp;ldquo;and a second @yesnault in topic /Internal/App&amp;rdquo; in topic /Internal/App&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;see result in screenshot below for these two messages in topic /Private/yesnault/Notifications&lt;/p&gt;
+
+&lt;h2 id=&#34;screenshot&#34;&gt;Screenshot&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-notifications-view.png?width=80%&#34; alt=&#34;Notifications View&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-notificationsview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-notificationsview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-notificationsview&#34;&gt;https://github.com/ovh/tatwebui-plugin-notificationsview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

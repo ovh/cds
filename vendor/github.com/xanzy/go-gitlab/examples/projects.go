@@ -23,7 +23,7 @@ func projectExample() {
 	}
 
 	// Add a new snippet
-	s := &gitlab.CreateSnippetOptions{
+	s := &gitlab.CreateProjectSnippetOptions{
 		Title:      gitlab.String("Dummy Snippet"),
 		FileName:   gitlab.String("snippet.go"),
 		Code:       gitlab.String("package main...."),
@@ -35,7 +35,7 @@ func projectExample() {
 	}
 
 	// List all project snippets
-	snippets, _, err := git.ProjectSnippets.ListSnippets(project.PathWithNamespace, &gitlab.ListSnippetsOptions{})
+	snippets, _, err := git.ProjectSnippets.ListSnippets(project.PathWithNamespace, &gitlab.ListProjectSnippetsOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}

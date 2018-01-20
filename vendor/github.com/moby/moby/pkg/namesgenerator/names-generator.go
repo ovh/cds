@@ -586,13 +586,6 @@ var (
 
 		// Ada Yonath - an Israeli crystallographer, the first woman from the Middle East to win a Nobel prize in the sciences. https://en.wikipedia.org/wiki/Ada_Yonath
 		"yonath",
-
-		// CDS Contributors > 10 commits
-		"samin",
-		"esnault",
-		"coenen",
-		"guiheux",
-		"roullon",
 	}
 )
 

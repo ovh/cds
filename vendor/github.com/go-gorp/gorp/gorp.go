@@ -270,13 +270,12 @@ func columnToFieldIndex(m *DbMap, t reflect.Type, name string, cols []string) ([
 			missingColNames = append(missingColNames, colName)
 		}
 	}
-	/* fsamin : [PATCH] : We want to ignore this kind of error. There is a TODO in errors.go about it
 	if len(missingColNames) > 0 {
 		return colToFieldIndex, &NoFieldInTypeError{
 			TypeName:        t.Name(),
 			MissingColNames: missingColNames,
 		}
-	}*/
+	}
 	return colToFieldIndex, nil
 }
 

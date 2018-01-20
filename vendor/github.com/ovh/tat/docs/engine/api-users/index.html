@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="generator" content="Hugo 0.19-DEV" />
+    <meta name="description" content="">
+
+
+    <link rel="shortcut icon" href="https://raw.githubusercontent.com/ovh/tat/master/tat.png" type="image/x-icon" />
+
+    
+    <title>API - Users</title>
+    <link href="https://ovh.github.io/tat/css/nucleus.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/hybrid.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/featherlight.min.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/perfect-scrollbar.min.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/horsey.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/theme.css" rel="stylesheet">
+    <link href="https://ovh.github.io/tat/css/hugo-theme.css" rel="stylesheet">
+    <script src="https://ovh.github.io/tat/js/jquery-2.x.min.js"></script>
+    <style type="text/css">:root #header + #content > #left > #rlblock_left
+    {display:none !important;}</style>
+    <link href="https://ovh.github.io/tat/css/style.css" rel="stylesheet">
+
+  </head>
+  <body class="" data-url="/engine/api-users/">
+    <nav id="sidebar">
+  <div id="header-wrapper">
+    <div id="header">
+      <img src="https://raw.githubusercontent.com/ovh/tat/master/tat.png" width="25%" style="margin-top: -15px;">
+
+    </div>
+    
+      <div class="searchbox">
+    <label for="search-by"><i class="fa fa-search"></i></label>
+    <input id="search-by" type="text" placeholder="Search">
+</div>
+<script type="text/javascript" src="https://ovh.github.io/tat/js/lunr.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/tat/js/horsey.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/tat";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/tat/js/search.js"></script>
+
+    
+</div>
+
+
+  <div class="highlightable">
+    <ul class="topics">
+      
+      
+        
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+          
+            
+          
+        
+      
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/overview/">
+        <a href="https://ovh.github.io/tat/overview/">
+          <span>
+            
+              <b>1. </b>
+            
+             Overview
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/introduction/">
+              <a href="https://ovh.github.io/tat/overview/introduction/">
+                <span>Introduction     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/concepts/">
+              <a href="https://ovh.github.io/tat/overview/concepts/">
+                <span>Concepts     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/lifecycle/">
+              <a href="https://ovh.github.io/tat/overview/lifecycle/">
+                <span>DevOps LifeCycle / Feedback Loop     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/architecture/">
+              <a href="https://ovh.github.io/tat/overview/architecture/">
+                <span>Architecture     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/overview/contribute/">
+              <a href="https://ovh.github.io/tat/overview/contribute/">
+                <span>Contribute     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/tatwebui/">
+        <a href="https://ovh.github.io/tat/tatwebui/">
+          <span>
+            
+              <b>2. </b>
+            
+             Tat Webui
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/introduction/">
+              <a href="https://ovh.github.io/tat/tatwebui/introduction/">
+                <span>Introduction     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/standardview/">
+              <a href="https://ovh.github.io/tat/tatwebui/standardview/">
+                <span>Standard View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/notificationsview/">
+              <a href="https://ovh.github.io/tat/tatwebui/notificationsview/">
+                <span>Notifications View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/monitoringview/">
+              <a href="https://ovh.github.io/tat/tatwebui/monitoringview/">
+                <span>Monitoring View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/pastatview/">
+              <a href="https://ovh.github.io/tat/tatwebui/pastatview/">
+                <span>Pastat View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/dashingview/">
+              <a href="https://ovh.github.io/tat/tatwebui/dashingview/">
+                <span>Dashing View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/releaseview/">
+              <a href="https://ovh.github.io/tat/tatwebui/releaseview/">
+                <span>Release View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/cdsview/">
+              <a href="https://ovh.github.io/tat/tatwebui/cdsview/">
+                <span>CDS View     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatwebui/development/">
+              <a href="https://ovh.github.io/tat/tatwebui/development/">
+                <span>Development     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  parent" data-nav-id="/engine/">
+        <a href="https://ovh.github.io/tat/engine/">
+          <span>
+            
+              <b>3. </b>
+            
+             Tat Engine Reference
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/general/">
+              <a href="https://ovh.github.io/tat/engine/general/">
+                <span>General     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-messages/">
+              <a href="https://ovh.github.io/tat/engine/api-messages/">
+                <span>API - Messages     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-topics/">
+              <a href="https://ovh.github.io/tat/engine/api-topics/">
+                <span>API - Topics     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item active" data-nav-id="/engine/api-users/">
+              <a href="https://ovh.github.io/tat/engine/api-users/">
+                <span>API - Users     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-groups/">
+              <a href="https://ovh.github.io/tat/engine/api-groups/">
+                <span>API - Groups     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-presences/">
+              <a href="https://ovh.github.io/tat/engine/api-presences/">
+                <span>API - Presences     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/api-system/">
+              <a href="https://ovh.github.io/tat/engine/api-system/">
+                <span>API - System     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/simple-installation/">
+              <a href="https://ovh.github.io/tat/engine/simple-installation/">
+                <span>Simple Installation     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/engine/production-installation/">
+              <a href="https://ovh.github.io/tat/engine/production-installation/">
+                <span>Installation - Production Way     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/tatcli/">
+        <a href="https://ovh.github.io/tat/tatcli/">
+          <span>
+            
+              <b>4. </b>
+            
+             Tat CLI Reference
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/general/">
+              <a href="https://ovh.github.io/tat/tatcli/general/">
+                <span>General     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-config/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-config/">
+                <span>tatcli config -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-group/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-group/">
+                <span>tatcli group -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-message/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-message/">
+                <span>tatcli message -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-presence/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-presence/">
+                <span>tatcli presence -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-stats/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-stats/">
+                <span>tatcli stats -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-system/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-system/">
+                <span>tatcli system -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-topic/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-topic/">
+                <span>tatcli topic -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-ui/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-ui/">
+                <span>tatcli ui -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-update/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-update/">
+                <span>tatcli update -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-user/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-user/">
+                <span>tatcli users -h     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatcli/tatcli-version/">
+              <a href="https://ovh.github.io/tat/tatcli/tatcli-version/">
+                <span>tatcli version -h     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/sdk/">
+        <a href="https://ovh.github.io/tat/sdk/">
+          <span>
+            
+              <b>5. </b>
+            
+             Tat SDK
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/sdk/golang-simple-main/">
+              <a href="https://ovh.github.io/tat/sdk/golang-simple-main/">
+                <span>Golang - A simple main example     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/sdk/golang-full-example/">
+              <a href="https://ovh.github.io/tat/sdk/golang-full-example/">
+                <span>Golang - Full Example     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/ecosystem/">
+        <a href="https://ovh.github.io/tat/ecosystem/">
+          <span>
+            
+              <b>6. </b>
+            
+             Ecosystem
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/al2tat/">
+              <a href="https://ovh.github.io/tat/ecosystem/al2tat/">
+                <span>al2tat     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/mail2tat/">
+              <a href="https://ovh.github.io/tat/ecosystem/mail2tat/">
+                <span>mail2tat     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/tat2es/">
+              <a href="https://ovh.github.io/tat/ecosystem/tat2es/">
+                <span>tat2es     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/tat2xmpp/">
+              <a href="https://ovh.github.io/tat/ecosystem/tat2xmpp/">
+                <span>tat2xmpp     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/ecosystem/tatdashing/">
+              <a href="https://ovh.github.io/tat/ecosystem/tatdashing/">
+                <span>tatdashing     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+      
+
+      
+        
+      
+      
+      
+
+      <li class="dd-item  " data-nav-id="/tatnhack/">
+        <a href="https://ovh.github.io/tat/tatnhack/">
+          <span>
+            
+              <b>7. </b>
+            
+             Tat&#39;n Hack
+            
+           </span>
+        </a>
+        
+        <ul>
+          
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatnhack/monitoring-process/">
+              <a href="https://ovh.github.io/tat/tatnhack/monitoring-process/">
+                <span>Monitoring a process with al2tat     </i></span>
+              </a>
+            </li>
+          
+          
+          
+            <li class="dd-item " data-nav-id="/tatnhack/visual-feedback/">
+              <a href="https://ovh.github.io/tat/tatnhack/visual-feedback/">
+                <span>Visual Feedback     </i></span>
+              </a>
+            </li>
+          
+          
+        </ul>
+        
+      </li>
+      
+      
+    </ul>
+    <hr>
+     
+    <section id="footer">
+      <p>Built with <a href="http://gohugo.io/">Hugo</a> and <a href="https://github.com/matcornic/hugo-theme-learn">learn theme</a></i></p>
+      <p>Tat is an <a href="https://github.com/ovh">OVH OSS</a></p>
+      <p><a href="https://ovh.com"><img src="https://ovh.github.io/tat/imgs/ovh-logo.png"></a></p>
+    </section>
+  </div>
+</nav>
+
+        <section id="body">
+        <div id="overlay"></div>
+
+        <div class="padding highlightable">
+
+            <div id="top-bar">
+              
+              <div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+                  <span id="sidebar-toggle-span">
+                      <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                        <i class="fa fa-bars"></i>
+                      </a>
+                  </span>
+                
+                <span id="toc-menu"><a href=""><i class="fa fa-list-alt"></i></a></span>
+                
+                
+                
+                
+                  
+                
+                  
+                    
+                    
+                <a href="https://ovh.github.io/tat/engine/" itemprop="url"><span itemprop="title">Tat Engine Reference</span></a> <i class="fa fa-angle-right"></i>
+                    
+                  
+                
+                  
+                
+                  
+                
+                  
+                
+                  
+                
+                  
+                
+                <span itemprop="title"> API - Users</span>
+              </div>
+              
+                  <div class="progress">
+    <div class="wrapper">
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#tat-password">Tat Password</a></li>
+<li><a href="#create-a-user">Create a User</a></li>
+<li><a href="#verify-a-user">Verify a User</a></li>
+<li><a href="#ask-for-reset-a-password">Ask for reset a password</a></li>
+<li><a href="#get-information-about-current-user">Get information about current User</a></li>
+<li><a href="#get-contacts">Get contacts</a></li>
+<li><a href="#add-a-contact">Add a contact</a></li>
+<li><a href="#remove-a-contact">Remove a contact</a></li>
+<li><a href="#add-a-favorite-topic">Add a favorite topic</a></li>
+<li><a href="#remove-a-favorite-topic">Remove a favorite topic</a></li>
+<li><a href="#enable-notifications-on-one-topic">Enable notifications on one topic</a></li>
+<li><a href="#disable-notifications-on-one-topic">Disable notifications on one topic</a></li>
+<li><a href="#enable-notifications-on-all-topics">Enable notifications on all topics</a></li>
+<li><a href="#disable-notifications-on-all-topics-except-private">Disable notifications on all topics, except /Private/*</a></li>
+<li><a href="#add-a-favorite-tag">Add a favorite tag</a></li>
+<li><a href="#remove-a-favorite-tag">Remove a favorite tag</a></li>
+<li><a href="#getting-users-list">Getting Users List</a>
+<ul>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#example">Example</a></li>
+</ul></li>
+<li><a href="#convert-a-user-to-a-system-user">Convert a user to a system user</a></li>
+<li><a href="#update-flags-on-system-user">Update flags on system user</a></li>
+<li><a href="#reset-a-password-for-system-user">Reset a password for system user</a></li>
+<li><a href="#grant-a-user-to-an-admin-user">Grant a user to an admin user</a></li>
+<li><a href="#rename-a-username">Rename a username</a></li>
+<li><a href="#update-fullname-or-email">Update fullname or email</a></li>
+<li><a href="#archive-a-user">Archive a user</a></li>
+<li><a href="#check-private-topics-and-default-group-on-one-user">Check Private Topics and Default Group on one user</a></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+</div>
+
+              
+
+            </div>
+            
+    	        <div id="body-inner">
+                
+                <h1>API - Users</h1>
+                
+
+
+
+<h2 id="tat-password">Tat Password</h2>
+
+<p>It&rsquo;s a generated password by Tat, allowing username to communicate with Tat.
+User creates an account, a mail is send to verify account and user has to go on a Tat URL to validate account and get password.
+Password is encrypted in Tat Database (sha512 Sum).</p>
+
+<p>First user created is an administrator.</p>
+
+<h2 id="create-a-user">Create a User</h2>
+
+<p>Return a mail to user, with instruction to validate his account.</p>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -d '{&quot;username&quot;: &quot;userA&quot;, &quot;fullname&quot;: &quot;User AA&quot;, &quot;email&quot;: &quot;usera@foo.net&quot;, &quot;callback&quot;: &quot; Click on scheme://:host::port/user/verify/:username/:token to validate your account&quot;}' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user
+</code></pre>
+
+<p>Callback is a string sent by mail, indicating to the user how to validate his account.
+Available fields (automatically filled by Tat ):</p>
+
+<pre><code>:scheme -&gt; http of https
+:host -&gt; ip or hostname of Tat Engine
+:port -&gt; port of Tat Engine
+:username -&gt; username
+:token -&gt; tokenVerify of user
+</code></pre>
+
+<h2 id="verify-a-user">Verify a User</h2>
+
+<pre><code class="language-bash">curl -XGET \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/verify/yourUsername/tokenVerifyReceivedByMail
+</code></pre>
+
+<p>This url can be called only once per password and expired 30 minutes after querying create user with POST on <code>/user</code></p>
+
+<h2 id="ask-for-reset-a-password">Ask for reset a password</h2>
+
+<p>Returns: tokenVerify by email</p>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -d '{&quot;username&quot;: &quot;userA&quot;, &quot;email&quot;: &quot;usera@foo.net&quot;}' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/reset
+</code></pre>
+
+<h2 id="get-information-about-current-user">Get information about current User</h2>
+
+<pre><code class="language-bash">curl -XGET \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me
+</code></pre>
+
+<h2 id="get-contacts">Get contacts</h2>
+
+<p>Retrieves contacts presences since n seconds</p>
+
+<p>Example since 15 seconds :</p>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/contacts/15
+</code></pre>
+
+<h2 id="add-a-contact">Add a contact</h2>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/contact/username
+</code></pre>
+
+<h2 id="remove-a-contact">Remove a contact</h2>
+
+<pre><code class="language-bash">curl -XDELETE \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/contacts/username
+</code></pre>
+
+<h2 id="add-a-favorite-topic">Add a favorite topic</h2>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/topics/myTopic/sub-topic
+</code></pre>
+
+<h2 id="remove-a-favorite-topic">Remove a favorite topic</h2>
+
+<pre><code class="language-bash">curl -XDELETE \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/topics/myTopic/sub-topic
+</code></pre>
+
+<h2 id="enable-notifications-on-one-topic">Enable notifications on one topic</h2>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/enable/notifications/topics/myTopic/sub-topic
+</code></pre>
+
+<h2 id="disable-notifications-on-one-topic">Disable notifications on one topic</h2>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/disable/notifications/topics/myTopic/sub-topic
+</code></pre>
+
+<h2 id="enable-notifications-on-all-topics">Enable notifications on all topics</h2>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/enable/notifications/alltopics
+</code></pre>
+
+<h2 id="disable-notifications-on-all-topics-except-private">Disable notifications on all topics, except /Private/*</h2>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/disable/notifications/alltopics
+</code></pre>
+
+<h2 id="add-a-favorite-tag">Add a favorite tag</h2>
+
+<pre><code class="language-bash">curl -XPOST \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/tags/myTag
+</code></pre>
+
+<h2 id="remove-a-favorite-tag">Remove a favorite tag</h2>
+
+<pre><code class="language-bash">curl -XDELETE \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userA&quot; \
+    -H &quot;Tat_password: password&quot; \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/me/tags/myTag
+</code></pre>
+
+<h2 id="getting-users-list">Getting Users List</h2>
+
+<pre><code class="language-bash">curl -XGET https://&lt;tatHostname&gt;:&lt;tatPort&gt;/users?skip=&lt;skip&gt;&amp;limit=&lt;limit&gt; | python -m json.tool
+curl -XGET https://&lt;tatHostname&gt;:&lt;tatPort&gt;/users?skip=&lt;skip&gt;&amp;limit=&lt;limit&gt;&amp;argName=valName&amp;arg2Name=val2Name | python -m json.tool
+</code></pre>
+
+<p>Users list with groups (admin only)</p>
+
+<pre><code class="language-bash">curl -XGET https://&lt;tatHostname&gt;:&lt;tatPort&gt;/users?skip=&lt;skip&gt;&amp;limit=&lt;limit&gt;&amp;withGroups=true
+</code></pre>
+
+<h3 id="parameters">Parameters</h3>
+
+<ul>
+<li>skip: Skip skips over the n initial documents from the query results</li>
+<li>limit: Limit restricts the maximum number of documents retrieved</li>
+<li>username: Username</li>
+<li>fullname: Fullname</li>
+<li>dateMinCreation: filter result on dateCreation, timestamp Unix format</li>
+<li>dateMaxCreation: filter result on dateCreation, timestamp Unix Format</li>
+</ul>
+
+<h3 id="example">Example</h3>
+
+<pre><code class="language-bash">curl -XGET https://&lt;tatHostname&gt;:&lt;tatPort&gt;/users?skip=0&amp;limit=100 | python -m json.tool
+</code></pre>
+
+<h2 id="convert-a-user-to-a-system-user">Convert a user to a system user</h2>
+
+<p>Only for Tat Admin: convert a <code>normal user</code> to a <code>system user</code>.
+A system user must have a username starting with <code>tat.system</code>.
+Remove email and set user attribute IsSystem to true.
+This action returns a new password for this user.
+Warning: it is an irreversible action.</p>
+
+<p>Flag <code>canWriteNotifications</code> allows (or not if false) the <code>system user</code> to write inside private topics of user <code>/Private/username/Notifications</code></p>
+
+<p>Flag <code>canListUsersAsAdmin</code> allows this <code>system user</code> to view all user&rsquo;s fields (email, etc&hellip;)</p>
+
+<pre><code class="language-bash">curl -XPUT \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userAdmin&quot; \
+    -H &quot;Tat_password: passwordAdmin&quot; \
+    -d '{ &quot;username&quot;: &quot;usernameToConvert&quot;, &quot;canWriteNotifications&quot;: &quot;true&quot;, &quot;canListUsersAsAdmin&quot;: &quot;true&quot; }' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/convert
+</code></pre>
+
+<h2 id="update-flags-on-system-user">Update flags on system user</h2>
+
+<p>Only for Tat Admin.</p>
+
+<pre><code class="language-bash">curl -XPUT \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userAdmin&quot; \
+    -H &quot;Tat_password: passwordAdmin&quot; \
+    -d '{ &quot;username&quot;: &quot;userSystem&quot;, &quot;canWriteNotifications&quot;: &quot;true&quot;, &quot;canListUsersAsAdmin&quot;: &quot;true&quot; }' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/updatesystem
+</code></pre>
+
+<h2 id="reset-a-password-for-system-user">Reset a password for system user</h2>
+
+<p>Only for Tat Admin.
+A <code>system user</code> must have a username starting with <code>tat.system</code>.
+This action returns a new password for this user.</p>
+
+<pre><code class="language-bash">curl -XPUT \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userAdmin&quot; \
+    -H &quot;Tat_password: passwordAdmin&quot; \
+    -d '{ &quot;username&quot;: &quot;userameSystemToReset&quot; }' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/resetsystem
+</code></pre>
+
+<h2 id="grant-a-user-to-an-admin-user">Grant a user to an admin user</h2>
+
+<p>Only for Tat Admin: convert a <code>normal user</code> to an <code>admin user</code>.</p>
+
+<pre><code class="language-bash">curl -XPUT \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userAdmin&quot; \
+    -H &quot;Tat_password: passwordAdmin&quot; \
+    -d '{ &quot;username&quot;: &quot;usernameToGrant&quot; }' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/setadmin
+</code></pre>
+
+<h2 id="rename-a-username">Rename a username</h2>
+
+<p>Only for Tat Admin: rename the username of a user. This action updates all Private topics of the user.</p>
+
+<pre><code class="language-bash">curl -XPUT \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userAdmin&quot; \
+    -H &quot;Tat_password: passwordAdmin&quot; \
+    -d '{ &quot;username&quot;: &quot;usernameToRename&quot;, &quot;newUsername&quot;: &quot;NewUsername&quot; }' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/rename
+</code></pre>
+
+<h2 id="update-fullname-or-email">Update fullname or email</h2>
+
+<p>Only for Tat Admin: update fullname and email of a user.</p>
+
+<pre><code class="language-bash">curl -XPUT \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userAdmin&quot; \
+    -H &quot;Tat_password: passwordAdmin&quot; \
+    -d '{ &quot;username&quot;: &quot;usernameToRename&quot;, &quot;newFullname&quot;: &quot;NewFullname&quot;, &quot;newEmail&quot;: &quot;NewEmail&quot; }' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/update
+</code></pre>
+
+<h2 id="archive-a-user">Archive a user</h2>
+
+<p>Only for Tat Admin</p>
+
+<pre><code class="language-bash">curl -XPUT \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userAdmin&quot; \
+    -H &quot;Tat_password: passwordAdmin&quot; \
+    -d '{ &quot;username&quot;: &quot;usernameToRename&quot; }' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/archive
+</code></pre>
+
+<h2 id="check-private-topics-and-default-group-on-one-user">Check Private Topics and Default Group on one user</h2>
+
+<p>Only for Tat Admin</p>
+
+<pre><code class="language-bash">curl -XPUT \
+    -H &quot;Content-Type: application/json&quot; \
+    -H &quot;Tat_username: userAdmin&quot; \
+    -H &quot;Tat_password: passwordAdmin&quot; \
+    -d '{ &quot;username&quot;: &quot;usernameToRename&quot;,  &quot;fixPrivateTopics&quot;: true, &quot;fixDefaultGroup&quot;: true }' \
+    https://&lt;tatHostname&gt;:&lt;tatPort&gt;/user/check
+</code></pre>
+
+
+      
+      </div>
+    </div>
+
+    <div id="navigation">
+        <a class="nav nav-prev" href="https://ovh.github.io/tat/engine/api-topics"> <i class="fa fa-chevron-left"></i></a>
+        <a class="nav nav-next" href="https://ovh.github.io/tat/engine/api-groups" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
+    </div>
+
+    </section>
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>
+    <script src="https://ovh.github.io/tat/js/clipboard.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/perfect-scrollbar.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/perfect-scrollbar.jquery.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/jquery.sticky-kit.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/featherlight.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/html5shiv-printshiv.min.js"></script>
+    <script src="https://ovh.github.io/tat/js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="https://ovh.github.io/tat/js/modernizr.custom.71422.js"></script>
+    <script src="https://ovh.github.io/tat/js/learn.js"></script>
+    <script src="https://ovh.github.io/tat/js/hugo-learn.js"></script>
+    
+
+  </body>
+</html>
+

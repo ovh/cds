@@ -21,7 +21,7 @@ import (
 	"net/url"
 )
 
-// ProjectProjectMembersService handles communication with the project members
+// ProjectMembersService handles communication with the project members
 // related methods of the GitLab API.
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/members.html
