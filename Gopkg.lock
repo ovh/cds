@@ -458,12 +458,6 @@
   revision = "ae8357db35d721c58dcdc911318b55bef6b1b001"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/loopfz/gadgeto"
-  packages = ["iffy"]
-  revision = "e200fafc4ff412a969f9851c118de19c57ce1659"
-
-[[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "0723e352fa358f9322c938cc2dadda874e9151a9"
@@ -876,6 +870,12 @@
   revision = "749e360c8f236773f28fc6d3ddfce4a470795227"
 
 [[projects]]
+  branch = "ye-cds"
+  name = "github.com/yesnault/gadgeto"
+  packages = ["iffy"]
+  revision = "d07b674b863bc6877ed8af1cad0593b19f5af4ff"
+
+[[projects]]
   branch = "master"
   name = "github.com/yesnault/go-imap"
   packages = ["imap"]
@@ -1043,6 +1043,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "83ce83cb82649e384ce85b2713452a0967f168ff2cc1a2309db0f715d42bc4e6"
+  inputs-digest = "7931b92079688fd1f2262d8e258e1876468685d511e832c75e38e728daf45dcf"
   solver-name = "gps-cdcl"
   solver-version = 1

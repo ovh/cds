@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/loopfz/gadgeto/iffy"
+	"github.com/yesnault/gadgeto/iffy"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"

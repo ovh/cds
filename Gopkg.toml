@@ -75,10 +75,6 @@ ignored = ["github.com/Microsoft/go-winio*"]
 
 [[constraint]]
   branch = "master"
-  name = "github.com/loopfz/gadgeto"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/mcuadros/go-defaults"
 
 [[constraint]]
@@ -128,3 +124,8 @@ ignored = ["github.com/Microsoft/go-winio*"]
 [[constraint]]
   name = "gopkg.in/urfave/cli.v1"
   version = "1.18.1"
+
+
+[[constraint]]
+  branch = "ye-cds"
+  name = "github.com/yesnault/gadgeto"
