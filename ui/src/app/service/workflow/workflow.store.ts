@@ -76,6 +76,8 @@ export class WorkflowStore {
             return this._workflowService.getWorkflow(key, workflowName).map( res => {
                 this._workflows.next(store.set(workflowKey, res));
                 return res;
+            }, err => {
+                this._workflows.error(err);
             });
         } else {
             return Observable.of(store.get(workflowKey));
