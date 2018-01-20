@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -775,7 +774,6 @@ func (api *API) addBuildTestResultsHandler() Handler {
 			return sdk.WrapError(err, "addBuildTestsResultsHandler> Cannot insert tests results")
 		}
 
-		stats.TestEvent(api.mustDB(), p.ProjectID, a.ID, tests)
 		return nil
 	}
 }

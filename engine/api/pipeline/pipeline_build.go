@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -1026,9 +1025,6 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 	pb.Parameters = params
 	pb.Application = *app
 	pb.Environment = *env
-
-	// Update stats
-	stats.PipelineEvent(tx, p.Type, proj.ID, app.ID)
 
 	//Send notification
 	//Load previous pipeline (some app, pip, env and branch)

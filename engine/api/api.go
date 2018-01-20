@@ -30,7 +30,6 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -482,7 +481,6 @@ func (a *API) Serve(ctx context.Context) error {
 	go auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
 	go repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	go stats.StartRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go services.KillDeadServices(ctx, services.NewRepository(a.mustDB, a.Cache))
