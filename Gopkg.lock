@@ -234,7 +234,8 @@
 [[projects]]
   name = "github.com/go-gorp/gorp"
   packages = ["."]
-  revision = "38e1f13a40bf2445da3204161a38df0d0b006e83"
+  revision = "2339bc087d1279bf35cb006305543d6194eda24a"
+  source = "https://github.com/yesnault/gorp.git"
 
 [[projects]]
   name = "github.com/go-redis/redis"
@@ -1043,6 +1044,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7931b92079688fd1f2262d8e258e1876468685d511e832c75e38e728daf45dcf"
+  inputs-digest = "0f9b06d2b1bc0b5f5a1ca9def5cc29248656ecdca80b59f8db7c8bc8c2243633"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -125,7 +125,11 @@ ignored = ["github.com/Microsoft/go-winio*"]
   name = "gopkg.in/urfave/cli.v1"
   version = "1.18.1"
 
-
 [[constraint]]
   branch = "ye-cds"
   name = "github.com/yesnault/gadgeto"
+
+[[constraint]]
+  name = "github.com/go-gorp/gorp"
+  revision = "2339bc087d1279bf35cb006305543d6194eda24a"
+  source = "https://github.com/yesnault/gorp.git"
