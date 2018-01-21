@@ -1,6 +1,10 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"testing"
 
@@ -11,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -21,9 +26,6 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -86,10 +88,20 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	route := router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_getSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
-	tester.Run()
+
+	uri := router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var schedulers []sdk.PipelineScheduler
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &schedulers))
+	assert.Equal(t, len(schedulers), 1)
 }
 
 func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
@@ -97,9 +109,6 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -148,18 +157,38 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	route := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "POST", route+"?envName="+env.Name, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
-	tester.Run()
-	tester.Reset()
+
+	jsonBody, _ := json.Marshal(s)
+	body := bytes.NewBuffer(jsonBody)
+	uri := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
+	req, err := http.NewRequest("POST", uri+"?envName="+env.Name, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &app))
 
 	scheduler.Run(api.mustDB())
 	scheduler.ExecuterRun(api.mustDB, api.Cache)
 
-	route = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
-	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
-	tester.Run()
+	uri = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var schedulers []sdk.PipelineScheduler
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &schedulers))
+	assert.Equal(t, len(schedulers), 1)
+
 }
 
 func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
@@ -167,9 +196,6 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -209,12 +235,20 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	route := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
 
-	tester.Run()
-	tester.Reset()
+	jsonBody, _ := json.Marshal(s)
+	body := bytes.NewBuffer(jsonBody)
+	uri := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &app))
 
 	assert.Equal(t, len(app.Workflows), 1)
 	assert.Equal(t, len(app.Workflows[0].Schedulers), 1)
@@ -222,10 +256,19 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	log.Warning(">>%+v", s)
 
-	route = router.GetRoute("PUT", api.updateSchedulerApplicationPipelineHandler, vars)
-	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "PUT", route, s).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
-	tester.Run()
-	tester.Reset()
+	jsonBody, _ = json.Marshal(s)
+	body = bytes.NewBuffer(jsonBody)
+	uri = router.GetRoute("PUT", api.updateSchedulerApplicationPipelineHandler, vars)
+	req, err = http.NewRequest("PUT", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &app))
 
 	assert.Equal(t, len(app.Workflows), 1)
 	assert.Equal(t, len(app.Workflows[0].Schedulers), 1)
@@ -234,9 +277,19 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	scheduler.Run(api.mustDB())
 	scheduler.ExecuterRun(api.mustDB, api.Cache)
 
-	route = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
-	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
-	tester.Run()
+	uri = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var apps []sdk.Application
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &apps))
+	assert.Equal(t, len(apps), 1)
 
 }
 
@@ -246,9 +299,6 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
-
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
@@ -287,26 +337,50 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	route := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
 
-	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
+	jsonBody, _ := json.Marshal(s)
+	body := bytes.NewBuffer(jsonBody)
+	uri := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
 
-	tester.Run()
-	tester.Reset()
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &app))
 
 	assert.Equal(t, len(app.Workflows), 1)
 	assert.Equal(t, len(app.Workflows[0].Schedulers), 1)
 	s = &app.Workflows[0].Schedulers[0]
 
 	vars["id"] = strconv.FormatInt(s.ID, 10)
-	route = router.GetRoute("DELETE", api.deleteSchedulerApplicationPipelineHandler, vars)
-	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "DELETE", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200))
 
-	tester.Run()
-	tester.Reset()
+	jsonBody, _ = json.Marshal(s)
+	body = bytes.NewBuffer(jsonBody)
+	uri = router.GetRoute("DELETE", api.deleteSchedulerApplicationPipelineHandler, vars)
+	req, err = http.NewRequest("DELETE", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
 
-	route = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
-	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(0), iffy.DumpResponse(t))
-	tester.Run()
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	uri = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var apps []sdk.Application
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &apps))
+	assert.Equal(t, len(apps), 0)
 }
