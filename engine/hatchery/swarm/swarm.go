@@ -133,7 +133,7 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 			All: true,
 		})
 		if err != nil {
-			return nil, sdk.WrapError(err, "getContainers> error: %s")
+			return nil, sdk.WrapError(err, "getContainers> unable to list containers")
 		}
 		containersCache.mu.Lock()
 		containersCache.list = s
