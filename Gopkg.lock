@@ -232,6 +232,7 @@
   revision = "798ffb9cbbe4073ef1f88e6069ca4a2c6aa6676b"
 
 [[projects]]
+  branch = "ye-cds"
   name = "github.com/go-gorp/gorp"
   packages = ["."]
   revision = "2339bc087d1279bf35cb006305543d6194eda24a"
@@ -1044,6 +1045,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0f9b06d2b1bc0b5f5a1ca9def5cc29248656ecdca80b59f8db7c8bc8c2243633"
+  inputs-digest = "ac3d02c563936a3a017f2b2a9fd525c3c9739bd1f67a24464413ae1b96b449cf"
   solver-name = "gps-cdcl"
   solver-version = 1

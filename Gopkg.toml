@@ -131,5 +131,5 @@ ignored = ["github.com/Microsoft/go-winio*"]
 
 [[constraint]]
   name = "github.com/go-gorp/gorp"
-  revision = "2339bc087d1279bf35cb006305543d6194eda24a"
+  branch = "ye-cds"
   source = "https://github.com/yesnault/gorp.git"
