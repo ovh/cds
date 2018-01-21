@@ -76,7 +76,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
-	//4. Do the request
+	// Do the request
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
