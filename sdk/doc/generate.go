@@ -159,7 +159,7 @@ type visitor struct {
 var newHandle bool
 var currentRouteInfo RouteInfo
 
-// Generate the api documentation
+// GetAllRouteInfo generates the api documentation
 func GetAllRouteInfo(path string) []Doc {
 	fset := token.NewFileSet() // positions are relative to fset
 	dm, err := parser.ParseDir(fset, path, filterFile, parser.ParseComments)
