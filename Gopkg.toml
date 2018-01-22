@@ -133,3 +133,8 @@ ignored = ["github.com/Microsoft/go-winio*"]
   name = "github.com/go-gorp/gorp"
   branch = "ye-cds"
   source = "https://github.com/yesnault/gorp.git"
+
+[[constraint]]
+  name = "github.com/hashicorp/go-plugin"
+  branch = "ye-cds"
+  source = "https://github.com/yesnault/go-plugin.git"

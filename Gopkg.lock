@@ -351,14 +351,22 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/hashicorp/go-hclog"
+  packages = ["."]
+  revision = "ca137eb4b4389c9bc6f1a6d887f056bf16c00510"
+
+[[projects]]
+  branch = "master"
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
   revision = "b7773ae218740a7be65057fc60b366a49b538a44"
 
 [[projects]]
+  branch = "ye-cds"
   name = "github.com/hashicorp/go-plugin"
   packages = ["."]
-  revision = "8cf118f7a2f0c7ef1c82f66d4f6ac77c7e27dc12"
+  revision = "2a028f5cea1e9f7ee1bd9d459461ac9c2624a8d1"
+  source = "https://github.com/yesnault/go-plugin.git"
 
 [[projects]]
   branch = "master"
@@ -531,6 +539,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/mitchellh/go-testing-interface"
+  packages = ["."]
+  revision = "a61a99592b77c9ba629d254a693acffaeb4b7e28"
+
+[[projects]]
+  branch = "master"
   name = "github.com/mitchellh/go-wordwrap"
   packages = ["."]
   revision = "ad45545899c7b13c020ea92b2072220eefad42b8"
@@ -560,6 +574,12 @@
   name = "github.com/nsf/termbox-go"
   packages = ["."]
   revision = "b6acae516ace002cb8105a89024544a1480655a5"
+
+[[projects]]
+  name = "github.com/oklog/run"
+  packages = ["."]
+  revision = "4dadeb3030eda0273a12382bb2348ffc7c9d1a39"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/olekukonko/tablewriter"
@@ -972,6 +992,8 @@
     "codes",
     "credentials",
     "grpclog",
+    "health",
+    "health/grpc_health_v1",
     "internal",
     "keepalive",
     "metadata",
@@ -1045,6 +1067,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ac3d02c563936a3a017f2b2a9fd525c3c9739bd1f67a24464413ae1b96b449cf"
+  inputs-digest = "13f207795159cc43be2b8bbb9c7238076cac1dd67b4d471969b8d3c9105b23f5"
   solver-name = "gps-cdcl"
   solver-version = 1
