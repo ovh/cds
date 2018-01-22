@@ -892,12 +892,6 @@
   revision = "749e360c8f236773f28fc6d3ddfce4a470795227"
 
 [[projects]]
-  branch = "ye-cds"
-  name = "github.com/yesnault/gadgeto"
-  packages = ["iffy"]
-  revision = "d07b674b863bc6877ed8af1cad0593b19f5af4ff"
-
-[[projects]]
   branch = "master"
   name = "github.com/yesnault/go-imap"
   packages = ["imap"]
@@ -1067,6 +1061,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "13f207795159cc43be2b8bbb9c7238076cac1dd67b4d471969b8d3c9105b23f5"
+  inputs-digest = "a0ec61dd091f5f8a1e118107cb772b91f15d2f02053e437c5300261c3f8c42da"
   solver-name = "gps-cdcl"
   solver-version = 1
