@@ -285,7 +285,7 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 		Name: "Production2",
 	}
 
-	jsonBody, _ := json.Marshal(v)
+	jsonBody, _ := json.Marshal(envPost)
 	body := bytes.NewBuffer(jsonBody)
 	uri := router.GetRoute("POST", api.cloneEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
