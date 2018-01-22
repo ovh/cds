@@ -262,6 +262,7 @@ export class WorkflowSidebarEditNodeComponent {
                 modal.approve(null);
             }
         }, () => {
+            this.node.hooks.pop();
             this.loading = false;
         });
     }
