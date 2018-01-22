@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -44,7 +45,24 @@ title = "%s"
 	}
 
 	if gitPath != "" {
-		GetAllRouteInfo(gitPath + "/engine/api")
+		if err := os.MkdirAll(genPath+"/api", os.ModePerm); err != nil {
+			return err
+		}
+
+		/* Example doc on Handler:
+
+		// getActionsHandler Retrieve all public actions
+		// @title A title
+		// @description the description
+		// @params AA=valA
+		// @params BB=valB
+		// @body {"mykey": "myval"}
+		func (api *API) getActionsHandler() Handler {
+		[...]
+		*/
+		if err := writeRouteInfo(getAllRouteInfo(gitPath+"/engine/api"), genPath+"/api"); err != nil {
+			return err
+		}
 	}
 
 	return genMarkdownTreeCustom(root, genPath+"/"+rootName, filePrepender, linkHandler)
@@ -144,7 +162,7 @@ type RouteInfo struct {
 	HTTPOperation string
 }
 
-// Middleware Represente a middleware
+// Middleware represents a middleware
 type Middleware struct {
 	Name  string
 	Value []string
@@ -159,8 +177,8 @@ type visitor struct {
 var newHandle bool
 var currentRouteInfo RouteInfo
 
-// GetAllRouteInfo generates the api documentation
-func GetAllRouteInfo(path string) []Doc {
+// getAllRouteInfo generates the api documentation
+func getAllRouteInfo(path string) []Doc {
 	fset := token.NewFileSet() // positions are relative to fset
 	dm, err := parser.ParseDir(fset, path, filterFile, parser.ParseComments)
 	if err != nil {
@@ -201,7 +219,76 @@ func GetAllRouteInfo(path string) []Doc {
 		extractFromRouteInfo(&d, routeInfo)
 		allDocs = append(allDocs, d)
 	}
+
+	sort.Slice(allDocs, func(i, j int) bool { return allDocs[i].URL < allDocs[j].URL })
+
 	return allDocs
+}
+
+func writeRouteInfo(docs []Doc, genPath string) error {
+	f, err := os.Create(genPath + "/_index.md")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	content := `+++
+title = "REST API"
++++
+
+## Routes
+`
+
+	if _, err := f.WriteString(content); err != nil {
+		return err
+	}
+
+	var currentTitle string
+	for _, doc := range docs {
+		var content, lineTitle string
+
+		t := strings.Split(doc.URL, "/")
+		if len(t) >= 2 {
+			lineTitle = t[1]
+		}
+
+		if currentTitle != lineTitle {
+			content = fmt.Sprintf("## %s\n", lineTitle)
+		}
+		currentTitle = lineTitle
+		content += fmt.Sprintf("#### %s `%s`\n\n", doc.HTTPOperation, doc.URL)
+		for _, v := range doc.QueryParams {
+			content += fmt.Sprintf("* QueryParam: %s\n", v)
+		}
+
+		if doc.Title != "" {
+			content += fmt.Sprintf("* Title: %s\n", doc.Title)
+		}
+
+		if doc.Description != "" {
+			content += fmt.Sprintf("* Description: %s\n", doc.Description)
+		}
+
+		content += fmt.Sprintf("* Method: [%s](https://github.com/ovh/cds/search?q=%%22func+%%28api+*API%%29+%s%%22)\n", doc.Method, doc.Method)
+		if len(doc.Middleware) > 0 {
+			content += fmt.Sprintf("* Middleware(s): ")
+		}
+		for _, v := range doc.Middleware {
+			content += fmt.Sprintf("%s: %s\n", v.Name, v.Value)
+		}
+
+		if doc.Body != "" {
+			content += fmt.Sprintf("* Body: \n\n```\n%s\n```\n", doc.Body)
+		}
+
+		content += "\n\n"
+
+		if _, err := f.WriteString(content); err != nil {
+			return err
+		}
+	}
+	f.Sync()
+	return nil
 }
 
 func extractFromMethod(doc *Doc, m Method) {
