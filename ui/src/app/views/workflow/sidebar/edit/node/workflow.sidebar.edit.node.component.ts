@@ -192,8 +192,10 @@ export class WorkflowSidebarEditNodeComponent {
                 this.deleteWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
                 return;
             } else {
+                clonedWorkflow = Workflow.removeNodesInNotifications(clonedWorkflow, clonedWorkflow.root, this.node.id, false);
+
                 clonedWorkflow.root.triggers.forEach((t, i) => {
-                    this.removeNode(this.node.id, t.workflow_dest_node, clonedWorkflow.root, i);
+                    this.removeNode(clonedWorkflow, this.node.id, t.workflow_dest_node, clonedWorkflow.root, i);
                 });
                 if (clonedWorkflow.joins) {
                     clonedWorkflow.joins.forEach(j => {
@@ -202,7 +204,7 @@ export class WorkflowSidebarEditNodeComponent {
                         });
                         if (j.triggers) {
                             j.triggers.forEach((t, i) => {
-                                this.removeNodeFromJoin(this.node.id, t.workflow_dest_node, j, i);
+                                this.removeNodeFromJoin(clonedWorkflow, this.node.id, t.workflow_dest_node, j, i);
                             });
                         }
                     });
@@ -214,30 +216,33 @@ export class WorkflowSidebarEditNodeComponent {
                 this._toast.error('', this._translate.instant('workflow_node_remove_multiple_parent'));
                 return;
             }
+            clonedWorkflow = Workflow.removeNodeInNotifications(clonedWorkflow, this.node);
         }
         this.updateWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
     }
 
-    removeNodeFromJoin(id: number, node: WorkflowNode, parent: WorkflowNodeJoin, index: number) {
+    removeNodeFromJoin(workflow: Workflow, id: number, node: WorkflowNode, parent: WorkflowNodeJoin, index: number) {
         if (node.id === id) {
             parent.triggers.splice(index, 1);
         }
         if (node.triggers) {
             node.triggers.forEach((t, i) => {
-                this.removeNode(id, t.workflow_dest_node, node, i);
+                this.removeNode(workflow, id, t.workflow_dest_node, node, i);
             });
         }
     }
 
-    removeNode(id: number, node: WorkflowNode, parent: WorkflowNode, index: number) {
+    removeNode(workflow: Workflow, id: number, node: WorkflowNode, parent: WorkflowNode, index: number): Workflow {
         if (node.id === id) {
             parent.triggers.splice(index, 1);
+            workflow = Workflow.removeNodeInNotifications(workflow, node);
         }
         if (node.triggers) {
             node.triggers.forEach((t, i) => {
-                this.removeNode(id, t.workflow_dest_node, node, i);
+                workflow = this.removeNode(workflow, id, t.workflow_dest_node, node, i);
             });
         }
+        return workflow;
     }
 
     deleteWorkflow(w: Workflow, modal: ActiveModal<boolean, boolean, void>): void {

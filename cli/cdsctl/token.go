@@ -60,6 +60,7 @@ var tokenFindCmd = cli.Command{
 	Long: `
 Find an existing token with his value to have his description, creation date and the name of the creator.
 	`,
+	Example: `cdsctl token find "myTokenValue"`,
 	Aliases: []string{"check", "describe"},
 	Args: []cli.Arg{
 		{Name: "token"},

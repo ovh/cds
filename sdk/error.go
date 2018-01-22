@@ -134,6 +134,7 @@ var (
 	ErrDownloadInvalidName                   = Error{ID: 119, Status: http.StatusNotFound}
 	ErrDownloadDoesNotExist                  = Error{ID: 120, Status: http.StatusNotFound}
 	ErrTokenNotFound                         = Error{ID: 121, Status: http.StatusNotFound}
+	ErrWorkflowNotificationNodeRef           = Error{ID: 122, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -256,6 +257,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrDownloadInvalidName.ID:                   "Invalid name",
 	ErrDownloadDoesNotExist.ID:                  "File does not exist",
 	ErrTokenNotFound.ID:                         "Token does not exist",
+	ErrWorkflowNotificationNodeRef.ID:           "An invalid workflow node reference has been found, if you want to delete a pipeline from your workflow check if this pipeline isn't referenced in your notifications list",
 }
 
 var errorsFrench = map[int]string{
@@ -378,6 +380,7 @@ var errorsFrench = map[int]string{
 	ErrDownloadInvalidName.ID:                   "Nom invalide",
 	ErrDownloadDoesNotExist.ID:                  "Le fichier n'existe pas",
 	ErrTokenNotFound.ID:                         "Le token n'existe pas",
+	ErrWorkflowNotificationNodeRef.ID:           "Une référence de noeud de workflow est invalide dans vos notifications (si vous souhaitez supprimer un pipeline vérifiez qu'il ne soit plus référencé dans la liste de vos notifications)",
 }
 
 var errorsLanguages = []map[int]string{
