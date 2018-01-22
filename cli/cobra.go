@@ -343,6 +343,10 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 		s = reflect.ValueOf(i)
 	}
 
+	if s.Kind() != reflect.Struct {
+		return nil
+	}
+
 	t := reflect.TypeOf(i)
 	var ok = true
 	for i := 0; i < s.NumField() && ok; i++ {
