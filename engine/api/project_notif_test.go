@@ -1,10 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/yesnault/gadgeto/iffy"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -20,9 +22,6 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -75,17 +74,33 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 		"key": p.Key,
 		"permApplicationName": app.Name,
 	}
-	route := router.GetRoute("POST", api.addNotificationsHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_getProjectNotificationsHandler", "POST", route, notifsToAdd).Headers(headers).Checkers(iffy.ExpectStatus(200))
-	tester.Run()
-	tester.Reset()
+
+	jsonBody, _ := json.Marshal(notifsToAdd)
+	body := bytes.NewBuffer(jsonBody)
+	uri := router.GetRoute("POST", api.addNotificationsHandler, vars)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	vars = map[string]string{
 		"permProjectKey": p.Key,
 	}
-	route = router.GetRoute("GET", api.getProjectNotificationsHandler, vars)
-	tester.AddCall("Test_getProjectNotificationsHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
-	tester.Run()
 
+	uri = router.GetRoute("GET", api.getProjectNotificationsHandler, vars)
+	req, err = http.NewRequest("GET", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var notifs []sdk.UserNotification
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &notifs))
 }

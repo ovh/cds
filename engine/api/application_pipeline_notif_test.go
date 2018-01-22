@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	"github.com/yesnault/gadgeto/iffy"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
@@ -566,9 +565,6 @@ func Test_addNotificationsHandler(t *testing.T) {
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
-
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -618,10 +614,20 @@ func Test_addNotificationsHandler(t *testing.T) {
 		"key": p.Key,
 		"permApplicationName": app.Name,
 	}
-	route := router.GetRoute("POST", api.addNotificationsHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_addNotificationsHandler", "POST", route, notifsToAdd).Headers(headers).Checkers(iffy.ExpectStatus(200))
-	tester.Run()
+
+	uri := router.GetRoute("POST", api.addNotificationsHandler, vars)
+	test.NotEmpty(t, uri)
+
+	jsonBody, _ := json.Marshal(notifsToAdd)
+	body := bytes.NewBuffer(jsonBody)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	notifications, errN := notification.LoadAllUserNotificationSettings(api.mustDB(), app.ID)
 	test.NoError(t, errN)
