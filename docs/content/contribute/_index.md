@@ -50,9 +50,9 @@ hugo server
 
 We use https://github.com/golang/dep to manage CDS Dependencies.
 
-If you update a CDS Dependency, you have to edit `Gopkg.toml` file and then run:
+If you have to add or update a CDS Dependency, please follow instructions on https://github.com/golang/dep#adding-a-dependency
 
+And then launch
 ```bash
-$ dep ensure
 $ dep prune
 ```
