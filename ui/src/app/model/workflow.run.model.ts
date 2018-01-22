@@ -35,6 +35,9 @@ export class WorkflowRun {
     join_triggers_run: Map<number, TriggerRun>;
     commits: Array<Commit>;
     infos: Array<SpawnInfo>;
+
+    // Useful for UI
+    duration: string;
 }
 
 export class WorkflowRunTags {

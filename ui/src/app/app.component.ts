@@ -8,6 +8,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
+import {ToastService} from './shared/toast/ToastService';
 import {AppService} from './app.service';
 import {LastUpdateService} from './service/sse/lastupdate.sservice';
 import {LastModification} from './model/lastupdate.model';
@@ -36,11 +37,14 @@ export class AppComponent  implements OnInit {
     versionWorkerSubscription: Subscription;
 
     displayResolver = false;
+    toasterConfig: any;
 
     constructor(_translate: TranslateService, private _language: LanguageStore,
                 private _authStore: AuthentificationStore, private _router: Router,
-                private _notification: NotificationService, private _appService: AppService, private _last: LastUpdateService) {
+                private _notification: NotificationService, private _appService: AppService,
+                private _last: LastUpdateService, private _toastService: ToastService) {
         this.zone = new NgZone({enableLongStackTrace: false});
+        this.toasterConfig = this._toastService.getConfig();
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');
         let browserLang = navigator.language.match(/fr/) ? 'fr' : 'en';

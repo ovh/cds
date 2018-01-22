@@ -28,7 +28,6 @@ export class TokenListComponent extends Table {
     public ready = false;
     private _tokens: Token[];
     filter: string;
-    showToken: {} = {};
     expirationToString = ExpirationToString;
     newToken: Token;
 

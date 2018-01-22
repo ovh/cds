@@ -15,10 +15,10 @@
         <thead>
         <tr>
             <th class="four wide center">{{ 'token_description' | translate }}</th>
-            <th class="three wide center">{{ 'token_value' | translate }}</th>
-            <th class="three wide center">{{ 'token_type' | translate }}</th>
+            <th class="two wide center">{{ 'token_type' | translate }}</th>
             <th class="three wide center">{{ 'token_group_name' | translate }}</th>
-            <th class="five wide center">{{ 'token_created' | translate }}</th>
+            <th class="three wide center">{{ 'token_creator' | translate }}</th>
+            <th class="three wide center">{{ 'token_created' | translate }}</th>
             <th class="three wide"></th>
         </tr>
         </thead>
@@ -27,17 +27,14 @@
             <td class="border center">
                 {{t.description}}
             </td>
-            <td class="border token-content center">
-                <button class="ui circular icon button" *ngIf="!showToken[t.token]" (click)="showToken[t.token] = true">
-                    <i class="unhide icon"></i>
-                </button>
-                <span *ngIf="showToken[t.token]">{{t.token}}</span>
-            </td>
             <td class="border center">
                 {{expirationToString[t.expiration]}}
             </td>
             <td class="border center">
                 {{t.group_name}}
+            </td>
+            <td class="border center">
+                {{t.creator}}
             </td>
             <td class="border center">
                 {{t.created | date}}
@@ -52,11 +49,6 @@
                     <input class="ui input" placeholder="Description" [(ngModel)]="newToken.description">
                 </div>
             </td>
-            <td class="border token-content center">
-                <div class="ui fluid input focus disabled">
-                    <input class="ui input">
-                </div>
-            </td>
             <td class="border center">
                 <sui-select class="selection"
                     [(ngModel)]="newToken.expirationString"
@@ -66,6 +58,11 @@
                                        [value]="expiration">
                     </sui-select-option>
                 </sui-select>
+            </td>
+            <td class="border center">
+                <div class="ui fluid input focus disabled">
+                    <input class="ui input">
+                </div>
             </td>
             <td class="border center">
                 <div class="ui fluid input focus disabled">

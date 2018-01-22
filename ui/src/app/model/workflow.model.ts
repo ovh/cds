@@ -325,6 +325,49 @@ export class Workflow {
         return {found: false};
     }
 
+    static removeNodeInNotifications(workflow: Workflow, node: WorkflowNode): Workflow {
+        if (!Array.isArray(workflow.notifications) || !workflow.notifications.length) {
+            return workflow;
+        }
+
+        workflow.notifications = workflow.notifications.map((notif) => {
+            notif.source_node_id = notif.source_node_id.filter((srcId) => srcId !== node.id);
+            notif.source_node_ref = notif.source_node_ref.filter((ref) => ref !== node.ref);
+            return notif;
+        });
+
+        return workflow;
+    }
+
+    static removeNodesInNotifications(workflow: Workflow, currentNode: WorkflowNode, nodeId: number, deleteNode: boolean): Workflow {
+        if (!currentNode || !Array.isArray(workflow.notifications) || !workflow.notifications.length) {
+            return workflow;
+        }
+        if (currentNode.id === nodeId) {
+            deleteNode = true;
+        }
+
+        if (deleteNode) {
+            workflow = Workflow.removeNodeInNotifications(workflow, currentNode);
+        }
+
+        if (currentNode.id === workflow.root.id && Array.isArray(workflow.joins)) { // Check from joins
+            workflow.joins.forEach((join) => {
+                join.triggers.forEach((trig) => {
+                    workflow = Workflow.removeNodesInNotifications(workflow, trig.workflow_dest_node, nodeId, deleteNode);
+                });
+            });
+        }
+
+        if (Array.isArray(currentNode.triggers)) {
+            currentNode.triggers.forEach((trig) => {
+                workflow = Workflow.removeNodesInNotifications(workflow, trig.workflow_dest_node, nodeId, deleteNode);
+            });
+        }
+
+        return workflow;
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }

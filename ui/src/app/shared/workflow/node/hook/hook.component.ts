@@ -63,13 +63,13 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
             Workflow.removeHook(workflowToUpdate, h.hook);
         } else {
             Workflow.updateHook(workflowToUpdate, h.hook);
-
         }
-        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate).pipe(finalize(() => {
-            this.loading = false;
-        })).subscribe(() => {
-            this.editHook.modal.approve(true);
-            this._toast.success('', this._translate.instant('workflow_updated'));
-        });
+
+        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this.editHook.modal.approve(true);
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            });
     }
 }
