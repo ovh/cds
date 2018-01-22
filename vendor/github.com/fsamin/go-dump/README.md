@@ -17,7 +17,7 @@ a := T{23, "foo bar"}
 dump.FDump(out, a)
 ````
 
-Will prints
+Will print
 
 ````bash
 T.A: 23
@@ -37,7 +37,7 @@ a := T{23, "foo bar"}
 m, _ := dump.ToMap(a)
 ```
 
-Will returns such a map:
+Will return such a map:
 
 | KEY           | Value         |
 | ------------- | ------------- |
@@ -175,6 +175,4 @@ See [unit tests](test/dump_test.go) for more examples.
 
 Go-Dump needs Go >= 1.7
 
-External Dependencies :
-
-- github.com/mitchellh/mapstructure
+No external dependencies :)

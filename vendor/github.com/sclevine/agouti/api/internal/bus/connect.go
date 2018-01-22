@@ -56,6 +56,7 @@ func openSession(url string, body io.Reader, httpClient *http.Client) (sessionID
 	if err != nil {
 		return "", err
 	}
+	defer response.Body.Close()
 
 	var sessionResponse struct{ SessionID string }
 	responseBody, err := ioutil.ReadAll(response.Body)

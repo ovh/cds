@@ -1,0 +1,13 @@
+one:
+  id: 1
+  title: Post 1
+  content: Post 1 content
+  created_at: 2016-01-01 12:30:12
+  updated_at: 2016-01-01 12:30:12
+
+two:
+  id: 2
+  title: Post 2
+  content: Post 2 content
+  created_at: 2016-01-01 12:30:12
+  updated_at: 2016-01-01 12:30:12

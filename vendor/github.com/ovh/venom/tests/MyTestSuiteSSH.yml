@@ -1,0 +1,10 @@
+name: MyTestSuite
+testcases:
+- name: ssh foo status
+  steps:
+  - type: ssh
+    host: localhost
+    command: echo foo
+    assertions:
+    - result.code ShouldEqual 0
+    - result.timeseconds ShouldBeLessThan 10

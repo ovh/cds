@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tatnhacks on TAT - TextAndTag Documentation</title>
+    <link>https://ovh.github.io/tat/tatnhack/index.xml</link>
+    <description>Recent content in Tatnhacks on TAT - TextAndTag Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://ovh.github.io/tat/tatnhack/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Tat&#39;n Hack</title>
+      <link>https://ovh.github.io/tat/tatnhack/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatnhack/</guid>
+      <description>
+
+&lt;h3 id=&#34;chapter-7&#34;&gt;Chapter 7&lt;/h3&gt;
+
+&lt;h1 id=&#34;tat-n-hack&#34;&gt;Tat&amp;rsquo;n Hack&lt;/h1&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Monitoring a process with al2tat</title>
+      <link>https://ovh.github.io/tat/tatnhack/monitoring-process/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatnhack/monitoring-process/</guid>
+      <description>&lt;p&gt;Here, a script for monitoring process and send alert to al2tat.&lt;/p&gt;
+
+&lt;p&gt;Script checkProcess.sh:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;#!/bin/bash
+
+NAME=&amp;quot;$1&amp;quot;
+HOSTNAME=`hostname`
+TAT_USER=&amp;quot;tat.system.your.user&amp;quot;
+TAT_PASSWORD=&amp;quot;YouTatVeryLongPassword&amp;quot;
+TAT_TOPIC=&amp;quot;/Internal/Alerts&amp;quot;
+
+SERVICE=&amp;quot;YourService&amp;quot;
+
+if [[ &amp;quot;x${NAME}&amp;quot; == &amp;quot;x&amp;quot; ]]; then
+    echo &amp;quot;invalid usage, ./checkProcess.sh &amp;lt;processName&amp;gt;&amp;quot;;
+    exit 1;
+fi;
+
+pgrep -l ${NAME} &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+
+if [[ $? -ne 0 ]]; then
+    curl -XPOST  \
+    -H &amp;quot;Content-Type: application/json&amp;quot; \
+    -H &amp;quot;Tat_username: ${TAT_USER}&amp;quot; \
+    -H &amp;quot;Tat_password: ${TAT_PASSWORD}&amp;quot; \
+    -H &amp;quot;Tat_topic: ${TAT_TOPIC}&amp;quot; \
+    -d &#39;{ &amp;quot;alert&amp;quot; : &amp;quot;AL&amp;quot;, &amp;quot;nbAlert&amp;quot; : 1, &amp;quot;service&amp;quot; : &amp;quot;&#39;${SERVICE}&#39;&amp;quot;, &amp;quot;summary&amp;quot; : &amp;quot;&#39;${NAME}&#39; is down on &#39;${HOSTNAME}&#39;&amp;quot; }&#39; https://&amp;lt;url2tat&amp;gt;/alarm/sync
+fi;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Crontab&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;*/5 * * * * checkProcess.sh yourProcess &amp;gt; /dev/null 2&amp;gt;&amp;amp;1
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Visual Feedback</title>
+      <link>https://ovh.github.io/tat/tatnhack/visual-feedback/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatnhack/visual-feedback/</guid>
+      <description>&lt;p&gt;Visual Feedback is a way to be alerted with lights, LED Strip lights or something else.&lt;/p&gt;
+
+&lt;p&gt;Principles:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;a message is created on tat&lt;/li&gt;
+&lt;li&gt;script check.sh use tatcli to check if a new message arrives.&lt;/li&gt;
+&lt;li&gt;on new message, chech.sh writes on /dev/ttyACM0 device&lt;/li&gt;
+&lt;li&gt;an arduino, with a LED Strip interprets request to turn on the LEDs&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;You need:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Arduino Nano or Uno&lt;/li&gt;
+&lt;li&gt;470Ω resistor&lt;/li&gt;
+&lt;li&gt;A WS2812 strip&lt;/li&gt;
+&lt;li&gt;1000ųF capacitor&lt;/li&gt;
+&lt;li&gt;5V DC 2A Power Supply&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;See &lt;a href=&#34;http://www.tweaking4all.com/hardware/arduino/arduino-ws2812-led/&#34;&gt;http://www.tweaking4all.com/hardware/arduino/arduino-ws2812-led/&lt;/a&gt; or &lt;a href=&#34;https://www.aufilelec.fr/ruban-de-led-rgb-pilote-par-un-arduino/&#34;&gt;https://www.aufilelec.fr/ruban-de-led-rgb-pilote-par-un-arduino/&lt;/a&gt; (French)
+for assembly instructions.&lt;/p&gt;
+
+&lt;p&gt;File config.h&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#define NUM_LEDS 30
+#define DATA_PIN 7
+CRGB leds[ NUM_LEDS ];
+int argument = 20;
+
+#define SERIAL_SPEED 9600
+
+#define RED    0
+#define BLUE   1
+#define GREEN  2
+
+#endif
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;File tatstripled.ino&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#include &amp;quot;FastLED.h&amp;quot;
+// memo : https://www.arduino.cc/en/Reference/HomePage
+// uint8_t = short
+// uint16_t = int
+// uint32_t = long
+
+#include &amp;quot;config.h&amp;quot;
+
+String cmd;
+
+void setup() {
+  Serial.begin(SERIAL_SPEED);
+  delay(2);
+  FastLED.addLeds&amp;lt;NEOPIXEL, DATA_PIN&amp;gt;(leds, NUM_LEDS);
+
+  delay(2000);
+  kitt(10,10,30,1,10);
+  kitt(10,30,10,1,10);
+  kitt(30,00,10,1,10);
+  FastLED.showColor(CRGB(0,0,0));
+}
+
+unsigned int parse(char* str, char** command, unsigned long* params) {
+  unsigned int result = 0;
+  unsigned long currentInt = 0;
+
+  // get the command
+  for(*command = str; (*str !=0 ) &amp;amp;&amp;amp; (*str != &#39;:&#39;);str++);
+  if (*str) {
+    *str = 0;
+
+    // process through  the parameters
+    while (*(++str)) {
+      if ((*str &amp;lt;= &#39;9&#39;) &amp;amp;&amp;amp; (*str &amp;gt;= &#39;0&#39;)) {
+        currentInt *= 10;
+        currentInt += *str - &#39;0&#39;;
+      } else {
+        params[result++] = currentInt;
+        currentInt = 0;
+      }
+    }
+    params[result++] = currentInt;
+  }
+
+  return result;
+}
+
+// This function runs over and over, and is where you do the magic to light
+// your leds.
+void loop() {
+  if (Serial.available() &amp;gt; 0) {
+
+    String fromUsb = Serial.readStringUntil(&#39;\n&#39;);
+    char* command;
+    unsigned long parameters[20];
+    short red = 0;
+    short blue = 0;
+    short green = 0;
+    unsigned long* params = 0;
+    char fromUsbChar [100];
+    fromUsb.toCharArray(fromUsbChar, 100);
+
+    int parameterLength = parse(fromUsbChar, &amp;amp;command, parameters);
+    cmd = String(command);
+
+    if (cmd == &amp;quot;stop&amp;quot;) {
+      FastLED.clearData();
+    }
+
+    if (parameterLength &amp;gt; 2) {
+      red = (short) parameters[RED];
+      blue = (short) parameters[BLUE];
+      green = (short) parameters[GREEN];
+      params = &amp;amp;parameters[3];
+      parameterLength -= 3;
+
+      if (parameterLength &amp;gt; 0) {
+        if (cmd == &amp;quot;colorWipe&amp;quot;) {
+          colorWipe(red, green, blue, params[0]);
+        }
+        if (cmd == &amp;quot;colorWipeMicro&amp;quot;) {
+          colorWipeMicro(red, green, blue, params[0]);
+        }     
+        if (cmd == &amp;quot;Rainbow&amp;quot;) {
+          Rainbow(params[0]);
+        }
+
+        if (parameterLength &amp;gt; 1) {
+          if (cmd == &amp;quot;flashstrip&amp;quot;) {
+            flashstrip(red, green, blue, params[0], params[1]);
+          }
+          if (cmd == &amp;quot;flash&amp;quot;) {
+            flash(red, green, blue, params[0], params[1]);
+          }
+          if (cmd == &amp;quot;flashstriptwo&amp;quot;) {
+            flashstriptwo(red, green, blue, params[0], params[1]);
+          }
+          if (cmd == &amp;quot;pixel&amp;quot;) {
+            pixel(red, green, blue, params[0], params[1]);
+          }
+          if (cmd == &amp;quot;pixeldelay&amp;quot;) {
+            pixeldelay(red, green, blue, params[0], params[1]);
+          }          
+          if (cmd == &amp;quot;jauge&amp;quot;) {
+            jauge(red, green, blue, params[0], params[1]);
+          }
+          if (cmd == &amp;quot;bug&amp;quot;) {
+            bug(params[0], params[1]);
+          }
+          if (cmd == &amp;quot;kitt&amp;quot;) {
+            kitt(red, green, blue, params[0], params[1]);
+          }
+        }
+      }
+    }
+
+  } //End of if
+}
+
+// cmd fills led with one color
+void colorWipe(short r, short g, short b, long tempo) {
+    FastLED.showColor(CRGB( r, g, b));
+    delay(tempo);
+}
+
+//
+void colorWipeMicro(short r, short g, short b, long tempoMicro) {
+  FastLED.showColor(CRGB( r, g, b));
+  delayMicroseconds(tempoMicro);
+}
+
+
+//
+void pixel (short r, short g, short b, short pix, long tempoMicro) {
+  leds[(pix - 1)].setRGB( r, g, b);
+  FastLED.show();
+  delayMicroseconds(tempoMicro);
+}
+
+//
+void pixeldelay (short r, short g, short b, short pix, long numberOfCycle) {
+  for (int i = 0; i &amp;lt; numberOfCycle; i++) {
+    leds[(pix - 1)].setRGB( r, g, b);
+    FastLED.show();
+    delay(1000);
+    leds[(pix - 1)].setRGB( 0, 0, 0);
+    FastLED.show();
+    delay(1000);
+  }
+}
+
+//
+void jauge(short r, short g, short b, short numberOfLed, short tempo) {
+  for (int i = 0; i &amp;lt;= numberOfLed; i++) {
+    leds[(i-1)].setRGB( r, g, b);
+    FastLED.show();
+    delay(tempo);
+  }
+}
+
+//
+void flashstrip (short r, short g, short b, int numberOfCycle,int tempo) {
+  for (int i = 0; i &amp;lt; numberOfCycle; i++) {
+    FastLED.showColor(CRGB( r, g, b));
+    delay(tempo);
+    FastLED.showColor(CRGB(0, 0, 0));
+    delay(tempo);
+  }
+}
+
+void flashstriptwo (short r, short g, short b, int numberOfCycle, int tempoMicro) {
+  for (int i = 0; i &amp;lt; numberOfCycle; i++) {
+    FastLED.showColor(CRGB( r, g, b));
+    delayMicroseconds(tempoMicro);
+    FastLED.showColor(CRGB(0, 0, 0));
+    delayMicroseconds(tempoMicro);
+  }
+}
+
+
+void flash (short r, short g, short b, int numberOfCycle,int tempo) {
+  for (int i = 0; i &amp;lt; numberOfCycle; i++) {
+    colorWipe(r, g, b, tempo);
+    colorWipe(0, 0, 0, tempo);
+  }
+}
+
+//
+void bug (int numberOfCycle, long tempo) {
+  for (int j = 0; j &amp;lt;= numberOfCycle; j++) {
+    leds[(random(0, 30))].setRGB((random(0, 255)), (random(0, 255)), (random(0, 255)));
+    FastLED.show();
+    delay(tempo);
+  }
+}
+
+//
+void kitt(short r, short g, short b, short nbForwardBackward, short speed) {
+
+  for (int k = 1; k &amp;lt;= nbForwardBackward; k++) {
+    for (int i = 0; i &amp;lt;= 30; i++) {
+      leds[i].setRGB( r, g, b); // full red actual led
+      FastLED.show();
+      delay (speed);
+      if (i &amp;gt; 0) {
+        leds[(i - 1)].setRGB( 0, 0, 0); // full black led before
+        FastLED.show();
+        delay (speed);
+      }
+    }
+    for (int i = 30; i &amp;gt;= 0; i--) {
+      if (i != 0) {
+        leds[i].setRGB( r, g, b); // full red actual led
+        FastLED.show();
+        delay (speed);
+      }
+      if (i &amp;lt; 30) {
+        leds[(i + 1)].setRGB( 0, 0, 0); // full black led before
+        FastLED.show();
+        delay (speed);
+      }
+    }
+  }
+}
+
+void Rainbow(int tempo){
+  int deltahue = 5;
+  for (int thishue = 0; thishue &amp;lt; 255; thishue++) {
+    fill_rainbow(leds, 30, thishue, deltahue);
+    FastLED.show();
+    delay(tempo);
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;File check.sh&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;#!/bin/bash
+
+NOW=`date +&amp;quot;%s&amp;quot;`
+LAST_CALL_FILE=&amp;quot;/tmp/tatstripled.lastcall&amp;quot;
+MIN_DATE=`cat $LAST_CALL_FILE`
+
+if [[ &amp;quot;x&amp;quot; == &amp;quot;$MIN_DATE&amp;quot; ]]; then
+  MIN_DATE=`date +%s -d &amp;quot;1 day ago&amp;quot;`
+fi;
+
+
+function send {
+    if [[ &amp;quot;x0&amp;quot; != &amp;quot;x$2&amp;quot; ]]; then
+      echo &amp;quot;$1&amp;quot;
+      echo -n &amp;quot;$1&amp;quot; &amp;gt; /dev/ttyACM0
+      echo &amp;quot;send done&amp;quot;
+    fi;
+}
+
+# $1 code ret tatli
+# $2 title
+# $3 type
+# $4 color1
+# $5 color2
+# $6 color3
+# $7 speed
+function work {
+    RET=$1
+    NB=`cat out.log | cut -d &#39;:&#39; -f2 | sed &#39;s/\}//&#39;`
+
+    re=&#39;^[0-9]+$&#39;
+    if [[ $RET -ne 0 ]] || [[ &amp;quot;x&amp;quot; == &amp;quot;x$NB&amp;quot; ]] || [[ &amp;quot;x$NB&amp;quot; == &amp;quot;x502&amp;quot; ]] || ! [[ $NB =~ $re ]]; then
+        echo &#39;1&#39; &amp;gt;&amp;gt; error.log
+        NBE=`wc -l log | cut -d &#39; &#39; -f1`
+        if [[ $NBE -gt 5 ]]; then # tat down more than 5x
+            echo -n &amp;quot;flash:100,0,0,10,100&amp;quot; &amp;gt; /dev/ttyACM0 # red
+            sleep 2;
+        fi;
+        exit 1;
+    fi;
+    rm -f error.log
+    echo &amp;quot;$2:$NB&amp;quot;
+    send &amp;quot;$3:$4,$5,$6,$NB,$7&amp;quot; $NB
+    sleep 2;
+
+    if [[ &amp;quot;x$3&amp;quot; == &amp;quot;xRainbow&amp;quot; ]]; then # set rainbox to off
+        send &amp;quot;kitt:$4,$5,$6,$NB,$7&amp;quot; $NB
+        sleep 2;
+        send &amp;quot;kitt:$4,$5,$6,$NB,$7&amp;quot; $NB
+    fi;
+}
+
+rm -f out.log &amp;amp;&amp;amp; tatcli msg list /Internal/Alerts --label=open --tag=CD --onlyCount true &amp;gt; out.log
+work $? &amp;quot;alerts&amp;quot; &amp;quot;kitt&amp;quot; 100 0 0 10
+
+rm -f out.log &amp;amp;&amp;amp; tatcli msg list /Internal/PullRequests --onlyCount=true --label=OPENED --dateMinCreation=$MIN_DATE &amp;gt; out.log
+work $? &amp;quot;newpr&amp;quot; &amp;quot;Rainbow&amp;quot; 38 152 224 100
+
+rm -f out.log &amp;amp;&amp;amp; tatcli msg list /Internal/PullRequests --onlyCount=true --label=OPENED &amp;gt; out.log
+work $? &amp;quot;pr&amp;quot; &amp;quot;kitt&amp;quot; 4 16 22 20
+
+echo $NOW &amp;gt; $LAST_CALL_FILE
+
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

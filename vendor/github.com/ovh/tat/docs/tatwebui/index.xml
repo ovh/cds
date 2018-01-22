@@ -1,0 +1,822 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tatwebuis on TAT - TextAndTag Documentation</title>
+    <link>https://ovh.github.io/tat/tatwebui/index.xml</link>
+    <description>Recent content in Tatwebuis on TAT - TextAndTag Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://ovh.github.io/tat/tatwebui/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Tat Webui</title>
+      <link>https://ovh.github.io/tat/tatwebui/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/</guid>
+      <description>
+
+&lt;h3 id=&#34;chapter-2&#34;&gt;Chapter 2&lt;/h3&gt;
+
+&lt;h1 id=&#34;tat-webui&#34;&gt;Tat Webui&lt;/h1&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Introduction</title>
+      <link>https://ovh.github.io/tat/tatwebui/introduction/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/introduction/</guid>
+      <description>&lt;p&gt;Tatwebui is a web application, with a nodejs HTTP Server for serving js/html/css files.
+This application requests Tat Engine for all actions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Rights Controls, Users &amp;amp; Groups&lt;/li&gt;
+&lt;li&gt;Topics management, parameters, ACLs&lt;/li&gt;
+&lt;li&gt;Manipulate messages&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The views are used to display messages in different ways. Views are plugins, see
+&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview&#34;&gt;Standard View&lt;/a&gt; for example.
+Some OVH views are opensourced like:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/standardview&#34;&gt;Standard View&lt;/a&gt;: standard view with all features on messages&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/notificationsview&#34;&gt;Notifications View&lt;/a&gt;: display user notifications in /Private/username/Notifications topic&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/monitoringview&#34;&gt;Monitoring View&lt;/a&gt;: quick look on many items, UP or Down&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/releaseview&#34;&gt;Release View&lt;/a&gt;: Plan, Changelog, Release&amp;hellip; communicate with others teams&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/dashingview&#34;&gt;Dashing View&lt;/a&gt;: widgets, graph&amp;hellip; one way to create dashing about everything&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/pastatview&#34;&gt;Pastat View&lt;/a&gt;: a Gist like&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://ovh.github.io/tat/tatwebui/cdsview&#34;&gt;CDS View&lt;/a&gt;: Display &lt;a href=&#34;https://github.com/ovh/cds&#34;&gt;CDS&lt;/a&gt; Notifications&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Standard View</title>
+      <link>https://ovh.github.io/tat/tatwebui/standardview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/standardview/</guid>
+      <description>
+
+&lt;h2 id=&#34;screenshots&#34;&gt;Screenshots&lt;/h2&gt;
+
+&lt;h3 id=&#34;messages-list&#34;&gt;Messages - List&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-standard-view-list.png?width=80%&#34; alt=&#34;Standard View&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;messages-edit&#34;&gt;Messages - Edit&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-standard-view-details.png?width=80%&#34; alt=&#34;Standard View&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-standardview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-standardview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview&#34;&gt;https://github.com/ovh/tatwebui-plugin-standardview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Notifications View</title>
+      <link>https://ovh.github.io/tat/tatwebui/notificationsview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/notificationsview/</guid>
+      <description>
+
+&lt;p&gt;When a message contains a mention for someone, a other message is created by Tat Engine in topic
+/Private/username/Notifications, where username is the user mentioned.&lt;/p&gt;
+
+&lt;p&gt;Example :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;a message &amp;ldquo;a first notification for @yesnault&amp;rdquo; in topic /Internal/App&lt;/li&gt;
+&lt;li&gt;a other message &amp;ldquo;and a second @yesnault in topic /Internal/App&amp;rdquo; in topic /Internal/App&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;see result in screenshot below for these two messages in topic /Private/yesnault/Notifications&lt;/p&gt;
+
+&lt;h2 id=&#34;screenshot&#34;&gt;Screenshot&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-notifications-view.png?width=80%&#34; alt=&#34;Notifications View&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-notificationsview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-notificationsview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-notificationsview&#34;&gt;https://github.com/ovh/tatwebui-plugin-notificationsview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Monitoring View</title>
+      <link>https://ovh.github.io/tat/tatwebui/monitoringview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/monitoringview/</guid>
+      <description>
+
+&lt;h2 id=&#34;screenshot&#34;&gt;Screenshot&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-monitoring-view.png?width=80%&#34; alt=&#34;Monitoring View&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;using&#34;&gt;Using&lt;/h2&gt;
+
+&lt;h3 id=&#34;send-to-tat-engine&#34;&gt;Send to Tat Engine&lt;/h3&gt;
+
+&lt;p&gt;The screenshot above was created with these messages:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;
+tatcli topic truncate /Private/yesnault/Monitoring --force
+for i in {1..99}; do
+  for j in {1..20}; do
+     MTYPE=&amp;quot;UP&amp;quot;;
+     COLOR=&amp;quot;#6C6&amp;quot;;
+     if [ ${j} -eq 7 ]; then MTYPE=&amp;quot;AL&amp;quot;; COLOR=&amp;quot;d9534f&amp;quot;; fi;
+     tatcli msg add /Private/yesnault/Monitoring &amp;quot;#monitoring #myService #item:myItem${i}${j}&amp;quot; --label=&amp;quot;$COLOR;$MTYPE&amp;quot;
+  done
+done
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;production-way-with-al2tat&#34;&gt;Production Way with al2tat&lt;/h3&gt;
+
+&lt;p&gt;Send a monitoring message to al2tat microservice on path /monitoring.
+See &lt;a href=&#34;https://github.com/ovh/al2tat&#34;&gt;https://github.com/ovh/al2tat&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-monitoringview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-monitoringview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-monitoringview&#34;&gt;https://github.com/ovh/tatwebui-plugin-monitoringview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Pastat View</title>
+      <link>https://ovh.github.io/tat/tatwebui/pastatview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/pastatview/</guid>
+      <description>
+
+&lt;h2 id=&#34;screenshots&#34;&gt;Screenshots&lt;/h2&gt;
+
+&lt;h3 id=&#34;messages-list&#34;&gt;Messages - List&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-pastat-view-list.png?width=80%&#34; alt=&#34;Pastat View&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;messages-edit&#34;&gt;Messages - Edit&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-pastat-view-details.png?width=80%&#34; alt=&#34;Pastat View&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-dashingview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-dashingview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-pastatview&#34;&gt;https://github.com/ovh/tatwebui-plugin-pastatview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Dashing View</title>
+      <link>https://ovh.github.io/tat/tatwebui/dashingview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/dashingview/</guid>
+      <description>
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;p&gt;This screenshot&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-dashing-view.png?width=80%&#34; alt=&#34;Dashing View&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;can be done by sending info with tatcli :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring&amp;quot; \
+  --label=&amp;quot;#eeeee;border-width:0px&amp;quot; \
+  --label=&amp;quot;#eeeee;height:110px&amp;quot; \
+  --label=&amp;quot;#eeeee;hide-bottom&amp;quot; \
+  --label=&amp;quot;#eeeee;order:1&amp;quot; \
+  --label=&amp;quot;#eeeee;value:MyDashing&amp;quot; \
+  --label=&amp;quot;#eeeee;width:96%&amp;quot; \
+  --label=&amp;quot;#ffffff;color&amp;quot; \
+  --label=&amp;quot;#161d23;bg-color&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring&amp;quot; \
+  --label=&amp;quot;#93c47d;bg-color&amp;quot; \
+  --label=&amp;quot;#eeeee;border-width:0px&amp;quot; \
+  --label=&amp;quot;#eeeee;height:5px&amp;quot; \
+  --label=&amp;quot;#eeeee;hide-bottom&amp;quot; \
+  --label=&amp;quot;#eeeee;order:2&amp;quot; \
+  --label=&amp;quot;#eeeee;value&amp;quot; \
+  --label=&amp;quot;#eeeee;value&amp;quot; \
+  --label=&amp;quot;#eeeee;value&amp;quot; \
+  --label=&amp;quot;#eeeee;color&amp;quot; \
+  --label=&amp;quot;#eeeee;width:96.3%&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring&amp;quot; \
+  --label=&amp;quot;#161d23;bg-color&amp;quot; \
+  --label=&amp;quot;#eeeee;border-width:0px&amp;quot; \
+  --label=&amp;quot;#eeeee;color&amp;quot; \
+  --label=&amp;quot;#eeeee;height:20px&amp;quot; \
+  --label=&amp;quot;#eeeee;hide-bottom&amp;quot; \
+  --label=&amp;quot;#eeeee;order:3&amp;quot; \
+  --label=&amp;quot;#eeeee;width:96%&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:OCO_Critical&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&amp;quot;#ce352c;color&amp;quot; \
+  --label=&amp;quot;#eeeee;order:11&amp;quot; \
+  --label=&amp;quot;#eeeee;value:79&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:OCO_Warn&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&amp;quot;#fa6800;color&amp;quot; \
+  --label=&amp;quot;#eeeee;order:12&amp;quot; \
+  --label=&amp;quot;#eeeee;value:2312&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:OCO_Info&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&amp;quot;#60a917;color&amp;quot; \
+  --label=&amp;quot;#eeeee;order:13&amp;quot; \
+  --label=&amp;quot;#eeeee;value:2714&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:StatusCake_Tests&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&amp;quot;#63305a;color&amp;quot; \
+  --label=&amp;quot;#eeeee;order:15&amp;quot; \
+  --label=&amp;quot;#eeeee;value:15/15&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:checkFilerz A&amp;quot; \
+  --label=&amp;quot;#eeeee;order:18&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&#39;#eeeeee;widget:progressbar&#39; \
+  --label=&#39;#eeeeee;percentRunning:70&#39; \
+  --label=&#39;#1ba1e2;color&#39; \
+  --label=&#39;#eeeeee;widget-class:success&#39; \
+  --label=&#39;#eeeeee;widget-mode:vertical&#39;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:checkFilerz B&amp;quot; \
+  --label=&amp;quot;#eeeee;order:19&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&#39;#eeeeee;widget:progressbar&#39; \
+  --label=&#39;#eeeeee;percentRunning:30&#39; \
+  --label=&#39;#1ba1e2;color&#39; \
+  --label=&#39;#eeeeee;widget-class:success&#39; \
+  --label=&#39;#eeeeee;widget-mode:horizontal&#39;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:checkFilerz C&amp;quot; \
+  --label=&amp;quot;#eeeee;order:20&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&#39;#eeeeee;widget:progressbar&#39; \
+  --label=&#39;#eeeeee;percentRunning:25&#39; \
+  --label=&#39;#eeeeee;widget-class:warning&#39; \
+  --label=&#39;#eeeeee;widget-mode:horizontal&#39;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:StatusUP&amp;quot; \
+  --label=&amp;quot;#eeeee;order:21&amp;quot; \
+  --label=&amp;quot;#60a917;bg-color&amp;quot; \
+  --label=&amp;quot;#ffffff;color&amp;quot; \
+  --label=&amp;quot;#eeeeee;value:79&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:Status&amp;quot; \
+  --label=&amp;quot;#eeeee;order:22&amp;quot; \
+  --label=&amp;quot;#60a917;bg-color&amp;quot; \
+  --label=&amp;quot;#ffffff;color&amp;quot; \
+  --label=&amp;quot;#eeeeee;value::)&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #YourTeam #item:Status&amp;quot; \
+  --label=&amp;quot;#eeeee;order:22&amp;quot; \
+  --label=&amp;quot;#60a917;bg-color&amp;quot; \
+  --label=&amp;quot;#ffffff;color&amp;quot; \
+  --label=&amp;quot;#eeeeee;value:↑&amp;quot;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #item:Pie&amp;quot; \
+  --label=&amp;quot;#eeeee;order:23&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot;  \
+  --label=&amp;quot;#eeeeee;width:20%&amp;quot; \
+  --label=&#39;#eeeee;widget-data-serie:20 30 40&#39; \
+  --label=&#39;#eeeee;widget-options:donut:true donutWidth:60 startAngle:270 total:200 showLabel:false&#39; \
+  --label=&#39;#eeeee;widget:Pie&#39;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #item:Line&amp;quot; \
+  --label=&amp;quot;#eeeee;order:24&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&amp;quot;#eeeeee;width:76%&amp;quot; \
+  --label=&#39;#eeeeee;widget-data-labels:Mon Tue Wed Thu Fri Sat&#39; \
+  --label=&#39;#eeeeee;widget-data-options:low:0 showArea:true showPoint:false fullWidth:true&#39; \
+  --label=&#39;#eeeeee;widget-data-series:1 5 2 5 4 3&#39; \
+  --label=&#39;#eeeeee;widget-data-series:2 3 4 8 1 2&#39; \
+  --label=&#39;#eeeeee;widget-data-series:5 4 3 2 1 0.5&#39; \
+  --label=&#39;#eeeeee;widget:Line&#39;
+
+tatcli msg add /Internal/YourTopic/Dashing &amp;quot;#monitoring #item:Bar&amp;quot;  \
+  --label=&amp;quot;#eeeee;order:25&amp;quot; \
+  --label=&amp;quot;#e8f1f4;bg-color&amp;quot; \
+  --label=&amp;quot;#eeeeee;height:200px&amp;quot; \
+  --label=&amp;quot;#eeeeee;width:95%&amp;quot; \
+  --label=&amp;quot;#eeeeee;widget:Bar&amp;quot; \
+  --label=&amp;quot;#eeeeee;widget-data-labels:AA BB CC DD EE FF GG&amp;quot; \
+  --label=&amp;quot;#eeeeee;widget-data-series:5 4 3 7 5 10 3&amp;quot; \
+  --label=&amp;quot;#eeeeee;widget-data-series:3 2 9 5 4 6 4&amp;quot; \
+  --label=&amp;quot;#eeeeee;widget-options:seriesBarDistance:10 reverseData:true horizontalBars:true&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In standard View, theses messages look like:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-dashing-view-standardview1.png?width=80%&#34; alt=&#34;Dashing View in Standard View&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-dashing-view-standardview2.png?width=80%&#34; alt=&#34;Dashing View in Standard View&#34; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;legend&#34;&gt;Legend&lt;/h3&gt;
+
+&lt;p&gt;You can add legend on widget-data-series.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;widget-data-series:LegenA:5 4 3 7 5 10 3
+widget-data-series:LegenB:5 4 3 7 5 10 3
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-dashingview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-dashingview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-dashingview&#34;&gt;https://github.com/ovh/tatwebui-plugin-dashingview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Release View</title>
+      <link>https://ovh.github.io/tat/tatwebui/releaseview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/releaseview/</guid>
+      <description>
+
+&lt;h2 id=&#34;screenshot&#34;&gt;Screenshot&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tatwebui-release-view.png?width=80%&#34; alt=&#34;Release View&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;using&#34;&gt;Using&lt;/h2&gt;
+
+&lt;p&gt;A release message :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#release:test a title
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A release message with attributes :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#release:test #attr:EU #attr:CA a title
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A release message with a forced date and attributes :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#release:test #attr:EU #attr:CA #date:2015-12-24 a title
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And replies to complete informations about release :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#fix: a fix here
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code&gt;#feat: a new feature
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;First tag of reply will become a section (#feat, #fix, #whatever)&lt;/p&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;p&gt;The screenshot above was created with these messages.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;
+# Insert Release Title
+tatcli msg add /Private/yesnault/Release &amp;quot;#release:2.0.0&amp;quot; -v
+
+# get IDMessage from previous command
+ID_MSG=&amp;quot;58032b202683911aacaa23d0&amp;quot;
+
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Major A message belongs to one topic only now.&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Major A GET on /Private/username/Tasks returns message in this topic and all message with label doing:username&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Major the field &amp;quot;topics&amp;quot; is kept for backwards compatibility&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Major new mongo index for more efficiency, with new field topic&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Chore logs/iot key&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Chore update deps&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Feat add async for /countEmptyTopic&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Feat add prod logger&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Feat allow http:// in tag&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Feat check date on list&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Feat list presences, get without topic name&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Feat remove condition on move msg&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Fix 401 if wrong auth&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Fix err on find topic&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Fix get msg in unknown topic&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Fix remove admin user&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Fix remove log fatal&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Fix remove unused log / return on unknown topic&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Refactor remove action bookmark&amp;quot;
+tatcli msg reply /Private/yesnault/Release $ID_MSG &amp;quot;#Refactor task: add label doing and doing:username&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-releaseview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-releaseview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Add in config.json (client side) of tatwebui this attribute :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;releaseview&amp;quot;: {
+  &amp;quot;tracker&amp;quot;: &amp;quot;RELEASEVIEW_TRACKER&amp;quot;,
+  &amp;quot;keyword&amp;quot;: &amp;quot;RELEASEVIEW_KEYWORD&amp;quot;
+},
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Set tracker with your issue tracker system.&lt;/p&gt;
+
+&lt;p&gt;Set keyword to your issue tracker.&lt;/p&gt;
+
+&lt;p&gt;Example : if you write a
+message like &amp;ldquo;feat: a big feature #RELEASE_KEYWORD:AAA-1&amp;rdquo;, an url will be generated on tatwebui :
+$RELEASE_TRACKER/AAA-1&lt;/p&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-releaseview&#34;&gt;https://github.com/ovh/tatwebui-plugin-releaseview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>CDS View</title>
+      <link>https://ovh.github.io/tat/tatwebui/cdsview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/cdsview/</guid>
+      <description>
+
+&lt;h2 id=&#34;screenshot&#34;&gt;Screenshot&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-build-cds.png?width=80%&#34; alt=&#34;CDS View&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;details-of-messages-sent-by-cds&#34;&gt;Details of messages sent by CDS&lt;/h2&gt;
+
+&lt;p&gt;Example: message and replies created by CDS by pipeline building Tat Engine:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{
+    &amp;quot;_id&amp;quot;: &amp;quot;58030253dc55630001c69635&amp;quot;,
+    &amp;quot;text&amp;quot;: &amp;quot;#cds #type:pipelineBuild #project:TAT #app:tat-engine #pipeline:build-go-api-tat #environment:NoEnv #build:74 #idp:297065 #branch:master&amp;quot;,
+    &amp;quot;topic&amp;quot;: &amp;quot;/Internal/CDS/Notifs&amp;quot;,
+    &amp;quot;inReplyOfID&amp;quot;: &amp;quot;&amp;quot;,
+    &amp;quot;inReplyOfIDRoot&amp;quot;: &amp;quot;&amp;quot;,
+    &amp;quot;nbLikes&amp;quot;: 0,
+    &amp;quot;labels&amp;quot;: [
+        {
+            &amp;quot;text&amp;quot;: &amp;quot;Success&amp;quot;,
+            &amp;quot;color&amp;quot;: &amp;quot;#3c763d&amp;quot;
+        }
+    ],
+    &amp;quot;nbVotesUP&amp;quot;: 0,
+    &amp;quot;nbVotesDown&amp;quot;: 0,
+    &amp;quot;tags&amp;quot;: [
+        &amp;quot;cds&amp;quot;,
+        &amp;quot;type:pipelineBuild&amp;quot;,
+        &amp;quot;project:TAT&amp;quot;,
+        &amp;quot;app:tat-engine&amp;quot;,
+        &amp;quot;pipeline:build-go-api-tat&amp;quot;,
+        &amp;quot;environment:NoEnv&amp;quot;,
+        &amp;quot;build:74&amp;quot;,
+        &amp;quot;idp:297065&amp;quot;,
+        &amp;quot;branch:master&amp;quot;
+    ],
+    &amp;quot;dateCreation&amp;quot;: 1476592211.0365698,
+    &amp;quot;dateUpdate&amp;quot;: 1476592269.024161,
+    &amp;quot;author&amp;quot;: {
+        &amp;quot;username&amp;quot;: &amp;quot;tat.system.cds&amp;quot;,
+        &amp;quot;fullname&amp;quot;: &amp;quot;CDS System&amp;quot;
+    },
+    &amp;quot;replies&amp;quot;: [
+        {
+            &amp;quot;_id&amp;quot;: &amp;quot;58030280a41e6200014bf98a&amp;quot;,
+            &amp;quot;text&amp;quot;: &amp;quot;#cds #type:actionBuild #project:TAT #app:tat-engine #pipeline:build-go-api-tat #build:74 #action: #actionId:400588 #idp:297065&amp;quot;,
+            &amp;quot;topic&amp;quot;: &amp;quot;/Internal/CDS/Notifs&amp;quot;,
+            &amp;quot;inReplyOfID&amp;quot;: &amp;quot;58030253dc55630001c69635&amp;quot;,
+            &amp;quot;inReplyOfIDRoot&amp;quot;: &amp;quot;58030253dc55630001c69635&amp;quot;,
+            &amp;quot;nbLikes&amp;quot;: 0,
+            &amp;quot;labels&amp;quot;: [
+                {
+                    &amp;quot;text&amp;quot;: &amp;quot;Success&amp;quot;,
+                    &amp;quot;color&amp;quot;: &amp;quot;#3c763d&amp;quot;
+                }
+            ],
+            &amp;quot;nbVotesUP&amp;quot;: 0,
+            &amp;quot;nbVotesDown&amp;quot;: 0,
+            &amp;quot;tags&amp;quot;: [
+                &amp;quot;cds&amp;quot;,
+                &amp;quot;type:actionBuild&amp;quot;,
+                &amp;quot;project:TAT&amp;quot;,
+                &amp;quot;app:tat-engine&amp;quot;,
+                &amp;quot;pipeline:build-go-api-tat&amp;quot;,
+                &amp;quot;build:74&amp;quot;,
+                &amp;quot;action:&amp;quot;,
+                &amp;quot;actionId:400588&amp;quot;,
+                &amp;quot;idp:297065&amp;quot;
+            ],
+            &amp;quot;dateCreation&amp;quot;: 1476592256.450992,
+            &amp;quot;dateUpdate&amp;quot;: 1476592272.0423489,
+            &amp;quot;author&amp;quot;: {
+                &amp;quot;username&amp;quot;: &amp;quot;tat.system.cds&amp;quot;,
+                &amp;quot;fullname&amp;quot;: &amp;quot;CDS System&amp;quot;
+            },
+            &amp;quot;nbReplies&amp;quot;: 0
+        },
+        {
+            &amp;quot;_id&amp;quot;: &amp;quot;5803027f403f9d0001b1af55&amp;quot;,
+            &amp;quot;text&amp;quot;: &amp;quot;#cds #type:actionBuild #project:TAT #app:tat-engine #pipeline:build-go-api-tat #build:74 #action:Packaging #actionId:400588 #idp:297065&amp;quot;,
+            &amp;quot;topic&amp;quot;: &amp;quot;/Internal/CDS/Notifs&amp;quot;,
+            &amp;quot;inReplyOfID&amp;quot;: &amp;quot;58030253dc55630001c69635&amp;quot;,
+            &amp;quot;inReplyOfIDRoot&amp;quot;: &amp;quot;58030253dc55630001c69635&amp;quot;,
+            &amp;quot;nbLikes&amp;quot;: 0,
+            &amp;quot;labels&amp;quot;: [
+                {
+                    &amp;quot;text&amp;quot;: &amp;quot;Waiting&amp;quot;,
+                    &amp;quot;color&amp;quot;: &amp;quot;#8a6d3b&amp;quot;
+                }
+            ],
+            &amp;quot;nbVotesUP&amp;quot;: 0,
+            &amp;quot;nbVotesDown&amp;quot;: 0,
+            &amp;quot;tags&amp;quot;: [
+                &amp;quot;cds&amp;quot;,
+                &amp;quot;type:actionBuild&amp;quot;,
+                &amp;quot;project:TAT&amp;quot;,
+                &amp;quot;app:tat-engine&amp;quot;,
+                &amp;quot;pipeline:build-go-api-tat&amp;quot;,
+                &amp;quot;build:74&amp;quot;,
+                &amp;quot;action:Packaging&amp;quot;,
+                &amp;quot;actionId:400588&amp;quot;,
+                &amp;quot;idp:297065&amp;quot;
+            ],
+            &amp;quot;dateCreation&amp;quot;: 1476592255.230196,
+            &amp;quot;dateUpdate&amp;quot;: 1476592255.230196,
+            &amp;quot;author&amp;quot;: {
+                &amp;quot;username&amp;quot;: &amp;quot;tat.system.cds&amp;quot;,
+                &amp;quot;fullname&amp;quot;: &amp;quot;CDS System&amp;quot;
+            },
+            &amp;quot;nbReplies&amp;quot;: 0
+        },
+        {
+            &amp;quot;_id&amp;quot;: &amp;quot;580302566f60b7000148d63d&amp;quot;,
+            &amp;quot;text&amp;quot;: &amp;quot;#cds #type:actionBuild #project:TAT #app:tat-engine #pipeline:build-go-api-tat #build:74 #action:Commit #actionId:400584 #idp:297065&amp;quot;,
+            &amp;quot;topic&amp;quot;: &amp;quot;/Internal/CDS/Notifs&amp;quot;,
+            &amp;quot;inReplyOfID&amp;quot;: &amp;quot;58030253dc55630001c69635&amp;quot;,
+            &amp;quot;inReplyOfIDRoot&amp;quot;: &amp;quot;58030253dc55630001c69635&amp;quot;,
+            &amp;quot;nbLikes&amp;quot;: 0,
+            &amp;quot;labels&amp;quot;: [
+                {
+                    &amp;quot;text&amp;quot;: &amp;quot;Success&amp;quot;,
+                    &amp;quot;color&amp;quot;: &amp;quot;#3c763d&amp;quot;
+                }
+            ],
+            &amp;quot;nbVotesUP&amp;quot;: 0,
+            &amp;quot;nbVotesDown&amp;quot;: 0,
+            &amp;quot;tags&amp;quot;: [
+                &amp;quot;cds&amp;quot;,
+                &amp;quot;type:actionBuild&amp;quot;,
+                &amp;quot;project:TAT&amp;quot;,
+                &amp;quot;app:tat-engine&amp;quot;,
+                &amp;quot;pipeline:build-go-api-tat&amp;quot;,
+                &amp;quot;build:74&amp;quot;,
+                &amp;quot;action:Commit&amp;quot;,
+                &amp;quot;actionId:400584&amp;quot;,
+                &amp;quot;idp:297065&amp;quot;
+            ],
+            &amp;quot;dateCreation&amp;quot;: 1476592214.5933328,
+            &amp;quot;dateUpdate&amp;quot;: 1476592255.251998,
+            &amp;quot;author&amp;quot;: {
+                &amp;quot;username&amp;quot;: &amp;quot;tat.system.cds&amp;quot;,
+                &amp;quot;fullname&amp;quot;: &amp;quot;CDS System&amp;quot;
+            },
+            &amp;quot;nbReplies&amp;quot;: 0
+        }
+    ],
+    &amp;quot;nbReplies&amp;quot;: 3
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;configuration&#34;&gt;Configuration&lt;/h2&gt;
+
+&lt;p&gt;In plugin.tpl.json file, add this line :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;tatwebui-plugin-cdsview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-cdsview.git&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;source&#34;&gt;Source&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-cdsview&#34;&gt;https://github.com/ovh/tatwebui-plugin-cdsview&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Development</title>
+      <link>https://ovh.github.io/tat/tatwebui/development/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatwebui/development/</guid>
+      <description>
+
+&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+
+&lt;p&gt;A view in Tat WebUI is a bower&amp;rsquo;s plugin. You can develop your own view to display message or add specific action on messages.&lt;/p&gt;
+
+&lt;h2 id=&#34;steps&#34;&gt;Steps&lt;/h2&gt;
+
+&lt;h3 id=&#34;requirements&#34;&gt;Requirements&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;#Install NodeJs [https://nodejs.org/]
+#Install Bower
+npm install -g bower
+
+#Install Grunt
+npm install -g grunt-cli
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;tatwebui-bootstrap&#34;&gt;Tatwebui bootstrap&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;mkdir -p $HOME/src/github.com/ovh #you can used what you want, it&#39;s just for example
+git clone https://github.com/ovh/tatwebui.git
+cd tatwebui/client
+touch plugin.tpl.json custom.plugin.tpl.json src/assets/config.json
+cd ../server
+touch app/config.json
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;tatwebui-configuration&#34;&gt;Tatwebui configuration&lt;/h3&gt;
+
+&lt;p&gt;In file client/src/assets/config.json, add theses lines&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+  &amp;quot;backend&amp;quot;: {
+    &amp;quot;scheme&amp;quot;: &amp;quot;https&amp;quot;,
+    &amp;quot;host&amp;quot;: &amp;quot;url-tat-engine&amp;quot;,
+    &amp;quot;port&amp;quot;: 443,
+    &amp;quot;autologin&amp;quot;: false
+  },
+  &amp;quot;releaseview&amp;quot;: {
+    &amp;quot;tracker&amp;quot;: &amp;quot;https://github.com/ovh/tat/issues/&amp;quot;,
+    &amp;quot;keyword&amp;quot;: &amp;quot;github&amp;quot;
+  },
+  &amp;quot;help&amp;quot;: {
+    &amp;quot;signup&amp;quot;: [&amp;quot;l&#39;aide ici&amp;quot;]
+  },
+  &amp;quot;links&amp;quot;: {
+    &amp;quot;home&amp;quot;: [{
+      &amp;quot;caption&amp;quot;: &amp;quot;label home 1&amp;quot;,
+      &amp;quot;url&amp;quot;: &amp;quot;http://tat-engine.tat.tat.home1&amp;quot;
+    }, {
+      &amp;quot;caption&amp;quot;: &amp;quot;label home 2&amp;quot;,
+      &amp;quot;url&amp;quot;: &amp;quot;http://tat-engine.tat.tat.home2&amp;quot;
+    }],
+    &amp;quot;menu&amp;quot;: [{
+      &amp;quot;caption&amp;quot;: &amp;quot;label 1&amp;quot;,
+      &amp;quot;url&amp;quot;: &amp;quot;http://tat-engine.tat.tat.label1&amp;quot;
+    }, {
+      &amp;quot;caption&amp;quot;: &amp;quot;label 2&amp;quot;,
+      &amp;quot;url&amp;quot;: &amp;quot;http://tat-engine.tat.tat.label2&amp;quot;
+    }]
+  },
+  &amp;quot;viewconfigs&amp;quot;: {
+    &amp;quot;standardview-list&amp;quot;: {
+      &amp;quot;filters&amp;quot;: {
+        &amp;quot;placeholder&amp;quot;: {
+          &amp;quot;text&amp;quot;: &amp;quot;text&amp;quot;,
+          &amp;quot;label&amp;quot;: &amp;quot;open,doing&amp;quot;,
+          &amp;quot;andLabel&amp;quot;: &amp;quot;open,doing&amp;quot;,
+          &amp;quot;notLabel&amp;quot;: &amp;quot;done&amp;quot;,
+          &amp;quot;tag&amp;quot;: &amp;quot;PCC,STOCKAGE&amp;quot;,
+          &amp;quot;andTag&amp;quot;: &amp;quot;PCC,STOCKAGE&amp;quot;,
+          &amp;quot;notTag&amp;quot;: &amp;quot;PCC,STOCKAGE&amp;quot;
+        }
+      }
+    }
+  }
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In file server/app/config.json, add theses lines
+This file is not really used in development, but it&amp;rsquo;s checked by make target.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+ &amp;quot;proxy&amp;quot;: {
+   &amp;quot;tatEngine&amp;quot;: {
+     &amp;quot;scheme&amp;quot;: &amp;quot;http&amp;quot;,
+     &amp;quot;host&amp;quot;: &amp;quot;ip_or_domain_of_proxy&amp;quot;,
+     &amp;quot;port&amp;quot;: 8080,
+     &amp;quot;sslInsecureSkipVerify&amp;quot;: false
+   },
+   &amp;quot;listen_port&amp;quot;: 8001
+ },
+ &amp;quot;filesystem&amp;quot;: {
+     &amp;quot;listen_port&amp;quot;: 8000
+ },
+ &amp;quot;process&amp;quot;: {
+   &amp;quot;nb_forks&amp;quot;: &amp;quot;2&amp;quot;
+ }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;plugins-configuration&#34;&gt;Plugins configuration&lt;/h3&gt;
+
+&lt;p&gt;In file plugin.tpl.json, add theses lines&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;
+{
+  &amp;quot;dependencies&amp;quot;: {
+    &amp;quot;tatwebui-plugin-standardview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-standardview.git&amp;quot;,
+    &amp;quot;tatwebui-plugin-notificationsview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-notificationsview.git&amp;quot;,
+    &amp;quot;tatwebui-plugin-cdsview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-cdsview.git&amp;quot;,
+    &amp;quot;tatwebui-plugin-monitoringview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-monitoringview.git&amp;quot;,
+    &amp;quot;tatwebui-plugin-pastatview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-pastatview.git&amp;quot;,
+    &amp;quot;tatwebui-plugin-dashingview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-dashingview.git&amp;quot;,
+    &amp;quot;tatwebui-plugin-releaseview&amp;quot;: &amp;quot;git+https://github.com/ovh/tatwebui-plugin-releaseview.git&amp;quot;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;first-run-without-additional-plugin&#34;&gt;First Run without additional plugin&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;cd $HOME/src/github.com/ovh/tatwebui
+make release &amp;amp;&amp;amp; make run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then go to &lt;a href=&#34;http://localhost:8000/&#34;&gt;http://localhost:8000/&lt;/a&gt; , check if it&amp;rsquo;s ok.
+Run in Dev Mode&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cd $HOME/src/github.com/ovh/tatwebui
+make devclient
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then go to &lt;a href=&#34;http://localhost:9000/&#34;&gt;http://localhost:9000/&lt;/a&gt; and use your tat_username and tat_password to log in.&lt;/p&gt;
+
+&lt;h2 id=&#34;bootstrap-your-plugin&#34;&gt;Bootstrap your plugin&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt;cd $HOME/src/
+git clone https://github.com/ovh/tatwebui-plugin-standardview.git
+mv tatwebui-plugin-standardview tatwebui-plugin-yourpluginview
+cd tatwebui-plugin-yourpluginview
+# then rename all files *standardview* to *yourpluginview*
+# then rename all code *Standardview* to *Yourpluginview*, *standardView* to *yourpluginView* -&amp;gt; it&#39;s case sensitive !
+# adjust files bower.json file and yourpluginview-list.route.js
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;tatwebui-plugin-configuration-for-dev&#34;&gt;Tatwebui Plugin Configuration for dev&lt;/h3&gt;
+
+&lt;p&gt;In file custom.plugin.tpl.json, add theses lines&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;
+{
+  &amp;quot;dependencies&amp;quot;: {
+    &amp;quot;your-plugin-view&amp;quot;: &amp;quot;git+https://.../you-plugin-view.git&amp;quot;
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;cd $HOME/src/github.com/ovh/tatwebui/client/bower_components
+ln -s $HOME/you-plugin-view tatwebui-plugin-yourpluginview
+cd $HOME/src/github.com/ovh/tatwebui
+make devclient
+```&lt;/p&gt;
+
+&lt;p&gt;Then go to &lt;a href=&#34;http://localhost:9000/&#34;&gt;http://localhost:9000/&lt;/a&gt; and check if your view is available on top right&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

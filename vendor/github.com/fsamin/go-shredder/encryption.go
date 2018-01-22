@@ -10,7 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/maxwellhealth/go-gpg"
+	"github.com/fsamin/go-shredder/pgp"
 )
 
 func GPGEncrypt(publicKey []byte, content io.Reader) (io.Reader, error) {

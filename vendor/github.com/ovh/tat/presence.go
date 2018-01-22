@@ -32,7 +32,7 @@ type PresenceCriteria struct {
 	Username        string
 	DateMinPresence string
 	DateMaxPresence string
-	SortBy          string
+	SortBy		string
 }
 
 // PresencesJSON represents list of presences with count for total

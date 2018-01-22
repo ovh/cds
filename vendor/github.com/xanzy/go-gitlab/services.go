@@ -34,16 +34,18 @@ type ServicesService struct {
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/services.html
 type Service struct {
-	ID                  *int       `json:"id"`
-	Title               *string    `json:"title"`
+	ID                  int        `json:"id"`
+	Title               string     `json:"title"`
 	CreatedAt           *time.Time `json:"created_at"`
-	UpdatedAt           *time.Time `json:"created_at"`
-	Active              *bool      `json:"active"`
-	PushEvents          *bool      `json:"push_events"`
-	IssuesEvents        *bool      `json:"issues_events"`
-	MergeRequestsEvents *bool      `json:"merge_requests_events"`
-	TagPushEvents       *bool      `json:"tag_push_events"`
-	NoteEvents          *bool      `json:"note_events"`
+	UpdatedAt           *time.Time `json:"updated_at"`
+	Active              bool       `json:"active"`
+	PushEvents          bool       `json:"push_events"`
+	IssuesEvents        bool       `json:"issues_events"`
+	MergeRequestsEvents bool       `json:"merge_requests_events"`
+	TagPushEvents       bool       `json:"tag_push_events"`
+	NoteEvents          bool       `json:"note_events"`
+	PipelineEvents      bool       `json:"pipeline_events"`
+	JobEvents           bool       `json:"job_events"`
 }
 
 // SetGitLabCIServiceOptions represents the available SetGitLabCIService()
@@ -142,6 +144,50 @@ func (s *ServicesService) DeleteHipChatService(pid interface{}, options ...Optio
 	return s.client.Do(req, nil)
 }
 
+// DroneCIService represents Drone CI service settings.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#drone-ci
+type DroneCIService struct {
+	Service
+	Properties *DroneCIServiceProperties `json:"properties"`
+}
+
+// DroneCIServiceProperties represents Drone CI specific properties.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#drone-ci
+type DroneCIServiceProperties struct {
+	Token                 string `json:"token"`
+	DroneURL              string `json:"drone_url"`
+	EnableSSLVerification bool   `json:"enable_ssl_verification"`
+}
+
+// GetDroneCIService gets Drone CI service settings for a project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#get-drone-ci-service-settings
+func (s *ServicesService) GetDroneCIService(pid interface{}, options ...OptionFunc) (*DroneCIService, *Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/drone-ci", url.QueryEscape(project))
+
+	req, err := s.client.NewRequest("GET", u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	svc := new(DroneCIService)
+	resp, err := s.client.Do(req, svc)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return svc, resp, err
+}
+
 // SetDroneCIServiceOptions represents the available SetDroneCIService()
 // options.
 //
@@ -191,42 +237,46 @@ func (s *ServicesService) DeleteDroneCIService(pid interface{}, options ...Optio
 	return s.client.Do(req, nil)
 }
 
-// DroneCIServiceProperties represents Drone CI specific properties.
-type DroneCIServiceProperties struct {
-	Token                 *string `url:"token" json:"token"`
-	DroneURL              *string `url:"drone_url" json:"drone_url"`
-	EnableSSLVerification *bool   `url:"enable_ssl_verification" json:"enable_ssl_verification"`
-}
-
-// DroneCIService represents Drone CI service settings.
-type DroneCIService struct {
-	Service
-	Properties *DroneCIServiceProperties `json:"properties"`
-}
-
-// GetDroneCIService gets Drone CI service settings for a project.
+// SlackService represents Slack service settings.
 //
 // GitLab API docs:
-// https://docs.gitlab.com/ce/api/services.html#get-drone-ci-service-settings
-func (s *ServicesService) GetDroneCIService(pid interface{}, options ...OptionFunc) (*DroneCIService, *Response, error) {
+// https://docs.gitlab.com/ce/api/services.html#slack
+type SlackService struct {
+	Service
+	Properties *SlackServiceProperties `json:"properties"`
+}
+
+// SlackServiceProperties represents Slack specific properties.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#slack
+type SlackServiceProperties struct {
+	NotifyOnlyBrokenPipelines bool `json:"notify_only_broken_pipelines"`
+}
+
+// GetSlackService gets Slack service settings for a project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#get-slack-service-settings
+func (s *ServicesService) GetSlackService(pid interface{}, options ...OptionFunc) (*SlackService, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/services/drone-ci", url.QueryEscape(project))
+	u := fmt.Sprintf("projects/%s/services/slack", url.QueryEscape(project))
 
 	req, err := s.client.NewRequest("GET", u, nil, options)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	opt := new(DroneCIService)
-	resp, err := s.client.Do(req, opt)
+	svc := new(SlackService)
+	resp, err := s.client.Do(req, svc)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return opt, resp, err
+	return svc, resp, err
 }
 
 // SetSlackServiceOptions represents the available SetSlackService()
@@ -269,6 +319,97 @@ func (s *ServicesService) DeleteSlackService(pid interface{}, options ...OptionF
 		return nil, err
 	}
 	u := fmt.Sprintf("projects/%s/services/slack", url.QueryEscape(project))
+
+	req, err := s.client.NewRequest("DELETE", u, nil, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Do(req, nil)
+}
+
+// JiraService represents Jira service settings.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#jira
+type JiraService struct {
+	Service
+	Properties *JiraServiceProperties `json:"properties"`
+}
+
+// JiraServiceProperties represents Jira specific properties.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#jira
+type JiraServiceProperties struct {
+	URL                   *string `url:"url,omitempty" json:"url,omitempty"`
+	ProjectKey            *string `url:"project_key,omitempty" json:"project_key,omitempty" `
+	Username              *string `url:"username,omitempty" json:"username,omitempty" `
+	Password              *string `url:"password,omitempty" json:"password,omitempty" `
+	JiraIssueTransitionID *string `url:"jira_issue_transition_id,omitempty" json:"jira_issue_transition_id,omitempty"`
+}
+
+// GetJiraService gets Jira service settings for a project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#get-jira-service-settings
+func (s *ServicesService) GetJiraService(pid interface{}, options ...OptionFunc) (*JiraService, *Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/jira", url.QueryEscape(project))
+
+	req, err := s.client.NewRequest("GET", u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	svc := new(JiraService)
+	resp, err := s.client.Do(req, svc)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return svc, resp, err
+}
+
+// SetJiraServiceOptions represents the available SetJiraService()
+// options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#edit-jira-service
+type SetJiraServiceOptions JiraServiceProperties
+
+// SetJiraService sets Jira service for a project
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#edit-jira-service
+func (s *ServicesService) SetJiraService(pid interface{}, opt *SetJiraServiceOptions, options ...OptionFunc) (*Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/jira", url.QueryEscape(project))
+
+	req, err := s.client.NewRequest("PUT", u, opt, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Do(req, nil)
+}
+
+// DeleteJiraService deletes Jira service for project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#delete-jira-service
+func (s *ServicesService) DeleteJiraService(pid interface{}, options ...OptionFunc) (*Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/jira", url.QueryEscape(project))
 
 	req, err := s.client.NewRequest("DELETE", u, nil, options)
 	if err != nil {

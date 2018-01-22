@@ -49,9 +49,21 @@ type PushEvent struct {
 		WebURL            string          `json:"web_url"`
 		Visibility        VisibilityValue `json:"visibility"`
 	} `json:"project"`
-	Repository        *Repository `json:"repository"`
-	Commits           []*Commit   `json:"commits"`
-	TotalCommitsCount int         `json:"total_commits_count"`
+	Repository *Repository `json:"repository"`
+	Commits    []*struct {
+		ID        string     `json:"id"`
+		Message   string     `json:"message"`
+		Timestamp *time.Time `json:"timestamp"`
+		URL       string     `json:"url"`
+		Author    struct {
+			Name  string `json:"name"`
+			Email string `json:"email"`
+		} `json:"author"`
+		Added    []string `json:"added"`
+		Modified []string `json:"modified"`
+		Removed  []string `json:"removed"`
+	} `json:"commits"`
+	TotalCommitsCount int `json:"total_commits_count"`
 }
 
 // TagEvent represents a tag event.
@@ -84,9 +96,21 @@ type TagEvent struct {
 		WebURL            string          `json:"web_url"`
 		Visibility        VisibilityValue `json:"visibility"`
 	} `json:"project"`
-	Repository        *Repository `json:"repository"`
-	Commits           []*Commit   `json:"commits"`
-	TotalCommitsCount int         `json:"total_commits_count"`
+	Repository *Repository `json:"repository"`
+	Commits    []*struct {
+		ID        string     `json:"id"`
+		Message   string     `json:"message"`
+		Timestamp *time.Time `json:"timestamp"`
+		URL       string     `json:"url"`
+		Author    struct {
+			Name  string `json:"name"`
+			Email string `json:"email"`
+		} `json:"author"`
+		Added    []string `json:"added"`
+		Modified []string `json:"modified"`
+		Removed  []string `json:"removed"`
+	} `json:"commits"`
+	TotalCommitsCount int `json:"total_commits_count"`
 }
 
 // IssueEvent represents a issue event.
@@ -126,7 +150,7 @@ type IssueEvent struct {
 		Description string `json:"description"`
 		MilestoneID int    `json:"milestone_id"`
 		State       string `json:"state"`
-		Iid         int    `json:"iid"`
+		IID         int    `json:"iid"`
 		URL         string `json:"url"`
 		Action      string `json:"action"`
 	} `json:"object_attributes"`
@@ -186,7 +210,16 @@ type CommitCommentEvent struct {
 			DeletedFile bool   `json:"deleted_file"`
 		} `json:"st_diff"`
 	} `json:"object_attributes"`
-	Commit *Commit `json:"commit"`
+	Commit *struct {
+		ID        string     `json:"id"`
+		Message   string     `json:"message"`
+		Timestamp *time.Time `json:"timestamp"`
+		URL       string     `json:"url"`
+		Author    struct {
+			Name  string `json:"name"`
+			Email string `json:"email"`
+		} `json:"author"`
+	} `json:"commit"`
 }
 
 // MergeCommentEvent represents a comment on a merge event.
@@ -213,7 +246,6 @@ type MergeCommentEvent struct {
 		WebURL            string          `json:"web_url"`
 		Visibility        VisibilityValue `json:"visibility"`
 	} `json:"project"`
-	Repository       *Repository `json:"repository"`
 	ObjectAttributes struct {
 		ID           int    `json:"id"`
 		Note         string `json:"note"`
@@ -230,7 +262,57 @@ type MergeCommentEvent struct {
 		StDiff       *Diff  `json:"st_diff"`
 		URL          string `json:"url"`
 	} `json:"object_attributes"`
-	MergeRequest *MergeRequest `json:"merge_request"`
+	Repository   *Repository `json:"repository"`
+	MergeRequest struct {
+		ID              int    `json:"id"`
+		TargetBranch    string `json:"target_branch"`
+		SourceBranch    string `json:"source_branch"`
+		SourceProjectID int    `json:"source_project_id"`
+		AuthorID        int    `json:"author_id"`
+		AssigneeID      int    `json:"assignee_id"`
+		Title           string `json:"title"`
+		CreatedAt       string `json:"created_at"`
+		UpdatedAt       string `json:"updated_at"`
+		MilestoneID     int    `json:"milestone_id"`
+		State           string `json:"state"`
+		MergeStatus     string `json:"merge_status"`
+		TargetProjectID int    `json:"target_project_id"`
+		IID             int    `json:"iid"`
+		Description     string `json:"description"`
+		Position        int    `json:"position"`
+		LockedAt        string `json:"locked_at"`
+		UpdatedByID     int    `json:"updated_by_id"`
+		MergeError      string `json:"merge_error"`
+		MergeParams     struct {
+			ForceRemoveSourceBranch string `json:"force_remove_source_branch"`
+		} `json:"merge_params"`
+		MergeWhenPipelineSucceeds bool        `json:"merge_when_pipeline_succeeds"`
+		MergeUserID               int         `json:"merge_user_id"`
+		MergeCommitSha            string      `json:"merge_commit_sha"`
+		DeletedAt                 string      `json:"deleted_at"`
+		InProgressMergeCommitSha  string      `json:"in_progress_merge_commit_sha"`
+		LockVersion               int         `json:"lock_version"`
+		ApprovalsBeforeMerge      string      `json:"approvals_before_merge"`
+		RebaseCommitSha           string      `json:"rebase_commit_sha"`
+		TimeEstimate              int         `json:"time_estimate"`
+		Squash                    bool        `json:"squash"`
+		LastEditedAt              string      `json:"last_edited_at"`
+		LastEditedByID            int         `json:"last_edited_by_id"`
+		Source                    *Repository `json:"source"`
+		Target                    *Repository `json:"target"`
+		LastCommit                struct {
+			ID        string     `json:"id"`
+			Message   string     `json:"message"`
+			Timestamp *time.Time `json:"timestamp"`
+			URL       string     `json:"url"`
+			Author    struct {
+				Name  string `json:"name"`
+				Email string `json:"email"`
+			} `json:"author"`
+		} `json:"last_commit"`
+		WorkInProgress bool `json:"work_in_progress"`
+		TotalTimeSpent int  `json:"total_time_spent"`
+	} `json:"merge_request"`
 }
 
 // IssueCommentEvent represents a comment on an issue event.
@@ -360,7 +442,7 @@ type MergeEvent struct {
 		State           string    `json:"state"`
 		MergeStatus     string    `json:"merge_status"`
 		TargetProjectID int       `json:"target_project_id"`
-		Iid             int       `json:"iid"`
+		IID             int       `json:"iid"`
 		Description     string    `json:"description"`
 		Position        int       `json:"position"`
 		LockedAt        string    `json:"locked_at"`
@@ -385,7 +467,10 @@ type MergeEvent struct {
 			Message   string     `json:"message"`
 			Timestamp *time.Time `json:"timestamp"`
 			URL       string     `json:"url"`
-			Author    *Author    `json:"author"`
+			Author    struct {
+				Name  string `json:"name"`
+				Email string `json:"email"`
+			} `json:"author"`
 		} `json:"last_commit"`
 		WorkInProgress bool   `json:"work_in_progress"`
 		URL            string `json:"url"`
@@ -485,10 +570,10 @@ type PipelineEvent struct {
 		Visibility        VisibilityValue `json:"visibility"`
 	} `json:"project"`
 	Commit struct {
-		ID        string    `json:"id"`
-		Message   string    `json:"message"`
-		Timestamp time.Time `json:"timestamp"`
-		URL       string    `json:"url"`
+		ID        string     `json:"id"`
+		Message   string     `json:"message"`
+		Timestamp *time.Time `json:"timestamp"`
+		URL       string     `json:"url"`
 		Author    struct {
 			Name  string `json:"name"`
 			Email string `json:"email"`

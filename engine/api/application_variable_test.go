@@ -3,8 +3,8 @@ package api
 import (
 	"testing"
 
-	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
+	"github.com/yesnault/gadgeto/iffy"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/test/assets"

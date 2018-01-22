@@ -1,0 +1,229 @@
+Connected to 74.125.131.109:993 (Tag=IZQEW)
+S: * OK Gimap ready for requests from 192.0.2.1 abc0123456789xyz.12
+Server greeting: Gimap ready for requests from 192.0.2.1 abc0123456789xyz.12
+C: IZQEW1 CAPABILITY
+S: * CAPABILITY IMAP4rev1 UNSELECT IDLE NAMESPACE QUOTA ID XLIST CHILDREN X-GM-EXT-1 XYZZY SASL-IR AUTH=XOAUTH AUTH=XOAUTH2
+S: IZQEW1 OK Thats all she wrote! abc0123456789xyz.12
+C: IZQEW2 ID ("name" "goimap")
+S: * ID ("name" "GImap" "vendor" "Google, Inc." "support-url" "http://support.google.com/mail" "remote-host" "192.0.2.1" "connection-token" "abc0123456789xyz.12")
+S: IZQEW2 OK Success abc0123456789xyz.12
+--- ID ---
+1 command response(s), 1 unilateral response(s) // Note: unilateral response is server greeting
+OK Success abc0123456789xyz.12
+
+C: IZQEW3 NOOP
+S: IZQEW3 OK Nothing Accomplished. abc0123456789xyz.12
+--- NOOP ---
+0 command response(s), 0 unilateral response(s)
+OK Nothing Accomplished. abc0123456789xyz.12
+
+Raw logging disabled during LOGIN
+--- LOGIN ---
+0 command response(s), 1 unilateral response(s)
+OK Go IMAP authenticated (Success)
+
+C: IZQEW6 GETQUOTAROOT "INBOX"
+S: * QUOTAROOT "INBOX" ""
+S: * QUOTA "" (STORAGE 9 26214400)
+S: IZQEW6 OK Success
+--- GETQUOTAROOT ---
+2 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW7 LIST "" ""
+S: * LIST (\Noselect) "/" "/"
+S: IZQEW7 OK Success
+--- LIST ---
+1 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW8 CREATE "GoIMAPxyz123/Demo1"
+S: IZQEW8 OK Success
+--- CREATE ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW9 LIST "" "GoIMAPxyz123"
+S: * LIST (\Noselect \HasChildren) "/" "GoIMAPxyz123"
+S: IZQEW9 OK Success
+--- LIST ---
+1 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW10 LIST "" "GoIMAPxyz123/Demo1"
+S: * LIST (\HasNoChildren) "/" "GoIMAPxyz123/Demo1"
+S: IZQEW10 OK Success
+--- LIST ---
+1 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW11 RENAME "GoIMAPxyz123/Demo1" "GoIMAPxyz123/Demo12"
+S: IZQEW11 OK Success
+--- RENAME ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW12 RENAME "GoIMAPxyz123/Demo12" "GoIMAPxyz123/Demo1"
+S: IZQEW12 OK Success
+--- RENAME ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW13 SUBSCRIBE "GoIMAPxyz123/Demo1"
+S: IZQEW13 OK Success
+--- SUBSCRIBE ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW14 UNSUBSCRIBE "GoIMAPxyz123/Demo1"
+S: IZQEW14 OK Success
+--- UNSUBSCRIBE ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW15 STATUS "GoIMAPxyz123/Demo1" (MESSAGES RECENT UIDNEXT UIDVALIDITY UNSEEN)
+S: * STATUS "GoIMAPxyz123/Demo1" (MESSAGES 0 RECENT 0 UIDNEXT 1 UIDVALIDITY 59 UNSEEN 0)
+S: IZQEW15 OK Success
+--- STATUS ---
+1 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW16 DELETE "GoIMAPxyz123/Demo1"
+S: IZQEW16 OK Success
+--- DELETE ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW17 CREATE "GoIMAPxyz123/Demo1"
+S: IZQEW17 OK Success
+--- CREATE ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW18 EXAMINE "GoIMAPxyz123/Demo1"
+S: * FLAGS (\Answered \Flagged \Draft \Deleted \Seen)
+S: * OK [PERMANENTFLAGS ()] Flags permitted.
+S: * OK [UIDVALIDITY 60] UIDs valid.
+S: * 0 EXISTS
+S: * 0 RECENT
+S: * OK [UIDNEXT 1] Predicted next UID.
+S: IZQEW18 OK [READ-ONLY] GoIMAPxyz123/Demo1 selected. (Success)
+--- EXAMINE ---
+6 command response(s), 0 unilateral response(s)
+OK GoIMAPxyz123/Demo1 selected. (Success)
+
+C: IZQEW19 UNSELECT
+S: IZQEW19 OK Returned to authenticated state. (Success)
+--- UNSELECT ---
+0 command response(s), 0 unilateral response(s)
+OK Returned to authenticated state. (Success)
+
+C: IZQEW20 APPEND "GoIMAPxyz123/Demo1" {70}
+S: + go ahead
+C: literal 70 bytes
+C:
+S: IZQEW20 OK [APPENDUID 60 1] (Success)
+--- APPEND ---
+0 command response(s), 0 unilateral response(s)
+OK (Success)
+
+C: IZQEW21 SELECT "GoIMAPxyz123/Demo1"
+S: * FLAGS (\Answered \Flagged \Draft \Deleted \Seen)
+S: * OK [PERMANENTFLAGS (\Answered \Flagged \Draft \Deleted \Seen \*)] Flags permitted.
+S: * OK [UIDVALIDITY 60] UIDs valid.
+S: * 1 EXISTS
+S: * 0 RECENT
+S: * OK [UIDNEXT 2] Predicted next UID.
+S: IZQEW21 OK [READ-WRITE] GoIMAPxyz123/Demo1 selected. (Success)
+--- SELECT ---
+6 command response(s), 0 unilateral response(s)
+OK GoIMAPxyz123/Demo1 selected. (Success)
+
+C: IZQEW22 CHECK
+S: IZQEW22 OK Success
+--- CHECK ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+--- "GoIMAPxyz123/Demo1" ---
+ReadOnly:     false
+Flags:        (\Answered \Deleted \Draft \Flagged \Seen)
+PermFlags:    (\* \Answered \Deleted \Draft \Flagged \Seen)
+Messages:     1
+Recent:       0
+Unseen:       0
+UIDNext:      2
+UIDValidity:  60
+UIDNotSticky: false
+
+C: IZQEW23 UID SEARCH CHARSET UTF-8 SUBJECT "GoIMAP"
+S: * SEARCH 1
+S: IZQEW23 OK SEARCH completed (Success)
+--- UID SEARCH ---
+1 command response(s), 0 unilateral response(s)
+OK SEARCH completed (Success)
+
+C: IZQEW24 FETCH 1 (FLAGS INTERNALDATE RFC822.SIZE BODY[])
+S: * 1 FETCH (RFC822.SIZE 70 INTERNALDATE "10-Sep-2012 19:11:20 +0000" FLAGS (\Seen) BODY[] {70}
+S: literal 70 bytes
+S: )
+S: IZQEW24 OK Success
+--- FETCH ---
+1 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW25 UID STORE 1 +FLAGS.SILENT (\Deleted)
+S: * 1 EXPUNGE
+S: * 0 EXISTS
+S: IZQEW25 OK Success
+--- UID STORE ---
+0 command response(s), 2 unilateral response(s)
+OK Success
+
+C: IZQEW26 EXPUNGE
+S: IZQEW26 OK Success
+--- EXPUNGE ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW27 UID SEARCH CHARSET UTF-8 SUBJECT "GoIMAP"
+S: * SEARCH
+S: IZQEW27 OK SEARCH completed (Success)
+--- UID SEARCH ---
+1 command response(s), 0 unilateral response(s)
+OK SEARCH completed (Success)
+
+--- "GoIMAPxyz123/Demo1" ---
+ReadOnly:     false
+Flags:        (\Answered \Deleted \Draft \Flagged \Seen)
+PermFlags:    (\* \Answered \Deleted \Draft \Flagged \Seen)
+Messages:     0
+Recent:       0
+Unseen:       0
+UIDNext:      2
+UIDValidity:  60
+UIDNotSticky: false
+
+C: IZQEW28 CLOSE
+S: IZQEW28 OK Returned to authenticated state. (Success)
+--- CLOSE ---
+0 command response(s), 0 unilateral response(s)
+OK Returned to authenticated state. (Success)
+
+C: IZQEW29 DELETE "GoIMAPxyz123/Demo1"
+S: IZQEW29 OK Success
+--- DELETE ---
+0 command response(s), 0 unilateral response(s)
+OK Success
+
+C: IZQEW30 LOGOUT
+S: * BYE LOGOUT Requested
+Logout reason: LOGOUT Requested
+S: IZQEW30 OK 73 good day (Success)
+S:  (EOF)
+Close reason: end of stream
+Connection closing (flush=false)
+--- LOGOUT ---
+1 command response(s), 0 unilateral response(s)
+OK 73 good day (Success)
+

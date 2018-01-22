@@ -91,7 +91,7 @@ func (s *BuildVariablesService) GetBuildVariable(pid interface{}, key string, op
 type CreateBuildVariableOptions struct {
 	Key       *string `url:"key" json:"key"`
 	Value     *string `url:"value" json:"value"`
-	Protected *bool   `url:"protected" json:"protected"`
+	Protected *bool   `url:"protected,omitempty" json:"protected,omitempty"`
 }
 
 // CreateBuildVariable creates a variable for a given project
@@ -126,7 +126,7 @@ func (s *BuildVariablesService) CreateBuildVariable(pid interface{}, opt *Create
 type UpdateBuildVariableOptions struct {
 	Key       *string `url:"key" json:"key"`
 	Value     *string `url:"value" json:"value"`
-	Protected *bool   `url:"protected" json:"protected"`
+	Protected *bool   `url:"protected,omitempty" json:"protected,omitempty"`
 }
 
 // UpdateBuildVariable updates an existing project variable

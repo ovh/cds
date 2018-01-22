@@ -1,0 +1,17 @@
+one:
+  id: 1
+  name: Go
+  created_at: 2016-01-01 12:30:12
+  updated_at: 2016-01-01 12:30:12
+
+two:
+  id: 2
+  name: Ruby
+  created_at: 2016-01-01 12:30:12
+  updated_at: 2016-01-01 12:30:12
+
+three:
+  id: 3
+  name: Java
+  created_at: 2016-01-01 12:30:12
+  updated_at: 2016-01-01 12:30:12
