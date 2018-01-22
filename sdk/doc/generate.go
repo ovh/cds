@@ -12,9 +12,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // GenerateDocumentation generates hugo documentation for a command line
