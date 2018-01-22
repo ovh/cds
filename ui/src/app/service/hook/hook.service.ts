@@ -15,13 +15,10 @@ export class HookService {
     }
 
     getHookModel(p: Project, w: Workflow, n: WorkflowNode): Observable<Array<WorkflowHookModel>> {
-        if (!this.models) {
-            return this._http.get<Array<WorkflowHookModel>>('/project/' + p.key + '/workflow/' + w.name +
-                '/node/' + n.id + '/hook/model').map(ms => {
-                this.models = <Array<WorkflowHookModel>>ms;
-                return ms;
-            });
-        }
-        return Observable.of(this.models);
+        return this._http.get<Array<WorkflowHookModel>>('/project/' + p.key + '/workflow/' + w.name +
+            '/node/' + n.id + '/hook/model').map(ms => {
+            this.models = <Array<WorkflowHookModel>>ms;
+            return ms;
+        });
     }
 }
