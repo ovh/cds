@@ -562,6 +562,7 @@
   "user_is_admin": "This user is a CDS Administrator",
   "user_saved": "User saved",
   "user_my_profile": "My profile",
+  "user_deleted": "User is deleted",
 
   "user_list_title": "Users",
   "user_edit_title": "Edit user",

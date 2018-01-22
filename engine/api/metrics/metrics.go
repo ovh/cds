@@ -30,6 +30,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	nbWorkflowRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
 	nbWorkflowNodeRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
 	nbWorkflowNodeRunJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_run_jobs", Help: "metrics nb_workflow_node_run_jobs", ConstLabels: labels})
+	nbMaxWorkersBuilding := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
 
 	nbOldPipelineBuilds := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_old_pipeline_builds", Help: "metrics nb_old_pipeline_builds", ConstLabels: labels})
 	nbOldPipelineBuildJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_old_pipeline_build_jobs", Help: "metrics nb_old_pipeline_build_jobs", ConstLabels: labels})
@@ -47,6 +48,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	registry.MustRegister(nbWorkflowNodeRunJobs)
 	registry.MustRegister(nbOldPipelineBuilds)
 	registry.MustRegister(nbOldPipelineBuildJobs)
+	registry.MustRegister(nbMaxWorkersBuilding)
 
 	tick := time.NewTicker(30 * time.Second).C
 
@@ -72,6 +74,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run_job", nbWorkflowNodeRunJobs)
 				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build", nbOldPipelineBuilds)
 				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build_job", nbOldPipelineBuildJobs)
+				count(DBFunc(), "SELECT COUNT(1) FROM worker where status like 'Building' ", nbMaxWorkersBuilding)
 			}
 		}
 	}(c, DBFunc)
