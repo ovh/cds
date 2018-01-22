@@ -97,7 +97,7 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
+  branch = "ye-cds"
   name = "github.com/docker/docker"
   packages = [
     "api/types",
@@ -126,7 +126,7 @@
     "pkg/term",
     "pkg/term/windows"
   ]
-  revision = "db5c006bc8654ab1e4c24a1a9f460bbe4039686e"
+  source = "https://github.com/yesnault/moby.git"
 
 [[projects]]
   name = "github.com/docker/docker-credential-helpers"
