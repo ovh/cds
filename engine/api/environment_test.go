@@ -285,9 +285,17 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 		Name: "Production2",
 	}
 
+	jsonBody, _ := json.Marshal(v)
+	body := bytes.NewBuffer(jsonBody)
 	uri := router.GetRoute("POST", api.cloneEnvironmentHandler, vars)
-	tester := iffy.NewTester(t, router.Mux)
-	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_cloneEnvironmentHandler", "POST", uri, &envPost).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
-	tester.Run()
+	test.NotEmpty(t, uri)
+
+	req, _ := http.NewRequest("POST", uri, body)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
 }
