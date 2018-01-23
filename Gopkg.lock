@@ -4,10 +4,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/Azure/go-ansiterm"
-  packages = [
-    ".",
-    "winterm"
-  ]
+  packages = [".","winterm"]
   revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
 
 [[projects]]
@@ -93,43 +90,12 @@
 [[projects]]
   branch = "master"
   name = "github.com/docker/docker"
-  packages = [
-    "api/types",
-    "api/types/blkiodev",
-    "api/types/container",
-    "api/types/filters",
-    "api/types/mount",
-    "api/types/network",
-    "api/types/registry",
-    "api/types/strslice",
-    "api/types/swarm",
-    "api/types/swarm/runtime",
-    "api/types/versions",
-    "opts",
-    "pkg/archive",
-    "pkg/fileutils",
-    "pkg/homedir",
-    "pkg/idtools",
-    "pkg/ioutils",
-    "pkg/jsonmessage",
-    "pkg/longpath",
-    "pkg/mount",
-    "pkg/pools",
-    "pkg/stdcopy",
-    "pkg/system",
-    "pkg/term",
-    "pkg/term/windows"
-  ]
+  packages = ["api/types","api/types/blkiodev","api/types/container","api/types/filters","api/types/mount","api/types/network","api/types/registry","api/types/strslice","api/types/swarm","api/types/swarm/runtime","api/types/versions","opts","pkg/archive","pkg/fileutils","pkg/homedir","pkg/idtools","pkg/ioutils","pkg/jsonmessage","pkg/longpath","pkg/mount","pkg/pools","pkg/stdcopy","pkg/system","pkg/term","pkg/term/windows"]
   revision = "db5c006bc8654ab1e4c24a1a9f460bbe4039686e"
 
 [[projects]]
   name = "github.com/docker/docker-credential-helpers"
-  packages = [
-    "credentials",
-    "osxkeychain",
-    "secretservice",
-    "wincred"
-  ]
+  packages = ["credentials","osxkeychain","secretservice","wincred"]
   revision = "d8f57a18c61ade10ddf767fa080b4778359f5c66"
 
 [[projects]]
@@ -151,10 +117,7 @@
 
 [[projects]]
   name = "github.com/eapache/go-resiliency"
-  packages = [
-    "breaker",
-    "retrier"
-  ]
+  packages = ["breaker","retrier"]
   revision = "b86b1ec0dd4209a588dc1285cdd471e73525c0b3"
 
 [[projects]]
@@ -193,11 +156,14 @@
   version = "1.0.2"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/fsamin/go-repo"
+  packages = ["."]
+  revision = "7fc6e6ff62133460b7f288043db6e47edf5dd6aa"
+
+[[projects]]
   name = "github.com/fsamin/go-shredder"
-  packages = [
-    ".",
-    "pgp"
-  ]
+  packages = [".","pgp"]
   revision = "b2488aedb5bebea5b484c9b12263f2c4a090d2de"
   version = "1.0.0"
 
@@ -218,11 +184,7 @@
 
 [[projects]]
   name = "github.com/gin-gonic/gin"
-  packages = [
-    ".",
-    "binding",
-    "render"
-  ]
+  packages = [".","binding","render"]
   revision = "e2212d40c62a98b388a5eb48ecbdcf88534688ba"
   version = "v1.1.4"
 
@@ -240,14 +202,7 @@
 
 [[projects]]
   name = "github.com/go-redis/redis"
-  packages = [
-    ".",
-    "internal",
-    "internal/consistenthash",
-    "internal/hashtag",
-    "internal/pool",
-    "internal/proto"
-  ]
+  packages = [".","internal","internal/consistenthash","internal/hashtag","internal/pool","internal/proto"]
   revision = "f29951c8990f0d31d1bacc27393ac88e3edf7e21"
 
 [[projects]]
@@ -264,14 +219,7 @@
 
 [[projects]]
   name = "github.com/golang/protobuf"
-  packages = [
-    "proto",
-    "ptypes",
-    "ptypes/any",
-    "ptypes/duration",
-    "ptypes/empty",
-    "ptypes/timestamp"
-  ]
+  packages = ["proto","ptypes","ptypes/any","ptypes/duration","ptypes/empty","ptypes/timestamp"]
   revision = "8ee79997227bf9b34611aee7946ae64735e6fd93"
 
 [[projects]]
@@ -287,28 +235,12 @@
 
 [[projects]]
   name = "github.com/google/gops"
-  packages = [
-    "agent",
-    "internal",
-    "signal"
-  ]
+  packages = ["agent","internal","signal"]
   revision = "806455e841dcb0614891ad847500aaa6b10d3d1d"
 
 [[projects]]
   name = "github.com/gophercloud/gophercloud"
-  packages = [
-    ".",
-    "openstack",
-    "openstack/compute/v2/extensions/tenantnetworks",
-    "openstack/compute/v2/flavors",
-    "openstack/compute/v2/images",
-    "openstack/compute/v2/servers",
-    "openstack/identity/v2/tenants",
-    "openstack/identity/v2/tokens",
-    "openstack/identity/v3/tokens",
-    "openstack/utils",
-    "pagination"
-  ]
+  packages = [".","openstack","openstack/compute/v2/extensions/tenantnetworks","openstack/compute/v2/flavors","openstack/compute/v2/images","openstack/compute/v2/servers","openstack/identity/v2/tenants","openstack/identity/v2/tokens","openstack/identity/v3/tokens","openstack/utils","pagination"]
   revision = "baa2eb4d1d56e7f2c29a30bbcfeb5f7fd441eb01"
 
 [[projects]]
@@ -351,12 +283,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/hashicorp/go-hclog"
-  packages = ["."]
-  revision = "ca137eb4b4389c9bc6f1a6d887f056bf16c00510"
-
-[[projects]]
-  branch = "master"
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
   revision = "b7773ae218740a7be65057fc60b366a49b538a44"
@@ -365,7 +291,7 @@
   branch = "ye-cds"
   name = "github.com/hashicorp/go-plugin"
   packages = ["."]
-  revision = "2a028f5cea1e9f7ee1bd9d459461ac9c2624a8d1"
+  revision = "bb20eeea62eb19fcb525c4b545b9e65e9f550bc1"
   source = "https://github.com/yesnault/go-plugin.git"
 
 [[projects]]
@@ -376,26 +302,12 @@
 
 [[projects]]
   name = "github.com/hashicorp/hcl"
-  packages = [
-    ".",
-    "hcl/ast",
-    "hcl/parser",
-    "hcl/scanner",
-    "hcl/strconv",
-    "hcl/token",
-    "json/parser",
-    "json/scanner",
-    "json/token"
-  ]
+  packages = [".","hcl/ast","hcl/parser","hcl/scanner","hcl/strconv","hcl/token","json/parser","json/scanner","json/token"]
   revision = "99ce73d4fe576449f7a689d4fc2b2ad09a86bdaa"
 
 [[projects]]
   name = "github.com/hashicorp/vault"
-  packages = [
-    "api",
-    "helper/compressutil",
-    "helper/jsonutil"
-  ]
+  packages = ["api","helper/compressutil","helper/jsonutil"]
   revision = "f1c8b772fdecdd20f483653d18619d41b25ef934"
 
 [[projects]]
@@ -416,11 +328,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/inconshreveable/go-update"
-  packages = [
-    ".",
-    "internal/binarydist",
-    "internal/osext"
-  ]
+  packages = [".","internal/binarydist","internal/osext"]
   revision = "8152e7eb6ccf8679a64582a66b78519688d156ad"
 
 [[projects]]
@@ -461,10 +369,7 @@
 
 [[projects]]
   name = "github.com/lib/pq"
-  packages = [
-    ".",
-    "oid"
-  ]
+  packages = [".","oid"]
   revision = "ae8357db35d721c58dcdc911318b55bef6b1b001"
 
 [[projects]]
@@ -508,10 +413,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/mattn/go-zglob"
-  packages = [
-    ".",
-    "fastwalk"
-  ]
+  packages = [".","fastwalk"]
   revision = "4959821b481786922ac53e7ef25c61ae19fb7c36"
 
 [[projects]]
@@ -536,12 +438,6 @@
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
   revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/mitchellh/go-testing-interface"
-  packages = ["."]
-  revision = "a61a99592b77c9ba629d254a693acffaeb4b7e28"
 
 [[projects]]
   branch = "master"
@@ -576,12 +472,6 @@
   revision = "b6acae516ace002cb8105a89024544a1480655a5"
 
 [[projects]]
-  name = "github.com/oklog/run"
-  packages = ["."]
-  revision = "4dadeb3030eda0273a12382bb2348ffc7c9d1a39"
-  version = "v1.0.0"
-
-[[projects]]
   name = "github.com/olekukonko/tablewriter"
   packages = ["."]
   revision = "daf2955e742cf123959884fdff4685aa79b63135"
@@ -594,19 +484,13 @@
 
 [[projects]]
   name = "github.com/opencontainers/image-spec"
-  packages = [
-    "specs-go",
-    "specs-go/v1"
-  ]
+  packages = ["specs-go","specs-go/v1"]
   revision = "d60099175f88c47cd379c4738d158884749ed235"
   version = "v1.0.1"
 
 [[projects]]
   name = "github.com/opencontainers/runc"
-  packages = [
-    "libcontainer/system",
-    "libcontainer/user"
-  ]
+  packages = ["libcontainer/system","libcontainer/user"]
   revision = "6cbd8e20efb1dc8f94001d475602c4a96636c4df"
 
 [[projects]]
@@ -622,21 +506,7 @@
 
 [[projects]]
   name = "github.com/ovh/venom"
-  packages = [
-    ".",
-    "context/default",
-    "context/webctx",
-    "executors",
-    "executors/dbfixtures",
-    "executors/exec",
-    "executors/http",
-    "executors/imap",
-    "executors/ovhapi",
-    "executors/readfile",
-    "executors/smtp",
-    "executors/ssh",
-    "executors/web"
-  ]
+  packages = [".","context/default","context/webctx","executors","executors/dbfixtures","executors/exec","executors/http","executors/imap","executors/ovhapi","executors/readfile","executors/smtp","executors/ssh","executors/web"]
   revision = "b33b89904e874839d0c728d17c85802e318d3314"
 
 [[projects]]
@@ -701,19 +571,12 @@
 
 [[projects]]
   name = "github.com/prometheus/common"
-  packages = [
-    "expfmt",
-    "internal/bitbucket.org/ww/goautoneg",
-    "model"
-  ]
+  packages = ["expfmt","internal/bitbucket.org/ww/goautoneg","model"]
   revision = "bc8b88226a1210b016e9993b1d75f858c9c8f778"
 
 [[projects]]
   name = "github.com/prometheus/procfs"
-  packages = [
-    ".",
-    "xfs"
-  ]
+  packages = [".","xfs"]
   revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
@@ -723,10 +586,7 @@
 
 [[projects]]
   name = "github.com/rubenv/sql-migrate"
-  packages = [
-    ".",
-    "sqlparse"
-  ]
+  packages = [".","sqlparse"]
   revision = "6f4757563362064790a6687a6b60f182062c8634"
 
 [[projects]]
@@ -738,14 +598,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/sclevine/agouti"
-  packages = [
-    ".",
-    "api",
-    "api/internal/bus",
-    "api/internal/service",
-    "internal/element",
-    "internal/target"
-  ]
+  packages = [".","api","api/internal/bus","api/internal/service","internal/element","internal/target"]
   revision = "8cf0313221cb2c26a4059f8e273c0856b4cb091d"
 
 [[projects]]
@@ -756,10 +609,7 @@
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
-  packages = [
-    "internal/common",
-    "mem"
-  ]
+  packages = ["internal/common","mem"]
   revision = "e49a95f3d5f824c3f9875ca49e54e4fef17f82cf"
   version = "v2.17.03"
 
@@ -776,20 +626,12 @@
 
 [[projects]]
   name = "github.com/smartystreets/assertions"
-  packages = [
-    ".",
-    "internal/go-render/render",
-    "internal/oglematchers"
-  ]
+  packages = [".","internal/go-render/render","internal/oglematchers"]
   revision = "15adfb6b24e2f2a9ecc821eaeabcc90064e4e3e7"
 
 [[projects]]
   name = "github.com/spf13/afero"
-  packages = [
-    ".",
-    "mem",
-    "sftp"
-  ]
+  packages = [".","mem","sftp"]
   revision = "52e4a6cfac46163658bd4f123c49b6ee7dc75f78"
 
 [[projects]]
@@ -799,10 +641,7 @@
 
 [[projects]]
   name = "github.com/spf13/cobra"
-  packages = [
-    ".",
-    "doc"
-  ]
+  packages = [".","doc"]
   revision = "b95ab734e27d33e0d8fbabf71ca990568d4e2020"
 
 [[projects]]
@@ -818,10 +657,7 @@
 
 [[projects]]
   name = "github.com/spf13/viper"
-  packages = [
-    ".",
-    "remote"
-  ]
+  packages = [".","remote"]
   revision = "84f94806c67f59dd7ae87bc5351f7a9c94a4558d"
 
 [[projects]]
@@ -836,26 +672,7 @@
 
 [[projects]]
   name = "github.com/vmware/govmomi"
-  packages = [
-    ".",
-    "find",
-    "guest",
-    "list",
-    "nfc",
-    "object",
-    "property",
-    "session",
-    "task",
-    "view",
-    "vim25",
-    "vim25/debug",
-    "vim25/methods",
-    "vim25/mo",
-    "vim25/progress",
-    "vim25/soap",
-    "vim25/types",
-    "vim25/xml"
-  ]
+  packages = [".","find","guest","list","nfc","object","property","session","task","view","vim25","vim25/debug","vim25/methods","vim25/mo","vim25/progress","vim25/soap","vim25/types","vim25/xml"]
   revision = "d7e841db6909ae5e9eb7493f7b1ea7d7b15101e3"
 
 [[projects]]
@@ -882,13 +699,7 @@
 
 [[projects]]
   name = "github.com/xordataexchange/crypt"
-  packages = [
-    "backend",
-    "backend/consul",
-    "backend/etcd",
-    "config",
-    "encoding/secconf"
-  ]
+  packages = ["backend","backend/consul","backend/etcd","config","encoding/secconf"]
   revision = "749e360c8f236773f28fc6d3ddfce4a470795227"
 
 [[projects]]
@@ -904,73 +715,29 @@
 
 [[projects]]
   name = "github.com/yuin/gopher-lua"
-  packages = [
-    ".",
-    "ast",
-    "parse",
-    "pm"
-  ]
+  packages = [".","ast","parse","pm"]
   revision = "8c2befcd3908152acadb961802fecd7636321747"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = [
-    "cast5",
-    "curve25519",
-    "ed25519",
-    "ed25519/internal/edwards25519",
-    "internal/chacha20",
-    "openpgp",
-    "openpgp/armor",
-    "openpgp/elgamal",
-    "openpgp/errors",
-    "openpgp/packet",
-    "openpgp/s2k",
-    "poly1305",
-    "ssh",
-    "ssh/terminal"
-  ]
+  packages = ["cast5","curve25519","ed25519","ed25519/internal/edwards25519","internal/chacha20","openpgp","openpgp/armor","openpgp/elgamal","openpgp/errors","openpgp/packet","openpgp/s2k","poly1305","ssh","ssh/terminal"]
   revision = "a6600008915114d9c087fad9f03d75087b1a74df"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "context/ctxhttp",
-    "http2",
-    "http2/hpack",
-    "idna",
-    "internal/timeseries",
-    "lex/httplex",
-    "trace"
-  ]
+  packages = ["context","context/ctxhttp","http2","http2/hpack","idna","internal/timeseries","lex/httplex","trace"]
   revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [[projects]]
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
+  packages = ["unix","windows"]
   revision = "4b45465282a4624cf39876842a017334f13b8aff"
 
 [[projects]]
   name = "golang.org/x/text"
-  packages = [
-    "internal/gen",
-    "internal/tag",
-    "internal/triegen",
-    "internal/ucd",
-    "language",
-    "secure/bidirule",
-    "transform",
-    "unicode/bidi",
-    "unicode/cldr",
-    "unicode/norm",
-    "unicode/rangetable"
-  ]
+  packages = ["internal/gen","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
   revision = "bd91bbf73e9a4a801adbfb97133c992678533126"
 
 [[projects]]
@@ -981,22 +748,7 @@
 
 [[projects]]
   name = "google.golang.org/grpc"
-  packages = [
-    ".",
-    "codes",
-    "credentials",
-    "grpclog",
-    "health",
-    "health/grpc_health_v1",
-    "internal",
-    "keepalive",
-    "metadata",
-    "naming",
-    "peer",
-    "stats",
-    "tap",
-    "transport"
-  ]
+  packages = [".","codes","credentials","grpclog","internal","keepalive","metadata","naming","peer","stats","tap","transport"]
   revision = "7fc29d0caa400efc53212b222356f99efe87d7d5"
 
 [[projects]]
@@ -1061,6 +813,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a0ec61dd091f5f8a1e118107cb772b91f15d2f02053e437c5300261c3f8c42da"
+  inputs-digest = "8ceec8f397667248117a6c7703b8f18db0bbcf5dad0203b6f54e63ddb2fd069d"
   solver-name = "gps-cdcl"
   solver-version = 1
