@@ -21,16 +21,18 @@ var (
 
 	applicationGroup = cli.NewCommand(applicationGroupCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil),
+			cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var applicationGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS application",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "application-name"},
+	},
+	Args: []cli.Arg{
 		{Name: "path"},
 	},
 	Flags: []cli.Flag{

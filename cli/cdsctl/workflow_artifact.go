@@ -21,17 +21,19 @@ var (
 
 	workflowArtifact = cli.NewCommand(workflowArtifactCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(workflowArtifactListCmd, workflowArtifactListRun, nil),
-			cli.NewCommand(workflowArtifactDownloadCmd, workflowArtifactDownloadRun, nil),
+			cli.NewListCommand(workflowArtifactListCmd, workflowArtifactListRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowArtifactDownloadCmd, workflowArtifactDownloadRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var workflowArtifactListCmd = cli.Command{
 	Name:  "list",
 	Short: "List artifacts of one Workflow Run",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
-		{Name: "workflow"},
+		{Name: "workflow-name"},
+	},
+	Args: []cli.Arg{
 		{Name: "number"},
 	},
 }
@@ -51,9 +53,11 @@ func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 var workflowArtifactDownloadCmd = cli.Command{
 	Name:  "download",
 	Short: "Download artifacts of one Workflow Run",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
-		{Name: "workflow"},
+		{Name: "workflow-name"},
+	},
+	Args: []cli.Arg{
 		{Name: "number"},
 	},
 	OptionalArgs: []cli.Arg{

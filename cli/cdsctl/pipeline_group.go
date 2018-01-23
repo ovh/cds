@@ -21,15 +21,17 @@ var (
 
 	pipelineGroup = cli.NewCommand(pipelineGroupCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(pipelineGroupImportCmd, pipelineGroupImportRun, nil),
+			cli.NewCommand(pipelineGroupImportCmd, pipelineGroupImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var pipelineGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS pipeline",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "pipeline-name"},
 		{Name: "path"},
 	},

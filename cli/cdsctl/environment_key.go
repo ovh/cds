@@ -15,17 +15,19 @@ var (
 
 	environmentKey = cli.NewCommand(environmentKeyCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(environmentKeyCreateCmd, environmentCreateKeyRun, nil),
-			cli.NewListCommand(environmentKeyListCmd, environmentListKeyRun, nil),
-			cli.NewCommand(environmentKeyDeleteCmd, environmentDeleteKeyRun, nil),
+			cli.NewCommand(environmentKeyCreateCmd, environmentCreateKeyRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(environmentKeyListCmd, environmentListKeyRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(environmentKeyDeleteCmd, environmentDeleteKeyRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var environmentKeyCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new key on environment. key-type can be ssh or pgp",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 		{Name: "key-name"},
 		{Name: "key-type"},
@@ -45,8 +47,10 @@ func environmentCreateKeyRun(v cli.Values) error {
 var environmentKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environment keys",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 	},
 }
@@ -62,8 +66,10 @@ func environmentListKeyRun(v cli.Values) (cli.ListResult, error) {
 var environmentKeyDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS environment key",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 		{Name: "key-name"},
 	},

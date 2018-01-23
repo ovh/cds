@@ -15,18 +15,20 @@ var (
 
 	environmentVariable = cli.NewCommand(environmentVariableCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(environmentVariableCreateCmd, environmentCreateVariableRun, nil),
-			cli.NewListCommand(environmentVariableListCmd, environmentListVariableRun, nil),
-			cli.NewCommand(environmentVariableDeleteCmd, environmentDeleteVariableRun, nil),
-			cli.NewCommand(environmentVariableUpdateCmd, environmentUpdateVariableRun, nil),
+			cli.NewCommand(environmentVariableCreateCmd, environmentCreateVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(environmentVariableListCmd, environmentListVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(environmentVariableDeleteCmd, environmentDeleteVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(environmentVariableUpdateCmd, environmentUpdateVariableRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var environmentVariableCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new variable on environment. variable type can be one of password, text, string, key, boolean, number, repository",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 		{Name: "variable-name"},
 		{Name: "variable-type"},
@@ -46,8 +48,10 @@ func environmentCreateVariableRun(v cli.Values) error {
 var environmentVariableListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environment variables",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 	},
 }
@@ -63,8 +67,10 @@ func environmentListVariableRun(v cli.Values) (cli.ListResult, error) {
 var environmentVariableDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS environment variable",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 		{Name: "variable-name"},
 	},
@@ -77,8 +83,10 @@ func environmentDeleteVariableRun(v cli.Values) error {
 var environmentVariableUpdateCmd = cli.Command{
 	Name:  "update",
 	Short: "Update CDS environment variable value",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 		{Name: "variable-oldname"},
 		{Name: "variable-name"},

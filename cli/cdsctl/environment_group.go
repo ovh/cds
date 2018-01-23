@@ -21,15 +21,17 @@ var (
 
 	environmentGroup = cli.NewCommand(environmentGroupCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(environmentGroupImportCmd, environmentGroupImportRun, nil),
+			cli.NewCommand(environmentGroupImportCmd, environmentGroupImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var environmentGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS environment",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "environment-name"},
 		{Name: "path"},
 	},

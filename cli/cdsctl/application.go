@@ -20,22 +20,22 @@ var (
 
 	application = cli.NewCommand(applicationCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(applicationListCmd, applicationListRun, nil),
-			cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil),
-			cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil),
-			cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil),
+			cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil, withAllCommandModifiers()...),
+			cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil, withAllCommandModifiers()...),
 			applicationKey,
 			applicationGroup,
 			applicationVariable,
-			cli.NewCommand(applicationExportCmd, applicationExportRun, nil),
-			cli.NewCommand(applicationImportCmd, applicationImportRun, nil),
+			cli.NewCommand(applicationExportCmd, applicationExportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(applicationImportCmd, applicationImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var applicationListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS applications",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 	},
 }
@@ -51,14 +51,14 @@ func applicationListRun(v cli.Values) (cli.ListResult, error) {
 var applicationShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS application",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
-		{Name: "app-name"},
+		{Name: "application-name"},
 	},
 }
 
 func applicationShowRun(v cli.Values) (interface{}, error) {
-	app, err := client.ApplicationGet(v["project-key"], v["app-name"])
+	app, err := client.ApplicationGet(v["project-key"], v["application-name"])
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +68,10 @@ func applicationShowRun(v cli.Values) (interface{}, error) {
 var applicationCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS application",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "application-name"},
 	},
 	Aliases: []string{"add"},
@@ -83,7 +85,7 @@ func applicationCreateRun(v cli.Values) error {
 var applicationDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS application",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "application-name"},
 	},
@@ -101,8 +103,10 @@ func applicationDeleteRun(v cli.Values) error {
 var applicationImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import an application",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "filename"},
 	},
 	Flags: []cli.Flag{
@@ -143,7 +147,7 @@ func applicationImportRun(c cli.Values) error {
 var applicationExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export an application",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "application-name"},
 	},

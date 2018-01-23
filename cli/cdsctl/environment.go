@@ -21,9 +21,9 @@ var (
 
 	environment = cli.NewCommand(environmentCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(environmentListCmd, environmentListRun, nil),
-			cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil),
-			cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil),
+			cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil, withAllCommandModifiers()...),
+			cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil, withAllCommandModifiers()...),
 			environmentKey,
 			environmentVariable,
 			environmentGroup,
@@ -33,7 +33,7 @@ var (
 var environmentListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environments",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 	},
 }
@@ -49,8 +49,10 @@ func environmentListRun(v cli.Values) (cli.ListResult, error) {
 var environmentCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS environment",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "environment-name"},
 	},
 	Aliases: []string{"add"},
@@ -64,8 +66,10 @@ func environmentCreateRun(v cli.Values) error {
 var environmentDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS environment",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "environment-name"},
 	},
 }

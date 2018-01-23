@@ -15,18 +15,20 @@ var (
 
 	projectVariable = cli.NewCommand(projectVariableCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(projectVariableCreateCmd, projectCreateVariableRun, nil),
-			cli.NewListCommand(projectVariableListCmd, projectListVariableRun, nil),
-			cli.NewCommand(projectVariableDeleteCmd, projectDeleteVariableRun, nil),
-			cli.NewCommand(projectVariableUpdateCmd, projectUpdateVariableRun, nil),
+			cli.NewCommand(projectVariableCreateCmd, projectCreateVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(projectVariableListCmd, projectListVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(projectVariableDeleteCmd, projectDeleteVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(projectVariableUpdateCmd, projectUpdateVariableRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var projectVariableCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new variable on project. Variable type can be one of password, text, string, key, boolean, number, repository",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "variable-name"},
 		{Name: "variable-type"},
 		{Name: "variable-value"},
@@ -45,8 +47,10 @@ func projectCreateVariableRun(v cli.Values) error {
 var projectVariableListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS project variables",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 	},
 }
@@ -62,8 +66,10 @@ func projectListVariableRun(v cli.Values) (cli.ListResult, error) {
 var projectVariableDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS project variable",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "env-name"},
 		{Name: "variable-name"},
 	},
@@ -76,8 +82,10 @@ func projectDeleteVariableRun(v cli.Values) error {
 var projectVariableUpdateCmd = cli.Command{
 	Name:  "update",
 	Short: "Update CDS project variable value",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "variable-oldname"},
 		{Name: "variable-name"},
 		{Name: "variable-type"},

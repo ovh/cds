@@ -17,8 +17,10 @@ var workflowImportCmd = cli.Command{
 		
 		If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
 	`,
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "filename"},
 	},
 	Flags: []cli.Flag{

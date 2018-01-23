@@ -23,11 +23,11 @@ var (
 
 	pipeline = cli.NewCommand(pipelineCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil),
-			cli.NewCommand(pipelineCreateCmd, pipelineCreateRun, nil),
-			cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil),
-			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil),
-			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil),
+			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(pipelineCreateCmd, pipelineCreateRun, nil, withAllCommandModifiers()...),
+			cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
 			pipelineGroup,
 		})
 )
@@ -35,7 +35,7 @@ var (
 var pipelineListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS pipelines",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 	},
 }
@@ -51,8 +51,10 @@ func pipelineListRun(v cli.Values) (cli.ListResult, error) {
 var pipelineCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS pipeline",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "pipeline-name"},
 	},
 	Flags: []cli.Flag{
@@ -80,8 +82,10 @@ func pipelineCreateRun(v cli.Values) error {
 var pipelineExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export CDS pipeline",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "pipeline-name"},
 	},
 	Flags: []cli.Flag{
@@ -124,8 +128,10 @@ var pipelineImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import CDS pipeline",
 	Long:  "PATH: Path or URL of pipeline to import",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "path"},
 	},
 	Flags: []cli.Flag{
@@ -187,8 +193,10 @@ func pipelineImportRun(v cli.Values) error {
 var pipelineDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS pipeline",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "pipeline-name"},
 	},
 }

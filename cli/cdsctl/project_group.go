@@ -21,15 +21,17 @@ var (
 
 	projectGroup = cli.NewCommand(projectGroupCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(projectGroupImportCmd, projectGroupImportRun, nil),
+			cli.NewCommand(projectGroupImportCmd, projectGroupImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var projectGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS project",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
+	},
+	Args: []cli.Arg{
 		{Name: "path"},
 	},
 	Flags: []cli.Flag{

@@ -20,10 +20,10 @@ var (
 
 	project = cli.NewCommand(projectCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(projectListCmd, projectListRun, nil),
-			cli.NewGetCommand(projectShowCmd, projectShowRun, nil),
+			cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(projectCreateCmd, projectCreateRun, nil),
-			cli.NewDeleteCommand(projectDeleteCmd, projectDeleteRun, nil),
+			cli.NewDeleteCommand(projectDeleteCmd, projectDeleteRun, nil, withAllCommandModifiers()...),
 			projectKey,
 			projectGroup,
 			projectVariable,
@@ -36,7 +36,7 @@ var projectListCmd = cli.Command{
 }
 
 func projectListRun(v cli.Values) (cli.ListResult, error) {
-	projs, err := client.ProjectList()
+	projs, err := client.ProjectList(false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func projectListRun(v cli.Values) (cli.ListResult, error) {
 var projectShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS project",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 	},
 }
@@ -72,7 +72,7 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 var projectCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS project",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "project-name"},
 	},
@@ -90,7 +90,7 @@ func projectCreateRun(v cli.Values) error {
 var projectDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS project",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 	},
 }

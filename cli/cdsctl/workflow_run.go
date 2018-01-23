@@ -15,7 +15,7 @@ import (
 var workflowRunManualCmd = cli.Command{
 	Name:  "run",
 	Short: "Run a CDS workflow",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "workflow-name"},
 	},

@@ -23,16 +23,16 @@ var (
 
 	workflow = cli.NewCommand(workflowCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(workflowListCmd, workflowListRun, nil),
-			cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil),
-			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil),
-			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil),
-			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil),
-			cli.NewCommand(workflowStopCmd, workflowStopRun, nil),
-			cli.NewCommand(workflowExportCmd, workflowExportRun, nil),
-			cli.NewCommand(workflowImportCmd, workflowImportRun, nil),
-			cli.NewCommand(workflowPullCmd, workflowPullRun, nil),
-			cli.NewCommand(workflowPushCmd, workflowPushRun, nil),
+			cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...),
+			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowStopCmd, workflowStopRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowExportCmd, workflowExportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowImportCmd, workflowImportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowPullCmd, workflowPullRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
 			workflowArtifact,
 		})
 )
@@ -40,7 +40,7 @@ var (
 var workflowListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS workflows",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 	},
 }
@@ -56,7 +56,7 @@ func workflowListRun(v cli.Values) (cli.ListResult, error) {
 var workflowHistoryCmd = cli.Command{
 	Name:  "history",
 	Short: "History of a CDS workflow",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "workflow-name"},
 	},
@@ -109,7 +109,7 @@ func workflowHistoryRun(v cli.Values) (cli.ListResult, error) {
 var workflowShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS workflow",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "workflow-name"},
 	},
@@ -186,7 +186,7 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 var workflowDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS workflow",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "workflow-name"},
 	},
@@ -209,9 +209,11 @@ var workflowStopCmd = cli.Command{
 		cdsctl workflow stop MYPROJECT myworkflow 5 # To stop a workflow run on number 5
 		cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node run on workflow run 5
 	`,
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "workflow-name"},
+	},
+	Args: []cli.Arg{
 		{Name: "run-number"},
 	},
 	OptionalArgs: []cli.Arg{

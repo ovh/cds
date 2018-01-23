@@ -19,7 +19,7 @@ var workflowPushCmd = cli.Command{
 		For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with
 		cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
 	`,
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 	},
 	VariadicArgs: cli.Arg{

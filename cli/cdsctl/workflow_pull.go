@@ -14,7 +14,7 @@ import (
 var workflowPullCmd = cli.Command{
 	Name:  "pull",
 	Short: "Pull a workflow",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "workflow-name"},
 	},
