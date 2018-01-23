@@ -225,69 +225,62 @@ func getAllRouteInfo(path string) []Doc {
 	return allDocs
 }
 
-func writeRouteInfo(docs []Doc, genPath string) error {
-	f, err := os.Create(genPath + "/_index.md")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	content := `+++
-title = "REST API"
-+++
-
-## Routes
-`
-
-	if _, err := f.WriteString(content); err != nil {
-		return err
-	}
-
-	var currentTitle string
-	for _, doc := range docs {
-		var content, lineTitle string
-
+func writeRouteInfo(inputDocs []Doc, genPath string) error {
+	docsSection := make(map[string][]Doc)
+	for _, doc := range inputDocs {
 		t := strings.Split(doc.URL, "/")
 		if len(t) >= 2 {
-			lineTitle = t[1]
+			lineTitle := t[1]
+			docsSection[lineTitle] = append(docsSection[lineTitle], doc)
 		}
+	}
 
-		if currentTitle != lineTitle {
-			content = fmt.Sprintf("## %s\n", lineTitle)
+	for name, docs := range docsSection {
+		filename := fmt.Sprintf("%s/%s.md", genPath, name)
+		if _, err := os.Stat(filename); err == nil {
+			if err := os.Remove(filename); err != nil {
+				return err
+			}
 		}
-		currentTitle = lineTitle
-		content += fmt.Sprintf("#### %s `%s`\n\n", doc.HTTPOperation, doc.URL)
-		for _, v := range doc.QueryParams {
-			content += fmt.Sprintf("* QueryParam: %s\n", v)
+		f, err := os.Create(filename)
+		if err != nil {
+			return err
 		}
+		var content = fmt.Sprintf("+++\ntitle = \"Routes %s\"\n+++\n\n", name)
+		for _, doc := range docs {
+			content += fmt.Sprintf("#### %s `%s`\n\n", doc.HTTPOperation, doc.URL)
+			for _, v := range doc.QueryParams {
+				content += fmt.Sprintf("* QueryParam: %s\n", v)
+			}
 
-		if doc.Title != "" {
-			content += fmt.Sprintf("* Title: %s\n", doc.Title)
-		}
+			if doc.Title != "" {
+				content += fmt.Sprintf("* Title: %s\n", doc.Title)
+			}
 
-		if doc.Description != "" {
-			content += fmt.Sprintf("* Description: %s\n", doc.Description)
-		}
+			if doc.Description != "" {
+				content += fmt.Sprintf("* Description: %s\n", doc.Description)
+			}
 
-		content += fmt.Sprintf("* Method: [%s](https://github.com/ovh/cds/search?q=%%22func+%%28api+*API%%29+%s%%22)\n", doc.Method, doc.Method)
-		if len(doc.Middleware) > 0 {
-			content += fmt.Sprintf("* Middleware(s): ")
-		}
-		for _, v := range doc.Middleware {
-			content += fmt.Sprintf("%s: %s\n", v.Name, v.Value)
-		}
+			content += fmt.Sprintf("* Method: [%s](https://github.com/ovh/cds/search?q=%%22func+%%28api+*API%%29+%s%%22)\n", doc.Method, doc.Method)
+			if len(doc.Middleware) > 0 {
+				content += fmt.Sprintf("* Middleware(s): ")
+			}
+			for _, v := range doc.Middleware {
+				content += fmt.Sprintf("%s: %s\n", v.Name, v.Value)
+			}
 
-		if doc.Body != "" {
-			content += fmt.Sprintf("* Body: \n\n```\n%s\n```\n", doc.Body)
+			if doc.Body != "" {
+				content += fmt.Sprintf("* Body: \n\n```\n%s\n```\n", doc.Body)
+			}
+
+			content += "\n\n"
 		}
-
-		content += "\n\n"
-
 		if _, err := f.WriteString(content); err != nil {
 			return err
 		}
+		f.Sync()
+		f.Close()
 	}
-	f.Sync()
 	return nil
 }
 
