@@ -103,6 +103,8 @@ $ docker-compose up cds-hatchery-swarm
 A `swarm hatchery` spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.
 
+Now, you have to create worker model of type `docker`, please follow [how to create a worker model docker]({{< relref "workflows/pipelines/requirements/worker-model/docker-simple.md" >}}).
+
 ## Next with Actions, Plugins
 
 - You can download CDS CLI from https://github.com/ovh/cds/releases
