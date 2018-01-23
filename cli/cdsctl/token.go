@@ -95,10 +95,7 @@ func tokenDeleteRun(v cli.Values) error {
 		return fmt.Errorf("Token id is bad formatted")
 	}
 
-	if err := client.GroupDeleteToken(v["groupname"], tokenID); err != nil {
-		return err
-	}
-	return nil
+	return client.GroupDeleteToken(v["groupname"], tokenID)
 }
 
 var tokenListCmd = cli.Command{
