@@ -56,7 +56,8 @@ title = "%s"
 		// @description the description
 		// @params AA=valA
 		// @params BB=valB
-		// @body {"mykey": "myval"}
+		// @requestBody {"mykey": "myval"}
+		// @responseBody {"mykey": "myval"}
 		func (api *API) getActionsHandler() Handler {
 		[...]
 		*/
@@ -129,10 +130,11 @@ func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, li
 }
 
 const (
-	title       = "@title"
-	description = "@description"
-	queryParam  = "@params"
-	body        = "@body"
+	title        = "@title"
+	description  = "@description"
+	queryParam   = "@params"
+	requestBody  = "@requestBody"
+	responseBody = "@responseBody"
 )
 
 // Method Represent data on a method
@@ -148,7 +150,8 @@ type Doc struct {
 	Method        string
 	URL           string
 	QueryParams   []string
-	Body          string
+	ResponseBody  string
+	RequestBody   string
 	Middleware    []Middleware
 	HTTPOperation string
 }
@@ -156,7 +159,6 @@ type Doc struct {
 // RouteInfo Information on a route
 type RouteInfo struct {
 	URL           string
-	URLParams     []string
 	Method        string
 	Middleware    []Middleware
 	HTTPOperation string
@@ -235,6 +237,16 @@ func writeRouteInfo(inputDocs []Doc, genPath string) error {
 		}
 	}
 
+	const template = `
+
+URL         | **%s**
+----------- |----------
+Method      | %s     
+%sPermissions | %s     
+Code        | %s     
+
+`
+
 	for name, docs := range docsSection {
 		filename := fmt.Sprintf("%s/%s.md", genPath, name)
 		if _, err := os.Stat(filename); err == nil {
@@ -242,35 +254,61 @@ func writeRouteInfo(inputDocs []Doc, genPath string) error {
 				return err
 			}
 		}
+		fmt.Printf("create file %s\n", filename)
 		f, err := os.Create(filename)
 		if err != nil {
 			return err
 		}
 		var content = fmt.Sprintf("+++\ntitle = \"Routes %s\"\n+++\n\n", name)
 		for _, doc := range docs {
-			content += fmt.Sprintf("#### %s `%s`\n\n", doc.HTTPOperation, doc.URL)
-			for _, v := range doc.QueryParams {
-				content += fmt.Sprintf("* QueryParam: %s\n", v)
+			if doc.Title == "" {
+				content += fmt.Sprintf("### %s `%s`\n\n", doc.HTTPOperation, doc.URL)
+			} else {
+				content += fmt.Sprintf("### %s", doc.Title)
 			}
 
-			if doc.Title != "" {
-				content += fmt.Sprintf("* Title: %s\n", doc.Title)
-			}
-
-			if doc.Description != "" {
-				content += fmt.Sprintf("* Description: %s\n", doc.Description)
-			}
-
-			content += fmt.Sprintf("* Method: [%s](https://github.com/ovh/cds/search?q=%%22func+%%28api+*API%%29+%s%%22)\n", doc.Method, doc.Method)
-			if len(doc.Middleware) > 0 {
-				content += fmt.Sprintf("* Middleware(s): ")
-			}
+			var permissions string
+			var noAuth bool
 			for _, v := range doc.Middleware {
-				content += fmt.Sprintf("%s: %s\n", v.Name, v.Value)
+				if permissions != "" {
+					permissions += " - "
+				}
+				permissions += fmt.Sprintf(" %s: %s", v.Name, strings.Join(v.Value, ","))
+				if v.Name == "Auth" {
+					for _, value := range v.Value {
+						if value == "false" {
+							noAuth = true
+						}
+					}
+				}
 			}
 
-			if doc.Body != "" {
-				content += fmt.Sprintf("* Body: \n\n```\n%s\n```\n", doc.Body)
+			if !noAuth {
+				if permissions != "" {
+					permissions += " - "
+				}
+				permissions += " Auth: true"
+			}
+
+			var params string
+			for _, v := range doc.QueryParams {
+				params += fmt.Sprintf("QueryParam|%s\n", v)
+			}
+
+			code := fmt.Sprintf("[%s](https://github.com/ovh/cds/search?q=%%22func+%%28api+*API%%29+%s%%22)\n", doc.Method, doc.Method)
+			content += fmt.Sprintf(template, doc.URL, doc.HTTPOperation, params, permissions, code)
+
+			content += "\n"
+			if doc.Description != "" {
+				content += fmt.Sprintf("#### Description \n\n %s\n\n", doc.Description)
+			}
+
+			if doc.RequestBody != "" {
+				content += fmt.Sprintf("#### Request Body \n\n```\n%s\n```\n", doc.RequestBody)
+			}
+
+			if doc.ResponseBody != "" {
+				content += fmt.Sprintf("#### Response Body \n\n```\n%s\n```\n", doc.ResponseBody)
 			}
 
 			content += "\n\n"
@@ -296,9 +334,16 @@ func extractFromMethod(doc *Doc, m Method) {
 		if strings.Contains(dLine, queryParam) {
 			doc.QueryParams = append(doc.QueryParams, strings.Trim(strings.Replace(dLine, queryParam, "", -1), " "))
 		}
-		if strings.Contains(dLine, body) {
-			doc.Body = strings.Trim(strings.Replace(dLine, body, "", -1), " ")
+		if strings.Contains(dLine, requestBody) {
+			doc.RequestBody = strings.Trim(strings.Replace(dLine, requestBody, "", -1), " ")
 		}
+		if strings.Contains(dLine, responseBody) {
+			doc.ResponseBody = strings.Trim(strings.Replace(dLine, responseBody, "", -1), " ")
+		}
+	}
+	if len(docSliptted) > 0 && doc.Title == "" {
+		doc.Title = strings.Replace(docSliptted[0], "Handler", "", 1)
+		doc.Title = strings.Replace(doc.Title, "Handle", "", 1)
 	}
 }
 func extractFromRouteInfo(doc *Doc, routeInfo RouteInfo) {
@@ -364,7 +409,7 @@ func (v visitor) Visit(n ast.Node) ast.Visitor {
 				v.allRoutes[currentRouteInfo.Method] = currentRouteInfo
 			}
 			currentRouteInfo = RouteInfo{}
-		} else if isHttpOperation(d.Sel.Name) {
+		} else if isHTTPOperation(d.Sel.Name) {
 			// new Route
 			if currentRouteInfo.HTTPOperation != "" && currentRouteInfo.Method != "" {
 				v.allRoutes[currentRouteInfo.Method] = currentRouteInfo
@@ -387,7 +432,7 @@ func (v visitor) Visit(n ast.Node) ast.Visitor {
 	return v
 }
 
-func isHttpOperation(op string) bool {
+func isHTTPOperation(op string) bool {
 	switch op {
 	case "GET", "POST", "PUT", "DELETE", "POSTEXECUTE":
 		return true

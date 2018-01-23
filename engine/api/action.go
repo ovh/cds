@@ -15,7 +15,7 @@ import (
 )
 
 // getActionsHandler Retrieve all public actions
-// @title Retrieve all public actions
+// @title List all public actions
 func (api *API) getActionsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		acts, err := action.LoadActions(api.mustDB())
