@@ -1,38 +1,24 @@
-<ng-template let-context let-modal="modal" #nodeHookFormModal>
-    <div class="header">
-        {{ 'workflow_node_hook_modal_title' | translate }}
-        <div class="deleteButton" *ngIf="canDelete">
-            <app-delete-button [loading]="loading" [disabled]="loading" (event)="deleteHook()"></app-delete-button>
-        </div>
-    </div>
-    <div class="content">
-        <div class="ui form">
-            <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
-            <ng-container *ngIf="!loadingModels">
-                <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
-                    <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
-                    </sui-select-option>
-                </sui-select>
-            </ng-container>
-            <ng-container *ngIf="loadingModels">
-                <sui-select class="selection" placeholder="{{'common_loading' | translate}}">
-                    <sui-select-option value="">{{'common_loading' | translate}}</sui-select-option>
-                </sui-select>
-            </ng-container>
-            <ng-container *ngIf="_hook.model && displayConfig">
-                <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
-                <ng-container *ngIf="_hook.config">
-                    <div class="inline fields" *ngFor="let k of hook.config | keys">
-                        <div class="four wide field"><label>{{k}}</label></div>
-                        <div class="twelve wide field"><input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable"></div>
-                    </div>
-                </ng-container>
-                <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
-            </ng-container>
-        </div>
-    </div>
-    <div class="actions">
-        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="addHook()">{{ 'btn_save' | translate }}</button>
-    </div>
-</ng-template>
+<div class="ui form">
+    <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
+    <ng-container *ngIf="!loading">
+        <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
+            <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
+            </sui-select-option>
+        </sui-select>
+    </ng-container>
+    <ng-container *ngIf="loading">
+        <sui-select class="selection" placeholder="{{'common_loading' | translate}}">
+            <sui-select-option value="">{{'common_loading' | translate}}</sui-select-option>
+        </sui-select>
+    </ng-container>
+    <ng-container *ngIf="_hook.model && displayConfig">
+        <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
+        <ng-container *ngIf="_hook.config">
+            <div class="inline fields" *ngFor="let k of hook.config | keys">
+                <div class="four wide field"><label>{{k}}</label></div>
+                <div class="twelve wide field"><input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable"></div>
+            </div>
+        </ng-container>
+        <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
+    </ng-container>
+</div>

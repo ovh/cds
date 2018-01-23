@@ -10,6 +10,8 @@ import {Job} from './job.model';
 import {Commit} from './repositories.model';
 import {Usage} from './usage.model';
 
+export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+
 export class PipelineStatus {
     static BUILDING = 'Building';
     static FAIL = 'Fail';
@@ -67,6 +69,18 @@ export class Pipeline {
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;
+
+    // Return true if pattern is good
+    public static checkName(name: string): boolean {
+      if (!name) {
+          return false;
+      }
+
+      if (!pipelineNamePattern.test(name)) {
+          return false;
+      }
+      return true;
+    }
 
     public static hasParameterWithoutValue(pipeline: Pipeline) {
         if (pipeline.parameters) {

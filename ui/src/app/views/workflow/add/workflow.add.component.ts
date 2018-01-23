@@ -2,7 +2,13 @@ import {Component} from '@angular/core';
 import {Workflow} from '../../../model/workflow.model';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
+import {Application} from '../../../model/application.model';
+import {Pipeline} from '../../../model/pipeline.model';
+import {Environment} from '../../../model/environment.model';
+import {ApplicationStore} from '../../../service/application/application.store';
+import {ProjectStore} from '../../../service/project/project.store';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
+import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {first} from 'rxjs/operators';
@@ -18,14 +24,71 @@ export class WorkflowAddComponent {
     project: Project;
 
     loading = false;
+    currentStep = 1;
 
+    // Pipeline section
+    set createNewPipeline(data: boolean) {
+      this._createNewPipeline = data;
+      if (data) {
+        this.newPipeline = new Pipeline();
+        this.workflow.root.pipeline_id = null;
+      }
+    }
+    get createNewPipeline() {
+      return this._createNewPipeline;
+    }
+    errorPipelineNamePattern = false;
+    loadingCreatePipeline = false;
+    newPipeline: Pipeline = new Pipeline();
+    pipelineSection: 'pipeline'|'application'|'environment' = 'pipeline';
+    _createNewPipeline = false;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _router: Router, private _workflowStore: WorkflowStore,
-                private _translate: TranslateService, private _toast: ToastService) {
+    // Application details
+    set createNewApplication(data: boolean) {
+      this._createNewApplication = data;
+      if (data) {
+        this.newApplication = new Application();
+        this.workflow.root.context.application_id = null;
+      }
+    }
+    get createNewApplication() {
+      return this._createNewApplication;
+    }
+    errorApplicationNamePattern = false;
+    loadingCreateApplication = false;
+    newApplication: Application = new Application();
+    _createNewApplication = false;
+
+    // Environment details
+    set createNewEnvironment(data: boolean) {
+      this._createNewEnvironment = data;
+      if (data) {
+        this.newEnvironment = new Environment();
+        this.workflow.root.context.environment_id = null;
+      }
+    }
+    get createNewEnvironment() {
+      return this._createNewEnvironment;
+    }
+    loadingCreateEnvironment = false;
+    newEnvironment: Environment = new Environment();
+    _createNewEnvironment = false;
+
+    constructor(private _activatedRoute: ActivatedRoute,
+                private _router: Router, private _workflowStore: WorkflowStore,
+                private _translate: TranslateService, private _toast: ToastService,
+                private _pipStore: PipelineStore, private _appStore: ApplicationStore,
+                private _projectStore: ProjectStore) {
         this.workflow = new Workflow();
 
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
+            if (!this.project.pipeline_names || !this.project.pipeline_names.length) {
+              this.createNewPipeline = true;
+            }
+            if (!this.project.application_names || !this.project.application_names.length) {
+              this.createNewApplication = true;
+            }
         });
     }
 
@@ -42,5 +105,81 @@ export class WorkflowAddComponent {
         }, () => {
             this.loading = false;
         });
+    }
+
+    createPipeline(): void {
+        if (!Pipeline.checkName(this.newPipeline.name)) {
+          this.errorPipelineNamePattern = true;
+          return;
+        }
+
+        this.loadingCreatePipeline = true;
+        this.newPipeline.type = 'deployment';
+        this._pipStore.createPipeline(this.project.key, this.newPipeline).subscribe((pip) => {
+            this.loadingCreatePipeline = false;
+            this._toast.success('', this._translate.instant('pipeline_added'));
+            this.workflow.root.pipeline_id = pip.id;
+            this.pipelineSection = 'application';
+        }, () => {
+            this.loadingCreatePipeline = false;
+        });
+    }
+
+    selectOrCreatePipeline() {
+      if (this.createNewPipeline) {
+        return this.createPipeline();
+      }
+      this.pipelineSection = 'application';
+    }
+
+    createApplication(): void {
+      if (!Application.checkName(this.newApplication.name)) {
+        this.errorApplicationNamePattern = true;
+        return;
+      }
+
+      this.loadingCreateApplication = true;
+      this._appStore.createApplication(this.project.key, this.newApplication).subscribe((app) => {
+          this.loadingCreateApplication = false;
+          this._toast.success('', this._translate.instant('application_created'));
+          this.workflow.root.context.application_id = app.id;
+          this.pipelineSection = 'environment';
+      }, () => {
+          this.loadingCreateApplication = false;
+      });
+    }
+
+    selectOrCreateApplication() {
+      if (this.createNewApplication && this.newApplication.name) {
+        return this.createApplication();
+      }
+      this.pipelineSection = 'environment';
+    }
+
+    createEnvironment(): void {
+      this.loadingCreateEnvironment = true;
+      this._projectStore.addProjectEnvironment(this.project.key, this.newEnvironment).subscribe((proj) => {
+          this._toast.success('', this._translate.instant('environment_created'));
+          this.loadingCreateEnvironment = false;
+          this.workflow.root.context.environment_id = proj.environments.find((env) => env.name === this.newEnvironment.name).id;
+          this.goToNextStep(null);
+      }, () => {
+          this.loadingCreateEnvironment = false;
+      });
+    }
+
+    selectOrCreateEnvironment() {
+      if (this.createNewEnvironment && this.newEnvironment.name) {
+        return this.createEnvironment();
+      }
+      this.goToNextStep(null);
+    }
+
+    goToNextStep(stepNum: number): void {
+      if (stepNum != null) {
+        this.currentStep = stepNum;
+      } else {
+        this.currentStep++;
+      }
     }
 }

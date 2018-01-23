@@ -2,33 +2,300 @@
     <div class="scrollingContent">
         <div class="paddingContent">
             <div class="viewContent">
-                <form class="ui form">
-                    <h2>{{ 'workflow_create' | translate }}</h2>
-                    <div class="ui grid">
-                        <div class="one wide column">
-
+              <h2>{{ 'workflow_create' | translate }}</h2>
+              <div class="ui grid">
+                <div class="ui row">
+                  <div class="sixteen wide column">
+                    <div class="ui three top attached steps">
+                      <div class="step pointing" [class.active]="currentStep === 0" (click)="goToNextStep(0)">
+                        <i class="share alternate icon"></i>
+                        <div class="content">
+                          <div class="title">Workflow</div>
+                          <div class="description">Choose your workflow options</div>
                         </div>
-                        <div class="fourteen wide column">
-                            <div class="field">
-                                <label>{{ 'workflow_name' | translate}}</label>
-                                <input name="name" class="ui input" [(ngModel)]="workflow.name">
-                            </div>
-                            <div class="field">
-                                <label>{{ 'workflow_description' | translate}}</label>
-                                <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
-                            </div>
-                            <div class="field">
-                                <app-workflow-node-form [project]="project" [node]="workflow.root"></app-workflow-node-form>
-                            </div>
-                            <div class="field">
-                                <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
-                                <button class="ui right floated green button" (click)="createWorkflow()"
-                                        [disabled]="!workflow.root.pipeline_id || !workflow.name" [class.loading]="loading">{{ 'btn_save' | translate }}
-                                </button>
-                            </div>
+                      </div>
+                      <div class="step pointing" [class.disabled]="!workflow.name" [class.active]="currentStep === 1" (click)="goToNextStep(1)">
+                        <i class="sitemap icon"></i>
+                        <div class="content">
+                          <div class="title">Pipeline</div>
+                          <div class="description">Create or select your first pipeline</div>
                         </div>
+                      </div>
+                      <div class="step pointing" [class.disabled]="workflow.root == null || !workflow.root.pipeline_id" [class.active]="currentStep === 2" (click)="goToNextStep(2)">
+                        <i class="anchor icon"></i>
+                        <div class="content">
+                          <div class="title">Hook</div>
+                          <div class="description">Attach a hook on your first pipeline</div>
+                        </div>
+                      </div>
                     </div>
-                </form>
+                    <div class="ui attached segment">
+
+                      <div [ngSwitch]="currentStep">
+                        <!-- ######### WORKFLOW FIRST STEP ######### -->
+                        <form class="ui form" *ngSwitchCase="0">
+                            <div class="ui grid">
+                                <div class="ui row">
+                                  <div class="one wide column">
+
+                                  </div>
+                                  <div class="fourteen wide column">
+                                      <div class="field">
+                                          <label>{{ 'workflow_name' | translate}}</label>
+                                          <input name="name" class="ui input" [(ngModel)]="workflow.name">
+                                      </div>
+                                      <div class="field">
+                                          <label>{{ 'workflow_description' | translate}}</label>
+                                          <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
+                                      </div>
+                                      <div class="field">
+                                          <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                          <button class="ui right floated green button" (click)="goToNextStep()"
+                                                  [disabled]="!workflow.name" [class.loading]="loading">{{ 'btn_next' | translate }}
+                                          </button>
+                                      </div>
+                                  </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- ######### WORKFLOW PIPELINE SECOND STEP ######### -->
+                        <form class="ui form" *ngSwitchCase="1">
+                            <div class="ui grid">
+                                <div class="ui row">
+                                  <div class="three wide column">
+                                    <div class="ui tiny vertical steps">
+                                      <div class="step pointing"
+                                        [class.active]="pipelineSection === 'pipeline'"
+                                        (click)="pipelineSection = 'pipeline'">
+                                        <i class="sitemap icon"></i>
+                                        <div class="content">
+                                          <div class="title">Pipeline <i class="green check icon" *ngIf="workflow.root.pipeline_id"></i></div>
+                                        </div>
+                                      </div>
+                                      <div class="step pointing"
+                                        [class.disabled]="workflow.root == null || !workflow.root.pipeline_id"
+                                        [class.active]="pipelineSection === 'application'"
+                                        (click)="pipelineSection = 'application'">
+                                        <i class="rocket icon"></i>
+                                        <div class="content">
+                                          <div class="title">Application <i class="green check icon" *ngIf="workflow.root.context.application_id"></i></div>
+                                          <div class="description">{{'action_optional' | translate}}</div>
+                                        </div>
+                                      </div>
+                                      <div class="step pointing"
+                                        [class.disabled]="workflow.root == null || !workflow.root.pipeline_id"
+                                        [class.active]="pipelineSection === 'environment'"
+                                        (click)="pipelineSection = 'environment'">
+                                        <i class="tree icon"></i>
+                                        <div class="content">
+                                          <div class="title">Environment <i class="green check icon" *ngIf="workflow.root.context.environment_id"></i></div>
+                                          <div class="description">{{'common_optional' | translate}}</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="thirteen wide column">
+                                    <ng-container [ngSwitch]="pipelineSection">
+                                      <!-- ############### PIPELINE SECTION ############## -->
+                                      <div *ngSwitchCase="'pipeline'">
+                                        <div class="ui row mb20">
+                                          <div class="ui sixteen wide column">
+                                            <div class="two ui buttons">
+                                              <button class="ui button"
+                                                [class.active]="!createNewPipeline"
+                                                [class.disabled]="!project.pipeline_names || !project.pipeline_names.length"
+                                                (click)="createNewPipeline = false">
+                                                Select
+                                              </button>
+                                              <button class="ui button" [class.active]="createNewPipeline" (click)="createNewPipeline = true">
+                                                Create
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="ui row">
+                                          <div class="ui sixteen wide column">
+                                            <ng-container >
+                                              <div class="fields">
+                                                <div class="six wide field">
+                                                    <label>{{'pipeline_name' | translate}}</label>
+                                                    <ng-container *ngIf="!createNewPipeline">
+                                                      <sm-select
+                                                          class="search"
+                                                          placeholder="{{ 'common_pipeline' | translate }}"
+                                                          [(model)]="workflow.root.pipeline_id"
+                                                          [options]="{'fullTextSearch': true}"
+                                                          id="WorkflowPipelineSelect">
+                                                          <option *ngFor="let p of project.pipeline_names" [value]="p.id">{{ p.name}}</option>
+                                                      </sm-select>
+                                                    </ng-container>
+                                                    <ng-container *ngIf="createNewPipeline">
+                                                      <input type="text" name="pipname" [(ngModel)]="newPipeline.name" [placeholder]="'pipeline_name_new' | translate">
+                                                      <div class="ui error message" *ngIf="errorPipelineNamePattern">
+                                                          {{ 'pipeline_name_error' | translate }}
+                                                      </div>
+                                                    </ng-container>
+                                                </div>
+                                                <div class="ten wide field right aligned">
+                                                  <div class="ui toggle checkbox ml10">
+                                                    <input type="checkbox" name="mutex" [(ngModel)]="workflow.root.context.mutex">
+                                                    <label>
+                                                      <a href="https://ovh.github.io/cds/workflows/design/mutex" target="_blank">
+                                                        {{ 'workflow_root_context_mutex' | translate }}
+                                                        <i class="external icon"></i>
+                                                      </a>
+                                                    </label>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </ng-container>
+                                          </div>
+                                        </div>
+                                        <div class="ui row">
+                                          <div class="ui sixteen wide column">
+                                            <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                            <button class="ui right floated green button" (click)="selectOrCreatePipeline()"
+                                                    [disabled]="!workflow.root.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
+                                                    {{ 'btn_next' | translate }}
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <!-- ############### APPLICATION SECTION ############## -->
+                                      <div *ngSwitchCase="'application'">
+                                        <div class="ui row mb20">
+                                          <div class="ui sixteen wide column">
+                                            <div class="two ui buttons">
+                                              <button class="ui button"
+                                                [class.active]="!createNewApplication"
+                                                [class.disabled]="!project.application_names || !project.application_names.length"
+                                                (click)="createNewApplication = false">
+                                                Select
+                                              </button>
+                                              <button class="ui button" [class.active]="createNewApplication" (click)="createNewApplication = true">
+                                                Create
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="ui row">
+                                          <div class="ui sixteen wide column">
+                                            <ng-container >
+                                              <div class="fields">
+                                                <div class="six wide field">
+                                                    <label>{{'application_name' | translate}}</label>
+                                                    <ng-container *ngIf="!createNewApplication">
+                                                      <sm-select
+                                                          class="search"
+                                                          placeholder="{{ 'common_application' | translate }}"
+                                                          [(model)]="workflow.root.context.application_id"
+                                                          [options]="{'fullTextSearch': true}"
+                                                          id="WorkflowApplicationSelect">
+                                                          <option> </option>
+                                                          <option *ngFor="let a of project.application_names" [value]="a.id">{{ a.name }}</option>
+                                                      </sm-select>
+                                                    </ng-container>
+                                                    <ng-container *ngIf="createNewApplication">
+                                                      <input type="text" name="appname" [(ngModel)]="newApplication.name">
+                                                      <div class="ui error message" *ngIf="errorPipelineNamePattern">
+                                                          {{ 'application_name_error' | translate }}
+                                                      </div>
+                                                    </ng-container>
+                                                </div>
+                                              </div>
+                                            </ng-container>
+                                          </div>
+                                        </div>
+                                        <div class="ui row">
+                                          <div class="ui sixteen wide column">
+                                            <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                            <button class="ui right floated green button" (click)="selectOrCreateApplication()"
+                                                    [disabled]="!workflow.root.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
+                                                    {{ 'btn_next' | translate }}
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <!-- ############### ENVIRONMENT SECTION ############## -->
+                                      <div *ngSwitchCase="'environment'">
+                                        <div class="ui row mb20">
+                                          <div class="ui sixteen wide column">
+                                            <div class="two ui buttons">
+                                              <button class="ui button"
+                                                [class.active]="!createNewEnvironment"
+                                                [class.disabled]="!project.environments || !project.environments.length"
+                                                (click)="createNewEnvironment = false">
+                                                Select
+                                              </button>
+                                              <button class="ui button" [class.active]="createNewEnvironment" (click)="createNewEnvironment = true">
+                                                Create
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="ui row">
+                                          <div class="ui sixteen wide column">
+                                            <ng-container >
+                                              <div class="fields">
+                                                <div class="six wide field">
+                                                    <label>{{'environment_name' | translate}}</label>
+                                                    <ng-container *ngIf="!createNewEnvironment">
+                                                      <sm-select
+                                                          class="search"
+                                                          placeholder="{{ 'common_environment' | translate }}"
+                                                          [(model)]="workflow.root.context.environment_id"
+                                                          [options]="{'fullTextSearch': true}"
+                                                          id="WorkflowApplicationSelect">
+                                                          <option> </option>
+                                                          <option *ngFor="let env of project.environments" [value]="env.id">{{ env.name }}</option>
+                                                      </sm-select>
+                                                    </ng-container>
+                                                    <ng-container *ngIf="createNewEnvironment">
+                                                      <input type="text" name="envname" [(ngModel)]="newEnvironment.name">
+                                                    </ng-container>
+                                                </div>
+                                              </div>
+                                            </ng-container>
+                                          </div>
+                                        </div>
+                                        <div class="ui row">
+                                          <div class="ui sixteen wide column">
+                                            <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                            <button class="ui right floated green button" (click)="selectOrCreateEnvironment()"
+                                                    [disabled]="!workflow.root.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment">
+                                                    {{ 'btn_next' | translate }}
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </ng-container>
+                                  </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- ######### WORKFLOW HOOKS THIRD STEP ######### -->
+                        <form class="ui form" *ngSwitchCase="2">
+                            <div class="ui grid">
+                                <div class="ui row">
+                                  <div class="sixteen wide column">
+                                    <app-workflow-node-hook-form
+                                      [loading]="loading"
+                                      [project]="project"
+                                      [workflow]="workflow"
+                                      [node]="workflow.root"
+                                      (hookEvent)="addHook($event)" #worklflowAddHook>
+                                    </app-workflow-node-hook-form>
+                                  </div>
+                                </div>
+                              </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
         </div>
     </div>

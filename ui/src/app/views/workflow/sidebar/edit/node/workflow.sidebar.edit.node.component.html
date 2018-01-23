@@ -82,7 +82,7 @@
     <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (conditionsEvent)="updateNodeConditions($event)" #workflowConditions></app-workflow-node-conditions>
 </ng-container>
 <ng-container *ngIf="project && node">
-    <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
+    <app-workflow-node-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-modal>
 </ng-container>
 <ng-template let-context let-modal="modal" #nodeNameWarningModal>
     <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>

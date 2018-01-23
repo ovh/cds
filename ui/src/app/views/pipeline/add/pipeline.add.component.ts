@@ -18,7 +18,6 @@ export class PipelineAddComponent {
     loadingCreate = false;
     pipelineType: Array<string>;
     newPipeline = new Pipeline();
-    selectedApplications: Array<string>;
 
     pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     pipPatternError = false;
@@ -43,17 +42,6 @@ export class PipelineAddComponent {
         if (!this.pipelineNamePattern.test(this.newPipeline.name)) {
             this.pipPatternError = true;
             return;
-        }
-
-        if (this.selectedApplications && this.selectedApplications.length > 0) {
-            if (!this.newPipeline.usage) {
-                this.newPipeline.usage = new Usage();
-            }
-            this.selectedApplications.forEach(name => {
-                this.newPipeline.usage.applications.push(this.project.applications.find(a => {
-                    return a.name === name;
-                }));
-            });
         }
 
         this.loadingCreate = true;

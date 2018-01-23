@@ -128,6 +128,7 @@
   "btn_run_workflow": "Run workflow",
   "btn_validate": "Validate",
   "btn_save": "Save",
+  "btn_next": "Next",
   "btn_edit": "Edit",
   "btn_add": "Add",
 
@@ -376,6 +377,7 @@
   "pipeline_label_stop": "Stop pipeline",
   "pipeline_loading": "Loading pipeline...",
   "pipeline_name": "Pipeline name",
+  "pipeline_name_new": "New pipeline name",
   "pipeline_name_error": "Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-",
   "pipeline_parameters_list_title": "List of pipeline parameters: ",
   "pipeline_parameters_form_title": "Add a parameter: ",

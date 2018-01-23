@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeHook
+    Workflow, WorkflowNode, WorkflowNodeHook, WorkflowTriggerConditionCache
 } from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
@@ -14,13 +14,13 @@ import {first, finalize} from 'rxjs/operators';
 import {Observable} from 'rxjs/Observable';
 
 @Component({
-    selector: 'app-workflow-node-hook-form',
-    templateUrl: './hook.form.html',
-    styleUrls: ['./hook.form.scss']
+    selector: 'app-workflow-node-hook-modal',
+    templateUrl: './hook.modal.html',
+    styleUrls: ['./hook.modal.scss']
 })
-export class WorkflowNodeHookFormComponent {
+export class WorkflowNodeHookModalComponent {
 
-    _hook: WorkflowNodeHook = new WorkflowNodeHook();
+    _hook: WorkflowNodeHook;
     canDelete = false;
 
     @Input() project: Project;
@@ -45,6 +45,7 @@ export class WorkflowNodeHookFormComponent {
     @Output() hookEvent = new EventEmitter<HookEvent>();
 
     hooksModel: Array<WorkflowHookModel>;
+    wfTriggerConditions: WorkflowTriggerConditionCache;
     selectedHookModel: WorkflowHookModel;
     operators: {};
     conditionNames: Array<string>;
@@ -76,6 +77,7 @@ export class WorkflowNodeHookFormComponent {
                 if (this._hook && this._hook.model) {
                     this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
                 }
+                this.wfTriggerConditions = wtc;
                 this.operators = wtc.operators;
                 this.conditionNames = wtc.names;
             }

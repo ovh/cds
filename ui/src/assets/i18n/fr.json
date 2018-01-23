@@ -128,6 +128,7 @@
   "btn_run_workflow": "Lancer le workflow",
   "btn_validate": "Valider",
   "btn_save": "Sauvegarder",
+  "btn_next": "Suivant",
   "btn_edit": "Éditer",
   "btn_add": "Ajouter",
 
@@ -137,6 +138,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_optional": "Optionel",
   "common_ask_cds_administrator": "Demandez à votre administrateur CDS",
   "common_audit": "Audit",
   "common_advanced": "Administration",
@@ -376,6 +378,7 @@
   "pipeline_label_stop": "Arrêter le pipeline",
   "pipeline_loading": "Chargement du pipeline...",
   "pipeline_name": "Nom du pipeline",
+  "pipeline_name_new": "Nom du nouveau pipeline",
   "pipeline_name_error": "Le nom du pipeline est invalide. Pattern autorisé : a-zA-Z0-9._-",
   "pipeline_parameters_list_title": "Liste des paramètres du pipeline : ",
   "pipeline_parameters_form_title": "Ajouter un paramètre : ",

@@ -1,0 +1,23 @@
+<ng-template let-context let-modal="modal" #nodeHookFormModal>
+    <div class="header">
+        {{ 'workflow_node_hook_modal_title' | translate }}
+        <div class="deleteButton" *ngIf="canDelete">
+            <app-delete-button [loading]="loading" [disabled]="loading" (event)="deleteHook()"></app-delete-button>
+        </div>
+    </div>
+    <div class="content">
+      <app-workflow-node-hook-form
+        [loading]="loadingModels"
+        [project]="project"
+        [workflow]="workflow"
+        [node]="node"
+        [hooksModel]="hooksModel"
+        [hook]="hook"
+        [triggerConditions]="wfTriggerConditions" #worklflowAddHook>
+      </app-workflow-node-hook-form>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="addHook()">{{ 'btn_save' | translate }}</button>
+    </div>
+</ng-template>

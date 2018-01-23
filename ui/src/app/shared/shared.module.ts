@@ -60,7 +60,8 @@ import {PermissionEnvironmentFormComponent} from './permission/environment/form/
 import {NgxAutoScroll} from 'ngx-auto-scroll/src/ngx-auto-scroll.directive';
 import {SuiModule} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
-import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook.component';
+import {WorkflowNodeHookModalComponent} from './workflow/node/hook/modal/hook.modal.component';
+import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
 import {UsageWorkflowsComponent} from './usage/workflows/usage.workflows.component';
 import {UsageApplicationsComponent} from './usage/applications/usage.applications.component';
@@ -125,6 +126,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowNodeConditionsComponent,
+        WorkflowNodeHookModalComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
         WorkflowTriggerComponent,
@@ -205,6 +207,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         WorkflowNodeConditionsComponent,
         WorkflowNodeRunParamComponent,
         WorkflowNodeHookComponent,
+        WorkflowNodeHookModalComponent,
         WorkflowNodeHookFormComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
