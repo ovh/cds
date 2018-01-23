@@ -8,22 +8,18 @@ import (
 	"golang.org/x/net/context"
 )
 
-// ReadCloserWrapper wraps an io.Reader, and implements an io.ReadCloser
-// It calls the given callback function when closed. It should be constructed
-// with NewReadCloserWrapper
-type ReadCloserWrapper struct {
+type readCloserWrapper struct {
 	io.Reader
 	closer func() error
 }
 
-// Close calls back the passed closer function
-func (r *ReadCloserWrapper) Close() error {
+func (r *readCloserWrapper) Close() error {
 	return r.closer()
 }
 
 // NewReadCloserWrapper returns a new io.ReadCloser.
 func NewReadCloserWrapper(r io.Reader, closer func() error) io.ReadCloser {
-	return &ReadCloserWrapper{
+	return &readCloserWrapper{
 		Reader: r,
 		closer: closer,
 	}
