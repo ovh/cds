@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -90,6 +91,19 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	w.ID = oldW.ID
 	if err := Update(db, store, w, oldW, proj, u); err != nil {
 		return sdk.WrapError(err, "Import> Unable to update workflow")
+	}
+
+	if len(w.Groups) > 0 {
+		for i := range w.Groups {
+			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
+			if err != nil {
+				return sdk.WrapError(err, "Import> Unable to load group %s", w.Groups[i].Group.Name)
+			}
+			w.Groups[i].Group = *g
+		}
+		if err := upsertAllGroups(db, w, w.Groups); err != nil {
+			return sdk.WrapError(err, "Import> Unable to update workflow")
+		}
 	}
 
 	if msgChan != nil {

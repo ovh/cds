@@ -74,6 +74,29 @@ func UpdateGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) e
 	return nil
 }
 
+func upsertAllGroups(db gorp.SqlExecutor, w *sdk.Workflow, gps []sdk.GroupPermission) error {
+	queryD := `delete from workflow_group where workflow_id = $1`
+	if _, err := db.Exec(queryD, w.ID); err != nil {
+		return sdk.WrapError(err, "UpsertAllGroups")
+	}
+
+	for _, gp := range gps {
+		query := `INSERT INTO workflow_group (group_id, workflow_id, role) VALUES ($1, $2, $3)`
+		if _, err := db.Exec(query, gp.Group.ID, w.ID, gp.Permission); err != nil {
+			return sdk.WrapError(err, "upsertAllGroups> unable to insert group_id=%d workflow_id=%d role=%d", gp.Group.ID, w.ID, gp.Permission)
+		}
+	}
+
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
+	if err != nil {
+		return sdk.WrapError(err, "upsertAllGroups")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "upsertAllGroups")
+	}
+	return nil
+}
+
 // DeleteGroup remove group permission on the given workflow
 func DeleteGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, index int) error {
 	query := `DELETE FROM  workflow_group WHERE workflow_id = $1 AND group_id = $2`

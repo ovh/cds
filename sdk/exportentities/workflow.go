@@ -310,6 +310,12 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	//Process hooks
 	wf.Visit(w.processHooks)
 
+	//Compute permissions
+	for g, p := range w.Permissions {
+		perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
+		wf.Groups = append(wf.Groups, perm)
+	}
+
 	return wf, nil
 }
 
