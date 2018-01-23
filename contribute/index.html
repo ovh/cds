@@ -921,6 +921,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/token/find/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/find/">
+          <span>find</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/token/generate/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/token/generate/">
           <span>generate</span>
@@ -1356,6 +1361,7 @@
 <li><a href="#documentation">Documentation</a>
 <ul>
 <li><a href="#write-generate-test-documentation">Write / Generate / Test documentation</a></li>
+<li><a href="#golang-development">Golang Development</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1425,6 +1431,17 @@ hugo server
 <ul>
 <li>go to <a href="http://localhost:1313/cds/">http://localhost:1313/cds/</a></li>
 </ul>
+
+<h3 id="golang-development">Golang Development</h3>
+
+<p>We use <a href="https://github.com/golang/dep">https://github.com/golang/dep</a> to manage CDS Dependencies.</p>
+
+<p>If you have to add or update a CDS Dependency, please follow instructions on <a href="https://github.com/golang/dep#adding-a-dependency">https://github.com/golang/dep#adding-a-dependency</a></p>
+
+<p>And then launch:</p>
+
+<pre><code class="language-bash">$ dep prune
+</code></pre>
 
 
 <footer class=" footline" >

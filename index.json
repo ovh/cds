@@ -242,7 +242,7 @@
 	"title": "Download",
 	"tags": [],
 	"description": "",
-	"content": "You\u0026rsquo;ll find last release of CDS on Github Releases\n"
+	"content": " You\u0026rsquo;ll find the lastest release of CDS on Github Releases\nCDS Worker CDS Worker Documentation\n   OS 386 amd64 arm     darwin      freebsd      linux      windows       CDSCTL cdsctl Documentation\n   OS 386 amd64 arm     darwin      freebsd      linux      windows       CDS Engine CDS Engine Documentation\n   OS 386 amd64 arm     darwin      freebsd      linux      windows       "
 },
 {
 	"uri": "https://ovh.github.io/cds/introduction/scopes/environment/",
@@ -424,7 +424,7 @@
 	"title": "Opensource / Contribute",
 	"tags": [],
 	"description": "",
-	"content": " Roadmap See https://github.com/ovh/cds/blob/master/ROADMAP.md\nContact us  Benjamin COENEN - @BnJ25 François SAMIN - @francoissamin Steven GUIHEUX - @sguiheux Yvonnick ESNAULT - @yesnault  A remark / question / suggestion, feel free to join us on https://gitter.im/ovh-cds/Lobby\nAll CDS Contributors: https://github.com/ovh/cds/graphs/contributors\nFound a bug? Feel free to open an issue on https://github.com/ovh/cds/issues\nDocumentation Documentation https://ovh.github.io/cds is generated with Hugo. Source are under https://github.com/ovh/cds/tree/master/docs/content\nWrite / Generate / Test documentation  Download release Hugo v32.4 https://github.com/gohugoio/hugo/releases/tag/v0.32.4 - put hugo binary in your PATH Download CDS Binaries: cdsctl, engine, worker from https://github.com/ovh/cds/releases/latest Clone CDS repository: git clone https://github.com/ovh/cds.git inside ${CDS_SOURCES} Generate documentation with Hugo  cd ${CDS_SOURCES}/docs/content/cli rm -rf cdsctl engine worker; cdsctl doc # generate cdsctl directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli engine doc # generate engine directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli worker doc # generate worker directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli cd ${CDS_SOURCES}/docs hugo server   go to http://localhost:1313/cds/  "
+	"content": " Roadmap See https://github.com/ovh/cds/blob/master/ROADMAP.md\nContact us  Benjamin COENEN - @BnJ25 François SAMIN - @francoissamin Steven GUIHEUX - @sguiheux Yvonnick ESNAULT - @yesnault  A remark / question / suggestion, feel free to join us on https://gitter.im/ovh-cds/Lobby\nAll CDS Contributors: https://github.com/ovh/cds/graphs/contributors\nFound a bug? Feel free to open an issue on https://github.com/ovh/cds/issues\nDocumentation Documentation https://ovh.github.io/cds is generated with Hugo. Source are under https://github.com/ovh/cds/tree/master/docs/content\nWrite / Generate / Test documentation  Download release Hugo v32.4 https://github.com/gohugoio/hugo/releases/tag/v0.32.4 - put hugo binary in your PATH Download CDS Binaries: cdsctl, engine, worker from https://github.com/ovh/cds/releases/latest Clone CDS repository: git clone https://github.com/ovh/cds.git inside ${CDS_SOURCES} Generate documentation with Hugo  cd ${CDS_SOURCES}/docs/content/cli rm -rf cdsctl engine worker; cdsctl doc # generate cdsctl directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli engine doc # generate engine directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli worker doc # generate worker directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli cd ${CDS_SOURCES}/docs hugo server   go to http://localhost:1313/cds/  Golang Development We use https://github.com/golang/dep to manage CDS Dependencies.\nIf you have to add or update a CDS Dependency, please follow instructions on https://github.com/golang/dep#adding-a-dependency\nAnd then launch:\n$ dep prune  "
 },
 {
 	"uri": "https://ovh.github.io/cds/hosting/repositories-manager/",
@@ -908,6 +908,13 @@
 	"tags": [],
 	"description": "",
 	"content": " worker export worker export  \nSynopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can create a build variable with the worker command:\n# worker export \u0026lt;varname\u0026gt; \u0026lt;value\u0026gt; worker export foo bar  then, you can use new build variable:\necho \u0026quot;{{.cds.build.foo}}\u0026quot;  Scope You can use the build variable in :\n the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your worklow   worker export [flags]  Options  -h, --help help for export  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default \u0026quot;notice\u0026quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  "
+},
+{
+	"uri": "https://ovh.github.io/cds/cli/cdsctl/token/find/",
+	"title": "find",
+	"tags": [],
+	"description": "",
+	"content": " cdsctl token find Find an existing token\nSynopsis Find an existing token with his value to have his description, creation date and the name of the creator.\ncdsctl token find TOKEN [flags]  Examples cdsctl token find \u0026quot;myTokenValue\u0026quot;  Options  --format string Output format: plain|json|yaml (default \u0026quot;plain\u0026quot;) -h, --help help for find  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl token - Manage CDS group token  "
 },
 {
 	"uri": "https://ovh.github.io/cds/cli/cdsctl/token/generate/",
@@ -1411,7 +1418,7 @@
 	"title": "token",
 	"tags": [],
 	"description": "",
-	"content": " cdsctl token Manage CDS group token\nSynopsis Manage CDS group token\nOptions  -h, --help help for token  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility cdsctl token delete - Delete a token linked to a group cdsctl token generate - Generate a new token cdsctl token list - List tokens from group  "
+	"content": " cdsctl token Manage CDS group token\nSynopsis Manage CDS group token\nOptions  -h, --help help for token  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform \u0026quot;insecure\u0026quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility cdsctl token delete - Delete a token linked to a group cdsctl token find - Find an existing token cdsctl token generate - Generate a new token cdsctl token list - List tokens from group  "
 },
 {
 	"uri": "https://ovh.github.io/cds/cli/cdsctl/application/variable/update/",
