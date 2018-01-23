@@ -96,10 +96,6 @@
 [[projects]]
   branch = "ye-cds"
   name = "github.com/docker/docker"
-<<<<<<< HEAD
-  packages = ["api/types","api/types/blkiodev","api/types/container","api/types/filters","api/types/mount","api/types/network","api/types/registry","api/types/strslice","api/types/swarm","api/types/swarm/runtime","api/types/versions","opts","pkg/archive","pkg/fileutils","pkg/homedir","pkg/idtools","pkg/ioutils","pkg/jsonmessage","pkg/longpath","pkg/mount","pkg/pools","pkg/stdcopy","pkg/system","pkg/term","pkg/term/windows"]
-  revision = "db5c006bc8654ab1e4c24a1a9f460bbe4039686e"
-=======
   packages = [
     "api/types",
     "api/types/blkiodev",
@@ -128,7 +124,6 @@
     "pkg/term/windows"
   ]
   source = "https://github.com/yesnault/moby.git"
->>>>>>> master
 
 [[projects]]
   name = "github.com/docker/docker-credential-helpers"
@@ -850,10 +845,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-<<<<<<< HEAD
   inputs-digest = "8ceec8f397667248117a6c7703b8f18db0bbcf5dad0203b6f54e63ddb2fd069d"
-=======
-  inputs-digest = "586eaa6e5dd36085dd7984ecb240801ac7c34ee93bf6cfca443965d1818a3436"
->>>>>>> master
   solver-name = "gps-cdcl"
   solver-version = 1
