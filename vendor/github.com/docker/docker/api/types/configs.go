@@ -50,7 +50,6 @@ type ExecConfig struct {
 	Detach       bool     // Execute in detach mode
 	DetachKeys   string   // Escape keys for detach
 	Env          []string // Environment variables
-	WorkingDir   string   // Working directory
 	Cmd          []string // Execution commands and args
 }
 

@@ -11,6 +11,12 @@
   revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
 
 [[projects]]
+  name = "github.com/Microsoft/go-winio"
+  packages = ["."]
+  revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
+  version = "v0.4.7"
+
+[[projects]]
   branch = "master"
   name = "github.com/Nvveen/Gotty"
   packages = ["."]
@@ -91,7 +97,7 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
+  branch = "ye-cds"
   name = "github.com/docker/docker"
   packages = [
     "api/types",
@@ -120,7 +126,7 @@
     "pkg/term",
     "pkg/term/windows"
   ]
-  revision = "db5c006bc8654ab1e4c24a1a9f460bbe4039686e"
+  source = "https://github.com/yesnault/moby.git"
 
 [[projects]]
   name = "github.com/docker/docker-credential-helpers"
@@ -1061,6 +1067,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a0ec61dd091f5f8a1e118107cb772b91f15d2f02053e437c5300261c3f8c42da"
+  inputs-digest = "586eaa6e5dd36085dd7984ecb240801ac7c34ee93bf6cfca443965d1818a3436"
   solver-name = "gps-cdcl"
   solver-version = 1

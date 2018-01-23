@@ -1,3 +1,5 @@
+// +build windows
+
 package system
 
 // Mknod is not implemented on Windows.
