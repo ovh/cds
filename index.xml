@@ -263,7 +263,10 @@ The following tools must be included in the model:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/hosting/download/</guid>
-      <description>You&amp;rsquo;ll find last release of CDS on Github Releases</description>
+      <description>You&amp;rsquo;ll find the lastest release of CDS on Github Releases
+CDS Worker CDS Worker Documentation
+   OS 386 amd64 arm     darwin      freebsd      linux      windows       CDSCTL cdsctl Documentation
+   OS 386 amd64 arm     darwin      freebsd      linux      windows       CDS Engine CDS Engine Documentation</description>
     </item>
     
     <item>
