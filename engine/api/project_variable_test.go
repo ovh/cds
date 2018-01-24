@@ -2,10 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/project"
@@ -19,9 +19,6 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -42,12 +39,18 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 		"name":           "foo",
 	}
 
-	route := router.GetRoute("GET", api.getVariableAuditInProjectHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	uri := router.GetRoute("GET", api.getVariableAuditInProjectHandler, vars)
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var audits []sdk.ProjectVariableAudit
-	tester.AddCall("Test_getVariableAuditInProjectHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t), iffy.UnmarshalResponse(&audits))
-	tester.Run()
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &audits))
 
 	assert.Nil(t, audits[0].VariableBefore)
 	assert.Equal(t, audits[0].VariableAfter.Name, "foo")

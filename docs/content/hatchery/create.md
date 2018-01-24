@@ -26,8 +26,6 @@ weight = 7
 
 * [NeedRegistration](https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.NeedRegistration) is used to know if your worker model need registration. For example if a user update a worker model you have to rebuild the virtual machine model linked to this worker model. And this function returns true if the worker model was updated after the virtual machine model was created on vsphere. In order to know that for vsphere we have add some metadata on each vms in order to add more custom data as the last creation of this vm for example.
 
-* [CanSpawn](https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.CanSpawn) function checks if the hatchery can spawn this model. For example with vsphere with check if there is a memory requirement, if it's the case it returns false because it's not already supported by our vsphere hatchery for now.
-
 * [WorkersStartedByModel](https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.WorkersStartedByModel) returns all workers which are running with a worker model. In our vsphere example, in order to know that we register a string metadata called model which tell us the name of our worker model.
 
 * [WorkersStarted](https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.WorkersStarted) returns all workers include those which are running to build a vm model or to register a worker model. For example in the vsphere case, in order to count them we all prefix our worker spawned with `worker-`.

@@ -197,3 +197,38 @@ func (s *PipelineTriggersService) DeletePipelineTrigger(pid interface{}, trigger
 
 	return s.client.Do(req, nil)
 }
+
+// RunPipelineTriggerOptions represents the available RunPipelineTrigger() options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/ci/triggers/README.html#triggering-a-pipeline
+type RunPipelineTriggerOptions struct {
+	Ref       *string           `url:"ref" json:"ref"`
+	Token     *string           `url:"token" json:"token"`
+	Variables map[string]string `url:"variables,omitempty" json:"variables,omitempty"`
+}
+
+// RunPipelineTrigger starts a trigger from a project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/ci/triggers/README.html#triggering-a-pipeline
+func (s *PipelineTriggersService) RunPipelineTrigger(pid interface{}, opt *RunPipelineTriggerOptions, options ...OptionFunc) (*Pipeline, *Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("projects/%s/trigger/pipeline", url.QueryEscape(project))
+
+	req, err := s.client.NewRequest("POST", u, opt, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pt := new(Pipeline)
+	resp, err := s.client.Do(req, pt)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return pt, resp, err
+}

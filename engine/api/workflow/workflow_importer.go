@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -59,6 +60,26 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	}
 	w.Visit(envLoader)
 
+	var hookLoad = func(n *sdk.WorkflowNode) {
+		for i := range n.Hooks {
+			h := &n.Hooks[i]
+			m, err := LoadHookModelByName(db, h.WorkflowHookModel.Name)
+			if err != nil {
+				log.Warning("workflow.Import> %s > Hook %s not found", w.Name, h.WorkflowHookModel.Name)
+				mError.Append(sdk.NewError(sdk.ErrNoEnvironment, fmt.Errorf("hook %s not found", h.WorkflowHookModel.Name)))
+				return
+			}
+			h.WorkflowHookModel = *m
+			h.WorkflowHookModelID = m.ID
+			for k, v := range m.DefaultConfig {
+				if _, has := h.Config[k]; !has {
+					h.Config[k] = v
+				}
+			}
+		}
+	}
+	w.Visit(hookLoad)
+
 	if !mError.IsEmpty() {
 		return mError
 	}
@@ -90,6 +111,19 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	w.ID = oldW.ID
 	if err := Update(db, store, w, oldW, proj, u); err != nil {
 		return sdk.WrapError(err, "Import> Unable to update workflow")
+	}
+
+	if len(w.Groups) > 0 {
+		for i := range w.Groups {
+			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
+			if err != nil {
+				return sdk.WrapError(err, "Import> Unable to load group %s", w.Groups[i].Group.Name)
+			}
+			w.Groups[i].Group = *g
+		}
+		if err := upsertAllGroups(db, w, w.Groups); err != nil {
+			return sdk.WrapError(err, "Import> Unable to update workflow")
+		}
 	}
 
 	if msgChan != nil {

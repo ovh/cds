@@ -2,12 +2,25 @@ package shredder
 
 import (
 	"bytes"
+	"crypto/rand"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"sort"
-
-	"github.com/satori/go.uuid"
 )
+
+func newUUID() string {
+	uuid := make([]byte, 16)
+	n, err := io.ReadFull(rand.Reader, uuid)
+	if n != len(uuid) || err != nil {
+		return ""
+	}
+	// variant bits; see section 4.1.1
+	uuid[8] = uuid[8]&^0xc0 | 0x80
+	// version 4 (pseudo-random); see section 4.1.3
+	uuid[6] = uuid[6]&^0xf0 | 0x40
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
+}
 
 // ShredFile shreds a file content. See Shred for more details
 func ShredFile(filename string, id string, opts *Opts) (Chunks, error) {
@@ -30,7 +43,7 @@ func ShredFile(filename string, id string, opts *Opts) (Chunks, error) {
 // You can define Encryption option such as GPG or AES. See GPGEncryption and AESEncryption structures.
 func Shred(content []byte, id string, opts *Opts) (Chunks, error) {
 	if id == "" {
-		id = uuid.NewV4().String()
+		id = newUUID()
 	}
 	ctx := &Ctx{
 		UUID:        id,

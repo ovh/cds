@@ -87,6 +87,17 @@ func TestPushEventUnmarshal(t *testing.T) {
 		t.Errorf("ProjectID is %v, want %v", event.ProjectID, 15)
 	}
 
+	if event.UserName != "John Smith" {
+		t.Errorf("Username is %s, want %s", event.UserName, "John Smith")
+	}
+
+	if event.Commits[0] == nil || event.Commits[0].Timestamp == nil {
+		t.Errorf("Commit Timestamp isn't nil")
+	}
+
+	if event.Commits[0] == nil || event.Commits[0].Author.Name != "Jordi Mallach" {
+		t.Errorf("Commit Username is %s, want %s", event.UserName, "Jordi Mallach")
+	}
 }
 
 func TestMergeEventUnmarshal(t *testing.T) {
@@ -199,6 +210,17 @@ func TestMergeEventUnmarshal(t *testing.T) {
 		t.Errorf("ObjectAttributes is %v, want %v", event.ObjectAttributes.Assignee.Username, "user1")
 	}
 
+	if event.User.Name == "" {
+		t.Errorf("Username is %s, want %s", event.User.Name, "Administrator")
+	}
+
+	if event.ObjectAttributes.LastCommit.Timestamp == nil {
+		t.Errorf("Timestamp isn't nil")
+	}
+
+	if name := event.ObjectAttributes.LastCommit.Author.Name; name != "GitLab dev user" {
+		t.Errorf("Commit Username is %s, want %s", name, "GitLab dev user")
+	}
 }
 
 func TestPipelineEventUnmarshal(t *testing.T) {
@@ -376,6 +398,17 @@ func TestPipelineEventUnmarshal(t *testing.T) {
 		t.Errorf("ObjectAttributes is %v, want %v", event.ObjectAttributes.ID, 1977)
 	}
 
+	if event.User.Name == "" {
+		t.Errorf("Username is %s, want %s", event.User.Name, "Administrator")
+	}
+
+	if event.Commit.Timestamp == nil {
+		t.Errorf("Timestamp isn't nil")
+	}
+
+	if name := event.Commit.Author.Name; name != "User" {
+		t.Errorf("Commit Username is %s, want %s", name, "User")
+	}
 }
 
 func TestBuildEventUnmarshal(t *testing.T) {
@@ -594,5 +627,17 @@ func TestMergeEventUnmarshalFromGroup(t *testing.T) {
 
 	if event.Assignee.Username != "root" {
 		t.Errorf("Assignee.Username is %v, want %v", event.Assignee, "root")
+	}
+
+	if event.User.Name == "" {
+		t.Errorf("Username is %s, want %s", event.User.Name, "Administrator")
+	}
+
+	if event.ObjectAttributes.LastCommit.Timestamp == nil {
+		t.Errorf("Timestamp isn't nil")
+	}
+
+	if name := event.ObjectAttributes.LastCommit.Author.Name; name != "Test User" {
+		t.Errorf("Commit Username is %s, want %s", name, "Test User")
 	}
 }

@@ -8,7 +8,7 @@ import "encoding/json"
 // For example, to open Firefox with JavaScript disabled:
 //    capabilities := agouti.NewCapabilities().Browser("firefox").Without("javascriptEnabled")
 //    driver.NewPage(agouti.Desired(capabilities))
-// See: https://code.google.com/p/selenium/wiki/DesiredCapabilities
+// See: https://github.com/SeleniumHQ/selenium/wiki/DesiredCapabilities
 //
 // All methods called on this instance will modify the original instance.
 type Capabilities map[string]interface{}

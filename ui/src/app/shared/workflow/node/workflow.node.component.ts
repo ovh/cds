@@ -67,6 +67,7 @@ export class WorkflowNodeComponent implements OnInit {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         this.workflowCoreSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe(wr => {
+            this.warnings = 0;
             if (wr) {
                 if (this.workflowRun && this.workflowRun.id !== wr.id) {
                     this.currentNodeRun = null;

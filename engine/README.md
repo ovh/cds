@@ -7,7 +7,7 @@ This component is responsible and is the entry point to several µServices such 
 * API
 * VCS
 * Hooks
-* [Hatcheries](https://ovh.github.io/cds/advanced/advanced.hatcheries/)
+* [Hatcheries](https://ovh.github.io/cds/hatchery/)
 
 The API component is the core component and is mandatory in every setups.
 
@@ -19,7 +19,7 @@ There are two ways to set up CDS:
 - with [toml](https://github.com/toml-lang/toml) configuration
 - with environment variables.
 
-[Read more](https://ovh.github.io/cds/installation/installation.configuration/)
+[Read more](https://ovh.github.io/cds/hosting/configuration/)
  
 ## Startup
 

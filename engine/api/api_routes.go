@@ -68,7 +68,6 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))
 	r.Handle("/mon/smtp/ping", r.GET(api.smtpPingHandler, Auth(true)))
 	r.Handle("/mon/version", r.GET(VersionHandler, Auth(false)))
-	r.Handle("/mon/stats", r.GET(api.getStatsHandler, Auth(false)))
 	r.Handle("/mon/db/migrate", r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
 	r.Handle("/mon/db/times", r.GET(api.getMonDBTimesDBHandler, NeedAdmin(true)))
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
@@ -331,7 +330,8 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
-	r.Handle("/user/tokens", r.GET(api.getUserTokenListHandler))
+	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
+	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
 	r.Handle("/user/import", r.POST(api.importUsersHandler, NeedAdmin(true)))
 	r.Handle("/user/{username}", r.GET(api.getUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.updateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.deleteUserHandler, NeedUsernameOrAdmin(true)))

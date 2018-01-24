@@ -44,3 +44,15 @@ cd ${CDS_SOURCES}/docs
 hugo server
 ```
 * go to http://localhost:1313/cds/
+
+
+### Golang Development
+
+We use https://github.com/golang/dep to manage CDS Dependencies.
+
+If you have to add or update a CDS Dependency, please follow instructions on https://github.com/golang/dep#adding-a-dependency
+
+And then launch:
+```bash
+$ dep prune
+```

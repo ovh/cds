@@ -1,0 +1,11 @@
+IMAP4rev1 Client for Go
+=======================
+
+To download and install this package run:
+
+go get github.com/mxk/go-imap/imap
+
+The documentation is available at:
+
+http://godoc.org/github.com/mxk/go-imap/imap
+http://godoc.org/github.com/mxk/go-imap/mock

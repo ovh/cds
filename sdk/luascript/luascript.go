@@ -27,6 +27,25 @@ func NewCheck() (*Check, error) {
 			RegistrySize:  120 * 20,
 		})
 
+	// Opening a subset of builtin modules
+	for _, pair := range []struct {
+		n string
+		f lua.LGFunction
+	}{
+		{lua.LoadLibName, lua.OpenPackage}, // Must be first
+		{lua.BaseLibName, lua.OpenBase},
+		{lua.TabLibName, lua.OpenTable},
+		{lua.StringLibName, lua.OpenString},
+	} {
+		if err := state.CallByParam(lua.P{
+			Fn:      state.NewFunction(pair.f),
+			NRet:    0,
+			Protect: true,
+		}, lua.LString(pair.n)); err != nil {
+			return nil, err
+		}
+	}
+
 	// Sandboxing lua engine
 	if err := state.DoString("coroutine=nil;debug=nil;io=nil;open=nil;os=nil"); err != nil {
 		return nil, err

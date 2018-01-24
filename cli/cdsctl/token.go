@@ -18,6 +18,7 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(tokenListCmd, tokenListRun, nil),
 			cli.NewGetCommand(tokenCreateCmd, tokenCreateRun, nil),
+			cli.NewGetCommand(tokenFindCmd, tokenFindRun, nil),
 			cli.NewDeleteCommand(tokenDeleteCmd, tokenDeleteRun, nil),
 		})
 )
@@ -53,6 +54,27 @@ func tokenCreateRun(v cli.Values) (interface{}, error) {
 	return *token, nil
 }
 
+var tokenFindCmd = cli.Command{
+	Name:  "find",
+	Short: "Find an existing token",
+	Long: `
+Find an existing token with his value to have his description, creation date and the name of the creator.
+	`,
+	Example: `cdsctl token find "myTokenValue"`,
+	Aliases: []string{"check", "describe"},
+	Args: []cli.Arg{
+		{Name: "token"},
+	},
+}
+
+func tokenFindRun(v cli.Values) (interface{}, error) {
+	token, err := client.FindToken(v["token"])
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+
 var tokenDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a token linked to a group",
@@ -73,10 +95,7 @@ func tokenDeleteRun(v cli.Values) error {
 		return fmt.Errorf("Token id is bad formatted")
 	}
 
-	if err := client.GroupDeleteToken(v["groupname"], tokenID); err != nil {
-		return err
-	}
-	return nil
+	return client.GroupDeleteToken(v["groupname"], tokenID)
 }
 
 var tokenListCmd = cli.Command{

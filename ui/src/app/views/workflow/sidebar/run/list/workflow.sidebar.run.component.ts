@@ -179,7 +179,10 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                   });
               });
             }
-            this.filteredWorkflowRuns.forEach((r) => this.filteredTags[r.id] = this.getFilteredTags(r.tags));
+            this.filteredWorkflowRuns.forEach((r) => {
+              this.filteredTags[r.id] = this.getFilteredTags(r.tags);
+              r.duration = this.getDuration(r.status, r.start, r.last_execution);
+            });
         }
     }
 

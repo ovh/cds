@@ -11,6 +11,7 @@ import {Project} from '../../../../../model/project.model';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {HookEvent} from '../hook.event';
 import {first, finalize} from 'rxjs/operators';
+import {Observable} from 'rxjs/Observable';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -67,21 +68,23 @@ export class WorkflowNodeHookFormComponent {
 
     show(): void {
         this.loadingModels = true;
-        this._hookService.getHookModel(this.project, this.workflow, this.node)
-          .pipe(
+        Observable.zip(
+            this._hookService.getHookModel(this.project, this.workflow, this.node),
+            this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id),
+            (hms, wtc) => {
+                this.hooksModel = hms;
+                if (this._hook && this._hook.model) {
+                    this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
+                }
+                this.operators = wtc.operators;
+                this.conditionNames = wtc.names;
+            }
+        ).pipe(
             first(),
             finalize(() => this.loadingModels = false)
-          )
-          .subscribe(hms => {
-              this.hooksModel = hms;
-              if (this._hook && this._hook.model) {
-                  this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
-              }
-          });
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).pipe(first()).subscribe( wtc => {
-            this.operators = wtc.operators;
-            this.conditionNames = wtc.names;
-        });
+        )
+        .subscribe();
+
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookFormModal);
         this.modal = this._modalService.open(this.modalConfig);
     }

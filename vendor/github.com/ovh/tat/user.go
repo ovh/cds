@@ -86,7 +86,7 @@ type UserCriteria struct {
 	Fullname        string
 	DateMinCreation string
 	DateMaxCreation string
-	SortBy          string
+	SortBy		string
 }
 
 //ContactsJSON represents a contact for a user, in contacts attribute on a user

@@ -12,7 +12,7 @@ now.BeginningOfDay()
 #### But `now` is so common I can't search the project with my favorite search engine
 
 * Star it in github [https://github.com/jinzhu/now](https://github.com/jinzhu/now)
-* Search it with [http://godoc.org](http://godoc.org)
+* Documentation at [godoc.org](https://godoc.org/github.com/jinzhu/now)
 
 ## Install
 

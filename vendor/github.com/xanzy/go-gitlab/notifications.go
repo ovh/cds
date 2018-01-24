@@ -24,7 +24,7 @@ type NotificationSettings struct {
 	Events            *NotificationEvents    `json:"events"`
 }
 
-// NotificationEvents represents the avialable notification setting events.
+// NotificationEvents represents the available notification setting events.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/notification_settings.html#notification-settings

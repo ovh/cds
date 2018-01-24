@@ -17,3 +17,14 @@ func TestLuaCheck(t *testing.T) {
 	assert.False(t, l.IsError)
 	assert.True(t, l.Result)
 }
+
+func TestLuaCheckStrings(t *testing.T) {
+	l, err := NewCheck()
+	test.NoError(t, err)
+	l.SetVariables(map[string]string{
+		"cds.application": "mon-appli",
+	})
+	test.NoError(t, l.Perform("return string.match(\"abcdefg\", \"b..\") == \"bcd\""))
+	assert.False(t, l.IsError)
+	assert.True(t, l.Result)
+}

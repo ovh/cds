@@ -47,8 +47,6 @@ func (c *Client) getCancelable(key string, options Options,
 	}
 	p += str
 
-	fmt.Println("------>%s", p)
-
 	req := NewRawRequest("GET", p, nil, cancel)
 	resp, err := c.SendRequest(req)
 
