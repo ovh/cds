@@ -32,7 +32,7 @@ CDS Command line interface: [read more](https://ovh.github.io/cds/cli/cdsctl/)
 
 ### Worker
 
-In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](https://ovh.github.io/cds/cli/worker/)
+In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](https://ovh.github.io/cds/worker/)
 
 ### Hatchery
 
