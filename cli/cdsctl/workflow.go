@@ -1,18 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"os"
-	"regexp"
-	"strconv"
-	"strings"
 
-	"github.com/fsamin/go-dump"
+	repo "github.com/fsamin/go-repo"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
-	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var (
@@ -26,6 +21,7 @@ var (
 			cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...),
 			cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil, withAllCommandModifiers()...),
 			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(workflowStatusCmd, workflowStatusRun, nil, withAllCommandModifiers()...),
 			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowStopCmd, workflowStopRun, nil, withAllCommandModifiers()...),
@@ -37,229 +33,49 @@ var (
 		})
 )
 
-var workflowListCmd = cli.Command{
-	Name:  "list",
-	Short: "List CDS workflows",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-	},
-}
-
-func workflowListRun(v cli.Values) (cli.ListResult, error) {
-	w, err := client.WorkflowList(v[_ProjectKey])
+func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) {
+	//Try to get the latest commit
+	r, err := repo.New(".")
 	if err != nil {
-		return nil, err
+		return 0, nil
 	}
-	return cli.AsListResult(w), nil
-}
 
-var workflowHistoryCmd = cli.Command{
-	Name:  "history",
-	Short: "History of a CDS workflow",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-		{Name: _WorkflowName},
-	},
-	OptionalArgs: []cli.Arg{
+	latestCommit, err := r.LatestCommit()
+	if err != nil {
+		return 0, fmt.Errorf("unable to get latest commit: %v", err)
+	}
+
+	filters := []cdsclient.Filter{
 		{
-			Name: "offset",
-			IsValid: func(s string) bool {
-				match, _ := regexp.MatchString(`[0-9]?`, s)
-				return match
-			},
-			Weight: 1,
+			Name:  "name",
+			Value: workflowName,
 		},
 		{
-			Name: "limit",
-			IsValid: func(s string) bool {
-				match, _ := regexp.MatchString(`[0-9]?`, s)
-				return match
-			},
-			Weight: 2,
+			Name:  "git.hash",
+			Value: latestCommit.Hash,
 		},
-	},
-}
-
-func workflowHistoryRun(v cli.Values) (cli.ListResult, error) {
-	var offset int64
-	if v.GetString("offset") != "" {
-		var errn error
-		offset, errn = v.GetInt64("offset")
-		if errn != nil {
-			return nil, errn
-		}
 	}
-
-	var limit int64
-	if v.GetString("limit") != "" {
-		var errl error
-		limit, errl = v.GetInt64("limit")
-		if errl != nil {
-			return nil, errl
-		}
-	}
-
-	w, err := client.WorkflowRunList(v[_ProjectKey], v[_WorkflowName], offset, limit)
+	runs, err := client.WorkflowRunSearch(workflowName, 0, 1, filters...)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	return cli.AsListResult(w), nil
-}
-
-var workflowShowCmd = cli.Command{
-	Name:  "show",
-	Short: "Show a CDS workflow",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-		{Name: _WorkflowName},
-	},
-	OptionalArgs: []cli.Arg{
-		{
-			Name: "run-number",
-			IsValid: func(s string) bool {
-				match, _ := regexp.MatchString(`[0-9]?`, s)
-				return match
-			},
-			Weight: 1,
-		},
-	},
-}
-
-func workflowShowRun(v cli.Values) (interface{}, error) {
-	var runNumber int64
-	if v.GetString("run-number") != "" {
-		var errl error
-		runNumber, errl = v.GetInt64("run-number")
-		if errl != nil {
-			return nil, errl
-		}
+	if len(runs) != 1 {
+		return 0, fmt.Errorf("workflow run not found : %+v", runs)
 	}
 
-	if runNumber == 0 {
-		w, err := client.WorkflowGet(v[_ProjectKey], v[_WorkflowName])
-		if err != nil {
-			return nil, err
-		}
-		return *w, nil
+	if runs[0].Number > 0 {
+		return runs[0].Number, nil
 	}
 
-	w, err := client.WorkflowRunGet(v[_ProjectKey], v[_WorkflowName], runNumber)
+	// If no run number, get the latest
+	runs, err = client.WorkflowRunList(projectKey, workflowName, 0, 1)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	var tags []string
-	for _, tag := range w.Tags {
-		tags = append(tags, fmt.Sprintf("%s:%s", tag.Tag, tag.Value))
+	if len(runs) != 1 {
+		return 0, fmt.Errorf("workflow run not found : %+v", runs)
 	}
 
-	type wtags struct {
-		sdk.WorkflowRun
-		Payload string `cli:"payload"`
-		Tags    string `cli:"tags"`
-	}
-
-	var payload []string
-	if v, ok := w.WorkflowNodeRuns[w.Workflow.RootID]; ok {
-		if len(v) > 0 {
-			e := dump.NewDefaultEncoder(new(bytes.Buffer))
-			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-			e.ExtraFields.DetailedMap = false
-			e.ExtraFields.DetailedStruct = false
-			e.ExtraFields.Len = false
-			e.ExtraFields.Type = false
-			pl, errm1 := e.ToStringMap(v[0].Payload)
-			if errm1 != nil {
-				return nil, errm1
-			}
-			for k, kv := range pl {
-				payload = append(payload, fmt.Sprintf("%s:%s", k, kv))
-			}
-			payload = append(payload)
-		}
-	}
-
-	wt := &wtags{*w, strings.Join(payload, " "), strings.Join(tags, " ")}
-	return *wt, nil
-}
-
-var workflowDeleteCmd = cli.Command{
-	Name:  "delete",
-	Short: "Delete a CDS workflow",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-		{Name: _WorkflowName},
-	},
-}
-
-func workflowDeleteRun(v cli.Values) error {
-	err := client.WorkflowDelete(v[_ProjectKey], v[_WorkflowName])
-	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
-		fmt.Println(err.Error())
-		os.Exit(0)
-	}
-	return err
-}
-
-var workflowStopCmd = cli.Command{
-	Name:  "stop",
-	Short: "Stop a CDS workflow or a specific node name",
-	Long:  "Stop a CDS workflow or a specific node name",
-	Example: `
-		cdsctl workflow stop MYPROJECT myworkflow 5 # To stop a workflow run on number 5
-		cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node run on workflow run 5
-	`,
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-		{Name: _WorkflowName},
-	},
-	Args: []cli.Arg{
-		{Name: "run-number"},
-	},
-	OptionalArgs: []cli.Arg{
-		{Name: "node-name"},
-	},
-}
-
-func workflowStopRun(v cli.Values) error {
-	var fromNodeID int64
-	runNumber, errp := strconv.ParseInt(v.GetString("run-number"), 10, 64)
-	if errp != nil {
-		return fmt.Errorf("run-number invalid: not a integer")
-	}
-
-	if v.GetString("node-name") != "" {
-		if runNumber <= 0 {
-			return fmt.Errorf("You can use flag node-name without flag run-number")
-		}
-		wr, err := client.WorkflowRunGet(v[_ProjectKey], v[_WorkflowName], runNumber)
-		if err != nil {
-			return err
-		}
-		for _, wnrs := range wr.WorkflowNodeRuns {
-			if wnrs[0].WorkflowNodeName == v.GetString("node-name") {
-				fromNodeID = wnrs[0].ID
-				break
-			}
-		}
-		if fromNodeID == 0 {
-			return fmt.Errorf("Node not found")
-		}
-	}
-
-	if fromNodeID != 0 {
-		wNodeRun, err := client.WorkflowNodeStop(v[_ProjectKey], v[_WorkflowName], runNumber, fromNodeID)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Workflow node %s from workflow %s #%d has been stopped\n", v.GetString("node-name"), v[_WorkflowName], wNodeRun.Number)
-	} else {
-		w, err := client.WorkflowStop(v[_ProjectKey], v[_WorkflowName], runNumber)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Workflow %s #%d has been stopped\n", v[_WorkflowName], w.Number)
-	}
-
-	return nil
+	return runs[0].Number, nil
 }

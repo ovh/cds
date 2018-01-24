@@ -94,36 +94,10 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "ye-cds"
+  branch = "master"
   name = "github.com/docker/docker"
-  packages = [
-    "api/types",
-    "api/types/blkiodev",
-    "api/types/container",
-    "api/types/filters",
-    "api/types/mount",
-    "api/types/network",
-    "api/types/registry",
-    "api/types/strslice",
-    "api/types/swarm",
-    "api/types/swarm/runtime",
-    "api/types/versions",
-    "opts",
-    "pkg/archive",
-    "pkg/fileutils",
-    "pkg/homedir",
-    "pkg/idtools",
-    "pkg/ioutils",
-    "pkg/jsonmessage",
-    "pkg/longpath",
-    "pkg/mount",
-    "pkg/pools",
-    "pkg/stdcopy",
-    "pkg/system",
-    "pkg/term",
-    "pkg/term/windows"
-  ]
-  source = "https://github.com/yesnault/moby.git"
+  packages = ["api/types","api/types/blkiodev","api/types/container","api/types/filters","api/types/mount","api/types/network","api/types/registry","api/types/strslice","api/types/swarm","api/types/swarm/runtime","api/types/versions","opts","pkg/archive","pkg/fileutils","pkg/homedir","pkg/idtools","pkg/ioutils","pkg/jsonmessage","pkg/longpath","pkg/mount","pkg/pools","pkg/stdcopy","pkg/system","pkg/term","pkg/term/windows"]
+  revision = "e11bf870a3170a1d2b1e177a0d7ccc66200bd643"
 
 [[projects]]
   name = "github.com/docker/docker-credential-helpers"
@@ -191,7 +165,7 @@
   branch = "master"
   name = "github.com/fsamin/go-repo"
   packages = ["."]
-  revision = "7fc6e6ff62133460b7f288043db6e47edf5dd6aa"
+  revision = "fd8b30226d76e93f2814345cf2e22f1215c5d561"
 
 [[projects]]
   name = "github.com/fsamin/go-shredder"
@@ -845,6 +819,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8ceec8f397667248117a6c7703b8f18db0bbcf5dad0203b6f54e63ddb2fd069d"
+  inputs-digest = "fea8145d15da04238ca73cb70aa1e5660defb92f40f8b679f90a9657c8b2f7e2"
   solver-name = "gps-cdcl"
   solver-version = 1

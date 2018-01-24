@@ -81,3 +81,12 @@ func TestLocalConfigGet(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "value", val)
 }
+
+func TestLatestCommit(t *testing.T) {
+	r, err := New(".")
+	assert.NoError(t, err)
+
+	c, err := r.LatestCommit()
+	t.Logf("%+v", c)
+	assert.NoError(t, err)
+}
