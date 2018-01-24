@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -101,7 +102,7 @@ var (
 	loadWorkflows = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		workflows, errW := workflow.LoadAll(db, proj.Key)
 		if errW != nil {
-			return sdk.WrapError(errW, " workflow.LoadAll")
+			log.Error("Unable to load workflows for project %s: %v", proj.Key, errW)
 		}
 		proj.Workflows = workflows
 		return nil
