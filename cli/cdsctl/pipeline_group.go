@@ -29,7 +29,7 @@ var pipelineGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS pipeline",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "pipeline-name"},
@@ -80,7 +80,7 @@ func pipelineGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.PipelineGroupsImport(v["project-key"], v["pipeline-name"], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.PipelineGroupsImport(v[_ProjectKey], v["pipeline-name"], reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
 	fmt.Printf("Groups imported in pipeline %s with success\n", v["pipeline-name"])

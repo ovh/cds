@@ -15,8 +15,8 @@ var workflowPullCmd = cli.Command{
 	Name:  "pull",
 	Short: "Pull a workflow",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow-name"},
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
 	},
 	Flags: []cli.Flag{
 		{
@@ -56,7 +56,7 @@ func workflowPullRun(c cli.Values) error {
 		return fmt.Errorf("Unable to create directory %s: %v", c.GetString("output-dir"), err)
 	}
 
-	tr, err := client.WorkflowPull(c.GetString("project-key"), c.GetString("workflow-name"), c.GetBool("with-permissions"))
+	tr, err := client.WorkflowPull(c.GetString(_ProjectKey), c.GetString(_WorkflowName), c.GetBool("with-permissions"))
 	if err != nil {
 		return err
 	}

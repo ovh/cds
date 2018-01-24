@@ -16,8 +16,8 @@ var workflowRunManualCmd = cli.Command{
 	Name:  "run",
 	Short: "Run a CDS workflow",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow-name"},
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
 	},
 	OptionalArgs: []cli.Arg{
 		{Name: "payload"},
@@ -74,7 +74,7 @@ func workflowRunManualRun(v cli.Values) error {
 		if runNumber <= 0 {
 			return fmt.Errorf("You can use flag node-name without flag run-number")
 		}
-		wr, err := client.WorkflowRunGet(v["project-key"], v["workflow-name"], runNumber)
+		wr, err := client.WorkflowRunGet(v[_ProjectKey], v[_WorkflowName], runNumber)
 		if err != nil {
 			return err
 		}
@@ -89,12 +89,12 @@ func workflowRunManualRun(v cli.Values) error {
 		}
 	}
 
-	w, err := client.WorkflowRunFromManual(v["project-key"], v["workflow-name"], manual, runNumber, fromNodeID)
+	w, err := client.WorkflowRunFromManual(v[_ProjectKey], v[_WorkflowName], manual, runNumber, fromNodeID)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Workflow %s #%d has been launched\n", v["workflow-name"], w.Number)
+	fmt.Printf("Workflow %s #%d has been launched\n", v[_WorkflowName], w.Number)
 
 	var baseURL string
 	configUser, err := client.ConfigUser()
@@ -112,7 +112,7 @@ func workflowRunManualRun(v cli.Values) error {
 	}
 
 	if !v.GetBool("interactive") {
-		url := fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", baseURL, v["project-key"], v["workflow-name"], w.Number)
+		url := fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", baseURL, v[_ProjectKey], v[_WorkflowName], w.Number)
 		fmt.Println(url)
 
 		if v.GetBool("open-web-browser") {

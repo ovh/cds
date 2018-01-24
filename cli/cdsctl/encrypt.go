@@ -46,7 +46,7 @@ Or push your workflow
 	Example: `cdsctl encrypt MYPROJECT my-data my-super-secret-value
 my-data: 01234567890987654321`,
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "variable-name"},
@@ -64,7 +64,7 @@ func encryptRun(v cli.Values) error {
 		secretValue = cli.ReadLine()
 	}
 
-	variable, err := client.VariableEncrypt(v.GetString("project-key"), v.GetString("variable-name"), secretValue)
+	variable, err := client.VariableEncrypt(v.GetString(_ProjectKey), v.GetString("variable-name"), secretValue)
 	if err != nil {
 		return err
 	}

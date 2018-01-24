@@ -7,11 +7,17 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/ovh/cds/sdk"
-
 	repo "github.com/fsamin/go-repo"
+
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+)
+
+var (
+	_ProjectKey      = "project-key"
+	_ApplicationName = "application-name"
+	_WorkflowName    = "workflow-name"
 )
 
 type config struct {
@@ -124,13 +130,13 @@ func withAutoConf() cli.CommandModifier {
 			}
 
 			for _, arg := range c.Ctx {
-				if arg.Name == "project-key" {
+				if arg.Name == _ProjectKey {
 					*args = []string{autoDiscoveredProj}
 				}
-				if arg.Name == "application-name" {
+				if arg.Name == _ApplicationName {
 					*args = append(*args, autoDiscoveredApp)
 				}
-				if arg.Name == "workflow-name" {
+				if arg.Name == _WorkflowName {
 					*args = append(*args, autoDiscoveredWorkflow)
 				}
 			}

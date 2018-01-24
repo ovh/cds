@@ -26,7 +26,7 @@ var projectVariableCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new variable on project. Variable type can be one of password, text, string, key, boolean, number, repository",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "variable-name"},
@@ -41,14 +41,14 @@ func projectCreateVariableRun(v cli.Values) error {
 		Type:  v["variable-type"],
 		Value: v["variable-value"],
 	}
-	return client.ProjectVariableCreate(v["project-key"], variable)
+	return client.ProjectVariableCreate(v[_ProjectKey], variable)
 }
 
 var projectVariableListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS project variables",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "env-name"},
@@ -56,7 +56,7 @@ var projectVariableListCmd = cli.Command{
 }
 
 func projectListVariableRun(v cli.Values) (cli.ListResult, error) {
-	variables, err := client.ProjectVariablesList(v["project-key"])
+	variables, err := client.ProjectVariablesList(v[_ProjectKey])
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ var projectVariableDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS project variable",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "env-name"},
@@ -76,14 +76,14 @@ var projectVariableDeleteCmd = cli.Command{
 }
 
 func projectDeleteVariableRun(v cli.Values) error {
-	return client.ProjectVariableDelete(v["project-key"], v["variable-name"])
+	return client.ProjectVariableDelete(v[_ProjectKey], v["variable-name"])
 }
 
 var projectVariableUpdateCmd = cli.Command{
 	Name:  "update",
 	Short: "Update CDS project variable value",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "variable-oldname"},
@@ -94,12 +94,12 @@ var projectVariableUpdateCmd = cli.Command{
 }
 
 func projectUpdateVariableRun(v cli.Values) error {
-	variable, err := client.ProjectVariableGet(v["project-key"], v["variable-oldname"])
+	variable, err := client.ProjectVariableGet(v[_ProjectKey], v["variable-oldname"])
 	if err != nil {
 		return err
 	}
 	variable.Name = v["variable-name"]
 	variable.Value = v["variable-value"]
 	variable.Type = v["variable-type"]
-	return client.ProjectVariableUpdate(v["project-key"], variable)
+	return client.ProjectVariableUpdate(v[_ProjectKey], variable)
 }

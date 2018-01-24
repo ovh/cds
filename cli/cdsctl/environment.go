@@ -34,12 +34,12 @@ var environmentListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environments",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 }
 
 func environmentListRun(v cli.Values) (cli.ListResult, error) {
-	apps, err := client.EnvironmentList(v["project-key"])
+	apps, err := client.EnvironmentList(v[_ProjectKey])
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ var environmentCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS environment",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "environment-name"},
@@ -60,14 +60,14 @@ var environmentCreateCmd = cli.Command{
 
 func environmentCreateRun(v cli.Values) error {
 	env := &sdk.Environment{Name: v["environment-name"]}
-	return client.EnvironmentCreate(v["project-key"], env)
+	return client.EnvironmentCreate(v[_ProjectKey], env)
 }
 
 var environmentDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS environment",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "environment-name"},
@@ -75,7 +75,7 @@ var environmentDeleteCmd = cli.Command{
 }
 
 func environmentDeleteRun(v cli.Values) error {
-	err := client.EnvironmentDelete(v["project-key"], v["environment-name"])
+	err := client.EnvironmentDelete(v[_ProjectKey], v["environment-name"])
 	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoEnvironment) {
 		fmt.Println(err.Error())
 		os.Exit(0)

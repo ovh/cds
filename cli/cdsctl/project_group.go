@@ -29,7 +29,7 @@ var projectGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS project",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "path"},
@@ -78,10 +78,10 @@ func projectGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.ProjectGroupsImport(v["project-key"], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.ProjectGroupsImport(v[_ProjectKey], reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
-	fmt.Printf("Groups imported in project %s with success\n", v["project-key"])
+	fmt.Printf("Groups imported in project %s with success\n", v[_ProjectKey])
 
 	return nil
 }

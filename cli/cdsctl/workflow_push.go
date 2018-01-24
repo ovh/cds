@@ -20,7 +20,7 @@ var workflowPushCmd = cli.Command{
 		cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
 	`,
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	VariadicArgs: cli.Arg{
 		Name: "yaml-file",
@@ -69,7 +69,7 @@ func workflowPushRun(c cli.Values) error {
 	r := bytes.NewBuffer(btes)
 
 	// Push it !
-	msgList, err := client.WorkflowPush(c.GetString("project-key"), r)
+	msgList, err := client.WorkflowPush(c.GetString(_ProjectKey), r)
 	for _, msg := range msgList {
 		fmt.Println(msg)
 	}

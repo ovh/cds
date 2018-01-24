@@ -25,7 +25,7 @@ var environmentKeyCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new key on environment. key-type can be ssh or pgp",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "env-name"},
@@ -41,14 +41,14 @@ func environmentCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	return client.EnvironmentKeyCreate(v["project-key"], v["env-name"], key)
+	return client.EnvironmentKeyCreate(v[_ProjectKey], v["env-name"], key)
 }
 
 var environmentKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environment keys",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "env-name"},
@@ -56,7 +56,7 @@ var environmentKeyListCmd = cli.Command{
 }
 
 func environmentListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.EnvironmentKeysList(v["project-key"], v["env-name"])
+	keys, err := client.EnvironmentKeysList(v[_ProjectKey], v["env-name"])
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ var environmentKeyDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS environment key",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
 		{Name: "env-name"},
@@ -76,5 +76,5 @@ var environmentKeyDeleteCmd = cli.Command{
 }
 
 func environmentDeleteKeyRun(v cli.Values) error {
-	return client.EnvironmentKeysDelete(v["project-key"], v["env-name"], v["key-name"])
+	return client.EnvironmentKeysDelete(v[_ProjectKey], v["env-name"], v["key-name"])
 }

@@ -47,7 +47,7 @@ var projectShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS project",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 }
 
@@ -62,7 +62,7 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 			r.URL.RawQuery = q.Encode()
 		})
 	}
-	proj, err := client.ProjectGet(v["project-key"], mods...)
+	proj, err := client.ProjectGet(v[_ProjectKey], mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ var projectCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS project",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 		{Name: "project-name"},
 	},
 	OptionalArgs: []cli.Arg{
@@ -83,7 +83,7 @@ var projectCreateCmd = cli.Command{
 }
 
 func projectCreateRun(v cli.Values) error {
-	proj := &sdk.Project{Name: v["project-name"], Key: v["project-key"]}
+	proj := &sdk.Project{Name: v["project-name"], Key: v[_ProjectKey]}
 	return client.ProjectCreate(proj, v["group-name"])
 }
 
@@ -91,12 +91,12 @@ var projectDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS project",
 	Ctx: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 }
 
 func projectDeleteRun(v cli.Values) error {
-	projKey := v["project-key"]
+	projKey := v[_ProjectKey]
 	if v.GetBool("force") {
 		// Delete all workflow
 		ws, errW := client.WorkflowList(projKey)
