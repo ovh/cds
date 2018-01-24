@@ -49,7 +49,7 @@ services:
   cds-ui:
     image: ovhcom/cds-ui:latest
     environment:
-      BACKEND_HOST: ${HOSTNAME}:8081
+      BACKEND_HOST: cds-api:8081
       BASE_URL: /
     ports:
       - "2015:2015"
