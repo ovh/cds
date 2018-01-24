@@ -130,6 +130,9 @@ export class WorkflowAddComponent {
       if (this.createNewPipeline) {
         return this.createPipeline();
       }
+      if (this.workflow.root.pipeline_id) {
+          this.workflow.root.pipeline_id = Number(this.workflow.root.pipeline_id);
+      }
       this.pipelineSection = 'application';
     }
 
@@ -153,6 +156,9 @@ export class WorkflowAddComponent {
       if (this.createNewApplication && this.newApplication.name) {
         return this.createApplication();
       }
+      if (this.workflow.root.context.application_id) {
+          this.workflow.root.context.application_id = Number(this.workflow.root.context.application_id);
+      }
       this.pipelineSection = 'environment';
     }
 
@@ -170,6 +176,9 @@ export class WorkflowAddComponent {
     selectOrCreateEnvironment() {
       if (this.createNewEnvironment && this.newEnvironment.name) {
         return this.createEnvironment();
+      }
+      if (this.workflow.root.context.environment_id) {
+          this.workflow.root.context.environment_id = Number(this.workflow.root.context.environment_id);
       }
       this.createWorkflow();
     }
