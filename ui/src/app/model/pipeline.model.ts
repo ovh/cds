@@ -78,6 +78,24 @@ export class Pipeline {
         return false;
     }
 
+    public static mergeAndKeepOld(ref: Array<Parameter>, current: Array<Parameter>): Array<Parameter> {
+        if (!current) {
+            return ref;
+        }
+        if (!ref) {
+            return current;
+        }
+
+        let mapParam = current.reduce((m, o) => {
+            m[o.name] = o;
+            return m;
+        }, {});
+        ref.forEach( a => {
+            if (!mapParam[a.name]) {
+                current.push(a)
+            }
+        });
+    }
     /**
      * Merge parameters
      * @param ref
