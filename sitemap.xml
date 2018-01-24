@@ -301,12 +301,20 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/tags/</loc>
     <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/action/</loc>
   </url>
   
   <url>
@@ -342,11 +350,27 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/admin/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/</loc>
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/artifact/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/auth/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/build/</loc>
   </url>
   
   <url>
@@ -379,6 +403,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/engine/config/check/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/config/</loc>
   </url>
   
   <url>
@@ -490,6 +518,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/download/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/download/</loc>
   </url>
   
@@ -534,6 +566,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/group/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/group/</loc>
   </url>
   
@@ -554,6 +590,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/hatchery/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/_header/</loc>
   </url>
   
@@ -563,6 +603,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/history/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/hook/</loc>
   </url>
   
   <url>
@@ -678,6 +722,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/login/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/login/</loc>
   </url>
   
@@ -690,6 +738,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/mon/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/monitoring/</loc>
   </url>
   
@@ -698,7 +750,23 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/notification/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/parameter/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/pipeline/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/pipeline/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/plugin/</loc>
   </url>
   
   <url>
@@ -730,6 +798,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/project/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/project/</loc>
   </url>
   
@@ -742,11 +814,23 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/queue/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/worker/register/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/group/user/removeadmin/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/repositories_manager/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/requirement/</loc>
   </url>
   
   <url>
@@ -806,6 +890,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/suggest/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/worker/tag/</loc>
   </url>
   
@@ -815,6 +903,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/token/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/ui/</loc>
   </url>
   
   <url>
@@ -850,11 +942,19 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/user/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/group/user/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/user/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/variable/</loc>
   </url>
   
   <url>
@@ -882,11 +982,19 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/worker/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/worker/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/cli/worker/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/workflow/</loc>
   </url>
   
   <url>
