@@ -109,6 +109,8 @@ export class Pipeline {
                 current.push(a)
             }
         });
+
+        return current;
     }
     /**
      * Merge parameters
