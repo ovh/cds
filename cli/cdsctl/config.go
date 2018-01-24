@@ -176,7 +176,7 @@ func discoverConf() error {
 		return err
 	}
 
-	if cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct ?", name, fetchURL)) {
+	if cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL)) {
 		projs, err := client.ProjectList(true, true, cdsclient.Filter{
 			Name:  "repo",
 			Value: name,
@@ -197,7 +197,7 @@ func discoverConf() error {
 
 		//Set cds.project
 		if len(filteredProjs) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS project %s - %s. Is it correct ?", filteredProjs[0].Key, filteredProjs[0].Name)) {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS project %s - %s. Is it correct?", filteredProjs[0].Key, filteredProjs[0].Name)) {
 				chosenProj = &filteredProjs[0]
 			}
 		} else {
@@ -220,7 +220,7 @@ func discoverConf() error {
 
 		//Set cds.application
 		if len(chosenProj.Applications) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS application %s. Is it correct ?", chosenProj.Applications[0].Name)) {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS application %s. Is it correct?", chosenProj.Applications[0].Name)) {
 				if err := r.LocalConfigSet("cds", "application", chosenProj.Applications[0].Name); err != nil {
 					return err
 				}
@@ -244,7 +244,7 @@ func discoverConf() error {
 
 		//Set cds.workflow
 		if len(chosenProj.Workflows) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS workflow %s. Is it correct ?", chosenProj.Workflows[0].Name)) {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS workflow %s. Is it correct?", chosenProj.Workflows[0].Name)) {
 				if err := r.LocalConfigSet("cds", "workflow", chosenProj.Workflows[0].Name); err != nil {
 					return err
 				}
