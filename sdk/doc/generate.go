@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -227,6 +228,23 @@ func getAllRouteInfo(path string) []Doc {
 	return allDocs
 }
 
+type pageTmpl struct {
+	Title  string
+	Routes []routeTmpl
+}
+
+type routeTmpl struct {
+	Title        string
+	Description  string
+	URL          string
+	Method       string
+	Permissions  string
+	QueryParams  []string
+	Code         string
+	RequestBody  string
+	ResponseBody string
+}
+
 func writeRouteInfo(inputDocs []Doc, genPath string) error {
 	docsSection := make(map[string][]Doc)
 	for _, doc := range inputDocs {
@@ -236,16 +254,6 @@ func writeRouteInfo(inputDocs []Doc, genPath string) error {
 			docsSection[lineTitle] = append(docsSection[lineTitle], doc)
 		}
 	}
-
-	const template = `
-
-URL         | **%s**
------------ |----------
-Method      | %s     
-%sPermissions | %s     
-Code        | %s     
-
-`
 
 	for name, docs := range docsSection {
 		filename := fmt.Sprintf("%s/%s.md", genPath, name)
@@ -259,12 +267,23 @@ Code        | %s
 		if err != nil {
 			return err
 		}
-		var content = fmt.Sprintf("+++\ntitle = \"Routes %s\"\n+++\n\n", name)
+
+		t := template.New("routes")
+		t, err = t.ParseFiles("sdk/doc/routes.tmpl")
+		if err != nil {
+			return err
+		}
+		dataPage := pageTmpl{
+			Title:  name,
+			Routes: []routeTmpl{},
+		}
+
 		for _, doc := range docs {
+			route := routeTmpl{}
 			if doc.Title == "" {
-				content += fmt.Sprintf("### %s `%s`\n\n", doc.HTTPOperation, doc.URL)
+				route.Title = fmt.Sprintf("%s `%s`", doc.HTTPOperation, doc.URL)
 			} else {
-				content += fmt.Sprintf("### %s", doc.Title)
+				route.Title = doc.Title
 			}
 
 			var permissions string
@@ -289,31 +308,18 @@ Code        | %s
 				}
 				permissions += " Auth: true"
 			}
-
-			var params string
-			for _, v := range doc.QueryParams {
-				params += fmt.Sprintf("QueryParam|%s\n", v)
-			}
-
-			code := fmt.Sprintf("[%s](https://github.com/ovh/cds/search?q=%%22func+%%28api+*API%%29+%s%%22)\n", doc.Method, doc.Method)
-			content += fmt.Sprintf(template, doc.URL, doc.HTTPOperation, params, permissions, code)
-
-			content += "\n"
-			if doc.Description != "" {
-				content += fmt.Sprintf("#### Description \n\n %s\n\n", doc.Description)
-			}
-
-			if doc.RequestBody != "" {
-				content += fmt.Sprintf("#### Request Body \n\n```\n%s\n```\n", doc.RequestBody)
-			}
-
-			if doc.ResponseBody != "" {
-				content += fmt.Sprintf("#### Response Body \n\n```\n%s\n```\n", doc.ResponseBody)
-			}
-
-			content += "\n\n"
+			route.Permissions = permissions
+			route.URL = doc.URL
+			route.Method = doc.HTTPOperation
+			route.QueryParams = doc.QueryParams
+			route.Code = fmt.Sprintf("[%s](https://github.com/ovh/cds/search?q=%%22func+%%28api+*API%%29+%s%%22)\n", doc.Method, doc.Method)
+			route.Description = doc.Description
+			route.RequestBody = doc.RequestBody
+			route.ResponseBody = doc.ResponseBody
+			dataPage.Routes = append(dataPage.Routes, route)
 		}
-		if _, err := f.WriteString(content); err != nil {
+
+		if err := t.ExecuteTemplate(f, "routes.tmpl", dataPage); err != nil {
 			return err
 		}
 		f.Sync()
