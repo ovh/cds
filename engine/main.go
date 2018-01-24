@@ -104,7 +104,6 @@ var docCmd = &cobra.Command{
 	Short:  "generate hugo doc for building http://ovh.github.com/cds",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("%+v", args)
 		if len(args) != 2 {
 			cmd.Usage()
 			os.Exit(1)
