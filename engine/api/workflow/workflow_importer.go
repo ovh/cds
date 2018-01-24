@@ -59,6 +59,26 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	}
 	w.Visit(envLoader)
 
+	var hookLoad = func(n *sdk.WorkflowNode) {
+		for i := range n.Hooks {
+			h := &n.Hooks[i]
+			m, err := LoadHookModelByName(db, h.WorkflowHookModel.Name)
+			if err != nil {
+				log.Warning("workflow.Import> %s > Hook %s not found", w.Name, h.WorkflowHookModel.Name)
+				mError.Append(sdk.NewError(sdk.ErrNoEnvironment, fmt.Errorf("hook %s not found", h.WorkflowHookModel.Name)))
+				return
+			}
+			h.WorkflowHookModel = *m
+			h.WorkflowHookModelID = m.ID
+			for k, v := range m.DefaultConfig {
+				if _, has := h.Config[k]; !has {
+					h.Config[k] = v
+				}
+			}
+		}
+	}
+	w.Visit(hookLoad)
+
 	if !mError.IsEmpty() {
 		return mError
 	}
