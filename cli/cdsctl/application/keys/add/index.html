@@ -482,25 +482,59 @@
         <span>action</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/action/delete/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/action/delete/">
-          <span>delete</span>
+    <li data-nav-id="/introduction/concepts/" class="dd-item">
+      <a href="https://ovh.github.io/cds/introduction/concepts/">
+        <span>Concepts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/introduction/concepts/pipeline/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/concepts/pipeline/">
+          <span>Pipeline</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/action/doc/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/action/doc/">
-          <span>doc</span>
+      <li data-nav-id="/introduction/concepts/stage/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/concepts/stage/">
+          <span>Stage</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/action/list/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/action/list/">
-          <span>list</span>
+      <li data-nav-id="/introduction/concepts/job/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/concepts/job/">
+          <span>Job</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/action/show/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/action/show/">
-          <span>show</span>
+      <li data-nav-id="/introduction/concepts/step/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/concepts/step/">
+          <span>Step</span>
         </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/introduction/scopes/" class="dd-item">
+      <a href="https://ovh.github.io/cds/introduction/scopes/">
+        <span>Scopes &amp; ACLs</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/introduction/scopes/project/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/project/">
+          <span>Project</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/scopes/application/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/application/">
+          <span>Application</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/scopes/environment/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/environment/">
+          <span>Environment</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/scopes/permissions/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/permissions/">
+          <span>Permissions</span>
+        </a>
+    </li>
+        </ul>
     </li>
         </ul>
     </li>
@@ -1416,7 +1450,7 @@
 
 <p>Add a new key on application. key type can be ssh or pgp</p>
 
-<pre><code>cdsctl application keys add KEY APP-NAME KEY-NAME KEY-TYPE [flags]
+<pre><code>cdsctl application keys add [ PROJECT-KEY APPLICATION-NAME ] KEY-NAME KEY-TYPE [flags]
 </code></pre>
 
 <h3 id="options">Options</h3>
