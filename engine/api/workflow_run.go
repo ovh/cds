@@ -57,7 +57,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	//Parse all form values
 	mapFilters := map[string]string{}
 	for k := range r.Form {
-		if k != "offset" && k != "limit" {
+		if k != "offset" && k != "limit" && k != "workflow" {
 			mapFilters[k] = r.FormValue(k)
 		}
 	}

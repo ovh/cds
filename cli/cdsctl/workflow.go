@@ -47,7 +47,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 
 	filters := []cdsclient.Filter{
 		{
-			Name:  "name",
+			Name:  "workflow",
 			Value: workflowName,
 		},
 		{
@@ -55,7 +55,8 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 			Value: latestCommit.Hash,
 		},
 	}
-	runs, err := client.WorkflowRunSearch(workflowName, 0, 1, filters...)
+	//Searching workflow
+	runs, err := client.WorkflowRunSearch(projectKey, 0, 0, filters...)
 	if err != nil {
 		return 0, err
 	}

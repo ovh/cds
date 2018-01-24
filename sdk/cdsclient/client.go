@@ -25,7 +25,7 @@ func New(c Config) Interface {
 	cli := new(client)
 	cli.config = c
 	cli.HTTPClient = &http.Client{
-		Timeout: time.Second * 30,
+		Timeout: time.Second * 60,
 	}
 	cli.init()
 	return cli

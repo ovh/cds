@@ -218,6 +218,10 @@ func discoverConf() error {
 			}
 		}
 
+		if chosenProj == nil {
+			return nil
+		}
+
 		//Set cds.application
 		if len(chosenProj.Applications) == 1 {
 			if cli.AskForConfirmation(fmt.Sprintf("Found CDS application %s. Is it correct?", chosenProj.Applications[0].Name)) {
