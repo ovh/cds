@@ -486,7 +486,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go services.KillDeadServices(ctx, services.NewRepository(a.mustDB, a.Cache))
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
-	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap())
+	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	if !a.Config.Schedulers.Disabled {
 		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {

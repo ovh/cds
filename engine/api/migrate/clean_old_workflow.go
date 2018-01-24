@@ -4,29 +4,30 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hook"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
-
-	"github.com/golang/protobuf/ptypes/duration"
-	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk/log"
-	"sync"
 )
 
-func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User, apiUrl string) {
+func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap, apiUrl string) {
+	u := &sdk.User{
+		Admin:    true,
+		Username: "CDS-DeleteApp",
+	}
 	tick := time.NewTicker(10 * time.Second).C
 	for {
 		select {
@@ -48,36 +49,43 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 					continue
 				}
 
-				p, errP := project.LoadByID(DBFunc(), store, a.ProjectID, u)
+				p, errP := project.LoadByID(DBFunc(), store, a.ProjectID, u, project.LoadOptions.WithEnvironments)
 				if errP != nil {
 					log.Error("CleanOldWorkflow> Cannot load project %d: %s", p.ID, errP)
 					continue
 				}
 
+				chanErr := make(chan error)
+
 				wg := sync.WaitGroup{}
 				wg.Add(1)
 				go cleanApplicationHook(DBFunc(), store, &wg, *p, *a, apiUrl)
 				wg.Add(1)
-				go cleanApplication(DBFunc(), &wg, *a)
+				go cleanApplication(DBFunc(), &wg, chanErr, *a)
 				wg.Add(1)
-				go cleanApplicationArtifact(DBFunc(), &wg, *a)
+				go cleanApplicationArtifact(DBFunc(), &wg, chanErr, *a)
 				wg.Add(1)
-				go cleanApplicationPipelineBuild(DBFunc(), &wg, *a)
+				go cleanApplicationPipelineBuild(DBFunc(), &wg, chanErr, *a)
+
+				// TODO Read from error chan
+
+				wg.Wait()
+				close(chanErr)
+
+				// TODO IF NO ERROR, delete app pipeline and app
+				//if err := application.DeleteAllApplicationPipeline(tx, app.ID); err != nil {
+				//	return sdk.WrapError(err, "cleanApplication> Unable to delete application pipeline for %s", app.Name)
+				//}
+				// Delete app
 			}
 
 		}
 	}
-	// Load application
-
-	// for each application
-
-	// go delete stash hook
 	// clean application
-	cleanApplication(db)
 
 }
 
-// cleanApplicationHook
+// cleanApplicationHook don't care about error
 func cleanApplicationHook(db *gorp.DbMap, store cache.Store, wg *sync.WaitGroup, p sdk.Project, app sdk.Application, apiURL string) {
 	defer wg.Done()
 	if app.VCSServer == "" {
@@ -120,54 +128,92 @@ func cleanApplicationHook(db *gorp.DbMap, store cache.Store, wg *sync.WaitGroup,
 			log.Error("cleanApplicationHook> Cannot delete hooks from repomanager: %s / %s", vcsServer.Name, app.RepositoryFullname)
 			return
 		}
+
+		// Delete hook on table hook is done after
 	}
 }
 
-func cleanApplicationArtifact(db *gorp.DbMap, wg *sync.WaitGroup, app sdk.Application) {
+func cleanApplicationArtifact(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, app sdk.Application) {
+	defer wg.Done()
 	arts, err := artifact.LoadArtifactByApplicationID(db, app.ID)
 	if err != nil {
-		log.Error("cleanApplicationArtifact> Cannot load artifact for application %s", app.ID)
+		err := fmt.Errorf("cleanApplicationArtifact> Cannot load artifact for application %s: %s", app.ID, err)
+		log.Warning("%s", err)
+		chErr <- err
 		return
 	}
 	for _, ar := range arts {
 		if err := artifact.DeleteArtifact(db, ar.ID); err != nil {
-			log.Error("cleanApplicationArtifact> Cannot delete artifact %d", ar.ID)
+			err := fmt.Errorf("cleanApplicationArtifact> Cannot delete artifact %d : %s", app.ID, err)
+			log.Warning("%s", err)
+			chErr <- err
 			continue
 		}
 		time.Sleep(1 * time.Second)
 	}
 }
 
-func cleanApplicationPipelineBuild(db *gorp.DbMap, wg *sync.WaitGroup, app sdk.Application) {
-
+func cleanApplicationPipelineBuild(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, app sdk.Application) {
+	defer wg.Done()
+	pipBuildMax := int64(50)
+	for {
+		result, err := db.Exec("DELETE FROM pipeline_build where application_id = $1 LIMIT $2", app.ID, pipBuildMax)
+		if err != nil {
+			err := fmt.Errorf("cleanApplicationPipelineBuild> Cannot delete pipeline-build for application %d: %s", app.ID, err)
+			log.Warning("%s", err)
+			chErr <- err
+			break
+		}
+		nbRows, err := result.RowsAffected()
+		if err != nil {
+			err := fmt.Errorf("cleanApplicationPipelineBuild> Cannot get nb of rows affected appID %d: %s", app.ID, err)
+			log.Warning("%s", err)
+			chErr <- err
+			break
+		}
+		if nbRows < pipBuildMax {
+			break
+		}
+	}
 }
 
-func cleanApplication(db *gorp.DbMap, wg *sync.WaitGroup, app sdk.Application) error {
+func cleanApplication(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, app sdk.Application) {
 	defer wg.Done()
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		errF := fmt.Errorf("cleanApplication> Cannot start transaction to cleanApplication %s: %s", app.Name, err)
+		log.Warning("%s", errF)
+		chErr <- errF
+		return
 	}
 	defer tx.Rollback()
 
 	if err := scheduler.DeleteByApplicationID(tx, app.ID); err != nil {
-		return sdk.WrapError(err, "cleanApplication> Unable to delete scheduler for application %s", app.Name)
+		errF := fmt.Errorf("cleanApplication> Unable to delete scheduler for application %s: %s", app.Name, err)
+		log.Warning("%s", errF)
+		chErr <- errF
+		return
 	}
 
 	if err := poller.DeleteAll(tx, app.ID); err != nil {
-		return sdk.WrapError(err, "cleanApplication> Unable to delete poller for application %s", app.Name)
+		errF := fmt.Errorf("cleanApplication> Unable to delete poller for application %s: %s", app.Name, err)
+		log.Warning("%s", errF)
+		chErr <- errF
+		return
 	}
 
 	if err := trigger.DeleteApplicationTriggers(tx, app.ID); err != nil {
-		return sdk.WrapError(err, "cleanApplication> Unable to delete trigger for application %s", app.Name)
+		errF := fmt.Errorf("cleanApplication> Unable to delete trigger for application %s: %s", app.Name, err)
+		log.Warning("%s", errF)
+		chErr <- errF
+		return
 	}
 
 	if err := sanity.DeleteAllApplicationWarnings(tx, app.ID); err != nil {
-		return sdk.WrapError(err, "cleanApplication> Unable to delete warnings for application %s", app.Name)
+		errF := fmt.Errorf("cleanApplication> Unable to delete warnings for application %s: %s", app.Name, err)
+		log.Warning("%s", errF)
+		chErr <- errF
+		return
 	}
-
-	if err := application.DeleteAllApplicationPipeline(tx, app.ID); err != nil {
-		return sdk.WrapError(err, "cleanApplication> Unable to delete application pipeline for %s", app.Name)
-	}
-	return nil
+	return
 }
