@@ -20,10 +20,10 @@ var (
 
 	project = cli.NewCommand(projectCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(projectListCmd, projectListRun, nil),
-			cli.NewGetCommand(projectShowCmd, projectShowRun, nil),
+			cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(projectCreateCmd, projectCreateRun, nil),
-			cli.NewDeleteCommand(projectDeleteCmd, projectDeleteRun, nil),
+			cli.NewDeleteCommand(projectDeleteCmd, projectDeleteRun, nil, withAllCommandModifiers()...),
 			projectKey,
 			projectGroup,
 			projectVariable,
@@ -36,7 +36,7 @@ var projectListCmd = cli.Command{
 }
 
 func projectListRun(v cli.Values) (cli.ListResult, error) {
-	projs, err := client.ProjectList()
+	projs, err := client.ProjectList(false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +46,8 @@ func projectListRun(v cli.Values) (cli.ListResult, error) {
 var projectShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS project",
-	Args: []cli.Arg{
-		{Name: "project-key"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
 	},
 }
 
@@ -62,7 +62,7 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 			r.URL.RawQuery = q.Encode()
 		})
 	}
-	proj, err := client.ProjectGet(v["project-key"], mods...)
+	proj, err := client.ProjectGet(v[_ProjectKey], mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +72,8 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 var projectCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS project",
-	Args: []cli.Arg{
-		{Name: "project-key"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
 		{Name: "project-name"},
 	},
 	OptionalArgs: []cli.Arg{
@@ -83,20 +83,20 @@ var projectCreateCmd = cli.Command{
 }
 
 func projectCreateRun(v cli.Values) error {
-	proj := &sdk.Project{Name: v["project-name"], Key: v["project-key"]}
+	proj := &sdk.Project{Name: v["project-name"], Key: v[_ProjectKey]}
 	return client.ProjectCreate(proj, v["group-name"])
 }
 
 var projectDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS project",
-	Args: []cli.Arg{
-		{Name: "project-key"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
 	},
 }
 
 func projectDeleteRun(v cli.Values) error {
-	projKey := v["project-key"]
+	projKey := v[_ProjectKey]
 	if v.GetBool("force") {
 		// Delete all workflow
 		ws, errW := client.WorkflowList(projKey)

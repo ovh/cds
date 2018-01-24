@@ -21,15 +21,17 @@ var (
 
 	environmentGroup = cli.NewCommand(environmentGroupCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(environmentGroupImportCmd, environmentGroupImportRun, nil),
+			cli.NewCommand(environmentGroupImportCmd, environmentGroupImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var environmentGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS environment",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "environment-name"},
 		{Name: "path"},
 	},
@@ -77,7 +79,7 @@ func environmentGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.EnvironmentGroupsImport(v["project-key"], v["environment-name"], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.EnvironmentGroupsImport(v[_ProjectKey], v["environment-name"], reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
 	fmt.Printf("Groups imported in environment %s with success\n", v["environment-name"])

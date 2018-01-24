@@ -15,18 +15,20 @@ var (
 
 	applicationKey = cli.NewCommand(applicationKeyCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(applicationKeyCreateCmd, applicationCreateKeyRun, nil),
-			cli.NewListCommand(applicationKeyListCmd, applicationListKeyRun, nil),
-			cli.NewCommand(applicationKeyDeleteCmd, applicationDeleteKeyRun, nil),
+			cli.NewCommand(applicationKeyCreateCmd, applicationCreateKeyRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(applicationKeyListCmd, applicationListKeyRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(applicationKeyDeleteCmd, applicationDeleteKeyRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var applicationKeyCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new key on application. key type can be ssh or pgp",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
+	},
 	Args: []cli.Arg{
-		{Name: "key"},
-		{Name: "app-name"},
 		{Name: "key-name"},
 		{Name: "key-type"},
 	},
@@ -39,20 +41,20 @@ func applicationCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	return client.ApplicationKeyCreate(v["key"], v["app-name"], key)
+	return client.ApplicationKeyCreate(v[_ProjectKey], v[_ApplicationName], key)
 }
 
 var applicationKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS application keys",
-	Args: []cli.Arg{
-		{Name: "key"},
-		{Name: "app-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
 	},
 }
 
 func applicationListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.ApplicationKeysList(v["key"], v["app-name"])
+	keys, err := client.ApplicationKeysList(v[_ProjectKey], v[_ApplicationName])
 	if err != nil {
 		return nil, err
 	}
@@ -62,13 +64,15 @@ func applicationListKeyRun(v cli.Values) (cli.ListResult, error) {
 var applicationKeyDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS an application key",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
+	},
 	Args: []cli.Arg{
-		{Name: "key"},
-		{Name: "app-name"},
 		{Name: "key-name"},
 	},
 }
 
 func applicationDeleteKeyRun(v cli.Values) error {
-	return client.ApplicationKeysDelete(v["key"], v["app-name"], v["key-name"])
+	return client.ApplicationKeysDelete(v[_ProjectKey], v[_ApplicationName], v["key-name"])
 }

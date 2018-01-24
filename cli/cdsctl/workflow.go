@@ -23,16 +23,16 @@ var (
 
 	workflow = cli.NewCommand(workflowCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(workflowListCmd, workflowListRun, nil),
-			cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil),
-			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil),
-			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil),
-			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil),
-			cli.NewCommand(workflowStopCmd, workflowStopRun, nil),
-			cli.NewCommand(workflowExportCmd, workflowExportRun, nil),
-			cli.NewCommand(workflowImportCmd, workflowImportRun, nil),
-			cli.NewCommand(workflowPullCmd, workflowPullRun, nil),
-			cli.NewCommand(workflowPushCmd, workflowPushRun, nil),
+			cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...),
+			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowStopCmd, workflowStopRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowExportCmd, workflowExportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowImportCmd, workflowImportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowPullCmd, workflowPullRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
 			workflowArtifact,
 		})
 )
@@ -40,13 +40,13 @@ var (
 var workflowListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS workflows",
-	Args: []cli.Arg{
-		{Name: "project-key"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
 	},
 }
 
 func workflowListRun(v cli.Values) (cli.ListResult, error) {
-	w, err := client.WorkflowList(v["project-key"])
+	w, err := client.WorkflowList(v[_ProjectKey])
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,9 @@ func workflowListRun(v cli.Values) (cli.ListResult, error) {
 var workflowHistoryCmd = cli.Command{
 	Name:  "history",
 	Short: "History of a CDS workflow",
-	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
 	},
 	OptionalArgs: []cli.Arg{
 		{
@@ -99,7 +99,7 @@ func workflowHistoryRun(v cli.Values) (cli.ListResult, error) {
 		}
 	}
 
-	w, err := client.WorkflowRunList(v["project-key"], v["workflow-name"], offset, limit)
+	w, err := client.WorkflowRunList(v[_ProjectKey], v[_WorkflowName], offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -109,9 +109,9 @@ func workflowHistoryRun(v cli.Values) (cli.ListResult, error) {
 var workflowShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS workflow",
-	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
 	},
 	OptionalArgs: []cli.Arg{
 		{
@@ -136,14 +136,14 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 	}
 
 	if runNumber == 0 {
-		w, err := client.WorkflowGet(v["project-key"], v["workflow-name"])
+		w, err := client.WorkflowGet(v[_ProjectKey], v[_WorkflowName])
 		if err != nil {
 			return nil, err
 		}
 		return *w, nil
 	}
 
-	w, err := client.WorkflowRunGet(v["project-key"], v["workflow-name"], runNumber)
+	w, err := client.WorkflowRunGet(v[_ProjectKey], v[_WorkflowName], runNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -186,14 +186,14 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 var workflowDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS workflow",
-	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
 	},
 }
 
 func workflowDeleteRun(v cli.Values) error {
-	err := client.WorkflowDelete(v["project-key"], v["workflow-name"])
+	err := client.WorkflowDelete(v[_ProjectKey], v[_WorkflowName])
 	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
 		fmt.Println(err.Error())
 		os.Exit(0)
@@ -209,9 +209,11 @@ var workflowStopCmd = cli.Command{
 		cdsctl workflow stop MYPROJECT myworkflow 5 # To stop a workflow run on number 5
 		cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node run on workflow run 5
 	`,
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow-name"},
 		{Name: "run-number"},
 	},
 	OptionalArgs: []cli.Arg{
@@ -230,7 +232,7 @@ func workflowStopRun(v cli.Values) error {
 		if runNumber <= 0 {
 			return fmt.Errorf("You can use flag node-name without flag run-number")
 		}
-		wr, err := client.WorkflowRunGet(v["project-key"], v["workflow-name"], runNumber)
+		wr, err := client.WorkflowRunGet(v[_ProjectKey], v[_WorkflowName], runNumber)
 		if err != nil {
 			return err
 		}
@@ -246,17 +248,17 @@ func workflowStopRun(v cli.Values) error {
 	}
 
 	if fromNodeID != 0 {
-		wNodeRun, err := client.WorkflowNodeStop(v["project-key"], v["workflow-name"], runNumber, fromNodeID)
+		wNodeRun, err := client.WorkflowNodeStop(v[_ProjectKey], v[_WorkflowName], runNumber, fromNodeID)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Workflow node %s from workflow %s #%d has been stopped\n", v.GetString("node-name"), v["workflow-name"], wNodeRun.Number)
+		fmt.Printf("Workflow node %s from workflow %s #%d has been stopped\n", v.GetString("node-name"), v[_WorkflowName], wNodeRun.Number)
 	} else {
-		w, err := client.WorkflowStop(v["project-key"], v["workflow-name"], runNumber)
+		w, err := client.WorkflowStop(v[_ProjectKey], v[_WorkflowName], runNumber)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Workflow %s #%d has been stopped\n", v["workflow-name"], w.Number)
+		fmt.Printf("Workflow %s #%d has been stopped\n", v[_WorkflowName], w.Number)
 	}
 
 	return nil

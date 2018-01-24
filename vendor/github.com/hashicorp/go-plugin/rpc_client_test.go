@@ -3,26 +3,13 @@ package plugin
 import (
 	"bytes"
 	"io"
-	"os"
 	"testing"
 	"time"
-
-	hclog "github.com/hashicorp/go-hclog"
 )
 
 func TestClient_App(t *testing.T) {
-	pluginLogger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
-		Output:     os.Stderr,
-		JSONFormat: true,
-	})
-
-	testPlugin := &testInterfaceImpl{
-		logger: pluginLogger,
-	}
-
 	client, _ := TestPluginRPCConn(t, map[string]Plugin{
-		"test": &testInterfacePlugin{Impl: testPlugin},
+		"test": new(testInterfacePlugin),
 	})
 	defer client.Close()
 

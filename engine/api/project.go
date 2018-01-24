@@ -6,29 +6,73 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getProjectsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
-		withApplication := FormBool(r, "application")
+		withApplications := FormBool(r, "application")
+		withWorkflows := FormBool(r, "workflow")
+		filterByRepo := r.FormValue("repo")
 
-		var projects []sdk.Project
-		var err error
+		opts := []project.LoadOptionFunc{}
 
-		if withApplication {
-			projects, err = project.LoadAll(api.mustDB(), api.Cache, getUser(ctx), project.LoadOptions.WithApplications)
-		} else {
-			projects, err = project.LoadAll(api.mustDB(), api.Cache, getUser(ctx))
+		if withApplications {
+			opts = append(opts, project.LoadOptions.WithApplications)
 		}
+
+		if withWorkflows {
+			opts = append(opts, project.LoadOptions.WithWorkflows)
+		}
+
+		if filterByRepo != "" {
+			var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *sdk.User) error {
+				//Filter the applications by repo
+				apps := []sdk.Application{}
+				for i := range p.Applications {
+					if p.Applications[i].RepositoryFullname == filterByRepo {
+						apps = append(apps, p.Applications[i])
+					}
+				}
+				p.Applications = apps
+				ws := []sdk.Workflow{}
+				//Filter the workflow by applications
+				for i := range p.Workflows {
+					w, err := workflow.LoadByID(db, store, p.Workflows[i].ID, u, workflow.LoadOptions{})
+					if err != nil {
+						return err
+					}
+
+					wapps := w.GetApplications()
+					//Checks the workflow use one of the applications
+				wapps:
+					for _, a := range wapps {
+						for _, b := range apps {
+							if a.Name == b.Name {
+								ws = append(ws, p.Workflows[i])
+								break wapps
+							}
+						}
+					}
+				}
+				p.Workflows = ws
+
+				return nil
+			}
+			opts = append(opts, &filterByRepoFunc)
+		}
+
+		projects, err := project.LoadAll(api.mustDB(), api.Cache, getUser(ctx), opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
 		}
