@@ -22,11 +22,6 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, e
 		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "ParseAndImport>> Workflow name %s do not respect pattern %s", ew.Name, sdk.NamePattern)
 	}
 
-	w := new(sdk.Workflow)
-	w.Name = ew.Name
-	w.ProjectID = proj.ID
-	w.ProjectKey = proj.Key
-
 	//Inherit permissions from project
 	if len(ew.Permissions) == 0 {
 		ew.Permissions = make(map[string]int)
@@ -35,17 +30,13 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, e
 		}
 	}
 
-	//Compute permissions
-	for g, p := range ew.Permissions {
-		perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
-		w.Groups = append(w.Groups, perm)
-	}
-
 	//Parse workflow
 	w, errW := ew.GetWorkflow()
 	if errW != nil {
 		return nil, sdk.WrapError(errW, "ParseAndImport> Workflow parsing error")
 	}
+	w.ProjectID = proj.ID
+	w.ProjectKey = proj.Key
 
 	//Import
 	done := new(sync.WaitGroup)
