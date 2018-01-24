@@ -5,7 +5,6 @@ import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
-import {Usage} from '../../../model/usage.model';
 
 @Component({
     selector: 'app-pipeline-add',

@@ -117,6 +117,7 @@
   "btn_close": "Fermer",
   "btn_continue": "Continuer",
   "btn_create": "Créer",
+  "btn_finish": "Terminer",
   "btn_detach": "Détacher le pipeline",
   "btn_delete": "Supprimer",
   "btn_link": "Connecter",
@@ -205,6 +206,8 @@
   "common_usage": "Usage",
   "common_orientation": "Orientation",
   "common_copy_clipboard": "Copier dans le presse papier",
+  "common_select": "Selectionner",
+  "common_create": "Créer",
 
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",
@@ -406,6 +409,7 @@
   "pipeline_stage_edit": "Édition du stage",
   "pipeline_stage_moved": "Stage déplacé",
   "pipeline_stage_no": "Le pipeline ne contient aucun stage",
+  "pipeline_workflow_wizard": "Créer ou sélectionner votre première pipeline associée à votre workflow",
 
   "poller_added": "Poller ajouté",
   "poller_create_label": "Créer un poller",
@@ -670,6 +674,7 @@
   "workflow_node_context_pipeline_parameter": "Paramètres du pipeline",
   "workflow_node_context_payload": "Payload par défaut",
   "workflow_run_node_job_queued": "Attente depuis {{time}}",
+  "workflow_wizard_description": "Choisissez vos options de workflow",
 
   "workflow_node_edition": "Configuration",
   "workflow_node_condition_warning": "Attention si vous avez des conditions basiques et avancées, seulement les conditions avancées seront éffectives.",

@@ -10,22 +10,15 @@
                       <div class="step pointing" [class.active]="currentStep === 0" (click)="goToNextStep(0)">
                         <i class="share alternate icon"></i>
                         <div class="content">
-                          <div class="title">Workflow</div>
-                          <div class="description">Choose your workflow options</div>
+                          <div class="title">{{'common_workflow' | translate}}</div>
+                          <div class="description">{{'workflow_wizard_description' | translate}}</div>
                         </div>
                       </div>
                       <div class="step pointing" [class.disabled]="!workflow.name" [class.active]="currentStep === 1" (click)="goToNextStep(1)">
                         <i class="sitemap icon"></i>
                         <div class="content">
-                          <div class="title">Pipeline</div>
-                          <div class="description">Create or select your first pipeline</div>
-                        </div>
-                      </div>
-                      <div class="step pointing" [class.disabled]="workflow.root == null || !workflow.root.pipeline_id" [class.active]="currentStep === 2" (click)="goToNextStep(2)">
-                        <i class="anchor icon"></i>
-                        <div class="content">
-                          <div class="title">Hook</div>
-                          <div class="description">Attach a hook on your first pipeline</div>
+                          <div class="title">{{'common_pipeline' | translate}}</div>
+                          <div class="description">{{'pipeline_wizard_description' | translate}}</div>
                         </div>
                       </div>
                     </div>
@@ -70,7 +63,7 @@
                                         (click)="pipelineSection = 'pipeline'">
                                         <i class="sitemap icon"></i>
                                         <div class="content">
-                                          <div class="title">Pipeline <i class="green check icon" *ngIf="workflow.root.pipeline_id"></i></div>
+                                          <div class="title">{{'common_pipeline' | translate}} <i class="green check icon" *ngIf="workflow.root.pipeline_id"></i></div>
                                         </div>
                                       </div>
                                       <div class="step pointing"
@@ -79,7 +72,7 @@
                                         (click)="pipelineSection = 'application'">
                                         <i class="rocket icon"></i>
                                         <div class="content">
-                                          <div class="title">Application <i class="green check icon" *ngIf="workflow.root.context.application_id"></i></div>
+                                          <div class="title">{{'common_application' | translate}} <i class="green check icon" *ngIf="workflow.root.context.application_id"></i></div>
                                           <div class="description">{{'action_optional' | translate}}</div>
                                         </div>
                                       </div>
@@ -89,7 +82,7 @@
                                         (click)="pipelineSection = 'environment'">
                                         <i class="tree icon"></i>
                                         <div class="content">
-                                          <div class="title">Environment <i class="green check icon" *ngIf="workflow.root.context.environment_id"></i></div>
+                                          <div class="title">{{'common_environment' | translate}} <i class="green check icon" *ngIf="workflow.root.context.environment_id"></i></div>
                                           <div class="description">{{'common_optional' | translate}}</div>
                                         </div>
                                       </div>
@@ -106,10 +99,10 @@
                                                 [class.active]="!createNewPipeline"
                                                 [class.disabled]="!project.pipeline_names || !project.pipeline_names.length"
                                                 (click)="createNewPipeline = false">
-                                                Select
+                                                {{'common_select' | translate}}
                                               </button>
                                               <button class="ui button" [class.active]="createNewPipeline" (click)="createNewPipeline = true">
-                                                Create
+                                                {{'common_create' | translate}}
                                               </button>
                                             </div>
                                           </div>
@@ -171,10 +164,10 @@
                                                 [class.active]="!createNewApplication"
                                                 [class.disabled]="!project.application_names || !project.application_names.length"
                                                 (click)="createNewApplication = false">
-                                                Select
+                                                {{'common_select' | translate}}
                                               </button>
                                               <button class="ui button" [class.active]="createNewApplication" (click)="createNewApplication = true">
-                                                Create
+                                                {{'common_create' | translate}}
                                               </button>
                                             </div>
                                           </div>
@@ -226,10 +219,10 @@
                                                 [class.active]="!createNewEnvironment"
                                                 [class.disabled]="!project.environments || !project.environments.length"
                                                 (click)="createNewEnvironment = false">
-                                                Select
+                                                {{'common_select' | translate}}
                                               </button>
                                               <button class="ui button" [class.active]="createNewEnvironment" (click)="createNewEnvironment = true">
-                                                Create
+                                                {{'common_create' | translate}}
                                               </button>
                                             </div>
                                           </div>
@@ -264,7 +257,7 @@
                                             <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
                                             <button class="ui right floated green button" (click)="selectOrCreateEnvironment()"
                                                     [disabled]="!workflow.root.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment">
-                                                    {{ 'btn_next' | translate }}
+                                                    {{ 'btn_finish' | translate }}
                                             </button>
                                           </div>
                                         </div>
@@ -273,23 +266,6 @@
                                   </div>
                                 </div>
                             </div>
-                        </form>
-
-                        <!-- ######### WORKFLOW HOOKS THIRD STEP ######### -->
-                        <form class="ui form" *ngSwitchCase="2">
-                            <div class="ui grid">
-                                <div class="ui row">
-                                  <div class="sixteen wide column">
-                                    <app-workflow-node-hook-form
-                                      [loading]="loading"
-                                      [project]="project"
-                                      [workflow]="workflow"
-                                      [node]="workflow.root"
-                                      (hookEvent)="addHook($event)" #worklflowAddHook>
-                                    </app-workflow-node-hook-form>
-                                  </div>
-                                </div>
-                              </div>
                         </form>
                       </div>
                     </div>

@@ -11,7 +11,7 @@ import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {first} from 'rxjs/operators';
+import {first, finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-add',
@@ -24,7 +24,7 @@ export class WorkflowAddComponent {
     project: Project;
 
     loading = false;
-    currentStep = 1;
+    currentStep = 0;
 
     // Pipeline section
     set createNewPipeline(data: boolean) {
@@ -98,13 +98,15 @@ export class WorkflowAddComponent {
 
     createWorkflow(): void {
         this.loading = true;
-        this._workflowStore.addWorkflow(this.project.key, this.workflow).pipe(first()).subscribe(() => {
-            this._toast.success('', this._translate.instant('workflow_added'));
-            this.loading = false;
-            this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name]);
-        }, () => {
-            this.loading = false;
-        });
+        this._workflowStore.addWorkflow(this.project.key, this.workflow)
+            .pipe(
+                first(),
+                finalize(() => this.loading = false)
+            )
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_added'));
+                this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name]);
+            });
     }
 
     createPipeline(): void {
@@ -115,14 +117,13 @@ export class WorkflowAddComponent {
 
         this.loadingCreatePipeline = true;
         this.newPipeline.type = 'deployment';
-        this._pipStore.createPipeline(this.project.key, this.newPipeline).subscribe((pip) => {
-            this.loadingCreatePipeline = false;
-            this._toast.success('', this._translate.instant('pipeline_added'));
-            this.workflow.root.pipeline_id = pip.id;
-            this.pipelineSection = 'application';
-        }, () => {
-            this.loadingCreatePipeline = false;
-        });
+        this._pipStore.createPipeline(this.project.key, this.newPipeline)
+            .pipe(finalize(() => this.loadingCreatePipeline = false))
+            .subscribe((pip) => {
+                this._toast.success('', this._translate.instant('pipeline_added'));
+                this.workflow.root.pipeline_id = pip.id;
+                this.pipelineSection = 'application';
+            });
     }
 
     selectOrCreatePipeline() {
@@ -139,14 +140,13 @@ export class WorkflowAddComponent {
       }
 
       this.loadingCreateApplication = true;
-      this._appStore.createApplication(this.project.key, this.newApplication).subscribe((app) => {
-          this.loadingCreateApplication = false;
-          this._toast.success('', this._translate.instant('application_created'));
-          this.workflow.root.context.application_id = app.id;
-          this.pipelineSection = 'environment';
-      }, () => {
-          this.loadingCreateApplication = false;
-      });
+      this._appStore.createApplication(this.project.key, this.newApplication)
+          .pipe(finalize(() => this.loadingCreateApplication = false))
+          .subscribe((app) => {
+              this._toast.success('', this._translate.instant('application_created'));
+              this.workflow.root.context.application_id = app.id;
+              this.pipelineSection = 'environment';
+          });
     }
 
     selectOrCreateApplication() {
@@ -158,21 +158,20 @@ export class WorkflowAddComponent {
 
     createEnvironment(): void {
       this.loadingCreateEnvironment = true;
-      this._projectStore.addProjectEnvironment(this.project.key, this.newEnvironment).subscribe((proj) => {
-          this._toast.success('', this._translate.instant('environment_created'));
-          this.loadingCreateEnvironment = false;
-          this.workflow.root.context.environment_id = proj.environments.find((env) => env.name === this.newEnvironment.name).id;
-          this.goToNextStep(null);
-      }, () => {
-          this.loadingCreateEnvironment = false;
-      });
+      this._projectStore.addProjectEnvironment(this.project.key, this.newEnvironment)
+          .pipe(finalize(() => this.loadingCreateEnvironment = false))
+          .subscribe((proj) => {
+              this._toast.success('', this._translate.instant('environment_created'));
+              this.workflow.root.context.environment_id = proj.environments.find((env) => env.name === this.newEnvironment.name).id;
+              this.createWorkflow();
+          });
     }
 
     selectOrCreateEnvironment() {
       if (this.createNewEnvironment && this.newEnvironment.name) {
         return this.createEnvironment();
       }
-      this.goToNextStep(null);
+      this.createWorkflow();
     }
 
     goToNextStep(stepNum: number): void {
