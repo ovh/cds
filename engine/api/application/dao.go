@@ -42,6 +42,19 @@ var LoadOptions = struct {
 	WithClearKeys:                  &loadClearKeys,
 }
 
+// LoadOldApplicationWorkflowToClean load application to clean
+func LoadOldApplicationWorkflowToClean(db gorp.SqlExecutor) ([]sdk.Application, error) {
+	apps := []sdk.Application{}
+	query := `SELECT application.* FROM application where workflow_migration = 'CLEANING'`
+	if _, err := db.Select(&apps, query); err != nil {
+		if err == sql.ErrNoRows {
+			return apps, nil
+		}
+		return nil, sdk.WrapError(err, "LoadOldApplicationWorkflowToClean> Cannot load application to clean")
+	}
+	return apps, nil
+}
+
 // Exists checks if an application given its name exists
 func Exists(db gorp.SqlExecutor, projectKey, appName string) (bool, error) {
 	count, err := db.SelectInt("SELECT count(1) FROM application join project ON project.id = application.project_id WHERE project.projectkey = $1 AND application.name = $2", projectKey, appName)

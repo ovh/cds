@@ -85,7 +85,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeletePipelineBuildByApplicationID")
 			}
 
-			appToClean.WorkflowMigration = migrate.STATUS_DONE
+			appToClean.WorkflowMigration = migrate.STATUS_CLEANING
 			appToClean.ProjectID = p.ID
 			if err := application.Update(tx, api.Cache, appToClean, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
@@ -144,7 +144,7 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		defer tx.Rollback()
 
 		if len(cdTree) == 0 {
-			app.WorkflowMigration = migrate.STATUS_DONE
+			app.WorkflowMigration = migrate.STATUS_CLEANING
 		} else {
 			if errM := migrate.MigrateToWorkflow(tx, api.Cache, cdTree, p, getUser(ctx), force); errM != nil {
 				return sdk.WrapError(errM, "migrationApplicationWorkflowHandler")
