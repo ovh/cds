@@ -89,6 +89,19 @@ export class WorkflowAddComponent {
             if (!this.project.application_names || !this.project.application_names.length) {
               this.createNewApplication = true;
             }
+
+            if (Array.isArray(this.project.application_names)) {
+                let voidApp = new Application();
+                voidApp.id = 0;
+                voidApp.name = ' ';
+                this.project.application_names.unshift(voidApp);
+            }
+            if (Array.isArray(this.project.environments)) {
+                let voidEnv = new Environment();
+                voidEnv.id = 0;
+                voidEnv.name = ' ';
+                this.project.environments.unshift(voidEnv);
+            }
         });
     }
 

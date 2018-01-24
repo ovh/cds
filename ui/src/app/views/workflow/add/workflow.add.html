@@ -72,7 +72,7 @@
                                         (click)="pipelineSection = 'application'">
                                         <i class="rocket icon"></i>
                                         <div class="content">
-                                          <div class="title">{{'common_application' | translate}} <i class="green check icon" *ngIf="workflow.root.context.application_id"></i></div>
+                                          <div class="title">{{'common_application' | translate}} <i class="green check icon" *ngIf="workflow.root.context.application_id && workflow.root.context.application_id > 0"></i></div>
                                           <div class="description">{{'action_optional' | translate}}</div>
                                         </div>
                                       </div>
@@ -82,7 +82,7 @@
                                         (click)="pipelineSection = 'environment'">
                                         <i class="tree icon"></i>
                                         <div class="content">
-                                          <div class="title">{{'common_environment' | translate}} <i class="green check icon" *ngIf="workflow.root.context.environment_id"></i></div>
+                                          <div class="title">{{'common_environment' | translate}} <i class="green check icon" *ngIf="workflow.root.context.environment_id && workflow.root.context.environment_id > 0"></i></div>
                                           <div class="description">{{'common_optional' | translate}}</div>
                                         </div>
                                       </div>
