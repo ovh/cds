@@ -77,7 +77,7 @@ func UpdateGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) e
 func upsertAllGroups(db gorp.SqlExecutor, w *sdk.Workflow, gps []sdk.GroupPermission) error {
 	queryD := `delete from workflow_group where workflow_id = $1`
 	if _, err := db.Exec(queryD, w.ID); err != nil {
-		return sdk.WrapError(err, "UpsertAllGroups")
+		return sdk.WrapError(err, "upsertAllGroups")
 	}
 
 	for _, gp := range gps {
