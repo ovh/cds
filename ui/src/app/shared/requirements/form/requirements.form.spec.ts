@@ -6,14 +6,14 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
-import {RequirementService} from '../../../service/worker-model/requirement/requirement.service';
 import {SharedModule} from '../../shared.module';
 import {RequirementsFormComponent} from './requirements.form.component';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
-import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {RequirementService} from '../../../service/requirement/requirement.service';
+import {RequirementStore} from '../../../service/requirement/requirement.store';
 
 describe('CDS: Requirement Form Component', () => {
 

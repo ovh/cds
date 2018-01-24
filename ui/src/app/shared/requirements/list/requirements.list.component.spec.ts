@@ -4,14 +4,14 @@ import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../shared.module';
-import {RequirementService} from '../../../service/worker-model/requirement/requirement.service';
 import {RequirementsListComponent} from './requirements.list.component';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
-import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import {RequirementStore} from '../../../service/requirement/requirement.store';
+import {RequirementService} from '../../../service/requirement/requirement.service';
 
 describe('CDS: Requirement List Component', () => {
 
