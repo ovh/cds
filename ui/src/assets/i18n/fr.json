@@ -206,7 +206,7 @@
   "common_usage": "Usage",
   "common_orientation": "Orientation",
   "common_copy_clipboard": "Copier dans le presse papier",
-  "common_select": "Selectionner",
+  "common_select": "Sélectionner",
   "common_create": "Créer",
 
   "keys_added": "La clé a été ajoutée",
@@ -409,7 +409,7 @@
   "pipeline_stage_edit": "Édition du stage",
   "pipeline_stage_moved": "Stage déplacé",
   "pipeline_stage_no": "Le pipeline ne contient aucun stage",
-  "pipeline_workflow_wizard": "Créer ou sélectionner votre première pipeline associée à votre workflow",
+  "pipeline_workflow_wizard": "Créer ou sélectionner votre premier pipeline associé à votre workflow",
 
   "poller_added": "Poller ajouté",
   "poller_create_label": "Créer un poller",
@@ -754,7 +754,7 @@
   "workflow_notification_body": "Message",
   "workflow_notification_to_group": "Envoyer au groupe",
   "workflow_notification_to_initiator": "Envoyer à l'initiateur",
-  "workflow_notification_node_error": "Vous devez selectionner au moins 1 pipeline",
+  "workflow_notification_node_error": "Vous devez sélectionner au moins 1 pipeline",
   "workflow_notification_jabber_user": "Utilisateurs jabber",
   "workflow_notification_email_user": "Emails",
   "workflow_notification_list": "Liste des notifications",
