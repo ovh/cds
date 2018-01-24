@@ -275,6 +275,7 @@
   "token_title_handling": "Gestion des tokens du groupe",
   "token_loading": "Chargement des tokens",
   "token_group_name": "Groupe",
+  "token_generated": "Voici votre token généré",
 
   "hook_create_label": "Créer un hook",
   "hook_deleted": "Hook supprimé",
@@ -409,7 +410,7 @@
   "pipeline_stage_edit": "Édition du stage",
   "pipeline_stage_moved": "Stage déplacé",
   "pipeline_stage_no": "Le pipeline ne contient aucun stage",
-  "pipeline_workflow_wizard": "Créer ou sélectionner votre premier pipeline associé à votre workflow",
+  "pipeline_wizard_description": "Créer ou sélectionner votre premier pipeline associé à votre workflow",
 
   "poller_added": "Poller ajouté",
   "poller_create_label": "Créer un poller",

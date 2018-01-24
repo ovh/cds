@@ -274,6 +274,7 @@
   "token_title_handling": "Handle group tokens",
   "token_loading": "Loading tokens",
   "token_group_name": "Group",
+  "token_generated": "Here is your generated token",
 
   "hook_create_label": "Create a hook",
   "hook_deleted": "Hook deleted",
