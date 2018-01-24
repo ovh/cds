@@ -9,10 +9,8 @@
         </thead>
         <tbody>
         <tr *ngFor="let gp of getDataForCurrentPage()">
-            <td>
-                <div class="ui fluid input">
-                    {{ gp.group.name }}
-                </div>
+            <td class="middle-aligned">
+                {{ gp.group.name }}
             </td>
             <td>
                 <div *ngIf="edit;then wPermission;else rPermission"></div>

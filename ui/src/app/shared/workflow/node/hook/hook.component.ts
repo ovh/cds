@@ -2,7 +2,7 @@ import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/c
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
 import {ToastService} from '../../../toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {WorkflowNodeHookFormComponent} from './form/node.hook.component';
+import {WorkflowNodeHookFormComponent} from './form/hook.form.component';
 import {Project} from '../../../../model/project.model';
 import {HookEvent} from './hook.event';
 import {cloneDeep} from 'lodash';
@@ -57,6 +57,7 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
     }
 
     updateHook(h: HookEvent): void {
+        console.log('hookEvent', h);
         let workflowToUpdate = cloneDeep(this.workflow);
         this.loading = true;
         if (h.type === 'delete') {

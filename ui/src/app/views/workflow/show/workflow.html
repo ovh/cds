@@ -48,8 +48,12 @@
                                                                 <i class="resize vertical icon"></i>
                                                             </button>
                                                         </div>
-                                                        <div class="six wide column centered" title="{{'common_version' | translate}}">
-
+                                                        <div class="six wide column centered">
+                                                          <div class="ui blue buttons">
+                                                              <a class="ui button" [routerLink]="['/project', project.key, 'pipeline']">
+                                                                <i _ngcontent-c26="" class="sitemap icon"></i> {{'pipeline_create' | translate }}
+                                                              </a>
+                                                          </div>
                                                         </div>
                                                         <div class="right aligned five wide column" title="{{'btn_run_custom_worklow' | translate}}">
                                                             <div class="ui green buttons">

@@ -19,14 +19,6 @@
                             <option *ngFor="let t of pipelineType" value="{{t}}">{{t}}</option>
                         </sm-select>
                     </div>
-                    <div class="field" *ngIf="project.applications && project.applications.length > 0">
-                        <label>{{'pipeline_attach_application' | translate}}</label>
-                        <sm-select class="fluid search multiple" id="PipelineLinkedApplicationSelect"
-                            [(model)]="selectedApplications"
-                            [options]="{'fullTextSearch': true}">
-                            <option *ngFor="let a of project.applications" value="{{a.name}}">{{a.name}}</option>
-                        </sm-select>
-                    </div>
                     <div class="field">
                         <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'pipelines'}">{{ 'btn_cancel' | translate }}</a>
                         <button class="ui green right floated button" [class.loading]="loadingCreate" [class.disabled]="!newPipeline.name || newPipeline.name === ''"
@@ -39,5 +31,5 @@
     </div>
 </div>
 <ng-template #loadingArea>
-    <div class="ui text active loader">Loading..</div>
+    <div class="ui text active loader">{{'common_loading' | translate}}...</div>
 </ng-template>

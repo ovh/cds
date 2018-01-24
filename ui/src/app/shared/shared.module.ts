@@ -60,7 +60,7 @@ import {PermissionEnvironmentFormComponent} from './permission/environment/form/
 import {NgxAutoScroll} from 'ngx-auto-scroll/src/ngx-auto-scroll.directive';
 import {SuiModule} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
-import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook.component';
+import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
 import {UsageWorkflowsComponent} from './usage/workflows/usage.workflows.component';
 import {UsageApplicationsComponent} from './usage/applications/usage.applications.component';

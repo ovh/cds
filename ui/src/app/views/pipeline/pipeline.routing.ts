@@ -2,7 +2,7 @@ import { ModuleWithProviders } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
 import {PipelineShowComponent} from './show/pipeline.show.component';
-import {ProjectResolver, ProjectForPipelineCreateResolver} from '../../service/project/project.resolver';
+import {ProjectResolver} from '../../service/project/project.resolver';
 import {ApplicationQueryParamResolver} from '../../service/application/application.resolver';
 import {PipelineAddComponent} from './add/pipeline.add.component';
 
@@ -15,7 +15,7 @@ const pipelineRoutes: Routes = [
             { path: '',
                 component: PipelineAddComponent,
                 resolve: {
-                    project: ProjectForPipelineCreateResolver
+                    project: ProjectResolver
                 }
             },
             { path: ':pipName',
