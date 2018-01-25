@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 )
@@ -20,7 +21,17 @@ func Do(input string, vars map[string]string) (string, error) {
 	defaults := make(map[string]string, len(vars))
 	empty := make(map[string]string, len(vars))
 
-	for k, v := range vars {
+	// sort key, to replace the longer variables before
+	// see "same prefix" unit test
+	var keys sort.StringSlice
+	for k := range vars {
+		keys = append(keys, k)
+	}
+	keys.Sort()                      // short to long
+	sort.Sort(sort.Reverse(keys[:])) // reverse, to get the longer before
+
+	for _, k := range keys {
+		v := vars[k]
 		kb := strings.Replace(k, ".", "__", -1)
 		// "-"" are not a valid char in go template var name
 		kb = strings.Replace(kb, "-", "µµµ", -1)
@@ -30,7 +41,6 @@ func Do(input string, vars map[string]string) (string, error) {
 		if v == "" {
 			empty[k] = k
 		}
-
 		input = strings.Replace(input, k, kb, -1)
 	}
 

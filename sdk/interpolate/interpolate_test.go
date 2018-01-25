@@ -220,6 +220,15 @@ func TestDo(t *testing.T) {
 		}
 		}`,
 		},
+		{
+			name: "same prefix",
+			args: args{
+				input: `{"HOST": "customer{{.cds.env.lb.prefix}}.{{.cds.env.lb}}"}`,
+				//vars:  map[string]string{"cds.env.lb": "lb", "cds.env.lb.prefix": "myprefix"},
+				vars: map[string]string{"cds.env.lb": "lb", "cds.env.lb.prefix": "myprefix"},
+			},
+			want: `{"HOST": "customermyprefix.lb"}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
