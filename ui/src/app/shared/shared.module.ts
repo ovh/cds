@@ -46,6 +46,7 @@ import {PipelineLaunchModalComponent} from './pipeline/launch/pipeline.launch.mo
 import {CommitListComponent} from './commit/commit.list.component';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {WorkflowNodeComponent} from './workflow/node/workflow.node.component';
+import {WorkflowNodeAddWizardComponent} from './workflow/node/wizard/node.wizard.component';
 import {WorkflowTriggerComponent} from './workflow/trigger/workflow.trigger.component';
 import {WorkflowNodeFormComponent} from './workflow/node/form/workflow.node.form.component';
 import {WorkflowDeleteNodeComponent} from './workflow/node/delete/workflow.node.delete.component';
@@ -117,6 +118,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         VariableValueComponent,
         WarningModalComponent,
         WorkflowNodeComponent,
+        WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
         WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
@@ -196,6 +198,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         VariableValueComponent,
         WarningModalComponent,
         WorkflowNodeComponent,
+        WorkflowNodeAddWizardComponent,
         WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
         WorkflowJoinComponent,
