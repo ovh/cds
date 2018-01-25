@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moby/moby/pkg/namesgenerator"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 
+	"github.com/moby/moby/pkg/namesgenerator"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
