@@ -3,6 +3,8 @@ package exportentities
 import (
 	"fmt"
 
+	"github.com/fsamin/go-dump"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,7 +19,7 @@ type Workflow struct {
 	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
 	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	Payload         interface{}                 `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Payload         map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
 	Parameters      map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
@@ -33,7 +35,7 @@ type NodeEntry struct {
 	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
 	OneAtATime      *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
-	Payload         interface{}                 `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Payload         map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
 	Parameters      map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
@@ -111,7 +113,17 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		}
 
 		if n.Context.HasDefaultPayload() {
-			entry.Payload = n.Context.DefaultPayload
+			enc := dump.NewDefaultEncoder(nil)
+			enc.ExtraFields.DetailedMap = false
+			enc.ExtraFields.DetailedStruct = false
+			enc.ExtraFields.Len = false
+			enc.ExtraFields.Type = false
+			enc.Formatters = nil
+			m, err := enc.ToMap(n.Context.DefaultPayload)
+			if err != nil {
+				return entry, err
+			}
+			entry.Payload = m
 		}
 
 		if len(n.Context.DefaultPipelineParameters) > 0 {
@@ -192,6 +204,8 @@ func (w Workflow) Entries() map[string]NodeEntry {
 		Conditions:      w.Conditions,
 		DependsOn:       w.DependsOn,
 		When:            w.When,
+		Payload:         w.Payload,
+		Parameters:      w.Parameters,
 	}
 	return map[string]NodeEntry{
 		w.PipelineName: singleEntry,
@@ -350,6 +364,13 @@ func (e *NodeEntry) getNode(name string) (*sdk.WorkflowNode, error) {
 			node.Context = new(sdk.WorkflowNodeContext)
 		}
 		node.Context.Conditions = *e.Conditions
+	}
+
+	if len(e.Payload) > 0 {
+		if node.Context == nil {
+			node.Context = new(sdk.WorkflowNodeContext)
+		}
+		node.Context.DefaultPayload = e.Payload
 	}
 
 	mapPipelineParameters := sdk.ParametersFromMap(e.Parameters)
