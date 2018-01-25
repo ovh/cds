@@ -48,6 +48,7 @@ export class WorkflowNodeContextComponent {
     loadingBranches = false;
 
     pipParamsReady = false;
+    currentPipeline: Pipeline;
     pipelineSubscription: Subscription;
 
     constructor(
@@ -92,6 +93,7 @@ export class WorkflowNodeContextComponent {
             this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
                 let pip = pips.get(this.project.key + '-' + this.node.pipeline.name);
                 if (pip) {
+                    this.currentPipeline = pip;
                     this.pipParamsReady = true;
                     this.editableNode.context.default_pipeline_parameters =
                         Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters);
