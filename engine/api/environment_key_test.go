@@ -1,12 +1,15 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
-
-	"github.com/loopfz/gadgeto/iffy"
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
@@ -17,9 +20,6 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -61,12 +61,20 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.GetRoute("GET", api.getKeysInEnvironmentHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	uri := router.GetRoute("GET", api.getKeysInEnvironmentHandler, vars)
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var keys []sdk.ApplicationKey
-	tester.AddCall("Test_getKeysInEnvironmentHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t), iffy.UnmarshalResponse(&keys))
-	tester.Run()
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &keys))
+	assert.Equal(t, len(keys), 1)
+
 }
 
 func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
@@ -74,9 +82,6 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -111,12 +116,20 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.GetRoute("DELETE", api.deleteKeyInEnvironmentHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	uri := router.GetRoute("DELETE", api.deleteKeyInEnvironmentHandler, vars)
+	req, err := http.NewRequest("DELETE", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
 
-	var keys []sdk.ApplicationKey
-	tester.AddCall("Test_deleteKeyInEnvironmentHandler", "DELETE", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(0), iffy.DumpResponse(t), iffy.UnmarshalResponse(&keys))
-	tester.Run()
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var keys []sdk.EnvironmentKey
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &keys))
+	assert.Equal(t, len(keys), 0)
+
 }
 
 func Test_addKeyInEnvironmentHandler(t *testing.T) {
@@ -124,9 +137,6 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -153,12 +163,21 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 		"permEnvironmentName": env.Name,
 	}
 
-	route := router.GetRoute("POST", api.addKeyInEnvironmentHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	jsonBody, _ := json.Marshal(k)
+	body := bytes.NewBuffer(jsonBody)
+
+	uri := router.GetRoute("POST", api.addKeyInEnvironmentHandler, vars)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var key sdk.EnvironmentKey
-	tester.AddCall("Test_addKeyInEnvironmentHandler", "POST", route, k).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.UnmarshalResponse(&key))
-	tester.Run()
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &key))
 
 	assert.Equal(t, env.ID, key.EnvironmentID)
 }

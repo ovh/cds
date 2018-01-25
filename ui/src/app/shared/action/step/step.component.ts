@@ -30,6 +30,7 @@ export class ActionStepComponent {
     @Output() removeEvent = new EventEmitter<StepEvent>();
 
     originalParam = new Map<string, Parameter>();
+    collapsed = true;
 
     constructor() { }
 

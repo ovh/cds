@@ -1,9 +1,11 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
-
-	"github.com/loopfz/gadgeto/iffy"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -20,9 +22,6 @@ func Test_getAllKeysProjectHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -140,16 +139,23 @@ func Test_getAllKeysProjectHandler(t *testing.T) {
 	test.NoError(t, environment.InsertKey(db, env2k1))
 	test.NoError(t, environment.InsertKey(db, env2k2))
 
-	route := router.GetRoute("GET", api.getAllKeysProjectHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
-
 	allkeys := struct {
 		ProjectKeys     []sdk.ProjectKey     `json:"project_key"`
 		ApplicationKeys []sdk.ApplicationKey `json:"application_key"`
 		EnvironmentKeys []sdk.EnvironmentKey `json:"environment_key"`
 	}{}
-	tester.AddCall("Test_getAllKeysProjectHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t), iffy.UnmarshalResponse(&allkeys))
-	tester.Run()
+
+	uri := router.GetRoute("GET", api.getAllKeysProjectHandler, vars)
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &allkeys))
 
 	assert.Equal(t, 1, len(allkeys.ProjectKeys))
 	assert.Equal(t, 3, len(allkeys.ApplicationKeys))
@@ -161,9 +167,6 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -192,12 +195,19 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 		"name":           k.Name,
 	}
 
-	route := router.GetRoute("GET", api.getKeysInProjectHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	uri := router.GetRoute("GET", api.getKeysInProjectHandler, vars)
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var keys []sdk.ProjectKey
-	tester.AddCall("Test_getKeysInProjectHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t), iffy.UnmarshalResponse(&keys))
-	tester.Run()
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &keys))
+	assert.Equal(t, len(keys), 1)
 }
 
 func Test_deleteKeyInProjectHandler(t *testing.T) {
@@ -205,9 +215,6 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -232,12 +239,19 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 		"name":           k.Name,
 	}
 
-	route := router.GetRoute("DELETE", api.deleteKeyInProjectHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	uri := router.GetRoute("DELETE", api.deleteKeyInProjectHandler, vars)
+	req, err := http.NewRequest("DELETE", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var keys []sdk.ProjectKey
-	tester.AddCall("Test_deleteKeyInProjectHandler", "DELETE", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(0), iffy.DumpResponse(t), iffy.UnmarshalResponse(&keys))
-	tester.Run()
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &keys))
+	assert.Equal(t, len(keys), 0)
 }
 
 func Test_addKeyInProjectHandler(t *testing.T) {
@@ -245,9 +259,6 @@ func Test_addKeyInProjectHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -264,12 +275,20 @@ func Test_addKeyInProjectHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 	}
 
-	route := router.GetRoute("POST", api.addKeyInProjectHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	jsonBody, _ := json.Marshal(k)
+	body := bytes.NewBuffer(jsonBody)
+	uri := router.GetRoute("POST", api.addKeyInProjectHandler, vars)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var key sdk.ProjectKey
-	tester.AddCall("Test_addKeyInProjectHandler", "POST", route, k).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.UnmarshalResponse(&key))
-	tester.Run()
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &key))
 
 	assert.Equal(t, proj.ID, key.ProjectID)
 }

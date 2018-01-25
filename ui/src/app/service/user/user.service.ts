@@ -94,7 +94,7 @@ export class UserService {
      * @returns {Observable<Token[]>}
      */
     getTokens(): Observable<Token[]> {
-        return this._http.get<Token[]>('/user/tokens');
+        return this._http.get<Token[]>('/user/token');
     }
 
     /**

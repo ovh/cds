@@ -10,9 +10,9 @@ import (
 var workflowExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export a workflow",
-	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
 	},
 	Flags: []cli.Flag{
 		{
@@ -31,7 +31,7 @@ var workflowExportCmd = cli.Command{
 }
 
 func workflowExportRun(c cli.Values) error {
-	btes, err := client.WorkflowExport(c.GetString("project-key"), c.GetString("workflow-name"), c.GetBool("with-permissions"), c.GetString("format"))
+	btes, err := client.WorkflowExport(c.GetString(_ProjectKey), c.GetString(_WorkflowName), c.GetBool("with-permissions"), c.GetString("format"))
 	if err != nil {
 		return err
 	}

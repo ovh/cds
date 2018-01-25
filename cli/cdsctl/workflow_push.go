@@ -19,8 +19,8 @@ var workflowPushCmd = cli.Command{
 		For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with
 		cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
 	`,
-	Args: []cli.Arg{
-		{Name: "project-key"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
 	},
 	VariadicArgs: cli.Arg{
 		Name: "yaml-file",
@@ -69,7 +69,7 @@ func workflowPushRun(c cli.Values) error {
 	r := bytes.NewBuffer(btes)
 
 	// Push it !
-	msgList, err := client.WorkflowPush(c.GetString("project-key"), r)
+	msgList, err := client.WorkflowPush(c.GetString(_ProjectKey), r)
 	for _, msg := range msgList {
 		fmt.Println(msg)
 	}

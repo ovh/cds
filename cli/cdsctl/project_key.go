@@ -15,17 +15,19 @@ var (
 
 	projectKey = cli.NewCommand(projectKeyCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(projectKeyCreateCmd, projectCreateKeyRun, nil),
-			cli.NewListCommand(projectKeyListCmd, projectListKeyRun, nil),
-			cli.NewCommand(projectKeyDeleteCmd, projectDeleteKeyRun, nil),
+			cli.NewCommand(projectKeyCreateCmd, projectCreateKeyRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(projectKeyListCmd, projectListKeyRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(projectKeyDeleteCmd, projectDeleteKeyRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var projectKeyCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new key on project. key-type can be ssh or pgp",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "key-name"},
 		{Name: "key-type"},
 	},
@@ -38,19 +40,19 @@ func projectCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	return client.ProjectKeyCreate(v["project-key"], key)
+	return client.ProjectKeyCreate(v[_ProjectKey], key)
 }
 
 var projectKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS project keys",
 	Args: []cli.Arg{
-		{Name: "project-key"},
+		{Name: _ProjectKey},
 	},
 }
 
 func projectListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.ProjectKeysList(v["project-key"])
+	keys, err := client.ProjectKeysList(v[_ProjectKey])
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +62,14 @@ func projectListKeyRun(v cli.Values) (cli.ListResult, error) {
 var projectKeyDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS project key",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "key-name"},
 	},
 }
 
 func projectDeleteKeyRun(v cli.Values) error {
-	return client.ProjectKeysDelete(v["project-key"], v["key-name"])
+	return client.ProjectKeysDelete(v[_ProjectKey], v["key-name"])
 }

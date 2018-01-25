@@ -12,14 +12,12 @@
         <div class="node pipeline">
             <div class="ellipsis">
                 <b>{{node.name}}</b>
-                <span *ngIf="warnings > 0"
+                <div *ngIf="warnings > 0"
                     suiPopup
                     popupPlacement="right center"
                     [popupText]="'warning_build_title' | translate: {nb: warnings}">
-                    <span class="fixed">
-                        <i class="warning sign icon orange"></i>
-                    </span>
-                </span>
+                    <i class="warning sign icon orange fixed"></i>
+                </div>
             </div>
 
             <div class="node context"

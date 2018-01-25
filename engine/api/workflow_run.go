@@ -365,6 +365,7 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 		}
 	}
 
+	run.LastExecution = time.Now()
 	run.Status = sdk.StatusStopped.String()
 	if errU := workflow.UpdateWorkflowRun(tx, run); errU != nil {
 		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run %d", run.ID)

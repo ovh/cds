@@ -9,7 +9,7 @@
     <div class="page" [class.connected]="isConnected">
         <div class="content" [class.connected]="isConnected">
             <div class="toast">
-                <toaster-container></toaster-container>
+                <toaster-container [toasterconfig]="toasterConfig"></toaster-container>
             </div>
             <router-outlet></router-outlet>
             <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}</div>

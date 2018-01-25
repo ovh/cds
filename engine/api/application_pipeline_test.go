@@ -1,9 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -18,9 +21,6 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -65,10 +65,20 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		"key": proj.Key,
 		"permApplicationName": app.Name,
 	}
-	route := router.GetRoute("POST", api.attachPipelinesToApplicationHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_attachPipelinesToApplicationHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200))
-	tester.Run()
+
+	uri := router.GetRoute("POST", api.attachPipelinesToApplicationHandler, vars)
+	test.NotEmpty(t, uri)
+
+	jsonBody, _ := json.Marshal(request)
+	body := bytes.NewBuffer(jsonBody)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	appDB, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
 	test.NoError(t, err)

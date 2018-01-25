@@ -21,16 +21,18 @@ var (
 
 	applicationGroup = cli.NewCommand(applicationGroupCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil),
+			cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var applicationGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS application",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "application-name"},
 		{Name: "path"},
 	},
 	Flags: []cli.Flag{
@@ -78,10 +80,10 @@ func applicationGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.ApplicationGroupsImport(v["project-key"], v["application-name"], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.ApplicationGroupsImport(v[_ProjectKey], v[_ApplicationName], reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
-	fmt.Printf("Groups imported in application %s with success\n", v["application-name"])
+	fmt.Printf("Groups imported in application %s with success\n", v[_ApplicationName])
 
 	return nil
 }

@@ -469,3 +469,19 @@ func (api *API) getUserTokenListHandler() Handler {
 		return WriteJSON(w, r, tokens, http.StatusOK)
 	}
 }
+
+func (api *API) getUserTokenHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		tok, err := token.LoadTokenWithGroup(api.mustDB(), vars["token"])
+		if err == sdk.ErrInvalidToken {
+			return sdk.ErrTokenNotFound
+		}
+		if err != nil {
+			return sdk.WrapError(err, "getUserTokenHandler> cannot load token for user %s", getUser(ctx).Username)
+		}
+		tok.Token = ""
+
+		return WriteJSON(w, r, tok, http.StatusOK)
+	}
+}

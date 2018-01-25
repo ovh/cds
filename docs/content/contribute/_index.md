@@ -37,10 +37,21 @@ Documentation https://ovh.github.io/cds is generated with Hugo. Source are under
 ```bash
 cd ${CDS_SOURCES}/docs/content/cli
 rm -rf cdsctl engine worker;
-cdsctl doc  # generate cdsctl directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
-engine doc  # generate engine directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
-worker doc  # generate worker directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
+cd ${CDS_SOURCES}
+GEN_PATH=${CDS_SOURCES}/docs/content/cli make doc 
 cd ${CDS_SOURCES}/docs
 hugo server
 ```
 * go to http://localhost:1313/cds/
+
+
+### Golang Development
+
+We use https://github.com/golang/dep to manage CDS Dependencies.
+
+If you have to add or update a CDS Dependency, please follow instructions on https://github.com/golang/dep#adding-a-dependency
+
+And then launch:
+```bash
+$ dep prune
+```

@@ -117,6 +117,7 @@
   "btn_continue": "Continue",
   "btn_close": "Close",
   "btn_create": "Create",
+  "btn_finish": "Finish",
   "btn_delete": "Delete",
   "btn_detach": "Unlink pipeline",
   "btn_link": "Connect",
@@ -128,6 +129,7 @@
   "btn_run_workflow": "Run workflow",
   "btn_validate": "Validate",
   "btn_save": "Save",
+  "btn_next": "Next",
   "btn_edit": "Edit",
   "btn_add": "Add",
 
@@ -203,6 +205,8 @@
   "common_usage": "Usage",
   "common_orientation": "Orientation",
   "common_copy_clipboard": "Copy to clipboad",
+  "common_select": "Select",
+  "common_create": "Create",
 
   "keys_added": "Key added",
   "keys_add_title": "Add a key",
@@ -263,12 +267,14 @@
   "token_value": "Token",
   "token_type": "Type",
   "token_created": "Creation date",
+  "token_creator": "Creator",
   "token_deleted": "Token removed with success",
   "token_added": "Token generated with success",
   "token_no": "No token linked to this group",
   "token_title_handling": "Handle group tokens",
   "token_loading": "Loading tokens",
   "token_group_name": "Group",
+  "token_generated": "Here is your generated token",
 
   "hook_create_label": "Create a hook",
   "hook_deleted": "Hook deleted",
@@ -375,6 +381,7 @@
   "pipeline_label_stop": "Stop pipeline",
   "pipeline_loading": "Loading pipeline...",
   "pipeline_name": "Pipeline name",
+  "pipeline_name_new": "New pipeline name",
   "pipeline_name_error": "Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-",
   "pipeline_parameters_list_title": "List of pipeline parameters: ",
   "pipeline_parameters_form_title": "Add a parameter: ",
@@ -402,6 +409,7 @@
   "pipeline_stage_edit": "Edit stage",
   "pipeline_stage_moved": "Stage moved",
   "pipeline_stage_no": "The pipeline has no stage",
+  "pipeline_wizard_description": "Create or select your first pipeline for you workflow",
 
   "poller_added": "Poller added",
   "poller_create_label": "Create a poller",
@@ -667,6 +675,7 @@
   "workflow_node_context_pipeline_parameter": "Pipeline parameters",
   "workflow_node_context_payload": "Default payload",
   "workflow_run_node_job_queued": "Queued {{time}} ago",
+  "workflow_wizard_description": "Choose your workflow options",
 
   "workflow_node_edition": "Edit your configuration",
   "workflow_node_condition_warning": "Attention if you have basic conditions and advanced at the same time, only advanced conditions will be effective.",

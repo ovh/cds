@@ -17,8 +17,10 @@ var workflowImportCmd = cli.Command{
 		
 		If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
 	`,
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "filename"},
 	},
 	Flags: []cli.Flag{
@@ -44,7 +46,7 @@ func workflowImportRun(c cli.Values) error {
 		format = "json"
 	}
 
-	msgs, err := client.WorkflowImport(c.GetString("project-key"), f, format, c.GetBool("force"))
+	msgs, err := client.WorkflowImport(c.GetString(_ProjectKey), f, format, c.GetBool("force"))
 	if err != nil {
 		return err
 	}

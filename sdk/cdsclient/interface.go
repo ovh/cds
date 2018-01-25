@@ -10,6 +10,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type Filter struct {
+	Name, Value string
+}
+
 // ExportImportInterface exposes pipeline and application export and import function
 type ExportImportInterface interface {
 	PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
@@ -125,7 +129,7 @@ type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project, groupName string) error
 	ProjectDelete(projectKey string) error
 	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
-	ProjectList() ([]sdk.Project, error)
+	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectGroupsImport(projectKey string, content io.Reader, format string, force bool) (sdk.Project, error)
@@ -173,6 +177,7 @@ type UserClient interface {
 	UserReset(username, email, callback string) error
 	UserSignup(username, fullname, email, callback string) error
 	ListAllTokens() ([]sdk.Token, error)
+	FindToken(token string) (sdk.Token, error)
 }
 
 // WorkerClient exposes workers functions

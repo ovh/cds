@@ -82,18 +82,15 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                             historyChecked = true;
                             this._workflowRunService.nodeRunHistory(
                                 this.project.key, this.workflowName,
-                                number, this.nodeRun.workflow_node_id).pipe(first()).subscribe( nrs => {
-                                this.nodeRunsHistory = nrs;
-                            })
+                                number, this.nodeRun.workflow_node_id)
+                            .pipe(first())
+                            .subscribe(nrs => this.nodeRunsHistory = nrs);
                         }
 
-                        if (this.nodeRun && (this.nodeRun.status === PipelineStatus.SUCCESS || this.nodeRun.status === PipelineStatus.FAIL
-                                || this.nodeRun.status === PipelineStatus.DISABLED || this.nodeRun.status === PipelineStatus.SKIPPED)) {
+                        if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
                             this.nodeRunWorker.stop();
                             this.nodeRunWorker = undefined;
-
-                            this.duration = this._durationService.duration(
-                                new Date(this.nodeRun.start), new Date(this.nodeRun.done));
+                            this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
                         }
                     });
                 });

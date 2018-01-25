@@ -12,6 +12,7 @@ type config struct {
 	RejectInvalidSSL    bool
 	Debug               bool
 	HTTPClient          *http.Client
+	ChromeOptions       map[string]interface{}
 }
 
 // An Option specifies configuration for a new WebDriver or Page.
@@ -28,6 +29,16 @@ func Browser(name string) Option {
 func Timeout(seconds int) Option {
 	return func(c *config) {
 		c.Timeout = time.Duration(seconds) * time.Second
+	}
+}
+
+// ChromeOptions is used to pass additional options to Chrome via ChromeDriver.
+func ChromeOptions(opt string, value interface{}) Option {
+	return func(c *config) {
+		if c.ChromeOptions == nil {
+			c.ChromeOptions = make(map[string]interface{})
+		}
+		c.ChromeOptions[opt] = value
 	}
 }
 
@@ -71,6 +82,9 @@ func (c *config) Capabilities() Capabilities {
 	}
 	if c.BrowserName != "" {
 		merged.Browser(c.BrowserName)
+	}
+	if c.ChromeOptions != nil {
+		merged["chromeOptions"] = c.ChromeOptions
 	}
 	if c.RejectInvalidSSL {
 		merged.Without("acceptSslCerts")

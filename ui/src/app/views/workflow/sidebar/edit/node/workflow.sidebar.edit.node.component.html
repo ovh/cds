@@ -18,7 +18,7 @@
               </div>
             </ng-container>
             <div class="sub header">
-              <span>{{ 'workflow_node_edition' | translate }}</span>
+              <span>{{ 'common_pipeline' | translate }} : {{node.pipeline.name}}</span>
               <div class="inline pointing ml5" (click)="openWarningModal()" *ngIf="displayInputName && nameWarning &&
               nameWarning.nodes?.length > 0">
                 <i class="orange warning sign icon  animated infinite tada"></i>

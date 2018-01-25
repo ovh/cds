@@ -1,0 +1,9 @@
+language: go
+
+go:
+  - tip
+  - master
+
+script:
+  - go test
+  - go build

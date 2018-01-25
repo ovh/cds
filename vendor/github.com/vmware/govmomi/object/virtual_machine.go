@@ -286,8 +286,6 @@ func (v VirtualMachine) WaitForNetIP(ctx context.Context, v4 bool, device ...str
 				}
 
 				for _, ip := range nic.IpConfig.IpAddress {
-					fmt.Println(ip.IpAddress)
-
 					if _, ok := macs[mac]; !ok {
 						continue // Ignore any that don't correspond to a VM device
 					}

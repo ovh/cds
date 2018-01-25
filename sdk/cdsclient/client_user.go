@@ -106,11 +106,23 @@ func (c *client) UserConfirm(username, token string) (bool, string, error) {
 	return true, res.Password, nil
 }
 
-// Get all tokens that an user can access
+// ListAllTokens Get all tokens that an user can access
 func (c *client) ListAllTokens() ([]sdk.Token, error) {
 	tokens := []sdk.Token{}
-	if _, err := c.GetJSON("/user/tokens", &tokens); err != nil {
+	if _, err := c.GetJSON("/user/token", &tokens); err != nil {
 		return tokens, err
 	}
 	return tokens, nil
+}
+
+// FindToken Get a specific token with his value to have description
+func (c *client) FindToken(tokenValue string) (sdk.Token, error) {
+	token := sdk.Token{}
+	if code, err := c.GetJSON("/user/token/"+url.QueryEscape(tokenValue), &token); err != nil {
+		if code == http.StatusNotFound {
+			return token, sdk.ErrTokenNotFound
+		}
+		return token, err
+	}
+	return token, nil
 }

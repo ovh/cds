@@ -80,6 +80,7 @@ func (s args) Swap(i, j int) {
 // Command represents the way to instanciate a cobra.Command
 type Command struct {
 	Name         string
+	Ctx          []Arg
 	Args         []Arg
 	OptionalArgs []Arg
 	VariadicArgs Arg
@@ -89,6 +90,7 @@ type Command struct {
 	Flags        []Flag
 	Aliases      []string
 	Hidden       bool
+	PreRun       func(c *Command, args *[]string) error
 }
 
 // CommandModifier is a function type to extend a command
@@ -172,6 +174,13 @@ func CommandWithExtraAliases(c *Command, run interface{}) {
 		extraAliases = []string{"rm", "remove", "del"}
 	}
 	c.Aliases = append(c.Aliases, extraAliases...)
+}
+
+// CommandWithPreRun to add pre run function
+func CommandWithPreRun(f func(c *Command, args *[]string) error) func(c *Command, run interface{}) {
+	return func(c *Command, run interface{}) {
+		c.PreRun = f
+	}
 }
 
 // ErrWrongUsage is a common error
