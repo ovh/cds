@@ -50,6 +50,7 @@ const (
 	HostProcess = "host"
 	Openstack   = "openstack"
 	VSphere     = "vsphere"
+	Kubernetes  = "kubernetes"
 )
 
 var (
@@ -59,6 +60,7 @@ var (
 		string(HostProcess),
 		string(Openstack),
 		string(VSphere),
+		string(Kubernetes),
 	}
 )
 

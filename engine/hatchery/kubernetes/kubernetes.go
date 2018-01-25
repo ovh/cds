@@ -1,12 +1,24 @@
-package main
+package kubernetes
 
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+	"time"
 
+	"github.com/moby/moby/pkg/namesgenerator"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
+
+	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 // New instanciates a new hatchery local
@@ -16,47 +28,91 @@ func New() *HatcheryKubernetes {
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
-	// if err := h.CheckConfiguration(cfg); err != nil {
-	// 	return err
-	// }
-	//
-	// var ok bool
-	// h.Config, ok = cfg.(HatcheryConfiguration)
-	// if !ok {
-	// 	return fmt.Errorf("Invalid configuration")
-	// }
+	if err := h.CheckConfiguration(cfg); err != nil {
+		return err
+	}
+
+	var ok bool
+	h.Config, ok = cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
+	if err != nil {
+		return sdk.WrapError(err, "Cannot build config from flags")
+	}
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(configK8s)
+	if err != nil {
+		return sdk.WrapError(err, "Cannot create new config")
+	}
+
+	h.k8sClient = clientset
+
+	if h.Config.KubernetesNamespace != apiv1.NamespaceDefault {
+		if _, err := clientset.CoreV1().Namespaces().Get(h.Config.KubernetesNamespace, metav1.GetOptions{}); err != nil {
+			ns := apiv1.Namespace{}
+			ns.SetName(h.Config.KubernetesNamespace)
+			if _, errC := clientset.CoreV1().Namespaces().Create(&ns); errC != nil {
+				return sdk.WrapError(errC, "Cannot create namespace %s in kubernetes", h.Config.KubernetesNamespace)
+			}
+		}
+	}
 
 	return nil
 }
 
+// getStartingConfig implements ConfigAccess
+func (h *HatcheryKubernetes) getStartingConfig() (*clientcmdapi.Config, error) {
+	defaultClientConfigRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	overrideCfg := clientcmd.ConfigOverrides{
+		AuthInfo: clientcmdapi.AuthInfo{
+			Username: h.Config.KubernetesUsername,
+			Password: h.Config.KubernetesPassword,
+			Token:    h.Config.KubernetesToken,
+		},
+	}
+
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(defaultClientConfigRules, &overrideCfg)
+	rawConfig, err := clientConfig.RawConfig()
+	if os.IsNotExist(err) {
+		return clientcmdapi.NewConfig(), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &rawConfig, nil
+}
+
 // CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
-	// hconfig, ok := cfg.(HatcheryConfiguration)
-	// if !ok {
-	// 	return fmt.Errorf("Invalid configuration")
-	// }
-	//
-	// if hconfig.API.HTTP.URL == "" {
-	// 	return fmt.Errorf("API HTTP(s) URL is mandatory")
-	// }
-	//
-	// if hconfig.API.Token == "" {
-	// 	return fmt.Errorf("API Token URL is mandatory")
-	// }
-	//
-	// if hconfig.Basedir == "" {
-	// 	return fmt.Errorf("Invalid basedir directory")
-	// }
-	//
-	// if hconfig.Name == "" {
-	// 	return fmt.Errorf("please enter a name in your local hatchery configuration")
-	// }
-	//
-	// if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {
-	// 	return fmt.Errorf("Basedir doesn't exist")
-	// } else if err != nil {
-	// 	return fmt.Errorf("Invalid basedir: %v", err)
-	// }
+	hconfig, ok := cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	if hconfig.API.HTTP.URL == "" {
+		return fmt.Errorf("API HTTP(s) URL is mandatory")
+	}
+
+	if hconfig.API.Token == "" {
+		return fmt.Errorf("API Token URL is mandatory")
+	}
+
+	if hconfig.Name == "" {
+		return fmt.Errorf("please enter a name in your local hatchery configuration")
+	}
+
+	if hconfig.KubernetesNamespace == "" {
+		return fmt.Errorf("please enter a valid kubernetes namespace")
+	}
+
+	if hconfig.KubernetesMasterURL == "" {
+		return fmt.Errorf("please enter a valid kubernetes master URL")
+	}
+
 	return nil
 }
 
@@ -91,79 +147,117 @@ func (h *HatcheryKubernetes) Configuration() hatchery.CommonConfiguration {
 
 // ModelType returns type of hatchery
 func (*HatcheryKubernetes) ModelType() string {
-	return sdk.HostProcess
+	return sdk.Kubernetes
 }
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+	for _, r := range requirements {
+		if r.Type == sdk.ServiceRequirement {
+			return false
+		}
+	}
 	return true
-}
-
-// killWorker kill a local process
-func (h *HatcheryKubernetes) killWorker(worker sdk.Worker) error {
-	return nil
 }
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+	name := fmt.Sprintf("k8s-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	label := "execution"
+	if spawnArgs.RegisterOnly {
+		name = "register-" + name
+		label = "register"
+	}
 
-	return "wName", nil
+	envs := []apiv1.EnvVar{
+		{Name: "CDS_API", Value: h.Config.API.HTTP.URL},
+		{Name: "CDS_NAME", Value: name},
+		{Name: "CDS_TOKEN", Value: h.Configuration().API.Token},
+		{Name: "CDS_SINGLE_USE", Value: "1"},
+		{Name: "CDS_MODEL", Value: fmt.Sprintf("%d", spawnArgs.Model.ID)},
+		{Name: "CDS_HATCHERY", Value: fmt.Sprintf("%d", h.hatch.ID)},
+		{Name: "CDS_HATCHERY_NAME", Value: h.hatch.Name},
+		{Name: "CDS_FORCE_EXIT", Value: "1"},
+		{Name: "CDS_TTL", Value: fmt.Sprintf("%d", h.Config.WorkerTTL)},
+	}
+
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			envs = append(envs, apiv1.EnvVar{Name: "CDS_BOOKED_WORKFLOW_JOB_ID", Value: fmt.Sprintf("%d", spawnArgs.JobID)})
+		} else {
+			envs = append(envs, apiv1.EnvVar{Name: "CDS_BOOKED_PB_JOB_ID", Value: fmt.Sprintf("%d", spawnArgs.JobID)})
+		}
+	}
+
+	var gracePeriodSecs int64
+	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&apiv1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+			DeletionGracePeriodSeconds: &gracePeriodSecs,
+			Labels: map[string]string{
+				LABEL_WORKER:       label,
+				LABEL_WORKER_MODEL: strings.ToLower(spawnArgs.Model.Name),
+			},
+		},
+		Spec: apiv1.PodSpec{
+			RestartPolicy:                 apiv1.RestartPolicyNever,
+			TerminationGracePeriodSeconds: &gracePeriodSecs,
+			Containers: []apiv1.Container{
+				{
+					Name:  name,
+					Image: spawnArgs.Model.Image,
+					Env:   envs,
+					Resources: apiv1.ResourceRequirements{
+						Requests: apiv1.ResourceList{
+							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", h.Config.DefaultMemory)),
+						},
+					},
+				},
+			},
+		},
+	})
+
+	return pod.Name, err
 }
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryKubernetes) WorkersStarted() int {
-	return len(h.workers)
+	list, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
+	if err != nil {
+		return 0
+	}
+
+	return len(list.Items)
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryKubernetes) WorkersStartedByModel(model *sdk.Model) int {
-	return 0
-}
+	list, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER_MODEL})
+	if err != nil {
+		log.Error("WorkersStartedByModel> Cannot get list of workers started (%s)", err)
+		return 0
+	}
 
-// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
-// returns an error "Exit status X" if current host misses one requirement
-func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
-	var capa []sdk.Requirement
-
-	return capa, nil
+	return len(list.Items)
 }
 
 // Init register local hatchery with its worker model
 func (h *HatcheryKubernetes) Init() error {
-	h.workers = make(map[string]workerCmd)
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
 
-	genname := h.Configuration().Name
 	h.client = cdsclient.NewHatchery(
 		h.Configuration().API.HTTP.URL,
 		h.Configuration().API.Token,
 		h.Configuration().Provision.RegisterFrequency,
 		h.Configuration().API.HTTP.Insecure,
-		genname,
+		h.hatch.Name,
 	)
-
-	req, err := h.Client().Requirements()
-	if err != nil {
-		return fmt.Errorf("Cannot fetch requirements: %s", err)
-	}
-
-	capa, err := checkCapabilities(req)
-	if err != nil {
-		return fmt.Errorf("Cannot check local capabilities: %s", err)
-	}
-
-	h.hatch = &sdk.Hatchery{
-		Name: genname,
-		Model: sdk.Model{
-			Name:         genname,
-			Image:        genname,
-			Capabilities: capa,
-			Provision:    int64(h.Config.NbProvision),
-		},
-		Version: sdk.VERSION,
-	}
 
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
@@ -173,17 +267,35 @@ func (h *HatcheryKubernetes) Init() error {
 	return nil
 }
 
-func (h *HatcheryKubernetes) localWorkerIndexCleanup() {
-
-}
-
 func (h *HatcheryKubernetes) startKillAwolWorkerRoutine() {
-
+	for {
+		time.Sleep(30 * time.Second)
+		h.killAwolWorkers()
+	}
 }
 
 func (h *HatcheryKubernetes) killAwolWorkers() error {
+	pods, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
+	if err != nil {
+		return err
+	}
 
-	return nil
+	var globalErr error
+	for _, pod := range pods.Items {
+		toDelete := false
+		for _, container := range pod.Status.ContainerStatuses {
+			if (container.State.Terminated != nil && container.State.Terminated.Reason == "Completed") || (container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull") {
+				toDelete = true
+			}
+		}
+		if toDelete {
+			if err := h.k8sClient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
+				globalErr = err
+				log.Error("hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
+			}
+		}
+	}
+	return globalErr
 }
 
 // NeedRegistration return true if worker model need regsitration
