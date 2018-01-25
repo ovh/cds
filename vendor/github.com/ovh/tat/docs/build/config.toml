@@ -1,9 +1,0 @@
-baseurl = "https://ovh.github.io/tat"
-title = "TAT - TextAndTag Documentation"
-languageCode = "en-us"
-theme = "hugo-theme-learn"
-canonifyurls = true
-createFromSiteMenusMain = true
-[params]
-  menu = [ "overview", "tatwebui", "engine", "tatcli", "sdk", "ecosystem", "tatnhack" ]
-  search = true

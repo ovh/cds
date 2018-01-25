@@ -141,3 +141,7 @@
 [[constraint]]
   name = "github.com/Microsoft/go-winio"
   version = "0.4.7"
+
+[prune]
+  non-go = true
+  go-tests = true
