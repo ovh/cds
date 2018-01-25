@@ -1,0 +1,1154 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tatclis on TAT - TextAndTag Documentation</title>
+    <link>https://ovh.github.io/tat/tatcli/index.xml</link>
+    <description>Recent content in Tatclis on TAT - TextAndTag Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://ovh.github.io/tat/tatcli/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Tat CLI Reference</title>
+      <link>https://ovh.github.io/tat/tatcli/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/</guid>
+      <description>
+
+&lt;h3 id=&#34;chapter-4&#34;&gt;Chapter 4&lt;/h3&gt;
+
+&lt;h1 id=&#34;tatcli&#34;&gt;TATCLI&lt;/h1&gt;
+
+&lt;p&gt;Reference&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>General</title>
+      <link>https://ovh.github.io/tat/tatcli/general/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/general/</guid>
+      <description>
+
+&lt;p&gt;&lt;img align=&#34;right&#34; src=&#34;https://raw.githubusercontent.com/ovh/tat/master/tat.png&#34;&gt;&lt;/p&gt;
+
+&lt;p&gt;Tatcli, a Tat Command Line Interface.&lt;/p&gt;
+
+&lt;p&gt;See Tat Engine for more information: &lt;a href=&#34;https://github.com/ovh/tat&#34;&gt;https://github.com/ovh/tat&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;download&#34;&gt;Download&lt;/h2&gt;
+
+&lt;p&gt;Download latest binary on release page &lt;a href=&#34;https://github.com/ovh/tat/releases&#34;&gt;https://github.com/ovh/tat/releases&lt;/a&gt;
+then &lt;code&gt;chmod +x tatcli&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;If you have already installed tatcli, you can update it with &lt;code&gt;tatcli update&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;usage-general-rules&#34;&gt;Usage - General Rules&lt;/h2&gt;
+
+&lt;p&gt;A successful command will give you no feedback. If you want one, you can use &lt;code&gt;-v&lt;/code&gt; argument.
+After each command, the exit code can be found in the &lt;code&gt;$?&lt;/code&gt; variable. No error if exit code equals 0.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli config -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-config/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-config/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-config-h&#34;&gt;tatcli config -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;Config commands: tatcli config &amp;lt;command&amp;gt;
+
+Usage:
+  tatcli config [command]
+
+Aliases:
+  config, c
+
+
+Available Commands:
+  template    Write a template configuration file in $HOME/.tatcli/config.json: tatcli config template
+  show        Show Configuration: tatcli config show
+
+Flags:
+  -h, --help=false: help for config
+
+Global Flags: see tatcli -h
+
+Use &amp;quot;tatcli config [command] --help&amp;quot; for more information about a command.
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;example&#34;&gt;Example&lt;/h2&gt;
+
+&lt;h3 id=&#34;credentials&#34;&gt;Credentials&lt;/h3&gt;
+
+&lt;p&gt;Config file is under $HOME/.tatcli/config.json
+You can create it with this command:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli config template
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Template is:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+  &amp;quot;username&amp;quot;:&amp;quot;myUsername&amp;quot;,
+  &amp;quot;password&amp;quot;:&amp;quot;myPassword&amp;quot;,
+  &amp;quot;url&amp;quot;:&amp;quot;http://urltat:port&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli group -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-group/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-group/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-group-h&#34;&gt;tatcli group -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;Group commands: tatcli group &amp;lt;command&amp;gt;
+
+Usage:
+  tatcli group [command]
+
+Aliases:
+  group, g
+
+
+Available Commands:
+  list            List all groups: tatcli group list &amp;lt;skip&amp;gt; &amp;lt;limit&amp;gt;
+  create          create a new group: tatcli group create &amp;lt;groupname&amp;gt; &amp;lt;description&amp;gt;
+  update          update a group: tatcli group update &amp;lt;groupname&amp;gt; &amp;lt;newGroupname&amp;gt; &amp;lt;newDescription&amp;gt;
+  delete          delete a group: tatcli group delete &amp;lt;groupname&amp;gt;
+  addUser         Add Users to a group: tacli group addUser &amp;lt;groupname&amp;gt; &amp;lt;username1&amp;gt; [&amp;lt;username2&amp;gt; ... ]
+  deleteUser      Delete Users from a group: tacli group deleteUser &amp;lt;groupname&amp;gt; &amp;lt;username1&amp;gt; [&amp;lt;username2&amp;gt; ... ]
+  addAdminUser    Add Admin Users to a group: tacli group addAdminUser &amp;lt;groupname&amp;gt; &amp;lt;username1&amp;gt; [&amp;lt;username2&amp;gt; ... ]
+  deleteAdminUser Delete Admin Users from a group: tacli group deleteAdminUser &amp;lt;groupname&amp;gt; &amp;lt;username1&amp;gt; [&amp;lt;username2&amp;gt; ... ]
+
+Flags:
+  -h, --help=false: help for group
+
+Global Flags: see tatcli -h
+
+Use &amp;quot;tatcli group [command] --help&amp;quot; for more information about a command.
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;examples&#34;&gt;Examples&lt;/h2&gt;
+
+&lt;h3 id=&#34;create-a-group-admin-only&#34;&gt;Create a group (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli group add groupname description of group
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;update-a-group-admin-only&#34;&gt;Update a group (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli group update groupname newGroupname new description of group
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-a-group-admin-only&#34;&gt;Delete a group (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli group delete groupname
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-user-to-a-group&#34;&gt;Add user to a group&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli group addUser groupname username
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-a-user-from-a-group&#34;&gt;Delete a user from a group&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli group deleteUser groupname username
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli message -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-message/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-message/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-message-h&#34;&gt;tatcli message -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;Manipulate messages: tatcli message &amp;lt;command&amp;gt;
+
+Usage:
+  tatcli message [command]
+
+Aliases:
+  message, m, msg
+
+
+Available Commands:
+  add         tatcli message add [--dateCreation=timestamp] &amp;lt;topic&amp;gt; &amp;lt;my message&amp;gt;
+  concat      Update a message (if it&#39;s enabled on topic) by adding additional text at the end of message: tatcli message concat &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt; &amp;lt;additional text...&amp;gt;
+  delete      Delete a message: tatcli message delete &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt; [--cascade] [--cascadeForce]
+  deletebulk  Delete a list of messages: tatcli message deletebulk &amp;lt;topic&amp;gt; &amp;lt;skip&amp;gt; &amp;lt;limit&amp;gt; [--cascade] [--cascadeForce]
+  label       Add a label to a message: tatcli message label &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt; &amp;lt;colorInHexa&amp;gt; &amp;lt;my Label&amp;gt;
+  like        Like a message: tatcli message like &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt;
+  list        List all messages on one topic: tatcli msg list &amp;lt;Topic&amp;gt; &amp;lt;skip&amp;gt; &amp;lt;limit&amp;gt;
+  move        Move a message: tatcli message move &amp;lt;oldTopic&amp;gt; &amp;lt;idMessage&amp;gt; &amp;lt;newTopic&amp;gt;
+  relabel     Remove all labels and add new ones to a message: tatcli msg relabel &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt; --label=&amp;quot;#EEEE;myLabel1,#EEEE;myLabel2&amp;quot; --options=&amp;quot;myLabelToRemove1,myLabelToRemove2&amp;quot;
+  reply       Reply to a message: tatcli message reply &amp;lt;topic&amp;gt; &amp;lt;inReplyOfId&amp;gt; &amp;lt;my message...&amp;gt;
+  task        Create a task from one message: tatcli message task /Private/username/tasks/sub-topic idMessage
+  unlabel     Remove a label from a message: tatcli message unlabel &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt; &amp;lt;my Label&amp;gt;
+  unlike      Unlike a message: tatcli message unlike &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt;
+  untask      Remove a message from tasks: tatcli message untask /Private/username/tasks idMessage
+  unvotedown  Remove a vote down from a message: tatcli message unvotedown &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt;
+  unvoteup    Remove a vote UP from a message: tatcli message unvoteup &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt;
+  update      Update a message (if it&#39;s enabled on topic): tatcli message update &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt; &amp;lt;my message...&amp;gt;
+  votedown    Vote Down a message: tatcli message votedown &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt;
+  voteup      Vote UP a message: tatcli message voteup &amp;lt;topic&amp;gt; &amp;lt;idMessage&amp;gt;
+
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;command-message-list&#34;&gt;Command Message list&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;List all messages on one topic: tatcli msg list &amp;lt;Topic&amp;gt; &amp;lt;skip&amp;gt; &amp;lt;limit&amp;gt;
+
+Usage:
+  tatcli message list [flags]
+
+Aliases:
+  list, l
+
+
+Flags:
+      --allIDMessage string              Search in All ID Message (idMessage, idReply, idRoot)
+      --andLabel string                  Search by label (and) : could be labelA,labelB
+      --andTag string                    Search by tag (and) : could be tagA,tagB
+      --dateMaxCreation string           Search by dateCreation (timestamp), select messages where dateCreation &amp;lt;= dateMaxCreation
+      --dateMaxUpdate string             Search by dateUpdate (timestamp), select messages where dateUpdate &amp;lt;= dateMaxUpdate
+      --dateMinCreation string           Search by dateCreation (timestamp), select messages where dateCreation &amp;gt;= dateMinCreation
+      --dateMinUpdate string             Search by dateUpdate (timestamp), select messages where dateUpdate &amp;gt;= dateMinUpdate
+      --dateRefCreation string           This have to be used with dateRefDeltaMinCreation and / or dateRefDeltaMaxCreation. This could be BeginningOfMinute, BeginningOfHour, BeginningOfDay, BeginningOfWeek, BeginningOfMonth, BeginningOfQuarter, BeginningOfYear
+      --dateRefDeltaMaxCreation string   Add seconds to dateRefCreation flag
+      --dateRefDeltaMaxUpdate string     Add seconds to dateRefUpdate flag
+      --dateRefDeltaMinCreation string   Add seconds to dateRefCreation flag
+      --dateRefDeltaMinUpdate string     Add seconds to dateRefUpdate flag
+      --dateRefUpdate string             This have to be used with dateRefDeltaMinUpdate and / or dateRefDeltaMaxUpdate. This could be BeginningOfMinute, BeginningOfHour, BeginningOfDay, BeginningOfWeek, BeginningOfMonth, BeginningOfQuarter, BeginningOfYear
+      --exec stringSlice                 --stream required. Exec a cmd on each new message: --stream --exec &#39;myLights --pulse blue --duration=1000&#39; With only --onlyMsgCount=true : --exec min:max:cmda --exec min:max:cmdb, example: --exec 0:4:&#39;cmdA&#39; --exec 5::&#39;cmdb&#39;
+      --execErr stringSlice              --stream required. Exec a cmd on each error while requesting tat: --stream --exec &#39;myLights --pulse blue --duration=1000&#39; --execErr &#39;myLights --pulse red --duration=2000&#39;
+      --idMessage string                 Search by IDMessage
+      --inReplyOfID string               Search by IDMessage InReply
+      --inReplyOfIDRoot string           Search by IDMessage IdRoot
+      --label string                     Search by label: could be labelA,labelB
+      --lastHourMaxCreation string       Search by dateCreation, select messages where dateCreation &amp;lt;= Now Beginning Of Hour - (60 * lastHourMaxCreation)
+      --lastHourMaxUpdate string         Search by dateUpdate, select messages where dateUpdate &amp;lt;= Now Beginning Of Hour - (60 * lastHourMaxCreation)
+      --lastHourMinCreation string       Search by dateCreation, select messages where dateCreation &amp;gt;= Now Beginning Of Hour - (60 * lastHourMinCreation)
+      --lastHourMinUpdate string         Search by dateUpdate, select messages where dateUpdate &amp;gt;= Now Beginning Of Hour - (60 * lastHourMinCreation)
+      --lastMaxCreation string           Search by dateCreation (duration in second), select messages where dateCreation &amp;lt;= now - lastMaxCreation
+      --lastMaxUpdate string             Search by dateUpdate (duration in second), select messages where dateUpdate &amp;lt;= now - lastMaxCreation
+      --lastMinCreation string           Search by dateCreation (duration in second), select messages where dateCreation &amp;gt;= now - lastMinCreation
+      --lastMinUpdate string             Search by dateUpdate (duration in second), select messages where dateUpdate &amp;gt;= now - lastMinCreation
+      --limitMaxNbReplies string         In onetree mode, filter root messages with min or equals maxNbReplies
+      --limitMaxNbVotesDown string       Search by nbVotesDown
+      --limitMaxNbVotesUP string         Search by nbVotesUP
+      --limitMinNbReplies string         In onetree mode, filter root messages with more or equals minNbReplies
+      --limitMinNbVotesDown string       Search by nbVotesDown
+      --limitMinNbVotesUP string         Search by nbVotesUP
+      --notLabel string                  Search by label (exclude): could be labelA,labelB
+      --notTag string                    Search by tag (exclude) : could be tagA,tagB
+      --onlyCount string                 --onlyCount=true: only count messages, without retrieve msg. limit, skip, treeview criterias are ignored.
+      --onlyMsgReply string              --onlyMsgReply=true: restricts to reply message only (inReplyOfIDRoot not empty). If treeView is used, limit search criteria to reply, messages root are still given, independently of search criteria.
+      --onlyMsgRoot string               --onlyMsgRoot=true: restricts to root message only (inReplyOfIDRoot empty). If treeView is used, limit search criteria to root message, replies are still given, independently of search criteria.
+      --sortBy string                    --sortBy=-dateCreation: sort message. Use &#39;-&#39; to reverse sort. Default is --sortBy=-dateCreation. You can use: text, topic, inReplyOfID, inReplyOfIDRoot, nbLikes, labels, likers, votersUP, votersDown, nbVotesUP, nbVotesDown, userMentions, urls, tags, dateCreation, dateUpdate, author, nbReplies
+      --startLabel string                Search by a label prefix: --startLabel=&#39;mykey:,myKey2:&#39;
+      --startTag string                  Search by a tag prefix: --startTag=&#39;mykey:,myKey2:&#39;
+  -s, --stream                           stream messages --stream. Request tat each 10s, default sort: dateUpdate
+      --streamFormat string              --stream required. Format output. Available:  $TAT_MSG_ID $TAT_MSG_TEXT $TAT_MSG_TOPIC $TAT_MSG_INREPLYOFID $TAT_MSG_INREPLYOFIDROOT $TAT_MSG_NBLIKES $TAT_MSG_NBVOTESUP $TAT_MSG_NBVOTESDOWN $TAT_MSG_DATECREATION $TAT_MSG_DATECREATION_HUMAN $TAT_MSG_DATEUPDATE $TAT_MSG_DATEUPDATE_HUMAN $TAT_MSG_AUTHOR_USERNAME $TAT_MSG_NBREPLIES $TAT_MSG_LABELS $TAT_MSG_TAGS $TAT_MSG_LIKERS $TAT_MSG_VOTERSUP $TAT_MSG_VOTERSDOWN $TAT_MSG_USERMENTIONS $TAT_MSG_URLS (default &amp;quot;$TAT_MSG_DATEUPDATE_HUMAN $TAT_MSG_AUTHOR_USERNAME $TAT_MSG_TEXT&amp;quot;)
+      --tag string                       Search by tag : could be tagA,tagB
+      --text string                      Search by text
+      --topic string                     Search by topic
+      --treeView string                  Tree View of messages: onetree or fulltree. Default: notree
+      --username string                  Search by username : could be usernameA,usernameB
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;examples&#34;&gt;Examples&lt;/h2&gt;
+
+&lt;h3 id=&#34;create-a-message&#34;&gt;Create a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message add /YourTopic my message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;With labels:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli msg add --label=&amp;quot;#cccccc;label,#dddddd;label2&amp;quot; /YourTopic my message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you are a &lt;code&gt;system user&lt;/code&gt;, you can force date creation. Date as timestamp&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message add --dateCreation=11111 /YourTopic my message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;reply-to-a-message&#34;&gt;Reply to a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message reply /YourTopic idOfMessage my message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;like-a-message&#34;&gt;Like a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message like /YourTopic idOfMessage
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;unlike-a-message&#34;&gt;Unlike a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message unlike /YourTopic idOfMessage
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-a-label-to-a-message&#34;&gt;Add a label to a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message label /YourTopic idOfMessage color myLabel
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;remove-a-label-from-a-message&#34;&gt;Remove a label from a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message unlabel /YourTopic idOfMessage myLabel
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;remove-all-labels-and-add-new-ones-to-a-message&#34;&gt;Remove all labels and add new ones to a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message relabel /YourTopic idOfMessage --label=&amp;quot;#cccccc;label,#dddddd;label2&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;update-a-message-by-adding-additional-text-at-the-end-of-message&#34;&gt;Update a message by adding additional text at the end of message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message concat /YourTopic idOfMessage additional text
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;vote-up-a-message&#34;&gt;Vote UP a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message voteup /YourTopic idOfMessage
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;vote-down-a-message&#34;&gt;Vote Down a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message votedown /YourTopic idOfMessage
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;remove-a-vote-up-from-a-message&#34;&gt;Remove a Vote UP from a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message unvoteup /YourTopic idOfMessage
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;remove-a-vote-down-from-a-message&#34;&gt;Remove a Vote Down from a message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message unvotedown /YourTopic idOfMessage
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;create-a-task-from-one-message&#34;&gt;Create a task from one message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message task /Private/username/Tasks idOfMessage
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;remove-a-message-from-tasks&#34;&gt;Remove a message from tasks&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message untask /Private/username/Tasks idOfMessage
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;move-a-message-to-another-topic&#34;&gt;Move a message to another topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message move /MyOldTopic/SubTopic idOfMessage /MyNewTopic/SubTopic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;getting-message&#34;&gt;Getting message&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli message list /YourTopic
+tatcli message list /YourTopic 0 10
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;stream-messages-and-exec-a-command-on-each-message&#34;&gt;Stream messages and exec a command on each message&lt;/h3&gt;
+
+&lt;p&gt;Execute &amp;lsquo;myLights&amp;rsquo; binary for each new message on topic /YourTopic/YourSubTopic&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli msg list /YourTopic/YourSubTopic --stream --exec &amp;quot;./myLights --pulse blue --duration=1000&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Execute &amp;lsquo;myLights&amp;rsquo; binary for each new message on topic /YourTopic/YourSubTopic and
+another command if there is an error while requesting tat.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli msg list /YourTopic/YourSubTopic --stream --exec &amp;quot;./myLights --pulse blue --duration=1000&amp;quot; --exec &amp;quot;./myLights --pulse red --duration=2000&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;stream-messages-and-exec-a-command-on-count-value&#34;&gt;Stream messages and exec a command on count value&lt;/h3&gt;
+
+&lt;p&gt;Count messages with label open on topic /Internal/Alerts, then :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;if there is 0 message, execute &lt;code&gt;blinkstick --morph green&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;if there are between 1 and 5 messages, execute &lt;code&gt;blinkstick --morph yellow&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;if there are more than 5 messages, execute &lt;code&gt;blinkstick --morph red&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;if there is an error while requesting tat, execute &lt;code&gt;blinkstick --pulse red --duration=2000&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli msg list /Internal/Alerts --label=open --stream --exec 0:0:&#39;blinkstick --morph green&#39; --exec 1:5:&#39;blinkstick --morph blue&#39; --exec 6::&#39;blinkstick --morph yellow&#39; --execErr &amp;quot;blinkstick --pulse red --duration=2000&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;stream-messages-format-output-and-exec-with-arguments&#34;&gt;Stream messages, format output and exec with arguments&lt;/h3&gt;
+
+&lt;p&gt;Stream messages and display only username and text.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli msg list /Internal/Alerts --stream --streamFormat &#39;$TAT_MSG_AUTHOR_USERNAME $TAT_MSG_TEXT &#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Stream messages and execute foo.sh on each message with 2 arguments: message ID and message Text.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;echo &#39;echo $* &amp;gt;&amp;gt; foo.log&#39; &amp;gt; foo.sh &amp;amp;&amp;amp; chmod +x foo.sh
+
+tatcli msg list /Internal/Alerts --stream --exec &#39;./foo.sh $TAT_MSG_ID $TAT_MSG_TEXT&#39;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can use :&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_ID&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_TEXT&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_TOPIC&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_INREPLYOFID&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_INREPLYOFIDROOT&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_NBLIKES&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_NBVOTESUP&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_NBVOTESDOWN&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_DATECREATION&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_DATECREATION_HUMAN&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_DATEUPDATE&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_DATEUPDATE_HUMAN&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_AUTHOR_USERNAME&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_NBREPLIES&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_LABELS&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_TAGS&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_LIKERS&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_VOTERSUP&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_VOTERSDOWN&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_USERMENTIONS&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;$TAT_MSG_URLS&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;example-green-if-new-up-alert-orange-if-new-al-alert-on-message-with-foo-tag&#34;&gt;Example : Green if new UP alert, Orange if new AL alert on message with FOO tag&lt;/h4&gt;
+
+&lt;p&gt;tatcli msg list /Internal/Alerts –tag FOO &amp;ndash;stream &amp;ndash;exec &amp;lsquo;./blink.sh $TAT_MSG_TAG&amp;rsquo;&lt;/p&gt;
+
+&lt;p&gt;with blink.sh :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;#!/bin/bash
+
+for tag in &amp;quot;$*&amp;quot;
+do
+test &amp;quot;${tag#*AL}&amp;quot; != &amp;quot;$tag&amp;quot; &amp;amp;&amp;amp; blinkstick --pulse red --duration=1000 &amp;amp;&amp;amp; exit 0
+test &amp;quot;${tag#*UP}&amp;quot; != &amp;quot;$tag&amp;quot; &amp;amp;&amp;amp; blinkstick --pulse blue --duration=1000 &amp;amp;&amp;amp; exit 0
+done
+
+exit 1;
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli presence -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-presence/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-presence/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-presence-h&#34;&gt;tatcli presence -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;Presence commands: tatcli presence [&amp;lt;command&amp;gt;]
+
+Usage:
+  tatcli presence [command]
+
+Aliases:
+  presence, p
+
+
+Available Commands:
+  add         Add a new presence on one topic with status (online, offline, busy): tatcli presence add &amp;lt;topic&amp;gt; &amp;lt;status&amp;gt;
+  delete      Delete a user&#39;s presence on one topic: tatcli presence delete &amp;lt;topic&amp;gt; &amp;lt;username&amp;gt;
+  list        List all presences on one topic: tatcli presence list &amp;lt;topic&amp;gt; [&amp;lt;skip&amp;gt;] [&amp;lt;limit&amp;gt;]
+
+Flags:
+  -h, --help=false: help for presence
+
+Global Flags: see tatcli -h
+
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli stats -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-stats/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-stats/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-stats-h&#34;&gt;tatcli stats -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;Stats commands (admin only): tatcli stats [&amp;lt;command&amp;gt;]
+
+Usage:
+  tatcli stats [command]
+
+Aliases:
+  stats, stat
+
+
+Available Commands:
+  count              Count all messages, groups, presences, users, groups, topics: tatcli stats count
+  distribution       Distribution of messages per topics: tatcli stats distribution
+  dbstats            DB Stats: tatcli stats dbstats
+  dbServerStatus     DB Stats: tatcli stats dbServerStatus
+  dbReplSetGetConfig DB Stats: tatcli stats dbReplSetGetConfig
+  dbReplSetGetStatus DB Stats: tatcli stats dbReplSetGetStatus
+  dbCollections      DB Stats on each collection: tatcli stats dbCollections
+  dbSlowestQueries   DB Stats slowest Queries: tatcli stats dbSlowestQueries
+  instance           Info about current instance of engine
+
+Flags:
+  -h, --help=false: help for stats
+
+Global Flags: see tatcli -h
+
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli system -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-system/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-system/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-system-h&#34;&gt;tatcli system -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;System commands (admin only): tatcli system [&amp;lt;command&amp;gt;]
+
+Usage:
+  tatcli system [command]
+
+Aliases:
+  system, sys
+
+
+Available Commands:
+  cacheclean  Clean Cache: tatcli system cacheclean
+  cacheinfo   Info on Cache: tatcli system cacheinfo
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli topic -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-topic/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-topic/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-topic-h&#34;&gt;tatcli topic -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;Topic commands: tatcli topic [command]
+
+Usage:
+  tatcli topic [command]
+
+Aliases:
+  topic, t
+
+
+Available Commands:
+  addAdminGroup     Add Admin Groups to a topic: tatcli topic addAdminGroup [--recursive] &amp;lt;topic&amp;gt; &amp;lt;groupname1&amp;gt; [groupname2]...
+  addAdminUser      Add Admin Users to a topic: tatcli topic addAdminUser [--recursive] &amp;lt;topic&amp;gt; &amp;lt;username1&amp;gt; [username2]...
+  addParameter      Add Parameter to a topic: tatcli topic addParameter [--recursive] &amp;lt;topic&amp;gt; &amp;lt;key&amp;gt;:&amp;lt;value&amp;gt; [&amp;lt;key2&amp;gt;:&amp;lt;value2&amp;gt;]...
+  addRoGroup        Add Read Only Groups to a topic: tatcli topic addRoGroup [--recursive] &amp;lt;topic&amp;gt; &amp;lt;groupname1&amp;gt; [&amp;lt;groupname2&amp;gt;]...
+  addRoUser         Add Read Only Users to a topic: tatcli topic addRoUser [--recursive] &amp;lt;topic&amp;gt; &amp;lt;username1&amp;gt; [username2]...
+  addRwGroup        Add Read Write Groups to a topic: tatcli topic addRwGroup [--recursive] &amp;lt;topic&amp;gt; &amp;lt;groupname1&amp;gt; [&amp;lt;groupname2&amp;gt;]...
+  addRwUser         Add Read Write Users to a topic: tatcli topic addRwUser [--recursive] &amp;lt;topic&amp;gt; &amp;lt;username1&amp;gt; [username2]...
+  allcomputelabels  Compute Labels on all topics, only for tat admin : tatcli topic allcomputelabels
+  allcomputereplies Compute Replies on all topics, only for tat admin : tatcli topic allcomputereplies
+  allcomputetags    Compute Tags on all topics, only for tat admin : tatcli topic allcomputetags
+  allsetparam       Set a param for all topics, only for tat admin : tatcli topic allsetparam &amp;lt;paramName&amp;gt; &amp;lt;paramValue&amp;gt;
+  computelabels     Compute Labels on this topic, only for tat admin and administrators on topic : tatcli topic computelabels &amp;lt;topic&amp;gt;
+  computetags       Compute Tags on this topic, only for tat admin and administrators on topic : tatcli topic computetags &amp;lt;topic&amp;gt;
+  create            Create a new topic: tatcli create &amp;lt;topic&amp;gt; &amp;lt;description of topic&amp;gt;
+  delete            Delete a topic: tatcli delete &amp;lt;topic&amp;gt;
+  deleteAdminGroup  Delete Admin Groups from a topic: tatcli topic deleteAdminGroup [--recursive] &amp;lt;topic&amp;gt; &amp;lt;groupname1&amp;gt; [&amp;lt;groupname2&amp;gt;]...
+  deleteAdminUser   Delete Admin Users from a topic: tatcli topic deleteAdminUser [--recursive] &amp;lt;topic&amp;gt; &amp;lt;username1&amp;gt; [username2]...
+  deleteParameter   Remove Parameter to a topic: tatcli topic deleteParameter [--recursive] &amp;lt;topic&amp;gt; &amp;lt;key&amp;gt; [&amp;lt;key2&amp;gt;]...
+  deleteRoGroup     Delete Read Only Groups from a topic: tatcli topic deleteRoGroup [--recursive] &amp;lt;topic&amp;gt; &amp;lt;groupname1&amp;gt; [&amp;lt;groupname2&amp;gt;]...
+  deleteRoUser      Delete Read Only Users from a topic: tatcli topic deleteRoUser [--recursive] &amp;lt;topic&amp;gt; &amp;lt;username1&amp;gt; [username2]...
+  deleteRwGroup     Delete Read Write Groups from a topic: tatcli topic deleteRwGroup [--recursive] &amp;lt;topic&amp;gt; &amp;lt;groupname1&amp;gt; [&amp;lt;groupname2&amp;gt;]...
+  deleteRwUser      Delete Read Write Users from a topic: tatcli topic deleteRwUser [--recursive] &amp;lt;topic&amp;gt; &amp;lt;username1&amp;gt; [username2]...
+  list              List all topics: tatcli topic list [&amp;lt;skip&amp;gt;] [&amp;lt;limit&amp;gt;], tatcli topic list -h for see all criterias
+  parameter         Update param on one topic: tatcli topic param [--recursive] &amp;lt;topic&amp;gt; &amp;lt;maxReplies&amp;gt; &amp;lt;maxLength&amp;gt; &amp;lt;canForceDate&amp;gt; &amp;lt;canUpdateMsg&amp;gt; &amp;lt;canDeleteMsg&amp;gt; &amp;lt;canUpdateAllMsg&amp;gt; &amp;lt;canDeleteAllMsg&amp;gt; &amp;lt;adminCanUpdateAllMsg&amp;gt; &amp;lt;adminCanDeleteAllMsg&amp;gt; &amp;lt;isAutoComputeTags&amp;gt; &amp;lt;isAutoComputeLabels&amp;gt;
+  truncate          Remove all messages in a topic, only for tat admin and administrators on topic : tatcli topic truncate &amp;lt;topic&amp;gt; [--force]
+  truncatelabels    Truncate Labels on this topic, only for tat admin and administrators on topic : tatcli topic truncatelabels &amp;lt;topic&amp;gt;
+  truncatetags      Truncate Tags on this topic, only for tat admin and administrators on topic : tatcli topic truncatetags &amp;lt;topic&amp;gt;
+
+Flags:
+  -h, --help=false: help for topic
+
+Global Flags: see tatcli -h
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;examples&#34;&gt;Examples&lt;/h2&gt;
+
+&lt;h3 id=&#34;create-a-topic&#34;&gt;Create a Topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic add /topic topic description
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-a-topic&#34;&gt;Delete a Topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic delete /topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;truncate-a-topic&#34;&gt;Truncate a Topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic truncate /topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;getting-topics-list&#34;&gt;Getting Topics List&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic list
+tatcli topic list skip limit
+tatcli topic list skip limit true
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;if true, return nb unread messages&lt;/p&gt;
+
+&lt;h3 id=&#34;add-a-read-only-user-to-a-topic&#34;&gt;Add a read only user to a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic addRoUser /topic username
+tatcli topic addRoUser /topic username1 username2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-a-read-write-user-to-a-topic&#34;&gt;Add a read write user to a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic addRwUser /topic username
+tatcli topic addRwUser /topic username1 username2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-an-admin-user-to-a-topic&#34;&gt;Add an admin user to a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic addAdminUser /topic username
+tatcli topic addAdminUser /topic username1 username2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-a-read-only-user-from-a-topic&#34;&gt;Delete a read only user from a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic deleteRoUser /topic username
+tatcli topic deleteRoUser /topic username1 username2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-a-read-write-user-from-a-topic&#34;&gt;Delete a read write user from a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic deleteRwUser /topic username
+tatcli topic deleteRwUser /topic username1 username2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-an-admin-user-from-a-topic&#34;&gt;Delete an admin user from a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic deleteAdminUser /topic username
+tatcli topic deleteAdminUser /topic username1 username2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-a-read-only-group-to-a-topic&#34;&gt;Add a read only group to a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic addRoGroup /topic groupname
+tatcli topic addRoGroup /topic groupname1 groupname2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-a-read-write-group-to-a-topic&#34;&gt;Add a read write group to a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic addRwGroup /topic groupname
+tatcli topic addRwGroup /topic groupname1 groupname2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-an-admin-group-to-a-topic&#34;&gt;Add an admin group to a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic addAdminGroup /topic groupname
+tatcli topic addAdminGroup /topic groupname1 groupname2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-a-read-only-group-from-a-topic&#34;&gt;Delete a read only group from a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic deleteRoGroup /topic groupname
+tatcli topic deleteRoGroup /topic groupname1 groupname2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-a-read-write-group-from-a-topic&#34;&gt;Delete a read write group from a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic deleteRwGroup /topic groupname
+tatcli topic deleteRwGroup /topic groupname1 groupname2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;delete-an-admin-group-from-a-topic&#34;&gt;Delete an admin group from a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli topic deleteAdminGroup /topic groupname
+tatcli topic deleteAdminGroup /topic groupname1 groupname2
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli ui -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-ui/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-ui/</guid>
+      <description>
+
+&lt;p&gt;Interactive mode of tatcli :
+- &lt;code&gt;tatcli ui&lt;/code&gt; or with args :
+ - &lt;code&gt;tatcli ui /YourTopic/SubTopic /run AA,BB /hide-usernames /hide-top&lt;/code&gt;
+ - &lt;code&gt;tatcli ui /YourTopic/SubTopic /split label:open label:doing label:done /mode run /save&lt;/code&gt;
+ - &lt;code&gt;tatcli ui /YourTopic/SubTopic /run AA,BB /hide-usernames /hide-bottom /save&lt;/code&gt;&lt;/p&gt;
+
+&lt;h4 id=&#34;shortcuts&#34;&gt;Shortcuts:&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code&gt; ----------------------------------------------
+ ----------------------------------------------
+         |||                     |||
+         |||                     |||
+         |||         |||         |||
+         |||         |||         |||
+         |||                     |||
+         |||         |||         |||
+         |||         |||         |||
+         |||                     |||
+         |||                     |||
+
+
+- Ctrl + a to view all topics. Cmd /topics in send box
+- Ctrl + b to go back to messsages list, after selected a message
+- Ctrl + c clears filters and UI on current messages list
+- Ctrl + f to view favorites topics. Cmd /favorites
+- Ctrl + h to go back home. Cmd /home or /help
+- Ctrl + t hide or show top menu. Cmd /toggle-top
+- Ctrl + y hide or show actionbox menu. Cmd /toggle-bottom
+- Ctrl + o open current message on tatwebui with a browser. Cmd /open
+           Use option tatwebui-url in config file. See /set-tatwebui-url
+- Ctrl + p open links in current message with a browser. Cmd /open-links
+- Ctrl + j / Ctrl + k (for reverse):
+        if mode run is enabled, set a msg from open to doing,
+             from doing to done from done to open.
+        if mode monitoring is enabled, set a msg from UP to AL,
+             from AL to UP.
+- Ctrl + q to quit. Cmd /quit
+- Ctrl + r to view unread topics. Cmd /unread
+- Ctrl + u display/hide usernames in messages list. Cmd /toggle-usernames
+- UP / Down to move into topics &amp;amp; messages list
+- UP / Down to navigate through history of action box
+- &amp;lt;tab&amp;gt; to go to next section on screen
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;commands-on-action-box&#34;&gt;Commands on Action Box:&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code&gt;- /help display this page
+- /me show information about you
+- /version to show tatcli and engine version
+
+On messages list:
+- /label eeeeee yourLabel to add a label on selected message
+- /unlabel yourLabel to remove label &amp;quot;yourLabel&amp;quot; on selected message
+- /voteup, /votedown, /unvoteup, /unvotedown to vote up or down, or remove vote
+- /task, /untask to add or remove selected message as a personal task
+- /like, /unlike to add or remove like on selected message
+- /filter label:labelA,labelB andtag:tag,tagb
+- /mode (run|monitoring): enable Ctrl + l shortcut, see on left side for help
+- /codereview splits screen into fours panes: label:OPENED label:APPROVED label:MERGED label:DECLINED
+- /monitoring splits screen into three panes: label:UP, label:AL, notlabel:AL,UP
+       This is the same as two commands:
+         - /split label:UP label:AL notlabel:AL,UP
+         - /mode monitoring
+- /run &amp;lt;tag&amp;gt; splits screen into three panes: label:open, label:doing, label:done
+        /run AA,BB is the same as two commands:
+          - /split tag:AA,BB;label:open tag:AA,BB;label:doing tag:AA,BB;label:done
+          - /mode run
+- /set-tatwebui-url &amp;lt;urlOfTatWebUI&amp;gt; sets tatwebui-url in tatcli config file. This
+        url is used by Ctrl + o shortcut to open message with a tatwebui instance.
+- /split &amp;lt;criteria&amp;gt; splits screen with one section per criteria delimited by space, ex:
+        /split label:labelA label:labelB label:labelC
+        /split label:labelA,labelB andtag:tag,tagb
+        /split tag:myTag;label:labelA,labelB andtag:tag,tagb;label:labelC
+- /save saves current filters and /toggle-* in tatcli config file
+- /toggle-usernames displays or hides username in messages list
+
+For /split and /filter, see all parameters on https://github.com/ovh/tat#parameters
+
+On topics list, ex:
+- /filter topic:/Private/firstname.lastname
+see all parameters on https://github.com/ovh/tat#parameters-4
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;hooks&#34;&gt;Hooks&lt;/h4&gt;
+
+&lt;h5 id=&#34;standard-hooks&#34;&gt;Standard Hooks&lt;/h5&gt;
+
+&lt;p&gt;In your tatcli config file ($HOME/.tatcli/config.json), add attribut &lt;code&gt;hooks&lt;/code&gt;  :&lt;/p&gt;
+
+&lt;p&gt;Example :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cat $HOME/.tatcli/config.json
+{
+  &amp;quot;username&amp;quot;: &amp;quot;username&amp;quot;,
+  &amp;quot;password&amp;quot;: &amp;quot;tatPassword&amp;quot;,
+  &amp;quot;url&amp;quot;: &amp;quot;https://your-tat-engine-url&amp;quot;,
+  &amp;quot;tatwebui-url&amp;quot;: &amp;quot;https://your-tat-webui-url&amp;quot;,
+  &amp;quot;hooks&amp;quot;: [
+    {
+      &amp;quot;shortcut&amp;quot;: &amp;quot;C-x&amp;quot;,
+      &amp;quot;command&amp;quot;: &amp;quot;/todo&amp;quot;,
+      &amp;quot;exec&amp;quot;: &amp;quot;tatcli msg reply $UI_SELECTED_MSG_TOPIC $UI_SELECTED_MSG_ID #TODO $UI_ACTION_TEXT&amp;quot;,
+      &amp;quot;topics&amp;quot;: [
+        &amp;quot;/Internal/Alerts&amp;quot;
+      ]
+    },
+    {
+      &amp;quot;shortcut&amp;quot;: &amp;quot;&amp;quot;,
+      &amp;quot;command&amp;quot;: &amp;quot;/FIXME&amp;quot;,
+      &amp;quot;exec&amp;quot;: &amp;quot;tatcli msg reply $UI_SELECTED_MSG_TOPIC $UI_SELECTED_MSG_ID #FIXME $UI_ACTION_TEXT&amp;quot;,
+      &amp;quot;topics&amp;quot;: []
+    },
+    {
+      &amp;quot;shortcut&amp;quot;: &amp;quot;&amp;quot;,
+      &amp;quot;command&amp;quot;: &amp;quot;/foo&amp;quot;,
+      &amp;quot;exec&amp;quot;: &amp;quot;foo.sh $UI_SELECTED_MSG_ID #FIXME $UI_ACTION_TEXT&amp;quot;,
+      &amp;quot;topics&amp;quot;: [
+        &amp;quot;/Internal/topicA&amp;quot;,
+        &amp;quot;/Internal/topicB&amp;quot;
+      ]
+    }
+  ]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Empty attributes &amp;lsquo;topics&amp;rsquo;: hook is available on all topics.&lt;/p&gt;
+
+&lt;p&gt;Available variable:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$UI_SELECTED_MSG_ID
+$UI_SELECTED_MSG_TEXT
+$UI_SELECTED_MSG_TOPIC
+$UI_SELECTED_MSG_AUTHOR_USERNAME
+$UI_SELECTED_MSG_DATE_CREATION
+$UI_SELECTED_MSG_DATE_UPDATE
+$UI_CURRENT_USERNAME
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h5 id=&#34;post-hook-run-action&#34;&gt;Post Hook RUN Action&lt;/h5&gt;
+
+&lt;p&gt;In your tatcli config file ($HOME/.tatcli/config.json), add attribut &lt;code&gt;post-hook-run-action&lt;/code&gt;  :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;cat $HOME/.tatcli/config.json
+{
+  &amp;quot;username&amp;quot;: &amp;quot;username&amp;quot;,
+  &amp;quot;password&amp;quot;: &amp;quot;tatPassword&amp;quot;,
+  &amp;quot;url&amp;quot;: &amp;quot;https://your-tat-engine-url&amp;quot;,
+  &amp;quot;tatwebui-url&amp;quot;: &amp;quot;https://your-tat-webui-url&amp;quot;,
+  &amp;quot;post-hook-run-action&amp;quot;: &amp;quot;./yourScript.sh&amp;quot;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In tatcli ui, mode run, this command will be called each time you move a message.&lt;/p&gt;
+
+&lt;p&gt;yourScript.sh will be called like this :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;./yourScript.sh &amp;lt;action&amp;gt; &amp;lt;idMessage&amp;gt; &amp;lt;msgJson&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli update -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-update/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-update-h&#34;&gt;tatcli update -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli update
+
+Usage:
+  tatcli update [flags]
+  tatcli update [command]
+
+Aliases:
+  update, up
+
+Available Commands:
+  snapshot    Update tatcli to latest snapshot version: tatcli update snapshot
+
+Flags:
+  -h, --help=false: help for update
+
+Global Flags: see tatcli -h
+
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli users -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-user/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-user/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-user-h&#34;&gt;tatcli user -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;User commands: tatcli user &amp;lt;command&amp;gt;
+
+Usage:
+  tatcli user [command]
+
+Aliases:
+  user, u
+
+
+Available Commands:
+  list                          List all users: tatcli user list [&amp;lt;skip&amp;gt;] [&amp;lt;limit&amp;gt;]
+  me                            Get Information about you: tatcli user me
+  contacts                      Get contacts presences since n seconds: tatcli user contacts &amp;lt;seconds&amp;gt;
+  addContact                    Add a contact: tatcli user addContact &amp;lt;contactUsername&amp;gt;
+  removeContact                 Remove a contact: tatcli user removeContact &amp;lt;contactUsername&amp;gt;
+  addFavoriteTopic              Add a favorite Topic: tatcli user addFavoriteTopic &amp;lt;topicName&amp;gt;
+  removeFavoriteTopic           Remove a favorite Topic: tatcli user removeFavoriteTopic &amp;lt;topicName&amp;gt;
+  enableNotificationsTopic      Enable notifications on a topic: tatcli user enableNotificationsTopic &amp;lt;topicName&amp;gt;
+  enableNotificationsAllTopics  Enable notifications on a topic: tatcli user enableNotificationsAllTopics
+  disableNotificationsTopic     Disable notifications on a topic: tatcli user disableNotificationsTopic &amp;lt;topicName&amp;gt;
+  disableNotificationsAllTopics Disable notifications on all topics: tatcli user disableNotificationsAllTopics
+  addFavoriteTag                Add a favorite Tag: tatcli user addFavoriteTag &amp;lt;tag&amp;gt;
+  removeFavoriteTag             Remove a favorite Tag: tatcli user removeFavoriteTag &amp;lt;tag&amp;gt;
+  add                           Add a user: tatcli user add &amp;lt;username&amp;gt; &amp;lt;email&amp;gt; &amp;lt;fullname&amp;gt;
+  reset                         Ask for Reset a password: tatcli user reset &amp;lt;username&amp;gt; &amp;lt;email&amp;gt;
+  resetSystemUser               Reset password for a system user (admin only): tatcli user resetSystemUser &amp;lt;username&amp;gt;
+  convert                       Convert a user to a system user (admin only): tatcli user convert &amp;lt;username&amp;gt; &amp;lt;canWriteNotifications&amp;gt; &amp;lt;canListUsersAsAdmin&amp;gt;
+  updateSystemUser              Update a system user (admin only): tatcli user updateSystemUser &amp;lt;username&amp;gt; &amp;lt;canWriteNotifications&amp;gt; &amp;lt;canListUsersAsAdmin&amp;gt;
+  archive                       Archive a user (admin only): tatcli user archive &amp;lt;username&amp;gt;
+  rename                        Rename username of a user (admin only): tatcli user rename &amp;lt;oldUsername&amp;gt; &amp;lt;newUsername&amp;gt;
+  update                        Update Fullname and Email of a user (admin only): tatcli user update &amp;lt;username&amp;gt; &amp;lt;newEmail&amp;gt; &amp;lt;newFullname&amp;gt;
+  setAdmin                      Grant user to Tat admin (admin only): tatcli user setAdmin &amp;lt;username&amp;gt;
+  verify                        Verify account: tatcli user verify [--save] &amp;lt;username&amp;gt; &amp;lt;tokenVerify&amp;gt;
+  check                         Check Private Topics and Default Group on one user (admin only): tatcli user check &amp;lt;username&amp;gt; &amp;lt;fixPrivateTopics&amp;gt; &amp;lt;fixDefaultGroup&amp;gt;
+
+Flags:
+  -h, --help=false: help for user
+
+Global Flags: see tatcli -h
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;examples&#34;&gt;Examples&lt;/h2&gt;
+
+&lt;h3 id=&#34;create-a-user&#34;&gt;Create a user&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user add username email fullname
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;verify-account&#34;&gt;Verify account&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user verify username tokenVerify
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;For saving configuration in $HOME/.tatcli/config.json file&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user verify --save username tokenVerify
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;ask-for-reset-password&#34;&gt;Ask for reset password&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user reset username email
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;get-information-about-me&#34;&gt;Get information about me&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user me
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;get-contacts-presences-since-n-seconds-tatcli-user-contacts-seconds&#34;&gt;Get contacts presences since n seconds: tatcli user contacts &lt;seconds&gt;&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user contacts 15
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-a-favorite-tag&#34;&gt;Add a favorite tag&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user addFavoriteTag myTag
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;remove-a-favorite-tag&#34;&gt;Remove a favorite tag&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user removeFavoriteTag myTag
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;add-a-favorite-topic&#34;&gt;Add a favorite topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user addFavoriteTopic /topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;remove-a-favorite-topic&#34;&gt;Remove a favorite topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user removeFavoriteTopic /topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;enable-notifications-on-a-topic&#34;&gt;Enable notifications on a topic&lt;/h3&gt;
+
+&lt;p&gt;Notifications are by default enabled on topic&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user enableNotificationsTopic /topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;disable-notifications-on-a-topic&#34;&gt;Disable notifications on a topic&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user disableNotificationsTopic /topic/sub-topic
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;enable-notifications-on-all-topics&#34;&gt;Enable notifications on all topics&lt;/h3&gt;
+
+&lt;p&gt;Notifications are by default enabled on all topics&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user enableNotificationsAllTopics
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;disable-notifications-on-all-topics&#34;&gt;Disable notifications on all topics&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user disableNotificationsAllTopics
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;list-users&#34;&gt;List Users&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user list
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;with groups (admin only):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user list --withGroups
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;convert-to-a-system-user-admin-only&#34;&gt;Convert to a system user (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user convert usernameToConvertSystem flagCanWriteOnNotificationsTopics flagCanListUsersAsAdmin
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;flagCanWriteOnNotificationsTopics could be true or false&lt;/p&gt;
+
+&lt;p&gt;flagCanListUsersAsAdmin could be true or false&lt;/p&gt;
+
+&lt;h3 id=&#34;update-a-system-user-admin-only&#34;&gt;Update a system user (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user userSystemUser usernameOfSystemUser flagCanWriteOnNotificationsTopics flagCanListUsersAsAdmin
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;flagCanWriteOnNotificationsTopics could be true or false&lt;/p&gt;
+
+&lt;p&gt;flagCanListUsersAsAdmin could be true or false&lt;/p&gt;
+
+&lt;h3 id=&#34;grant-a-user-to-tat-admin-admin-only&#34;&gt;Grant a user to Tat Admin (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user setAdmin usernameToGrant
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;archive-a-user-admin-only&#34;&gt;Archive a user (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user archive usernameToArchive
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;rename-a-username-admin-only&#34;&gt;Rename a username  (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user rename oldUsername newUsername
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;update-fullname-and-email-admin-only&#34;&gt;Update fullname and email (Admin only)&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user update username newEmail newFirstname newLastname
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;check-a-user-admin-only&#34;&gt;Check a user (Admin only)&lt;/h3&gt;
+
+&lt;p&gt;Check Private Topics and Default Group on one user:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli user check &amp;lt;username&amp;gt; &amp;lt;fixPrivateTopics&amp;gt; &amp;lt;fixDefaultGroup&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Example :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli check username true true
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>tatcli version -h</title>
+      <link>https://ovh.github.io/tat/tatcli/tatcli-version/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/tatcli/tatcli-version/</guid>
+      <description>
+
+&lt;h2 id=&#34;command-description&#34;&gt;Command Description&lt;/h2&gt;
+
+&lt;h3 id=&#34;tatcli-version-h&#34;&gt;tatcli version -h&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;tatcli version
+
+Usage:
+  tatcli version [flags]
+
+Aliases:
+  version, v
+
+
+Flags:
+  -h, --help=false: help for version
+      --versionNewLine=true: New line after version number. If true, display Version Engine too
+
+Global Flags: see tatcli -h
+
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

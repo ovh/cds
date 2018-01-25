@@ -1,0 +1,75 @@
+name: MyTestSuite HTTP
+testcases:
+- name: GET http testcase
+  steps:
+  - type: http
+    method: GET
+    url: https://eu.api.ovh.com/1.0/
+    retry: 3
+    delay: 2
+    assertions:
+    - result.body ShouldContainSubstring /dedicated/server
+    - result.body ShouldContainSubstring /ipLoadbalancing
+    - result.statuscode ShouldEqual 200
+    - result.bodyjson.apis.apis0.path ShouldEqual /allDom
+
+- name: POST http testcase
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/auth/logout
+    assertions:
+    - result.statuscode ShouldEqual 401
+    - result.headers.www-authenticate ShouldEqual X-OVH-Auth
+    - result.timeseconds ShouldBeLessThan 1
+
+- name: POST http multipart
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/auth/logout
+    multipart_form:
+      file: '@./venom.gif'
+    assertions:
+    - result.statuscode ShouldEqual 401
+
+- name: POST http (enhanced assertions)
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/newAccount/rules
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.__type__ ShouldEqual Array
+      # Ensure a minimum of fields are present.
+      - result.bodyjson.__len__ ShouldBeGreaterThanOrEqualTo 8
+      # Ensure fields have the right keys.
+      - result.bodyjson.bodyjson0 ShouldContainKey fieldName
+      - result.bodyjson.bodyjson0 ShouldContainKey mandatory
+      - result.bodyjson.bodyjson0 ShouldContainKey regularExpression
+      - result.bodyjson.bodyjson0 ShouldContainKey prefix
+      - result.bodyjson.bodyjson0 ShouldContainKey examples
+      - result.bodyjson.bodyjson0 ShouldNotContainKey lol
+      - result.statuscode ShouldNotEqual {{.POST http multipart.result.statuscode}}
+
+- name: GET http (with templated stuff)
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0/{{.POST http multipart.result.bodyjson.bodyjson0.fieldName}}
+    assertions:
+      - result.statuscode ShouldEqual 404
+      - result.statuscode ShouldNotEqual {{.POST http multipart.result.statuscode}}
+
+- name: GET http (with skip body)
+  steps:
+  - type: http
+    method: POST
+    url: https://eu.api.ovh.com/1.0
+    skip_body: true
+    skip_headers: true
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.body ShouldBeEmpty
+      - result.headers ShouldBeEmpty
+

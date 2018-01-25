@@ -1,0 +1,28 @@
+<html>
+<head>
+    <title>Mobile Page Title</title>
+</head>
+<body style="height: 6000px; width: 2000px;">
+<div id="touch" style="position: absolute; top: 500px; left: 500px;">touch here</div>
+<div id="message">event:</div>
+<script>
+    var message = document.getElementById('message');
+    var touch = document.getElementById('touch');
+
+    touch.addEventListener('touchstart', function(event) {
+        message.innerHTML += ' start with ' + event.targetTouches.length;
+    });
+    touch.addEventListener('touchend', function(event) {
+        message.innerHTML += ' end with ' + event.targetTouches.length;
+    });
+    touch.addEventListener('touchmove', function(event) {
+        massage.innerHTML += ' move with ' + event.targetTouches.length;
+    });
+
+    window.addEventListener('scroll', function(event) {
+        message.innerHTML += ' scroll left ' + window.scrollX;
+        message.innerHTML += ' scroll top ' + window.scrollY;
+    });
+</script>
+</body>
+</html>

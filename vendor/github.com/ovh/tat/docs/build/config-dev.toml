@@ -1,0 +1,9 @@
+baseurl = "http://localhost:1313/"
+title = "TAT - TextAndTag Documentation"
+languageCode = "en-us"
+theme = "hugo-theme-learn"
+canonifyurls = true
+createFromSiteMenusMain = true
+search = true
+[params]
+  menu = [ "overview", "tatwebui", "engine", "tatcli", "sdk", "ecosystem", "tatnhack" ]

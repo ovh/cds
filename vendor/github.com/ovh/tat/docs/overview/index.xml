@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Overviews on TAT - TextAndTag Documentation</title>
+    <link>https://ovh.github.io/tat/overview/index.xml</link>
+    <description>Recent content in Overviews on TAT - TextAndTag Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://ovh.github.io/tat/overview/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Overview</title>
+      <link>https://ovh.github.io/tat/overview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/</guid>
+      <description>
+
+&lt;h3 id=&#34;chapter-1&#34;&gt;Chapter 1&lt;/h3&gt;
+
+&lt;h1 id=&#34;tat-overview&#34;&gt;TAT Overview&lt;/h1&gt;
+
+&lt;p&gt;Discover what is Tat and the core-concepts behind it.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Introduction</title>
+      <link>https://ovh.github.io/tat/overview/introduction/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/introduction/</guid>
+      <description>&lt;p&gt;Tat, aka Text And Tags, is a communication tool - Human &amp;amp; Robot all together.&lt;/p&gt;
+
+&lt;p&gt;Some use cases:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Viewing Pull Requests, Build And Deployment in one place&lt;/li&gt;
+&lt;li&gt;Alerting &amp;amp; Monitoring Overview&lt;/li&gt;
+&lt;li&gt;Agile view as simple as a whiteboard with post-it&lt;/li&gt;
+&lt;li&gt;Team Communication &amp;amp; Reporting facilities
+&amp;hellip;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Tat Engine exposes only an HTTP REST API. You can manipulate this API with Tat Command Line Interface, aka tatcli, see &lt;a href=&#34;https://github.com/ovh/tat/tatcli&#34;&gt;https://github.com/ovh/tat/tatcli&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;A WebUI is also available, see &lt;a href=&#34;https://github.com/ovh/tatwebui&#34;&gt;https://github.com/ovh/tatwebui&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Tat Engine:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Uses MongoDB as backend&lt;/li&gt;
+&lt;li&gt;Is fully stateless, scale as you want&lt;/li&gt;
+&lt;li&gt;Is the central Hub of Tat microservices ecosystem&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The initial goal of TAT was to make an overview on Continuous Delivery Pipeline, with some pre-requisites:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Scalable, High Availability, Self-Hosted&lt;/li&gt;
+&lt;li&gt;API, CLI&lt;/li&gt;
+&lt;li&gt;Simple Usage&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tat-cd-overview.png?width=700px&#34; alt=&#34;DevOps LifeCycle&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Concepts</title>
+      <link>https://ovh.github.io/tat/overview/concepts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/concepts/</guid>
+      <description>
+
+&lt;h2 id=&#34;four-concepts-topic-message-tag-label&#34;&gt;Four Concepts: Topic / Message / Tag / Label&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Topic
+
+&lt;ul&gt;
+&lt;li&gt;Contains 0 or n messages&lt;/li&gt;
+&lt;li&gt;Administrator(s) of Topic can create Topic inside it&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Message
+
+&lt;ul&gt;
+&lt;li&gt;Consists of text, tags and labels&lt;/li&gt;
+&lt;li&gt;Can not be deleted or modified (by default)&lt;/li&gt;
+&lt;li&gt;Is limited in characters (topic setting)&lt;/li&gt;
+&lt;li&gt;Is always attached to one topic&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Tag
+
+&lt;ul&gt;
+&lt;li&gt;Within the message content&lt;/li&gt;
+&lt;li&gt;Can not be added after message creation (by default)&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Label
+
+&lt;ul&gt;
+&lt;li&gt;Can be added or removed freely&lt;/li&gt;
+&lt;li&gt;Have a color&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Think about messages as plain information pieces, their meaning are contextualized through microservices using those messages and views you plug on their topics.&lt;/p&gt;
+
+&lt;h2 id=&#34;users-groups-and-administrators&#34;&gt;Users, Groups and Administrators&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Group
+
+&lt;ul&gt;
+&lt;li&gt;Managed by an administrator(s): adding or removing users from the group&lt;/li&gt;
+&lt;li&gt;Without prior authorization, a group or user has no access to topics&lt;/li&gt;
+&lt;li&gt;A group or a user can be read-only or read-write on a topic&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Administrator(s)
+
+&lt;ul&gt;
+&lt;li&gt;First user created is an administrator&lt;/li&gt;
+&lt;li&gt;Tat Administrator: all configuration access&lt;/li&gt;
+&lt;li&gt;On Group(s): can add/remove member(s)&lt;/li&gt;
+&lt;li&gt;On Topic(s): can create sub-topics, update rights parameters and default view&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;some-rules-and-rules-exception&#34;&gt;Some rules and rules exception&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Deleting a message is possible in the private topics, or can be granted on other topic&lt;/li&gt;
+&lt;li&gt;Modification of a message is possible in private topics, or can be granted on other topic&lt;/li&gt;
+&lt;li&gt;The default length of a message is 140 characters, this limit can be modified by topic&lt;/li&gt;
+&lt;li&gt;A date creation of a message can be explicitly set by a system user&lt;/li&gt;
+&lt;li&gt;message.dateCreation and message.dateUpdate are in timestamp format, ex:
+
+&lt;ul&gt;
+&lt;li&gt;1436912447: 1436912447 seconds&lt;/li&gt;
+&lt;li&gt;1436912447.345678: 1436912447 seconds and 345678 milliseconds&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;faq&#34;&gt;FAQ&lt;/h2&gt;
+
+&lt;p&gt;&lt;em&gt;What about attachment (sound, image, etc&amp;hellip;) ?&lt;/em&gt;
+Tat Engine stores only &lt;em&gt;text&lt;/em&gt;. Use other application, like &lt;a href=&#34;https://github.com/root-gg/plik&#34;&gt;Plik&lt;/a&gt;
+to upload file and store URL on Tat.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>DevOps LifeCycle / Feedback Loop</title>
+      <link>https://ovh.github.io/tat/overview/lifecycle/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/lifecycle/</guid>
+      <description>
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle.png?width=50%&#34; alt=&#34;DevOps LifeCycle&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;feedback-everywhere&#34;&gt;Feedback everywhere&lt;/h2&gt;
+
+&lt;p&gt;We want feedback, not only when applications are in production, but everywhere.
+PullRequest, build, Release, Monitoring, etc&amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;Following examples show how we are using Tat through our DevOps lifecycle @ OVH.&lt;/p&gt;
+
+&lt;p&gt;First of all, TaT was designed to be a hub of all Continuous Delivery and DevOps communcation. By plugin all the software running in Plug all the software running in your DevOps ecosystem to Tat, you&amp;rsquo;ll be able to follow all the things in TaT and improve as well team and machines collaboration]&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Plan :
+
+Code :
+
+Build And Tests :
+
+Release :
+
+Monitor :
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;plan&#34;&gt;Plan&lt;/h2&gt;
+
+&lt;p&gt;Starting the DevOps lifcycle with an agile view designed to plan your next release/iteration&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-plan.png?width=250px&#34; alt=&#34;DevOps LifeCycle Plan&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-plan-agile.png?width=750px&#34; alt=&#34;DevOps LifeCycle Plan&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-plan-roadmap.png?width=750px&#34; alt=&#34;DevOps LifeCycle Plan&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;code&#34;&gt;Code&lt;/h2&gt;
+
+&lt;p&gt;Follow Pull Request, and share pieces of Code&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-code.png?width=250px&#34; alt=&#34;DevOps LifeCycle Code&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-code-gist.png?width=750px&#34; alt=&#34;DevOps LifeCycle Code&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-code-pull-request.png?width=750px&#34; alt=&#34;DevOps LifeCycle Code&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;build-test&#34;&gt;Build &amp;amp; Test&lt;/h2&gt;
+
+&lt;p&gt;Follow Continuous Integration, Continuous Delivery Pipelines through a pipeline views. Here shown with CDS (lien vers CDS).&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-build.png?width=250px&#34; alt=&#34;DevOps LifeCycle Build&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-build-cds.png?width=750px&#34; alt=&#34;DevOps LifeCycle Build&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;release&#34;&gt;Release&lt;/h2&gt;
+
+&lt;p&gt;End of your cycle commitment: build automatically your release note from your git repository, JIRA &amp;hellip;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-release.png?width=250px&#34; alt=&#34;DevOps LifeCycle Release&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-release-changelog-1.png?width=750px&#34; alt=&#34;DevOps LifeCycle Release&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-release-changelog-2.png?width=750px&#34; alt=&#34;DevOps LifeCycle Release&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;deploy&#34;&gt;Deploy&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-deploy.png?width=250px&#34; alt=&#34;DevOps LifeCycle Deploy&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-build-cds.png?width=750px&#34; alt=&#34;DevOps LifeCycle Deploy&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;monitor&#34;&gt;Monitor&lt;/h2&gt;
+
+&lt;p&gt;Build your own dashing view, monitor things with a light Terminal UI, showing resources heatmap of planning your interventions..&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor.png?width=250px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor-dashboard.png?width=750px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor-tatcli.png?width=750px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor-multiple.png?width=750px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-monitor-oncall.png?width=750px&#34; alt=&#34;DevOps LifeCycle Monitor&#34; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;feedback&#34;&gt;Feedback&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-feedback.png?width=250px&#34; alt=&#34;DevOps LifeCycle Feedback&#34; /&gt;
+&lt;img src=&#34;https://ovh.github.io/tat/imgs/devops-lifecycle-feedback-kpi.png?width=750px&#34; alt=&#34;DevOps LifeCycle Feedback&#34; /&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Architecture</title>
+      <link>https://ovh.github.io/tat/overview/architecture/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/architecture/</guid>
+      <description>&lt;p&gt;&lt;img src=&#34;https://ovh.github.io/tat/imgs/tat-architecture-overview.png?width=50%&#34; alt=&#34;Architecture&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Main components of a Tat Installation are:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Tat, also called Tat Engine. Your can running as many Engine as you want.
+You can imagine running many Tat&lt;em&gt;-Engine&lt;/em&gt; instances on  Mesos/Marathon, Kubernetes or Swarm, or configure yourself behind a reverse proxy. Source: &lt;a href=&#34;http://github.com/ovh/tat&#34;&gt;http://github.com/ovh/tat&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Tatwebui: it&amp;rsquo;s a web application, an easier way to call Tat Engine than curl. This application
+is component oriented, your can display messages with different Views. See &lt;a href=&#34;https://ovh.github.io/tat/tatwebui&#34;&gt;next chapter&lt;/a&gt; about Tatwebui for
+more information. Source: &lt;a href=&#34;http://github.com/ovh/tatwebui&#34;&gt;http://github.com/ovh/tatwebui&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Tatcli, the TAT Command Line Interface. All Tat features are available on tatcli. You can use it
+for &amp;ldquo;one shot&amp;rdquo; action on Tat Engine, or for display a UI in command line with &lt;code&gt;tatcli ui&lt;/code&gt;. Tatcli ui
+is popular to keep an eye on alerts or monitoring events without having a browser on it. Source: &lt;a href=&#34;http://github.com/ovh/tat/tatcli&#34;&gt;http://github.com/ovh/tat/tatcli&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;uServices: Tat Engine is simple to be used, it&amp;rsquo;s also easy to develop uService above tat to
+make things a little more advanced, like on-call schedule &amp;amp; intervention, reporting, etc&amp;hellip;
+You&amp;rsquo;ll find some opensourced uService in chapter &lt;a href=&#34;https://ovh.github.io/tat/ecosystem&#34;&gt;Ecosystem&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Contribute</title>
+      <link>https://ovh.github.io/tat/overview/contribute/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/overview/contribute/</guid>
+      <description>
+
+&lt;h2 id=&#34;contributing&#34;&gt;Contributing&lt;/h2&gt;
+
+&lt;p&gt;You&amp;rsquo;ve developed a new cool feature? Fixed an annoying bug? We&amp;rsquo;d be happy
+to hear from you! Make sure to read CONTRIBUTING file on repository concerned before.&lt;/p&gt;
+
+&lt;h2 id=&#34;code&#34;&gt;Code&lt;/h2&gt;
+
+&lt;h3 id=&#34;main-components&#34;&gt;Main Components&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Tat Engine &lt;a href=&#34;https://ovh.github.io/tat/engine/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tat&#34;&gt;http://github.com/ovh/tat&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tat/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tat/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Tatwebui &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tatwebui&#34;&gt;http://github.com/ovh/tatwebui&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tatwebui/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tatwebui/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Tatcli &lt;a href=&#34;https://ovh.github.io/tat/tatcli/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tat/tatcli&#34;&gt;http://github.com/ovh/tat/tatcli&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tat/tatcli/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;http://github.com/ovh/tat/tatcli/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;views&#34;&gt;Views&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;CDS View &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/cdsview/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-cdsview&#34;&gt;https://github.com/ovh/tatwebui-plugin-cdsview&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-cdsview/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-cdsview/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Dashing View &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/dashingview/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-dashingview&#34;&gt;https://github.com/ovh/tatwebui-plugin-dashingview&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-dashingview/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-dashingview/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Monitoring View &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/monitoringview/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-monitoringview&#34;&gt;https://github.com/ovh/tatwebui-plugin-monitoringview&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-monitoringview/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-monitoringview/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Notifications View &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/notificationsview/&#34;&gt;Doc&lt;/a&gt;  - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-notificationsview&#34;&gt;https://github.com/ovh/tatwebui-plugin-notificationsview&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-notificationsview/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-notificationsview/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Pastat View &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/pastatview/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-pastatview&#34;&gt;https://github.com/ovh/tatwebui-plugin-pastatview&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-pastatview/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-pastatview/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Release View &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/releaseview/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-releaseview&#34;&gt;https://github.com/ovh/tatwebui-plugin-releaseview&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-releaseview/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-releaseview/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Standard View &lt;a href=&#34;https://ovh.github.io/tat/tatwebui/standardview/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview&#34;&gt;https://github.com/ovh/tatwebui-plugin-standardview&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview/blob/master/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tatwebui-plugin-standardview/blob/master/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;ecosystem&#34;&gt;Ecosystem&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Tat-Contrib repository: &lt;a href=&#34;https://github.com/ovh/tat-contrib&#34;&gt;https://github.com/ovh/tat-contrib&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Al2tat &lt;a href=&#34;https://ovh.github.io/tat/ecosystem/al2tat/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/tree/master/al2tat&#34;&gt;https://github.com/ovh/tat-contrib/tree/master/al2tat&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/al2tat/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/al2tat/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Mail2tat &lt;a href=&#34;https://ovh.github.io/tat/ecosystem/mail2tat/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/tree/master/mail2tat&#34;&gt;https://github.com/ovh/tat-contrib/tree/master/mail2tat&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/mail2tat/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/mail2tat/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;TatDashing &lt;a href=&#34;https://ovh.github.io/tat/ecosystem/tatdashing/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/tree/master/tatdashing&#34;&gt;https://github.com/ovh/tat-contrib/tree/master/tatdashing&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/tatdashing/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/tatdashing/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Tat2XMPP &lt;a href=&#34;https://ovh.github.io/tat/ecosystem/tat2xmpp/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/tree/master/tat2xmpp&#34;&gt;https://github.com/ovh/tat-contrib/tree/master/tat2xmpp&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/tat2xmpp/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/tat2xmpp/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Tat2es &lt;a href=&#34;https://ovh.github.io/tat/ecosystem/tat2es/&#34;&gt;Doc&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/tree/master/tat2es&#34;&gt;https://github.com/ovh/tat-contrib/tree/master/tat2es&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/tat2es/LICENSE&#34;&gt;LICENSE&lt;/a&gt; - &lt;a href=&#34;https://github.com/ovh/tat-contrib/blob/master/tat2es/CONTRIBUTING.md&#34;&gt;CONTRIBUTING&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

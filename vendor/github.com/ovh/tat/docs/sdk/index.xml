@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sdks on TAT - TextAndTag Documentation</title>
+    <link>https://ovh.github.io/tat/sdk/index.xml</link>
+    <description>Recent content in Sdks on TAT - TextAndTag Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://ovh.github.io/tat/sdk/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Tat SDK</title>
+      <link>https://ovh.github.io/tat/sdk/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/sdk/</guid>
+      <description>
+
+&lt;h3 id=&#34;chapter-5&#34;&gt;Chapter 5&lt;/h3&gt;
+
+&lt;h1 id=&#34;overview&#34;&gt;Overview&lt;/h1&gt;
+
+&lt;p&gt;TAT SDK&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://godoc.org/github.com/ovh/tat#Client&#34;&gt;Godoc&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Golang - A simple main example</title>
+      <link>https://ovh.github.io/tat/sdk/golang-simple-main/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/sdk/golang-simple-main/</guid>
+      <description>
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code&gt; cd &amp;lt;directory-containing-main.go&amp;gt;/
+ go get -u github.com/ovh/tat
+ build &amp;amp;&amp;amp; ./mycli-minimal -url=http://url-tat-engine -username=&amp;lt;tatUsername&amp;gt; -password=&amp;lt;tatPassword&amp;gt; /Internal/your/topic your message
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;file-main-go&#34;&gt;File main.go&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+import (
+	&amp;quot;flag&amp;quot;
+	&amp;quot;fmt&amp;quot;
+	&amp;quot;os&amp;quot;
+	&amp;quot;strings&amp;quot;
+
+	&amp;quot;github.com/ovh/tat&amp;quot;
+)
+
+// taturl, username / password of tat engine
+var (
+	taturl   string
+	username string
+	password string
+)
+
+func main() {
+	flag.StringVar(&amp;amp;taturl, &amp;quot;url&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;URL of Tat Engine&amp;quot;)
+	flag.StringVar(&amp;amp;username, &amp;quot;username&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;tat username&amp;quot;)
+	flag.StringVar(&amp;amp;password, &amp;quot;password&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;tat password&amp;quot;)
+	flag.Parse()
+
+	client, err := tat.NewClient(tat.Options{
+		URL:      taturl,
+		Username: username,
+		Password: password,
+		Referer:  &amp;quot;mycli-minimal.v0&amp;quot;,
+	})
+
+	if err != nil {
+		fmt.Printf(&amp;quot;Error while create new Tat Client: %s\n&amp;quot;, err)
+		os.Exit(1)
+	}
+
+	args := flag.Args()
+	text := strings.Join(args[1:], &amp;quot; &amp;quot;)
+	topic := args[0]
+	m := tat.MessageJSON{
+		Text:  text,
+		Topic: topic,
+	}
+
+	fmt.Printf(&amp;quot;Send on topic %s this message: %s\n&amp;quot;, topic, text)
+
+	msgCreated, err := client.MessageAdd(m)
+	if err != nil {
+		fmt.Printf(&amp;quot;Error:%s\n&amp;quot;, err)
+		os.Exit(1)
+	}
+	fmt.Printf(&amp;quot;ID Message Created: %s\n&amp;quot;, msgCreated.Message.ID)
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;notice&#34;&gt;Notice&lt;/h2&gt;
+
+&lt;p&gt;This is just a simple example. Please do not use tat password in argument of your binary.
+Please check next chapter &lt;a href=&#34;../golang-full-example&#34;&gt;&amp;ldquo;Full Example&amp;rdquo;&lt;/a&gt; for a real example.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Golang - Full Example</title>
+      <link>https://ovh.github.io/tat/sdk/golang-full-example/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/tat/sdk/golang-full-example/</guid>
+      <description>
+
+&lt;h2 id=&#34;usage&#34;&gt;Usage&lt;/h2&gt;
+
+&lt;p&gt;This example uses &lt;a href=&#34;https://github.com/spf13/viper&#34;&gt;viper&lt;/a&gt;, &lt;a href=&#34;https://github.com/spf13/cobra&#34;&gt;cobra&lt;/a&gt; and &lt;a href=&#34;https://ovh.github.io/tat/tatcli/general/&#34;&gt;tatcli&lt;/a&gt; config file.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;Usage:
+ go build &amp;amp;&amp;amp; ./mycli-full demo /YouTopic/subTopic your message
+
+with a config file:
+ go build &amp;amp;&amp;amp; ./mycli-full --configFile $HOME/.tatcli/config.local.json demo /YouTopic/subTopic your message
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;file-main-go&#34;&gt;File main.go&lt;/h2&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+import (
+	&amp;quot;fmt&amp;quot;
+	&amp;quot;os&amp;quot;
+
+	log &amp;quot;github.com/Sirupsen/logrus&amp;quot;
+	&amp;quot;github.com/ovh/tat&amp;quot;
+	&amp;quot;github.com/spf13/cobra&amp;quot;
+	&amp;quot;github.com/spf13/viper&amp;quot;
+)
+
+var rootCmd = &amp;amp;cobra.Command{
+	Use:  &amp;quot;mycli-full&amp;quot;,
+	Long: `SDK Use Demo`,
+}
+
+// URL of tat engine, tat username and tat password
+var (
+	home     = os.Getenv(&amp;quot;HOME&amp;quot;)
+	taturl   string
+	username string
+	password string
+
+	// ConfigFile is $HOME/.tatcli/config.json per default
+	// contains user, password and url of tat
+	configFile string
+)
+
+func main() {
+	addCommands()
+
+	rootCmd.PersistentFlags().StringVarP(&amp;amp;taturl, &amp;quot;url&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;URL Tat Engine, facultative if you have a &amp;quot;+home+&amp;quot;/.tatcli/config.json file&amp;quot;)
+	rootCmd.PersistentFlags().StringVarP(&amp;amp;username, &amp;quot;username&amp;quot;, &amp;quot;u&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;username, facultative if you have a &amp;quot;+home+&amp;quot;/.tatcli/config.json file&amp;quot;)
+	rootCmd.PersistentFlags().StringVarP(&amp;amp;password, &amp;quot;password&amp;quot;, &amp;quot;p&amp;quot;, &amp;quot;&amp;quot;, &amp;quot;password, facultative if you have a &amp;quot;+home+&amp;quot;/.tatcli/config.json file&amp;quot;)
+	rootCmd.PersistentFlags().StringVarP(&amp;amp;configFile, &amp;quot;configFile&amp;quot;, &amp;quot;c&amp;quot;, home+&amp;quot;/.tatcli/config.json&amp;quot;, &amp;quot;configuration file, default is &amp;quot;+home+&amp;quot;/.tatcli/config.json&amp;quot;)
+
+	viper.BindPFlag(&amp;quot;url&amp;quot;, rootCmd.PersistentFlags().Lookup(&amp;quot;url&amp;quot;))
+	viper.BindPFlag(&amp;quot;username&amp;quot;, rootCmd.PersistentFlags().Lookup(&amp;quot;username&amp;quot;))
+	viper.BindPFlag(&amp;quot;password&amp;quot;, rootCmd.PersistentFlags().Lookup(&amp;quot;password&amp;quot;))
+
+	log.SetLevel(log.DebugLevel)
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+}
+
+//AddCommands adds child commands to the root command rootCmd.
+func addCommands() {
+	rootCmd.AddCommand(cmdDemo)
+}
+
+var cmdDemo = &amp;amp;cobra.Command{
+	Use:   &amp;quot;demo &amp;lt;topic&amp;gt; &amp;lt;msg&amp;gt;&amp;quot;,
+	Short: &amp;quot;Demo Post Msg&amp;quot;,
+	Run: func(cmd *cobra.Command, args []string) {
+		create(args[0], args[1])
+	},
+}
+
+// create creates a message in specified topic
+func create(topic, message string) {
+	readConfig()
+	m := tat.MessageJSON{Text: message, Topic: topic}
+	msgCreated, err := getClient().MessageAdd(m)
+	if err != nil {
+		log.Errorf(&amp;quot;Error:%s&amp;quot;, err)
+		return
+	}
+	log.Debugf(&amp;quot;ID Message Created: %d&amp;quot;, msgCreated.Message.ID)
+}
+
+func getClient() *tat.Client {
+	tc, err := tat.NewClient(tat.Options{
+		URL:      viper.GetString(&amp;quot;url&amp;quot;),
+		Username: viper.GetString(&amp;quot;username&amp;quot;),
+		Password: viper.GetString(&amp;quot;password&amp;quot;),
+		Referer:  &amp;quot;mycli.v0&amp;quot;,
+	})
+
+	if err != nil {
+		log.Fatalf(&amp;quot;Error while create new Tat Client: %s&amp;quot;, err)
+	}
+
+	tat.DebugLogFunc = log.Debugf
+	return tc
+}
+
+// readConfig reads config in .tatcli/config per default
+func readConfig() {
+	if configFile != &amp;quot;&amp;quot; {
+		viper.SetConfigFile(configFile)
+		viper.ReadInConfig() // Find and read the config file
+	}
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;notice&#34;&gt;Notice&lt;/h2&gt;
+
+&lt;p&gt;You should split this file into many files.&lt;/p&gt;
+
+&lt;p&gt;See &lt;a href=&#34;https://github.com/ovh/tat/tatcli&#34;&gt;https://github.com/ovh/tat/tatcli&lt;/a&gt; for CLI with many subcommands.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

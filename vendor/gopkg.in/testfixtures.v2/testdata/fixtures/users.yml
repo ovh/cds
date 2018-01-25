@@ -1,0 +1,24 @@
+# json object
+-
+  id: 1
+  attributes:
+    name: John
+    surname: Due
+    age: 20
+    favorite_color:
+      - blue
+      - red
+      - yellow
+
+# json array
+-
+  id: 2
+  attributes:
+    - foo
+    - bar
+    - baz:
+      foobar: foobaz
+      arr:
+        - 1
+        - 2
+        - 3

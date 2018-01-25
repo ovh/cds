@@ -1,0 +1,15 @@
+Connected to 173.194.68.109:993 (Tag=JUSQL)
+S: * OK Gimap ready for requests from 192.0.2.1 abc0123456789xyz.12
+Server greeting: Gimap ready for requests from 192.0.2.1 abc0123456789xyz.12
+C: JUSQL1 CAPABILITY
+S: * CAPABILITY IMAP4rev1 UNSELECT IDLE NAMESPACE QUOTA ID XLIST CHILDREN X-GM-EXT-1 XYZZY SASL-IR AUTH=XOAUTH AUTH=XOAUTH2
+S: JUSQL1 OK Thats all she wrote! abc0123456789xyz.12
+C: JUSQL2 XYZZY
+S: JUSQL2 OK Nothing happens. abc0123456789xyz.12
+C: JUSQL3 LOGOUT
+S: * BYE Logout Requested abc0123456789xyz.12
+Logout reason: Logout Requested abc0123456789xyz.12
+S: JUSQL3 OK Quoth the raven, nevermore... abc0123456789xyz.12
+S:  (EOF)
+Close reason: end of stream
+Connection closing (flush=false)

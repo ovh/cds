@@ -123,21 +123,17 @@
   name = "gopkg.in/urfave/cli.v1"
   version = "1.18.1"
 
-[[constraint]]
-  branch = "ye-cds"
-  name = "github.com/yesnault/gadgeto"
-
-[[constraint]]
+[[override]]
   name = "github.com/docker/docker"
   branch = "ye-cds"
   source = "https://github.com/yesnault/moby.git"
 
-[[constraint]]
+[[override]]
   name = "github.com/go-gorp/gorp"
   branch = "ye-cds"
   source = "https://github.com/yesnault/gorp.git"
 
-[[constraint]]
+[[override]]
   name = "github.com/hashicorp/go-plugin"
   branch = "ye-cds"
   source = "https://github.com/yesnault/go-plugin.git"

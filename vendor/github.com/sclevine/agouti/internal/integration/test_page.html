@@ -1,0 +1,55 @@
+<html>
+<head>
+    <title>Page Title</title>
+</head>
+<body>
+<header>
+    <h1>Title</h1>
+    <h2 style="display: none;">Invisible Title</h2>
+</header>
+<label for="labeled_field">Some Label </label>
+<label> <input value="some embedded value" /> Some Container Label </label>
+<input id="labeled_field" value="some labeled value" />
+<input type="button" value=" Some Input   Button " />
+<input type="submit" value=" Some Submit   Button " />
+<button name="some button name"><img> Some   Button </button>
+<a href="#new_page">Click Me</a>
+<p id="double_click" ondblclick="doubleClicked();">Double-click Me</p>
+<div id="some_element" class="some-element" style="color: blue;"></div>
+<form id="some_form" method="post">
+    <input id="some_input" type="text" value="some value" />
+</form>
+<input id="some_checkbox" type="checkbox" />
+<input id="some_disabled_checkbox" type="checkbox" disabled="disabled" />
+<input id="some_selected_checkbox" type="checkbox" checked="checked" />
+<input id="popup_alert" type="button" onclick="alert('some alert');" />
+<input id="popup_confirm" type="button" onclick="confirmed = confirm('some confirm');" />
+<input id="popup_prompt" type="button" onclick="promptText = prompt('some prompt?');" />
+<input id="new_window" type="button" onclick="window.open('about:blank', 'new window');" />
+<input id="file_picker" type="file" />
+<select id="some_select">
+    <option>first option</option>
+    <option>second option</option>
+</select>
+<select id="some_select_other">
+    <option>third option</option>
+    <option>fourth option</option>
+</select>
+<iframe id="frame" src="http://example.com"></iframe>
+<script>
+    function doubleClicked() {
+        var element = document.getElementById("double_click");
+        element.innerHTML = "double-click success";
+    }
+
+    setTimeout(function() {
+        var element = document.getElementById("some_element");
+        element.innerHTML = "some text";
+        var causeError = doesNotExist;
+    }, 2000);
+
+    console.log("some log");
+    document.cookie="browser-test-cookie=browser value";
+</script>
+</body>
+</html>
