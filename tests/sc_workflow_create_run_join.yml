@@ -35,7 +35,7 @@ testcases:
 
 - name: check workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow show ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 1 --format json
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 1 --format json
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -54,7 +54,7 @@ testcases:
 
 - name: check workflow run with good branch
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow show ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Building
