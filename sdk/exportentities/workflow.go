@@ -196,10 +196,9 @@ func (w Workflow) Entries() map[string]NodeEntry {
 	return map[string]NodeEntry{
 		w.PipelineName: singleEntry,
 	}
-
 }
 
-func (e NodeEntry) checkValidity() error {
+func (e NodeEntry) checkValidity(w sdk.Workflow) error {
 	return nil
 }
 
@@ -420,7 +419,7 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 }
 
 func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
-	if err := e.checkValidity(); err != nil {
+	if err := e.checkValidity(*w); err != nil {
 		return false, err
 	}
 
