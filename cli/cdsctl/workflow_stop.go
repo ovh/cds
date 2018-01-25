@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/ovh/cds/cli"
 )
@@ -21,20 +20,21 @@ var workflowStopCmd = cli.Command{
 		{Name: _WorkflowName},
 	},
 	OptionalArgs: []cli.Arg{
-		{Name: "run-number"},
-		{Name: "node-name"},
+		{
+			Name:   "run-number",
+			Weight: 1,
+		},
+		{
+			Name:   "node-name",
+			Weight: 2,
+		},
 	},
 }
 
 func workflowStopRun(v cli.Values) error {
-
-	var runNumber int64
-	var errRunNumber error
 	// If no run number, get the latest
-	runNumberStr := v.GetString("run-number")
-	if runNumberStr != "" {
-		runNumber, errRunNumber = strconv.ParseInt(runNumberStr, 10, 64)
-	} else {
+	runNumber, errRunNumber := v.GetInt64("run-number")
+	if runNumber == 0 {
 		runNumber, errRunNumber = workflowNodeForCurrentRepo(v[_ProjectKey], v.GetString(_WorkflowName))
 	}
 	if errRunNumber != nil {

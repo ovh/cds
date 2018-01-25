@@ -23,7 +23,11 @@ type Values map[string]string
 
 // GetInt64 returns a int64
 func (v *Values) GetInt64(s string) (int64, error) {
-	n, err := strconv.ParseInt((*v)[s], 10, 64)
+	ns := (*v)[s]
+	if ns == "" {
+		return 0, nil
+	}
+	n, err := strconv.ParseInt(ns, 10, 64)
 	if err != nil {
 		return -1, fmt.Errorf("%s invalid: not a integer", s)
 	}
