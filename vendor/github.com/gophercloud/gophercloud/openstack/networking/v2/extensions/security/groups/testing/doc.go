@@ -1,2 +1,0 @@
-// networking_extensions_security_groups_v2
-package testing

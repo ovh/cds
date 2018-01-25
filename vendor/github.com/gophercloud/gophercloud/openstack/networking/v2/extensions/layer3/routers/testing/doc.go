@@ -1,2 +1,0 @@
-// networking_extensions_layer3_routers_v2
-package testing
