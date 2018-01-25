@@ -96,7 +96,8 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		if msgChan != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgWorkflowImportedInserted, w.Name)
 		}
-		return nil
+
+		return importWorkflowGroups(db, w)
 	}
 
 	if !force {
@@ -113,17 +114,8 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		return sdk.WrapError(err, "Import> Unable to update workflow")
 	}
 
-	if len(w.Groups) > 0 {
-		for i := range w.Groups {
-			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
-			if err != nil {
-				return sdk.WrapError(err, "Import> Unable to load group %s", w.Groups[i].Group.Name)
-			}
-			w.Groups[i].Group = *g
-		}
-		if err := upsertAllGroups(db, w, w.Groups); err != nil {
-			return sdk.WrapError(err, "Import> Unable to update workflow")
-		}
+	if err := importWorkflowGroups(db, w); err != nil {
+		return err
 	}
 
 	if msgChan != nil {
@@ -131,4 +123,20 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	}
 	return nil
 
+}
+
+func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {
+	if len(w.Groups) > 0 {
+		for i := range w.Groups {
+			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
+			if err != nil {
+				return sdk.WrapError(err, "importWorkflowGroups> Unable to load group %s", w.Groups[i].Group.Name)
+			}
+			w.Groups[i].Group = *g
+		}
+		if err := upsertAllGroups(db, w, w.Groups); err != nil {
+			return sdk.WrapError(err, "importWorkflowGroups> Unable to update workflow")
+		}
+	}
+	return nil
 }
