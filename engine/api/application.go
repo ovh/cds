@@ -472,7 +472,8 @@ func (api *API) addApplicationHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot commit transaction")
 		}
-		return nil
+
+		return WriteJSON(w, r, app, http.StatusOK)
 	}
 }
 

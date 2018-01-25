@@ -1,7 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {Router} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {SharedService} from '../shared.service';
@@ -42,7 +41,6 @@ describe('CDS: Usage Component', () => {
         fakeUser.admin = true;
 
         fixture.componentInstance.workflows = [new Workflow(), new Workflow()];
-        fixture.componentInstance.currentUser = fakeUser;
 
         fixture.detectChanges();
         tick(50);

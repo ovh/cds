@@ -348,6 +348,9 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
 		payload["git.repository"] = pushEvent.Repository.FullName
+		if strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
+			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
+		}
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
@@ -362,11 +365,13 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		}
 		payload["git.author"] = pushEvent.UserUsername
 		payload["git.author.email"] = pushEvent.UserEmail
-		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+		payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Ref, "refs/heads/"), "refs/tags/")
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
 		payload["git.repository"] = pushEvent.Repository.Name
-
+		if strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
+			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
+		}
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
@@ -382,11 +387,13 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 			return nil, nil
 		}
 
-		payload["git.branch"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/heads/")
+		payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/heads/"), "refs/tags/")
 		payload["git.hash.before"] = pushEvent.Changes[0].FromHash
 		payload["git.hash"] = pushEvent.Changes[0].ToHash
 		payload["git.repository"] = fmt.Sprintf("%s/%s", pushEvent.Repository.Project.Key, pushEvent.Repository.Name)
-
+		if strings.HasPrefix(pushEvent.Changes[0].RefID, "refs/tags/") {
+			payload["git.tag"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/tags/")
+		}
 	default:
 		log.Warning("executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
 		return nil, nil

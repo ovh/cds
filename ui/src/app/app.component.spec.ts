@@ -3,7 +3,6 @@
 import {TestBed, async, getTestBed, fakeAsync} from '@angular/core/testing';
 import {AppModule} from './app.module';
 import {AppComponent} from './app.component';
-import {beforeEach, afterEach, expect, it, describe} from 'jasmine'
 import {Injector} from '@angular/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {User} from './model/user.model';

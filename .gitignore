@@ -35,3 +35,5 @@ ui/dist
 docs/content/cli/cdsctl/
 docs/content/cli/engine/
 docs/content/cli/worker/
+docs/content/cli/api/*
+!docs/content/cli/api/_index.md

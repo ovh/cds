@@ -1,0 +1,35 @@
++++
+title = "{{.Title}}"
++++
+
+{{range .Routes}}
+### {{.Title}}
+
+URL         | **`{{.URL}}`**
+----------- |----------
+Method      | {{.Method}}     
+{{if .QueryParams -}}{{range .QueryParams}}Query Parameter | {{.}}
+{{end}}{{- end}}Permissions | {{.Permissions}}
+Code        | {{.Code}}    
+
+{{if .Description -}}
+#### Description
+{{ .Description}}
+{{- end}}
+
+
+{{if .RequestBody -}}
+#### Request Body
+```
+{{ .RequestBody}}
+```
+{{- end}}
+
+{{if .ResponseBody -}}
+#### Response Body
+```
+{{ .ResponseBody}}
+```
+{{- end}}
+
+{{end}}

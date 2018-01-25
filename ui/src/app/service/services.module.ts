@@ -26,8 +26,7 @@ import {ApplicationResolver, ApplicationQueryParamResolver} from './application/
 import {
     ProjectResolver,
     ProjectForApplicationResolver,
-    ProjectForWorkflowResolver,
-    ProjectForPipelineCreateResolver
+    ProjectForWorkflowResolver
 } from './project/project.resolver';
 import {ProjectAuditService} from './project/project.audit.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
@@ -90,7 +89,6 @@ export class ServicesModule {
                 PipelineStore,
                 ProjectResolver,
                 ProjectForApplicationResolver,
-                ProjectForPipelineCreateResolver,
                 ProjectForWorkflowResolver,
                 ProjectService,
                 ProjectAuditService,
@@ -151,7 +149,6 @@ export {
     ProjectResolver,
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
-    ProjectForPipelineCreateResolver,
     ProjectStore,
     ProjectAuditService,
     RepoManagerService,

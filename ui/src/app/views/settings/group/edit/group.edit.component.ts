@@ -4,7 +4,7 @@ import {first, finalize} from 'rxjs/operators';
 import {Group} from '../../../../model/group.model';
 import {GroupService} from '../../../../service/group/group.service';
 import {User} from '../../../../model/user.model';
-import {TokenEvent} from '../../../../model/token.model';
+import {Token, TokenEvent} from '../../../../model/token.model';
 import {UserService} from '../../../../service/user/user.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
@@ -24,6 +24,7 @@ export class GroupEditComponent implements OnInit {
     addUserUsername: string;
     users: Array<User>;
     members: Array<User>;
+    tokenGenerated: Token;
 
     private groupname: string;
     private groupnamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
@@ -192,6 +193,7 @@ export class GroupEditComponent implements OnInit {
                             this.group.tokens.push(token);
                         }
                         this._toast.success('', this._translate.instant('token_added'));
+                        this.tokenGenerated = token;
                     });
                     break;
         }

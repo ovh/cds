@@ -44,7 +44,6 @@ func main() {
 			update,
 			usr,
 			monitoring,
-			health,
 			version,
 			encrypt,
 			token,
