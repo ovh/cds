@@ -34,7 +34,9 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 			ProjectKey: proj.Key,
 		}
 
-		addGroupOnWorkflow(db, &newW, &oldW.Application)
+		if err := addGroupOnWorkflow(db, &newW, &oldW.Application); err != nil {
+			return sdk.WrapError(err, "MigrateToWorkflow")
+		}
 
 		currentApplicationID := oldW.Application.ID
 
