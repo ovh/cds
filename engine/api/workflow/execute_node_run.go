@@ -619,64 +619,125 @@ func SyncNodeRunRunJob(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJo
 	return found, nil
 }
 
-func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun) (repository string, branch string, hash string, author string, message string, err error) {
-	repository = gitValues[tagGitRepository]
-	branch = gitValues[tagGitBranch]
-	hash = gitValues[tagGitHash]
-	author = gitValues[tagGitAuthor]
-	message = gitValues[tagGitMessage]
+type vcsInfos struct {
+	repository string
+	branch     string
+	hash       string
+	author     string
+	message    string
+	url        string
+	httpurl    string
+}
+
+func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, ignoreError bool) (vcsInfos, error) {
+	var vcsInfos vcsInfos
+	vcsInfos.repository = gitValues[tagGitRepository]
+	vcsInfos.branch = gitValues[tagGitBranch]
+	vcsInfos.hash = gitValues[tagGitHash]
+	vcsInfos.author = gitValues[tagGitAuthor]
+	vcsInfos.message = gitValues[tagGitMessage]
 
 	if node.Context == nil || node.Context.Application == nil || node.Context.Application.VCSServer == "" {
-		return repository, branch, hash, author, message, nil
-	}
-
-	// Set default values
-	if repository == "" {
-		repository = node.Context.Application.RepositoryFullname
+		return vcsInfos, nil
 	}
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
 	if vcsServer == nil {
-		return repository, branch, hash, author, message, nil
+		return vcsInfos, nil
 	}
 
 	//Get the RepositoriesManager Client
 	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
 	if errclient != nil {
-		return repository, branch, hash, author, message, sdk.WrapError(errclient, "computeVCSInfos> Cannot get client")
+		return vcsInfos, sdk.WrapError(errclient, "computeVCSInfos> Cannot get client")
 	}
 
-	if branch == "" {
-		branches, errR := client.Branches(repository)
+	// Set default values
+	if vcsInfos.repository == "" {
+		vcsInfos.repository = node.Context.Application.RepositoryFullname
+	} else if vcsInfos.repository != node.Context.Application.RepositoryFullname {
+		//The input repository is not the same as the application, we have to check if it is a fork
+		forks, err := client.ListForks(node.Context.Application.RepositoryFullname)
+		if err != nil {
+			return vcsInfos, sdk.WrapError(errclient, "computeVCSInfos> Cannot get forks for %s", node.Context.Application.RepositoryFullname)
+		}
+		var forkFound bool
+		for _, fork := range forks {
+			if vcsInfos.repository == fork.Fullname {
+				forkFound = true
+				break
+			}
+		}
+
+		//If it's not a fork; reset this value to the application repository
+		if !forkFound {
+			if !ignoreError {
+				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.repository))
+			}
+			vcsInfos.repository = node.Context.Application.RepositoryFullname
+		}
+	}
+
+	//Get the url and http_url
+	repo, err := client.RepoByFullname(vcsInfos.repository)
+	if err != nil {
+		if !ignoreError {
+			return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
+		}
+		//If we ignore errors
+		vcsInfos.repository = node.Context.Application.RepositoryFullname
+		repo, err = client.RepoByFullname(node.Context.Application.RepositoryFullname)
+		if err != nil {
+			return vcsInfos, sdk.WrapError(errclient, "computeVCSInfos> Cannot get repo %s", node.Context.Application.RepositoryFullname)
+		}
+	}
+	vcsInfos.url = repo.SSHCloneURL
+	vcsInfos.httpurl = repo.HTTPCloneURL
+
+	//Check that the branch exist, if it isn't existing, let the default branch
+	var branch *sdk.VCSBranch
+	if vcsInfos.branch != "" {
+		branch, err = client.Branch(vcsInfos.repository, vcsInfos.branch)
+		if err != nil {
+			if !ignoreError {
+				return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
+			}
+		}
+
+		if branch == nil {
+			log.Error("computeVCSInfos> unable to get branch %s", vcsInfos.branch)
+			vcsInfos.branch = ""
+		}
+	}
+
+	//Get the default branch
+	if branch == nil {
+		branches, errR := client.Branches(vcsInfos.repository)
 		if errR != nil {
-			return repository, branch, hash, author, message, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", repository)
+			return vcsInfos, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", vcsInfos.repository)
 		}
-		branch = sdk.GetDefaultBranch(branches).DisplayID
+		_branch := sdk.GetDefaultBranch(branches)
+		branch = &_branch
+		vcsInfos.branch = branch.DisplayID
+	}
+	if vcsInfos.hash == "" {
+		vcsInfos.hash = branch.LatestCommit
 	}
 
-	if hash != "" {
-		commit, errCm := client.Commit(repository, hash)
-		if errCm != nil {
-			return repository, branch, hash, author, message, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", repository, hash)
-		}
-		author = commit.Author.Name
-		message = commit.Message
-
-		return repository, branch, hash, author, message, nil
-	}
-
-	branchInfos, errBr := client.Branch(repository, branch)
-	if errBr != nil {
-		return repository, branch, hash, author, message, sdk.WrapError(errBr, "computeVCSInfos> cannot get branch infos for %s and branch %s", repository, branch)
-	}
-	hash = branchInfos.LatestCommit
-
-	commit, errCm := client.Commit(repository, hash)
+	//Get the latest commit
+	commit, errCm := client.Commit(vcsInfos.repository, vcsInfos.hash)
 	if errCm != nil {
-		return repository, branch, hash, author, message, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", repository, hash)
+		if !ignoreError {
+			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.repository, vcsInfos.hash)
+		}
+		vcsInfos.hash = branch.LatestCommit
+		commit, errCm = client.Commit(vcsInfos.repository, vcsInfos.hash)
+		if errCm != nil {
+			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.repository, vcsInfos.hash)
+		}
 	}
-	author = commit.Author.DisplayName
-	message = commit.Message
+	vcsInfos.author = commit.Author.Name
+	vcsInfos.message = commit.Message
 
-	return repository, branch, hash, author, message, nil
+	return vcsInfos, nil
 }

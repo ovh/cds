@@ -99,9 +99,10 @@
   branch = "master"
   name = "github.com/skratchdot/open-golang"
 
-[[constraint]]
+[[override]]
   name = "github.com/xanzy/go-gitlab"
-  version = "0.7.4"
+  branch = "feat-list-project-forks"
+  source = "https://github.com/fsamin/go-gitlab.git"
 
 [[constraint]]
   branch = "master"

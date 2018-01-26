@@ -418,3 +418,97 @@ func (s *ServicesService) DeleteJiraService(pid interface{}, options ...OptionFu
 
 	return s.client.Do(req, nil)
 }
+
+// JenkinsCIService represents Jenkins CI service settings.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ee/api/services.html#jenkins-ci
+type JenkinsCIService struct {
+	Service
+	Properties *JenkinsCIServiceProperties `json:"properties"`
+}
+
+// JenkinsCIServiceProperties represents Jenkins CI specific properties.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ee/api/services.html#jenkins-ci
+type JenkinsCIServiceProperties struct {
+	URL         *string `url:"jenkins_url,omitempty" json:"jenkins_url,omitempty"`
+	ProjectName *string `url:"project_name,omitempty" json:"project_name,omitempty"`
+	Username    *string `url:"username,omitempty" json:"username,omitempty"`
+}
+
+// GetJenkinsCIService gets Jenkins CI service settings for a project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ee/api/services.html#get-jenkins-ci-service-settings
+func (s *ServicesService) GetJenkinsCIService(pid interface{}, options ...OptionFunc) (*JenkinsCIService, *Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/jenkins", url.QueryEscape(project))
+
+	req, err := s.client.NewRequest("GET", u, nil, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	svc := new(JenkinsCIService)
+	resp, err := s.client.Do(req, svc)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return svc, resp, err
+}
+
+// SetJenkinsCIServiceOptions represents the available SetJenkinsCIService()
+// options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ee/api/services.html#jenkins-ci
+type SetJenkinsCIServiceOptions struct {
+	URL         *string `url:"jenkins_url,omitempty" json:"jenkins_url,omitempty"`
+	ProjectName *string `url:"project_name,omitempty" json:"project_name,omitempty"`
+	Username    *string `url:"username,omitempty" json:"username,omitempty"`
+	Password    *string `url:"password,omitempty" json:"password,omitempty"`
+}
+
+// SetJenkinsCIService sets Jenkins service for a project
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ee/api/services.html#create-edit-jenkins-ci-service
+func (s *ServicesService) SetJenkinsCIService(pid interface{}, opt *SetJenkinsCIServiceOptions, options ...OptionFunc) (*Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/jenkins", url.QueryEscape(project))
+
+	req, err := s.client.NewRequest("PUT", u, opt, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Do(req, nil)
+}
+
+// DeleteJenkinsCIService deletes Jenkins CI service for project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/services.html#delete-jira-service
+func (s *ServicesService) DeleteJenkinsCIService(pid interface{}, options ...OptionFunc) (*Response, error) {
+	project, err := parseID(pid)
+	if err != nil {
+		return nil, err
+	}
+	u := fmt.Sprintf("projects/%s/services/jenkins", url.QueryEscape(project))
+
+	req, err := s.client.NewRequest("DELETE", u, nil, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.client.Do(req, nil)
+}
