@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -102,7 +103,7 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 	}
 
 	if hconfig.Name == "" {
-		return fmt.Errorf("please enter a name in your local hatchery configuration")
+		return fmt.Errorf("please enter a name in your kubernetes hatchery configuration")
 	}
 
 	if hconfig.KubernetesNamespace == "" {
@@ -147,7 +148,7 @@ func (h *HatcheryKubernetes) Configuration() hatchery.CommonConfiguration {
 
 // ModelType returns type of hatchery
 func (*HatcheryKubernetes) ModelType() string {
-	return sdk.Kubernetes
+	return sdk.Docker
 }
 
 // CanSpawn return wether or not hatchery can spawn model.
@@ -182,11 +183,26 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		{Name: "CDS_TTL", Value: fmt.Sprintf("%d", h.Config.WorkerTTL)},
 	}
 
+	var logJob string
 	if spawnArgs.JobID > 0 {
 		if spawnArgs.IsWorkflowJob {
+			logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
 			envs = append(envs, apiv1.EnvVar{Name: "CDS_BOOKED_WORKFLOW_JOB_ID", Value: fmt.Sprintf("%d", spawnArgs.JobID)})
 		} else {
+			logJob = fmt.Sprintf("for pipeline build job %d,", spawnArgs.JobID)
 			envs = append(envs, apiv1.EnvVar{Name: "CDS_BOOKED_PB_JOB_ID", Value: fmt.Sprintf("%d", spawnArgs.JobID)})
+		}
+	}
+
+	memory := int64(h.Config.DefaultMemory)
+	for _, r := range spawnArgs.Requirements {
+		if r.Type == sdk.MemoryRequirement {
+			var err error
+			memory, err = strconv.ParseInt(r.Value, 10, 64)
+			if err != nil {
+				log.Warning("spawnKubernetesDockerWorker> %s unable to parse memory requirement %s:%s", logJob, memory, err)
+				return "", err
+			}
 		}
 	}
 
@@ -196,8 +212,9 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 			Name: name,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
-				LABEL_WORKER:       label,
-				LABEL_WORKER_MODEL: strings.ToLower(spawnArgs.Model.Name),
+				LABEL_WORKER:        label,
+				LABEL_WORKER_MODEL:  strings.ToLower(spawnArgs.Model.Name),
+				LABEL_HATCHERY_NAME: h.Configuration().Name,
 			},
 		},
 		Spec: apiv1.PodSpec{
@@ -210,7 +227,7 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 					Env:   envs,
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
-							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", h.Config.DefaultMemory)),
+							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
 						},
 					},
 				},
@@ -224,12 +241,19 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryKubernetes) WorkersStarted() int {
-	list, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
+	workersLen := 0
+	list, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
 	if err != nil {
-		return 0
+		return workersLen
+	}
+	for _, pod := range list.Items {
+		labels := pod.GetLabels()
+		if labels[LABEL_HATCHERY_NAME] == h.Configuration().Name {
+			workersLen++
+		}
 	}
 
-	return len(list.Items)
+	return workersLen
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but

@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	LABEL_WORKER       = "CDS_WORKER"
-	LABEL_WORKER_MODEL = "CDS_WORKER_MODEL"
+	LABEL_HATCHERY_NAME = "CDS_HATCHERY_NAME"
+	LABEL_WORKER        = "CDS_WORKER"
+	LABEL_WORKER_MODEL  = "CDS_WORKER_MODEL"
 )
 
 // HatcheryConfiguration is the configuration for local hatchery
