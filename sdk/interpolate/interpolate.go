@@ -4,11 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 )
 
 var interpolateRegex = regexp.MustCompile("({{\\.[a-zA-Z0-9._\\-µ|\\s]+}})")
+
+type reverseString []string
+
+func (p reverseString) Len() int           { return len(p) }
+func (p reverseString) Less(i, j int) bool { return p[i] > p[j] }
+func (p reverseString) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 // Do returns interpolated input with vars
 func Do(input string, vars map[string]string) (string, error) {
@@ -20,7 +27,18 @@ func Do(input string, vars map[string]string) (string, error) {
 	defaults := make(map[string]string, len(vars))
 	empty := make(map[string]string, len(vars))
 
-	for k, v := range vars {
+	// sort key, to replace the longer variables before
+	// see "same prefix" unit test
+	keys := make([]string, len(vars))
+	var i int64
+	for k := range vars {
+		keys[i] = k
+		i++
+	}
+	sort.Sort(reverseString(keys))
+
+	for _, k := range keys {
+		v := vars[k]
 		kb := strings.Replace(k, ".", "__", -1)
 		// "-"" are not a valid char in go template var name
 		kb = strings.Replace(kb, "-", "µµµ", -1)
@@ -30,7 +48,6 @@ func Do(input string, vars map[string]string) (string, error) {
 		if v == "" {
 			empty[k] = k
 		}
-
 		input = strings.Replace(input, k, kb, -1)
 	}
 
