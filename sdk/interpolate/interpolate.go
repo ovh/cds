@@ -30,8 +30,10 @@ func Do(input string, vars map[string]string) (string, error) {
 	// sort key, to replace the longer variables before
 	// see "same prefix" unit test
 	keys := make([]string, len(vars))
+	var i int64
 	for k := range vars {
-		keys = append(keys, k)
+		keys[i] = k
+		i++
 	}
 	sort.Sort(reverseString(keys))
 
