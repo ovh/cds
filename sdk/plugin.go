@@ -40,7 +40,6 @@ func DownloadPlugin(name string, destdir string) error {
 		}
 
 		if err := f.Close(); err == nil {
-			fmt.Printf("Download %s completed\n", destPath)
 			return nil
 		}
 	}

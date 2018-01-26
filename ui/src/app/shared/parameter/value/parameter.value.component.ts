@@ -33,8 +33,8 @@ export class ParameterValueComponent implements OnInit {
 
     @Input('ref')
     set ref(data: Parameter|Array<string>) {
-        if (data && data instanceof Parameter && data.type === 'list') {
-            this.refValue = (<string>data.value).split(';');
+        if (data && (<Parameter>data).type === 'list') {
+            this.refValue = (<string>(<Parameter>data).value).split(';');
         } else if (data && Array.isArray(data)) {
             this.list = data;
         }

@@ -46,10 +46,10 @@ default: build
 
 clean:
 	@rm -rf $(TARGET_DIR)
-	@for TST in `find . -name "tests.log"`; do \
+	@for TST in `find ../ -name "tests.log"`; do \
 		rm $$TST; \
 	done;
-	@for profile in `find . -name "*.coverprofile"`; do \
+	@for profile in `find ../ -name "*.coverprofile"`; do \
 		rm $$profile; \
 	done;
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -33,6 +34,25 @@ func (c *client) WorkflowRunGet(projectKey string, workflowName string, number i
 		return nil, err
 	}
 	return &run, nil
+}
+
+func (c *client) WorkflowRunSearch(projectKey string, offset, limit int64, filters ...Filter) ([]sdk.WorkflowRun, error) {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit == 0 {
+		limit = 50
+	}
+
+	path := fmt.Sprintf("/project/%s/runs?offset=%d&limit=%d", projectKey, offset, limit)
+	for _, f := range filters {
+		path += fmt.Sprintf("&%s=%s", url.QueryEscape(f.Name), url.QueryEscape(f.Value))
+	}
+	runs := []sdk.WorkflowRun{}
+	if _, err := c.GetJSON(path, &runs); err != nil {
+		return nil, err
+	}
+	return runs, nil
 }
 
 func (c *client) WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error) {

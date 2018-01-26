@@ -139,6 +139,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_optional": "Optional",
   "common_ask_cds_administrator": "Ask your CDS Administrator",
   "common_audit": "Audit",
   "common_advanced": "Advanced",
@@ -703,7 +704,7 @@
   "workflow_node_join_add": "Add a join",
   "workflow_node_join_link": "Link to a join",
   "workflow_node_pipeline_synchronized": "Pipeline up to date",
-  "workflow_node_parent": "Add a parent node",
+  "workflow_node_parent": "Add a parent pipeline",
   "workflow_node_remove_multiple_parent": "A workflow must not have multiple root pipelines",
   "workflow_node_trigger_add": "Add a pipeline",
   "workflow_node_trigger_condition_list_title": "Trigger condition list",

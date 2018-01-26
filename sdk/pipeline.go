@@ -394,14 +394,12 @@ func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, fo
 
 			data, _, err := Request("GET", path, nil)
 			if err != nil {
-				fmt.Printf("Cannot stream logs: %s\n", err)
 				close(ch)
 				return
 			}
 
 			err = json.Unmarshal([]byte(data), &logs)
 			if err != nil {
-				fmt.Printf("Cannot unmarshall logs: %s\n", err)
 				close(ch)
 				return
 			}

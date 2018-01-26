@@ -129,17 +129,20 @@ func withAutoConf() cli.CommandModifier {
 				return err
 			}
 
+			preargs := []string{}
 			for _, arg := range c.Ctx {
 				if arg.Name == _ProjectKey {
-					*args = []string{autoDiscoveredProj}
+					preargs = []string{autoDiscoveredProj}
 				}
 				if arg.Name == _ApplicationName {
-					*args = append(*args, autoDiscoveredApp)
+					preargs = append(preargs, autoDiscoveredApp)
 				}
 				if arg.Name == _WorkflowName {
-					*args = append(*args, autoDiscoveredWorkflow)
+					preargs = append(preargs, autoDiscoveredWorkflow)
 				}
 			}
+
+			*args = append(preargs, *args...)
 
 			return nil
 		},
@@ -216,6 +219,10 @@ func discoverConf() error {
 			if err := r.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
 				return err
 			}
+		}
+
+		if chosenProj == nil {
+			return nil
 		}
 
 		//Set cds.application

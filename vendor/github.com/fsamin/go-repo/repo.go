@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 )
-
-type Repo struct {
-	path string
-}
 
 func New(path string) (Repo, error) {
 	return Repo{path}, nil
@@ -64,23 +62,10 @@ func (r Repo) Name() (string, error) {
 }
 
 func (r Repo) LocalConfigGet(section, key string) (string, error) {
-	cmd := exec.Command("git", "config", "--local", "--get", fmt.Sprintf("%s.%s", section, key))
-	stdOut := new(bytes.Buffer)
-	stdErr := new(bytes.Buffer)
-	cmd.Dir = r.path
-	cmd.Stderr = stdErr
-	cmd.Stdout = stdOut
-	err := cmd.Run()
+	s, err := r.runCmd("git", "config", "--local", "--get", fmt.Sprintf("%s.%s", section, key))
 	if err != nil {
 		return "", err
 	}
-
-	errOut := stdErr.Bytes()
-	if len(errOut) > 0 {
-		return "", fmt.Errorf(string(errOut))
-	}
-
-	s := stdOut.String()
 	return s[:len(s)-1], nil
 }
 
@@ -88,24 +73,13 @@ func (r Repo) LocalConfigSet(section, key, value string) error {
 	conf, _ := r.LocalConfigGet(section, key)
 	s := fmt.Sprintf("%s.%s", section, key)
 	if conf != "" {
-		cmd := exec.Command("git", "config", "--local", "--unset", s)
-		cmd.Dir = r.path
-		if err := cmd.Run(); err != nil {
+		if _, err := r.runCmd("git", "config", "--local", "--unset", s); err != nil {
 			return err
 		}
 	}
 
-	cmd := exec.Command("git", "config", "--local", "--add", s, value)
-	stdErr := new(bytes.Buffer)
-	cmd.Dir = r.path
-	cmd.Stderr = stdErr
-	if err := cmd.Run(); err != nil {
+	if _, err := r.runCmd("git", "config", "--local", "--add", s, value); err != nil {
 		return err
-	}
-
-	errOut := stdErr.Bytes()
-	if len(errOut) > 0 {
-		return fmt.Errorf(string(errOut))
 	}
 
 	return nil
@@ -148,4 +122,33 @@ func trimURL(fetchURL string) (string, error) {
 	}
 
 	return repoName, nil
+}
+
+func (r Repo) LatestCommit() (Commit, error) {
+	c := Commit{}
+	hash, err := r.runCmd("git", "rev-parse", "HEAD")
+	if err != nil {
+		return c, err
+	}
+
+	details, err := r.runCmd("git", "show", hash[:7], "--quiet", "--pretty=%at||%an||%s||%b")
+	if err != nil {
+		return c, err
+	}
+
+	c.LongHash = hash[:len(hash)-1]
+	c.Hash = hash[:7]
+
+	splittedDetails := strings.SplitN(details, "||", 4)
+
+	ts, err := strconv.ParseInt(splittedDetails[0], 10, 64)
+	if err != nil {
+		return c, err
+	}
+	c.Date = time.Unix(ts, 0)
+	c.Author = splittedDetails[1]
+	c.Subject = splittedDetails[2]
+	c.Body = splittedDetails[3]
+
+	return c, nil
 }
