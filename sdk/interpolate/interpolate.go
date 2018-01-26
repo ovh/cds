@@ -11,6 +11,12 @@ import (
 
 var interpolateRegex = regexp.MustCompile("({{\\.[a-zA-Z0-9._\\-µ|\\s]+}})")
 
+type reverseString []string
+
+func (p reverseString) Len() int           { return len(p) }
+func (p reverseString) Less(i, j int) bool { return p[i] > p[j] }
+func (p reverseString) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
 // Do returns interpolated input with vars
 func Do(input string, vars map[string]string) (string, error) {
 	if !strings.Contains(input, "{{") {
@@ -23,12 +29,11 @@ func Do(input string, vars map[string]string) (string, error) {
 
 	// sort key, to replace the longer variables before
 	// see "same prefix" unit test
-	var keys sort.StringSlice
+	keys := make([]string, len(vars))
 	for k := range vars {
 		keys = append(keys, k)
 	}
-	keys.Sort()                      // short to long
-	sort.Sort(sort.Reverse(keys[:])) // reverse, to get the longer before
+	sort.Sort(reverseString(keys))
 
 	for _, k := range keys {
 		v := vars[k]
