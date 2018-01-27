@@ -250,7 +250,7 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 			break
 		}
 	}
-	if found != true {
+	if !found {
 		return false
 	}
 
