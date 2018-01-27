@@ -60,12 +60,11 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 
 // PostUpdate is a db hook
 func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
-	bm, err := json.Marshal(p.Metadata)
-	if err != nil {
-		return err
+	bm, errm := json.Marshal(p.Metadata)
+	if errm != nil {
+		return errm
 	}
 
-	bv := []byte{}
 	if len(p.VCSServers) > 0 {
 		b1, err := yaml.Marshal(p.VCSServers)
 		if err != nil {
@@ -75,10 +74,11 @@ func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
 		if err != nil {
 			return err
 		}
-		bv = encryptedVCSServerStr
+		_, err = db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, bm, encryptedVCSServerStr)
+		return err
 	}
 
-	_, err = db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, bm, bv)
+	_, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, bm)
 	return err
 }
 
