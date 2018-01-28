@@ -350,6 +350,10 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
 		payload["git.repository"] = pushEvent.Repository.FullName
+		payload["cds.triggered_by.username"] = pushEvent.HeadCommit.Author.Username
+		payload["cds.triggered_by.fullname"] = pushEvent.HeadCommit.Author.Name
+		payload["cds.triggered_by.email"] = pushEvent.HeadCommit.Author.Email
+
 		if strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
 			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
 		}
@@ -371,6 +375,11 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
 		payload["git.repository"] = pushEvent.Repository.Name
+
+		payload["cds.triggered_by.username"] = pushEvent.UserUsername
+		payload["cds.triggered_by.fullname"] = pushEvent.UserName
+		payload["cds.triggered_by.email"] = pushEvent.UserEmail
+
 		if strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
 			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
 		}
@@ -393,6 +402,11 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.hash.before"] = pushEvent.Changes[0].FromHash
 		payload["git.hash"] = pushEvent.Changes[0].ToHash
 		payload["git.repository"] = fmt.Sprintf("%s/%s", pushEvent.Repository.Project.Key, pushEvent.Repository.Name)
+
+		payload["cds.triggered_by.username"] = pushEvent.Actor.Name
+		payload["cds.triggered_by.fullname"] = pushEvent.Actor.DisplayName
+		payload["cds.triggered_by.email"] = pushEvent.Actor.EmailAddress
+
 		if strings.HasPrefix(pushEvent.Changes[0].RefID, "refs/tags/") {
 			payload["git.tag"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/tags/")
 		}
@@ -492,6 +506,9 @@ func executeWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 			h.Payload[k] = v.Value
 		}
 	}
+
+	h.Payload["cds.triggered_by.username"] = "cds.webhook"
+	h.Payload["cds.triggered_by.fullname"] = "CDS Webhook"
 
 	//try to find some specific values
 	for k := range values {
