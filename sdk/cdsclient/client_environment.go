@@ -53,7 +53,7 @@ func (c *client) EnvironmentGroupsImport(projectKey, envName string, content io.
 	}
 
 	if err := json.Unmarshal(btes, &env); err != nil {
-		return env, errReq
+		return env, err
 	}
 
 	return env, errReq

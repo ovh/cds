@@ -292,7 +292,7 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 	}
 
 	//Prepare the payload
-	//Anything can be pushed in the configuration, juste avoid sending
+	//Anything can be pushed in the configuration, just avoid sending
 	payloadValues := map[string]string{}
 	for k, v := range t.Config {
 		switch k {
@@ -301,6 +301,8 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 			payloadValues[k] = v.Value
 		}
 	}
+	payloadValues["cds.triggered_by.username"] = "cds.scheduler"
+	payloadValues["cds.triggered_by.fullname"] = "CDS Scheduler"
 	h.Payload = payloadValues
 
 	return &h, nil
