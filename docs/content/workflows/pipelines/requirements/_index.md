@@ -43,6 +43,14 @@ You can defined environment variables of the service by setting requirement valu
     registry.ovh.net/official/postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword
 ```
 
+To define your job's requirements in the UI, you just have to go on the job's edition page and click on requirements :
+
+![Job's requirement UI](/images/job_requirements_ui.png)
+
+Then a modal will appear in order to select your requirements :
+
+![Job's requirement modal](/images/requirements_ui.png)
+
 ### Tutorials
 
 * [Tutorial - Service Link Requirement Nginx]({{< relref "workflows/pipelines/requirements/service/example-nginx.md" >}})
