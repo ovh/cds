@@ -659,7 +659,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValu
 		//The input repository is not the same as the application, we have to check if it is a fork
 		forks, err := client.ListForks(node.Context.Application.RepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(errclient, "computeVCSInfos> Cannot get forks for %s", node.Context.Application.RepositoryFullname)
+			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get forks for %s", node.Context.Application.RepositoryFullname)
 		}
 		var forkFound bool
 		for _, fork := range forks {
@@ -688,7 +688,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValu
 		vcsInfos.repository = node.Context.Application.RepositoryFullname
 		repo, err = client.RepoByFullname(node.Context.Application.RepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(errclient, "computeVCSInfos> Cannot get repo %s", node.Context.Application.RepositoryFullname)
+			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get repo %s", node.Context.Application.RepositoryFullname)
 		}
 	}
 	vcsInfos.url = repo.SSHCloneURL
