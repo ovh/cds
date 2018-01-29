@@ -172,6 +172,7 @@ func Load(db gorp.SqlExecutor, store cache.Store, projectKey, name string, u *sd
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow %s in project %s", name, projectKey)
 	}
+	res.ProjectKey = projectKey
 	return res, nil
 }
 

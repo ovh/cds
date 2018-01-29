@@ -438,7 +438,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		}
 
 		if wNode == nil || errW != nil {
-			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, name, nodeName, workflow.LoadOptions{})
+			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, getUser(ctx), name, nodeName, workflow.LoadOptions{})
 			if errCtx != nil {
 				return sdk.WrapError(errCtx, "getWorkflowCommitsHandler> Unable to load workflow node context")
 			}
