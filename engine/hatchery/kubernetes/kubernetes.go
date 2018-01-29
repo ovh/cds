@@ -264,8 +264,15 @@ func (h *HatcheryKubernetes) WorkersStartedByModel(model *sdk.Model) int {
 		log.Error("WorkersStartedByModel> Cannot get list of workers started (%s)", err)
 		return 0
 	}
+	workersLen := 0
+	for _, pod := range list.Items {
+		labels := pod.GetLabels()
+		if labels[LABEL_WORKER_MODEL] == model.Name {
+			workersLen++
+		}
+	}
 
-	return len(list.Items)
+	return workersLen
 }
 
 // Init register local hatchery with its worker model
