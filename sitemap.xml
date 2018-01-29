@@ -95,6 +95,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/hatchery/kubernetes/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/hatchery/marathon/</loc>
   </url>
   

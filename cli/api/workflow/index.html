@@ -431,6 +431,11 @@
           <span>Hatchery Local</span>
         </a>
     </li>
+      <li data-nav-id="/hatchery/kubernetes/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/kubernetes/">
+          <span>Hatchery Kubernetes</span>
+        </a>
+    </li>
       <li data-nav-id="/hatchery/marathon/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/marathon/">
           <span>Hatchery Marathon</span>
@@ -1513,9 +1518,9 @@
 <ul>
 <li><a href="#get-workflow-artifact-hash">GET <code>/workflow/artifact/&lt;hash&gt;</code></a></li>
 <li><a href="#get-workflow-hook">GET <code>/workflow/hook</code></a></li>
-<li><a href="#put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
-<li><a href="#get-workflow-hook-model-model">GET <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
 <li><a href="#post-workflow-hook-model-model">POST <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
+<li><a href="#get-workflow-hook-model-model">GET <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
+<li><a href="#put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1595,7 +1600,7 @@
 </tbody>
 </table>
 
-<h3 id="put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></h3>
+<h3 id="post-workflow-hook-model-model">POST <code>/workflow/hook/model/&lt;model&gt;</code></h3>
 
 <table>
 <thead>
@@ -1608,7 +1613,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>POST</td>
 </tr>
 
 <tr>
@@ -1618,7 +1623,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowHookModelHandler%22">putWorkflowHookModelHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowHookModelHandler%22">postWorkflowHookModelHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1651,7 +1656,7 @@
 </tbody>
 </table>
 
-<h3 id="post-workflow-hook-model-model">POST <code>/workflow/hook/model/&lt;model&gt;</code></h3>
+<h3 id="put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></h3>
 
 <table>
 <thead>
@@ -1664,7 +1669,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -1674,7 +1679,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowHookModelHandler%22">postWorkflowHookModelHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowHookModelHandler%22">putWorkflowHookModelHandler</a></td>
 </tr>
 </tbody>
 </table>

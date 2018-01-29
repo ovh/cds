@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>config :: CDS - Continuous Delivery Service</title>
+    <title>Hatchery Kubernetes :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/api/config/">
+  <body class="" data-url="/hatchery/kubernetes/">
     <nav id="sidebar" class="">
 
 
@@ -421,9 +421,10 @@
     </li>
           
           
-    <li data-nav-id="/hatchery/" class="dd-item">
+    <li data-nav-id="/hatchery/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/hatchery/">
-        <span>Hatchery</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Hatchery</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/hatchery/local/" class="dd-item">
@@ -431,7 +432,7 @@
           <span>Hatchery Local</span>
         </a>
     </li>
-      <li data-nav-id="/hatchery/kubernetes/" class="dd-item">
+      <li data-nav-id="/hatchery/kubernetes/" class="dd-item active">
         <a href="https://ovh.github.io/cds/hatchery/kubernetes/">
           <span>Hatchery Kubernetes</span>
         </a>
@@ -470,16 +471,14 @@
     </li>
           
           
-    <li data-nav-id="/cli/" class="dd-item parent">
+    <li data-nav-id="/cli/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/">
-        <span>Command Line &amp; REST API</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Command Line &amp; REST API</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/cli/api/" class="dd-item parent">
+    <li data-nav-id="/cli/api/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/api/">
-        <span>REST API</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>REST API</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/api/action/" class="dd-item">
@@ -507,7 +506,7 @@
           <span>build</span>
         </a>
     </li>
-      <li data-nav-id="/cli/api/config/" class="dd-item active">
+      <li data-nav-id="/cli/api/config/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/config/">
           <span>config</span>
         </a>
@@ -1474,7 +1473,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/api/config.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/hatchery/kubernetes.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1494,12 +1493,7 @@
 
 
 
-
-
-
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/api/'>REST API</a> > config
-
- 
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/hatchery/'>Hatchery</a> > Hatchery Kubernetes
 
  
 
@@ -1514,10 +1508,7 @@
 <ul>
 <li>
 <ul>
-<li>
-<ul>
-<li><a href="#configuser-return-url-of-cds-ui">ConfigUser return url of CDS UI</a></li>
-</ul></li>
+<li><a href="#start-kubernetes-hatchery">Start Kubernetes hatchery</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -1530,7 +1521,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>config</h1>
+                <h1>Hatchery Kubernetes</h1>
                 <p></p>
             </div>
           
@@ -1540,33 +1531,24 @@
 
 
 
-<h3 id="configuser-return-url-of-cds-ui">ConfigUser return url of CDS UI</h3>
+<p><img src="https://ovh.github.io/cds/images/hatchery.kubernetes.png" alt="Hatchery Kubernetes" /></p>
 
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/config/user</code></strong></th>
-</tr>
-</thead>
+<h2 id="start-kubernetes-hatchery">Start Kubernetes hatchery</h2>
 
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
+<p>Generate a token for group:</p>
 
-<tr>
-<td>Permissions</td>
-<td>Auth: true -  Auth: true</td>
-</tr>
+<pre><code class="language-bash">$ cds generate token -g shared.infra -e persistent
+fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
+</code></pre>
 
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+ConfigUserHandler%22">ConfigUserHandler</a></td>
-</tr>
-</tbody>
-</table>
+<p>Edit the <a href="https://ovh.github.io/cds/hosting/configuration/">CDS Configuration</a> or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated.</p>
+
+<p>Then start hatchery:</p>
+
+<pre><code class="language-bash">engine start hatchery:kubernetes --config config.toml
+</code></pre>
+
+<p>This hatchery will spawn <code>Pods</code> on Kubernetes in the default namespace or the specified namespace in your <code>config.toml</code>. Each pods is a CDS Worker, using the Worker Model of type &lsquo;docker&rsquo;.</p>
 
 
 <footer class=" footline" >
@@ -1586,8 +1568,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/api/build/" title="build"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/api/download/" title="download" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/hatchery/local/" title="Hatchery Local"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/hatchery/marathon/" title="Hatchery Marathon" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
