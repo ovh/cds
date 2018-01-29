@@ -38,5 +38,5 @@ Workers authenticate on CDS with a token and have the same permissions as the us
 To generate a token, run the following command, replace yourgroup with your group
 
 ```bash
-$ cdsctl generate token -g yourgroup -e persistent
+$ cdsctl token generate yourgroup persistent
 ```
