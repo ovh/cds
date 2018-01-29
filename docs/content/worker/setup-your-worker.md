@@ -20,7 +20,7 @@ Workers authenticate on CDS with a token and have the same permissions as the us
 Generate a token with the following cdsctl command:
 
 ```bash
-$ cdsctl generate token -g yourgroup -e persistent
+$ cdsctl token generate yourgroup persistent
 ```
 
 ### Linux Setup
