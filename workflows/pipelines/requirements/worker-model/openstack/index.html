@@ -1590,10 +1590,20 @@ apt-get -y --force-yes install curl git &gt;&gt; /tmp/user_data 2&gt;&amp;1
 apt-get -y --force-yes install binutils &gt;&gt; /tmp/user_data 2&gt;&amp;1
 </code></pre>
 
-<p>Last step, define worker model in cds:</p>
+<p>Last step, define worker model in cds via <a href="https://ovh.github.io/cds/cli/">CLI</a>:</p>
 
-<pre><code class="language-bash">$ cds worker model add docker openstack --image=&quot;Debian 8&quot; --flavor=&quot;vps-ssd-1&quot; --userdata=&quot;./docker.udata&quot;
+<pre><code class="language-bash">$ cds worker model add docker Openstack --image=&quot;Debian 8&quot; --flavor=&quot;vps-ssd-1&quot; --userdata=&quot;./docker.udata&quot;
 </code></pre>
+
+<p>Or via UI (inside settings section &ndash;&gt; worker models):</p>
+
+<p><img src="https://ovh.github.io/cds/images/worker_model_ui_empty.png" alt="Worker Model UI" /></p>
+
+<p><strong>Attention</strong> in the UI for an Openstack worker model you have to put in the image input a valid JSON with the name of your image (inside <code>OS</code> field), and inside the <code>user_data</code> your specific script like above but manually encoded in base64.</p>
+
+<p>For example:</p>
+
+<p><img src="https://ovh.github.io/cds/images/worker_model_openstack.png" alt="Worker Model UI Openstack" /></p>
 
 
 <footer class=" footline" >
