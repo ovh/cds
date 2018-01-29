@@ -5,7 +5,7 @@ CDS/UI is a webclient for CDS
 This project was generated with [angular-cli](https://github.com/angular/angular-cli).
 
 ## Development server
-Run npm start for a dev serveur. 
+Run npm start for a dev server. 
 
 Navigate to `http://localhost:4200/`.
 

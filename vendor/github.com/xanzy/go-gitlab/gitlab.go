@@ -214,12 +214,12 @@ type Client struct {
 	Namespaces           *NamespacesService
 	Notes                *NotesService
 	NotificationSettings *NotificationSettingsService
+	Pipelines            *PipelinesService
+	PipelineTriggers     *PipelineTriggersService
 	Projects             *ProjectsService
 	ProjectMembers       *ProjectMembersService
 	ProjectSnippets      *ProjectSnippetsService
 	ProtectedBranches    *ProtectedBranchesService
-	Pipelines            *PipelinesService
-	PipelineTriggers     *PipelineTriggersService
 	Repositories         *RepositoriesService
 	RepositoryFiles      *RepositoryFilesService
 	Services             *ServicesService
@@ -230,6 +230,7 @@ type Client struct {
 	Tags                 *TagsService
 	Todos                *TodosService
 	Users                *UsersService
+	Validate             *ValidateService
 	Version              *VersionService
 	Wikis                *WikisService
 }
@@ -289,11 +290,11 @@ func newClient(httpClient *http.Client, tokenType tokenType, token string) *Clie
 	c.Namespaces = &NamespacesService{client: c}
 	c.Notes = &NotesService{client: c}
 	c.NotificationSettings = &NotificationSettingsService{client: c}
+	c.Pipelines = &PipelinesService{client: c}
+	c.PipelineTriggers = &PipelineTriggersService{client: c}
 	c.Projects = &ProjectsService{client: c}
 	c.ProjectMembers = &ProjectMembersService{client: c}
 	c.ProjectSnippets = &ProjectSnippetsService{client: c}
-	c.Pipelines = &PipelinesService{client: c}
-	c.PipelineTriggers = &PipelineTriggersService{client: c}
 	c.ProtectedBranches = &ProtectedBranchesService{client: c}
 	c.Repositories = &RepositoriesService{client: c}
 	c.RepositoryFiles = &RepositoryFilesService{client: c}
@@ -305,6 +306,7 @@ func newClient(httpClient *http.Client, tokenType tokenType, token string) *Clie
 	c.Tags = &TagsService{client: c}
 	c.Todos = &TodosService{client: c}
 	c.Users = &UsersService{client: c}
+	c.Validate = &ValidateService{client: c}
 	c.Version = &VersionService{client: c}
 	c.Wikis = &WikisService{client: c}
 

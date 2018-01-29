@@ -46,7 +46,7 @@
                 </div>
               </div>
 
-              <div class="ui info message" *ngIf="!group.users || group.users?.length === 0">
+              <div class="ui info message" *ngIf="members && members?.length === 0">
                   {{ 'group_no_member' | translate }}
               </div>
 

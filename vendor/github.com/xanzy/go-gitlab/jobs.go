@@ -44,6 +44,7 @@ type JobsService struct {
 type Job struct {
 	Commit        *Commit    `json:"commit"`
 	CreatedAt     *time.Time `json:"created_at"`
+	Coverage      float64    `json:"coverage"`
 	ArtifactsFile struct {
 		Filename string `json:"filename"`
 		Size     int    `json:"size"`

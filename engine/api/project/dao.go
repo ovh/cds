@@ -223,6 +223,7 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 	return nil
 }
 
+// LoadOptionFunc is used as options to loadProject functions
 type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User) error
 
 // LoadOptions provides all options on project loads functions
