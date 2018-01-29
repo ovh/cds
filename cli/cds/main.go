@@ -63,6 +63,13 @@ func main() {
 		//Set the config file
 		sdk.CDSConfigFile = internal.ConfigFile
 
+		//Set http client
+		c := &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: internal.InsecureSkipVerifyTLS},
+			}}
+		sdk.SetHTTPClient(c)
+
 		//On login command: do nothing
 		if cmd == login.CmdLogin || cmd == login.CmdSignup {
 			return
@@ -81,13 +88,6 @@ func main() {
 
 		//Just one try
 		sdk.SetRetry(1)
-
-		//Set http client
-		c := &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: internal.InsecureSkipVerifyTLS},
-			}}
-		sdk.SetHTTPClient(c)
 
 		//Manage warnings
 		if !internal.NoWarnings && cmd != user.Cmd {
