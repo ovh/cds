@@ -243,6 +243,17 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 		return false
 	}
 
+	var found bool
+	for _, n := range notif.SourceNodeIDs {
+		if n == nodeRun.WorkflowNodeID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return false
+	}
+
 	switch nodeRun.Status {
 	case sdk.StatusSuccess.String():
 		if check(notif.Settings.Success()) {
