@@ -284,10 +284,6 @@ func load(db gorp.SqlExecutor, store cache.Store, opts LoadOptions, u *sdk.User,
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow")
 	}
 
-	if dbRes.Root == nil {
-		return nil, sdk.ErrWorkflowNotFound
-	}
-
 	res := sdk.Workflow(dbRes)
 	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
 
