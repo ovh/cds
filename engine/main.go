@@ -19,6 +19,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
@@ -251,7 +252,7 @@ Start CDS Engine Services
 
 This is the core component of CDS.
 
-	
+
 #### Hatcheries
 
 They are the components responsible for spawning workers. Supported platforms/orchestrators are:
@@ -337,6 +338,9 @@ See $ engine config command for more details.
 			case "hatchery:local":
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
+			case "hatchery:kubernetes":
+				services = append(services, serviceConf{arg: a, service: kubernetes.New(), cfg: conf.Hatchery.Kubernetes})
+				names = append(names, conf.Hatchery.Kubernetes.Name)
 			case "hatchery:marathon":
 				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)

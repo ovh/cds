@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/structs"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
@@ -37,11 +38,12 @@ type Configuration struct {
 	} `toml:"debug" comment:"#####################\n Debug with gops \n####################"`
 	API      api.Configuration `toml:"api" comment:"#####################\n API Configuration \n####################"`
 	Hatchery struct {
-		Local     local.HatcheryConfiguration     `toml:"local" comment:"Hatchery Local."`
-		Marathon  marathon.HatcheryConfiguration  `toml:"marathon" comment:"Hatchery Marathon."`
-		Openstack openstack.HatcheryConfiguration `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`
-		Swarm     swarm.HatcheryConfiguration     `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
-		VSphere   vsphere.HatcheryConfiguration   `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
+		Local      local.HatcheryConfiguration      `toml:"local" comment:"Hatchery Local."`
+		Kubernetes kubernetes.HatcheryConfiguration `toml:"kubernetes" comment:"Hatchery Kubernetes."`
+		Marathon   marathon.HatcheryConfiguration   `toml:"marathon" comment:"Hatchery Marathon."`
+		Openstack  openstack.HatcheryConfiguration  `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`
+		Swarm      swarm.HatcheryConfiguration      `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
+		VSphere    vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
 	} `toml:"hatchery"`
 	Hooks        hooks.Configuration        `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################"`
 	VCS          vcs.Configuration          `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################"`

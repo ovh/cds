@@ -99,10 +99,9 @@
   branch = "master"
   name = "github.com/skratchdot/open-golang"
 
-[[override]]
+[[constraint]]
   name = "github.com/xanzy/go-gitlab"
-  branch = "feat-list-project-forks"
-  source = "https://github.com/fsamin/go-gitlab.git"
+  branch = "master"
 
 [[constraint]]
   branch = "master"
@@ -138,7 +137,7 @@
   name = "github.com/hashicorp/go-plugin"
   branch = "ye-cds"
   source = "https://github.com/yesnault/go-plugin.git"
-  
+
 [[constraint]]
   name = "github.com/Microsoft/go-winio"
   version = "0.4.7"
@@ -147,4 +146,3 @@
   non-go = true
   go-tests = true
   unused-packages = true
-  
