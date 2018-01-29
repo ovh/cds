@@ -51,7 +51,7 @@ apt-get -y --force-yes install binutils >> /tmp/user_data 2>&1
 Last step, define worker model in cds via [CLI]({{< relref "cli/_index.md" >}}):
 
 ```bash
-$ cds worker model add docker Openstack --image="Debian 8" --flavor="vps-ssd-1" --userdata="./docker.udata"
+$ cdsctl worker model add docker openstack myGroupName --image="Debian 8" --flavor="vps-ssd-1" --userdata="./docker.udata"
 ```
 
 Or via UI (inside settings section --> worker models):
