@@ -683,3 +683,33 @@ func (s *Service) deleteHookHandler() api.Handler {
 		return client.DeleteHook(fmt.Sprintf("%s/%s", owner, repo), hook)
 	}
 }
+
+func (s *Service) getListForks() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getListForks> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getListForks> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getListForks> Unable to get authorized client")
+		}
+
+		forks, err := client.ListForks(fmt.Sprintf("%s/%s", owner, repo))
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getListForks> Unable to get forks")
+		}
+
+		return api.WriteJSON(w, r, forks, http.StatusOK)
+	}
+}

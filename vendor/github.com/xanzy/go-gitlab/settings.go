@@ -86,7 +86,8 @@ type Settings struct {
 	MetricsPort                         int               `json:"metrics_port"`
 	MetricsSampleInterval               int               `json:"metrics_sample_interval"`
 	MetricsTimeout                      int               `json:"metrics_timeout"`
-	PasswordAuthenticationEnabled       bool              `json:"password_authentication_enabled"`
+	PasswordAuthenticationEnabledForWeb bool              `json:"password_authentication_enabled_for_web"`
+	PasswordAuthenticationEnabledForGit bool              `json:"password_authentication_enabled_for_git"`
 	PerformanceBarAllowedGroupId        string            `json:"performance_bar_allowed_group_id"`
 	PerformanceBarEnabled               bool              `json:"performance_bar_enabled"`
 	PlantumlEnabled                     bool              `json:"plantuml_enabled"`
@@ -205,7 +206,8 @@ type UpdateSettingsOptions struct {
 	MetricsPort                         *int              `url:"metrics_port,omitempty" json:"metrics_port,omitempty"`
 	MetricsSampleInterval               *int              `url:"metrics_sample_interval,omitempty" json:"metrics_sample_interval,omitempty"`
 	MetricsTimeout                      *int              `url:"metrics_timeout,omitempty" json:"metrics_timeout,omitempty"`
-	PasswordAuthenticationEnabled       *bool             `url:"password_authentication_enabled,omitempty" json:"password_authentication_enabled,omitempty"`
+	PasswordAuthenticationEnabledForWeb *bool             `url:"password_authentication_enabled_for_web,omitempty" json:"password_authentication_enabled_for_web,omitempty"`
+	PasswordAuthenticationEnabledForGit *bool             `url:"password_authentication_enabled_for_git,omitempty" json:"password_authentication_enabled_for_git,omitempty"`
 	PerformanceBarAllowedGroupId        *string           `url:"performance_bar_allowed_group_id,omitempty" json:"performance_bar_allowed_group_id,omitempty"`
 	PerformanceBarEnabled               *bool             `url:"performance_bar_enabled,omitempty" json:"performance_bar_enabled,omitempty"`
 	PlantumlEnabled                     *bool             `url:"plantuml_enabled,omitempty" json:"plantuml_enabled,omitempty"`

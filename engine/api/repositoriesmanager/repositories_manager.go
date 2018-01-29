@@ -335,6 +335,15 @@ func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL st
 	return nil
 }
 
+func (c *vcsClient) ListForks(repo string) ([]sdk.VCSRepo, error) {
+	forks := []sdk.VCSRepo{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/forks", c.name, repo)
+	if _, err := c.doJSONRequest("GET", path, nil, &forks); err != nil {
+		return nil, err
+	}
+	return forks, nil
+}
+
 // WebhooksInfos is a set of info about webhooks
 type WebhooksInfos struct {
 	WebhooksSupported bool   `json:"webhooks_supported"`
