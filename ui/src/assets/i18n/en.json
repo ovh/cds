@@ -584,7 +584,6 @@
   "vcs_ssh_key" : "SSH key",
   "vcs_pgp_key" : "PGP key",
 
-
   "warning_goto_application_variables": "application variables",
   "warning_goto_job": "job",
   "warning_goto_pipeline_parameter": "pipeline parameters",
@@ -676,6 +675,7 @@
   "workflow_node_context_pipeline_parameter": "Pipeline parameters",
   "workflow_node_context_payload": "Default payload",
   "workflow_run_node_job_queued": "Queued {{time}} ago",
+  "workflow_update_name_error": "Invalid workflow name. Allowed pattern is: a-zA-Z0-9",
   "workflow_wizard_description": "Choose your workflow options",
 
   "workflow_node_edition": "Edit your configuration",
