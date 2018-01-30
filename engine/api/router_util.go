@@ -9,11 +9,13 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -45,6 +47,7 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status 
 
 	w.Header().Add("Content-Type", "application/json")
 	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(b)))
+	writeProcessTime(w)
 	w.WriteHeader(status)
 	w.Write(b)
 	return nil
@@ -64,8 +67,22 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 			return ctx, nil
 		}
 	}
+	writeProcessTime(w)
 	w.WriteHeader(http.StatusNoContent)
 	return ctx, nil
+}
+
+func writeProcessTime(w http.ResponseWriter) {
+	for k, v := range w.Header() {
+		if k == cdsclient.ResponseAPITSTimeHeader && len(v) == 1 {
+			start, err := strconv.ParseInt(v[0], 10, 64)
+			if err != nil {
+				log.Error("writeProcessTime> error on ParseInt header ResponseAPITSTimeHeader: %s", err)
+				break
+			}
+			w.Header().Add(cdsclient.ResponseProcessTimeHeader, fmt.Sprintf("%d", time.Now().UnixNano()-start))
+		}
+	}
 }
 
 // UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
