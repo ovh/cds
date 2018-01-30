@@ -182,7 +182,7 @@ func (api *API) getWorkflowRunNumHandler() Handler {
 	}
 }
 
-// getWorkflowRunNumHandler updates the current run number for the given workflow
+// postWorkflowRunNumHandler updates the current run number for the given workflow
 func (api *API) postWorkflowRunNumHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
