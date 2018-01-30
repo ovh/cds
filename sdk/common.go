@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"bytes"
+	"encoding/json"
 	"reflect"
 	"regexp"
 
@@ -36,4 +38,13 @@ func InterfaceSlice(slice interface{}) []interface{} {
 	}
 
 	return ret
+}
+
+// JSONWithoutHTMLEncode return byte array of a struct into json without HTML encode
+func JSONWithoutHTMLEncode(t interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
 }

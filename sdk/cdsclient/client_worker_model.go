@@ -52,3 +52,26 @@ func (c *client) WorkerModelSpawnError(id int64, info string) error {
 	}
 	return nil
 }
+
+// WorkerModelAdd create a new worker model available
+func (c *client) WorkerModelAdd(name string, modelType string, image string, groupID int64) (sdk.Model, error) {
+	uri := fmt.Sprintf("/worker/model")
+	model := sdk.Model{
+		Name:          name,
+		Type:          modelType,
+		Image:         image,
+		GroupID:       groupID,
+		Communication: "http",
+	}
+
+	modelCreated := sdk.Model{}
+	code, err := c.PostJSON(uri, model, &modelCreated)
+	if err != nil {
+		return modelCreated, err
+	}
+	if code >= 300 {
+		return modelCreated, fmt.Errorf("WorkerModelAdd> HTTP %d", code)
+	}
+
+	return modelCreated, nil
+}
