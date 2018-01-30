@@ -73,15 +73,12 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 }
 
 func writeProcessTime(w http.ResponseWriter) {
-	for k, v := range w.Header() {
-		if k == cdsclient.ResponseAPINanosecondsTimeHeader && len(v) == 1 {
-			start, err := strconv.ParseInt(v[0], 10, 64)
-			if err != nil {
-				log.Error("writeProcessTime> error on ParseInt header ResponseAPINanosecondsTimeHeader: %s", err)
-				break
-			}
-			w.Header().Add(cdsclient.ResponseProcessTimeHeader, fmt.Sprintf("%d", time.Now().UnixNano()-start))
+	if h := w.Header().Get(cdsclient.ResponseAPINanosecondsTimeHeader); h != "" {
+		start, err := strconv.ParseInt(h, 10, 64)
+		if err != nil {
+			log.Error("writeProcessTime> error on ParseInt header ResponseAPINanosecondsTimeHeader: %s", err)
 		}
+		w.Header().Add(cdsclient.ResponseProcessTimeHeader, fmt.Sprintf("%d", time.Now().UnixNano()-start))
 	}
 }
 
