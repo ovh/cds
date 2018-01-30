@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func Test_updateStepStatusHandler(t *testing.T) {
@@ -197,8 +198,9 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	name := "HATCHERY_TEST_" + namesgenerator.GetRandomName(0)
 	hatch := sdk.Hatchery{
-		Name:    "HATCHERY_TEST_" + namesgenerator.GetRandomName(0),
+		Name:    name,
 		GroupID: g.ID,
 	}
 	if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
@@ -218,6 +220,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	test.NoError(t, err)
 	basedHash := base64.StdEncoding.EncodeToString([]byte(hatch.UID))
 	req.Header.Add(sdk.AuthHeader, basedHash)
+	req.Header.Add(cdsclient.RequestedNameHeader, name)
 	req.Header.Add(sdk.SessionTokenHeader, tk)
 	req.Header.Add("User-Agent", sdk.HatcheryAgent)
 

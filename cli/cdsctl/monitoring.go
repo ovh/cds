@@ -578,7 +578,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	}
 	ui.queue.Items = items
 
-	t := fmt.Sprintf("Queue - wf:%d - pb:%d - Max Waiting:%s ", nWJobs.Count, len(pbJobs), sdk.Round(maxQueued, time.Second).String())
+	t := fmt.Sprintf("Queue - ALL:%d wf:%d - pb:%d - Max Waiting:%s ", nWJobs.Count+int64(len(pbJobs)), nWJobs.Count, len(pbJobs), sdk.Round(maxQueued, time.Second).String())
 	for name, total := range booked {
 		t += fmt.Sprintf("%s:%d ", name, total)
 	}
