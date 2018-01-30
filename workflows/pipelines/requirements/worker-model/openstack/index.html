@@ -1141,6 +1141,11 @@
         <span>model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/cli/cdsctl/worker/model/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/add/">
+          <span>add</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/worker/model/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/list/">
           <span>list</span>
@@ -1597,7 +1602,7 @@ apt-get -y --force-yes install binutils &gt;&gt; /tmp/user_data 2&gt;&amp;1
 
 <p>Last step, define worker model in cds via <a href="https://ovh.github.io/cds/cli/">CLI</a>:</p>
 
-<pre><code class="language-bash">$ cds worker model add docker Openstack --image=&quot;Debian 8&quot; --flavor=&quot;vps-ssd-1&quot; --userdata=&quot;./docker.udata&quot;
+<pre><code class="language-bash">$ cdsctl worker model add docker openstack myGroupName --image=&quot;Debian 8&quot; --flavor=&quot;vps-ssd-1&quot; --userdata=&quot;./docker.udata&quot;
 </code></pre>
 
 <p>Or via UI (inside settings section &ndash;&gt; worker models):</p>

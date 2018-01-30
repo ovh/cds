@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>start :: CDS - Continuous Delivery Service</title>
+    <title>add :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/engine/start/">
+  <body class="" data-url="/cli/cdsctl/worker/model/add/">
     <nav id="sidebar" class="">
 
 
@@ -613,9 +613,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/">
-        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>cdsctl</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
@@ -1123,9 +1124,10 @@
           <span>version</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/worker/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/worker/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/worker/">
-        <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>worker</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/worker/list/" class="dd-item">
@@ -1133,12 +1135,13 @@
           <span>list</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/worker/model/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/worker/model/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/">
-        <span>model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>model</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/worker/model/add/" class="dd-item">
+      <li data-nav-id="/cli/cdsctl/worker/model/add/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/add/">
           <span>add</span>
         </a>
@@ -1233,10 +1236,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/engine/" class="dd-item parent">
+    <li data-nav-id="/cli/engine/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/engine/">
-        <span>engine</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>engine</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/engine/config/" class="dd-item">
@@ -1278,7 +1280,7 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/cli/engine/start/" class="dd-item active">
+      <li data-nav-id="/cli/engine/start/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/engine/start/">
           <span>start</span>
         </a>
@@ -1479,7 +1481,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/engine/start.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/worker/model/add.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1502,7 +1504,17 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/engine/'>engine</a> > start
+
+
+
+
+
+
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/worker/'>worker</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/worker/model/'>model</a> > add
+
+ 
+
+ 
 
  
 
@@ -1519,17 +1531,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#engine-start">engine start</a>
+<li><a href="#cdsctl-worker-model-add">cdsctl worker model add</a>
 <ul>
-<li><a href="#synopsis">Synopsis</a>
-<ul>
-<li><a href="#api">API</a></li>
-<li><a href="#hatcheries">Hatcheries</a></li>
-<li><a href="#hooks">Hooks</a></li>
-<li><a href="#repositories">Repositories</a></li>
-<li><a href="#vcs">VCS</a></li>
-</ul></li>
+<li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#options">Options</a></li>
+<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
 <li><a href="#see-also">SEE ALSO</a></li>
 </ul></li>
 </ul></li>
@@ -1544,7 +1550,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>start</h1>
+                <h1>add</h1>
                 <p></p>
             </div>
           
@@ -1554,72 +1560,40 @@
 
 
 
-<h2 id="engine-start">engine start</h2>
+<h2 id="cdsctl-worker-model-add">cdsctl worker model add</h2>
 
-<p>Start CDS</p>
+<p>cdsctl worker model add [name] [docker|openstack|vsphere] &ndash;group [group]</p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Start CDS Engine Services</p>
+<p>Available model type :
+- Docker images (&ldquo;docker&rdquo;)
+- Openstack image (&ldquo;openstack&rdquo;)
+- VSphere image (&ldquo;vsphere&rdquo;)</p>
 
-<h4 id="api">API</h4>
-
-<p>This is the core component of CDS.</p>
-
-<h4 id="hatcheries">Hatcheries</h4>
-
-<p>They are the components responsible for spawning workers. Supported platforms/orchestrators are:</p>
-
-<ul>
-<li>Local machine</li>
-<li>Openstack</li>
-<li>Docker Swarm</li>
-<li>Openstack</li>
-<li>Vsphere</li>
-</ul>
-
-<h4 id="hooks">Hooks</h4>
-
-<p>This component operates CDS workflow hooks</p>
-
-<h4 id="repositories">Repositories</h4>
-
-<p>This component operates CDS workflow repositories</p>
-
-<h4 id="vcs">VCS</h4>
-
-<p>This component operates CDS VCS connectivity</p>
-
-<p>Start all of this with a single command:</p>
-
-<pre><code>$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs] [repositories]
-</code></pre>
-
-<p>All the services are using the same configuration file format.</p>
-
-<p>You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.</p>
-
-<p>You can also use or override toml file with environment variable.</p>
-
-<p>See $ engine config command for more details.</p>
-
-<pre><code>engine start [flags]
+<pre><code>cdsctl worker model add NAME TYPE GROUP [flags]
 </code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>      --config string              config file
-  -h, --help                       help for start
-      --remote-config string       (optional) consul configuration store
-      --remote-config-key string   (optional) consul configuration store key (default &quot;cds/config.api.toml&quot;)
-      --vault-addr string          (optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)
-      --vault-token string         (optional) Vault token to fetch secrets from vault
+<pre><code>      --flavor string     Flavor value (only for openstack)
+  -h, --help              help for add
+      --image string      Image value
+      --userdata string   Path to UserData file (only for vsphere or openstack)
+</code></pre>
+
+<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
+
+<pre><code>  -f, --file string   set configuration file
+  -k, --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
+  -w, --no-warnings   do not display warnings
+  -v, --verbose       verbose output
 </code></pre>
 
 <h3 id="see-also">SEE ALSO</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/engine/engine/">engine</a>  - CDS Engine</li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/">cdsctl worker model</a>   - Manage Worker Model</li>
 </ul>
 
 
@@ -1640,8 +1614,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/engine/database/upgrade/" title="upgrade"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/engine/update/" title="update" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/worker/model/" title="model"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/worker/model/list/" title="list" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
