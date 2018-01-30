@@ -65,7 +65,7 @@ func (c *client) ProjectGroupsImport(projectKey string, content io.Reader, forma
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, errReq := c.Request("POST", url, content)
+	btes, _, _, errReq := c.Request("POST", url, content)
 	if errReq != nil {
 		return proj, errReq
 	}
