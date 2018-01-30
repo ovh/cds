@@ -302,7 +302,7 @@ func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 	ctx := sdk.WorkflowNodeContext(dbnc)
 
-	if err := postLoadNodeContext(db, store, proj.Key, nil, &ctx, opts); err != nil {
+	if err := postLoadNodeContext(db, store, proj.Key, u, &ctx, opts); err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context dependencies")
 	}
 
