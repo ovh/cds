@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -19,7 +20,69 @@ import (
 
 func (api *API) postEnvironmentImportHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		force := FormBool(r, "force")
+
+		//Load project
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		if errp != nil {
+			return sdk.WrapError(errp, "postEnvironmentImportHandler>> Unable load project")
+		}
+
+		body, errr := ioutil.ReadAll(r.Body)
+		if errr != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		}
+		defer r.Body.Close()
+
+		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = http.DetectContentType(body)
+		}
+
+		var eenv = new(exportentities.Environment)
+		var errenv error
+		switch contentType {
+		case "application/json":
+			errenv = json.Unmarshal(body, eenv)
+		case "application/x-yaml", "text/x-yam":
+			errenv = yaml.Unmarshal(body, eenv)
+		default:
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
+		}
+
+		if errenv != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errenv)
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "postEnvironmentImportHandler> Unable to start tx")
+		}
+		defer tx.Rollback()
+
+		msgList, globalError := environment.ParseAndImport(tx, api.Cache, proj, eenv, force, project.DecryptWithBuiltinKey, getUser(ctx))
+		msgListString := translate(r, msgList)
+
+		if globalError != nil {
+			myError, ok := globalError.(sdk.Error)
+			if ok {
+				return WriteJSON(w, r, msgListString, myError.Status)
+			}
+			return sdk.WrapError(globalError, "postEnvironmentImportHandler> Unable import environment %s", eenv.Name)
+		}
+
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
+			return sdk.WrapError(err, "postEnvironmentImportHandler> Unable to update project")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postEnvironmentImportHandler> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, r, msgListString, http.StatusOK)
 	}
 }
 
