@@ -31,8 +31,8 @@ const (
 
 	// ResponseAPITimeHeader is used as HTTP header
 	ResponseAPITimeHeader = "X-Api-Time"
-	// ResponseAPITSTimeHeader is used as HTTP header
-	ResponseAPITSTimeHeader = "X-Api-Ts-Time"
+	// ResponseAPINanosecondsTimeHeader is used as HTTP header
+	ResponseAPINanosecondsTimeHeader = "X-Api-Nanoseconds-Time"
 	// ResponseEtagHeader is used as HTTP header
 	ResponseEtagHeader = "Etag"
 	// ResponseProcessTimeHeader is used as HTTP header
