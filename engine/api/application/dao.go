@@ -204,7 +204,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOpti
 	}
 
 	if u != nil {
-		loadPermission(db, store, &app, u)
+		LoadPermission(db, store, &app, u)
 	}
 
 	for _, f := range opts {

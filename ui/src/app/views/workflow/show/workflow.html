@@ -18,7 +18,7 @@
                     <i class="plug icon"></i>
                     {{'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs" (click)="showTab('advanced')">
+                <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs" (click)="showTab('advanced')" *ngIf="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE">
                     <i class="graduation icon"></i>
                     {{'common_advanced' | translate }}</a>
             </sm-menu>
@@ -52,8 +52,11 @@
                                                         </div>
                                                         <div class="right aligned five wide column" title="{{'btn_run_custom_worklow' | translate}}">
                                                             <div class="ui green buttons">
-                                                                <div class="ui button" (click)="runWithParameter()" [class.loading]="loading">{{
-                                                                    'btn_run_workflow' | translate }}
+                                                                <div class="ui button"
+                                                                    [class.disabled]="detailedWorkflow.permission < permissionEnum.READ_EXECUTE"
+                                                                    (click)="runWithParameter()"
+                                                                    [class.loading]="loading">
+                                                                    {{'btn_run_workflow' | translate }}
                                                                 </div>
                                                             </div>
                                                         </div>

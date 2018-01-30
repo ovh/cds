@@ -1,5 +1,6 @@
 import {Component, Input, Output, EventEmitter, OnInit} from '@angular/core';
 import {Project} from '../../../../model/project.model';
+import {PermissionValue} from '../../../../model/permission.model';
 import {WorkflowRun} from '../../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
@@ -37,6 +38,7 @@ export class WorkflowRunSummaryComponent implements OnInit {
     showInfos = false;
 
     pipelineStatusEnum = PipelineStatus;
+    permissionEnum = PermissionValue;
 
     constructor(private _workflowRunService: WorkflowRunService,
         private _toast: ToastService, private _translate: TranslateService) {

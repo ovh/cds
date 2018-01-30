@@ -1,6 +1,7 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {Router, ActivatedRoute} from '@angular/router';
 import {Project} from '../../../../../model/project.model';
+import {PermissionValue} from '../../../../../model/permission.model';
 import {
     Workflow,
     WorkflowNode
@@ -118,44 +119,52 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     }
 
     getCanBeRun(): boolean {
-      if (this.currentWorkflowNodeRun) {
-        return this.currentWorkflowNodeRun.can_be_run;
-      }
+        let appForbid = this.node && this.node.context.application && this.node.context.application.permission &&
+            this.node.context.application.permission < PermissionValue.READ_EXECUTE;
+        let envForbid = this.node && this.node.context.environment && this.node.context.environment.permission
+            && this.node.context.environment.permission < PermissionValue.READ_EXECUTE;
 
-      let workflowRunIsNotActive = this.currentWorkflowRun && !PipelineStatus.isActive(this.currentWorkflowRun.status);
-      if (workflowRunIsNotActive && this.currentWorkflowNodeRun) {
-        return true;
-      }
-
-      if (workflowRunIsNotActive && !this.currentWorkflowNodeRun && this.nodeId === this.workflow.root_id) {
-        return true;
-      }
-
-      let nbNodeFound = 0;
-      let parentNodes = Workflow.getParentNodeIds(this.workflow, this.nodeId);
-      for (let parentNodeId of parentNodes) {
-        for (let nodeRunId in this.currentWorkflowRun.nodes) {
-          if (!this.currentWorkflowRun.nodes[nodeRunId]) {
-            continue;
-          }
-          let nodeRuns = this.currentWorkflowRun.nodes[nodeRunId];
-          if (nodeRuns[0].workflow_node_id === parentNodeId) { // if node id is still the same
-            if (PipelineStatus.isActive(nodeRuns[0].status)) {
-              return false;
-            }
-            nbNodeFound++;
-          } else if (!Workflow.getNodeByID(nodeRuns[0].workflow_node_id, this.workflow)) {
-            // workflow updated so prefer return true
-            return true;
-          }
+        if (this.workflow.permission < PermissionValue.READ_EXECUTE || appForbid || envForbid) {
+          return false;
         }
-      }
+        if (this.currentWorkflowNodeRun) {
+            return this.currentWorkflowNodeRun.can_be_run;
+        }
 
-      if (nbNodeFound !== parentNodes.length) { // It means that a parent node isn't already executed
-        return false;
-      }
+        let workflowRunIsNotActive = this.currentWorkflowRun && !PipelineStatus.isActive(this.currentWorkflowRun.status);
+        if (workflowRunIsNotActive && this.currentWorkflowNodeRun) {
+            return true;
+        }
 
-      return true;
+        if (workflowRunIsNotActive && !this.currentWorkflowNodeRun && this.nodeId === this.workflow.root_id) {
+            return true;
+        }
+
+        let nbNodeFound = 0;
+        let parentNodes = Workflow.getParentNodeIds(this.workflow, this.nodeId);
+        for (let parentNodeId of parentNodes) {
+            for (let nodeRunId in this.currentWorkflowRun.nodes) {
+                if (!this.currentWorkflowRun.nodes[nodeRunId]) {
+                    continue;
+                }
+                let nodeRuns = this.currentWorkflowRun.nodes[nodeRunId];
+                if (nodeRuns[0].workflow_node_id === parentNodeId) { // if node id is still the same
+                    if (PipelineStatus.isActive(nodeRuns[0].status)) {
+                        return false;
+                    }
+                    nbNodeFound++;
+                } else if (!Workflow.getNodeByID(nodeRuns[0].workflow_node_id, this.workflow)) {
+                    // workflow updated so prefer return true
+                    return true;
+                }
+            }
+        }
+
+        if (nbNodeFound !== parentNodes.length) { // It means that a parent node isn't already executed
+            return false;
+        }
+
+        return true;
     }
 
     stopNodeRun(): void {
