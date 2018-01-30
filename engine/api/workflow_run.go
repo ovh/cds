@@ -166,6 +166,7 @@ func (api *API) getWorkflowRunsHandler() Handler {
 	}
 }
 
+// getWorkflowRunNumHandler returns the last run number for the given workflow
 func (api *API) getWorkflowRunNumHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -177,15 +178,11 @@ func (api *API) getWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunNumHandler> Cannot load current run num")
 		}
 
-		m := struct {
-			Num int64 `json:"num"`
-		}{
-			Num: num,
-		}
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, r, sdk.WorkflowRunNumber{Num: num}, http.StatusOK)
 	}
 }
 
+// getWorkflowRunNumHandler updates the current run number for the given workflow
 func (api *API) postWorkflowRunNumHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
