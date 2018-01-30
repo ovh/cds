@@ -9,7 +9,8 @@
                   [project]="project"
                   [hideCancel]="true"
                   [hideNext]="true"
-                  (nodeCreated)="destNodeChange($event)" #nodeWizard>
+                  (nodeCreated)="destNodeChange($event)"
+                  (pipelineSectionChanged)="pipelineSectionChanged($event)" #nodeWizard>
                 </app-workflow-node-add-wizard>
             </ng-container>
         </div>
