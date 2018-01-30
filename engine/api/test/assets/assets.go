@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 // InsertTestProject create a test project
@@ -121,6 +122,7 @@ func AuthentifyRequestFromWorker(t *testing.T, req *http.Request, w *sdk.Worker)
 func AuthentifyRequestFromHatchery(t *testing.T, req *http.Request, h *sdk.Hatchery) {
 	req.Header.Add("User-Agent", string(sdk.HatcheryAgent))
 	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(h.UID)))
+	req.Header.Add(cdsclient.RequestedNameHeader, h.Name)
 }
 
 // AuthentifyRequestFromService have to be used only for tests
