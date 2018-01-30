@@ -20,7 +20,7 @@ func (c *client) ApplicationVariableCreate(projectKey string, appName string, va
 }
 
 func (c *client) ApplicationVariableDelete(projectKey string, appName string, varName string) error {
-	_, _, err := c.Request("DELETE", "/project/"+projectKey+"/application/"+appName+"/variable/"+url.QueryEscape(varName), nil)
+	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/application/"+appName+"/variable/"+url.QueryEscape(varName), nil)
 	return err
 }
 

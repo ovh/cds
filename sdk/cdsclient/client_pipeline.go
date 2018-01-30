@@ -43,7 +43,7 @@ func (c *client) PipelineGroupsImport(projectKey, pipelineName string, content i
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, errReq := c.Request("POST", url, content)
+	btes, _, _, errReq := c.Request("POST", url, content)
 	if errReq != nil {
 		return pip, errReq
 	}

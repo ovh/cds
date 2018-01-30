@@ -121,7 +121,7 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName
 		url = a.TempURL
 	}
 
-	reader, _, err = c.Stream("GET", url, nil, true)
+	reader, _, _, err = c.Stream("GET", url, nil, true)
 	if err != nil {
 		return err
 	}
