@@ -1,8 +1,9 @@
 <div class="ui form">
     <div class="fields">
         <div class="seven wide field">
-            <sm-select 
-                [options]="{'fullTextSearch': true}"
+            <sm-select
+                class="search"
+                [options]="{'fullTextSearch': true, 'allowAdditions': true}"
                 [(model)]="newPrerequisite.parameter"
                 placeholder="{{ 'prerequisite_parameter_name' | translate }}">
                 <option *ngFor="let p of prerequisites" value="{{p.parameter}}">{{p.parameter}}</option>
