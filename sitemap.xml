@@ -362,6 +362,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/</loc>
   </url>
   
@@ -514,7 +518,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/delete/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/delete/</loc>
   </url>
   
   <url>
@@ -762,6 +766,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/parameter/</loc>
   </url>
   
@@ -850,6 +858,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/set/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/group/user/setadmin/</loc>
   </url>
   
@@ -871,6 +883,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/user/show/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/show/</loc>
   </url>
   
   <url>

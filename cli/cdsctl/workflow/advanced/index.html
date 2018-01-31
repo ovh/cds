@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>delete :: CDS - Continuous Delivery Service</title>
+    <title>advanced :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/workflow/delete/">
+  <body class="" data-url="/cli/cdsctl/workflow/advanced/">
     <nav id="sidebar" class="">
 
 
@@ -1159,6 +1159,36 @@
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
+    <li data-nav-id="/cli/cdsctl/workflow/advanced/" class="dd-item parent active">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/">
+        <span>advanced</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/workflow/advanced/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/workflow/advanced/number/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/">
+        <span>number</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/workflow/advanced/number/set/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/set/">
+          <span>set</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/advanced/number/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
     <li data-nav-id="/cli/cdsctl/workflow/artifact/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/">
         <span>artifact</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -1175,11 +1205,6 @@
         </a>
     </li>
         </ul>
-    </li>
-      <li data-nav-id="/cli/cdsctl/workflow/delete/" class="dd-item active">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/delete/">
-          <span>delete</span>
-        </a>
     </li>
       <li data-nav-id="/cli/cdsctl/workflow/export/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/export/">
@@ -1480,7 +1505,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/workflow/delete.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/workflow/advanced/_index.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1506,7 +1531,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/workflow/'>workflow</a> > delete
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/workflow/'>workflow</a> > advanced
 
  
 
@@ -1525,7 +1550,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-workflow-delete">cdsctl workflow delete</a>
+<li><a href="#cdsctl-workflow-advanced">cdsctl workflow advanced</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#options">Options</a></li>
@@ -1544,7 +1569,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>delete</h1>
+                <h1>advanced</h1>
                 <p></p>
             </div>
           
@@ -1554,21 +1579,17 @@
 
 
 
-<h2 id="cdsctl-workflow-delete">cdsctl workflow delete</h2>
+<h2 id="cdsctl-workflow-advanced">cdsctl workflow advanced</h2>
 
-<p>Delete a CDS workflow</p>
+<p>Manage Workflow Advanced</p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Delete a CDS workflow</p>
-
-<pre><code>cdsctl workflow delete [ PROJECT-KEY WORKFLOW-NAME ] [flags]
-</code></pre>
+<p>Manage Workflow Advanced</p>
 
 <h3 id="options">Options</h3>
 
-<pre><code>      --force   Force delete without confirmation and exit 0 if resource does not exist
-  -h, --help    help for delete
+<pre><code>  -h, --help   help for advanced
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
@@ -1583,12 +1604,16 @@
 
 <ul>
 <li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">cdsctl workflow</a>   - Manage CDS workflow</li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/delete/">cdsctl workflow advanced delete</a>   - Delete a CDS workflow</li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/">cdsctl workflow advanced number</a>   - Manage Workflow Run Number</li>
 </ul>
 
 
 <footer class=" footline" >
 	
 </footer>
+
+
 
 
 
@@ -1603,8 +1628,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/list/" title="list"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/workflow/export/" title="export" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/workflow/" title="workflow"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/delete/" title="delete" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -1624,4 +1649,3 @@
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
-
