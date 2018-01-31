@@ -268,3 +268,35 @@ func (s *GroupsService) ListGroupProjects(gid interface{}, opt *ListGroupProject
 
 	return p, resp, err
 }
+
+// ListSubgroupsOptions represents the available ListSubgroupsOptions()
+// options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/groups.html#list-a-groups-s-subgroups
+type ListSubgroupsOptions ListGroupsOptions
+
+// ListSubgroups gets a list of subgroups for a given project.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/groups.html#list-a-groups-s-subgroups
+func (s *GroupsService) ListSubgroups(gid interface{}, opt *ListSubgroupsOptions, options ...OptionFunc) ([]*Group, *Response, error) {
+	group, err := parseID(gid)
+	if err != nil {
+		return nil, nil, err
+	}
+	u := fmt.Sprintf("groups/%s/subgroups", url.QueryEscape(group))
+
+	req, err := s.client.NewRequest("GET", u, opt, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var g []*Group
+	resp, err := s.client.Do(req, &g)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return g, resp, err
+}

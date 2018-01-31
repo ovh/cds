@@ -129,6 +129,8 @@ func (l *NotificationLevelValue) UnmarshalJSON(data []byte) error {
 		*l = NotificationLevelValue(raw)
 	case string:
 		*l = notificationLevelTypes[raw]
+	case nil:
+		// No action needed.
 	default:
 		return fmt.Errorf("json: cannot unmarshal %T into Go value of type %T", raw, *l)
 	}
@@ -222,6 +224,7 @@ type Client struct {
 	ProtectedBranches    *ProtectedBranchesService
 	Repositories         *RepositoriesService
 	RepositoryFiles      *RepositoryFilesService
+	Runners              *RunnersService
 	Services             *ServicesService
 	Session              *SessionService
 	Settings             *SettingsService
@@ -298,6 +301,7 @@ func newClient(httpClient *http.Client, tokenType tokenType, token string) *Clie
 	c.ProtectedBranches = &ProtectedBranchesService{client: c}
 	c.Repositories = &RepositoriesService{client: c}
 	c.RepositoryFiles = &RepositoryFilesService{client: c}
+	c.Runners = &RunnersService{client: c}
 	c.Services = &ServicesService{client: c}
 	c.Session = &SessionService{client: c}
 	c.Settings = &SettingsService{client: c}

@@ -21,8 +21,11 @@ func (r Repo) runCmd(name string, args ...string) (stdOut string, err error) {
 	stdOut = buffOut.String()
 	stdErr := buffErr.String()
 
-	if len(stdErr) > 0 {
-		return stdOut, fmt.Errorf(stdErr)
+	if !cmd.ProcessState.Success() {
+		if len(stdErr) > 0 {
+			return stdOut, fmt.Errorf(stdErr)
+		}
+		return stdOut, fmt.Errorf("exited with error")
 	}
 
 	return stdOut, nil
