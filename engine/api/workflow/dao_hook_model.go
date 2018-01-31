@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Here are the default hooks
@@ -127,8 +128,15 @@ func CreateBuiltinWorkflowHookModels(db *gorp.DbMap) error {
 		}
 
 		if !ok {
+			log.Debug("CreateBuiltinWorkflowHookModels> inserting hooks config: %s", h.Name)
 			if err := InsertHookModel(tx, h); err != nil {
-				return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels")
+				return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels error on insert")
+			}
+		} else {
+			log.Debug("CreateBuiltinWorkflowHookModels> updating hooks config: %s", h.Name)
+			// update default values
+			if err := UpdateHookModel(tx, h); err != nil {
+				return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels  error on update")
 			}
 		}
 	}
