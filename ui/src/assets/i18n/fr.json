@@ -679,6 +679,7 @@
   "workflow_run_node_job_queued": "Attente depuis {{time}}",
   "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : a-zA-Z0-9",
   "workflow_wizard_description": "Choisissez vos options de workflow",
+  "workflow_edit_as_code": "Editer en code",
 
   "workflow_node_edition": "Configuration",
   "workflow_node_condition_warning": "Attention si vous avez des conditions basiques et avancées, seulement les conditions avancées seront éffectives.",

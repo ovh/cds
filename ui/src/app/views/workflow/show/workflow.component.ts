@@ -71,6 +71,9 @@ export class WorkflowShowComponent {
         this.activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
             let projkey = params['key'];
+
+            this._workflowCoreService.toggleAsCodeEditor(false);
+            this._workflowCoreService.setWorkflowPreview(null);
             if (projkey && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();

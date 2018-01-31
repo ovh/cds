@@ -57,7 +57,7 @@
                                                         </div>
                                                         <div class="six wide column centered">
                                                             <div class="ui blue button" (click)="showAsCodeEditor()" [class.loading]="loading">
-                                                                <i class="terminal icon"></i>Edit as code
+                                                                <i class="terminal icon"></i> {{'workflow_edit_as_code' | translate}}
                                                                 <i class="orange warning sign icon ml5"
                                                                     *ngIf="previewWorkflow"
                                                                     suiPopup
