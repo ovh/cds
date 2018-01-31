@@ -7,6 +7,7 @@ import {WorkflowService} from './workflow.service';
 import {GroupPermission} from '../../model/group.model';
 import {NavbarRecentData} from '../../model/navbar.model';
 import 'rxjs/add/observable/of';
+import {mergeMap, map} from 'rxjs/operators';
 
 @Injectable()
 export class WorkflowStore {
@@ -137,6 +138,24 @@ export class WorkflowStore {
             this._workflows.next(store.set(workflowKey, w));
             return w;
         });
+    }
+
+    /**
+     * Import a workflow
+     * @param key Project unique key
+     * @param workflow workflow to update
+     */
+    importWorkflow(key: string, workflowName: string, workflowCode: string): Observable<Workflow> {
+        return this._workflowService.importWorkflow(key, workflowCode)
+            .pipe(
+                mergeMap(() => this._workflowService.getWorkflow(key, workflowName)),
+                map((wf) => {
+                    let workflowKey = key + '-' + wf.name;
+                    let store = this._workflows.getValue();
+                    this._workflows.next(store.set(workflowKey, wf));
+                    return wf;
+                })
+            );
     }
 
     /**

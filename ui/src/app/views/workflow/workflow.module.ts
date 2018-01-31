@@ -20,6 +20,7 @@ import {ActionStepSummaryComponent} from './sidebar/run/node/stage/job/action/ac
 import {WorkflowSidebarEditComponent} from './sidebar/edit/workflow.sidebar.edit.component';
 import {WorkflowSidebarEditJoinComponent} from './sidebar/edit/join/workflow.sidebar.edit.join.component';
 import {WorkflowSidebarEditNodeComponent} from './sidebar/edit/node/workflow.sidebar.edit.node.component';
+import {WorkflowSidebarCodeComponent} from './sidebar/code/sidebar.code.component';
 import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.list.component';
 import {WorkflowRunTestsResultComponent} from './run/node/test/tests.component';
 import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.component';
@@ -52,6 +53,7 @@ import {WorkflowNotificationListComponent} from './show/notification/list/workfl
         WorkflowNodeRunHistoryComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
+        WorkflowSidebarCodeComponent,
         StageStepSummaryComponent,
         JobStepSummaryComponent,
         ActionStepSummaryComponent,

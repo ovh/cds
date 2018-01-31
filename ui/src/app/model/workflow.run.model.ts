@@ -66,7 +66,7 @@ export class WorkflowNodeRun {
     artifacts: Array<WorkflowNodeRunArtifact>;
     tests: Tests;
     commits: Array<Commit>;
-    triggers_run: Map<number, TriggerRun>
+    triggers_run: Map<string, TriggerRun>
     can_be_run: boolean
 }
 

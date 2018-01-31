@@ -28,7 +28,9 @@ export class WorkflowShowComponent {
 
     project: Project;
     detailedWorkflow: Workflow;
+    previewWorkflow: Workflow;
     workflowSubscription: Subscription;
+    workflowPreviewSubscription: Subscription;
     direction: string;
 
     @ViewChild('workflowGraph')
@@ -102,6 +104,9 @@ export class WorkflowShowComponent {
         });
 
         this._workflowCoreService.setCurrentWorkflowRun(null);
+
+        this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
+            .subscribe((wfPreview) => this.previewWorkflow = wfPreview);
     }
 
     changeDirection() {
@@ -122,6 +127,10 @@ export class WorkflowShowComponent {
         if (this.workflowJoinTriggerSrc) {
             this.workflowJoinTriggerSrc.show();
         }
+    }
+
+    showAsCodeEditor() {
+      this._workflowCoreService.toggleAsCodeEditor(true);
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {

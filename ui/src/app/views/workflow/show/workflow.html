@@ -5,7 +5,14 @@
             <sm-menu title="" class="pointing secondary">
                 <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs" (click)="showTab('workflows')">
                     <i class="share alternate icon"></i>
-                    {{'common_workflows' | translate }}</a>
+                    {{'common_workflows' | translate }}
+                    <i class="orange warning sign icon ml5"
+                        *ngIf="previewWorkflow"
+                        suiPopup
+                        [popupText]="'Votre workflow est dans un état temporaire de prévisualisation'"
+                        popupPlacement="top center">
+                    </i>
+                </a>
                 <a sm-item [class.active]="selectedTab === 'notifications'" id="WorkflowNotificationTabs" (click)="showTab('notifications')">
                     <i class="alarm icon"></i>
                     {{'common_notifications' | translate }}</a>
@@ -49,6 +56,15 @@
                                                             </button>
                                                         </div>
                                                         <div class="six wide column centered">
+                                                            <div class="ui blue button" (click)="showAsCodeEditor()" [class.loading]="loading">
+                                                                <i class="terminal icon"></i>Edit as code
+                                                                <i class="orange warning sign icon ml5"
+                                                                    *ngIf="previewWorkflow"
+                                                                    suiPopup
+                                                                    [popupText]="'workflow_preview_mode' | translate"
+                                                                    popupPlacement="top center">
+                                                                </i>
+                                                            </div>
                                                         </div>
                                                         <div class="right aligned five wide column" title="{{'btn_run_custom_worklow' | translate}}">
                                                             <div class="ui green buttons">
@@ -65,9 +81,9 @@
                                     <div class="two wide column"></div>
                                 </div>
                             </div>
-                            <ng-container>
+                            <ng-container *ngIf="detailedWorkflow">
                                 <div class="graph">
-                                    <app-workflow-graph [workflowData]="detailedWorkflow" [project]="project"
+                                    <app-workflow-graph [workflowData]="previewWorkflow || detailedWorkflow" [project]="project"
                                                         [direction]="direction"
                                                         (addSrcToJoinEvent)="addSourceToJoin($event)"
                                                         (deleteJoinSrcEvent)="openDeleteJoinSrcModal($event)"

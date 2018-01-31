@@ -139,6 +139,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_preview": "Preview",
   "common_optional": "Optional",
   "common_ask_cds_administrator": "Ask your CDS Administrator",
   "common_audit": "Audit",
@@ -670,6 +671,7 @@
   "workflow_join_trigger_src_title": "Delete",
   "workflow_loading": "Loading workflow...",
   "workflow_name": "Workflow name",
+  "workflow_preview_mode": "Your workflow is in preview mode",
   "workflow_node_context_edit": "Edit the pipeline context",
   "workflow_node_launch": "Pipeline actions",
   "workflow_node_context_pipeline_parameter": "Pipeline parameters",

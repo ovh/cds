@@ -38,6 +38,7 @@
         "../node_modules/codemirror/addon/mode/simple.js",
         "../node_modules/codemirror/mode/dockerfile/dockerfile.js",
         "../node_modules/codemirror/mode/perl/perl.js",
+        "../node_modules/codemirror/mode/yaml/yaml.js",
         "../node_modules/codemirror/mode/htmlmixed/htmlmixed.js",
         "../node_modules/codemirror/mode/clike/clike.js",
         "../node_modules/codemirror/mode/css/css.js",

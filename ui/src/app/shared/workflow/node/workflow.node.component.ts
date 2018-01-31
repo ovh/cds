@@ -115,6 +115,10 @@ export class WorkflowNodeComponent implements OnInit {
     }
 
     goToNodeRun(): void {
+        if (this.workflow.previewMode) {
+          return;
+        }
+
         let qps = cloneDeep(this._route.snapshot.queryParams);
         qps['selectedJoinId'] = null;
 

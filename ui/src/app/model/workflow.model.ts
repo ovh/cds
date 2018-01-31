@@ -29,6 +29,8 @@ export class Workflow {
 
     // UI params
     externalChange: boolean;
+    forceRefresh: boolean;
+    previewMode: boolean;
 
     // Do not remove root node
     static removeNodeWithoutChild(workflow: Workflow, node: WorkflowNode): boolean {
@@ -377,6 +379,7 @@ export class Workflow {
 
 export class WorkflowNodeJoin {
     id: number;
+    ref: string;
     workflow_id: number;
     source_node_id: Array<number>;
     source_node_ref: Array<string>;

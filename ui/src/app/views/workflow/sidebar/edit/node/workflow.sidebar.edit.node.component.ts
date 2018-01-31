@@ -293,7 +293,6 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     addHook(he: HookEvent): void {
-        console.log('blabla', he);
         if (!this.node.hooks) {
             this.node.hooks = new Array<WorkflowNodeHook>();
         }

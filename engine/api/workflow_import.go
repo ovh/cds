@@ -24,6 +24,58 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (api *API) postWorkflowPreviewHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+
+		//Load project
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithApplications,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithPipelines,
+		)
+		if errp != nil {
+			return sdk.WrapError(errp, "postWorkflowPreviewHandler>> Unable load project")
+		}
+
+		body, errr := ioutil.ReadAll(r.Body)
+		if errr != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		}
+		defer r.Body.Close()
+
+		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = http.DetectContentType(body)
+		}
+
+		var ew = new(exportentities.Workflow)
+		var errw error
+		switch contentType {
+		case "application/json":
+			errw = json.Unmarshal(body, ew)
+		case "application/x-yaml", "text/x-yaml":
+			errw = yaml.Unmarshal(body, ew)
+		default:
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
+		}
+
+		if errw != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errw)
+		}
+
+		wf, globalError := workflow.Parse(proj, ew)
+		if globalError != nil {
+			return sdk.WrapError(globalError, "postWorkflowPreviewHandler> Unable import workflow %s", ew.Name)
+		}
+
+		return WriteJSON(w, r, wf, http.StatusOK)
+	}
+}
+
 func (api *API) postWorkflowImportHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL

@@ -73,6 +73,7 @@ func loadJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 		}
 		j.Triggers = append(j.Triggers, *jt)
 	}
+	j.Ref = fmt.Sprintf("%d", j.ID)
 
 	return &j, nil
 }
