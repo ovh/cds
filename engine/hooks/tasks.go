@@ -15,7 +15,6 @@ import (
 	"github.com/gorhill/cronexpr"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -110,7 +109,7 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*Task, error) {
 	}
 
 	switch h.WorkflowHookModel.Name {
-	case workflow.WebHookModel.Name:
+	case sdk.WebHookModelName:
 		h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
 			Value:        fmt.Sprintf("%s/webhook/%s", s.Cfg.URLPublic, h.UUID),
 			Configurable: false,
@@ -120,7 +119,7 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*Task, error) {
 			Type:   TypeWebHook,
 			Config: h.Config,
 		}, nil
-	case workflow.RepositoryWebHookModel.Name:
+	case sdk.RepositoryWebHookModelName:
 		h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
 			Value:        fmt.Sprintf("%s/webhook/%s", s.Cfg.URLPublic, h.UUID),
 			Configurable: false,
@@ -130,7 +129,7 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*Task, error) {
 			Type:   TypeRepoManagerWebHook,
 			Config: h.Config,
 		}, nil
-	case workflow.SchedulerModel.Name:
+	case sdk.SchedulerModelName:
 		return &Task{
 			UUID:   h.UUID,
 			Type:   TypeScheduler,

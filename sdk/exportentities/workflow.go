@@ -429,10 +429,8 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 				}
 			}
 			n.Hooks = append(n.Hooks, sdk.WorkflowNodeHook{
-				WorkflowHookModel: sdk.WorkflowHookModel{
-					Name: h.Model,
-				},
-				Config: cfg,
+				WorkflowHookModel: sdk.GetDefaultHookModel(h.Model),
+				Config:            cfg,
 			})
 		}
 	}
