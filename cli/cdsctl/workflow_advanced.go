@@ -28,15 +28,15 @@ var (
 
 	workflowAdvancedRunNumber = cli.NewCommand(workflowAdvancedRunNumberCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(workflowRunNumberGetCmd, workflowRunNumberGetRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(workflowRunNumberShowCmd, workflowRunNumberShowRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowRunNumberSetCmd, workflowRunNumberSetRun, nil, withAllCommandModifiers()...),
 		})
 )
 
-var workflowRunNumberGetCmd = cli.Command{
-	Name:    "get",
-	Short:   "Get a Workflow Run Number",
-	Example: `cdsctl workflow advanced number set MYPROJECT my-workflow`,
+var workflowRunNumberShowCmd = cli.Command{
+	Name:    "show",
+	Short:   "Show a Workflow Run Number",
+	Example: `cdsctl workflow advanced number show MYPROJECT my-workflow`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 		{Name: _WorkflowName},
@@ -56,13 +56,8 @@ var workflowRunNumberSetCmd = cli.Command{
 	},
 }
 
-func workflowRunNumberGetRun(v cli.Values) error {
-	runNumber, err := client.WorkflowRunNumberGet(v[_ProjectKey], v[_WorkflowName])
-	if err != nil {
-		return err
-	}
-	fmt.Printf("%d\n", runNumber.Num)
-	return nil
+func workflowRunNumberShowRun(v cli.Values) (interface{}, error) {
+	return client.WorkflowRunNumberGet(v[_ProjectKey], v[_WorkflowName])
 }
 
 func workflowRunNumberSetRun(v cli.Values) error {

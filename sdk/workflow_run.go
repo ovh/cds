@@ -46,7 +46,7 @@ type WorkflowRunPostHandlerOption struct {
 
 //WorkflowRunNumber contains a workflow run number
 type WorkflowRunNumber struct {
-	Num int64 `json:"num"`
+	Num int64 `json:"num" cli:"run-number"`
 }
 
 // Translate translates messages in WorkflowNodeRun
