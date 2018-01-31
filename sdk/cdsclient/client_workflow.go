@@ -94,6 +94,28 @@ func (c *client) WorkflowNodeRun(projectKey string, workflowName string, number 
 	return &run, nil
 }
 
+func (c *client) WorkflowRunNumberGet(projectKey string, workflowName string) (*sdk.WorkflowRunNumber, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/num", projectKey, workflowName)
+	runNumber := sdk.WorkflowRunNumber{}
+	if _, err := c.GetJSON(url, &runNumber); err != nil {
+		return nil, err
+	}
+	return &runNumber, nil
+}
+
+func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, number int64) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/num", projectKey, workflowName)
+	runNumber := sdk.WorkflowRunNumber{Num: number}
+	code, err := c.PostJSON(url, runNumber, nil)
+	if err != nil {
+		return err
+	}
+	if code >= 300 {
+		return fmt.Errorf("Cannot update workflow run number. HTTP code error : %d", code)
+	}
+	return nil
+}
+
 func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/job/%d/step/%d", projectKey, workflowName, number, nodeRunID, job, step)
 	buildState := sdk.BuildState{}
