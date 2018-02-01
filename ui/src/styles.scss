@@ -572,9 +572,10 @@ foreignObject {
 // Ovveride of ng2-semantic-ui
 sui-search {
   .ui.input {
-    input {
+    .prompt {
       background-color: transparent;
       border-color: #233332;
+      color: rgba(255, 255, 255, 0.9); // fix: navbar search color on focus out
     }
   }
 }
