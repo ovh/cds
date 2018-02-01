@@ -36,7 +36,17 @@ var workflowRunManualCmd = cli.Command{
 			ShortHand: "p",
 			Usage:     "Run the workflow with pipeline parameter",
 			IsValid: func(s string) bool {
-				return strings.Count(s, "=") == 1
+				if s == "" {
+					return true
+				}
+				// Hacking cobra which split param with a double pipe
+				splittedParam := strings.Split(s, "||")
+				for _, p := range splittedParam {
+					if strings.Count(p, "=") < 1 {
+						return false
+					}
+				}
+				return true
 			},
 			Kind: reflect.Slice,
 		},
@@ -82,6 +92,9 @@ func workflowRunManualRun(v cli.Values) error {
 	pipParams := v.GetStringSlice("parameter")
 	if len(pipParams) > 0 {
 		for _, sParam := range pipParams {
+			if sParam == "" {
+				continue
+			}
 			splittedParam := strings.SplitN(sParam, "=", 2)
 			sdk.AddParameter(&manual.PipelineParameters, splittedParam[0], sdk.StringParameter, splittedParam[1])
 		}
