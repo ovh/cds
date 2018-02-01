@@ -19,6 +19,7 @@ cover.html
 .bash_aliases
 npm-debug.log
 debug.test
+.tmp
 
 # UI
 ui/node_modules

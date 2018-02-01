@@ -96,6 +96,17 @@ func (s *Service) Serve(c context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
+	//Set the dao
+	s.dao = dao{
+		store: s.Cache,
+	}
+
+	go func() {
+		if err := s.processor(ctx); err != nil {
+			log.Info("Repositories> Shutdown processor")
+		}
+	}()
+
 	//Gracefully shutdown the http server
 	go func() {
 		select {
