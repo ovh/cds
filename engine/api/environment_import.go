@@ -18,6 +18,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// postEnvironmentImportHandler import an environment yml file
+// getActionsHandler Retrieve all public actions
+// @title import an environment yml file
+// @description import an environment yml file with `cdsctl environment import myenv.env.yml`
+// @params force=true or false. If false and if the environment already exists, raise an error
 func (api *API) postEnvironmentImportHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL

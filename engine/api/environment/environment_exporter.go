@@ -19,6 +19,13 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, 
 		return 0, sdk.WrapError(errload, "environment.Export> Cannot load %s", envName)
 	}
 
+	// reload variables with clear password
+	variables, errLoadVariables := GetAllVariable(db, key, envName, WithClearPassword())
+	if errLoadVariables != nil {
+		return 0, sdk.WrapError(errLoadVariables, "environment.Export> Cannot load variables value")
+	}
+	env.Variable = variables
+
 	// Reload key
 	if errE := LoadAllDecryptedKeys(db, env); errE != nil {
 		return 0, sdk.WrapError(errE, "environment.Export> Cannot load env %s keys", envName)
