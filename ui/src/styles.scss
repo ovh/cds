@@ -32,7 +32,7 @@ input[disabled] {
 
 .CodeMirror {
   min-height:40px;
-  height: auto;
+  height: 100%;
   border: 1px solid rgba(34, 36, 38, 0.14902);
   border-radius: 4px;
 }
@@ -48,8 +48,8 @@ input[disabled] {
 // Code mirror
 .CodeMirror-scroll {
   text-align: left;
-  height: auto;
-  overflow: hidden !important;
+  height: 100%;
+  overflow: auto;
 }
 
 $scrollbarsize: 10px;
@@ -101,7 +101,7 @@ body ::-webkit-scrollbar-thumb {
 .ui {
   i.icon.blue {
     color: $cds_color_teal !important;
-  } 
+  }
 
   i.icon.red {
     color: $cds_color_red !important;

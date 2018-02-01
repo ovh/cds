@@ -139,6 +139,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_preview": "Preview",
   "common_optional": "Optional",
   "common_ask_cds_administrator": "Ask your CDS Administrator",
   "common_audit": "Audit",
@@ -670,6 +671,7 @@
   "workflow_join_trigger_src_title": "Delete",
   "workflow_loading": "Loading workflow...",
   "workflow_name": "Workflow name",
+  "workflow_preview_mode": "Your workflow is in preview mode",
   "workflow_node_context_edit": "Edit the pipeline context",
   "workflow_node_launch": "Pipeline actions",
   "workflow_node_context_pipeline_parameter": "Pipeline parameters",
@@ -677,6 +679,7 @@
   "workflow_run_node_job_queued": "Queued {{time}} ago",
   "workflow_update_name_error": "Invalid workflow name. Allowed pattern is: a-zA-Z0-9",
   "workflow_wizard_description": "Choose your workflow options",
+  "workflow_edit_as_code": "Edit as code",
 
   "workflow_node_edition": "Edit your configuration",
   "workflow_node_condition_warning": "Attention if you have basic conditions and advanced at the same time, only advanced conditions will be effective.",

@@ -57,7 +57,6 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
     }
 
     updateHook(h: HookEvent): void {
-        console.log('hookEvent', h);
         let workflowToUpdate = cloneDeep(this.workflow);
         this.loading = true;
         if (h.type === 'delete') {

@@ -5,6 +5,69 @@ import (
 	"fmt"
 )
 
+const (
+	WebHookModelName           = "WebHook"
+	RepositoryWebHookModelName = "RepositoryWebHook"
+	SchedulerModelName         = "Scheduler"
+	GitPollerModelName         = "Git Repository Poller"
+)
+
+var (
+	WebHookModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/webhook",
+		Name:       WebHookModelName,
+		Icon:       "Linkify",
+		DefaultConfig: WorkflowNodeHookConfig{
+			"method": {
+				Value:        "POST",
+				Configurable: true,
+			},
+		},
+	}
+
+	RepositoryWebHookModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/repositorywebhook",
+		Name:       RepositoryWebHookModelName,
+		Icon:       "Linkify",
+		DefaultConfig: WorkflowNodeHookConfig{
+			"method": {
+				Value:        "POST",
+				Configurable: false,
+			},
+		},
+	}
+
+	GitPollerModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/poller",
+		Name:       GitPollerModelName,
+		Icon:       "git square",
+	}
+
+	SchedulerModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/scheduler",
+		Name:       SchedulerModelName,
+		Icon:       "fa-clock-o",
+		DefaultConfig: WorkflowNodeHookConfig{
+			"cron": {
+				Value:        "0 * * * *",
+				Configurable: true,
+			},
+			"timezone": {
+				Value:        "UTC",
+				Configurable: true,
+			},
+		},
+	}
+)
+
 // Hook used to link a git repository to a given pipeline
 type Hook struct {
 	ID            int64    `json:"id"`
@@ -85,4 +148,20 @@ func DeleteHook(project, application, pipeline string, id int64) error {
 	}
 
 	return nil
+}
+
+// GetDefaultHookModel return the workflow hook model by its name
+func GetDefaultHookModel(modelName string) WorkflowHookModel {
+	switch modelName {
+	case SchedulerModelName:
+		return SchedulerModel
+	case RepositoryWebHookModelName:
+		return RepositoryWebHookModel
+	case WebHookModelName:
+		return WebHookModel
+	case GitPollerModelName:
+		return GitPollerModel
+	}
+
+	return WebHookModel
 }

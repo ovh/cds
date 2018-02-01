@@ -90,7 +90,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {
 	// Delete from vcs configuration if needed
 	for _, h := range hookToDelete {
-		if h.WorkflowHookModel.Name == RepositoryWebHookModel.Name {
+		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
 			if projectVCSServer != nil {

@@ -2,6 +2,8 @@ package exportentities
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/fsamin/go-dump"
 
@@ -28,6 +30,7 @@ type Workflow struct {
 }
 
 type NodeEntry struct {
+	ID              int64                       `json:"-" yaml:"-"`
 	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
 	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
@@ -301,17 +304,21 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 		return nil, err
 	}
 
+	rand.Seed(time.Now().Unix())
 	entries := w.Entries()
 	var attempt int
+	fakeID := rand.Int63n(5000)
 	// attempt is there to avoid infinit loop, but it should not happend becase we check validty and dependencies earlier
 	for len(entries) != 0 && attempt < 1000 {
 		for name, entry := range entries {
+			entry.ID = fakeID
 			ok, err := entry.processNode(name, wf)
 			if err != nil {
 				return nil, err
 			}
 			if ok {
 				delete(entries, name)
+				fakeID++
 			}
 		}
 		attempt++
@@ -422,10 +429,8 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 				}
 			}
 			n.Hooks = append(n.Hooks, sdk.WorkflowNodeHook{
-				WorkflowHookModel: sdk.WorkflowHookModel{
-					Name: h.Model,
-				},
-				Config: cfg,
+				WorkflowHookModel: sdk.GetDefaultHookModel(h.Model),
+				Config:            cfg,
 			})
 		}
 	}
@@ -506,6 +511,7 @@ func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
 		}
 
 		if joinFound {
+			j.Ref = fmt.Sprintf("fakeRef%d", e.ID)
 			join = j
 		}
 	}
@@ -514,6 +520,7 @@ func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
 	if join == nil {
 		join = &sdk.WorkflowNodeJoin{
 			SourceNodeRefs: e.DependsOn,
+			Ref:            fmt.Sprintf("fakeRef%d", e.ID),
 		}
 		appendJoin = true
 	}

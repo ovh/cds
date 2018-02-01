@@ -11,15 +11,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, force bool, u *sdk.User) ([]sdk.Message, error) {
-	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, force)
-	log.Debug("ParseAndImport>> Workflow: %+v", ew)
+// Parse parse an exportentities.workflow and return the parsed workflow
+func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
+	log.Info("Parse>> Parse workflow %s in project %s", ew.Name, proj.Key)
+	log.Debug("Parse>> Workflow: %+v", ew)
 
 	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(ew.Name) {
-		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "ParseAndImport>> Workflow name %s do not respect pattern %s", ew.Name, sdk.NamePattern)
+		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Parse>> Workflow name %s do not respect pattern %s", ew.Name, sdk.NamePattern)
 	}
 
 	//Inherit permissions from project
@@ -37,6 +37,19 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, e
 	}
 	w.ProjectID = proj.ID
 	w.ProjectKey = proj.Key
+
+	return w, nil
+}
+
+// ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
+func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, force bool, u *sdk.User) ([]sdk.Message, error) {
+	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, force)
+	log.Debug("ParseAndImport>> Workflow: %+v", ew)
+	//Parse workflow
+	w, errW := Parse(proj, ew)
+	if errW != nil {
+		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
+	}
 
 	//Import
 	done := new(sync.WaitGroup)

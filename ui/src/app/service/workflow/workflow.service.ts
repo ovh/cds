@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpClient, HttpParams, HttpHeaders} from '@angular/common/http';
 import {GroupPermission} from '../../model/group.model';
 
 @Injectable()
@@ -23,6 +23,32 @@ export class WorkflowService {
     }
 
     /**
+     * Get the given workflow from API in export format
+     * @param key Project unique key
+     * @param workflowName Workflow Name
+     */
+    getWorkflowExport(key: string, workflowName: string): Observable<string> {
+        let params = new HttpParams();
+        params = params.append('format', 'yaml');
+
+        return this._http.get<string>('/project/' + key + '/export/workflows/' + workflowName, {params, responseType: <any>'text'});
+    }
+
+    /**
+     * Get the given workflow from API in export format
+     * @param key Project unique key
+     * @param workflowName Workflow Name
+     */
+    previewWorkflowImport(key: string, workflowImportCode: string): Observable<Workflow> {
+        let params = new HttpParams();
+        params = params.append('format', 'yaml');
+        let headers = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/x-yaml');
+
+        return this._http.post<Workflow>('/project/' + key + '/preview/workflows', workflowImportCode, {headers, params});
+    }
+
+    /**
      * Call API to create a new workflow
      * @param key Project unique key
      * @param workflow Workflow to create
@@ -40,6 +66,20 @@ export class WorkflowService {
         // reinit node id
         Workflow.reinitID(workflow);
         return this._http.put<Workflow>('/project/' + key + '/workflows/' + name, workflow);
+    }
+
+    /**
+     * Import a workflow
+     * @param key Project unique key
+     * @param workflow WorkflowCode to import
+     */
+    importWorkflow(key: string, workflowCode: string): Observable<Workflow> {
+        let headers = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/x-yaml');
+        let params = new HttpParams();
+        params = params.append('force', 'true');
+
+        return this._http.post<Workflow>(`/project/${key}/import/workflows`, workflowCode, {headers, params});
     }
 
     /**

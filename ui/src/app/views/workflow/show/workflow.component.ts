@@ -28,7 +28,9 @@ export class WorkflowShowComponent {
 
     project: Project;
     detailedWorkflow: Workflow;
+    previewWorkflow: Workflow;
     workflowSubscription: Subscription;
+    workflowPreviewSubscription: Subscription;
     direction: string;
 
     @ViewChild('workflowGraph')
@@ -69,6 +71,9 @@ export class WorkflowShowComponent {
         this.activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
             let projkey = params['key'];
+
+            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+            this._workflowCoreService.setWorkflowPreview(null);
             if (projkey && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
@@ -102,6 +107,18 @@ export class WorkflowShowComponent {
         });
 
         this._workflowCoreService.setCurrentWorkflowRun(null);
+
+        this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
+            .subscribe((wfPreview) => {
+                this.previewWorkflow = wfPreview
+                if (wfPreview != null) {
+                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+                }
+            });
+    }
+
+    savePreview() {
+        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
     }
 
     changeDirection() {
@@ -122,6 +139,10 @@ export class WorkflowShowComponent {
         if (this.workflowJoinTriggerSrc) {
             this.workflowJoinTriggerSrc.show();
         }
+    }
+
+    showAsCodeEditor() {
+      this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {

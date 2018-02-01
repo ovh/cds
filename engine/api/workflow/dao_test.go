@@ -1068,7 +1068,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 			Hooks: []sdk.WorkflowNodeHook{
 				{
 					WorkflowHookModel: sdk.WorkflowHookModel{
-						Name: workflow.WebHookModel.Name,
+						Name: sdk.WebHookModelName,
 					},
 					Config: sdk.WorkflowNodeHookConfig{
 						"method": sdk.WorkflowNodeHookConfigValue{

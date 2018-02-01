@@ -12,65 +12,11 @@ import (
 
 // Here are the default hooks
 var (
-	WebHookModel = &sdk.WorkflowHookModel{
-		Author:     "CDS",
-		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: "github.com/ovh/cds/hook/builtin/webhook",
-		Name:       "WebHook",
-		Icon:       "Linkify",
-		DefaultConfig: sdk.WorkflowNodeHookConfig{
-			"method": {
-				Value:        "POST",
-				Configurable: true,
-			},
-		},
-	}
-
-	RepositoryWebHookModel = &sdk.WorkflowHookModel{
-		Author:     "CDS",
-		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: "github.com/ovh/cds/hook/builtin/repositorywebhook",
-		Name:       "RepositoryWebHook",
-		Icon:       "Linkify",
-		DefaultConfig: sdk.WorkflowNodeHookConfig{
-			"method": {
-				Value:        "POST",
-				Configurable: false,
-			},
-		},
-	}
-
-	GitPollerModel = &sdk.WorkflowHookModel{
-		Author:     "CDS",
-		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: "github.com/ovh/cds/hook/builtin/poller",
-		Name:       "Git Repository Poller",
-		Icon:       "git square",
-	}
-
-	SchedulerModel = &sdk.WorkflowHookModel{
-		Author:     "CDS",
-		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: "github.com/ovh/cds/hook/builtin/scheduler",
-		Name:       "Scheduler",
-		Icon:       "fa-clock-o",
-		DefaultConfig: sdk.WorkflowNodeHookConfig{
-			"cron": {
-				Value:        "0 * * * *",
-				Configurable: true,
-			},
-			"timezone": {
-				Value:        "UTC",
-				Configurable: true,
-			},
-		},
-	}
-
 	builtinModels = []*sdk.WorkflowHookModel{
-		WebHookModel,
-		RepositoryWebHookModel,
+		&sdk.WebHookModel,
+		&sdk.RepositoryWebHookModel,
 		// GitPollerModel, TODO enable this line when GitPoller will be developed
-		SchedulerModel,
+		&sdk.SchedulerModel,
 	}
 )
 

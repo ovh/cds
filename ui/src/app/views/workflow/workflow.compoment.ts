@@ -25,6 +25,7 @@ export class WorkflowComponent implements OnInit {
     number: number;
     workflowSubscription: Subscription;
     sideBarSubscription: Subscription;
+    asCodeEditorSubscription: Subscription;
     projectSubscription: Subscription;
     sidebarOpen: boolean;
     currentNodeName: string;
@@ -34,6 +35,7 @@ export class WorkflowComponent implements OnInit {
     selectedJoin: WorkflowNodeJoin;
     selectedNodeRunId: number;
     selectedNodeRunNum: number;
+    asCodeEditorOpen: boolean;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
@@ -47,6 +49,13 @@ export class WorkflowComponent implements OnInit {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
+
+        this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
+          .subscribe((state) => {
+              if (state != null) {
+                  this.asCodeEditorOpen = state.open;
+              }
+          });
 
         this.sideBarSubscription = this._workflowCore.getSidebarStatus().subscribe(b => {
             this.sidebarOpen = b;

@@ -385,6 +385,7 @@ func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
 //WorkflowNodeJoin aims to joins multiple node into multiple triggers
 type WorkflowNodeJoin struct {
 	ID             int64                     `json:"id" db:"id"`
+	Ref            string                    `json:"ref" db:"-"`
 	WorkflowID     int64                     `json:"workflow_id" db:"workflow_id"`
 	SourceNodeIDs  []int64                   `json:"source_node_id,omitempty" db:"-"`
 	SourceNodeRefs []string                  `json:"source_node_ref,omitempty" db:"-"`

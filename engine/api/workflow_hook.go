@@ -79,7 +79,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 
 		indexToDelete := -1
 		for i := range m {
-			if m[i].Name == workflow.RepositoryWebHookModel.Name {
+			if m[i].Name == sdk.RepositoryWebHookModelName {
 				if !repoWebHookEnable {
 					indexToDelete = i
 					break
