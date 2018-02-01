@@ -67,16 +67,46 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 				wg.Add(1)
 				go cleanApplicationPipelineBuild(DBFunc(), &wg, chanErr, *a)
 
-				// TODO Read from error chan
-
+				hasErrorChan := make(chan bool)
+				go func(chanErr <-chan error, hasE chan<- bool) {
+					for {
+						select {
+						case e, ok := <-chanErr:
+							if e != nil {
+								hasE <- true
+								close(hasE)
+								return
+							}
+							if !ok {
+								close(hasE)
+								return
+							}
+						}
+					}
+				}(chanErr, hasErrorChan)
 				wg.Wait()
 				close(chanErr)
 
-				// TODO IF NO ERROR, delete app pipeline and app
-				//if err := application.DeleteAllApplicationPipeline(tx, app.ID); err != nil {
-				//	return sdk.WrapError(err, "cleanApplication> Unable to delete application pipeline for %s", app.Name)
-				//}
-				// Delete app
+				for has := range hasErrorChan {
+					if has {
+						tx, errT := DBFunc().Begin()
+						if errT != nil {
+							log.Warning("CleanOldWorkflow> Cannot start transaction to clean application %s %d: %s", app.Name, app.ID, errT)
+							continue
+						}
+						if err := application.DeleteAllApplicationPipeline(tx, app.ID); err != nil {
+							log.Warning("cleanApplication>Cannot redetach pipeline from application %s %d: %s", app.Name, app.ID, err)
+							tx.Rollback()
+							continue
+						}
+						if err := tx.Commit(); err != nil {
+							log.Warning("cleanApplication>Cannot commit transaction: %s", err)
+							tx.Rollback()
+							continue
+						}
+					}
+				}
+
 			}
 
 		}
