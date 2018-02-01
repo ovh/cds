@@ -764,6 +764,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/environment/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/export/">
+          <span>export</span>
+        </a>
+    </li>
     <li data-nav-id="/cli/cdsctl/environment/group/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/">
         <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -775,6 +780,11 @@
         </a>
     </li>
         </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/import/">
+          <span>import</span>
+        </a>
     </li>
     <li data-nav-id="/cli/cdsctl/environment/keys/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/environment/keys/">
@@ -1548,10 +1558,10 @@
 <li><a href="#list-all-public-actions">List all public actions</a></li>
 <li><a href="#get-action-actionid-audit">GET <code>/action/&lt;actionID&gt;/audit</code></a></li>
 <li><a href="#get-action-actionname-using">GET <code>/action/&lt;actionName&gt;/using</code></a></li>
-<li><a href="#post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></a></li>
-<li><a href="#put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></a></li>
-<li><a href="#get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></a></li>
 <li><a href="#delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></a></li>
+<li><a href="#get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></a></li>
+<li><a href="#put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></a></li>
+<li><a href="#post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></a></li>
 <li><a href="#importaction-insert-or-update-an-existing-action">importAction insert OR update an existing action.</a></li>
 <li><a href="#get-action-requirement">GET <code>/action/requirement</code></a></li>
 </ul></li>
@@ -1661,7 +1671,7 @@
 </tbody>
 </table>
 
-<h3 id="post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></h3>
+<h3 id="delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></h3>
 
 <table>
 <thead>
@@ -1674,7 +1684,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -1684,35 +1694,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22">addActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22">updateActionHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22">deleteActionHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1745,7 +1727,7 @@
 </tbody>
 </table>
 
-<h3 id="delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></h3>
+<h3 id="put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></h3>
 
 <table>
 <thead>
@@ -1758,7 +1740,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -1768,7 +1750,35 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22">deleteActionHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22">updateActionHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addActionHandler%22">addActionHandler</a></td>
 </tr>
 </tbody>
 </table>
