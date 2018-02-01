@@ -64,6 +64,10 @@ var (
 				Value:        "UTC",
 				Configurable: true,
 			},
+			"payload": {
+				Value:        "{}",
+				Configurable: true,
+			},
 		},
 	}
 )

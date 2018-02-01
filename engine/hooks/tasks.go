@@ -293,9 +293,30 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 	//Prepare the payload
 	//Anything can be pushed in the configuration, just avoid sending
 	payloadValues := map[string]string{}
+	if payload, ok := t.Config["payload"]; ok && payload.Value != "{}" {
+		var payloadInt interface{}
+		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
+			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+			e.ExtraFields.DetailedMap = false
+			e.ExtraFields.DetailedStruct = false
+			e.ExtraFields.Len = false
+			e.ExtraFields.Type = false
+
+			m1, errm1 := e.ToStringMap(payloadInt)
+			if errm1 != nil {
+				log.Error("Hooks> doScheduledTaskExecution> Cannot convert payload to map %s", errm1)
+			} else {
+				payloadValues = m1
+			}
+		} else {
+			log.Error("Hooks> doScheduledTaskExecution> Cannot unmarshall payload %s", err)
+		}
+
+	}
 	for k, v := range t.Config {
 		switch k {
-		case "project", "workflow", "cron", "timezone":
+		case "project", "workflow", "cron", "timezone", "payload":
 		default:
 			payloadValues[k] = v.Value
 		}

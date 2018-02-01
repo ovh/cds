@@ -25,7 +25,18 @@
                 <ng-container *ngIf="_hook.config">
                     <div class="inline fields" *ngFor="let k of hook.config | keys">
                         <div class="four wide field"><label>{{k}}</label></div>
-                        <div class="twelve wide field"><input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable"></div>
+                        <div class="twelve wide field">
+                          <input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable" *ngIf="k !== 'payload'">
+                          <ng-container *ngIf="k === 'payload'">
+                              <codemirror
+                                [class.invalid]="invalidJSON"
+                                [(ngModel)]="_hook.config[k].value"
+                                [config]="codeMirrorConfig"
+                                (change)="changeCodeMirror($event)"
+                                #textareaCodeMirror>
+                              </codemirror>
+                          </ng-container>
+                        </div>
                     </div>
                 </ng-container>
                 <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
@@ -34,6 +45,6 @@
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="addHook()">{{ 'btn_save' | translate }}</button>
+        <button class="ui green button" [disabled]="loading || invalidJSON" [class.loading]="loading" (click)="addHook()">{{ 'btn_save' | translate }}</button>
     </div>
 </ng-template>
