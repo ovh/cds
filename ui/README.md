@@ -4,11 +4,15 @@ CDS/UI is a webclient for CDS
 
 This project was generated with [angular-cli](https://github.com/angular/angular-cli).
 
+## Prerequisites
+
+The project have dependencies that require Node 6.9.0 or higher, together with NPM 3 or higher.
+
 ## Development server
 
 Install the dependencies: `npm install`.
 
-Run `npm start` to launch a dev server. 
+Run `npm start` to launch a development server. 
 
 Navigate to `http://localhost:4200/`.
 
