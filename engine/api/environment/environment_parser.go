@@ -16,7 +16,7 @@ import (
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
 func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eenv *exportentities.Environment, force bool, decryptFunc keys.DecryptFunc, u *sdk.User) ([]sdk.Message, error) {
 	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, force)
-	log.Debug("ParseAndImport>> App: %+v", eenv)
+	log.Debug("ParseAndImport>> Env: %+v", eenv)
 
 	//Check valid application name
 	rx := sdk.NamePatternRegex
@@ -86,7 +86,6 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 			Key:           *kk,
 			EnvironmentID: env.ID,
 		}
-
 		env.Keys = append(env.Keys, k)
 	}
 
