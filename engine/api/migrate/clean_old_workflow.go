@@ -42,6 +42,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 				continue
 			}
 
+			log.Info("Applications to clean: %d", len(apps))
 			for _, app := range apps {
 				a, errA := application.LoadByID(DBFunc(), store, app.ID, u, application.LoadOptions.WithHooks, application.LoadOptions.WithPipelines)
 				if errA != nil {
@@ -209,37 +210,29 @@ func cleanApplicationPipelineBuild(db *gorp.DbMap, wg *sync.WaitGroup, chErr cha
 
 func cleanApplication(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, app sdk.Application) {
 	defer wg.Done()
-	tx, err := db.Begin()
-	if err != nil {
-		errF := fmt.Errorf("cleanApplication> Cannot start transaction to cleanApplication %s: %s", app.Name, err)
-		log.Warning("%s", errF)
-		chErr <- errF
-		return
-	}
-	defer tx.Rollback()
 
-	if err := scheduler.DeleteByApplicationID(tx, app.ID); err != nil {
+	if err := scheduler.DeleteByApplicationID(db, app.ID); err != nil {
 		errF := fmt.Errorf("cleanApplication> Unable to delete scheduler for application %s: %s", app.Name, err)
 		log.Warning("%s", errF)
 		chErr <- errF
 		return
 	}
 
-	if err := poller.DeleteAll(tx, app.ID); err != nil {
+	if err := poller.DeleteAll(db, app.ID); err != nil {
 		errF := fmt.Errorf("cleanApplication> Unable to delete poller for application %s: %s", app.Name, err)
 		log.Warning("%s", errF)
 		chErr <- errF
 		return
 	}
 
-	if err := trigger.DeleteApplicationTriggers(tx, app.ID); err != nil {
+	if err := trigger.DeleteApplicationTriggers(db, app.ID); err != nil {
 		errF := fmt.Errorf("cleanApplication> Unable to delete trigger for application %s: %s", app.Name, err)
 		log.Warning("%s", errF)
 		chErr <- errF
 		return
 	}
 
-	if err := sanity.DeleteAllApplicationWarnings(tx, app.ID); err != nil {
+	if err := sanity.DeleteAllApplicationWarnings(db, app.ID); err != nil {
 		errF := fmt.Errorf("cleanApplication> Unable to delete warnings for application %s: %s", app.Name, err)
 		log.Warning("%s", errF)
 		chErr <- errF
