@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -444,6 +445,19 @@ func LoadEnvironmentByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Environme
 		})
 	}
 	return res, nil
+}
+
+// Permission Get the permission for the given environment and user
+func Permission(key string, envName string, u *sdk.User) int {
+	if u == nil {
+		return 0
+	}
+
+	if u.Admin {
+		return permission.PermissionReadWriteExecute
+	}
+
+	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: key, Name: envName}]
 }
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables

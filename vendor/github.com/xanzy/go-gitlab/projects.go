@@ -83,8 +83,9 @@ type Project struct {
 		GroupName        string `json:"group_name"`
 		GroupAccessLevel int    `json:"group_access_level"`
 	} `json:"shared_with_groups"`
-	Statistics *ProjectStatistics `json:"statistics"`
-	Links      *Links             `json:"_links,omitempty"`
+	Statistics   *ProjectStatistics `json:"statistics"`
+	Links        *Links             `json:"_links,omitempty"`
+	CIConfigPath *string            `json:"ci_config_path"`
 }
 
 // Repository represents a repository.
@@ -350,7 +351,7 @@ type CreateProjectOptions struct {
 	RequestAccessEnabled                      *bool            `url:"request_access_enabled,omitempty" json:"request_access_enabled,omitempty"`
 	TagList                                   *[]string        `url:"tag_list,omitempty" json:"tag_list,omitempty"`
 	PrintingMergeRequestLinkEnabled           *bool            `url:"printing_merge_request_link_enabled,omitempty" json:"printing_merge_request_link_enabled,omitempty"`
-	CiConfigPath                              *string          `url:"ci_config_path,omitempty" json:"ci_config_path,omitempty"`
+	CIConfigPath                              *string          `url:"ci_config_path,omitempty" json:"ci_config_path,omitempty"`
 }
 
 // CreateProject creates a new project owned by the authenticated user.

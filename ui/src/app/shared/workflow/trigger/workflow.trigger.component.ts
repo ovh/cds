@@ -47,6 +47,10 @@ export class WorkflowTriggerComponent {
         this.trigger.workflow_dest_node = node;
     }
 
+    pipelineSectionChanged(pipSection: string) {
+      this.currentSection = pipSection;
+    }
+
     saveTrigger(): void {
         this.loading = true;
         this.nodeWizard.goToNextSection()

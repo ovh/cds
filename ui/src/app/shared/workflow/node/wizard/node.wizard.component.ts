@@ -31,6 +31,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     @Input() hideCancel: boolean;
     @Input() hideNext: boolean;
     @Output() nodeCreated: EventEmitter<WorkflowNode> = new EventEmitter<WorkflowNode>();
+    @Output() pipelineSectionChanged: EventEmitter<string> = new EventEmitter<string>();
 
     _project: Project;
     node: WorkflowNode = new WorkflowNode();
@@ -50,7 +51,14 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     errorPipelineNamePattern = false;
     loadingCreatePipeline = false;
     newPipeline: Pipeline = new Pipeline();
-    pipelineSection: 'pipeline'|'application'|'environment' = 'pipeline';
+    set pipelineSection(data: 'pipeline'|'application'|'environment') {
+        this._pipelineSection = data;
+        this.pipelineSectionChanged.emit(data);
+    }
+    get pipelineSection() {
+        return this._pipelineSection;
+    }
+    _pipelineSection: 'pipeline'|'application'|'environment' = 'pipeline';
     _createNewPipeline = false;
 
     // Application details

@@ -18,6 +18,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -150,13 +151,15 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 
 // DefaultHeaders is a set of default header for the router
 func DefaultHeaders() map[string]string {
+	now := time.Now()
 	return map[string]string{
-		"Access-Control-Allow-Origin":   "*",
-		"Access-Control-Allow-Methods":  "GET,OPTIONS,PUT,POST,DELETE",
-		"Access-Control-Allow-Headers":  "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition",
-		"Access-Control-Expose-Headers": "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition",
-		"X-Api-Time":                    time.Now().Format(time.RFC3339),
-		"ETag":                          fmt.Sprintf("%d", time.Now().Unix()),
+		"Access-Control-Allow-Origin":              "*",
+		"Access-Control-Allow-Methods":             "GET,OPTIONS,PUT,POST,DELETE",
+		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition",
+		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition",
+		cdsclient.ResponseAPINanosecondsTimeHeader: fmt.Sprintf("%d", now.UnixNano()),
+		cdsclient.ResponseAPITimeHeader:            now.Format(time.RFC3339),
+		cdsclient.ResponseEtagHeader:               fmt.Sprintf("%d", now.Unix()),
 	}
 }
 
@@ -209,7 +212,6 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			latency := end.Sub(start)
 			if rc.IsDeprecated {
 				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
-				w.Header().Add("X-CDS-WARNING", "deprecated route")
 			} else {
 				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
 			}

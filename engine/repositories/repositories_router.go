@@ -16,5 +16,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	//	r.Middlewares = append(r.Middlewares, s.authMiddleware)
 
 	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
-
+	r.Handle("/mon/status", r.GET(s.getStatusHandler))
+	r.Handle("/operations", r.POST(s.postOperationHandler))
+	r.Handle("/operations/{uuid}", r.GET(s.getOperationsHandler))
 }

@@ -60,11 +60,22 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 			if jobs != nil {
 				queue := []sdk.WorkflowNodeJobRun{}
-				if _, err := c.GetJSON("/queue/workflows", &queue, SetHeader("If-Modified-Since", t0.Format(time.RFC1123))); err != nil {
-					errs <- sdk.WrapError(err, "Unable to load jobs")
+				_, header, _, errReq := c.RequestJSON(http.MethodGet, "/queue/workflows", nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
+				if errReq != nil {
+					errs <- sdk.WrapError(errReq, "Unable to load jobs")
+					continue
 				}
+
+				apiTimeHeader := header.Get(ResponseAPITimeHeader)
+				apiTime, errParse := time.Parse(time.RFC3339, apiTimeHeader)
+				if errParse != nil {
+					errs <- sdk.WrapError(errParse, "Unable to load jobs, failed to parse API Time")
+					continue
+				}
+
 				// Gracetime to remove, see https://github.com/ovh/cds/issues/1214
-				t0 = time.Now().Add(-time.Duration(graceTime) * time.Second)
+				t0 = apiTime.Add(-time.Duration(graceTime) * time.Second)
+
 				for _, j := range queue {
 					// if there is a grace time, check it
 					if j.QueuedSeconds > int64(graceTime) {

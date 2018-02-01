@@ -20,6 +20,6 @@ func (c *client) ProjectKeyCreate(projectKey string, keyProject *sdk.ProjectKey)
 }
 
 func (c *client) ProjectKeysDelete(projectKey string, keyName string) error {
-	_, _, err := c.Request("DELETE", "/project/"+projectKey+"/keys/"+url.QueryEscape(keyName), nil)
+	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/keys/"+url.QueryEscape(keyName), nil)
 	return err
 }

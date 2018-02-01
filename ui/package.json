@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "license": "MIT",
   "angular-cli": {},
+  "engines": {
+    "node": ">= 6.9.0",
+    "npm": ">= 3.0.0"
+  },
   "scripts": {
     "start": "ng serve --environment dev",
     "test": "ng lint && ng test --watch false --code-coverage",

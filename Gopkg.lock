@@ -203,7 +203,7 @@
   branch = "master"
   name = "github.com/fsamin/go-repo"
   packages = ["."]
-  revision = "fd8b30226d76e93f2814345cf2e22f1215c5d561"
+  revision = "dedb0cbb26d7f011de1c68db8c38d910ab6c78cb"
 
 [[projects]]
   name = "github.com/fsamin/go-shredder"
@@ -930,11 +930,10 @@
   revision = "d7e841db6909ae5e9eb7493f7b1ea7d7b15101e3"
 
 [[projects]]
-  branch = "feat-list-project-forks"
   name = "github.com/xanzy/go-gitlab"
   packages = ["."]
-  revision = "4063ac0e9957c05b7abc2f6974e01a51818ba16b"
-  source = "https://github.com/fsamin/go-gitlab.git"
+  revision = "7bcfc0373b18ff9f02c7485a15a29053d85e8e56"
+  version = "v0.7.5"
 
 [[projects]]
   name = "github.com/xeipuuv/gojsonpointer"
@@ -1267,6 +1266,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "394df38422d0c1265a79c6414d34a39f5eadd96535ed71b94d1686027a0c7542"
+  inputs-digest = "81ce28b542fa6c09999480211f2873ba34cd5bc38a9dc6268f365a147f9aa3db"
   solver-name = "gps-cdcl"
   solver-version = 1

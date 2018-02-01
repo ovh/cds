@@ -43,7 +43,7 @@ func (c *client) ApplicationGroupsImport(projectKey, appName string, content io.
 		uri += "&forceUpdate=true"
 	}
 
-	btes, _, errReq := c.Request("POST", uri, content)
+	btes, _, _, errReq := c.Request("POST", uri, content)
 	if errReq != nil {
 		return app, errReq
 	}
@@ -58,6 +58,6 @@ func (c *client) ApplicationGroupsImport(projectKey, appName string, content io.
 //ApplicationAttachToReposistoriesManager attachs the application to the repo identified by its fullname in the reposManager
 func (c *client) ApplicationAttachToReposistoriesManager(projectKey, appName, reposManager, repoFullname string) error {
 	uri := fmt.Sprintf("/project/%s/repositories_manager/%s/application/%s/attach?fullname=%s", projectKey, reposManager, appName, url.QueryEscape(repoFullname))
-	_, _, err := c.Request("POST", uri, nil)
+	_, _, _, err := c.Request("POST", uri, nil)
 	return err
 }

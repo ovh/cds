@@ -22,7 +22,6 @@ var (
 			cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil, withAllCommandModifiers()...),
 			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...),
 			cli.NewGetCommand(workflowStatusCmd, workflowStatusRun, nil, withAllCommandModifiers()...),
-			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowStopCmd, workflowStopRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowExportCmd, workflowExportRun, nil, withAllCommandModifiers()...),
@@ -30,6 +29,7 @@ var (
 			cli.NewCommand(workflowPullCmd, workflowPullRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
 			workflowArtifact,
+			workflowAdvanced,
 		})
 )
 

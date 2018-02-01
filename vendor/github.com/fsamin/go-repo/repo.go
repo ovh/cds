@@ -2,37 +2,41 @@ package repo
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
-	"os/exec"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	zglob "github.com/mattn/go-zglob"
 )
 
+func Clone(path, url string) (Repo, error) {
+	r := Repo{path}
+	_, err := r.runCmd("git", "clone", url, ".")
+	if err != nil {
+		return r, err
+	}
+	return r, nil
+}
+
 func New(path string) (Repo, error) {
+	dotGit := filepath.Join(path, ".git")
+	if _, err := os.Stat(dotGit); err != nil || os.IsNotExist(err) {
+		return Repo{}, err
+	}
 	return Repo{path}, nil
 }
 
 func (r Repo) FetchURL() (string, error) {
-	cmd := exec.Command("git", "remote", "show", "origin", "-n")
-	stdOut := new(bytes.Buffer)
-	stdErr := new(bytes.Buffer)
-	cmd.Dir = r.path
-	cmd.Stderr = stdErr
-	cmd.Stdout = stdOut
-	err := cmd.Run()
+	stdOut, err := r.runCmd("git", "remote", "show", "origin", "-n")
 	if err != nil {
 		return "", err
 	}
 
-	errOut := stdErr.Bytes()
-	if len(errOut) > 0 {
-		return "", fmt.Errorf(string(errOut))
-	}
-
-	reader := bufio.NewReader(stdOut)
+	reader := bufio.NewReader(strings.NewReader(stdOut))
 	var fetchURL string
 	for {
 		b, _, err := reader.ReadLine()
@@ -151,4 +155,60 @@ func (r Repo) LatestCommit() (Commit, error) {
 	c.Body = splittedDetails[3]
 
 	return c, nil
+}
+
+func (r Repo) CurrentBranch() (string, error) {
+	b, err := r.runCmd("git", "rev-parse", "--abbrev-ref", "HEAD")
+	if err != nil {
+		return "", err
+	}
+	return b[:len(b)-1], nil
+}
+
+func (r Repo) FetchRemoteBranch(remote, branch string) error {
+	if _, err := r.runCmd("git", "fetch"); err != nil {
+		return err
+	}
+	_, err := r.runCmd("git", "checkout", "-b", branch, "--track", remote+"/"+branch)
+	return err
+}
+
+func (r Repo) Pull(remote, branch string) error {
+	_, err := r.runCmd("git", "pull", remote, branch)
+	return err
+}
+
+func (r Repo) ResetHard(hash string) error {
+	_, err := r.runCmd("git", "reset", "--hard", hash)
+	return err
+}
+
+func (r Repo) DefaultBranch() (string, error) {
+	s, err := r.runCmd("git", "symbolic-ref", "refs/remotes/origin/HEAD")
+	if err != nil {
+		return "", err
+	}
+	s = strings.Replace(s, "\n", "", 1)
+	s = strings.Replace(s, "refs/remotes/origin/", "", 1)
+	return s, nil
+}
+
+func (r Repo) Glob(s string) ([]string, error) {
+	p := filepath.Join(r.path, s)
+	files, err := zglob.Glob(p)
+	if err != nil {
+		return nil, err
+	}
+	for i, f := range files {
+		files[i], err = filepath.Rel(r.path, f)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return files, nil
+}
+
+func (r Repo) Open(s string) (*os.File, error) {
+	p := filepath.Join(r.path, s)
+	return os.Open(p)
 }

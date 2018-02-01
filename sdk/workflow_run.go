@@ -44,6 +44,11 @@ type WorkflowRunPostHandlerOption struct {
 	FromNodeIDs []int64                   `json:"from_nodes,omitempty"`
 }
 
+//WorkflowRunNumber contains a workflow run number
+type WorkflowRunNumber struct {
+	Num int64 `json:"num" cli:"run-number"`
+}
+
 // Translate translates messages in WorkflowNodeRun
 func (r *WorkflowRun) Translate(lang string) {
 	for ki, info := range r.Infos {
