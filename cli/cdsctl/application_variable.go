@@ -15,19 +15,21 @@ var (
 
 	applicationVariable = cli.NewCommand(applicationVariableCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(applicationVariableCreateCmd, applicationCreateVariableRun, nil),
-			cli.NewListCommand(applicationVariableListCmd, applicationListVariableRun, nil),
-			cli.NewCommand(applicationVariableDeleteCmd, applicationDeleteVariableRun, nil),
-			cli.NewCommand(applicationVariableUpdateCmd, applicationUpdateVariableRun, nil),
+			cli.NewCommand(applicationVariableCreateCmd, applicationCreateVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(applicationVariableListCmd, applicationListVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(applicationVariableDeleteCmd, applicationDeleteVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(applicationVariableUpdateCmd, applicationUpdateVariableRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var applicationVariableCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new variable on application. variable type can be one of password, text, string, key, boolean, number, repository",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "app-name"},
 		{Name: "variable-name"},
 		{Name: "variable-type"},
 		{Name: "variable-value"},
@@ -40,20 +42,20 @@ func applicationCreateVariableRun(v cli.Values) error {
 		Type:  v["variable-type"],
 		Value: v["variable-value"],
 	}
-	return client.ApplicationVariableCreate(v["project-key"], v["app-name"], variable)
+	return client.ApplicationVariableCreate(v[_ProjectKey], v[_ApplicationName], variable)
 }
 
 var applicationVariableListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS application variables",
-	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "app-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
 	},
 }
 
 func applicationListVariableRun(v cli.Values) (cli.ListResult, error) {
-	variables, err := client.ApplicationVariablesList(v["project-key"], v["app-name"])
+	variables, err := client.ApplicationVariablesList(v[_ProjectKey], v[_ApplicationName])
 	if err != nil {
 		return nil, err
 	}
@@ -63,23 +65,27 @@ func applicationListVariableRun(v cli.Values) (cli.ListResult, error) {
 var applicationVariableDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS application variable",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "app-name"},
 		{Name: "variable-name"},
 	},
 }
 
 func applicationDeleteVariableRun(v cli.Values) error {
-	return client.ApplicationVariableDelete(v["project-key"], v["app-name"], v["variable-name"])
+	return client.ApplicationVariableDelete(v[_ProjectKey], v[_ApplicationName], v["variable-name"])
 }
 
 var applicationVariableUpdateCmd = cli.Command{
 	Name:  "update",
 	Short: "Update CDS application variable value",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "app-name"},
 		{Name: "variable-oldname"},
 		{Name: "variable-name"},
 		{Name: "variable-type"},
@@ -88,12 +94,12 @@ var applicationVariableUpdateCmd = cli.Command{
 }
 
 func applicationUpdateVariableRun(v cli.Values) error {
-	variable, err := client.ApplicationVariableGet(v["project-key"], v["app-name"], v["variable-oldname"])
+	variable, err := client.ApplicationVariableGet(v[_ProjectKey], v[_ApplicationName], v["variable-oldname"])
 	if err != nil {
 		return err
 	}
 	variable.Name = v["variable-name"]
 	variable.Value = v["variable-value"]
 	variable.Type = v["variable-type"]
-	return client.ApplicationVariableUpdate(v["project-key"], v["app-name"], variable)
+	return client.ApplicationVariableUpdate(v[_ProjectKey], v[_ApplicationName], variable)
 }

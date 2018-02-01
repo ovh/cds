@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -33,6 +34,25 @@ func (c *client) WorkflowRunGet(projectKey string, workflowName string, number i
 		return nil, err
 	}
 	return &run, nil
+}
+
+func (c *client) WorkflowRunSearch(projectKey string, offset, limit int64, filters ...Filter) ([]sdk.WorkflowRun, error) {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit == 0 {
+		limit = 50
+	}
+
+	path := fmt.Sprintf("/project/%s/runs?offset=%d&limit=%d", projectKey, offset, limit)
+	for _, f := range filters {
+		path += fmt.Sprintf("&%s=%s", url.QueryEscape(f.Name), url.QueryEscape(f.Value))
+	}
+	runs := []sdk.WorkflowRun{}
+	if _, err := c.GetJSON(path, &runs); err != nil {
+		return nil, err
+	}
+	return runs, nil
 }
 
 func (c *client) WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error) {
@@ -74,6 +94,28 @@ func (c *client) WorkflowNodeRun(projectKey string, workflowName string, number 
 	return &run, nil
 }
 
+func (c *client) WorkflowRunNumberGet(projectKey string, workflowName string) (*sdk.WorkflowRunNumber, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/num", projectKey, workflowName)
+	runNumber := sdk.WorkflowRunNumber{}
+	if _, err := c.GetJSON(url, &runNumber); err != nil {
+		return nil, err
+	}
+	return &runNumber, nil
+}
+
+func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, number int64) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/num", projectKey, workflowName)
+	runNumber := sdk.WorkflowRunNumber{Num: number}
+	code, err := c.PostJSON(url, runNumber, nil)
+	if err != nil {
+		return err
+	}
+	if code >= 300 {
+		return fmt.Errorf("Cannot update workflow run number. HTTP code error : %d", code)
+	}
+	return nil
+}
+
 func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/job/%d/step/%d", projectKey, workflowName, number, nodeRunID, job, step)
 	buildState := sdk.BuildState{}
@@ -101,7 +143,7 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName
 		url = a.TempURL
 	}
 
-	reader, _, err = c.Stream("GET", url, nil, true)
+	reader, _, _, err = c.Stream("GET", url, nil, true)
 	if err != nil {
 		return err
 	}

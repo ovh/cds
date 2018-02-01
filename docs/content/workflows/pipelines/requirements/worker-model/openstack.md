@@ -48,8 +48,18 @@ apt-get -y --force-yes install curl git >> /tmp/user_data 2>&1
 apt-get -y --force-yes install binutils >> /tmp/user_data 2>&1
 ```
 
-Last step, define worker model in cds:
+Last step, define worker model in cds via [CLI]({{< relref "cli/_index.md" >}}):
 
 ```bash
-$ cds worker model add docker openstack --image="Debian 8" --flavor="vps-ssd-1" --userdata="./docker.udata"
+$ cdsctl worker model add docker openstack myGroupName --image="Debian 8" --flavor="vps-ssd-1" --userdata="./docker.udata"
 ```
+
+Or via UI (inside settings section --> worker models):
+
+![Worker Model UI](/images/worker_model_ui_empty.png)
+
+**Attention** in the UI for an Openstack worker model you have to put in the image input a valid JSON with the name of your image (inside `OS` field), and inside the `user_data` your specific script like above but manually encoded in base64.
+
+For example:
+
+![Worker Model UI Openstack](/images/worker_model_openstack.png)

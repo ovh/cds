@@ -1,10 +1,10 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, fakeAsync, inject} from '@angular/core/testing';
+import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
+import {XHRBackend} from '@angular/http';
 import {Injector} from '@angular/core';
 import {NavbarComponent} from './navbar.component';
 import {SharedModule} from '../../shared/shared.module';
@@ -19,8 +19,6 @@ import {ApplicationService} from '../../service/application/application.service'
 import {Project} from '../../model/project.model';
 import {LanguageStore} from '../../service/language/language.store';
 import {RouterService} from '../../service/router/router.service';
-import {WarningStore} from '../../service/warning/warning.store';
-import {WarningService} from '../../service/warning/warning.service';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
 import {User} from '../../model/user.model';
@@ -46,8 +44,6 @@ describe('CDS: Navbar Component', () => {
                 PipelineService,
                 VariableService,
                 RouterService,
-                WarningStore,
-                WarningService,
                 AuthentificationStore,
                 ApplicationStore,
                 ApplicationService,

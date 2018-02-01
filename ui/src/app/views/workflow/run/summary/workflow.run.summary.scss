@@ -63,6 +63,10 @@
   }
 
   .spawninfo {
+    .scrollable {
+      max-height: 300px;
+      overflow-y: auto;
+    }
     pre {
       white-space: pre-line;
       font-size: 0.85em;

@@ -20,7 +20,7 @@ func (c *client) ProjectVariableCreate(projectKey string, variable *sdk.Variable
 }
 
 func (c *client) ProjectVariableDelete(projectKey string, varName string) error {
-	_, _, err := c.Request("DELETE", "/project/"+projectKey+"/variable/"+url.QueryEscape(varName), nil)
+	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/variable/"+url.QueryEscape(varName), nil)
 	return err
 }
 

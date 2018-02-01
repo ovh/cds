@@ -47,13 +47,13 @@ func (c *client) EnvironmentGroupsImport(projectKey, envName string, content io.
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, errReq := c.Request("POST", url, content)
+	btes, _, _, errReq := c.Request("POST", url, content)
 	if errReq != nil {
 		return env, errReq
 	}
 
 	if err := json.Unmarshal(btes, &env); err != nil {
-		return env, errReq
+		return env, err
 	}
 
 	return env, errReq

@@ -2,33 +2,65 @@
     <div class="scrollingContent">
         <div class="paddingContent">
             <div class="viewContent">
-                <form class="ui form">
-                    <h2>{{ 'workflow_create' | translate }}</h2>
-                    <div class="ui grid">
-                        <div class="one wide column">
-
+              <h2>{{ 'workflow_create' | translate }}</h2>
+              <div class="ui grid">
+                <div class="ui row">
+                  <div class="sixteen wide column">
+                    <div class="ui three top attached steps">
+                      <div class="step pointing" [class.active]="currentStep === 0" (click)="goToNextStep(0)">
+                        <i class="share alternate icon"></i>
+                        <div class="content">
+                          <div class="title">{{'common_workflow' | translate}}</div>
+                          <div class="description">{{'workflow_wizard_description' | translate}}</div>
                         </div>
-                        <div class="fourteen wide column">
-                            <div class="field">
-                                <label>{{ 'workflow_name' | translate}}</label>
-                                <input name="name" class="ui input" [(ngModel)]="workflow.name">
-                            </div>
-                            <div class="field">
-                                <label>{{ 'workflow_description' | translate}}</label>
-                                <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
-                            </div>
-                            <div class="field">
-                                <app-workflow-node-form [project]="project" [node]="workflow.root"></app-workflow-node-form>
-                            </div>
-                            <div class="field">
-                                <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
-                                <button class="ui right floated green button" (click)="createWorkflow()"
-                                        [disabled]="!workflow.root.pipeline_id || !workflow.name" [class.loading]="loading">{{ 'btn_save' | translate }}
-                                </button>
-                            </div>
+                      </div>
+                      <div class="step pointing" [class.disabled]="!workflow.name" [class.active]="currentStep === 1" (click)="goToNextStep(1)">
+                        <i class="sitemap icon"></i>
+                        <div class="content">
+                          <div class="title">{{'common_pipeline' | translate}}</div>
+                          <div class="description">{{'pipeline_wizard_description' | translate}}</div>
                         </div>
+                      </div>
                     </div>
-                </form>
+                    <div class="ui attached segment">
+
+                      <div [ngSwitch]="currentStep">
+                        <!-- ######### WORKFLOW FIRST STEP ######### -->
+                        <form class="ui form" *ngSwitchCase="0">
+                            <div class="ui grid">
+                                <div class="ui row">
+                                  <div class="one wide column">
+
+                                  </div>
+                                  <div class="fourteen wide column">
+                                      <div class="field">
+                                          <label>{{ 'workflow_name' | translate}}</label>
+                                          <input name="name" class="ui input" [(ngModel)]="workflow.name">
+                                      </div>
+                                      <div class="field">
+                                          <label>{{ 'workflow_description' | translate}}</label>
+                                          <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
+                                      </div>
+                                      <div class="field">
+                                          <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                          <button class="ui right floated green button" (click)="goToNextStep()"
+                                                  [disabled]="!workflow.name" [class.loading]="loading">{{ 'btn_next' | translate }}
+                                          </button>
+                                      </div>
+                                  </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- ######### WORKFLOW PIPELINE SECOND STEP ######### -->
+                        <ng-container *ngSwitchCase="1">
+                          <app-workflow-node-add-wizard [project]="project" (nodeCreated)="createWorkflow($event)"></app-workflow-node-add-wizard>
+                        </ng-container>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
         </div>
     </div>

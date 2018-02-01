@@ -17,7 +17,7 @@ import {PipelineStore} from '../../../../../service/pipeline/pipeline.store';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/node.hook.component';
+import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
@@ -262,7 +262,9 @@ export class WorkflowSidebarEditNodeComponent {
                 modal.approve(null);
             }
         }, () => {
-            this.node.hooks.pop();
+            if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
+              this.node.hooks.pop();
+            }
             this.loading = false;
         });
     }
@@ -291,6 +293,7 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     addHook(he: HookEvent): void {
+        console.log('blabla', he);
         if (!this.node.hooks) {
             this.node.hooks = new Array<WorkflowNodeHook>();
         }

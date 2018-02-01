@@ -9,6 +9,7 @@
                 <app-parameter-list
                     [project]="project"
                     [parameters]="editableNode.context.default_pipeline_parameters"
+                    [paramsRef]="currentPipeline.parameters"
                     mode="launcher"
                     [suggest]="suggest"
                     [canDelete]="true"

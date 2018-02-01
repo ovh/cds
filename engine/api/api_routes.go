@@ -325,7 +325,7 @@ func (api *API) InitRouter() {
 	r.Handle("/requirement/types", r.GET(api.getRequirementTypesHandler))
 	r.Handle("/requirement/types/{type}", r.GET(api.getRequirementTypeValuesHandler))
 
-	// UI
+	// config
 	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(true)))
 
 	// Users

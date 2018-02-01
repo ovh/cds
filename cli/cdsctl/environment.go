@@ -21,9 +21,9 @@ var (
 
 	environment = cli.NewCommand(environmentCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(environmentListCmd, environmentListRun, nil),
-			cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil),
-			cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil),
+			cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil, withAllCommandModifiers()...),
+			cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil, withAllCommandModifiers()...),
 			environmentKey,
 			environmentVariable,
 			environmentGroup,
@@ -33,13 +33,13 @@ var (
 var environmentListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environments",
-	Args: []cli.Arg{
-		{Name: "project-key"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
 	},
 }
 
 func environmentListRun(v cli.Values) (cli.ListResult, error) {
-	apps, err := client.EnvironmentList(v["project-key"])
+	apps, err := client.EnvironmentList(v[_ProjectKey])
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +49,10 @@ func environmentListRun(v cli.Values) (cli.ListResult, error) {
 var environmentCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS environment",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "environment-name"},
 	},
 	Aliases: []string{"add"},
@@ -58,20 +60,22 @@ var environmentCreateCmd = cli.Command{
 
 func environmentCreateRun(v cli.Values) error {
 	env := &sdk.Environment{Name: v["environment-name"]}
-	return client.EnvironmentCreate(v["project-key"], env)
+	return client.EnvironmentCreate(v[_ProjectKey], env)
 }
 
 var environmentDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS environment",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "environment-name"},
 	},
 }
 
 func environmentDeleteRun(v cli.Values) error {
-	err := client.EnvironmentDelete(v["project-key"], v["environment-name"])
+	err := client.EnvironmentDelete(v[_ProjectKey], v["environment-name"])
 	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoEnvironment) {
 		fmt.Println(err.Error())
 		os.Exit(0)

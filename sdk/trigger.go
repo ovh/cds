@@ -92,10 +92,6 @@ func AddTrigger(t *PipelineTrigger) error {
 		uri = fmt.Sprintf("%s?env=%s", uri, t.SrcEnvironment.Name)
 	}
 
-	fmt.Printf("Adding trigger %s/%s/%s[%s] -> %s/%s/%s[%s]\n",
-		t.SrcProject.Key, t.SrcApplication.Name, t.SrcPipeline.Name, t.SrcEnvironment.Name,
-		t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
-
 	data, err := json.Marshal(t)
 	if err != nil {
 		return err

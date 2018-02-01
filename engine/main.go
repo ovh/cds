@@ -19,6 +19,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
@@ -71,16 +72,6 @@ func init() {
 }
 
 func main() {
-	// hidden command, generateDocumentation, only used to generate hugo documentation
-	// run with ./engine generateDocumentation
-	osArgs := os.Args[1:]
-	if len(osArgs) == 1 && osArgs[0] == "generateDocumentation" {
-		if err := doc.GenerateDocumentation(mainCmd); err != nil {
-			sdk.Exit(err.Error())
-		}
-		os.Exit(0)
-	}
-
 	mainCmd.Execute()
 }
 
@@ -111,11 +102,15 @@ var versionCmd = &cobra.Command{
 }
 
 var docCmd = &cobra.Command{
-	Use:    "doc",
+	Use:    "doc <generation-path> <git-directory>",
 	Short:  "generate hugo doc for building http://ovh.github.com/cds",
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := doc.GenerateDocumentation(mainCmd); err != nil {
+		if len(args) != 2 {
+			cmd.Usage()
+			os.Exit(1)
+		}
+		if err := doc.GenerateDocumentation(mainCmd, args[0], args[1]); err != nil {
 			sdk.Exit(err.Error())
 		}
 	},
@@ -257,7 +252,7 @@ Start CDS Engine Services
 
 This is the core component of CDS.
 
-	
+
 #### Hatcheries
 
 They are the components responsible for spawning workers. Supported platforms/orchestrators are:
@@ -343,6 +338,9 @@ See $ engine config command for more details.
 			case "hatchery:local":
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
+			case "hatchery:kubernetes":
+				services = append(services, serviceConf{arg: a, service: kubernetes.New(), cfg: conf.Hatchery.Kubernetes})
+				names = append(names, conf.Hatchery.Kubernetes.Name)
 			case "hatchery:marathon":
 				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)

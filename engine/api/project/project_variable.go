@@ -14,8 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// Deprecated
-// GetVariableAudit Get variable audit for the given project
+// GetVariableAudit Get variable audit for the given project. DEPRECATED
 func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
@@ -55,8 +54,7 @@ func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, err
 	return audits, nil
 }
 
-// Deprecated
-// GetAudit retrieve the current project variable audit
+// GetAudit retrieve the current project variable audit. DEPRECATED
 func GetAudit(db gorp.SqlExecutor, key string, auditID int64) ([]sdk.Variable, error) {
 	query := `
 		SELECT project_variable_audit_old.data
@@ -198,14 +196,14 @@ func GetVariableByID(db gorp.SqlExecutor, projectID int64, variableID int64, arg
 	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM project_variable
 		  WHERE id=$1 AND project_id=$2`
 	var varValue sql.NullString
-	var cipher_value []byte
-	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipher_value)
+	var cipherValue []byte
+	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipherValue)
 	if err != nil {
 		return variable, err
 	}
 
 	var errD error
-	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipher_value, c.clearsecret)
+	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipherValue, c.clearsecret)
 	return variable, errD
 }
 
@@ -220,13 +218,13 @@ func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName str
 	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM project_variable
 		  WHERE var_name=$1 AND project_id=$2`
 	var varValue sql.NullString
-	var cipher_value []byte
-	err := db.QueryRow(query, variableName, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipher_value)
+	var cipherValue []byte
+	err := db.QueryRow(query, variableName, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipherValue)
 	if err != nil {
 		return variable, err
 	}
 	var errD error
-	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipher_value, c.clearsecret)
+	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipherValue, c.clearsecret)
 	return variable, errD
 }
 

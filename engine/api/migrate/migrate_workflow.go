@@ -34,7 +34,10 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 			ProjectID:  proj.ID,
 			ProjectKey: proj.Key,
 		}
-		addGroupOnWorkflow(&newW, proj)
+
+		if err := addGroupOnWorkflow(db, &newW, &oldW.Application); err != nil {
+			return sdk.WrapError(err, "MigrateToWorkflow")
+		}
 
 		currentApplicationID := oldW.Application.ID
 
@@ -66,12 +69,17 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 	return nil
 }
 
-func addGroupOnWorkflow(w *sdk.Workflow, proj *sdk.Project) {
-	for _, pg := range proj.ProjectGroups {
-		if pg.Permission == permission.PermissionReadWriteExecute {
-			w.Groups = append(w.Groups, pg)
+func addGroupOnWorkflow(db gorp.SqlExecutor, w *sdk.Workflow, app *sdk.Application) error {
+	if err := application.LoadGroupByApplication(db, app); err != nil {
+		return sdk.WrapError(err, "addGroupOnWorkflow> error while LoadGroupByApplication on application %s", app.ID)
+	}
+
+	for _, ag := range app.ApplicationGroups {
+		if ag.Permission == permission.PermissionReadWriteExecute || ag.Permission == permission.PermissionReadExecute {
+			w.Groups = append(w.Groups, ag)
 		}
 	}
+	return nil
 }
 
 func migratePipeline(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, oldPipeline sdk.CDPipeline, appID int64, u *sdk.User) (*sdk.WorkflowNode, error) {

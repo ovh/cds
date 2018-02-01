@@ -12,10 +12,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (g *gitlabClient) GetHook(repo, id string) (sdk.VCSHook, error) {
+func (c *gitlabClient) GetHook(repo, id string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, fmt.Errorf("Not yet implemented")
 }
-func (g *gitlabClient) UpdateHook(repo, id string, hook sdk.VCSHook) error {
+func (c *gitlabClient) UpdateHook(repo, id string, hook sdk.VCSHook) error {
 	return fmt.Errorf("Not yet implemented")
 }
 
@@ -109,7 +109,7 @@ func buildGitlabURL(givenURL string) (string, error) {
 
 	url := fmt.Sprintf("%s://%s/%s?uid=%s", u.Scheme, u.Host, u.Path, q.Get("uid"))
 
-	for k, _ := range q {
+	for k := range q {
 		if k != "uid" && !strings.Contains(q.Get(k), "{") {
 			url = fmt.Sprintf("%s&%s=%s", url, k, q.Get(k))
 		}

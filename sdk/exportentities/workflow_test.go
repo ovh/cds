@@ -233,6 +233,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					Pipeline: sdk.Pipeline{
 						Name: "pipeline",
 					},
+					Context: &sdk.WorkflowNodeContext{},
 					Hooks: []sdk.WorkflowNodeHook{
 						{
 							WorkflowHookModel: sdk.WorkflowHookModel{
@@ -272,6 +273,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					Pipeline: sdk.Pipeline{
 						Name: "pipeline-root",
 					},
+					Context: &sdk.WorkflowNodeContext{},
 					Triggers: []sdk.WorkflowNodeTrigger{
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
@@ -311,6 +313,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					Pipeline: sdk.Pipeline{
 						Name: "pipeline-root",
 					},
+					Context: &sdk.WorkflowNodeContext{},
 					Triggers: []sdk.WorkflowNodeTrigger{
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
@@ -319,6 +322,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 								Pipeline: sdk.Pipeline{
 									Name: "pipeline-child",
 								},
+								Context: &sdk.WorkflowNodeContext{},
 							},
 						},
 					},
@@ -351,6 +355,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					Pipeline: sdk.Pipeline{
 						Name: "pipeline-root",
 					},
+					Context: &sdk.WorkflowNodeContext{},
 					Triggers: []sdk.WorkflowNodeTrigger{
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
@@ -359,6 +364,8 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 								Pipeline: sdk.Pipeline{
 									Name: "pipeline-child",
 								},
+								Context: &sdk.WorkflowNodeContext{},
+
 								Triggers: []sdk.WorkflowNodeTrigger{
 									{
 										WorkflowDestNode: sdk.WorkflowNode{
@@ -367,6 +374,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 											Pipeline: sdk.Pipeline{
 												Name: "pipeline-child",
 											},
+											Context: &sdk.WorkflowNodeContext{},
 										},
 									},
 								},
@@ -430,6 +438,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					Pipeline: sdk.Pipeline{
 						Name: "pipeline",
 					},
+					Context: &sdk.WorkflowNodeContext{},
 					Triggers: []sdk.WorkflowNodeTrigger{
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
@@ -438,6 +447,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 								Pipeline: sdk.Pipeline{
 									Name: "pipeline",
 								},
+								Context: &sdk.WorkflowNodeContext{},
 							},
 						},
 						{
@@ -447,6 +457,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 								Pipeline: sdk.Pipeline{
 									Name: "pipeline",
 								},
+								Context: &sdk.WorkflowNodeContext{},
 							},
 						},
 					},
@@ -475,6 +486,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 									Pipeline: sdk.Pipeline{
 										Name: "pipeline",
 									},
+									Context: &sdk.WorkflowNodeContext{},
 								},
 							},
 							{
@@ -484,6 +496,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 									Pipeline: sdk.Pipeline{
 										Name: "pipeline",
 									},
+									Context: &sdk.WorkflowNodeContext{},
 								},
 							},
 							{
@@ -493,6 +506,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 									Pipeline: sdk.Pipeline{
 										Name: "pipeline",
 									},
+									Context: &sdk.WorkflowNodeContext{},
 								},
 							},
 						},
@@ -507,6 +521,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 									Pipeline: sdk.Pipeline{
 										Name: "pipeline",
 									},
+									Context: &sdk.WorkflowNodeContext{},
 								},
 							},
 						},
@@ -547,7 +562,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 
 			for actualKey := range actualValues {
 				_, ok := expextedValues[actualKey]
-				assert.True(t, ok, "got %s, but not found is expected workflow")
+				assert.True(t, ok, "got %s, but not found is expected workflow", actualKey)
 			}
 		})
 	}

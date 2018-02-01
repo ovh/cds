@@ -65,6 +65,18 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	sort.Sort(orderArgs(c.Args...))
 	sort.Sort(orderArgs(c.OptionalArgs...))
 
+	if len(c.Ctx) > 0 {
+		cmd.Use = cmd.Use + " ["
+	}
+
+	for _, a := range c.Ctx {
+		cmd.Use = cmd.Use + " " + strings.ToUpper(a.Name)
+	}
+
+	if len(c.Ctx) > 0 {
+		cmd.Use = cmd.Use + " ]"
+	}
+
 	for _, a := range c.Args {
 		cmd.Use = cmd.Use + " " + strings.ToUpper(a.Name)
 	}
@@ -96,7 +108,8 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		}
 	}
 
-	definedArgs := append(c.Args, c.OptionalArgs...)
+	definedArgs := append(c.Ctx, c.Args...)
+	definedArgs = append(definedArgs, c.OptionalArgs...)
 	sort.Sort(orderArgs(definedArgs...))
 	definedArgs = append(definedArgs, c.VariadicArgs)
 
@@ -112,20 +125,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		return cmd
 	}
 
-	cmd.Run = func(cmd *cobra.Command, args []string) {
-		//Command must receive as leat mandatory args
-		if len(c.Args) > len(args) {
-			ExitOnError(ErrWrongUsage, cmd.Help)
-		}
-		//If there is no optionnal args but there more args than expected
-		if c.VariadicArgs.Name == "" && len(c.OptionalArgs) == 0 && len(args) > len(c.Args) {
-			ExitOnError(ErrWrongUsage, cmd.Help)
-		}
-		//If there is a variadic arg, we condider at least one arg mandatory
-		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+1) {
-			ExitOnError(ErrWrongUsage, cmd.Help)
-		}
-
+	var argsToVal = func(args []string) Values {
 		vals := Values{}
 		nbDefinedArgs := len(definedArgs)
 		if c.VariadicArgs.Name != "" {
@@ -162,6 +162,32 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				ExitOnError(ErrWrongUsage, cmd.Help)
 			}
 		}
+		return vals
+	}
+
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		if c.PreRun != nil {
+			if err := c.PreRun(&c, &args); err != nil {
+				fmt.Println("Error: ", err)
+				ExitOnError(ErrWrongUsage, cmd.Help)
+			}
+		}
+
+		//Command must receive as leat mandatory args
+		if len(c.Args)+len(c.Ctx) > len(args) {
+			ExitOnError(ErrWrongUsage, cmd.Help)
+		}
+
+		//If there is no optionnal args but there more args than expected
+		if c.VariadicArgs.Name == "" && len(c.OptionalArgs) == 0 && (len(args) > len(c.Args)+len(c.Ctx)) {
+			ExitOnError(ErrWrongUsage, cmd.Help)
+		}
+		//If there is a variadic arg, we condider at least one arg mandatory
+		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) {
+			ExitOnError(ErrWrongUsage, cmd.Help)
+		}
+
+		vals := argsToVal(args)
 
 		format, _ := cmd.Flags().GetString("format")
 
@@ -348,6 +374,10 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 	}
 
 	t := reflect.TypeOf(i)
+	if t.Kind() == reflect.Ptr {
+		t = reflect.TypeOf(reflect.ValueOf(i).Elem().Interface())
+	}
+
 	var ok = true
 	for i := 0; i < s.NumField() && ok; i++ {
 		f := s.Field(i)

@@ -46,7 +46,7 @@
                 </div>
               </div>
 
-              <div class="ui info message" *ngIf="!group.users || group.users?.length === 0">
+              <div class="ui info message" *ngIf="members && members?.length === 0">
                   {{ 'group_no_member' | translate }}
               </div>
 
@@ -102,6 +102,13 @@
         <div class="sixteen wide column">
             <h3>{{'token_title_handling' | translate}}</h3>
             <app-token-list [tokens]="group.tokens" [displayAdd]="true" (event)="tokenEvent($event)"></app-token-list>
+            <div class="ui green message animated fadeIn" *ngIf="tokenGenerated != null">
+              <i class="close icon" (click)="tokenGenerated = null"></i>
+              <div class="header">
+                {{'token_generated' | translate}} <span *ngIf="tokenGenerated.description">({{tokenGenerated.description}})</span>
+              </div>
+              <p>{{tokenGenerated.token}}</p>
+            </div>
         </div>
       </div>
     </div>

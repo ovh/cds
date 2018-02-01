@@ -100,7 +100,7 @@ var (
 		return nil
 	}
 
-	loadPermission = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	LoadPermission = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		app.Permission = permission.ApplicationPermission(app.ProjectKey, app.Name, u)
 		return nil
 	}

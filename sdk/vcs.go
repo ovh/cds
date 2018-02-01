@@ -57,6 +57,9 @@ type VCSAuthorizedClient interface {
 	// Release
 	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
 	UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error
+
+	// Forks
+	ListForks(repo string) ([]VCSRepo, error)
 }
 
 // GetDefaultBranch return the default branch

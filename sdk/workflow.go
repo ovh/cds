@@ -703,7 +703,7 @@ func (c *WorkflowNodeContext) HasDefaultPayload() bool {
 	dumper.ExtraFields.DetailedMap = false
 	dumper.ExtraFields.DetailedStruct = false
 	dumper.ExtraFields.Len = false
-	dumper.ExtraFields.Type =  false
+	dumper.ExtraFields.Type = false
 	m, _ := dumper.ToStringMap(c.DefaultPayload)
 	return len(m) > 0
 }

@@ -8,9 +8,7 @@ import {XHRBackend} from '@angular/http';
 import {ActionComponent} from './action.component';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
-import {RequirementStore} from '../../service/worker-model/requirement/requirement.store';
 import {ParameterService} from '../../service/parameter/parameter.service';
-import {RequirementService} from '../../service/worker-model/requirement/requirement.service';
 import {Action} from '../../model/action.model';
 import {RequirementEvent} from '../requirements/requirement.event.model';
 import {Requirement} from '../../model/requirement.model';
@@ -24,6 +22,8 @@ import {StepEvent} from './step/step.event';
 import {WorkerModelService} from '../../service/worker-model/worker-model.service';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import {RequirementStore} from '../../service/requirement/requirement.store';
+import {RequirementService} from '../../service/requirement/requirement.service';
 
 describe('CDS: Action Component', () => {
 

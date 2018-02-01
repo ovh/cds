@@ -11,6 +11,8 @@ import {Scheduler} from './scheduler.model';
 import {Key} from './keys.model';
 import {VCSStrategy} from './vcs.model';
 
+export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+
 export class Application {
     id: number;
     name: string;
@@ -39,6 +41,18 @@ export class Application {
 
     // workflow depth for horizontal tree view
     horizontalDepth: number;
+
+    // Return true if pattern is good
+    public static checkName(name: string): boolean {
+      if (!name) {
+          return false;
+      }
+
+      if (!applicationNamePattern.test(name)) {
+          return false;
+      }
+      return true;
+    }
 }
 
 export class ApplicationPipeline {

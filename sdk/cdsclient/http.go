@@ -26,6 +26,17 @@ const (
 	RequestedWithValue = "X-CDS-SDK"
 	// RequestedNameHeader is used as HTTP header
 	RequestedNameHeader = "X-Requested-Name"
+	// RequestedIfModifiedSinceHeader is used as HTTP header
+	RequestedIfModifiedSinceHeader = "If-Modified-Since"
+
+	// ResponseAPITimeHeader is used as HTTP header
+	ResponseAPITimeHeader = "X-Api-Time"
+	// ResponseAPINanosecondsTimeHeader is used as HTTP header
+	ResponseAPINanosecondsTimeHeader = "X-Api-Nanoseconds-Time"
+	// ResponseEtagHeader is used as HTTP header
+	ResponseEtagHeader = "Etag"
+	// ResponseProcessTimeHeader is used as HTTP header
+	ResponseProcessTimeHeader = "X-Api-Process-Time"
 )
 
 // RequestModifier is used to modify behavior of Request and Steam functions
@@ -50,33 +61,37 @@ func SetHeader(key, value string) RequestModifier {
 
 // PostJSON post the *in* struct as json. If set, it unmarshalls the response to *out*
 func (c *client) PostJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
-	return c.RequestJSON(http.MethodPost, path, in, out, mods...)
+	_, _, code, err := c.RequestJSON(http.MethodPost, path, in, out, mods...)
+	return code, err
 }
 
 // PostJSON ut the *in* struct as json. If set, it unmarshalls the response to *out*
 func (c *client) PutJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
-	return c.RequestJSON(http.MethodPut, path, in, out, mods...)
+	_, _, code, err := c.RequestJSON(http.MethodPut, path, in, out, mods...)
+	return code, err
 }
 
 // GetJSON get the requested path If set, it unmarshalls the response to *out*
 func (c *client) GetJSON(path string, out interface{}, mods ...RequestModifier) (int, error) {
-	return c.RequestJSON(http.MethodGet, path, nil, out, mods...)
+	_, _, code, err := c.RequestJSON(http.MethodGet, path, nil, out, mods...)
+	return code, err
 }
 
 // DeleteJSON deletes the requested path If set, it unmarshalls the response to *out*
 func (c *client) DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error) {
-	return c.RequestJSON(http.MethodDelete, path, nil, out, mods...)
+	_, _, code, err := c.RequestJSON(http.MethodDelete, path, nil, out, mods...)
+	return code, err
 }
 
 // RequestJSON does a request with the *in* struct as json. If set, it unmarshalls the response to *out*
-func (c *client) RequestJSON(method, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
+func (c *client) RequestJSON(method, path string, in interface{}, out interface{}, mods ...RequestModifier) ([]byte, http.Header, int, error) {
 	var b = []byte{}
 	var err error
 
 	if in != nil {
 		b, err = json.Marshal(in)
 		if err != nil {
-			return 0, err
+			return nil, nil, 0, err
 		}
 	}
 
@@ -85,28 +100,28 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 		body = bytes.NewBuffer(b)
 	}
 
-	res, code, err := c.Request(method, path, body, mods...)
+	res, header, code, err := c.Request(method, path, body, mods...)
 	if err != nil {
-		return code, err
+		return nil, nil, code, err
 	}
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return code, err
+			return res, nil, code, err
 		}
 	}
 
 	if code >= 400 {
-		return code, fmt.Errorf("HTTP %d", code)
+		return res, nil, code, fmt.Errorf("HTTP %d", code)
 	}
-	return code, nil
+	return res, header, code, nil
 }
 
 // Request executes an authentificated HTTP request on $path given $method and $args
-func (c *client) Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, int, error) {
-	respBody, code, err := c.Stream(method, path, body, false, mods...)
+func (c *client) Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error) {
+	respBody, respHeader, code, err := c.Stream(method, path, body, false, mods...)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 	defer func() {
 		// Drain and close the body to let the Transport reuse the connection
@@ -117,7 +132,7 @@ func (c *client) Request(method string, path string, body io.Reader, mods ...Req
 	var bodyBtes []byte
 	bodyBtes, err = ioutil.ReadAll(respBody)
 	if err != nil {
-		return nil, code, err
+		return nil, nil, code, err
 	}
 
 	if c.config.Verbose {
@@ -127,14 +142,14 @@ func (c *client) Request(method string, path string, body io.Reader, mods ...Req
 	}
 
 	if err := sdk.DecodeError(bodyBtes); err != nil {
-		return nil, code, err
+		return nil, nil, code, err
 	}
 
-	return bodyBtes, code, nil
+	return bodyBtes, respHeader, code, nil
 }
 
 // Stream makes an authenticated http request and return io.ReadCloser
-func (c *client) Stream(method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, int, error) {
+func (c *client) Stream(method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
 	var savederror error
 
 	var bodyContent []byte
@@ -142,7 +157,7 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 	if body != nil {
 		bodyContent, err = ioutil.ReadAll(body)
 		if err != nil {
-			return nil, 0, err
+			return nil, nil, 0, err
 		}
 	}
 
@@ -210,7 +225,7 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 
 		// if everything is fine, return body
 		if errDo == nil && resp.StatusCode < 500 {
-			return resp.Body, resp.StatusCode, nil
+			return resp.Body, resp.Header, resp.StatusCode, nil
 		}
 
 		// if no request error by status > 500, check CDS error
@@ -225,7 +240,7 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 			}
 			if cdserr := sdk.DecodeError(body); cdserr != nil {
 				resp.Body.Close()
-				return nil, resp.StatusCode, cdserr
+				return nil, resp.Header, resp.StatusCode, cdserr
 			}
 		}
 
@@ -247,11 +262,11 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 		}
 
 		if errDo != nil {
-			return nil, 0, errDo
+			return nil, nil, 0, errDo
 		}
 	}
 
-	return nil, 0, fmt.Errorf("x%d: %s", c.config.Retry, savederror)
+	return nil, nil, 0, fmt.Errorf("x%d: %s", c.config.Retry, savederror)
 }
 
 // UploadMultiPart upload multipart

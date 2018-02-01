@@ -21,15 +21,17 @@ var (
 
 	pipelineGroup = cli.NewCommand(pipelineGroupCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(pipelineGroupImportCmd, pipelineGroupImportRun, nil),
+			cli.NewCommand(pipelineGroupImportCmd, pipelineGroupImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var pipelineGroupImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import group linked to a CDS pipeline",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "pipeline-name"},
 		{Name: "path"},
 	},
@@ -78,7 +80,7 @@ func pipelineGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.PipelineGroupsImport(v["project-key"], v["pipeline-name"], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.PipelineGroupsImport(v[_ProjectKey], v["pipeline-name"], reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
 	fmt.Printf("Groups imported in pipeline %s with success\n", v["pipeline-name"])

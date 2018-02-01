@@ -33,7 +33,7 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, e
 	//Parse workflow
 	w, errW := ew.GetWorkflow()
 	if errW != nil {
-		return nil, sdk.WrapError(errW, "ParseAndImport> Workflow parsing error")
+		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
 	}
 	w.ProjectID = proj.ID
 	w.ProjectKey = proj.Key

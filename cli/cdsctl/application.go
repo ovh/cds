@@ -20,28 +20,28 @@ var (
 
 	application = cli.NewCommand(applicationCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(applicationListCmd, applicationListRun, nil),
-			cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil),
-			cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil),
-			cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil),
+			cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil, withAllCommandModifiers()...),
+			cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil, withAllCommandModifiers()...),
 			applicationKey,
 			applicationGroup,
 			applicationVariable,
-			cli.NewCommand(applicationExportCmd, applicationExportRun, nil),
-			cli.NewCommand(applicationImportCmd, applicationImportRun, nil),
+			cli.NewCommand(applicationExportCmd, applicationExportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(applicationImportCmd, applicationImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var applicationListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS applications",
-	Args: []cli.Arg{
-		{Name: "project-key"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
 	},
 }
 
 func applicationListRun(v cli.Values) (cli.ListResult, error) {
-	apps, err := client.ApplicationList(v["project-key"])
+	apps, err := client.ApplicationList(v[_ProjectKey])
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +51,14 @@ func applicationListRun(v cli.Values) (cli.ListResult, error) {
 var applicationShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS application",
-	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "app-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
 	},
 }
 
 func applicationShowRun(v cli.Values) (interface{}, error) {
-	app, err := client.ApplicationGet(v["project-key"], v["app-name"])
+	app, err := client.ApplicationGet(v[_ProjectKey], v[_ApplicationName])
 	if err != nil {
 		return nil, err
 	}
@@ -68,29 +68,31 @@ func applicationShowRun(v cli.Values) (interface{}, error) {
 var applicationCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS application",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "application-name"},
+		{Name: _ApplicationName},
 	},
 	Aliases: []string{"add"},
 }
 
 func applicationCreateRun(v cli.Values) error {
-	a := &sdk.Application{Name: v["application-name"]}
-	return client.ApplicationCreate(v["project-key"], a)
+	a := &sdk.Application{Name: v[_ApplicationName]}
+	return client.ApplicationCreate(v[_ProjectKey], a)
 }
 
 var applicationDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS application",
-	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "application-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
 	},
 }
 
 func applicationDeleteRun(v cli.Values) error {
-	err := client.ApplicationDelete(v["project-key"], v["application-name"])
+	err := client.ApplicationDelete(v[_ProjectKey], v[_ApplicationName])
 	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 		fmt.Println(err.Error())
 		os.Exit(0)
@@ -101,8 +103,10 @@ func applicationDeleteRun(v cli.Values) error {
 var applicationImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import an application",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "filename"},
 	},
 	Flags: []cli.Flag{
@@ -128,7 +132,7 @@ func applicationImportRun(c cli.Values) error {
 		format = "json"
 	}
 
-	msgs, err := client.ApplicationImport(c.GetString("project-key"), f, format, c.GetBool("force"))
+	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), f, format, c.GetBool("force"))
 	if err != nil {
 		return err
 	}
@@ -143,9 +147,9 @@ func applicationImportRun(c cli.Values) error {
 var applicationExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export an application",
-	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "application-name"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
 	},
 	Flags: []cli.Flag{
 		{
@@ -164,7 +168,7 @@ var applicationExportCmd = cli.Command{
 }
 
 func applicationExportRun(c cli.Values) error {
-	btes, err := client.ApplicationExport(c.GetString("project-key"), c.GetString("application-name"), c.GetBool("with-permissions"), c.GetString("format"))
+	btes, err := client.ApplicationExport(c.GetString(_ProjectKey), c.GetString(_ApplicationName), c.GetBool("with-permissions"), c.GetString("format"))
 	if err != nil {
 		return err
 	}

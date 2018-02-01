@@ -296,6 +296,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 //processWorkflowNodeRun triggers execution of a node run
 func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}) (bool, error) {
+	//TODO: Check user permission
 	t0 := time.Now()
 	log.Debug("processWorkflowNodeRun> Begin [#%d.%d]%s.%d", w.Number, subnumber, w.Workflow.Name, n.ID)
 	defer func() {
@@ -484,29 +485,30 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 	}
 
-	var vcsAuthor, vcsMessage string
-	var errVcs error
-	run.VCSRepository, run.VCSBranch, run.VCSHash, vcsAuthor, vcsMessage, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
+	var isRoot bool
+	if n.ID == w.Workflow.Root.ID {
+		isRoot = true
+	}
+
+	vcsInfos, errVcs := getVCSInfos(db, store, p, gitValues, n, run, !isRoot)
 	if errVcs != nil {
+		if isRoot {
+			return false, errVcs
+		}
 		log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
 	}
 
-	//If git values doesn't exist in jobparams, they doesn't exist in gitValues; inject them from VCSInfos in run.BuildParameters
-	if v := gitValues[tagGitRepository]; v == "" {
-		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
-	}
-	if v := gitValues[tagGitBranch]; v == "" {
-		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
-	}
-	if v := gitValues[tagGitHash]; v == "" {
-		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
-	}
-	if v := gitValues[tagGitAuthor]; v == "" {
-		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsAuthor)
-	}
-	if v := gitValues[tagGitMessage]; v == "" {
-		sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsMessage)
-	}
+	run.VCSRepository = vcsInfos.repository
+	run.VCSBranch = vcsInfos.branch
+	run.VCSHash = vcsInfos.hash
+
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.url", sdk.StringParameter, vcsInfos.url)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.http_url", sdk.StringParameter, vcsInfos.httpurl)
 
 	//Tag VCS infos
 	w.Tag(tagGitRepository, run.VCSRepository)
@@ -516,7 +518,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	} else {
 		w.Tag(tagGitHash, run.VCSHash)
 	}
-	w.Tag(tagGitAuthor, vcsAuthor)
+	w.Tag(tagGitAuthor, vcsInfos.author)
 
 	// Add env tag
 	if n.Context != nil && n.Context.Environment != nil {

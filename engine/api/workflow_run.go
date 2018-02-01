@@ -57,7 +57,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	//Parse all form values
 	mapFilters := map[string]string{}
 	for k := range r.Form {
-		if k != "offset" && k != "limit" {
+		if k != "offset" && k != "limit" && k != "workflow" {
 			mapFilters[k] = r.FormValue(k)
 		}
 	}
@@ -166,6 +166,7 @@ func (api *API) getWorkflowRunsHandler() Handler {
 	}
 }
 
+// getWorkflowRunNumHandler returns the last run number for the given workflow
 func (api *API) getWorkflowRunNumHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -177,15 +178,11 @@ func (api *API) getWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunNumHandler> Cannot load current run num")
 		}
 
-		m := struct {
-			Num int64 `json:"num"`
-		}{
-			Num: num,
-		}
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, r, sdk.WorkflowRunNumber{Num: num}, http.StatusOK)
 	}
 }
 
+// postWorkflowRunNumHandler updates the current run number for the given workflow
 func (api *API) postWorkflowRunNumHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -438,7 +435,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		}
 
 		if wNode == nil || errW != nil {
-			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, name, nodeName, workflow.LoadOptions{})
+			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, getUser(ctx), name, nodeName, workflow.LoadOptions{})
 			if errCtx != nil {
 				return sdk.WrapError(errCtx, "getWorkflowCommitsHandler> Unable to load workflow node context")
 			}

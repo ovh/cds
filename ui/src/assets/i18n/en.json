@@ -117,6 +117,7 @@
   "btn_continue": "Continue",
   "btn_close": "Close",
   "btn_create": "Create",
+  "btn_finish": "Finish",
   "btn_delete": "Delete",
   "btn_detach": "Unlink pipeline",
   "btn_link": "Connect",
@@ -128,6 +129,7 @@
   "btn_run_workflow": "Run workflow",
   "btn_validate": "Validate",
   "btn_save": "Save",
+  "btn_next": "Next",
   "btn_edit": "Edit",
   "btn_add": "Add",
 
@@ -137,6 +139,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_optional": "Optional",
   "common_ask_cds_administrator": "Ask your CDS Administrator",
   "common_audit": "Audit",
   "common_advanced": "Advanced",
@@ -203,6 +206,8 @@
   "common_usage": "Usage",
   "common_orientation": "Orientation",
   "common_copy_clipboard": "Copy to clipboad",
+  "common_select": "Select",
+  "common_create": "Create",
 
   "keys_added": "Key added",
   "keys_add_title": "Add a key",
@@ -270,6 +275,7 @@
   "token_title_handling": "Handle group tokens",
   "token_loading": "Loading tokens",
   "token_group_name": "Group",
+  "token_generated": "Here is your generated token",
 
   "hook_create_label": "Create a hook",
   "hook_deleted": "Hook deleted",
@@ -376,6 +382,7 @@
   "pipeline_label_stop": "Stop pipeline",
   "pipeline_loading": "Loading pipeline...",
   "pipeline_name": "Pipeline name",
+  "pipeline_name_new": "New pipeline name",
   "pipeline_name_error": "Invalid pipeline name. Allowed pattern is: a-zA-Z0-9._-",
   "pipeline_parameters_list_title": "List of pipeline parameters: ",
   "pipeline_parameters_form_title": "Add a parameter: ",
@@ -403,6 +410,7 @@
   "pipeline_stage_edit": "Edit stage",
   "pipeline_stage_moved": "Stage moved",
   "pipeline_stage_no": "The pipeline has no stage",
+  "pipeline_wizard_description": "Create or select your first pipeline for you workflow",
 
   "poller_added": "Poller added",
   "poller_create_label": "Create a poller",
@@ -576,7 +584,6 @@
   "vcs_ssh_key" : "SSH key",
   "vcs_pgp_key" : "PGP key",
 
-
   "warning_goto_application_variables": "application variables",
   "warning_goto_job": "job",
   "warning_goto_pipeline_parameter": "pipeline parameters",
@@ -668,6 +675,8 @@
   "workflow_node_context_pipeline_parameter": "Pipeline parameters",
   "workflow_node_context_payload": "Default payload",
   "workflow_run_node_job_queued": "Queued {{time}} ago",
+  "workflow_update_name_error": "Invalid workflow name. Allowed pattern is: a-zA-Z0-9",
+  "workflow_wizard_description": "Choose your workflow options",
 
   "workflow_node_edition": "Edit your configuration",
   "workflow_node_condition_warning": "Attention if you have basic conditions and advanced at the same time, only advanced conditions will be effective.",
@@ -695,7 +704,7 @@
   "workflow_node_join_add": "Add a join",
   "workflow_node_join_link": "Link to a join",
   "workflow_node_pipeline_synchronized": "Pipeline up to date",
-  "workflow_node_parent": "Add a parent node",
+  "workflow_node_parent": "Add a parent pipeline",
   "workflow_node_remove_multiple_parent": "A workflow must not have multiple root pipelines",
   "workflow_node_trigger_add": "Add a pipeline",
   "workflow_node_trigger_condition_list_title": "Trigger condition list",

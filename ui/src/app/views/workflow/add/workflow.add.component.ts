@@ -1,11 +1,11 @@
 import {Component} from '@angular/core';
-import {Workflow} from '../../../model/workflow.model';
+import {Workflow, WorkflowNode} from '../../../model/workflow.model';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {first} from 'rxjs/operators';
+import {first, finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-add',
@@ -18,9 +18,10 @@ export class WorkflowAddComponent {
     project: Project;
 
     loading = false;
+    currentStep = 0;
 
-
-    constructor(private _activatedRoute: ActivatedRoute, private _router: Router, private _workflowStore: WorkflowStore,
+    constructor(private _activatedRoute: ActivatedRoute,
+                private _router: Router, private _workflowStore: WorkflowStore,
                 private _translate: TranslateService, private _toast: ToastService) {
         this.workflow = new Workflow();
 
@@ -33,14 +34,25 @@ export class WorkflowAddComponent {
         this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'workflows'}});
     }
 
-    createWorkflow(): void {
+    createWorkflow(node: WorkflowNode): void {
         this.loading = true;
-        this._workflowStore.addWorkflow(this.project.key, this.workflow).pipe(first()).subscribe(() => {
-            this._toast.success('', this._translate.instant('workflow_added'));
-            this.loading = false;
-            this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name]);
-        }, () => {
-            this.loading = false;
-        });
+        this.workflow.root = node;
+        this._workflowStore.addWorkflow(this.project.key, this.workflow)
+            .pipe(
+                first(),
+                finalize(() => this.loading = false)
+            )
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_added'));
+                this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name]);
+            });
+    }
+
+    goToNextStep(stepNum: number): void {
+      if (stepNum != null) {
+        this.currentStep = stepNum;
+      } else {
+        this.currentStep++;
+      }
     }
 }

@@ -11,7 +11,7 @@
         </thead>
         <tbody>
         <tr *ngFor="let p of getDataForCurrentPage()" class="ui form">
-            <td>
+            <td class="middle-aligned">
                 <div class="ui fluid input" *ngIf="mode === 'edit'">
                     <input class="ui input" [(ngModel)]="p.name" (keydown)="p.hasChanged = true" [disabled]="p.updating">
                 </div>

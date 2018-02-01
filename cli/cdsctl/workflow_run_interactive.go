@@ -17,7 +17,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 
 	for {
 		var errrg error
-		wo, errrg = client.WorkflowRunGet(v["project-key"], v["workflow-name"], w.Number)
+		wo, errrg = client.WorkflowRunGet(v[_ProjectKey], v[_WorkflowName], w.Number)
 		if errrg != nil {
 			return errrg
 		}
@@ -39,7 +39,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 							end = fmt.Sprintf(" end:%s", job.Done)
 						}
 
-						jobLine := fmt.Sprintf("%s  %s/%s/%s/%s %s %s \n", status, v["workflow-name"], wn.Name, stage.Name, job.Job.Action.Name, start, end)
+						jobLine := fmt.Sprintf("%s  %s/%s/%s/%s %s %s \n", status, v[_WorkflowName], wn.Name, stage.Name, job.Job.Action.Name, start, end)
 						if job.Status == sdk.StatusFail.String() {
 							newOutput += fmt.Sprintf(tm.Color(tm.Bold(jobLine), tm.RED))
 						} else {
@@ -52,7 +52,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 						newOutput += fmt.Sprintf("\n")
 
 						for _, step := range job.Job.StepStatus {
-							buildState, errb := client.WorkflowNodeRunJobStep(v["project-key"], v["workflow-name"], wo.Number, wnr.ID, job.ID, step.StepOrder)
+							buildState, errb := client.WorkflowNodeRunJobStep(v[_ProjectKey], v[_WorkflowName], wo.Number, wnr.ID, job.ID, step.StepOrder)
 							if errb != nil {
 								return errb
 							}
@@ -66,7 +66,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 								if step.Status == sdk.StatusFail.String() {
 									if !failedOnStepKnowned {
 										// hide "Starting" text on resume
-										failedOn = fmt.Sprintf("%s%s / %s / %s / %s %s \n", failedOn, v["workflow-name"], wn.Name, stage.Name, titleStep, strings.Replace(line, "Starting", "", 1))
+										failedOn = fmt.Sprintf("%s%s / %s / %s / %s %s \n", failedOn, v[_WorkflowName], wn.Name, stage.Name, titleStep, strings.Replace(line, "Starting", "", 1))
 									}
 									failedOnStepKnowned = true
 									titleStep = fmt.Sprintf(tm.Color(titleStep, tm.RED))
@@ -101,14 +101,14 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 
 	if wo != nil {
 		iconStatus, _ := statusShort(wo.Status)
-		tm.Printf("Workflow: %s - RUN %d.%d - %s %s \n", v["workflow-name"], wo.Number, wo.LastSubNumber, wo.Status, iconStatus)
+		tm.Printf("Workflow: %s - RUN %d.%d - %s %s \n", v[_WorkflowName], wo.Number, wo.LastSubNumber, wo.Status, iconStatus)
 		tm.Printf("Start: %s - End %s\n", wo.Start, wo.LastModified)
 		tm.Printf("Duration: %s\n", sdk.Round(wo.LastModified.Sub(wo.Start), time.Second).String())
 		if wo.Status == sdk.StatusFail.String() {
 			tm.Println(tm.Color(fmt.Sprintf("Failed on: %s", failedOn), tm.RED))
 		}
 
-		u := fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", baseURL, v["project-key"], v["workflow-name"], wo.Number)
+		u := fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", baseURL, v[_ProjectKey], v[_WorkflowName], wo.Number)
 		tm.Printf("View on web UI: %s\n", u)
 	}
 	tm.Flush()

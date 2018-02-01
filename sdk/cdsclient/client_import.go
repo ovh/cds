@@ -17,7 +17,7 @@ func (c *client) PipelineImport(projectKey string, content io.Reader, format str
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, errReq := c.Request("POST", url, content)
+	btes, _, _, errReq := c.Request("POST", url, content)
 	if errReq != nil {
 		return nil, errReq
 	}
@@ -55,7 +55,7 @@ func (c *client) ApplicationImport(projectKey string, content io.Reader, format 
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, code, err := c.Request("POST", url, content, mods...)
+	btes, _, code, err := c.Request("POST", url, content, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (c *client) WorkflowImport(projectKey string, content io.Reader, format str
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, code, err := c.Request("POST", url, content, mods...)
+	btes, _, code, err := c.Request("POST", url, content, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (c *client) WorkflowPush(projectKey string, tarContent io.Reader) ([]string
 		},
 	}
 
-	btes, code, err := c.Request("POST", url, tarContent, mods...)
+	btes, _, code, err := c.Request("POST", url, tarContent, mods...)
 	if err != nil {
 		return nil, err
 	}

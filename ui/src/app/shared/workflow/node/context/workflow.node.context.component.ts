@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {Project} from '../../../../model/project.model';
 import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
-import {cloneDeep, unionBy} from 'lodash';
+import {cloneDeep} from 'lodash';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {VariableService} from '../../../../service/variable/variable.service';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
@@ -12,6 +12,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {finalize} from 'rxjs/operators';
+import {Pipeline} from '../../../../model/pipeline.model';
 declare var CodeMirror: any;
 
 @Component({
@@ -47,6 +48,7 @@ export class WorkflowNodeContextComponent {
     loadingBranches = false;
 
     pipParamsReady = false;
+    currentPipeline: Pipeline;
     pipelineSubscription: Subscription;
 
     constructor(
@@ -91,9 +93,10 @@ export class WorkflowNodeContextComponent {
             this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
                 let pip = pips.get(this.project.key + '-' + this.node.pipeline.name);
                 if (pip) {
+                    this.currentPipeline = pip;
                     this.pipParamsReady = true;
                     this.editableNode.context.default_pipeline_parameters =
-                        unionBy(pip.parameters, this.editableNode.context.default_pipeline_parameters, 'name');
+                        Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters);
                     try {
                         this.editableNode.context.default_payload = JSON.parse(this.payloadString);
                         this.invalidJSON = false;

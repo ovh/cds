@@ -20,7 +20,7 @@ func (c *client) EnvironmentVariableCreate(projectKey string, envName string, va
 }
 
 func (c *client) EnvironmentVariableDelete(projectKey string, envName string, varName string) error {
-	_, _, err := c.Request("DELETE", "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(varName), nil)
+	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(varName), nil)
 	return err
 }
 

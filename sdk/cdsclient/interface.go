@@ -4,11 +4,16 @@ import (
 	"archive/tar"
 	"context"
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
+
+type Filter struct {
+	Name, Value string
+}
 
 // ExportImportInterface exposes pipeline and application export and import function
 type ExportImportInterface interface {
@@ -125,7 +130,7 @@ type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project, groupName string) error
 	ProjectDelete(projectKey string) error
 	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
-	ProjectList() ([]sdk.Project, error)
+	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectGroupsImport(projectKey string, content io.Reader, format string, force bool) (sdk.Project, error)
@@ -180,6 +185,7 @@ type UserClient interface {
 type WorkerClient interface {
 	WorkerModelBook(id int64) error
 	WorkerList() ([]sdk.Worker, error)
+	WorkerModelAdd(name string, modelType string, image string, groupID int64) (sdk.Model, error)
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerModels() ([]sdk.Model, error)
@@ -193,10 +199,13 @@ type WorkflowClient interface {
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
 	WorkflowDelete(projectKey string, workflowName string) error
 	WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
+	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
 	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual, number, fromNodeID int64) (*sdk.WorkflowRun, error)
+	WorkflowRunNumberGet(projectKey string, workflowName string) (*sdk.WorkflowRunNumber, error)
+	WorkflowRunNumberSet(projectKey string, workflowName string, number int64) error
 	WorkflowStop(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowNodeStop(projectKey string, workflowName string, number, fromNodeID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
@@ -251,5 +260,5 @@ type Raw interface {
 	PutJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
 	GetJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
 	DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
-	Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, int, error)
+	Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
 }

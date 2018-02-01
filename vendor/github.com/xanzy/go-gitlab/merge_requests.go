@@ -53,13 +53,13 @@ type MergeRequest struct {
 		State     string     `json:"state"`
 		CreatedAt *time.Time `json:"created_at"`
 	} `json:"author"`
-	Assignees []struct {
+	Assignee struct {
 		ID        int        `json:"id"`
 		Username  string     `json:"username"`
 		Name      string     `json:"name"`
 		State     string     `json:"state"`
 		CreatedAt *time.Time `json:"created_at"`
-	} `json:"assignees"`
+	} `json:"assignee"`
 	SourceProjectID           int        `json:"source_project_id"`
 	TargetProjectID           int        `json:"target_project_id"`
 	Labels                    []string   `json:"labels"`
