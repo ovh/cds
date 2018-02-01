@@ -69,7 +69,9 @@ func TestImport(t *testing.T) {
 			name: "simple workflow insertion",
 			args: args{
 				w: &sdk.Workflow{
-					Name: "test-1",
+					Name:      "test-1",
+					Metadata:  sdk.Metadata{"triggered_by": "bla"},
+					PurgeTags: []string{"aa", "bb"},
 					Root: &sdk.WorkflowNode{
 						Name: "pipeline",
 						Ref:  "pipeline",

@@ -64,6 +64,11 @@ func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User,
 	return nil
 }
 
+// PostInsert is a db hook
+func (w *Workflow) PostInsert(db gorp.SqlExecutor) error {
+	return w.PostUpdate(db)
+}
+
 // PostGet is a db hook
 func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
@@ -347,6 +352,11 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	w.LastModified = time.Now()
 	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id) VALUES ($1, $2, $3) RETURNING id", w.Name, w.Description, w.ProjectID).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
+	}
+
+	dbw := Workflow(*w)
+	if err := dbw.PostInsert(db); err != nil {
+		return sdk.WrapError(err, "Insert> Cannot post insert hook")
 	}
 
 	if w.Root == nil {
