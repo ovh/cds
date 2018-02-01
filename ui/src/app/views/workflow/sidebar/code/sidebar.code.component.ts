@@ -8,6 +8,7 @@ import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.se
 import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
+import {Subscription} from 'rxjs/Subscription';
 import {finalize} from 'rxjs/operators';
 
 @Component({
@@ -40,6 +41,7 @@ export class WorkflowSidebarCodeComponent {
     @ViewChild('codeMirror')
     codemirror: CodemirrorComponent;
 
+    asCodeEditorSubscription: Subscription;
     codeMirrorConfig: any;
 
     exportedWf: string;
@@ -60,10 +62,18 @@ export class WorkflowSidebarCodeComponent {
             lineNumbers: true,
             autoRefresh: true,
         };
+
+        this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
+            .subscribe((state) => {
+                if (state != null && state.save) {
+                    this.save();
+                }
+            });
     }
 
     cancel() {
-        this._workflowCore.toggleAsCodeEditor(false);
+        this._workflowCore.setWorkflowPreview(null);
+        this._workflowCore.toggleAsCodeEditor({open: false, save: false});
     }
 
     preview() {
@@ -78,7 +88,7 @@ export class WorkflowSidebarCodeComponent {
         this._workflowStore.importWorkflow(this.project.key, this.workflow.name, this.exportedWf)
             .pipe(finalize(() => this.loading = false))
             .subscribe((wf) => {
-                this._workflowCore.toggleAsCodeEditor(false);
+                this._workflowCore.toggleAsCodeEditor({open: false, save: false});
                 this._workflowCore.setWorkflowPreview(null);
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });

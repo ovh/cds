@@ -10,7 +10,7 @@ export class WorkflowCoreService {
     private _sideBarStatus: BehaviorSubject<boolean> = new BehaviorSubject(true);
     private _currentWorkflowRun: BehaviorSubject<WorkflowRun> = new BehaviorSubject(null);
     private _linkJoinEvent: BehaviorSubject<WorkflowNode> = new BehaviorSubject(null);
-    private _asCodeEditorEvent: BehaviorSubject<boolean> = new BehaviorSubject(null);
+    private _asCodeEditorEvent: BehaviorSubject<{open: boolean, save: boolean}> = new BehaviorSubject(null);
     private _previewWorkflow: BehaviorSubject<Workflow> = new BehaviorSubject(null);
 
     getSidebarStatus(): Observable<boolean> {
@@ -21,11 +21,11 @@ export class WorkflowCoreService {
         this._sideBarStatus.next(o);
     }
 
-    getAsCodeEditor(): Observable<boolean> {
-        return new Observable<boolean>(fn => this._asCodeEditorEvent.subscribe(fn));
+    getAsCodeEditor(): Observable<{open: boolean, save: boolean}> {
+        return new Observable<{open: boolean, save: boolean}>(fn => this._asCodeEditorEvent.subscribe(fn));
     }
 
-    toggleAsCodeEditor(o: boolean): void {
+    toggleAsCodeEditor(o: {open: boolean, save: boolean}): void {
         this._asCodeEditorEvent.next(o);
     }
 

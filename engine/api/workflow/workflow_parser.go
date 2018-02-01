@@ -13,7 +13,7 @@ import (
 
 // Parse parse an exportentities.workflow and return the parsed workflow
 func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
-	log.Info("Parse>> Import workflow %s in project %s", ew.Name, proj.Key)
+	log.Info("Parse>> Parse workflow %s in project %s", ew.Name, proj.Key)
 	log.Debug("Parse>> Workflow: %+v", ew)
 
 	//Check valid application name

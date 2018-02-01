@@ -51,10 +51,9 @@ export class WorkflowComponent implements OnInit {
         });
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
-          .subscribe((open) => {
-              this.asCodeEditorOpen = open;
-              if (open === false) {
-                  this._workflowCore.setWorkflowPreview(null);
+          .subscribe((state) => {
+              if (state != null) {
+                  this.asCodeEditorOpen = state.open;
               }
           });
 

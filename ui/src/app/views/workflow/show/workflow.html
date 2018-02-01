@@ -56,15 +56,21 @@
                                                             </button>
                                                         </div>
                                                         <div class="six wide column centered">
-                                                            <div class="ui blue button" (click)="showAsCodeEditor()" [class.loading]="loading">
-                                                                <i class="terminal icon"></i> {{'workflow_edit_as_code' | translate}}
-                                                                <i class="orange warning sign icon ml5"
-                                                                    *ngIf="previewWorkflow"
-                                                                    suiPopup
-                                                                    [popupText]="'workflow_preview_mode' | translate"
-                                                                    popupPlacement="top center">
-                                                                </i>
+                                                            <div class="ui buttons">
+                                                              <div class="ui blue button" (click)="showAsCodeEditor()" [class.loading]="loading">
+                                                                  <i class="terminal icon"></i> {{'workflow_edit_as_code' | translate}}
+                                                                  <i class="orange warning sign icon ml5"
+                                                                      *ngIf="previewWorkflow"
+                                                                      suiPopup
+                                                                      [popupText]="'workflow_preview_mode' | translate"
+                                                                      popupPlacement="top center">
+                                                                  </i>
+                                                              </div>
+                                                              <div *ngIf="previewWorkflow" class="ui green button" (click)="savePreview()" [class.loading]="loading">
+                                                                  <i class="save icon"></i> {{'btn_save' | translate}}
+                                                              </div>
                                                             </div>
+
                                                         </div>
                                                         <div class="right aligned five wide column" title="{{'btn_run_custom_worklow' | translate}}">
                                                             <div class="ui green buttons">

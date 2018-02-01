@@ -72,7 +72,7 @@ export class WorkflowShowComponent {
             let workflowName = params['workflowName'];
             let projkey = params['key'];
 
-            this._workflowCoreService.toggleAsCodeEditor(false);
+            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
             if (projkey && workflowName) {
                 if (this.workflowSubscription) {
@@ -109,7 +109,16 @@ export class WorkflowShowComponent {
         this._workflowCoreService.setCurrentWorkflowRun(null);
 
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
-            .subscribe((wfPreview) => this.previewWorkflow = wfPreview);
+            .subscribe((wfPreview) => {
+                this.previewWorkflow = wfPreview
+                if (wfPreview != null) {
+                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+                }
+            });
+    }
+
+    savePreview() {
+        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
     }
 
     changeDirection() {
@@ -133,7 +142,7 @@ export class WorkflowShowComponent {
     }
 
     showAsCodeEditor() {
-      this._workflowCoreService.toggleAsCodeEditor(true);
+      this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {

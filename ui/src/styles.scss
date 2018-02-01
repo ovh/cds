@@ -49,7 +49,7 @@ input[disabled] {
 .CodeMirror-scroll {
   text-align: left;
   height: 100%;
-  overflow: hidden !important;
+  overflow: auto;
 }
 
 $scrollbarsize: 10px;
