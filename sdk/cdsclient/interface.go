@@ -61,6 +61,8 @@ type EnvironmentClient interface {
 	EnvironmentDelete(projectKey string, envName string) error
 	EnvironmentGet(projectKey string, envName string, opts ...RequestModifier) (*sdk.Environment, error)
 	EnvironmentList(projectKey string) ([]sdk.Environment, error)
+	EnvironmentExport(projectKey, name string, exportWithPermissions bool, format string) ([]byte, error)
+	EnvironmentImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
 	EnvironmentGroupsImport(projectKey, envName string, content io.Reader, format string, force bool) (sdk.Environment, error)
 	EnvironmentVariableClient
 	EnvironmentKeysClient

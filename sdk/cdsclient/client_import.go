@@ -72,6 +72,48 @@ func (c *client) ApplicationImport(projectKey string, content io.Reader, format 
 	return messages, nil
 }
 
+func (c *client) EnvironmentImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
+	var url string
+	url = fmt.Sprintf("/project/%s/import/environment", projectKey)
+	if force {
+		url += "?force=true"
+	}
+
+	mods := []RequestModifier{}
+	switch format {
+	case "json":
+		mods = []RequestModifier{
+			func(r *http.Request) {
+				r.Header.Set("Content-Type", "application/json")
+			},
+		}
+	case "yaml", "yml":
+		mods = []RequestModifier{
+			func(r *http.Request) {
+				r.Header.Set("Content-Type", "application/x-yaml")
+			},
+		}
+	default:
+		return nil, exportentities.ErrUnsupportedFormat
+	}
+
+	btes, _, code, err := c.Request("POST", url, content, mods...)
+	if err != nil {
+		return nil, err
+	}
+
+	if code > 400 {
+		return nil, fmt.Errorf("HTTP Code %d", code)
+	}
+
+	messages := []string{}
+	if err := json.Unmarshal(btes, &messages); err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}
+
 func (c *client) WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
 	var url string
 	url = fmt.Sprintf("/project/%s/import/workflows", projectKey)

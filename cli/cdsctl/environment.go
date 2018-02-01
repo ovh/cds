@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"reflect"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -27,6 +29,8 @@ var (
 			environmentKey,
 			environmentVariable,
 			environmentGroup,
+			cli.NewCommand(environmentExportCmd, environmentExportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(environmentImportCmd, environmentImportRun, nil, withAllCommandModifiers()...),
 		})
 )
 
@@ -82,4 +86,82 @@ func environmentDeleteRun(v cli.Values) error {
 	}
 
 	return err
+}
+
+var environmentImportCmd = cli.Command{
+	Name:  "import",
+	Short: "Import an environment",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "filename"},
+	},
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.Bool,
+			Name:    "force",
+			Usage:   "Override environment if exists",
+			Default: "false",
+		},
+	},
+}
+
+func environmentImportRun(c cli.Values) error {
+	path := c.GetString("filename")
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var format = "yaml"
+	if strings.HasSuffix(path, ".json") {
+		format = "json"
+	}
+
+	msgs, err := client.EnvironmentImport(c.GetString(_ProjectKey), f, format, c.GetBool("force"))
+	if err != nil {
+		return err
+	}
+
+	for _, s := range msgs {
+		fmt.Println(s)
+	}
+
+	return nil
+}
+
+var environmentExportCmd = cli.Command{
+	Name:  "export",
+	Short: "Export an environment",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "environment-name"},
+	},
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.Bool,
+			Name:    "with-permissions",
+			Usage:   "Export permissions",
+			Default: "false",
+		},
+		{
+			Kind:    reflect.String,
+			Name:    "format",
+			Usage:   "Specify export format (json or yaml)",
+			Default: "yaml",
+		},
+	},
+}
+
+func environmentExportRun(c cli.Values) error {
+	btes, err := client.EnvironmentExport(c.GetString(_ProjectKey), c.GetString("environment-name"), c.GetBool("with-permissions"), c.GetString("format"))
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(btes))
+	return nil
 }

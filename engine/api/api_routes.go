@@ -223,8 +223,8 @@ func (api *API) InitRouter() {
 
 	// Environment
 	r.Handle("/project/{permProjectKey}/environment", r.GET(api.getEnvironmentsHandler), r.POST(api.addEnvironmentHandler), r.PUT(api.updateEnvironmentsHandler, DEPRECATED))
-	r.Handle("/project/{permProjectKey}/environment/import", r.POST(api.importNewEnvironmentHandler))
-	r.Handle("/project/{key}/environment/import/{permEnvironmentName}", r.POST(api.importIntoEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/import", r.POST(api.importNewEnvironmentHandler, DEPRECATED))
+	r.Handle("/project/{key}/environment/import/{permEnvironmentName}", r.POST(api.importIntoEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}", r.GET(api.getEnvironmentHandler), r.PUT(api.updateEnvironmentHandler), r.DELETE(api.deleteEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/usage", r.GET(api.getEnvironmentUsageHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/keys", r.GET(api.getKeysInEnvironmentHandler), r.POST(api.addKeyInEnvironmentHandler))
