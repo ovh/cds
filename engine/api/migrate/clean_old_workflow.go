@@ -79,6 +79,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 								return
 							}
 							if !ok {
+								hasE <- false
 								close(hasE)
 								return
 							}
@@ -117,6 +118,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 						}
 						log.Info("CleanOldWorkflow> End removing pipelines")
 					}
+					break
 				}
 
 			}
