@@ -27,6 +27,8 @@ type Workflow struct {
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
 	PipelineHooks   []HookEntry                 `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
 	Permissions     map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	Metadata        map[string]string           `json:"metadata,omitempty" yaml:"metadata,omitempty" db:"-"`
+	PurgeTags       []string                    `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty" db:"-"`
 }
 
 type NodeEntry struct {
@@ -58,6 +60,14 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	exportedWorkflow.Version = WorkflowVersion1
 	exportedWorkflow.Workflow = map[string]NodeEntry{}
 	exportedWorkflow.Hooks = map[string][]HookEntry{}
+	if len(w.Metadata) > 0 {
+		exportedWorkflow.Metadata = make(map[string]string, len(w.Metadata))
+		for k, v := range w.Metadata {
+			exportedWorkflow.Metadata[k] = v
+		}
+	}
+
+	exportedWorkflow.PurgeTags = w.PurgeTags
 	nodes := w.Nodes(false)
 
 	if withPermission {
@@ -302,6 +312,13 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	}
 	if err := w.checkDependencies(); err != nil {
 		return nil, err
+	}
+	wf.PurgeTags = w.PurgeTags
+	if len(w.Metadata) > 0 {
+		wf.Metadata = make(map[string]string, len(w.Metadata))
+		for k, v := range w.Metadata {
+			wf.Metadata[k] = v
+		}
 	}
 
 	rand.Seed(time.Now().Unix())
