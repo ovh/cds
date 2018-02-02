@@ -46,8 +46,8 @@
                                           <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
                                       </div>
                                       <div class="field">
-                                          <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
-                                          <button class="ui right floated green button" (click)="goToNextStep()"
+                                          <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                          <button class="ui right floated green button" type="button" (click)="goToNextStep()"
                                                   [disabled]="!workflow.name" [class.loading]="loading">{{ 'btn_next' | translate }}
                                           </button>
                                       </div>
