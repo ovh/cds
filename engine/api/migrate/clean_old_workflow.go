@@ -89,7 +89,9 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 				close(chanErr)
 
 				for has := range hasErrorChan {
+					log.Info("CanClean pipeline %+v", has)
 					if !has {
+						log.Info("CleanOldWorkflow> Start removing pipelines")
 						tx, errT := DBFunc().Begin()
 						if errT != nil {
 							log.Warning("CleanOldWorkflow> Cannot start transaction to clean application %s %d: %s", a.Name, a.ID, errT)
@@ -113,6 +115,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 							tx.Rollback()
 							continue
 						}
+						log.Info("CleanOldWorkflow> End removing pipelines")
 					}
 				}
 
@@ -125,6 +128,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 
 // cleanApplicationHook don't care about error
 func cleanApplicationHook(db *gorp.DbMap, store cache.Store, wg *sync.WaitGroup, p sdk.Project, app sdk.Application, apiURL string) {
+	log.Info("cleanApplicationHook> Start deleting hooks")
 	defer wg.Done()
 	if app.VCSServer == "" {
 		return
@@ -169,10 +173,12 @@ func cleanApplicationHook(db *gorp.DbMap, store cache.Store, wg *sync.WaitGroup,
 
 		// Delete hook on table hook is done after
 	}
+	log.Info("cleanApplicationHook> End deleting hooks")
 }
 
 func cleanApplicationArtifact(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, app sdk.Application) {
 	defer wg.Done()
+	log.Info("cleanApplicationArtifact> Start deleting artifacts")
 	arts, err := artifact.LoadArtifactByApplicationID(db, app.ID)
 	if err != nil {
 		err := fmt.Errorf("cleanApplicationArtifact> Cannot load artifact for application %s: %s", app.ID, err)
@@ -189,10 +195,12 @@ func cleanApplicationArtifact(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- e
 		}
 		time.Sleep(1 * time.Second)
 	}
+	log.Info("cleanApplicationArtifact> End deleting artifacts")
 }
 
 func cleanApplicationPipelineBuild(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, app sdk.Application) {
 	defer wg.Done()
+	log.Info("cleanApplicationPipelineBuild> Start deleting pipeline build")
 	pipBuildMax := int64(50)
 	for {
 		// Delete test
@@ -240,12 +248,12 @@ func cleanApplicationPipelineBuild(db *gorp.DbMap, wg *sync.WaitGroup, chErr cha
 			break
 		}
 	}
-
+	log.Info("cleanApplicationPipelineBuild> End deleting pipeline build")
 }
 
 func cleanApplication(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, app sdk.Application) {
 	defer wg.Done()
-
+	log.Info("cleanApplication> Start deleting scheduler/poller/trigger/warining")
 	if err := scheduler.DeleteByApplicationID(db, app.ID); err != nil {
 		errF := fmt.Errorf("cleanApplication> Unable to delete scheduler for application %s: %s", app.Name, err)
 		log.Warning("%s", errF)
@@ -273,5 +281,6 @@ func cleanApplication(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, ap
 		chErr <- errF
 		return
 	}
+	log.Info("cleanApplication> End deleting scheduler/poller/trigger/warining")
 	return
 }
