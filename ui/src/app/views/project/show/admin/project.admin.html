@@ -3,7 +3,7 @@
         <app-zone-content class="bottom">
             <sui-progress class="indicating" [value]="migrationValue" [showProgress]="true" [maximum]="project.applications?.length" [precision]="1" *ngIf="project.workflow_migration === 'STARTED'">
             </sui-progress>
-            <i class="green check icon" *ngIf="project.workflow_migration === 'DONE'"></i>
+            <i class="green check icon" *ngIf="project.workflow_migration === 'DONE' || project.workflow_migration === 'CLEANING'"></i>
         </app-zone-content>
     </app-zone>
     <app-zone header="{{ 'project_rename_title' | translate }}">

@@ -34,6 +34,15 @@
                 </li>
             </ul>
         </div>
+        <div *ngSwitchCase="'CLEANING'">
+            <div class="ui grid" *ngIf="keysDone">
+                <div class="ui stackable four column grid">
+                    <div class="center aligned column" *ngFor="let k of keysDone">
+                        <a href="#" [routerLink]="['/admin', 'migration', k]">{{k}}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div *ngSwitchCase="'DONE'">
             <div class="ui grid" *ngIf="keysDone">
                 <div class="ui stackable four column grid">

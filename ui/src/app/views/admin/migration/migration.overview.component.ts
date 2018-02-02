@@ -38,7 +38,7 @@ export class MigrationOverviewComponent implements OnInit {
                     proj.applications.forEach( app => {
                         if (app.workflow_migration === 'DONE') {
                             data.progress++;
-                        } else if (app.workflow_migration === 'STARTED') {
+                        } else if (app.workflow_migration === 'STARTED' || app.workflow_migration === 'CLEANING') {
                             data.progress += 0.5;
                         }
                     });

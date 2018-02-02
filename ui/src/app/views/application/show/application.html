@@ -7,7 +7,7 @@
         </div>
         <div class="CDSmenu" *ngIf="application">
             <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')" *ngIf="application.workflow_migration !== 'DONE'">
+                <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')" *ngIf="application.workflow_migration !== 'DONE' && application.workflow_migration !== 'CLEANING'">
                   <i class="rocket icon"></i>{{ 'common_workflow' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')">
@@ -34,7 +34,7 @@
         <div class="scrollingContent">
             <div class="paddingContent">
                 <div class="viewContent">
-                    <div [hidden]="selectedTab !== 'workflow'" class="workflow" *ngIf="application.workflow_migration !== 'DONE'">
+                    <div [hidden]="selectedTab !== 'workflow'" class="workflow" *ngIf="application.workflow_migration !== 'DONE' && application.workflow_migration !== 'CLEANING'">
                         <app-application-workflow [tab]="selectedTab" [project]="project" [application]="application" [(applicationFilter)]="appFilter" (changeWorkerEvent)="changeWorkerFilter($event)" #workflow></app-application-workflow>
                     </div>
                     <div [ngSwitch]="selectedTab">
