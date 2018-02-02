@@ -26,6 +26,9 @@ var workflowRunManualCmd = cli.Command{
 			ShortHand: "d",
 			Usage:     "Run the workflow with payload data",
 			IsValid: func(s string) bool {
+				if strings.TrimSpace(s) == "" {
+					return true
+				}
 				data := map[string]interface{}{}
 				return json.Unmarshal([]byte(s), &data) == nil
 			},
@@ -81,7 +84,7 @@ var workflowRunManualCmd = cli.Command{
 
 func workflowRunManualRun(v cli.Values) error {
 	manual := sdk.WorkflowNodeRunManual{}
-	if v.GetString("data") != "" {
+	if strings.TrimSpace(v.GetString("data")) != "" {
 		data := map[string]interface{}{}
 		if err := json.Unmarshal([]byte(v["data"]), &data); err != nil {
 			return fmt.Errorf("Error payload isn't a valid json")
