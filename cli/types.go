@@ -44,6 +44,11 @@ func (v *Values) GetBool(s string) bool {
 	return strings.ToLower((*v)[s]) == "true" || strings.ToLower((*v)[s]) == "yes" || strings.ToLower((*v)[s]) == "y" || strings.ToLower((*v)[s]) == "1"
 }
 
+// GetStringSlice returns a string slice
+func (v *Values) GetStringSlice(s string) []string {
+	return strings.Split((*v)[s], "||")
+}
+
 // Arg represent a command argument
 type Arg struct {
 	Name    string

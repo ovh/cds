@@ -103,6 +103,8 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		case reflect.Bool:
 			b, _ := strconv.ParseBool(f.Default)
 			_ = cmd.Flags().BoolP(f.Name, f.ShortHand, b, f.Usage)
+		case reflect.Slice:
+			_ = cmd.Flags().StringSliceP(f.Name, f.ShortHand, nil, f.Usage)
 		default:
 			_ = cmd.Flags().StringP(f.Name, f.ShortHand, f.Default, f.Usage)
 		}
@@ -156,6 +158,10 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				b, err := cmd.Flags().GetBool(s)
 				ExitOnError(err)
 				vals[s] = fmt.Sprintf("%v", b)
+			case reflect.Slice:
+				slice, err := cmd.Flags().GetStringSlice(s)
+				ExitOnError(err)
+				vals[s] = strings.Join(slice, "||")
 			}
 			if c.Flags[i].IsValid != nil && !c.Flags[i].IsValid(vals[s]) {
 				fmt.Printf("%s is invalid\n", s)

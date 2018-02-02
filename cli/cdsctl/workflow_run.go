@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -19,10 +20,36 @@ var workflowRunManualCmd = cli.Command{
 		{Name: _ProjectKey},
 		{Name: _WorkflowName},
 	},
-	OptionalArgs: []cli.Arg{
-		{Name: "payload"},
-	},
 	Flags: []cli.Flag{
+		{
+			Name:      "data",
+			ShortHand: "d",
+			Usage:     "Run the workflow with payload data",
+			IsValid: func(s string) bool {
+				data := map[string]interface{}{}
+				return json.Unmarshal([]byte(s), &data) == nil
+			},
+			Kind: reflect.String,
+		},
+		{
+			Name:      "parameter",
+			ShortHand: "p",
+			Usage:     "Run the workflow with pipeline parameter",
+			IsValid: func(s string) bool {
+				if s == "" {
+					return true
+				}
+				// Hacking cobra which split param with a double pipe
+				splittedParam := strings.Split(s, "||")
+				for _, p := range splittedParam {
+					if strings.Count(p, "=") < 1 {
+						return false
+					}
+				}
+				return true
+			},
+			Kind: reflect.Slice,
+		},
 		{
 			Name:  "run-number",
 			Usage: "Existing Workflow RUN Number",
@@ -54,9 +81,22 @@ var workflowRunManualCmd = cli.Command{
 
 func workflowRunManualRun(v cli.Values) error {
 	manual := sdk.WorkflowNodeRunManual{}
-	if v["payload"] != "" {
-		if err := json.Unmarshal([]byte(v["payload"]), &manual.Payload); err != nil {
+	if v.GetString("data") != "" {
+		data := map[string]interface{}{}
+		if err := json.Unmarshal([]byte(v["data"]), &data); err != nil {
 			return fmt.Errorf("Error payload isn't a valid json")
+		}
+		manual.Payload = data
+	}
+
+	pipParams := v.GetStringSlice("parameter")
+	if len(pipParams) > 0 {
+		for _, sParam := range pipParams {
+			if sParam == "" {
+				continue
+			}
+			splittedParam := strings.SplitN(sParam, "=", 2)
+			sdk.AddParameter(&manual.PipelineParameters, splittedParam[0], sdk.StringParameter, splittedParam[1])
 		}
 	}
 
