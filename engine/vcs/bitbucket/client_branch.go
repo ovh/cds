@@ -80,6 +80,7 @@ func (b *bitbucketClient) Branch(fullname string, filter string) (*sdk.VCSBranch
 				LatestCommit: b.LatestHash,
 				Default:      b.IsDefault,
 			}
+			break
 		}
 	}
 
