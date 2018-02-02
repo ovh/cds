@@ -7,13 +7,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/migrate"
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 )
