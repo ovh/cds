@@ -35,7 +35,11 @@
                                   <div class="fourteen wide column">
                                       <div class="field">
                                           <label>{{ 'workflow_name' | translate}}</label>
-                                          <input name="name" class="ui input" [(ngModel)]="workflow.name">
+                                          <input
+                                            name="name"
+                                            class="ui input"
+                                            [(ngModel)]="workflow.name"
+                                            pattern="^[a-zA-Z0-9._-]{1,}$">
                                       </div>
                                       <div class="field">
                                           <label>{{ 'workflow_description' | translate}}</label>
