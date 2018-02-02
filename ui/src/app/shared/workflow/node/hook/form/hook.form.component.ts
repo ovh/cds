@@ -50,6 +50,8 @@ export class WorkflowNodeHookFormComponent {
     conditionNames: Array<string>;
     loadingModels = true;
     displayConfig = false;
+    invalidJSON = false;
+    codeMirrorConfig: any;
 
     // Ng semantic modal
     @ViewChild('nodeHookFormModal')
@@ -58,6 +60,13 @@ export class WorkflowNodeHookFormComponent {
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
     constructor(private _hookService: HookService, private _modalService: SuiModalService, private _workflowStore: WorkflowStore) {
+        this.codeMirrorConfig = {
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            mode: 'application/json',
+            lineWrapping: true,
+            autoRefresh: true
+        };
     }
 
     updateHook(): void {
@@ -95,5 +104,16 @@ export class WorkflowNodeHookFormComponent {
 
     deleteHook(): void {
         this.hookEvent.emit(new HookEvent('delete', this.hook));
+    }
+
+    changeCodeMirror(code: string) {
+        if (typeof code === 'string') {
+            this.invalidJSON = false;
+            try {
+                JSON.parse(code);
+            } catch (e) {
+                this.invalidJSON = true;
+            }
+        }
     }
 }
