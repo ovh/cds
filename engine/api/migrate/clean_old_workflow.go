@@ -89,7 +89,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 				close(chanErr)
 
 				for has := range hasErrorChan {
-					if has {
+					if !has {
 						tx, errT := DBFunc().Begin()
 						if errT != nil {
 							log.Warning("CleanOldWorkflow> Cannot start transaction to clean application %s %d: %s", a.Name, a.ID, errT)
