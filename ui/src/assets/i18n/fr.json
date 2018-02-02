@@ -677,7 +677,7 @@
   "workflow_node_context_pipeline_parameter": "Paramètres du pipeline",
   "workflow_node_context_payload": "Payload par défaut",
   "workflow_run_node_job_queued": "Attente depuis {{time}}",
-  "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : a-zA-Z0-9",
+  "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : ^[a-zA-Z0-9._-]{1,}$",
   "workflow_wizard_description": "Choisissez vos options de workflow",
   "workflow_edit_as_code": "Editer en code",
 

@@ -10,7 +10,7 @@
                                [disabled]="loading"
                                required
                                #formWorkflowUpdateName="ngModel"
-                               pattern="[a-zA-Z0-9]*">
+                               pattern="^[a-zA-Z0-9._-]{1,}$">
                         <div *ngIf="formWorkflowUpdateName && !formWorkflowUpdateName.valid && !formWorkflowUpdateName.pristine"
                              class="ui error message">
                             <p>{{'workflow_update_name_error' | translate}}</p>
