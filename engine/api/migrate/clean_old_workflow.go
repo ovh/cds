@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hook"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -92,14 +93,22 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 					if has {
 						tx, errT := DBFunc().Begin()
 						if errT != nil {
-							log.Warning("CleanOldWorkflow> Cannot start transaction to clean application %s %d: %s", app.Name, app.ID, errT)
+							log.Warning("CleanOldWorkflow> Cannot start transaction to clean application %s %d: %s", a.Name, a.ID, errT)
 							continue
 						}
-						if err := application.DeleteAllApplicationPipeline(tx, app.ID); err != nil {
-							log.Warning("cleanApplication>Cannot redetach pipeline from application %s %d: %s", app.Name, app.ID, err)
+						if err := application.DeleteAllApplicationPipeline(tx, a.ID); err != nil {
+							log.Warning("cleanApplication>Cannot detach pipeline from application %s %d: %s", a.Name, a.ID, err)
 							tx.Rollback()
 							continue
 						}
+
+						a.WorkflowMigration = STATUS_DONE
+						if err := application.Update(tx, store, a, u); err != nil {
+							log.Warning("cleanApplication>Cannot update application migration status %s %d: %s", a.Name, a.ID, err)
+							tx.Rollback()
+							continue
+						}
+
 						if err := tx.Commit(); err != nil {
 							log.Warning("cleanApplication>Cannot commit transaction: %s", err)
 							tx.Rollback()
@@ -112,7 +121,6 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 
 		}
 	}
-	// clean application
 
 }
 
@@ -188,7 +196,34 @@ func cleanApplicationPipelineBuild(db *gorp.DbMap, wg *sync.WaitGroup, chErr cha
 	defer wg.Done()
 	pipBuildMax := int64(50)
 	for {
-		result, err := db.Exec("DELETE FROM pipeline_build where application_id = $1 LIMIT $2", app.ID, pipBuildMax)
+		// Delete test
+		queryTest := `DELETE FROM pipeline_build_test WHERE pipeline_build_id IN (SELECT id FROM pipeline_build WHERE application_id = $1 ORDER BY id ASC LIMIT $2)`
+		if _, err := db.Exec(queryTest, app.ID, pipBuildMax); err != nil {
+			err := fmt.Errorf("cleanApplicationPipelineBuild> Cannot delete pipeline-build-test for application %d: %s", app.ID, err)
+			log.Warning("%s", err)
+			chErr <- err
+			break
+		}
+
+		// Delete logs
+		queryLog := `DELETE FROM pipeline_build_log WHERE pipeline_build_id IN (SELECT id FROM pipeline_build WHERE application_id = $1 ORDER BY id ASC LIMIT $2)`
+		if _, err := db.Exec(queryLog, app.ID, pipBuildMax); err != nil {
+			err := fmt.Errorf("cleanApplicationPipelineBuild> Cannot delete pipeline-build-log for application %d: %s", app.ID, err)
+			log.Warning("%s", err)
+			chErr <- err
+			break
+		}
+
+		// Delete build job
+		queryJob := `DELETE FROM pipeline_build_job WHERE pipeline_build_id IN (SELECT id FROM pipeline_build WHERE application_id = $1 ORDER BY id ASC LIMIT $2)`
+		if _, err := db.Exec(queryJob, app.ID, pipBuildMax); err != nil {
+			err := fmt.Errorf("cleanApplicationPipelineBuild> Cannot delete pipeline-build-job for application %d: %s", app.ID, err)
+			log.Warning("%s", err)
+			chErr <- err
+			break
+		}
+
+		result, err := db.Exec("DELETE FROM pipeline_build where id IN (SELECT id FROM pipeline_build WHERE application_id = $1 ORDER BY id ASC LIMIT $2)", app.ID, pipBuildMax)
 		if err != nil {
 			err := fmt.Errorf("cleanApplicationPipelineBuild> Cannot delete pipeline-build for application %d: %s", app.ID, err)
 			log.Warning("%s", err)
@@ -206,6 +241,7 @@ func cleanApplicationPipelineBuild(db *gorp.DbMap, wg *sync.WaitGroup, chErr cha
 			break
 		}
 	}
+
 }
 
 func cleanApplication(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, app sdk.Application) {

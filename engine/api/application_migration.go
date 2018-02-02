@@ -51,40 +51,6 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 				return sdk.WrapError(errA, "migrationApplicationWorkflowHandler> Cannot load app")
 			}
 
-			if err := trigger.DeleteApplicationTriggers(tx, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler.trigger.DeleteApplicationTriggers")
-			}
-			for _, appPip := range appToClean.Pipelines {
-				if err := application.DeleteAllApplicationPipeline(tx, appToClean.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-				}
-				// Delete test results
-				if err := pipeline.DeletePipelineTestResults(tx, appPip.Pipeline.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-				}
-			}
-			if err := scheduler.DeleteByApplicationID(tx, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-			}
-
-			if err := poller.DeleteAll(tx, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-			}
-
-			if err := artifact.DeleteArtifactsByApplicationID(tx, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-			}
-
-			// Delete application_pipeline_notif
-			query := `DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (SELECT id FROM application_pipeline WHERE application_id = $1)`
-			if _, err := tx.Exec(query, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Delete notification")
-			}
-
-			if err := pipeline.DeletePipelineBuildByApplicationID(tx, appToClean.ID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeletePipelineBuildByApplicationID")
-			}
-
 			appToClean.WorkflowMigration = migrate.STATUS_CLEANING
 			appToClean.ProjectID = p.ID
 			if err := application.Update(tx, api.Cache, appToClean, getUser(ctx)); err != nil {
