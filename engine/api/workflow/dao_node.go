@@ -105,6 +105,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && n.Context.ApplicationID == 0 {
 			// Remove repository webhook
 			hooksUUIDs = append(hooksUUIDs, h.UUID)
+			continue
 		}
 
 		//Configure the hook
