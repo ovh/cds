@@ -84,6 +84,32 @@ export class ProjectStore {
             let proj = store.get(key);
             if (proj) {
                 proj = Object.assign({}, proj, res);
+                if (opts) {
+                    opts.forEach( o => {
+                       switch (o.fieldName) {
+                           case 'workflow_names':
+                               if (!res.workflow_names) {
+                                   proj.workflow_names = [];
+                               }
+                               break;
+                           case 'pipeline_names':
+                               if (!res.pipeline_names) {
+                                   proj.pipeline_names = [];
+                               }
+                               break;
+                           case 'application_names':
+                               if (!res.application_names) {
+                                   proj.application_names = [];
+                               }
+                               break;
+                           case 'environments':
+                               if (!res.environments) {
+                                   proj.environments = [];
+                               }
+                               break;
+                       }
+                    });
+                }
             } else {
                 proj = res;
             }
