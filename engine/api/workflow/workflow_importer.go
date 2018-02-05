@@ -97,6 +97,11 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 			msgChan <- sdk.NewMessage(sdk.MsgWorkflowImportedInserted, w.Name)
 		}
 
+		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
+		if _, errHr := HookRegistration(db, store, &sdk.Workflow{}, *w, proj); errHr != nil {
+			return sdk.WrapError(errHr, "Import>")
+		}
+
 		return importWorkflowGroups(db, w)
 	}
 
@@ -114,6 +119,11 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		return sdk.WrapError(err, "Import> Unable to update workflow")
 	}
 
+	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
+	if _, errHr := HookRegistration(db, store, oldW, *w, proj); errHr != nil {
+		return sdk.WrapError(errHr, "Import>")
+	}
+
 	if err := importWorkflowGroups(db, w); err != nil {
 		return err
 	}
@@ -122,7 +132,6 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		msgChan <- sdk.NewMessage(sdk.MsgWorkflowImportedUpdated, w.Name)
 	}
 	return nil
-
 }
 
 func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {
