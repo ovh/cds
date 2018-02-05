@@ -83,7 +83,7 @@ func initViper(w *currentWorker) {
 	w.bookedPBJobID = viper.GetInt64("booked_pb_job_id")
 	w.bookedWJobID = viper.GetInt64("booked_workflow_job_id")
 
-	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name)
+	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name, viper.GetBool("insecure"))
 }
 
 func (w *currentWorker) initServer(c context.Context) {

@@ -26,6 +26,9 @@ func cmdMain(w *currentWorker) *cobra.Command {
 	pflags.String("api", "", "URL of CDS API")
 	viper.BindPFlag("api", pflags.Lookup("api"))
 
+	pflags.Bool("insecure", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
+	viper.BindPFlag("insecure", pflags.Lookup("insecure"))
+
 	pflags.String("token", "", "CDS Token")
 	viper.BindPFlag("token", pflags.Lookup("token"))
 

@@ -38,13 +38,13 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			if w.apiEndpoint == "" {
 				sdk.Exit("--api not provided, aborting update.")
 			}
-			w.client = cdsclient.NewWorker(w.apiEndpoint, "download")
+			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", viper.GetBool("insecure"))
 
 			urlBinary = w.client.DownloadURLFromAPI("worker", runtime.GOOS, runtime.GOARCH)
 			fmt.Printf("Updating worker binary from CDS API on %s...\n", urlBinary)
 		} else {
 			// no need to have apiEndpoint here
-			w.client = cdsclient.NewWorker("", "download")
+			w.client = cdsclient.NewWorker("", "download", false)
 
 			var errGH error
 			urlBinary, errGH = w.client.DownloadURLFromGithub("worker", runtime.GOOS, runtime.GOARCH)
