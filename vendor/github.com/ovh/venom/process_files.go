@@ -116,7 +116,7 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 		}
 		ts.Total = len(ts.TestCases)
 
-		b := pb.New(nSteps).Prefix(rightPad("⚙ "+ts.Package, " ", 47))
+		b := pb.New(nSteps).Prefix(rightPad("READING "+ts.Package, " ", 47))
 		b.ShowCounters = false
 		b.Output = v.LogOutput
 		if v.OutputDetails == DetailsLow {

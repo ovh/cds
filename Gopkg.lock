@@ -696,7 +696,8 @@
     "executors/ssh",
     "executors/web"
   ]
-  revision = "b33b89904e874839d0c728d17c85802e318d3314"
+  revision = "0646fd4622983c00f65debeae319ee9d774b43d4"
+  version = "0.17.0"
 
 [[projects]]
   name = "github.com/patrickmn/go-cache"
@@ -930,10 +931,10 @@
   revision = "d7e841db6909ae5e9eb7493f7b1ea7d7b15101e3"
 
 [[projects]]
+  branch = "master"
   name = "github.com/xanzy/go-gitlab"
   packages = ["."]
-  revision = "7bcfc0373b18ff9f02c7485a15a29053d85e8e56"
-  version = "v0.7.5"
+  revision = "e9b63f4c287702da85a1c0be96c98c8d7e98c5a5"
 
 [[projects]]
   name = "github.com/xeipuuv/gojsonpointer"

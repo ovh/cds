@@ -6,13 +6,14 @@ import (
 	"io/ioutil"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/venom"
-	"github.com/ovh/venom/executors"
+	migrate "github.com/rubenv/sql-migrate"
 	fixtures "gopkg.in/testfixtures.v2"
-
 	// SQL drivers.
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+
+	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name of the executor.
@@ -27,11 +28,12 @@ func New() venom.Executor {
 // Executor is a venom executor that can load
 // fixtures in many databases, using YAML schemas.
 type Executor struct {
-	Files    []string `json:"files" yaml:"files"`
-	Folder   string   `json:"folder" yaml:"folder"`
-	Database string   `json:"database" yaml:"database"`
-	DSN      string   `json:"dsn" yaml:"dsn"`
-	Schemas  []string `json:"schemas" yaml:"schemas"`
+	Files      []string `json:"files" yaml:"files"`
+	Folder     string   `json:"folder" yaml:"folder"`
+	Database   string   `json:"database" yaml:"database"`
+	DSN        string   `json:"dsn" yaml:"dsn"`
+	Schemas    []string `json:"schemas" yaml:"schemas"`
+	Migrations string   `json:"migrations" yaml:"migrations"`
 }
 
 // Result represents a step result.
@@ -71,6 +73,17 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 				return nil, fmt.Errorf("failed to exec schema from file %s : %v", s, err)
 			}
 		}
+	} else if e.Migrations != "" {
+		l.Debugf("loading migrations from folder %s\n", e.Migrations)
+
+		migrations := &migrate.FileMigrationSource{
+			Dir: e.Migrations,
+		}
+		n, errMigrate := migrate.Exec(db, e.Database, migrations, migrate.Up)
+		if errMigrate != nil {
+			return nil, fmt.Errorf("failed to apply up migrations: %s", errMigrate)
+		}
+		l.Debugf("applied %d migrations\n", n)
 	}
 	// Load fixtures in the databases.
 	// Bu default the package refuse to load if the database
