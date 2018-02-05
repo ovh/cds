@@ -52,7 +52,10 @@ export class ProjectRepoManagerFormComponent  {
                       this.connectLoading = false;
                       this.addRepoResponse = res;
                       this.modalInstance = verificationModal;
-                      verificationModal.show();
+                      setTimeout(() => {
+                          verificationModal.show();
+                      }, 1);
+
                   }, () => {
                       this.connectLoading = false;
                   });
