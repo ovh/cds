@@ -39,12 +39,12 @@ func (s *Service) webhookHandler() api.Handler {
 		}
 
 		//Prepare a web hook execution
-		exec := &TaskExecution{
+		exec := &sdk.TaskExecution{
 			Timestamp: time.Now().UnixNano(),
 			Type:      webHook.Type,
 			UUID:      webHook.UUID,
 			Config:    webHook.Config,
-			WebHook: &WebHookExecution{
+			WebHook: &sdk.WebHookExecution{
 				RequestBody:   req,
 				RequestHeader: r.Header,
 				RequestURL:    r.URL.RawQuery,
@@ -119,6 +119,13 @@ func (s *Service) getTaskHandler() api.Handler {
 		if t != nil {
 			return api.WriteJSON(w, r, t, http.StatusOK)
 		}
+
+		execs, err := s.Dao.FindAllTaskExecutions(t)
+		if err != nil {
+			return sdk.WrapError(err, "Hooks> getTaskHandler> Unable to load executions")
+		}
+
+		t.Executions = execs
 
 		return api.WriteJSON(w, r, t, http.StatusOK)
 	}

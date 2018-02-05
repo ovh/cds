@@ -176,6 +176,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", r.GET(api.getWorkflowHookHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/hook/model", r.GET(api.getWorkflowHookModelsHandler))
 
 	// Preview workflows
