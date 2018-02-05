@@ -17,10 +17,10 @@ func init() {
 func Test_doWebHookExecution(t *testing.T) {
 	log.SetLogger(t)
 	s := Service{}
-	task := &TaskExecution{
+	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeWebHook,
-		WebHook: &WebHookExecution{
+		WebHook: &sdk.WebHookExecution{
 			RequestBody: nil,
 			RequestURL:  "uid=42413e87905b813a375c7043ce9d4047b7e265ae3730b60180cad02ae81cc62385e5b05b9e7c758b15bb3872498a5e88963f3deac308f636baf345ed9cf1b259&project=IRTM&name=rtm-packaging&branch=master&hash=123456789&message=monmessage&author=sguiheux",
 		},
@@ -36,10 +36,10 @@ func Test_doWebHookExecution(t *testing.T) {
 func Test_doWebHookExecutionGithub(t *testing.T) {
 	log.SetLogger(t)
 	s := Service{}
-	task := &TaskExecution{
+	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
-		WebHook: &WebHookExecution{
+		WebHook: &sdk.WebHookExecution{
 			RequestBody: []byte(githubPushEvent),
 			RequestHeader: map[string][]string{
 				GithubHeader: {"push"},
@@ -59,10 +59,10 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 func Test_doWebHookExecutionTagGithub(t *testing.T) {
 	log.SetLogger(t)
 	s := Service{}
-	task := &TaskExecution{
+	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
-		WebHook: &WebHookExecution{
+		WebHook: &sdk.WebHookExecution{
 			RequestBody: []byte(githubTagEvent),
 			RequestHeader: map[string][]string{
 				GithubHeader: {"push"},
@@ -82,10 +82,10 @@ func Test_doWebHookExecutionTagGithub(t *testing.T) {
 func Test_doWebHookExecutionGitlab(t *testing.T) {
 	log.SetLogger(t)
 	s := Service{}
-	task := &TaskExecution{
+	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
-		WebHook: &WebHookExecution{
+		WebHook: &sdk.WebHookExecution{
 			RequestBody: []byte(gitlabPushEvent),
 			RequestHeader: map[string][]string{
 				GitlabHeader: {"Push Hook"},
@@ -105,10 +105,10 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 func Test_doWebHookExecutionBitbucket(t *testing.T) {
 	log.SetLogger(t)
 	s := Service{}
-	task := &TaskExecution{
+	task := &sdk.TaskExecution{
 		UUID: sdk.RandomString(10),
 		Type: TypeRepoManagerWebHook,
-		WebHook: &WebHookExecution{
+		WebHook: &sdk.WebHookExecution{
 			RequestBody: []byte(bitbucketPushEvent),
 			RequestHeader: map[string][]string{
 				BitbucketHeader: {"repo:refs_changed"},
