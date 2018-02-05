@@ -112,6 +112,7 @@ func NewPipelineV1(pip sdk.Pipeline, withPermission bool) (p PipelineV1) {
 		p.Parameters[v.Name] = ParameterValue{
 			Type:         string(v.Type),
 			DefaultValue: v.Value,
+			Description:  v.Description,
 		}
 	}
 
@@ -190,6 +191,7 @@ func NewPipeline(pip sdk.Pipeline, withPermission bool) (p *Pipeline) {
 			p.Parameters[v.Name] = ParameterValue{
 				Type:         string(v.Type),
 				DefaultValue: v.Value,
+				Description:  v.Description,
 			}
 		}
 	}
@@ -321,9 +323,10 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 	//Compute parameters
 	for p, v := range p.Parameters {
 		param := sdk.Parameter{
-			Name:  p,
-			Type:  v.Type,
-			Value: v.DefaultValue,
+			Name:        p,
+			Type:        v.Type,
+			Value:       v.DefaultValue,
+			Description: v.Description,
 		}
 		pip.Parameter = append(pip.Parameter, param)
 	}
@@ -564,9 +567,10 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	//Compute parameters
 	for p, v := range p.Parameters {
 		param := sdk.Parameter{
-			Name:  p,
-			Type:  v.Type,
-			Value: v.DefaultValue,
+			Name:        p,
+			Type:        v.Type,
+			Value:       v.DefaultValue,
+			Description: v.Description,
 		}
 		if param.Type == "" {
 			param.Type = sdk.StringParameter
