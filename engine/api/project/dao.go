@@ -16,6 +16,49 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// LoadAllByRepo returns all projects whith an application linked to the repo
+func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+	var query string
+	var args []interface{}
+
+	// Admin can gets all project
+	// Users can gets only their projects
+	if u == nil || u.Admin {
+		query = `SELECT project.*
+		FROM  project
+		JOIN  application on project.id = application.project_id
+		WHERE application.repo_fullname = $1
+		ORDER by project.name, project.projectkey ASC`
+	} else {
+		query = `SELECT project.*
+		FROM  project
+		JOIN  application on project.id = application.project_id
+		WHERE application.repo_fullname = $3
+		AND   project.id IN (
+			SELECT project_group.project_id
+			FROM project_group
+			WHERE
+				project_group.group_id = ANY(string_to_array($1, ',')::int[])
+				OR
+				$2 = ANY(string_to_array($1, ',')::int[])
+		)`
+
+		var groupID string
+		for i, g := range u.Groups {
+			if i == 0 {
+				groupID = fmt.Sprintf("%d", g.ID)
+			} else {
+				groupID += "," + fmt.Sprintf("%d", g.ID)
+			}
+		}
+		args = []interface{}{groupID, group.SharedInfraGroup.ID}
+	}
+
+	args = append(args, repo)
+
+	return loadprojects(db, store, u, opts, query, args...)
+}
+
 // LoadAll returns all projects
 func LoadAll(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	var query string

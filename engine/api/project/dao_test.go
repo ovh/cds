@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -51,6 +52,50 @@ func TestDeleteByID(t *testing.T) {
 
 func TestExist(t *testing.T) {
 	//covered by TestLoadAll
+}
+
+func TestLoadAllByRepo(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+
+	app, _ := application.LoadByName(db, cache, "TestLoadAllByRepo", "TestLoadAllByRepo", nil)
+	if app != nil {
+		application.DeleteApplication(db, app.ID)
+	}
+	project.Delete(db, cache, "TestLoadAllByRepo")
+	proj := sdk.Project{
+		Key:  "TestLoadAllByRepo",
+		Name: "TestLoadAllByRepo",
+	}
+
+	g := sdk.Group{
+		Name: "test_TestLoadAll_group",
+	}
+
+	eg, _ := group.LoadGroup(db, g.Name)
+	if eg != nil {
+		g = *eg
+	} else if err := group.InsertGroup(db, &g); err != nil {
+		t.Fatalf("Cannot insert group : %s", err)
+	}
+
+	app = &sdk.Application{
+		Name:               "TestLoadAllByRepo",
+		RepositoryFullname: "ovh/cds",
+	}
+
+	test.NoError(t, project.Insert(db, cache, &proj, nil))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.LoadGroupByProject(db, &proj))
+
+	user.DeleteUserWithDependenciesByName(db, "TestLoadAllByRepo_user")
+
+	u, _ := InsertLambdaUser(t, db, "TestLoadAllByRepo_user", &proj.ProjectGroups[0].Group)
+
+	test.NoError(t, application.Insert(db, cache, &proj, app, u))
+
+	projs, err := project.LoadAllByRepo(db, cache, u, "ovh/cds")
+	assert.NoError(t, err)
+	assert.Len(t, projs, 1)
 }
 
 func TestLoadAll(t *testing.T) {
