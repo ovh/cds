@@ -201,6 +201,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 				if err := UpdateParameterInPipeline(db, pip.ID, oldParam.Name, param); err != nil {
 					return sdk.WrapError(err, "ImportUpdate> cannot update parameter %s", param.Name)
 				}
+				break
 			}
 		}
 		if !found {
