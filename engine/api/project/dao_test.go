@@ -62,6 +62,7 @@ func TestLoadAllByRepo(t *testing.T) {
 		application.DeleteApplication(db, app.ID)
 	}
 	project.Delete(db, cache, "TestLoadAllByRepo")
+	defer project.Delete(db, cache, "TestLoadAllByRepo")
 	proj := sdk.Project{
 		Key:  "TestLoadAllByRepo",
 		Name: "TestLoadAllByRepo",
@@ -146,12 +147,12 @@ func TestLoadAll(t *testing.T) {
 
 	for _, p := range actualGroups1 {
 		if p.Name == "test_TestLoadAll" {
-			t.Log(p)
 			assert.EqualValues(t, proj.Metadata, p.Metadata)
 		}
 	}
 
 	actualGroups2, err := project.LoadAll(db, cache, u2)
+	t.Log(actualGroups2)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups2) == 1, "This should return one project")
 
