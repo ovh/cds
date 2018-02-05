@@ -104,15 +104,17 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 		}
 	}
 
-	// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
-	var getFilteredEnv = func(s string) string {
-		if strings.HasPrefix(s, "CDS_") {
-			return s
+	if a.Type != sdk.ScriptAction {
+		// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
+		var getFilteredEnv = func(s string) string {
+			if strings.HasPrefix(s, "CDS_") {
+				return s
+			}
+			return os.Getenv(s)
 		}
-		return os.Getenv(s)
-	}
-	for i := range a.Parameters {
-		a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+		for i := range a.Parameters {
+			a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+		}
 	}
 
 	return w.runJob(ctx, a, buildID, params, stepOrder, stepName)
