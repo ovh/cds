@@ -98,8 +98,16 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	}
 
 	//Insert hooks
+	hooksUUIDs := []string{}
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
+
+		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && n.Context.ApplicationID == 0 {
+			// Remove repository webhook
+			hooksUUIDs = append(hooksUUIDs, h.UUID)
+			continue
+		}
+
 		//Configure the hook
 		h.Config["project"] = sdk.WorkflowNodeHookConfigValue{
 			Value:        w.ProjectKey,
@@ -137,6 +145,24 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		if err := insertHook(db, n, h); err != nil {
 			return nodes, sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node hook")
 		}
+	}
+
+	// Delete hook if needed
+	if len(hooksUUIDs) > 0 {
+		hooks := []sdk.WorkflowNodeHook{}
+		for _, h := range n.Hooks {
+			found := false
+			for _, uuid := range hooksUUIDs {
+				if uuid == h.UUID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				hooks = append(hooks, h)
+			}
+		}
+		n.Hooks = hooks
 	}
 
 	//Insert triggers
