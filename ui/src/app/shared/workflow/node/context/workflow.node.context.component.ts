@@ -96,7 +96,7 @@ export class WorkflowNodeContextComponent {
                     this.currentPipeline = pip;
                     this.pipParamsReady = true;
                     this.editableNode.context.default_pipeline_parameters =
-                        Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters);
+                        cloneDeep(Pipeline.mergeAndKeepOld(pip.parameters, this.editableNode.context.default_pipeline_parameters));
                     try {
                         this.editableNode.context.default_payload = JSON.parse(this.payloadString);
                         this.invalidJSON = false;
