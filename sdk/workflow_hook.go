@@ -23,6 +23,10 @@ func (w *Workflow) FilterHooksConfig(s ...string) {
 
 // GetHooks returns the list of all hooks in the workflow tree
 func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
+	if w == nil {
+		return nil
+	}
+
 	if w.Root == nil {
 		return nil
 	}

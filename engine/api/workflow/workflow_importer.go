@@ -86,7 +86,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 
 	doUpdate, errE := Exists(db, proj.Key, w.Name)
 	if errE != nil {
-		return sdk.WrapError(errE, "Import")
+		return sdk.WrapError(errE, "Import> Cannot check if workflow exist")
 	}
 
 	if !doUpdate {
@@ -98,8 +98,8 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		}
 
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-		if _, errHr := HookRegistration(db, store, &sdk.Workflow{}, *w, proj); errHr != nil {
-			return sdk.WrapError(errHr, "Import>")
+		if _, errHr := HookRegistration(db, store, nil, *w, proj); errHr != nil {
+			return sdk.WrapError(errHr, "Import> Cannot register hook")
 		}
 
 		return importWorkflowGroups(db, w)
@@ -121,7 +121,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 
 	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
 	if _, errHr := HookRegistration(db, store, oldW, *w, proj); errHr != nil {
-		return sdk.WrapError(errHr, "Import>")
+		return sdk.WrapError(errHr, "Import> Cannot register hook")
 	}
 
 	if err := importWorkflowGroups(db, w); err != nil {
