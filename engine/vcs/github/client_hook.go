@@ -11,13 +11,12 @@ import (
 
 func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	url := "/repos/" + repo + "/hooks"
-
 	r := WebhookCreate{
 		Name:   "web",
 		Active: true,
 		Events: []string{"push"},
 		Config: WebHookConfig{
-			URL:         hook.URL,
+			URL:         g.apiURL + hook.URL,
 			ContentType: "json",
 		},
 	}

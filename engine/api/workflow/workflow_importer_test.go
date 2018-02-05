@@ -1,24 +1,47 @@
 package workflow_test
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"testing"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
+type mockHTTPClient struct{}
+
+func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {
+	body := ioutil.NopCloser(bytes.NewReader([]byte("{}")))
+	return &http.Response{Body: body}, nil
+}
+
 func TestImport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	repositoryService := services.NewRepository(func() *gorp.DbMap {
+		return db
+	}, cache)
+	mockService := &sdk.Service{Name: "service_test", Type: "hooks"}
+	repositoryService.Delete(mockService)
+	test.NoError(t, repositoryService.Insert(mockService))
+
+	//Mock HTTPClient from services package
+	services.HTTPClient = &mockHTTPClient{}
 
 	//Pipeline
 	pip := sdk.Pipeline{
