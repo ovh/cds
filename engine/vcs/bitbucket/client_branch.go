@@ -69,29 +69,15 @@ func (b *bitbucketClient) Branch(fullname string, filter string) (*sdk.VCSBranch
 		return nil, sdk.ErrNotFound
 	}
 
-	found := false
-	var branch sdk.VCSBranch
 	for _, b := range branches.Values {
 		if b.DisplayID == filter {
-			found = true
-			branch = sdk.VCSBranch{
+			return &sdk.VCSBranch{
 				ID:           b.ID,
 				DisplayID:    b.DisplayID,
 				LatestCommit: b.LatestHash,
 				Default:      b.IsDefault,
-			}
-			break
+			}, nil
 		}
 	}
-
-	if !found {
-		branch = sdk.VCSBranch{
-			ID:           branches.Values[0].ID,
-			DisplayID:    branches.Values[0].DisplayID,
-			LatestCommit: branches.Values[0].LatestHash,
-			Default:      branches.Values[0].IsDefault,
-		}
-	}
-
-	return &branch, nil
+	return nil, sdk.ErrNoBranch
 }
