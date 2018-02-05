@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	STATUS_INIT  = "NOT_BEGUN"
-	STATUS_START = "STARTED"
-	STATUS_DONE  = "DONE"
+	STATUS_INIT     = "NOT_BEGUN"
+	STATUS_START    = "STARTED"
+	STATUS_CLEANING = "CLEANING"
+	STATUS_DONE     = "DONE"
 )
 
 func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline, proj *sdk.Project, u *sdk.User, force bool) error {
@@ -168,7 +169,7 @@ bigloop:
 
 			// is sub App
 			if childPip.Application.ID != 0 && childPip.Application.ID != appID {
-				childPip.Application.WorkflowMigration = STATUS_DONE
+				childPip.Application.WorkflowMigration = STATUS_CLEANING
 				childPip.Application.ProjectID = p.ID
 				if errA := application.Update(db, store, &childPip.Application, u); errA != nil {
 					return nil, sdk.WrapError(errA, "Cannot update subapplication %s", childPip.Application.Name)

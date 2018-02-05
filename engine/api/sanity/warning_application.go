@@ -14,7 +14,7 @@ func CheckApplication(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicati
 	warChan := make(chan []sdk.Warning)
 	done := make(chan bool)
 
-	if err := DeleteAllApplicationWarnings(db, proj.ID, app.ID); err != nil {
+	if err := DeleteAllApplicationWarnings(db, app.ID); err != nil {
 		return err
 	}
 

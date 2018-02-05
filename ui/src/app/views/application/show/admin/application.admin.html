@@ -6,6 +6,9 @@
                     <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
                     <button class="ui red button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
                 </div>
+                <div *ngSwitchCase="'CLEANING'">
+                    <i class="green check icon"></i>
+                </div>
                 <div *ngSwitchCase="'DONE'">
                     <i class="green check icon"></i>
                 </div>

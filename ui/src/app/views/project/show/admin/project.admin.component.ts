@@ -34,7 +34,7 @@ export class ProjectAdminComponent implements OnInit {
             this.project.applications.forEach(app => {
                 if (app.workflow_migration === 'STARTED') {
                     this.migrationValue += 0.5;
-                } else if (app.workflow_migration === 'DONE') {
+                } else if (app.workflow_migration === 'DONE' || app.workflow_migration === 'CLEANING') {
                     this.migrationValue++;
                 }
             });
