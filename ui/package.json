@@ -54,7 +54,7 @@
     "js-beautify": "1.6.14",
     "lodash": "~4.17.2",
     "moment": "^2.17.1",
-    "ng-event-source": "^1.0.6",
+    "ng-event-source": "^1.0.8",
     "ng-semantic": "https://github.com/sguiheux/ngSemantic/tarball/sgu-master",
     "ng2-codemirror-typescript": "^1.1.1",
     "ng2-completer": "^1.4.0",
