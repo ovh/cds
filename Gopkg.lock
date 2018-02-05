@@ -931,10 +931,9 @@
   revision = "d7e841db6909ae5e9eb7493f7b1ea7d7b15101e3"
 
 [[projects]]
-  branch = "master"
   name = "github.com/xanzy/go-gitlab"
   packages = ["."]
-  revision = "e9b63f4c287702da85a1c0be96c98c8d7e98c5a5"
+  revision = "v0.7.5"
 
 [[projects]]
   name = "github.com/xeipuuv/gojsonpointer"
@@ -1267,6 +1266,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "81ce28b542fa6c09999480211f2873ba34cd5bc38a9dc6268f365a147f9aa3db"
+  inputs-digest = "8c3b8c37d07a5d3927d7721691038b05d40c4306feb615f5e5ec5514d3c34fed"
   solver-name = "gps-cdcl"
   solver-version = 1

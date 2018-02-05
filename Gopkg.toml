@@ -101,7 +101,7 @@
 
 [[constraint]]
   name = "github.com/xanzy/go-gitlab"
-  branch = "master"
+  revision = "v0.7.5"
 
 [[constraint]]
   branch = "master"
@@ -141,6 +141,10 @@
 [[constraint]]
   name = "github.com/Microsoft/go-winio"
   version = "0.4.7"
+
+[[constraint]]
+  name = "github.com/ovh/venom"
+  version = "0.17.0"
 
 [prune]
   non-go = true
