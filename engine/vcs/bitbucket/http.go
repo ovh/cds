@@ -3,7 +3,6 @@ package bitbucket
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -53,27 +53,6 @@ func requestString(method string, uri string, params map[string]string) string {
 
 	return result
 }
-
-var (
-	// ErrNotFound is returned if the specified resource does not exist.
-	ErrNotFound = errors.New("Not Found")
-
-	// ErrForbidden is returned if the caller attempts to make a call or modify a resource
-	// for which the caller is not authorized.
-	//
-	// The request was a valid request, the caller's authentication credentials
-	// succeeded but those credentials do not grant the caller permission to
-	// access the resource.
-	ErrForbidden = errors.New("Forbidden")
-
-	// ErrNotAuthorized is returned if the call requires authentication and either the credentials
-	// provided failed or no credentials were provided.
-	ErrNotAuthorized = errors.New("Unauthorized")
-
-	// ErrBadRequest is returned if the caller submits a badly formed request. For example,
-	// the caller can receive this return if you forget a required parameter.
-	ErrBadRequest = errors.New("Bad Request")
-)
 
 func (c *bitbucketClient) getFullAPIURL(api string) string {
 	var url string
@@ -157,13 +136,14 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 	// Check for an http error status (ie not 200 StatusOK)
 	switch resp.StatusCode {
 	case 404:
-		return ErrNotFound
+		return sdk.ErrNotFound
 	case 403:
-		return ErrForbidden
+		return sdk.ErrForbidden
 	case 401:
-		return ErrNotAuthorized
+		return sdk.ErrUnauthorized
 	case 400:
-		return sdk.WrapError(ErrBadRequest, "bitbucketClient.do> %s", string(body))
+		log.Warning("bitbucketClient.do> %s", string(body))
+		return sdk.ErrWrongRequest
 	}
 
 	// Unmarshall the JSON response
