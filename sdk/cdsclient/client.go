@@ -48,26 +48,20 @@ func NewService(endpoint string, timeout time.Duration) Interface {
 }
 
 // NewWorker returns client for a worker
-func NewWorker(endpoint string, name string, insecureSkipVerifyTLS bool) Interface {
+func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 10,
 	}
 	cli := new(client)
 	cli.config = conf
-	cli.HTTPClient = &http.Client{
-		Timeout: time.Second * 10,
-		Transport: &httpcontrol.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
-		},
-	}
 
-	// need to override sdk client to take care of insecure flag
-	sdk.SetHTTPClient(&http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
-		},
-	})
+	if c == nil {
+		cli.HTTPClient = &http.Client{Timeout: time.Second * 10}
+	} else {
+		cli.HTTPClient = c
+		sdk.SetHTTPClient(c)
+	}
 
 	cli.isWorker = true
 	cli.name = name
