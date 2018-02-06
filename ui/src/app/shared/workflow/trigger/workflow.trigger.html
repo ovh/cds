@@ -18,6 +18,6 @@
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
         <button class="ui green button" [disabled]="loading || trigger.workflow_dest_node == null" *ngIf="currentSection !== 'environment'" [class.loading]="loading" (click)="nextStep()">{{ 'btn_next' | translate }}</button>
-        <button class="ui green button" *ngIf="currentSection === 'environment'" [disabled]="loading" [class.loading]="loading" (click)="saveTrigger()">{{ 'btn_finish' | translate }}</button>
+        <button class="ui green button" [disabled]="trigger.workflow_dest_node == null || !trigger.workflow_dest_node.pipeline_id" *ngIf="currentSection === 'environment'" [disabled]="loading" [class.loading]="loading" (click)="saveTrigger()">{{ 'btn_finish' | translate }}</button>
     </div>
 </ng-template>
