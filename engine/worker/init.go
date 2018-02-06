@@ -1,10 +1,14 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
+	"time"
 
+	"github.com/facebookgo/httpcontrol"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -83,7 +87,12 @@ func initViper(w *currentWorker) {
 	w.bookedPBJobID = viper.GetInt64("booked_pb_job_id")
 	w.bookedWJobID = viper.GetInt64("booked_workflow_job_id")
 
-	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name)
+	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name, &http.Client{
+		Timeout: time.Second * 10,
+		Transport: &httpcontrol.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: viper.GetBool("insecure")},
+		},
+	})
 }
 
 func (w *currentWorker) initServer(c context.Context) {

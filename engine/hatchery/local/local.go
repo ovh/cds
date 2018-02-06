@@ -160,6 +160,7 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
 	args = append(args, fmt.Sprintf("--hatchery-name=%s", h.hatch.Name))
+	args = append(args, fmt.Sprintf("--insecure=%t", h.Config.API.HTTP.Insecure))
 
 	if h.Config.Provision.WorkerLogsOptions.Graylog.Host != "" {
 		args = append(args, fmt.Sprintf("--graylog-host=%s", h.Config.Provision.WorkerLogsOptions.Graylog.Host))
