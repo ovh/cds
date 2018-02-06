@@ -1,6 +1,9 @@
 package repositories
 
-import "github.com/ovh/cds/engine/api/cache"
+import (
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk"
+)
 
 var (
 	rootKey      = cache.Key("repositories", "operations")
@@ -12,19 +15,19 @@ type dao struct {
 	store cache.Store
 }
 
-func (d *dao) saveOperation(o *Operation) error {
+func (d *dao) saveOperation(o *sdk.Operation) error {
 	d.store.SetAdd(rootKey, o.UUID, o)
 	return nil
 }
 
-func (d *dao) pushOperation(o *Operation) error {
+func (d *dao) pushOperation(o *sdk.Operation) error {
 	d.store.Enqueue(processorKey, o.UUID)
 	return nil
 }
 
-func (d *dao) loadOperation(uuid string) *Operation {
+func (d *dao) loadOperation(uuid string) *sdk.Operation {
 	key := cache.Key(rootKey, uuid)
-	o := new(Operation)
+	o := new(sdk.Operation)
 	if d.store.Get(key, o) {
 		return o
 	}

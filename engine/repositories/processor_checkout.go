@@ -5,10 +5,11 @@ import (
 
 	repo "github.com/fsamin/go-repo"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) processCheckout(op *Operation) error {
+func (s *Service) processCheckout(op *sdk.Operation) error {
 	r := s.Repo(*op)
 	if err := s.checkOrCreateFS(r); err != nil {
 		log.Error("Repositories> processCheckout> Error %v", err)

@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -22,7 +23,7 @@ func (s *Service) processor(ctx context.Context) error {
 	}
 }
 
-func (s *Service) do(op Operation) error {
+func (s *Service) do(op sdk.Operation) error {
 	log.Info("repositories > processing > %v", op.UUID)
 	log.Debug("repositories > processing > %+v", op)
 
@@ -30,28 +31,28 @@ func (s *Service) do(op Operation) error {
 	case op.Setup.Checkout.Branch != "":
 		if err := s.processCheckout(&op); err != nil {
 			op.Error = err.Error()
-			op.Status = OperationStatusError
+			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = ""
-			op.Status = OperationStatusDone
+			op.Status = sdk.OperationStatusDone
 		}
 	default:
 		op.Error = "unrecognized setup"
-		op.Status = OperationStatusError
+		op.Status = sdk.OperationStatusError
 	}
 
 	switch {
 	case op.LoadFiles.Pattern != "":
 		if err := s.processLoadFiles(&op); err != nil {
 			op.Error = err.Error()
-			op.Status = OperationStatusError
+			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = ""
-			op.Status = OperationStatusDone
+			op.Status = sdk.OperationStatusDone
 		}
 	default:
 		op.Error = "unrecognized operation"
-		op.Status = OperationStatusError
+		op.Status = sdk.OperationStatusError
 	}
 
 	log.Debug("repositories > processing done > %+v", op)

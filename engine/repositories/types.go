@@ -2,7 +2,6 @@ package repositories
 
 // Service is the stuct representing a vcs µService
 import (
-	"encoding/base64"
 	"path/filepath"
 
 	"github.com/ovh/cds/engine/api"
@@ -48,52 +47,11 @@ type Configuration struct {
 	} `toml:"cache" comment:"######################\n CDS Repositories Cache Settings \n######################"`
 }
 
-// Operation is the main business object use in repositories service
-type Operation struct {
-	UUID               string                 `json:"uuid"`
-	URL                string                 `json:"url"`
-	RepositoryStrategy sdk.RepositoryStrategy `json:"strategy,omitempty"`
-	Setup              struct {
-		Checkout OperationCheckout `json:"checkout,omitempty"`
-	} `json:"setup,omitempty"`
-	LoadFiles OperationLoadFiles `json:"load_files,omitempty"`
-	Status    OperationStatus    `json:"status,omitempty"`
-	Error     string             `json:"error,omitempty"`
-}
-
-func (s Service) Repo(op Operation) *Repo {
-	r := new(Repo)
+// Repo retiens a sdk.OperationRepo from an sdk.Operation
+func (s Service) Repo(op sdk.Operation) *sdk.OperationRepo {
+	r := new(sdk.OperationRepo)
 	r.URL = op.URL
 	r.Basedir = filepath.Join(s.Cfg.Basedir, r.ID())
 	r.RepositoryStrategy = op.RepositoryStrategy
 	return r
-}
-
-type OperationLoadFiles struct {
-	Pattern string            `json:"pattern,omitempty"`
-	Results map[string][]byte `json:"results,omitempty"`
-}
-
-type OperationCheckout struct {
-	Branch string `json:"branch,omitempty"`
-	Commit string `json:"commit,omitempty"`
-}
-
-type OperationStatus int
-
-const (
-	OperationStatusPending OperationStatus = iota
-	OperationStatusProcessing
-	OperationStatusDone
-	OperationStatusError
-)
-
-type Repo struct {
-	Basedir            string
-	URL                string
-	RepositoryStrategy sdk.RepositoryStrategy
-}
-
-func (r Repo) ID() string {
-	return base64.StdEncoding.EncodeToString([]byte(r.URL))
 }

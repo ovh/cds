@@ -35,7 +35,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		//Push the hook to hooks µService
 		dao := services.Querier(db, store)
 		//Load service "hooks"
-		srvs, err := dao.FindByType("hooks")
+		srvs, err := dao.FindByType(services.TypeHooks)
 		if err != nil {
 			return nil, sdk.WrapError(err, "HookRegistration> Unable to get services dao")
 		}
@@ -118,7 +118,7 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 	//Push the hook to hooks µService
 	dao := services.Querier(db, store)
 	//Load service "hooks"
-	srvs, err := dao.FindByType("hooks")
+	srvs, err := dao.FindByType(services.TypeHooks)
 	if err != nil {
 		return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
 	}

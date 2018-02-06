@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -39,7 +40,7 @@ func (s *Service) doHeartbeat() error {
 		HTTPURL:       s.Cfg.URL,
 		LastHeartbeat: time.Time{},
 		Token:         s.Cfg.API.Token,
-		Type:          "repositories",
+		Type:          services.TypeRepositories,
 	}
 	log.Debug("Repositories> doHeartbeat: %+v", srv)
 	hash, err := s.cds.ServiceRegister(srv)

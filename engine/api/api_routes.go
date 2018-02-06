@@ -78,6 +78,10 @@ func (api *API) InitRouter() {
 	// Specific web ui routes
 	r.Handle("/ui/navbar", r.GET(api.getUINavbarHandler))
 
+	// Import As Code
+	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))
+	r.Handle("/import/{permProjectKey}/{uuid}", r.GET(api.getImportAsCodeHandler))
+
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))
 	r.Handle("/project/{permProjectKey}", r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
