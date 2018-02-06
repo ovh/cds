@@ -104,7 +104,7 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 		}
 	}
 
-	if a.Type != sdk.ScriptAction {
+	if a.Name != sdk.ScriptAction {
 		// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
 		var getFilteredEnv = func(s string) string {
 			if strings.HasPrefix(s, "CDS_") {
