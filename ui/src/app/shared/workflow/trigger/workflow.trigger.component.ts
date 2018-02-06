@@ -48,7 +48,7 @@ export class WorkflowTriggerComponent {
     }
 
     pipelineSectionChanged(pipSection: string) {
-      this.currentSection = pipSection;
+        this.currentSection = pipSection;
     }
 
     saveTrigger(): void {
