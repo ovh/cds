@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -102,6 +103,10 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	w := sdk.Workflow{}
 	if err := gorpmapping.JSONNullString(res.W, &w); err != nil {
 		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal workflow")
+	}
+	// TODO: to delete when old runs will be purged
+	for i := range w.Joins {
+		w.Joins[i].Ref = fmt.Sprintf("%d", w.Joins[i].ID)
 	}
 	r.Workflow = w
 
