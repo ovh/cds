@@ -137,7 +137,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 			return sdk.WrapError(globalError, "postWorkflowImportHandler> Unable import workflow %s", ew.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectWorkflowLastModificationType); err != nil {
 			return sdk.WrapError(err, "postWorkflowImportHandler> Unable to update project")
 		}
 

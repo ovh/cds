@@ -209,6 +209,7 @@
   "common_copy_clipboard": "Copy to clipboad",
   "common_select": "Select",
   "common_create": "Create",
+  "common_import": "Import",
 
   "keys_added": "Key added",
   "keys_add_title": "Add a key",
