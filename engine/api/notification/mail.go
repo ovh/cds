@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var regexpIsHTML = regexp.MustCompile(`^<[a-z][\s\S]*>`)
+var regexpIsHTML = regexp.MustCompile(`^\w*\n*<[a-z][\s\S]*>`)
 
 // SendMailNotif Send user notification by mail
 func SendMailNotif(notif sdk.EventNotif) {
