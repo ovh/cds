@@ -4,7 +4,7 @@ weight = 3
 
 +++
 
-You want to run a workflow after a git push on a repository? This kink of hook is for you.
+You want to run a workflow after a git push on a repository? This kind of hook is for you.
 
 You have to:
 
