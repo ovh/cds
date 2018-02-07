@@ -4,7 +4,7 @@ weight = 4
 
 +++
 
-If you want to trigger the launch of your workflow then you need hooks on your root pipeline inside the workflow.
+If you want to trigger the run of your workflow you need some hooks on your root pipeline inside the workflow.
 
 On the root pipeline only, you can add hooks:
 
