@@ -1569,7 +1569,14 @@
 <li><a href="#get-import-workflow-as-code-operation-details">Get import workflow as code operation details</a>
 <ul>
 <li><a href="#description-1">Description</a></li>
+<li><a href="#request-body-1">Request Body</a></li>
 <li><a href="#response-body-1">Response Body</a></li>
+</ul></li>
+<li><a href="#perform-workflow-as-code-import">Perform workflow as code import</a>
+<ul>
+<li><a href="#description-2">Description</a></li>
+<li><a href="#request-body-2">Request Body</a></li>
+<li><a href="#response-body-2">Response Body</a></li>
 </ul></li>
 </ul></li>
 </ul></li>
@@ -1668,9 +1675,56 @@
 
 <p>This route helps you to know if a &ldquo;import as code&rdquo; is over, and the details of the performed operation</p>
 
+<h4 id="request-body-1">Request Body</h4>
+
+<pre><code>None
+</code></pre>
+
 <h4 id="response-body-1">Response Body</h4>
 
 <pre><code>{&quot;uuid&quot;:&quot;ee3946ac-3a77-46b1-af78-77868fde75ec&quot;,&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{}},&quot;load_files&quot;:{&quot;pattern&quot;:&quot;.cds/**/*.yml&quot;,&quot;results&quot;:{&quot;w-go-repo.yml&quot;:&quot;bmFtZTogdy1nby1yZXBvCgkJCQkJdmVyc2lvbjogdjEuMAoJCQkJCXBpcGVsaW5lOiBidWlsZAoJCQkJCWFwcGxpY2F0aW9uOiBnby1yZXBvCgkJCQkJcGlwZWxpbmVfaG9va3M6CgkJCQkJLSB0eXBlOiBSZXBvc2l0b3J5V2ViSG9vawoJCQkJCQ==&quot;}},&quot;status&quot;:2}
+</code></pre>
+
+<h3 id="perform-workflow-as-code-import">Perform workflow as code import</h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/import/&lt;project-key&gt;/&lt;uuid&gt;/perform</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPerformImportAsCodeHandler%22">postPerformImportAsCodeHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="description-2">Description</h4>
+
+<p>This operation push the workflow as code into the project</p>
+
+<h4 id="request-body-2">Request Body</h4>
+
+<pre><code>None
+</code></pre>
+
+<h4 id="response-body-2">Response Body</h4>
+
+<pre><code>translated message list
 </code></pre>
 
 
