@@ -148,11 +148,18 @@ export class WorkflowStore {
     importWorkflow(key: string, workflowName: string, workflowCode: string): Observable<Workflow> {
         return this._workflowService.importWorkflow(key, workflowCode)
             .pipe(
-                mergeMap(() => this._workflowService.getWorkflow(key, workflowName)),
+                mergeMap(() => {
+                  if (workflowName) {
+                    return this._workflowService.getWorkflow(key, workflowName);
+                  }
+                  return Observable.of(null);
+                }),
                 map((wf) => {
-                    let workflowKey = key + '-' + wf.name;
-                    let store = this._workflows.getValue();
-                    this._workflows.next(store.set(workflowKey, wf));
+                    if (wf) {
+                      let workflowKey = key + '-' + wf.name;
+                      let store = this._workflows.getValue();
+                      this._workflows.next(store.set(workflowKey, wf));
+                    }
                     return wf;
                 })
             );

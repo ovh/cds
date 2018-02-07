@@ -43,7 +43,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 				continue
 			}
 
-			log.Info("Applications to clean: %d", len(apps))
+			log.Debug("Applications to clean: %d", len(apps))
 			for _, app := range apps {
 				a, errA := application.LoadByID(DBFunc(), store, app.ID, u, application.LoadOptions.WithHooks, application.LoadOptions.WithPipelines)
 				if errA != nil {
