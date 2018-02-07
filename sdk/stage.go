@@ -3,6 +3,7 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // Stage Pipeline step that parallelize actions by order
@@ -25,6 +26,9 @@ type Stage struct {
 func (s *Stage) Conditions() []WorkflowNodeCondition {
 	res := []WorkflowNodeCondition{}
 	for _, p := range s.Prerequisites {
+		if !strings.HasPrefix(p.Parameter, "git.") {
+			p.Parameter = "cds.pip." + p.Parameter
+		}
 		res = append(res, WorkflowNodeCondition{
 			Value:    p.ExpectedValue,
 			Variable: p.Parameter,
