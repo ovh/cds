@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // PubSub represents a subscriber
@@ -41,6 +40,5 @@ type Store interface {
 
 //New init a cache
 func New(redisHost, redisPassword string, TTL int) (Store, error) {
-	log.Info("Cache> Initialize redis cache (Host=%s, TTL=%d seconds)", redisHost, TTL)
 	return NewRedisStore(redisHost, redisPassword, TTL)
 }
