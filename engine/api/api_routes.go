@@ -81,6 +81,7 @@ func (api *API) InitRouter() {
 	// Import As Code
 	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))
 	r.Handle("/import/{permProjectKey}/{uuid}", r.GET(api.getImportAsCodeHandler))
+	r.Handle("/import/{permProjectKey}/{uuid}/perform", r.POST(api.postPerformImportAsCodeHandler))
 
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))

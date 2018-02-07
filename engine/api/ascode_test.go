@@ -154,3 +154,66 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), myOpe))
 	assert.NotEmpty(t, myOpe.UUID)
 }
+
+func Test_postPerformImportAsCodeHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+	//Insert Project
+	pkey := sdk.RandomString(10)
+	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+
+	repositoryService := services.NewRepository(func() *gorp.DbMap {
+		return db
+	}, api.Cache)
+	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler", Type: services.TypeRepositories}
+	repositoryService.Delete(mockService)
+	test.NoError(t, repositoryService.Insert(mockService))
+
+	UUID := sdk.UUID()
+
+	//This is a mock for the repositories service
+	services.HTTPClient = mock(
+		func(r *http.Request) (*http.Response, error) {
+			body := new(bytes.Buffer)
+			w := new(http.Response)
+			enc := json.NewEncoder(body)
+			w.Body = ioutil.NopCloser(body)
+
+			ope := new(sdk.Operation)
+			ope.URL = "https://github.com/fsamin/go-repo.git"
+			ope.UUID = UUID
+			ope.Status = sdk.OperationStatusDone
+			ope.LoadFiles.Pattern = workflowAsCodePattern
+			ope.LoadFiles.Results = map[string][]byte{
+				"w-go-repo.yml": []byte(`name: w-go-repo
+version: v1.0
+pipeline: build
+application: go-repo`),
+				"go-repo.app.yml": []byte(`name: go-repo
+version: v1.0`),
+				"go-repo.pip.yml": []byte(`name: build
+version: v1.0`),
+			}
+			if err := enc.Encode(ope); err != nil {
+				return writeError(w, err)
+			}
+
+			w.StatusCode = http.StatusOK
+			return w, nil
+		},
+	)
+
+	uri := api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
+		"permProjectKey": pkey,
+		"uuid":           UUID,
+	})
+	req, err := http.NewRequest("POST", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+	t.Logf(w.Body.String())
+}
