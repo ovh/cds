@@ -73,7 +73,7 @@ func (api *API) smtpPingHandler() Handler {
 		}
 
 		message := "mail sent"
-		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), getUser(ctx).Email); err != nil {
+		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), getUser(ctx).Email, false); err != nil {
 			message = err.Error()
 		}
 

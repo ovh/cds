@@ -110,7 +110,7 @@ func SendMailVerifyToken(userMail, username, token, callback string) error {
 	if err != nil {
 		return err
 	}
-	return SendEmail("Welcome to CDS", &mailContent, userMail)
+	return SendEmail("Welcome to CDS", &mailContent, userMail, false)
 }
 
 func getCallbackURL(username, token, callback string) string {
@@ -141,7 +141,7 @@ func createTemplate(templ, callbackURL string) (bytes.Buffer, error) {
 }
 
 //SendEmail is the core function to send an email
-func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error {
+func SendEmail(subject string, mailContent *bytes.Buffer, userMail string, isHTML bool) error {
 	from := mail.Address{
 		Name:    "",
 		Address: smtpFrom,
@@ -156,6 +156,10 @@ func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error
 	headers["From"] = smtpFrom
 	headers["To"] = to.String()
 	headers["Subject"] = subject
+
+	if isHTML {
+		headers["Content-Type"] = `text/html; charset="utf-8"`
+	}
 
 	// Setup message
 	message := ""
