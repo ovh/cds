@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/google/gops/agent"
@@ -316,9 +315,11 @@ See $ engine config command for more details.
 
 		// Gracefully shutdown all
 		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
-		defer func() {
+		signal.Notify(c)
+		go func() {
+			<-c
 			signal.Stop(c)
+			cancel()
 		}()
 
 		type serviceConf struct {
@@ -378,6 +379,7 @@ See $ engine config command for more details.
 			GraylogExtraValue:      conf.Log.Graylog.ExtraValue,
 			GraylogFieldCDSVersion: sdk.VERSION,
 			GraylogFieldCDSName:    strings.Join(names, "_"),
+			Ctx:                    ctx,
 		})
 
 		for _, s := range services {
@@ -390,11 +392,9 @@ See $ engine config command for more details.
 		}
 
 		//Wait for the end
-		select {
-		case <-c:
-			cancel()
-			os.Exit(0)
-		case <-ctx.Done():
+		<-ctx.Done()
+		if ctx.Err() != nil {
+			fmt.Printf("Exiting (%v)\n", ctx.Err())
 		}
 	},
 }
