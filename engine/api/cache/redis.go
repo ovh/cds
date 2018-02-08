@@ -58,12 +58,19 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 
 //Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) bool {
+	var secondAttempt bool
+retry:
 	if s.Client == nil {
 		log.Error("redis> cannot get redis client")
 		return false
 	}
 	val, err := s.Client.Get(key).Result()
 	if err != nil && err != redis.Nil {
+		if !secondAttempt {
+			secondAttempt = true
+			time.Sleep(50 * time.Millisecond)
+			goto retry
+		}
 		log.Warning("redis> Get error %s : %v", key, err)
 		return false
 	}
@@ -79,6 +86,8 @@ func (s *RedisStore) Get(key string, value interface{}) bool {
 
 //SetWithTTL a value in local store (0 for eternity)
 func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
+	var secondAttempt bool
+retry:
 	if s.Client == nil {
 		log.Error("redis> cannot get redis client")
 		return
@@ -88,6 +97,11 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 		log.Warning("redis> Error caching %s: %s", key, err)
 	}
 	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
+		if !secondAttempt {
+			secondAttempt = true
+			time.Sleep(50 * time.Millisecond)
+			goto retry
+		}
 		log.Warning("redis> Error caching %s: %s", key, err)
 	}
 }
