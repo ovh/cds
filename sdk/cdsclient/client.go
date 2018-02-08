@@ -60,7 +60,6 @@ func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 		cli.HTTPClient = &http.Client{Timeout: time.Second * 10}
 	} else {
 		cli.HTTPClient = c
-		sdk.SetHTTPClient(c)
 	}
 
 	cli.isWorker = true
