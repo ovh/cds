@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
@@ -22,10 +23,12 @@ type Conf struct {
 	GraylogExtraValue      string
 	GraylogFieldCDSName    string
 	GraylogFieldCDSVersion string
+	Ctx                    context.Context
 }
 
 var (
 	logger Logger
+	hook   *loghook.Hook
 )
 
 // Logger defines the logs levels used
@@ -69,7 +72,6 @@ func Initialize(conf *Conf) {
 		if conf.GraylogFieldCDSName != "" {
 			extra["CDSName"] = conf.GraylogFieldCDSName
 		}
-
 		if conf.GraylogFieldCDSVersion != "" {
 			extra["CDSVersion"] = conf.GraylogFieldCDSVersion
 		}
@@ -81,15 +83,27 @@ func Initialize(conf *Conf) {
 		hostname, _ := os.Hostname()
 		extra["CDSHostname"] = hostname
 
-		h, err := loghook.NewHook(graylogcfg, extra)
+		var errhook error
+		hook, errhook = loghook.NewHook(graylogcfg, extra)
 
-		if err != nil {
-			log.Errorf("Error while initialize graylog hook: %s", err)
+		if errhook != nil {
+			log.Errorf("Error while initialize graylog hook: %v", errhook)
 		} else {
-			log.AddHook(h)
+			log.AddHook(hook)
 			log.SetOutput(ioutil.Discard)
 		}
 	}
+
+	if conf.Ctx == nil {
+		conf.Ctx = context.Background()
+	}
+	go func() {
+		<-conf.Ctx.Done()
+		log.Info("Draining logs")
+		if hook != nil {
+			hook.Flush()
+		}
+	}()
 }
 
 // Debug prints debug log
