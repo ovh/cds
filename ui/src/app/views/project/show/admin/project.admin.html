@@ -16,8 +16,7 @@
                                [(ngModel)]="project.name"
                                [disabled]="loading"
                                required
-                               #formProjectUpdateName="ngModel"
-                               pattern="[a-zA-Z0-9]*">
+                               #formProjectUpdateName="ngModel">
                         <div *ngIf="!formProjectUpdateName.valid && !formProjectUpdateName.pristine"
                              class="ui error message">
                             <p>{{'project_update_name_error' | translate}}</p>
