@@ -436,7 +436,7 @@ func (api *API) addApplicationHandler() Handler {
 
 		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errl != nil {
-			return sdk.WrapError(errl, "addApplicationHandler: Cannot load %s: %s", key)
+			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s: %s", key)
 		}
 
 		var app sdk.Application
@@ -467,6 +467,10 @@ func (api *API) addApplicationHandler() Handler {
 
 		if err := application.AddGroup(tx, api.Cache, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot add groups on application")
+		}
+
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectApplicationLastModificationType); err != nil {
+			return sdk.WrapError(err, "addApplicationHandler> Cannot update last modified on project")
 		}
 
 		if err := tx.Commit(); err != nil {
