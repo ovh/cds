@@ -1,4 +1,3 @@
-
 <ng-template let-context let-modal="modal" #nodeHookFormModal>
     <div class="header">
         {{ 'workflow_node_hook_modal_title' | translate }}
@@ -8,7 +7,10 @@
     </div>
     <div class="content">
         <div class="ui form">
-            <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
+            <h3 class="inline">{{ 'workflow_node_hook_form_title' | translate }}</h3>
+            <div class="right floated mb15">
+                <i class="book icon"></i><a href="https://ovh.github.io/cds/workflows/design/hooks/" target="_blank">{{'common_documentation' | translate}}</a>
+            </div>
             <ng-container *ngIf="!loadingModels">
                 <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
                     <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}

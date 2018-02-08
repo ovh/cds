@@ -4,13 +4,14 @@ weight = 4
 
 +++
 
-On the root pipeline only, you can Hooks: 
+If you want to trigger the run of your workflow you need some hooks on your root pipeline inside the workflow.
 
-* webhook
-* scheduler
-* repository Webhooks
+On the root pipeline only, you can add hooks:
 
-There are two hooks on this pipeline, a repository webhook (github here) and a webhook:
+* [webhook]({{< relref "workflows/design/hooks/webhook.md" >}})
+* [scheduler]({{< relref "workflows/design/hooks/scheduler.md" >}})
+* [repository webhooks]({{< relref "workflows/design/hooks/git-repo-webhook.md" >}})
+
+There are two hooks on this pipeline, a repository webhook (Github here) and a webhook:
 
 ![Hooks](/images/workflows.design.hooks.png)
-
