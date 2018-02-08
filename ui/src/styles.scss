@@ -32,7 +32,7 @@ input[disabled] {
 
 .CodeMirror {
   min-height:40px;
-  height: 100%;
+  height: auto;
   border: 1px solid rgba(34, 36, 38, 0.14902);
   border-radius: 4px;
 }
@@ -48,8 +48,19 @@ input[disabled] {
 // Code mirror
 .CodeMirror-scroll {
   text-align: left;
-  height: 100%;
-  overflow: auto;
+  height: auto;
+  overflow: hidden !important;
+}
+
+.fullheight {
+  .CodeMirror {
+    height: 100% !important;
+  }
+  // Code mirror
+  .CodeMirror-scroll {
+    height: 100% !important;
+    overflow: auto !important;
+  }
 }
 
 $scrollbarsize: 10px;
