@@ -324,7 +324,7 @@ func (a *API) mustDB() *gorp.DbMap {
 
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
-	log.Info("Starting CDS API Server %s...", sdk.VERSION)
+	log.Info("Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
 
@@ -332,6 +332,7 @@ func (a *API) Serve(ctx context.Context) error {
 	secret.Init(a.Config.Secrets.Key)
 
 	//Initialize mail package
+	log.Info("Initializing mail driver...")
 	mail.Init(a.Config.SMTP.User,
 		a.Config.SMTP.Password,
 		a.Config.SMTP.From,
@@ -341,6 +342,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.Disable)
 
 	//Initialize artifacts storage
+	log.Info("Initializing %s objectstore...", a.Config.Artifact.Mode)
 	var objectstoreKind objectstore.Kind
 	switch a.Config.Artifact.Mode {
 	case "openstack":
@@ -374,6 +376,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Fatalf("Cannot initialize storage: %s", err)
 	}
 
+	log.Info("Initializing database connection...")
 	//Intialize database
 	var errDB error
 	a.DBConnectionFactory, errDB = database.Init(
@@ -391,6 +394,7 @@ func (a *API) Serve(ctx context.Context) error {
 		os.Exit(3)
 	}
 
+	log.Info("Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,
 		SharedInfraToken: a.Config.Auth.SharedInfraToken,
@@ -403,6 +407,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("Cannot setup builtin workflow hook models: %s", err)
 	}
 
+	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	//Init the cache
 	var errCache error
 	a.Cache, errCache = cache.New(
@@ -414,6 +419,7 @@ func (a *API) Serve(ctx context.Context) error {
 		os.Exit(3)
 	}
 
+	log.Info("Initializing HTTP router")
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
@@ -429,6 +435,7 @@ func (a *API) Serve(ctx context.Context) error {
 	//Intialize notification package
 	notification.Init(a.Config.URL.API, a.Config.URL.UI)
 
+	log.Info("Initializing Authentication driver...")
 	// Initialize the auth driver
 	var authMode string
 	var authOptions interface{}
@@ -459,6 +466,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Fatalf("Error: %v", errdriver)
 	}
 
+	log.Info("Initializing event broker...")
 	kafkaOptions := event.KafkaConfig{
 		Enabled:         a.Config.Events.Kafka.Enabled,
 		BrokerAddresses: a.Config.Events.Kafka.Broker,
@@ -476,6 +484,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Error while initializing workers routine: %s", err)
 	}
 
+	log.Info("Initializing internal routines...")
 	go queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap)
@@ -492,7 +501,6 @@ func (a *API) Serve(ctx context.Context) error {
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
-
 	go workflow.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 
 	s := &http.Server{
