@@ -163,6 +163,8 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 	leave:
 		for {
 			select {
+			case <-r.Context().Done():
+				return nil
 			case <-w.(http.CloseNotifier).CloseNotify():
 				b.mutex.Lock()
 				delete(b.clients, messageChan.UIID)
