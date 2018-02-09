@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/base64"
 	"fmt"
@@ -341,7 +342,9 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 			return sdk.WrapError(err, "AddLog> Cannot insert log")
 		}
 	} else {
-		existingLogs.Val += logs.Val
+		logbuf := bytes.NewBufferString(existingLogs.Val)
+		logbuf.WriteString(logs.Val)
+		existingLogs.Val = logbuf.String()
 		existingLogs.LastModified = logs.LastModified
 		existingLogs.Done = logs.Done
 		if err := updateLog(db, existingLogs); err != nil {
@@ -367,7 +370,9 @@ func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun
 		step.Done = time.Time{}
 		if l != nil { // log could be nil here
 			l.Done = nil
-			l.Val += "\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n"
+			logbuf := bytes.NewBufferString(l.Val)
+			logbuf.WriteString("\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n")
+			l.Val = logbuf.String()
 			if err := updateLog(db, l); err != nil {
 				return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while update step log")
 			}
