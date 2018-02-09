@@ -655,6 +655,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	const nbWorker int = 5
 	defer close(chEvent)
 	defer close(chError)
+	errorOccured := false
 
 	tx, errb := db.Begin()
 	if errb != nil {
@@ -667,6 +668,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		var errfh error
 		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent)
 		if errfh != nil {
+			errorOccured = true
 			chError <- sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
 		}
 	} else {
@@ -684,6 +686,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			for _, fromNodeID := range opts.FromNodeIDs {
 				fromNode := lastRun.Workflow.GetNode(fromNodeID)
 				if fromNode == nil {
+					errorOccured = true
 					chError <- sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node %d", fromNodeID)
 				}
 				fromNodes = append(fromNodes, fromNode)
@@ -717,6 +720,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 					continue
 				}
 				if chError != nil {
+					errorOccured = true
 					chError <- err
 				} else {
 					log.Warning("postWorkflowRunHandler> Cannot run from node %v", err)
@@ -729,14 +733,17 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			var errmr error
 			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent)
 			if errmr != nil {
+				errorOccured = true
 				chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 			}
 		}
 	}
 
-	//Commit and return success
-	if err := tx.Commit(); err != nil {
-		chError <- sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+	if !errorOccured {
+		//Commit and return success
+		if err := tx.Commit(); err != nil {
+			chError <- sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+		}
 	}
 }
 
