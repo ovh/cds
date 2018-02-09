@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/google/gops/agent"
@@ -315,7 +316,7 @@ See $ engine config command for more details.
 
 		// Gracefully shutdown all
 		c := make(chan os.Signal, 1)
-		signal.Notify(c)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 		go func() {
 			<-c
 			signal.Stop(c)
