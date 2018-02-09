@@ -45,6 +45,8 @@ export class ActionComponent implements OnDestroy {
 
     @Output() actionEvent = new EventEmitter<ActionEvent>();
 
+    collapsed = true;
+
     constructor(private sharedService: SharedService, private _actionStore: ActionStore, private dragulaService: DragulaService) {
         this._actionStore.getActions().subscribe(mapActions => {
             this.publicActions = mapActions.toArray();
