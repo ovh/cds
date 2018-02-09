@@ -325,9 +325,9 @@ export class ApplicationService {
      * @returns {Observable<Notification>}
      */
     updateNotification(key: string, appName: string, pipName: string, notification: Notification): Observable<Application> {
-        if (notification.notifications) {
+        if (Array.isArray(notification.notifications)) {
             notification.notifications.forEach((n: UserNotificationSettings) => {
-                if (n.recipients) {
+                if (Array.isArray(n.recipients)) {
                     n.recipients = n.recipients.map(r => r.trim());
                 }
             });
