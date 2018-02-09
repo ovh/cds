@@ -1,7 +1,7 @@
 import {Component, Input, Output, EventEmitter, OnInit} from '@angular/core';
 import {WorkflowNode} from '../../../../model/workflow.model';
 import {Router} from '@angular/router';
-import {Project} from '../../../../model/project.model';
+import {Project, IdName} from '../../../../model/project.model';
 import {Application} from '../../../../model/application.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Environment} from '../../../../model/environment.model';
@@ -36,6 +36,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     _project: Project;
     node: WorkflowNode = new WorkflowNode();
     loading = false;
+    applicationsName: IdName[] = [];
+    environmentsName: IdName[] = [];
 
     // Pipeline section
     set createNewPipeline(data: boolean) {
@@ -108,18 +110,21 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       if (!this.project.application_names || !this.project.application_names.length) {
         this.createNewApplication = true;
       }
+      if (!this.project.environments || !this.project.environments.length) {
+        this.createNewEnvironment = true;
+      }
 
       if (Array.isArray(this.project.application_names)) {
           let voidApp = new Application();
           voidApp.id = 0;
           voidApp.name = ' ';
-          this.project.application_names.unshift(voidApp);
+          this.applicationsName = [voidApp, ...this.project.application_names];
       }
       if (Array.isArray(this.project.environments)) {
           let voidEnv = new Environment();
           voidEnv.id = 0;
           voidEnv.name = ' ';
-          this.project.environments.unshift(voidEnv);
+          this.environmentsName = [voidEnv, ...this.project.environments];
       }
     }
 
