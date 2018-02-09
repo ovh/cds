@@ -73,12 +73,32 @@
 
     <div class="subtitle normalStep">
         <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
+        <div class="right floated">
+          <button class="ui blue button" (click)="collapsed = !collapsed">
+              <ng-container *ngIf="collapsed">
+                  <i class="hide icon"></i>
+                  {{'common_hide_all' | translate}}
+              </ng-container>
+              <ng-container *ngIf="!collapsed">
+                  <i class="eye icon"></i>
+                  {{'common_show_all' | translate}}
+              </ng-container>
+
+          </button>
+        </div>
     </div>
     <div class="ui segment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="steps" *ngIf="steps">
             <div *ngFor="let step of steps" class="step" [class.off]="!step.enabled">
-                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest" [publicActions]="publicActions"
-                                 (removeEvent)="stepManagement($event)"></app-action-step>
+                <app-action-step
+                    [action]="editableAction"
+                    [step]="step"
+                    [edit]="edit"
+                    [suggest]="suggest"
+                    [publicActions]="publicActions"
+                    [collapsed]="collapsed"
+                    (removeEvent)="stepManagement($event)">
+                </app-action-step>
                 <hr>
             </div>
         </div>
