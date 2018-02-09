@@ -48,6 +48,11 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	}
 	hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 
+	//TODO: to delete when all previous scheduler are updated
+	if _, ok := hook.Config["payload"]; hook.WorkflowHookModel.Name == sdk.SchedulerModelName && !ok {
+		hook.Config["payload"] = sdk.SchedulerModel.DefaultConfig["payload"]
+	}
+
 	errmu := sdk.MultiError{}
 	// Check configuration of the hook vs the model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
