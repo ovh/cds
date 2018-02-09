@@ -53,6 +53,7 @@ export class WorkflowAdminComponent implements OnInit {
         }
         if (this._tagWorkflow.metadata['default_tags']) {
             this.selectedTags = this._tagWorkflow.metadata['default_tags'].split(',');
+            this.existingTags.push(...this.selectedTags);
         }
 
         if (this.project.permission !== 7) {
@@ -62,8 +63,8 @@ export class WorkflowAdminComponent implements OnInit {
 
         this._workflowRunService.getTags(this.project.key, this._tagWorkflow.name).subscribe(tags => {
             Object.keys(tags).forEach(k => {
-                if (tags.hasOwnProperty(k)) {
-                    this.existingTags.push(k)
+                if (tags.hasOwnProperty(k) && this.existingTags.indexOf(k) !== -1) {
+                    this.existingTags.push(k);
                 }
             });
         });
