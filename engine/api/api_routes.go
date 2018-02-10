@@ -12,12 +12,13 @@ func (api *API) InitRouter() {
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware)
 	api.lastUpdateBroker = &lastUpdateBroker{
-		make(map[string]*lastUpdateBrokerSubscribe),
-		make(chan *lastUpdateBrokerSubscribe),
-		make(chan string),
-		&sync.Mutex{},
+		clients:  make(map[string]lastUpdateBrokerSubscribe),
+		messages: make(chan string),
+		mutex:    &sync.RWMutex{},
+		cache:    api.Cache,
+		dbFunc:   api.DBConnectionFactory.GetDBMap,
 	}
-	api.lastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap, api.Cache)
+	api.lastUpdateBroker.Init(api.Router.Background)
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
