@@ -138,9 +138,13 @@
   branch = "ye-cds"
   source = "https://github.com/yesnault/go-plugin.git"
 
-[[constraint]]
+[[override]]
   name = "github.com/Microsoft/go-winio"
   version = "0.4.7"
+
+[[override]]
+  name = "github.com/chzyer/readline"
+  revision = "f6d7a1f6fbf35bbf9beb80dc63c56a29dcfb759f"
 
 [[constraint]]
   name = "github.com/ovh/venom"

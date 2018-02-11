@@ -1,11 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
+	"io"
+	"path"
 	"strings"
 
+	"github.com/chzyer/readline"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 
@@ -24,12 +25,15 @@ CDS Shell Mode. Keywords:
 - help: display this help
 - ls: display current list
 - ls <KEY>: display current object, ls MY_PRJ is the same as cdsctl project show MY_PRJ
+- mode: display current mode. Choose mode with "mode vi" ou "mode emacs"
 - open: open CDS WebUI with current context
 - run: run current workflow
 - version: same as cdsctl version command
 
 `,
 }
+
+var current *shellCurrent
 
 func shellRun(v cli.Values) error {
 	shellASCII()
@@ -43,17 +47,43 @@ func shellRun(v cli.Values) error {
 	// enable shell mode, this will prevent to os.Exit if there is an error on a command
 	cli.ShellMode = true
 
-	current := &shellCurrent{}
+	l, err := readline.NewEx(&readline.Config{
+		Prompt:          "\033[31m»\033[0m ",
+		HistoryFile:     path.Join(userHomeDir(), ".cdsctl_history"),
+		AutoComplete:    completer,
+		InterruptPrompt: "^C",
+		EOFPrompt:       "exit",
+
+		HistorySearchFold: true,
+	})
+
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+	}
+
+	defer l.Close()
+
+	current = &shellCurrent{rline: l}
+
 	for {
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("> ")
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSpace(text)
-		if text == "exit" || text == "quit" {
+		line, err := l.Readline()
+		if err == readline.ErrInterrupt {
+			if len(line) == 0 {
+				break
+			} else {
+				continue
+			}
+		} else if err == io.EOF {
 			break
 		}
-		if len(text) > 0 {
-			shellProcessCommand(text, current)
+
+		line = strings.TrimSpace(line)
+
+		if line == "exit" || line == "quit" {
+			break
+		}
+		if len(line) > 0 {
+			shellProcessCommand(line, current)
 		}
 	}
 	return nil
@@ -66,6 +96,7 @@ type shellCurrent struct {
 	pipeline    string
 	environment string
 	position    shellPosition
+	rline       *readline.Instance
 }
 
 type shellPosition int
@@ -155,33 +186,33 @@ func (s *shellCurrent) getArgs() []string {
 }
 
 func (s *shellCurrent) getPwd() string {
-	r := "/ "
+	r := "/"
 	if s.project != "" {
 		r += s.project
 	}
 	if s.position == shellInWorkflows || s.position == shellInWorkflow {
-		r += " / workflows"
+		r += "/workflows"
 	}
 	if s.workflow != "" {
-		r += " / " + s.workflow
+		r += "/" + s.workflow
 	}
 	if s.position == shellInApplications || s.position == shellInApplication {
-		r += " / applications"
+		r += "/applications"
 	}
 	if s.application != "" {
-		r += " / " + s.application
+		r += "/" + s.application
 	}
 	if s.position == shellInPipelines || s.position == shellInPipeline {
-		r += " / pipelines"
+		r += "/pipelines"
 	}
 	if s.pipeline != "" {
-		r += " / " + s.pipeline
+		r += "/" + s.pipeline
 	}
 	if s.position == shellInEnvironments || s.position == shellInEnvironment {
-		r += " / environments"
+		r += "/environments"
 	}
 	if s.environment != "" {
-		r += " / " + s.environment
+		r += "/" + s.environment
 	}
 	return r
 }
@@ -205,11 +236,84 @@ func (s *shellCurrent) setPositionInsideProject(input string) {
 
 type shellCommandFunc func(args []string, current *shellCurrent) *cobra.Command
 
+func listCurrent() func(string) []string {
+	return func(line string) []string {
+		r := []string{}
+		switch current.position {
+		case shellInProjects:
+			values, _ := client.ProjectList(false, false)
+			for _, v := range values {
+				r = append(r, v.Key)
+			}
+		case shellInProject:
+			r = []string{"..", "workflows", "applications", "environments", "pipelines"}
+		case shellInWorkflows:
+			values, _ := client.WorkflowList(current.project)
+			for _, v := range values {
+				r = append(r, v.Name)
+			}
+		case shellInApplications:
+			values, _ := client.ApplicationList(current.project)
+			for _, v := range values {
+				r = append(r, v.Name)
+			}
+		case shellInPipelines:
+			values, _ := client.PipelineList(current.project)
+			for _, v := range values {
+				r = append(r, v.Name)
+			}
+		case shellInEnvironments:
+			values, _ := client.EnvironmentList(current.project)
+			for _, v := range values {
+				r = append(r, v.Name)
+			}
+		}
+		return r
+	}
+}
+
 var (
+	completer = readline.NewPrefixCompleter(
+		readline.PcItem("mode",
+			readline.PcItem("vi"),
+			readline.PcItem("emacs"),
+		),
+		readline.PcItem("help"),
+		readline.PcItem("cd",
+			readline.PcItemDynamic(listCurrent()),
+		),
+		readline.PcItem("ls",
+			readline.PcItemDynamic(listCurrent()),
+		),
+		readline.PcItem("open"),
+		readline.PcItem("pwd"),
+		readline.PcItem("version"),
+		readline.PcItem("run"),
+		readline.PcItem("exit"),
+	)
+
 	shellCommands = map[string]shellCommandFunc{
-		"cd":  cdCommand,
-		"ls":  lsCommand,
-		"dir": lsCommand,
+		"cd": cdCommand,
+		"ls": lsCommand,
+		"mode": func(args []string, current *shellCurrent) *cobra.Command {
+			if len(args) == 0 {
+				if current.rline.IsVimMode() {
+					println("current mode: vim")
+				} else {
+					println("current mode: emacs")
+				}
+			} else {
+				switch args[0] {
+				case "vi":
+					current.rline.SetVimMode(true)
+				case "emacs":
+					current.rline.SetVimMode(false)
+				default:
+					fmt.Println("invalid mode:", args[0])
+				}
+			}
+			return nil
+		},
 		"help": func(args []string, current *shellCurrent) *cobra.Command {
 			fmt.Println(shellCmd.Long)
 			return nil
