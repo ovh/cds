@@ -24,6 +24,7 @@ func main() {
 	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
 	update := cli.NewCommand(updateCmd, updateRun, nil, cli.CommandWithoutExtraFlags)
 	version := cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
+	shell := cli.NewCommand(shellCmd, shellRun, nil, cli.CommandWithoutExtraFlags)
 	doc := cli.NewCommand(docCmd, docRun, nil, cli.CommandWithoutExtraFlags)
 	monitoring := cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
 
@@ -43,6 +44,7 @@ func main() {
 			workflow,
 			update,
 			usr,
+			shell,
 			monitoring,
 			version,
 			encrypt,

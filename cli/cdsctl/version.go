@@ -20,5 +20,6 @@ func versionRun(v cli.Values) error {
 		return err
 	}
 	fmt.Printf("CDS api version: %s\n", version.Version)
+	fmt.Printf("CDS URL: %s\n", client.APIURL())
 	return nil
 }
