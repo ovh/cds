@@ -387,7 +387,20 @@ var (
 			}
 			return cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...)
 		} else if current.position == shellInProject {
-			fmt.Println("./workflows\n./applications\n./pipelines\n./environments")
+			fmt.Println("workflows\napplications\npipelines\nenvironments")
+			if len(args) == 1 {
+				switch args[0] {
+				case "workflows":
+					return cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...)
+				case "pipelines":
+					return cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...)
+				case "applications":
+					return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
+				case "environments":
+					return cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...)
+				}
+				return nil
+			}
 			return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
 		} else if current.position == shellInApplications {
 			return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
@@ -418,7 +431,14 @@ func shellProcessCommand(input string, current *shellCurrent) {
 			return
 		}
 		fmt.Printf("--> Command %s", cmd.Short)
-		args := append(current.getArgs(), tuple[1:]...)
+		args := current.getArgs()
+		if len(tuple) > 1 {
+			subcmd := strings.Join(tuple[1:], " ")
+			if subcmd != "workflows" && subcmd != "applications" && subcmd != "environments" && subcmd != "pipelines" {
+				args = append(current.getArgs(), tuple[1:]...)
+			}
+		}
+
 		if len(args) > 0 {
 			fmt.Printf(" with args: %+v", args)
 		}
