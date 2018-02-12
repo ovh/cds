@@ -69,16 +69,26 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string, store cache.S
 
 func (b *lastUpdateBroker) UpdateUserPermissions(username string) {
 	var user *sdk.User
+
+	// get the user
+	b.mutex.Lock()
 	for _, c := range b.clients {
 		if c.User.Username == username {
 			user = c.User
-			if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
-				log.Error("lastUpdate.UpdateUserPermissions> Cannot load user permission:%s", err)
-			}
 			break
 		}
 	}
+	b.mutex.Unlock()
 
+	if user == nil {
+		return
+	}
+	// load permission without being in the mutex lock
+	if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+		log.Error("lastUpdate.UpdateUserPermissions> Cannot load user permission:%s", err)
+	}
+
+	// then, relock map and update user
 	b.mutex.Lock()
 	for _, c := range b.clients {
 		if c.User.Username == username {
