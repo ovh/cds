@@ -1565,6 +1565,7 @@
 <li><a href="#export-a-variable-inside-a-step">Export a variable inside a step</a></li>
 <li><a href="#shell-environment-variable">Shell Environment Variable</a></li>
 <li><a href="#git-variables">Git variables</a></li>
+<li><a href="#helpers">Helpers</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -1628,19 +1629,23 @@
 <p>Here is the list of builtin variables, generated for every build:</p>
 
 <ul>
-<li><code>{{.cds.project}}</code> The name of the current project</li>
 <li><code>{{.cds.environment}}</code> The name of the current environment</li>
 <li><code>{{.cds.application}}</code> The name of the current application</li>
-<li><code>{{.cds.pipeline}}</code> The name of the current pipeline</li>
-<li><code>{{.cds.stage}}</code> The name of the current stage</li>
 <li><code>{{.cds.job}}</code> The name of the current job</li>
-<li><code>{{.cds.workspace}}</code> Current job&rsquo;s workspace. It&rsquo;s a directory. In a step <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">script</a>, <code>{{.cds.workspace}}</code> == $HOME</li>
-<li><code>{{.cds.version}}</code> The current version number</li>
-<li><code>{{.cds.parent.application}}</code> The name of the application that triggered the current build</li>
-<li><code>{{.cds.parent.pipeline}}</code> The name of the pipeline that triggered the current build</li>
+<li><code>{{.cds.manual}}</code> true if current pipeline is manually run, false otherwise</li>
+<li><code>{{.cds.pipeline}}</code> The name of the current pipeline</li>
+<li><code>{{.cds.project}}</code> The name of the current project</li>
+<li><code>{{.cds.run}}</code> Run Number of current workflow, example: 3.0</li>
+<li><code>{{.cds.run.number}}</code> Number of current workflow, example: 3 if <code>{{.cds.run}} = 3.0</code></li>
+<li><code>{{.cds.run.subnumber}}</code> Sub Number of current workflow, example: 4 if <code>{{.cds.run}} = 3.4</code></li>
+<li><code>{{.cds.stage}}</code> The name of the current stage</li>
+<li><code>{{.cds.status}}</code> Status or previous pipeline: Success or Failed</li>
 <li><code>{{.cds.triggered_by.email}}</code> Email of the user who launched the current build</li>
 <li><code>{{.cds.triggered_by.fullname}}</code> Full name of the user who launched the current build</li>
 <li><code>{{.cds.triggered_by.username}}</code> Username of the user who launched the current build</li>
+<li><code>{{.cds.version}}</code> The current version number, it&rsquo;s an alias to <code>{{.cds.run.number}}</code></li>
+<li><code>{{.cds.workflow}}</code> The name of the current workflow</li>
+<li><code>{{.cds.workspace}}</code> Current job&rsquo;s workspace. It&rsquo;s a directory. In a step <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">script</a>, <code>{{.cds.workspace}}</code> == $HOME</li>
 </ul>
 
 <h2 id="the-version-variable">The .version variable</h2>
@@ -1680,6 +1685,66 @@ echo $CDS_PARENT_APPLICATION
 <li><code>{{.git.author}}</code></li>
 <li><code>{{.git.message}}</code></li>
 </ul>
+
+<h2 id="helpers">Helpers</h2>
+
+<p>Some helpers are available to transform the value of a CDS Variable.</p>
+
+<p>Example: run a pipeline, with an application named <code>my_app</code>. A step script:</p>
+
+<pre><code>echo &quot;{{.cds.application | upper}}
+</code></pre>
+
+<p>will display</p>
+
+<pre><code>MY_APP
+</code></pre>
+
+<p>Helpers available:</p>
+
+<ul>
+<li>abbrev</li>
+<li>abbrevboth</li>
+<li>trunc</li>
+<li>trim</li>
+<li>upper</li>
+<li>lower</li>
+<li>title</li>
+<li>untitle</li>
+<li>substr</li>
+<li>repeat</li>
+<li>trimall</li>
+<li>trimAll</li>
+<li>trimSuffix</li>
+<li>trimPrefix</li>
+<li>nospace</li>
+<li>initials</li>
+<li>randAlphaNum</li>
+<li>randAlpha</li>
+<li>randASCII</li>
+<li>randNumeric</li>
+<li>swapcase</li>
+<li>shuffle</li>
+<li>snakecase</li>
+<li>camelcase</li>
+<li>quote</li>
+<li>squote</li>
+<li>indent</li>
+<li>nindent</li>
+<li>replace</li>
+<li>plural</li>
+<li>toString</li>
+<li>default</li>
+<li>empty</li>
+<li>coalesce</li>
+<li>toJSON</li>
+<li>toPrettyJSON</li>
+<li>b64enc</li>
+<li>b64dec</li>
+<li>escape : replace &lsquo;_&lsquo;, &lsquo;/&rsquo;, &lsquo;.&rsquo; by &lsquo;-&rsquo;</li>
+</ul>
+
+<p>You&rsquo;re a go developper? See all helpers on <a href="https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23">https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23</a></p>
 
 
 <footer class=" footline" >
