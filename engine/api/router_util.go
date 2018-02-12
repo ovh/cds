@@ -19,12 +19,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func deleteUserPermissionCache(ctx context.Context, store cache.Store) {
+func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store) {
 	if getUser(ctx) != nil {
-		kp := cache.Key("users", getUser(ctx).Username, "perms")
-		kg := cache.Key("users", getUser(ctx).Username, "groups")
+		username := getUser(ctx).Username
+		kp := cache.Key("users", username, "perms")
+		kg := cache.Key("users", username, "groups")
 		store.Delete(kp)
 		store.Delete(kg)
+		// refresh user persmission for Last Update SSE
+		api.lastUpdateBroker.UpdateUserPermissions(username)
 	}
 }
 

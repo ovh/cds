@@ -52,7 +52,7 @@ func getPermissionByMethod(method string, isExecution bool) int {
 
 func (api *API) deletePermissionMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
-		deleteUserPermissionCache(ctx, api.Cache)
+		api.deleteUserPermissionCache(ctx, api.Cache)
 	}
 	return ctx, nil
 }

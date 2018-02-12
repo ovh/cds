@@ -29,7 +29,7 @@ type lastUpdateBrokerSubscribe struct {
 type lastUpdateBroker struct {
 	clients  map[string]lastUpdateBrokerSubscribe
 	messages chan string
-	mutex    *sync.RWMutex
+	mutex    *sync.Mutex
 	dbFunc   func() *gorp.DbMap
 	cache    cache.Store
 }
@@ -67,6 +67,27 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string, store cache.S
 	}
 }
 
+func (b *lastUpdateBroker) UpdateUserPermissions(username string) {
+	var user *sdk.User
+	for _, c := range b.clients {
+		if c.User.Username == username {
+			user = c.User
+			if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+				log.Error("lastUpdate.UpdateUserPermissions> Cannot load user permission:%s", err)
+			}
+			break
+		}
+	}
+
+	b.mutex.Lock()
+	for _, c := range b.clients {
+		if c.User.Username == username {
+			c.User = user
+		}
+	}
+	b.mutex.Unlock()
+}
+
 // Start the broker
 func (b *lastUpdateBroker) Start(c context.Context) {
 	for {
@@ -90,7 +111,7 @@ func (b *lastUpdateBroker) Start(c context.Context) {
 			}
 
 			//Receive new message
-			b.mutex.RLock()
+			b.mutex.Lock()
 			for _, i := range b.clients {
 				if i.User.Admin {
 					i.Queue <- msg
@@ -114,7 +135,7 @@ func (b *lastUpdateBroker) Start(c context.Context) {
 					}
 				}
 			}
-			b.mutex.RUnlock()
+			b.mutex.Unlock()
 		}
 	}
 }

@@ -14,7 +14,7 @@ func (api *API) InitRouter() {
 	api.lastUpdateBroker = &lastUpdateBroker{
 		clients:  make(map[string]lastUpdateBrokerSubscribe),
 		messages: make(chan string),
-		mutex:    &sync.RWMutex{},
+		mutex:    &sync.Mutex{},
 		cache:    api.Cache,
 		dbFunc:   api.DBConnectionFactory.GetDBMap,
 	}
