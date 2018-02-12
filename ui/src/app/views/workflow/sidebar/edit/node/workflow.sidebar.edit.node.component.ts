@@ -147,7 +147,7 @@ export class WorkflowSidebarEditNodeComponent {
         let currentNode: WorkflowNode;
         if (clonedWorkflow.root.id === this.node.id) {
             currentNode = clonedWorkflow.root;
-        } else if (clonedWorkflow.root.triggers) {
+        } else {
             currentNode = Workflow.getNodeByID(this.node.id, clonedWorkflow);
         }
 
