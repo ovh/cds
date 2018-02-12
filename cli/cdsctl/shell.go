@@ -431,7 +431,6 @@ func shellProcessCommand(input string, current *shellCurrent) {
 		if cmd == nil {
 			return
 		}
-		fmt.Printf("--> Command %s", cmd.Short)
 		args := current.getArgs()
 		if len(tuple) > 1 {
 			subcmd := strings.Join(tuple[1:], " ")
@@ -446,9 +445,6 @@ func shellProcessCommand(input string, current *shellCurrent) {
 		fmt.Println()
 		cmd.SetArgs(args)
 		cmd.Execute()
-		if input != "pwd" {
-			fmt.Println(current.getPwd())
-		}
 		return
 	}
 	fmt.Printf("Invalid command %s\n", input)
@@ -457,17 +453,31 @@ func shellProcessCommand(input string, current *shellCurrent) {
 func shellASCII() {
 	fmt.Printf(`
 
-                                           
-  ,ad8888ba,   88888888ba,     ad88888ba   
- d8"'    `+"`"+`"8b  88      `+"`"+`"8b   d8"     "8b  
-d8'            88        `+"`"+`8b  Y8,          
-88             88         88  `+"`"+`Y8aaaaa,    
-88             88         88    `+"`"+`"""""8b,  
-Y8,            88         8P          `+"`"+`8b  
- Y8a.    .a8P  88      .a8P   Y8a     a8P  
-  `+"`"+`"Y8888Y"'   88888888Y"'     "Y88888P"   
-						
-  
-connecting to cds api %s...                                           
+               .';:looddddolc;'.               .,::::::::::::::::;;;,'..           .............................
+            'cdOKKXXXXXXXXXXXXKOd:.            'OXXXXXXXXXXXXXXXXXXXKK0Oxo:...',;;::ccccccccccccccccccccccccccc;.
+         .:x0XXXX0OxollllodxOKXXXXOl.          'OXXXX0OOOOOOOOOO0000KXXXXX0dccccccccccccccccccccccccccccccccccc;.
+       .;kKXXX0d:..         .,lOKXXXOc.        'OXXX0c..............';cdOKKkdddl;,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,.
+      .oKXXX0l.                .l0XXXKo.       'OXXX0;                  .cOKKKKO:.
+     .dKXXXk,                    :0XXXKl.      'OXXX0;                    .dKXXX0:
+    .lKXXXO,                      :xdoc,       'OXXX0;                     ,kOOOOx:,,,,,,,''..
+    ;OXXXKc                                    'OXXX0;                    .cxxxxxxxxxxxxxxxxdoc.
+   .lKXXXk'                                    'OXXX0;                     'oxxxxxxxxxxxxxxxxxx:
+   .xXXXXo.                                    'OXXX0;                      .:kOOOko:;;;;;;;;;;.
+   'kXXXKl                                     'OXXX0;                       ,OXXXK:
+   'kXXXKl                                     'OXXX0;                       ,OXXXK:
+   .xXXXXo.                                    'OXXX0;                       ;0XXX0;       .;;;;;;;;;;;;;;;;,'.
+    lKXXXx.                                    'OXXX0;                       lKXXXk'      .cxxxxxxxxxxxxxxxxxdl'
+    ,OXXX0:                        ;c:,..      'OXXX0;                      .xXXXKo.       'cdxxxxxxxxxxxxxxxxxc.
+    .lKXXXx.                      ,OXXX0c      'OXXX0;                     .lKXXXO,          ..',,,;;;;;;;,;;;,.
+     .xXXXKd.                    'kXXXXx.      'OXXX0;                    .l0XXX0c
+      'xKXXKk;.                .:OXXXKx'       'OXXX0;                   ,dKXXX0c
+       .o0XXXKxc'.           .:xKXXXKd.        'OXXX0:             ...,cx0K0OOOxc:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;'
+         ;xKXXXX0kdl:;;;;:cox0KXXXKx;.         'OXXXKOdddddddddddxxkO0KXXXKOxxkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkxkxc.
+           ,lk0XXXXXXXXXXXXXXXXKko,.           'OXXXXXXXXXXXXXXXXXXXXXKKOxddkkxkkkkkkkkkkkkkkkkkkkkkkkxxxxdol:,.
+             .';codkkOOOOOkxdl:'.              .cooooooooooooooooollc:;'.  .;;;;;;;;;;;;;;;;;;;;;;;,,,,'....
+                    .......
+
+
+connecting to cds api %s...
   > `, client.APIURL())
 }

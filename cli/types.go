@@ -127,6 +127,10 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 			},
 		}
 	case RunListFunc:
+		var quiet string
+		if ShellMode {
+			quiet = "true"
+		}
 		extraFlags = []Flag{
 			{
 				Name:    "filter",
@@ -143,7 +147,7 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 			{
 				Name:      "quiet",
 				ShortHand: "q",
-				Default:   "",
+				Default:   quiet,
 				Usage:     "Only display object's key",
 				Kind:      reflect.Bool,
 			},
