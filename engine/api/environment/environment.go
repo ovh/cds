@@ -457,7 +457,7 @@ func Permission(key string, envName string, u *sdk.User) int {
 		return permission.PermissionReadWriteExecute
 	}
 
-	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: key, Name: envName}]
+	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, envName)]
 }
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables

@@ -17,7 +17,75 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson9e1087fdDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *UserPermissions) {
+func easyjson9e1087fdDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *UserPermissionsMap) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+	} else {
+		in.Delim('{')
+		if !in.IsDelim('}') {
+			*out = make(UserPermissionsMap)
+		} else {
+			*out = nil
+		}
+		for !in.IsDelim('}') {
+			key := string(in.String())
+			in.WantColon()
+			var v1 int
+			v1 = int(in.Int())
+			(*out)[key] = v1
+			in.WantComma()
+		}
+		in.Delim('}')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson9e1087fdEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in UserPermissionsMap) {
+	if in == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+		out.RawString(`null`)
+	} else {
+		out.RawByte('{')
+		v2First := true
+		for v2Name, v2Value := range in {
+			if v2First {
+				v2First = false
+			} else {
+				out.RawByte(',')
+			}
+			out.String(string(v2Name))
+			out.RawByte(':')
+			out.Int(int(v2Value))
+		}
+		out.RawByte('}')
+	}
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v UserPermissionsMap) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson9e1087fdEncodeGithubComOvhCdsSdk(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v UserPermissionsMap) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson9e1087fdEncodeGithubComOvhCdsSdk(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *UserPermissionsMap) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson9e1087fdDecodeGithubComOvhCdsSdk(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *UserPermissionsMap) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson9e1087fdDecodeGithubComOvhCdsSdk(l, v)
+}
+func easyjson9e1087fdDecodeGithubComOvhCdsSdk1(in *jlexer.Lexer, out *UserPermissions) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -52,9 +120,9 @@ func easyjson9e1087fdDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *UserPermiss
 					out.Groups = (out.Groups)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v1 string
-					v1 = string(in.String())
-					out.Groups = append(out.Groups, v1)
+					var v3 string
+					v3 = string(in.String())
+					out.Groups = append(out.Groups, v3)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -75,9 +143,9 @@ func easyjson9e1087fdDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *UserPermiss
 					out.GroupsAdmin = (out.GroupsAdmin)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v2 string
-					v2 = string(in.String())
-					out.GroupsAdmin = append(out.GroupsAdmin, v2)
+					var v4 string
+					v4 = string(in.String())
+					out.GroupsAdmin = append(out.GroupsAdmin, v4)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -95,9 +163,9 @@ func easyjson9e1087fdDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *UserPermiss
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v3 int
-					v3 = int(in.Int())
-					(out.ProjectsPerm)[key] = v3
+					var v5 int
+					v5 = int(in.Int())
+					(out.ProjectsPerm)[key] = v5
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -128,7 +196,7 @@ func easyjson9e1087fdDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *UserPermiss
 		in.Consumed()
 	}
 }
-func easyjson9e1087fdEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in UserPermissions) {
+func easyjson9e1087fdEncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in UserPermissions) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -142,11 +210,11 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in UserPermis
 		}
 		{
 			out.RawByte('[')
-			for v4, v5 := range in.Groups {
-				if v4 > 0 {
+			for v6, v7 := range in.Groups {
+				if v6 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v5))
+				out.String(string(v7))
 			}
 			out.RawByte(']')
 		}
@@ -161,11 +229,11 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in UserPermis
 		}
 		{
 			out.RawByte('[')
-			for v6, v7 := range in.GroupsAdmin {
-				if v6 > 0 {
+			for v8, v9 := range in.GroupsAdmin {
+				if v8 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v7))
+				out.String(string(v9))
 			}
 			out.RawByte(']')
 		}
@@ -180,16 +248,16 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in UserPermis
 		}
 		{
 			out.RawByte('{')
-			v8First := true
-			for v8Name, v8Value := range in.ProjectsPerm {
-				if v8First {
-					v8First = false
+			v10First := true
+			for v10Name, v10Value := range in.ProjectsPerm {
+				if v10First {
+					v10First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v8Name))
+				out.String(string(v10Name))
 				out.RawByte(':')
-				out.Int(int(v8Value))
+				out.Int(int(v10Value))
 			}
 			out.RawByte('}')
 		}
@@ -240,23 +308,23 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in UserPermis
 // MarshalJSON supports json.Marshaler interface
 func (v UserPermissions) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson9e1087fdEncodeGithubComOvhCdsSdk(&w, v)
+	easyjson9e1087fdEncodeGithubComOvhCdsSdk1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v UserPermissions) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson9e1087fdEncodeGithubComOvhCdsSdk(w, v)
+	easyjson9e1087fdEncodeGithubComOvhCdsSdk1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *UserPermissions) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson9e1087fdDecodeGithubComOvhCdsSdk(&r, v)
+	easyjson9e1087fdDecodeGithubComOvhCdsSdk1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *UserPermissions) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson9e1087fdDecodeGithubComOvhCdsSdk(l, v)
+	easyjson9e1087fdDecodeGithubComOvhCdsSdk1(l, v)
 }

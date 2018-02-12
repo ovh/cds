@@ -3,7 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 // User represent a CDS user.
@@ -32,40 +31,11 @@ type UserPermissions struct {
 }
 
 // UserPermissionsMap is a type of map. The in key the key and name of the object and value is the level of permissions
-type UserPermissionsMap map[UserPermissionKey]int
+//easyjson:json
+type UserPermissionsMap map[string]int
 
-// UserPermissionKey is used as a key in UserPermissionsMap
-type UserPermissionKey struct {
-	Key  string
-	Name string
-}
-
-//MarshalJSON is the json.Marshaller implementation usefull to serialize UserPermissionsMap
-func (m UserPermissionsMap) MarshalJSON() ([]byte, error) {
-	var data = make(map[string]int, len(m))
-	for k, v := range m {
-		data[k.Key+"/"+k.Name] = v
-	}
-	return json.Marshal(data)
-}
-
-//UnmarshalJSON is the json.Unmarshaller implementation usefull to deserialize UserPermissionsMap
-func (m *UserPermissionsMap) UnmarshalJSON(b []byte) error {
-	data := map[string]int{}
-	if err := json.Unmarshal(b, &data); err != nil {
-		return err
-	}
-
-	*m = make(map[UserPermissionKey]int)
-
-	for k, v := range data {
-		t := strings.SplitN(k, "/", 2)
-		if len(t) != 2 {
-			return fmt.Errorf("json: unable to unmarshal permissions")
-		}
-		(*m)[UserPermissionKey{Key: t[0], Name: t[1]}] = v
-	}
-	return nil
+func UserPermissionKey(k, n string) string {
+	return k + "/" + n
 }
 
 // UserAPIRequest  request for rest API
