@@ -9,7 +9,7 @@ import (
 	"text/template"
 )
 
-var interpolateRegex = regexp.MustCompile("({{\\.[a-zA-Z0-9._\\-µ|\\s]+}})")
+var interpolateRegex = regexp.MustCompile("({{[\\.\"a-zA-Z0-9._\\-µ|\\s]+}})")
 
 type reverseString []string
 
@@ -67,8 +67,19 @@ func Do(input string, vars map[string]string) (string, error) {
 						// with cds.foo.bar unknown from vars
 						nameWithDot := strings.Replace(e, "__", ".", -1)
 						nameWithDot = strings.Replace(nameWithDot, "µµµ", ".", -1)
+						nameWithDot = strings.Replace(nameWithDot, "\"", "\\\"", -1)
 						// "-"" are not a valid char in go template var name, as we don't know e, no pb to replace "-" with "µ"
 						eb := strings.Replace(e, "-", "µµµ", -1)
+
+						// check if helper exists. if helper does not exist, as
+						// '{{"conf"|uvault}}' -> return '{{"conf"|uvault}}' in default value
+						// '{{ default "{{\"conf\"|uvault}}" "" }}'
+						if pos := strings.Index(eb, "|"); pos > 0 && len(eb) > pos {
+							helper := strings.TrimSpace(eb[pos+1:])
+							if _, ok := interpolateHelperFuncs[helper]; !ok {
+								eb = ""
+							}
+						}
 						input = strings.Replace(input, sm[i][1], "{{ default \"{{"+nameWithDot+"}}\" "+eb+" }}", -1)
 					} else if _, ok := empty[e]; !ok {
 						// replace {{.cds.foo.bar}} with {{ default "" .cds.foo.bar}}

@@ -81,6 +81,14 @@ func TestDo(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "unknown function",
+			args: args{
+				input: `echo '{{"conf"|uvault}}'`,
+				vars:  map[string]string{},
+			},
+			want: `echo '{{"conf"|uvault}}'`,
+		},
+		{
 			name: "simple",
 			args: args{
 				input: "a {{.cds.app.value}}",
