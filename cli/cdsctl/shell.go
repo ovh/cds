@@ -41,7 +41,7 @@ func shellRun(v cli.Values) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Connected. cdsctl version: %s connected to CDS API %s version:%s \n\n", sdk.VERSION, client.APIURL(), version.Version)
+	fmt.Printf("Connected. cdsctl version: %s connected to CDS API version:%s \n\n", sdk.VERSION, version.Version)
 	fmt.Println("enter `exit` quit")
 
 	// enable shell mode, this will prevent to os.Exit if there is an error on a command
@@ -381,12 +381,13 @@ var (
 	}
 
 	lsCommand = func(args []string, current *shellCurrent) *cobra.Command {
-		if current.position == shellInProjects {
+		switch current.position {
+		case shellInProjects:
 			if len(args) == 1 {
 				return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
 			}
 			return cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...)
-		} else if current.position == shellInProject {
+		case shellInProject:
 			fmt.Println("workflows\napplications\npipelines\nenvironments")
 			if len(args) == 1 {
 				switch args[0] {
@@ -402,17 +403,17 @@ var (
 				return nil
 			}
 			return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
-		} else if current.position == shellInApplications {
+		case shellInApplications:
 			return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
-		} else if current.position == shellInApplication {
+		case shellInApplication:
 			return cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...)
-		} else if current.position == shellInEnvironments {
+		case shellInEnvironments:
 			return cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...)
-		} else if current.position == shellInPipelines {
+		case shellInPipelines:
 			return cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...)
-		} else if current.position == shellInWorkflows {
+		case shellInWorkflows:
 			return cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...)
-		} else if current.position == shellInWorkflow {
+		case shellInWorkflow:
 			return cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...)
 		}
 		return nil
@@ -458,15 +459,15 @@ func shellASCII() {
 
                                            
   ,ad8888ba,   88888888ba,     ad88888ba   
- d8"'    ` + "`" + `"8b  88      ` + "`" + `"8b   d8"     "8b  
-d8'            88        ` + "`" + `8b  Y8,          
-88             88         88  ` + "`" + `Y8aaaaa,    
-88             88         88    ` + "`" + `"""""8b,  
-Y8,            88         8P          ` + "`" + `8b  
+ d8"'    `+"`"+`"8b  88      `+"`"+`"8b   d8"     "8b  
+d8'            88        `+"`"+`8b  Y8,          
+88             88         88  `+"`"+`Y8aaaaa,    
+88             88         88    `+"`"+`"""""8b,  
+Y8,            88         8P          `+"`"+`8b  
  Y8a.    .a8P  88      .a8P   Y8a     a8P  
-  ` + "`" + `"Y8888Y"'   88888888Y"'     "Y88888P"   
+  `+"`"+`"Y8888Y"'   88888888Y"'     "Y88888P"   
 						
   
-connecting to cds api...                                           
-  > `)
+connecting to cds api %s...                                           
+  > `, client.APIURL())
 }
