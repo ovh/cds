@@ -93,6 +93,7 @@ var (
 // Requirement can be :
 // - a binary "which /usr/bin/docker"
 // - a network access "telnet google.com 443"
+//easyjson:json
 type Requirement struct {
 	Name  string `json:"name"`
 	Type  string `json:"type" yaml:"-"`
