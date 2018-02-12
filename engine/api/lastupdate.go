@@ -193,7 +193,9 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 				b.mutex.Unlock()
 				break leave
 			case msg := <-messageChan.Queue:
-				fmt.Fprintf(w, "data: %s\n\n", msg)
+				w.Write([]byte("data: "))
+				w.Write([]byte(msg))
+				w.Write([]byte("\n\n"))
 				f.Flush()
 			}
 		}
