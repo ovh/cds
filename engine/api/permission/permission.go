@@ -30,7 +30,7 @@ func ApplicationPermission(key string, appName string, u *sdk.User) int {
 		return PermissionReadWriteExecute
 	}
 
-	return u.Permissions.ApplicationsPerm[sdk.UserPermissionKey{Key: key, Name: appName}]
+	return u.Permissions.ApplicationsPerm[sdk.UserPermissionKey(key, appName)]
 }
 
 // ProjectPermission  Get the permission for the given project
@@ -48,7 +48,7 @@ func WorkflowPermission(key string, name string, u *sdk.User) int {
 		return PermissionReadWriteExecute
 	}
 
-	return u.Permissions.WorkflowsPerm[sdk.UserPermissionKey{Key: key, Name: name}]
+	return u.Permissions.WorkflowsPerm[sdk.UserPermissionKey(key, name)]
 }
 
 // PipelinePermission  Get the permission for the given pipeline
@@ -57,7 +57,7 @@ func PipelinePermission(key string, name string, u *sdk.User) int {
 		return PermissionReadWriteExecute
 	}
 
-	return u.Permissions.PipelinesPerm[sdk.UserPermissionKey{Key: key, Name: name}]
+	return u.Permissions.PipelinesPerm[sdk.UserPermissionKey(key, name)]
 }
 
 // EnvironmentPermission  Get the permission for the given environment
@@ -65,7 +65,7 @@ func EnvironmentPermission(key string, name string, u *sdk.User) int {
 	if u.Admin {
 		return PermissionReadWriteExecute
 	}
-	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: key, Name: name}]
+	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, name)]
 }
 
 // AccessToApplication check if we can modify the given application
@@ -74,7 +74,7 @@ func AccessToApplication(key string, name string, u *sdk.User, access int) bool 
 		return true
 	}
 
-	return u.Permissions.ApplicationsPerm[sdk.UserPermissionKey{Key: key, Name: name}] >= access
+	return u.Permissions.ApplicationsPerm[sdk.UserPermissionKey(key, name)] >= access
 }
 
 // AccessToPipeline check if we can modify the given pipeline
@@ -89,7 +89,7 @@ func AccessToPipeline(key string, env, pip string, u *sdk.User, access int) bool
 		}
 	}
 
-	if u.Permissions.PipelinesPerm[sdk.UserPermissionKey{Key: key, Name: pip}] >= access {
+	if u.Permissions.PipelinesPerm[sdk.UserPermissionKey(key, pip)] >= access {
 		if env != sdk.DefaultEnv.Name {
 			return AccessToEnvironment(key, env, u, access)
 		}
@@ -115,7 +115,7 @@ func AccessToEnvironment(key, env string, u *sdk.User, access int) bool {
 		}
 	}
 
-	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: key, Name: env}] >= access
+	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, env)] >= access
 }
 
 // ProjectPermissionUsers Get users that access to given project

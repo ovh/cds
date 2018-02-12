@@ -256,7 +256,7 @@ func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName strin
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.PipelinesPerm[sdk.UserPermissionKey{Key: projectKey, Name: pipelineName}] >= perm
+			return getUser(ctx).Permissions.PipelinesPerm[sdk.UserPermissionKey(projectKey, pipelineName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -271,7 +271,7 @@ func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string,
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: projectKey, Name: envName}] >= perm
+			return getUser(ctx).Permissions.EnvironmentsPerm[sdk.UserPermissionKey(projectKey, envName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -286,7 +286,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey{Key: projectKey, Name: workflowName}] >= perm
+			return getUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -305,7 +305,7 @@ func (api *API) checkApplicationPermissions(ctx context.Context, applicationName
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.ApplicationsPerm[sdk.UserPermissionKey{Key: projectKey, Name: applicationName}] >= perm
+			return getUser(ctx).Permissions.ApplicationsPerm[sdk.UserPermissionKey(projectKey, applicationName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
