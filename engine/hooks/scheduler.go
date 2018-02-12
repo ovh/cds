@@ -155,7 +155,5 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 
 		//Start (or restart) the task
 		s.startTask(c, task)
-
-		continue
 	}
 }

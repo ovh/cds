@@ -77,6 +77,12 @@ func (c *client) GetJSON(path string, out interface{}, mods ...RequestModifier) 
 	return code, err
 }
 
+// GetJSONWithHeaders get the requested path If set, it unmarshalls the response to *out* and return response headers
+func (c *client) GetJSONWithHeaders(path string, out interface{}, mods ...RequestModifier) (http.Header, int, error) {
+	_, header, code, err := c.RequestJSON(http.MethodGet, path, nil, out, mods...)
+	return header, code, err
+}
+
 // DeleteJSON deletes the requested path If set, it unmarshalls the response to *out*
 func (c *client) DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error) {
 	_, _, code, err := c.RequestJSON(http.MethodDelete, path, nil, out, mods...)

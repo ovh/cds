@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -385,4 +386,80 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 	}
 
 	return nil
+}
+
+func (api *API) getHookPollingVCSEvents() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		uid := vars["uid"]
+
+		h, err := hook.LoadHookByUID(api.mustDB(), uid)
+		if err != nil {
+			return sdk.WrapError(err, "getHookPollingVCSEvents> cannot load hook")
+		}
+
+		proj, errProj := project.Load(api.mustDB(), api.Cache, projectKey, nil)
+		if errProj != nil {
+			return sdk.WrapError(errProj, "getHookPollingVCSEvents> cannot load project")
+		}
+
+		//get the client for the repositories manager
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rm)
+		client, err := repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
+		if err != nil {
+			return nil, sdk.WrapError(err, "Polling> Unable to get client for %s %s", projectKey, rm)
+		}
+
+		//Check if the polling if disabled
+		if info, err := repositoriesmanager.GetPollingInfos(client); err != nil {
+			return nil, err
+		} else if info.PollingDisabled || !info.PollingSupported {
+			log.Info("Polling> %s polling is disabled", vcsServer.Name)
+			return nil, nil
+		}
+
+		var events []interface{}
+		events, pollingDelay, err = client.GetEvents(p.Application.RepositoryFullname, p.DateCreation)
+		if err != nil && err.Error() != "No new events" {
+			return nil, sdk.WrapError(err, "Polling> Unable to get events for %s %s", projectKey, rm)
+		}
+		e.PushEvents, err = client.PushEvents(p.Application.RepositoryFullname, events)
+		if err != nil {
+			e.Error = err.Error()
+		}
+
+		e.CreateEvents, err = client.CreateEvents(p.Application.RepositoryFullname, events)
+		if err != nil {
+			e.Error = err.Error()
+		}
+
+		e.DeleteEvents, err = client.DeleteEvents(p.Application.RepositoryFullname, events)
+		if err != nil {
+			e.Error = err.Error()
+		}
+
+		e.PullRequestEvents, err = client.PullRequestEvents(p.Application.RepositoryFullname, events)
+		if err != nil {
+			e.Error = err.Error()
+		}
+
+		// var pbs []sdk.PipelineBuild
+		// if len(e.PushEvents) > 0 {
+		// 	var err error
+		// 	pbs, err = triggerPipelines(tx, store, projectKey, p, e)
+		// 	if err != nil {
+		// 		return nil, sdk.WrapError(err, "Polling> Unable to trigger pipeline %s for repository %s", p.Pipeline.Name, p.Application.RepositoryFullname)
+		// 	}
+		// }
+
+		// if len(e.PullRequestEvents) > 0 {
+		// 	pbsPull, errPull := triggerPipelines(tx, store, projectKey, p, e)
+		// 	if errPull != nil {
+		// 		return nil, sdk.WrapError(errPull, "Polling> Unable for pull request to trigger pipeline %s for repository %s", p.Pipeline.Name, p.Application.RepositoryFullname)
+		// 	}
+		// 	pbs = append(pbs, pbsPull...)
+		// }
+
+		return WriteJSON(w, r, h, http.StatusOK)
+	}
 }
