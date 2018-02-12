@@ -63,7 +63,7 @@ export class WorkflowAdminComponent implements OnInit {
 
         this._workflowRunService.getTags(this.project.key, this._tagWorkflow.name).subscribe(tags => {
             Object.keys(tags).forEach(k => {
-                if (tags.hasOwnProperty(k) && this.existingTags.indexOf(k) !== -1) {
+                if (tags.hasOwnProperty(k) && this.existingTags.indexOf(k) === -1) {
                     this.existingTags.push(k);
                 }
             });
