@@ -20,6 +20,7 @@ type User struct {
 }
 
 // UserPermissions is the set of permissions for a user
+//easyjson:json
 type UserPermissions struct {
 	Groups           []string           `json:"Groups,omitempty"` // json key are capitalized to ensure exising data in cache are still valid
 	GroupsAdmin      []string           `json:"GroupsAdmin,omitempty"`
