@@ -197,7 +197,7 @@ type WorkerClient interface {
 
 // HookClient exposes functions used for hooks services
 type HookClient interface {
-	PollVCSEvents(uuid string) (events sdk.RepositoryEvents, nextSchedule time.Time, err error)
+	PollVCSEvents(uuid, vcsServer string) (events sdk.RepositoryEvents, interval time.Duration, err error)
 }
 
 // WorkflowClient exposes workflows functions
@@ -250,6 +250,7 @@ type Interface interface {
 	WorkerClient
 	WorkflowClient
 	MonitoringClient
+	HookClient
 	Version() (*sdk.Version, error)
 }
 

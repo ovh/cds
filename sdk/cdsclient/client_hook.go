@@ -8,8 +8,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) PollVCSEvents(uuid string) (events sdk.RepositoryEvents, interval time.Duration, err error) {
-	url := fmt.Sprintf("/hook/%s/vcsevent", uuid)
+func (c *client) PollVCSEvents(uuid, vcsServer string) (events sdk.RepositoryEvents, interval time.Duration, err error) {
+	url := fmt.Sprintf("/hook/%s/%s/vcsevent", uuid, vcsServer)
 	header, _, errGet := c.GetJSONWithHeaders(url, &events)
 	if errGet != nil {
 		return events, interval, errGet

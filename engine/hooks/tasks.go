@@ -215,6 +215,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 		//Compute a new date
 		t0 := time.Now().In(loc)
 		nextSchedule = cronExpr.Next(t0)
+
 	case TypeRepoPoller:
 		nextSchedule = time.Now().Add(time.Minute * 2)
 		if val, ok := t.Config["next_execution"]; ok {
@@ -318,6 +319,8 @@ func (s *Service) doPollerTaskExecution(t *sdk.TaskExecution) ([]sdk.WorkflowNod
 		Configurable: false,
 		Value:        time.Now().String(),
 	}
+
+	events, interval, err := s.cds.PollVCSEvents(t.UUID, t.Config["vcsServer"].Value)
 	// GET VCS EVENT WITH s.cds and SDK
 	// AND Populate next execution
 
