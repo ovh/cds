@@ -287,6 +287,9 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 	}
 
 	w.Status = getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled)
+	if sdk.StatusIsTerminated(w.Status) {
+		w.LastExecution = time.Now()
+	}
 	if err := UpdateWorkflowRun(db, w); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun>")
 	}
@@ -528,6 +531,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	for _, info := range w.Infos {
 		if info.IsError {
 			run.Status = string(sdk.StatusFail)
+			run.Done = time.Now()
 			break
 		}
 	}
