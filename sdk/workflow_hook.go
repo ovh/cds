@@ -60,6 +60,35 @@ type WorkflowNodeHook struct {
 	Config              WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
+//Equals checks functionnal equality between two hooks
+func (h WorkflowNodeHook) Equals(h1 WorkflowNodeHook) bool {
+	if h.UUID != h1.UUID {
+		return false
+	}
+	if h.WorkflowHookModelID != h1.WorkflowHookModelID {
+		return false
+	}
+	for k, cfg := range h.Config {
+		cfg1, has := h1.Config[k]
+		if !has {
+			return false
+		}
+		if cfg.Value == cfg1.Value {
+			return true
+		}
+	}
+	for k, cfg1 := range h1.Config {
+		cfg, has := h.Config[k]
+		if !has {
+			return false
+		}
+		if cfg.Value == cfg1.Value {
+			return true
+		}
+	}
+	return true
+}
+
 // WorkflowHookModelBuiltin is a constant for the builtin hook models
 const WorkflowHookModelBuiltin = "builtin"
 
