@@ -34,3 +34,15 @@ return cds_status == "Success" and (git_branch == "master" or cds_manual == "tru
 ```
 
 ![Pipeline basic run conditions](/images/workflow_pipeline_run_conditions_advanced.png)
+
+You can also use regular expression in your Lua condition, for instance:
+```lua
+-- this example checks if current application beginning with 'abc'
+-- don't forget to import the regular expression module
+local re = require("re")
+
+return re.match(cds_application, "abc.*") == cds_application
+```
+
+Functions `re.find` , `re.gsub`, `re.match`, `re.gmatch` are available. These functions have the same API as Lua pattern match. Under the hood, it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.
+
