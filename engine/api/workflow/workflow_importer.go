@@ -81,7 +81,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	w.Visit(hookLoad)
 
 	if !mError.IsEmpty() {
-		return mError
+		return sdk.NewError(sdk.ErrWrongRequest, mError)
 	}
 
 	doUpdate, errE := Exists(db, proj.Key, w.Name)
