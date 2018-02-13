@@ -114,8 +114,8 @@ if [ "x" != "x{{.binary}}" ]; then
   GOARGS=" -o {{.binary}}"
 fi;
 
-if [ "xtrue" == "x${{.detectRaceCondition}}" ]; then
-  GOARGS="${{GOARGS}} -race"
+if [ "xtrue" == "x{{.detectRaceCondition}}" ]; then
+  GOARGS="${GOARGS} -race"
 fi;
 
 if [ "xtrue" == "x{{.cgoDisabled}}" ]; then
