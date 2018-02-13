@@ -119,6 +119,11 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 			Configurable: false,
 		}
 
+		h.Config["workflow_id"] = sdk.WorkflowNodeHookConfigValue{
+			Value:        fmt.Sprint(w.ID),
+			Configurable: false,
+		}
+
 		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName || h.WorkflowHookModel.Name == sdk.GitPollerModelName {
 			if n.Context.Application == nil {
 				app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)

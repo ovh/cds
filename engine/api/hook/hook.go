@@ -102,19 +102,6 @@ func LoadHook(db gorp.SqlExecutor, id int64) (sdk.Hook, error) {
 	return h, nil
 }
 
-// LoadHookByUID loads a single hook
-func LoadHookByUID(db gorp.SqlExecutor, uid string) (sdk.Hook, error) {
-	h := sdk.Hook{UID: uid}
-	query := `SELECT id, application_id, pipeline_id, kind, host, project, repository, enabled FROM hook WHERE uuid = $1`
-
-	err := db.QueryRow(query, uid).Scan(&h.ID, &h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.Enabled)
-	if err != nil {
-		return h, err
-	}
-
-	return h, nil
-}
-
 //FindHook loads a hook from its attributes
 func FindHook(db gorp.SqlExecutor, applicationID, pipelineID int64, kind, host, project, repository string) (sdk.Hook, error) {
 	h := sdk.Hook{}

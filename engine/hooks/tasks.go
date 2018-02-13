@@ -137,6 +137,12 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 			Type:   TypeScheduler,
 			Config: h.Config,
 		}, nil
+	case sdk.GitPollerModelName:
+		return &sdk.Task{
+			UUID:   h.UUID,
+			Type:   TypeRepoPoller,
+			Config: h.Config,
+		}, nil
 	}
 
 	return nil, fmt.Errorf("Unsupported hook: %s", h.WorkflowHookModel.Name)
@@ -275,7 +281,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		h, err = s.doScheduledTaskExecution(e)
 	case e.ScheduledTask != nil && e.Type == TypeRepoPoller:
 		//Populate next execution
-		hs, err = s.doPollerTaskExecution(e)
+		hs, err = s.doPollerTaskExecution(t, e)
 	default:
 		err = fmt.Errorf("Unsupported task type %s", e.Type)
 	}
@@ -313,23 +319,60 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	return nil
 }
 
-func (s *Service) doPollerTaskExecution(t *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing polling task %s", t.UUID)
-	t.Config["next_execution"] = sdk.WorkflowNodeHookConfigValue{
-		Configurable: false,
-		Value:        time.Now().String(),
+func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
+	log.Debug("Hooks> Processing polling task %s", taskExec.UUID)
+
+	tExecs, errF := s.Dao.FindAllTaskExecutions(task)
+	if errF != nil {
+		return nil, errF
 	}
 
-	events, interval, err := s.cds.PollVCSEvents(t.UUID, t.Config["vcsServer"].Value)
-	// GET VCS EVENT WITH s.cds and SDK
-	// AND Populate next execution
+	var maxTs int64
+	for _, tExec := range tExecs {
+		if tExec.Status == TaskExecutionDone && maxTs < tExec.Timestamp {
+			maxTs = tExec.Timestamp
+		}
+	}
+	workflowID, errP := strconv.ParseInt(taskExec.Config["workflow_id"].Value, 10, 64)
+	if errP != nil {
+		return nil, sdk.WrapError(errP, "Hooks> doPollerTaskExecution> Cannot convert workflow id %s", taskExec.Config["workflow_id"].Value)
+	}
+	events, interval, err := s.cds.PollVCSEvents(taskExec.UUID, workflowID, taskExec.Config["vcsServer"].Value, maxTs/1000)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Hooks> doPollerTaskExecution> Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config["workflow"].Value, taskExec.Config["vcsServer"].Value)
+	}
 
-	// t.Config["project"]
-	// t.Config["workflow"]
-	// t.UUID
+	var hookEvents []sdk.WorkflowNodeRunHookEvent
+	if len(events.PushEvents) > 0 || len(events.PullRequestEvents) > 0 {
+		i := 0
+		hookEvents = make([]sdk.WorkflowNodeRunHookEvent, len(events.PushEvents)+len(events.PullRequestEvents))
+		for _, pushEvent := range events.PushEvents {
+			payload := fillPayload(pushEvent)
+			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
+				WorkflowNodeHookUUID: task.UUID,
+				Payload:              payload,
+			}
+			i++
+		}
 
-	// t.ScheduledTask.DateScheduledExecution =
-	return nil, nil
+		for _, pullRequestEvent := range events.PullRequestEvents {
+			payload := fillPayload(pullRequestEvent.Head)
+			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
+				WorkflowNodeHookUUID: task.UUID,
+				Payload:              payload,
+			}
+			i++
+		}
+	}
+
+	nextExec := fmt.Sprint(time.Now().Add(interval).Unix())
+	taskExec.Config["next_execution"] = sdk.WorkflowNodeHookConfigValue{
+		Configurable: false,
+		Value:        nextExec,
+	}
+	taskExec.ScheduledTask.DateScheduledExecution = nextExec
+
+	return hookEvents, nil
 }
 
 func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {

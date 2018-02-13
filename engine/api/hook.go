@@ -393,15 +393,25 @@ func (api *API) getHookPollingVCSEvents() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		uid := vars["uid"]
-		workflowName := vars["workflow"]
 		vcsServerParam := vars["vcsServer"]
+		lastExec := time.Now()
+		workflowID, errV := requestVarInt(r, "workflowID")
+		if errV != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "getHookPollingVCSEvents> cannot convert workflowID to int %s", errV)
+		}
 
-		h, errL := hook.LoadHookByUID(api.mustDB(), uid)
+		if r.Header.Get("X-CDS-Last-Execution") != "" {
+			if ts, err := strconv.ParseInt(r.Header.Get("X-CDS-Last-Execution"), 10, 64); err == nil {
+				lastExec = time.Unix(ts, 0)
+			}
+		}
+
+		h, errL := workflow.LoadHookByUUID(api.mustDB(), uid)
 		if errL != nil {
 			return sdk.WrapError(errL, "getHookPollingVCSEvents> cannot load hook")
 		}
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, h.Project, nil)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, h.Config["project"].Value, nil)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getHookPollingVCSEvents> cannot load project")
 		}
@@ -421,23 +431,23 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			return WriteJSON(w, r, nil, http.StatusOK)
 		}
 
-		events, pollingDelay, err := client.GetEvents(h.Repository, time.Now())
+		events, pollingDelay, err := client.GetEvents(h.Config["repoFullName"].Value, lastExec)
 		if err != nil && err.Error() != "No new events" {
 			return sdk.WrapError(err, "Polling> Unable to get events for %s %s", proj.Key, vcsServerParam)
 		}
-		pushEvents, err := client.PushEvents(h.Repository, events)
+		pushEvents, err := client.PushEvents(h.Config["repoFullName"].Value, events)
 		if err != nil {
 			return sdk.WrapError(err, "getHookPollingVCSEvent> ")
 		}
 
-		pullRequestEvents, err := client.PullRequestEvents(h.Repository, events)
+		pullRequestEvents, err := client.PullRequestEvents(h.Config["repoFullName"].Value, events)
 		if err != nil {
 			return sdk.WrapError(err, "getHookPollingVCSEvent> ")
 		}
 
 		repoEvents := sdk.RepositoryEvents{}
 		for _, pushEvent := range pushEvents {
-			exist, errB := workflow.BuildExist(api.mustDB(), h.Project, workflowName, h.Pipeline.ID, pushEvent.Commit.Hash)
+			exist, errB := workflow.BuildExist(api.mustDB(), h.Config["project"].Value, workflowID, pushEvent.Commit.Hash)
 			if errB != nil {
 				return errB
 			}
@@ -447,7 +457,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 		}
 
 		for _, pullRequestEvent := range pullRequestEvents {
-			exist, errB := workflow.BuildExist(api.mustDB(), h.Project, workflowName, h.Pipeline.ID, pullRequestEvent.Head.Commit.Hash)
+			exist, errB := workflow.BuildExist(api.mustDB(), h.Config["project"].Value, workflowID, pullRequestEvent.Head.Commit.Hash)
 			if errB != nil {
 				return errB
 			}
@@ -456,7 +466,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			}
 		}
 
-		w.Header().Add("X-Poll-Interval", fmt.Sprintf("%.0f", pollingDelay.Seconds()))
+		w.Header().Add("X-CDS-Poll-Interval", fmt.Sprintf("%.0f", pollingDelay.Seconds()))
 
 		return WriteJSON(w, r, repoEvents, http.StatusOK)
 	}

@@ -8,3 +8,8 @@ func (c *client) ConfigUser() (map[string]string, error) {
 
 	return res, nil
 }
+
+func (c *client) SetUserToken(user, token string) {
+	c.config.User = user
+	c.config.Token = token
+}

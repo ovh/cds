@@ -520,18 +520,17 @@ func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit
 }
 
 // BuildExist Check if build exist or not
-func BuildExist(db gorp.SqlExecutor, projectKey, workflowName string, pipID int64, hash string) (bool, error) {
+func BuildExist(db gorp.SqlExecutor, projectKey string, workflowID int64, hash string) (bool, error) {
 	query := `
 	SELECT COUNT(*)
 		FROM workflow_node_run
 			JOIN workflow_run ON workflow_run.id = workflow_node_run.workflow_run_id
 			JOIN project ON project.id = workflow_run.project_id
 	WHERE project.projectkey = $1
-	AND (workflow_run.workflow ->> 'name')::text = $2
-	AND (workflow_run.workflow -> 'root' ->> 'pipeline_id')::bigint = $3
-	AND workflow_node_run.vcs_hash = $4
+	AND workflow_run.workflow_id = $2
+	AND workflow_node_run.vcs_hash = $3
 	`
 
-	count, err := db.SelectInt(query, projectKey, workflowName, pipID, hash)
+	count, err := db.SelectInt(query, projectKey, workflowID, hash)
 	return count != 0, err
 }

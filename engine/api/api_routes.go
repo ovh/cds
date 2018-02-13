@@ -64,7 +64,7 @@ func (api *API) InitRouter() {
 
 	// Hooks
 	r.Handle("/hook", r.POST(api.receiveHookHandler, Auth(false) /* Public handler called by third parties */))
-	r.Handle("/hook/{uid}/workflow/{workflow}/vcsevent/{vcsserver}", r.GET(api.getHookPollingVCSEvents, NeedService()))
+	r.Handle("/hook/{uid}/workflow/{workflowID}/vcsevent/{vcsserver}", r.GET(api.getHookPollingVCSEvents))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))
@@ -369,7 +369,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 
 	// Workflows
-	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler, NeedService()))
+	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler))
 	r.Handle("/workflow/hook/model/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
