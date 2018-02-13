@@ -1612,6 +1612,17 @@ return cds_status == &quot;Success&quot; and (git_branch == &quot;master&quot; o
 
 <p><img src="https://ovh.github.io/cds/images/workflow_pipeline_run_conditions_advanced.png" alt="Pipeline basic run conditions" /></p>
 
+<p>You can also use regular expression in your Lua condition, for instance:</p>
+
+<pre><code class="language-lua">-- this example checks if current application beginning with 'abc'
+-- don't forget to import the regular expression module
+local re = require(&quot;re&quot;)
+
+return re.match(cds_application, &quot;abc.*&quot;) == cds_application
+</code></pre>
+
+<p>Functions <code>re.find</code> , <code>re.gsub</code>, <code>re.match</code>, <code>re.gmatch</code> are available. These functions have the same API as Lua pattern match. Under the hood, it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.</p>
+
 
 <footer class=" footline" >
 	
