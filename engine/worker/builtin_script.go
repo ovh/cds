@@ -154,19 +154,21 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			//set up environment variables from pipeline build job parameters
 			for _, p := range *params {
 				// avoid put private key in environment var as it's a binary value
-				if (p.Type == sdk.KeyPGPParameter || p.Type == sdk.KeySSHParameter) && strings.HasSuffix(p.Name, ".priv") {
+				if strings.HasPrefix(p.Name, "cds.key.") && strings.HasSuffix(p.Name, ".priv") {
 					continue
 				}
 				if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
 					continue
 				}
 				envName := strings.Replace(p.Name, ".", "_", -1)
+				envName = strings.Replace(envName, "-", "_", -1)
 				envName = strings.ToUpper(envName)
 				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
 			}
 
 			for _, p := range w.currentJob.buildVariables {
 				envName := strings.Replace(p.Name, ".", "_", -1)
+				envName = strings.Replace(envName, "-", "_", -1)
 				envName = strings.ToUpper(envName)
 				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
 			}
