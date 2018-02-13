@@ -4,11 +4,14 @@ import (
 	"context"
 	"strings"
 
+	"github.com/yuin/gluare"
 	lua "github.com/yuin/gopher-lua"
 )
 
 // Check is a type which helps to call a lua script with variables to check something.
 // The lua script must return true/false
+// re.find , re.gsub, re.match, re.gmatch are available. These functions have the same API as Lua pattern match. gluare uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.
+
 type Check struct {
 	state                    *lua.LState
 	exceptionHandlerFunction *lua.LFunction
@@ -45,6 +48,9 @@ func NewCheck() (*Check, error) {
 			return nil, err
 		}
 	}
+
+	//Open gluare module
+	state.PreloadModule("re", gluare.Loader)
 
 	// Sandboxing lua engine
 	if err := state.DoString("coroutine=nil;debug=nil;io=nil;open=nil;os=nil"); err != nil {
