@@ -48,12 +48,11 @@ func shellRun(v cli.Values) error {
 	cli.ShellMode = true
 
 	l, err := readline.NewEx(&readline.Config{
-		Prompt:          "\033[31m»\033[0m ",
-		HistoryFile:     path.Join(userHomeDir(), ".cdsctl_history"),
-		AutoComplete:    completer,
-		InterruptPrompt: "^C",
-		EOFPrompt:       "exit",
-
+		Prompt:            "\033[31m»\033[0m ",
+		HistoryFile:       path.Join(userHomeDir(), ".cdsctl_history"),
+		AutoComplete:      completer,
+		InterruptPrompt:   "^C",
+		EOFPrompt:         "exit",
 		HistorySearchFold: true,
 	})
 
@@ -63,7 +62,7 @@ func shellRun(v cli.Values) error {
 
 	defer l.Close()
 
-	current = &shellCurrent{rline: l}
+	current = &shellCurrent{rline: l, command: root}
 
 	for {
 		line, err := l.Readline()
@@ -97,6 +96,7 @@ type shellCurrent struct {
 	environment string
 	position    shellPosition
 	rline       *readline.Instance
+	command     *cobra.Command
 }
 
 type shellPosition int
@@ -323,7 +323,7 @@ var (
 			return nil
 		},
 		"pwd": func(args []string, current *shellCurrent) *cobra.Command {
-			fmt.Println(current.getPwd())
+			fmt.Println(current.getPwd() + " // " + current.command.CommandPath())
 			return nil
 		},
 		"version": func(args []string, current *shellCurrent) *cobra.Command {
@@ -335,87 +335,99 @@ var (
 	}
 
 	cdCommand = func(args []string, current *shellCurrent) *cobra.Command {
+
 		if len(args) == 0 {
-			current.reset()
+			//	current.reset()
 			return nil
 		}
 
-		// remove ./, useful if user enter "cd ./workflows"
-		args[0] = strings.TrimPrefix(args[0], "./")
+		cmds := current.command.Commands()
+		for _, cmd := range cmds {
+			if cmd.Name() == args[0] {
+				current.command = cmd
+			}
+		}
 
 		// cd ..
-		if len(args) == 1 && args[0] == ".." {
-			if current.position == shellInProject { // inside a project, go to list project
-				current.reset()
-				current.position = shellInProjects
-			} else if current.position != shellInProjects { // inside apps, workflows... go to project
-				prj := current.project
-				current.reset()
-				current.project = prj
-				current.position = shellInProject
-			}
-			return nil
-		}
+		// if len(args) == 1 && args[0] == ".." {
+		// 	if current.position == shellInProject { // inside a project, go to list project
+		// 		current.reset()
+		// 		current.position = shellInProjects
+		// 	} else if current.position != shellInProjects { // inside apps, workflows... go to project
+		// 		prj := current.project
+		// 		current.reset()
+		// 		current.project = prj
+		// 		current.position = shellInProject
+		// 	}
+		// 	return nil
+		// }
 
-		switch current.position {
-		case shellInProjects:
-			current.reset()
-			current.project = args[0]
-			current.position = shellInProject
-		case shellInProject:
-			current.setPositionInsideProject(args[0])
-		case shellInWorkflows:
-			current.position = shellInWorkflow
-			current.workflow = args[0]
-		case shellInApplications:
-			current.position = shellInApplication
-			current.application = args[0]
-		case shellInEnvironments:
-			current.position = shellInEnvironment
-			current.environment = args[0]
-		case shellInPipelines:
-			current.position = shellInPipeline
-			current.pipeline = args[0]
-		}
+		// switch current.position {
+		// case shellInProjects:
+		// 	current.reset()
+		// 	current.project = args[0]
+		// 	current.position = shellInProject
+		// case shellInProject:
+		// 	current.setPositionInsideProject(args[0])
+		// case shellInWorkflows:
+		// 	current.position = shellInWorkflow
+		// 	current.workflow = args[0]
+		// case shellInApplications:
+		// 	current.position = shellInApplication
+		// 	current.application = args[0]
+		// case shellInEnvironments:
+		// 	current.position = shellInEnvironment
+		// 	current.environment = args[0]
+		// case shellInPipelines:
+		// 	current.position = shellInPipeline
+		// 	current.pipeline = args[0]
+		// }
 		return nil
 	}
 
 	lsCommand = func(args []string, current *shellCurrent) *cobra.Command {
-		switch current.position {
-		case shellInProjects:
-			if len(args) == 1 {
-				return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
+		cmds := current.command.Commands()
+		for _, cmd := range cmds {
+			if cmd.Name() == "list" {
+				return cmd
 			}
-			return cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...)
-		case shellInProject:
-			fmt.Println("workflows\napplications\npipelines\nenvironments")
-			if len(args) == 1 {
-				switch args[0] {
-				case "workflows":
-					return cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...)
-				case "pipelines":
-					return cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...)
-				case "applications":
-					return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
-				case "environments":
-					return cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...)
-				}
-				return nil
-			}
-			return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
-		case shellInApplications:
-			return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
-		case shellInApplication:
-			return cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...)
-		case shellInEnvironments:
-			return cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...)
-		case shellInPipelines:
-			return cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...)
-		case shellInWorkflows:
-			return cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...)
-		case shellInWorkflow:
-			return cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...)
 		}
+
+		// switch current.position {
+		// case shellInProjects:
+		// 	if len(args) == 1 {
+		// 		return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
+		// 	}
+		// 	return cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...)
+		// case shellInProject:
+		// 	fmt.Println("workflows\napplications\npipelines\nenvironments")
+		// 	if len(args) == 1 {
+		// 		switch args[0] {
+		// 		case "workflows":
+		// 			return cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...)
+		// 		case "pipelines":
+		// 			return cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...)
+		// 		case "applications":
+		// 			return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
+		// 		case "environments":
+		// 			return cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...)
+		// 		}
+		// 		return nil
+		// 	}
+		// 	return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
+		// case shellInApplications:
+		// 	return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
+		// case shellInApplication:
+		// 	return cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...)
+		// case shellInEnvironments:
+		// 	return cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...)
+		// case shellInPipelines:
+		// 	return cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...)
+		// case shellInWorkflows:
+		// 	return cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...)
+		// case shellInWorkflow:
+		// 	return cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...)
+		//}
 		return nil
 	}
 )
@@ -431,19 +443,23 @@ func shellProcessCommand(input string, current *shellCurrent) {
 		if cmd == nil {
 			return
 		}
-		args := current.getArgs()
-		if len(tuple) > 1 {
-			subcmd := strings.Join(tuple[1:], " ")
-			if subcmd != "workflows" && subcmd != "applications" && subcmd != "environments" && subcmd != "pipelines" {
-				args = append(current.getArgs(), tuple[1:]...)
-			}
-		}
 
-		if len(args) > 0 {
-			fmt.Printf(" with args: %+v", args)
-		}
-		fmt.Println()
-		cmd.SetArgs(args)
+		// if len(tuple) > 1 {
+		// 	//subcmd := strings.Join(tuple[1:], " ")
+		// 	//if subcmd != "workflows" && subcmd != "applications" && subcmd != "environments" && subcmd != "pipelines" {
+		// 	//args = append(current.getArgs(), tuple[1:]...)
+		// 	//}
+		// }
+
+		// //if len(args) > 0 {
+		// fmt.Printf(" with args: %+v", args)
+		// //}
+		//fmt.Println()
+		//t := strings.Split(cmd.CommandPath(), " ")
+		//args := []string{}
+		args := tuple[1:]
+		fmt.Printf(" exec %+v %+v\n", cmd, args)
+		cmd.Run(cmd, args)
 		cmd.Execute()
 		return
 	}

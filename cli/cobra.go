@@ -187,6 +187,8 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	}
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {
+		fmt.Printf("######cmd %s\n", cmd.CommandPath())
+		fmt.Printf("######args %+v\n", args)
 		if c.PreRun != nil {
 			if err := c.PreRun(&c, &args); err != nil {
 				fmt.Println("Error: ", err)
