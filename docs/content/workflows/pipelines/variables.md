@@ -101,7 +101,7 @@ Some helpers are available to transform the value of a CDS Variable.
 Example: run a pipeline, with an application named `my_app`. A step script:
 
 ```
-echo "{{.cds.application | upper}}
+echo "{{.cds.application | upper}}"
 ```
 
 will display
@@ -110,13 +110,13 @@ will display
 MY_APP
 ```
 
-Helpers available:
+Helpers available and some examples:
 
 - abbrev
 - abbrevboth
 - trunc
 - trim
-- upper
+- upper: `{{.cds.application | upper}}`
 - lower
 - title
 - untitle
@@ -143,7 +143,7 @@ Helpers available:
 - replace
 - plural
 - toString
-- default
+- default: `{{.cds.application | default ""}}`, `{{.cds.application | default "defaultValue"}}`
 - empty
 - coalesce
 - toJSON
