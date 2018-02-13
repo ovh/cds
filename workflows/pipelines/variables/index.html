@@ -261,6 +261,36 @@
         <span>User Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-docker-package/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-docker-package/">
+          <span>cds-docker-package</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-go-build/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-go-build/">
+          <span>cds-go-build</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-nexus-upload/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-nexus-upload/">
+          <span>cds-nexus-upload</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-perl-test/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-perl-test/">
+          <span>cds-perl-test</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-publish-ovh-metrics/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-publish-ovh-metrics/">
+          <span>cds-publish-ovh-metrics</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-python-pylint/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-python-pylint/">
+          <span>cds-python-pylint</span>
+        </a>
+    </li>
         </ul>
     </li>
     <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item">
@@ -1662,7 +1692,7 @@ echo $CDS_PARENT_APPLICATION
 
 <p>Example: run a pipeline, with an application named <code>my_app</code>. A step script:</p>
 
-<pre><code>echo &quot;{{.cds.application | upper}}
+<pre><code>echo &quot;{{.cds.application | upper}}&quot;
 </code></pre>
 
 <p>will display</p>
@@ -1670,14 +1700,14 @@ echo $CDS_PARENT_APPLICATION
 <pre><code>MY_APP
 </code></pre>
 
-<p>Helpers available:</p>
+<p>Helpers available and some examples:</p>
 
 <ul>
 <li>abbrev</li>
 <li>abbrevboth</li>
 <li>trunc</li>
 <li>trim</li>
-<li>upper</li>
+<li>upper: <code>{{.cds.application | upper}}</code></li>
 <li>lower</li>
 <li>title</li>
 <li>untitle</li>
@@ -1704,7 +1734,7 @@ echo $CDS_PARENT_APPLICATION
 <li>replace</li>
 <li>plural</li>
 <li>toString</li>
-<li>default</li>
+<li>default: <code>{{.cds.application | default &quot;&quot;}}</code>, <code>{{.cds.application | default &quot;defaultValue&quot;}}</code></li>
 <li>empty</li>
 <li>coalesce</li>
 <li>toJSON</li>
