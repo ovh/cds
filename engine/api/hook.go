@@ -402,7 +402,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 
 		if r.Header.Get("X-CDS-Last-Execution") != "" {
 			if ts, err := strconv.ParseInt(r.Header.Get("X-CDS-Last-Execution"), 10, 64); err == nil {
-				lastExec = time.Unix(ts, 0)
+				lastExec = time.Unix(0, ts)
 			}
 		}
 

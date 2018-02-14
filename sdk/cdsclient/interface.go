@@ -234,7 +234,6 @@ type MonitoringClient interface {
 type Interface interface {
 	ActionClient
 	APIURL() string
-	SetUserToken(user, token string)
 	ApplicationClient
 	ConfigUser() (map[string]string, error)
 	DownloadClient

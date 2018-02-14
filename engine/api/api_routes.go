@@ -64,7 +64,7 @@ func (api *API) InitRouter() {
 
 	// Hooks
 	r.Handle("/hook", r.POST(api.receiveHookHandler, Auth(false) /* Public handler called by third parties */))
-	r.Handle("/hook/{uid}/workflow/{workflowID}/vcsevent/{vcsserver}", r.GET(api.getHookPollingVCSEvents))
+	r.Handle("/hook/{uid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))

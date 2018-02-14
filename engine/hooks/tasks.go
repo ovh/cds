@@ -337,7 +337,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 	if errP != nil {
 		return nil, sdk.WrapError(errP, "Hooks> doPollerTaskExecution> Cannot convert workflow id %s", taskExec.Config["workflow_id"].Value)
 	}
-	events, interval, err := s.cds.PollVCSEvents(taskExec.UUID, workflowID, taskExec.Config["vcsServer"].Value, maxTs/1000)
+	events, interval, err := s.cds.PollVCSEvents(taskExec.UUID, workflowID, taskExec.Config["vcsServer"].Value, maxTs)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Hooks> doPollerTaskExecution> Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config["workflow"].Value, taskExec.Config["vcsServer"].Value)
 	}

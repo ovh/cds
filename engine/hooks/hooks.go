@@ -63,7 +63,6 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Instanciate a cds client
 	s.cds = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
-	s.cds.SetUserToken(s.Cfg.Name, s.Cfg.API.Token)
 
 	//First register(heartbeat)
 	if err := s.doHeartbeat(); err != nil {
