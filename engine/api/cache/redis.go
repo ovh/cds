@@ -56,53 +56,59 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
+const retryWaitDuration = 30 * time.Millisecond
+
 //Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) bool {
-	var secondAttempt bool
-retry:
 	if s.Client == nil {
 		log.Error("redis> cannot get redis client")
 		return false
 	}
-	val, err := s.Client.Get(key).Result()
-	if err != nil && err != redis.Nil {
-		if !secondAttempt {
-			secondAttempt = true
-			time.Sleep(50 * time.Millisecond)
-			goto retry
+
+	var errRedis error
+	for i := 0; i < 3; i++ {
+		val, errRedis := s.Client.Get(key).Result()
+		if errRedis != nil && errRedis != redis.Nil {
+			time.Sleep(retryWaitDuration)
+			continue
 		}
-		log.Warning("redis> Get error %s : %v", key, err)
-		return false
-	}
-	if val != "" && err != redis.Nil {
-		if err := json.Unmarshal([]byte(val), value); err != nil {
-			log.Warning("redis> Cannot unmarshal %s :%s", key, err)
-			return false
+		if val != "" && errRedis != redis.Nil {
+			if err := json.Unmarshal([]byte(val), value); err != nil {
+				log.Warning("redis> cannot unmarshal %s :%s", key, err)
+				return false
+			}
+			return true
 		}
-		return true
 	}
+
+	if errRedis != nil && errRedis != redis.Nil {
+		log.Error("redis> get error %s : %v", key, errRedis)
+	}
+
 	return false
 }
 
 //SetWithTTL a value in local store (0 for eternity)
 func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
-	var secondAttempt bool
-retry:
 	if s.Client == nil {
 		log.Error("redis> cannot get redis client")
 		return
 	}
 	b, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis> Error caching %s: %s", key, err)
+		log.Warning("redis> error caching %s: %s", key, err)
 	}
-	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
-		if !secondAttempt {
-			secondAttempt = true
-			time.Sleep(50 * time.Millisecond)
-			goto retry
+
+	var errRedis error
+	for i := 0; i < 3; i++ {
+		errRedis = s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err()
+		if errRedis == nil {
+			break
 		}
-		log.Warning("redis> Error caching %s: %s", key, err)
+		time.Sleep(retryWaitDuration)
+	}
+	if err != nil {
+		log.Error("redis> set error %s: %v", key, errRedis)
 	}
 }
 
@@ -118,7 +124,7 @@ func (s *RedisStore) Delete(key string) {
 		return
 	}
 	if err := s.Client.Del(key).Err(); err != nil {
-		log.Warning("redis> Error deleting %s : %s", key, err)
+		log.Error("redis> error deleting %s : %s", key, err)
 	}
 }
 
