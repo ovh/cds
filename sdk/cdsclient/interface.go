@@ -205,6 +205,11 @@ type WorkerClient interface {
 	WorkerSetStatus(sdk.Status) error
 }
 
+// HookClient exposes functions used for hooks services
+type HookClient interface {
+	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
+}
+
 // WorkflowClient exposes workflows functions
 type WorkflowClient interface {
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
@@ -256,6 +261,7 @@ type Interface interface {
 	WorkerClient
 	WorkflowClient
 	MonitoringClient
+	HookClient
 	Version() (*sdk.Version, error)
 }
 

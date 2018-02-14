@@ -11,6 +11,7 @@ On the root pipeline only, you can add hooks:
 * [webhook]({{< relref "workflows/design/hooks/webhook.md" >}})
 * [scheduler]({{< relref "workflows/design/hooks/scheduler.md" >}})
 * [repository webhooks]({{< relref "workflows/design/hooks/git-repo-webhook.md" >}})
+* [git poller]({{< relref "workflows/design/hooks/git-poller.md" >}})
 
 There are two hooks on this pipeline, a repository webhook (Github here) and a webhook:
 
