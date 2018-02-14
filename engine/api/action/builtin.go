@@ -96,7 +96,7 @@ The public key have to be granted on your repository`,
 	}
 
 	// ----------------------------------- Checkout Application    -----------------------
-	checkoutApplication := sdk.NewAction(sdk.CheckoutApplication)
+	checkoutApplication := sdk.NewAction(sdk.CheckoutApplicationAction)
 	checkoutApplication.Type = sdk.BuiltinAction
 	checkoutApplication.Description = `CDS Builtin Action.
 Checkout a repository into a new directory.`
