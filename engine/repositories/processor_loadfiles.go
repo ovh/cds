@@ -14,13 +14,13 @@ func (s *Service) processLoadFiles(op *sdk.Operation) error {
 
 	gitRepo, err := repo.New(r.Basedir)
 	if err != nil {
-		log.Debug("Repositories> processLoadFiles> Error: %v", err)
+		log.Error("Repositories> processLoadFiles> Error: %v", err)
 		return err
 	}
 
 	files, err := gitRepo.Glob(op.LoadFiles.Pattern)
 	if err != nil {
-		log.Debug("Repositories> processLoadFiles> Error: %v", err)
+		log.Error("Repositories> processLoadFiles> Error: %v", err)
 		return err
 	}
 

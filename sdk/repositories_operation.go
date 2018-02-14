@@ -10,9 +10,16 @@ type Operation struct {
 	Setup              struct {
 		Checkout OperationCheckout `json:"checkout,omitempty"`
 	} `json:"setup,omitempty"`
-	LoadFiles OperationLoadFiles `json:"load_files,omitempty"`
-	Status    OperationStatus    `json:"status,omitempty"`
-	Error     string             `json:"error,omitempty"`
+	LoadFiles      OperationLoadFiles       `json:"load_files,omitempty"`
+	Status         OperationStatus          `json:"status,omitempty"`
+	Error          string                   `json:"error,omitempty"`
+	RepositoryInfo *OperationRepositoryInfo `json:"repository_info,omitempty"`
+}
+
+type OperationRepositoryInfo struct {
+	Name          string `json:"name,omitempty"`
+	FetchURL      string `json:"fetch_url,omitempty"`
+	DefaultBranch string `json:"default_branch,omitempty"`
 }
 
 type OperationLoadFiles struct {

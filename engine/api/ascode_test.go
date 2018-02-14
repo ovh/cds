@@ -182,6 +182,11 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 			ope := new(sdk.Operation)
 			ope.URL = "https://github.com/fsamin/go-repo.git"
 			ope.UUID = UUID
+			ope.RepositoryInfo = &sdk.OperationRepositoryInfo{
+				Name:          "go-repo",
+				FetchURL:      ope.URL,
+				DefaultBranch: "master",
+			}
 			ope.Status = sdk.OperationStatusDone
 			ope.LoadFiles.Pattern = workflowAsCodePattern
 			ope.LoadFiles.Results = map[string][]byte{

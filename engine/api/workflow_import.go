@@ -126,7 +126,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		msgList, globalError := workflow.ParseAndImport(tx, api.Cache, proj, ew, force, getUser(ctx))
+		wrkflw, msgList, globalError := workflow.ParseAndImport(tx, api.Cache, proj, ew, force, getUser(ctx))
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {
@@ -145,11 +145,22 @@ func (api *API) postWorkflowImportHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowImportHandler> Cannot commit transaction")
 		}
 
+		if wrkflw != nil {
+			w.Header().Add("X-Cds-Workflow-ID", fmt.Sprintf("%d", wrkflw.ID))
+			w.Header().Add("X-Cds-Workflow-Name", wrkflw.Name)
+		}
+
 		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
-func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader) ([]sdk.Message, error) {
+type workflowPushOption struct {
+	FromRepository  string
+	Branch          string
+	IsDefaultBranch bool
+}
+
+func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, opts *workflowPushOption) ([]sdk.Message, error) {
 	//Load project
 	proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
 		project.LoadOptions.WithGroups,
@@ -279,10 +290,21 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader) ([
 		return nil, sdk.WrapError(errp, "workflowPush> Unable reload project")
 	}
 
-	msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, true, getUser(ctx))
+	wf, msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, true, getUser(ctx))
 	if err != nil {
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
 		return nil, sdk.WrapError(err, "workflowPush> ", err)
+	}
+
+	// TODO workflow as code, manage derivation workflow
+	if opts != nil {
+		wf.FromRepository = opts.FromRepository
+		if !opts.IsDefaultBranch {
+			wf.DerivationBranch = opts.Branch
+		}
+		if err := workflow.Update(tx, api.Cache, wf, wf, proj, getUser(ctx)); err != nil {
+			return nil, sdk.WrapError(err, "workflowPush> ", err)
+		}
 	}
 
 	allMsg = append(allMsg, msgList...)
@@ -319,7 +341,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 
 		tr := tar.NewReader(bytes.NewReader(btes))
 
-		allMsg, err := api.workflowPush(ctx, key, tr)
+		allMsg, err := api.workflowPush(ctx, key, tr, nil)
 		if err != nil {
 			return err
 		}

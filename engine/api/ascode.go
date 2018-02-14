@@ -134,7 +134,12 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		}
 
 		tr := tar.NewReader(buf)
-		allMsg, err := api.workflowPush(ctx, key, tr)
+		opt := &workflowPushOption{
+			Branch:          ope.RepositoryStrategy.Branch,
+			FromRepository:  ope.RepositoryInfo.FetchURL,
+			IsDefaultBranch: ope.RepositoryStrategy.Branch == ope.RepositoryInfo.DefaultBranch,
+		}
+		allMsg, err := api.workflowPush(ctx, key, tr, opt)
 		if err != nil {
 			return err
 		}
