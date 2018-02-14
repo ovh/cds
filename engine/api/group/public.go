@@ -21,13 +21,13 @@ func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
 	if err := db.QueryRow(query, groupName).Scan(&id); err == sql.ErrNoRows {
-		log.Info("CreateDefaultGroup> create %s group in DB", groupName)
+		log.Debug("CreateDefaultGroup> create %s group in DB", groupName)
 		query = `INSERT INTO "group" (name) VALUES ($1)`
 		if _, err := db.Exec(query, groupName); err != nil {
 			return err
 		}
 	} else {
-		log.Info("CreateDefaultGroup> group %s already exist", groupName)
+		log.Debug("CreateDefaultGroup> group %s already exist", groupName)
 	}
 	return nil
 }

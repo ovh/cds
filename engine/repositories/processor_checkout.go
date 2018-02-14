@@ -26,6 +26,28 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 		}
 	}
 
+	n, err := gitRepo.Name()
+	if err != nil {
+		log.Error("Repositories> processCheckout> Error: %v", err)
+		return err
+	}
+	f, err := gitRepo.FetchURL()
+	if err != nil {
+		log.Error("Repositories> processCheckout> Error: %v", err)
+		return err
+	}
+	d, err := gitRepo.DefaultBranch()
+	if err != nil {
+		log.Error("Repositories> processCheckout> Error: %v", err)
+		return err
+	}
+
+	op.RepositoryInfo = &sdk.OperationRepositoryInfo{
+		Name:          n,
+		FetchURL:      f,
+		DefaultBranch: d,
+	}
+
 	//Check branch
 	currentBranch, err := gitRepo.CurrentBranch()
 	if err != nil {
