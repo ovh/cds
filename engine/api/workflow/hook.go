@@ -27,7 +27,6 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 	var defaultPayload *sdk.WorkflowNodeContextDefaultPayloadVCS
 
 	if len(hookToUpdate) > 0 {
-
 		if oldW != nil {
 			log.Info("HookRegistration> Merge: %+v, New: %+v, OLD: %+v", hookToUpdate, wf.GetHooks(), oldW.GetHooks())
 		}
@@ -169,28 +168,18 @@ func diffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.
 	hookToUpdate = make(map[string]sdk.WorkflowNodeHook)
 	hookToDelete = make(map[string]sdk.WorkflowNodeHook)
 
-	for kNew := range newHooks {
-		hold, ok := oldHooks[kNew]
+	for key, hNew := range newHooks {
+		hold, ok := oldHooks[key]
 		// if new hook
-		if !ok {
-			hookToUpdate[kNew] = newHooks[kNew]
+		if !ok || !hNew.Equals(hold) {
+			hookToUpdate[key] = newHooks[key]
 			continue
-		}
-
-	next:
-		for k, v := range newHooks[kNew].Config {
-			for kold, vold := range hold.Config {
-				if kold == k && v != vold {
-					hookToUpdate[kNew] = newHooks[kNew]
-					break next
-				}
-			}
 		}
 	}
 
-	for kHold := range oldHooks {
-		if _, ok := newHooks[kHold]; !ok {
-			hookToDelete[kHold] = oldHooks[kHold]
+	for key := range oldHooks {
+		if _, ok := newHooks[key]; !ok {
+			hookToDelete[key] = oldHooks[key]
 		}
 	}
 	return
