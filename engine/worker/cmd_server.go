@@ -35,6 +35,7 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	r := mux.NewRouter()
 	r.HandleFunc("/var", w.addBuildVarHandler)
 	r.HandleFunc("/upload", w.uploadHandler)
+	r.HandleFunc("/download", w.downloadHandler)
 	r.HandleFunc("/tmpl", w.tmplHandler)
 	r.HandleFunc("/tag", w.tagHandler)
 	r.HandleFunc("/log", w.logHandler)
