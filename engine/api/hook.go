@@ -410,6 +410,9 @@ func (api *API) getHookPollingVCSEvents() Handler {
 		if errL != nil {
 			return sdk.WrapError(errL, "getHookPollingVCSEvents> cannot load hook")
 		}
+		if h == nil {
+			return sdk.ErrNotFound
+		}
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, h.Config["project"].Value, nil)
 		if errProj != nil {
