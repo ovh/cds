@@ -55,6 +55,7 @@ func init() {
 		"replace":      replace,
 		"plural":       plural,
 		"toString":     strval,
+		"defaultCDS":   defaultCDS,
 		"default":      dfault,
 		"empty":        empty,
 		"coalesce":     coalesce,
@@ -66,7 +67,7 @@ func init() {
 	}
 }
 
-// dfault checks whether `given` is set, and returns default if not set.
+// defaultCDS checks whether `given` is set, and returns default if not set.
 //
 // This returns `d` if `given` appears not to be set, and `given` otherwise.
 //
@@ -76,12 +77,16 @@ func init() {
 // Structs are never considered unset.
 //
 // For everything else, including pointers, a nil value is unset.
-func dfault(d interface{}, given ...interface{}) interface{} {
-
+func defaultCDS(d interface{}, given ...interface{}) interface{} {
 	if empty(given) || empty(given[0]) {
 		return d
 	}
 	return given[0]
+}
+
+// Switch order so that "$foo" | trimall "$"
+func dfault(input, valfault string) string {
+	return valfault
 }
 
 // empty returns true if the given value has the zero value for its type.

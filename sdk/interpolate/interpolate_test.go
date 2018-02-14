@@ -81,6 +81,38 @@ func TestDo(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "default value with empty default",
+			args: args{
+				input: `aa:{{.cds.app.foo | default ""}}end`,
+				vars:  map[string]string{},
+			},
+			want: `aa:end`,
+		},
+		{
+			name: "default value",
+			args: args{
+				input: `aa:{{.cds.app.foo | default "bar" }}end`,
+				vars:  map[string]string{},
+			},
+			want: `aa:barend`,
+		},
+		{
+			name: "default value with knowned var",
+			args: args{
+				input: `aa:{{.cds.app.foo | default "bar"}}end`,
+				vars:  map[string]string{"cds.app.foo": "value"},
+			},
+			want: `aa:valueend`,
+		},
+		{
+			name: "default empty value with knowned var",
+			args: args{
+				input: `aa:{{.cds.app.foo | default ""}}end`,
+				vars:  map[string]string{"cds.app.foo": "value"},
+			},
+			want: `aa:valueend`,
+		},
+		{
 			name: "unknown function",
 			args: args{
 				input: `echo '{{"conf"|uvault}}'`,

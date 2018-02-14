@@ -985,6 +985,12 @@
   revision = "9a5282f852773c55c1be7488cf7091ad2084ee5a"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/yuin/gluare"
+  packages = ["."]
+  revision = "d7c94f1a80ede93a621ed100866e6d4745ca8c22"
+
+[[projects]]
   name = "github.com/yuin/gopher-lua"
   packages = [
     ".",
@@ -1277,6 +1283,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b5cd2d1709fc3c03507d27414863f2b211824d6bc09d8ad70dc585be444f573b"
+  inputs-digest = "0b3ea699f6ca8420d7bf8442ae3ce4694bee3a3baae20a2079e00a80eb818d9a"
   solver-name = "gps-cdcl"
   solver-version = 1
