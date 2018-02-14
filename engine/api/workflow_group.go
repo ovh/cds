@@ -58,7 +58,7 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, wf, http.StatusOK)
+		return WriteJSON(w, wf, http.StatusOK)
 	}
 }
 
@@ -116,7 +116,7 @@ func (api *API) putWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowGroupHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, wf, http.StatusOK)
+		return WriteJSON(w, wf, http.StatusOK)
 	}
 }
 
@@ -172,6 +172,6 @@ func (api *API) postWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowGroupHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, wf, http.StatusOK)
+		return WriteJSON(w, wf, http.StatusOK)
 	}
 }

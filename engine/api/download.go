@@ -14,7 +14,7 @@ import (
 func (api *API) downloadsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		downloads := sdk.GetStaticDownloadsWithAvailability(api.Config.Directories.Download)
-		return WriteJSON(w, r, downloads, http.StatusAccepted)
+		return WriteJSON(w, downloads, http.StatusAccepted)
 	}
 }
 

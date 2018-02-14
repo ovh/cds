@@ -32,7 +32,7 @@ func (s *Service) postOperationHandler() api.Handler {
 			return err
 		}
 
-		return api.WriteJSON(w, r, op, http.StatusAccepted)
+		return api.WriteJSON(w, op, http.StatusAccepted)
 	}
 }
 
@@ -42,7 +42,7 @@ func (s *Service) getOperationsHandler() api.Handler {
 
 		op := s.dao.loadOperation(uuid)
 
-		return api.WriteJSON(w, r, op, http.StatusOK)
+		return api.WriteJSON(w, op, http.StatusOK)
 	}
 }
 

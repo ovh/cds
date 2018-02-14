@@ -47,6 +47,7 @@ func main() {
 			version,
 			encrypt,
 			token,
+			admin,
 		},
 	)
 

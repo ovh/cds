@@ -29,7 +29,7 @@ func (api *API) getKeysInApplicationHandler() Handler {
 			return sdk.WrapError(errK, "getKeysInApplicationHandler> Cannot load application keys")
 		}
 
-		return WriteJSON(w, r, app.Keys, http.StatusOK)
+		return WriteJSON(w, app.Keys, http.StatusOK)
 	}
 }
 
@@ -65,7 +65,7 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -127,6 +127,6 @@ func (api *API) addKeyInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, newKey, http.StatusOK)
+		return WriteJSON(w, newKey, http.StatusOK)
 	}
 }

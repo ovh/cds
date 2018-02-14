@@ -115,7 +115,6 @@ func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	r.Config = conf
-
 	//Load the model
 	model, err := LoadHookModelByID(db, r.WorkflowHookModelID)
 	if err != nil {

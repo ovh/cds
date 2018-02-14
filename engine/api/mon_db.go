@@ -25,7 +25,7 @@ func (api *API) getMonDBStatusMigrateHandler() Handler {
 		for _, r := range records {
 			m = append(m, sdk.MonDBMigrate{ID: r.Id, AppliedAt: r.AppliedAt})
 		}
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }
 
@@ -45,7 +45,7 @@ func (api *API) getMonDBTimesDBHandler() Handler {
 		o.QueueWorkflow = api.getMonDBTimesDBQueueWorkflow(ctx)
 
 		log.Info("getMonDBTimesDBHandler> elapsed %s", elapsed("getMonDBTimesDBHandler", o.Now))
-		return WriteJSON(w, r, o, http.StatusOK)
+		return WriteJSON(w, o, http.StatusOK)
 	}
 }
 

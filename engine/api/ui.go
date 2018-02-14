@@ -14,6 +14,6 @@ func (api *API) getUINavbarHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getUINavbarHandler")
 		}
-		return WriteJSON(w, r, data, http.StatusOK)
+		return WriteJSON(w, data, http.StatusOK)
 	}
 }

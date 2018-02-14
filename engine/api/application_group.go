@@ -77,7 +77,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load application groups")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -141,7 +141,7 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -198,7 +198,7 @@ func (api *API) addGroupInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load application groups")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -237,7 +237,7 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application groups")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -357,6 +357,6 @@ func (api *API) importGroupsInApplicationHandler() Handler {
 			return sdk.WrapError(err, "importGroupsInApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }

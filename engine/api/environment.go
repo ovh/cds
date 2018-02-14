@@ -51,7 +51,7 @@ func (api *API) getEnvironmentsHandler() Handler {
 			return sdk.WrapError(err, "getEnvironmentsHandler> Cannot commit transaction from db")
 		}
 
-		return WriteJSON(w, r, environments, http.StatusOK)
+		return WriteJSON(w, environments, http.StatusOK)
 	}
 }
 
@@ -90,7 +90,7 @@ func (api *API) getEnvironmentHandler() Handler {
 
 		env.Permission = permission.EnvironmentPermission(projectKey, env.Name, getUser(ctx))
 
-		return WriteJSON(w, r, env, http.StatusOK)
+		return WriteJSON(w, env, http.StatusOK)
 	}
 }
 
@@ -104,7 +104,7 @@ func (api *API) getEnvironmentUsageHandler() Handler {
 			return sdk.WrapError(err, "getEnvironmentHandler> Cannot load usage for environment %s in project %s", environmentName, projectKey)
 		}
 
-		return WriteJSON(w, r, usage, http.StatusOK)
+		return WriteJSON(w, usage, http.StatusOK)
 	}
 }
 
@@ -282,7 +282,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, proj, http.StatusOK)
+		return WriteJSON(w, proj, http.StatusOK)
 	}
 }
 
@@ -336,7 +336,7 @@ func (api *API) addEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
 
-		return WriteJSON(w, r, proj, http.StatusOK)
+		return WriteJSON(w, proj, http.StatusOK)
 	}
 }
 
@@ -383,7 +383,7 @@ func (api *API) deleteEnvironmentHandler() Handler {
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteEnvironmentHandler> Cannot load environments")
 		}
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -473,7 +473,7 @@ func (api *API) updateEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "updateEnvironmentHandler> Cannot load environments")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -558,6 +558,6 @@ func (api *API) cloneEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }

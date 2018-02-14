@@ -71,7 +71,7 @@ func (api *API) addWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "addWorkerModel> cannot add worker model")
 		}
 
-		return WriteJSON(w, r, model, http.StatusOK)
+		return WriteJSON(w, model, http.StatusOK)
 	}
 }
 
@@ -119,7 +119,7 @@ func (api *API) spawnErrorWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Cannot commit tx")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -254,7 +254,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "updateWorkerModel> unable to commit transaction")
 		}
 
-		return WriteJSON(w, r, model, http.StatusOK)
+		return WriteJSON(w, model, http.StatusOK)
 	}
 }
 
@@ -287,7 +287,7 @@ func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name stri
 	if err != nil {
 		return sdk.WrapError(err, "getWorkerModel> cannot load worker model")
 	}
-	return WriteJSON(w, r, m, http.StatusOK)
+	return WriteJSON(w, m, http.StatusOK)
 }
 
 func (api *API) getWorkerModelsEnabledHandler() Handler {
@@ -299,7 +299,7 @@ func (api *API) getWorkerModelsEnabledHandler() Handler {
 		if errgroup != nil {
 			return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", getHatchery(ctx).ID, getHatchery(ctx).GroupID)
 		}
-		return WriteJSON(w, r, models, http.StatusOK)
+		return WriteJSON(w, models, http.StatusOK)
 	}
 }
 
@@ -326,18 +326,18 @@ func (api *API) getWorkerModelsHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> this route can't be called by worker or hatchery")
 		}
 
-		return WriteJSON(w, r, models, http.StatusOK)
+		return WriteJSON(w, models, http.StatusOK)
 	}
 }
 
 func (api *API) getWorkerModelTypesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
+		return WriteJSON(w, sdk.AvailableWorkerModelType, http.StatusOK)
 	}
 }
 
 func (api *API) getWorkerModelCommunicationsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, sdk.AvailableWorkerModelCommunication, http.StatusOK)
+		return WriteJSON(w, sdk.AvailableWorkerModelCommunication, http.StatusOK)
 	}
 }

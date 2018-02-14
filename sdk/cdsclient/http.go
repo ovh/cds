@@ -137,7 +137,7 @@ func (c *client) Request(method string, path string, body io.Reader, mods ...Req
 
 	if c.config.Verbose {
 		if len(bodyBtes) > 0 {
-			log.Printf("Response Body: %s\n", body)
+			log.Printf("Response Body: %s\n", bodyBtes)
 		}
 	}
 

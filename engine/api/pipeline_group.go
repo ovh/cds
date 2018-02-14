@@ -92,7 +92,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 		if err := pipeline.LoadGroupByPipeline(api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s", p.Name)
 		}
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -226,7 +226,7 @@ func (api *API) addGroupInPipelineHandler() Handler {
 		if err := pipeline.LoadGroupByPipeline(api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot load group")
 		}
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -345,7 +345,7 @@ func (api *API) importGroupsInPipelineHandler() Handler {
 			return sdk.WrapError(err, "importGroupsInPipelineHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, pip, http.StatusOK)
+		return WriteJSON(w, pip, http.StatusOK)
 	}
 }
 
@@ -393,6 +393,6 @@ func (api *API) deleteGroupFromPipelineHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot load groups")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }

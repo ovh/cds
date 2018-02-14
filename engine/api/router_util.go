@@ -32,7 +32,7 @@ func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store
 }
 
 // Accepted is a helper function used by asynchronous handlers
-func Accepted(w http.ResponseWriter, r *http.Request) error {
+func Accepted(w http.ResponseWriter) error {
 	const msg = "request accepted"
 	w.Header().Add("Content-Type", "text/plain")
 	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(msg)))
@@ -41,19 +41,24 @@ func Accepted(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// Write is a helper function
+func Write(w http.ResponseWriter, btes []byte, status int, contentType string) error {
+	w.Header().Add("Content-Type", contentType)
+	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(btes)))
+	writeProcessTime(w)
+	w.WriteHeader(status)
+	w.Write(btes)
+	return nil
+}
+
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
-func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {
+func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	b, e := json.Marshal(data)
 	if e != nil {
 		return sdk.WrapError(e, "WriteJSON> unable to marshal : %s", e)
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(b)))
-	writeProcessTime(w)
-	w.WriteHeader(status)
-	w.Write(b)
-	return nil
+	return Write(w, b, status, "application/json")
 }
 
 // writeNoContentPostMiddleware writes StatusNoContent (204) for each response with No Header Content-Type

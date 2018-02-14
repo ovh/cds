@@ -91,7 +91,7 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
 		envUpdated.ProjectKey = key
 
-		return WriteJSON(w, r, envUpdated, http.StatusOK)
+		return WriteJSON(w, envUpdated, http.StatusOK)
 	}
 }
 
@@ -171,7 +171,7 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
 		envUpdated.ProjectKey = key
 
-		return WriteJSON(w, r, envUpdated, http.StatusOK)
+		return WriteJSON(w, envUpdated, http.StatusOK)
 	}
 }
 
@@ -383,6 +383,6 @@ func (api *API) importGroupsInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importGroupsInEnvironmentHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, env, http.StatusOK)
+		return WriteJSON(w, env, http.StatusOK)
 	}
 }

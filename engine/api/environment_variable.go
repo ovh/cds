@@ -24,7 +24,7 @@ func (api *API) getEnvironmentsAuditHandler() Handler {
 		if errAudit != nil {
 			return sdk.WrapError(errAudit, "getEnvironmentsAuditHandler: Cannot get environment audit for project %s", key)
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -94,7 +94,7 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			return sdk.WrapError(errEnvs, "restoreEnvironmentAuditHandler: Cannot load environments")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -120,7 +120,7 @@ func (api *API) getVariableAuditInEnvironmentHandler() Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInEnvironmentHandler> Cannot load audit for variable %s", varName)
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -136,7 +136,7 @@ func (api *API) getVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(errVar, "getVariableInEnvironmentHandler: Cannot get variable %s for environment %s", name, envName)
 		}
 
-		return WriteJSON(w, r, v, http.StatusOK)
+		return WriteJSON(w, v, http.StatusOK)
 	}
 }
 
@@ -151,7 +151,7 @@ func (api *API) getVariablesInEnvironmentHandler() Handler {
 			return sdk.WrapError(errVar, "getVariablesInEnvironmentHandler: Cannot get variables for environment %s", envName)
 		}
 
-		return WriteJSON(w, r, variables, http.StatusOK)
+		return WriteJSON(w, variables, http.StatusOK)
 	}
 }
 
@@ -206,7 +206,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -260,7 +260,7 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -324,6 +324,6 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }

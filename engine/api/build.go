@@ -100,7 +100,7 @@ func (api *API) getPipelineBuildTriggeredHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoPipelineBuild, "getPipelineBuildTriggeredHandler> Cannot load pipeline build children: %s", err)
 		}
-		return WriteJSON(w, r, pbs, http.StatusOK)
+		return WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
@@ -243,7 +243,7 @@ func (api *API) getBuildStateHandler() Handler {
 		}
 		pb.Translate(r.Header.Get("Accept-Language"))
 
-		return WriteJSON(w, r, pb, http.StatusOK)
+		return WriteJSON(w, pb, http.StatusOK)
 	}
 }
 
@@ -321,7 +321,7 @@ func (api *API) getPipelineBuildJobHandler() Handler {
 			}
 			return sdk.WrapError(err, "getPipelineBuildJobHandler> Unable to load pipeline build job id")
 		}
-		return WriteJSON(w, r, j, http.StatusOK)
+		return WriteJSON(w, j, http.StatusOK)
 	}
 }
 
@@ -395,7 +395,7 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "takePipelineBuildJobHandler> Cannot commit transaction")
 		}
-		return WriteJSON(w, r, pbji, http.StatusOK)
+		return WriteJSON(w, pbji, http.StatusOK)
 	}
 }
 
@@ -409,7 +409,7 @@ func (api *API) bookPipelineBuildJobHandler() Handler {
 		if _, err := pipeline.BookPipelineBuildJob(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "bookPipelineBuildJobHandler> job already booked")
 		}
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -438,7 +438,7 @@ func (api *API) addSpawnInfosPipelineBuildJobHandler() Handler {
 			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -614,7 +614,7 @@ func (api *API) getQueueHandler() Handler {
 			return sdk.WrapError(errQ, "getQueueHandler> Cannot load queue from db: %s", errQ)
 		}
 
-		return WriteJSON(w, r, queue, http.StatusOK)
+		return WriteJSON(w, queue, http.StatusOK)
 	}
 }
 
@@ -842,6 +842,6 @@ func (api *API) getBuildTestResultsHandler() Handler {
 			return sdk.WrapError(errltr, "getBuildTestResultsHandler> Cannot load test results")
 		}
 
-		return WriteJSON(w, r, tests, http.StatusOK)
+		return WriteJSON(w, tests, http.StatusOK)
 	}
 }

@@ -25,7 +25,7 @@ func (api *API) getProjectNotificationsHandler() Handler {
 			return err
 		}
 
-		WriteJSON(w, r, notifs, http.StatusOK)
+		WriteJSON(w, notifs, http.StatusOK)
 		return nil
 	}
 }

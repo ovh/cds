@@ -72,7 +72,7 @@ func (api *API) postWorkflowPreviewHandler() Handler {
 			return sdk.WrapError(globalError, "postWorkflowPreviewHandler> Unable import workflow %s", ew.Name)
 		}
 
-		return WriteJSON(w, r, wf, http.StatusOK)
+		return WriteJSON(w, wf, http.StatusOK)
 	}
 }
 
@@ -132,7 +132,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
 			if ok {
-				return WriteJSON(w, r, msgListString, myError.Status)
+				return WriteJSON(w, msgListString, myError.Status)
 			}
 			return sdk.WrapError(globalError, "postWorkflowImportHandler> Unable import workflow %s", ew.Name)
 		}
@@ -145,7 +145,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowImportHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, msgListString, http.StatusOK)
+		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
@@ -325,6 +325,6 @@ func (api *API) postWorkflowPushHandler() Handler {
 		}
 		msgListString := translate(r, allMsg)
 
-		return WriteJSON(w, r, msgListString, http.StatusOK)
+		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

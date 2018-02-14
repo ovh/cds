@@ -15,6 +15,16 @@ type Filter struct {
 	Name, Value string
 }
 
+// AdminService expose all function to CDS services
+type AdminService interface {
+	Services() ([]sdk.Service, error)
+	ServicesByType(s string) ([]sdk.Service, error)
+	ServiceCallGET(s string, url string) ([]byte, error)
+	ServiceCallPOST(s string, url string, body []byte) ([]byte, error)
+	ServiceCallPUT(s string, url string, body []byte) ([]byte, error)
+	ServiceCallDELETE(s string, url string) error
+}
+
 // ExportImportInterface exposes pipeline and application export and import function
 type ExportImportInterface interface {
 	PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
@@ -228,6 +238,7 @@ type MonitoringClient interface {
 // Interface is the main interface for cdsclient package
 type Interface interface {
 	ActionClient
+	AdminService
 	APIURL() string
 	ApplicationClient
 	ConfigUser() (map[string]string, error)

@@ -39,7 +39,7 @@ func (api *API) getProjectsHandler() Handler {
 			if err != nil {
 				return sdk.WrapError(err, "getProjectsHandler")
 			}
-			return WriteJSON(w, r, projects, http.StatusOK)
+			return WriteJSON(w, projects, http.StatusOK)
 		}
 
 		var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *sdk.User) error {
@@ -80,7 +80,7 @@ func (api *API) getProjectsHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
 		}
-		return WriteJSON(w, r, projects, http.StatusOK)
+		return WriteJSON(w, projects, http.StatusOK)
 	}
 }
 
@@ -115,7 +115,7 @@ func (api *API) updateProjectHandler() Handler {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 
-		return WriteJSON(w, r, proj, http.StatusOK)
+		return WriteJSON(w, proj, http.StatusOK)
 	}
 }
 
@@ -181,7 +181,7 @@ func (api *API) getProjectHandler() Handler {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -305,7 +305,7 @@ func (api *API) addProjectHandler() Handler {
 			return sdk.WrapError(err, "addProjectHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, p, http.StatusCreated)
+		return WriteJSON(w, p, http.StatusCreated)
 	}
 }
 

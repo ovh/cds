@@ -53,7 +53,7 @@ func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 	}
 
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
-	res, code, err := DoRequest(srv, method, path, b, mods...)
+	res, code, err := doRequest(srv, method, path, b, mods...)
 	if err != nil {
 		return code, sdk.WrapError(err, "services.doJSONRequest> Unable to perform request")
 	}
@@ -89,7 +89,7 @@ func PostMultipart(srvs []sdk.Service, path string, filename string, fileContent
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, code, err := DoRequest(srv, "POST", path, body.Bytes(), mods...)
+			res, code, err := doRequest(srv, "POST", path, body.Bytes(), mods...)
 			lastCode = code
 			lastErr = err
 
@@ -110,8 +110,31 @@ func PostMultipart(srvs []sdk.Service, path string, filename string, fileContent
 	return lastCode, lastErr
 }
 
-// DoRequest performs an http request on service
-func DoRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+// DoRequest performs an http request on a service
+func DoRequest(srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+	var lastErr error
+	var lastCode int
+	var attempt int
+	for {
+		attempt++
+		for i := range srvs {
+			srv := &srvs[i]
+			btes, code, err := doRequest(srv, method, path, args, mods...)
+			if err == nil {
+				return btes, code, nil
+			}
+			lastErr = err
+			lastCode = code
+		}
+		if lastErr != nil || attempt > 5 {
+			break
+		}
+	}
+	return nil, lastCode, lastErr
+}
+
+// doRequest performs an http request on service
+func doRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,

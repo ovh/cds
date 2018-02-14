@@ -266,7 +266,7 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 		}
 	}()
 
-	return WriteJSON(w, r, pb, http.StatusOK)
+	return WriteJSON(w, pb, http.StatusOK)
 }
 
 func (api *API) runPipelineHandler() Handler {
@@ -459,7 +459,7 @@ func (api *API) updatePipelineHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot commit transaction")
 		}
-		return WriteJSON(w, r, pipelineDB, http.StatusOK)
+		return WriteJSON(w, pipelineDB, http.StatusOK)
 	}
 }
 
@@ -479,7 +479,7 @@ func (api *API) getApplicationUsingPipelineHandler() Handler {
 			return sdk.WrapError(err, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", name)
 		}
 
-		return WriteJSON(w, r, applications, http.StatusOK)
+		return WriteJSON(w, applications, http.StatusOK)
 	}
 }
 
@@ -557,7 +557,7 @@ func (api *API) addPipelineHandler() Handler {
 
 		p.Permission = permission.PermissionReadWriteExecute
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -571,7 +571,7 @@ func (api *API) getPipelineAuditHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getPipelineAuditHandler> Cannot load pipeline audit")
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -620,13 +620,13 @@ func (api *API) getPipelineHandler() Handler {
 			p.Usage.Environments = envs
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
 func (api *API) getPipelineTypeHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, sdk.AvailablePipelineType, http.StatusOK)
+		return WriteJSON(w, sdk.AvailablePipelineType, http.StatusOK)
 	}
 }
 
@@ -652,7 +652,7 @@ func (api *API) getPipelinesHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, r, pip, http.StatusOK)
+		return WriteJSON(w, pip, http.StatusOK)
 	}
 }
 
@@ -740,7 +740,7 @@ func (api *API) getPipelineHistoryHandler() Handler {
 			return sdk.WrapError(errl, "getPipelineHistoryHandler> cannot load pipeline %s history", p.Name)
 		}
 
-		return WriteJSON(w, r, pbs, http.StatusOK)
+		return WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
@@ -851,7 +851,7 @@ func (api *API) addJobToPipelineHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, r, job, http.StatusOK)
+		return WriteJSON(w, job, http.StatusOK)
 	}
 }
 
@@ -922,7 +922,7 @@ func (api *API) updateJoinedActionHandler() Handler {
 			return sdk.WrapError(err, "updateJoinedAction> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 
@@ -989,7 +989,7 @@ func (api *API) getJoinedActionAuditHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, audit, http.StatusOK)
+		return WriteJSON(w, audit, http.StatusOK)
 	}
 }
 
@@ -1013,7 +1013,7 @@ func (api *API) getJoinedActionHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 
@@ -1032,7 +1032,7 @@ func (api *API) getBuildingPipelinesHandler() Handler {
 
 		}
 		pbs = append(pbs, recent...)
-		return WriteJSON(w, r, pbs, http.StatusOK)
+		return WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
@@ -1047,7 +1047,7 @@ func (api *API) getPipelineBuildingCommitHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, pbs, http.StatusOK)
+		return WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
@@ -1195,7 +1195,7 @@ func (api *API) restartPipelineBuildHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, pb, http.StatusOK)
+		return WriteJSON(w, pb, http.StatusOK)
 	}
 }
 
@@ -1252,7 +1252,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		//Check it the application is attached to a repository
 		if app.VCSServer == "" {
 			log.Warning("getPipelineCommitsHandler> Application %s/%s not attached to a repository manager", projectKey, appName)
-			return WriteJSON(w, r, commits, http.StatusOK)
+			return WriteJSON(w, commits, http.StatusOK)
 		}
 
 		pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), app.ID, pip.ID, env.ID, 1, pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)))
@@ -1262,12 +1262,12 @@ func (api *API) getPipelineCommitsHandler() Handler {
 
 		if len(pbs) != 1 {
 			log.Debug("getPipelineCommitsHandler> There is no previous build")
-			return WriteJSON(w, r, commits, http.StatusOK)
+			return WriteJSON(w, commits, http.StatusOK)
 		}
 
 		if app.RepositoryFullname == "" {
 			log.Debug("getPipelineCommitsHandler> No repository on the application %s", appName)
-			return WriteJSON(w, r, commits, http.StatusOK)
+			return WriteJSON(w, commits, http.StatusOK)
 		}
 
 		//Get the RepositoriesManager Client
@@ -1279,7 +1279,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 
 		if pbs[0].Trigger.VCSChangesHash == "" {
 			log.Debug("getPipelineCommitsHandler>No hash on the previous run %d", pbs[0].ID)
-			return WriteJSON(w, r, commits, http.StatusOK)
+			return WriteJSON(w, commits, http.StatusOK)
 		}
 
 		//If we are lucky, return a true diff
@@ -1289,7 +1289,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 			return sdk.WrapError(errcommits, "getPipelineBuildCommitsHandler> Cannot get commits")
 		}
 
-		return WriteJSON(w, r, commits, http.StatusOK)
+		return WriteJSON(w, commits, http.StatusOK)
 	}
 }
 
@@ -1361,6 +1361,6 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getPipelineBuildCommitsHandler> UpdatePipelineBuildCommits failed")
 		}
-		return WriteJSON(w, r, cm, http.StatusOK)
+		return WriteJSON(w, cm, http.StatusOK)
 	}
 }

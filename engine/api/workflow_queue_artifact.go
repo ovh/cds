@@ -178,7 +178,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() Handler {
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
 
-		return WriteJSON(w, r, art, http.StatusOK)
+		return WriteJSON(w, art, http.StatusOK)
 	}
 }
 

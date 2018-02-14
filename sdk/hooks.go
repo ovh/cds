@@ -2,10 +2,10 @@ package sdk
 
 // Task is a generic hook tasks such as webhook, scheduler,... which will be started and wait for execution
 type Task struct {
-	UUID       string
-	Type       string
-	Config     WorkflowNodeHookConfig
-	Stopped    bool
+	UUID       string                 `cli:"UUID,key"`
+	Type       string                 `cli:"Type"`
+	Config     WorkflowNodeHookConfig `cli:"Config"`
+	Stopped    bool                   `cli:"Stopped"`
 	Executions []TaskExecution
 }
 

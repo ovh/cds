@@ -24,6 +24,6 @@ func (api *API) getUserWarningsHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, warnings, http.StatusOK)
+		return WriteJSON(w, warnings, http.StatusOK)
 	}
 }
