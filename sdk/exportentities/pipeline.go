@@ -468,6 +468,11 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 		return
 	}
 
+	a, ok, e = s.AsCheckoutApplication()
+	if ok {
+		return
+	}
+
 	a, ok, e = s.AsScript()
 	if ok {
 		return

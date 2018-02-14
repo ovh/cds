@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	dump "github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"
 
@@ -547,6 +548,26 @@ steps:
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 1)
 	assert.Equal(t, sdk.GitCloneAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 7)
+}
+
+func Test_ImportPipelineWithCheckout(t *testing.T) {
+	in := `name: build-all-images
+steps:
+- checkout:
+    directory: '.'
+`
+
+	payload := &Pipeline{}
+	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
+
+	p, err := payload.Pipeline()
+	test.NoError(t, err)
+
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 1)
+	assert.Equal(t, sdk.CheckoutApplicationAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 1)
+
+	dump.Dump(p)
 }
 
 func Test_IsFlagged(t *testing.T) {
