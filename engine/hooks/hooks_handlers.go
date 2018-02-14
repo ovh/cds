@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) webhookHandler() api.Handler {
@@ -16,8 +17,9 @@ func (s *Service) webhookHandler() api.Handler {
 		//Get the UUID of the webhook
 		vars := mux.Vars(r)
 		uuid := vars["uuid"]
+
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Hook> webhookHandler> invalid uuid")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hook> webhookHandler> invalid uuid or name")
 		}
 
 		//Load the task
@@ -58,7 +60,7 @@ func (s *Service) webhookHandler() api.Handler {
 		s.Dao.EnqueueTaskExecution(exec)
 
 		//Return the execution
-		return api.WriteJSON(w, r, exec, http.StatusOK)
+		return api.WriteJSON(w, exec, http.StatusOK)
 	}
 }
 
@@ -73,6 +75,17 @@ func (s *Service) postTaskHandler() api.Handler {
 			return sdk.WrapError(err, "Hooks> postTaskHandler")
 		}
 		return nil
+	}
+}
+
+func (s *Service) getTasksHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tasks, err := s.Dao.FindAllTasks()
+		if err != nil {
+			return sdk.WrapError(err, "Hooks> getTasksHandler")
+		}
+		log.Debug("all tasks> %v", tasks)
+		return api.WriteJSON(w, tasks, http.StatusOK)
 	}
 }
 
@@ -117,7 +130,7 @@ func (s *Service) getTaskHandler() api.Handler {
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t != nil {
-			return api.WriteJSON(w, r, t, http.StatusOK)
+			return api.WriteJSON(w, t, http.StatusOK)
 		}
 
 		execs, err := s.Dao.FindAllTaskExecutions(t)
@@ -127,7 +140,7 @@ func (s *Service) getTaskHandler() api.Handler {
 
 		t.Executions = execs
 
-		return api.WriteJSON(w, r, t, http.StatusOK)
+		return api.WriteJSON(w, t, http.StatusOK)
 	}
 }
 
@@ -140,7 +153,7 @@ func (s *Service) deleteTaskHandler() api.Handler {
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t != nil {
-			return api.WriteJSON(w, r, t, http.StatusOK)
+			return api.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Stop the task
@@ -164,7 +177,7 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t != nil {
-			return api.WriteJSON(w, r, t, http.StatusOK)
+			return api.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Load the executions
@@ -173,7 +186,7 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
 
-		return api.WriteJSON(w, r, execs, http.StatusOK)
+		return api.WriteJSON(w, execs, http.StatusOK)
 	}
 }
 
@@ -216,7 +229,7 @@ func (s *Service) postTaskBulkHandler() api.Handler {
 				return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 			}
 		}
-		return api.WriteJSON(w, r, hooks, http.StatusOK)
+		return api.WriteJSON(w, hooks, http.StatusOK)
 	}
 }
 

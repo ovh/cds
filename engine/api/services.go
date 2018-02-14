@@ -70,6 +70,6 @@ func (api *API) postServiceRegisterHandler() Handler {
 			return sdk.WrapError(err, "postServiceRegisterHandler")
 		}
 
-		return WriteJSON(w, r, srv, http.StatusOK)
+		return WriteJSON(w, srv, http.StatusOK)
 	}
 }

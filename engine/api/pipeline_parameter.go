@@ -28,7 +28,7 @@ func (api *API) getParametersInPipelineHandler() Handler {
 			return sdk.WrapError(err, "getParametersInPipelineHandler: Cannot get parameters for pipeline %s", pipelineName)
 		}
 
-		return WriteJSON(w, r, parameters, http.StatusOK)
+		return WriteJSON(w, parameters, http.StatusOK)
 	}
 }
 
@@ -71,7 +71,7 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load pipeline parameters")
 		}
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -178,7 +178,7 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 			return sdk.WrapError(err, "updateParametersInPipelineHandler: Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, append(added, updated...), http.StatusOK)
+		return WriteJSON(w, append(added, updated...), http.StatusOK)
 	}
 }
 
@@ -235,7 +235,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load pipeline parameters")
 		}
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -297,6 +297,6 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot get pipeline parameters")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }

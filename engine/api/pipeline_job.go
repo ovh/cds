@@ -96,7 +96,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
 		}
 
-		return WriteJSON(w, r, pip, http.StatusOK)
+		return WriteJSON(w, pip, http.StatusOK)
 	}
 }
 
@@ -193,7 +193,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot load stages")
 		}
 
-		return WriteJSON(w, r, pipelineData, http.StatusOK)
+		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
 
@@ -267,6 +267,6 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")
 		}
 
-		return WriteJSON(w, r, pipelineData, http.StatusOK)
+		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }

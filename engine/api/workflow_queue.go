@@ -79,7 +79,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
-		return WriteJSON(w, r, pbji, http.StatusOK)
+		return WriteJSON(w, pbji, http.StatusOK)
 	}
 }
 
@@ -193,7 +193,7 @@ func (api *API) postBookWorkflowJobHandler() Handler {
 		if _, err := workflow.BookNodeJobRun(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "postBookWorkflowJobHandler> job already booked")
 		}
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -207,7 +207,7 @@ func (api *API) getWorkflowJobHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobHandler> job not found")
 		}
-		return WriteJSON(w, r, j, http.StatusOK)
+		return WriteJSON(w, j, http.StatusOK)
 	}
 }
 
@@ -446,7 +446,7 @@ func (api *API) countWorkflowJobQueueHandler() Handler {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
 
-		return WriteJSON(w, r, count, http.StatusOK)
+		return WriteJSON(w, count, http.StatusOK)
 	}
 }
 
@@ -467,7 +467,7 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
 
-		return WriteJSON(w, r, jobs, http.StatusOK)
+		return WriteJSON(w, jobs, http.StatusOK)
 	}
 }
 

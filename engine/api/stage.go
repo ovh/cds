@@ -65,7 +65,7 @@ func (api *API) addStageHandler() Handler {
 			return sdk.WrapError(err, "addStageHandler> Cannot load pipeline stages")
 		}
 
-		return WriteJSON(w, r, pipelineData, http.StatusCreated)
+		return WriteJSON(w, pipelineData, http.StatusCreated)
 	}
 }
 
@@ -93,7 +93,7 @@ func (api *API) getStageHandler() Handler {
 			return sdk.WrapError(err, "getStageHandler> Error on load stage")
 		}
 
-		return WriteJSON(w, r, s, http.StatusOK)
+		return WriteJSON(w, s, http.StatusOK)
 	}
 }
 
@@ -163,7 +163,7 @@ func (api *API) moveStageHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "moveStageHandler> Cannot commit transaction")
 		}
-		return WriteJSON(w, r, pipelineData, http.StatusOK)
+		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
 
@@ -233,7 +233,7 @@ func (api *API) updateStageHandler() Handler {
 			return sdk.WrapError(err, "updateStageHandler> Cannot load stages")
 		}
 
-		return WriteJSON(w, r, pipelineData, http.StatusOK)
+		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
 
@@ -293,6 +293,6 @@ func (api *API) deleteStageHandler() Handler {
 			return sdk.WrapError(err, "deleteStageHandler> Cannot load stages")
 		}
 
-		return WriteJSON(w, r, pipelineData, http.StatusOK)
+		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }

@@ -54,7 +54,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -125,7 +125,7 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot start transaction: %s")
 		}
-		return WriteJSON(w, r, groupProject, http.StatusOK)
+		return WriteJSON(w, groupProject, http.StatusOK)
 	}
 }
 
@@ -311,7 +311,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot load groups on project %s", p.Key)
 		}
 
-		return WriteJSON(w, r, p.ProjectGroups, http.StatusOK)
+		return WriteJSON(w, p.ProjectGroups, http.StatusOK)
 	}
 }
 
@@ -393,6 +393,6 @@ func (api *API) importGroupsInProjectHandler() Handler {
 			return sdk.WrapError(err, "importGroupsInProjectHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, proj, http.StatusOK)
+		return WriteJSON(w, proj, http.StatusOK)
 	}
 }

@@ -32,7 +32,7 @@ func (api *API) getWorkflowsHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, r, ws, http.StatusOK)
+		return WriteJSON(w, ws, http.StatusOK)
 	}
 }
 
@@ -62,7 +62,7 @@ func (api *API) getWorkflowHandler() Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig("project", "workflow")
 
-		return WriteJSON(w, r, w1, http.StatusOK)
+		return WriteJSON(w, w1, http.StatusOK)
 	}
 }
 
@@ -153,7 +153,7 @@ func (api *API) postWorkflowHandler() Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
-		return WriteJSON(w, r, wf1, http.StatusCreated)
+		return WriteJSON(w, wf1, http.StatusCreated)
 	}
 }
 
@@ -235,7 +235,7 @@ func (api *API) putWorkflowHandler() Handler {
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
-		return WriteJSON(w, r, wf1, http.StatusOK)
+		return WriteJSON(w, wf1, http.StatusOK)
 	}
 }
 
@@ -287,7 +287,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

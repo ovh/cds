@@ -74,7 +74,7 @@ func (api *API) postEnvironmentImportHandler() Handler {
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
 			if ok {
-				return WriteJSON(w, r, msgListString, myError.Status)
+				return WriteJSON(w, msgListString, myError.Status)
 			}
 			return sdk.WrapError(globalError, "postEnvironmentImportHandler> Unable import environment %s", eenv.Name)
 		}
@@ -87,7 +87,7 @@ func (api *API) postEnvironmentImportHandler() Handler {
 			return sdk.WrapError(err, "postEnvironmentImportHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, msgListString, http.StatusOK)
+		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
@@ -173,7 +173,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, msgListString, http.StatusOK)
+		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
@@ -273,6 +273,6 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, msgListString, http.StatusOK)
+		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

@@ -27,7 +27,7 @@ func (api *API) getKeysInEnvironmentHandler() Handler {
 			return sdk.WrapError(errK, "getKeysInEnvironmentHandler> Cannot load environment keys")
 		}
 
-		return WriteJSON(w, r, env.Keys, http.StatusOK)
+		return WriteJSON(w, env.Keys, http.StatusOK)
 	}
 }
 
@@ -68,7 +68,7 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -136,6 +136,6 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, newKey, http.StatusOK)
+		return WriteJSON(w, newKey, http.StatusOK)
 	}
 }

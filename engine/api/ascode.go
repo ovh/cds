@@ -51,7 +51,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to perform operation")
 		}
 
-		return WriteJSON(w, r, ope, http.StatusCreated)
+		return WriteJSON(w, ope, http.StatusCreated)
 	}
 }
 
@@ -76,7 +76,7 @@ func (api *API) getImportAsCodeHandler() Handler {
 		if _, err := services.DoJSONRequest(srvs, http.MethodGet, "/operations/"+uuid, nil, ope); err != nil {
 			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to get operation")
 		}
-		return WriteJSON(w, r, ope, http.StatusOK)
+		return WriteJSON(w, ope, http.StatusOK)
 	}
 }
 
@@ -140,6 +140,6 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		}
 		msgListString := translate(r, allMsg)
 
-		return WriteJSON(w, r, msgListString, http.StatusOK)
+		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

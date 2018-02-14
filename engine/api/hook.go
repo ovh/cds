@@ -146,7 +146,7 @@ func (api *API) addHookHandler() Handler {
 			return sdk.WrapError(errA, "addHook: Cannot load workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -189,7 +189,7 @@ func (api *API) updateHookHandler() Handler {
 			return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -204,7 +204,7 @@ func (api *API) getApplicationHooksHandler() Handler {
 			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application %s/%s", projectName, appName)
 		}
 
-		return WriteJSON(w, r, a.Hooks, http.StatusOK)
+		return WriteJSON(w, a.Hooks, http.StatusOK)
 	}
 }
 
@@ -233,7 +233,7 @@ func (api *API) getHooksHandler() Handler {
 			return sdk.WrapError(err, "getHooks> cannot load hooks")
 		}
 
-		return WriteJSON(w, r, hooks, http.StatusOK)
+		return WriteJSON(w, hooks, http.StatusOK)
 	}
 }
 

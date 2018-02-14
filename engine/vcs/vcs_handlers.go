@@ -23,7 +23,7 @@ func muxVar(r *http.Request, s string) string {
 
 func (s *Service) getAllVCSServersHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return api.WriteJSON(w, r, s.Cfg.Servers, http.StatusOK)
+		return api.WriteJSON(w, s.Cfg.Servers, http.StatusOK)
 	}
 }
 
@@ -34,7 +34,7 @@ func (s *Service) getVCSServersHandler() api.Handler {
 		if !ok {
 			return sdk.ErrNotFound
 		}
-		return api.WriteJSON(w, r, cfg, http.StatusOK)
+		return api.WriteJSON(w, cfg, http.StatusOK)
 	}
 }
 
@@ -66,7 +66,7 @@ func (s *Service) getVCSServersHooksHandler() api.Handler {
 			res.WebhooksIcon = sdk.GitlabIcon
 		}
 
-		return api.WriteJSON(w, r, res, http.StatusOK)
+		return api.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
@@ -94,7 +94,7 @@ func (s *Service) getVCSServersPollingHandler() api.Handler {
 			res.PollingDisabled = cfg.Gitlab.DisablePolling
 		}
 
-		return api.WriteJSON(w, r, res, http.StatusOK)
+		return api.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
@@ -111,7 +111,7 @@ func (s *Service) getAuthorizeHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getAuthorizeHandler>")
 		}
 
-		return api.WriteJSON(w, r, map[string]string{
+		return api.WriteJSON(w, map[string]string{
 			"token": token,
 			"url":   url,
 		}, http.StatusOK)
@@ -136,7 +136,7 @@ func (s *Service) postAuhorizeHandler() api.Handler {
 			return err
 		}
 
-		return api.WriteJSON(w, r, map[string]string{
+		return api.WriteJSON(w, map[string]string{
 			"token":  token,
 			"secret": secret,
 		}, http.StatusOK)
@@ -167,7 +167,7 @@ func (s *Service) getReposHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getReposHandler> Unable to get repos")
 		}
 
-		return api.WriteJSON(w, r, repos, http.StatusOK)
+		return api.WriteJSON(w, repos, http.StatusOK)
 	}
 }
 
@@ -197,7 +197,7 @@ func (s *Service) getRepoHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getRepoHandler> Unable to get repo %s/%s", owner, repo)
 		}
 
-		return api.WriteJSON(w, r, ghRepo, http.StatusOK)
+		return api.WriteJSON(w, ghRepo, http.StatusOK)
 	}
 }
 
@@ -226,7 +226,7 @@ func (s *Service) getBranchesHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getBranchesHandler> Unable to get repo %s/%s branches", owner, repo)
 		}
-		return api.WriteJSON(w, r, branches, http.StatusOK)
+		return api.WriteJSON(w, branches, http.StatusOK)
 	}
 }
 
@@ -256,7 +256,7 @@ func (s *Service) getBranchHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getBranchHandler> Unable to get repo %s/%s branch", owner, repo, branch)
 		}
-		return api.WriteJSON(w, r, ghBranch, http.StatusOK)
+		return api.WriteJSON(w, ghBranch, http.StatusOK)
 	}
 }
 
@@ -290,7 +290,7 @@ func (s *Service) getCommitsHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getCommitsHandler> Unable to get commits on branch %s of %s/%s commits", branch, owner, repo)
 		}
-		return api.WriteJSON(w, r, commits, http.StatusOK)
+		return api.WriteJSON(w, commits, http.StatusOK)
 	}
 }
 
@@ -320,7 +320,7 @@ func (s *Service) getCommitHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getCommitHandler> Unable to get commit %s on %s/%s", commit, owner, repo)
 		}
-		return api.WriteJSON(w, r, c, http.StatusOK)
+		return api.WriteJSON(w, c, http.StatusOK)
 	}
 }
 
@@ -349,7 +349,7 @@ func (s *Service) getPullRequestsHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getPullRequestsHandler> Unable to get pull requests on %s/%s", owner, repo)
 		}
-		return api.WriteJSON(w, r, c, http.StatusOK)
+		return api.WriteJSON(w, c, http.StatusOK)
 	}
 }
 
@@ -395,7 +395,7 @@ func (s *Service) getEventsHandler() api.Handler {
 			Events: evts,
 			Delay:  delay,
 		}
-		return api.WriteJSON(w, r, res, http.StatusOK)
+		return api.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
@@ -433,25 +433,25 @@ func (s *Service) postFilterEventsHandler() api.Handler {
 			if err != nil {
 				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter push events")
 			}
-			return api.WriteJSON(w, r, events, http.StatusOK)
+			return api.WriteJSON(w, events, http.StatusOK)
 		case "create":
 			events, err := client.CreateEvents(fmt.Sprintf("%s/%s", owner, repo), evts)
 			if err != nil {
 				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter create events")
 			}
-			return api.WriteJSON(w, r, events, http.StatusOK)
+			return api.WriteJSON(w, events, http.StatusOK)
 		case "delete":
 			events, err := client.DeleteEvents(fmt.Sprintf("%s/%s", owner, repo), evts)
 			if err != nil {
 				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter delete events")
 			}
-			return api.WriteJSON(w, r, events, http.StatusOK)
+			return api.WriteJSON(w, events, http.StatusOK)
 		case "pullrequests":
 			events, err := client.PullRequestEvents(fmt.Sprintf("%s/%s", owner, repo), evts)
 			if err != nil {
 				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter pullrequests events")
 			}
-			return api.WriteJSON(w, r, events, http.StatusOK)
+			return api.WriteJSON(w, events, http.StatusOK)
 		default:
 			return sdk.WrapError(sdk.ErrWrongRequest, "VCS> postFilterEventsHandler> Unrecognized filter")
 		}
@@ -526,7 +526,7 @@ func (s *Service) postReleaseHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> postReleaseHandler> Unable to create release")
 		}
 
-		return api.WriteJSON(w, r, re, http.StatusOK)
+		return api.WriteJSON(w, re, http.StatusOK)
 	}
 }
 
@@ -601,7 +601,7 @@ func (s *Service) getHookHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getHookHandler> Unable to get authorized client")
 		}
 
-		return api.WriteJSON(w, r, hook, http.StatusOK)
+		return api.WriteJSON(w, hook, http.StatusOK)
 	}
 }
 
@@ -634,7 +634,7 @@ func (s *Service) postHookHandler() api.Handler {
 		if err := client.CreateHook(fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
 			return sdk.WrapError(err, "postHookHandler> CreateHook")
 		}
-		return api.WriteJSON(w, r, body, http.StatusOK)
+		return api.WriteJSON(w, body, http.StatusOK)
 	}
 }
 
@@ -710,6 +710,6 @@ func (s *Service) getListForks() api.Handler {
 			return sdk.WrapError(err, "VCS> getListForks> Unable to get forks")
 		}
 
-		return api.WriteJSON(w, r, forks, http.StatusOK)
+		return api.WriteJSON(w, forks, http.StatusOK)
 	}
 }

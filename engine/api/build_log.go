@@ -91,7 +91,7 @@ func (api *API) getStepBuildLogsHandler() Handler {
 			return sdk.WrapError(errLog, "getBuildLogshandler> Cannot load pipeline build logs")
 		}
 
-		return WriteJSON(w, r, result, http.StatusOK)
+		return WriteJSON(w, result, http.StatusOK)
 	}
 }
 
@@ -178,7 +178,7 @@ func (api *API) getBuildLogsHandler() Handler {
 			l := sdk.NewLog(0, fmt.Sprintf("Build finished with status: %s\n", pb.Status), pb.ID, 0)
 			pipelinelogs = append(pipelinelogs, *l)
 		}
-		return WriteJSON(w, r, pipelinelogs, http.StatusOK)
+		return WriteJSON(w, pipelinelogs, http.StatusOK)
 	}
 }
 
@@ -251,7 +251,7 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 			return sdk.WrapError(err, "getPipelineBuildJobLogsHandler> Cannot load pipeline build logs")
 		}
 
-		return WriteJSON(w, r, pipelinelogs, http.StatusOK)
+		return WriteJSON(w, pipelinelogs, http.StatusOK)
 	}
 }
 

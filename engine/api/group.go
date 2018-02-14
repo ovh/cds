@@ -45,7 +45,7 @@ func (api *API) getGroupHandler() Handler {
 			g.Tokens = tokens
 		}
 
-		return WriteJSON(w, r, g, http.StatusOK)
+		return WriteJSON(w, g, http.StatusOK)
 	}
 }
 
@@ -211,7 +211,7 @@ func (api *API) getGroupsHandler() Handler {
 			return sdk.WrapError(err, "GetGroups: Cannot load group from db")
 		}
 
-		return WriteJSON(w, r, groups, http.StatusOK)
+		return WriteJSON(w, groups, http.StatusOK)
 	}
 }
 
@@ -221,7 +221,7 @@ func (api *API) getPublicGroupsHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "GetGroups: Cannot load group from db")
 		}
-		return WriteJSON(w, r, groups, http.StatusOK)
+		return WriteJSON(w, groups, http.StatusOK)
 	}
 }
 

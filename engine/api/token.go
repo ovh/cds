@@ -60,7 +60,7 @@ func (api *API) generateTokenHandler() Handler {
 			Creator:     getUser(ctx).Fullname,
 			GroupName:   groupName,
 		}
-		return WriteJSON(w, r, token, http.StatusOK)
+		return WriteJSON(w, token, http.StatusOK)
 	}
 }
 
@@ -75,7 +75,7 @@ func (api *API) getGroupTokenListHandler() Handler {
 		}
 
 		if !isAdmin {
-			return WriteJSON(w, r, nil, http.StatusForbidden)
+			return WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		tokens, err := group.LoadTokens(api.mustDB(), groupName)
@@ -83,7 +83,7 @@ func (api *API) getGroupTokenListHandler() Handler {
 			return sdk.WrapError(err, "getGroupTokenListHandler> cannot load group '%s'", groupName)
 		}
 
-		return WriteJSON(w, r, tokens, http.StatusOK)
+		return WriteJSON(w, tokens, http.StatusOK)
 	}
 }
 
@@ -102,13 +102,13 @@ func (api *API) deleteTokenHandler() Handler {
 		}
 
 		if !isGroupAdmin {
-			return WriteJSON(w, r, nil, http.StatusForbidden)
+			return WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		if err := token.Delete(api.mustDB(), tokenID); err != nil {
 			return sdk.WrapError(err, "deleteTokenHandler> cannot load delete token id %d", tokenID)
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
