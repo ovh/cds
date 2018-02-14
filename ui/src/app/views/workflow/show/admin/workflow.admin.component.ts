@@ -62,11 +62,13 @@ export class WorkflowAdminComponent implements OnInit {
         this.oldName = this.workflow.name;
 
         this._workflowRunService.getTags(this.project.key, this._tagWorkflow.name).subscribe(tags => {
+            let existingTags = [];
             Object.keys(tags).forEach(k => {
                 if (tags.hasOwnProperty(k) && this.existingTags.indexOf(k) === -1) {
-                    this.existingTags.push(k);
+                    existingTags.push(k);
                 }
             });
+            this.existingTags = this.existingTags.concat(existingTags);
         });
         this._workflowRunService.getRunNumber(this.project.key, this.workflow).pipe(first()).subscribe(n => {
             this.runnumber = n.num;

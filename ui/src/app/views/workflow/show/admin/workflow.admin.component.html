@@ -29,14 +29,13 @@
             <div class="ui form">
                 <div class="fields">
                     <div class="fourteen wide field">
-                        <sui-multi-select  class="selection" *ngIf="existingTags.length > 0"
-                           [ngModel]="selectedTags"
+                        <sui-multi-select class="selection" *ngIf="existingTags.length > 0"
+                           [(ngModel)]="selectedTags"
                            [options]="existingTags"
                            [isSearchable]="true"
                            (ngModelChange)="updateTagMetadata($event)"
                            #multiSelect>
-                            <sui-select-option *ngFor="let i of multiSelect.filteredOptions"
-                                               [value]="i">
+                            <sui-select-option *ngFor="let i of multiSelect.filteredOptions" [value]="i">
                             </sui-select-option>
                         </sui-multi-select>
                     </div>
