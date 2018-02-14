@@ -191,23 +191,30 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		fmt.Printf("######args %+v\n", args)
 		if c.PreRun != nil {
 			if err := c.PreRun(&c, &args); err != nil {
-				fmt.Println("Error: ", err)
+				fmt.Println("Error PreRun: ", err)
 				ExitOnError(ErrWrongUsage, cmd.Help)
+				return
 			}
 		}
 
 		//Command must receive as least mandatory args
 		if len(c.Args)+len(c.Ctx) > len(args) {
+			fmt.Println("Error AAA: ")
 			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
 		}
 
 		//If there is no optional args but there more args than expected
 		if c.VariadicArgs.Name == "" && len(c.OptionalArgs) == 0 && (len(args) > len(c.Args)+len(c.Ctx)) {
+			fmt.Println("Error BBB: ")
 			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
 		}
 		//If there is a variadic arg, we condider at least one arg mandatory
 		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) {
+			fmt.Println("Error CCC: ")
 			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
 		}
 
 		vals := argsToVal(args)

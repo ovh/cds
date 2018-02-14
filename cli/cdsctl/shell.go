@@ -35,6 +35,14 @@ CDS Shell Mode. Keywords:
 
 var current *shellCurrent
 
+func pcFromCommands(parent readline.PrefixCompleterInterface, c *cobra.Command) {
+	pc := readline.PcItem(c.Use)
+	parent.SetChildren(append(parent.GetChildren(), pc))
+	for _, child := range c.Commands() {
+		pcFromCommands(pc, child)
+	}
+}
+
 func shellRun(v cli.Values) error {
 	shellASCII()
 	version, err := client.Version()
@@ -46,6 +54,11 @@ func shellRun(v cli.Values) error {
 
 	// enable shell mode, this will prevent to os.Exit if there is an error on a command
 	cli.ShellMode = true
+
+	completer := readline.NewPrefixCompleter()
+	for _, child := range root.Commands() {
+		pcFromCommands(completer, child)
+	}
 
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:            "\033[31m»\033[0m ",
@@ -81,9 +94,21 @@ func shellRun(v cli.Values) error {
 		if line == "exit" || line == "quit" {
 			break
 		}
-		if len(line) > 0 {
-			shellProcessCommand(line, current)
+		// if len(line) > 0 {
+		// 	shellProcessCommand(line, current)
+		// }
+		cmd, flags, err := root.Find(strings.Fields(line))
+		if err != nil {
+			fmt.Printf("Error: %s\n", []byte(err.Error()))
 		}
+
+		cmd.ParseFlags([]string{"--format", "json"})
+		cmd.SetArgs([]string{})
+		fmt.Printf("Flags: %+v\n", flags)
+		fmt.Printf("Flags parsed: %+v\n", cmd.CommandPath())
+
+		cmd.Run(cmd, []string{"00SIM"})
+
 	}
 	return nil
 }
@@ -273,24 +298,24 @@ func listCurrent() func(string) []string {
 }
 
 var (
-	completer = readline.NewPrefixCompleter(
-		readline.PcItem("mode",
-			readline.PcItem("vi"),
-			readline.PcItem("emacs"),
-		),
-		readline.PcItem("help"),
-		readline.PcItem("cd",
-			readline.PcItemDynamic(listCurrent()),
-		),
-		readline.PcItem("ls",
-			readline.PcItemDynamic(listCurrent()),
-		),
-		readline.PcItem("open"),
-		readline.PcItem("pwd"),
-		readline.PcItem("version"),
-		readline.PcItem("run"),
-		readline.PcItem("exit"),
-	)
+	// completer = readline.NewPrefixCompleter(
+	// 	readline.PcItem("mode",
+	// 		readline.PcItem("vi"),
+	// 		readline.PcItem("emacs"),
+	// 	),
+	// 	readline.PcItem("help"),
+	// 	readline.PcItem("cd",
+	// 		readline.PcItemDynamic(listCurrent()),
+	// 	),
+	// 	readline.PcItem("ls",
+	// 		readline.PcItemDynamic(listCurrent()),
+	// 	),
+	// 	readline.PcItem("open"),
+	// 	readline.PcItem("pwd"),
+	// 	readline.PcItem("version"),
+	// 	readline.PcItem("run"),
+	// 	readline.PcItem("exit"),
+	// )
 
 	shellCommands = map[string]shellCommandFunc{
 		"cd": cdCommand,
@@ -343,6 +368,7 @@ var (
 
 		cmds := current.command.Commands()
 		for _, cmd := range cmds {
+
 			if cmd.Name() == args[0] {
 				current.command = cmd
 			}
@@ -458,8 +484,10 @@ func shellProcessCommand(input string, current *shellCurrent) {
 		//t := strings.Split(cmd.CommandPath(), " ")
 		//args := []string{}
 		args := tuple[1:]
+		fmt.Printf(" workflow.HasParent %t\n", workflow.HasParent())
 		fmt.Printf(" exec %+v %+v\n", cmd, args)
-		cmd.Run(cmd, args)
+		//cmd.Run(cmd, args)
+		cmd.SetArgs(args)
 		cmd.Execute()
 		return
 	}
