@@ -392,7 +392,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 func (api *API) getHookPollingVCSEvents() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		uid := vars["uid"]
+		uuid := vars["uuid"]
 		vcsServerParam := vars["vcsServer"]
 		lastExec := time.Now()
 		workflowID, errV := requestVarInt(r, "workflowID")
@@ -406,7 +406,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			}
 		}
 
-		h, errL := workflow.LoadHookByUUID(api.mustDB(), uid)
+		h, errL := workflow.LoadHookByUUID(api.mustDB(), uuid)
 		if errL != nil {
 			return sdk.WrapError(errL, "getHookPollingVCSEvents> cannot load hook")
 		}
@@ -428,7 +428,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 
 		//Check if the polling if disabled
 		if info, err := repositoriesmanager.GetPollingInfos(client); err != nil {
-			return err
+			return sdk.WrapError(err, "getHookPollingVCSEvents> cannot check if polling is enabled")
 		} else if info.PollingDisabled || !info.PollingSupported {
 			log.Info("getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
 			return WriteJSON(w, r, nil, http.StatusOK)
@@ -452,7 +452,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 		for _, pushEvent := range pushEvents {
 			exist, errB := workflow.BuildExist(api.mustDB(), h.Config["project"].Value, workflowID, pushEvent.Commit.Hash)
 			if errB != nil {
-				return errB
+				return sdk.WrapError(errB, "getHookPollingVCSEvents> Cannot check existing builds for push events")
 			}
 			if !exist {
 				repoEvents.PushEvents = append(repoEvents.PushEvents, pushEvent)
@@ -462,7 +462,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 		for _, pullRequestEvent := range pullRequestEvents {
 			exist, errB := workflow.BuildExist(api.mustDB(), h.Config["project"].Value, workflowID, pullRequestEvent.Head.Commit.Hash)
 			if errB != nil {
-				return errB
+				return sdk.WrapError(errB, "getHookPollingVCSEvents> Cannot check existing builds for pull request events")
 			}
 			if !exist {
 				repoEvents.PullRequestEvents = append(repoEvents.PullRequestEvents, pullRequestEvent)

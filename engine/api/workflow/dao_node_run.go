@@ -522,7 +522,7 @@ func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit
 // BuildExist Check if build exist or not
 func BuildExist(db gorp.SqlExecutor, projectKey string, workflowID int64, hash string) (bool, error) {
 	query := `
-	SELECT COUNT(*)
+	SELECT COUNT(1)
 		FROM workflow_node_run
 			JOIN workflow_run ON workflow_run.id = workflow_node_run.workflow_run_id
 			JOIN project ON project.id = workflow_run.project_id

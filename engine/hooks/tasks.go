@@ -223,7 +223,8 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 		nextSchedule = cronExpr.Next(t0)
 
 	case TypeRepoPoller:
-		nextSchedule = time.Now().Add(time.Minute * 2)
+		// Default value of next scheduling
+		nextSchedule = time.Now().Add(time.Minute)
 		if val, ok := t.Config["next_execution"]; ok {
 			nextExec, errT := strconv.ParseInt(val.Value, 10, 64)
 			if errT == nil {
@@ -328,6 +329,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 	}
 
 	var maxTs int64
+	// get max timestamp for previous tasks execution
 	for _, tExec := range tExecs {
 		if tExec.Status == TaskExecutionDone && maxTs < tExec.Timestamp {
 			maxTs = tExec.Timestamp
