@@ -102,6 +102,7 @@ func downloadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if errDo != nil {
 			sdk.Exit("cannot post worker download (Do): %s\n", errDo)
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
 			body, err := ioutil.ReadAll(resp.Body)
@@ -122,6 +123,7 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		writeError(w, r, newError)
 		return
 	}
+	defer r.Body.Close()
 
 	var reqArgs workerDownloadArtifact
 	if err := json.Unmarshal(data, &reqArgs); err != nil {
@@ -208,7 +210,7 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 			}
 		}(a)
 
-		// there is one error, do not try to load all artefact
+		// there is one error, do not try to load all artifacts
 		if isInError {
 			break
 		}
