@@ -52,7 +52,7 @@ type ApplicationClient interface {
 // ApplicationKeysClient exposes application keys related functions
 type ApplicationKeysClient interface {
 	ApplicationKeysList(projectKey string, appName string) ([]sdk.ApplicationKey, error)
-	ApplicationKeyCreate(projectKey string, appName string, keyApp *sdk.ApplicationKey) error
+	ApplicationKeyCreate(projectKey string, appName string, keyApp *sdk.ApplicationKey) (*sdk.ApplicationKey, error)
 	ApplicationKeysDelete(projectKey string, appName string, KeyAppName string) error
 }
 
