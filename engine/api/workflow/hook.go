@@ -104,7 +104,7 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 					ID:       h.Config["webHookID"].Value,
 				}
 				if err := client.DeleteHook(h.Config["repoFullName"].Value, vcsHook); err != nil {
-					return sdk.WrapError(err, "deleteHookConfiguration> Cannot delete hook on repository")
+					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
 				}
 				h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 					Value:        vcsHook.ID,
