@@ -51,6 +51,12 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 			Status:       string(sdk.StatusWaiting),
 		}
 
+		if trigg, ok := e.Payload["cds.triggered_by.username"]; ok {
+			wr.Tag(tagTriggeredBy, trigg)
+		} else {
+			wr.Tag(tagTriggeredBy, "cds.hook")
+		}
+
 		//Insert it
 		if err := insertWorkflowRun(db, wr); err != nil {
 			return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
