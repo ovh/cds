@@ -41,7 +41,8 @@ func applicationCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	return client.ApplicationKeyCreate(v[_ProjectKey], v[_ApplicationName], key)
+	_, err := client.ApplicationKeyCreate(v[_ProjectKey], v[_ApplicationName], key)
+	return err
 }
 
 var applicationKeyListCmd = cli.Command{

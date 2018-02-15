@@ -14,9 +14,9 @@ func (c *client) ApplicationKeysList(key string, appName string) ([]sdk.Applicat
 	return k, nil
 }
 
-func (c *client) ApplicationKeyCreate(projectKey string, appName string, keyApplication *sdk.ApplicationKey) error {
+func (c *client) ApplicationKeyCreate(projectKey string, appName string, keyApplication *sdk.ApplicationKey) (*sdk.ApplicationKey, error) {
 	_, err := c.PostJSON("/project/"+projectKey+"/application/"+appName+"/keys", keyApplication, keyApplication)
-	return err
+	return keyApplication, err
 }
 
 func (c *client) ApplicationKeysDelete(projectKey string, appName string, keyName string) error {
