@@ -376,6 +376,12 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
 
+	run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
+		Name:  "cds.node",
+		Type:  sdk.StringParameter,
+		Value: run.WorkflowNodeName,
+	})
+
 	run.Manual = m
 	if m != nil {
 		e := dump.NewDefaultEncoder(new(bytes.Buffer))
