@@ -65,7 +65,6 @@ type Configuration struct {
 		MaxConn        int    `toml:"maxconn" default:"20" comment:"DB Max connection"`
 		ConnectTimeout int    `toml:"connectTimeout" default:"10" comment:"Maximum wait for connection, in seconds"`
 		Timeout        int    `toml:"timeout" default:"3000" comment:"Statement timeout value in milliseconds"`
-		Secret         string `toml:"secret"`
 	} `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
