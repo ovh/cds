@@ -431,7 +431,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			return sdk.WrapError(err, "getHookPollingVCSEvents> cannot check if polling is enabled")
 		} else if info.PollingDisabled || !info.PollingSupported {
 			log.Info("getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
-			return WriteJSON(w, r, nil, http.StatusOK)
+			return WriteJSON(w, nil, http.StatusOK)
 		}
 
 		events, pollingDelay, err := client.GetEvents(h.Config["repoFullName"].Value, lastExec)
@@ -471,6 +471,6 @@ func (api *API) getHookPollingVCSEvents() Handler {
 
 		w.Header().Add("X-CDS-Poll-Interval", fmt.Sprintf("%.0f", pollingDelay.Seconds()))
 
-		return WriteJSON(w, r, repoEvents, http.StatusOK)
+		return WriteJSON(w, repoEvents, http.StatusOK)
 	}
 }
