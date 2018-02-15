@@ -166,6 +166,11 @@
           <span>Webhook</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/design/hooks/git-poller/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/hooks/git-poller/">
+          <span>Git Poller hook</span>
+        </a>
+    </li>
       <li data-nav-id="/workflows/design/hooks/git-repo-webhook/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/">
           <span>Git Repository Webhook</span>
@@ -648,6 +653,37 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/action/show/">
           <span>show</span>
         </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/">
+        <span>admin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/cli/cdsctl/admin/hooks/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/hooks/">
+        <span>hooks</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/hooks/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/hooks/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/admin/services/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/">
+        <span>services</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/services/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
     </li>
         </ul>
     </li>
@@ -1560,10 +1596,10 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-group">POST <code>/group</code></a></li>
 <li><a href="#get-group">GET <code>/group</code></a></li>
-<li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#post-group">POST <code>/group</code></a></li>
 <li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#put-group-group-name">PUT <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</a></li>
 <li><a href="#get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></a></li>
@@ -1596,34 +1632,6 @@
 
 
 
-<h3 id="post-group">POST <code>/group</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22">addGroupHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-group">GET <code>/group</code></h3>
 
 <table>
@@ -1652,20 +1660,20 @@
 </tbody>
 </table>
 
-<h3 id="get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></h3>
+<h3 id="post-group">POST <code>/group</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+<th><strong><code>/group</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>POST</td>
 </tr>
 
 <tr>
@@ -1675,7 +1683,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22">getGroupHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22">addGroupHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1704,6 +1712,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22">deleteGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22">getGroupHandler</a></td>
 </tr>
 </tbody>
 </table>
