@@ -97,7 +97,6 @@ func downloadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		client := http.DefaultClient
-		client.Timeout = 5 * time.Minute
 
 		resp, errDo := client.Do(req)
 		if errDo != nil {
@@ -105,7 +104,12 @@ func downloadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		if resp.StatusCode >= 300 {
-			sdk.Exit("cannot artefact download HTTP %d\n", resp.StatusCode)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				sdk.Exit("cannot artefact download HTTP %v\n", err)
+			}
+			cdsError := sdk.DecodeError(body)
+			sdk.Exit("download failed: %v\n", cdsError)
 		}
 	}
 }
@@ -114,21 +118,23 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
+		writeError(w, r, newError)
 		return
 	}
 
 	var reqArgs workerDownloadArtifact
 	if err := json.Unmarshal(data, &reqArgs); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, err)
+		writeError(w, r, newError)
 		return
 	}
 
 	sendLog := getLogger(wk, wk.currentJob.pbJob.ID, wk.currentJob.currentStep)
 
 	if wk.currentJob.wJob == nil {
-		sendLog("command 'worker download' is only available on CDS Workflows")
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("command 'worker download' is only available on CDS Workflows"))
+		writeError(w, r, newError)
 		return
 	}
 
@@ -141,8 +147,8 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		buildNumberString := sdk.ParameterValue(wk.currentJob.params, "cds.run.number")
 		reqArgs.Number, errN = strconv.ParseInt(buildNumberString, 10, 64)
 		if errN != nil {
-			sendLog(fmt.Sprintf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
-			w.WriteHeader(http.StatusBadRequest)
+			newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot parse '%s' as run number: %s", buildNumberString, errN))
+			writeError(w, r, newError)
 			return
 		}
 	}
@@ -150,20 +156,21 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 	projectKey := sdk.ParameterValue(wk.currentJob.params, "cds.project")
 	artifacts, err := wk.client.WorkflowRunArtifacts(projectKey, reqArgs.Workflow, reqArgs.Number)
 	if err != nil {
-		sendLog(fmt.Sprintf("Cannot download artifacts with worker download: %s", err))
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Cannot download artifacts with worker download: %s", err))
+		writeError(w, r, newError)
 		return
 	}
 
 	regexp, errp := regexp.Compile(reqArgs.Pattern)
 	if errp != nil {
-		sendLog(fmt.Sprintf("Invalid pattern %s : %s", reqArgs.Pattern, errp))
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid pattern %s : %s", reqArgs.Pattern, errp))
+		writeError(w, r, newError)
 		return
 	}
 	wg := new(sync.WaitGroup)
 	wg.Add(len(artifacts))
 
+	var isInError bool
 	for i := range artifacts {
 		a := &artifacts[i]
 
@@ -185,22 +192,35 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 			f, err := os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
 			if err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact (OpenFile) %s: %s", a.Name, err))
+				isInError = true
 				return
 			}
 			sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", a.Name, projectKey, reqArgs.Workflow, reqArgs.Number))
 			if err := wk.client.WorkflowNodeRunArtifactDownload(projectKey, reqArgs.Workflow, *a, f); err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
+				isInError = true
 				return
 			}
 			if err := f.Close(); err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
+				isInError = true
 				return
 			}
 		}(a)
+
+		// there is one error, do not try to load all artefact
+		if isInError {
+			break
+		}
 		if len(artifacts) > 1 {
 			time.Sleep(3 * time.Second)
 		}
 	}
 
 	wg.Wait()
+	if isInError {
+		newError := sdk.NewError(sdk.ErrUnknownError, fmt.Errorf("Error while downloading artefacts - see previous logs"))
+		writeError(w, r, newError)
+	}
+
 }
