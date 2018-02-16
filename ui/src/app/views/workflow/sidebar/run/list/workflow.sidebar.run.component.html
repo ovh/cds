@@ -21,14 +21,12 @@
         <i class="icon ribbon-state"
             [class.success]="r.status === pipelineStatusEnum.SUCCESS"
             [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
-            [class.success]="r.status === pipelineStatusEnum.SUCCESS"
             [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED">
         </i>
         <div class="content">
           <a class="header"
               [class.success]="r.status === pipelineStatusEnum.SUCCESS"
               [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
-              [class.success]="r.status === pipelineStatusEnum.SUCCESS"
               [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED">
               <i class="tag icon"></i> {{r.num}}
           </a>

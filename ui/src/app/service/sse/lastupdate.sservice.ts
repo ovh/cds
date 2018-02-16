@@ -25,7 +25,7 @@ export class LastUpdateService {
 
         return Observable.create((observer) => {
             let eventSource = new EventSourcePolyfill(environment.apiURL + '/mon/lastupdates/events',
-                {headers: authHeader, errorOnTimeout: false, checkActivity: false, connectionTimeout: 5000});
+                {headers: authHeader, errorOnTimeout: false, checkActivity: false});
             eventSource.onmessage = (data => {
                 this.zone.run(() => {
                     observer.next(data.data);

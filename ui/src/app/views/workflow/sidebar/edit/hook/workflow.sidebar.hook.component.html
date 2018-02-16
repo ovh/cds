@@ -1,0 +1,34 @@
+<div class="sidebar-hook">
+    <h3 class="ui header ml5">
+        <i class="settings icon"></i>
+        <div class="content">
+            <span>Hook</span>
+            <div class="sub header">
+              <span>{{ 'workflow_node_edition' | translate }}</span>
+            </div>
+        </div>
+    </h3>
+    <div class="ui fluid vertical menu noborder">
+      <a class="item noborder" (click)="openHookEditModal()" [class.disabled]="readonly">
+        {{'btn_edit' | translate}} <i class="angle right icon"></i>
+      </a>
+      <a class="item noborder" (click)="openDeleteHookModal()" [class.disabled]="readonly">
+        {{'btn_delete' | translate}} <i class="angle right icon"></i>
+      </a>
+    </div>
+</div>
+<ng-container *ngIf="hook && node">
+    <app-workflow-node-hook-form
+      [project]="project"
+      [workflow]="workflow"
+      [node]="node"
+      (hookEvent)="updateHook($event)"
+      [loading]="loading"
+      [hook]="hook" #workflowEditHook>
+    </app-workflow-node-hook-form>
+</ng-container>
+<app-delete-modal
+    [title]="'workflow_hook_delete_title' | translate"
+    [msg]="'workflow_hook_delete_msg' | translate"
+    (event)="deleteHook()" #deleteHookModal>
+</app-delete-modal>

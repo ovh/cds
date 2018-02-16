@@ -2,36 +2,36 @@ package sdk
 
 // Task is a generic hook tasks such as webhook, scheduler,... which will be started and wait for execution
 type Task struct {
-	UUID       string                 `cli:"UUID,key"`
-	Type       string                 `cli:"Type"`
-	Config     WorkflowNodeHookConfig `cli:"Config"`
-	Stopped    bool                   `cli:"Stopped"`
-	Executions []TaskExecution
+	UUID       string                 `json:"uuid" cli:"UUID,key"`
+	Type       string                 `json:"type" cli:"Type"`
+	Config     WorkflowNodeHookConfig `json:"config" cli:"Config"`
+	Stopped    bool                   `json:"stopped" cli:"Stopped"`
+	Executions []TaskExecution        `json:"executions"`
 }
 
 // TaskExecution represents an execution instance of a task. It the task is a webhook; this represents the call of the webhook
 type TaskExecution struct {
-	UUID                string
-	Type                string
-	Timestamp           int64
-	NbErrors            int64
-	LastError           string
-	ProcessingTimestamp int64
-	WorkflowRun         int64
-	Config              WorkflowNodeHookConfig
-	WebHook             *WebHookExecution
-	ScheduledTask       *ScheduledTaskExecution
-	Status              string
+	UUID                string                  `json:"uuid"`
+	Type                string                  `json:"type"`
+	Timestamp           int64                   `json:"timestamp"`
+	NbErrors            int64                   `json:"nb_errors,omitempty"`
+	LastError           string                  `json:"last_error,omitempty"`
+	ProcessingTimestamp int64                   `json:"processing_timestamp"`
+	WorkflowRun         int64                   `json:"workflow_run"`
+	Config              WorkflowNodeHookConfig  `json:"config"`
+	WebHook             *WebHookExecution       `json:"webhook,omitempty"`
+	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty"`
+	Status              string                  `json:"status"`
 }
 
 // WebHookExecution contains specific data for a webhook execution
 type WebHookExecution struct {
-	RequestURL    string
-	RequestBody   []byte
-	RequestHeader map[string][]string
+	RequestURL    string              `json:"request_url"`
+	RequestBody   []byte              `json:"request_body"`
+	RequestHeader map[string][]string `json:"request_header"`
 }
 
 // ScheduledTaskExecution contains specific data for a scheduled task execution
 type ScheduledTaskExecution struct {
-	DateScheduledExecution string
+	DateScheduledExecution string `json:"date_scheduled_execution"`
 }

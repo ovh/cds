@@ -140,6 +140,8 @@
 
   "common_action": "Action",
   "common_preview": "Prévisualisation",
+  "common_details": "Détails",
+  "common_settings": "Configuration",
   "common_optional": "Optionel",
   "common_ask_cds_administrator": "Demandez à votre administrateur CDS",
   "common_audit": "Audit",
@@ -683,6 +685,8 @@
   "workflow_update_name_error": "Nom de workflow invalide. Pattern autorisé : ^[a-zA-Z0-9._-]{1,}$",
   "workflow_wizard_description": "Choisissez vos options de workflow",
   "workflow_edit_as_code": "Editer en code",
+  "workflow_hook_delete_title": "Supprimer le hook",
+  "workflow_hook_delete_msg": "Êtes-vous certain de vouloir supprimer ce hook ?",
 
   "workflow_node_edition": "Configuration",
   "workflow_node_condition_warning": "Attention si vous avez des conditions basiques et avancées, seulement les conditions avancées seront éffectives.",
@@ -701,6 +705,7 @@
   "workflow_node_hook_add": "Ajouter un hook",
   "workflow_node_hook_select": "Sélectionner un type de hook",
   "workflow_node_hook_modal_title": "Edition du hook",
+  "workflow_node_hook_modal_config_title": "Configuration du hook",
   "workflow_node_hook_condition_form": "Ajouter une condition de lancement",
   "workflow_node_hook_condition_list": "Conditions de lancement",
   "workflow_node_hook_condition_no": "Aucune condition",

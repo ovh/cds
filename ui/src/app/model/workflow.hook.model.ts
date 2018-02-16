@@ -13,3 +13,40 @@ export class WorkflowHookModel {
     default_config: Map<string, WorkflowNodeHookConfigValue>;
     disabled: boolean;
 }
+
+export enum HookStatus {
+  DONE = "DONE",
+  DOING = "DOING",
+  FAIL = "FAIL"
+}
+
+export class WorkflowHookTask {
+    uuid: string;
+    stopped: boolean;
+    config: Map<string, WorkflowNodeHookConfigValue>;
+    type: string;
+    executions: TaskExecution[];
+}
+
+export class TaskExecution {
+    uuid: string;
+    type: string;
+    timestamp: number;
+    nb_errors: number;
+    last_error: string;
+    processing_timestamp: number;
+    workflow_run: number;
+    config: Map<string, WorkflowNodeHookConfigValue>;;
+    webhook: Webhook;
+    scheduled_task?: any;
+    status: HookStatus;
+}
+
+export class Webhook {
+    RequestURL: string;
+    RequestBody: string;
+    RequestHeader: {
+        Accept: string[];
+        'User-Agent': string[];
+    };
+}

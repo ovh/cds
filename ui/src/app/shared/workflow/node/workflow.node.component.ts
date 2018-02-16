@@ -129,6 +129,7 @@ export class WorkflowNodeComponent implements OnInit {
 
         let qps = cloneDeep(this._route.snapshot.queryParams);
         qps['selectedJoinId'] = null;
+        qps['selectedHookId'] = null;
 
         if (!this._route.snapshot.params['number']) {
             qps['selectedNodeRunId'] = null;
@@ -141,6 +142,7 @@ export class WorkflowNodeComponent implements OnInit {
         } else {
             qps['selectedJoinId'] = null;
             qps['selectedNodeId'] = null;
+            qps['selectedHookId'] = null;
             this._router.navigate([
                 '/project', this.project.key,
                 'workflow', this.workflowName,

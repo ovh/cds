@@ -1,0 +1,48 @@
+<ng-template let-context let-modal="modal" #nodeHookDetailsModal>
+    <div class="header">
+        <span *ngIf="!readonly">{{ 'workflow_node_hook_modal_title' | translate }}</span>
+        <span *ngIf="readonly">{{ 'workflow_node_hook_modal_config_title' | translate }}</span>
+        <div class="deleteButton" *ngIf="canDelete && !readonly">
+            <app-delete-button [loading]="loading" [disabled]="loading" (event)="deleteHook()"></app-delete-button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="ui form">
+            <ng-container *ngIf="task">
+                <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
+                <ng-container *ngIf="task.config">
+                    <div class="inline fields" *ngFor="let k of task.config | keys">
+                        <div class="four wide field"><label>{{k}}</label></div>
+                        <div class="twelve wide field">
+                          <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
+                          <ng-container *ngIf="k === 'payload'">
+                              <codemirror
+                                [class.invalid]="invalidJSON"
+                                [(ngModel)]="task.config[k].value"
+                                [config]="codeMirrorConfig"
+                                (change)="changeCodeMirror($event)"
+                                #textareaCodeMirror>
+                              </codemirror>
+                          </ng-container>
+                        </div>
+                    </div>
+                    <h3>Logs du hook</h3>
+                    <div class="inline fields">
+                        <div class="four wide field"><label>Status</label></div>
+                        <input type="text" [ngModel]="task.status" [readonly]="true">
+
+                        <div class="four wide field"><label>Début</label></div>
+                        <input type="text" [ngModel]="task.status" [readonly]="true">
+
+                        <div class="four wide field"><label>Fin</label></div>
+                        <input type="text" [ngModel]="task.status" [readonly]="true">
+                    </div>
+                </ng-container>
+                <div class="ui info message" *ngIf="!task.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
+            </ng-container>
+        </div>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+    </div>
+</ng-template>

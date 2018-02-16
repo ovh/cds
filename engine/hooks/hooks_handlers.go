@@ -176,7 +176,7 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 
 		//Load the task
 		t := s.Dao.FindTask(uuid)
-		if t != nil {
+		if t == nil {
 			return api.WriteJSON(w, t, http.StatusOK)
 		}
 
@@ -185,8 +185,9 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
+		t.Executions = execs
 
-		return api.WriteJSON(w, execs, http.StatusOK)
+		return api.WriteJSON(w, t, http.StatusOK)
 	}
 }
 
