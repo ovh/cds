@@ -546,6 +546,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/worker/download/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/encrypt/</loc>
   </url>
   

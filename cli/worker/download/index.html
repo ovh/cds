@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/api/download/">
+  <body class="" data-url="/cli/worker/download/">
     <nav id="sidebar" class="">
 
 
@@ -481,10 +481,9 @@
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/cli/api/" class="dd-item parent">
+    <li data-nav-id="/cli/api/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/api/">
-        <span>REST API</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>REST API</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/api/action/" class="dd-item">
@@ -517,7 +516,7 @@
           <span>config</span>
         </a>
     </li>
-      <li data-nav-id="/cli/api/download/" class="dd-item active">
+      <li data-nav-id="/cli/api/download/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/download/">
           <span>download</span>
         </a>
@@ -1370,12 +1369,13 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/worker/" class="dd-item">
+    <li data-nav-id="/cli/worker/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/worker/">
-        <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>worker</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/worker/download/" class="dd-item">
+      <li data-nav-id="/cli/worker/download/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/worker/download/">
           <span>download</span>
         </a>
@@ -1559,7 +1559,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/api/download.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/worker/download.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1582,7 +1582,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/api/'>REST API</a> > download
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/worker/'>worker</a> > download
 
  
 
@@ -1599,10 +1599,12 @@
 <ul>
 <li>
 <ul>
-<li>
+<li><a href="#worker-download">worker download</a>
 <ul>
-<li><a href="#get-download">GET <code>/download</code></a></li>
-<li><a href="#get-download-name-os-arch">GET <code>/download/&lt;name&gt;/&lt;os&gt;/&lt;arch&gt;</code></a></li>
+<li><a href="#synopsis">Synopsis</a></li>
+<li><a href="#options">Options</a></li>
+<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
+<li><a href="#see-also">SEE ALSO</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1626,61 +1628,55 @@
 
 
 
-<h3 id="get-download">GET <code>/download</code></h3>
+<h2 id="worker-download">worker download</h2>
 
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/download</code></strong></th>
-</tr>
-</thead>
+<p>worker download [&ndash;workflow=<workflow-name>] [&ndash;number=<run-number>] [&ndash;tag=<tag>] [&ndash;pattern=<pattern>]</p>
 
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
+<h3 id="synopsis">Synopsis</h3>
 
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
+<p>Inside a job, there are two ways to download an artifact:</p>
 
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+downloadsHandler%22">downloadsHandler</a></td>
-</tr>
-</tbody>
-</table>
+<ul>
+<li>with a step using action Download Artifacts</li>
 
-<h3 id="get-download-name-os-arch">GET <code>/download/&lt;name&gt;/&lt;os&gt;/&lt;arch&gt;</code></h3>
+<li><p>with a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), using the worker command: <code>worker download --tag=&lt;tag&gt; &lt;path&gt;</code></p>
 
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/download/&lt;name&gt;/&lt;os&gt;/&lt;arch&gt;</code></strong></th>
-</tr>
-</thead>
+<p>worker download &ndash;pattern=&ldquo;files.*.yml&rdquo;</p>
 
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
+<p>#theses two commands have the same result:
+worker download
+worker download &ndash;workflow={{.cds.workflow}} &ndash;number={{.cds.run.number}}</p></li>
+</ul>
 
-<tr>
-<td>Permissions</td>
-<td>Auth: false</td>
-</tr>
+<pre><code>worker download [flags]
+</code></pre>
 
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+downloadHandler%22">downloadHandler</a></td>
-</tr>
-</tbody>
-</table>
+<h3 id="options">Options</h3>
+
+<pre><code>  -h, --help              help for download
+      --number string     Workflow Number to download from. Optional, default: current workflow run
+      --pattern string    Pattern matching files to download. Optional, default: *
+      --tag string        Tag matching files to download. Optional
+      --workflow string   Workflow name to download from. Optional, default: current workflow
+</code></pre>
+
+<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
+
+<pre><code>      --api string             URL of CDS API
+      --hatchery int           Hatchery ID spawing worker
+      --hatchery-name string   Hatchery Name spawing worker
+      --insecure               (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
+      --log-level string       Log Level: debug, info, notice, warning, critical (default &quot;notice&quot;)
+      --model int              Model of worker
+      --name string            Name of worker
+      --token string           CDS Token
+</code></pre>
+
+<h3 id="see-also">SEE ALSO</h3>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/cli/worker/worker/">worker</a>  - CDS Worker</li>
+</ul>
 
 
 <footer class=" footline" >
@@ -1700,8 +1696,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/api/config/" title="config"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/api/group/" title="group" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/worker/" title="worker"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/worker/exit/" title="exit" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
