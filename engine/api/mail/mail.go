@@ -82,6 +82,12 @@ func smtpClient() (*smtp.Client, error) {
 			log.Warning("Error with c.NewClient:%s\n", err.Error())
 			return nil, err
 		}
+		// TLS config
+		tlsconfig := &tls.Config{
+			InsecureSkipVerify: false,
+			ServerName:         smtpHost,
+		}
+		c.StartTLS(tlsconfig)
 	} else {
 		c, err = smtp.Dial(servername)
 		if err != nil {

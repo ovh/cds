@@ -27,7 +27,7 @@ func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
 			return err
 		}
 	} else {
-		log.Debug("CreateDefaultGroup> group %s already exist", groupName)
+		log.Debug("CreateDefaultGroup> group %s already exists", groupName)
 	}
 	return nil
 }
