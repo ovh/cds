@@ -258,7 +258,7 @@ func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
-	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook:
+	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller:
 		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
 		return nil
 	default:
