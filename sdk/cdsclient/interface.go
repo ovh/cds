@@ -34,7 +34,20 @@ type ExportImportInterface interface {
 	WorkflowExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
 	WorkflowPull(projectKey, name string, exportWithPermissions bool) (*tar.Reader, error)
 	WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
-	WorkflowPush(projectKey string, tarContent io.Reader) ([]string, error)
+	WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error)
+	WorkflowAsCodeInterface
+}
+
+// WorkflowAsCodeInterface exposes all workflow as code functions
+type WorkflowAsCodeInterface interface {
+	WorkflowAsCodeStart(projectKey string, repoURL string, repoStrategy sdk.RepositoryStrategy) (*sdk.Operation, error)
+	WorkflowAsCodeInfo(projectKey string, operationID string) (*sdk.Operation, error)
+	WorkflowAsCodePerform(projectKey string, operationID string) ([]string, error)
+}
+
+// RepositoriesManagerInterface exposes all repostories manager functions
+type RepositoriesManagerInterface interface {
+	RepositoriesList(projectKey string, repoManager string) ([]sdk.VCSRepo, error)
 }
 
 // ApplicationClient exposes application related functions
@@ -256,6 +269,7 @@ type Interface interface {
 	ProjectClient
 	QueueClient
 	Requirements() ([]sdk.Requirement, error)
+	RepositoriesManagerInterface
 	ServiceRegister(sdk.Service) (string, error)
 	UserClient
 	WorkerClient
