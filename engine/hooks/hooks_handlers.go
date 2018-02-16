@@ -206,7 +206,7 @@ func (s *Service) deleteTaskBulkHandler() api.Handler {
 
 			//Stop the task
 			if err := s.stopTask(ctx, t); err != nil {
-				return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
+				return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task %s", err)
 			}
 			//Delete the task
 			s.Dao.DeleteTask(t)
