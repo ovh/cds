@@ -19,12 +19,9 @@
             <span>Logs</span>
         </div>
     </h4>
-    <ng-container *ngIf="!loading && hookDetails && hookDetails.executions">
+    <ng-container *ngIf="!loading && hookDetails != null && hookDetails.executions != null">
         <div class="ui list divided no-mrt">
             <div class="item padding pointing" *ngFor="let exec of hookDetails.executions" (click)="openHookDetailsModal(exec)">
-                <div class="floated right mr" *ngIf="exec.status === hookStatus.DOING">
-                    <app-status-icon [status]="exec.status"></app-status-icon>
-                </div>
                 <i class="icon ribbon-state"
                     [class.success]="exec.status === hookStatus.DONE"
                     [class.waiting]="exec.status === hookStatus.DOING"
@@ -44,6 +41,7 @@
             </div>
         </div>
     </ng-container>
+    <div class="ui active centered inline loader" *ngIf="loading"></div>
 </div>
 <ng-container *ngIf="hook && node">
     <app-workflow-node-hook-form

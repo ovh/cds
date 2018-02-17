@@ -23,7 +23,7 @@
                 <tr
                   [class.active]="selectedLine === index + 1"
                   id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{index + 1}}"
-                  *ngIf="!last && logLine">
+                  *ngIf="!last">
                   <td class="number yellow right aligned pointing" (click)="generateLink(index + 1)">{{index + 1}}</td>
                   <td [innerHTML]="logLine"></td>
                 </tr>

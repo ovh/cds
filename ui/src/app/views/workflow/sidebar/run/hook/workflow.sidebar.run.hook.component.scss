@@ -49,7 +49,7 @@
       font-size: 0.90em;
     }
   }
-  
+
   i {
     &.ribbon-state {
       width: 5px;
@@ -78,9 +78,6 @@
   }
   .fail {
     color: $cds_color_red !important;
-  }
-  .active {
-    background-color: grey;
   }
   .waiting {
     color: $cds_color_teal !important;

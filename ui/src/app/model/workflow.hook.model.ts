@@ -15,9 +15,9 @@ export class WorkflowHookModel {
 }
 
 export enum HookStatus {
-  DONE = "DONE",
-  DOING = "DOING",
-  FAIL = "FAIL"
+  DONE = 'DONE',
+  DOING = 'DOING',
+  FAIL = 'FAIL'
 }
 
 export class WorkflowHookTask {
@@ -36,17 +36,14 @@ export class TaskExecution {
     last_error: string;
     processing_timestamp: number;
     workflow_run: number;
-    config: Map<string, WorkflowNodeHookConfigValue>;;
+    config: Map<string, WorkflowNodeHookConfigValue>;
     webhook: Webhook;
     scheduled_task?: any;
     status: HookStatus;
 }
 
 export class Webhook {
-    RequestURL: string;
-    RequestBody: string;
-    RequestHeader: {
-        Accept: string[];
-        'User-Agent': string[];
-    };
+    reques_url: string;
+    request_body: string;
+    request_header: Map<string, string[]>;
 }

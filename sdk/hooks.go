@@ -14,7 +14,7 @@ type TaskExecution struct {
 	UUID                string                  `json:"uuid"`
 	Type                string                  `json:"type"`
 	Timestamp           int64                   `json:"timestamp"`
-	NbErrors            int64                   `json:"nb_errors,omitempty"`
+	NbErrors            int64                   `json:"nb_errors"`
 	LastError           string                  `json:"last_error,omitempty"`
 	ProcessingTimestamp int64                   `json:"processing_timestamp"`
 	WorkflowRun         int64                   `json:"workflow_run"`

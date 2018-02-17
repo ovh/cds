@@ -1,13 +1,8 @@
-import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input} from '@angular/core';
 import {Router, ActivatedRoute} from '@angular/router';
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
-import {ToastService} from '../../../toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
 import {Project} from '../../../../model/project.model';
-import {HookEvent} from './hook.event';
 import {cloneDeep} from 'lodash';
-import {WorkflowStore} from '../../../../service/workflow/workflow.store';
-import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -41,11 +36,8 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
     selectedHookId: number;
 
     constructor(private elementRef: ElementRef,
-        private _workflowStore: WorkflowStore,
-        private _toast: ToastService,
         private _route: ActivatedRoute,
-        private _router: Router,
-        private _translate: TranslateService) {
+        private _router: Router) {
 
         this._route.queryParams.subscribe((qp) => {
             if (qp['selectedHookId']) {

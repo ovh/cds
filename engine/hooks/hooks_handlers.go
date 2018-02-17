@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -186,6 +187,10 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
 		t.Executions = execs
+
+		sort.Slice(t.Executions, func(i, j int) bool {
+			return t.Executions[i].Timestamp > t.Executions[j].Timestamp
+		})
 
 		return api.WriteJSON(w, t, http.StatusOK)
 	}

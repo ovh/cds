@@ -1,5 +1,4 @@
 import {Component, Input, ViewChild, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
 import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
@@ -10,7 +9,6 @@ import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {finalize} from 'rxjs/operators';
 
 @Component({
@@ -37,8 +35,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
     constructor(
         private _workflowStore: WorkflowStore,
         private _toast: ToastService,
-        private _translate: TranslateService,
-        private _router: Router
+        private _translate: TranslateService
     ) {
 
     }
@@ -57,7 +54,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
 
     ngOnInit() {
         let hookId = this.hook.id;
-        //Find node linked to this hook
+        // Find node linked to this hook
         this.node = Workflow.findNode(this.workflow, (node) => {
             return Array.isArray(node.hooks) && node.hooks.length &&
                 node.hooks.find((h) => h.id === hookId);

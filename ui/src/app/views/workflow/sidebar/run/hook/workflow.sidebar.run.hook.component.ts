@@ -37,13 +37,15 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
 
     ngOnInit() {
         let hookId = this.hook.id;
-        //Find node linked to this hook
+        // Find node linked to this hook
         this.node = Workflow.findNode(this.workflow, (node) => {
             return Array.isArray(node.hooks) && node.hooks.length &&
                 node.hooks.find((h) => h.id === hookId);
         });
 
+        this.loading = true;
         this._hook.getHookLogs(this.project.key, this.workflow.name, this.hook.uuid)
+            .pipe(finalize(() => this.loading = false))
             .subscribe((hook) => {
                 if (Array.isArray(hook.executions) && hook.executions.length) {
                     hook.executions = hook.executions.map((exec) => {

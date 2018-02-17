@@ -1,8 +1,8 @@
-import {Component, Input, ViewChild} from '@angular/core';
-import {HookService} from '../../../../../service/hook/hook.service';
+import {Component, ViewChild} from '@angular/core';
 import {TaskExecution} from '../../../../../model/workflow.hook.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-workflow-node-hook-details',
@@ -26,12 +26,22 @@ export class WorkflowNodeHookDetailsComponent {
             autoCloseBrackets: true,
             mode: 'application/json',
             lineWrapping: true,
-            autoRefresh: true
+            autoRefresh: true,
+            readOnly: true
         };
     }
 
     show(taskExec: TaskExecution): void {
-        this.task = taskExec;
+        this.task = cloneDeep(taskExec);
+        if (this.task.webhook && this.task.webhook.request_body) {
+          let body = atob(this.task.webhook.request_body);
+          try {
+            this.task.webhook.request_body = JSON.stringify(JSON.parse(body), null, 4);
+          } catch (e) {
+            this.task.webhook.request_body = body;
+          }
+
+        }
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookDetailsModal);
         this.modal = this._modalService.open(this.modalConfig);
     }
