@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"path"
@@ -29,18 +30,14 @@ CDS Shell Mode. Keywords:
 - open: open CDS WebUI with current context
 - run: run current workflow
 - version: same as cdsctl version command
-
 `,
 }
 
 var current *shellCurrent
 
-func pcFromCommands(parent readline.PrefixCompleterInterface, c *cobra.Command) {
-	pc := readline.PcItem(c.Use)
-	parent.SetChildren(append(parent.GetChildren(), pc))
-	for _, child := range c.Commands() {
-		pcFromCommands(pc, child)
-	}
+type shellCurrent struct {
+	path  string
+	rline *readline.Instance
 }
 
 func shellRun(v cli.Values) error {
@@ -55,15 +52,10 @@ func shellRun(v cli.Values) error {
 	// enable shell mode, this will prevent to os.Exit if there is an error on a command
 	cli.ShellMode = true
 
-	completer := readline.NewPrefixCompleter()
-	for _, child := range root.Commands() {
-		pcFromCommands(completer, child)
-	}
-
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:            "\033[31m»\033[0m ",
 		HistoryFile:       path.Join(userHomeDir(), ".cdsctl_history"),
-		AutoComplete:      completer,
+		AutoComplete:      getCompleter(),
 		InterruptPrompt:   "^C",
 		EOFPrompt:         "exit",
 		HistorySearchFold: true,
@@ -75,7 +67,7 @@ func shellRun(v cli.Values) error {
 
 	defer l.Close()
 
-	current = &shellCurrent{rline: l, command: root}
+	current = &shellCurrent{rline: l}
 
 	for {
 		line, err := l.Readline()
@@ -95,234 +87,45 @@ func shellRun(v cli.Values) error {
 			break
 		}
 		if len(line) > 0 {
-			shellProcessCommand(line, current)
+			current.shellProcessCommand(line)
 		}
-		// cmd, flags, err := root.Find(strings.Fields(line))
-		// if err != nil {
-		// 	fmt.Printf("Error: %s\n", []byte(err.Error()))
-		// }
-
-		// cmd.ParseFlags([]string{"--format", "json"})
-		// cmd.SetArgs([]string{})
-		// fmt.Printf("Flags: %+v\n", flags)
-		// fmt.Printf("Flags parsed: %+v\n", cmd.CommandPath())
-		// cmd.Run(cmd, []string{"00SIM"})
 	}
 	return nil
 }
 
-type shellCurrent struct {
-	project     string
-	workflow    string
-	application string
-	pipeline    string
-	environment string
-	position    shellPosition
-	rline       *readline.Instance
-	command     *cobra.Command
+func getCompleter() *readline.PrefixCompleter {
+	return readline.NewPrefixCompleter(
+		readline.PcItem("mode",
+			readline.PcItem("vi"),
+			readline.PcItem("emacs"),
+		),
+		readline.PcItem("help"),
+		readline.PcItem("cd",
+			readline.PcItemDynamic(listCurrent()),
+		),
+		readline.PcItem("ls",
+			readline.PcItemDynamic(listCurrent()),
+		),
+		readline.PcItem("open"),
+		readline.PcItem("pwd"),
+		readline.PcItem("version"),
+		readline.PcItem("run"),
+		readline.PcItem("exit"),
+	)
 }
-
-type shellPosition int
-
-const (
-	shellInRoot shellPosition = iota
-	shellInProjects
-	shellInProject
-	shellInWorkflow
-	shellInWorkflows
-	shellInApplication
-	shellInApplications
-	shellInPipeline
-	shellInPipelines
-	shellInEnvironment
-	shellInEnvironments
-	shellInAdmin
-)
-
-// isInProjects returns true if there is nothing selected
-func (s *shellCurrent) reset() {
-	s.position = shellInRoot
-	s.project = ""
-	s.workflow = ""
-	s.application = ""
-	s.pipeline = ""
-	s.environment = ""
-	s.command = root
-}
-
-func (s *shellCurrent) openBrowser() {
-	var baseURL string
-	configUser, err := client.ConfigUser()
-	if err != nil {
-		fmt.Printf("Error while getting URL UI: %s", err)
-		return
-	}
-
-	if b, ok := configUser[sdk.ConfigURLUIKey]; ok {
-		baseURL = b
-	}
-
-	if baseURL == "" {
-		fmt.Println("Unable to retrieve workflow URI")
-		return
-	}
-
-	url := fmt.Sprintf("%s", baseURL)
-	switch s.position {
-	case shellInProjects:
-		// nothing
-	case shellInProject:
-		url += fmt.Sprintf("/project/%s?tab=workflows", s.project)
-	case shellInWorkflow:
-		url += fmt.Sprintf("/project/%s/workflow/%s", s.project, s.workflow)
-	case shellInWorkflows:
-		url += fmt.Sprintf("/project/%s?tab=workflows", s.project)
-	case shellInApplication:
-		url += fmt.Sprintf("/project/%s/application/%s", s.project, s.application)
-	case shellInApplications:
-		url += fmt.Sprintf("/project/%s?tab=workflows", s.project)
-	case shellInPipeline:
-		url += fmt.Sprintf("/project/%s/pipeline/%s", s.project, s.pipeline)
-	case shellInPipelines:
-		url += fmt.Sprintf("/project/%s?tab=pipelines", s.project)
-	case shellInEnvironment:
-		url += fmt.Sprintf("/project/%s&envName=%s", s.project, s.environment)
-	case shellInEnvironments:
-		url += fmt.Sprintf("/project/%s?tab=environments", s.project)
-	}
-	fmt.Printf("Opening %s...\n", url)
-	browser.OpenURL(url)
-}
-
-func (s *shellCurrent) getArgs() []string {
-	r := []string{}
-	if s.project != "" {
-		r = append(r, s.project)
-	}
-	if s.workflow != "" {
-		r = append(r, s.workflow)
-	}
-	if s.application != "" {
-		r = append(r, s.application)
-	}
-	if s.pipeline != "" {
-		r = append(r, s.pipeline)
-	}
-	return r
-}
-
-func (s *shellCurrent) getPwd() string {
-	r := "/"
-	if s.project != "" {
-		r += s.project
-	}
-	if s.position == shellInWorkflows || s.position == shellInWorkflow {
-		r += "/workflows"
-	}
-	if s.workflow != "" {
-		r += "/" + s.workflow
-	}
-	if s.position == shellInApplications || s.position == shellInApplication {
-		r += "/applications"
-	}
-	if s.application != "" {
-		r += "/" + s.application
-	}
-	if s.position == shellInPipelines || s.position == shellInPipeline {
-		r += "/pipelines"
-	}
-	if s.pipeline != "" {
-		r += "/" + s.pipeline
-	}
-	if s.position == shellInEnvironments || s.position == shellInEnvironment {
-		r += "/environments"
-	}
-	if s.environment != "" {
-		r += "/" + s.environment
-	}
-	r += fmt.Sprintf(" --> %d", s.position)
-	return r
-}
-
-func (s *shellCurrent) setPositionInsideProject(input string) {
-	s.workflow = ""
-	s.application = ""
-	s.pipeline = ""
-	if input == "workflows" {
-		s.position = shellInWorkflows
-	} else if input == "applications" {
-		s.position = shellInApplications
-	} else if input == "environments" {
-		s.position = shellInEnvironments
-	} else if input == "pipelines" {
-		s.position = shellInPipelines
-	} else {
-		fmt.Printf("Invalid argument. Must be workflows, applications, environments or pipelines")
-	}
-}
-
-type shellCommandFunc func(args []string, current *shellCurrent) *cobra.Command
 
 func listCurrent() func(string) []string {
 	return func(line string) []string {
-		r := []string{}
-		switch current.position {
-		case shellInProjects:
-			values, _ := client.ProjectList(false, false)
-			for _, v := range values {
-				r = append(r, v.Key)
-			}
-		case shellInProject:
-			r = []string{"..", "workflows", "applications", "environments", "pipelines"}
-		case shellInWorkflows:
-			values, _ := client.WorkflowList(current.project)
-			for _, v := range values {
-				r = append(r, v.Name)
-			}
-		case shellInApplications:
-			values, _ := client.ApplicationList(current.project)
-			for _, v := range values {
-				r = append(r, v.Name)
-			}
-		case shellInPipelines:
-			values, _ := client.PipelineList(current.project)
-			for _, v := range values {
-				r = append(r, v.Name)
-			}
-		case shellInEnvironments:
-			values, _ := client.EnvironmentList(current.project)
-			for _, v := range values {
-				r = append(r, v.Name)
-			}
-		}
-		return r
+		output, subcmds := current.shellListCommand(current.path, nil)
+		return append(output, subcmds...)
 	}
 }
 
-var (
-	// completer = readline.NewPrefixCompleter(
-	// 	readline.PcItem("mode",
-	// 		readline.PcItem("vi"),
-	// 		readline.PcItem("emacs"),
-	// 	),
-	// 	readline.PcItem("help"),
-	// 	readline.PcItem("cd",
-	// 		readline.PcItemDynamic(listCurrent()),
-	// 	),
-	// 	readline.PcItem("ls",
-	// 		readline.PcItemDynamic(listCurrent()),
-	// 	),
-	// 	readline.PcItem("open"),
-	// 	readline.PcItem("pwd"),
-	// 	readline.PcItem("version"),
-	// 	readline.PcItem("run"),
-	// 	readline.PcItem("exit"),
-	// )
+type shellCommandFunc func(current *shellCurrent, args []string)
 
-	shellCommands = map[string]shellCommandFunc{
-		"cd": cdCommand,
-		"ls": lsCommand,
-		"mode": func(args []string, current *shellCurrent) *cobra.Command {
+func getShellCommands() map[string]shellCommandFunc {
+	m := map[string]shellCommandFunc{
+		"mode": func(current *shellCurrent, args []string) {
 			if len(args) == 0 {
 				if current.rline.IsVimMode() {
 					println("current mode: vim")
@@ -339,162 +142,185 @@ var (
 					fmt.Println("invalid mode:", args[0])
 				}
 			}
-			return nil
 		},
-		"help": func(args []string, current *shellCurrent) *cobra.Command {
+		"help": func(current *shellCurrent, args []string) {
 			fmt.Println(shellCmd.Long)
-			return nil
 		},
-		"open": func(args []string, current *shellCurrent) *cobra.Command {
+		"cd": func(current *shellCurrent, args []string) {
+			if len(args) == 0 {
+				current.path = ""
+				return
+			}
+
+			if args[0] == ".." {
+				idx := strings.LastIndex(current.path, "/")
+				current.path = current.path[:idx]
+				return
+			}
+
+			// path must start with / and end without /
+			if strings.HasPrefix(args[0], "/") { // absolute cd /...
+				current.path = args[0]
+			} else { // relative cd foo...
+				current.path += "/" + args[0]
+			}
+			current.path = strings.TrimSuffix(current.path, "/")
+		},
+		"open": func(current *shellCurrent, args []string) {
 			current.openBrowser()
-			return nil
 		},
-		"pwd": func(args []string, current *shellCurrent) *cobra.Command {
-			fmt.Println(current.getPwd() + " // " + current.command.CommandPath())
-			return nil
-		},
-		"version": func(args []string, current *shellCurrent) *cobra.Command {
-			return cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
-		},
-		"run": func(args []string, current *shellCurrent) *cobra.Command {
-			return cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil, withAllCommandModifiers()...)
-		},
-	}
-
-	cdCommand = func(args []string, current *shellCurrent) *cobra.Command {
-		if len(args) == 0 {
-			current.reset()
-			return nil
-		}
-
-		var changePosition bool
-		switch current.position {
-		case shellInRoot:
-			if args[0] == "projects" {
-				current.reset()
-				fmt.Println("go to projects")
-				current.position = shellInProjects
-				current.command = project
-			}
-		case shellInProjects:
-			current.reset()
-			fmt.Println("go to project " + args[0])
-			current.project = args[0]
-			current.position = shellInProject
-			current.command = project
-			changePosition = true
-			//case shellInProject:
-			//current.setPositionInsideProject(args[0])
-			//current.command = workflow
-			//	changePosition = true
-			// case shellInWorkflows:
-			// 	current.position = shellInWorkflow
-			// 	current.workflow = args[0]
-			// case shellInApplications:
-			// 	current.position = shellInApplication
-			// 	current.application = args[0]
-			// case shellInEnvironments:
-			// 	current.position = shellInEnvironment
-			// 	current.environment = args[0]
-			// case shellInPipelines:
-			// 	current.position = shellInPipeline
-			// 	current.pipeline = args[0]
-		}
-		if changePosition {
-			return nil
-		}
-
-		fmt.Println(args[0])
-		cmds := current.command.Commands()
-
-		for _, cmd := range cmds {
-			if cmd.Name() == args[0] {
-				fmt.Println("find")
-				current.command = cmd
-			}
-		}
-
-		// cd ..
-		// if len(args) == 1 && args[0] == ".." {
-		// 	if current.position == shellInProject { // inside a project, go to list project
-		// 		current.reset()
-		// 		current.position = shellInProjects
-		// 	} else if current.position != shellInProjects { // inside apps, workflows... go to project
-		// 		prj := current.project
-		// 		current.reset()
-		// 		current.project = prj
-		// 		current.position = shellInProject
-		// 	}
-		// 	return nil
-		// }
-
-		return nil
-	}
-
-	lsCommand = func(args []string, current *shellCurrent) *cobra.Command {
-		subcommands := []string{}
-		cmds := current.command.Commands()
-		fmt.Println("current name:", current.command.Name())
-		for _, cmd := range cmds {
-			//if current.position = shellInProject &&
-			if current.command.Name() == "project" {
-				if cmd.Name() == "list" {
-					return cmd
+		"ls": func(current *shellCurrent, args []string) {
+			inargs := args
+			path := current.path
+			if len(args) == 0 { // ls -> no path
+				// default values
+			} else {
+				if strings.HasPrefix(args[0], "/") { // ls /foo -> absolute path
+					path = args[0]
+					inargs = args[1:]
+				} else if strings.HasPrefix(args[0], "-") { // ls foo -> relative path
+					// default values
+				} else { // ls foo -> relative path
+					path = current.path + args[0]
+					inargs = args[1:]
 				}
 			}
-			subcommands = append(subcommands, cmd.Name())
-		}
 
-		// no list command, we list the subcommand
-		// except create / delete / show
-		exceptions := []string{"create", "show", "list", "delete", "import", "export"}
-		for _, s := range subcommands {
-			if sdk.IsInArray(s, exceptions) {
-				continue
+			output, subcmds := current.shellListCommand(path, inargs)
+			for _, s := range output {
+				if len(strings.TrimSpace(s)) > 0 {
+					fmt.Println(s)
+				}
 			}
-			fmt.Println(s)
-		}
-
-		return nil
+			if len(subcmds) > 0 {
+				fmt.Printf("\nsub-menu: ")
+			}
+			for _, s := range subcmds {
+				fmt.Printf("\033[32m»\033[0m %s ", s)
+			}
+			fmt.Println()
+		},
+		"pwd": func(current *shellCurrent, args []string) {
+			fmt.Println(current.path)
+		},
+		"version": func(current *shellCurrent, args []string) {
+			versionRun(nil)
+		},
 	}
-)
+	return m
+}
 
-func shellProcessCommand(input string, current *shellCurrent) {
+func (current *shellCurrent) shellProcessCommand(input string) {
 	tuple := strings.Split(input, " ")
-	if f, ok := shellCommands[tuple[0]]; ok {
+	if f, ok := getShellCommands()[tuple[0]]; ok {
 		if f == nil {
 			fmt.Printf("Command %s not defined in this context\n", input)
 			return
 		}
-		cmd := f(tuple[1:], current)
-		if cmd == nil {
-			return
+		f(current, tuple[1:])
+	}
+}
+
+func (current *shellCurrent) shellListCommand(path string, flags []string) ([]string, []string) {
+	spath := strings.Split(path, "/")
+	cmd := getRoot(true)
+	for index := 1; index < len(spath); index++ {
+		key := spath[index]
+		if f := findCommand(cmd, key); f != nil {
+			cmd = f
 		}
+	}
+	if cmd.Name() == "" {
+		return []string{"root cmd NOT found"}, nil
+	}
 
-		// if len(tuple) > 1 {
-		// 	//subcmd := strings.Join(tuple[1:], " ")
-		// 	//if subcmd != "workflows" && subcmd != "applications" && subcmd != "environments" && subcmd != "pipelines" {
-		// 	//args = append(current.getArgs(), tuple[1:]...)
-		// 	//}
-		// }
+	buf := new(bytes.Buffer)
+	if cmd.Name() == spath[len(spath)-1] { // list command
+		if lsCmd := findCommand(cmd, "list"); lsCmd != nil {
+			if len(flags) == 0 {
+				flags = []string{"-q"}
+			}
+			lsCmd.ParseFlags(flags)
+			lsCmd.SetOutput(buf)
+			lsCmd.Run(lsCmd, current.getArgs(lsCmd))
+		}
+	} else { // try show command
+		if showCmd := findCommand(cmd, "show"); showCmd != nil {
+			showCmd.ParseFlags(flags)
+			showCmd.SetOutput(buf)
+			showCmd.Run(showCmd, current.getArgs(showCmd))
+		}
+	}
 
-		// //if len(args) > 0 {
-		// fmt.Printf(" with args: %+v", args)
-		// //}
-		//fmt.Println()
-		//t := strings.Split(cmd.CommandPath(), " ")
-		//args := []string{}
+	var others []string
+	for _, c := range cmd.Commands() {
+		// list only command with sub commands
 
-		args := tuple[1:]
-		//fmt.Printf(" workflow.HasParent %t\n", workflow.HasParent())
-		//fmt.Printf(" exec %+v %+v\n", cmd, args)
-		cmd.SetArgs(args)
-		cmd.Run(cmd, args)
+		// TODO /project/workflow --> prevent that
+		if len(c.Commands()) > 0 {
+			others = append(others, c.Name())
+		}
+	}
+	out := strings.Split(buf.String(), "\n")
+	return out, others
+}
 
-		// cmd.Execute()
+func (current *shellCurrent) getArgs(cmd *cobra.Command) []string {
+	args := []string{}
+
+	if strings.Contains(cmd.Use, strings.ToUpper(_ProjectKey)) {
+		if strings.HasPrefix(current.path, "/project/") {
+			t := strings.Split(current.path, "/")
+			args = append(args, t[2])
+		}
+	}
+	if strings.Contains(cmd.Use, strings.ToUpper(_ApplicationName)) {
+		if strings.HasPrefix(current.path, "/project/") {
+			t := strings.Split(current.path, "/")
+			if len(t) >= 5 && t[3] == "application" {
+				args = append(args, t[4])
+			}
+		}
+	}
+	if strings.Contains(cmd.Use, strings.ToUpper(_ProjectKey)) {
+		if strings.HasPrefix(current.path, "/project/") {
+			t := strings.Split(current.path, "/")
+			if len(t) >= 5 && t[3] == "workflow" {
+				args = append(args, t[4])
+			}
+		}
+	}
+
+	return args
+}
+
+func findCommand(cmd *cobra.Command, key string) *cobra.Command {
+	for _, c := range cmd.Commands() {
+		if c.Name() == key {
+			return c
+		}
+	}
+	return nil
+}
+
+func (current *shellCurrent) openBrowser() {
+	var baseURL string
+	configUser, err := client.ConfigUser()
+	if err != nil {
+		fmt.Printf("Error while getting URL UI: %s", err)
 		return
 	}
-	fmt.Printf("Invalid command %s\n", input)
+
+	if b, ok := configUser[sdk.ConfigURLUIKey]; ok {
+		baseURL = b
+	}
+
+	if baseURL == "" {
+		fmt.Println("Unable to retrieve webui uri")
+		return
+	}
+
+	browser.OpenURL(baseURL + current.path)
 }
 
 func shellASCII() {

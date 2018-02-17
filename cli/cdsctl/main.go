@@ -20,6 +20,13 @@ var (
 )
 
 func main() {
+	root = getRoot(false)
+	if err := root.Execute(); err != nil {
+		cli.ExitOnError(err)
+	}
+}
+
+func getRoot(isShell bool) *cobra.Command {
 	login := cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
 	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
 	update := cli.NewCommand(updateCmd, updateRun, nil, cli.CommandWithoutExtraFlags)
@@ -28,8 +35,15 @@ func main() {
 	doc := cli.NewCommand(docCmd, docRun, nil, cli.CommandWithoutExtraFlags)
 	monitoring := cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
 
-	root = cli.NewCommand(mainCmd, mainRun,
-		[]*cobra.Command{
+	var cmds []*cobra.Command
+
+	if isShell {
+		cmds = []*cobra.Command{
+			project(),
+			admin,
+		}
+	} else {
+		cmds = []*cobra.Command{
 			doc, // hidden command
 			action,
 			login,
@@ -39,7 +53,7 @@ func main() {
 			pipeline,
 			group,
 			health,
-			project,
+			project(),
 			worker,
 			workflow,
 			update,
@@ -50,8 +64,10 @@ func main() {
 			encrypt,
 			token,
 			admin,
-		},
-	)
+		}
+	}
+
+	root = cli.NewCommand(mainCmd, mainRun, cmds)
 
 	root.PersistentFlags().StringVarP(&configFile, "file", "f", "", "set configuration file")
 	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
@@ -69,10 +85,7 @@ func main() {
 
 		client = cdsclient.New(*cfg)
 	}
-
-	if err := root.Execute(); err != nil {
-		cli.ExitOnError(err)
-	}
+	return root
 }
 
 var mainCmd = cli.Command{

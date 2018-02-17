@@ -128,9 +128,6 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 		}
 	case RunListFunc:
 		var quiet string
-		if ShellMode {
-			quiet = "true"
-		}
 		extraFlags = []Flag{
 			{
 				Name:    "filter",

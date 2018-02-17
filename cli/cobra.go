@@ -75,6 +75,7 @@ func NewListCommand(c Command, run RunListFunc, subCommands []*cobra.Command, mo
 
 func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods ...CommandModifier) *cobra.Command {
 	cmd := &cobra.Command{}
+	cmd.SetOutput(os.Stdout)
 	cmd.Use = c.Name
 
 	sort.Sort(orderArgs(c.Args...))
@@ -187,11 +188,8 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	}
 
 	cmd.Run = func(cmd *cobra.Command, args []string) {
-		fmt.Printf("######cmd %s\n", cmd.CommandPath())
-		fmt.Printf("######args %+v\n", args)
 		if c.PreRun != nil {
 			if err := c.PreRun(&c, &args); err != nil {
-				fmt.Println("Error PreRun: ", err)
 				ExitOnError(ErrWrongUsage, cmd.Help)
 				return
 			}
@@ -199,20 +197,17 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 
 		//Command must receive as least mandatory args
 		if len(c.Args)+len(c.Ctx) > len(args) {
-			fmt.Println("Error AAA: ")
 			ExitOnError(ErrWrongUsage, cmd.Help)
 			return
 		}
 
 		//If there is no optional args but there more args than expected
 		if c.VariadicArgs.Name == "" && len(c.OptionalArgs) == 0 && (len(args) > len(c.Args)+len(c.Ctx)) {
-			fmt.Println("Error BBB: ")
 			ExitOnError(ErrWrongUsage, cmd.Help)
 			return
 		}
 		//If there is a variadic arg, we condider at least one arg mandatory
 		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) {
-			fmt.Println("Error CCC: ")
 			ExitOnError(ErrWrongUsage, cmd.Help)
 			return
 		}
@@ -248,13 +243,13 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			case "json":
 				b, err := json.Marshal(i)
 				ExitOnError(err)
-				fmt.Println(string(b))
+				fmt.Fprint(cmd.OutOrStdout(), string(b))
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
-				fmt.Println(string(b))
+				fmt.Fprint(cmd.OutOrStdout(), string(b))
 			default:
-				w := tabwriter.NewWriter(os.Stdout, 10, 0, 1, ' ', 0)
+				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
 				e := dump.NewDefaultEncoder(new(bytes.Buffer))
 				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 				e.ExtraFields.DetailedMap = false
@@ -306,7 +301,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				}
 
 				if quiet {
-					fmt.Println(item["key"])
+					fmt.Fprintln(cmd.OutOrStdout(), item["key"])
 					continue
 				}
 
@@ -353,7 +348,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 					fmt.Println("nothing to display...")
 					return
 				}
-				table := tablewriter.NewWriter(os.Stdout)
+				table := tablewriter.NewWriter(cmd.OutOrStdout())
 				table.SetHeader(tableHeader)
 				for _, v := range tableData {
 					table.Append(v)
