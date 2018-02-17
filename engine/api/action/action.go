@@ -310,12 +310,20 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	}
 
 	// Checks if multiple requirements have the same name
+	nbModelReq := 0
 	for i := range a.Requirements {
 		for j := range a.Requirements {
 			if a.Requirements[i].Name == a.Requirements[j].Name && i != j {
 				return sdk.ErrInvalidJobRequirement
 			}
 		}
+		if a.Requirements[i].Type == sdk.ModelRequirement {
+			nbModelReq++
+		}
+	}
+
+	if nbModelReq > 0 {
+		return sdk.ErrInvalidJobRequirement
 	}
 
 	for i := range a.Requirements {
