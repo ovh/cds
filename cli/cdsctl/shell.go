@@ -94,21 +94,19 @@ func shellRun(v cli.Values) error {
 		if line == "exit" || line == "quit" {
 			break
 		}
-		// if len(line) > 0 {
-		// 	shellProcessCommand(line, current)
-		// }
-		cmd, flags, err := root.Find(strings.Fields(line))
-		if err != nil {
-			fmt.Printf("Error: %s\n", []byte(err.Error()))
+		if len(line) > 0 {
+			shellProcessCommand(line, current)
 		}
+		// cmd, flags, err := root.Find(strings.Fields(line))
+		// if err != nil {
+		// 	fmt.Printf("Error: %s\n", []byte(err.Error()))
+		// }
 
-		cmd.ParseFlags([]string{"--format", "json"})
-		cmd.SetArgs([]string{})
-		fmt.Printf("Flags: %+v\n", flags)
-		fmt.Printf("Flags parsed: %+v\n", cmd.CommandPath())
-
-		cmd.Run(cmd, []string{"00SIM"})
-
+		// cmd.ParseFlags([]string{"--format", "json"})
+		// cmd.SetArgs([]string{})
+		// fmt.Printf("Flags: %+v\n", flags)
+		// fmt.Printf("Flags parsed: %+v\n", cmd.CommandPath())
+		// cmd.Run(cmd, []string{"00SIM"})
 	}
 	return nil
 }
@@ -127,7 +125,8 @@ type shellCurrent struct {
 type shellPosition int
 
 const (
-	shellInProjects shellPosition = iota
+	shellInRoot shellPosition = iota
+	shellInProjects
 	shellInProject
 	shellInWorkflow
 	shellInWorkflows
@@ -137,16 +136,18 @@ const (
 	shellInPipelines
 	shellInEnvironment
 	shellInEnvironments
+	shellInAdmin
 )
 
 // isInProjects returns true if there is nothing selected
 func (s *shellCurrent) reset() {
-	s.position = shellInProjects
+	s.position = shellInRoot
 	s.project = ""
 	s.workflow = ""
 	s.application = ""
 	s.pipeline = ""
 	s.environment = ""
+	s.command = root
 }
 
 func (s *shellCurrent) openBrowser() {
@@ -239,6 +240,7 @@ func (s *shellCurrent) getPwd() string {
 	if s.environment != "" {
 		r += "/" + s.environment
 	}
+	r += fmt.Sprintf(" --> %d", s.position)
 	return r
 }
 
@@ -360,16 +362,54 @@ var (
 	}
 
 	cdCommand = func(args []string, current *shellCurrent) *cobra.Command {
-
 		if len(args) == 0 {
-			//	current.reset()
+			current.reset()
 			return nil
 		}
 
-		cmds := current.command.Commands()
-		for _, cmd := range cmds {
+		var changePosition bool
+		switch current.position {
+		case shellInRoot:
+			if args[0] == "projects" {
+				current.reset()
+				fmt.Println("go to projects")
+				current.position = shellInProjects
+				current.command = project
+			}
+		case shellInProjects:
+			current.reset()
+			fmt.Println("go to project " + args[0])
+			current.project = args[0]
+			current.position = shellInProject
+			current.command = project
+			changePosition = true
+			//case shellInProject:
+			//current.setPositionInsideProject(args[0])
+			//current.command = workflow
+			//	changePosition = true
+			// case shellInWorkflows:
+			// 	current.position = shellInWorkflow
+			// 	current.workflow = args[0]
+			// case shellInApplications:
+			// 	current.position = shellInApplication
+			// 	current.application = args[0]
+			// case shellInEnvironments:
+			// 	current.position = shellInEnvironment
+			// 	current.environment = args[0]
+			// case shellInPipelines:
+			// 	current.position = shellInPipeline
+			// 	current.pipeline = args[0]
+		}
+		if changePosition {
+			return nil
+		}
 
+		fmt.Println(args[0])
+		cmds := current.command.Commands()
+
+		for _, cmd := range cmds {
 			if cmd.Name() == args[0] {
+				fmt.Println("find")
 				current.command = cmd
 			}
 		}
@@ -388,72 +428,33 @@ var (
 		// 	return nil
 		// }
 
-		// switch current.position {
-		// case shellInProjects:
-		// 	current.reset()
-		// 	current.project = args[0]
-		// 	current.position = shellInProject
-		// case shellInProject:
-		// 	current.setPositionInsideProject(args[0])
-		// case shellInWorkflows:
-		// 	current.position = shellInWorkflow
-		// 	current.workflow = args[0]
-		// case shellInApplications:
-		// 	current.position = shellInApplication
-		// 	current.application = args[0]
-		// case shellInEnvironments:
-		// 	current.position = shellInEnvironment
-		// 	current.environment = args[0]
-		// case shellInPipelines:
-		// 	current.position = shellInPipeline
-		// 	current.pipeline = args[0]
-		// }
 		return nil
 	}
 
 	lsCommand = func(args []string, current *shellCurrent) *cobra.Command {
+		subcommands := []string{}
 		cmds := current.command.Commands()
+		fmt.Println("current name:", current.command.Name())
 		for _, cmd := range cmds {
-			if cmd.Name() == "list" {
-				return cmd
+			//if current.position = shellInProject &&
+			if current.command.Name() == "project" {
+				if cmd.Name() == "list" {
+					return cmd
+				}
 			}
+			subcommands = append(subcommands, cmd.Name())
 		}
 
-		// switch current.position {
-		// case shellInProjects:
-		// 	if len(args) == 1 {
-		// 		return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
-		// 	}
-		// 	return cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...)
-		// case shellInProject:
-		// 	fmt.Println("workflows\napplications\npipelines\nenvironments")
-		// 	if len(args) == 1 {
-		// 		switch args[0] {
-		// 		case "workflows":
-		// 			return cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...)
-		// 		case "pipelines":
-		// 			return cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...)
-		// 		case "applications":
-		// 			return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
-		// 		case "environments":
-		// 			return cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...)
-		// 		}
-		// 		return nil
-		// 	}
-		// 	return cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...)
-		// case shellInApplications:
-		// 	return cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...)
-		// case shellInApplication:
-		// 	return cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...)
-		// case shellInEnvironments:
-		// 	return cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...)
-		// case shellInPipelines:
-		// 	return cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...)
-		// case shellInWorkflows:
-		// 	return cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...)
-		// case shellInWorkflow:
-		// 	return cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...)
-		//}
+		// no list command, we list the subcommand
+		// except create / delete / show
+		exceptions := []string{"create", "show", "list", "delete", "import", "export"}
+		for _, s := range subcommands {
+			if sdk.IsInArray(s, exceptions) {
+				continue
+			}
+			fmt.Println(s)
+		}
+
 		return nil
 	}
 )
@@ -483,12 +484,14 @@ func shellProcessCommand(input string, current *shellCurrent) {
 		//fmt.Println()
 		//t := strings.Split(cmd.CommandPath(), " ")
 		//args := []string{}
+
 		args := tuple[1:]
-		fmt.Printf(" workflow.HasParent %t\n", workflow.HasParent())
-		fmt.Printf(" exec %+v %+v\n", cmd, args)
-		//cmd.Run(cmd, args)
+		//fmt.Printf(" workflow.HasParent %t\n", workflow.HasParent())
+		//fmt.Printf(" exec %+v %+v\n", cmd, args)
 		cmd.SetArgs(args)
-		cmd.Execute()
+		cmd.Run(cmd, args)
+
+		// cmd.Execute()
 		return
 	}
 	fmt.Printf("Invalid command %s\n", input)
