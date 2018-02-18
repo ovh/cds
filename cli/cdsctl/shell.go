@@ -70,6 +70,7 @@ func shellRun(v cli.Values) error {
 	current = &shellCurrent{rline: l}
 
 	for {
+		l.SetPrompt(fmt.Sprintf("%s \033[31m»\033[0m ", current.pwd()))
 		line, err := l.Readline()
 		if err == readline.ErrInterrupt {
 			if len(line) == 0 {
@@ -116,8 +117,10 @@ func getCompleter() *readline.PrefixCompleter {
 
 func listCurrent() func(string) []string {
 	return func(line string) []string {
-		output, subcmds := current.shellListCommand(current.path, nil)
-		return append(output, subcmds...)
+		output, submenus, cmds := current.shellListCommand(current.path, nil)
+		// delete empty values from list and return the list of string
+		out := append(output, submenus...)
+		return sdk.DeleteEmptyValueFromArray(append(out, cmds...))
 	}
 }
 
@@ -186,28 +189,38 @@ func getShellCommands() map[string]shellCommandFunc {
 				}
 			}
 
-			output, subcmds := current.shellListCommand(path, inargs)
+			output, submenus, cmds := current.shellListCommand(path, inargs)
 			for _, s := range output {
 				if len(strings.TrimSpace(s)) > 0 {
 					fmt.Println(s)
 				}
 			}
-			if len(subcmds) > 0 {
-				fmt.Printf("\nsub-menu: ")
+			if len(submenus) > 0 || len(cmds) > 0 {
+				fmt.Println() // empty line between list data and sub-menus/commands list
 			}
-			for _, s := range subcmds {
-				fmt.Printf("\033[32m»\033[0m %s ", s)
+			if len(submenus) > 0 {
+				fmt.Printf("\033[32m»\033[0m sub-menu: %s\n", strings.Join(submenus, " - "))
 			}
-			fmt.Println()
+
+			if len(cmds) > 0 {
+				fmt.Printf("\033[32m»\033[0m additional commands: %s\n", strings.Join(cmds, " - "))
+			}
 		},
 		"pwd": func(current *shellCurrent, args []string) {
-			fmt.Println(current.path)
+			fmt.Println(current.pwd())
 		},
 		"version": func(current *shellCurrent, args []string) {
 			versionRun(nil)
 		},
 	}
 	return m
+}
+
+func (current *shellCurrent) pwd() string {
+	if current.path == "" {
+		return "/"
+	}
+	return current.path
 }
 
 func (current *shellCurrent) shellProcessCommand(input string) {
@@ -221,7 +234,7 @@ func (current *shellCurrent) shellProcessCommand(input string) {
 	}
 }
 
-func (current *shellCurrent) shellListCommand(path string, flags []string) ([]string, []string) {
+func (current *shellCurrent) shellListCommand(path string, flags []string) ([]string, []string, []string) {
 	spath := strings.Split(path, "/")
 	cmd := getRoot(true)
 	for index := 1; index < len(spath); index++ {
@@ -231,7 +244,7 @@ func (current *shellCurrent) shellListCommand(path string, flags []string) ([]st
 		}
 	}
 	if cmd.Name() == "" {
-		return []string{"root cmd NOT found"}, nil
+		return []string{"root cmd NOT found"}, nil, nil
 	}
 
 	buf := new(bytes.Buffer)
@@ -251,46 +264,71 @@ func (current *shellCurrent) shellListCommand(path string, flags []string) ([]st
 			showCmd.Run(showCmd, current.getArgs(showCmd))
 		}
 	}
+	out := strings.Split(buf.String(), "\n")
 
-	var others []string
+	// compute list sub-menus and commands
+	var submenus, cmds []string
 	for _, c := range cmd.Commands() {
 		// list only command with sub commands
-
-		// TODO /project/workflow --> prevent that
-		if len(c.Commands()) > 0 {
-			others = append(others, c.Name())
+		if len(c.Commands()) > 0 && current.isCtxOK(c) {
+			submenus = append(submenus, c.Name())
+		} else if c.Name() != "list" && c.Name() != "show" { // list and show are the "ls" cmd
+			cmds = append(cmds, c.Name())
 		}
 	}
-	out := strings.Split(buf.String(), "\n")
-	return out, others
+
+	return out, submenus, cmds
+}
+
+func (current *shellCurrent) isCtxOK(cmd *cobra.Command) bool {
+	if a, withContext := current.extractArg(cmd, _ProjectKey); withContext && a == "" {
+		return false
+	}
+	if a, withContext := current.extractArg(cmd, _ApplicationName); withContext && a == "" {
+		return false
+	}
+	if a, withContext := current.extractArg(cmd, _WorkflowName); withContext && a == "" {
+		return false
+	}
+	return true
+}
+
+// key: _ProjectKey, _ApplicationName, _WorkflowName
+// pos: position to extract
+func (current *shellCurrent) extractArg(cmd *cobra.Command, key string) (string, bool) {
+	var inpath string
+	switch key {
+	case _ApplicationName:
+		inpath = "application"
+	case _WorkflowName:
+		inpath = "workflow"
+	}
+	var cmdWithContext bool
+	if strings.Contains(cmd.Use, strings.ToUpper(key)) {
+		cmdWithContext = true
+		if strings.HasPrefix(current.path, "/project/") {
+			t := strings.Split(current.path, "/")
+			if inpath == "" {
+				return t[2], cmdWithContext
+			} else if inpath != "" && len(t) >= 5 && t[3] == inpath {
+				return t[4], cmdWithContext
+			}
+		}
+	}
+	return "", cmdWithContext
 }
 
 func (current *shellCurrent) getArgs(cmd *cobra.Command) []string {
 	args := []string{}
-
-	if strings.Contains(cmd.Use, strings.ToUpper(_ProjectKey)) {
-		if strings.HasPrefix(current.path, "/project/") {
-			t := strings.Split(current.path, "/")
-			args = append(args, t[2])
-		}
+	if a, _ := current.extractArg(cmd, _ProjectKey); a != "" {
+		args = append(args, a)
 	}
-	if strings.Contains(cmd.Use, strings.ToUpper(_ApplicationName)) {
-		if strings.HasPrefix(current.path, "/project/") {
-			t := strings.Split(current.path, "/")
-			if len(t) >= 5 && t[3] == "application" {
-				args = append(args, t[4])
-			}
-		}
+	if a, _ := current.extractArg(cmd, _ApplicationName); a != "" {
+		args = append(args, a)
 	}
-	if strings.Contains(cmd.Use, strings.ToUpper(_ProjectKey)) {
-		if strings.HasPrefix(current.path, "/project/") {
-			t := strings.Split(current.path, "/")
-			if len(t) >= 5 && t[3] == "workflow" {
-				args = append(args, t[4])
-			}
-		}
+	if a, _ := current.extractArg(cmd, _WorkflowName); a != "" {
+		args = append(args, a)
 	}
-
 	return args
 }
 

@@ -25,3 +25,14 @@ func RandomString(strlen int) string {
 	}
 	return string(result)
 }
+
+// DeleteEmptyValueFromArray deletes empty value from an array of string
+func DeleteEmptyValueFromArray(array []string) []string {
+	var out []string
+	for _, str := range array {
+		if str != "" {
+			out = append(out, str)
+		}
+	}
+	return out
+}
