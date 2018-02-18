@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
+	repo "github.com/fsamin/go-repo"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 
@@ -74,6 +75,20 @@ func shellRun(v cli.Values) error {
 	defer l.Close()
 
 	current = &shellCurrent{rline: l}
+
+	// auto-discover current project with .git
+	if err := discoverConf(); err == nil {
+		if r, err := repo.New("."); err == nil {
+			if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
+				current.path = "/project/" + proj
+				if wf, _ := r.LocalConfigGet("cds", "workflow"); wf != "" {
+					current.path += "/workflow/" + wf
+				} else if app, _ := r.LocalConfigGet("cds", "application"); app != "" {
+					current.path += "/application/" + app
+				}
+			}
+		}
+	}
 
 	for {
 		l.SetPrompt(fmt.Sprintf("%s \033[31m»\033[0m ", current.pwd()))
@@ -293,7 +308,7 @@ func (current *shellCurrent) shellListCommand(path string, flags []string, onlyC
 		buf := new(bytes.Buffer)
 		if cmd.Name() == spath[len(spath)-1] { // list command
 			if lsCmd := findCommand(cmd, "list"); lsCmd != nil {
-				if len(flags) == 0 && current.cmd == "ls" {
+				if len(flags) == 0 && current.cmd != "ll" {
 					flags = []string{"-q"}
 				}
 				lsCmd.ParseFlags(flags)
