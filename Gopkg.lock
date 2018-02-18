@@ -130,6 +130,7 @@
   version = "17.03.3-ce-cds-yes"
 
 [[projects]]
+  branch = "go1.10"
   name = "github.com/docker/docker-credential-helpers"
   packages = [
     "credentials",
@@ -137,7 +138,8 @@
     "secretservice",
     "wincred"
   ]
-  revision = "d8f57a18c61ade10ddf767fa080b4778359f5c66"
+  revision = "4dd7c3df8875e5c6dc7820a98b91153d11b93182"
+  source = "https://github.com/yesnault/docker-credential-helpers.git"
 
 [[projects]]
   name = "github.com/docker/go-connections"
@@ -1283,6 +1285,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0b3ea699f6ca8420d7bf8442ae3ce4694bee3a3baae20a2079e00a80eb818d9a"
+  inputs-digest = "c023668a47ab10f43d9bdf60ba22e7701acaab2cb3b0d484c7cf8d7f23281687"
   solver-name = "gps-cdcl"
   solver-version = 1

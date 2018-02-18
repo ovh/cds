@@ -138,6 +138,11 @@
   branch = "ye-cds"
   source = "https://github.com/yesnault/go-plugin.git"
 
+[[override]]
+  name = "github.com/docker/docker-credential-helpers"
+  branch = "go1.10"
+  source = "https://github.com/yesnault/docker-credential-helpers.git"
+
 [[constraint]]
   name = "github.com/Microsoft/go-winio"
   version = "0.4.7"
