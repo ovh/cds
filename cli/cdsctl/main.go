@@ -40,7 +40,7 @@ func getRoot(isShell bool) *cobra.Command {
 	if isShell {
 		cmds = []*cobra.Command{
 			project(),
-			admin,
+			admin(),
 		}
 	} else {
 		cmds = []*cobra.Command{
@@ -63,7 +63,7 @@ func getRoot(isShell bool) *cobra.Command {
 			version,
 			encrypt,
 			token,
-			admin,
+			admin(),
 		}
 	}
 

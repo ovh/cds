@@ -11,10 +11,22 @@ var (
 		Name:  "admin",
 		Short: "Manage CDS (admin only)",
 	}
+)
 
-	admin = cli.NewCommand(adminCmd, nil,
+func admin() *cobra.Command {
+	if cli.ShellMode {
+		return cli.NewCommand(adminCmd, nil,
+			[]*cobra.Command{
+				adminServices,
+				adminHooks,
+				usr,
+				group,
+				worker,
+			})
+	}
+	return cli.NewCommand(adminCmd, nil,
 		[]*cobra.Command{
 			adminServices,
 			adminHooks,
 		})
-)
+}
