@@ -63,3 +63,13 @@ func (api *API) refreshHatcheryHandler() Handler {
 		return nil
 	}
 }
+
+func (api *API) hatcheryCountHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		count, err := hatchery.LoadHatcheriesCount(api.mustDB())
+		if err != nil {
+			return sdk.WrapError(err, "hatcheryCountHandler> cannot get hatcheries count")
+		}
+		return WriteJSON(w, count, http.StatusOK)
+	}
+}

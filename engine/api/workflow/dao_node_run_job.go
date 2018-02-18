@@ -237,6 +237,19 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "PostGet> json.Unmarshal params")
 	}
 
+	rows, err := s.Query("SELECT DISTINCT UNNEST(spawn_attempts) FROM workflow_node_run_job WHERE id = $1", j.ID)
+	if err != nil && err != sql.ErrNoRows {
+		return sdk.WrapError(err, "PostGet> cannot get spawn_attempts")
+	}
+
+	var hID int64
+	for rows.Next() {
+		if err := rows.Scan(&hID); err != nil {
+			return sdk.WrapError(err, "PostGet> cannot scan spawn_attempts")
+		}
+		j.SpawnAttempts = append(j.SpawnAttempts, hID)
+	}
+
 	j.QueuedSeconds = time.Now().Unix() - j.Queued.Unix()
 	return nil
 }

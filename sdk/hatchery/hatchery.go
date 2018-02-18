@@ -114,7 +114,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, hostname string) bool {
+func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobSpawnAttempts []int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, hostname string) bool {
 	if jobID == 0 {
 		return false
 	}

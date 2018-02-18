@@ -190,6 +190,11 @@ func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.H
 	return &h, nil
 }
 
+// LoadHatcheriesCount retrieves in database the number of hatcheries
+func LoadHatcheriesCount(db gorp.SqlExecutor) (int64, error) {
+	return db.SelectInt("SELECT COUNT(1) FROM hatchery")
+}
+
 // LoadHatcheries retrieves in database all registered hatcheries
 func LoadHatcheries(db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
 	var hatcheries []sdk.Hatchery

@@ -35,3 +35,14 @@ func (c *client) HatcheryRefresh(id int64) error {
 	}
 	return nil
 }
+
+func (c *client) HatcheryCount() (int64, error) {
+	var hatcheriesCount int64
+	code, err := c.GetJSON("/hatchery/count", &hatcheriesCount)
+	if code > 300 && err == nil {
+		return hatcheriesCount, fmt.Errorf("HatcheryCount> HTTP %d", code)
+	} else if err != nil {
+		return hatcheriesCount, sdk.WrapError(err, "HatcheryCount> Error")
+	}
+	return hatcheriesCount, nil
+}

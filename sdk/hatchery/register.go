@@ -110,7 +110,7 @@ func Create(h Interface) {
 			}
 			go func(job sdk.PipelineBuildJob) {
 				atomic.AddInt64(&workersStarted, 1)
-				if isRun := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
+				if isRun := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, []int64{}, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				} else {
 					atomic.AddInt64(&workersStarted, -1)
@@ -125,11 +125,34 @@ func Create(h Interface) {
 				// count + 1 here, and remove -1 if worker is not started
 				// this avoid to spawn to many workers compare
 				atomic.AddInt64(&workersStarted, 1)
-				if isRun := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
+				if isRun := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.SpawnAttempts, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				} else {
 					atomic.AddInt64(&workersStarted, -1)
+
+					if hCount, err := h.Client().HatcheryCount(); err == nil {
+						if int64(len(job.SpawnAttempts)) < hCount {
+							spawnAttempts, errQ := h.Client().QueueJobIncAttemps(job.ID)
+							if errQ == nil && int64(len(spawnAttempts)) >= hCount {
+								infos := []sdk.SpawnInfo{
+									{
+										RemoteTime: time.Now(),
+										Message: sdk.SpawnMsg{
+											ID:   sdk.MsgSpawnInfoHatcheryCannotStartJob.ID,
+											Args: []interface{}{},
+										},
+									},
+								}
+
+								if errS := h.Client().QueueJobSendSpawnInfo(true, job.ID, infos); errS != nil {
+									log.Warning("Hatchery> Create> cannot client.QueueJobSendSpawnInfo for job %d: %s", job.ID, errS)
+								}
+							}
+						}
+					} else {
+						log.Warning("Hatchery> Create> cannot get hatchery count %s", err)
+					}
 				}
 			}(j)
 		case err := <-errs:

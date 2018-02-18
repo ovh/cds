@@ -325,6 +325,26 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.H
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
+//AddNodeJobAttempt add an hatchery attempt to spawn a job
+func AddNodeJobAttempt(db gorp.SqlExecutor, id, hatcheryID int64) ([]int64, error) {
+	var ids []int64
+	query := "UPDATE workflow_node_run_job SET spawn_attempts = array_append(spawn_attempts, $1) WHERE id = $2 RETURNING (SELECT DISTINCT unnest(spawn_attempts))"
+	rows, err := db.Query(query, hatcheryID, id)
+	if err != nil && err != sql.ErrNoRows {
+		return ids, sdk.WrapError(err, "AddNodeJobAttempt> cannot update node run job")
+	}
+
+	var hID int64
+	for rows.Next() {
+		if errS := rows.Scan(&hID); errS != nil {
+			return ids, sdk.WrapError(errS, "AddNodeJobAttempt> cannot scan")
+		}
+		ids = append(ids, hID)
+	}
+
+	return ids, err
+}
+
 //AddLog adds a build log
 func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) error {
 	if job != nil {

@@ -197,6 +197,25 @@ func (api *API) postBookWorkflowJobHandler() Handler {
 	}
 }
 
+func (api *API) postIncWorkflowJobAttemptHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		id, errc := requestVarInt(r, "id")
+		if errc != nil {
+			return sdk.WrapError(errc, "postIncWorkflowJobAttemptHandler> invalid id")
+		}
+		h := getHatchery(ctx)
+		if h == nil {
+			return WriteJSON(w, nil, http.StatusUnauthorized)
+		}
+		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(), id, h.ID)
+		if err != nil {
+			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> job already booked")
+		}
+
+		return WriteJSON(w, spawnAttempts, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowJobHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
