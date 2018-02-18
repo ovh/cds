@@ -22,6 +22,7 @@ func admin() *cobra.Command {
 				usr,
 				group,
 				worker,
+				health,
 			})
 	}
 	return cli.NewCommand(adminCmd, nil,

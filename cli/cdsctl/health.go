@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -16,7 +14,7 @@ var (
 
 	health = cli.NewCommand(healthCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(healthStatusCmd, healthStatusRun, nil),
+			cli.NewListCommand(healthStatusCmd, healthStatusRun, nil),
 			cli.NewGetCommand(healthMonDBTimesCmd, healthMonDBTimesRun, nil),
 			cli.NewListCommand(healthMonDBMigrateCmd, healthMonDBMigrateRun, nil),
 		})
@@ -27,13 +25,12 @@ var healthStatusCmd = cli.Command{
 	Short: "Show CDS Status",
 }
 
-func healthStatusRun(v cli.Values) error {
+func healthStatusRun(v cli.Values) (cli.ListResult, error) {
 	s, err := client.MonStatus()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Println(s)
-	return nil
+	return cli.AsListResult(s.Lines), nil
 }
 
 var healthMonDBTimesCmd = cli.Command{

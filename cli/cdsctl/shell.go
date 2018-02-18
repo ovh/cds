@@ -19,17 +19,22 @@ var shellCmd = cli.Command{
 	Name:  "shell",
 	Short: "cdsctl interactive shell",
 	Long: `
-CDS Shell Mode. Keywords:
+CDS Shell Mode. default commands:
 
 - cd: reset current object. running "ls" after "cd" will display Projects List
 - cd <KEY>: go to an object, try to run "ls" after a cd <KEY>
 - help: display this help
-- ls: display current list
-- ls <KEY>: display current object, ls MY_PRJ is the same as cdsctl project show MY_PRJ
+- ls: display current list, quiet format
+- ll: display current list
 - mode: display current mode. Choose mode with "mode vi" ou "mode emacs"
 - open: open CDS WebUI with current context
-- run: run current workflow
 - version: same as cdsctl version command
+
+Other commands are available depending on your position. Example, run interactively a workflow:
+
+  cd /project/MY_PRJ_KEY/workflow/MY_WF
+  run -i
+
 `,
 }
 

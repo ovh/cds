@@ -21,9 +21,9 @@ type MonitoringStatus struct {
 
 // MonitoringStatusLine represents a CDS Component Status
 type MonitoringStatusLine struct {
-	Status    string `json:"status"`
-	Component string `json:"component"`
-	Value     string `json:"value"`
+	Status    string `json:"status" cli:"status"`
+	Component string `json:"component" cli:"component"`
+	Value     string `json:"value" cli:"value"`
 }
 
 func (m MonitoringStatusLine) String() string {
