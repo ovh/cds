@@ -135,6 +135,7 @@
   version = "17.03.3-ce-cds-yes"
 
 [[projects]]
+  branch = "go1.10"
   name = "github.com/docker/docker-credential-helpers"
   packages = [
     "credentials",
@@ -142,7 +143,8 @@
     "secretservice",
     "wincred"
   ]
-  revision = "d8f57a18c61ade10ddf767fa080b4778359f5c66"
+  revision = "4dd7c3df8875e5c6dc7820a98b91153d11b93182"
+  source = "https://github.com/yesnault/docker-credential-helpers.git"
 
 [[projects]]
   name = "github.com/docker/go-connections"
