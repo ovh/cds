@@ -262,7 +262,8 @@ func (current *shellCurrent) findCmd(search string) {
 
 	for _, prj := range nav.Projects {
 		s := r.FindStringSubmatch(prj.Name)
-		if len(s) == 2 {
+		s2 := r.FindStringSubmatch(prj.Key)
+		if len(s) == 2 || len(s2) == 2 {
 			fmt.Println("/project/" + prj.Key)
 		}
 		for _, app := range prj.ApplicationNames {
