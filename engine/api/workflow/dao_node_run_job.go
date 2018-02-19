@@ -243,6 +243,7 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 	}
 
 	var hID int64
+	defer rows.Close()
 	for rows.Next() {
 		if err := rows.Scan(&hID); err != nil {
 			return sdk.WrapError(err, "PostGet> cannot scan spawn_attempts")

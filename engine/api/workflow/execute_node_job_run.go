@@ -335,6 +335,7 @@ func AddNodeJobAttempt(db gorp.SqlExecutor, id, hatcheryID int64) ([]int64, erro
 
 	rows, err := db.Query("SELECT DISTINCT unnest(spawn_attempts) FROM workflow_node_run_job WHERE id = $1", id)
 	var hID int64
+	defer rows.Close()
 	for rows.Next() {
 		if errS := rows.Scan(&hID); errS != nil {
 			return ids, sdk.WrapError(errS, "AddNodeJobAttempt> cannot scan")
