@@ -545,6 +545,17 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/mailru/easyjson"
+  packages = [
+    ".",
+    "buffer",
+    "jlexer",
+    "jwriter"
+  ]
+  revision = "32fa128f234d041f196a9f3e0fea5ac9772c08e1"
+
+[[projects]]
+  branch = "master"
   name = "github.com/manucorporat/sse"
   packages = ["."]
   revision = "ee05b128a739a0fb76c7ebd3ae4810c1de808d6d"
@@ -974,6 +985,12 @@
   revision = "9a5282f852773c55c1be7488cf7091ad2084ee5a"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/yuin/gluare"
+  packages = ["."]
+  revision = "d7c94f1a80ede93a621ed100866e6d4745ca8c22"
+
+[[projects]]
   name = "github.com/yuin/gopher-lua"
   packages = [
     ".",
@@ -1266,6 +1283,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8c3b8c37d07a5d3927d7721691038b05d40c4306feb615f5e5ec5514d3c34fed"
+  inputs-digest = "0b3ea699f6ca8420d7bf8442ae3ce4694bee3a3baae20a2079e00a80eb818d9a"
   solver-name = "gps-cdcl"
   solver-version = 1

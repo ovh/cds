@@ -24,7 +24,7 @@ func (api *API) getVariablesAuditInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariablesAuditInApplicationHandler> Cannot get variable audit for application %s", appName)
 
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -106,7 +106,7 @@ func (api *API) getVariableAuditInApplicationHandler() Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -127,7 +127,7 @@ func (api *API) getVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariableInApplicationHandler> Cannot get variable %s for application %s", varName, appName)
 		}
 
-		return WriteJSON(w, r, variable, http.StatusOK)
+		return WriteJSON(w, variable, http.StatusOK)
 	}
 }
 
@@ -142,7 +142,7 @@ func (api *API) getVariablesInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariablesInApplicationHandler> Cannot get variables for application %s", appName)
 		}
 
-		return WriteJSON(w, r, variables, http.StatusOK)
+		return WriteJSON(w, variables, http.StatusOK)
 	}
 }
 
@@ -184,7 +184,7 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot load variables")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -307,7 +307,7 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot load variables")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -359,6 +359,6 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot get variables")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }

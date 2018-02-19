@@ -12,12 +12,13 @@ func (api *API) InitRouter() {
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware)
 	api.lastUpdateBroker = &lastUpdateBroker{
-		make(map[string]*lastUpdateBrokerSubscribe),
-		make(chan *lastUpdateBrokerSubscribe),
-		make(chan string),
-		&sync.Mutex{},
+		clients:  make(map[string]lastUpdateBrokerSubscribe),
+		messages: make(chan string),
+		mutex:    &sync.Mutex{},
+		cache:    api.Cache,
+		dbFunc:   api.DBConnectionFactory.GetDBMap,
 	}
-	api.lastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap, api.Cache)
+	api.lastUpdateBroker.Init(api.Router.Background)
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
@@ -37,6 +38,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)))
+	r.Handle("/admin/services", r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
+	r.Handle("/admin/services/{service}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
+	r.Handle("/admin/services/{service}/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
 
 	// Action plugin
 	r.Handle("/plugin", r.POST(api.addPluginHandler, NeedAdmin(true)), r.PUT(api.updatePluginHandler, NeedAdmin(true)))
@@ -63,6 +67,7 @@ func (api *API) InitRouter() {
 
 	// Hooks
 	r.Handle("/hook", r.POST(api.receiveHookHandler, Auth(false) /* Public handler called by third parties */))
+	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))
@@ -77,6 +82,11 @@ func (api *API) InitRouter() {
 
 	// Specific web ui routes
 	r.Handle("/ui/navbar", r.GET(api.getUINavbarHandler))
+
+	// Import As Code
+	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))
+	r.Handle("/import/{permProjectKey}/{uuid}", r.GET(api.getImportAsCodeHandler))
+	r.Handle("/import/{permProjectKey}/{uuid}/perform", r.POST(api.postPerformImportAsCodeHandler))
 
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))
@@ -176,6 +186,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", r.GET(api.getWorkflowHookHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/hook/model", r.GET(api.getWorkflowHookModelsHandler))
 
 	// Preview workflows

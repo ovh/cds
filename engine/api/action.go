@@ -22,7 +22,7 @@ func (api *API) getActionsHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "GetActions: Cannot load action from db")
 		}
-		return WriteJSON(w, r, acts, http.StatusOK)
+		return WriteJSON(w, acts, http.StatusOK)
 	}
 }
 
@@ -93,7 +93,7 @@ func (api *API) getPipelinesUsingActionHandler() Handler {
 
 			response = append(response, a)
 		}
-		return WriteJSON(w, r, response, http.StatusOK)
+		return WriteJSON(w, response, http.StatusOK)
 	}
 }
 
@@ -103,7 +103,7 @@ func (api *API) getActionsRequirements() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getActionsRequirements> Cannot load action requirements")
 		}
-		return WriteJSON(w, r, req, http.StatusOK)
+		return WriteJSON(w, req, http.StatusOK)
 	}
 }
 
@@ -182,7 +182,7 @@ func (api *API) updateActionHandler() Handler {
 			return sdk.WrapError(err, "updateAction> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 
@@ -218,7 +218,7 @@ func (api *API) addActionHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 
@@ -236,7 +236,7 @@ func (api *API) getActionAuditHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %s", actionID)
 		}
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 
@@ -249,7 +249,7 @@ func (api *API) getActionHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getActionHandler> Cannot load action: %s", err)
 		}
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 
@@ -329,6 +329,6 @@ func (api *API) importActionHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, r, a, code)
+		return WriteJSON(w, a, code)
 	}
 }

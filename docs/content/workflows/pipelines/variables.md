@@ -38,19 +38,23 @@ All variables in CDS can be invoked using the simple `{{.VAR}}` format. To simpl
 
 Here is the list of builtin variables, generated for every build:
 
-- `{{.cds.project}}` The name of the current project
 - `{{.cds.environment}}` The name of the current environment
 - `{{.cds.application}}` The name of the current application
-- `{{.cds.pipeline}}` The name of the current pipeline
-- `{{.cds.stage}}` The name of the current stage
 - `{{.cds.job}}` The name of the current job
-- `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), `{{.cds.workspace}}` == $HOME
-- `{{.cds.version}}` The current version number
-- `{{.cds.parent.application}}` The name of the application that triggered the current build
-- `{{.cds.parent.pipeline}}` The name of the pipeline that triggered the current build
+- `{{.cds.manual}}` true if current pipeline is manually run, false otherwise
+- `{{.cds.pipeline}}` The name of the current pipeline 
+- `{{.cds.project}}` The name of the current project
+- `{{.cds.run}}` Run Number of current workflow, example: 3.0
+- `{{.cds.run.number}}` Number of current workflow, example: 3 if `{{.cds.run}} = 3.0`
+- `{{.cds.run.subnumber}}` Sub Number of current workflow, example: 4 if `{{.cds.run}} = 3.4`
+- `{{.cds.stage}}` The name of the current stage
+- `{{.cds.status}}` Status or previous pipeline: Success or Failed
 - `{{.cds.triggered_by.email}}` Email of the user who launched the current build
 - `{{.cds.triggered_by.fullname}}` Full name of the user who launched the current build
 - `{{.cds.triggered_by.username}}` Username of the user who launched the current build
+- `{{.cds.version}}` The current version number, it's an alias to `{{.cds.run.number}}`
+- `{{.cds.workflow}}` The name of the current workflow
+- `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), `{{.cds.workspace}}` == $HOME
 
 ## The .version variable
 
@@ -89,3 +93,63 @@ Here is the list of git variables:
 - `{{.git.branch}}`
 - `{{.git.author}}`
 - `{{.git.message}}`
+
+## Helpers
+
+Some helpers are available to transform the value of a CDS Variable.
+
+Example: run a pipeline, with an application named `my_app`. A step script:
+
+```
+echo "{{.cds.application | upper}}"
+```
+
+will display
+
+```
+MY_APP
+```
+
+Helpers available and some examples:
+
+- abbrev
+- abbrevboth
+- trunc
+- trim
+- upper: `{{.cds.application | upper}}`
+- lower
+- title
+- untitle
+- substr
+- repeat
+- trimall
+- trimAll
+- trimSuffix
+- trimPrefix
+- nospace
+- initials
+- randAlphaNum
+- randAlpha
+- randASCII
+- randNumeric
+- swapcase
+- shuffle
+- snakecase
+- camelcase
+- quote
+- squote
+- indent
+- nindent
+- replace
+- plural
+- toString
+- default: `{{.cds.application | default ""}}`, `{{.cds.application | default "defaultValue"}}`
+- empty
+- coalesce
+- toJSON
+- toPrettyJSON
+- b64enc
+- b64dec
+- escape : replace '_', '/', '.' by '-'
+
+You're a go developper? See all helpers on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23 

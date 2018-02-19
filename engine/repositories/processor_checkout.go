@@ -5,10 +5,11 @@ import (
 
 	repo "github.com/fsamin/go-repo"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) processCheckout(op *Operation) error {
+func (s *Service) processCheckout(op *sdk.Operation) error {
 	r := s.Repo(*op)
 	if err := s.checkOrCreateFS(r); err != nil {
 		log.Error("Repositories> processCheckout> Error %v", err)
@@ -23,6 +24,28 @@ func (s *Service) processCheckout(op *Operation) error {
 			log.Error("Repositories> processCheckout> error %v", err)
 			return err
 		}
+	}
+
+	n, err := gitRepo.Name()
+	if err != nil {
+		log.Error("Repositories> processCheckout> Error: %v", err)
+		return err
+	}
+	f, err := gitRepo.FetchURL()
+	if err != nil {
+		log.Error("Repositories> processCheckout> Error: %v", err)
+		return err
+	}
+	d, err := gitRepo.DefaultBranch()
+	if err != nil {
+		log.Error("Repositories> processCheckout> Error: %v", err)
+		return err
+	}
+
+	op.RepositoryInfo = &sdk.OperationRepositoryInfo{
+		Name:          n,
+		FetchURL:      f,
+		DefaultBranch: d,
 	}
 
 	//Check branch

@@ -10,22 +10,26 @@ import (
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID            int64                  `json:"id" db:"id" cli:"-"`
-	Name          string                 `json:"name" db:"name" cli:"name,key"`
-	Description   string                 `json:"description,omitempty" db:"description" cli:"description"`
-	LastModified  time.Time              `json:"last_modified" db:"last_modified"`
-	ProjectID     int64                  `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey    string                 `json:"project_key" db:"-" cli:"-"`
-	RootID        int64                  `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
-	Root          *WorkflowNode          `json:"root" db:"-" cli:"-"`
-	Joins         []WorkflowNodeJoin     `json:"joins,omitempty" db:"-" cli:"-"`
-	Groups        []GroupPermission      `json:"groups,omitempty" db:"-" cli:"-"`
-	Permission    int                    `json:"permission,omitempty" db:"-" cli:"-"`
-	Metadata      Metadata               `json:"metadata" yaml:"metadata" db:"-"`
-	Usage         *Usage                 `json:"usage,omitempty" db:"-" cli:"-"`
-	HistoryLength int64                  `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags     []string               `json:"purge_tags,omitempty" db:"-" cli:"-"`
-	Notifications []WorkflowNotification `json:"notifications,omitempty" db:"-" cli:"-"`
+	ID                      int64                  `json:"id" db:"id" cli:"-"`
+	Name                    string                 `json:"name" db:"name" cli:"name,key"`
+	Description             string                 `json:"description,omitempty" db:"description" cli:"description"`
+	LastModified            time.Time              `json:"last_modified" db:"last_modified"`
+	ProjectID               int64                  `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey              string                 `json:"project_key" db:"-" cli:"-"`
+	RootID                  int64                  `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
+	Root                    *WorkflowNode          `json:"root" db:"-" cli:"-"`
+	Joins                   []WorkflowNodeJoin     `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups                  []GroupPermission      `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission              int                    `json:"permission,omitempty" db:"-" cli:"-"`
+	Metadata                Metadata               `json:"metadata" yaml:"metadata" db:"-"`
+	Usage                   *Usage                 `json:"usage,omitempty" db:"-" cli:"-"`
+	HistoryLength           int64                  `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags               []string               `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	Notifications           []WorkflowNotification `json:"notifications,omitempty" db:"-" cli:"-"`
+	FromRepository          string                 `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
+	DerivedFromWorkflowID   int64                  `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
+	DerivedFromWorkflowName string                 `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
+	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
 }
 
 // WorkflowNotification represents notifications on a workflow

@@ -48,16 +48,20 @@ func NewService(endpoint string, timeout time.Duration) Interface {
 }
 
 // NewWorker returns client for a worker
-func NewWorker(endpoint string, name string) Interface {
+func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 10,
 	}
 	cli := new(client)
 	cli.config = conf
-	cli.HTTPClient = &http.Client{
-		Timeout: time.Second * 10,
+
+	if c == nil {
+		cli.HTTPClient = &http.Client{Timeout: time.Second * 10}
+	} else {
+		cli.HTTPClient = c
 	}
+
 	cli.isWorker = true
 	cli.name = name
 	cli.init()

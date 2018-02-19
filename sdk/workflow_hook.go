@@ -23,6 +23,10 @@ func (w *Workflow) FilterHooksConfig(s ...string) {
 
 // GetHooks returns the list of all hooks in the workflow tree
 func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
+	if w == nil {
+		return nil
+	}
+
 	if w.Root == nil {
 		return nil
 	}
@@ -54,6 +58,35 @@ type WorkflowNodeHook struct {
 	WorkflowHookModelID int64                  `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
 	WorkflowHookModel   WorkflowHookModel      `json:"model" db:"-"`
 	Config              WorkflowNodeHookConfig `json:"config" db:"-"`
+}
+
+//Equals checks functionnal equality between two hooks
+func (h WorkflowNodeHook) Equals(h1 WorkflowNodeHook) bool {
+	if h.UUID != h1.UUID {
+		return false
+	}
+	if h.WorkflowHookModelID != h1.WorkflowHookModelID {
+		return false
+	}
+	for k, cfg := range h.Config {
+		cfg1, has := h1.Config[k]
+		if !has {
+			return false
+		}
+		if cfg.Value == cfg1.Value {
+			return true
+		}
+	}
+	for k, cfg1 := range h1.Config {
+		cfg, has := h.Config[k]
+		if !has {
+			return false
+		}
+		if cfg.Value == cfg1.Value {
+			return true
+		}
+	}
+	return true
 }
 
 // WorkflowHookModelBuiltin is a constant for the builtin hook models

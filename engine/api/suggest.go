@@ -138,6 +138,6 @@ func (api *API) getVariablesHandler() Handler {
 		allVariables = append(allVariables, gitVar...)
 
 		// Check permission on application
-		return WriteJSON(w, r, allVariables, http.StatusOK)
+		return WriteJSON(w, allVariables, http.StatusOK)
 	}
 }

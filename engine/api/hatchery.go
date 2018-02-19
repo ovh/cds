@@ -48,7 +48,7 @@ func (api *API) registerHatcheryHandler() Handler {
 		hatch.Uptodate = hatch.Version == sdk.VERSION
 
 		log.Debug("registerHatcheryHandler> Welcome %d", hatch.ID)
-		return WriteJSON(w, r, hatch, http.StatusOK)
+		return WriteJSON(w, hatch, http.StatusOK)
 	}
 }
 

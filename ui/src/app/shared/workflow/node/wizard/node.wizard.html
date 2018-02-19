@@ -41,12 +41,13 @@
                   <div class="ui sixteen wide column">
                     <div class="two ui buttons">
                       <button class="ui button"
+                        type="button"
                         [class.active]="!createNewPipeline"
                         [class.disabled]="!project.pipeline_names || !project.pipeline_names.length"
                         (click)="createNewPipeline = false">
                         {{'common_select' | translate}}
                       </button>
-                      <button class="ui button" [class.active]="createNewPipeline" (click)="createNewPipeline = true">
+                      <button class="ui button" type="button" [class.active]="createNewPipeline" (click)="createNewPipeline = true">
                         {{'common_create' | translate}}
                       </button>
                     </div>
@@ -92,8 +93,8 @@
                 </div>
                 <div class="ui row">
                   <div class="ui sixteen wide column">
-                    <button class="ui button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
-                    <button class="ui right floated green button" (click)="goToNextSection().subscribe()"
+                    <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
+                    <button class="ui right floated green button" type="button" (click)="goToNextSection().subscribe()"
                              *ngIf="!hideNext"
                             [disabled]="!node.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
                             {{ 'btn_next' | translate }}
@@ -107,12 +108,13 @@
                   <div class="ui sixteen wide column">
                     <div class="two ui buttons">
                       <button class="ui button"
+                        type="button"
                         [class.active]="!createNewApplication"
                         [class.disabled]="!project.application_names || !project.application_names.length"
                         (click)="createNewApplication = false">
                         {{'common_select' | translate}}
                       </button>
-                      <button class="ui button" [class.active]="createNewApplication" (click)="createNewApplication = true">
+                      <button class="ui button" type="button" [class.active]="createNewApplication" (click)="createNewApplication = true">
                         {{'common_create' | translate}}
                       </button>
                     </div>
@@ -132,7 +134,7 @@
                                   [options]="{'fullTextSearch': true}"
                                   id="WorkflowApplicationSelect">
                                   <option> </option>
-                                  <option *ngFor="let a of project.application_names" [value]="a.id">{{ a.name }}</option>
+                                  <option *ngFor="let a of applicationsName" [value]="a.id">{{ a.name }}</option>
                               </sm-select>
                             </ng-container>
                             <ng-container *ngIf="createNewApplication">
@@ -148,8 +150,8 @@
                 </div>
                 <div class="ui row">
                   <div class="ui sixteen wide column">
-                    <button class="ui button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
-                    <button class="ui right floated green button" (click)="goToNextSection().subscribe()"
+                    <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
+                    <button class="ui right floated green button" type="button" (click)="goToNextSection().subscribe()"
                             *ngIf="!hideNext"
                             [disabled]="!node.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
                             {{ 'btn_next' | translate }}
@@ -163,12 +165,13 @@
                   <div class="ui sixteen wide column">
                     <div class="two ui buttons">
                       <button class="ui button"
+                        type="button"
                         [class.active]="!createNewEnvironment"
                         [class.disabled]="!project.environments || !project.environments.length"
                         (click)="createNewEnvironment = false">
                         {{'common_select' | translate}}
                       </button>
-                      <button class="ui button" [class.active]="createNewEnvironment" (click)="createNewEnvironment = true">
+                      <button class="ui button" type="button" [class.active]="createNewEnvironment" (click)="createNewEnvironment = true">
                         {{'common_create' | translate}}
                       </button>
                     </div>
@@ -188,7 +191,7 @@
                                   [options]="{'fullTextSearch': true}"
                                   id="WorkflowApplicationSelect">
                                   <option> </option>
-                                  <option *ngFor="let env of project.environments" [value]="env.id">{{ env.name }}</option>
+                                  <option *ngFor="let env of environmentsName" [value]="env.id">{{ env.name }}</option>
                               </sm-select>
                             </ng-container>
                             <ng-container *ngIf="createNewEnvironment">
@@ -201,8 +204,8 @@
                 </div>
                 <div class="ui row">
                   <div class="ui sixteen wide column">
-                    <button class="ui button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
-                    <button class="ui right floated green button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
+                    <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
+                    <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
                             [disabled]="!node.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment">
                             {{ 'btn_finish' | translate }}
                     </button>

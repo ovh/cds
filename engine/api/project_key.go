@@ -59,7 +59,7 @@ func (api *API) getAllKeysProjectHandler() Handler {
 		}
 		allkeys.EnvironmentKeys = envKeys
 
-		return WriteJSON(w, r, allkeys, http.StatusOK)
+		return WriteJSON(w, allkeys, http.StatusOK)
 	}
 }
 
@@ -77,7 +77,7 @@ func (api *API) getKeysInProjectHandler() Handler {
 			return sdk.WrapError(errK, "getKeysInProjectHandler> Cannot load project keys")
 		}
 
-		return WriteJSON(w, r, p.Keys, http.StatusOK)
+		return WriteJSON(w, p.Keys, http.StatusOK)
 	}
 }
 
@@ -112,7 +112,7 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -173,6 +173,6 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, newKey, http.StatusOK)
+		return WriteJSON(w, newKey, http.StatusOK)
 	}
 }

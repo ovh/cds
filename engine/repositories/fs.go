@@ -19,7 +19,7 @@ func (s *Service) checkOrCreateRootFS() error {
 	return fmt.Errorf("bad configuration: %s is not a directory", s.Cfg.Basedir)
 }
 
-func (s *Service) checkOrCreateFS(r *Repo) error {
+func (s *Service) checkOrCreateFS(r *sdk.OperationRepo) error {
 	if err := s.checkOrCreateRootFS(); err != nil {
 		return sdk.WrapError(err, "checkOrCreateFS> ")
 	}

@@ -5,21 +5,22 @@ import (
 
 	repo "github.com/fsamin/go-repo"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) processLoadFiles(op *Operation) error {
+func (s *Service) processLoadFiles(op *sdk.Operation) error {
 	r := s.Repo(*op)
 
 	gitRepo, err := repo.New(r.Basedir)
 	if err != nil {
-		log.Debug("Repositories> processLoadFiles> Error: %v", err)
+		log.Error("Repositories> processLoadFiles> Error: %v", err)
 		return err
 	}
 
 	files, err := gitRepo.Glob(op.LoadFiles.Pattern)
 	if err != nil {
-		log.Debug("Repositories> processLoadFiles> Error: %v", err)
+		log.Error("Repositories> processLoadFiles> Error: %v", err)
 		return err
 	}
 

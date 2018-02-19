@@ -20,5 +20,5 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 		log.Warning("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
 	}
 
-	WriteJSON(w, r, sdkErr, errProcessed.Status)
+	WriteJSON(w, sdkErr, errProcessed.Status)
 }

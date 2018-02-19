@@ -65,7 +65,6 @@ type Configuration struct {
 		MaxConn        int    `toml:"maxconn" default:"20" comment:"DB Max connection"`
 		ConnectTimeout int    `toml:"connectTimeout" default:"10" comment:"Maximum wait for connection, in seconds"`
 		Timeout        int    `toml:"timeout" default:"3000" comment:"Statement timeout value in milliseconds"`
-		Secret         string `toml:"secret"`
 	} `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
@@ -324,7 +323,7 @@ func (a *API) mustDB() *gorp.DbMap {
 
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
-	log.Info("Starting CDS API Server %s...", sdk.VERSION)
+	log.Info("Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
 
@@ -332,6 +331,7 @@ func (a *API) Serve(ctx context.Context) error {
 	secret.Init(a.Config.Secrets.Key)
 
 	//Initialize mail package
+	log.Info("Initializing mail driver...")
 	mail.Init(a.Config.SMTP.User,
 		a.Config.SMTP.Password,
 		a.Config.SMTP.From,
@@ -341,6 +341,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.Disable)
 
 	//Initialize artifacts storage
+	log.Info("Initializing %s objectstore...", a.Config.Artifact.Mode)
 	var objectstoreKind objectstore.Kind
 	switch a.Config.Artifact.Mode {
 	case "openstack":
@@ -350,7 +351,7 @@ func (a *API) Serve(ctx context.Context) error {
 	case "filesystem", "local":
 		objectstoreKind = objectstore.Filesystem
 	default:
-		log.Fatalf("Unsupported objecstore mode : %s", a.Config.Artifact.Mode)
+		return fmt.Errorf("unsupported objecstore mode : %s", a.Config.Artifact.Mode)
 	}
 
 	cfg := objectstore.Config{
@@ -371,9 +372,10 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	if err := objectstore.Initialize(ctx, cfg); err != nil {
-		log.Fatalf("Cannot initialize storage: %s", err)
+		return fmt.Errorf("cannot initialize storage: %v", err)
 	}
 
+	log.Info("Initializing database connection...")
 	//Intialize database
 	var errDB error
 	a.DBConnectionFactory, errDB = database.Init(
@@ -387,22 +389,23 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Database.Timeout,
 		a.Config.Database.MaxConn)
 	if errDB != nil {
-		log.Error("Cannot connect to database: %s", errDB)
-		os.Exit(3)
+		return fmt.Errorf("cannot connect to database: %v", errDB)
 	}
 
+	log.Info("Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,
 		SharedInfraToken: a.Config.Auth.SharedInfraToken,
 	}
 	if err := bootstrap.InitiliazeDB(defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
-		log.Error("Cannot setup databases: %s", err)
+		return fmt.Errorf("cannot setup databases: %v", err)
 	}
 
 	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
-		log.Error("Cannot setup builtin workflow hook models: %s", err)
+		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
+	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	//Init the cache
 	var errCache error
 	a.Cache, errCache = cache.New(
@@ -410,10 +413,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
 	if errCache != nil {
-		log.Error("Cannot connect to cache store: %s", errCache)
-		os.Exit(3)
+		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
 
+	log.Info("Initializing HTTP router")
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
@@ -429,6 +432,7 @@ func (a *API) Serve(ctx context.Context) error {
 	//Intialize notification package
 	notification.Init(a.Config.URL.API, a.Config.URL.UI)
 
+	log.Info("Initializing Authentication driver...")
 	// Initialize the auth driver
 	var authMode string
 	var authOptions interface{}
@@ -456,9 +460,10 @@ func (a *API) Serve(ctx context.Context) error {
 	var errdriver error
 	a.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions, a.DBConnectionFactory.GetDBMap)
 	if errdriver != nil {
-		log.Fatalf("Error: %v", errdriver)
+		return fmt.Errorf("error: %v", errdriver)
 	}
 
+	log.Info("Initializing event broker...")
 	kafkaOptions := event.KafkaConfig{
 		Enabled:         a.Config.Events.Kafka.Enabled,
 		BrokerAddresses: a.Config.Events.Kafka.Broker,
@@ -467,15 +472,16 @@ func (a *API) Serve(ctx context.Context) error {
 		Topic:           a.Config.Events.Kafka.Topic,
 	}
 	if err := event.Initialize(kafkaOptions); err != nil {
-		log.Warning("⚠ Error while initializing event system: %s", err)
+		log.Error("error while initializing event system: %s", err)
 	} else {
 		go event.DequeueEvent(ctx)
 	}
 
 	if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-		log.Warning("⚠ Error while initializing workers routine: %s", err)
+		log.Error("error while initializing workers routine: %s", err)
 	}
 
+	log.Info("Initializing internal routines...")
 	go queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap)
@@ -492,7 +498,6 @@ func (a *API) Serve(ctx context.Context) error {
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
-
 	go workflow.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 
 	s := &http.Server{
@@ -519,13 +524,13 @@ func (a *API) Serve(ctx context.Context) error {
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
 		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Port, false, "", ""); err != nil {
-			log.Fatalf("Cannot start grpc cds-server: %s", err)
+			log.Error("Cannot start GRPC server: %v", err)
 		}
 	}()
 
 	log.Info("Starting CDS API HTTP Server on port %d", a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
-		log.Fatalf("Cannot start cds-server: %s", err)
+		return fmt.Errorf("Cannot start HTTP server: %v", err)
 	}
 
 	return nil

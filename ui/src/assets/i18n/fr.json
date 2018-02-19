@@ -209,6 +209,9 @@
   "common_copy_clipboard": "Copier dans le presse papier",
   "common_select": "Sélectionner",
   "common_create": "Créer",
+  "common_import": "Importer",
+  "common_show_all": "Voir tout",
+  "common_hide_all": "Cacher tout",
 
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",

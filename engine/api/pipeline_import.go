@@ -103,7 +103,7 @@ func (api *API) importPipelineHandler() Handler {
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
 			if ok {
-				return WriteJSON(w, r, msgListString, myError.Status)
+				return WriteJSON(w, msgListString, myError.Status)
 			}
 			return sdk.WrapError(globalError, "importPipelineHandler> Unable import pipeline")
 		}
@@ -116,6 +116,6 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, msgListString, http.StatusOK)
+		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

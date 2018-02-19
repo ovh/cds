@@ -37,7 +37,7 @@ func (api *API) attachPipelineToApplicationHandler() Handler {
 		if _, err := application.AttachPipeline(api.mustDB(), app.ID, pipeline.ID); err != nil {
 			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot attach pipeline %s to application %s", pipelineName, appName)
 		}
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -98,7 +98,7 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 			return sdk.WrapError(errW, "attachPipelinesToApplicationHandler: Cannot load application workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -135,7 +135,7 @@ func (api *API) updatePipelinesToApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnknownError, "updatePipelinesToApplicationHandler: Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -169,7 +169,7 @@ func (api *API) updatePipelineToApplicationHandler() Handler {
 			return sdk.WrapError(err, "updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s", appName, pipelineName)
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -184,7 +184,7 @@ func (api *API) getPipelinesInApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "getPipelinesInApplicationHandler: Cannot load pipelines for application %s", appName)
 		}
 
-		return WriteJSON(w, r, pipelines, http.StatusOK)
+		return WriteJSON(w, pipelines, http.StatusOK)
 	}
 }
 
@@ -240,21 +240,21 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 
 		a.Pipelines = append(a.Pipelines[:indexPipeline], a.Pipelines[indexPipeline+1:]...)
 
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 
 func (api *API) getUserNotificationTypeHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var types = []sdk.UserNotificationSettingsType{sdk.EmailUserNotification, sdk.JabberUserNotification}
-		return WriteJSON(w, r, types, http.StatusOK)
+		return WriteJSON(w, types, http.StatusOK)
 	}
 }
 
 func (api *API) getUserNotificationStateValueHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		states := []sdk.UserNotificationEventType{sdk.UserNotificationAlways, sdk.UserNotificationChange, sdk.UserNotificationNever}
-		return WriteJSON(w, r, states, http.StatusOK)
+		return WriteJSON(w, states, http.StatusOK)
 	}
 }
 
@@ -302,10 +302,10 @@ func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
 			return sdk.WrapError(err, "getUserNotificationApplicationPipelineHandler> cannot load notification settings")
 		}
 		if notifs == nil {
-			return WriteJSON(w, r, nil, http.StatusNoContent)
+			return WriteJSON(w, nil, http.StatusNoContent)
 		}
 
-		return WriteJSON(w, r, notifs, http.StatusOK)
+		return WriteJSON(w, notifs, http.StatusOK)
 	}
 }
 
@@ -377,7 +377,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 		if errN != nil {
 			return sdk.WrapError(errN, "deleteUserNotificationApplicationPipelineHandler> cannot load notifications")
 		}
-		return WriteJSON(w, r, applicationData, http.StatusOK)
+		return WriteJSON(w, applicationData, http.StatusOK)
 	}
 }
 
@@ -444,7 +444,7 @@ func (api *API) addNotificationsHandler() Handler {
 			return sdk.WrapError(errNotif, "addNotificationsHandler> cannot load notifications")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -514,6 +514,6 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 			return sdk.WrapError(errNotif, "updateUserNotificationApplicationPipelineHandler> Cannot load notifications")
 		}
 
-		return WriteJSON(w, r, applicationData, http.StatusOK)
+		return WriteJSON(w, applicationData, http.StatusOK)
 	}
 }

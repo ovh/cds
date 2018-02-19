@@ -1,10 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"runtime"
+	"time"
 
+	"github.com/facebookgo/httpcontrol"
 	"github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,13 +41,18 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			if w.apiEndpoint == "" {
 				sdk.Exit("--api not provided, aborting update.")
 			}
-			w.client = cdsclient.NewWorker(w.apiEndpoint, "download")
+			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", &http.Client{
+				Timeout: time.Second * 10,
+				Transport: &httpcontrol.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: viper.GetBool("insecure")},
+				},
+			})
 
 			urlBinary = w.client.DownloadURLFromAPI("worker", runtime.GOOS, runtime.GOARCH)
 			fmt.Printf("Updating worker binary from CDS API on %s...\n", urlBinary)
 		} else {
 			// no need to have apiEndpoint here
-			w.client = cdsclient.NewWorker("", "download")
+			w.client = cdsclient.NewWorker("", "download", nil)
 
 			var errGH error
 			urlBinary, errGH = w.client.DownloadURLFromGithub("worker", runtime.GOOS, runtime.GOARCH)

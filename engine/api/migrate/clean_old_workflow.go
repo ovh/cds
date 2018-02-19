@@ -23,7 +23,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap, apiUrl string) {
+// CleanOldWorkflow is the entry point to clean workflows
+func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap, apiURL string) {
 	u := &sdk.User{
 		Admin:    true,
 		Username: "CDS-DeleteApp",
@@ -42,7 +43,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 				continue
 			}
 
-			log.Info("Applications to clean: %d", len(apps))
+			log.Debug("Applications to clean: %d", len(apps))
 			for _, app := range apps {
 				a, errA := application.LoadByID(DBFunc(), store, app.ID, u, application.LoadOptions.WithHooks, application.LoadOptions.WithPipelines)
 				if errA != nil {
@@ -60,7 +61,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 
 				wg := sync.WaitGroup{}
 				wg.Add(1)
-				go cleanApplicationHook(DBFunc(), store, &wg, *p, *a, apiUrl)
+				go cleanApplicationHook(DBFunc(), store, &wg, *p, *a, apiURL)
 				wg.Add(1)
 				go cleanApplication(DBFunc(), &wg, chanErr, *a)
 				wg.Add(1)
@@ -183,7 +184,7 @@ func cleanApplicationArtifact(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- e
 	log.Debug("cleanApplicationArtifact> Start deleting artifacts")
 	arts, err := artifact.LoadArtifactByApplicationID(db, app.ID)
 	if err != nil {
-		err := fmt.Errorf("cleanApplicationArtifact> Cannot load artifact for application %s: %s", app.ID, err)
+		err := fmt.Errorf("cleanApplicationArtifact> Cannot load artifact for application %d: %s", app.ID, err)
 		log.Warning("%s", err)
 		chErr <- err
 		return

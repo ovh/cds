@@ -86,6 +86,6 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 		}
 
 		sort.Strings(data.ConditionNames)
-		return WriteJSON(w, r, data, http.StatusOK)
+		return WriteJSON(w, data, http.StatusOK)
 	}
 }

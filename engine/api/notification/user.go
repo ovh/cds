@@ -149,6 +149,11 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 	}
 	//Set PipelineBuild UI URL
 	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", uiURL, wr.Workflow.ProjectKey, wr.Workflow.Name, wr.Number)
+	if p, ok := params["cds.triggered_by.email"]; ok {
+		params["cds.author.email"] = p
+	} else if p, ok := params["git.author.email"]; ok {
+		params["cds.author.email"] = p
+	}
 	if p, ok := params["cds.triggered_by.username"]; ok {
 		params["cds.author"] = p
 	} else if p, ok := params["git.author"]; ok {
@@ -202,16 +207,12 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 					}
 				}
 				if jn.SendToAuthor {
-					var username string
-					if jn.SendToAuthor {
-						if author, ok := params["cds.author"]; ok {
-							username = author
-						}
-					}
-					if username != "" {
-						u, err := user.LoadUserWithoutAuth(db, username)
+					if email, ok := params["cds.author.email"]; ok {
+						jn.Recipients = append(jn.Recipients, email)
+					} else if author, okA := params["cds.author"]; okA && author != "" {
+						u, err := user.LoadUserWithoutAuth(db, author)
 						if err != nil {
-							log.Warning("notification[Email].SendPipelineBuild> Cannot load author %s: %s", username, err)
+							log.Warning("notification[Email].SendPipelineBuild> Cannot load author %s: %s", author, err)
 							continue
 						}
 						jn.Recipients = append(jn.Recipients, u.Email)

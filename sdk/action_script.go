@@ -113,6 +113,22 @@ func NewStepArtifactDownload(v map[string]string) Action {
 	return newAction
 }
 
+// NewCheckoutApplication returns an action (basically used as a step of a job) of checkout application type
+func NewCheckoutApplication(s string) Action {
+	newAction := Action{
+		Name: CheckoutApplicationAction,
+		Type: BuiltinAction,
+		Parameters: []Parameter{
+			{
+				Name:  "directory",
+				Value: s,
+				Type:  StringParameter,
+			},
+		},
+	}
+	return newAction
+}
+
 // NewStepPlugin returns an action (basically used as a step of a job) of plugin type
 func NewStepPlugin(v map[string]map[string]string) (*Action, error) {
 	if len(v) != 1 {

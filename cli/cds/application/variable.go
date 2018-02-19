@@ -63,7 +63,7 @@ func cmdApplicationAddVariable() *cobra.Command {
 		Long:  ``,
 		Run:   addApplicationVariable,
 	}
-	force = cmd.Flags().BoolP("force", "", false, "force update if variable already exist")
+	force = cmd.Flags().BoolP("force", "", false, "force update if variable already exists")
 
 	return cmd
 }

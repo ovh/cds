@@ -42,13 +42,13 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, force bool, u *sdk.User) ([]sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, force bool, u *sdk.User) (*sdk.Workflow, []sdk.Message, error) {
 	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, force)
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
 	//Parse workflow
 	w, errW := Parse(proj, ew)
 	if errW != nil {
-		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
+		return nil, nil, sdk.NewError(sdk.ErrWrongRequest, errW)
 	}
 
 	//Import
@@ -71,5 +71,5 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, e
 	close(msgChan)
 	done.Wait()
 
-	return msgList, globalError
+	return w, msgList, globalError
 }

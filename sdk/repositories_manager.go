@@ -20,20 +20,25 @@ type RepositoryPoller struct {
 	NextExecution *RepositoryPollerExecution `json:"next_execution" db:"-"`
 }
 
+// RepositoryEvents group all repostiory events
+type RepositoryEvents struct {
+	PushEvents        []VCSPushEvent        `json:"push_events" db:"-"`
+	CreateEvents      []VCSCreateEvent      `json:"create_events" db:"-"`
+	DeleteEvents      []VCSDeleteEvent      `json:"delete_events" db:"-"`
+	PullRequestEvents []VCSPullRequestEvent `json:"pullrequest_events" db:"-"`
+}
+
 //RepositoryPollerExecution is a polling execution
 type RepositoryPollerExecution struct {
-	ID                    int64                 `json:"id" db:"id"`
-	ApplicationID         int64                 `json:"-" db:"application_id"`
-	PipelineID            int64                 `json:"-" db:"pipeline_id"`
-	ExecutionPlannedDate  time.Time             `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
-	ExecutionDate         *time.Time            `json:"execution_date" db:"execution_date"`
-	Executed              bool                  `json:"executed" db:"executed"`
-	PipelineBuildVersions map[string]int64      `json:"pipeline_build_version" db:"-"`
-	PushEvents            []VCSPushEvent        `json:"push_events" db:"-"`
-	CreateEvents          []VCSCreateEvent      `json:"create_events" db:"-"`
-	DeleteEvents          []VCSDeleteEvent      `json:"delete_events" db:"-"`
-	PullRequestEvents     []VCSPullRequestEvent `json:"pullrequest_events" db:"-"`
-	Error                 string                `json:"error" db:"error"`
+	ID                    int64            `json:"id" db:"id"`
+	ApplicationID         int64            `json:"-" db:"application_id"`
+	PipelineID            int64            `json:"-" db:"pipeline_id"`
+	ExecutionPlannedDate  time.Time        `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
+	ExecutionDate         *time.Time       `json:"execution_date" db:"execution_date"`
+	Executed              bool             `json:"executed" db:"executed"`
+	PipelineBuildVersions map[string]int64 `json:"pipeline_build_version" db:"-"`
+	Error                 string           `json:"error" db:"error"`
+	RepositoryEvents
 }
 
 //GetReposManager calls API to get list of repositories manager

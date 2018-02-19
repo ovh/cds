@@ -67,7 +67,7 @@ func (api *API) postApplicationImportHandler() Handler {
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
 			if ok {
-				return WriteJSON(w, r, msgListString, myError.Status)
+				return WriteJSON(w, msgListString, myError.Status)
 			}
 			return sdk.WrapError(globalError, "postApplicationImportHandler> Unable import application %s", eapp.Name)
 		}
@@ -80,6 +80,6 @@ func (api *API) postApplicationImportHandler() Handler {
 			return sdk.WrapError(err, "postApplicationImportHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, msgListString, http.StatusOK)
+		return WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

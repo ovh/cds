@@ -13,7 +13,7 @@ import (
 
 func (api *API) getRequirementTypesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
+		return WriteJSON(w, sdk.AvailableRequirementsType, http.StatusOK)
 	}
 }
 
@@ -28,7 +28,7 @@ func (api *API) getRequirementTypeValuesHandler() Handler {
 			if err != nil {
 				return sdk.WrapError(err, "getRequirementTypeValuesHandler> Cannot load binary requirements")
 			}
-			return WriteJSON(w, r, req.Values(), http.StatusOK)
+			return WriteJSON(w, req.Values(), http.StatusOK)
 
 		case sdk.ModelRequirement:
 			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), getUser(ctx))
@@ -43,10 +43,10 @@ func (api *API) getRequirementTypeValuesHandler() Handler {
 					Value: m.Name,
 				}
 			}
-			return WriteJSON(w, r, modelsAsRequirements.Values(), http.StatusOK)
+			return WriteJSON(w, modelsAsRequirements.Values(), http.StatusOK)
 
 		case sdk.OSArchRequirement:
-			return WriteJSON(w, r, sdk.OSArchRequirementValues.Values(), http.StatusOK)
+			return WriteJSON(w, sdk.OSArchRequirementValues.Values(), http.StatusOK)
 
 		default:
 			return nil

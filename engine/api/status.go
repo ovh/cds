@@ -27,7 +27,7 @@ func VersionHandler() Handler {
 			Architecture: runtime.GOARCH,
 			OS:           runtime.GOOS,
 		}
-		return WriteJSON(w, r, s, http.StatusOK)
+		return WriteJSON(w, s, http.StatusOK)
 	}
 }
 
@@ -57,7 +57,7 @@ func (api *API) statusHandler() Handler {
 		if api.Router.panicked {
 			status = http.StatusServiceUnavailable
 		}
-		return WriteJSON(w, r, output, status)
+		return WriteJSON(w, output, status)
 	}
 }
 
@@ -73,10 +73,10 @@ func (api *API) smtpPingHandler() Handler {
 		}
 
 		message := "mail sent"
-		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), getUser(ctx).Email); err != nil {
+		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), getUser(ctx).Email, false); err != nil {
 			message = err.Error()
 		}
 
-		return WriteJSON(w, r, map[string]string{"message": message}, http.StatusOK)
+		return WriteJSON(w, map[string]string{"message": message}, http.StatusOK)
 	}
 }

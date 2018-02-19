@@ -16,13 +16,13 @@ func Test_postOperationHandler(t *testing.T) {
 	s, err := newTestService(t)
 	test.NoError(t, err)
 
-	op := new(Operation)
+	op := new(sdk.Operation)
 	op.URL = "https://github.com/ovh/cds.git"
 	op.RepositoryStrategy = sdk.RepositoryStrategy{
 		ConnectionType: "https",
 		DefaultBranch:  "master",
 	}
-	op.Setup.Checkout = OperationCheckout{
+	op.Setup.Checkout = sdk.OperationCheckout{
 		Branch: "master",
 	}
 

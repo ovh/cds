@@ -9,7 +9,7 @@ import (
 	"text/template"
 )
 
-var interpolateRegex = regexp.MustCompile("({{\\.[a-zA-Z0-9._\\-µ|\\s]+}})")
+var interpolateRegex = regexp.MustCompile("({{[\\.\"a-zA-Z0-9._\\-µ|\\s]+}})")
 
 type reverseString []string
 
@@ -51,33 +51,52 @@ func Do(input string, vars map[string]string) (string, error) {
 		input = strings.Replace(input, k, kb, -1)
 	}
 
-	// in input, replace {{.cds.foo.bar}} with {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}
+	var helper string
+	// in input, replace {{.cds.foo.bar}} with {{ defaultCDS "{{.cds.foo.bar}}" .cds.foo.bar}}
 	// t.Execute will call "default" function, documented on http://masterminds.github.io/sprig/defaults.html
 	sm := interpolateRegex.FindAllStringSubmatch(input, -1)
 	if len(sm) > 0 {
 		alreadyReplaced := map[string]string{}
 		for i := 0; i < len(sm); i++ {
+			helper = ""
 			if len(sm[i]) > 0 {
 				e := sm[i][1][2 : len(sm[i][1])-2]
 				// alreadyReplaced: check if var is already replaced.
 				// see test "two same unknown" on DoTest
 				if _, ok := alreadyReplaced[sm[i][1]]; !ok {
 					if _, ok := defaults[e]; !ok {
-						// replace {{.cds.foo.bar}} with {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}
+						// replace {{.cds.foo.bar}} with {{ defaultCDS "{{.cds.foo.bar}}" .cds.foo.bar}}
 						// with cds.foo.bar unknown from vars
 						nameWithDot := strings.Replace(e, "__", ".", -1)
 						nameWithDot = strings.Replace(nameWithDot, "µµµ", ".", -1)
+						nameWithDot = strings.Replace(nameWithDot, "\"", "\\\"", -1)
 						// "-"" are not a valid char in go template var name, as we don't know e, no pb to replace "-" with "µ"
 						eb := strings.Replace(e, "-", "µµµ", -1)
-						input = strings.Replace(input, sm[i][1], "{{ default \"{{"+nameWithDot+"}}\" "+eb+" }}", -1)
+
+						// check if helper exists. if helper does not exist, as
+						// '{{"conf"|uvault}}' -> return '{{"conf"|uvault}}' in defaultCDS value
+						// '{{ defaultCDS "{{\"conf\"|uvault}}" "" }}'
+
+						if pos := strings.Index(eb, "|"); pos > 0 && len(eb) > pos {
+							helper = strings.TrimSpace(eb[pos+1:])
+							if strings.HasPrefix(helper, "default") {
+								// 7 = len("default") --> helper[7:]
+								input = strings.Replace(input, sm[i][1], "{{ defaultCDS "+helper[7:]+" "+eb+" }}", -1)
+							} else if _, ok := interpolateHelperFuncs[helper]; !ok {
+								eb = ""
+							}
+						}
+						if helper != "default" {
+							input = strings.Replace(input, sm[i][1], "{{ defaultCDS \"{{"+nameWithDot+"}}\" "+eb+" }}", -1)
+						}
 					} else if _, ok := empty[e]; !ok {
-						// replace {{.cds.foo.bar}} with {{ default "" .cds.foo.bar}}
+						// replace {{.cds.foo.bar}} with {{ defaultCDS "" .cds.foo.bar}}
 						// with cds.foo.bar knowned, but with value empty string ""
-						input = strings.Replace(input, sm[i][1], "{{ default \"\" "+e+" }}", -1)
+						input = strings.Replace(input, sm[i][1], "{{ defaultCDS \"\" "+e+" }}", -1)
 					} else {
-						// replace {{.cds.foo.bar}} with {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}
+						// replace {{.cds.foo.bar}} with {{ defaultCDS "{{.cds.foo.bar}}" .cds.foo.bar}}
 						// with cds.foo.bar knowned from vars
-						input = strings.Replace(input, sm[i][1], "{{ default \"{{"+defaults[e[1:]]+"}}\" "+e+" }}", -1)
+						input = strings.Replace(input, sm[i][1], "{{ defaultCDS \"{{"+defaults[e[1:]]+"}}\" "+e+" }}", -1)
 					}
 					alreadyReplaced[sm[i][1]] = sm[i][1]
 				}

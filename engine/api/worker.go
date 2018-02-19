@@ -43,7 +43,7 @@ func (api *API) registerWorkerHandler() Handler {
 		log.Debug("New worker: [%s] - %s", worker.ID, worker.Name)
 
 		// Return worker info to worker itself
-		return WriteJSON(w, r, worker, http.StatusOK)
+		return WriteJSON(w, worker, http.StatusOK)
 	}
 }
 
@@ -58,7 +58,7 @@ func (api *API) getWorkersHandler() Handler {
 			return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
 		}
 
-		return WriteJSON(w, r, workers, http.StatusOK)
+		return WriteJSON(w, workers, http.StatusOK)
 	}
 }
 

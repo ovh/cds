@@ -8,6 +8,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ const (
 	TypeRepoManagerWebHook = "RepoWebHook"
 	TypeWebHook            = "Webhook"
 	TypeScheduler          = "Scheduler"
+	TypeRepoPoller         = "RepoPoller"
 
 	GithubHeader    = "X-Github-Event"
 	GitlabHeader    = "X-Gitlab-Event"
@@ -103,7 +105,7 @@ func (s *Service) synchronizeTasks() error {
 	return nil
 }
 
-func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*Task, error) {
+func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 	if h.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
 		return nil, fmt.Errorf("Unsupported hook type: %s", h.WorkflowHookModel.Type)
 	}
@@ -114,7 +116,7 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*Task, error) {
 			Value:        fmt.Sprintf("%s/webhook/%s", s.Cfg.URLPublic, h.UUID),
 			Configurable: false,
 		}
-		return &Task{
+		return &sdk.Task{
 			UUID:   h.UUID,
 			Type:   TypeWebHook,
 			Config: h.Config,
@@ -124,15 +126,21 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*Task, error) {
 			Value:        fmt.Sprintf("%s/webhook/%s", s.Cfg.URLPublic, h.UUID),
 			Configurable: false,
 		}
-		return &Task{
+		return &sdk.Task{
 			UUID:   h.UUID,
 			Type:   TypeRepoManagerWebHook,
 			Config: h.Config,
 		}, nil
 	case sdk.SchedulerModelName:
-		return &Task{
+		return &sdk.Task{
 			UUID:   h.UUID,
 			Type:   TypeScheduler,
+			Config: h.Config,
+		}, nil
+	case sdk.GitPollerModelName:
+		return &sdk.Task{
+			UUID:   h.UUID,
+			Type:   TypeRepoPoller,
 			Config: h.Config,
 		}, nil
 	}
@@ -161,21 +169,21 @@ func (s *Service) startTasks(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) startTask(ctx context.Context, t *Task) error {
+func (s *Service) startTask(ctx context.Context, t *sdk.Task) error {
 	t.Stopped = false
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
 	case TypeWebHook, TypeRepoManagerWebHook:
 		return nil
-	case TypeScheduler:
+	case TypeScheduler, TypeRepoPoller:
 		return s.prepareNextScheduledTaskExecution(t)
 	default:
 		return fmt.Errorf("Unsupported task type %s", t.Type)
 	}
 }
 
-func (s *Service) prepareNextScheduledTaskExecution(t *Task) error {
+func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	if t.Stopped {
 		return nil
 	}
@@ -199,25 +207,40 @@ func (s *Service) prepareNextScheduledTaskExecution(t *Task) error {
 		return sdk.WrapError(err, "startTask> unable to parse timezone: %s", t.Config["timezone"])
 	}
 
-	//Parse the cron expr
-	confCron := t.Config["cron"]
-	cronExpr, err := cronexpr.Parse(confCron.Value)
-	if err != nil {
-		return sdk.WrapError(err, "startTask> unable to parse cron expression: %s", t.Config["cron"])
+	var exec *sdk.TaskExecution
+	var nextSchedule time.Time
+	switch t.Type {
+	case TypeScheduler:
+		//Parse the cron expr
+		confCron := t.Config["cron"]
+		cronExpr, err := cronexpr.Parse(confCron.Value)
+		if err != nil {
+			return sdk.WrapError(err, "startTask> unable to parse cron expression: %s", t.Config["cron"])
+		}
+
+		//Compute a new date
+		t0 := time.Now().In(loc)
+		nextSchedule = cronExpr.Next(t0)
+
+	case TypeRepoPoller:
+		// Default value of next scheduling
+		nextSchedule = time.Now().Add(time.Minute)
+		if val, ok := t.Config["next_execution"]; ok {
+			nextExec, errT := strconv.ParseInt(val.Value, 10, 64)
+			if errT == nil {
+				nextSchedule = time.Unix(nextExec, 0)
+			}
+		}
 	}
 
-	//Compute a new date
-	t0 := time.Now().In(loc)
-	t1 := cronExpr.Next(t0)
-
 	//Craft a new execution
-	exec := &TaskExecution{
-		Timestamp: t1.UnixNano(),
+	exec = &sdk.TaskExecution{
+		Timestamp: nextSchedule.UnixNano(),
 		Type:      t.Type,
 		UUID:      t.UUID,
 		Config:    t.Config,
-		ScheduledTask: &ScheduledTaskExecution{
-			DateScheduledExecution: fmt.Sprintf("%v", t1),
+		ScheduledTask: &sdk.ScheduledTaskExecution{
+			DateScheduledExecution: fmt.Sprintf("%v", nextSchedule),
 		},
 	}
 
@@ -229,13 +252,13 @@ func (s *Service) prepareNextScheduledTaskExecution(t *Task) error {
 	return nil
 }
 
-func (s *Service) stopTask(ctx context.Context, t *Task) error {
+func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
 	log.Info("Hooks> Stopping task %s", t.UUID)
 	t.Stopped = true
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
-	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook:
+	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller:
 		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
 		return nil
 	default:
@@ -243,19 +266,23 @@ func (s *Service) stopTask(ctx context.Context, t *Task) error {
 	}
 }
 
-func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
+func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution) error {
 	if t.Stopped {
 		return nil
 	}
 
+	var hs []sdk.WorkflowNodeRunHookEvent
 	var h *sdk.WorkflowNodeRunHookEvent
 	var err error
 
 	switch {
 	case e.WebHook != nil:
 		h, err = s.doWebHookExecution(e)
-	case e.ScheduledTask != nil:
+	case e.ScheduledTask != nil && e.Type == TypeScheduler:
 		h, err = s.doScheduledTaskExecution(e)
+	case e.ScheduledTask != nil && e.Type == TypeRepoPoller:
+		//Populate next execution
+		hs, err = s.doPollerTaskExecution(t, e)
 	default:
 		err = fmt.Errorf("Unsupported task type %s", e.Type)
 	}
@@ -263,26 +290,94 @@ func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
 	if err != nil {
 		return err
 	}
-	if h == nil {
+	if h != nil {
+		hs = append(hs, *h)
+	}
+	if hs == nil || len(hs) == 0 {
 		return nil
 	}
 
 	// Call CDS API
 	confProj := t.Config["project"]
 	confWorkflow := t.Config["workflow"]
-	run, err := s.cds.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, *h)
-	if err != nil {
-		return sdk.WrapError(err, "Hooks> Unable to run workflow")
+	var globalErr error
+	for _, hEvent := range hs {
+		run, err := s.cds.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, hEvent)
+		if err != nil {
+			globalErr = err
+			log.Error("Hooks> Unable to run workflow %s", err)
+		}
+
+		//Save the run number
+		e.WorkflowRun = run.Number
+		log.Debug("Hooks> workflow %s/%s#%d has been triggered", t.Config["project"], t.Config["workflow"], run.Number)
 	}
 
-	//Save the run number
-	e.WorkflowRun = run.Number
-	log.Debug("Hooks> workflow %s/%s#%d has been triggered", t.Config["project"], t.Config["workflow"], run.Number)
+	if globalErr != nil {
+		return sdk.WrapError(globalErr, "Hooks> Unable to run workflow")
+	}
 
 	return nil
 }
 
-func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
+	log.Debug("Hooks> Processing polling task %s", taskExec.UUID)
+
+	tExecs, errF := s.Dao.FindAllTaskExecutions(task)
+	if errF != nil {
+		return nil, errF
+	}
+
+	var maxTs int64
+	// get max timestamp for previous tasks execution
+	for _, tExec := range tExecs {
+		if tExec.Status == TaskExecutionDone && maxTs < tExec.Timestamp {
+			maxTs = tExec.Timestamp
+		}
+	}
+	workflowID, errP := strconv.ParseInt(taskExec.Config["workflow_id"].Value, 10, 64)
+	if errP != nil {
+		return nil, sdk.WrapError(errP, "Hooks> doPollerTaskExecution> Cannot convert workflow id %s", taskExec.Config["workflow_id"].Value)
+	}
+	events, interval, err := s.cds.PollVCSEvents(taskExec.UUID, workflowID, taskExec.Config["vcsServer"].Value, maxTs)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Hooks> doPollerTaskExecution> Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config["workflow"].Value, taskExec.Config["vcsServer"].Value)
+	}
+
+	var hookEvents []sdk.WorkflowNodeRunHookEvent
+	if len(events.PushEvents) > 0 || len(events.PullRequestEvents) > 0 {
+		i := 0
+		hookEvents = make([]sdk.WorkflowNodeRunHookEvent, len(events.PushEvents)+len(events.PullRequestEvents))
+		for _, pushEvent := range events.PushEvents {
+			payload := fillPayload(pushEvent)
+			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
+				WorkflowNodeHookUUID: task.UUID,
+				Payload:              payload,
+			}
+			i++
+		}
+
+		for _, pullRequestEvent := range events.PullRequestEvents {
+			payload := fillPayload(pullRequestEvent.Head)
+			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
+				WorkflowNodeHookUUID: task.UUID,
+				Payload:              payload,
+			}
+			i++
+		}
+	}
+
+	nextExec := fmt.Sprint(time.Now().Add(interval).Unix())
+	taskExec.Config["next_execution"] = sdk.WorkflowNodeHookConfigValue{
+		Configurable: false,
+		Value:        nextExec,
+	}
+	taskExec.ScheduledTask.DateScheduledExecution = nextExec
+
+	return hookEvents, nil
+}
+
+func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	log.Debug("Hooks> Processing scheduled task %s", t.UUID)
 
 	// Prepare a struct to send to CDS API
@@ -328,7 +423,7 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 	return &h, nil
 }
 
-func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+func (s *Service) doWebHookExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	log.Debug("Hooks> Processing webhook %s %s", t.UUID, t.Type)
 
 	if t.Type == TypeRepoManagerWebHook {
@@ -337,7 +432,7 @@ func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHook
 	return executeWebHook(t)
 }
 
-func getRepositoryHeader(whe *WebHookExecution) string {
+func getRepositoryHeader(whe *sdk.WebHookExecution) string {
 	if v, ok := whe.RequestHeader[GithubHeader]; ok && v[0] == "push" {
 		return GithubHeader
 	} else if v, ok := whe.RequestHeader[GitlabHeader]; ok && v[0] == "Push Hook" {
@@ -348,7 +443,7 @@ func getRepositoryHeader(whe *WebHookExecution) string {
 	return ""
 }
 
-func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
 		WorkflowNodeHookUUID: t.UUID,
@@ -449,7 +544,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 	return &h, nil
 }
 
-func executeWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
 		WorkflowNodeHookUUID: t.UUID,

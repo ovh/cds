@@ -18,12 +18,12 @@ func muxVar(r *http.Request, s string) string {
 func (s *Service) postOperationHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		uuid := sdk.UUID()
-		op := new(Operation)
+		op := new(sdk.Operation)
 		if err := api.UnmarshalBody(r, op); err != nil {
 			return err
 		}
 		op.UUID = uuid
-		op.Status = OperationStatusPending
+		op.Status = sdk.OperationStatusPending
 		if err := s.dao.saveOperation(op); err != nil {
 			return err
 		}
@@ -32,7 +32,7 @@ func (s *Service) postOperationHandler() api.Handler {
 			return err
 		}
 
-		return api.WriteJSON(w, r, op, http.StatusAccepted)
+		return api.WriteJSON(w, op, http.StatusAccepted)
 	}
 }
 
@@ -42,7 +42,7 @@ func (s *Service) getOperationsHandler() api.Handler {
 
 		op := s.dao.loadOperation(uuid)
 
-		return api.WriteJSON(w, r, op, http.StatusOK)
+		return api.WriteJSON(w, op, http.StatusOK)
 	}
 }
 

@@ -363,8 +363,14 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
+			args.pip.Parameter = []sdk.Parameter{
+				{Name: "test", Value: "test_value", Type: sdk.StringParameter, Description: "test_description"},
+			}
 			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip, nil))
 
+			args.pip.Parameter = []sdk.Parameter{
+				{Name: "test", Value: "test_value_bis", Type: sdk.StringParameter, Description: "test_description_bis"},
+			}
 			args.pip.Stages = []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -424,12 +430,15 @@ func TestImportUpdate(t *testing.T) {
 			assert.Equal(t, 2, len(pip.Stages))
 			assert.Equal(t, 2, len(pip.Stages[0].Jobs))
 			assert.Equal(t, 2, len(pip.Stages[1].Jobs))
+			assert.Equal(t, 1, len(pip.Parameter))
+			assert.Equal(t, "test_value_bis", pip.Parameter[0].Value)
+			assert.Equal(t, "test_description_bis", pip.Parameter[0].Description)
 			assert.Equal(t, "Job n°2bis", pip.Stages[1].Jobs[1].Action.Name)
 		},
 	}
 
 	var test7 = testcase{
-		name:    "Remove a job on a stage",
+		name:    "Remove a job on a stage and add parameter",
 		wantErr: false,
 		args: args{
 			u:    u,
@@ -445,6 +454,9 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.ProjectKey = proj.Key
 			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip, nil))
 
+			args.pip.Parameter = []sdk.Parameter{
+				{Name: "test", Value: "test_value", Type: sdk.StringParameter, Description: "test_description"},
+			}
 			args.pip.Stages = []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -499,6 +511,7 @@ func TestImportUpdate(t *testing.T) {
 			assert.Equal(t, 2, len(pip.Stages))
 			assert.Equal(t, 2, len(pip.Stages[0].Jobs))
 			assert.Equal(t, 1, len(pip.Stages[1].Jobs))
+			assert.Equal(t, 1, len(pip.Parameter))
 			assert.Equal(t, "Job n°2", pip.Stages[1].Jobs[0].Action.Name)
 		},
 	}

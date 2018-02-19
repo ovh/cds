@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/fsamin/go-dump"
@@ -14,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -30,7 +32,7 @@ func (api *API) getWorkflowsHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, r, ws, http.StatusOK)
+		return WriteJSON(w, ws, http.StatusOK)
 	}
 }
 
@@ -60,7 +62,7 @@ func (api *API) getWorkflowHandler() Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig("project", "workflow")
 
-		return WriteJSON(w, r, w1, http.StatusOK)
+		return WriteJSON(w, w1, http.StatusOK)
 	}
 }
 
@@ -151,7 +153,7 @@ func (api *API) postWorkflowHandler() Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
-		return WriteJSON(w, r, wf1, http.StatusCreated)
+		return WriteJSON(w, wf1, http.StatusCreated)
 	}
 }
 
@@ -233,7 +235,7 @@ func (api *API) putWorkflowHandler() Handler {
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
-		return WriteJSON(w, r, wf1, http.StatusOK)
+		return WriteJSON(w, wf1, http.StatusOK)
 	}
 }
 
@@ -285,6 +287,42 @@ func (api *API) deleteWorkflowHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		uuid := vars["uuid"]
+
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
+		if errW != nil {
+			return sdk.WrapError(errW, "getWorkflowHookHandler> Cannot load Workflow %s/%s", key, name)
+		}
+
+		whooks := wf.GetHooks()
+		_, has := whooks[uuid]
+		if !has {
+			return sdk.WrapError(sdk.ErrNotFound, "getWorkflowHookHandler> Cannot load Workflow %s/%s hook %s", key, name, uuid)
+		}
+
+		//Push the hook to hooks µService
+		dao := services.Querier(api.mustDB(), api.Cache)
+		//Load service "hooks"
+		srvs, errS := dao.FindByType("hooks")
+		if errS != nil {
+			return sdk.WrapError(errS, "getWorkflowHookHandler> Unable to load hooks services")
+		}
+
+		path := fmt.Sprintf("/task/%s/execution", uuid)
+		executions := []sdk.TaskExecution{}
+		if _, err := services.DoJSONRequest(srvs, "GET", path, nil, &executions); err != nil {
+			return sdk.WrapError(err, "getWorkflowHookHandler> Unable to get hook %s executions", uuid)
+		}
+
+		return nil
 	}
 }

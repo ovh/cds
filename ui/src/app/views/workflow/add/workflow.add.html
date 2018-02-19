@@ -29,29 +29,62 @@
                         <form class="ui form" *ngSwitchCase="0">
                             <div class="ui grid">
                                 <div class="ui row">
-                                  <div class="one wide column">
-
-                                  </div>
+                                  <div class="one wide column"></div>
                                   <div class="fourteen wide column">
-                                      <div class="field">
-                                          <label>{{ 'workflow_name' | translate}}</label>
-                                          <input
-                                            name="name"
-                                            class="ui input"
-                                            [(ngModel)]="workflow.name"
-                                            pattern="^[a-zA-Z0-9._-]{1,}$">
-                                      </div>
-                                      <div class="field">
-                                          <label>{{ 'workflow_description' | translate}}</label>
-                                          <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
-                                      </div>
-                                      <div class="field">
-                                          <button class="ui button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
-                                          <button class="ui right floated green button" (click)="goToNextStep()"
-                                                  [disabled]="!workflow.name" [class.loading]="loading">{{ 'btn_next' | translate }}
-                                          </button>
-                                      </div>
+                                    <div class="two ui buttons">
+                                      <button class="ui button"
+                                        type="button"
+                                        [class.active]="!asCode"
+                                        [class.disabled]="!project.application_names || !project.application_names.length"
+                                        (click)="asCode = false">
+                                        {{'common_create' | translate}}
+                                      </button>
+                                      <button class="ui button" type="button" [class.active]="asCode" (click)="asCode = true">
+                                        {{'common_import' | translate}}
+                                      </button>
+                                    </div>
                                   </div>
+                                </div>
+                                <div class="ui row">
+                                    <div class="one wide column">
+
+                                    </div>
+                                    <div class="fourteen wide column" *ngIf="!asCode">
+                                        <div class="field">
+                                            <label>{{ 'workflow_name' | translate}}</label>
+                                            <input
+                                              name="name"
+                                              class="ui input"
+                                              [(ngModel)]="workflow.name"
+                                              pattern="^[a-zA-Z0-9._-]{1,}$">
+                                        </div>
+                                        <div class="field">
+                                            <label>{{ 'workflow_description' | translate}}</label>
+                                            <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
+                                        </div>
+                                        <div class="field">
+                                            <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                            <button class="ui right floated green button" type="button" (click)="goToNextStep()"
+                                                    [disabled]="!workflow.name" [class.loading]="loading">{{ 'btn_next' | translate }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="fourteen wide column" *ngIf="asCode">
+                                        <div class="field">
+                                            <codemirror
+                                                name="wfToImport"
+                                                [(ngModel)]="wfToImport"
+                                                (keydown)="updated = true"
+                                                [config]="codeMirrorConfig" #codeMirror>
+                                            </codemirror>
+                                        </div>
+                                        <div class="field">
+                                            <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                                            <button class="ui right floated green button" type="button" (click)="importWorkflow()" *ngIf="asCode"
+                                                    [disabled]="!wfToImport" [class.loading]="loading">{{ 'btn_create' | translate }}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </form>

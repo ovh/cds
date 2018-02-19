@@ -15,7 +15,7 @@ var (
 	builtinModels = []*sdk.WorkflowHookModel{
 		&sdk.WebHookModel,
 		&sdk.RepositoryWebHookModel,
-		// GitPollerModel, TODO enable this line when GitPoller will be developed
+		&sdk.GitPollerModel,
 		&sdk.SchedulerModel,
 	}
 )
@@ -106,13 +106,14 @@ func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 	if _, err := db.Select(&dbModels, "select id, name, type, command, author, description, identifier, icon from workflow_hook_model"); err != nil {
 		return nil, sdk.WrapError(err, "LoadHookModels> Unable to load WorkflowHookModel")
 	}
-	models := []sdk.WorkflowHookModel{}
+
+	models := make([]sdk.WorkflowHookModel, len(dbModels))
 	for i := range dbModels {
 		m := dbModels[i]
 		if err := m.PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "LoadHookModels> Unable to load WorkflowHookModel")
 		}
-		models = append(models, sdk.WorkflowHookModel(m))
+		models[i] = sdk.WorkflowHookModel(m)
 	}
 	return models, nil
 }

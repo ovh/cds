@@ -74,7 +74,7 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, r, schedulers, http.StatusOK)
+		return WriteJSON(w, schedulers, http.StatusOK)
 	}
 }
 
@@ -214,7 +214,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 			return sdk.WrapError(errW, "addSchedulerApplicationPipelineHandler> cannot reload workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusCreated)
+		return WriteJSON(w, app, http.StatusCreated)
 	}
 }
 
@@ -308,7 +308,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 			return sdk.WrapError(errW, "updateSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -361,6 +361,6 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 			return sdk.WrapError(errW, "deleteSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }

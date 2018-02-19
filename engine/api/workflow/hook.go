@@ -27,7 +27,6 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 	var defaultPayload *sdk.WorkflowNodeContextDefaultPayloadVCS
 
 	if len(hookToUpdate) > 0 {
-
 		if oldW != nil {
 			log.Info("HookRegistration> Merge: %+v, New: %+v, OLD: %+v", hookToUpdate, wf.GetHooks(), oldW.GetHooks())
 		}
@@ -35,7 +34,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		//Push the hook to hooks µService
 		dao := services.Querier(db, store)
 		//Load service "hooks"
-		srvs, err := dao.FindByType("hooks")
+		srvs, err := dao.FindByType(services.TypeHooks)
 		if err != nil {
 			return nil, sdk.WrapError(err, "HookRegistration> Unable to get services dao")
 		}
@@ -65,7 +64,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		for i := range hooksUpdated {
 			h := hooksUpdated[i]
 			v, ok := h.Config["webHookID"]
-			if h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
+			if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
 				if err := createVCSConfiguration(db, store, p, &h); err != nil {
 					return nil, sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
@@ -105,7 +104,7 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 					ID:       h.Config["webHookID"].Value,
 				}
 				if err := client.DeleteHook(h.Config["repoFullName"].Value, vcsHook); err != nil {
-					return sdk.WrapError(err, "deleteHookConfiguration> Cannot delete hook on repository")
+					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
 				}
 				h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 					Value:        vcsHook.ID,
@@ -118,7 +117,7 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 	//Push the hook to hooks µService
 	dao := services.Querier(db, store)
 	//Load service "hooks"
-	srvs, err := dao.FindByType("hooks")
+	srvs, err := dao.FindByType(services.TypeHooks)
 	if err != nil {
 		return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
 	}
@@ -169,28 +168,18 @@ func diffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.
 	hookToUpdate = make(map[string]sdk.WorkflowNodeHook)
 	hookToDelete = make(map[string]sdk.WorkflowNodeHook)
 
-	for kNew := range newHooks {
-		hold, ok := oldHooks[kNew]
+	for key, hNew := range newHooks {
+		hold, ok := oldHooks[key]
 		// if new hook
-		if !ok {
-			hookToUpdate[kNew] = newHooks[kNew]
+		if !ok || !hNew.Equals(hold) {
+			hookToUpdate[key] = newHooks[key]
 			continue
-		}
-
-	next:
-		for k, v := range newHooks[kNew].Config {
-			for kold, vold := range hold.Config {
-				if kold == k && v != vold {
-					hookToUpdate[kNew] = newHooks[kNew]
-					break next
-				}
-			}
 		}
 	}
 
-	for kHold := range oldHooks {
-		if _, ok := newHooks[kHold]; !ok {
-			hookToDelete[kHold] = oldHooks[kHold]
+	for key := range oldHooks {
+		if _, ok := newHooks[key]; !ok {
+			hookToDelete[key] = oldHooks[key]
 		}
 	}
 	return

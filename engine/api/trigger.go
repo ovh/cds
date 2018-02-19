@@ -131,7 +131,7 @@ func (api *API) addTriggerHandler() Handler {
 			return sdk.WrapError(errWorkflow, "addTriggerHandler> cannot load updated workflow")
 		}
 
-		return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
+		return WriteJSON(w, t.SrcApplication, http.StatusOK)
 	}
 }
 
@@ -150,7 +150,7 @@ func (api *API) getTriggerHandler() Handler {
 			return sdk.WrapError(errTrig, "getTriggerHandler> Cannot load trigger %d", triggerID)
 		}
 
-		return WriteJSON(w, r, t, http.StatusOK)
+		return WriteJSON(w, t, http.StatusOK)
 	}
 }
 
@@ -196,7 +196,7 @@ func (api *API) getTriggersHandler() Handler {
 			return sdk.WrapError(errTri, "getTriggersHandler> cannot load triggers")
 		}
 
-		return WriteJSON(w, r, triggers, http.StatusOK)
+		return WriteJSON(w, triggers, http.StatusOK)
 	}
 }
 
@@ -242,7 +242,7 @@ func (api *API) deleteTriggerHandler() Handler {
 			return sdk.WrapError(errWorkflow, "deleteTriggerHandler> cannot load updated workflow")
 		}
 
-		return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
+		return WriteJSON(w, t.SrcApplication, http.StatusOK)
 	}
 }
 
@@ -295,7 +295,7 @@ func (api *API) updateTriggerHandler() Handler {
 			return sdk.WrapError(errWorkflow, "updateTriggerHandler> cannot load updated workflow")
 		}
 
-		return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
+		return WriteJSON(w, t.SrcApplication, http.StatusOK)
 	}
 }
 
@@ -339,6 +339,6 @@ func (api *API) getTriggersAsSourceHandler() Handler {
 			return sdk.WrapError(errTri, "getTriggersAsSourceHandler> cannot load triggers")
 		}
 
-		return WriteJSON(w, r, triggers, http.StatusOK)
+		return WriteJSON(w, triggers, http.StatusOK)
 	}
 }

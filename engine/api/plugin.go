@@ -116,7 +116,7 @@ func (api *API) addPluginHandler() Handler {
 			return sdk.WrapError(err, "addPluginHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, a, http.StatusCreated)
+		return WriteJSON(w, a, http.StatusCreated)
 	}
 }
 
@@ -213,7 +213,7 @@ func (api *API) updatePluginHandler() Handler {
 			return sdk.WrapError(err, "updatePluginHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 

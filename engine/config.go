@@ -51,7 +51,7 @@ func config() {
 	case cfgFile != "":
 		//If the config file doesn't exists, let's exit
 		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
-			sdk.Exit("File doesn't exist")
+			sdk.Exit("File %s doesn't exist", cfgFile)
 		}
 		fmt.Println("Reading configuration file", cfgFile)
 

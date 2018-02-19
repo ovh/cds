@@ -138,7 +138,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	if runs == nil {
 		runs = []sdk.WorkflowRun{}
 	}
-	return WriteJSON(w, r, runs, code)
+	return WriteJSON(w, runs, code)
 }
 
 func (api *API) getWorkflowAllRunsHandler() Handler {
@@ -178,7 +178,7 @@ func (api *API) getWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunNumHandler> Cannot load current run num")
 		}
 
-		return WriteJSON(w, r, sdk.WorkflowRunNumber{Num: num}, http.StatusOK)
+		return WriteJSON(w, sdk.WorkflowRunNumber{Num: num}, http.StatusOK)
 	}
 }
 
@@ -225,7 +225,7 @@ func (api *API) postWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(errDb, "postWorkflowRunNumHandler> ")
 		}
 
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }
 
@@ -239,7 +239,7 @@ func (api *API) getLatestWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -269,7 +269,7 @@ func (api *API) resyncWorkflowRunHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "resyncWorkflowRunHandler> Cannot commit transaction")
 		}
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -287,7 +287,7 @@ func (api *API) getWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load workflow %s run number %d", name, number)
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -322,7 +322,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 		}
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -399,7 +399,7 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 		if !ok {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowNodeRunHistoryHandler")
 		}
-		return WriteJSON(w, r, nodeRuns, http.StatusOK)
+		return WriteJSON(w, nodeRuns, http.StatusOK)
 	}
 }
 
@@ -446,7 +446,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		}
 
 		if nodeCtx == nil || nodeCtx.Application == nil {
-			return WriteJSON(w, r, []sdk.VCSCommit{}, http.StatusOK)
+			return WriteJSON(w, []sdk.VCSCommit{}, http.StatusOK)
 		}
 
 		if wfRun == nil {
@@ -475,7 +475,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits")
 		}
 
-		return WriteJSON(w, r, commits, http.StatusOK)
+		return WriteJSON(w, commits, http.StatusOK)
 	}
 }
 
@@ -515,7 +515,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		}
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
-		return WriteJSON(w, r, nodeRun, http.StatusOK)
+		return WriteJSON(w, nodeRun, http.StatusOK)
 	}
 }
 
@@ -575,7 +575,7 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		}
 
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -639,7 +639,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			wr = &workflowRuns[0]
 			wr.Translate(r.Header.Get("Accept-Language"))
 		}
-		return WriteJSON(w, r, wr, http.StatusAccepted)
+		return WriteJSON(w, wr, http.StatusAccepted)
 	}
 }
 
@@ -655,6 +655,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	const nbWorker int = 5
 	defer close(chEvent)
 	defer close(chError)
+	errorOccured := false
 
 	tx, errb := db.Begin()
 	if errb != nil {
@@ -667,6 +668,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		var errfh error
 		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent)
 		if errfh != nil {
+			errorOccured = true
 			chError <- sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
 		}
 	} else {
@@ -684,6 +686,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			for _, fromNodeID := range opts.FromNodeIDs {
 				fromNode := lastRun.Workflow.GetNode(fromNodeID)
 				if fromNode == nil {
+					errorOccured = true
 					chError <- sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node %d", fromNodeID)
 				}
 				fromNodes = append(fromNodes, fromNode)
@@ -717,6 +720,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 					continue
 				}
 				if chError != nil {
+					errorOccured = true
 					chError <- err
 				} else {
 					log.Warning("postWorkflowRunHandler> Cannot run from node %v", err)
@@ -729,14 +733,17 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			var errmr error
 			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent)
 			if errmr != nil {
+				errorOccured = true
 				chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 			}
 		}
 	}
 
-	//Commit and return success
-	if err := tx.Commit(); err != nil {
-		chError <- sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+	if !errorOccured {
+		//Commit and return success
+		if err := tx.Commit(); err != nil {
+			chError <- sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+		}
 	}
 }
 
@@ -852,7 +859,7 @@ func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, r, nodeRun.Artifacts, http.StatusOK)
+		return WriteJSON(w, nodeRun.Artifacts, http.StatusOK)
 	}
 }
 
@@ -942,7 +949,7 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 			arts = append(arts, runs[0].Artifacts...)
 		}
 
-		return WriteJSON(w, r, arts, http.StatusOK)
+		return WriteJSON(w, arts, http.StatusOK)
 	}
 }
 
@@ -1012,7 +1019,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 			StepLogs: *ls,
 		}
 
-		return WriteJSON(w, r, result, http.StatusOK)
+		return WriteJSON(w, result, http.StatusOK)
 	}
 }
 
@@ -1027,6 +1034,6 @@ func (api *API) getWorkflowRunTagsHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunTagsHandler> Error")
 		}
 
-		return WriteJSON(w, r, res, http.StatusOK)
+		return WriteJSON(w, res, http.StatusOK)
 	}
 }

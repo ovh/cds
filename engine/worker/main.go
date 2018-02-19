@@ -56,6 +56,7 @@ func main() {
 	cmd := cmdMain(w)
 	cmd.AddCommand(cmdExport)
 	cmd.AddCommand(cmdUpload(w))
+	cmd.AddCommand(cmdDownload(w))
 	cmd.AddCommand(cmdTmpl(w))
 	cmd.AddCommand(cmdTag(w))
 	cmd.AddCommand(cmdRun(w))

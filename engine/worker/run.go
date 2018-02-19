@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
 )
@@ -104,27 +105,47 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 		}
 	}
 
-	// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
-	var getFilteredEnv = func(s string) string {
-		if strings.HasPrefix(s, "CDS_") {
-			return s
+	if a.Name != sdk.ScriptAction {
+		// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
+		var getFilteredEnv = func(s string) string {
+			if strings.HasPrefix(s, "CDS_") {
+				return s
+			}
+			return os.Getenv(s)
 		}
-		return os.Getenv(s)
-	}
-	for i := range a.Parameters {
-		a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+		for i := range a.Parameters {
+			a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+		}
 	}
 
 	return w.runJob(ctx, a, buildID, params, stepOrder, stepName)
 }
 
 func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) {
-	for i := range a.Parameters {
+	if w.currentJob.wJob != nil { // cds workflow, use helper from interpolate
+		tmp := map[string]string{}
 		for _, v := range w.currentJob.buildVariables {
-			a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+			tmp[v.Name] = v.Value
 		}
 		for _, v := range params {
-			a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+			tmp[v.Name] = v.Value
+		}
+
+		for i := range a.Parameters {
+			var err error
+			a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, tmp)
+			if err != nil {
+				log.Error("replaceVariablesPlaceholder> Error on interpolate: %s", err)
+			}
+		}
+	} else { // pipeline build Job
+		for i := range a.Parameters {
+			for _, v := range w.currentJob.buildVariables {
+				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+			}
+			for _, v := range params {
+				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+			}
 		}
 	}
 }

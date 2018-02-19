@@ -34,7 +34,7 @@ func (api *API) getApplicationsHandler() Handler {
 			return sdk.WrapError(err, "getApplicationsHandler> Cannot load applications from db")
 		}
 
-		return WriteJSON(w, r, applications, http.StatusOK)
+		return WriteJSON(w, applications, http.StatusOK)
 	}
 }
 
@@ -49,7 +49,7 @@ func (api *API) getApplicationTreeHandler() Handler {
 			return sdk.WrapError(err, "getApplicationTreeHandler> Cannot load CD Tree for applications %s", applicationName)
 		}
 
-		return WriteJSON(w, r, tree, http.StatusOK)
+		return WriteJSON(w, tree, http.StatusOK)
 	}
 }
 
@@ -94,7 +94,7 @@ func (api *API) getPipelineBuildBranchHistoryHandler() Handler {
 			return sdk.WrapError(errL, "getPipelineBranchHistoryHandler> Cannot get history by branch")
 		}
 
-		return WriteJSON(w, r, pbs, http.StatusOK)
+		return WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
@@ -111,7 +111,7 @@ func (api *API) getApplicationDeployHistoryHandler() Handler {
 			return sdk.WrapError(errL, "getPipelineDeployHistoryHandler> Cannot get history by env")
 		}
 
-		return WriteJSON(w, r, pbs, http.StatusOK)
+		return WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
@@ -133,7 +133,7 @@ func (api *API) getApplicationBranchVersionHandler() Handler {
 			return sdk.WrapError(err, "getApplicationBranchVersionHandler: Cannot load version for application %s on branch %s with remote %s", applicationName, branch, remote)
 		}
 
-		return WriteJSON(w, r, versions, http.StatusOK)
+		return WriteJSON(w, versions, http.StatusOK)
 	}
 }
 
@@ -177,7 +177,7 @@ func (api *API) getApplicationTreeStatusHandler() Handler {
 			hooks,
 		}
 
-		return WriteJSON(w, r, response, http.StatusOK)
+		return WriteJSON(w, response, http.StatusOK)
 	}
 }
 
@@ -287,7 +287,7 @@ func (api *API) getApplicationHandler() Handler {
 			app.Usage = &usage
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -364,7 +364,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 
 		//Yo analyze branch and delete pipeline_build for old branches...
 
-		return WriteJSON(w, r, branches, http.StatusOK)
+		return WriteJSON(w, branches, http.StatusOK)
 	}
 }
 
@@ -424,7 +424,7 @@ func (api *API) getApplicationRemoteHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, r, remotes, http.StatusOK)
+		return WriteJSON(w, remotes, http.StatusOK)
 	}
 }
 
@@ -436,7 +436,7 @@ func (api *API) addApplicationHandler() Handler {
 
 		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errl != nil {
-			return sdk.WrapError(errl, "addApplicationHandler: Cannot load %s: %s", key)
+			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s: %s", key)
 		}
 
 		var app sdk.Application
@@ -469,11 +469,15 @@ func (api *API) addApplicationHandler() Handler {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot add groups on application")
 		}
 
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectApplicationLastModificationType); err != nil {
+			return sdk.WrapError(err, "addApplicationHandler> Cannot update last modified on project")
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -576,7 +580,7 @@ func (api *API) cloneApplicationHandler() Handler {
 			return sdk.WrapError(err, "cloneApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, newApp, http.StatusOK)
+		return WriteJSON(w, newApp, http.StatusOK)
 	}
 }
 
@@ -688,7 +692,7 @@ func (api *API) updateApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 
 	}
 }

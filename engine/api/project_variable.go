@@ -33,7 +33,7 @@ func (api *API) postEncryptVariableHandler() Handler {
 		}
 
 		variable.Value = encryptedValue
-		return WriteJSON(w, r, variable, http.StatusOK)
+		return WriteJSON(w, variable, http.StatusOK)
 	}
 }
 
@@ -47,7 +47,7 @@ func (api *API) getVariablesAuditInProjectnHandler() Handler {
 			return sdk.WrapError(err, "getVariablesAuditInProjectnHandler: Cannot get variable audit for project %s", key)
 
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -124,7 +124,7 @@ func (api *API) getVariablesInProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
 		}
 
-		return WriteJSON(w, r, p.Variable, http.StatusOK)
+		return WriteJSON(w, p.Variable, http.StatusOK)
 	}
 }
 
@@ -163,7 +163,7 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -305,7 +305,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, newVar, http.StatusOK)
+		return WriteJSON(w, newVar, http.StatusOK)
 	}
 }
 
@@ -329,7 +329,7 @@ func (api *API) getVariableInProjectHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, v, http.StatusOK)
+		return WriteJSON(w, v, http.StatusOK)
 	}
 }
 
@@ -396,7 +396,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -421,6 +421,6 @@ func (api *API) getVariableAuditInProjectHandler() Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInProjectHandler> Cannot load audit for variable %s", varName)
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }

@@ -19,7 +19,7 @@ func (api *API) getWorkflowHooksHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowHooksHandler")
 		}
 
-		return WriteJSON(w, r, hooks, http.StatusOK)
+		return WriteJSON(w, hooks, http.StatusOK)
 	}
 }
 
@@ -93,7 +93,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			m = append(m[0:indexToDelete], m[indexToDelete+1:]...)
 		}
 
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }
 
@@ -105,7 +105,7 @@ func (api *API) getWorkflowHookModelHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelHandler")
 		}
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }
 
@@ -130,7 +130,7 @@ func (api *API) postWorkflowHookModelHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler> Unable to commit transaction")
 		}
 
-		return WriteJSON(w, r, m, http.StatusCreated)
+		return WriteJSON(w, m, http.StatusCreated)
 	}
 }
 
@@ -156,6 +156,6 @@ func (api *API) putWorkflowHookModelHandler() Handler {
 			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to commit transaction")
 		}
 
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }
