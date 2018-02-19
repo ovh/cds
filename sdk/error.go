@@ -259,7 +259,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrDownloadDoesNotExist.ID:                  "File does not exist",
 	ErrTokenNotFound.ID:                         "Token does not exist",
 	ErrWorkflowNotificationNodeRef.ID:           "An invalid workflow node reference has been found, if you want to delete a pipeline from your workflow check if this pipeline isn't referenced in your notifications list",
-	ErrInvalidJobRequirementDuplicateModel.ID:   "Invalid job requirement: you can't select multiple worker models",
+	ErrInvalidJobRequirementDuplicateModel.ID:   "Invalid job requirements: you can't select multiple worker models",
 }
 
 var errorsFrench = map[int]string{
@@ -383,7 +383,7 @@ var errorsFrench = map[int]string{
 	ErrDownloadDoesNotExist.ID:                  "Le fichier n'existe pas",
 	ErrTokenNotFound.ID:                         "Le token n'existe pas",
 	ErrWorkflowNotificationNodeRef.ID:           "Une référence de noeud de workflow est invalide dans vos notifications (si vous souhaitez supprimer un pipeline vérifiez qu'il ne soit plus référencé dans la liste de vos notifications)",
-	ErrInvalidJobRequirementDuplicateModel.ID:   "Pré-requis de job invalide: vous ne pouvez pas séléctionnez plusieurs modèles de worker",
+	ErrInvalidJobRequirementDuplicateModel.ID:   "Pré-requis de job invalides: vous ne pouvez pas séléctionnez plusieurs modèles de worker",
 }
 
 var errorsLanguages = []map[int]string{
