@@ -68,6 +68,11 @@
   revision = "d443b9114f9c050367638a536310fbec36a0de11"
 
 [[projects]]
+  name = "github.com/chzyer/readline"
+  packages = ["."]
+  revision = "f6d7a1f6fbf35bbf9beb80dc63c56a29dcfb759f"
+
+[[projects]]
   branch = "master"
   name = "github.com/containerd/continuity"
   packages = ["pathdriver"]
@@ -1285,6 +1290,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c023668a47ab10f43d9bdf60ba22e7701acaab2cb3b0d484c7cf8d7f23281687"
+  inputs-digest = "1a4e91bc42f731fddceead60a8f36e61d2ebde1ebf25da00e8402f07c44d38c7"
   solver-name = "gps-cdcl"
   solver-version = 1
