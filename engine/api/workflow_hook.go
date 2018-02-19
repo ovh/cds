@@ -77,23 +77,24 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			}
 		}
 
-		indexToDelete := -1
+		models := []sdk.WorkflowHookModel{}
 		for i := range m {
-			if m[i].Name == sdk.RepositoryWebHookModelName {
-				if !repoWebHookEnable {
-					indexToDelete = i
-					break
-				} else {
+			switch m[i].Name {
+			case sdk.RepositoryWebHookModelName:
+				if repoWebHookEnable {
 					m[i].Icon = webHookInfo.Icon
+					models = append(models, m[i])
 				}
+			case sdk.GitPollerModelName:
+				if repoWebHookEnable {
+					models = append(models, m[i])
+				}
+			default:
+				models = append(models, m[i])
 			}
-
-		}
-		if indexToDelete > -1 {
-			m = append(m[0:indexToDelete], m[indexToDelete+1:]...)
 		}
 
-		return WriteJSON(w, m, http.StatusOK)
+		return WriteJSON(w, models, http.StatusOK)
 	}
 }
 
