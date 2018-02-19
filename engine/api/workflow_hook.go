@@ -55,7 +55,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 
 		// Post processing  on repositoryWebHook
 		hasRepoManager := false
-		repoWebHookEnable := false
+		repoWebHookEnable, repoPollerEnable := false, false
 		if node.Context.Application != nil && node.Context.Application.RepositoryFullname != "" {
 			hasRepoManager = true
 		}
@@ -74,6 +74,12 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 					return sdk.WrapError(errWH, "getWorkflowHookModelsHandler> Cannot get vcs web hook info")
 				}
 				repoWebHookEnable = webHookInfo.WebhooksSupported && !webHookInfo.WebhooksDisabled
+
+				pollInfo, errPoll := repositoriesmanager.GetPollingInfos(client)
+				if errPoll != nil {
+					return sdk.WrapError(errPoll, "getWorkflowHookModelsHandler> Cannot get vcs poller info")
+				}
+				repoPollerEnable = pollInfo.PollingSupported && !pollInfo.PollingDisabled
 			}
 		}
 
@@ -86,7 +92,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 					models = append(models, m[i])
 				}
 			case sdk.GitPollerModelName:
-				if repoWebHookEnable {
+				if repoPollerEnable {
 					models = append(models, m[i])
 				}
 			default:
