@@ -152,7 +152,12 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 		return res
 	}
 
-	extractInfo(w, dir, params, clone.Branch, clone.CheckoutCommit, sendLog)
+	// extract info only if we git clone the same repo as current application linked to the pipeline
+	gitURLSSH := sdk.ParameterValue(*params, "git.url")
+	gitURLHTTP := sdk.ParameterValue(*params, "git.http_url")
+	if gitURLSSH == url || gitURLHTTP == url {
+		extractInfo(w, dir, params, clone.Branch, clone.CheckoutCommit, sendLog)
+	}
 
 	stdTaglistErr := new(bytes.Buffer)
 	stdTagListOut := new(bytes.Buffer)
