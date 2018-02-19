@@ -268,7 +268,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 			}
 			defer tx.Rollback()
 
-			wfNodeJobRun, errLj := workflow.LoadAndLockNodeJobRunWait(tx, api.Cache, id)
+			wfNodeJobRun, errLj := workflow.LoadNodeJobRun(tx, api.Cache, id)
 			if errLj != nil {
 				return sdk.WrapError(errLj, "addSpawnInfosPipelineBuildJobHandler> Cannot load node job run")
 			}
