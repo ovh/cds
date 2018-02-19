@@ -1,11 +1,11 @@
 package migrate
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/go-gorp/gorp"
 
-	"fmt"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
@@ -22,6 +22,7 @@ func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
 	if errQ != nil {
 		return
 	}
+
 	for _, id := range ids {
 		if err := migrateProject(db, id, store, u); err != nil {
 			continue
@@ -45,12 +46,11 @@ func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
 		return
 	}
 	for _, id := range envIds {
-		if err := migrateEnvironment(db, id, u); err != nil {
+		if err := migrateEnvironment(db, id); err != nil {
 			continue
 		}
 	}
 }
-
 func loadProjectIDs(db gorp.SqlExecutor) ([]int64, error) {
 	query := `SELECT project_id from project_variable where var_type = 'key'`
 	rows, errQ := db.Query(query)
@@ -79,7 +79,7 @@ func migrateProject(db *gorp.DbMap, projID int64, store cache.Store, u *sdk.User
 	}
 	defer tx.Rollback()
 
-	proj, errP := project.LoadByID(tx, store, projID, u, project.LoadOptions.WithLockNoWait, project.LoadOptions.WithVariablesWithClearPassword)
+	proj, errP := project.LoadByID(tx, store, projID, u, project.LoadOptions.WithLockNoWait, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 	if errP != nil {
 		log.Warning("migrateProject> Cannot get project %d: %s", projID, errP)
 		return errP
@@ -88,32 +88,32 @@ func migrateProject(db *gorp.DbMap, projID int64, store cache.Store, u *sdk.User
 	// find private key
 	keys := findKeyPair(proj.Variable)
 	for _, k := range keys {
-		projectKey := sdk.ProjectKey{
-			ProjectID: projID,
-			Builtin:   false,
-			Key: sdk.Key{
-				Public:  k.public.Value,
-				Private: k.private.Value,
-				Name:    fmt.Sprintf("proj-%s", k.private.Name),
-				Type:    sdk.KeySSHParameter,
-			},
-		}
-		if errK := project.InsertKey(tx, &projectKey); errK != nil {
-			log.Warning("migrateProject> Cannot insert project key %s: %s", k.private.Name, errK)
-			return errK
+		keyName := fmt.Sprintf("proj-%s", k.private.Name)
+		found := false
+		for _, k := range proj.Keys {
+			if k.Name == keyName {
+				found = true
+				break
+			}
 		}
 
-		if errD := project.DeleteVariable(tx, proj, &k.private, u); errD != nil {
-			log.Warning("migrateProject> Unable to delete private key variable %s for project %d: %s", k.private.Name, projID, errD)
-			return errD
-		}
-		if errPub := project.DeleteVariable(tx, proj, &k.public, u); errPub != nil {
-			log.Warning("migrateProject> Unable to delete public key variable %s for project %d: %s", k.public.Name, projID, errPub)
-			return errPub
+		if !found {
+			projectKey := sdk.ProjectKey{
+				ProjectID: projID,
+				Builtin:   false,
+				Key: sdk.Key{
+					Public:  k.public.Value,
+					Private: k.private.Value,
+					Name:    keyName,
+					Type:    sdk.KeySSHParameter,
+				},
+			}
+			if errK := project.InsertKey(tx, &projectKey); errK != nil {
+				log.Warning("migrateProject> Cannot insert project key %s: %s", k.private.Name, errK)
+				return errK
+			}
 		}
 	}
-
-	// TODO Update git clone action on pipeline
 
 	return tx.Commit()
 }
@@ -145,40 +145,38 @@ func migrateApplication(db *gorp.DbMap, appID int64, store cache.Store, u *sdk.U
 		return errT
 	}
 
-	// TODO add with lock application
-	app, errA := application.LoadByID(tx, store, appID, u, application.LoadOptions.WithVariables)
+	app, errA := application.LoadAndLockByID(tx, store, appID, u, application.LoadOptions.WithVariablesWithClearPassword, application.LoadOptions.WithKeys)
 	if errA != nil {
 		log.Warning("migrateApplication> Cannot load application %d: %s", appID, errA)
 	}
 	keys := findKeyPair(app.Variable)
 	for _, k := range keys {
-		appKey := sdk.ApplicationKey{
-			ApplicationID: appID,
-			Key: sdk.Key{
-				Public:  k.public.Value,
-				Private: k.private.Value,
-				Name:    fmt.Sprintf("app-%s", k.private.Name),
-				Type:    sdk.KeySSHParameter,
-			},
-		}
-		if errK := application.InsertKey(tx, &appKey); errK != nil {
-			log.Warning("migrateApplication> Cannot insert application key %s: %s", k.private.Name, errK)
-			return errK
+		keyName := fmt.Sprintf("app-%s", k.private.Name)
+
+		found := false
+		for _, k := range app.Keys {
+			if k.Name == keyName {
+				found = true
+				break
+			}
 		}
 
-		if errD := application.DeleteVariable(tx, store, app, &k.private, u); errD != nil {
-			log.Warning("migrateApplication> Unable to delete private key variable %s for application %d: %s", k.private.Name, appID, errD)
-			return errD
+		if !found {
+			appKey := sdk.ApplicationKey{
+				ApplicationID: appID,
+				Key: sdk.Key{
+					Public:  k.public.Value,
+					Private: k.private.Value,
+					Name:    keyName,
+					Type:    sdk.KeySSHParameter,
+				},
+			}
+			if errK := application.InsertKey(tx, &appKey); errK != nil {
+				log.Warning("migrateApplication> Cannot insert application key %s: %s", k.private.Name, errK)
+				return errK
+			}
 		}
-		if errPub := application.DeleteVariable(tx, store, app, &k.public, u); errPub != nil {
-			log.Warning("migrateProject> Unable to delete public key variable %s for application %d: %s", k.public.Name, appID, errPub)
-			return errPub
-		}
-
 	}
-
-	// TODO Update pipelines
-
 	return tx.Commit()
 }
 
@@ -202,7 +200,7 @@ func loadEnvironmentIDs(db gorp.SqlExecutor) ([]int64, error) {
 	return ids, nil
 }
 
-func migrateEnvironment(db *gorp.DbMap, envID int64, u *sdk.User) error {
+func migrateEnvironment(db *gorp.DbMap, envID int64) error {
 	tx, errT := db.Begin()
 	if errT != nil {
 		log.Warning("migrateEnvironment> Cannot start transaction: %s", errT)
@@ -218,33 +216,39 @@ func migrateEnvironment(db *gorp.DbMap, envID int64, u *sdk.User) error {
 		log.Warning("migrateEnvironment> Cannot load environment %d: %s", envID, errR)
 		return errR
 	}
+	envVars, errV := environment.GetAllVariableByID(tx, envID, environment.WithClearPassword())
+	if errV != nil {
+		log.Warning("migrateEnvironment> Cannot load clear password")
+	}
+	env.Variable = envVars
 	keys := findKeyPair(env.Variable)
 	for _, k := range keys {
-		envKey := sdk.EnvironmentKey{
-			EnvironmentID: envID,
-			Key: sdk.Key{
-				Public:  k.public.Value,
-				Private: k.private.Value,
-				Name:    fmt.Sprintf("env-%s", k.private.Name),
-				Type:    sdk.KeySSHParameter,
-			},
-		}
-		if errK := environment.InsertKey(tx, &envKey); errK != nil {
-			log.Warning("migrateEnvironment> Cannot insert environment key %s: %s", k.private.Name, errK)
-			return errK
+		keyName := fmt.Sprintf("env-%s", k.private.Name)
+
+		found := false
+		for _, k := range env.Keys {
+			if k.Name == keyName {
+				found = true
+				break
+			}
 		}
 
-		if errD := environment.DeleteVariable(tx, envID, &k.private, u); errD != nil {
-			log.Warning("migrateEnvironment> Unable to delete private key variable %s for environment %d: %s", k.private.Name, envID, errD)
-			return errD
-		}
-		if errPub := environment.DeleteVariable(tx, envID, &k.public, u); errPub != nil {
-			log.Warning("migrateEnvironment> Unable to delete public key variable %s for environment %d: %s", k.public.Name, envID, errPub)
-			return errPub
+		if !found {
+			envKey := sdk.EnvironmentKey{
+				EnvironmentID: envID,
+				Key: sdk.Key{
+					Public:  k.public.Value,
+					Private: k.private.Value,
+					Name:    keyName,
+					Type:    sdk.KeySSHParameter,
+				},
+			}
+			if errK := environment.InsertKey(tx, &envKey); errK != nil {
+				log.Warning("migrateEnvironment> Cannot insert environment key %s: %s", k.private.Name, errK)
+				return errK
+			}
 		}
 	}
-	// TODO pipeline keys
-
 	return tx.Commit()
 }
 
@@ -258,7 +262,7 @@ func findKeyPair(vs []sdk.Variable) []keyPair {
 	for _, v := range vs {
 		if v.Type == sdk.KeyVariable {
 			for _, vp := range vs {
-				if strings.HasPrefix(vp.Name, v.Name) {
+				if strings.HasPrefix(vp.Name, v.Name) && strings.HasSuffix(vp.Name, ".pub") {
 					kp := keyPair{
 						private: v,
 						public:  vp,
