@@ -689,7 +689,7 @@
   "workflow_wizard_description": "Choose your workflow options",
   "workflow_edit_as_code": "Edit as code",
   "workflow_hook_delete_title": "Delete the hook",
-  "workflow_hook_delete_msg": "Do you confirm the deletion of this hook ?",
+  "workflow_hook_delete_msg": "Do you confirm the deletion of this hook?",
   "workflow_hook_log_title": "Hook's log",
   "workflow_hook_log_workflow_run": "Workflow run",
 
