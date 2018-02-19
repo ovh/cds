@@ -255,6 +255,7 @@ type Interface interface {
 	PipelineClient
 	ProjectClient
 	QueueClient
+	Navbar() (*sdk.NavbarData, error)
 	Requirements() ([]sdk.Requirement, error)
 	ServiceRegister(sdk.Service) (string, error)
 	UserClient
