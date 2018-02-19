@@ -323,7 +323,7 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	}
 
 	if nbModelReq > 0 {
-		return sdk.ErrInvalidJobRequirement
+		return sdk.ErrInvalidJobRequirementDuplicateModel
 	}
 
 	for i := range a.Requirements {
