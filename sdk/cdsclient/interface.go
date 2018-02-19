@@ -127,7 +127,7 @@ type GroupClient interface {
 type HatcheryClient interface {
 	HatcheryRefresh(int64) error
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
-	HatcheryCount() (int64, error)
+	HatcheryCount(wfNodeRunID int64) (int64, error)
 }
 
 // PipelineClient exposes pipelines related functions
@@ -175,7 +175,7 @@ type QueueClient interface {
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
 	QueueJobBook(isWorkflowJob bool, id int64) error
 	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
-	QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
+	QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo, resync bool) error
 	QueueSendResult(int64, sdk.Result) error
 	QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error)
 	QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error

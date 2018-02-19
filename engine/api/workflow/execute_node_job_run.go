@@ -328,12 +328,12 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.H
 //AddNodeJobAttempt add an hatchery attempt to spawn a job
 func AddNodeJobAttempt(db gorp.SqlExecutor, id, hatcheryID int64) ([]int64, error) {
 	var ids []int64
-	query := "UPDATE workflow_node_run_job SET spawn_attempts = array_append(spawn_attempts, $1) WHERE id = $2 RETURNING (SELECT DISTINCT unnest(spawn_attempts))"
-	rows, err := db.Query(query, hatcheryID, id)
-	if err != nil && err != sql.ErrNoRows {
+	query := "UPDATE workflow_node_run_job SET spawn_attempts = array_append(spawn_attempts, $1) WHERE id = $2"
+	if _, err := db.Exec(query, hatcheryID, id); err != nil && err != sql.ErrNoRows {
 		return ids, sdk.WrapError(err, "AddNodeJobAttempt> cannot update node run job")
 	}
 
+	rows, err := db.Query("SELECT DISTINCT unnest(spawn_attempts) FROM workflow_node_run_job WHERE id = $1", id)
 	var hID int64
 	for rows.Next() {
 		if errS := rows.Scan(&hID); errS != nil {

@@ -162,12 +162,17 @@ func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
 }
 
 // QueueJobSendSpawnInfo sends a spawn info on a job
-func (c *client) QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error {
+func (c *client) QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo, resync bool) error {
 	path := fmt.Sprintf("/queue/workflows/%d/spawn/infos", id)
 	if !isWorkflowJob {
 		// DEPRECATED code -> it's for pipelineBuildJob
 		path = fmt.Sprintf("/queue/%d/spawn/infos", id)
 	}
+
+	if resync {
+		path += "?resync=true"
+	}
+
 	_, err := c.PostJSON(path, &in, nil)
 	return err
 }

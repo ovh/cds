@@ -63,7 +63,7 @@ func (api *API) InitRouter() {
 
 	// Hatchery
 	r.Handle("/hatchery", r.POST(api.registerHatcheryHandler, Auth(false)))
-	r.Handle("/hatchery/count", r.GET(api.hatcheryCountHandler))
+	r.Handle("/hatchery/count/{workflowNodeRunID}", r.GET(api.hatcheryCountHandler))
 	r.Handle("/hatchery/{id}", r.PUT(api.refreshHatcheryHandler))
 
 	// Hooks
