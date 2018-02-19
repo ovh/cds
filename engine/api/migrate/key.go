@@ -24,9 +24,7 @@ func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
 	}
 
 	for _, id := range ids {
-		if err := migrateProject(db, id, store, u); err != nil {
-			continue
-		}
+		migrateProject(db, id, store, u)
 	}
 
 	// Application migration
@@ -35,9 +33,7 @@ func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
 		return
 	}
 	for _, id := range appIds {
-		if err := migrateApplication(db, id, store, u); err != nil {
-			continue
-		}
+		migrateApplication(db, id, store, u)
 	}
 
 	// Environment migration
@@ -46,9 +42,7 @@ func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
 		return
 	}
 	for _, id := range envIds {
-		if err := migrateEnvironment(db, id); err != nil {
-			continue
-		}
+		migrateEnvironment(db, id)
 	}
 }
 func loadProjectIDs(db gorp.SqlExecutor) ([]int64, error) {
@@ -148,6 +142,7 @@ func migrateApplication(db *gorp.DbMap, appID int64, store cache.Store, u *sdk.U
 	app, errA := application.LoadAndLockByID(tx, store, appID, u, application.LoadOptions.WithVariablesWithClearPassword, application.LoadOptions.WithKeys)
 	if errA != nil {
 		log.Warning("migrateApplication> Cannot load application %d: %s", appID, errA)
+		return errA
 	}
 	keys := findKeyPair(app.Variable)
 	for _, k := range keys {
