@@ -130,16 +130,25 @@ func Create(h Interface) {
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				} else if errRec == nil {
 					atomic.AddInt64(&workersStarted, -1)
-
-					if hCount, err := h.Client().HatcheryCount(job.WorkflowNodeRunID); err == nil {
-						if int64(len(job.SpawnAttempts)) < hCount {
-							if _, errQ := h.Client().QueueJobIncAttempts(job.ID); errQ != nil {
-								log.Warning("Hatchery> Create> cannot inc spawn attempts %s", errQ)
-							}
+					found := false
+					for _, hID := range job.SpawnAttempts {
+						if hID == h.ID() {
+							found = true
 						}
-					} else {
-						log.Warning("Hatchery> Create> cannot get hatchery count %s", err)
 					}
+
+					if !found {
+						if hCount, err := h.Client().HatcheryCount(job.WorkflowNodeRunID); err == nil {
+							if int64(len(job.SpawnAttempts)) < hCount {
+								if _, errQ := h.Client().QueueJobIncAttempts(job.ID); errQ != nil {
+									log.Warning("Hatchery> Create> cannot inc spawn attempts %s", errQ)
+								}
+							}
+						} else {
+							log.Warning("Hatchery> Create> cannot get hatchery count %s", err)
+						}
+					}
+
 				} else {
 					atomic.AddInt64(&workersStarted, -1)
 				}
