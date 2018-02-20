@@ -89,6 +89,10 @@ var (
 		return LoadAllKeys(db, app)
 	}
 
+	loadLockNoWait = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		return nil
+	}
+
 	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		return LoadAllDecryptedKeys(db, app)
 	}

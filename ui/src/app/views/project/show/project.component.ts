@@ -94,10 +94,9 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
                 if (!proj.externalChange) {
                     this.project = proj;
                     if (goToDefaultTab) {
-                        if (this.project.workflow_migration !== 'NOT_BEGUN') {
+                        if (this.project.workflow_migration !== 'NOT_BEGUN' && this.selectedTab === 'applications') {
                             this.selectedTab = 'workflows';
-                        } else {
-                            this.selectedTab = 'applications';
+                            goToDefaultTab = false;
                         }
                     }
                 } else if (proj && proj.externalChange) {

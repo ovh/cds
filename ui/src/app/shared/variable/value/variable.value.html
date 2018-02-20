@@ -22,7 +22,7 @@
 
     <!-- Key -->
     <div class="ui form" *ngSwitchCase="'key'">
-        <input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="true" name="value">
+        <input type="password" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="true" name="value">
     </div>
 
     <!-- String -->
