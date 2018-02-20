@@ -4,7 +4,7 @@ import {ActivatedRoute, ResolveEnd, Router} from '@angular/router';
 import {Project} from '../../model/project.model';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
-import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {ProjectStore} from '../../service/project/project.store';
 import {RouterService} from '../../service/router/router.service';
@@ -33,6 +33,8 @@ export class WorkflowComponent implements OnInit {
     selectedNode: WorkflowNode;
     selectedJoinId: number;
     selectedJoin: WorkflowNodeJoin;
+    selectedHook: WorkflowNodeHook;
+    selectedHookId: number;
     selectedNodeRunId: number;
     selectedNodeRunNum: number;
     asCodeEditorOpen: boolean;
@@ -86,6 +88,8 @@ export class WorkflowComponent implements OnInit {
                                 this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
                             } else if (this.selectedJoinId) {
                                 this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
+                            } else if (this.selectedHookId) {
+                                this.selectedHook = Workflow.getHookByID(this.selectedHookId, this.workflow);
                             }
                         }
                         this.loading = false;
@@ -115,11 +119,16 @@ export class WorkflowComponent implements OnInit {
                 if (queryParams['selectedJoinId']) {
                     this.selectedJoinId = Number.isNaN(queryParams['selectedJoinId']) ? null : parseInt(queryParams['selectedJoinId'], 10);
                 }
+                if (queryParams['selectedHookId']) {
+                    this.selectedHookId = Number.isNaN(queryParams['selectedHookId']) ? null : parseInt(queryParams['selectedHookId'], 10);
+                }
 
                 if (this.selectedNodeId && !this.loading) {
                     this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
                 } else if (this.selectedJoinId && !this.loading) {
                     this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
+                } else if (this.selectedHookId && !this.loading) {
+                    this.selectedHook = Workflow.getHookByID(this.selectedHookId, this.workflow);
                 }
             }
         });
@@ -140,24 +149,44 @@ export class WorkflowComponent implements OnInit {
           if (queryp['selectedNodeId']) {
               this.selectedJoinId = null;
               this.selectedJoin = null;
+              this.selectedHookId = null;
+              this.selectedHook = null;
               this.selectedNodeId = Number.isNaN(queryp['selectedNodeId']) ? null : parseInt(queryp['selectedNodeId'], 10);
           } else {
               this.selectedNodeId = null;
               this.selectedNode = null;
+              this.selectedHook = null;
           }
 
           if (queryp['selectedJoinId']) {
               this.selectedNodeId = null;
               this.selectedNode = null;
+              this.selectedHookId = null;
+              this.selectedHook = null;
               this.selectedJoinId = Number.isNaN(queryp['selectedJoinId']) ? null : parseInt(queryp['selectedJoinId'], 10);
           } else {
               this.selectedJoinId = null;
               this.selectedJoin = null;
+              this.selectedHook = null;
+          }
+
+          if (queryp['selectedHookId']) {
+              this.selectedNodeId = null;
+              this.selectedNode = null;
+              this.selectedJoinId = null;
+              this.selectedJoin = null;
+              this.selectedHookId = Number.isNaN(queryp['selectedHookId']) ? null : parseInt(queryp['selectedHookId'], 10);
+          } else {
+              this.selectedJoinId = null;
+              this.selectedJoin = null;
+              this.selectedHook = null;
           }
 
           if (queryp['selectedNodeRunId'] || queryp['selectedNodeRunNum']) {
               this.selectedJoinId = null;
               this.selectedJoin = null;
+              this.selectedHookId = null;
+              this.selectedHook = null;
               this.selectedNodeRunId = Number.isNaN(queryp['selectedNodeRunId']) ? null : parseInt(queryp['selectedNodeRunId'], 10);
               this.selectedNodeRunNum = Number.isNaN(queryp['selectedNodeRunNum']) ? null : parseInt(queryp['selectedNodeRunNum'], 10);
           } else {
@@ -169,6 +198,8 @@ export class WorkflowComponent implements OnInit {
               this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
           } else if (this.selectedJoinId && !this.loading && this.workflow) {
               this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
+          } else if (this.selectedHookId && !this.loading && this.workflow) {
+              this.selectedHook = Workflow.getHookByID(this.selectedHookId, this.workflow);
           }
       });
     }
@@ -182,12 +213,15 @@ export class WorkflowComponent implements OnInit {
         let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
         qps['selectedNodeId'] = null;
         qps['selectedJoinId'] = null;
+        qps['selectedHookId'] = null;
         qps['selectedNodeRunNum'] = null;
         qps['selectedNodeRunId'] = null;
         this.selectedNode = null;
         this.selectedNodeId = null;
         this.selectedJoin = null;
         this.selectedJoinId = null;
+        this.selectedHook = null;
+        this.selectedHookId = null;
         this.selectedNodeRunNum = null;
         this.selectedNodeRunId = null;
 
@@ -208,7 +242,7 @@ export class WorkflowComponent implements OnInit {
     }
 
     displayToggleButton(): boolean {
-        return this.selectedNode == null && this.selectedJoin == null &&
+        return this.selectedNode == null && this.selectedJoin == null && this.selectedHook == null &&
             this.selectedNodeRunId == null && this.selectedNodeRunNum == null;
     }
 }

@@ -26,32 +26,32 @@
             </div>
         </div>
     </h3>
-    <div class="ui fluid vertical menu">
-      <a class="item" (click)="openEditContextModal()">
+    <div class="ui fluid vertical menu noborder">
+      <a class="item noborder" (click)="openEditContextModal()">
         {{ 'workflow_node_context_edit' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="openEditRunConditions()">
+      <a class="item noborder" (click)="openEditRunConditions()">
         {{ 'workflow_node_condition_edit' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">
+      <a class="item noborder" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">
         {{ 'pipeline_label_edit' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="openAddHookModal()" *ngIf="workflow && workflow.root.id === node.id">
+      <a class="item noborder" (click)="openAddHookModal()" *ngIf="workflow && workflow.root.id === node.id">
         {{ 'workflow_node_hook_add' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="openAddParentModal()" *ngIf="workflow && workflow.root.id === node.id">
+      <a class="item noborder" (click)="openAddParentModal()" *ngIf="workflow && workflow.root.id === node.id">
         {{ 'workflow_node_parent' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="openTriggerModal()">
+      <a class="item noborder" (click)="openTriggerModal()">
         {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="createJoin()">
+      <a class="item noborder" (click)="createJoin()">
         {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="linkJoin()">
+      <a class="item noborder" (click)="linkJoin()">
         {{ 'workflow_node_join_link' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="openDeleteNodeModal()">
+      <a class="item noborder" (click)="openDeleteNodeModal()">
         {{ 'workflow_node_delete_btn' | translate }} <i class="angle right icon"></i>
       </a>
     </div>

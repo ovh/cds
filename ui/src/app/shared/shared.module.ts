@@ -24,6 +24,7 @@ import {ParameterFormComponent} from './parameter/form/parameter.form';
 import {ParameterValueComponent} from './parameter/value/parameter.value.component';
 import {DragulaModule} from 'ng2-dragula/ng2-dragula';
 import {WarningModalComponent} from './modal/warning/warning.component';
+import {DeleteModalComponent} from './modal/delete/delete.component';
 import {CommonModule} from '@angular/common';
 import {CutPipe} from './pipes/cut.pipe';
 import {MomentModule} from 'angular2-moment';
@@ -63,6 +64,7 @@ import {SuiModule} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
+import {WorkflowNodeHookDetailsComponent} from './workflow/node/hook/details/hook.details.component';
 import {UsageWorkflowsComponent} from './usage/workflows/usage.workflows.component';
 import {UsageApplicationsComponent} from './usage/applications/usage.applications.component';
 import {UsagePipelinesComponent} from './usage/pipelines/usage.pipelines.component';
@@ -117,6 +119,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
+        DeleteModalComponent,
         WorkflowNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -129,6 +132,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         WorkflowNodeConditionsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
+        WorkflowNodeHookDetailsComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         WorkflowNodeConditionFormComponent,
@@ -197,6 +201,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
+        DeleteModalComponent,
         WorkflowNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteJoinComponent,
@@ -208,6 +213,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         WorkflowNodeConditionsComponent,
         WorkflowNodeRunParamComponent,
         WorkflowNodeHookComponent,
+        WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,

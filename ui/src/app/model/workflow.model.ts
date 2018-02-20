@@ -162,6 +162,40 @@ export class Workflow {
         return node;
     }
 
+    static findNode(w: Workflow, compareFunc): WorkflowNode {
+        let node = WorkflowNode.findNode(w.root, compareFunc);
+        if (!node && w.joins) {
+            quit: for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        node = WorkflowNode.findNode(w.joins[i].triggers[j].workflow_dest_node, compareFunc);
+                        if (node) {
+                            break quit;
+                        }
+                    }
+                }
+            }
+        }
+        return node;
+    }
+
+    static getHookByID(id: number, w: Workflow): WorkflowNodeHook {
+        let hook = WorkflowNode.getHookByID(w.root, id);
+        if (!hook && w.joins) {
+            quit: for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        hook = WorkflowNode.getHookByID(w.joins[i].triggers[j].workflow_dest_node, id);
+                        if (hook) {
+                            break quit;
+                        }
+                    }
+                }
+            }
+        }
+        return hook;
+    }
+
     static removeOldRef(w: Workflow) {
         if (!w.joins) {
             return;
@@ -462,7 +496,7 @@ export class WorkflowNode {
         return null;
     }
 
-    static getNodeByID(node: WorkflowNode, id: number) {
+    static getNodeByID(node: WorkflowNode, id: number): WorkflowNode {
         if (node.id === id) {
             return node;
         }
@@ -477,6 +511,43 @@ export class WorkflowNode {
             }
         }
         return nodeToFind;
+    }
+
+    static findNode(node: WorkflowNode, compareFunc): WorkflowNode {
+        if (compareFunc(node)) {
+            return node;
+        }
+        let nodeToFind: WorkflowNode;
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                let n = WorkflowNode.findNode(node.triggers[i].workflow_dest_node, compareFunc);
+                if (n) {
+                    nodeToFind = n;
+                    break;
+                }
+            }
+        }
+        return nodeToFind;
+    }
+
+    static getHookByID(node: WorkflowNode, id: number): WorkflowNodeHook {
+        if (Array.isArray(node.hooks) && node.hooks.length) {
+            let hook = node.hooks.find((h) => h.id === id);
+            if (hook != null) {
+                return hook;
+            }
+        }
+        let hookToFind: WorkflowNodeHook;
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                let h = WorkflowNode.getHookByID(node.triggers[i].workflow_dest_node, id);
+                if (h) {
+                    hookToFind = h;
+                    break;
+                }
+            }
+        }
+        return hookToFind;
     }
 
     static addRef(refs: string[], root: WorkflowNode) {
