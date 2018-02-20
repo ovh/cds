@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -22,8 +23,9 @@ var shellCmd = cli.Command{
 	Long: `
 CDS Shell Mode. default commands:
 
-- cd: reset current object. running "ls" after "cd" will display Projects List
-- cd <KEY>: go to an object, try to run "ls" after a cd <KEY>
+- cd: reset current position.
+- cd <SOMETHING>: go to an object. Try cd /project/ and tabulation to autocomplete
+- find <SOMETHING>: find a project / application / workflow. not case sensitive
 - help: display this help
 - ls: display current list, quiet format
 - ll: display current list
@@ -124,6 +126,7 @@ func getCompleter() *readline.PrefixCompleter {
 		readline.PcItem("help"),
 		readline.PcItem("cd",
 			readline.PcItemDynamic(listCurrent(false)),
+			readline.PcItemDynamic(findComplete()),
 		),
 		readline.PcItem("ls",
 			readline.PcItemDynamic(listCurrent(false)),
@@ -195,6 +198,13 @@ func getShellCommands() map[string]shellCommandFunc {
 			}
 			current.path = strings.TrimSuffix(current.path, "/")
 		},
+		"find": func(current *shellCurrent, args []string) {
+			if len(args) == 0 {
+				current.path = ""
+				return
+			}
+			current.findCmd(args[0])
+		},
 		"open": func(current *shellCurrent, args []string) {
 			current.openBrowser()
 		},
@@ -212,6 +222,64 @@ func getShellCommands() map[string]shellCommandFunc {
 		},
 	}
 	return m
+}
+
+func findComplete() func(string) []string {
+	return func(line string) []string {
+		words := strings.Split(line, " ")
+		if len(words) == 0 {
+			return nil
+		}
+		nav, err := client.Navbar()
+		if err != nil {
+			return []string{fmt.Sprintf("Error while getting data: %s\n", err)}
+		}
+		if len(nav.Projects) == 0 {
+			return []string{fmt.Sprintf("no project found")}
+		}
+		out := []string{}
+		for _, p := range nav.Projects {
+			out = append(out, "/project/"+p.Key)
+			for _, app := range p.ApplicationNames {
+				out = append(out, "/project/"+p.Key+"/application/"+app)
+			}
+			for _, wf := range p.WorkflowNames {
+				out = append(out, "/project/"+p.Key+"/workflow/"+wf)
+			}
+		}
+		return out
+	}
+}
+
+func (current *shellCurrent) findCmd(search string) {
+	nav, err := client.Navbar()
+	if err != nil {
+		fmt.Printf("Error while getting data: %s\n", err)
+	}
+	if len(nav.Projects) == 0 {
+		fmt.Println("no project found")
+	}
+	r, _ := regexp.Compile("(?i).*(" + search + ").*")
+
+	for _, prj := range nav.Projects {
+		s := r.FindStringSubmatch(prj.Name)
+		s2 := r.FindStringSubmatch(prj.Key)
+		if len(s) == 2 || len(s2) == 2 {
+			fmt.Println("/project/" + prj.Key)
+		}
+		for _, app := range prj.ApplicationNames {
+			s := r.FindStringSubmatch(app)
+			if len(s) == 2 {
+				fmt.Println("/project/" + prj.Key + "/application/" + app)
+			}
+		}
+		for _, wf := range prj.WorkflowNames {
+			s := r.FindStringSubmatch(wf)
+			if len(s) == 2 {
+				fmt.Println("/project/" + prj.Key + "/workflow/" + wf)
+			}
+		}
+	}
 }
 
 func (current *shellCurrent) lsCmd(args []string) {
