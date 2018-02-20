@@ -29,10 +29,6 @@ testcases:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been launched"
 
-- name: run workflow
-  steps:
-  - script: sleep 5
-
 - name: check workflow
   steps:
   - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
@@ -56,10 +52,6 @@ testcases:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #2 has been launched"
 
-- name: run workflow
-  steps:
-  - script: sleep 5
-  
 - name: check workflow run 2
   steps:
   - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2 --format json

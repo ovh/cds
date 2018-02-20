@@ -243,11 +243,19 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			case "json":
 				b, err := json.Marshal(i)
 				ExitOnError(err)
-				fmt.Fprint(cmd.OutOrStdout(), string(b))
+				if ShellMode {
+					fmt.Fprint(cmd.OutOrStdout(), string(b))
+				} else {
+					fmt.Println(string(b))
+				}
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
-				fmt.Fprint(cmd.OutOrStdout(), string(b))
+				if ShellMode {
+					fmt.Fprint(cmd.OutOrStdout(), string(b))
+				} else {
+					fmt.Println(string(b))
+				}
 			default:
 				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
 				e := dump.NewDefaultEncoder(new(bytes.Buffer))

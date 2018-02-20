@@ -189,5 +189,5 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 	}
 
 	wt := &wtags{*run, strings.Join(payload, " "), strings.Join(tags, " ")}
-	return *wt, nil
+	return wt, nil
 }

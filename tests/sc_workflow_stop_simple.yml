@@ -26,10 +26,6 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been launched"
-
-- name: run workflow
-  steps:
-  - script: sleep 5
   
 - name: check workflow
   steps:
