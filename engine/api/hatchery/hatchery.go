@@ -191,8 +191,8 @@ func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.H
 	return &h, nil
 }
 
-// LoadHatcheriesCount retrieves in database the number of hatcheries
-func LoadHatcheriesCount(db gorp.SqlExecutor, wfNodeRunID int64) (int64, error) {
+// CountHatcheries retrieves in database the number of hatcheries
+func CountHatcheries(db gorp.SqlExecutor, wfNodeRunID int64) (int64, error) {
 	query := `
 	SELECT COUNT(1)
 		FROM hatchery

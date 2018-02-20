@@ -301,18 +301,18 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 			return sdk.WrapError(errP, "postSpawnInfosWorkflowJobHandler> Cannot load project")
 		}
 
-		tx1, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
 		}
-		defer tx1.Rollback()
+		defer tx.Rollback()
 
-		if err := workflow.AddSpawnInfosNodeJobRun(tx1, api.Cache, p, id, s); err != nil {
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, s); err != nil {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d", id)
 		}
 
-		if err := tx1.Commit(); err != nil {
-			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx1")
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
 		}
 
 		return nil

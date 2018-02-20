@@ -68,10 +68,10 @@ func (api *API) hatcheryCountHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		wfNodeRunID, err := requestVarInt(r, "workflowNodeRunID")
 		if err != nil {
-			return sdk.WrapError(sdk.ErrWorkflowNodeRunJobNotFound, "cannot convert workflow node run ID")
+			return sdk.WrapError(err, "cannot convert workflow node run ID")
 		}
 
-		count, err := hatchery.LoadHatcheriesCount(api.mustDB(), wfNodeRunID)
+		count, err := hatchery.CountHatcheries(api.mustDB(), wfNodeRunID)
 		if err != nil {
 			return sdk.WrapError(err, "hatcheryCountHandler> cannot get hatcheries count")
 		}
