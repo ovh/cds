@@ -80,8 +80,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 
-	// Specific web ui routes
-	r.Handle("/ui/navbar", r.GET(api.getUINavbarHandler))
+	r.Handle("/navbar", r.GET(api.getNavbarHandler))
 
 	// Import As Code
 	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))

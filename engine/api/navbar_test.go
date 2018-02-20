@@ -11,11 +11,10 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/ui"
 	"github.com/ovh/cds/sdk"
 )
 
-func Test_getUINavbarHandler(t *testing.T) {
+func Test_getNavbarHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -31,7 +30,7 @@ func Test_getUINavbarHandler(t *testing.T) {
 	test.NoError(t, application.Insert(db, api.Cache, proj, &app2, u))
 
 	//Prepare request
-	uri := api.Router.GetRoute("GET", api.getUINavbarHandler, nil)
+	uri := api.Router.GetRoute("GET", api.getNavbarHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
@@ -43,7 +42,7 @@ func Test_getUINavbarHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
-	data := ui.NavbarData{}
+	data := sdk.NavbarData{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &data))
 
 	var projFound, app1Found, app2Found bool
