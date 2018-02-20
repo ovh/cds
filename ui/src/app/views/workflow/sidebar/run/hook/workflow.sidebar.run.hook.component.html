@@ -28,13 +28,16 @@
                     [class.fail]="exec.status === hookStatus.FAIL">
                 </i>
                 <div class="content">
+                  <div class="infoLine" *ngIf="exec.workflow_run">
+                      <i class="tag icon"></i> {{ exec.workflow_run }}
+                  </div>
                   <div class="infoLine" *ngIf="exec.config && exec.config['method'] && exec.config['method'].value">
                       <i class="code icon"></i> {{ exec.config['method'].value }}
                   </div>
                   <div class="infoLine">
                       <i class="calendar icon"></i> {{ (exec.timestamp / 1000000) | date:'short' }}
                   </div>
-                  <div class="infoLine">
+                  <div class="infoLine" *ngIf="exec.processing_timestamp">
                       <i class="checked calendar icon"></i> {{ (exec.processing_timestamp / 1000000) | date:'short' }}
                   </div>
                 </div>

@@ -19,6 +19,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() hook: WorkflowNodeHook;
+    @Input() runNumber: number;
     @Input() readonly = false;
 
     @ViewChild('workflowConfigHook')
@@ -48,12 +49,20 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             .pipe(finalize(() => this.loading = false))
             .subscribe((hook) => {
                 if (Array.isArray(hook.executions) && hook.executions.length) {
+                    let found = false;
                     hook.executions = hook.executions.map((exec) => {
                         if (exec.nb_errors > 0) {
                             exec.status = HookStatus.FAIL;
                         }
+                        if (!found && exec.workflow_run === this.runNumber) {
+                            found = true;
+                        }
                         return exec;
                     });
+
+                    if (found) {
+                        hook.executions = hook.executions.filter((h) => h.workflow_run === this.runNumber);
+                    }
                 }
                 this.hookDetails = hook;
             });

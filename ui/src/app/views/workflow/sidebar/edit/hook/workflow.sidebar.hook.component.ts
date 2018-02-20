@@ -1,7 +1,9 @@
 import {Component, Input, ViewChild, OnInit} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
+import {WorkflowHookTask, HookStatus, TaskExecution} from '../../../../../model/workflow.hook.model';
 import {cloneDeep} from 'lodash';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {WorkflowNodeHookDetailsComponent} from '../../../../../shared/workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
 import {DeleteModalComponent} from '../../../../../shared/modal/delete/delete.component';
@@ -9,6 +11,7 @@ import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
+import {HookService} from '../../../../../service/hook/hook.service';
 import {finalize} from 'rxjs/operators';
 
 @Component({
@@ -28,14 +31,19 @@ export class WorkflowSidebarHookComponent implements OnInit {
     workflowEditHook: WorkflowNodeHookFormComponent;
     @ViewChild('deleteHookModal')
     deleteHookModal: DeleteModalComponent;
+    @ViewChild('workflowDetailsHook')
+    workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     loading = false;
     node: WorkflowNode;
+    hookStatus = HookStatus;
+    hookDetails: WorkflowHookTask;
 
     constructor(
         private _workflowStore: WorkflowStore,
         private _toast: ToastService,
-        private _translate: TranslateService
+        private _translate: TranslateService,
+        private _hook: HookService
     ) {
 
     }
@@ -59,6 +67,21 @@ export class WorkflowSidebarHookComponent implements OnInit {
             return Array.isArray(node.hooks) && node.hooks.length &&
                 node.hooks.find((h) => h.id === hookId);
         });
+
+        this.loading = true;
+        this._hook.getHookLogs(this.project.key, this.workflow.name, this.hook.uuid)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe((hook) => {
+                if (Array.isArray(hook.executions) && hook.executions.length) {
+                    hook.executions = hook.executions.map((exec) => {
+                        if (exec.nb_errors > 0) {
+                            exec.status = HookStatus.FAIL;
+                        }
+                        return exec;
+                    });
+                }
+                this.hookDetails = hook;
+            });
     }
 
     deleteHook() {
@@ -84,5 +107,11 @@ export class WorkflowSidebarHookComponent implements OnInit {
 
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });
+    }
+
+    openHookDetailsModal(taskExec: TaskExecution) {
+        if (this.workflowDetailsHook && this.workflowDetailsHook.show) {
+            this.workflowDetailsHook.show(taskExec);
+        }
     }
 }

@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <h3>{{'workflow_hook_log_title' | translate}}</h3>
-                    <div class="inline fields">
+                    <div class="inline fields" *ngIf="task.workflow_run">
                       <div class="four wide field"><label>{{'workflow_hook_log_workflow_run' | translate}}</label></div>
                       <input type="text" [value]="task.workflow_run" [readonly]="true">
                     </div>

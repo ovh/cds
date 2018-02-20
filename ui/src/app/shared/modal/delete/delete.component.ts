@@ -1,5 +1,6 @@
 import {Component, Output, EventEmitter, Input, ViewChild} from '@angular/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-delete-modal',
@@ -7,31 +8,29 @@ import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
     styleUrls: ['./delete.scss']
 })
 export class DeleteModalComponent {
-
-    private currentEvent: any;
-
     @Input() title: string;
     @Input() msg: string;
-    @Output() event = new EventEmitter<any>();
+    @Output() event = new EventEmitter<boolean>();
 
+    // Ng semantic modal
     @ViewChild('myDeleteModal')
-    private modal: SemanticModalComponent;
+    public myDeleteModal: ModalTemplate<boolean, boolean, void>;
+    modal: ActiveModal<boolean, boolean, void>;
+    modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
-    constructor() { }
+    constructor(private _modalService: SuiModalService) { }
 
-    show(event?: any) {
-        if (event) {
-            this.currentEvent = event;
-        }
-        this.modal.show();
+    show() {
+        this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.myDeleteModal);
+        this.modal = this._modalService.open(this.modalConfig);
     }
 
-    eventAndClose(modal: any) {
-        this.event.emit(this.currentEvent);
-        this.close(modal);
+    eventAndClose() {
+        this.event.emit(true);
+        this.close();
     }
 
-    close(modal: any) {
-        modal.hide();
+    close() {
+        this.modal.approve(true);
     }
 }
