@@ -6,7 +6,7 @@ import (
 )
 
 // IsInArray Check if the element is in the array
-func IsInArray(elt int64, array []int64) bool {
+func IsInArray(elt string, array []string) bool {
 	for _, item := range array {
 		if item == elt {
 			return true
@@ -24,4 +24,15 @@ func RandomString(strlen int) string {
 		result[i] = chars[rand.Intn(len(chars))]
 	}
 	return string(result)
+}
+
+// DeleteEmptyValueFromArray deletes empty value from an array of string
+func DeleteEmptyValueFromArray(array []string) []string {
+	var out []string
+	for _, str := range array {
+		if str != "" {
+			out = append(out, str)
+		}
+	}
+	return out
 }
