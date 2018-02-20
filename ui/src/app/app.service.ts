@@ -55,6 +55,12 @@ export class AppService {
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
+            case 'project.platforms':
+                opts = [
+                  new LoadOpts('withPlatforms', 'platforms')
+                ];
+                this.updateProjectCache(lastUpdate, opts);
+                break;
             case 'project.keys':
                 opts = [
                   new LoadOpts('withKeys', 'keys')

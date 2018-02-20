@@ -1,6 +1,6 @@
 -- +migrate Up
 CREATE TABLE platform_model (
-  id BIGSERIAL,
+  id BIGSERIAL PRIMARY KEY,
   name VARCHAR(50),
   author VARCHAR(50),
   identifier VARCHAR(150),
@@ -14,12 +14,17 @@ CREATE TABLE platform_model (
   compute BOOLEAN
 );
 
+
+
 CREATE TABLE project_platform (
-  id BIGSERIAL,
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(100),
   project_id BIGINT,
   platform_model_id BIGINT,
   config TEXT
 );
+
+
 
 -- +migrate Down
 DROP TABLE platform_model;

@@ -35,12 +35,12 @@ type PlatformModel struct {
 	Compute       bool           `json:"compute" db:"compute"`
 }
 
-// Platform is an instanciation of a platform model
-type Platform struct {
-	ID              int64
-	ProjectID       int64
-	Name            string
-	PlatformModelID int64
-	Model           PlatformModel
-	Config          PlatformConfig
+// ProjectPlatform is an instanciation of a platform model
+type ProjectPlatform struct {
+	ID              int64          `json:"id" db:"id"`
+	ProjectID       int64          `json:"project_id" db:"project_id"`
+	Name            string         `json:"name" db:"name"`
+	PlatformModelID int64          `json:"platform_model_id" db:"platform_model_id"`
+	Model           PlatformModel  `json:"model" db:"-"`
+	Config          PlatformConfig `json:"config" db:"-"`
 }

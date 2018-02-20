@@ -184,6 +184,7 @@
   "common_pipeline_title": "Pipeline: ",
   "common_pipeline": "Pipeline",
   "common_pipelines": "Pipelines",
+  "common_platforms": "Platforms",
   "common_requirements": "Requirements",
   "common_status": "Status",
   "common_test": "Test",
@@ -465,6 +466,12 @@
   "project_variable_list_title": "List of project variables: ",
   "project_variable_form_title": "Add a new variable: ",
   "project_workflows_list": "List of workflows in the project: ",
+
+  "platform_name": "Platform name",
+  "platform_model": "Platform model",
+  "platform_configuration": "Platform configuration",
+
+  "provider_hook": "hook",
 
   "repo_name": "Repository",
   "repoman_delete_msg_ok": "Repository mananger is detached from the project",

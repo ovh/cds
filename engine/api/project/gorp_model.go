@@ -15,14 +15,15 @@ import (
 )
 
 type dbProject sdk.Project
-type dbVariable sdk.Variable
 type dbProjectVariableAudit sdk.ProjectVariableAudit
 type dbProjectKey sdk.ProjectKey
+type dbProjectPlatform sdk.ProjectPlatform
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbProject{}, "project", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableAudit{}, "project_variable_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectKey{}, "project_key", false))
+	gorpmapping.Register(gorpmapping.New(dbProjectPlatform{}, "project_platform", true, "id"))
 }
 
 // PostGet is a db hook
