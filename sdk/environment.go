@@ -10,7 +10,7 @@ import (
 // Environment represent a deployment environment
 type Environment struct {
 	ID                int64             `json:"id" yaml:"-"`
-	Name              string            `json:"name" yaml:"name" cli:"name"`
+	Name              string            `json:"name" yaml:"name" cli:"name,key"`
 	EnvironmentGroups []GroupPermission `json:"groups,omitempty" yaml:"groups"`
 	Variable          []Variable        `json:"variables,omitempty" yaml:"variables"`
 	ProjectID         int64             `json:"-" yaml:"-"`

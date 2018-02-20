@@ -17,6 +17,6 @@ export class NavbarService {
      * @returns {Observable<NavbarData>}
      */
     getData(): Observable<NavbarData> {
-        return this._http.get<NavbarData>('/ui/navbar');
+        return this._http.get<NavbarData>('/navbar');
     }
 }

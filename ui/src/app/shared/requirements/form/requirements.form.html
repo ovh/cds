@@ -39,7 +39,7 @@
                 <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
                     [no-match-found-text]="false">
                 <p *ngIf="workerModelLinked != null">
-                    <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" (click)="closeModal()">
+                    <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" target="_blank" (click)="closeModal()">
                             {{ 'requirement_settings_worker_model' | translate }} {{ newRequirement.value }}
                         </a>
                 </p>

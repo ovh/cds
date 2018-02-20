@@ -9,7 +9,7 @@ import (
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
 	ID            string    `json:"id" cli:"-"`
-	Name          string    `json:"name" cli:"name"`
+	Name          string    `json:"name" cli:"name,key"`
 	LastBeat      time.Time `json:"-" cli:"lastbeat"`
 	GroupID       int64     `json:"group_id" cli:"-"`
 	ModelID       int64     `json:"model_id" cli:"-"`

@@ -1,4 +1,4 @@
-package ui
+package navbar
 
 import (
 	"database/sql"
@@ -13,21 +13,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// NavbarData is the struct returned by getUINavbarHandler
-type NavbarData struct {
-	Projects []NavbarProjectData `json:"projects"`
-}
-
-// NavbarProjectData is the sub struct returned by getUINavbarHandler
-type NavbarProjectData struct {
-	Key              string   `json:"key"`
-	Name             string   `json:"name"`
-	ApplicationNames []string `json:"application_names,omitempty"`
-	WorkflowNames    []string `json:"workflow_names,omitempty"`
-}
-
 // LoadNavbarData returns just the needed data for the ui navbar
-func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data NavbarData, err error) {
+func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data sdk.NavbarData, err error) {
 	var query string
 	var args []interface{}
 	// Admin can gets all project
@@ -109,7 +96,7 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data N
 		}
 
 		data.Projects = append(data.Projects,
-			NavbarProjectData{
+			sdk.NavbarProjectData{
 				Key:              key,
 				Name:             name,
 				ApplicationNames: appNames,
