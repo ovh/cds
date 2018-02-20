@@ -498,6 +498,8 @@
   "requirement_manual_value": "Or enter manually the value:",
   "requirement_options": "Options:",
   "requirement_documentation": "Documentation about requirements",
+  "requirement_error_model": "You can't have multiple requirements of type model",
+  "requirement_error_hostname": "You can't have multiple requirements of type hostname",
 
   "requirement_placeholder_name_binary": "",
   "requirement_placeholder_name_model": "",

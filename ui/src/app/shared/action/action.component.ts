@@ -46,7 +46,7 @@ export class ActionComponent implements OnDestroy {
     @Output() actionEvent = new EventEmitter<ActionEvent>();
 
     collapsed = true;
-
+    configRequirements: {disableModel?: boolean, disableHostname?: boolean} = {};
     constructor(private sharedService: SharedService, private _actionStore: ActionStore, private dragulaService: DragulaService) {
         this._actionStore.getActions().subscribe(mapActions => {
             this.publicActions = mapActions.toArray();
@@ -92,11 +92,23 @@ export class ActionComponent implements OnDestroy {
                 if (indexAdd === -1) {
                     this.editableAction.requirements.push(r.requirement);
                 }
+                if (r.requirement.type === 'model') {
+                    this.configRequirements.disableModel = true;
+                }
+                if (r.requirement.type === 'hostname') {
+                    this.configRequirements.disableHostname = true;
+                }
                 break;
             case 'delete':
                 let indexDelete = this.editableAction.requirements.indexOf(r.requirement);
                 if (indexDelete >= 0) {
                     this.editableAction.requirements.splice(indexDelete, 1);
+                }
+                if (r.requirement.type === 'model') {
+                    this.configRequirements.disableModel = false;
+                }
+                if (r.requirement.type === 'hostname') {
+                    this.configRequirements.disableHostname = false;
                 }
                 break;
         }
@@ -112,6 +124,12 @@ export class ActionComponent implements OnDestroy {
                     req.value = newValue.trim();
                     req.opts = newOpts.replace(/\s/g, '\n');
                 }
+            }
+            if (req.type === 'model') {
+                this.configRequirements.disableModel = true;
+            }
+            if (req.type === 'hostname') {
+                this.configRequirements.disableHostname = true;
             }
         });
     }
