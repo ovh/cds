@@ -23,8 +23,9 @@ var shellCmd = cli.Command{
 	Long: `
 CDS Shell Mode. default commands:
 
-- cd: reset current object. running "ls" after "cd" will display Projects List
-- cd <KEY>: go to an object, try to run "ls" after a cd <KEY>
+- cd: reset current position.
+- cd <SOMETHING>: go to an object. Try cd /project/ and tabulation to autocomplete
+- find <SOMETHING>: find a project / application / workflow. not case sensitive
 - help: display this help
 - ls: display current list, quiet format
 - ll: display current list
