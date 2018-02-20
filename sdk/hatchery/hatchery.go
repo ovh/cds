@@ -192,7 +192,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 					RemoteTime: time.Now(),
 					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
 				})
-				if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos, false); err != nil {
+				if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
 					log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", timestamp, jobID, err)
 				}
 				if err := h.Client().WorkerModelSpawnError(model.ID, fmt.Sprintf("routine> cannot spawn worker %s for job %d: %s", model.Name, jobID, errSpawn)); err != nil {
@@ -212,7 +212,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 				},
 			})
 
-			if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos, false); err != nil {
+			if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
 				log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", timestamp, jobID, err)
 			}
 			return true, nil // ok for this job

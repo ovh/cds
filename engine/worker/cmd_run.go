@@ -315,7 +315,7 @@ func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) {
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
 		}}
-		if err := w.client.QueueJobSendSpawnInfo(true, wjob.ID, infos, false); err != nil {
+		if err := w.client.QueueJobSendSpawnInfo(true, wjob.ID, infos); err != nil {
 			log.Warning("Cannot record QueueJobSendSpawnInfo for job (err spawn): %d %s", wjob.ID, err)
 		}
 		return

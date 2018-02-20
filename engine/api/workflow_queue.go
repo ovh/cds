@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -212,6 +213,60 @@ func (api *API) postIncWorkflowJobAttemptHandler() Handler {
 			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> job already booked")
 		}
 
+		hCount, err := hatchery.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
+		if err != nil {
+			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> cannot get hatcheries count")
+		}
+
+		if int64(len(spawnAttempts)) >= hCount {
+			infos := []sdk.SpawnInfo{
+				{
+					RemoteTime: time.Now(),
+					Message: sdk.SpawnMsg{
+						ID:   sdk.MsgSpawnInfoHatcheryCannotStartJob.ID,
+						Args: []interface{}{},
+					},
+				},
+			}
+
+			p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+			if errP != nil {
+				return sdk.WrapError(errP, "postIncWorkflowJobAttemptHandler> Cannot load project")
+			}
+
+			tx, errBegin := api.mustDB().Begin()
+			if errBegin != nil {
+				return sdk.WrapError(errBegin, "postIncWorkflowJobAttemptHandler> Cannot start transaction")
+			}
+			defer tx.Rollback()
+
+			if err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, infos); err != nil {
+				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot save spawn info on node job run %d", id)
+			}
+
+			wfNodeJobRun, errLj := workflow.LoadNodeJobRun(tx, api.Cache, id)
+			if errLj != nil {
+				return sdk.WrapError(errLj, "postIncWorkflowJobAttemptHandler> Cannot load node job run")
+			}
+
+			wfNodeRun, errLr := workflow.LoadAndLockNodeRunByID(tx, wfNodeJobRun.WorkflowNodeRunID, true)
+			if errLr != nil {
+				return sdk.WrapError(errLr, "postIncWorkflowJobAttemptHandler> Cannot load node run")
+			}
+
+			if found, err := workflow.SyncNodeRunRunJob(tx, wfNodeRun, *wfNodeJobRun); err != nil || !found {
+				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot sync run job (found=%v)", found)
+			}
+
+			if err := workflow.UpdateNodeRun(tx, wfNodeRun); err != nil {
+				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot update node job run")
+			}
+
+			if err := tx.Commit(); err != nil {
+				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot commit tx")
+			}
+		}
+
 		return WriteJSON(w, spawnAttempts, http.StatusOK)
 	}
 }
@@ -232,7 +287,6 @@ func (api *API) getWorkflowJobHandler() Handler {
 
 func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
-		resync := FormBool(r, "resync")
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
 			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
@@ -259,36 +313,6 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 
 		if err := tx1.Commit(); err != nil {
 			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx1")
-		}
-
-		if resync {
-			tx, errBegin := api.mustDB().Begin()
-			if errBegin != nil {
-				return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
-			}
-			defer tx.Rollback()
-
-			wfNodeJobRun, errLj := workflow.LoadNodeJobRun(tx, api.Cache, id)
-			if errLj != nil {
-				return sdk.WrapError(errLj, "addSpawnInfosPipelineBuildJobHandler> Cannot load node job run")
-			}
-
-			wfNodeRun, errLr := workflow.LoadAndLockNodeRunByID(tx, wfNodeJobRun.WorkflowNodeRunID, true)
-			if errLr != nil {
-				return sdk.WrapError(errLr, "addSpawnInfosPipelineBuildJobHandler> Cannot load node run")
-			}
-
-			if _, err := workflow.SyncNodeRunRunJob(tx, wfNodeRun, *wfNodeJobRun); err != nil {
-				return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot sync run job")
-			}
-
-			if err := workflow.UpdateNodeRun(tx, wfNodeRun); err != nil {
-				return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot update node job run")
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
-			}
 		}
 
 		return nil

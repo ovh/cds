@@ -133,25 +133,15 @@ func Create(h Interface) {
 
 					if hCount, err := h.Client().HatcheryCount(job.WorkflowNodeRunID); err == nil {
 						if int64(len(job.SpawnAttempts)) < hCount {
-							spawnAttempts, errQ := h.Client().QueueJobIncAttemps(job.ID)
-							if errQ == nil && int64(len(spawnAttempts)) >= hCount {
-								infos := []sdk.SpawnInfo{
-									{
-										RemoteTime: time.Now(),
-										Message: sdk.SpawnMsg{
-											ID:   sdk.MsgSpawnInfoHatcheryCannotStartJob.ID,
-											Args: []interface{}{},
-										},
-									},
-								}
-								if errS := h.Client().QueueJobSendSpawnInfo(true, job.ID, infos, true); errS != nil {
-									log.Warning("Hatchery> Create> cannot client.QueueJobSendSpawnInfo for job %d: %s", job.ID, errS)
-								}
+							if _, errQ := h.Client().QueueJobIncAttempts(job.ID); errQ != nil {
+								log.Warning("Hatchery> Create> cannot inc spawn attempts %s", errQ)
 							}
 						}
 					} else {
 						log.Warning("Hatchery> Create> cannot get hatchery count %s", err)
 					}
+				} else {
+					atomic.AddInt64(&workersStarted, -1)
 				}
 			}(j)
 		case err := <-errs:

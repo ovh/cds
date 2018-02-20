@@ -162,23 +162,19 @@ func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
 }
 
 // QueueJobSendSpawnInfo sends a spawn info on a job
-func (c *client) QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo, resync bool) error {
+func (c *client) QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error {
 	path := fmt.Sprintf("/queue/workflows/%d/spawn/infos", id)
 	if !isWorkflowJob {
 		// DEPRECATED code -> it's for pipelineBuildJob
 		path = fmt.Sprintf("/queue/%d/spawn/infos", id)
 	}
 
-	if resync {
-		path += "?resync=true"
-	}
-
 	_, err := c.PostJSON(path, &in, nil)
 	return err
 }
 
-// QueueJobIncAttemps add hatcheryID that cannot run this job and return the spawn attempts list
-func (c *client) QueueJobIncAttemps(jobID int64) ([]int64, error) {
+// QueueJobIncAttempts add hatcheryID that cannot run this job and return the spawn attempts list
+func (c *client) QueueJobIncAttempts(jobID int64) ([]int64, error) {
 	var spawnAttempts []int64
 	path := fmt.Sprintf("/queue/workflows/%d/attempt", jobID)
 	_, err := c.PostJSON(path, nil, &spawnAttempts)
