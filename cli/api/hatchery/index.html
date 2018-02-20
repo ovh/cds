@@ -994,6 +994,11 @@
         <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/cli/cdsctl/pipeline/group/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/">
+          <span>import</span>
+        </a>
+    </li>
         </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/pipeline/import/" class="dd-item">
@@ -1603,6 +1608,7 @@
 <ul>
 <li><a href="#post-hatchery">POST <code>/hatchery</code></a></li>
 <li><a href="#put-hatchery-id">PUT <code>/hatchery/&lt;id&gt;</code></a></li>
+<li><a href="#get-hatchery-count-workflownoderunid">GET <code>/hatchery/count/&lt;workflowNodeRunID&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1678,6 +1684,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+refreshHatcheryHandler%22">refreshHatcheryHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-hatchery-count-workflownoderunid">GET <code>/hatchery/count/&lt;workflowNodeRunID&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/hatchery/count/&lt;workflowNodeRunID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+hatcheryCountHandler%22">hatcheryCountHandler</a></td>
 </tr>
 </tbody>
 </table>
