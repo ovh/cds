@@ -63,6 +63,7 @@ func (api *API) InitRouter() {
 
 	// Hatchery
 	r.Handle("/hatchery", r.POST(api.registerHatcheryHandler, Auth(false)))
+	r.Handle("/hatchery/count/{workflowNodeRunID}", r.GET(api.hatcheryCountHandler))
 	r.Handle("/hatchery/{id}", r.PUT(api.refreshHatcheryHandler))
 
 	// Hooks
@@ -80,8 +81,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 
-	// Specific web ui routes
-	r.Handle("/ui/navbar", r.GET(api.getUINavbarHandler))
+	r.Handle("/navbar", r.GET(api.getNavbarHandler))
 
 	// Import As Code
 	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))
@@ -291,6 +291,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery()))
+	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery()))
 	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 3), NeedHatchery()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker()))

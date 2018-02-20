@@ -66,9 +66,5 @@ func workflowRunNumberSetRun(v cli.Values) error {
 		return fmt.Errorf("number parameter have to be an integer")
 	}
 
-	if err := client.WorkflowRunNumberSet(v[_ProjectKey], v[_WorkflowName], number); err != nil {
-		return err
-	}
-
-	return nil
+	return client.WorkflowRunNumberSet(v[_ProjectKey], v[_WorkflowName], number)
 }

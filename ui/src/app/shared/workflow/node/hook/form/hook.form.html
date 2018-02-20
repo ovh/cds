@@ -1,7 +1,8 @@
 <ng-template let-context let-modal="modal" #nodeHookFormModal>
     <div class="header">
-        {{ 'workflow_node_hook_modal_title' | translate }}
-        <div class="deleteButton" *ngIf="canDelete">
+        <span *ngIf="!readonly">{{ 'workflow_node_hook_modal_title' | translate }}</span>
+        <span *ngIf="readonly">{{ 'workflow_node_hook_modal_config_title' | translate }}</span>
+        <div class="deleteButton" *ngIf="canDelete && !readonly">
             <app-delete-button [loading]="loading" [disabled]="loading" (event)="deleteHook()"></app-delete-button>
         </div>
     </div>
@@ -12,7 +13,13 @@
                 <i class="book icon"></i><a href="https://ovh.github.io/cds/workflows/design/hooks/" target="_blank">{{'common_documentation' | translate}}</a>
             </div>
             <ng-container *ngIf="!loadingModels">
-                <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
+                <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}"
+                  [(ngModel)]="selectedHookModel"
+                  (ngModelChange)="updateHook()"
+                  [options]="hooksModel"
+                  [isSearchable]="true"
+                  [isDisabled]="updateMode"
+                  labelField="name" #select>
                     <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                     </sui-select-option>
                 </sui-select>
@@ -28,7 +35,7 @@
                     <div class="inline fields" *ngFor="let k of hook.config | keys">
                         <div class="four wide field"><label>{{k}}</label></div>
                         <div class="twelve wide field">
-                          <input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable" *ngIf="k !== 'payload'">
+                          <input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable || readonly" *ngIf="k !== 'payload'">
                           <ng-container *ngIf="k === 'payload'">
                               <codemirror
                                 [class.invalid]="invalidJSON"
@@ -47,6 +54,6 @@
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" [disabled]="loading || invalidJSON" [class.loading]="loading" (click)="addHook()">{{ 'btn_save' | translate }}</button>
+        <button *ngIf="!readonly" class="ui green button" [disabled]="loading || invalidJSON" [class.loading]="loading" (click)="addHook()">{{ 'btn_save' | translate }}</button>
     </div>
 </ng-template>

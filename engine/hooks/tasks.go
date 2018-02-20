@@ -306,11 +306,11 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		if err != nil {
 			globalErr = err
 			log.Error("Hooks> Unable to run workflow %s", err)
+		} else {
+			//Save the run number
+			e.WorkflowRun = run.Number
+			log.Debug("Hooks> workflow %s/%s#%d has been triggered", t.Config["project"], t.Config["workflow"], run.Number)
 		}
-
-		//Save the run number
-		e.WorkflowRun = run.Number
-		log.Debug("Hooks> workflow %s/%s#%d has been triggered", t.Config["project"], t.Config["workflow"], run.Number)
 	}
 
 	if globalErr != nil {

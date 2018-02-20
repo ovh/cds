@@ -27,6 +27,7 @@ export class WorkflowNodeHookFormComponent {
     @Input() workflow: Workflow;
     @Input() node: WorkflowNode;
     @Input() loading: boolean;
+    @Input() readonly: boolean;
     @Input('hook')
     set hook(data: WorkflowNodeHook) {
         if (data) {
@@ -51,6 +52,7 @@ export class WorkflowNodeHookFormComponent {
     loadingModels = true;
     displayConfig = false;
     invalidJSON = false;
+    updateMode = false;
     codeMirrorConfig: any;
 
     // Ng semantic modal
@@ -84,6 +86,9 @@ export class WorkflowNodeHookFormComponent {
                 this.hooksModel = hms;
                 if (this._hook && this._hook.model) {
                     this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
+                }
+                if (this.selectedHookModel != null) {
+                  this.updateMode = true;
                 }
                 this.operators = wtc.operators;
                 this.conditionNames = wtc.names;

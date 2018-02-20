@@ -18,6 +18,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// ShellMode will os.Exit if false, display only exit code if true
+var ShellMode bool
+
 //ExitOnError if the error is not nil; exit the process with printing help functions and the error
 func ExitOnError(err error, helpFunc ...func() error) {
 	if err == nil {
@@ -29,13 +32,25 @@ func ExitOnError(err error, helpFunc ...func() error) {
 		for _, f := range helpFunc {
 			f()
 		}
-		os.Exit(e.Code)
+		OSExit(e.Code)
 	}
 	fmt.Println("Error:", err.Error())
 	for _, f := range helpFunc {
 		f()
 	}
-	os.Exit(50)
+	OSExit(50)
+}
+
+// OSExit will os.Exit if ShellMode is false, display only exit code if true
+func OSExit(code int) {
+	if ShellMode {
+		// display code only if os.Exit is not ok
+		if code != 0 {
+			fmt.Printf("Command exit with code %d\n", code)
+		}
+	} else {
+		os.Exit(code)
+	}
 }
 
 // NewCommand creates a new cobra command with or without a RunFunc and eventually subCommands
@@ -60,6 +75,7 @@ func NewListCommand(c Command, run RunListFunc, subCommands []*cobra.Command, mo
 
 func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods ...CommandModifier) *cobra.Command {
 	cmd := &cobra.Command{}
+	cmd.SetOutput(os.Stdout)
 	cmd.Use = c.Name
 
 	sort.Sort(orderArgs(c.Args...))
@@ -174,23 +190,26 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	cmd.Run = func(cmd *cobra.Command, args []string) {
 		if c.PreRun != nil {
 			if err := c.PreRun(&c, &args); err != nil {
-				fmt.Println("Error: ", err)
 				ExitOnError(ErrWrongUsage, cmd.Help)
+				return
 			}
 		}
 
-		//Command must receive as leat mandatory args
+		//Command must receive as least mandatory args
 		if len(c.Args)+len(c.Ctx) > len(args) {
 			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
 		}
 
-		//If there is no optionnal args but there more args than expected
+		//If there is no optional args but there more args than expected
 		if c.VariadicArgs.Name == "" && len(c.OptionalArgs) == 0 && (len(args) > len(c.Args)+len(c.Ctx)) {
 			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
 		}
 		//If there is a variadic arg, we condider at least one arg mandatory
 		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) {
 			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
 		}
 
 		vals := argsToVal(args)
@@ -201,14 +220,14 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		case RunFunc:
 			if f == nil {
 				cmd.Help()
-				os.Exit(0)
+				OSExit(0)
 			}
 			ExitOnError(f(vals))
-			os.Exit(0)
+			OSExit(0)
 		case RunGetFunc:
 			if f == nil {
 				cmd.Help()
-				os.Exit(0)
+				OSExit(0)
 			}
 			i, err := f(vals)
 			if err != nil {
@@ -224,13 +243,21 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			case "json":
 				b, err := json.Marshal(i)
 				ExitOnError(err)
-				fmt.Println(string(b))
+				if ShellMode {
+					fmt.Fprint(cmd.OutOrStdout(), string(b))
+				} else {
+					fmt.Println(string(b))
+				}
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
-				fmt.Println(string(b))
+				if ShellMode {
+					fmt.Fprint(cmd.OutOrStdout(), string(b))
+				} else {
+					fmt.Println(string(b))
+				}
 			default:
-				w := tabwriter.NewWriter(os.Stdout, 10, 0, 1, ' ', 0)
+				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
 				e := dump.NewDefaultEncoder(new(bytes.Buffer))
 				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 				e.ExtraFields.DetailedMap = false
@@ -249,7 +276,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		case RunListFunc:
 			if f == nil {
 				cmd.Help()
-				os.Exit(0)
+				OSExit(0)
 			}
 
 			quiet, _ := cmd.Flags().GetBool("quiet")
@@ -282,7 +309,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				}
 
 				if quiet {
-					fmt.Println(item["key"])
+					fmt.Fprintln(cmd.OutOrStdout(), item["key"])
 					continue
 				}
 
@@ -329,7 +356,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 					fmt.Println("nothing to display...")
 					return
 				}
-				table := tablewriter.NewWriter(os.Stdout)
+				table := tablewriter.NewWriter(cmd.OutOrStdout())
 				table.SetHeader(tableHeader)
 				for _, v := range tableData {
 					table.Append(v)
@@ -341,14 +368,14 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		case RunDeleteFunc:
 			if f == nil {
 				cmd.Help()
-				os.Exit(0)
+				OSExit(0)
 			}
 
 			force, _ := cmd.Flags().GetBool("force")
 
 			if !force && !AskForConfirmation("Are you sure to delete?") {
 				fmt.Println("Deletion aborted")
-				os.Exit(0)
+				OSExit(0)
 			}
 
 			err := f(vals)
@@ -356,7 +383,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				fmt.Println("Delete with success")
 			}
 			ExitOnError(err)
-			os.Exit(0)
+			OSExit(0)
 
 		default:
 			panic(fmt.Errorf("Unknown function type: %T", f))

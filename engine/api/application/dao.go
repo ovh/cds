@@ -104,6 +104,43 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 	return load(db, store, projectKey, u, opts, query, args...)
 }
 
+// LoadAndLockByID load and lock given application
+func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
+	var query string
+	var args []interface{}
+
+	if u == nil || u.Admin {
+		query = `
+                SELECT application.*
+                FROM application
+                WHERE application.id = $1 FOR UPDATE NOWAIT`
+		args = []interface{}{id}
+	} else {
+		query = `
+            SELECT distinct application.*
+            FROM application
+            JOIN application_group on application.id = application_group.application_id
+            WHERE application.id = $1
+            AND (
+				application_group.group_id = ANY(string_to_array($2, ',')::int[])
+				OR
+				$3 = ANY(string_to_array($2, ',')::int[])
+			) FOR UPDATE NOWAIT`
+		var groupID string
+
+		for i, g := range u.Groups {
+			if i == 0 {
+				groupID = fmt.Sprintf("%d", g.ID)
+			} else {
+				groupID += "," + fmt.Sprintf("%d", g.ID)
+			}
+		}
+		args = []interface{}{id, groupID, group.SharedInfraGroup.ID}
+	}
+
+	return load(db, store, "", u, opts, query, args...)
+}
+
 // LoadByID load an application from DB
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	var query string

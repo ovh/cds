@@ -110,7 +110,7 @@ func Create(h Interface) {
 			}
 			go func(job sdk.PipelineBuildJob) {
 				atomic.AddInt64(&workersStarted, 1)
-				if isRun := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
+				if isRun, _ := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, []int64{}, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				} else {
 					atomic.AddInt64(&workersStarted, -1)
@@ -125,9 +125,30 @@ func Create(h Interface) {
 				// count + 1 here, and remove -1 if worker is not started
 				// this avoid to spawn to many workers compare
 				atomic.AddInt64(&workersStarted, 1)
-				if isRun := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
+				if isRun, errRec := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.SpawnAttempts, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
+				} else if errRec == nil {
+					atomic.AddInt64(&workersStarted, -1)
+					found := false
+					for _, hID := range job.SpawnAttempts {
+						if hID == h.ID() {
+							found = true
+						}
+					}
+
+					if !found {
+						if hCount, err := h.Client().HatcheryCount(job.WorkflowNodeRunID); err == nil {
+							if int64(len(job.SpawnAttempts)) < hCount {
+								if _, errQ := h.Client().QueueJobIncAttempts(job.ID); errQ != nil {
+									log.Warning("Hatchery> Create> cannot inc spawn attempts %s", errQ)
+								}
+							}
+						} else {
+							log.Warning("Hatchery> Create> cannot get hatchery count %s", err)
+						}
+					}
+
 				} else {
 					atomic.AddInt64(&workersStarted, -1)
 				}

@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {HttpClient} from '@angular/common/http';
-import {WorkflowHookModel} from '../../model/workflow.hook.model';
+import {WorkflowHookModel, WorkflowHookTask} from '../../model/workflow.hook.model';
 import {Workflow, WorkflowNode} from '../../model/workflow.model';
 import {Project} from '../../model/project.model';
 import 'rxjs/add/observable/of';
@@ -20,5 +20,9 @@ export class HookService {
             this.models = <Array<WorkflowHookModel>>ms;
             return ms;
         });
+    }
+
+    getHookLogs(projectKey: string, workflowName: string, uuid: string): Observable<WorkflowHookTask> {
+      return this._http.get<WorkflowHookTask>(`/project/${projectKey}/workflows/${workflowName}/hooks/${uuid}`);
     }
 }

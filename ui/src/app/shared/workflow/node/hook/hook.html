@@ -1,11 +1,3 @@
-<div class="workflowHook" (click)="openEditHookModal()" [class.pointing]="!readonly">
+<div class="workflowHook pointing" (click)="openEditHookSidebar()" [class.active]="hook.id === selectedHookId">
     <i class="{{icon}} icon"></i>
 </div>
-<app-workflow-node-hook-form
-  [project]="project"
-  [workflow]="workflow"
-  [node]="node"
-  (hookEvent)="updateHook($event)"
-  [loading]="loading"
-  [hook]="hook" #editHook>
-</app-workflow-node-hook-form>
