@@ -794,6 +794,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/navbar/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/engine/config/new/</loc>
   </url>
   
@@ -906,6 +910,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/shell/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/action/show/</loc>
   </url>
   
@@ -971,10 +979,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/token/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/cli/api/ui/</loc>
   </url>
   
   <url>

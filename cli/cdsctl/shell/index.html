@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Plugins Actions :: CDS - Continuous Delivery Service</title>
+    <title>shell :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/workflows/pipelines/actions/plugins/">
+  <body class="" data-url="/cli/cdsctl/shell/">
     <nav id="sidebar" class="">
 
 
@@ -131,10 +131,9 @@
     </li>
           
           
-    <li data-nav-id="/workflows/" class="dd-item parent">
+    <li data-nav-id="/workflows/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/">
-        <span>Building CDS Workflows</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Building CDS Workflows</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/design/" class="dd-item">
@@ -213,10 +212,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/" class="dd-item parent">
+    <li data-nav-id="/workflows/pipelines/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/pipelines/">
-        <span>Building Pipelines</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Building Pipelines</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/variables/" class="dd-item">
@@ -224,10 +222,9 @@
           <span>Variables</span>
         </a>
     </li>
-    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item parent">
+    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/pipelines/actions/">
-        <span>Actions</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/pipelines/actions/builtin/" class="dd-item">
@@ -299,10 +296,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item parent active">
+    <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/">
-        <span>Plugins Actions</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Plugins Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/actions/plugins/write-plugin/" class="dd-item">
@@ -479,9 +475,10 @@
     </li>
           
           
-    <li data-nav-id="/cli/" class="dd-item">
+    <li data-nav-id="/cli/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/">
-        <span>Command Line &amp; REST API</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Command Line &amp; REST API</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/api/" class="dd-item">
@@ -626,9 +623,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/">
-        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>cdsctl</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
@@ -1103,7 +1101,7 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/cli/cdsctl/shell/" class="dd-item">
+      <li data-nav-id="/cli/cdsctl/shell/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/cdsctl/shell/">
           <span>shell</span>
         </a>
@@ -1566,7 +1564,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/pipelines/actions/plugins/_index.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/shell.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1589,12 +1587,7 @@
 
 
 
-
-
-
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/actions/'>Actions</a> > Plugins Actions
-
- 
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > shell
 
  
 
@@ -1607,7 +1600,20 @@
             </div>
             <div class="progress">
     <div class="wrapper">
-
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#cdsctl-shell">cdsctl shell</a>
+<ul>
+<li><a href="#synopsis">Synopsis</a></li>
+<li><a href="#options">Options</a></li>
+<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
+<li><a href="#see-also">SEE ALSO</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
     </div>
 </div>
 
@@ -1617,7 +1623,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Plugins Actions</h1>
+                <h1>shell</h1>
                 <p></p>
             </div>
           
@@ -1625,36 +1631,59 @@
 
 
 
-<p>CDS Plugin System lets users develop complex actions. See <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/">How to write a plugin</a></p>
-
-<p>CDS Administrators have to import plugins on CDS to let user use them.</p>
-
-<p>Plugins from <a href="https://github.com/ovh/cds/tree/master/contrib/plugins">CDS Contributions</a>:</p>
 
 
+<h2 id="cdsctl-shell">cdsctl shell</h2>
 
-<ul class="children children-li"><li>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/" >Write a Plugin</a></li><li>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/" >plugin-download</a></li><li>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-group-tmpl/" >plugin-group-tmpl</a></li><li>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-kafka-publish/" >plugin-kafka-publish</a></li><li>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-marathon/" >plugin-marathon</a></li><li>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-ssh-cmd/" >plugin-ssh-cmd</a></li><li>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-tmpl/" >plugin-tmpl</a></li><li>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-venom/" >plugin-venom</a></li>
+<p>cdsctl interactive shell</p>
+
+<h3 id="synopsis">Synopsis</h3>
+
+<p>CDS Shell Mode. default commands:</p>
+
+<ul>
+<li>cd: reset current position.</li>
+<li>cd <SOMETHING>: go to an object. Try cd /project/ and tabulation to autocomplete</li>
+<li>find <SOMETHING>: find a project / application / workflow. not case sensitive</li>
+<li>help: display this help</li>
+<li>ls: display current list, quiet format</li>
+<li>ll: display current list</li>
+<li>mode: display current mode. Choose mode with &ldquo;mode vi&rdquo; ou &ldquo;mode emacs&rdquo;</li>
+<li>open: open CDS WebUI with current context</li>
+<li>version: same as cdsctl version command</li>
 </ul>
 
+<p>Other commands are available depending on your position. Example, run interactively a workflow:</p>
 
+<p>cd /project/MY_PRJ_KEY/workflow/MY_WF
+  run -i</p>
 
+<pre><code>cdsctl shell [flags]
+</code></pre>
 
+<h3 id="options">Options</h3>
 
+<pre><code>  -h, --help   help for shell
+</code></pre>
+
+<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
+
+<pre><code>  -f, --file string   set configuration file
+  -k, --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
+  -w, --no-warnings   do not display warnings
+  -v, --verbose       verbose output
+</code></pre>
+
+<h3 id="see-also">SEE ALSO</h3>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/cdsctl/">cdsctl</a>  - CDS Command line utility</li>
+</ul>
 
 
 <footer class=" footline" >
 	
 </footer>
-
-
 
 
 
@@ -1669,8 +1698,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-python-pylint/" title="cds-python-pylint"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/" title="Write a Plugin" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/project/variable/update/" title="update"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/signup/" title="signup" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -1690,3 +1719,4 @@
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
+

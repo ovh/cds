@@ -552,6 +552,11 @@
           <span>mon</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/navbar/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/navbar/">
+          <span>navbar</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/notification/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/notification/">
           <span>notification</span>
@@ -595,11 +600,6 @@
       <li data-nav-id="/cli/api/suggest/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/suggest/">
           <span>suggest</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/api/ui/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/api/ui/">
-          <span>ui</span>
         </a>
     </li>
       <li data-nav-id="/cli/api/user/" class="dd-item active">
@@ -1100,6 +1100,11 @@
         </ul>
     </li>
         </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/shell/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/shell/">
+          <span>shell</span>
+        </a>
     </li>
       <li data-nav-id="/cli/cdsctl/signup/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/signup/">
@@ -1602,9 +1607,9 @@
 <li>
 <ul>
 <li><a href="#getusers-fetches-all-users-from-databases">GetUsers fetches all users from databases</a></li>
-<li><a href="#deleteuser-removes-a-user">DeleteUser removes a user</a></li>
-<li><a href="#updateuser-modifies-user-informations">UpdateUser modifies user informations</a></li>
 <li><a href="#getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</a></li>
+<li><a href="#updateuser-modifies-user-informations">UpdateUser modifies user informations</a></li>
+<li><a href="#deleteuser-removes-a-user">DeleteUser removes a user</a></li>
 <li><a href="#confirmuser-verify-token-send-via-email-and-mark-user-as-verified">ConfirmUser verify token send via email and mark user as verified</a></li>
 <li><a href="#getusergroups-returns-groups-of-the-user">getUserGroups returns groups of the user</a></li>
 <li><a href="#post-user-username-reset">POST <code>/user/&lt;username&gt;/reset</code></a></li>
@@ -1663,7 +1668,7 @@
 </tbody>
 </table>
 
-<h3 id="deleteuser-removes-a-user">DeleteUser removes a user</h3>
+<h3 id="getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</h3>
 
 <table>
 <thead>
@@ -1676,7 +1681,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>GET</td>
 </tr>
 
 <tr>
@@ -1686,7 +1691,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteUserHandler%22">deleteUserHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1719,7 +1724,7 @@
 </tbody>
 </table>
 
-<h3 id="getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</h3>
+<h3 id="deleteuser-removes-a-user">DeleteUser removes a user</h3>
 
 <table>
 <thead>
@@ -1732,7 +1737,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -1742,7 +1747,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteUserHandler%22">deleteUserHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1961,7 +1966,7 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/api/ui/" title="ui"> <i class="fa fa-chevron-left"></i></a>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/api/suggest/" title="suggest"> <i class="fa fa-chevron-left"></i></a>
             <a class="nav nav-next" href="https://ovh.github.io/cds/cli/api/variable/" title="variable" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>

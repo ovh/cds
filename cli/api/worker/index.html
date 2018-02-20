@@ -552,6 +552,11 @@
           <span>mon</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/navbar/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/navbar/">
+          <span>navbar</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/notification/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/notification/">
           <span>notification</span>
@@ -595,11 +600,6 @@
       <li data-nav-id="/cli/api/suggest/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/suggest/">
           <span>suggest</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/api/ui/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/api/ui/">
-          <span>ui</span>
         </a>
     </li>
       <li data-nav-id="/cli/api/user/" class="dd-item">
@@ -1100,6 +1100,11 @@
         </ul>
     </li>
         </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/shell/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/shell/">
+          <span>shell</span>
+        </a>
     </li>
       <li data-nav-id="/cli/cdsctl/signup/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/signup/">
@@ -1607,8 +1612,8 @@
 <li><a href="#post-worker-checking">POST <code>/worker/checking</code></a></li>
 <li><a href="#get-worker-model">GET <code>/worker/model</code></a></li>
 <li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
-<li><a href="#delete-worker-model-permmodelid">DELETE <code>/worker/model/&lt;permModelID&gt;</code></a></li>
 <li><a href="#put-worker-model-permmodelid">PUT <code>/worker/model/&lt;permModelID&gt;</code></a></li>
+<li><a href="#delete-worker-model-permmodelid">DELETE <code>/worker/model/&lt;permModelID&gt;</code></a></li>
 <li><a href="#put-worker-model-book-permmodelid">PUT <code>/worker/model/book/&lt;permModelID&gt;</code></a></li>
 <li><a href="#get-worker-model-capability-type">GET <code>/worker/model/capability/type</code></a></li>
 <li><a href="#get-worker-model-communication">GET <code>/worker/model/communication</code></a></li>
@@ -1809,34 +1814,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-worker-model-permmodelid">DELETE <code>/worker/model/&lt;permModelID&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model/&lt;permModelID&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22">deleteWorkerModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-worker-model-permmodelid">PUT <code>/worker/model/&lt;permModelID&gt;</code></h3>
 
 <table>
@@ -1861,6 +1838,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateWorkerModelHandler%22">updateWorkerModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-worker-model-permmodelid">DELETE <code>/worker/model/&lt;permModelID&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/worker/model/&lt;permModelID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22">deleteWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>

@@ -551,6 +551,11 @@
           <span>mon</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/navbar/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/navbar/">
+          <span>navbar</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/notification/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/notification/">
           <span>notification</span>
@@ -594,11 +599,6 @@
       <li data-nav-id="/cli/api/suggest/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/suggest/">
           <span>suggest</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/api/ui/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/api/ui/">
-          <span>ui</span>
         </a>
     </li>
       <li data-nav-id="/cli/api/user/" class="dd-item">
@@ -1101,6 +1101,11 @@
         </ul>
     </li>
         </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/shell/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/shell/">
+          <span>shell</span>
+        </a>
     </li>
       <li data-nav-id="/cli/cdsctl/signup/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/signup/">
@@ -1647,7 +1652,11 @@
 
 <h3 id="options">Options</h3>
 
-<pre><code>  -h, --help   help for status
+<pre><code>      --fields string   Only display specified object fields. 'empty' will display all fields, 'all' will display all object fields, 'field1,field2' to select multiple fields
+      --filter string   Filter output based on conditions provided
+      --format string   Output format: table|json|yaml (default &quot;table&quot;)
+  -h, --help            help for status
+  -q, --quiet           Only display object's key
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
