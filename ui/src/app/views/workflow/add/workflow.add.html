@@ -50,13 +50,15 @@
 
                                     </div>
                                     <div class="fourteen wide column" *ngIf="!asCode">
-                                        <div class="field">
+                                        <div class="field" [class.error]="name.invalid">
                                             <label>{{ 'workflow_name' | translate}}</label>
                                             <input
                                               name="name"
                                               class="ui input"
                                               [(ngModel)]="workflow.name"
-                                              pattern="^[a-zA-Z0-9._-]{1,}$">
+                                              pattern="^[a-zA-Z0-9._-]{1,}$"
+                                              #name="ngModel">
+                                              <p class="red" *ngIf="name.invalid">{{'workflow_name_error' | translate}}</p>
                                         </div>
                                         <div class="field">
                                             <label>{{ 'workflow_description' | translate}}</label>
@@ -65,7 +67,7 @@
                                         <div class="field">
                                             <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
                                             <button class="ui right floated green button" type="button" (click)="goToNextStep()"
-                                                    [disabled]="!workflow.name" [class.loading]="loading">{{ 'btn_next' | translate }}
+                                                    [disabled]="!workflow.name || name.invalid" [class.loading]="loading">{{ 'btn_next' | translate }}
                                             </button>
                                         </div>
                                     </div>

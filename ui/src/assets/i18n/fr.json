@@ -679,6 +679,7 @@
   "workflow_join_trigger_src_title": "Suppression",
   "workflow_loading": "Chargement du workflow...",
   "workflow_name": "Nom du workflow",
+  "workflow_name_error": "Le nom du workflow doit suivre ce pattern ^[a-zA-Z0-9._-]{1,}$",
   "workflow_preview_mode": "Votre workflow est dans un état de prévisualisation",
   "workflow_node_context_edit": "Contexte du pipeline",
   "workflow_node_launch": "Actions sur le pipeline",
