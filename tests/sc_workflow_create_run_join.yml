@@ -31,7 +31,7 @@ testcases:
 
 - name: run workflow
   steps:
-  - script: sleep 1
+  - script: sleep 5
 
 - name: check workflow
   steps:
