@@ -169,6 +169,24 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 	(*appConfig.Labels)["CDS_APPLICATION"] = a.Arguments().Get("cds.application")
 	(*appConfig.Labels)["CDS_ENVIRONMENT"] = a.Arguments().Get("cds.environment")
 
+	cdsWorkflow := a.Arguments().Get("cds.workflow")
+	if cdsWorkflow != "" {
+		(*appConfig.Labels)["CDS_WORKFLOW"] = cdsWorkflow
+	}
+
+	cdsRunNumber := a.Arguments().Get("cds.run")
+	if cdsRunNumber != "" {
+		(*appConfig.Labels)["CDS_RUN"] = cdsRunNumber
+	}
+
+	gitURL := a.Arguments().Get("git.url")
+	gitHTTPURL := a.Arguments().Get("git.http_url")
+	if gitURL != "" {
+		(*appConfig.Labels)["CDS_GIT_URL"] = gitURL
+	} else if gitHTTPURL != "" {
+		(*appConfig.Labels)["CDS_GIT_URL"] = gitHTTPURL
+	}
+
 	gitBranch := a.Arguments().Get("git.branch")
 	if gitBranch != "" {
 		(*appConfig.Labels)["CDS_GIT_BRANCH"] = gitBranch
