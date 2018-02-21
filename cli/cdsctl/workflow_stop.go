@@ -10,10 +10,9 @@ var workflowStopCmd = cli.Command{
 	Name:  "stop",
 	Short: "Stop a CDS workflow or a specific node name",
 	Long:  "Stop a CDS workflow or a specific node name",
-	Example: `
-		cdsctl workflow stop # Stop the workflow run for the current repo and the current hash
-		cdsctl workflow stop MYPROJECT myworkflow 5 # To stop a workflow run on number 5
-		cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node run on workflow run 5
+	Example: `cdsctl workflow stop # Stop the workflow run for the current repo and the current hash
+cdsctl workflow stop MYPROJECT myworkflow 5 # To stop a workflow run on number 5
+cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node run on workflow run 5
 	`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},

@@ -13,9 +13,10 @@ var workflowImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import a workflow",
 	Long: `
-		In case you want to import just your workflow.
+In case you want to import just your workflow.
 		
-		If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
+If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
+
 	`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
