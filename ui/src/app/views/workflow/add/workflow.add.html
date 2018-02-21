@@ -14,7 +14,7 @@
                           <div class="description">{{'workflow_wizard_description' | translate}}</div>
                         </div>
                       </div>
-                      <div class="step pointing" [class.disabled]="!workflow.name" [class.active]="currentStep === 1" (click)="goToNextStep(1)">
+                      <div class="step pointing" [class.disabled]="!workflow.name || duplicateWorkflowName" [class.active]="currentStep === 1" (click)="goToNextStep(1)">
                         <i class="sitemap icon"></i>
                         <div class="content">
                           <div class="title">{{'common_pipeline' | translate}}</div>
@@ -50,15 +50,17 @@
 
                                     </div>
                                     <div class="fourteen wide column" *ngIf="!asCode">
-                                        <div class="field" [class.error]="name.invalid">
+                                        <div class="field" [class.error]="name.invalid || duplicateWorkflowName">
                                             <label>{{ 'workflow_name' | translate}}</label>
                                             <input
                                               name="name"
                                               class="ui input"
                                               [(ngModel)]="workflow.name"
                                               pattern="^[a-zA-Z0-9._-]{1,}$"
+                                              (ngModelChange)="duplicateWorkflowName = false"
                                               #name="ngModel">
                                               <p class="red" *ngIf="name.invalid">{{'workflow_name_error' | translate}}</p>
+                                              <p class="red" *ngIf="duplicateWorkflowName">{{'workflow_name_error_duplicate' | translate}}</p>
                                         </div>
                                         <div class="field">
                                             <label>{{ 'workflow_description' | translate}}</label>
@@ -67,7 +69,7 @@
                                         <div class="field">
                                             <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
                                             <button class="ui right floated green button" type="button" (click)="goToNextStep()"
-                                                    [disabled]="!workflow.name || name.invalid" [class.loading]="loading">{{ 'btn_next' | translate }}
+                                                    [disabled]="!workflow.name || name.invalid || duplicateWorkflowName" [class.loading]="loading">{{ 'btn_next' | translate }}
                                             </button>
                                         </div>
                                     </div>

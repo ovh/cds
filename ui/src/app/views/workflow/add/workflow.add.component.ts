@@ -27,6 +27,7 @@ export class WorkflowAddComponent {
     updated = false;
     loading = false;
     currentStep = 0;
+    duplicateWorkflowName = false;
 
     constructor(private _activatedRoute: ActivatedRoute,
                 private _router: Router, private _workflowStore: WorkflowStore,
@@ -64,6 +65,12 @@ export class WorkflowAddComponent {
     }
 
     goToNextStep(stepNum: number): void {
+      if (Array.isArray(this.project.workflow_names) && this.project.workflow_names.find((w) => w === this.workflow.name)) {
+        this.duplicateWorkflowName = true;
+        return;
+      }
+
+      this.duplicateWorkflowName = false;
       if (stepNum != null) {
         this.currentStep = stepNum;
       } else {
