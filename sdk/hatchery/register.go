@@ -110,7 +110,7 @@ func Create(h Interface) {
 			}
 			go func(job sdk.PipelineBuildJob) {
 				atomic.AddInt64(&workersStarted, 1)
-				if isRun, _ := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, []int64{}, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
+				if isRun, _, _ := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, []int64{}, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				} else {
 					atomic.AddInt64(&workersStarted, -1)
@@ -125,10 +125,10 @@ func Create(h Interface) {
 				// count + 1 here, and remove -1 if worker is not started
 				// this avoid to spawn to many workers compare
 				atomic.AddInt64(&workersStarted, 1)
-				if isRun, errRec := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.SpawnAttempts, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
+				if isRun, temptToSpawn, _ := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.SpawnAttempts, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
-				} else if errRec == nil {
+				} else if temptToSpawn {
 					atomic.AddInt64(&workersStarted, -1)
 					found := false
 					for _, hID := range job.SpawnAttempts {

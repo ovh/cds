@@ -527,7 +527,7 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		}
 	default:
 		log.Warning("executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
-		return nil, nil
+		return nil, fmt.Errorf("Repository manager not found. Cannot read request body")
 	}
 
 	d := dump.NewDefaultEncoder(&bytes.Buffer{})
