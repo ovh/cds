@@ -19,7 +19,3 @@ It allows you to enable some CDS features such as :
  - Commit logs on pipeline build details
 
 Go through this tutorial to enable the link between repositories managers and CDS.
-
-
-You need CDS admin privileges to perform the following steps.
-Download and install properly the CDS CLI.

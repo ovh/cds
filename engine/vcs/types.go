@@ -105,7 +105,7 @@ func (s GitlabServerConfiguration) check() error {
 
 // BitbucketServerConfiguration represents the bitbucket configuration
 type BitbucketServerConfiguration struct {
-	ConsumerKey string `toml:"consumerKey" json:"-"`
+	ConsumerKey string `toml:"consumerKey" json:"-" comment:"You can change the consumeKey if you want"`
 	PrivateKey  string `toml:"privateKey" json:"-"`
 	Status      struct {
 		Disable bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`

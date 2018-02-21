@@ -10,24 +10,39 @@ Go to `https://github.com/settings/developers` and **Register a new application*
 
 On the next page Github give you a **Client ID** and a **Client Secret**
 
-### Connect CDS To Github
+### Complete CDS Configuration File
 
-Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with `<client-secret>`:
+Set value to `clientId` and `clientSecret`
 
-```toml
-[vcs.repositories.github]
-clientsecret = "<client-secret>"
+```yaml
+    [vcs.servers.github]
+
+      # URL of this VCS Server
+      url = "https://github.com"
+
+      [vcs.servers.github.github]
+
+        # github OAuth Application Client ID
+        clientId = "xxxx"
+
+        # github OAuth Application Client Secret
+        clientSecret = "xxxx"
+
+        # Does polling is supported by VCS Server
+        disablePolling = false
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        [vcs.servers.github.github.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = true
 ```
 
 **Then restart CDS**
 
-With CDS CLI run :
-
-```bash
-$ cds admin reposmanager add GITHUB github http://github.com client-id=<your_client_id>
-```
-
-Now check everything is OK with :
-```bash
-$ cds admin reposmanager list
-```
+See how to generate **[Configuration File]({{<relref "/hosting/configuration/_index.md" >}})**
