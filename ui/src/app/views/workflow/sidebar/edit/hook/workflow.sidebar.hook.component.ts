@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild, OnInit} from '@angular/core';
+import {Component, Input, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
 import {WorkflowHookTask, HookStatus, TaskExecution} from '../../../../../model/workflow.hook.model';
 import {cloneDeep} from 'lodash';
@@ -20,12 +20,21 @@ import {finalize} from 'rxjs/operators';
     styleUrls: ['./workflow.sidebar.hook.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarHookComponent implements OnInit {
+export class WorkflowSidebarHookComponent {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() hook: WorkflowNodeHook;
     @Input() readonly = false;
+    @Input('hook')
+    set hook(data: WorkflowNodeHook) {
+        this._hook = data;
+        if (data) {
+            this.loadHookDetails();
+        }
+    }
+    get hook() {
+      return this._hook;
+    }
 
     @ViewChild('workflowEditHook')
     workflowEditHook: WorkflowNodeHookFormComponent;
@@ -38,12 +47,13 @@ export class WorkflowSidebarHookComponent implements OnInit {
     node: WorkflowNode;
     hookStatus = HookStatus;
     hookDetails: WorkflowHookTask;
+    _hook: WorkflowNodeHook;
 
     constructor(
         private _workflowStore: WorkflowStore,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _hook: HookService
+        private _hookService: HookService
     ) {
 
     }
@@ -60,7 +70,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
         }
     }
 
-    ngOnInit() {
+    loadHookDetails() {
         let hookId = this.hook.id;
         // Find node linked to this hook
         this.node = Workflow.findNode(this.workflow, (node) => {
@@ -69,7 +79,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
         });
 
         this.loading = true;
-        this._hook.getHookLogs(this.project.key, this.workflow.name, this.hook.uuid)
+        this._hookService.getHookLogs(this.project.key, this.workflow.name, this.hook.uuid)
             .pipe(finalize(() => this.loading = false))
             .subscribe((hook) => {
                 if (Array.isArray(hook.executions) && hook.executions.length) {

@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild, OnInit} from '@angular/core';
+import {Component, Input, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
 import {WorkflowHookTask, HookStatus, TaskExecution} from '../../../../../model/workflow.hook.model';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
@@ -14,13 +14,22 @@ import {finalize} from 'rxjs/operators';
     styleUrls: ['./workflow.sidebar.run.hook.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunHookComponent implements OnInit {
+export class WorkflowSidebarRunHookComponent {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() hook: WorkflowNodeHook;
     @Input() runNumber: number;
     @Input() readonly = false;
+    @Input('hook')
+    set hook(data: WorkflowNodeHook) {
+        this._hook = data;
+        if (data) {
+            this.loadHookDetails();
+        }
+    }
+    get hook() {
+      return this._hook;
+    }
 
     @ViewChild('workflowConfigHook')
     workflowConfigHook: WorkflowNodeHookFormComponent;
@@ -31,12 +40,13 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     node: WorkflowNode;
     hookStatus = HookStatus;
     hookDetails: WorkflowHookTask;
+    _hook: WorkflowNodeHook;
 
-    constructor(private _hook: HookService) {
+    constructor(private _hookService: HookService) {
 
     }
 
-    ngOnInit() {
+    loadHookDetails() {
         let hookId = this.hook.id;
         // Find node linked to this hook
         this.node = Workflow.findNode(this.workflow, (node) => {
@@ -45,7 +55,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
         });
 
         this.loading = true;
-        this._hook.getHookLogs(this.project.key, this.workflow.name, this.hook.uuid)
+        this._hookService.getHookLogs(this.project.key, this.workflow.name, this.hook.uuid)
             .pipe(finalize(() => this.loading = false))
             .subscribe((hook) => {
                 if (Array.isArray(hook.executions) && hook.executions.length) {
