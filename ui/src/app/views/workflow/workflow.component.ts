@@ -155,7 +155,6 @@ export class WorkflowComponent implements OnInit {
           } else {
               this.selectedNodeId = null;
               this.selectedNode = null;
-              this.selectedHook = null;
           }
 
           if (queryp['selectedJoinId']) {
@@ -167,7 +166,6 @@ export class WorkflowComponent implements OnInit {
           } else {
               this.selectedJoinId = null;
               this.selectedJoin = null;
-              this.selectedHook = null;
           }
 
           if (queryp['selectedHookId']) {
@@ -177,8 +175,7 @@ export class WorkflowComponent implements OnInit {
               this.selectedJoin = null;
               this.selectedHookId = Number.isNaN(queryp['selectedHookId']) ? null : parseInt(queryp['selectedHookId'], 10);
           } else {
-              this.selectedJoinId = null;
-              this.selectedJoin = null;
+              this.selectedHookId = null;
               this.selectedHook = null;
           }
 
