@@ -679,6 +679,8 @@
   "workflow_join_trigger_src_title": "Delete",
   "workflow_loading": "Loading workflow...",
   "workflow_name": "Workflow name",
+  "workflow_name_error": "Workflow name must follow this pattern ^[a-zA-Z0-9._-]{1,}$",
+  "workflow_name_error_duplicate": "This workflow name already exists in your project",
   "workflow_preview_mode": "Your workflow is in preview mode",
   "workflow_node_context_edit": "Edit the pipeline context",
   "workflow_node_launch": "Pipeline actions",
