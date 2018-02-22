@@ -4,6 +4,7 @@ import {Component, OnInit} from '@angular/core';
 import {User} from '../../../model/user.model';
 import {AccountComponent} from '../account.component';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-account-verify',
@@ -13,6 +14,7 @@ import {AuthentificationStore} from '../../../service/auth/authentification.stor
 export class VerifyComponent extends AccountComponent implements OnInit  {
 
     userVerified: any;
+    userVerifiedDisplay: any;
     showErrorMessage = false;
 
     constructor(private _userService: UserService, private _router: Router,
@@ -25,6 +27,8 @@ export class VerifyComponent extends AccountComponent implements OnInit  {
         if (params['username'] && params['token']) {
             this._userService.verify(params['username'], params['token']).subscribe( res => {
                 this.userVerified = res;
+                this.userVerifiedDisplay = cloneDeep(res);
+                delete this.userVerifiedDisplay.user.permissions;
             }, () => {
                 this.showErrorMessage = true;
             });
