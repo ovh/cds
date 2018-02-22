@@ -139,11 +139,16 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			FromRepository:  ope.RepositoryInfo.FetchURL,
 			IsDefaultBranch: ope.RepositoryStrategy.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
-		allMsg, err := api.workflowPush(ctx, key, tr, opt)
+		allMsg, wrkflw, err := api.workflowPush(ctx, key, tr, opt)
 		if err != nil {
 			return err
 		}
 		msgListString := translate(r, allMsg)
+
+		if wrkflw != nil {
+			w.Header().Add("X-Cds-Workflow-ID", fmt.Sprintf("%d", wrkflw.ID))
+			w.Header().Add("X-Cds-Workflow-Name", wrkflw.Name)
+		}
 
 		return WriteJSON(w, msgListString, http.StatusOK)
 	}

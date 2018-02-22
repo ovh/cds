@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"archive/tar"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -156,28 +157,34 @@ func (c *client) WorkflowImport(projectKey string, content io.Reader, format str
 	return messages, nil
 }
 
-func (c *client) WorkflowPush(projectKey string, tarContent io.Reader) ([]string, error) {
+func (c *client) WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error) {
 	url := fmt.Sprintf("/project/%s/push/workflows", projectKey)
 
-	mods := []RequestModifier{
+	mods = append(mods,
 		func(r *http.Request) {
 			r.Header.Set("Content-Type", "application/tar")
-		},
-	}
+		})
 
-	btes, _, code, err := c.Request("POST", url, tarContent, mods...)
+	btes, headers, code, err := c.Request("POST", url, tarContent, mods...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Code %d", code)
+		return nil, nil, fmt.Errorf("HTTP Code %d", code)
 	}
 
 	messages := []string{}
 	if err := json.Unmarshal(btes, &messages); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return messages, nil
+	wName := headers.Get("X-Cds-Workflow-Name")
+
+	tarReader, err := c.WorkflowPull(projectKey, wName, false)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return messages, tarReader, nil
 }

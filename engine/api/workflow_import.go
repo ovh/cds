@@ -160,7 +160,7 @@ type workflowPushOption struct {
 	IsDefaultBranch bool
 }
 
-func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, opts *workflowPushOption) ([]sdk.Message, error) {
+func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, opts *workflowPushOption) ([]sdk.Message, *sdk.Workflow, error) {
 	//Load project
 	proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
 		project.LoadOptions.WithGroups,
@@ -170,7 +170,7 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 
 	if errp != nil {
 		log.Error("workflowPush> Unable to load project %s: %v", key, errp)
-		return nil, sdk.WrapError(errp, "workflowPush> Unable load project")
+		return nil, nil, sdk.WrapError(errp, "workflowPush> Unable load project")
 	}
 
 	apps := make(map[string]exportentities.Application)
@@ -186,7 +186,7 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 		}
 		if err != nil {
 			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, sdk.WrapError(err, "workflowPush>")
+			return nil, nil, sdk.WrapError(err, "workflowPush>")
 		}
 
 		log.Debug("workflowPush> Reading %s", hdr.Name)
@@ -194,7 +194,7 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 		buff := new(bytes.Buffer)
 		if _, err := io.Copy(buff, tr); err != nil {
 			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, sdk.WrapError(err, "workflowPush>")
+			return nil, nil, sdk.WrapError(err, "workflowPush>")
 		}
 
 		b := buff.Bytes()
@@ -236,12 +236,12 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 	// When a DB transaction has been started, just return at the first error
 	// because transaction may have to be aborted
 	if !mError.IsEmpty() {
-		return nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
+		return nil, nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
 	}
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
-		return nil, sdk.WrapError(err, "workflowPush> Unable to start tx")
+		return nil, nil, sdk.WrapError(err, "workflowPush> Unable to start tx")
 	}
 	defer tx.Rollback()
 
@@ -251,7 +251,7 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 		msgList, err := application.ParseAndImport(tx, api.Cache, proj, &app, true, project.DecryptWithBuiltinKey, getUser(ctx))
 		if err != nil {
 			err = sdk.SetError(err, "unable to import application %s", app.Name)
-			return nil, sdk.WrapError(err, "workflowPush> ", err)
+			return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
 		}
 		allMsg = append(allMsg, msgList...)
 		log.Debug("workflowPush> -- %s OK", filename)
@@ -262,7 +262,7 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 		msgList, err := environment.ParseAndImport(tx, api.Cache, proj, &env, true, project.DecryptWithBuiltinKey, getUser(ctx))
 		if err != nil {
 			err = sdk.SetError(err, "unable to import environment %s", env.Name)
-			return nil, sdk.WrapError(err, "workflowPush> ", err)
+			return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
 		}
 		allMsg = append(allMsg, msgList...)
 		log.Debug("workflowPush> -- %s OK", filename)
@@ -273,7 +273,7 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 		msgList, err := pipeline.ParseAndImport(tx, api.Cache, proj, &pip, true, getUser(ctx))
 		if err != nil {
 			err = sdk.SetError(err, "unable to import pipeline %s", pip.Name)
-			return nil, sdk.WrapError(err, "workflowPush> ", err)
+			return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
 		}
 		allMsg = append(allMsg, msgList...)
 		log.Debug("workflowPush> -- %s OK", filename)
@@ -287,13 +287,13 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 		project.LoadOptions.WithPipelines,
 	)
 	if errp != nil {
-		return nil, sdk.WrapError(errp, "workflowPush> Unable reload project")
+		return nil, nil, sdk.WrapError(errp, "workflowPush> Unable reload project")
 	}
 
 	wf, msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, true, getUser(ctx))
 	if err != nil {
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
-		return nil, sdk.WrapError(err, "workflowPush> ", err)
+		return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
 	}
 
 	// TODO workflow as code, manage derivation workflow
@@ -303,21 +303,21 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 			wf.DerivationBranch = opts.Branch
 		}
 		if err := workflow.Update(tx, api.Cache, wf, wf, proj, getUser(ctx)); err != nil {
-			return nil, sdk.WrapError(err, "workflowPush> ", err)
+			return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
 		}
 	}
 
 	allMsg = append(allMsg, msgList...)
 
 	if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-		return nil, sdk.WrapError(err, "workflowPush> Unable to update project")
+		return nil, nil, sdk.WrapError(err, "workflowPush> Unable to update project")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "workflowPush> Cannot commit transaction")
+		return nil, nil, sdk.WrapError(err, "workflowPush> Cannot commit transaction")
 	}
 
-	return allMsg, nil
+	return allMsg, wf, nil
 }
 
 func (api *API) postWorkflowPushHandler() Handler {
@@ -341,11 +341,23 @@ func (api *API) postWorkflowPushHandler() Handler {
 
 		tr := tar.NewReader(bytes.NewReader(btes))
 
-		allMsg, err := api.workflowPush(ctx, key, tr, nil)
+		var pushOptions *workflowPushOption
+		if r.Header.Get("X-Cds-Workflow-As-Code") != "" {
+			pushOptions = &workflowPushOption{
+				FromRepository: r.Header.Get("X-Cds-Workflow-As-Code"),
+			}
+		}
+
+		allMsg, wrkflw, err := api.workflowPush(ctx, key, tr, pushOptions)
 		if err != nil {
 			return err
 		}
 		msgListString := translate(r, allMsg)
+
+		if wrkflw != nil {
+			w.Header().Add("X-Cds-Workflow-ID", fmt.Sprintf("%d", wrkflw.ID))
+			w.Header().Add("X-Cds-Workflow-Name", wrkflw.Name)
+		}
 
 		return WriteJSON(w, msgListString, http.StatusOK)
 	}
