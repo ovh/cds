@@ -233,6 +233,13 @@ func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
 	}
 
 	for k := range models {
+		// for a shared.infra hatchery, all models are here (group shared.infra or not)
+		// but, a shared.infra hatchery can provision only a shared.infra model
+		// others hatcheries (not shared.infra): only worker models with same group are here
+		// DO NOT provision if hatchery group is not the same as model
+		if models[k].GroupID != h.Hatchery().GroupID {
+			continue
+		}
 		if models[k].Type == h.ModelType() {
 			existing := h.WorkersStartedByModel(&models[k])
 			for i := existing; i < int(models[k].Provision); i++ {
