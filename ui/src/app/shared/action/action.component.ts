@@ -115,6 +115,7 @@ export class ActionComponent implements OnDestroy {
     }
 
     prepareEditRequirements(): void {
+        this.configRequirements = {};
         this.editableAction.requirements.forEach(req => {
             if (req.type === 'model' || req.type === 'service') {
                 let spaceIdx = req.value.indexOf(' ');
