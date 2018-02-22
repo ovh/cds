@@ -94,6 +94,11 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 			}
 		}
 	}
+
+	if err := isRequirementsValid(a.Requirements); err != nil {
+		return err
+	}
+
 	for i := range a.Requirements {
 		if err := InsertActionRequirement(tx, a.ID, a.Requirements[i]); err != nil {
 			return err
@@ -310,12 +315,8 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	}
 
 	// Checks if multiple requirements have the same name
-	for i := range a.Requirements {
-		for j := range a.Requirements {
-			if a.Requirements[i].Name == a.Requirements[j].Name && i != j {
-				return sdk.ErrInvalidJobRequirement
-			}
-		}
+	if err := isRequirementsValid(a.Requirements); err != nil {
+		return err
 	}
 
 	for i := range a.Requirements {
@@ -438,5 +439,29 @@ func insertAudit(db gorp.SqlExecutor, actionID, userID int64, change string) err
 		return err
 	}
 
+	return nil
+}
+
+func isRequirementsValid(requirements sdk.RequirementList) error {
+	nbModelReq, nbHostnameReq := 0, 0
+	for i := range requirements {
+		for j := range requirements {
+			if requirements[i].Name == requirements[j].Name && i != j {
+				return sdk.ErrInvalidJobRequirement
+			}
+		}
+		switch requirements[i].Type {
+		case sdk.ModelRequirement:
+			nbModelReq++
+		case sdk.HostnameRequirement:
+			nbHostnameReq++
+		}
+	}
+	if nbModelReq > 1 {
+		return sdk.ErrInvalidJobRequirementDuplicateModel
+	}
+	if nbHostnameReq > 1 {
+		return sdk.ErrInvalidJobRequirementDuplicateHostname
+	}
 	return nil
 }
