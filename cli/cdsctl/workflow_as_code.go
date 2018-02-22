@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	repo "github.com/fsamin/go-repo"
@@ -20,15 +21,47 @@ import (
 var workflowInitCmd = cli.Command{
 	Name:  "init",
 	Short: "Init a workflow",
-	Long: `
-		Initialize a workflow from your current repository..
-	`,
+	Long: `[WARNING] THIS IS AN EXPERIMENTAL FEATURE
+Initialize a workflow from your current repository, this will create yml files and push them to CDS.`,
 	OptionalArgs: []cli.Arg{
 		{Name: _ProjectKey},
 	},
+	Flags: []cli.Flag{
+		{
+			Name:      "from-remote",
+			ShortHand: "r",
+			Usage:     "Initialize a workflow from your git origin",
+			Kind:      reflect.Bool,
+		},
+	},
 }
 
-func workflowInitRun(c cli.Values) error {
+func interactiveChooseProject(gitRepo repo.Repo) (string, error) {
+	projs, err := client.ProjectList(false, false)
+	if err != nil {
+		return "", err
+	}
+	var chosenProj *sdk.Project
+	opts := make([]string, len(projs))
+	for i := range projs {
+		opts[i] = fmt.Sprintf("%s - %s", projs[i].Key, projs[i].Name)
+	}
+	choice := cli.MultiChoice("Choose the CDS project", opts...)
+
+	for i := range projs {
+		if choice == fmt.Sprintf("%s - %s", projs[i].Key, projs[i].Name) {
+			chosenProj = &projs[i]
+		}
+	}
+
+	if err := gitRepo.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
+		return "", err
+	}
+
+	return chosenProj.Key, nil
+}
+
+func workflowInitRunFromRemote(c cli.Values) error {
 	path := "."
 	gitRepo, errRepo := repo.New(path)
 	if errRepo != nil {
@@ -37,38 +70,78 @@ func workflowInitRun(c cli.Values) error {
 
 	var pkey = c.GetString(_ProjectKey)
 	if pkey == "" {
-		projs, err := client.ProjectList(false, false)
+		var err error
+		pkey, err = interactiveChooseProject(gitRepo)
 		if err != nil {
 			return err
 		}
-		var chosenProj *sdk.Project
-		opts := make([]string, len(projs))
-		for i := range projs {
-			opts[i] = fmt.Sprintf("%s - %s", projs[i].Key, projs[i].Name)
-		}
-		choice := cli.MultiChoice("Choose the CDS project", opts...)
-
-		for i := range projs {
-			if choice == fmt.Sprintf("%s - %s", projs[i].Key, projs[i].Name) {
-				chosenProj = &projs[i]
-			}
-		}
-
-		if err := gitRepo.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
-			return err
-		}
-
-		pkey = chosenProj.Key
 	}
 
 	repoName, _ := gitRepo.Name()
-	fetchURL, _ := gitRepo.FetchURL()
-	name := strings.SplitN(repoName, "/", 2)[1]
-
 	if repoName == "" {
 		return fmt.Errorf("unable to retrieve repository name")
 	}
 
+	fetchURL, _ := gitRepo.FetchURL()
+	if fetchURL == "" {
+		return fmt.Errorf("unable to retrieve origin URL")
+	}
+
+	fmt.Printf("Initializing workflow from %s (%v)...\n", cli.Magenta(repoName), cli.Magenta(fetchURL))
+
+	ope, err := client.WorkflowAsCodeStart(pkey, fetchURL, sdk.RepositoryStrategy{})
+	if err != nil {
+		return fmt.Errorf("unable to perform operation: %v", err)
+	}
+
+	for ope.Status == sdk.OperationStatusPending || ope.Status == sdk.OperationStatusProcessing {
+		ope, err = client.WorkflowAsCodeInfo(pkey, ope.UUID)
+		if err != nil {
+			return fmt.Errorf("unable to perform operation: %v", err)
+		}
+	}
+
+	msgList, err := client.WorkflowAsCodePerform(pkey, ope.UUID)
+	for _, msg := range msgList {
+		fmt.Println("\t" + msg)
+	}
+
+	if err != nil {
+		return fmt.Errorf("unable to perform operation: %v", err)
+	}
+
+	return nil
+
+}
+
+func workflowInitRun(c cli.Values) error {
+	if c.GetBool("from-remote") {
+		return workflowInitRunFromRemote(c)
+	}
+
+	path := "."
+	gitRepo, errRepo := repo.New(path)
+	if errRepo != nil {
+		return errRepo
+	}
+
+	var pkey = c.GetString(_ProjectKey)
+	if pkey == "" {
+		var err error
+		pkey, err = interactiveChooseProject(gitRepo)
+		if err != nil {
+			return err
+		}
+	}
+
+	repoName, _ := gitRepo.Name()
+	if repoName == "" {
+		return fmt.Errorf("unable to retrieve repository name")
+	}
+
+	name := strings.SplitN(repoName, "/", 2)[1]
+
+	fetchURL, _ := gitRepo.FetchURL()
 	if fetchURL == "" {
 		return fmt.Errorf("unable to retrieve origin URL")
 	}
@@ -77,10 +150,7 @@ func workflowInitRun(c cli.Values) error {
 
 	dotCDS := filepath.Join(path, ".cds")
 
-	var shouldCreateWorkflowDir bool
-	var shouldCreateWorkflowFiles bool
-	var shouldCreateApplication bool
-	var shouldCreatePipeline bool
+	var shouldCreateWorkflowDir, shouldCreateWorkflowFiles, shouldCreateApplication, shouldCreatePipeline bool
 	var existingApp *sdk.Application
 	var existingPip *sdk.Pipeline
 	var repoManagerName string
@@ -108,6 +178,7 @@ func workflowInitRun(c cli.Values) error {
 		fmt.Println("Loading yaml files...")
 		//TODO
 		return fmt.Errorf("Not yet implemented")
+
 	} else {
 		// Check if the project is linked to a repository
 		proj, err := client.ProjectGet(pkey)
@@ -337,6 +408,20 @@ func workflowInitRun(c cli.Values) error {
 
 	fmt.Printf("Now you can run: ")
 	fmt.Printf(cli.Magenta("git add %s/ && git commit -s -m \"chore: init CDS workflow files\"\n", dotCDS))
+
+	keysList, err := client.ApplicationKeysList(pkey, appName)
+	if err != nil {
+		return err
+	}
+
+	if len(keysList) != 0 {
+		fmt.Printf("You should consider add the following keys in %v", cli.Magenta(repoManagerName))
+		for _, k := range keysList {
+			fmt.Println(cli.Magenta(k.Type))
+			fmt.Println(k.Public)
+			fmt.Println()
+		}
+	}
 
 	return nil
 }

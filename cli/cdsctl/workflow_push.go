@@ -40,9 +40,9 @@ func workflowPushRun(c cli.Values) error {
 	for _, file := range files {
 		fmt.Println("Reading file ", cli.Magenta(file))
 		if dir == "" {
-			dir = filepath.Base(file)
+			dir = filepath.Dir(file)
 		}
-		if dir != filepath.Base(file) {
+		if dir != filepath.Dir(file) {
 			return fmt.Errorf("files must be ine the same directory")
 		}
 	}
