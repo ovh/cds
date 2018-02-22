@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
 	dump "github.com/fsamin/go-dump"
 	repo "github.com/fsamin/go-repo"
 
@@ -59,7 +58,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 		return nil, fmt.Errorf("unable to get latest commit: %v", err)
 	}
 
-	currentDisplay.Printf("Looking for %s...", magenta(latestCommit.Hash))
+	currentDisplay.Printf("Looking for %s...", cli.Magenta(latestCommit.Hash))
 	currentDisplay.Do(context.Background())
 
 	for runNumber == 0 {
@@ -87,21 +86,9 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	return nil, nil
 }
 
-var (
-	red          = color.New(color.FgRed).SprintfFunc()
-	blue         = color.New(color.FgBlue).SprintfFunc()
-	magenta      = color.New(color.FgMagenta).SprintfFunc()
-	green        = color.New(color.FgGreen).SprintfFunc()
-	cyan         = color.New(color.FgCyan).SprintfFunc()
-	buildingChar = blue("↻")
-	okChar       = green("✓")
-	koChar       = red("✗")
-	arrow        = cyan("➤")
-)
-
 //w-cds #10.0 ✓root -> ✓build -> ✓test -> ✗deploy
 func workflowRunFormatDisplay(run *sdk.WorkflowRun, commit repo.Commit, currentDisplay *cli.Display) {
-	var output = "%s [%s | %s] " + cyan("#%d.%d", run.Number, run.LastSubNumber)
+	var output = "%s [%s | %s] " + cli.Cyan("#%d.%d", run.Number, run.LastSubNumber)
 	nodeIDs := []int64{}
 	for id := range run.WorkflowNodeRuns {
 		nodeIDs = append(nodeIDs, id)
@@ -121,21 +108,21 @@ func workflowRunFormatDisplay(run *sdk.WorkflowRun, commit repo.Commit, currentD
 		})
 
 		if output[len(output):] != " " {
-			output += fmt.Sprintf(" %s ", arrow)
+			output += fmt.Sprintf(" %s ", cli.Arrow)
 		}
 
 		nodeRun := nodeRuns[0]
 		switch nodeRun.Status {
 		case sdk.StatusSuccess.String():
-			output += green("%s %s", okChar, green(nodeRun.WorkflowNodeName))
+			output += cli.Green("%s %s", cli.OKChar, cli.Green(nodeRun.WorkflowNodeName))
 		case sdk.StatusFail.String():
-			output += red("%s %s", koChar, red(nodeRun.WorkflowNodeName))
+			output += cli.Red("%s %s", cli.KOChar, cli.Red(nodeRun.WorkflowNodeName))
 		default:
-			output += blue("%s %s", buildingChar, blue(nodeRun.WorkflowNodeName))
+			output += cli.Blue("%s %s", cli.BuildingChar, cli.Blue(nodeRun.WorkflowNodeName))
 		}
 	}
 
-	currentDisplay.Printf(output, run.Workflow.Name, magenta(commit.Hash), magenta(commit.Author))
+	currentDisplay.Printf(output, run.Workflow.Name, cli.Magenta(commit.Hash), cli.Magenta(commit.Author))
 }
 
 func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {

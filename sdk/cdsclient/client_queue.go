@@ -168,8 +168,17 @@ func (c *client) QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.Sp
 		// DEPRECATED code -> it's for pipelineBuildJob
 		path = fmt.Sprintf("/queue/%d/spawn/infos", id)
 	}
+
 	_, err := c.PostJSON(path, &in, nil)
 	return err
+}
+
+// QueueJobIncAttempts add hatcheryID that cannot run this job and return the spawn attempts list
+func (c *client) QueueJobIncAttempts(jobID int64) ([]int64, error) {
+	var spawnAttempts []int64
+	path := fmt.Sprintf("/queue/workflows/%d/attempt", jobID)
+	_, err := c.PostJSON(path, nil, &spawnAttempts)
+	return spawnAttempts, err
 }
 
 // QueueJobBook books a job for a Hatchery

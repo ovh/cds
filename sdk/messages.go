@@ -74,6 +74,7 @@ var (
 	MsgWorkflowNodeMutexRelease            = &Message{"MsgWorkflowNodeMutexRelease", trad{FR: "Lancement du pipeline %s", EN: "Triggering pipeline %s"}, nil}
 	MsgWorkflowImportedUpdated             = &Message{"MsgWorkflowImportedUpdated", trad{FR: "Le workflow %s a été mis à jour", EN: "Workflow %s has been updated"}, nil}
 	MsgWorkflowImportedInserted            = &Message{"MsgWorkflowImportedInserted", trad{FR: "Le workflow %s a été créé", EN: "Workflow %s has been created"}, nil}
+	MsgSpawnInfoHatcheryCannotStartJob     = &Message{"MsgSpawnInfoHatcheryCannotStart", trad{FR: "Aucune hatchery n'a pu démarrer de worker respectant vos pré-requis de job, merci de les vérifier.", EN: "No hatchery can spawn a worker corresponding your job's requirements. Please check your job's requirements."}, nil}
 )
 
 // Messages contains all sdk Messages
@@ -130,6 +131,7 @@ var Messages = map[string]*Message{
 	MsgWorkflowImportedInserted.ID:            MsgWorkflowImportedInserted,
 	MsgWorkflowNodeMutex.ID:                   MsgWorkflowNodeMutex,
 	MsgWorkflowNodeMutexRelease.ID:            MsgWorkflowNodeMutexRelease,
+	MsgSpawnInfoHatcheryCannotStartJob.ID:     MsgSpawnInfoHatcheryCannotStartJob,
 }
 
 //Message represent a struc format translated messages

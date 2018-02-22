@@ -34,7 +34,20 @@ type ExportImportInterface interface {
 	WorkflowExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
 	WorkflowPull(projectKey, name string, exportWithPermissions bool) (*tar.Reader, error)
 	WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
-	WorkflowPush(projectKey string, tarContent io.Reader) ([]string, error)
+	WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error)
+	WorkflowAsCodeInterface
+}
+
+// WorkflowAsCodeInterface exposes all workflow as code functions
+type WorkflowAsCodeInterface interface {
+	WorkflowAsCodeStart(projectKey string, repoURL string, repoStrategy sdk.RepositoryStrategy) (*sdk.Operation, error)
+	WorkflowAsCodeInfo(projectKey string, operationID string) (*sdk.Operation, error)
+	WorkflowAsCodePerform(projectKey string, operationID string) ([]string, error)
+}
+
+// RepositoriesManagerInterface exposes all repostories manager functions
+type RepositoriesManagerInterface interface {
+	RepositoriesList(projectKey string, repoManager string) ([]sdk.VCSRepo, error)
 }
 
 // ApplicationClient exposes application related functions
@@ -127,6 +140,7 @@ type GroupClient interface {
 type HatcheryClient interface {
 	HatcheryRefresh(int64) error
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
+	HatcheryCount(wfNodeRunID int64) (int64, error)
 }
 
 // PipelineClient exposes pipelines related functions
@@ -179,6 +193,7 @@ type QueueClient interface {
 	QueueSendResult(int64, sdk.Result) error
 	QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error)
 	QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error
+	QueueJobIncAttempts(jobID int64) ([]int64, error)
 }
 
 // UserClient exposes users functions
@@ -256,7 +271,9 @@ type Interface interface {
 	PipelineClient
 	ProjectClient
 	QueueClient
+	Navbar() (*sdk.NavbarData, error)
 	Requirements() ([]sdk.Requirement, error)
+	RepositoriesManagerInterface
 	ServiceRegister(sdk.Service) (string, error)
 	UserClient
 	WorkerClient

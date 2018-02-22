@@ -18,6 +18,7 @@ var (
 
 	workflow = cli.NewCommand(workflowCmd, nil,
 		[]*cobra.Command{
+			cli.NewCommand(workflowInitCmd, workflowInitRun, nil),
 			cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...),
 			cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil, withAllCommandModifiers()...),
 			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...),
@@ -35,7 +36,7 @@ var (
 
 func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) {
 	//Try to get the latest commit
-	r, err := repo.New(".")
+	r, err := repo.New("")
 	if err != nil {
 		return 0, nil
 	}

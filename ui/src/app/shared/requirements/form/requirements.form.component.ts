@@ -42,6 +42,7 @@ export class RequirementsFormComponent implements OnInit {
 
     @Input() modal: SemanticModalComponent;
     @Input() groupsPermission: Array<GroupPermission>;
+    @Input() config: {disableModel?: boolean, disableHostname?: boolean};
 
     @Output() event = new EventEmitter<RequirementEvent>();
 
@@ -55,6 +56,7 @@ export class RequirementsFormComponent implements OnInit {
     workerModelLinked: WorkerModel;
     isFormValid = false;
     modelTypeClass: string;
+    popupText: string;
 
     constructor(private _requirementStore: RequirementStore,
         private _workerModelService: WorkerModelService,
@@ -105,7 +107,17 @@ export class RequirementsFormComponent implements OnInit {
     }
 
     computeFormValid(form): void {
-        this.isFormValid = (form.valid === true && this.newRequirement.name !== '' && this.newRequirement.value !== '');
+        this.popupText = '';
+        let goodModel = this.newRequirement.type !== 'model' || !this.config.disableModel;
+        let goodHostname = this.newRequirement.type !== 'hostname' || !this.config.disableHostname;
+        this.isFormValid = (form.valid === true && this.newRequirement.name !== '' && this.newRequirement.value !== '')
+            && goodModel && goodHostname;
+        if (!goodModel) {
+            this.popupText = this._translate.instant('requirement_error_model');
+        }
+        if (!goodHostname) {
+            this.popupText = this._translate.instant('requirement_error_hostname');
+        }
     }
 
     selectType(): void {

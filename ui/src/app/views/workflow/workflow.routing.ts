@@ -6,7 +6,7 @@ import {WorkflowAddComponent} from './add/workflow.add.component';
 import {WorkflowShowComponent} from './show/workflow.component';
 import {WorkflowRunComponent} from './run/workflow.run.component';
 import {WorkflowNodeRunComponent} from './run/node/workflow.run.node.component';
-import {WorkflowComponent} from './workflow.compoment';
+import {WorkflowComponent} from './workflow.component';
 
 const workflowRoutes: Routes = [
     {

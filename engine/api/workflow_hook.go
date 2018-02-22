@@ -55,7 +55,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 
 		// Post processing  on repositoryWebHook
 		hasRepoManager := false
-		repoWebHookEnable := false
+		repoWebHookEnable, repoPollerEnable := false, false
 		if node.Context.Application != nil && node.Context.Application.RepositoryFullname != "" {
 			hasRepoManager = true
 		}
@@ -74,28 +74,35 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 					return sdk.WrapError(errWH, "getWorkflowHookModelsHandler> Cannot get vcs web hook info")
 				}
 				repoWebHookEnable = webHookInfo.WebhooksSupported && !webHookInfo.WebhooksDisabled
-			}
-		}
 
-		indexToDelete := -1
-		for i := range m {
-			if m[i].Name == sdk.RepositoryWebHookModelName {
-				if !repoWebHookEnable {
-					indexToDelete = i
-					break
-				} else {
-					m[i].Icon = webHookInfo.Icon
+				pollInfo, errPoll := repositoriesmanager.GetPollingInfos(client)
+				if errPoll != nil {
+					return sdk.WrapError(errPoll, "getWorkflowHookModelsHandler> Cannot get vcs poller info")
 				}
+				repoPollerEnable = pollInfo.PollingSupported && !pollInfo.PollingDisabled
 			}
-
 		}
-		if indexToDelete > -1 {
-			m = append(m[0:indexToDelete], m[indexToDelete+1:]...)
+
+		models := []sdk.WorkflowHookModel{}
+		for i := range m {
+			switch m[i].Name {
+			case sdk.RepositoryWebHookModelName:
+				if repoWebHookEnable {
+					m[i].Icon = webHookInfo.Icon
+					models = append(models, m[i])
+				}
+			case sdk.GitPollerModelName:
+				if repoPollerEnable {
+					models = append(models, m[i])
+				}
+			default:
+				models = append(models, m[i])
+			}
 		}
 
 		for _, platform := range p.Platforms {
 			if platform.Model.Name == sdk.KafkaPlatformModel {
-				m = append(m, sdk.KafkaHookModel)
+				models = append(models, sdk.KafkaHookModel)
 			}
 		}
 

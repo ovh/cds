@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/tar"
 	"fmt"
 	"io"
 	"os"
@@ -61,6 +62,10 @@ func workflowPullRun(c cli.Values) error {
 		return err
 	}
 
+	return workflowTarReaderToFiles(dir, tr, c.GetBool("force"), c.GetBool("quiet"))
+}
+
+func workflowTarReaderToFiles(dir string, tr *tar.Reader, force, quiet bool) error {
 	// Iterate through the files in the archive.
 	for {
 		hdr, err := tr.Next()
@@ -73,7 +78,7 @@ func workflowPullRun(c cli.Values) error {
 
 		fname := filepath.Join(dir, hdr.Name)
 		if _, err = os.Stat(fname); err == nil || os.IsExist(err) {
-			if !c.GetBool("force") {
+			if !force {
 				if !cli.AskForConfirmation(fmt.Sprintf("This will override %s. Do you want to continue?", fname)) {
 					os.Exit(0)
 				}
@@ -81,7 +86,7 @@ func workflowPullRun(c cli.Values) error {
 		}
 
 		if verbose {
-			fmt.Println("Creating file", fname)
+			fmt.Println("Creating file", cli.Magenta(fname))
 		}
 		fi, err := os.Create(fname)
 		if err != nil {
@@ -93,7 +98,7 @@ func workflowPullRun(c cli.Values) error {
 		if err := fi.Close(); err != nil {
 			return err
 		}
-		if !c.GetBool("quiet") {
+		if !quiet {
 			fmt.Println(fname)
 		}
 	}

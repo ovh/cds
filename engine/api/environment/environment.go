@@ -73,6 +73,19 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *
 }
 
 // Lock locks an environment given its ID
+func LockByID(db gorp.SqlExecutor, envID int64) error {
+	_, err := db.Exec(`
+	SELECT *
+	FROM environment
+	WHERE id = $1 FOR UPDATE NOWAIT
+	`, envID)
+	if err == sql.ErrNoRows {
+		return sdk.ErrNoEnvironment
+	}
+	return err
+}
+
+// Lock locks an environment given its ID
 func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 	_, err := db.Exec(`
 	SELECT *

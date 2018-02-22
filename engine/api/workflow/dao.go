@@ -674,17 +674,5 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
 		}
 	}
-
-	//Checks hooks conditions
-	hooks := w.GetHooks()
-	for _, h := range hooks {
-		for k := range h.Config {
-			switch k {
-			case "project", "workflow":
-				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid hooks (%s) configuration %s on node %s", h.WorkflowHookModel.Name, h.UUID, w.GetNode(h.WorkflowNodeID).Name))
-			}
-		}
-	}
-
 	return nil
 }

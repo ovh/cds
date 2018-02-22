@@ -114,25 +114,29 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, hostname string) bool {
+// Receive job return 2 booleans and one error
+// First boolean is to know if the worker has been spawned
+// The second one is to know if the hatchery tempt to spawn this worker
+// The error is to know if an error occured when we attempted to spawn the worker
+func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobSpawnAttempts []int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, hostname string) (bool, bool, error) {
 	if jobID == 0 {
-		return false
+		return false, false, nil
 	}
 
 	n := atomic.LoadInt64(nRoutines)
 	if n > 10 {
 		log.Info("too many routines in same time %d", n)
-		return false
+		return false, false, nil
 	}
 
 	if _, exist := spawnIDs.Get(string(jobID)); exist {
 		log.Debug("job %d already spawned in previous routine", jobID)
-		return false
+		return false, false, nil
 	}
 
 	if jobQueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
 		log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", jobID, jobQueuedSeconds)
-		return false
+		return false, false, nil
 	}
 
 	log.Debug("work on job %d queued since %d seconds", jobID, jobQueuedSeconds)
@@ -142,7 +146,7 @@ func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID i
 			t = "another hatchery"
 		}
 		log.Debug("job %d already booked by %s %s (%d)", jobID, t, jobBookedBy.Name, jobBookedBy.ID)
-		return false
+		return false, false, nil
 	}
 
 	atomic.AddInt64(nRoutines, 1)
@@ -150,9 +154,9 @@ func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID i
 	isSpawned, errR := routine(h, isWorkflowJob, models, execGroups, jobID, requirements, hostname, time.Now().Unix())
 	if errR != nil {
 		log.Warning("Error on routine: %s", errR)
-		return false
+		return false, true, errR
 	}
-	return isSpawned
+	return isSpawned, true, nil
 }
 
 func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64) (bool, error) {

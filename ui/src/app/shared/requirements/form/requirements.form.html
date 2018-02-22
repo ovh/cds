@@ -39,7 +39,7 @@
                 <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)" placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
                     [no-match-found-text]="false">
                 <p *ngIf="workerModelLinked != null">
-                    <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" (click)="closeModal()">
+                    <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" target="_blank" (click)="closeModal()">
                             {{ 'requirement_settings_worker_model' | translate }} {{ newRequirement.value }}
                         </a>
                 </p>
@@ -57,16 +57,30 @@
         </div>
         <div class="one wide center mtop8" *ngIf="newRequirement.type === 'model' && workerModelLinked != null">
             <div *ngIf="workerModelLinked.group.name === 'shared.infra'" [smDirTooltip]="'worker_model_official' | translate" smDirPosition="top center">
-                <i class="check circle outline icon large green">
-                    </i>
+                <i class="check circle outline icon large green"></i>
             </div>
             <div *ngIf="workerModelLinked.group.name !== 'shared.infra'" [smDirTooltip]="'worker_model_unofficial' | translate" smDirPosition="top center">
-                <i class="remove circle outline icon large red">
-                    </i>
+                <i class="remove circle outline icon large red"></i>
             </div>
         </div>
         <div class="two wide center field">
-            <button class="ui blue icon button" [disabled]="!isFormValid" (click)="onSubmitAddRequirement(formAddRequirement)"><i class="plus icon"></i></button>
+            <div suiPopup
+            [popupText]="popupText"
+            popupPlacement="top"
+            *ngIf="(newRequirement.type === 'model' && config.disableModel) || (newRequirement.type === 'hostname' && config.disableHostname)">
+                <button class="ui blue icon button"
+                    [disabled]="!isFormValid"
+                    (click)="onSubmitAddRequirement(formAddRequirement)">
+                    <i class="plus icon"></i>
+                </button>
+            </div>
+            <div *ngIf="(newRequirement.type !== 'model' || !config.disableModel) && (newRequirement.type !== 'hostname' || !config.disableHostname)">
+                <button class="ui blue icon button"
+                    [disabled]="!isFormValid"
+                    (click)="onSubmitAddRequirement(formAddRequirement)">
+                    <i class="plus icon"></i>
+                </button>
+            </div>
         </div>
     </div>
     <p>
