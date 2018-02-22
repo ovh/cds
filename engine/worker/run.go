@@ -91,9 +91,9 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 }
 
 func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
-	log.Debug("startAction> Begin %p", ctx)
+	log.Debug("startAction> Begin %s", a.ID)
 	defer func() {
-		log.Debug("startAction> End %p (%v)", ctx, ctx.Err())
+		log.Debug("startAction> End %s (%v)", a.ID, ctx.Err())
 	}()
 	// Process action build arguments
 	for _, abp := range *params {

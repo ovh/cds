@@ -11,6 +11,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -305,6 +307,11 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 		// add requirements in job parameters, to use them as {{.job.requirement...}} in job
 		jobParams = append(jobParams, prepareRequirementsToNodeJobRunParameters(jobRequirements)...)
 
+		groups, errGroups := getJobExecutablesGroups(db, run)
+		if errGroups != nil {
+			return sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
+		}
+
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
 			WorkflowNodeRunID: run.ID,
@@ -312,6 +319,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 			Queued:            time.Now(),
 			Status:            sdk.StatusWaiting.String(),
 			Parameters:        jobParams,
+			ExecGroups:        groups,
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
@@ -360,6 +368,57 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	}
 
 	return nil
+}
+
+func getJobExecutablesGroups(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
+	query := `
+	SELECT distinct("group".id), "group".name FROM "group"
+	LEFT JOIN pipeline_group ON pipeline_group.group_id = "group".id
+	LEFT JOIN project_group ON project_group.group_id = "group".id
+	LEFT JOIN workflow_node ON workflow_node.pipeline_id = pipeline_group.pipeline_id
+	LEFT JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
+	LEFT OUTER JOIN application_group ON workflow_node_context.application_id = application_group.application_id
+	LEFT OUTER JOIN environment_group ON workflow_node_context.environment_id = environment_group.environment_id
+	WHERE workflow_node.id = $1
+		AND workflow_node_context.workflow_node_id = workflow_node.id
+		AND workflow_node.pipeline_id = pipeline_group.pipeline_id
+		AND pipeline_group.group_id = "group".id
+		AND (workflow_node_context.application_id is null OR application_group.role >= $2)
+		AND pipeline_group.role >= $2
+		AND (workflow_node_context.environment_id is NULL or environment_group.role >= $2);
+	`
+
+	var groups []sdk.Group
+	rows, err := db.Query(query, run.WorkflowNodeID, permission.PermissionReadExecute)
+	if err != nil {
+		return nil, sdk.WrapError(err, "getJobExecutablesGroups> err query")
+	}
+	defer rows.Close()
+
+	var sharedInfraIn bool
+	for rows.Next() {
+		var g sdk.Group
+		var groupID sql.NullInt64
+		var groupName sql.NullString
+
+		if err := rows.Scan(&groupID, &groupName); err != nil {
+			return nil, sdk.WrapError(err, "getJobExecutablesGroups> err scan")
+		}
+
+		if groupID.Valid {
+			g.ID = groupID.Int64
+			g.Name = groupName.String
+		}
+		groups = append(groups, g)
+		if g.ID == group.SharedInfraGroup.ID {
+			sharedInfraIn = true
+		}
+	}
+	if !sharedInfraIn {
+		groups = append(groups, *group.SharedInfraGroup)
+	}
+
+	return groups, nil
 }
 
 func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, error) {
