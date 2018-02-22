@@ -10,21 +10,31 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (api *API) getProjectPlatformHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		platformName := vars["platformName"]
+
+		clearPassword := FormBool(r, "clearPassword")
+
+		platform, err := project.LoadPlatformsByName(api.mustDB(), projectKey, platformName, clearPassword)
+		if err != nil {
+			return sdk.WrapError(err, "getProjectPlatformHandler> Cannot load platform %s/%s", projectKey, platformName)
+		}
+		return WriteJSON(w, platform, http.StatusOK)
+	}
+}
 func (api *API) getProjectPlatformsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "getProjectPlatformsHandler> Cannot load project")
 		}
-
-		projectPlatforms, err := project.LoadPlatformsByID(api.mustDB(), p.ID)
-		if err != nil {
-			return sdk.WrapError(err, "getProjectPlatformsHandler> Cannot load project platform")
-		}
-		return WriteJSON(w, projectPlatforms, http.StatusOK)
+		return WriteJSON(w, p.Platforms, http.StatusOK)
 	}
 }
 

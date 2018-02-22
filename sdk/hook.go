@@ -10,9 +10,32 @@ const (
 	RepositoryWebHookModelName = "RepositoryWebHook"
 	SchedulerModelName         = "Scheduler"
 	GitPollerModelName         = "Git Repository Poller"
+	KafkaHookModelName         = "Kafka hook"
 )
 
 var (
+	KafkaHookModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/kafka",
+		Name:       KafkaHookModelName,
+		Icon:       "Linkify",
+		DefaultConfig: WorkflowNodeHookConfig{
+			"platform": {
+				Value:        "",
+				Configurable: true,
+			},
+			"consumer group": {
+				Value:        "",
+				Configurable: true,
+			},
+			"topic": {
+				Value:        "",
+				Configurable: true,
+			},
+		},
+	}
+
 	WebHookModel = WorkflowHookModel{
 		Author:     "CDS",
 		Type:       WorkflowHookModelBuiltin,

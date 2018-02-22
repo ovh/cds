@@ -5,21 +5,45 @@ const (
 )
 
 var (
+	// KafkaPlatform represent a kafka platform
 	KafkaPlatform = PlatformModel{
 		Name:       KafkaPlatformModel,
 		Author:     "CDS",
 		Identifier: "github.com/ovh/cds/platform/builtin/kafka",
 		Icon:       "",
 		DefaultConfig: PlatformConfig{
-			"broker": "",
+			"broker url": PlatformConfigValue{
+				Type: PlatformConfigTypeString,
+			},
+			"username": PlatformConfigValue{
+				Type: PlatformConfigTypeString,
+			},
+			"password": PlatformConfigValue{
+				Type: PlatformConfigTypePassword,
+			},
 		},
 		Disabled: false,
 		Hook:     true,
 	}
 )
 
-type PlatformConfig map[string]string
+// PlatformConfig represent the configuration of a plateform
+type PlatformConfig map[string]PlatformConfigValue
 
+const (
+	// PlatformConfigTypeString represents a string configuration value
+	PlatformConfigTypeString = "string"
+	// PlatformConfigTypeString represents a password configuration value
+	PlatformConfigTypePassword = "password"
+)
+
+// PlatformConfigValue represent a configuration value for a platform
+type PlatformConfigValue struct {
+	Value string `json:"value"`
+	Type  string `json:"type"`
+}
+
+// PlatformModel represent a platform model with its default configuration
 type PlatformModel struct {
 	ID            int64          `json:"id" db:"id"`
 	Name          string         `json:"name" db:"name"`

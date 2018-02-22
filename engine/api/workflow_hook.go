@@ -33,7 +33,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			return sdk.WrapError(errN, "getWorkflowHookModelsHandler")
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
@@ -91,6 +91,12 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 		}
 		if indexToDelete > -1 {
 			m = append(m[0:indexToDelete], m[indexToDelete+1:]...)
+		}
+
+		for _, platform := range p.Platforms {
+			if platform.Model.Name == sdk.KafkaPlatformModel {
+				m = append(m, sdk.KafkaHookModel)
+			}
 		}
 
 		return WriteJSON(w, m, http.StatusOK)

@@ -32,8 +32,8 @@ export class ProjectPlatformFormComponent {
 
     create(): void {
         this.loading = true;
-        this._projectStore.addPlatform(this.project.key, this.newPlatform).pipe(finalize(() => {
-            this.loading = true;
+        this._projectStore.addPlatform(this.project.key, this.newPlatform).pipe(first(), finalize(() => {
+            this.loading = false;
         })).subscribe(() => {
 
         });

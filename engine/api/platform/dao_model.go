@@ -92,6 +92,23 @@ func UpdatePlatformModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 	return nil
 }
 
+// PostGet is a db hook
+func (pm *PlatformModel) PostGet(db gorp.SqlExecutor) error {
+	query := "SELECT default_config FROM platform_model where id = $1"
+	s, err := db.SelectNullStr(query, pm.ID)
+	if err != nil {
+		return sdk.WrapError(err, "PlatformModel.PostGet> Cannot get default config")
+	}
+	if s.Valid {
+		var defaultConfig sdk.PlatformConfig
+		if err := json.Unmarshal([]byte(s.String), &defaultConfig); err != nil {
+			return sdk.WrapError(err, "PlatformModel.PostGet> Cannot unmarshall default config")
+		}
+		pm.DefaultConfig = defaultConfig
+	}
+	return nil
+}
+
 // PostInsert is a db hook
 func (pm *PlatformModel) PostInsert(db gorp.SqlExecutor) error {
 	return pm.PostUpdate(db)

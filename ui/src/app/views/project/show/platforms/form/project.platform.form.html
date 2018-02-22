@@ -32,7 +32,8 @@
                     <div class="inline fields" *ngFor="let k of newPlatform.model.default_config | keys">
                         <div class="four wide field"><label>{{k}}</label></div>
                         <div class="twelve wide field">
-                            <input type="text" [(ngModel)]="newPlatform.config[k].value">
+                            <input type="text" [(ngModel)]="newPlatform.config[k].value" *ngIf="newPlatform.config[k].type === 'string'">
+                            <input type="password" [(ngModel)]="newPlatform.config[k].value" *ngIf="newPlatform.config[k].type === 'password'">
                         </div>
                     </div>
                 </ng-container>

@@ -5,7 +5,7 @@ CREATE TABLE platform_model (
   author VARCHAR(50),
   identifier VARCHAR(150),
   icon VARCHAR(20),
-  default_config TEXT,
+  default_config JSONB,
   disabled BOOLEAN,
   hook BOOLEAN,
   file_storage BOOLEAN,
@@ -14,14 +14,12 @@ CREATE TABLE platform_model (
   compute BOOLEAN
 );
 
-
-
 CREATE TABLE project_platform (
   id BIGSERIAL PRIMARY KEY,
   name VARCHAR(100),
   project_id BIGINT,
   platform_model_id BIGINT,
-  config TEXT
+  config JSONB
 );
 
 

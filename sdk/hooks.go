@@ -21,6 +21,7 @@ type TaskExecution struct {
 	Config              WorkflowNodeHookConfig
 	WebHook             *WebHookExecution
 	ScheduledTask       *ScheduledTaskExecution
+	Kafka               *KafkaTaskExecution
 	Status              string
 }
 
@@ -29,6 +30,11 @@ type WebHookExecution struct {
 	RequestURL    string
 	RequestBody   []byte
 	RequestHeader map[string][]string
+}
+
+// KafkaTestExecution contains specific data for a kafka hook
+type KafkaTaskExecution struct {
+	Message []byte
 }
 
 // ScheduledTaskExecution contains specific data for a scheduled task execution
