@@ -130,5 +130,5 @@ $ cds admin plugin add ./plugin-download
 # Go further
 
 - How to use Openstack infrastructure to spawn CDS container [read more]({{< relref "hatchery/openstack.md" >}})
-- Link CDS to a repository manager, as Github, Bitbucket or Gitlab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
+- Link CDS to a repository manager, as Github, Bitbucket Server or Gitlab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
 - Learn more about CDS variables [read more]({{< relref "workflows/pipelines/variables.md" >}})
