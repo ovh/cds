@@ -58,9 +58,9 @@ services:
 
   # The docker engine must be accessible from this container
   # The hatchery swarm uses standard docker environment variables like
-  # DOCKER_HOST=tcp://${HOSTNAME}:2376 or tcp://${HOSTNAME}:2375 if you use an unsecured docker engine
-  # DOCKER_CERT_PATH=/Users/me/.docker/machines/.client
-  # DOCKER_TLS_VERIFY=1
+  # DOCKER_HOST: tcp://${HOSTNAME}:2376 or tcp://${HOSTNAME}:2375 if you use an unsecured docker engine
+  # DOCKER_CERT_PATH: /Users/me/.docker/machines/.client
+  # DOCKER_TLS_VERIFY: 1
   #
   # If you don't want to open the docker tcp post, you can bind the docker socket in the volumes section 
   # and set DOCKER_HOST to unix://var/run/docker.sock
@@ -75,9 +75,9 @@ services:
       CDS_HATCHERY_SWARM_COMMONCONFIGURATION_NAME: hatchery-swarm
       CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       DOCKER_HOST: tcp://${HOSTNAME}:2375
-      # DOCKER_HOST="unix://var/run/docker.sock"
-      # DOCKER_CERT_PATH=/Users/me/.docker/machines/.client
-      # DOCKER_TLS_VERIFY=1
+      # DOCKER_HOST: unix://var/run/docker.sock
+      # DOCKER_CERT_PATH: /Users/me/.docker/machines/.client
+      # DOCKER_TLS_VERIFY: 1
       CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_HTTP_URL: http://cds-api:8081
       CDS_HATCHERY_SWARM_MAXCONTAINERS: 4
     links:
