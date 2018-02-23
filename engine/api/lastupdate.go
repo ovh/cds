@@ -189,6 +189,7 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 		fmt.Fprint(w, "data: ACK\n\n")
 		f.Flush()
 
+		tick := time.NewTicker(time.Second)
 	leave:
 		for {
 			select {
@@ -207,7 +208,7 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 				w.Write([]byte(msg))
 				w.Write([]byte("\n\n"))
 				f.Flush()
-			default:
+			case <-tick.C:
 				f.Flush()
 			}
 		}
