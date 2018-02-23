@@ -12,6 +12,7 @@ import (
 func Resync(db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, u *sdk.User) error {
 	options := LoadOptions{
 		DeepPipeline: true,
+		Base64Keys:   true,
 	}
 	wf, errW := LoadByID(db, store, wr.Workflow.ID, u, options)
 	if errW != nil {
