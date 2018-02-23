@@ -461,7 +461,7 @@ func (api *API) importUsersHandler() Handler {
 
 func (api *API) getUserTokenListHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx).ID)
+		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getUserTokenListHandler> cannot load group for user %s", getUser(ctx).Username)
 		}

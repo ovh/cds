@@ -117,18 +117,36 @@ func Delete(db gorp.SqlExecutor, tokenID int64) error {
 }
 
 // LoadTokens load all tokens linked that a user can see
-func LoadTokens(db gorp.SqlExecutor, userID int64) ([]sdk.Token, error) {
+func LoadTokens(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Token, error) {
+	var query string
 	tokens := []sdk.Token{}
+	if user.Admin {
+		query = `
+			SELECT DISTINCT(token.id), token.creator, token.description, token.expiration, token.created, "group".name
+			FROM "group"
+			JOIN token ON "group".id = token.group_id
+			JOIN group_user ON group_user.user_id = $1
+			WHERE group_user.group_admin = true
+			ORDER BY "group".name
+		`
+	} else {
+		query = `
+			SELECT DISTINCT(token.id), token.creator, token.description, token.expiration, token.created, "group".name
+				FROM "group"
+					JOIN token ON "group".id = token.group_id
+					JOIN group_user ON group_user.user_id = $1
+			WHERE "group".id IN (
+				SELECT "group".id
+					FROM "group"
+						JOIN group_user ON group_user.group_id = "group".id
+				WHERE group_user.user_id = $1
+				AND group_user.group_admin = true
+			)
+			ORDER BY "group".name
+		`
+	}
 
-	query := `
-		SELECT DISTINCT(token.id), token.creator, token.description, token.expiration, token.created, "group".name
-		FROM "group"
-		JOIN token ON "group".id = token.group_id
-		JOIN group_user ON group_user.user_id = $1
-		WHERE group_user.group_admin = true
-		ORDER BY "group".name
-	`
-	rows, err := db.Query(query, userID)
+	rows, err := db.Query(query, user.ID)
 	if err == sql.ErrNoRows {
 		return tokens, nil
 	}
