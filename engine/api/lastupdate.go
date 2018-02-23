@@ -207,6 +207,8 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 				w.Write([]byte(msg))
 				w.Write([]byte("\n\n"))
 				f.Flush()
+			default:
+				f.Flush()
 			}
 		}
 		return nil
