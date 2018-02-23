@@ -75,10 +75,10 @@ export class UserService {
      * Verify user token to activate his account.
      * @param username Username to activate
      * @param token activation token
-     * @returns {Observable<Response>}
+     * @returns {Observable<any>}
      */
-    verify(username: string, token: string): Observable<Response> {
-        return this._http.get<Response>('/user/' + username + '/confirm/' + token);
+    verify(username: string, token: string): Observable<any> {
+        return this._http.get<any>('/user/' + username + '/confirm/' + token);
     }
 
     /**
