@@ -3,6 +3,7 @@ package gitlab
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/xanzy/go-gitlab"
@@ -89,20 +90,47 @@ func (c *gitlabClient) SetStatus(event sdk.Event) error {
 	return nil
 }
 
+func (c *gitlabClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+	ss, _, err := c.client.Commits.GetCommitStatuses(repo, ref, nil)
+	if err != nil {
+		return nil, sdk.WrapError(err, "gitlabClient.ListStatuses> Unable to get comit statuses %s", ref)
+	}
+
+	vcsStatuses := []sdk.VCSCommitStatus{}
+	for _, s := range ss {
+		if !strings.HasPrefix(s.Description, "CDS/") {
+			continue
+		}
+		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
+			CreatedAt:  *s.CreatedAt,
+			Decription: s.Description,
+			Ref:        ref,
+			State:      processBitbucketState(*s),
+		})
+	}
+
+	return vcsStatuses, nil
+}
+
+func processBitbucketState(s gitlab.CommitStatus) string {
+	switch s.Status {
+	case string(gitlab.Success):
+		return sdk.StatusSuccess.String()
+	case string(gitlab.Failed):
+		return sdk.StatusFail.String()
+	case string(gitlab.Canceled):
+		return sdk.StatusSkipped.String()
+	default:
+		return sdk.StatusBuilding.String()
+	}
+}
+
 func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventWorkflowNodeRun
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "gitlabClient.processPipelineBuildEvent> cannot read payload")
 	}
-
-	log.Debug("Process event:%+v", event)
-
-	key := fmt.Sprintf("%s-%s-%s",
-		eventNR.ProjectKey,
-		eventNR.WorkflowName,
-		eventNR.NodeName,
-	)
 
 	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 		uiURL,
@@ -111,7 +139,7 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 		eventNR.Number,
 	)
 
-	data.desc = fmt.Sprintf("Build #%d.%d %s", eventNR.Number, eventNR.SubNumber, key)
+	data.desc = sdk.VCSCommitStatusDescription(eventNR)
 	data.hash = eventNR.Hash
 	data.repoFullName = eventNR.RepositoryFullName
 	data.status = eventNR.Status
@@ -125,8 +153,6 @@ func processPipelineBuildEvent(event sdk.Event, uiURL string) (statusData, error
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
 		return data, sdk.WrapError(err, "gitlabClient.processPipelineBuildEvent> cannot read payload")
 	}
-
-	log.Debug("Process event:%+v", event)
 
 	cdsProject := eventpb.ProjectKey
 	cdsApplication := eventpb.ApplicationName
