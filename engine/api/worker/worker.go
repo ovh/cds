@@ -404,15 +404,18 @@ func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64, jo
 // LoadWorkerModelsUsableOnGroup returns worker models for a group
 func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
 	ms := []WorkerModel{}
-	if _, err := db.Select(&ms, `
-		SELECT * from worker_model
-		WHERE disabled = FALSE
-		AND (group_id = $1 OR group_id = $2 OR $1 = $2)
-		ORDER by name
-		`, groupID, sharedinfraGroupID); err != nil {
+	var err error
+	models := []sdk.Model{}
+
+	if sharedinfraGroupID == groupID { // shared infra, return all models
+		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE ORDER by name`)
+	} else { // not shared infra, returns only selected worker models
+		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND group_id = $1 ORDER by name`, groupID)
+	}
+	if err != nil {
 		return nil, err
 	}
-	models := []sdk.Model{}
+
 	for i := range ms {
 		if err := ms[i].PostSelect(db); err != nil {
 			return nil, err
