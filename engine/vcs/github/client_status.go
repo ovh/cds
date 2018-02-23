@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/ovh/cds/engine/api/cache"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -100,8 +100,7 @@ func (g *githubClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitSta
 	url := "/repos/" + repo + "/statuses/" + ref
 	status, body, _, err := g.get(url)
 	if err != nil {
-		log.Warning("githubClient.ListStatuses> Error %s", err)
-		return []sdk.VCSCommitStatus{}, err
+		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "githubClient.ListStatuses")
 	}
 	if status >= 400 {
 		return []sdk.VCSCommitStatus{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
@@ -114,8 +113,7 @@ func (g *githubClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitSta
 		g.Cache.Get(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), &ss)
 	} else {
 		if err := json.Unmarshal(body, &ss); err != nil {
-			log.Warning("githubClient.ListStatuses> Unable to parse github commit: %s", err)
-			return []sdk.VCSCommitStatus{}, err
+			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "githubClient.ListStatuses> Unable to parse github commit: %s", ref)
 		}
 		//Put the body on cache for one hour and one minute
 		g.Cache.SetWithTTL(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), ss, 61*60)
