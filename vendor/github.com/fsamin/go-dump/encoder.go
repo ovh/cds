@@ -1,6 +1,7 @@
 package dump
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"reflect"
@@ -17,6 +18,7 @@ type Encoder struct {
 		Type           bool
 		DetailedStruct bool
 		DetailedMap    bool
+		DeepJSON       bool
 	}
 	writer io.Writer
 }
@@ -103,11 +105,6 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 			return err
 		}
 	case reflect.Array, reflect.Slice:
-		if e.ExtraFields.Type {
-			nodeType := append(roots, "__Type__")
-			nodeTypeFormatted := strings.Join(sliceFormat(nodeType, e.Formatters), ".")
-			w[nodeTypeFormatted] = "Array"
-		}
 		if err := e.fDumpArray(w, i, roots); err != nil {
 			return err
 		}
@@ -124,12 +121,59 @@ func (e *Encoder) fdumpInterface(w map[string]interface{}, i interface{}, roots 
 		return nil
 	default:
 		k := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
-		w[k] = f.Interface()
+		if e.ExtraFields.DeepJSON && (f.Kind() == reflect.String) {
+			if err := e.fDumpJSON(w, f.Interface().(string), roots, k); err != nil {
+				return err
+			}
+		} else {
+			w[k] = f.Interface()
+		}
+
+	}
+	return nil
+}
+
+func (e *Encoder) fDumpJSON(w map[string]interface{}, i string, roots []string, k string) error {
+	var value interface{}
+	bodyJSONArray := []interface{}{}
+	// Try to parse as a json array
+	if err := json.Unmarshal([]byte(i), &bodyJSONArray); err != nil {
+		//Try to parse as a map
+		bodyJSONMap := map[string]interface{}{}
+		if err2 := json.Unmarshal([]byte(i), &bodyJSONMap); err2 == nil {
+			value = bodyJSONMap
+		} else {
+			value = i
+		}
+	} else {
+		value = bodyJSONArray
+	}
+
+	if value == i {
+		w[k] = i
+		return nil
+	}
+	if err := e.fdumpInterface(w, value, roots); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (e *Encoder) fDumpArray(w map[string]interface{}, i interface{}, roots []string) error {
+	f := valueFromInterface(i)
+	if _, ok := f.Interface().([]byte); ok {
+		if err := e.fdumpInterface(w, string(f.Interface().([]byte)), roots); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if e.ExtraFields.Type {
+		nodeType := append(roots, "__Type__")
+		nodeTypeFormatted := strings.Join(sliceFormat(nodeType, e.Formatters), ".")
+		w[nodeTypeFormatted] = "Array"
+	}
+
 	v := reflect.ValueOf(i)
 
 	if e.ExtraFields.Len {
