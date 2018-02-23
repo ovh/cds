@@ -17,6 +17,7 @@ var (
 		&sdk.RepositoryWebHookModel,
 		&sdk.GitPollerModel,
 		&sdk.SchedulerModel,
+		&sdk.KafkaHookModel,
 	}
 )
 

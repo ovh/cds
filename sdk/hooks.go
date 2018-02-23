@@ -20,6 +20,7 @@ type TaskExecution struct {
 	WorkflowRun         int64                   `json:"workflow_run"`
 	Config              WorkflowNodeHookConfig  `json:"config"`
 	WebHook             *WebHookExecution       `json:"webhook,omitempty"`
+	Kafka               *KafkaTaskExecution     `json:"kafka,omitempty"`
 	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty"`
 	Status              string                  `json:"status"`
 }

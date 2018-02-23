@@ -114,8 +114,9 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 	switch h.WorkflowHookModel.Name {
 	case sdk.KafkaHookModelName:
 		return &sdk.Task{
-			UUID: h.UUID,
-			Type: TypeKafka,
+			UUID:   h.UUID,
+			Type:   TypeKafka,
+			Config: h.Config,
 		}, nil
 	case sdk.WebHookModelName:
 		h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
@@ -261,13 +262,13 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	return nil
 }
 
-func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
+func (s *Service) stopTask(t *sdk.Task) error {
 	log.Info("Hooks> Stopping task %s", t.UUID)
 	t.Stopped = true
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
-	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller:
+	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka:
 		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
 		return nil
 	default:

@@ -106,7 +106,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, m, http.StatusOK)
+		return WriteJSON(w, models, http.StatusOK)
 	}
 }
 

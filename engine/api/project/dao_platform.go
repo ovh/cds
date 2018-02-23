@@ -2,11 +2,11 @@ package project
 
 import (
 	"database/sql"
+	"encoding/base64"
+	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
-	"encoding/base64"
-	"encoding/json"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
@@ -44,7 +44,7 @@ func LoadPlatformsByName(db gorp.SqlExecutor, key string, name string, clearPwd 
 		JOIN project ON project.id = project_platform.project_id
 		WHERE project.projectkey = $1 AND project_platform.name = $2
 	`
-	if _, err := db.Select(&pp, query, key, name); err != nil {
+	if err := db.SelectOne(&pp, query, key, name); err != nil {
 		return sdk.ProjectPlatform{}, sdk.WrapError(err, "LoadPlatformsByName> Cannot load platform")
 	}
 	p := sdk.ProjectPlatform(pp)
@@ -57,10 +57,10 @@ func LoadPlatformsByName(db gorp.SqlExecutor, key string, name string, clearPwd 
 				}
 				v.Value = decryptedValue
 				p.Config[k] = v
+			} else {
+				v.Value = sdk.PasswordPlaceholder
+				p.Config[k] = v
 			}
-		} else {
-			v.Value = sdk.PasswordPlaceholder
-			p.Config[k] = v
 		}
 	}
 
@@ -103,7 +103,6 @@ func LoadPlatformsByID(db gorp.SqlExecutor, id int64, clearPassword bool) ([]sdk
 		}
 		platforms[i] = sdk.ProjectPlatform(*pp)
 	}
-
 	return platforms, nil
 }
 

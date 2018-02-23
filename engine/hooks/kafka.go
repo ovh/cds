@@ -30,24 +30,22 @@ func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 
 func (s *Service) startKafkaHook(t *sdk.Task) error {
 	var kafkaPlatform, kafkaUser, projectKey, consumerGroup, topic string
-	for k, v := range t.Config.Values() {
+	for k, v := range t.Config {
 		switch k {
-		case "user":
-			kafkaUser = v
 		case "platform":
-			kafkaPlatform = v
+			kafkaPlatform = v.Value
 		case "consumer group":
-			consumerGroup = v
+			consumerGroup = v.Value
 		case "topic":
-			topic = v
+			topic = v.Value
 		case "project":
-			projectKey = v
+			projectKey = v.Value
 		}
 	}
 	pf, err := s.cds.ProjectPlatform(projectKey, kafkaPlatform, true)
 	if err != nil {
-		s.saveKafkaExecution(t, err.Error(), 1)
-		return sdk.WrapError(err, "startTask> Cannot get kafka configuration")
+		s.stopTask(t)
+		return sdk.WrapError(err, "startTask> Cannot get kafka configuration for %s/%s", projectKey, kafkaPlatform)
 	}
 
 	var password, broker string
@@ -55,8 +53,10 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		switch k {
 		case "password":
 			password = v.Value
-		case "broker":
+		case "broker url":
 			broker = v.Value
+		case "username":
+			kafkaUser = v.Value
 		}
 
 	}
@@ -82,7 +82,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		clusterConfig)
 
 	if errConsumer != nil {
-		s.saveKafkaExecution(t, errConsumer.Error(), 1)
+		s.stopTask(t)
 		return fmt.Errorf("startKafkaHook>Error creating consumer: %s", errConsumer)
 	}
 

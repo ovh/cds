@@ -106,7 +106,7 @@ func (s *Service) putTaskHandler() api.Handler {
 		}
 
 		//Stop the task
-		if err := s.stopTask(ctx, t); err != nil {
+		if err := s.stopTask(t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
 		}
 
@@ -158,7 +158,7 @@ func (s *Service) deleteTaskHandler() api.Handler {
 		}
 
 		//Stop the task
-		if err := s.stopTask(ctx, t); err != nil {
+		if err := s.stopTask(t); err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
 		}
 
@@ -211,7 +211,7 @@ func (s *Service) deleteTaskBulkHandler() api.Handler {
 			}
 
 			//Stop the task
-			if err := s.stopTask(ctx, t); err != nil {
+			if err := s.stopTask(t); err != nil {
 				return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task %s", err)
 			}
 			//Delete the task

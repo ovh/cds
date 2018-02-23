@@ -83,7 +83,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	//Insert new node
 	dbwn := Node(*n)
 	if err := db.Insert(&dbwn); err != nil {
-		return nodes, sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
+		return nodes, sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node %s", n.Name)
 	}
 	n.ID = dbwn.ID
 	nodes = syncNodesArray(nodes, *n)
