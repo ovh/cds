@@ -67,6 +67,9 @@ func workflowPushRun(c cli.Values) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("Workflow successfully pushed !")
+
 	return workflowTarReaderToFiles(dir, tr, false, false)
 }
 

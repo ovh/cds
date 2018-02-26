@@ -66,6 +66,9 @@ func workflowPullRun(c cli.Values) error {
 }
 
 func workflowTarReaderToFiles(dir string, tr *tar.Reader, force, quiet bool) error {
+	if tr == nil {
+		return fmt.Errorf("Unable to read workflow")
+	}
 	// Iterate through the files in the archive.
 	for {
 		hdr, err := tr.Next()
