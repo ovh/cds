@@ -458,33 +458,6 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
 	}
 
-	//Check
-	if h != nil {
-		hooks := w.Workflow.GetHooks()
-		hook, ok := hooks[h.WorkflowNodeHookUUID]
-		if !ok {
-			return false, sdk.WrapError(sdk.ErrNoHook, "processWorkflowNodeRun> Unable to find hook %s", h.WorkflowNodeHookUUID)
-		}
-
-		//Check conditions
-		var params = run.BuildParameters
-		//Define specific destination parameters
-		dest := w.Workflow.GetNode(hook.WorkflowNodeID)
-		if dest == nil {
-			return false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processWorkflowNodeRun> Unable to find node %d", hook.WorkflowNodeID)
-		}
-
-		if !checkNodeRunCondition(w, *dest, params) {
-			log.Debug("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
-			return false, nil
-		}
-	} else {
-		if !checkNodeRunCondition(w, *n, run.BuildParameters) {
-			log.Debug("processWorkflowNodeRun> Condition failed %d/%d", w.ID, n.ID)
-			return false, nil
-		}
-	}
-
 	//Parse job params to get the VCS infos
 	gitValues := map[string]string{}
 	for _, param := range jobParams {
@@ -518,6 +491,33 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.url", sdk.StringParameter, vcsInfos.url)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.http_url", sdk.StringParameter, vcsInfos.httpurl)
+
+	//Check
+	if h != nil {
+		hooks := w.Workflow.GetHooks()
+		hook, ok := hooks[h.WorkflowNodeHookUUID]
+		if !ok {
+			return false, sdk.WrapError(sdk.ErrNoHook, "processWorkflowNodeRun> Unable to find hook %s", h.WorkflowNodeHookUUID)
+		}
+
+		//Check conditions
+		var params = run.BuildParameters
+		//Define specific destination parameters
+		dest := w.Workflow.GetNode(hook.WorkflowNodeID)
+		if dest == nil {
+			return false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processWorkflowNodeRun> Unable to find node %d", hook.WorkflowNodeID)
+		}
+
+		if !checkNodeRunCondition(w, *dest, params) {
+			log.Debug("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
+			return false, nil
+		}
+	} else {
+		if !checkNodeRunCondition(w, *n, run.BuildParameters) {
+			log.Debug("processWorkflowNodeRun> Condition failed %d/%d", w.ID, n.ID)
+			return false, nil
+		}
+	}
 
 	//Tag VCS infos
 	w.Tag(tagGitRepository, run.VCSRepository)
