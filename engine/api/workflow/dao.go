@@ -428,6 +428,7 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 				} else {
 					n.Name = n.Pipeline.Name
 				}
+				log.Info("renameNode> Node name generation %s [%+v]", n.Name, maxNumberByPipeline)
 				maxNumberByPipeline[n.Pipeline.ID] = nextNumber
 			}
 		}
