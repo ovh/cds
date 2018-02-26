@@ -687,6 +687,7 @@ export class WorkflowNodeHook {
 export class WorkflowNodeHookConfigValue {
     value: string;
     configurable: boolean;
+    type: string;
 }
 
 // WorkflowNodeTrigger is a ling betweeb two pipelines in a workflow

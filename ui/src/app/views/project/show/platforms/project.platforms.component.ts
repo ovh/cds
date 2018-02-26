@@ -16,7 +16,7 @@ export class ProjectPlatformsComponent implements OnInit {
     constructor(private _projectStore: ProjectStore) { }
 
     ngOnInit(): void {
-        if (this.project.platforms) {
+        if (this.project.platforms && this.project.platforms.length === 0) {
             this.loading = false;
             return;
         }

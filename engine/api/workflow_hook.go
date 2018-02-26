@@ -83,6 +83,14 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			}
 		}
 
+		hasKafka := false
+		for _, platform := range p.Platforms {
+			if platform.Model.Name == sdk.KafkaPlatformModel {
+				hasKafka = true
+				break
+			}
+		}
+
 		models := []sdk.WorkflowHookModel{}
 		for i := range m {
 			switch m[i].Name {
@@ -95,14 +103,12 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 				if repoPollerEnable {
 					models = append(models, m[i])
 				}
+			case sdk.KafkaHookModelName:
+				if hasKafka {
+					models = append(models, m[i])
+				}
 			default:
 				models = append(models, m[i])
-			}
-		}
-
-		for _, platform := range p.Platforms {
-			if platform.Model.Name == sdk.KafkaPlatformModel {
-				models = append(models, sdk.KafkaHookModel)
 			}
 		}
 

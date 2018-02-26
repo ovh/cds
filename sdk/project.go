@@ -30,7 +30,7 @@ type Project struct {
 	WorkflowMigration string             `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys              []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
 	VCSServers        []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
-	Platforms         []ProjectPlatform  `json:"platform" yaml:"platform" db:"-" cli:"-"`
+	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platform" db:"-" cli:"-"`
 }
 
 // ProjectVCSServer represents associations between a project and a vcs server
