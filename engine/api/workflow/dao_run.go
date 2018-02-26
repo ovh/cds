@@ -328,39 +328,8 @@ func loadRun(db gorp.SqlExecutor, withArtifacts bool, query string, args ...inte
 	}
 	wr := sdk.WorkflowRun(*runDB)
 
-	q := "select workflow_node_run.* from workflow_node_run where workflow_run_id = $1 ORDER BY workflow_node_run.sub_num DESC"
-	dbNodeRuns := []NodeRun{}
-	if _, err := db.Select(&dbNodeRuns, q, wr.ID); err != nil {
-		if err != sql.ErrNoRows {
-			return nil, sdk.WrapError(err, "loadRun> Unable to load workflow nodes run")
-		}
-	}
-
-	for _, n := range dbNodeRuns {
-		wnr, err := fromDBNodeRun(n)
-		if err != nil {
-			return nil, err
-		}
-		if wr.WorkflowNodeRuns == nil {
-			wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
-		}
-		wnr.CanBeRun = canBeRun(&wr, wnr)
-
-		if withArtifacts {
-			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
-			if errA != nil {
-				return nil, sdk.WrapError(errA, "loadRun>Error loading artifacts for run %d", wnr.ID)
-			}
-			wnr.Artifacts = arts
-		}
-
-		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)
-	}
-
-	for k := range wr.WorkflowNodeRuns {
-		sort.Slice(wr.WorkflowNodeRuns[k], func(i, j int) bool {
-			return wr.WorkflowNodeRuns[k][i].SubNumber > wr.WorkflowNodeRuns[k][j].SubNumber
-		})
+	if err := syncNodeRuns(db, &wr, withArtifacts); err != nil {
+		return nil, sdk.WrapError(err, "loadRun> Unable to load workflow node run")
 	}
 
 	tags, errT := loadTagsByRunID(db, wr.ID)
@@ -564,5 +533,43 @@ func deleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
 		log.Warning("deleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
 		return err
 	}
+	return nil
+}
+
+// syncNodeRuns load the workflow node runs for a workflow run
+func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, withArtifacts bool) error {
+	wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
+	q := "select workflow_node_run.* from workflow_node_run where workflow_run_id = $1 ORDER BY workflow_node_run.sub_num DESC"
+	dbNodeRuns := []NodeRun{}
+	if _, err := db.Select(&dbNodeRuns, q, wr.ID); err != nil {
+		if err != sql.ErrNoRows {
+			return sdk.WrapError(err, "syncNodeRuns> Unable to load workflow nodes run")
+		}
+	}
+
+	for _, n := range dbNodeRuns {
+		wnr, err := fromDBNodeRun(n)
+		if err != nil {
+			return err
+		}
+		wnr.CanBeRun = canBeRun(wr, wnr)
+
+		if withArtifacts {
+			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
+			if errA != nil {
+				return sdk.WrapError(errA, "syncNodeRuns>Error loading artifacts for run %d", wnr.ID)
+			}
+			wnr.Artifacts = arts
+		}
+
+		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)
+	}
+
+	for k := range wr.WorkflowNodeRuns {
+		sort.Slice(wr.WorkflowNodeRuns[k], func(i, j int) bool {
+			return wr.WorkflowNodeRuns[k][i].SubNumber > wr.WorkflowNodeRuns[k][j].SubNumber
+		})
+	}
+
 	return nil
 }

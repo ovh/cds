@@ -96,7 +96,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 			haveToUpdate := false
 
-			log.Debug("last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
+			log.Debug("processWorkflowRun> last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
 				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
@@ -125,7 +125,6 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 					}
 
 					if !abortTrigger {
-
 						//Keep the subnumber of the previous node in the graph
 						conditionOk, errPwnr := processWorkflowNodeRun(dbCopy, db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, chanEvent)
 						if errPwnr != nil {
@@ -282,6 +281,27 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 						continue
 					}
 				}
+			}
+		}
+	}
+
+	// Recompute status counter, it's mandatory to resync
+	// the map of workflow node runs of the wornflow run to get the right statuses
+	// After resync, recompute all status counter compute the workflow status
+	// All of this is usefull to get the right workflow status is the last node status is skipped
+	if err := syncNodeRuns(db, w, false); err != nil {
+		return false, sdk.WrapError(err, "processWorkflowRun> Unable to sync workflow node runs")
+	}
+	// Reinit the counters
+	nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled = 0, 0, 0, 0, 0, 0
+	for k, v := range w.WorkflowNodeRuns {
+		lastCurrentSn := lastSubNumber(w.WorkflowNodeRuns[k])
+		// Subversion of workflowNodeRun
+		for i := range v {
+			nodeRun := &w.WorkflowNodeRuns[k][i]
+			// Compute for the last subnumber only
+			if lastCurrentSn == nodeRun.SubNumber {
+				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
 			}
 		}
 	}
