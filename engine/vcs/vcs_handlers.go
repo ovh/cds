@@ -324,6 +324,37 @@ func (s *Service) getCommitHandler() api.Handler {
 	}
 }
 
+func (s *Service) getCommitStatusHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+		commit := muxVar(r, "commit")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitStatusHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitStatusHandler> Unable to get authorized client")
+		}
+
+		statuses, err := client.ListStatuses(fmt.Sprintf("%s/%s", owner, repo), commit)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitStatusHandler> Unable to get commit %s statuses on %s/%s", commit, owner, repo)
+		}
+
+		return api.WriteJSON(w, statuses, http.StatusOK)
+	}
+}
+
 func (s *Service) getPullRequestsHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")

@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -233,42 +232,6 @@ func AddApplicationFromReposManager(projectkey, rmname, repoFullname string) err
 	return nil
 }
 
-//RepositoriesManagerClient is the client interface
-type RepositoriesManagerClient interface {
-	//Repos
-	Repos() ([]VCSRepo, error)
-	RepoByFullname(fullname string) (VCSRepo, error)
-
-	//Branches
-	Branches(string) ([]VCSBranch, error)
-	Branch(string, string) (*VCSBranch, error)
-
-	//Commits
-	Commits(repo, branch, since, until string) ([]VCSCommit, error)
-	Commit(repo, hash string) (VCSCommit, error)
-
-	// PullRequests
-	PullRequests(string) ([]VCSPullRequest, error)
-
-	//Hooks
-	CreateHook(repo, url string) error
-	DeleteHook(repo, url string) error
-
-	//Events
-	GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error)
-	PushEvents(string, []interface{}) ([]VCSPushEvent, error)
-	CreateEvents(string, []interface{}) ([]VCSCreateEvent, error)
-	DeleteEvents(string, []interface{}) ([]VCSDeleteEvent, error)
-	PullRequestEvents(string, []interface{}) ([]VCSPullRequestEvent, error)
-
-	// Set build status on repository
-	SetStatus(event Event) error
-
-	// Release
-	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
-	UploadReleaseFile(repo string, release *VCSRelease, runArtifact WorkflowNodeRunArtifact, file *bytes.Buffer) error
-}
-
 // VCSRelease represents data about release on github, etc..
 type VCSRelease struct {
 	ID        int64  `json:"id"`
@@ -366,4 +329,12 @@ type VCSHook struct {
 	Body        string   `json:"body"`
 	InsecureSSL bool     `json:"insecure_ssl"`
 	Workflow    bool     `json:"workflow"`
+}
+
+// VCSCommitStatus represents a status on a VCS repository
+type VCSCommitStatus struct {
+	Ref        string    `json:"ref"`
+	CreatedAt  time.Time `json:"created_at"`
+	State      string    `json:"state"`
+	Decription string    `json:"description"`
 }

@@ -36,15 +36,16 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Sto
 		if db != nil {
 			if err := processEvent(db, e, store); err != nil {
 				log.Error("ReceiveEvents> err while processing error=%s : %v", err, e)
-				retryEvent(&e, err, store)
+				RetryEvent(&e, err, store)
 			}
 			continue
 		}
-		retryEvent(&e, nil, store)
+		RetryEvent(&e, nil, store)
 	}
 }
 
-func retryEvent(e *sdk.Event, err error, store cache.Store) {
+//RetryEvent retries the events
+func RetryEvent(e *sdk.Event, err error, store cache.Store) {
 	e.Attempts++
 	if e.Attempts > 2 {
 		log.Error("ReceiveEvents> Aborting event processing %v: %v", err, e)
@@ -102,7 +103,7 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 	}
 
 	if err := c.SetStatus(event); err != nil {
-		retryEvent(&event, err, store)
+		RetryEvent(&event, err, store)
 		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > err:%s", err)
 	}
 

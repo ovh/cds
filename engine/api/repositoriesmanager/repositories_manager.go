@@ -348,6 +348,15 @@ func (c *vcsClient) ListForks(repo string) ([]sdk.VCSRepo, error) {
 	return forks, nil
 }
 
+func (c *vcsClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+	statuses := []sdk.VCSCommitStatus{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s/statuses", c.name, repo, ref)
+	if _, err := c.doJSONRequest("GET", path, nil, &statuses); err != nil {
+		return nil, err
+	}
+	return statuses, nil
+}
+
 // WebhooksInfos is a set of info about webhooks
 type WebhooksInfos struct {
 	WebhooksSupported bool   `json:"webhooks_supported"`
