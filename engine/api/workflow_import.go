@@ -146,8 +146,8 @@ func (api *API) postWorkflowImportHandler() Handler {
 		}
 
 		if wrkflw != nil {
-			w.Header().Add("X-Cds-Workflow-ID", fmt.Sprintf("%d", wrkflw.ID))
-			w.Header().Add("X-Cds-Workflow-Name", wrkflw.Name)
+			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
+			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
 		return WriteJSON(w, msgListString, http.StatusOK)
@@ -342,9 +342,9 @@ func (api *API) postWorkflowPushHandler() Handler {
 		tr := tar.NewReader(bytes.NewReader(btes))
 
 		var pushOptions *workflowPushOption
-		if r.Header.Get("X-Cds-Workflow-As-Code") != "" {
+		if r.Header.Get(sdk.WorkflowAsCodeHeader) != "" {
 			pushOptions = &workflowPushOption{
-				FromRepository: r.Header.Get("X-Cds-Workflow-As-Code"),
+				FromRepository: r.Header.Get(sdk.WorkflowAsCodeHeader),
 			}
 		}
 
@@ -355,8 +355,8 @@ func (api *API) postWorkflowPushHandler() Handler {
 		msgListString := translate(r, allMsg)
 
 		if wrkflw != nil {
-			w.Header().Add("X-Cds-Workflow-ID", fmt.Sprintf("%d", wrkflw.ID))
-			w.Header().Add("X-Cds-Workflow-Name", wrkflw.Name)
+			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
+			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
 		return WriteJSON(w, msgListString, http.StatusOK)

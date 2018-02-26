@@ -41,6 +41,13 @@ var (
 	agent string
 	// CDSConfigFile is path to the default config file
 	CDSConfigFile = path.Join(os.Getenv("HOME"), ".cds", "config.json")
+
+	// ResponseWorkflowNameHeader is used as HTTP header
+	ResponseWorkflowNameHeader = "X-Api-Workflow-Name"
+	// ResponseWorkflowIDHeader is used as HTTP header
+	ResponseWorkflowIDHeader = "X-Api-Workflow-Id"
+	// WorkflowAsCodeHeader is used as HTTP header
+	WorkflowAsCodeHeader = "X-Api-Workflow-As-Code"
 )
 
 // InitEndpoint force sdk package request to given endpoint

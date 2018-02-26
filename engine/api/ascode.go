@@ -146,8 +146,8 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		msgListString := translate(r, allMsg)
 
 		if wrkflw != nil {
-			w.Header().Add("X-Cds-Workflow-ID", fmt.Sprintf("%d", wrkflw.ID))
-			w.Header().Add("X-Cds-Workflow-Name", wrkflw.Name)
+			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
+			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
 		return WriteJSON(w, msgListString, http.StatusOK)

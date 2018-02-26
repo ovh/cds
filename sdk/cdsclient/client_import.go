@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/ovh/cds/sdk"
+
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -179,8 +181,10 @@ func (c *client) WorkflowPush(projectKey string, tarContent io.Reader, mods ...R
 		return nil, nil, err
 	}
 
-	wName := headers.Get("X-Cds-Workflow-Name")
-
+	wName := headers.Get(sdk.ResponseWorkflowNameHeader)
+	if wName == "" {
+		return messages, nil, nil
+	}
 	tarReader, err := c.WorkflowPull(projectKey, wName, false)
 	if err != nil {
 		return nil, nil, err
