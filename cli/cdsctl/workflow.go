@@ -56,12 +56,13 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 			Value: latestCommit.Hash,
 		},
 	}
+
 	//Searching workflow
 	runs, err := client.WorkflowRunSearch(projectKey, 0, 0, filters...)
 	if err != nil {
 		return 0, err
 	}
-	if len(runs) != 1 {
+	if len(runs) < 1 {
 		return 0, fmt.Errorf("workflow run not found : %+v", runs)
 	}
 
