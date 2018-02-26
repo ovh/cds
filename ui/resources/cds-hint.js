@@ -60,16 +60,16 @@
 
         // Get current line
         var text = cm.doc.children[0].lines[cur.line].text;
-        // Show nothing if there is no  {{. on the line
         if (text.indexOf(cdsPrefix) === -1 && text.indexOf(workflowPrefix) === -1 && text.indexOf(gitPrefix) === -1) {
             return null;
         }
 
         var areaBefore = text.substring(0, cur.ch);
-        var ch = areaBefore.lastIndexOf(cdsPrefix);
-        if (ch === -1) {
-            ch = areaBefore.lastIndexOf(workflowPrefix);
-        }
+        var cdsPrefixCh = areaBefore.lastIndexOf(cdsPrefix);
+        var workflowPrefixCh = areaBefore.lastIndexOf(workflowPrefix);
+        var gitPrefixCh = areaBefore.lastIndexOf(gitPrefix);
+
+        var ch = Math.max(cdsPrefixCh, workflowPrefixCh, gitPrefixCh);
         return {
             list: cdsCompletionList.filter(function (l) {
                 return l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(cdsPrefix))) !== -1 ||
