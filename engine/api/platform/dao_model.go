@@ -1,7 +1,6 @@
 package platform
 
 import (
-	"database/sql"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
@@ -11,14 +10,32 @@ import (
 )
 
 var (
+	// Models list available platform models
 	Models = []sdk.PlatformModel{
 		sdk.KafkaPlatform,
 	}
 )
 
+// LoadModels load platform models
+func LoadModels(db gorp.SqlExecutor) ([]sdk.PlatformModel, error) {
+	var pm []platformModel
+	if _, err := db.Select(&pm, "SELECT * from platform_model"); err != nil {
+		return nil, sdk.WrapError(err, "LoadModels> Cannot select all platform model")
+	}
+
+	var platforms = make([]sdk.PlatformModel, len(pm))
+	for i, p := range pm {
+		if err := p.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadModels> Cannot post et platform model")
+		}
+		platforms[i] = sdk.PlatformModel(p)
+	}
+	return platforms, nil
+}
+
 // LoadModel Load a platform model by its ID
 func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
-	var pm PlatformModel
+	var pm platformModel
 	if err := db.SelectOne(&pm, "SELECT * from platform_model where id = $1", modelID); err != nil {
 		return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> Cannot select platform model %d", modelID)
 	}
@@ -26,54 +43,51 @@ func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
 }
 
 // CreatePlatformModels create platforms models
-func CreatePlatformModels(db *gorp.DbMap) error {
+func CreateModels(db *gorp.DbMap) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return sdk.WrapError(err, "CreatePlatformModels> Unable to start transaction")
+		return sdk.WrapError(err, "CreateModels> Unable to start transaction")
 	}
 	defer tx.Rollback()
 
 	if _, err := tx.Exec("LOCK TABLE platform_model IN ACCESS EXCLUSIVE MODE"); err != nil {
-		return sdk.WrapError(err, "CreatePlatformModels> Unable to lock table")
+		return sdk.WrapError(err, "CreateModels> Unable to lock table")
 	}
 
 	for i := range Models {
 		p := &Models[i]
-		ok, err := checkPlatformExist(tx, p)
+		ok, err := ModelExists(tx, p)
 		if err != nil {
-			return sdk.WrapError(err, "CreatePlatformModels")
+			return sdk.WrapError(err, "CreateModels")
 		}
 
 		if !ok {
-			log.Debug("CreatePlatformModels> inserting platform config: %s", p.Name)
-			if err := InsertPlatformModel(tx, p); err != nil {
-				return sdk.WrapError(err, "CreatePlatformModels error on insert")
+			log.Debug("CreateModels> inserting platform config: %s", p.Name)
+			if err := InsertModel(tx, p); err != nil {
+				return sdk.WrapError(err, "CreateModels error on insert")
 			}
 		} else {
-			log.Debug("CreatePlatformModels> updating platform config: %s", p.Name)
+			log.Debug("CreateModels> updating platform config: %s", p.Name)
 			// update default values
-			if err := UpdatePlatformModel(tx, p); err != nil {
-				return sdk.WrapError(err, "CreatePlatformModels  error on update")
+			if err := UpdateModel(tx, p); err != nil {
+				return sdk.WrapError(err, "CreateModels  error on update")
 			}
 		}
 	}
 	return tx.Commit()
 }
 
-func checkPlatformExist(db gorp.SqlExecutor, p *sdk.PlatformModel) (bool, error) {
+func ModelExists(db gorp.SqlExecutor, p *sdk.PlatformModel) (bool, error) {
 	var count = 0
-	if err := db.QueryRow("select count(1), id from platform_model where name = $1 group by id", p.Name).Scan(&count, &p.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
+	if err := db.QueryRow("select count(1), id from platform_model where name = $1 GROUP BY id", p.Name).Scan(&count, &p.ID); err != nil {
 		return false, sdk.WrapError(err, "checkPlatformExist")
 	}
 	return count > 0, nil
 }
 
 // InsertPlatformModel inserts a platform model in database
-func InsertPlatformModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
-	dbm := PlatformModel(*m)
+func InsertModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
+	dbm := platformModel(*m)
 	if err := db.Insert(&dbm); err != nil {
 		return sdk.WrapError(err, "InsertPlatformModel> Unable to insert platform model %s", m.Name)
 	}
@@ -82,8 +96,8 @@ func InsertPlatformModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 }
 
 // UpdatePlatformModel updates a platform model in database
-func UpdatePlatformModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
-	dbm := PlatformModel(*m)
+func UpdateModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
+	dbm := platformModel(*m)
 	if n, err := db.Update(&dbm); err != nil {
 		return sdk.WrapError(err, "UpdatePlatformModel> Unable to update platform model %s", m.Name)
 	} else if n == 0 {
@@ -93,7 +107,7 @@ func UpdatePlatformModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 }
 
 // PostGet is a db hook
-func (pm *PlatformModel) PostGet(db gorp.SqlExecutor) error {
+func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 	query := "SELECT default_config FROM platform_model where id = $1"
 	s, err := db.SelectNullStr(query, pm.ID)
 	if err != nil {
@@ -110,12 +124,12 @@ func (pm *PlatformModel) PostGet(db gorp.SqlExecutor) error {
 }
 
 // PostInsert is a db hook
-func (pm *PlatformModel) PostInsert(db gorp.SqlExecutor) error {
+func (pm *platformModel) PostInsert(db gorp.SqlExecutor) error {
 	return pm.PostUpdate(db)
 }
 
 // PostUpdate is a db hook
-func (pm *PlatformModel) PostUpdate(db gorp.SqlExecutor) error {
+func (pm *platformModel) PostUpdate(db gorp.SqlExecutor) error {
 	if pm.DefaultConfig == nil {
 		pm.DefaultConfig = sdk.PlatformConfig{}
 	}

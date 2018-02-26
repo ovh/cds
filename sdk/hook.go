@@ -22,16 +22,19 @@ var (
 		Icon:       "Linkify",
 		DefaultConfig: WorkflowNodeHookConfig{
 			"platform": {
-				Value:        "",
+				Value:        KafkaPlatformModel,
 				Configurable: true,
+				Type:         HookConfigTypePlatform,
 			},
 			"consumer group": {
 				Value:        "",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 			"topic": {
 				Value:        "",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 		},
 	}
@@ -46,6 +49,7 @@ var (
 			"method": {
 				Value:        "POST",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 		},
 	}
@@ -60,6 +64,7 @@ var (
 			"method": {
 				Value:        "POST",
 				Configurable: false,
+				Type:         HookConfigTypeString,
 			},
 		},
 	}
@@ -82,14 +87,17 @@ var (
 			"cron": {
 				Value:        "0 * * * *",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 			"timezone": {
 				Value:        "UTC",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 			"payload": {
 				Value:        "{}",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 		},
 	}

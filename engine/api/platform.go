@@ -5,10 +5,15 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getPlatformModel() Handler {
+func (api *API) getPlatformModels() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, platform.Models, http.StatusOK)
+		p, err := platform.LoadModels(api.mustDB())
+		if err != nil {
+			return sdk.WrapError(err, "getPlatformModels> Cannot get platform models")
+		}
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }

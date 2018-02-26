@@ -405,7 +405,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
-	if err := platform.CreatePlatformModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := platform.CreateModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		return fmt.Errorf("cannot setup platforms: %v", err)
 	}
 

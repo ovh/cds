@@ -71,7 +71,7 @@ func (api *API) InitRouter() {
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
 
 	// Platform
-	r.Handle("/platform/models", r.GET(api.getPlatformModel))
+	r.Handle("/platform/models", r.GET(api.getPlatformModels))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))
@@ -105,7 +105,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", r.GET(api.getVariableAuditInProjectHandler))
 	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler), r.POST(api.addApplicationHandler))
 	r.Handle("/project/{permProjectKey}/platforms", r.GET(api.getProjectPlatformsHandler), r.POST(api.postProjectPlatformHandler))
-	r.Handle("/project/{permProjectKey}/platforms/{platformName}", r.GET(api.getProjectPlatformHandler, AllowServices(true)))
+	r.Handle("/project/{permProjectKey}/platforms/{platformName}", r.GET(api.getProjectPlatformHandler, AllowServices(true)), r.PUT(api.putProjectPlatformHandler), r.DELETE(api.deleteProjectPlatformHandler))
 	r.Handle("/project/{permProjectKey}/notifications", r.GET(api.getProjectNotificationsHandler))
 	r.Handle("/project/{permProjectKey}/all/keys", r.GET(api.getAllKeysProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys", r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))

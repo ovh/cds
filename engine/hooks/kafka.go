@@ -144,6 +144,7 @@ func (s *Service) doKafkaTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeR
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
 	e.ExtraFields.DetailedStruct = false
+	e.ExtraFields.DeepJSON = true
 	e.ExtraFields.Len = false
 	e.ExtraFields.Type = false
 	m, err := e.ToStringMap(bodyJSON)

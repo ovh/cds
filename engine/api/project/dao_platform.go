@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
@@ -31,6 +32,15 @@ func (pp *dbProjectPlatform) PostGet(db gorp.SqlExecutor) error {
 			return sdk.WrapError(err, "dbProjectPlatform.PostGet> Cannot unmarshall config")
 		}
 		pp.Config = config
+	}
+	return nil
+}
+
+// DeletePlatform
+func DeletePlatform(db gorp.SqlExecutor, platform sdk.ProjectPlatform) error {
+	pp := dbProjectPlatform(platform)
+	if _, err := db.Delete(&pp); err != nil {
+		return sdk.WrapError(err, "DeletePlatform> Cannot remove project platform")
 	}
 	return nil
 }
@@ -146,15 +156,42 @@ func InsertPlatform(db gorp.SqlExecutor, pp *sdk.ProjectPlatform) error {
 	return nil
 }
 
-// PostInsert is a db hook
-func (pp *dbProjectPlatform) PostInsert(db gorp.SqlExecutor) error {
-	configB, err := json.Marshal(pp.Config)
+// UpdatePlatform Update a project platform
+func UpdatePlatform(db gorp.SqlExecutor, pp sdk.ProjectPlatform) error {
+	for k, v := range pp.Config {
+		if v.Type == sdk.PlatformConfigTypePassword {
+			s, errS := encryptPlatformValue(v.Value)
+			if errS != nil {
+				return sdk.WrapError(errS, "UpdatePlatform> Cannot encrypt password")
+			}
+			v.Value = string(s)
+			pp.Config[k] = v
+		}
+	}
+	ppDb := dbProjectPlatform(pp)
+	if _, err := db.Update(&ppDb); err != nil {
+		return sdk.WrapError(err, "UpdatePlatform> Cannot update project platform")
+	}
+	return nil
+}
+
+// PostUpdate is a db hook
+func (pp *dbProjectPlatform) PostUpdate(db gorp.SqlExecutor) error {
+	configB, err := gorpmapping.JSONToNullString(pp.Config)
 	if err != nil {
 		return sdk.WrapError(err, "PostInsert.projectPlatform> Cannot post insert project platform")
 	}
 
-	if _, err := db.Exec("UPDATE project_platform set config = $1 WHERE id = $2", string(configB), pp.ID); err != nil {
+	if _, err := db.Exec("UPDATE project_platform set config = $1 WHERE id = $2", configB, pp.ID); err != nil {
 		return sdk.WrapError(err, "PostInsert.projectPlatform> Cannot update config")
+	}
+	return nil
+}
+
+// PostInsert is a db hook
+func (pp *dbProjectPlatform) PostInsert(db gorp.SqlExecutor) error {
+	if err := pp.PostUpdate(db); err != nil {
+		return sdk.WrapError(err, "PostInsert.projectPlatform> Cannot update")
 	}
 	return nil
 }
