@@ -13,7 +13,7 @@ What you need to perform the following steps :
 In Gitlab go to *Settings* / *Application* section. Create a new application with :
 
  - Name : **CDS**
- - Redirect URI : **http(s)://<your-cds-api>/repositories_manager/oauth2/callback**
+ - Redirect URI : **https://your-cds-api/repositories_manager/oauth2/callback**
 
 Scopes :
 
@@ -21,22 +21,37 @@ Scopes :
  - read_user
  - read_registry
 
-### Connect CDS to Gitlab
-Using CDS CLI, run :
+### Complete CDS Configuration File
 
- ```
- $ cds admin reposmanager add GITLAB mygitlab.mynetwork.net http://mygitlab.mynetwork.net app-id=gitlabappid
- ```
-
-And follow instructions.
-
-### Update config.toml and restart
-
-Update the secret value in `api.vcs.gitlab` section then restart CDS.
+Set value to `appId` and `secret`
 
 
-You can check operation has succeeded with :
+```yaml
+   [vcs.servers.Gitlab]
 
- ```
- $ cds admin reposmanager list
- ```
+      # URL of this VCS Server
+      url = "https://gitlab.com"
+
+      [vcs.servers.Gitlab.gitlab]
+        appId = "xxxx"
+
+        # Does polling is supported by VCS Server
+        disablePolling = false
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        secret = "xxxx"
+
+        [vcs.servers.Gitlab.gitlab.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = true
+```
+
+**Then restart CDS**
+
+See how to generate **[Configuration File]({{<relref "/hosting/configuration/_index.md" >}})**
