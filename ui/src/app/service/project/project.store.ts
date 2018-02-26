@@ -803,4 +803,37 @@ export class ProjectStore {
         });
     }
 
+    deleteProjectPlatform(key: string, platformName: string) {
+        return this._projectService.removePlatform(key, platformName).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate) {
+                if (!projectUpdate.platforms) {
+                    return res;
+                }
+                projectUpdate.platforms = projectUpdate.platforms.filter(p => p.name !== platformName);
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return res;
+        });
+    }
+
+    updateProjectPlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
+        return this._projectService.updatePlatform(key, platform).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate) {
+                if (!projectUpdate.platforms) {
+                    return res;
+                }
+                let index = projectUpdate.platforms.findIndex(p => p.name === platform.name);
+                if (index !== -1) {
+                    projectUpdate.platforms[index] = res;
+                }
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return res;
+        });
+    }
+
 }

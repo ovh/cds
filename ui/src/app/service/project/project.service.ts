@@ -364,4 +364,24 @@ export class ProjectService {
     addPlatform(key: string, p: ProjectPlatform): Observable<ProjectPlatform> {
         return this._http.post<ProjectPlatform>('/project/' + key + '/platforms', p);
     }
+
+    /**
+     * Remove a project platform
+     * @param key project unique key
+     * @param name platform name
+     * @returns {Observable<Object>}
+     */
+    removePlatform(key: string, name: string) {
+        return this._http.delete('/project/' + key + '/platforms/' + name);
+    }
+
+    /**
+     * Update project platform configuration
+     * @param key Project unique key
+     * @param platform Platform to update
+     * @returns {Observable<ProjectPlatform>}
+     */
+    updatePlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
+        return this._http.put<ProjectPlatform>('/project/' + key + '/platforms/' + platform.name, platform);
+    }
 }

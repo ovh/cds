@@ -21,6 +21,9 @@ export class ProjectPlatform {
     model: PlatformModel;
     config: {};
 
+    // UI attributes
+    hasChanged = false;
+
     static mergeConfig(default_config: {}, config: {}) {
         if (!default_config) {
             return;
