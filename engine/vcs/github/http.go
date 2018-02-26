@@ -146,7 +146,12 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 		path = APIURL + path
 	}
 
-	req, err := http.NewRequest(http.MethodGet, path, nil)
+	callURL, err := url.ParseRequestURI(path)
+	if err != nil {
+		return 0, nil, nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, callURL.String(), nil)
 	if err != nil {
 		return 0, nil, nil, err
 	}
