@@ -81,7 +81,7 @@ func (s *Service) Serve(c context.Context) error {
 	//Init the DAO
 	s.Dao = dao{s.Cache}
 
-	//Start the heartbeat gorourine
+	//Start the heartbeat goroutine
 	go func() {
 		if err := s.heartbeat(ctx); err != nil {
 			log.Error("%v", err)
@@ -89,21 +89,23 @@ func (s *Service) Serve(c context.Context) error {
 		}
 	}()
 
-	//Start all the tasks
-	go func() {
-		if err := s.runTasks(ctx); err != nil {
-			log.Error("%v", err)
-			cancel()
-		}
-	}()
+	if !s.Cfg.Disable {
+		//Start all the tasks
+		go func() {
+			if err := s.runTasks(ctx); err != nil {
+				log.Error("%v", err)
+				cancel()
+			}
+		}()
 
-	//Start the scheduler to execute all the tasks
-	go func() {
-		if err := s.runScheduler(ctx); err != nil {
-			log.Error("%v", err)
-			cancel()
-		}
-	}()
+		//Start the scheduler to execute all the tasks
+		go func() {
+			if err := s.runScheduler(ctx); err != nil {
+				log.Error("%v", err)
+				cancel()
+			}
+		}()
+	}
 
 	//Init the http server
 	s.initRouter(ctx)

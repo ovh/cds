@@ -69,6 +69,7 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 		}
 		if !hasRun {
 			wr.Status = sdk.StatusNeverBuilt.String()
+			wr.LastExecution = time.Now()
 			return wr, UpdateWorkflowRun(db, wr)
 		}
 	} else {
