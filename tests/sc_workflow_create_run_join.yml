@@ -20,7 +20,7 @@ testcases:
 
 - name: push workflow and pipelines
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW3 ./tests/fixtures/ITSCWRKFLW3/*.yml
+  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW3 ./tests/fixtures/ITSCWRKFLW3/*.yml --skip-update-files
 
 - name: run workflow
   steps:
