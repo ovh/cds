@@ -3,6 +3,7 @@ package objectstore
 import (
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/ncw/swift"
@@ -67,6 +68,8 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 		return "", sdk.WrapError(errC, "SwiftStore> Unable to create object %s", object)
 	}
 
+	fmt.Println("ici ---------------")
+	io.Copy(os.Stdout, data)
 	log.Debug("SwiftStore> copy object %s/%s", container, object)
 	if _, err := io.Copy(file, data); err != nil {
 		_ = file.Close()
