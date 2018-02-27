@@ -10,6 +10,25 @@ You need to perform the following steps :
  - Bitbucket admin privileges
  - A RSA Key Pair
 
+### Generate RSA Key Pair
+
+Create the private RSA certificate:
+
+```
+$ openssl genrsa -out key.pem 1024
+```
+
+The content of key.pem have to be used as `privateKey` below in CDS Configuration file.
+
+Generate the public RSA certificate:
+
+```
+$ openssl rsa -in key.pem -pubout
+```
+
+This will display the public key, you will have to copy-paste it inside `Public Key` field on Bitbucket.
+
+
 ### Create a CDS application in BitBucket
 In Bitbucket go to *Administration Settings* / *Application Links*. Create a new Application with :
 
