@@ -28,8 +28,6 @@ type statusData struct {
 //SetStatus Users with push access can create commit statuses for a given ref:
 //https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(event sdk.Event) error {
-	log.Debug("github.SetStatus> receive: type:%s all: %+v", event.EventType, event)
-
 	if g.DisableStatus {
 		log.Warning("github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
