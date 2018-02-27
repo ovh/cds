@@ -478,7 +478,7 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	}{}
 
 	if wf.HistoryLength == 0 {
-		log.Warning("PurgeWorkflowRun> history length equals 0, skipping purge")
+		log.Debug("PurgeWorkflowRun> history length equals 0, skipping purge")
 		return nil
 	}
 

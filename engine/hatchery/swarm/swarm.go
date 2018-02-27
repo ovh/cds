@@ -225,7 +225,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		name = "register-" + name
 	}
 
-	log.Info("SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
+	log.Debug("SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
 
 	//Create a network
 	network := name + "-net"
@@ -636,7 +636,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	}
 
 	if len(cs) > h.Config.MaxContainers {
-		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
+		log.Debug("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
 		return false
 	}
 

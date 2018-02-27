@@ -189,9 +189,9 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 // requirements services are not supported
 func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	if spawnArgs.JobID > 0 {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.LogInfo)
 	}
 
 	var logJob string
@@ -526,7 +526,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 
 		// then if it's not found, kill it !
 		if !found && time.Since(t) > 1*time.Minute {
-			log.Info("killAwolWorkers> killing awol worker %s", app.ID)
+			log.Debug("killAwolWorkers> killing awol worker %s", app.ID)
 			if _, err := h.marathonClient.DeleteApplication(app.ID, true); err != nil {
 				log.Warning("killAwolWorkers> Error while delete app %s err:%s", app.ID, err)
 				// continue to next app
