@@ -54,7 +54,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 
 		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
 		if errP != nil {
-			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project")
+			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project nodeJobRunID:%d", id)
 		}
 
 		//Load worker model
@@ -75,7 +75,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
-			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob %d", id)
+			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)

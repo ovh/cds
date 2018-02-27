@@ -636,7 +636,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	}
 
 	if len(cs) > h.Config.MaxContainers {
-		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
+		log.Info("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
 		return false
 	}
 
