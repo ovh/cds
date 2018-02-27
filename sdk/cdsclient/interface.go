@@ -119,6 +119,8 @@ type ActionClient interface {
 	ActionDelete(actionName string) error
 	ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error)
 	ActionList() ([]sdk.Action, error)
+	ActionImport(content io.Reader, format string) error
+	ActionExport(name string, format string) ([]byte, error)
 }
 
 // GroupClient exposes groups related functions

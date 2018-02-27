@@ -26,9 +26,11 @@ func (api *API) InitRouter() {
 	// Action
 	r.Handle("/action", r.GET(api.getActionsHandler))
 	r.Handle("/action/import", r.POST(api.importActionHandler, NeedAdmin(true)))
+
 	r.Handle("/action/requirement", r.GET(api.getActionsRequirements, Auth(false)))
 	r.Handle("/action/{permActionName}", r.GET(api.getActionHandler), r.POST(api.addActionHandler), r.PUT(api.updateActionHandler), r.DELETE(api.deleteActionHandler))
 	r.Handle("/action/{actionName}/using", r.GET(api.getPipelinesUsingActionHandler, NeedAdmin(true)))
+	r.Handle("/action/{permActionName}/export", r.GET(api.getActionExportHandler))
 	r.Handle("/action/{actionID}/audit", r.GET(api.getActionAuditHandler, NeedAdmin(true)))
 
 	// Admin
