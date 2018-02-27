@@ -102,9 +102,10 @@ func loadJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, no
 }
 
 func findNodeByRef(ref string, nodes []sdk.WorkflowNode) *sdk.WorkflowNode {
-	for _, n := range nodes {
+	for i := range nodes {
+		n := &nodes[i]
 		if n.Ref == ref {
-			return &n
+			return n
 		}
 	}
 	return nil
