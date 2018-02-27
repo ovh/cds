@@ -37,7 +37,7 @@ func LoadModels(db gorp.SqlExecutor) ([]sdk.PlatformModel, error) {
 func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
 	var pm platformModel
 	if err := db.SelectOne(&pm, "SELECT * from platform_model where id = $1", modelID); err != nil {
-		return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> Cannot select platform model %d", modelID)
+		return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> Cannot select platform model %d", modelID)
 	}
 	return sdk.PlatformModel(pm), nil
 }
