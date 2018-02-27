@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
@@ -12,7 +13,7 @@ import (
 func Export(db gorp.SqlExecutor, name string, f exportentities.Format, u *sdk.User, w io.Writer) (int, error) {
 	a, err := LoadPublicAction(db, name)
 	if err != nil {
-		return 0, sdk.WrapError(sdk.ErrNotFound, "Export> Cannot load action")
+		return 0, sdk.WrapError(err, "Export> Cannot load action")
 	}
 
 	return ExportAction(db, *a, f, w)
