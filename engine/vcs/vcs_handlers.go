@@ -254,7 +254,7 @@ func (s *Service) getBranchHandler() api.Handler {
 
 		ghBranch, err := client.Branch(fmt.Sprintf("%s/%s", owner, repo), branch)
 		if err != nil {
-			return sdk.WrapError(err, "VCS> getBranchHandler> Unable to get repo %s/%s branch", owner, repo, branch)
+			return sdk.WrapError(err, "VCS> getBranchHandler> Unable to get repo %s/%s branch %s", owner, repo, branch)
 		}
 		return api.WriteJSON(w, ghBranch, http.StatusOK)
 	}
