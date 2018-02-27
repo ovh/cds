@@ -34,6 +34,7 @@ type Configuration struct {
 	RetryDelay       int64  `toml:"retryDelay" default:"1" comment:"Execution retry delay in seconds"`
 	RetryError       int64  `toml:"retryError" default:"3" comment:"Retry execution while this number of error is not reached"`
 	ExecutionHistory int    `toml:"executionHistory" default:"10" comment:"Number of execution to keep"`
+	Disable          bool   `toml:"disable" default:"false" comment:"Disable all hooks executions"`
 	API              struct {
 		HTTP struct {
 			URL      string `toml:"url" default:"http://localhost:8081"`

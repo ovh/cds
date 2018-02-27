@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -141,12 +142,17 @@ func doRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 		}
 	}
 
+	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	var requestError error
 	var req *http.Request
 	if args != nil {
-		req, requestError = http.NewRequest(method, srv.HTTPURL+path, bytes.NewReader(args))
+		req, requestError = http.NewRequest(method, callURL.String(), bytes.NewReader(args))
 	} else {
-		req, requestError = http.NewRequest(method, srv.HTTPURL+path, nil)
+		req, requestError = http.NewRequest(method, callURL.String(), nil)
 	}
 	if requestError != nil {
 		return nil, 0, requestError

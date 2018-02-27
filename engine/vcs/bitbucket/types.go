@@ -55,6 +55,7 @@ type Status struct {
 	Name        string `json:"name"`
 	State       string `json:"state"`
 	URL         string `json:"url"`
+	Timestamp   int64  `json:"dateAdded"`
 }
 
 type Lines struct {
@@ -171,6 +172,13 @@ type Response struct {
 	Size          int    `json:"size"`
 	NextPageStart int    `json:"nextPageStart"`
 	IsLastPage    bool   `json:"isLastPage"`
+}
+
+type ResponseStatus struct {
+	Values        []Status `json:"values"`
+	Size          int      `json:"size"`
+	NextPageStart int      `json:"nextPageStart"`
+	IsLastPage    bool     `json:"isLastPage"`
 }
 
 type Project struct {

@@ -96,7 +96,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 			haveToUpdate := false
 
-			log.Debug("last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
+			log.Debug("processWorkflowRun> last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
 				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
@@ -125,7 +125,6 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 					}
 
 					if !abortTrigger {
-
 						//Keep the subnumber of the previous node in the graph
 						conditionOk, errPwnr := processWorkflowNodeRun(dbCopy, db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, chanEvent)
 						if errPwnr != nil {
@@ -286,9 +285,35 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 		}
 	}
 
+	// Recompute status counter, it's mandatory to resync
+	// the map of workflow node runs of the wornflow run to get the right statuses
+	// After resync, recompute all status counter compute the workflow status
+	// All of this is usefull to get the right workflow status is the last node status is skipped
+	if err := syncNodeRuns(db, w, false); err != nil {
+		return false, sdk.WrapError(err, "processWorkflowRun> Unable to sync workflow node runs")
+	}
+	// Reinit the counters
+	nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled = 0, 0, 0, 0, 0, 0
+	for k, v := range w.WorkflowNodeRuns {
+		lastCurrentSn := lastSubNumber(w.WorkflowNodeRuns[k])
+		// Subversion of workflowNodeRun
+		for i := range v {
+			nodeRun := &w.WorkflowNodeRuns[k][i]
+			// Compute for the last subnumber only
+			if lastCurrentSn == nodeRun.SubNumber {
+				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
+			}
+		}
+	}
+
 	w.Status = getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled)
 	if sdk.StatusIsTerminated(w.Status) {
 		w.LastExecution = time.Now()
+		defer func() {
+			if err := resyncCommitStatus(dbCopy, store, p, w); err != nil {
+				log.Error("processWorkflowRun> %v", err)
+			}
+		}()
 	}
 	if err := UpdateWorkflowRun(db, w); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun>")
@@ -458,33 +483,6 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
 	}
 
-	//Check
-	if h != nil {
-		hooks := w.Workflow.GetHooks()
-		hook, ok := hooks[h.WorkflowNodeHookUUID]
-		if !ok {
-			return false, sdk.WrapError(sdk.ErrNoHook, "processWorkflowNodeRun> Unable to find hook %s", h.WorkflowNodeHookUUID)
-		}
-
-		//Check conditions
-		var params = run.BuildParameters
-		//Define specific destination parameters
-		dest := w.Workflow.GetNode(hook.WorkflowNodeID)
-		if dest == nil {
-			return false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processWorkflowNodeRun> Unable to find node %d", hook.WorkflowNodeID)
-		}
-
-		if !checkNodeRunCondition(w, *dest, params) {
-			log.Debug("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
-			return false, nil
-		}
-	} else {
-		if !checkNodeRunCondition(w, *n, run.BuildParameters) {
-			log.Debug("processWorkflowNodeRun> Condition failed %d/%d", w.ID, n.ID)
-			return false, nil
-		}
-	}
-
 	//Parse job params to get the VCS infos
 	gitValues := map[string]string{}
 	for _, param := range jobParams {
@@ -518,6 +516,33 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.url", sdk.StringParameter, vcsInfos.url)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.http_url", sdk.StringParameter, vcsInfos.httpurl)
+
+	//Check
+	if h != nil {
+		hooks := w.Workflow.GetHooks()
+		hook, ok := hooks[h.WorkflowNodeHookUUID]
+		if !ok {
+			return false, sdk.WrapError(sdk.ErrNoHook, "processWorkflowNodeRun> Unable to find hook %s", h.WorkflowNodeHookUUID)
+		}
+
+		//Check conditions
+		var params = run.BuildParameters
+		//Define specific destination parameters
+		dest := w.Workflow.GetNode(hook.WorkflowNodeID)
+		if dest == nil {
+			return false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processWorkflowNodeRun> Unable to find node %d", hook.WorkflowNodeID)
+		}
+
+		if !checkNodeRunCondition(w, *dest, params) {
+			log.Debug("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
+			return false, nil
+		}
+	} else {
+		if !checkNodeRunCondition(w, *n, run.BuildParameters) {
+			log.Debug("processWorkflowNodeRun> Condition failed %d/%d", w.ID, n.ID)
+			return false, nil
+		}
+	}
 
 	//Tag VCS infos
 	w.Tag(tagGitRepository, run.VCSRepository)

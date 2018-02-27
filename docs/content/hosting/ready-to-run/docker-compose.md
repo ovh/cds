@@ -49,9 +49,8 @@ run `docker-compose logs` to get URL for validate the registration.
 On UI http://localhost:2015:
 
 - Create a project
-- Create an application, with a void pipeline
-- Create a pipeline, attached to application
-- On Pipeline, add a stage and a job
+- Create a workflows
+- On the first Pipeline, add a stage and a job
 - Inside job, add a step of type "[script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}})"
 - In script content, add theses lines:
 
@@ -124,11 +123,12 @@ $ cds action add --url https://raw.githubusercontent.com/ovh/cds/master/contrib/
 - Import plugins, example:
 ```bash
 # download plugin-download-linux-amd64 from  https://github.com/ovh/cds/releases
-$ cds admin plugin add ./plugin-download-linux-amd64
+$ mv plugin-download-linux-amd64 plugin-download
+$ cds admin plugin add ./plugin-download
 ```
 
 # Go further
 
 - How to use Openstack infrastructure to spawn CDS container [read more]({{< relref "hatchery/openstack.md" >}})
-- Link CDS to a repository manager, as Github or Bitbucket [read more]({{< relref "hosting/repositories_manager/_index.md" >}})
+- Link CDS to a repository manager, as Github, Bitbucket Server or Gitlab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
 - Learn more about CDS variables [read more]({{< relref "workflows/pipelines/variables.md" >}})

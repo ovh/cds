@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"fmt"
 	"io"
 	"time"
 )
@@ -53,6 +54,7 @@ type VCSAuthorizedClient interface {
 
 	// Set build status on repository
 	SetStatus(event Event) error
+	ListStatuses(repo string, ref string) ([]VCSCommitStatus, error)
 
 	// Release
 	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
@@ -70,4 +72,14 @@ func GetDefaultBranch(branches []VCSBranch) VCSBranch {
 		}
 	}
 	return VCSBranch{}
+}
+
+// VCSCommitStatusDescription return a node formated status description
+func VCSCommitStatusDescription(evt EventWorkflowNodeRun) string {
+	key := fmt.Sprintf("%s-%s-%s",
+		evt.ProjectKey,
+		evt.WorkflowName,
+		evt.NodeName,
+	)
+	return fmt.Sprintf("CDS/%s", key)
 }

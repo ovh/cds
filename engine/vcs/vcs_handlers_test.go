@@ -398,6 +398,50 @@ func Test_getCommitHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 }
 
+func Test_getCommitStatusHandler(t *testing.T) {
+	cfg := test.LoadTestingConf(t)
+
+	//Bootstrap the service
+	s, err := newTestService(t)
+	test.NoError(t, err)
+
+	checkConfigGithub(cfg, t)
+
+	err = s.addServerConfiguration("github", ServerConfiguration{
+		URL: "https://github.com",
+		Github: &GithubServerConfiguration{
+			ClientID:     cfg["githubClientID"],
+			ClientSecret: cfg["githubClientSecret"],
+		},
+	})
+	test.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"name":   "github",
+		"owner":  "ovh",
+		"repo":   "cds",
+		"commit": "a38dfc7cc835aadf6a112e8a540dd52cca79cc29",
+	}
+	uri := s.Router.GetRoute("GET", s.getCommitStatusHandler, vars)
+	test.NotEmpty(t, uri)
+	req := newRequest(t, s, "GET", uri, nil)
+
+	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
+	req.Header.Set(HeaderXAccessToken, token)
+	//accessTokenSecret is useless for github, let's give the same token
+	req.Header.Set(HeaderXAccessTokenSecret, token)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+
+	t.Logf("Status: %v", rec.Body.String())
+
+	//Asserts
+	assert.Equal(t, 200, rec.Code)
+}
+
 func checkConfigGithub(cfg map[string]string, t *testing.T) {
 	if cfg["githubClientID"] == "" || cfg["githubClientSecret"] == "" {
 		log.Debug("Skip Github Test - no configuration")

@@ -151,7 +151,7 @@ bigloop:
 				t.WorkflowDestNode.Context.Conditions.PlainConditions = append(t.WorkflowDestNode.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
 					Variable: c.Parameter,
 					Value:    c.ExpectedValue,
-					Operator: "eq",
+					Operator: sdk.WorkflowConditionsOperatorRegex,
 				})
 			}
 			t.WorkflowDestNode.Context.Conditions.PlainConditions = append(t.WorkflowDestNode.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{

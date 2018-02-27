@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/ovh/cds/cli"
@@ -16,15 +17,25 @@ var workflowPushCmd = cli.Command{
 	Name:  "push",
 	Short: "Push a workflow",
 	Long: `
-		Useful when you want to push a workflow and his dependencies (pipelines, applications, environments)
-		For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with
-		cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
+Useful when you want to push a workflow and his dependencies (pipelines, applications, environments)
+
+For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with
+
+	cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
+
 	`,
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
 	VariadicArgs: cli.Arg{
 		Name: "yaml-file",
+	},
+	Flags: []cli.Flag{
+		{
+			Kind:  reflect.Bool,
+			Name:  "skip-update-files",
+			Usage: "Usefull if you don't want to update yaml files after pushing the workflow.",
+		},
 	},
 }
 
@@ -64,6 +75,13 @@ func workflowPushRun(c cli.Values) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("Workflow successfully pushed !")
+
+	if c.GetBool("skip-update-files") {
+		return nil
+	}
+
 	return workflowTarReaderToFiles(dir, tr, false, false)
 }
 

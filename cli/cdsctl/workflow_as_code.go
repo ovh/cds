@@ -382,7 +382,7 @@ func workflowInitRun(c cli.Values) error {
 	fmt.Println("Pushing workflow to CDS...")
 	mods := []cdsclient.RequestModifier{
 		func(r *http.Request) {
-			r.Header.Set("X-Cds-Workflow-As-Code", repoName)
+			r.Header.Set(sdk.WorkflowAsCodeHeader, repoName)
 		},
 	}
 

@@ -28,20 +28,97 @@ On this application, you just have to set up *OAuth Incoming Authentication* :
  - Execute as : None
  - Allow user impersonation through 2-Legged OAuth : false
 
-### Connect CDS To Bitbucket
-With CDS CLI run :
+### Complete CDS Configuration File
 
- ```
- $ cds admin reposmanager add STASH mystash.mynetwork.net http://mystash.mynetwork.net key=privatekey
- ```
+Set value to `privateKey`. You can modify `consumerKey` if you want.
 
-And follow instructions.
+```yaml
+ [vcs.servers]
 
-Set in your configuration file the CDS **private key**
+    [vcs.servers.Bitbucket]
 
-Restart CDS.
+      # URL of this VCS Server
+      url = "https://mybitbucket.localhost"
 
-Now check everything is OK with :
- ```
- $ cds admin reposmanager list
- ```
+      [vcs.servers.Bitbucket.bitbucket]
+        # you can change the consumeKey if you want
+        consumerKey = "CDS"
+
+        # Does polling is supported by VCS Server
+        disablePolling = false
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
+
+        [vcs.servers.Bitbucket.bitbucket.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          # disable = false
+```
+
+You can configure many instances of Bitbucket:
+
+
+```yaml
+
+[vcs.servers]
+
+    [vcs.servers.mybitbucket_instance1]
+
+      # URL of this VCS Server
+      url = "https://mybitbucket-instance1.localhost"
+
+      [vcs.servers.mybitbucket_instance1.bitbucket]
+        consumerKey = "CDS_Instance1"
+
+        # Does polling is supported by VCS Server
+        disablePolling = true
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        # Does webhooks creation are supported by VCS Server
+        disableWebHooksCreation = false
+        privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
+
+        [vcs.servers.mybitbucket_instance1.bitbucket.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = true
+
+    [vcs.servers.mybitbucket_instance2]
+
+      # URL of this VCS Server
+      url = "https://mybitbucket-instance2.localhost"
+
+      [vcs.servers.mybitbucket_instance2.bitbucket]
+        consumerKey = "CDS_Instance2"
+
+        # Does polling is supported by VCS Server
+        disablePolling = true
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        # Does webhooks creation are supported by VCS Server
+        disableWebHooksCreation = false
+        privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
+
+        [vcs.servers.mybitbucket_instance2.bitbucket.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = true
+
+```
+
+**Then restart CDS**
+
+See how to generate **[Configuration File]({{<relref "/hosting/configuration/_index.md" >}})**

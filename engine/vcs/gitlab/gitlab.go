@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// gitlabClient implements RepositoriesManagerClient interface
+// gitlabClient implements VCSAuthorizedClient interface
 type gitlabClient struct {
 	client              *gitlab.Client
 	uiURL               string

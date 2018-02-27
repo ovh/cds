@@ -254,7 +254,7 @@ func (s *Service) getBranchHandler() api.Handler {
 
 		ghBranch, err := client.Branch(fmt.Sprintf("%s/%s", owner, repo), branch)
 		if err != nil {
-			return sdk.WrapError(err, "VCS> getBranchHandler> Unable to get repo %s/%s branch", owner, repo, branch)
+			return sdk.WrapError(err, "VCS> getBranchHandler> Unable to get repo %s/%s branch %s", owner, repo, branch)
 		}
 		return api.WriteJSON(w, ghBranch, http.StatusOK)
 	}
@@ -321,6 +321,37 @@ func (s *Service) getCommitHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getCommitHandler> Unable to get commit %s on %s/%s", commit, owner, repo)
 		}
 		return api.WriteJSON(w, c, http.StatusOK)
+	}
+}
+
+func (s *Service) getCommitStatusHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+		commit := muxVar(r, "commit")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitStatusHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitStatusHandler> Unable to get authorized client")
+		}
+
+		statuses, err := client.ListStatuses(fmt.Sprintf("%s/%s", owner, repo), commit)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitStatusHandler> Unable to get commit %s statuses on %s/%s", commit, owner, repo)
+		}
+
+		return api.WriteJSON(w, statuses, http.StatusOK)
 	}
 }
 

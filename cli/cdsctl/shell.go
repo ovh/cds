@@ -35,8 +35,14 @@ CDS Shell Mode. default commands:
 
 Other commands are available depending on your position. Example, run interactively a workflow:
 
-  cd /project/MY_PRJ_KEY/workflow/MY_WF
-  run -i
+
+	cd /project/MY_PRJ_KEY/workflow/MY_WF
+	run -i
+
+[![asciicast](https://asciinema.org/a/fTFpJ5uqClJ0Oq2EsiejGSeBk.png)](https://asciinema.org/a/fTFpJ5uqClJ0Oq2EsiejGSeBk)
+
+[![asciicast](https://asciinema.org/a/H67HlKNS2r0daQaEcuNfZhZZd.png)](https://asciinema.org/a/H67HlKNS2r0daQaEcuNfZhZZd)
+	
 
 `,
 }
