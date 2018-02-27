@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"fmt"
+
 	"github.com/ovh/cds/sdk"
 )
 

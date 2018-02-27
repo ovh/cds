@@ -371,7 +371,7 @@ export class ProjectService {
      * @param name platform name
      * @returns {Observable<Object>}
      */
-    removePlatform(key: string, name: string) {
+    removePlatform(key: string, name: string): Observable<any> {
         return this._http.delete('/project/' + key + '/platforms/' + name);
     }
 

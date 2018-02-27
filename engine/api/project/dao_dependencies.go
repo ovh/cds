@@ -111,7 +111,7 @@ var (
 	loadClearPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		pf, err := LoadPlatformsByID(db, proj.ID, true)
 		if err != nil {
-			return sdk.WrapError(err, "loadPlatforms> Cannot load platforms")
+			return sdk.WrapError(err, "loadClearPlatforms> Cannot load platforms")
 		}
 		proj.Platforms = pf
 		return nil
