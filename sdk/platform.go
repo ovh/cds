@@ -53,8 +53,8 @@ type PlatformModel struct {
 	DefaultConfig PlatformConfig `json:"default_config" db:"-"`
 	Disabled      bool           `json:"disabled" db:"disabled"`
 	Hook          bool           `json:"hook" db:"hook"`
-	FileStorage   bool           `json:"fileStorage" db:"file_storage"`
-	BlockStorage  bool           `json:"blockStorage" db:"block_storage"`
+	FileStorage   bool           `json:"file_storage" db:"file_storage"`
+	BlockStorage  bool           `json:"block_storage" db:"block_storage"`
 	Deployment    bool           `json:"deployment" db:"deployment"`
 	Compute       bool           `json:"compute" db:"compute"`
 }

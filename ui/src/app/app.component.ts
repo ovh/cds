@@ -69,7 +69,7 @@ export class AppComponent  implements OnInit {
                 this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
             } else {
                 this.isConnected = true;
-                // this.startLastUpdateSSE();
+                this.startLastUpdateSSE();
             }
             this.startVersionWorker();
         });

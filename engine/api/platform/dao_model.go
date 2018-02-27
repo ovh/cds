@@ -42,7 +42,7 @@ func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
 	return sdk.PlatformModel(pm), nil
 }
 
-// CreatePlatformModels create platforms models
+// CreateModels creates platforms models
 func CreateModels(db *gorp.DbMap) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -77,31 +77,32 @@ func CreateModels(db *gorp.DbMap) error {
 	return tx.Commit()
 }
 
+// ModelExists tests if the given model exists
 func ModelExists(db gorp.SqlExecutor, p *sdk.PlatformModel) (bool, error) {
 	var count = 0
 	if err := db.QueryRow("select count(1), id from platform_model where name = $1 GROUP BY id", p.Name).Scan(&count, &p.ID); err != nil {
-		return false, sdk.WrapError(err, "checkPlatformExist")
+		return false, sdk.WrapError(err, "ModelExists")
 	}
 	return count > 0, nil
 }
 
-// InsertPlatformModel inserts a platform model in database
+// InsertModel inserts a platform model in database
 func InsertModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 	dbm := platformModel(*m)
 	if err := db.Insert(&dbm); err != nil {
-		return sdk.WrapError(err, "InsertPlatformModel> Unable to insert platform model %s", m.Name)
+		return sdk.WrapError(err, "InsertModel> Unable to insert platform model %s", m.Name)
 	}
 	*m = sdk.PlatformModel(dbm)
 	return nil
 }
 
-// UpdatePlatformModel updates a platform model in database
+// UpdateModel updates a platform model in database
 func UpdateModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 	dbm := platformModel(*m)
 	if n, err := db.Update(&dbm); err != nil {
-		return sdk.WrapError(err, "UpdatePlatformModel> Unable to update platform model %s", m.Name)
+		return sdk.WrapError(err, "UpdateModel> Unable to update platform model %s", m.Name)
 	} else if n == 0 {
-		return sdk.WrapError(sdk.ErrNotFound, "UpdatePlatformModel> Unable to update platform model %s", m.Name)
+		return sdk.WrapError(sdk.ErrNotFound, "UpdateModel> Unable to update platform model %s", m.Name)
 	}
 	return nil
 }
