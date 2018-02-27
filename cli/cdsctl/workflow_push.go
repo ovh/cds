@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/ovh/cds/cli"
@@ -28,6 +29,13 @@ For example if you have a workflow with pipelines build and tests you can push y
 	},
 	VariadicArgs: cli.Arg{
 		Name: "yaml-file",
+	},
+	Flags: []cli.Flag{
+		{
+			Kind:  reflect.Bool,
+			Name:  "skip-update-files",
+			Usage: "Usefull if you don't want to update yaml files after pushing the workflow.",
+		},
 	},
 }
 
@@ -69,6 +77,10 @@ func workflowPushRun(c cli.Values) error {
 	}
 
 	fmt.Println("Workflow successfully pushed !")
+
+	if c.GetBool("skip-update-files") {
+		return nil
+	}
 
 	return workflowTarReaderToFiles(dir, tr, false, false)
 }
