@@ -344,6 +344,30 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 		return nil, sdk.WrapError(err, "Hooks> doPollerTaskExecution> Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config["workflow"].Value, taskExec.Config["vcsServer"].Value)
 	}
 
+	//Prepare the payload
+	//Anything can be pushed in the configuration, just avoid sending
+	payloadValues := map[string]string{}
+	if payload, ok := task.Config["payload"]; ok && payload.Value != "{}" {
+		var payloadInt interface{}
+		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
+			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+			e.ExtraFields.DetailedMap = false
+			e.ExtraFields.DetailedStruct = false
+			e.ExtraFields.Len = false
+			e.ExtraFields.Type = false
+
+			m1, errm1 := e.ToStringMap(payloadInt)
+			if errm1 != nil {
+				log.Error("Hooks> doPollerTaskExecution> Cannot convert payload to map %s", errm1)
+			} else {
+				payloadValues = m1
+			}
+		} else {
+			log.Error("Hooks> doPollerTaskExecution> Cannot unmarshall payload %s", err)
+		}
+	}
+
 	var hookEvents []sdk.WorkflowNodeRunHookEvent
 	if len(events.PushEvents) > 0 || len(events.PullRequestEvents) > 0 {
 		i := 0
@@ -352,7 +376,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 			payload := fillPayload(pushEvent)
 			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
 				WorkflowNodeHookUUID: task.UUID,
-				Payload:              payload,
+				Payload:              sdk.ParametersMapMerge(payloadValues, payload),
 			}
 			i++
 		}
@@ -361,7 +385,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 			payload := fillPayload(pullRequestEvent.Head)
 			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
 				WorkflowNodeHookUUID: task.UUID,
-				Payload:              payload,
+				Payload:              sdk.ParametersMapMerge(payloadValues, payload),
 			}
 			i++
 		}

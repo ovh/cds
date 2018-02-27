@@ -47,6 +47,12 @@ var (
 		Identifier: "github.com/ovh/cds/hook/builtin/poller",
 		Name:       GitPollerModelName,
 		Icon:       "git square",
+		DefaultConfig: WorkflowNodeHookConfig{
+			"payload": {
+				Value:        "{}",
+				Configurable: true,
+			},
+		},
 	}
 
 	SchedulerModel = WorkflowHookModel{
