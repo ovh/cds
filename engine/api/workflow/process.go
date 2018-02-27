@@ -288,7 +288,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 	// Recompute status counter, it's mandatory to resync
 	// the map of workflow node runs of the wornflow run to get the right statuses
 	// After resync, recompute all status counter compute the workflow status
-	// All of this is usefull to get the right workflow status is the last node status is skipped
+	// All of this is useful to get the right workflow status is the last node status is skipped
 	if err := syncNodeRuns(db, w, false); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun> Unable to sync workflow node runs")
 	}

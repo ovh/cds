@@ -34,6 +34,9 @@ var (
 var actionListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS actions",
+	Long: `Useful list CDS actions
+
+cdsctl action list`,
 }
 
 func actionListRun(v cli.Values) (cli.ListResult, error) {
@@ -50,6 +53,9 @@ var actionShowCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "action-name"},
 	},
+	Long: `Useful to show a CDS action
+
+cdsctl action show myAction`,
 }
 
 func actionShowRun(v cli.Values) (interface{}, error) {
@@ -66,6 +72,9 @@ var actionDeleteCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "action-name"},
 	},
+	Long: `Useful to delete a CDS action
+
+cdsctl action delete myAction`,
 }
 
 func actionDeleteRun(v cli.Values) error {
@@ -101,6 +110,9 @@ var actionImportCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "path"},
 	},
+	Long: `Useful to import a CDS action from a file
+
+cdsctl action import myAction.yml`,
 }
 
 func actionImportRun(v cli.Values) error {
@@ -124,6 +136,9 @@ func actionImportRun(v cli.Values) error {
 var actionExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export a CDS action",
+	Long: `Useful to export a CDS action
+
+cdsctl action export myAction`,
 	Args: []cli.Arg{
 		{Name: "action-name"},
 	},
