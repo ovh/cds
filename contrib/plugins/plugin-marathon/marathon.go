@@ -179,12 +179,9 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 		(*appConfig.Labels)["CDS_RUN"] = cdsRunNumber
 	}
 
-	gitURL := a.Arguments().Get("git.url")
-	gitHTTPURL := a.Arguments().Get("git.http_url")
-	if gitURL != "" {
-		(*appConfig.Labels)["CDS_GIT_URL"] = gitURL
-	} else if gitHTTPURL != "" {
-		(*appConfig.Labels)["CDS_GIT_URL"] = gitHTTPURL
+	gitRepository := a.Arguments().Get("git.repository")
+	if gitRepository != "" {
+		(*appConfig.Labels)["CDS_GIT_REPOSITORY"] = gitRepository
 	}
 
 	gitBranch := a.Arguments().Get("git.branch")
