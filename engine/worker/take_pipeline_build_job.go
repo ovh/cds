@@ -20,11 +20,6 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	log.Debug("takePipelineBuildJob> Begin %p", ctx)
-	defer func() {
-		log.Debug("takePipelineBuildJob> End %p (%s)", ctx, ctx.Err())
-	}()
-
 	in := sdk.WorkerTakeForm{
 		Time:    time.Now(),
 		Version: sdk.VERSION,

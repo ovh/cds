@@ -91,10 +91,6 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 }
 
 func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
-	log.Debug("startAction> Begin %s", a.ID)
-	defer func() {
-		log.Debug("startAction> End %s (%v)", a.ID, ctx.Err())
-	}()
 	// Process action build arguments
 	for _, abp := range *params {
 		// Process build variable for root action
@@ -352,8 +348,6 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	t0 := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
 
-	log.Debug("processJob> Begin %p", ctx)
-	defer log.Debug("processJob> End %p", ctx)
 	defer func() { log.Info("processJob> Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
 	defer cancel()
 	defer w.drainLogsAndCloseLogger(ctx)
@@ -453,10 +447,6 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
 	defer cancel()
 
-	log.Debug("run> Begin %p", ctx)
-	defer func() {
-		log.Debug("run> End %p (%v)", ctx, ctx.Err())
-	}()
 	t0 := time.Now()
 	defer func() {
 		log.Info("run> Run Pipeline Build Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String())
