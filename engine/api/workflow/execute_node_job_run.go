@@ -288,6 +288,15 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 		}
 		av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
 		av = sdk.VariablesPrefix(av, "cds.app.")
+
+		if err := application.DecryptVCSStrategyPassword(n.Context.Application); err != nil {
+			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot decrypt vcs configuration")
+		}
+		av = append(av, sdk.Variable{
+			Name:  "git.http.password",
+			Type:  sdk.SecretVariable,
+			Value: n.Context.Application.RepositoryStrategy.Password,
+		})
 	}
 	secrets = append(secrets, av...)
 

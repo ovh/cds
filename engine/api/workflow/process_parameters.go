@@ -130,9 +130,6 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 		if n.Context.Application.RepositoryStrategy.User != "" {
 			vars["git.http.user"] = n.Context.Application.RepositoryStrategy.User
 		}
-		if n.Context.Application.RepositoryStrategy.Password != "" {
-			vars["git.http.password"] = n.Context.Application.RepositoryStrategy.Password
-		}
 
 		if _, ok := vars["git.branch"]; !ok && n.Context.Application.RepositoryStrategy.Branch != "" {
 			vars["git.branch"] = n.Context.Application.RepositoryStrategy.Branch
@@ -145,7 +142,6 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 		delete(vars, "git.ssh.key")
 		delete(vars, "git.pgp.key")
 		delete(vars, "git.http.user")
-		delete(vars, "git.http.password")
 	}
 
 	params := []sdk.Parameter{}
