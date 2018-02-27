@@ -151,7 +151,7 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 
 	key := headers["X-Container-Meta-Temp-Url-Key"]
 	if key == "" {
-		log.Info("SwiftStore> Creating new session key for %s", container)
+		log.Debug("SwiftStore> Creating new session key for %s", container)
 		skey, _ := sessionstore.NewSessionKey()
 		key = string(skey)
 
