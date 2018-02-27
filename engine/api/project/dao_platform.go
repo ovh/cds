@@ -3,8 +3,6 @@ package project
 import (
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -26,12 +24,8 @@ func (pp *dbProjectPlatform) PostGet(db gorp.SqlExecutor) error {
 	if err != nil {
 		return sdk.WrapError(err, "dbProjectPlatform.PostGet> Cannot get config")
 	}
-	if s.Valid {
-		var config sdk.PlatformConfig
-		if err := json.Unmarshal([]byte(s.String), &config); err != nil {
-			return sdk.WrapError(err, "dbProjectPlatform.PostGet> Cannot unmarshall config")
-		}
-		pp.Config = config
+	if err := gorpmapping.JSONNullString(s, &pp.Config); err != nil {
+		return err
 	}
 	return nil
 }
