@@ -26,7 +26,7 @@ type Stage struct {
 func (s *Stage) Conditions() []WorkflowNodeCondition {
 	res := []WorkflowNodeCondition{}
 	for _, p := range s.Prerequisites {
-		if !strings.HasPrefix(p.Parameter, "git.") {
+		if !strings.HasPrefix(p.Parameter, "workflow.") && !strings.HasPrefix(p.Parameter, "git.") {
 			p.Parameter = "cds.pip." + p.Parameter
 		}
 		res = append(res, WorkflowNodeCondition{
