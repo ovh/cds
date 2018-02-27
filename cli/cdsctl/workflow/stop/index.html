@@ -1276,6 +1276,11 @@
           <span>import</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/workflow/init/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/init/">
+          <span>init</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/workflow/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/">
           <span>list</span>
@@ -1653,10 +1658,9 @@
 
 <h3 id="examples">Examples</h3>
 
-<pre><code>
-		cdsctl workflow stop # Stop the workflow run for the current repo and the current hash
-		cdsctl workflow stop MYPROJECT myworkflow 5 # To stop a workflow run on number 5
-		cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node run on workflow run 5
+<pre><code>cdsctl workflow stop # Stop the workflow run for the current repo and the current hash
+cdsctl workflow stop MYPROJECT myworkflow 5 # To stop a workflow run on number 5
+cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node run on workflow run 5
 	
 </code></pre>
 

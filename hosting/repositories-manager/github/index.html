@@ -78,26 +78,6 @@
         <span>Concepts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/introduction/concepts/pipeline/" class="dd-item">
-        <a href="https://ovh.github.io/cds/introduction/concepts/pipeline/">
-          <span>Pipeline</span>
-        </a>
-    </li>
-      <li data-nav-id="/introduction/concepts/stage/" class="dd-item">
-        <a href="https://ovh.github.io/cds/introduction/concepts/stage/">
-          <span>Stage</span>
-        </a>
-    </li>
-      <li data-nav-id="/introduction/concepts/job/" class="dd-item">
-        <a href="https://ovh.github.io/cds/introduction/concepts/job/">
-          <span>Job</span>
-        </a>
-    </li>
-      <li data-nav-id="/introduction/concepts/step/" class="dd-item">
-        <a href="https://ovh.github.io/cds/introduction/concepts/step/">
-          <span>Step</span>
-        </a>
-    </li>
         </ul>
     </li>
     <li data-nav-id="/introduction/scopes/" class="dd-item">
@@ -1273,6 +1253,11 @@
           <span>import</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/workflow/init/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/init/">
+          <span>init</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/workflow/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/">
           <span>list</span>
@@ -1607,7 +1592,7 @@
 <li><a href="#authorize-cds-on-github">Authorize CDS on Github</a>
 <ul>
 <li><a href="#create-a-cds-application-on-github">Create a CDS application on Github</a></li>
-<li><a href="#connect-cds-to-github">Connect CDS To Github</a></li>
+<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1639,25 +1624,41 @@
 
 <p>On the next page Github give you a <strong>Client ID</strong> and a <strong>Client Secret</strong></p>
 
-<h3 id="connect-cds-to-github">Connect CDS To Github</h3>
+<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
 
-<p>Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with <code>&lt;client-secret&gt;</code>:</p>
+<p>Set value to <code>clientId</code> and <code>clientSecret</code></p>
 
-<pre><code class="language-toml">[vcs.repositories.github]
-clientsecret = &quot;&lt;client-secret&gt;&quot;
+<pre><code class="language-yaml">    [vcs.servers.github]
+
+      # URL of this VCS Server
+      url = &quot;https://github.com&quot;
+
+      [vcs.servers.github.github]
+
+        # github OAuth Application Client ID
+        clientId = &quot;xxxx&quot;
+
+        # github OAuth Application Client Secret
+        clientSecret = &quot;xxxx&quot;
+
+        # Does polling is supported by VCS Server
+        disablePolling = false
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        [vcs.servers.github.github.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = true
 </code></pre>
 
 <p><strong>Then restart CDS</strong></p>
 
-<p>With CDS CLI run :</p>
-
-<pre><code class="language-bash">$ cds admin reposmanager add GITHUB github http://github.com client-id=&lt;your_client_id&gt;
-</code></pre>
-
-<p>Now check everything is OK with :</p>
-
-<pre><code class="language-bash">$ cds admin reposmanager list
-</code></pre>
+<p>See how to generate <strong><a href="">Configuration File</a></strong></p>
 
 
 <footer class=" footline" >

@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>list :: CDS - Continuous Delivery Service</title>
+    <title>init :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/project/list/">
+  <body class="" data-url="/cli/cdsctl/workflow/init/">
     <nav id="sidebar" class="">
 
 
@@ -1013,10 +1013,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/project/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/project/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/project/">
-        <span>project</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>project</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/project/create/" class="dd-item">
@@ -1063,7 +1062,7 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/cli/cdsctl/project/list/" class="dd-item active">
+      <li data-nav-id="/cli/cdsctl/project/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/project/list/">
           <span>list</span>
         </a>
@@ -1210,9 +1209,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">
-        <span>workflow</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>workflow</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/workflow/advanced/" class="dd-item">
@@ -1276,7 +1276,7 @@
           <span>import</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/workflow/init/" class="dd-item">
+      <li data-nav-id="/cli/cdsctl/workflow/init/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/init/">
           <span>init</span>
         </a>
@@ -1570,7 +1570,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/project/list.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/workflow/init.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1596,7 +1596,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/project/'>project</a> > list
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/workflow/'>workflow</a> > init
 
  
 
@@ -1615,7 +1615,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-project-list">cdsctl project list</a>
+<li><a href="#cdsctl-workflow-init">cdsctl workflow init</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#options">Options</a></li>
@@ -1634,7 +1634,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>list</h1>
+                <h1>init</h1>
                 <p></p>
             </div>
           
@@ -1644,24 +1644,22 @@
 
 
 
-<h2 id="cdsctl-project-list">cdsctl project list</h2>
+<h2 id="cdsctl-workflow-init">cdsctl workflow init</h2>
 
-<p>List CDS projects</p>
+<p>Init a workflow</p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>List CDS projects</p>
+<p>[WARNING] THIS IS AN EXPERIMENTAL FEATURE
+Initialize a workflow from your current repository, this will create yml files and push them to CDS.</p>
 
-<pre><code>cdsctl project list [flags]
+<pre><code>cdsctl workflow init [PROJECT-KEY] [flags]
 </code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>      --fields string   Only display specified object fields. 'empty' will display all fields, 'all' will display all object fields, 'field1,field2' to select multiple fields
-      --filter string   Filter output based on conditions provided
-      --format string   Output format: table|json|yaml (default &quot;table&quot;)
-  -h, --help            help for list
-  -q, --quiet           Only display object's key
+<pre><code>  -r, --from-remote   Initialize a workflow from your git origin
+  -h, --help          help for init
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
@@ -1675,7 +1673,7 @@
 <h3 id="see-also">SEE ALSO</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/project/">cdsctl project</a>     - Manage CDS project</li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">cdsctl workflow</a>   - Manage CDS workflow</li>
 </ul>
 
 
@@ -1696,8 +1694,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/project/keys/list/" title="list"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/project/show/" title="show" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/workflow/import/" title="import"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/" title="list" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

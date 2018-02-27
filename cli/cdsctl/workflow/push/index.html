@@ -1276,6 +1276,11 @@
           <span>import</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/workflow/init/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/init/">
+          <span>init</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/workflow/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/">
           <span>list</span>
@@ -1645,9 +1650,11 @@
 
 <h3 id="synopsis">Synopsis</h3>
 
-<pre><code>    Useful when you want to push a workflow and his dependencies (pipelines, applications, environments)
-    For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with
-    cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
+<p>Useful when you want to push a workflow and his dependencies (pipelines, applications, environments)</p>
+
+<p>For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with</p>
+
+<pre><code>cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
 </code></pre>
 
 <pre><code>cdsctl workflow push [ PROJECT-KEY ] YAML-FILE ... [flags]
@@ -1655,7 +1662,8 @@
 
 <h3 id="options">Options</h3>
 
-<pre><code>  -h, --help   help for push
+<pre><code>  -h, --help                help for push
+      --skip-update-files   Usefull if you don't want to update yaml files after pushing the workflow.
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>

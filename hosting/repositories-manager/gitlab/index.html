@@ -1273,6 +1273,11 @@
           <span>import</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/workflow/init/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/init/">
+          <span>init</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/workflow/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/">
           <span>list</span>
@@ -1607,8 +1612,7 @@
 <li><a href="#authorize-cds-on-your-gitlab-instance">Authorize CDS on your Gitlab instance</a>
 <ul>
 <li><a href="#create-a-cds-application-on-gitlab">Create a CDS application on Gitlab</a></li>
-<li><a href="#connect-cds-to-gitlab">Connect CDS to Gitlab</a></li>
-<li><a href="#update-config-toml-and-restart">Update config.toml and restart</a></li>
+<li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1646,7 +1650,7 @@
 
 <ul>
 <li>Name : <strong>CDS</strong></li>
-<li>Redirect URI : <strong>http(s)://<your-cds-api>/repositories_manager/oauth2/callback</strong></li>
+<li>Redirect URI : <strong><a href="https://your-cds-api/repositories_manager/oauth2/callback">https://your-cds-api/repositories_manager/oauth2/callback</a></strong></li>
 </ul>
 
 <p>Scopes :</p>
@@ -1657,23 +1661,38 @@
 <li>read_registry</li>
 </ul>
 
-<h3 id="connect-cds-to-gitlab">Connect CDS to Gitlab</h3>
+<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
 
-<p>Using CDS CLI, run :</p>
+<p>Set value to <code>appId</code> and <code>secret</code></p>
 
-<pre><code> $ cds admin reposmanager add GITLAB mygitlab.mynetwork.net http://mygitlab.mynetwork.net app-id=gitlabappid
+<pre><code class="language-yaml">   [vcs.servers.Gitlab]
+
+      # URL of this VCS Server
+      url = &quot;https://gitlab.com&quot;
+
+      [vcs.servers.Gitlab.gitlab]
+        appId = &quot;xxxx&quot;
+
+        # Does polling is supported by VCS Server
+        disablePolling = false
+
+        # Does webhooks are supported by VCS Server
+        disableWebHooks = false
+
+        secret = &quot;xxxx&quot;
+
+        [vcs.servers.Gitlab.gitlab.Status]
+
+          # Set to true if you don't want CDS to push statuses on the VCS server
+          disable = false
+
+          # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
+          showDetail = true
 </code></pre>
 
-<p>And follow instructions.</p>
+<p><strong>Then restart CDS</strong></p>
 
-<h3 id="update-config-toml-and-restart">Update config.toml and restart</h3>
-
-<p>Update the secret value in <code>api.vcs.gitlab</code> section then restart CDS.</p>
-
-<p>You can check operation has succeeded with :</p>
-
-<pre><code> $ cds admin reposmanager list
-</code></pre>
+<p>See how to generate <strong><a href="">Configuration File</a></strong></p>
 
 
 <footer class=" footline" >

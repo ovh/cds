@@ -1273,6 +1273,11 @@
           <span>import</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/workflow/init/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/init/">
+          <span>init</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/workflow/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/">
           <span>list</span>
@@ -1680,9 +1685,8 @@ run <code>docker-compose logs</code> to get URL for validate the registration.</
 
 <ul>
 <li>Create a project</li>
-<li>Create an application, with a void pipeline</li>
-<li>Create a pipeline, attached to application</li>
-<li>On Pipeline, add a stage and a job</li>
+<li>Create a workflows</li>
+<li>On the first Pipeline, add a stage and a job</li>
 <li>Inside job, add a step of type &ldquo;<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">script</a>&ldquo;</li>
 <li>In script content, add theses lines:</li>
 </ul>
@@ -1755,7 +1759,8 @@ $ ./cds login
 <li><p>Import plugins, example:</p>
 
 <pre><code class="language-bash"># download plugin-download-linux-amd64 from  https://github.com/ovh/cds/releases
-$ cds admin plugin add ./plugin-download-linux-amd64
+$ mv plugin-download-linux-amd64 plugin-download
+$ cds admin plugin add ./plugin-download
 </code></pre></li>
 </ul>
 
@@ -1763,7 +1768,7 @@ $ cds admin plugin add ./plugin-download-linux-amd64
 
 <ul>
 <li>How to use Openstack infrastructure to spawn CDS container <a href="https://ovh.github.io/cds/hatchery/openstack/">read more</a></li>
-<li>Link CDS to a repository manager, as Github or Bitbucket <a href="">read more</a></li>
+<li>Link CDS to a repository manager, as Github, Bitbucket Server or Gitlab <a href="https://ovh.github.io/cds/hosting/repositories-manager/">read more</a></li>
 <li>Learn more about CDS variables <a href="https://ovh.github.io/cds/workflows/pipelines/variables/">read more</a></li>
 </ul>
 
