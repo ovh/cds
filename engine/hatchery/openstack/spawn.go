@@ -27,9 +27,9 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 	}
 
 	if spawnArgs.JobID > 0 {
-		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, spawnArgs.Model.Name, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s model:%s for job %d - %s", name, spawnArgs.Model.Name, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s model:%s - %s", name, spawnArgs.Model.Name, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s model:%s - %s", name, spawnArgs.Model.Name, spawnArgs.LogInfo)
 	}
 
 	var omd sdk.OpenstackModelData

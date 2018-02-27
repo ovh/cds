@@ -147,9 +147,9 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	if spawnArgs.JobID > 0 {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s) - %s", wName, spawnArgs.Model.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) - %s", wName, spawnArgs.Model.Image, spawnArgs.LogInfo)
 	}
 
 	var args []string
