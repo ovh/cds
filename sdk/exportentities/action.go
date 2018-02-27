@@ -445,6 +445,8 @@ func (act *Action) Action() (*sdk.Action, error) {
 	a.Description = act.Description
 
 	//Compute parameters
+	a.Parameters = make([]sdk.Parameter, len(act.Parameters))
+	var i int
 	for p, v := range act.Parameters {
 		param := sdk.Parameter{
 			Name:        p,
@@ -455,7 +457,8 @@ func (act *Action) Action() (*sdk.Action, error) {
 		if param.Type == "" {
 			param.Type = sdk.StringParameter
 		}
-		a.Parameters = append(a.Parameters, param)
+		a.Parameters[i] = param
+		i++
 	}
 
 	a.Requirements = computeJobRequirements(act.Requirements)
