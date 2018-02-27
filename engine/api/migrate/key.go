@@ -99,7 +99,7 @@ func migrateProject(db *gorp.DbMap, projID int64, store cache.Store, u *sdk.User
 					Public:  k.public.Value,
 					Private: k.private.Value,
 					Name:    keyName,
-					Type:    sdk.KeySSHParameter,
+					Type:    sdk.KeyTypeSSH,
 				},
 			}
 			if errK := project.InsertKey(tx, &projectKey); errK != nil {
@@ -163,7 +163,7 @@ func migrateApplication(db *gorp.DbMap, appID int64, store cache.Store, u *sdk.U
 					Public:  k.public.Value,
 					Private: k.private.Value,
 					Name:    keyName,
-					Type:    sdk.KeySSHParameter,
+					Type:    sdk.KeyTypeSSH,
 				},
 			}
 			if errK := application.InsertKey(tx, &appKey); errK != nil {
@@ -235,7 +235,7 @@ func migrateEnvironment(db *gorp.DbMap, envID int64) error {
 					Public:  k.public.Value,
 					Private: k.private.Value,
 					Name:    keyName,
-					Type:    sdk.KeySSHParameter,
+					Type:    sdk.KeyTypeSSH,
 				},
 			}
 			if errK := environment.InsertKey(tx, &envKey); errK != nil {
