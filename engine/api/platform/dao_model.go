@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"database/sql"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
@@ -81,6 +82,9 @@ func CreateModels(db *gorp.DbMap) error {
 func ModelExists(db gorp.SqlExecutor, p *sdk.PlatformModel) (bool, error) {
 	var count = 0
 	if err := db.QueryRow("select count(1), id from platform_model where name = $1 GROUP BY id", p.Name).Scan(&count, &p.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
 		return false, sdk.WrapError(err, "ModelExists")
 	}
 	return count > 0, nil
