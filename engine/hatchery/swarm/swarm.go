@@ -170,7 +170,7 @@ func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error)
 }
 
 func (h *HatcherySwarm) killAndRemoveContainer(ID string) {
-	log.Info("killAndRemove>Remove container %s", ID)
+	log.Debug("killAndRemove>Remove container %s", ID)
 	if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
 		ID:     ID,
 		Signal: docker.SIGKILL,
@@ -207,7 +207,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) {
 		}
 		// If we succeed to get the network, kill and remove all the container on the network
 		if netname, ok := network.Labels["worker_net"]; ok {
-			log.Info("killAndRemove> Remove network %s", netname)
+			log.Debug("killAndRemove> Remove network %s", netname)
 			for id := range network.Containers {
 				h.killAndRemoveContainer(id)
 			}
@@ -412,7 +412,7 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 		//Moaaaaar memory
 		cArgs.memory = cArgs.memory * 110 / 100
 	}
-	log.Info("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
+	log.Debug("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
 
 	var exposedPorts map[docker.Port]struct{}
 	var mounts []docker.Mount
@@ -879,7 +879,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 	//Delete the workers
 	for _, c := range oldContainers {
-		log.Info("killAwolWorker> Delete worker %s", c.Names[0])
+		log.Debug("killAwolWorker> Delete worker %s", c.Names[0])
 		h.killAndRemove(c.ID)
 	}
 
@@ -904,7 +904,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 	for _, c := range oldContainers {
 		h.killAndRemove(c.ID)
-		log.Info("killAwolWorker> Delete worker %s", c.Names[0])
+		log.Debug("killAwolWorker> Delete worker %s", c.Names[0])
 	}
 
 	//Checking networks
@@ -933,7 +933,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 			continue
 		}
 
-		log.Info("killAwolWorker> Delete network %s", n.Name)
+		log.Debug("killAwolWorker> Delete network %s", n.Name)
 		if err := h.dockerClient.RemoveNetwork(n.ID); err != nil {
 			log.Warning("killAwolWorker> Unable to delete network %s err:%s", n.Name, err)
 		}
