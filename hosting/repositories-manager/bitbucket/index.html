@@ -570,6 +570,11 @@
           <span>pipeline</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/platform/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/platform/">
+          <span>platform</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/plugin/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/plugin/">
           <span>plugin</span>
@@ -1611,6 +1616,7 @@
 <ul>
 <li><a href="#authorize-cds-on-your-bitbucket-instance">Authorize CDS on your Bitbucket instance</a>
 <ul>
+<li><a href="#generate-rsa-key-pair">Generate RSA Key Pair</a></li>
 <li><a href="#create-a-cds-application-in-bitbucket">Create a CDS application in BitBucket</a></li>
 <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
 </ul></li>
@@ -1644,6 +1650,22 @@
 <li>Bitbucket admin privileges</li>
 <li>A RSA Key Pair</li>
 </ul>
+
+<h3 id="generate-rsa-key-pair">Generate RSA Key Pair</h3>
+
+<p>Create the private RSA certificate:</p>
+
+<pre><code>$ openssl genrsa -out key.pem 1024
+</code></pre>
+
+<p>The content of key.pem have to be used as <code>privateKey</code> below in CDS Configuration file.</p>
+
+<p>Generate the public RSA certificate:</p>
+
+<pre><code>$ openssl rsa -in key.pem -pubout
+</code></pre>
+
+<p>This will display the public key, you will have to copy-paste it inside <code>Public Key</code> field on Bitbucket.</p>
 
 <h3 id="create-a-cds-application-in-bitbucket">Create a CDS application in BitBucket</h3>
 

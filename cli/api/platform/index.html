@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>import :: CDS - Continuous Delivery Service</title>
+    <title>platform :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/environment/group/import/">
+  <body class="" data-url="/cli/api/platform/">
     <nav id="sidebar" class="">
 
 
@@ -481,9 +481,10 @@
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/cli/api/" class="dd-item">
+    <li data-nav-id="/cli/api/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/api/">
-        <span>REST API</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>REST API</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/api/action/" class="dd-item">
@@ -571,7 +572,7 @@
           <span>pipeline</span>
         </a>
     </li>
-      <li data-nav-id="/cli/api/platform/" class="dd-item">
+      <li data-nav-id="/cli/api/platform/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/api/platform/">
           <span>platform</span>
         </a>
@@ -628,10 +629,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/">
-        <span>cdsctl</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
@@ -795,10 +795,9 @@
           <span>encrypt</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/environment/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/environment/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/environment/">
-        <span>environment</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>environment</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/environment/create/" class="dd-item">
@@ -816,13 +815,12 @@
           <span>export</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/environment/group/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/environment/group/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/">
-        <span>group</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/environment/group/import/" class="dd-item active">
+      <li data-nav-id="/cli/cdsctl/environment/group/import/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/import/">
           <span>import</span>
         </a>
@@ -1576,7 +1574,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/environment/group/import.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/api/platform.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1599,17 +1597,7 @@
 
 
 
-
-
-
-
-
-
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/environment/'>environment</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/environment/group/'>group</a> > import
-
- 
-
- 
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/api/'>REST API</a> > platform
 
  
 
@@ -1626,12 +1614,9 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-environment-group-import">cdsctl environment group import</a>
+<li>
 <ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
+<li><a href="#get-platform-models">GET <code>/platform/models</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1645,7 +1630,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>import</h1>
+                <h1>platform</h1>
                 <p></p>
             </div>
           
@@ -1655,36 +1640,33 @@
 
 
 
-<h2 id="cdsctl-environment-group-import">cdsctl environment group import</h2>
+<h3 id="get-platform-models">GET <code>/platform/models</code></h3>
 
-<p>Import group linked to a CDS environment</p>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/platform/models</code></strong></th>
+</tr>
+</thead>
 
-<h3 id="synopsis">Synopsis</h3>
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
 
-<p>Import group linked to a CDS environment</p>
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
 
-<pre><code>cdsctl environment group import [ PROJECT-KEY ] ENVIRONMENT-NAME PATH [flags]
-</code></pre>
-
-<h3 id="options">Options</h3>
-
-<pre><code>      --force   Use force flag to replace groups in your environment
-  -h, --help    help for import
-</code></pre>
-
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
-
-<pre><code>  -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
-</code></pre>
-
-<h3 id="see-also">SEE ALSO</h3>
-
-<ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/">cdsctl environment group</a>     - Manage CDS group linked to an environment</li>
-</ul>
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPlatformModels%22">getPlatformModels</a></td>
+</tr>
+</tbody>
+</table>
 
 
 <footer class=" footline" >
@@ -1704,8 +1686,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/environment/group/" title="group"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/environment/import/" title="import" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/api/pipeline/" title="pipeline"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/api/plugin/" title="plugin" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
