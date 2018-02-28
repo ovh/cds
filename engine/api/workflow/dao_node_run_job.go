@@ -90,7 +90,11 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, isUser bool, gr
 
 	jobs := make([]sdk.WorkflowNodeJobRun, len(sqlJobs))
 	for i := range sqlJobs {
+		if err := sqlJobs[i].PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (PostGet)")
+		}
 		var toadd bool
+
 		// a shared.infra group can see all jobs
 		// a user (not a hatchery or worker) can see all jobs, even if jobs are only RO for him
 		if isSharedInfraGroup || isUser {
@@ -109,9 +113,6 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, isUser bool, gr
 			continue
 		}
 		getHatcheryInfo(store, &sqlJobs[i])
-		if err := sqlJobs[i].PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (PostGet)")
-		}
 		jobs[i] = sdk.WorkflowNodeJobRun(sqlJobs[i])
 	}
 

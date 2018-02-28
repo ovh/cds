@@ -79,15 +79,19 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		var isGroupOK bool
-		for _, g := range pbj.ExecGroups {
-			if g.ID == groups[0].ID {
-				isGroupOK = true
-				break
+		if len(pbj.ExecGroups) == 0 {
+			isGroupOK = true
+		} else {
+			for _, g := range pbj.ExecGroups {
+				if g.ID == groups[0].ID {
+					isGroupOK = true
+					break
+				}
 			}
 		}
 
 		if !isGroupOK {
-			return sdk.WrapError(sdk.ErrUnauthorized, "postTakeWorkflowJobHandler> this worker is not authorized to take this job:%d", id)
+			return sdk.WrapError(sdk.ErrForbidden, "postTakeWorkflowJobHandler> this worker is not authorized to take this job:%d", id)
 		}
 
 		chanEvent := make(chan interface{}, 1)
