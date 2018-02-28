@@ -70,8 +70,6 @@ workflow:
 
 	assert.NotNil(t, w)
 
-	dump.Dump(w)
-
 	m, _ := dump.ToStringMap(w)
 	assert.Equal(t, "test_1", m["Workflow.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Name"])
@@ -145,7 +143,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
 		Key: sdk.Key{
-			Name: "mykey",
+			Name: "app-mykey",
 			Type: sdk.KeyTypePGP,
 		},
 		ApplicationID: app.ID,
@@ -161,7 +159,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 
 	k2 := &sdk.ApplicationKey{
 		Key: sdk.Key{
-			Name: "mykey-ssh",
+			Name: "app-mykey-ssh",
 			Type: sdk.KeyTypeSSH,
 		},
 		ApplicationID: app.ID,
