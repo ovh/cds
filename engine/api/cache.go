@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/sdk"
 )
@@ -28,7 +29,7 @@ func (api *API) postPushCacheHandler() Handler {
 		_, errO := objectstore.StoreArtifact(&cacheObject, r.Body)
 		defer r.Body.Close()
 		if errO != nil {
-			return sdk.WrapError(errO, "SaveFile>Cannot store artifact")
+			return sdk.WrapError(errO, "SaveFile>Cannot store cache")
 		}
 
 		return nil

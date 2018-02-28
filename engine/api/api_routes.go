@@ -268,7 +268,7 @@ func (api *API) InitRouter() {
 
 	// Cache
 	r.Handle("/project/{key}/cache/{tag}/push", r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker()))
-	r.Handle("/project/{key}/cache/{tag}/pull", r.GET(api.getPullCacheHandler))
+	r.Handle("/project/{key}/cache/{tag}/pull", r.GET(api.getPullCacheHandler, NeedWorker()))
 
 	// Hooks
 	r.Handle("/project/{key}/application/{permApplicationName}/hook", r.GET(api.getApplicationHooksHandler))

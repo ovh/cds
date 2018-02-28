@@ -127,7 +127,6 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
-	sendLog(fmt.Sprintf("%s %s", projectKey, vars["tag"]))
 	if err := wk.client.WorkflowCachePush(projectKey, vars["tag"], res); err != nil {
 		sendLog(fmt.Sprintf("worker cache push > Cannot push cache: %s", err))
 	}
@@ -196,7 +195,6 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
-	sendLog(fmt.Sprintf("%s %s", projectKey, vars["tag"]))
 	bts, err := wk.client.WorkflowCachePull(projectKey, vars["tag"])
 	if err != nil {
 		sendLog(fmt.Sprintf("worker cache pull > Cannot push cache: %s", err))
