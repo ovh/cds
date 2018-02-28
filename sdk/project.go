@@ -33,7 +33,7 @@ type Project struct {
 	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
 }
 
-// SSHKeys returns the slide of ssh key for an application
+// SSHKeys returns the slice of ssh key for an application
 func (a Project) SSHKeys() []ProjectKey {
 	keys := []ProjectKey{}
 	for _, k := range a.Keys {
@@ -44,7 +44,7 @@ func (a Project) SSHKeys() []ProjectKey {
 	return keys
 }
 
-// PGPKeys returns the slide of pgp key for an application
+// PGPKeys returns the slice of pgp key for an application
 func (a Project) PGPKeys() []ProjectKey {
 	keys := []ProjectKey{}
 	for _, k := range a.Keys {

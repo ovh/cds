@@ -41,7 +41,7 @@ type Application struct {
 	Usage              *Usage                `json:"usage,omitempty" db:"-" cli:"-"`
 }
 
-// SSHKeys returns the slide of ssh key for an application
+// SSHKeys returns the slice of ssh key for an application
 func (a Application) SSHKeys() []ApplicationKey {
 	keys := []ApplicationKey{}
 	for _, k := range a.Keys {
@@ -52,7 +52,7 @@ func (a Application) SSHKeys() []ApplicationKey {
 	return keys
 }
 
-// PGPKeys returns the slide of pgp key for an application
+// PGPKeys returns the slice of pgp key for an application
 func (a Application) PGPKeys() []ApplicationKey {
 	keys := []ApplicationKey{}
 	for _, k := range a.Keys {
