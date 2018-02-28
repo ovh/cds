@@ -263,7 +263,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowNotificationNodeRef.ID:            "An invalid workflow node reference has been found, if you want to delete a pipeline from your workflow check if this pipeline isn't referenced in your notifications list",
 	ErrInvalidJobRequirementDuplicateModel.ID:    "Invalid job requirements: you can't select multiple worker models",
 	ErrInvalidJobRequirementDuplicateHostname.ID: "Invalid job requirements: you can't select multiple hostname",
-	ErrInvalidKeyName.ID:                         "Invalid key name. Application key must have prefix 'app-'; environment key must have prefix 'env'",
+	ErrInvalidKeyName.ID:                         "Invalid key name. Application key must have prefix 'app-'; environment key must have prefix 'env-'",
 }
 
 var errorsFrench = map[int]string{
@@ -389,7 +389,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowNotificationNodeRef.ID:            "Une référence de noeud de workflow est invalide dans vos notifications (si vous souhaitez supprimer un pipeline vérifiez qu'il ne soit plus référencé dans la liste de vos notifications)",
 	ErrInvalidJobRequirementDuplicateModel.ID:    "Pré-requis de job invalides: vous ne pouvez pas séléctionnez plusieurs modèles de worker",
 	ErrInvalidJobRequirementDuplicateHostname.ID: "Pré-requis de job invalides: vous ne pouvez pas séléctionnez plusieurs hostname",
-	ErrInvalidKeyName.ID:                         "Nom de clé invalide. Les clés d'application doivent être préfixées par 'app', les clés d'environment doivent être préfixées par 'env'",
+	ErrInvalidKeyName.ID:                         "Nom de clé invalide. Les clés d'application doivent être préfixées par 'app-', les clés d'environnement doivent être préfixées par 'env-'",
 }
 
 var errorsLanguages = []map[int]string{
