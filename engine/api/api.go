@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -245,7 +246,6 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	if len(aConfig.Secrets.Key) != 32 {
 		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
 	}
-
 	return nil
 }
 
@@ -403,6 +403,10 @@ func (a *API) Serve(ctx context.Context) error {
 
 	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
+	}
+
+	if err := platform.CreateModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup platforms: %v", err)
 	}
 
 	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)

@@ -1,0 +1,57 @@
+<div class="ProjectPlatformList">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+        <thead>
+        <tr>
+            <th class="four wide">{{ 'platform_name' | translate }}</th>
+            <th class="four wide">{{ 'platform_model' | translate }}</th>
+            <th class="six wide">{{ 'platform_configuration' | translate }}</th>
+            <th class="two wide"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let p of getDataForCurrentPage()">
+            <td>
+                {{ p.name }}
+            </td>
+            <td>
+                {{ p.model.name}}
+            </td>
+            <td>
+                <div class="ui form">
+                    <div class="inline fields" *ngFor="let k of p.config | keys">
+                        <div class="four wide field"><label>{{k}}</label></div>
+                        <div class="twelve wide field">
+                            <input type="text" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'string'" (ngModelChange)="p.hasChanged = true">
+                            <input type="password" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (ngModelChange)="p.hasChanged = true">
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
+                    <app-delete-button [loading]="loading" [disabled]="loading" (event)="deletePlatform(p)" *ngIf="!p.hasChanged"></app-delete-button>
+                    <button type="button" class="ui green button" *ngIf="p.hasChanged" (click)="updatePlatform(p)">{{ 'btn_save' | translate}}</button>
+                </ng-container>
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="4">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'platform_no' | translate }}
+    </div>
+</div>

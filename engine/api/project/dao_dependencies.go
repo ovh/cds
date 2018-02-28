@@ -99,6 +99,24 @@ var (
 		return LoadAllDecryptedKeys(db, proj)
 	}
 
+	loadPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		pf, err := LoadPlatformsByID(db, proj.ID, false)
+		if err != nil {
+			return sdk.WrapError(err, "loadPlatforms> Cannot load platforms")
+		}
+		proj.Platforms = pf
+		return nil
+	}
+
+	loadClearPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		pf, err := LoadPlatformsByID(db, proj.ID, true)
+		if err != nil {
+			return sdk.WrapError(err, "loadClearPlatforms> Cannot load platforms")
+		}
+		proj.Platforms = pf
+		return nil
+	}
+
 	loadWorkflows = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		workflows, errW := workflow.LoadAll(db, proj.Key)
 		if errW != nil {

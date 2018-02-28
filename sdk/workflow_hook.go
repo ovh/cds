@@ -110,7 +110,15 @@ func (cfg WorkflowNodeHookConfig) Values() map[string]string {
 type WorkflowNodeHookConfigValue struct {
 	Value        string `json:"value"`
 	Configurable bool   `json:"configurable"`
+	Type         string `json:"type"`
 }
+
+const (
+	// HookConfigTypeString type string
+	HookConfigTypeString = "string"
+	// HookConfigTypeString type platform
+	HookConfigTypePlatform = "platform"
+)
 
 //WorkflowHookModel represents a hook which can be used in workflows.
 type WorkflowHookModel struct {

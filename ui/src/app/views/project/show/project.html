@@ -7,7 +7,7 @@
     </div>
 
     <div class="CDSmenu">
-        <sm-menu title="" class="pointing secondary">
+        <sm-menu title="" class="pointing stackable secondary">
             <a *ngIf="currentUser.admin || project.workflow_migration !== 'NOT_BEGUN'" sm-item [class.active]="selectedTab === 'workflows'" id="ProjectWorkflowTab" (click)="showTab('workflows')"><i class="share alternate icon"></i>{{
                 'common_workflows' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'applications'" id="ProjectApplicationTab" (click)="showTab('applications')"><i class="rocket icon"></i>{{
@@ -22,6 +22,9 @@
                 'common_permissions' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'keys'" id="ProjectKeysTab" (click)="showTab('keys')"><i class="privacy icon"></i>
                 {{ 'common_keys' | translate }}
+            </a>
+            <a sm-item [class.active]="selectedTab === 'platforms'" id="ProjectPlatformsTab" (click)="showTab('platforms')"><i class="plug icon"></i>
+                {{ 'common_platforms' | translate }}
             </a>
             <a sm-item [class.active]="selectedTab === 'advanced'" id="ProjectAdvancedTab" (click)="showTab('advanced')" *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE"><i class="graduation icon"></i>{{
                 'common_advanced' | translate }}</a>
@@ -54,6 +57,9 @@
                 </div>
                 <div *ngSwitchCase="'keys'">
                     <app-project-keys [project]="project"></app-project-keys>
+                </div>
+                <div *ngSwitchCase="'platforms'">
+                    <app-project-platforms [project]="project"></app-project-platforms>
                 </div>
                 <div *ngSwitchCase="'advanced'">
                     <h3>{{ 'project_advanced_title' | translate }}</h3>

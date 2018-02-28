@@ -50,6 +50,7 @@ import {ApplicationMigrateService} from './application/application.migration.ser
 import {NavbarService} from './navbar/navbar.service';
 import {DownloadService} from './download/download.service';
 import {KeyService} from './keys/keys.service';
+import {PlatformService} from './platform/platform.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -87,6 +88,7 @@ export class ServicesModule {
                 PipelineService,
                 PipelineAuditService,
                 PipelineStore,
+                PlatformService,
                 ProjectResolver,
                 ProjectForApplicationResolver,
                 ProjectForWorkflowResolver,
@@ -146,6 +148,7 @@ export {
     PipelineResolver,
     PipelineStore,
     PipelineAuditService,
+    PlatformService,
     ProjectResolver,
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,

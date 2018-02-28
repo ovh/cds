@@ -160,6 +160,7 @@ type ProjectClient interface {
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectGroupsImport(projectKey string, content io.Reader, format string, force bool) (sdk.Project, error)
+	ProjectPlatform(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error)
 }
 
 // ProjectKeysClient exposes project keys related functions

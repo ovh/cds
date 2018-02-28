@@ -186,6 +186,7 @@
   "common_pipeline_title": "Pipeline : ",
   "common_pipeline": "Pipeline",
   "common_pipelines": "Pipelines",
+  "common_platforms": "Plateformes",
   "common_requirements": "Pré-requis",
   "common_status": "Status",
   "common_test": "Test",
@@ -469,7 +470,16 @@
   "project_updated": "Projet mis à jour",
   "project_variable_list_title": "Liste des variables du projet: ",
   "project_variable_form_title": "Ajouter une nouvelle variable: ",
-  "project_workflows_list": "Liste des workflows du projet: ",
+  "project_workflows_list": "Liste des workflows du projet : ",
+
+  "platform_add_title" : "Lier une plateforme : ",
+  "platform_list_title" : "Liste des plateformes liées : ",
+  "platform_name": "Nom de la plateforme",
+  "platform_no" : "Aucune plateforme de liée",
+  "platform_model": "Modèle de la plateforme",
+  "platform_configuration": "Configuration de la plateforme",
+
+  "provider_hook": "hook",
 
   "repo_name": "Nom du dépôt",
   "repoman_delete_msg_ok": "Le gestionnaire de dépôt n'est plus lié au projet",

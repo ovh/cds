@@ -33,7 +33,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			return sdk.WrapError(errN, "getWorkflowHookModelsHandler")
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
@@ -83,6 +83,14 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			}
 		}
 
+		hasKafka := false
+		for _, platform := range p.Platforms {
+			if platform.Model.Name == sdk.KafkaPlatformModel {
+				hasKafka = true
+				break
+			}
+		}
+
 		models := []sdk.WorkflowHookModel{}
 		for i := range m {
 			switch m[i].Name {
@@ -93,6 +101,10 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 				}
 			case sdk.GitPollerModelName:
 				if repoPollerEnable {
+					models = append(models, m[i])
+				}
+			case sdk.KafkaHookModelName:
+				if hasKafka {
 					models = append(models, m[i])
 				}
 			default:

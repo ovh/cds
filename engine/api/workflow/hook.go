@@ -27,10 +27,6 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 	var defaultPayload *sdk.WorkflowNodeContextDefaultPayloadVCS
 
 	if len(hookToUpdate) > 0 {
-		if oldW != nil {
-			log.Info("HookRegistration> Merge: %+v, New: %+v, OLD: %+v", hookToUpdate, wf.GetHooks(), oldW.GetHooks())
-		}
-
 		//Push the hook to hooks µService
 		dao := services.Querier(db, store)
 		//Load service "hooks"

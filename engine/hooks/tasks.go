@@ -26,6 +26,7 @@ const (
 	TypeWebHook            = "Webhook"
 	TypeScheduler          = "Scheduler"
 	TypeRepoPoller         = "RepoPoller"
+	TypeKafka              = "Kafka"
 
 	GithubHeader    = "X-Github-Event"
 	GitlabHeader    = "X-Gitlab-Event"
@@ -111,6 +112,12 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 	}
 
 	switch h.WorkflowHookModel.Name {
+	case sdk.KafkaHookModelName:
+		return &sdk.Task{
+			UUID:   h.UUID,
+			Type:   TypeKafka,
+			Config: h.Config,
+		}, nil
 	case sdk.WebHookModelName:
 		h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
 			Value:        fmt.Sprintf("%s/webhook/%s", s.Cfg.URLPublic, h.UUID),
@@ -178,9 +185,12 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) error {
 		return nil
 	case TypeScheduler, TypeRepoPoller:
 		return s.prepareNextScheduledTaskExecution(t)
+	case TypeKafka:
+		return s.startKafkaHook(t)
 	default:
 		return fmt.Errorf("Unsupported task type %s", t.Type)
 	}
+	return nil
 }
 
 func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
@@ -252,13 +262,13 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	return nil
 }
 
-func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
+func (s *Service) stopTask(t *sdk.Task) error {
 	log.Info("Hooks> Stopping task %s", t.UUID)
 	t.Stopped = true
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
-	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller:
+	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka:
 		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
 		return nil
 	default:
@@ -283,6 +293,8 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	case e.ScheduledTask != nil && e.Type == TypeRepoPoller:
 		//Populate next execution
 		hs, err = s.doPollerTaskExecution(t, e)
+	case e.Kafka != nil:
+		h, err = s.doKafkaTaskExecution(e)
 	default:
 		err = fmt.Errorf("Unsupported task type %s", e.Type)
 	}

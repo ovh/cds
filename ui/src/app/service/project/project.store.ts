@@ -11,6 +11,7 @@ import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
 import 'rxjs/add/observable/of';
 import {Key} from '../../model/keys.model';
+import {ProjectPlatform} from '../../model/platform.model';
 
 
 @Injectable()
@@ -107,6 +108,10 @@ export class ProjectStore {
                                    proj.environments = [];
                                }
                                break;
+                           case 'platforms':
+                               if (!res.platforms) {
+                                   proj.platforms = [];
+                               }
                        }
                     });
                 }
@@ -294,22 +299,6 @@ export class ProjectStore {
             }
             return res;
         });
-    }
-
-    /**
-     * Update applications and pipelines on a project
-     * @param key project key
-     * @param project project to update
-     */
-    updateApplicationsAndPipelines(key: string, project: Project): void {
-        let cache = this._projectCache.getValue();
-        let projectToUpdate = cache.get(key);
-        if (projectToUpdate) {
-            projectToUpdate.applications = project.applications;
-            projectToUpdate.pipelines = project.pipelines;
-            projectToUpdate.last_modified = project.last_modified;
-            this._projectCache.next(cache.set(key, projectToUpdate));
-        }
     }
 
     /**
@@ -762,5 +751,89 @@ export class ProjectStore {
         }
     }
 
+    /**
+     * Use by router to preload project
+     * @param key
+     * @returns {Observable<Project>}
+     */
+    getProjectPlatformsResolver(key: string): Observable<Project> {
+        let store = this._projectCache.getValue();
+        let missingPlatforms = store.size === 0 || !store.get(key) || !store.get(key).platforms || !store.get(key).platforms.length;
+
+        if (missingPlatforms) {
+            return this.resyncPlatforms(key);
+        } else {
+            return Observable.of(store.get(key));
+        }
+    }
+
+    /**
+     * Get project platforms
+     * @param key
+     * @returns {Observable<R>}
+     */
+    resyncPlatforms(key: string): Observable<Project> {
+        return this._projectService.getPlatforms(key)
+            .map((res) => {
+                let store = this._projectCache.getValue();
+                let proj = store.get(key);
+                proj.platforms = res;
+                this._projectCache.next(store.set(key, proj));
+                return proj;
+            });
+    }
+
+    /**
+     * Add a platform to a project
+     * @param key Project unique key
+     * @param platform Platform to add
+     */
+    addPlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
+        return this._projectService.addPlatform(key, platform).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate) {
+                if (!projectUpdate.platforms) {
+                    projectUpdate.platforms = new Array<ProjectPlatform>();
+                }
+                projectUpdate.platforms.push(res);
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return res;
+        });
+    }
+
+    deleteProjectPlatform(key: string, platformName: string) {
+        return this._projectService.removePlatform(key, platformName).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate) {
+                if (!projectUpdate.platforms) {
+                    return res;
+                }
+                projectUpdate.platforms = projectUpdate.platforms.filter(p => p.name !== platformName);
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return res;
+        });
+    }
+
+    updateProjectPlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
+        return this._projectService.updatePlatform(key, platform).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate) {
+                if (!projectUpdate.platforms) {
+                    return res;
+                }
+                let index = projectUpdate.platforms.findIndex(p => p.name === platform.name);
+                if (index !== -1) {
+                    projectUpdate.platforms[index] = res;
+                }
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return res;
+        });
+    }
 
 }

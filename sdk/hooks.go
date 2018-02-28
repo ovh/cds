@@ -20,6 +20,7 @@ type TaskExecution struct {
 	WorkflowRun         int64                   `json:"workflow_run"`
 	Config              WorkflowNodeHookConfig  `json:"config"`
 	WebHook             *WebHookExecution       `json:"webhook,omitempty"`
+	Kafka               *KafkaTaskExecution     `json:"kafka,omitempty"`
 	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty"`
 	Status              string                  `json:"status"`
 }
@@ -29,6 +30,11 @@ type WebHookExecution struct {
 	RequestURL    string              `json:"request_url"`
 	RequestBody   []byte              `json:"request_body"`
 	RequestHeader map[string][]string `json:"request_header"`
+}
+
+// KafkaTestExecution contains specific data for a kafka hook
+type KafkaTaskExecution struct {
+	Message []byte
 }
 
 // ScheduledTaskExecution contains specific data for a scheduled task execution

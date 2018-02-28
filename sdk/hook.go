@@ -10,9 +10,35 @@ const (
 	RepositoryWebHookModelName = "RepositoryWebHook"
 	SchedulerModelName         = "Scheduler"
 	GitPollerModelName         = "Git Repository Poller"
+	KafkaHookModelName         = "Kafka hook"
 )
 
 var (
+	KafkaHookModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/kafka",
+		Name:       KafkaHookModelName,
+		Icon:       "Linkify",
+		DefaultConfig: WorkflowNodeHookConfig{
+			"platform": {
+				Value:        KafkaPlatformModel,
+				Configurable: true,
+				Type:         HookConfigTypePlatform,
+			},
+			"consumer group": {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+			"topic": {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+		},
+	}
+
 	WebHookModel = WorkflowHookModel{
 		Author:     "CDS",
 		Type:       WorkflowHookModelBuiltin,
@@ -23,6 +49,7 @@ var (
 			"method": {
 				Value:        "POST",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 		},
 	}
@@ -37,6 +64,7 @@ var (
 			"method": {
 				Value:        "POST",
 				Configurable: false,
+				Type:         HookConfigTypeString,
 			},
 		},
 	}
@@ -59,14 +87,17 @@ var (
 			"cron": {
 				Value:        "0 * * * *",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 			"timezone": {
 				Value:        "UTC",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 			"payload": {
 				Value:        "{}",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 		},
 	}

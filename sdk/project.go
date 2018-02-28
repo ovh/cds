@@ -30,6 +30,7 @@ type Project struct {
 	WorkflowMigration string             `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys              []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
 	VCSServers        []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
 }
 
 // ProjectVCSServer represents associations between a project and a vcs server
@@ -83,6 +84,8 @@ const (
 	ProjectVariableLastModificationType = "project.variable"
 	// ProjectKeysLastModificationType represent key for last update event about project.keys (add, delete a key)
 	ProjectKeysLastModificationType = "project.keys"
+	// ProjectPlatformsLastModificationType represent key for last update event about project.platforms (add, update, delete a platform)
+	ProjectPlatformsLastModificationType = "project.platforms"
 )
 
 //ProjectLastUpdates update times of project, application and pipelines
