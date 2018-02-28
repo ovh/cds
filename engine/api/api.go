@@ -427,6 +427,11 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
+	//Temporary migration code
+	if err := bootstrap.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
+		log.Error("Bootstrap Error: %v", err)
+	}
+
 	//Init events package
 	event.Cache = a.Cache
 

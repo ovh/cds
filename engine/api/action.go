@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -31,67 +30,9 @@ func (api *API) getPipelinesUsingActionHandler() Handler {
 		// Get action name in URL
 		vars := mux.Vars(r)
 		name := vars["actionName"]
-
-		query := `
-		SELECT
-			action.type, action.name as actionName, action.id as actionId,
-			pipeline_stage.id as stageId,
-			pipeline.name as pipName, application.name as appName, project.name, project.projectkey
-		FROM action_edge
-		LEFT JOIN action on action.id = parent_id
-		LEFT OUTER JOIN pipeline_action ON pipeline_action.action_id = action.id
-		LEFT OUTER JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
-		LEFT OUTER JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
-		LEFT OUTER JOIN application_pipeline ON application_pipeline.pipeline_id = pipeline.id
-		LEFT OUTER JOIN application ON application.id = application_pipeline.application_id
-		LEFT OUTER JOIN project ON pipeline.project_id = project.id
-		LEFT JOIN action as actionChild ON  actionChild.id = child_id
-		WHERE actionChild.name = $1 and actionChild.public = true
-		ORDER BY projectkey, appName, pipName, actionName;
-	`
-		rows, errq := api.mustDB().Query(query, name)
-		if errq != nil {
-			return sdk.WrapError(errq, "getPipelinesUsingActionHandler> Cannot load pipelines using action %s", name)
-		}
-		defer rows.Close()
-
-		type pipelineUsingAction struct {
-			ActionID   int    `json:"action_id"`
-			ActionType string `json:"type"`
-			ActionName string `json:"action_name"`
-			PipName    string `json:"pipeline_name"`
-			AppName    string `json:"application_name"`
-			ProjName   string `json:"project_name"`
-			ProjKey    string `json:"key"`
-			StageID    int64  `json:"stage_id"`
-		}
-
-		response := []pipelineUsingAction{}
-
-		for rows.Next() {
-			var a pipelineUsingAction
-			var pipName, appName, projName, projKey sql.NullString
-			var stageID sql.NullInt64
-			if err := rows.Scan(&a.ActionType, &a.ActionName, &a.ActionID, &stageID, &pipName, &appName, &projName, &projKey); err != nil {
-				return sdk.WrapError(err, "getPipelinesUsingActionHandler> Cannot read sql response")
-			}
-			if stageID.Valid {
-				a.StageID = stageID.Int64
-			}
-			if pipName.Valid {
-				a.PipName = pipName.String
-			}
-			if appName.Valid {
-				a.AppName = appName.String
-			}
-			if projName.Valid {
-				a.ProjName = projName.String
-			}
-			if projKey.Valid {
-				a.ProjKey = projKey.String
-			}
-
-			response = append(response, a)
+		response, err := action.GetPipelineUsingAction(api.mustDB(), name)
+		if err != nil {
+			return err
 		}
 		return WriteJSON(w, response, http.StatusOK)
 	}

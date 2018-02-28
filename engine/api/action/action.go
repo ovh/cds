@@ -465,3 +465,87 @@ func isRequirementsValid(requirements sdk.RequirementList) error {
 	}
 	return nil
 }
+
+type PipelineUsingAction struct {
+	ActionID         int    `json:"action_id"`
+	ActionType       string `json:"type"`
+	ActionName       string `json:"action_name"`
+	PipName          string `json:"pipeline_name"`
+	AppName          string `json:"application_name"`
+	ProjName         string `json:"project_name"`
+	ProjKey          string `json:"key"`
+	StageID          int64  `json:"stage_id"`
+	WorkflowName     string `json:"workflow_name"`
+	WorkflowNodeName string `json:"workflow_node_name"`
+	WorkflowNodeID   int64  `json:"workflow_node_id"`
+}
+
+func GetPipelineUsingAction(db gorp.SqlExecutor, name string) ([]PipelineUsingAction, error) {
+	query := `
+		SELECT
+			action.type, action.name as actionName, action.id as actionId,
+			pipeline_stage.id as stageId,
+			pipeline.name as pipName, application.name as appName, project.name, project.projectkey,
+			workflow.name as wName, workflow_node.id as nodeId,  workflow_node.name as nodeName
+		FROM action_edge
+		LEFT JOIN action on action.id = parent_id
+		LEFT OUTER JOIN pipeline_action ON pipeline_action.action_id = action.id
+		LEFT OUTER JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
+		LEFT OUTER JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+		LEFT OUTER JOIN application_pipeline ON application_pipeline.pipeline_id = pipeline.id
+		LEFT OUTER JOIN application ON application.id = application_pipeline.application_id
+		LEFT OUTER JOIN project ON pipeline.project_id = project.id
+		LEFT OUTER JOIN workflow_node ON workflow_node.pipeline_id = pipeline.id
+		LEFT OUTER JOIN workflow ON workflow_node.workflow_id = workflow.id
+		LEFT JOIN action as actionChild ON  actionChild.id = child_id
+		WHERE actionChild.name = $1 and actionChild.public = true
+		ORDER BY projectkey, appName, pipName, actionName;
+	`
+	rows, errq := db.Query(query, name)
+	if errq != nil {
+		return nil, sdk.WrapError(errq, "getPipelineUsingAction> Cannot load pipelines using action %s", name)
+	}
+	defer rows.Close()
+
+	response := []PipelineUsingAction{}
+
+	for rows.Next() {
+		var a PipelineUsingAction
+		var pipName, appName, projName, projKey, wName, wnodeName sql.NullString
+		var stageID, nodeID sql.NullInt64
+		if err := rows.Scan(&a.ActionType, &a.ActionName, &a.ActionID, &stageID,
+			&pipName, &appName, &projName, &projKey,
+			&wName, &nodeID, &wnodeName,
+		); err != nil {
+			return nil, sdk.WrapError(err, "getPipelineUsingAction> Cannot read sql response")
+		}
+		if stageID.Valid {
+			a.StageID = stageID.Int64
+		}
+		if pipName.Valid {
+			a.PipName = pipName.String
+		}
+		if appName.Valid {
+			a.AppName = appName.String
+		}
+		if projName.Valid {
+			a.ProjName = projName.String
+		}
+		if projKey.Valid {
+			a.ProjKey = projKey.String
+		}
+		if wName.Valid {
+			a.WorkflowName = wName.String
+		}
+		if wnodeName.Valid {
+			a.WorkflowNodeName = wnodeName.String
+		}
+		if nodeID.Valid {
+			a.WorkflowNodeID = nodeID.Int64
+		}
+
+		response = append(response, a)
+	}
+
+	return response, nil
+}
