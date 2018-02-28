@@ -108,7 +108,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 
 	k := &sdk.ApplicationKey{
 		Key: sdk.Key{
-			Name: "mykey",
+			Name: "app-mykey",
 			Type: "pgp",
 		},
 		ApplicationID: app.ID,
@@ -217,7 +217,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	k := &sdk.ApplicationKey{
 		Key: sdk.Key{
-			Name: "mykey",
+			Name: "app-mykey",
 			Type: "pgp",
 		},
 		ApplicationID: app.ID,
@@ -384,9 +384,9 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithEmptyKey(t *testing.T) 
 	body := `version: v1.0
 name: myNewApp
 keys:
-  myPGPkey:
+  app-myPGPkey:
     type: pgp
-  mySSHKey:
+  app-mySSHKey:
     type: ssh`
 	req.Body = ioutil.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
@@ -408,13 +408,13 @@ keys:
 	var myPGPkey, mySSHKey bool
 	for _, k := range app.Keys {
 		switch k.Name {
-		case "myPGPkey":
+		case "app-myPGPkey":
 			myPGPkey = true
 			assert.NotEmpty(t, k.KeyID)
 			assert.NotEmpty(t, k.Private)
 			assert.NotEmpty(t, k.Public)
 			assert.NotEmpty(t, k.Type)
-		case "mySSHKey":
+		case "app-mySSHKey":
 			mySSHKey = true
 			assert.NotEmpty(t, k.Private)
 			assert.NotEmpty(t, k.Public)
