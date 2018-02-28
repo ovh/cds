@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -258,4 +259,25 @@ func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader)
 	}
 
 	return nil
+}
+
+func (c *client) WorkflowCachePull(projectKey, tag string) (io.Reader, error) {
+	url := fmt.Sprintf("/project/%s/cache/%s/pull", projectKey, tag)
+
+	mods := []RequestModifier{
+		(func(r *http.Request) {
+			r.Header.Set("Content-Type", "application/tar")
+		}),
+	}
+
+	res, _, code, err := c.Request("GET", url, nil, mods...)
+	if err != nil {
+		return nil, fmt.Errorf("Request error : %s", err)
+	}
+
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Code %d", code)
+	}
+
+	return bytes.NewBuffer(res), nil
 }

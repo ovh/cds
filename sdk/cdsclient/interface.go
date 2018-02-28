@@ -247,6 +247,7 @@ type WorkflowClient interface {
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 	WorkflowCachePush(projectKey, tag string, tarContent io.Reader) error
+	WorkflowCachePull(projectKey, tag string) (io.Reader, error)
 }
 
 // MonitoringClient exposes monitoring functions

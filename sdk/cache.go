@@ -55,10 +55,12 @@ func CreateTarFromPaths(paths []string) (io.Reader, error) {
 
 		if fstat.IsDir() {
 			if err := iterDirectory(path, tw); err != nil {
+				tw.Close()
 				return nil, err
 			}
 		} else {
 			if err := tarWrite(path, tw, fstat); err != nil {
+				tw.Close()
 				return nil, WrapError(err, "CreateTarFromPaths> Cannot tar write %s", path)
 			}
 		}
@@ -82,16 +84,17 @@ func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
 	}
 	defer filR.Close()
 
-	stat, err := filR.Stat()
-	if err != nil {
-		return WrapError(err, "tarWrite> cannot stat file")
+	hdr := &tar.Header{
+		Name:     path,
+		Mode:     0600,
+		Size:     fi.Size(),
+		Typeflag: tar.TypeReg,
 	}
 
-	hdr := &tar.Header{
-		Name: path,
-		Mode: 0600,
-		Size: stat.Size(),
+	if fi.IsDir() {
+		hdr.Typeflag = tar.TypeDir
 	}
+
 	if err := tw.WriteHeader(hdr); err != nil {
 		return WrapError(err, "tarWrite> cannot write header")
 	}
@@ -99,7 +102,7 @@ func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
 	if n, err := io.Copy(tw, filR); err != nil {
 		return err
 	} else if n == 0 {
-		return fmt.Errorf("nothing to write for %s", stat.Name())
+		return fmt.Errorf("nothing to write for %s", fi.Name())
 	}
 	return nil
 }

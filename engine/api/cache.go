@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -10,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) pushCacheHandler() Handler {
+func (api *API) postPushCacheHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -20,77 +19,42 @@ func (api *API) pushCacheHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		// btes, err := ioutil.ReadAll(r.Body)
-		// if err != nil {
-		// 	log.Error("postWorkflowPushHandler> Unable to read body: %v", err)
-		// 	return sdk.ErrWrongRequest
-		// }
-		// defer r.Body.Close()
-		//
-		// tr := tar.NewReader(bytes.NewReader(btes))
-
 		cacheObject := sdk.Cache{
 			Name:    "cache.tar.gz",
 			Project: projectKey,
 			Tag:     tag,
 		}
-		// for {
-		// 	hdr, err := tr.Next()
-		// 	if err == io.EOF {
-		// 		break
-		// 	}
-		// 	// buf.WriteString()
-		// 	fmt.Println("hdr", hdr)
-		// 	// buff := new(bytes.Buffer)
-		// 	trc := ioutil.NopCloser(tr)
-		//
-		// 	if _, err := io.Copy(os.Stdout, trc); err != nil {
-		// 		err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-		// 		fmt.Println(err)
-		// 	}
-		//
-		// 	// b := buff.Bytes()
-		// 	// fmt.Println(string(b))
-		//
-		// }
+
 		_, errO := objectstore.StoreArtifact(&cacheObject, r.Body)
+		defer r.Body.Close()
 		if errO != nil {
-			r.Body.Close()
 			return sdk.WrapError(errO, "SaveFile>Cannot store artifact")
 		}
-		r.Body.Close()
 
 		return nil
 	}
 }
 
-func (api *API) pullCacheHandler() Handler {
+func (api *API) getPullCacheHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars["key"]
 		tag := vars["tag"]
 
 		cacheObject := sdk.Cache{
 			Project: projectKey,
+			Name:    "cache.tar.gz",
 			Tag:     tag,
 		}
 
-		f, err := objectstore.FetchArtifact(&cacheObject)
+		fURL, err := objectstore.FetchTempURL(&cacheObject)
 		if err != nil {
 			return sdk.WrapError(err, "pullCacheHandler> Cannot fetch cache object")
 		}
 
-		if _, err := io.Copy(w, f); err != nil {
-			_ = f.Close()
-			return sdk.WrapError(err, "pullCacheHandler> Cannot stream cache file")
-		}
-
-		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "pullCacheHandler> Cannot close cache file")
-		}
-
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", "attachment; filename=\"cache.tar.gz\"")
+		http.Redirect(w, r, fURL, http.StatusMovedPermanently)
 		return nil
 	}
 }
