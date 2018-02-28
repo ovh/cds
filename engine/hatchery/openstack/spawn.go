@@ -124,7 +124,7 @@ export CDS_TTL={{.TTL}}
 				if spawnArgs.JobID != 0 {
 					jobInfo = fmt.Sprintf(" job:%d", spawnArgs.JobID)
 				}
-				log.Info("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArgs.LogInfo)
+				log.Debug("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArgs.LogInfo)
 				imageID = img.ID
 				break
 			}
