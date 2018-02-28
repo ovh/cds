@@ -373,8 +373,9 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 func getJobExecutablesGroups(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
 	query := `
 	SELECT distinct("group".id), "group".name FROM "group"
-	LEFT JOIN pipeline_group ON pipeline_group.group_id = "group".id
 	LEFT JOIN project_group ON project_group.group_id = "group".id
+	LEFT JOIN pipeline_group ON pipeline_group.group_id = "group".id
+	LEFT JOIN workflow_group ON workflow_group.group_id = "group".id
 	LEFT JOIN workflow_node ON workflow_node.pipeline_id = pipeline_group.pipeline_id
 	LEFT JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
 	LEFT OUTER JOIN application_group ON workflow_node_context.application_id = application_group.application_id
@@ -383,6 +384,8 @@ func getJobExecutablesGroups(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]s
 		AND workflow_node_context.workflow_node_id = workflow_node.id
 		AND workflow_node.pipeline_id = pipeline_group.pipeline_id
 		AND pipeline_group.group_id = "group".id
+		AND workflow_group.workflow_id = workflow_node.workflow_id
+		AND workflow_group.role >= $2
 		AND (workflow_node_context.application_id is null OR application_group.role >= $2)
 		AND pipeline_group.role >= $2
 		AND (workflow_node_context.environment_id is NULL or environment_group.role >= $2);
