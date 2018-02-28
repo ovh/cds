@@ -537,7 +537,8 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 		for i, g := range getUser(ctx).Groups {
 			groupsID[i] = g.ID
 		}
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since)
+
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, isUser(r), groupsID, &since)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}

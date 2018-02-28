@@ -42,7 +42,7 @@ func (api *API) getMonDBTimesDBHandler() Handler {
 		o.ProjectLoadAllWithApps = api.getMonDBTimesDBProjectLoadWithAppsHandler(ctx)
 		o.ProjectLoadAllRaw = api.getMonDBTimesDBProjectLoadAllRawHandler(ctx)
 		o.ProjectCount = api.getMonDBTimesDBProjectCountHandler(ctx)
-		o.QueueWorkflow = api.getMonDBTimesDBQueueWorkflow(ctx)
+		o.QueueWorkflow = api.getMonDBTimesDBQueueWorkflow(ctx, r)
 
 		log.Info("getMonDBTimesDBHandler> elapsed %s", elapsed("getMonDBTimesDBHandler", o.Now))
 		return WriteJSON(w, o, http.StatusOK)
@@ -93,14 +93,14 @@ func (api *API) getMonDBTimesDBProjectLoadAllRawHandler(ctx context.Context) str
 	return elapsed("getMonDBTimesDBProjectLoadAllRawHandler", s1)
 }
 
-func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context) string {
+func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context, r *http.Request) string {
 	groupsID := []int64{}
 	for _, g := range getUser(ctx).Groups {
 		groupsID = append(groupsID, g.ID)
 	}
 	since := time.Unix(0, 0)
 	s1 := time.Now()
-	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since); err != nil {
+	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, isUser(r), groupsID, &since); err != nil {
 		return fmt.Sprintf("getMonDBTimesDBQueueWorkflow> Unable to load queue:: %s", err)
 	}
 	return elapsed("getMonDBTimesDBQueueWorkflow", s1)

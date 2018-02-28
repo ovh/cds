@@ -126,7 +126,7 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.RootID][0], nodeRun)
 
 	//TestLoadNodeJobRun
-	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, true, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	//Print lastrun
@@ -267,7 +267,7 @@ func TestManualRun2(t *testing.T) {
 	_, err = workflow.ManualRunFromNode(db, db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
 	test.NoError(t, err)
 
-	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, true, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	assert.Len(t, jobs, 3)
@@ -356,7 +356,7 @@ func TestManualRun3(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
-	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, true, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	for i := range jobs {
@@ -454,7 +454,7 @@ func TestManualRun3(t *testing.T) {
 		tx.Commit()
 	}
 
-	jobs, err = workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err = workflow.LoadNodeJobRunQueue(db, cache, true, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
 

@@ -277,6 +277,17 @@ func getAgent(r *http.Request) string {
 	return r.Header.Get("User-Agent")
 }
 
+func isUser(r *http.Request) bool {
+	switch getAgent(r) {
+	case sdk.HatcheryAgent:
+		return false
+	case sdk.WorkerAgent:
+		return false
+	default:
+		return true
+	}
+}
+
 func getWorker(c context.Context) *sdk.Worker {
 	i := c.Value(auth.ContextWorker)
 	if i == nil {
