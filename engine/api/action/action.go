@@ -466,6 +466,7 @@ func isRequirementsValid(requirements sdk.RequirementList) error {
 	return nil
 }
 
+// PipelineUsingAction represent a pipeline using an action
 type PipelineUsingAction struct {
 	ActionID         int    `json:"action_id"`
 	ActionType       string `json:"type"`
@@ -480,6 +481,7 @@ type PipelineUsingAction struct {
 	WorkflowNodeID   int64  `json:"workflow_node_id"`
 }
 
+// GetPipelineUsingAction returns the list of pipelines using an action
 func GetPipelineUsingAction(db gorp.SqlExecutor, name string) ([]PipelineUsingAction, error) {
 	query := `
 		SELECT
