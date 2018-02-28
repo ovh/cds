@@ -383,7 +383,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	k := &sdk.ApplicationKey{
 		Key: sdk.Key{
-			Name: "mykey",
+			Name: "app-mykey",
 			Type: "pgp",
 		},
 		ApplicationID: app.ID,
