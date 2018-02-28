@@ -109,17 +109,17 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		}
 
 		//Configure the hook
-		h.Config["project"] = sdk.WorkflowNodeHookConfigValue{
+		h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
 			Value:        w.ProjectKey,
 			Configurable: false,
 		}
 
-		h.Config["workflow"] = sdk.WorkflowNodeHookConfigValue{
+		h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
 			Value:        w.Name,
 			Configurable: false,
 		}
 
-		h.Config["workflow_id"] = sdk.WorkflowNodeHookConfigValue{
+		h.Config[sdk.HookConfigWorkflowID] = sdk.WorkflowNodeHookConfigValue{
 			Value:        fmt.Sprint(w.ID),
 			Configurable: false,
 		}

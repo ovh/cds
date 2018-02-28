@@ -30,7 +30,7 @@ func (s *Service) webhookHandler() api.Handler {
 		}
 
 		//Check method
-		confValue := webHook.Config["method"]
+		confValue := webHook.Config[sdk.WebHookModelConfigMethod]
 		if r.Method != confValue.Value {
 			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Hook> webhookHandler> Unsupported method %s : %v", r.Method, webHook.Config)
 		}

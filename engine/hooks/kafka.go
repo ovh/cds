@@ -32,13 +32,13 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 	var kafkaPlatform, kafkaUser, projectKey, consumerGroup, topic string
 	for k, v := range t.Config {
 		switch k {
-		case "platform":
+		case sdk.KafkaHookModelPlatform:
 			kafkaPlatform = v.Value
-		case "consumer group":
+		case sdk.KafkaHookModelConsumerGroup:
 			consumerGroup = v.Value
-		case "topic":
+		case sdk.KafkaHookModelTopic:
 			topic = v.Value
-		case "project":
+		case sdk.HookConfigProject:
 			projectKey = v.Value
 		}
 	}

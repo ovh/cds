@@ -414,7 +414,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			return sdk.ErrNotFound
 		}
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, h.Config["project"].Value, nil)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, h.Config[sdk.HookConfigProject].Value, nil)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getHookPollingVCSEvents> cannot load project")
 		}
@@ -450,7 +450,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 
 		repoEvents := sdk.RepositoryEvents{}
 		for _, pushEvent := range pushEvents {
-			exist, errB := workflow.RunExist(api.mustDB(), h.Config["project"].Value, workflowID, pushEvent.Commit.Hash)
+			exist, errB := workflow.RunExist(api.mustDB(), h.Config[sdk.HookConfigProject].Value, workflowID, pushEvent.Commit.Hash)
 			if errB != nil {
 				return sdk.WrapError(errB, "getHookPollingVCSEvents> Cannot check existing builds for push events")
 			}
@@ -460,7 +460,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 		}
 
 		for _, pullRequestEvent := range pullRequestEvents {
-			exist, errB := workflow.RunExist(api.mustDB(), h.Config["project"].Value, workflowID, pullRequestEvent.Head.Commit.Hash)
+			exist, errB := workflow.RunExist(api.mustDB(), h.Config[sdk.HookConfigProject].Value, workflowID, pullRequestEvent.Head.Commit.Hash)
 			if errB != nil {
 				return sdk.WrapError(errB, "getHookPollingVCSEvents> Cannot check existing builds for pull request events")
 			}
