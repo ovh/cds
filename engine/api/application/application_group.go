@@ -144,7 +144,7 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 						return sdk.WrapError(erre, "AddGroup> Unable to check group in env")
 					}
 
-					if !groupAttachedToEnv {
+					if !groupAttachedToEnv && sdk.DefaultEnv.ID != t.DestEnvironment.ID {
 						if err := group.InsertGroupInEnvironment(db, t.DestEnvironment.ID, g.ID, perm); err != nil {
 							return sdk.WrapError(err, "AddGroup> Cannot add group %s in env %s", g.Name, t.DestEnvironment.Name)
 						}
@@ -160,7 +160,7 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 						return sdk.WrapError(erre, "AddGroup> Unable to check group in env")
 					}
 
-					if !groupAttachedToEnv {
+					if !groupAttachedToEnv && sdk.DefaultEnv.ID != t.SrcEnvironment.ID {
 						if err := group.InsertGroupInEnvironment(db, t.SrcEnvironment.ID, g.ID, perm); err != nil {
 							return sdk.WrapError(err, "AddGroup> Cannot add group %s in env %s", g.Name, t.SrcEnvironment.Name)
 						}
