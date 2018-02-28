@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Write a Plugin :: CDS - Continuous Delivery Service</title>
+    <title>Kafka hook :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/workflows/pipelines/actions/plugins/write-plugin/">
+  <body class="" data-url="/workflows/design/hooks/kafka-hook/">
     <nav id="sidebar" class="">
 
 
@@ -137,9 +137,10 @@
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/workflows/design/" class="dd-item">
+    <li data-nav-id="/workflows/design/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/design/">
-        <span>Design your Workflow</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Design your Workflow</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/design/payload/" class="dd-item">
@@ -152,9 +153,10 @@
           <span>Pipeline Context</span>
         </a>
     </li>
-    <li data-nav-id="/workflows/design/hooks/" class="dd-item">
+    <li data-nav-id="/workflows/design/hooks/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/design/hooks/">
-        <span>Hooks</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Hooks</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/design/hooks/scheduler/" class="dd-item">
@@ -177,7 +179,7 @@
           <span>Git Repository Webhook</span>
         </a>
     </li>
-      <li data-nav-id="/workflows/design/hooks/kafka-hook/" class="dd-item">
+      <li data-nav-id="/workflows/design/hooks/kafka-hook/" class="dd-item active">
         <a href="https://ovh.github.io/cds/workflows/design/hooks/kafka-hook/">
           <span>Kafka hook</span>
         </a>
@@ -209,14 +211,18 @@
         <span>Workflows Advanced</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-        </ul>
+      <li data-nav-id="/workflows/design/advanced/update-run-number/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/advanced/update-run-number/">
+          <span>Update a Workflow run number</span>
+        </a>
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/" class="dd-item parent">
+        </ul>
+    </li>
+    <li data-nav-id="/workflows/pipelines/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/pipelines/">
-        <span>Building Pipelines</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Building Pipelines</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/variables/" class="dd-item">
@@ -224,10 +230,9 @@
           <span>Variables</span>
         </a>
     </li>
-    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item parent">
+    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/pipelines/actions/">
-        <span>Actions</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/pipelines/actions/builtin/" class="dd-item">
@@ -299,13 +304,12 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item parent">
+    <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/">
-        <span>Plugins Actions</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Plugins Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/workflows/pipelines/actions/plugins/write-plugin/" class="dd-item active">
+      <li data-nav-id="/workflows/pipelines/actions/plugins/write-plugin/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/">
           <span>Write a Plugin</span>
         </a>
@@ -1576,7 +1580,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/pipelines/actions/plugins/write-plugin.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/design/hooks/kafka-hook.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1602,12 +1606,7 @@
 
 
 
-
-
-
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/actions/'>Actions</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/actions/plugins/'>Plugins Actions</a> > Write a Plugin
-
- 
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/design/'>Design your Workflow</a> > <a href='https://ovh.github.io/cds/workflows/design/hooks/'>Hooks</a> > Kafka hook
 
  
 
@@ -1632,7 +1631,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Write a Plugin</h1>
+                <h1>Kafka hook</h1>
                 <p></p>
             </div>
           
@@ -1640,21 +1639,18 @@
 
 
 
-<p>A CDS worker executes job, and job is composed of steps.</p>
+<p>You want to run a workflow from a kafka message? This kind of hook is for you.</p>
 
-<p>A step is :</p>
+<p>This kind of hook will connect to a kafka topic and consume message. For each message, it will trigger your workflow.</p>
+
+<p>You have to:</p>
 
 <ul>
-<li>a builtin action, as GitClone, etc&hellip; <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/">read more</a></li>
-<li>a user action <a href="">read more</a></li>
-<li>a Plugin Action</li>
+<li>link your project to a Kafka platform, on Advanced Section.</li>
+<li>add a Kafka hook on the root pipeline of your workflow</li>
 </ul>
 
-<p>A Plugin is a Golang Binary.</p>
-
-<p>Take a look at <a href="https://github.com/ovh/cds/tree/master/sdk/plugin/dummy/dummy_plugin.go">https://github.com/ovh/cds/tree/master/sdk/plugin/dummy/dummy_plugin.go</a></p>
-
-<p>Contribute on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins">https://github.com/ovh/cds/tree/master/contrib/plugins</a></p>
+<p>The kafka message will be used as a payload for your workflow <a href="https://ovh.github.io/cds/workflows/design/payload/">See playload documentation</a>.</p>
 
 
 <footer class=" footline" >
@@ -1674,8 +1670,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/" title="Plugins Actions"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/" title="plugin-download" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/" title="Git Repository Webhook"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/design/run-conditions/" title="Run conditions on pipeline" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

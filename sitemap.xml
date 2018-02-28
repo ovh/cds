@@ -171,6 +171,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/design/hooks/kafka-hook/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</loc>
   </url>
   

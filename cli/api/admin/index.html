@@ -176,6 +176,11 @@
           <span>Git Repository Webhook</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/design/hooks/kafka-hook/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/hooks/kafka-hook/">
+          <span>Kafka hook</span>
+        </a>
+    </li>
         </ul>
     </li>
       <li data-nav-id="/workflows/design/run-conditions/" class="dd-item">
@@ -1625,10 +1630,10 @@
 <li><a href="#get-admin-maintenance">GET <code>/admin/maintenance</code></a></li>
 <li><a href="#get-admin-services">GET <code>/admin/services</code></a></li>
 <li><a href="#get-admin-services-service">GET <code>/admin/services/&lt;service&gt;</code></a></li>
-<li><a href="#get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></a></li>
-<li><a href="#delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></a></li>
-<li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#delete-admin-warning">DELETE <code>/admin/warning</code></a></li>
 </ul></li>
 </ul></li>
@@ -1905,6 +1910,34 @@
 </tbody>
 </table>
 
+<h3 id="post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/services/&lt;service&gt;/call</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22">postAdminServiceCallHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></h3>
 
 <table>
@@ -1929,34 +1962,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22">getAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/&lt;service&gt;/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22">deleteAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1989,7 +1994,7 @@
 </tbody>
 </table>
 
-<h3 id="post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></h3>
+<h3 id="delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></h3>
 
 <table>
 <thead>
@@ -2002,7 +2007,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -2012,7 +2017,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22">postAdminServiceCallHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22">deleteAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>
