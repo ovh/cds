@@ -1,17 +1,13 @@
 package api
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) pushCacheHandler() Handler {
@@ -24,14 +20,14 @@ func (api *API) pushCacheHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		btes, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.Error("postWorkflowPushHandler> Unable to read body: %v", err)
-			return sdk.ErrWrongRequest
-		}
-		defer r.Body.Close()
-
-		tr := tar.NewReader(bytes.NewReader(btes))
+		// btes, err := ioutil.ReadAll(r.Body)
+		// if err != nil {
+		// 	log.Error("postWorkflowPushHandler> Unable to read body: %v", err)
+		// 	return sdk.ErrWrongRequest
+		// }
+		// defer r.Body.Close()
+		//
+		// tr := tar.NewReader(bytes.NewReader(btes))
 
 		cacheObject := sdk.Cache{
 			Name:    "cache.tar.gz",
@@ -43,9 +39,11 @@ func (api *API) pushCacheHandler() Handler {
 		// 	if err == io.EOF {
 		// 		break
 		// 	}
-		// 	buf.WriteString()
+		// 	// buf.WriteString()
 		// 	fmt.Println("hdr", hdr)
 		// 	// buff := new(bytes.Buffer)
+		// 	trc := ioutil.NopCloser(tr)
+		//
 		// 	if _, err := io.Copy(os.Stdout, trc); err != nil {
 		// 		err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
 		// 		fmt.Println(err)
@@ -55,13 +53,12 @@ func (api *API) pushCacheHandler() Handler {
 		// 	// fmt.Println(string(b))
 		//
 		// }
-		trc := ioutil.NopCloser(tr)
-		_, errO := objectstore.StoreArtifact(&cacheObject, trc)
+		_, errO := objectstore.StoreArtifact(&cacheObject, r.Body)
 		if errO != nil {
-			trc.Close()
+			r.Body.Close()
 			return sdk.WrapError(errO, "SaveFile>Cannot store artifact")
 		}
-		trc.Close()
+		r.Body.Close()
 
 		return nil
 	}

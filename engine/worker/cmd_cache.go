@@ -1,14 +1,12 @@
 package main
 
 import (
-	"archive/tar"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -111,52 +109,12 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 
 	sendLog(fmt.Sprintf("%v", c))
 
-	// Create a buffer to write our archive to.
-	buf := new(bytes.Buffer)
-
-	// Create a new tar archive.
-	tw := tar.NewWriter(buf)
-
-	// Add some files to the archive.
-	for _, file := range c.Files {
-		filBuf, err := ioutil.ReadFile(file)
-		if err != nil {
-			sendLog(err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		hdr := &tar.Header{
-			Name: filepath.Base(file),
-			Mode: 0600,
-			Size: int64(len(filBuf)),
-		}
-		if err := tw.WriteHeader(hdr); err != nil {
-			sendLog(err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		sendLog(fmt.Sprintf("Read file content %v", string(filBuf)))
-		if n, err := tw.Write(filBuf); err != nil {
-			sendLog(err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		} else if n == 0 {
-			sendLog("nothing to write")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	}
-	// Make sure to check the error on Close.
-	if err := tw.Close(); err != nil {
-		sendLog(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+	res, errTar := sdk.CreateTarFromPaths(c.Files)
+	if errTar != nil {
+		sendLog("Error: cannot tar : " + errTar.Error())
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	// Open the tar archive for reading.
-	btes := buf.Bytes()
-	res := bytes.NewBuffer(btes)
 	if wk.currentJob.wJob == nil {
 		sendLog("Error: cannot find workflow job info")
 		w.WriteHeader(http.StatusBadRequest)
