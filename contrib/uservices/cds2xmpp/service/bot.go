@@ -16,6 +16,7 @@ import (
 
 var (
 	cdsbot *botClient
+	xmlRegexp := regexp.MustCompile(`<\/[\w\-][^><]*>|<[\w\-][^><]*\/>`)
 )
 
 const resource = "cds"
@@ -33,7 +34,6 @@ type botClient struct {
 }
 
 func getBotClient() (*botClient, error) {
-
 	xClient, err := getNewXMPPClient()
 	if err != nil {
 		log.Errorf("getClient >> error with getNewXMPPClient err:%s", err)
@@ -51,9 +51,7 @@ func getBotClient() (*botClient, error) {
 }
 
 func (bot *botClient) born() {
-
 	bot.creation = time.Now().UTC()
-
 	rand.Seed(time.Now().Unix())
 
 	if viper.GetString("admin_conference") != "" {
@@ -77,7 +75,6 @@ func (bot *botClient) born() {
 }
 
 func (bot *botClient) helloWorld() {
-
 	for _, a := range bot.admins {
 		log.Infof("helloWorld >> sending hello world to %s", a)
 
@@ -87,7 +84,6 @@ func (bot *botClient) helloWorld() {
 			Text:   fmt.Sprintf("Hi, I'm CDS2XMPP, what a good day to be alive. /cds cds2xmpp status for more information"),
 		}
 	}
-
 }
 
 const status = `
@@ -157,7 +153,6 @@ func (bot *botClient) sendToXMPP() {
 // XML is detected if presence of tags like </foo> or <foo/>
 // This means that <br> is not detected as XML, but <br/> is
 func isXML(text string) bool {
-	xmlRegexp := regexp.MustCompile(`<\/[\w\-][^><]*>|<[\w\-][^><]*\/>`)
 	return len(xmlRegexp.FindAllString(text, -1)) > 0
 }
 
