@@ -35,3 +35,11 @@ A stage is composed of several pipelines. [See Workflow documentation]({{< relre
 
 ![Workflow](/images/introduction.concept.workflow.png)
 
+### A Project
+
+A project represents an organisation, it contains workflows, applications, pipelines and environments. It can be linked to platforms
+
+### A Platform
+
+A platform represents a link between CDS and another external platform (Kafka, Openstack)
+
