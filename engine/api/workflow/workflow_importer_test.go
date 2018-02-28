@@ -275,11 +275,11 @@ func TestImport(t *testing.T) {
 									Name: "Scheduler",
 								},
 								Config: sdk.WorkflowNodeHookConfig{
-									"cron": sdk.WorkflowNodeHookConfigValue{
+									sdk.SchedulerModelCron: sdk.WorkflowNodeHookConfigValue{
 										Value:        "* * * * *",
 										Configurable: true,
 									},
-									"timezone": sdk.WorkflowNodeHookConfigValue{
+									sdk.SchedulerModelTimezone: sdk.WorkflowNodeHookConfigValue{
 										Value:        "UTC",
 										Configurable: true,
 									},
