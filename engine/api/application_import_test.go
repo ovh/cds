@@ -6,12 +6,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithoutSecret(t *testing.T) {
@@ -367,6 +370,100 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	}
 }
 
+func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImportWithRegen(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	app := &sdk.Application{
+		Name: "myNewApp",
+	}
+	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
+
+	k := &sdk.ApplicationKey{
+		Key: sdk.Key{
+			Name: "mykey",
+			Type: "pgp",
+		},
+		ApplicationID: app.ID,
+	}
+
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	test.NoError(t, err)
+	k.Public = kpgp.Public
+	k.Private = kpgp.Private
+	k.KeyID = kpgp.KeyID
+	if err := application.InsertKey(api.mustDB(), k); err != nil {
+		t.Fatal(err)
+	}
+
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
+		Name:  "myPassword",
+		Type:  sdk.SecretVariable,
+		Value: "MySecretValue",
+	}, u))
+
+	//Export all the things
+	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+	}
+	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	body := rec.Body.String()
+	t.Logf(">>%s", body)
+
+	eapp := &exportentities.Application{}
+	test.NoError(t, yaml.Unmarshal([]byte(body), eapp))
+
+	False := false
+	ek := eapp.Keys[k.Name]
+	ek.Regen = &False
+	ek.Value = ""
+	eapp.Keys[k.Name] = ek
+
+	btes, err := yaml.Marshal(eapp)
+	body = string(btes)
+
+	t.Log(body)
+
+	//Import the new application
+	vars = map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri = api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
+	test.NotEmpty(t, uri)
+	uri += "?force=true"
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	test.NoError(t, err)
+	//Check keys
+	for _, k := range app.Keys {
+		assert.NotEmpty(t, k.Private)
+		assert.NotEmpty(t, k.Public)
+	}
+}
+
 func Test_postApplicationImportHandler_NewAppFromYAMLWithEmptyKey(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(db)
@@ -386,6 +483,7 @@ name: myNewApp
 keys:
   myPGPkey:
     type: pgp
+    regen: true
   mySSHKey:
     type: ssh`
 	req.Body = ioutil.NopCloser(strings.NewReader(body))

@@ -73,6 +73,16 @@ type ApplicationPipeline struct {
 	Triggers     []PipelineTrigger `json:"triggers,omitempty"`
 }
 
+// GetKey return a key by name
+func (a Application) GetKey(kname string) *ApplicationKey {
+	for i := range a.Keys {
+		if a.Keys[i].Name == kname {
+			return &a.Keys[i]
+		}
+	}
+	return nil
+}
+
 // NewApplication instanciate a new NewApplication
 func NewApplication(name string) *Application {
 	a := &Application{

@@ -73,6 +73,26 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	//Compute keys
 	for kname, kval := range eapp.Keys {
+		var oldKey *sdk.ApplicationKey
+		var keepOldValue bool
+		//If application doesn't exist, skip the regen mecanism to generate key
+		if oldApp == nil {
+			kval.Regen = nil
+			log.Debug("ParseAndImport> Skipping regen feature")
+		} else {
+			//If application exist, check the key exist
+			oldKey = oldApp.GetKey(kname)
+			//If the key doesn't exist, skip the regen mecanism to generate key
+			if oldKey == nil {
+				kval.Regen = nil
+				log.Debug("ParseAndImport> Skipping regen feature")
+			}
+		}
+
+		if kval.Regen != nil && !*kval.Regen {
+			keepOldValue = true
+		}
+
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
 			return nil, sdk.WrapError(err, "ParseAndImport>> Unable to parse key")
@@ -81,6 +101,10 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		k := sdk.ApplicationKey{
 			Key:           *kk,
 			ApplicationID: app.ID,
+		}
+
+		if keepOldValue && oldKey != nil {
+			k.Key = oldKey.Key
 		}
 
 		app.Keys = append(app.Keys, k)
