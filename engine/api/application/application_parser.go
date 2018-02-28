@@ -1,6 +1,7 @@
 package application
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/go-gorp/gorp"
@@ -73,6 +74,10 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	//Compute keys
 	for kname, kval := range eapp.Keys {
+		if !strings.HasPrefix(kname, "app-") {
+			return nil, sdk.WrapError(sdk.ErrInvalidKeyName, "ParseAndImport>> Unable to parse key %s", kname)
+		}
+
 		var oldKey *sdk.ApplicationKey
 		var keepOldValue bool
 		//If application doesn't exist, skip the regen mecanism to generate key

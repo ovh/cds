@@ -109,7 +109,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 
 	k := &sdk.EnvironmentKey{
 		Key: sdk.Key{
-			Name: "mykey",
+			Name: "env-mykey",
 			Type: "pgp",
 		},
 		EnvironmentID: env.ID,
@@ -229,7 +229,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 
 	k := &sdk.EnvironmentKey{
 		Key: sdk.Key{
-			Name: "mykey",
+			Name: "env-mykey",
 			Type: "pgp",
 		},
 		EnvironmentID: env.ID,
@@ -414,9 +414,9 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithEmptyKey(t *testing.T) 
 	body := `version: v1.0
 name: myNewEnv
 keys:
-  myPGPkey:
+  env-myPGPkey:
     type: pgp
-  mySSHKey:
+  env-mySSHKey:
     type: ssh`
 	req.Body = ioutil.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
@@ -443,13 +443,13 @@ keys:
 	var myPGPkey, mySSHKey bool
 	for _, k := range env.Keys {
 		switch k.Name {
-		case "myPGPkey":
+		case "env-myPGPkey":
 			myPGPkey = true
 			assert.NotEmpty(t, k.KeyID)
 			assert.NotEmpty(t, k.Private)
 			assert.NotEmpty(t, k.Public)
 			assert.NotEmpty(t, k.Type)
-		case "mySSHKey":
+		case "env-mySSHKey":
 			mySSHKey = true
 			assert.NotEmpty(t, k.Private)
 			assert.NotEmpty(t, k.Public)

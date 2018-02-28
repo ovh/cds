@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/go-gorp/gorp"
@@ -77,6 +78,10 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	//Compute keys
 	for kname, kval := range eenv.Keys {
+		if !strings.HasPrefix(kname, "env-") {
+			return nil, sdk.WrapError(sdk.ErrInvalidKeyName, "ParseAndImport>> Unable to parse key")
+		}
+
 		var oldKey *sdk.EnvironmentKey
 		var keepOldValue bool
 		//If env doesn't exist, skip the regen mecanism to generate key
