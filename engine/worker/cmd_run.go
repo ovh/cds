@@ -217,7 +217,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups, j.ID)
+				requirementsOK, _ := checkRequirements(w, &j.Job.Action, nil, j.ID)
 				t := ""
 				if j.ID == w.bookedWJobID {
 					t = ", this was my booked job"

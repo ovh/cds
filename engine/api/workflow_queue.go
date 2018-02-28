@@ -67,6 +67,29 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			workerModel = wm.Name
 		}
 
+		pbj, errl := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		if errl != nil {
+			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> Cannot load job nodeJobRunID:%d", id)
+		}
+
+		// a worker can have only one group
+		groups := getUser(ctx).Groups
+		if len(groups) != 1 {
+			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> too many groups detected on worker:%d", len(groups))
+		}
+
+		var isGroupOK bool
+		for _, g := range pbj.ExecGroups {
+			if g.ID == groups[0].ID {
+				isGroupOK = true
+				break
+			}
+		}
+
+		if !isGroupOK {
+			return sdk.WrapError(sdk.ErrUnauthorized, "postTakeWorkflowJobHandler> this worker is not authorized to take this job:%d", id)
+		}
+
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
 
