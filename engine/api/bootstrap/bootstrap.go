@@ -73,7 +73,14 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 		if err != nil {
 			return sdk.WrapError(err, "MigrateActionDEPRECATEDGitClone> Cannot start transaction")
 		}
-
+		var id int64
+		// Lock the job (action)
+		if err := tx.QueryRow("select id from action where id = $1 for update nowait", p.ActionID).Scan(&id); err != nil {
+			log.Info("MigrateActionDEPRECATEDGitClone> unable to take lock on action table: %v", err)
+			tx.Rollback()
+			continue
+		}
+		_ = id // we don't care about it
 		if err := MigrateActionDEPRECATEDGitClonePipeline(tx, store, p); err != nil {
 			log.Error("MigrateActionDEPRECATEDGitClone> %v", err)
 			tx.Rollback()
