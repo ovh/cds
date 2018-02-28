@@ -23,6 +23,7 @@ type statusData struct {
 	repoFullName string
 	hash         string
 	urlPipeline  string
+	context      string
 }
 
 //SetStatus Users with push access can create commit statuses for a given ref:
@@ -57,7 +58,7 @@ func (g *githubClient) SetStatus(event sdk.Event) error {
 		Description: data.desc,
 		TargetURL:   data.urlPipeline,
 		State:       data.status,
-		Context:     data.desc,
+		Context:     data.context,
 	}
 
 	path := fmt.Sprintf("/repos/%s/statuses/%s", data.repoFullName, data.hash)
@@ -184,7 +185,8 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 		data.urlPipeline = ""
 	}
 
-	data.desc = sdk.VCSCommitStatusDescription(eventNR)
+	data.context = sdk.VCSCommitStatusDescription(eventNR)
+	data.desc = eventNR.NodeName + ": " + eventNR.Status
 	return data, nil
 }
 

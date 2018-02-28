@@ -131,6 +131,7 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					SubNumber:      nodeRun.SubNumber,
 					Status:         nodeRun.Status,
 					Start:          nodeRun.Start.Unix(),
+					Done:           nodeRun.Done.Unix(),
 					ProjectKey:     p.Key,
 					Manual:         nodeRun.Manual,
 					HookEvent:      nodeRun.HookEvent,
@@ -139,6 +140,22 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					WorkflowName:   wr.Workflow.Name,
 					Hash:           nodeRun.VCSHash,
 					BranchName:     nodeRun.VCSBranch,
+				}
+
+				node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
+				if node != nil {
+					eventWNR.PipelineName = node.Pipeline.Name
+					eventWNR.NodeName = node.Name
+				}
+				if node.Context != nil {
+					if node.Context.Application != nil {
+						eventWNR.ApplicationName = node.Context.Application.Name
+						eventWNR.RepositoryManagerName = node.Context.Application.VCSServer
+						eventWNR.RepositoryFullName = node.Context.Application.RepositoryFullname
+					}
+					if node.Context.Environment != nil {
+						eventWNR.EnvironmentName = node.Context.Environment.Name
+					}
 				}
 
 				evt := sdk.Event{
