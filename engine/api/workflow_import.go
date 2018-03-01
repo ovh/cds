@@ -155,9 +155,12 @@ func (api *API) postWorkflowImportHandler() Handler {
 }
 
 type workflowPushOption struct {
-	FromRepository  string
-	Branch          string
-	IsDefaultBranch bool
+	VCSServer          string
+	FromRepository     string
+	Branch             string
+	IsDefaultBranch    bool
+	RepositoryName     string
+	RepositoryStrategy sdk.RepositoryStrategy
 }
 
 func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, opts *workflowPushOption) ([]sdk.Message, *sdk.Workflow, error) {

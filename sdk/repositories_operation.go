@@ -5,6 +5,7 @@ import "encoding/base64"
 // Operation is the main business object use in repositories service
 type Operation struct {
 	UUID               string             `json:"uuid"`
+	VCSServer          string             `json:"vcs_server,omitempty"`
 	URL                string             `json:"url"`
 	RepositoryStrategy RepositoryStrategy `json:"strategy,omitempty"`
 	Setup              struct {

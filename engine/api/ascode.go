@@ -20,7 +20,7 @@ const workflowAsCodePattern = ".cds/**/*.yml"
 // postImportAsCodeHandler
 // @title Import workflow as code
 // @description This the entrypoint to perform workflow as code. The first step is to post an operation leading to checkout application and scrapping files
-// @requestBody {"url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}
+// @requestBody {"vcs_Server":"github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}
 // @responseBody {"uuid":"ee3946ac-3a77-46b1-af78-77868fde75ec","url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}
 func (api *API) postImportAsCodeHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -135,9 +135,12 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 
 		tr := tar.NewReader(buf)
 		opt := &workflowPushOption{
-			Branch:          ope.RepositoryStrategy.Branch,
-			FromRepository:  ope.RepositoryInfo.FetchURL,
-			IsDefaultBranch: ope.RepositoryStrategy.Branch == ope.RepositoryInfo.DefaultBranch,
+			VCSServer:          ope.VCSServer,
+			RepositoryName:     ope.RepositoryInfo.Name,
+			RepositoryStrategy: ope.RepositoryStrategy,
+			Branch:             ope.Setup.Checkout.Branch,
+			FromRepository:     ope.RepositoryInfo.FetchURL,
+			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
 		allMsg, wrkflw, err := api.workflowPush(ctx, key, tr, opt)
 		if err != nil {
