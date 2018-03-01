@@ -48,6 +48,12 @@ func (api *API) getPullCacheHandler() Handler {
 		projectKey := vars["key"]
 		tag := vars["tag"]
 
+		// check tag name pattern
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(tag) {
+			return sdk.ErrInvalidName
+		}
+
 		cacheObject := sdk.Cache{
 			Project: projectKey,
 			Name:    "cache.tar",
