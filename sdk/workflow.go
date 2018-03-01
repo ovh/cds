@@ -187,9 +187,9 @@ func (w *Workflow) GetNodeByRef(ref string) *WorkflowNode {
 		j := &w.Joins[ji]
 		for ti := range j.Triggers {
 			t := &j.Triggers[ti]
-			n = (&t.WorkflowDestNode).GetNodeByRef(ref)
-			if n != nil {
-				return n
+			n2 := (&t.WorkflowDestNode).GetNodeByRef(ref)
+			if n2 != nil {
+				return n2
 			}
 		}
 	}
