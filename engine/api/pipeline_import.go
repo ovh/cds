@@ -55,7 +55,7 @@ func (api *API) importPipelineHandler() Handler {
 		}
 
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Cannot parse: %s", errorParse)
+			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
 		}
 
 		//Parse the data once to retrieve the version

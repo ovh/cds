@@ -125,7 +125,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		}
 
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Cannot parsing")
+			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
 		}
 
 		env := payload.Environment()
