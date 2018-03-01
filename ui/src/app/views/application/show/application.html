@@ -20,7 +20,7 @@
                   <i class="alarm icon"></i>{{ 'common_notifications' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
-                    <i class="plug icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
+                    <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'keys'" id="ApplicationKeysTab" (click)="showTab('keys')"><i class="privacy icon"></i>
                     {{ 'common_keys' | translate }}
@@ -29,7 +29,7 @@
                   <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
             </sm-menu>
-        </div> 
+        </div>
 
         <div class="scrollingContent">
             <div class="paddingContent">
