@@ -156,6 +156,16 @@ type WorkflowNodeRunArtifact struct {
 	TempURLSecretKey  string    `json:"-" db:"-"`
 }
 
+// Equal returns true if w WorkflowNodeRunArtifact equals c
+func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
+	return w.WorkflowID == c.WorkflowID &&
+		w.WorkflowNodeRunID == c.WorkflowNodeRunID &&
+		w.DownloadHash == c.DownloadHash &&
+		w.Tag == c.Tag &&
+		w.TempURL == c.TempURL &&
+		w.MD5sum == c.MD5sum
+}
+
 //WorkflowNodeJobRun represents an job to be run
 type WorkflowNodeJobRun struct {
 	ID                int64       `json:"id" db:"id"`
