@@ -88,7 +88,7 @@ func artifactsCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if resp.StatusCode >= 300 {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				sdk.Exit("cannot artefact artifacts HTTP %v\n", err)
+				sdk.Exit("cannot list artifacts HTTP %v\n", err)
 			}
 			cdsError := sdk.DecodeError(body)
 			sdk.Exit("artifacts failed: %v\n", cdsError)
