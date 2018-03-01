@@ -23,9 +23,9 @@ There are two ways to set up CDS:
  
 ## Startup
 
-A docker-compose file is provided for light deployment and dev environments, [follow this guide](https://ovh.github.io/cds/installation/installation.ready-to-run.docker-compose/).
+A docker-compose file is provided for light deployment and dev environments, [follow this guide](https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/).
 
-For larger deployments you have to go deeper and read this [advanced startup page](https://ovh.github.io/cds/installation/installation.advanced/).
+For larger deployments you have to go deeper and read this [advanced startup page](https://ovh.github.io/cds/hosting/).
 
 ## Database management
 
@@ -33,4 +33,4 @@ CDS provides all needed tools scripts to perform Schema creation and auto-migrat
 
 The migration files are available to download on [Github Releases](https://github.com/ovh/cds/releases) and the archive is named `sql.tar.gz`. You have to download it and untar (`tar xvzf sql.tar.gz`).
 
-[Read more](https://ovh.github.io/cds/installation/installation.database/)
+[Read more](https://ovh.github.io/cds/hosting/database/)
