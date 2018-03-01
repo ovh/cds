@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	cdsbot *botClient
-	xmlRegexp := regexp.MustCompile(`<\/[\w\-][^><]*>|<[\w\-][^><]*\/>`)
+	cdsbot    *botClient
+	xmlRegexp = regexp.MustCompile(`<\/[\w\-][^><]*>|<[\w\-][^><]*\/>`)
 )
 
 const resource = "cds"
