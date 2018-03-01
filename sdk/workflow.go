@@ -109,6 +109,23 @@ func (w *Workflow) JoinsID() []int64 {
 	return res
 }
 
+// ResetIDs resets all nodes and joins ids
+func (w *Workflow) ResetIDs() {
+	if w.Root == nil {
+		return
+	}
+	(w.Root).ResetIDs()
+	for i := range w.Joins {
+		j := &w.Joins[i]
+		j.ID = 0
+		j.SourceNodeIDs = nil
+		for tid := range j.Triggers {
+			t := &j.Triggers[tid]
+			(&t.WorkflowDestNode).ResetIDs()
+		}
+	}
+}
+
 //Nodes returns nodes IDs excluding the root ID
 func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	if w.Root == nil {
@@ -158,6 +175,25 @@ func (n *WorkflowNode) AddTrigger(name string, dest WorkflowNode) {
 		destNode := &n.Triggers[i].WorkflowDestNode
 		destNode.AddTrigger(name, dest)
 	}
+}
+
+//GetNodeByRef returns the node given its ref
+func (w *Workflow) GetNodeByRef(ref string) *WorkflowNode {
+	n := w.Root.GetNodeByRef(ref)
+	if n != nil {
+		return n
+	}
+	for ji := range w.Joins {
+		j := &w.Joins[ji]
+		for ti := range j.Triggers {
+			t := &j.Triggers[ti]
+			n = (&t.WorkflowDestNode).GetNodeByRef(ref)
+			if n != nil {
+				return n
+			}
+		}
+	}
+	return nil
 }
 
 //GetNodeByName returns the node given its name
@@ -439,6 +475,24 @@ func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 	return true
 }
 
+//GetNodeByRef returns the node given its ref
+func (n *WorkflowNode) GetNodeByRef(ref string) *WorkflowNode {
+	if n == nil {
+		return nil
+	}
+	if n.Ref == ref {
+		return n
+	}
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		n2 := (&t.WorkflowDestNode).GetNodeByRef(ref)
+		if n2 != nil {
+			return n2
+		}
+	}
+	return nil
+}
+
 //GetNodeByName returns the node given its name
 func (n *WorkflowNode) GetNodeByName(name string) *WorkflowNode {
 	if n == nil {
@@ -448,9 +502,9 @@ func (n *WorkflowNode) GetNodeByName(name string) *WorkflowNode {
 		return n
 	}
 	for _, t := range n.Triggers {
-		n = t.WorkflowDestNode.GetNodeByName(name)
-		if n != nil {
-			return n
+		n2 := t.WorkflowDestNode.GetNodeByName(name)
+		if n2 != nil {
+			return n2
 		}
 	}
 	return nil
@@ -471,6 +525,15 @@ func (n *WorkflowNode) GetNode(id int64) *WorkflowNode {
 		}
 	}
 	return nil
+}
+
+// ResetIDs resets node id for the following node and its triggers
+func (n *WorkflowNode) ResetIDs() {
+	n.ID = 0
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		(&t.WorkflowDestNode).ResetIDs()
+	}
 }
 
 //Nodes returns a slice with all node IDs

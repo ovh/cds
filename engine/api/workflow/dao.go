@@ -367,11 +367,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.WrapError(err, "Insert> Cannot rename node")
 	}
 
-	nodes := w.Nodes(true)
-	var errIN error
-
-	nodes, errIN = insertNode(db, store, w, w.Root, u, nodes, false)
-	if errIN != nil {
+	if errIN := insertNode(db, store, w, w.Root, u, false); errIN != nil {
 		return sdk.WrapError(errIN, "Insert> Unable to insert workflow root node")
 	}
 	w.RootID = w.Root.ID
@@ -382,13 +378,12 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 
 	for i := range w.Joins {
 		j := &w.Joins[i]
-		var err error
-		nodes, err = insertJoin(db, store, w, j, nodes, u)
-		if err != nil {
+		if err := insertJoin(db, store, w, j, u); err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
 
+	nodes := w.Nodes(true)
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
 		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
@@ -515,10 +510,10 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		}
 	}
 
-	nodes := w.Nodes(true)
-	nodes, err := insertNode(db, store, w, w.Root, u, nodes, false)
-	// Insert new Root Node
-	if err != nil {
+	// Delete all node ID
+	w.ResetIDs()
+
+	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Update> unable to update root node on workflow(%d)", w.ID)
 	}
 	w.RootID = w.Root.ID
@@ -526,13 +521,12 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	// Insert new JOIN
 	for i := range w.Joins {
 		j := &w.Joins[i]
-		var errJ error
-		nodes, errJ = insertJoin(db, store, w, j, nodes, u)
-		if errJ != nil {
-			return sdk.WrapError(errJ, "Update> Unable to update workflow(%d) join (%#v)", w.ID, j)
+		if err := insertJoin(db, store, w, j, u); err != nil {
+			return sdk.WrapError(err, "Update> Unable to update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
 
+	nodes := w.Nodes(true)
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
 		if err := insertNotification(db, store, w, n, nodes, u); err != nil {

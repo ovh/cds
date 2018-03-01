@@ -42,12 +42,12 @@
                     <div class="two ui buttons">
                       <button class="ui button"
                         type="button"
-                        [class.active]="!createNewPipeline"
+                        [class.active]="!createNewPipeline" [class.blue]="!createNewPipeline"
                         [class.disabled]="!project.pipeline_names || !project.pipeline_names.length"
                         (click)="createNewPipeline = false">
                         {{'common_select' | translate}}
                       </button>
-                      <button class="ui button" type="button" [class.active]="createNewPipeline" (click)="createNewPipeline = true">
+                      <button class="ui button" type="button" [class.active]="createNewPipeline" [class.blue]="createNewPipeline" (click)="createNewPipeline = true">
                         {{'common_create' | translate}}
                       </button>
                     </div>
@@ -109,12 +109,12 @@
                     <div class="two ui buttons">
                       <button class="ui button"
                         type="button"
-                        [class.active]="!createNewApplication"
+                        [class.active]="!createNewApplication" [class.blue]="!createNewApplication"
                         [class.disabled]="!project.application_names || !project.application_names.length"
                         (click)="createNewApplication = false">
                         {{'common_select' | translate}}
                       </button>
-                      <button class="ui button" type="button" [class.active]="createNewApplication" (click)="createNewApplication = true">
+                      <button class="ui button" type="button" [class.active]="createNewApplication"  [class.blue]="createNewApplication" (click)="createNewApplication = true">
                         {{'common_create' | translate}}
                       </button>
                     </div>
@@ -166,12 +166,12 @@
                     <div class="two ui buttons">
                       <button class="ui button"
                         type="button"
-                        [class.active]="!createNewEnvironment"
+                        [class.active]="!createNewEnvironment" [class.blue]="!createNewEnvironment"
                         [class.disabled]="!project.environments || !project.environments.length"
                         (click)="createNewEnvironment = false">
                         {{'common_select' | translate}}
                       </button>
-                      <button class="ui button" type="button" [class.active]="createNewEnvironment" (click)="createNewEnvironment = true">
+                      <button class="ui button" type="button" [class.active]="createNewEnvironment" [class.blue]="createNewEnvironment" (click)="createNewEnvironment = true">
                         {{'common_create' | translate}}
                       </button>
                     </div>
@@ -189,7 +189,7 @@
                                   placeholder="{{ 'common_environment' | translate }}"
                                   [(model)]="node.context.environment_id"
                                   [options]="{'fullTextSearch': true}"
-                                  id="WorkflowApplicationSelect">
+                                  id="WorkflowEnvironmentSelect">
                                   <option> </option>
                                   <option *ngFor="let env of environmentsName" [value]="env.id">{{ env.name }}</option>
                               </sm-select>

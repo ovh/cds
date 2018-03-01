@@ -457,7 +457,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
         if (event.code === 'Escape' && this.linkWithJoin) {
-            this.toggleLinkJoin(false);
+            this._workflowCore.linkJoinEvent(null);
         }
     }
 
@@ -474,6 +474,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     toggleLinkJoin(b: boolean): void {
+
         this.linkWithJoin = b;
         this.nodesComponent.forEach(c => {
             (<WorkflowNodeComponent>c.instance).disabled = this.linkWithJoin;

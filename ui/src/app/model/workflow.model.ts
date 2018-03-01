@@ -273,17 +273,20 @@ export class Workflow {
         return workflow.joins.find((join) => join.id === id);
     }
 
-    static reinitID(workflow: Workflow) {
-        WorkflowNode.reinitID(workflow.root);
+    static prepareRequestForAPI(workflow: Workflow) {
+        WorkflowNode.prepareRequestForAPI(workflow.root);
         if (workflow.joins) {
             workflow.joins.forEach(j => {
+                j.id = 0;
+                j.source_node_id = [];
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        WorkflowNode.reinitID(t.workflow_dest_node);
+                        WorkflowNode.prepareRequestForAPI(t.workflow_dest_node);
                     });
                 }
             });
         }
+        delete workflow.usage;
     }
 
     static getParentNodeIds(workflow: Workflow, currentNodeID: number): number[] {
@@ -644,11 +647,23 @@ export class WorkflowNode {
         return nodes;
     }
 
-    static reinitID(n: WorkflowNode) {
+    static prepareRequestForAPI(n: WorkflowNode) {
         n.id = 0;
+        if (n.pipeline_id === 0 && n.pipeline) {
+            n.pipeline_id = n.pipeline.id;
+        }
+        delete n.pipeline;
+        if (n.context.application && n.context.application.id > 0) {
+            n.context.application_id = n.context.application.id;
+            delete n.context.application;
+        }
+        if (n.context.environment && n.context.environment.id > 0) {
+            n.context.environment_id = n.context.environment.id;
+            delete n.context.environment;
+        }
         if (n.triggers) {
             n.triggers.forEach(t => {
-                WorkflowNode.reinitID(t.workflow_dest_node);
+                WorkflowNode.prepareRequestForAPI(t.workflow_dest_node);
             });
         }
     }
