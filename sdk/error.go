@@ -433,16 +433,20 @@ func ProcessError(target error, al string) (string, Error) {
 
 	tag, _, _ := matcher.Match(acceptedLanguages...)
 	var msg string
-	switch tag {
-	case language.French:
-		msg, ok = errorsFrench[cdsErr.ID]
-		break
-	case language.AmericanEnglish:
-		msg, ok = errorsAmericanEnglish[cdsErr.ID]
-		break
-	default:
-		msg, ok = errorsAmericanEnglish[cdsErr.ID]
-		break
+	if cdsErr.ID != 0 {
+		switch tag {
+		case language.French:
+			msg, ok = errorsFrench[cdsErr.ID]
+			break
+		case language.AmericanEnglish:
+			msg, ok = errorsAmericanEnglish[cdsErr.ID]
+			break
+		default:
+			msg, ok = errorsAmericanEnglish[cdsErr.ID]
+			break
+		}
+	} else {
+		msg = cdsErr.Message
 	}
 
 	if !ok {

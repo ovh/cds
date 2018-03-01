@@ -1,9 +1,11 @@
 package cdsclient
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -236,4 +238,46 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 	}
 
 	return nodeRun, nil
+}
+
+func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader) error {
+	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
+
+	mods := []RequestModifier{
+		(func(r *http.Request) {
+			r.Header.Set("Content-Type", "application/tar")
+		}),
+	}
+
+	_, _, code, err := c.Request("POST", url, tarContent, mods...)
+	if err != nil {
+		return err
+	}
+
+	if code >= 400 {
+		return fmt.Errorf("HTTP Code %d", code)
+	}
+
+	return nil
+}
+
+func (c *client) WorkflowCachePull(projectKey, tag string) (io.Reader, error) {
+	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
+
+	mods := []RequestModifier{
+		(func(r *http.Request) {
+			r.Header.Set("Content-Type", "application/tar")
+		}),
+	}
+
+	res, _, code, err := c.Request("GET", url, nil, mods...)
+	if err != nil {
+		return nil, err
+	}
+
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Code %d", code)
+	}
+
+	return bytes.NewBuffer(res), nil
 }
