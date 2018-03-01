@@ -199,7 +199,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "postWorkflowJobArtifactWithTempURLCallbackHandler> Unable to find artifact, key:%s", cacheKey)
 		}
 
-		if art != cachedArt {
+		if !art.Equal(cachedArt) {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler> Submitted artifact doesn't match, key:%s art:%v cachedArt:%v", cacheKey, art, cachedArt)
 		}
 
