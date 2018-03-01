@@ -1,1 +1,7 @@
 @import '../../../../../../common';
+
+td {
+  &.middle-aligned {
+    vertical-align: middle !important;
+  }
+}

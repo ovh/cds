@@ -2,6 +2,7 @@ import {Component, EventEmitter, Input, Output, OnInit, ViewChild} from '@angula
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {cloneDeep} from 'lodash';
 import {WorkflowNodeCondition, WorkflowNodeConditions, Workflow} from '../../../../../model/workflow.model';
+import {PipelineStatus} from '../../../../../model/pipeline.model';
 declare var CodeMirror: any;
 
 @Component({
@@ -35,6 +36,7 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
     condition = new WorkflowNodeCondition();
     mode = 'basic';
     codeMirrorConfig: {};
+    statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
 
     constructor() {
         this.codeMirrorConfig = {
@@ -60,6 +62,10 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
         }
 
         this.conditionsChange();
+    }
+
+    isStatusVariable(): boolean {
+        return this.condition && this.condition.variable && this.condition.variable.indexOf('.status') !== -1;
     }
 
     conditionsChange() {

@@ -19,6 +19,7 @@
                         *ngIf="names"
                         class="search" [options]="{'fullTextSearch': true}"
                         [(model)]="condition.variable"
+                        (change)="condition.value = null"
                         [options]="{'fullTextSearch': true}">
                         <option *ngFor="let n of names" [value]="n">{{n}}</option>
                     </sm-select>
@@ -30,7 +31,18 @@
                 </div>
                 <div class="five wide field">
                     <div class="ui input">
-                        <input type="text" [(ngModel)]="condition.value" placeholder="">
+                        <ng-container *ngIf="isStatusVariable()">
+                            <sui-select class="selection"
+                                name="value"
+                                [(ngModel)]="condition.value"
+                                [options]="statuses"
+                                #selectStatus>
+                                <sui-select-option *ngFor="let s of selectStatus.filteredOptions"
+                                                   [value]="s">
+                                </sui-select-option>
+                            </sui-select>
+                        </ng-container>
+                        <input type="text" [(ngModel)]="condition.value" placeholder="" *ngIf="!isStatusVariable()">
                     </div>
                 </div>
                 <div class="two wide field">

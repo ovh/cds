@@ -1,7 +1,14 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger
+    Workflow,
+    WorkflowNode,
+    WorkflowNodeJoin,
+    WorkflowNodeJoinTrigger,
+    WorkflowNodeContext,
+    WorkflowNodeCondition,
+    WorkflowNodeConditions
 } from '../../../../model/workflow.model';
+import {PipelineStatus} from '../../../../model/pipeline.model';
 import {WorkflowNodeAddWizardComponent} from '../../../../shared/workflow/node/wizard/node.wizard.component';
 import {Project} from '../../../../model/project.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
@@ -47,7 +54,21 @@ export class WorkflowTriggerJoinComponent {
         this.loading = true;
         this.nodeWizard.goToNextSection()
           .pipe(finalize(() => this.loading = false))
-          .subscribe(() => this.triggerChange.emit(this.trigger));
+          .subscribe(() => {
+            if (!this.trigger.workflow_dest_node.id) {
+                if (!this.trigger.workflow_dest_node.context) {
+                    this.trigger.workflow_dest_node.context = new WorkflowNodeContext();
+                }
+                this.trigger.workflow_dest_node.context.conditions = new WorkflowNodeConditions();
+                this.trigger.workflow_dest_node.context.conditions.plain = new Array<WorkflowNodeCondition>();
+                let c = new  WorkflowNodeCondition();
+                c.variable = 'cds.status';
+                c.value = PipelineStatus.SUCCESS;
+                c.operator = 'eq';
+                this.trigger.workflow_dest_node.context.conditions.plain.push(c);
+            }
+            this.triggerChange.emit(this.trigger);
+          });
     }
 
     pipelineSectionChanged(pipSection: string) {
