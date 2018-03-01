@@ -1,6 +1,9 @@
 <ng-template let-context let-modal="modal" #deleteModal>
     <div class="header">{{ 'workflow_node_delete_title' | translate: { node: node.name} }}</div>
     <div class="content">
+        <div class="ui orange message" *ngIf="deleteAll === 'all' && isRoot">
+          {{'workflow_deleted_warning' | translate}}
+        </div>
         <div class="ui form">
             <div class="grouped fields">
                 <div class="field">
@@ -14,6 +17,6 @@
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="deleteNode()">{{ 'btn_delete' | translate }}</button>
+        <button class="ui red button" [disabled]="loading" [class.loading]="loading" (click)="deleteNode()">{{ 'btn_delete' | translate }}</button>
     </div>
 </ng-template>

@@ -73,7 +73,7 @@
     </ng-template>
 </ng-container>
 <ng-container *ngIf="node">
-    <app-workflow-node-delete [loading]="loading" [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
+    <app-workflow-node-delete [loading]="loading" [node]="node" [isRoot]="node.id === workflow.root.id" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
 </ng-container>
 <ng-container *ngIf="project && node">
     <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
