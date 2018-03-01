@@ -3,6 +3,7 @@ import {
     Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeTrigger
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
+import {PipelineStatus} from '../../../model/pipeline.model';
 import {WorkflowNodeAddWizardComponent} from '../../../shared/workflow/node/wizard/node.wizard.component';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
@@ -64,7 +65,7 @@ export class WorkflowTriggerComponent {
                 this.trigger.workflow_dest_node.context.conditions.plain = new Array<WorkflowNodeCondition>();
                 let c = new  WorkflowNodeCondition();
                 c.variable = 'cds.status';
-                c.value = 'Success';
+                c.value = PipelineStatus.SUCCESS;
                 c.operator = 'eq';
                 this.trigger.workflow_dest_node.context.conditions.plain.push(c);
             }
