@@ -22,7 +22,7 @@
                 <a sm-item [class.active]="selectedTab === 'usage'" id="WorkflowUsageTabs"
                    [class.disabled]="usageCount === 0"
                    (click)="usageCount !== 0 && showTab('usage')">
-                    <i class="plug icon"></i>
+                    <i class="map signs icon"></i>
                     {{'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs" (click)="showTab('advanced')" *ngIf="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE">
