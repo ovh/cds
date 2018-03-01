@@ -123,8 +123,16 @@ func (s *RedisStore) Delete(key string) {
 		log.Error("redis> cannot get redis client")
 		return
 	}
-	if err := s.Client.Del(key).Err(); err != nil {
-		log.Error("redis> error deleting %s : %s", key, err)
+	var errRedis error
+	for i := 0; i < 3; i++ {
+		errRedis = s.Client.Del(key).Err()
+		if errRedis == nil {
+			break
+		}
+		time.Sleep(retryWaitDuration)
+	}
+	if errRedis != nil {
+		log.Error("redis> error deleting %s : %s", key, errRedis)
 	}
 }
 
@@ -192,9 +200,17 @@ func (s *RedisStore) QueueLen(queueName string) int {
 		return 0
 	}
 
-	res, err := s.Client.LLen(queueName).Result()
-	if err != nil {
-		log.Warning("redis> Cannot read %s :%s", queueName, err)
+	var errRedis error
+	var res int64
+	for i := 0; i < 3; i++ {
+		res, errRedis = s.Client.LLen(queueName).Result()
+		if errRedis == nil {
+			break
+		}
+		time.Sleep(retryWaitDuration)
+	}
+	if errRedis != nil {
+		log.Warning("redis> Cannot read %s :%s", queueName, errRedis)
 	}
 	return int(res)
 }

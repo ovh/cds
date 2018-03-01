@@ -60,7 +60,7 @@ func (api *API) getWorkflowHandler() Handler {
 		w1.Permission = permission.WorkflowPermission(key, w1.Name, getUser(ctx))
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
-		w1.FilterHooksConfig("project", "workflow")
+		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
 		return WriteJSON(w, w1, http.StatusOK)
 	}
@@ -151,7 +151,7 @@ func (api *API) postWorkflowHandler() Handler {
 		}
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
-		wf1.FilterHooksConfig("project", "workflow")
+		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
 		return WriteJSON(w, wf1, http.StatusCreated)
 	}
@@ -233,7 +233,7 @@ func (api *API) putWorkflowHandler() Handler {
 		wf1.Usage = &usage
 
 		//We filter project and workflow configuration key, because they are always set on insertHooks
-		wf1.FilterHooksConfig("project", "workflow")
+		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
 		return WriteJSON(w, wf1, http.StatusOK)
 	}

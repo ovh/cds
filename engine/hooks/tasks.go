@@ -89,8 +89,8 @@ func (s *Service) synchronizeTasks() error {
 	}
 
 	for _, h := range hooks {
-		confProj := h.Config["project"]
-		confWorkflow := h.Config["workflow"]
+		confProj := h.Config[sdk.HookConfigProject]
+		confWorkflow := h.Config[sdk.HookConfigWorkflow]
 		if confProj.Value == "" || confWorkflow.Value == "" {
 			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)
 			continue
@@ -211,10 +211,10 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	}
 
 	//Load the location for the timezone
-	confTimezone := t.Config["timezone"]
+	confTimezone := t.Config[sdk.SchedulerModelTimezone]
 	loc, err := time.LoadLocation(confTimezone.Value)
 	if err != nil {
-		return sdk.WrapError(err, "startTask> unable to parse timezone: %s", t.Config["timezone"])
+		return sdk.WrapError(err, "startTask> unable to parse timezone: %s", t.Config[sdk.SchedulerModelTimezone])
 	}
 
 	var exec *sdk.TaskExecution
@@ -222,10 +222,10 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	switch t.Type {
 	case TypeScheduler:
 		//Parse the cron expr
-		confCron := t.Config["cron"]
+		confCron := t.Config[sdk.SchedulerModelCron]
 		cronExpr, err := cronexpr.Parse(confCron.Value)
 		if err != nil {
-			return sdk.WrapError(err, "startTask> unable to parse cron expression: %s", t.Config["cron"])
+			return sdk.WrapError(err, "startTask> unable to parse cron expression: %s", t.Config[sdk.SchedulerModelCron])
 		}
 
 		//Compute a new date
@@ -310,8 +310,8 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	}
 
 	// Call CDS API
-	confProj := t.Config["project"]
-	confWorkflow := t.Config["workflow"]
+	confProj := t.Config[sdk.HookConfigProject]
+	confWorkflow := t.Config[sdk.HookConfigWorkflow]
 	var globalErr error
 	for _, hEvent := range hs {
 		run, err := s.cds.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, hEvent)
@@ -321,7 +321,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		} else {
 			//Save the run number
 			e.WorkflowRun = run.Number
-			log.Debug("Hooks> workflow %s/%s#%d has been triggered", t.Config["project"], t.Config["workflow"], run.Number)
+			log.Debug("Hooks> workflow %s/%s#%d has been triggered", t.Config[sdk.HookConfigProject], t.Config[sdk.HookConfigWorkflow], run.Number)
 		}
 	}
 
@@ -347,13 +347,37 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 			maxTs = tExec.Timestamp
 		}
 	}
-	workflowID, errP := strconv.ParseInt(taskExec.Config["workflow_id"].Value, 10, 64)
+	workflowID, errP := strconv.ParseInt(taskExec.Config[sdk.HookConfigWorkflowID].Value, 10, 64)
 	if errP != nil {
-		return nil, sdk.WrapError(errP, "Hooks> doPollerTaskExecution> Cannot convert workflow id %s", taskExec.Config["workflow_id"].Value)
+		return nil, sdk.WrapError(errP, "Hooks> doPollerTaskExecution> Cannot convert workflow id %s", taskExec.Config[sdk.HookConfigWorkflowID].Value)
 	}
 	events, interval, err := s.cds.PollVCSEvents(taskExec.UUID, workflowID, taskExec.Config["vcsServer"].Value, maxTs)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Hooks> doPollerTaskExecution> Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config["workflow"].Value, taskExec.Config["vcsServer"].Value)
+		return nil, sdk.WrapError(err, "Hooks> doPollerTaskExecution> Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config[sdk.HookConfigWorkflow].Value, taskExec.Config["vcsServer"].Value)
+	}
+
+	//Prepare the payload
+	//Anything can be pushed in the configuration, just avoid sending
+	payloadValues := map[string]string{}
+	if payload, ok := task.Config["payload"]; ok && payload.Value != "{}" {
+		var payloadInt interface{}
+		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
+			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+			e.ExtraFields.DetailedMap = false
+			e.ExtraFields.DetailedStruct = false
+			e.ExtraFields.Len = false
+			e.ExtraFields.Type = false
+
+			m1, errm1 := e.ToStringMap(payloadInt)
+			if errm1 != nil {
+				log.Error("Hooks> doPollerTaskExecution> Cannot convert payload to map %s", errm1)
+			} else {
+				payloadValues = m1
+			}
+		} else {
+			log.Error("Hooks> doPollerTaskExecution> Cannot unmarshall payload %s", err)
+		}
 	}
 
 	var hookEvents []sdk.WorkflowNodeRunHookEvent
@@ -364,7 +388,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 			payload := fillPayload(pushEvent)
 			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
 				WorkflowNodeHookUUID: task.UUID,
-				Payload:              payload,
+				Payload:              sdk.ParametersMapMerge(payloadValues, payload),
 			}
 			i++
 		}
@@ -373,7 +397,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 			payload := fillPayload(pullRequestEvent.Head)
 			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
 				WorkflowNodeHookUUID: task.UUID,
-				Payload:              payload,
+				Payload:              sdk.ParametersMapMerge(payloadValues, payload),
 			}
 			i++
 		}
@@ -400,7 +424,7 @@ func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowN
 	//Prepare the payload
 	//Anything can be pushed in the configuration, just avoid sending
 	payloadValues := map[string]string{}
-	if payload, ok := t.Config["payload"]; ok && payload.Value != "{}" {
+	if payload, ok := t.Config[sdk.SchedulerModelPayload]; ok && payload.Value != "{}" {
 		var payloadInt interface{}
 		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
@@ -423,7 +447,7 @@ func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowN
 	}
 	for k, v := range t.Config {
 		switch k {
-		case "project", "workflow", "cron", "timezone", "payload":
+		case sdk.HookConfigProject, sdk.HookConfigWorkflow, sdk.SchedulerModelCron, sdk.SchedulerModelTimezone, sdk.SchedulerModelPayload:
 		default:
 			payloadValues[k] = v.Value
 		}
@@ -571,7 +595,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 	}
 
 	// For POST, PUT, and PATCH requests, it also parses the request body as a form
-	confMethod := t.Config["method"]
+	confMethod := t.Config[sdk.WebHookModelConfigMethod]
 	if confMethod.Value == "POST" || confMethod.Value == "PUT" || confMethod.Value == "PATCH" {
 		//Depending on the content type, we should not read the body the same way
 		header := http.Header(t.WebHook.RequestHeader)
@@ -628,7 +652,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 	//Prepare the payload
 	for k, v := range t.Config {
 		switch k {
-		case "project", "workflow", "method":
+		case sdk.HookConfigProject, sdk.HookConfigWorkflow, sdk.WebHookModelConfigMethod:
 		default:
 			h.Payload[k] = v.Value
 		}

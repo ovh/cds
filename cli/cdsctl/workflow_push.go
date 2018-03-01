@@ -34,7 +34,7 @@ For example if you have a workflow with pipelines build and tests you can push y
 		{
 			Kind:  reflect.Bool,
 			Name:  "skip-update-files",
-			Usage: "Usefull if you don't want to update yaml files after pushing the workflow.",
+			Usage: "Useful if you don't want to update yaml files after pushing the workflow.",
 		},
 	},
 }

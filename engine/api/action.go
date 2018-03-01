@@ -2,14 +2,18 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -194,6 +198,27 @@ func (api *API) getActionHandler() Handler {
 	}
 }
 
+func (api *API) getActionExportHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["permActionName"]
+		format := FormString(r, "format")
+		if format == "" {
+			format = "yaml"
+		}
+		f, err := exportentities.GetFormat(format)
+		if err != nil {
+			return sdk.WrapError(err, "getActionExportHandler> Format invalid")
+		}
+
+		if _, err := action.Export(api.mustDB(), name, f, getUser(ctx), w); err != nil {
+			return sdk.WrapError(err, "getActionExportHandler>")
+		}
+		w.Header().Add("Content-Type", exportentities.GetContentType(f))
+		return nil
+	}
+}
+
 // importActionHandler insert OR update an existing action.
 func (api *API) importActionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -223,9 +248,36 @@ func (api *API) importActionHandler() Handler {
 			if errnew != nil {
 				return errnew
 			}
-		} else { // a jsonified action is posted in body
-			if err := UnmarshalBody(r, &a); err != nil {
-				return err
+		} else { // a encoded action is posted in body
+			data, errRead := ioutil.ReadAll(r.Body)
+			if errRead != nil {
+				return errRead
+			}
+			defer r.Body.Close()
+
+			contentType := r.Header.Get("Content-Type")
+			if contentType == "" {
+				contentType = http.DetectContentType(data)
+			}
+
+			var ea = new(exportentities.Action)
+			var errapp error
+			switch contentType {
+			case "application/json":
+				errapp = json.Unmarshal(data, ea)
+			case "application/x-yaml", "text/x-yam":
+				errapp = yaml.Unmarshal(data, ea)
+			default:
+				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
+			}
+
+			if errapp != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, errapp)
+			}
+
+			a, errapp = ea.Action()
+			if errapp != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, errapp)
 			}
 		}
 

@@ -13,6 +13,20 @@ const (
 	KafkaHookModelName         = "Kafka hook"
 )
 
+const (
+	HookConfigProject            = "project"
+	HookConfigWorkflow           = "workflow"
+	HookConfigWorkflowID         = "workflow_id"
+	WebHookModelConfigMethod     = "method"
+	RepositoryWebHookModelMethod = "method"
+	SchedulerModelCron           = "cron"
+	SchedulerModelTimezone       = "timezone"
+	SchedulerModelPayload        = "payload"
+	KafkaHookModelPlatform       = "platform"
+	KafkaHookModelConsumerGroup  = "consumer group"
+	KafkaHookModelTopic          = "topic"
+)
+
 var (
 	KafkaHookModel = WorkflowHookModel{
 		Author:     "CDS",
@@ -21,17 +35,17 @@ var (
 		Name:       KafkaHookModelName,
 		Icon:       "Linkify",
 		DefaultConfig: WorkflowNodeHookConfig{
-			"platform": {
+			KafkaHookModelPlatform: {
 				Value:        KafkaPlatformModel,
 				Configurable: true,
 				Type:         HookConfigTypePlatform,
 			},
-			"consumer group": {
+			KafkaHookModelConsumerGroup: {
 				Value:        "",
 				Configurable: true,
 				Type:         HookConfigTypeString,
 			},
-			"topic": {
+			KafkaHookModelTopic: {
 				Value:        "",
 				Configurable: true,
 				Type:         HookConfigTypeString,
@@ -46,7 +60,7 @@ var (
 		Name:       WebHookModelName,
 		Icon:       "Linkify",
 		DefaultConfig: WorkflowNodeHookConfig{
-			"method": {
+			WebHookModelConfigMethod: {
 				Value:        "POST",
 				Configurable: true,
 				Type:         HookConfigTypeString,
@@ -61,7 +75,7 @@ var (
 		Name:       RepositoryWebHookModelName,
 		Icon:       "Linkify",
 		DefaultConfig: WorkflowNodeHookConfig{
-			"method": {
+			RepositoryWebHookModelMethod: {
 				Value:        "POST",
 				Configurable: false,
 				Type:         HookConfigTypeString,
@@ -75,6 +89,12 @@ var (
 		Identifier: "github.com/ovh/cds/hook/builtin/poller",
 		Name:       GitPollerModelName,
 		Icon:       "git square",
+		DefaultConfig: WorkflowNodeHookConfig{
+			"payload": {
+				Value:        "{}",
+				Configurable: true,
+			},
+		},
 	}
 
 	SchedulerModel = WorkflowHookModel{
@@ -84,17 +104,17 @@ var (
 		Name:       SchedulerModelName,
 		Icon:       "fa-clock-o",
 		DefaultConfig: WorkflowNodeHookConfig{
-			"cron": {
+			SchedulerModelCron: {
 				Value:        "0 * * * *",
 				Configurable: true,
 				Type:         HookConfigTypeString,
 			},
-			"timezone": {
+			SchedulerModelTimezone: {
 				Value:        "UTC",
 				Configurable: true,
 				Type:         HookConfigTypeString,
 			},
-			"payload": {
+			SchedulerModelPayload: {
 				Value:        "{}",
 				Configurable: true,
 				Type:         HookConfigTypeString,

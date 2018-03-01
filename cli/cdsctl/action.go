@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
+	"reflect"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -23,12 +26,17 @@ var (
 			cli.NewGetCommand(actionShowCmd, actionShowRun, nil),
 			cli.NewCommand(actionDeleteCmd, actionDeleteRun, nil),
 			cli.NewCommand(actionDocCmd, actionDocRun, nil),
+			cli.NewCommand(actionImportCmd, actionImportRun, nil),
+			cli.NewCommand(actionExportCmd, actionExportRun, nil),
 		})
 )
 
 var actionListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS actions",
+	Long: `Useful list CDS actions
+
+cdsctl action list`,
 }
 
 func actionListRun(v cli.Values) (cli.ListResult, error) {
@@ -45,6 +53,9 @@ var actionShowCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "action-name"},
 	},
+	Long: `Useful to show a CDS action
+
+cdsctl action show myAction`,
 }
 
 func actionShowRun(v cli.Values) (interface{}, error) {
@@ -61,6 +72,9 @@ var actionDeleteCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "action-name"},
 	},
+	Long: `Useful to delete a CDS action
+
+cdsctl action delete myAction`,
 }
 
 func actionDeleteRun(v cli.Values) error {
@@ -87,5 +101,62 @@ func actionDocRun(v cli.Values) error {
 	}
 
 	fmt.Println(sdk.ActionInfoMarkdown(action, path.Base(v["path"])))
+	return nil
+}
+
+var actionImportCmd = cli.Command{
+	Name:  "import",
+	Short: "Import a CDS action",
+	Args: []cli.Arg{
+		{Name: "path"},
+	},
+	Long: `Useful to import a CDS action from a file
+
+cdsctl action import myAction.yml`,
+}
+
+func actionImportRun(v cli.Values) error {
+	path := v.GetString("path")
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var format = "yaml"
+	if strings.HasSuffix(path, ".json") {
+		format = "json"
+	}
+
+	fmt.Printf("%s successfully imported\n", path)
+
+	return client.ActionImport(f, format)
+}
+
+var actionExportCmd = cli.Command{
+	Name:  "export",
+	Short: "Export a CDS action",
+	Long: `Useful to export a CDS action
+
+cdsctl action export myAction`,
+	Args: []cli.Arg{
+		{Name: "action-name"},
+	},
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.String,
+			Name:    "format",
+			Usage:   "Specify export format (json or yaml)",
+			Default: "yaml",
+		},
+	},
+}
+
+func actionExportRun(v cli.Values) error {
+	b, err := client.ActionExport(v.GetString("action-name"), v.GetString("format"))
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(b))
 	return nil
 }

@@ -193,7 +193,11 @@ func (h *HatcherySwarm) killAndRemoveContainer(ID string) {
 func (h *HatcherySwarm) killAndRemove(ID string) {
 	container, err := h.dockerClient.InspectContainer(ID)
 	if err != nil {
-		log.Info("killAndRemove> cannot InspectContainer: %v", err)
+		if strings.Contains(err.Error(), "No such container") {
+			log.Debug("killAndRemove> cannot InspectContainer: %v", err)
+		} else {
+			log.Info("killAndRemove> cannot InspectContainer: %v", err)
+		}
 		h.killAndRemoveContainer(ID)
 		return
 	}

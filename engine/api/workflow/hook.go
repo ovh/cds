@@ -39,9 +39,9 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		for i := range hookToUpdate {
 			h := hookToUpdate[i]
 			if oldW != nil && wf.Name != oldW.Name {
-				configValue := h.Config["workflow"]
+				configValue := h.Config[sdk.HookConfigWorkflow]
 				configValue.Value = wf.Name
-				h.Config["workflow"] = configValue
+				h.Config[sdk.HookConfigWorkflow] = configValue
 				hookToUpdate[i] = h
 			}
 		}

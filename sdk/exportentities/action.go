@@ -9,6 +9,38 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// Action represents exported sdk.Action
+type Action struct {
+	Version      string                    `json:"version,omitempty" yaml:"version,omitempty"`
+	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
+	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Requirements []Requirement             `json:"requirements,omitempty" yaml:"requirements,omitempty"`
+	Steps        []Step                    `json:"steps,omitempty" yaml:"steps,omitempty"`
+}
+
+type ActionVersion string
+
+const ActionVersion1 = "v1.0"
+
+// NewAction returns a ready to export action
+func NewAction(act sdk.Action) (a Action) {
+	a.Name = act.Name
+	a.Version = ActionVersion1
+	a.Description = act.Description
+	a.Parameters = make(map[string]ParameterValue, len(act.Parameters))
+	for _, v := range act.Parameters {
+		a.Parameters[v.Name] = ParameterValue{
+			Type:         string(v.Type),
+			DefaultValue: v.Value,
+			Description:  v.Description,
+		}
+	}
+	a.Steps = newSteps(act)
+	a.Requirements = newRequirements(act.Requirements)
+	return a
+}
+
 func newSteps(a sdk.Action) []Step {
 	res := []Step{}
 	for i := range a.Actions {
@@ -403,4 +435,40 @@ func (s Step) IsFlagged(flag string) (bool, error) {
 		return false, fmt.Errorf("Malformatted Step : %s attribute must be true|false", flag)
 	}
 	return bS, nil
+}
+
+// Action returns an sdk.Action
+func (act *Action) Action() (*sdk.Action, error) {
+	a := new(sdk.Action)
+	a.Name = act.Name
+	a.Type = sdk.DefaultAction
+	a.Description = act.Description
+
+	//Compute parameters
+	a.Parameters = make([]sdk.Parameter, len(act.Parameters))
+	var i int
+	for p, v := range act.Parameters {
+		param := sdk.Parameter{
+			Name:        p,
+			Type:        v.Type,
+			Value:       v.DefaultValue,
+			Description: v.Description,
+		}
+		if param.Type == "" {
+			param.Type = sdk.StringParameter
+		}
+		a.Parameters[i] = param
+		i++
+	}
+
+	a.Requirements = computeJobRequirements(act.Requirements)
+
+	//Compute steps for the jobs
+	children, err := computeSteps(act.Steps)
+	if err != nil {
+		return nil, err
+	}
+
+	a.Actions = children
+	return a, nil
 }
