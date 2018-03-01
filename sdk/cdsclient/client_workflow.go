@@ -251,7 +251,7 @@ func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader)
 
 	_, _, code, err := c.Request("POST", url, tarContent, mods...)
 	if err != nil {
-		return fmt.Errorf("Request error : %s", err)
+		return err
 	}
 
 	if code >= 400 {
@@ -272,7 +272,7 @@ func (c *client) WorkflowCachePull(projectKey, tag string) (io.Reader, error) {
 
 	res, _, code, err := c.Request("GET", url, nil, mods...)
 	if err != nil {
-		return nil, fmt.Errorf("Request error : %s", err)
+		return nil, err
 	}
 
 	if code >= 400 {
