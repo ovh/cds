@@ -33,6 +33,16 @@ type EnvironmentVariableAudit struct {
 	Author         string    `json:"author" yaml:"-" db:"author"`
 }
 
+// GetKey return a key by name
+func (e Environment) GetKey(kname string) *EnvironmentKey {
+	for i := range e.Keys {
+		if e.Keys[i].Name == kname {
+			return &e.Keys[i]
+		}
+	}
+	return nil
+}
+
 // NewEnvironment instanciate a new Environment
 func NewEnvironment(name string) *Environment {
 	e := &Environment{

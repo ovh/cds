@@ -7,12 +7,13 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type DecryptFunc func(gorp.SqlExecutor, int64, string) (string, error)
 
 // Parse and decrypts an exported key
-func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.VariableValue, decryptFunc DecryptFunc) (*sdk.Key, error) {
+func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.KeyValue, decryptFunc DecryptFunc) (*sdk.Key, error) {
 	k := new(sdk.Key)
 	k.Type = kval.Type
 	k.Name = kname
@@ -58,25 +59,27 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 		default:
 			return nil, sdk.ErrUnknownKeyType
 		}
-	} else {
+	} else if kval.Regen == nil || *kval.Regen == true {
 		switch k.Type {
 		//Compute PGP Keys
 		case sdk.KeyTypePGP:
-			kTemp, err := GeneratePGPKeyPair(kname)
+			ktemp, err := GeneratePGPKeyPair(kname)
 			if err != nil {
 				return nil, sdk.WrapError(err, "keys.Parse> Unable to generate PGP key pair")
 			}
-			k = &kTemp
+			k = &ktemp
 		//Compute SSH Keys
 		case sdk.KeyTypeSSH:
-			kTemp, err := GenerateSSHKey(kname)
+			ktemp, err := GenerateSSHKey(kname)
 			if err != nil {
 				return nil, sdk.WrapError(err, "keys.Parse> Unable to generate SSH key pair")
 			}
-			k = &kTemp
+			k = &ktemp
 		default:
 			return nil, sdk.ErrUnknownKeyType
 		}
+	} else {
+		log.Debug("keys.Parse> Skip key regeneration")
 	}
 	return k, nil
 }

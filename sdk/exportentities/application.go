@@ -12,7 +12,7 @@ type Application struct {
 	RepositoryName    string                   `json:"repo,omitempty" yaml:"repo,omitempty"`
 	Permissions       map[string]int           `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 	Variables         map[string]VariableValue `json:"variables,omitempty" yaml:"variables,omitempty"`
-	Keys              map[string]VariableValue `json:"keys,omitempty" yaml:"keys,omitempty"`
+	Keys              map[string]KeyValue      `json:"keys,omitempty" yaml:"keys,omitempty"`
 	VCSConnectionType string                   `json:"vcs_connection_type,omitempty" yaml:"vcs_connection_type,omitempty"`
 	VCSSSHKey         string                   `json:"vcs_ssh_key,omitempty" yaml:"vcs_ssh_key,omitempty"`
 	VCSUser           string                   `json:"vcs_user,omitempty" yaml:"vcs_user,omitempty"`
@@ -62,9 +62,9 @@ func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedK
 		}
 	}
 
-	a.Keys = make(map[string]VariableValue, len(keys))
+	a.Keys = make(map[string]KeyValue, len(keys))
 	for _, e := range keys {
-		a.Keys[e.Name] = VariableValue{
+		a.Keys[e.Name] = KeyValue{
 			Type:  e.Type,
 			Value: e.Content,
 		}

@@ -319,11 +319,11 @@ func workflowInitRun(c cli.Values) error {
 			VCSConnectionType: "ssh",
 			VCSSSHKey:         "app-ssh-" + repoManagerName,
 			VCSPGPKey:         "app-pgp-" + repoManagerName,
-			Keys: map[string]exportentities.VariableValue{
-				"app-ssh-" + repoManagerName: exportentities.VariableValue{
+			Keys: map[string]exportentities.KeyValue{
+				"app-ssh-" + repoManagerName: exportentities.KeyValue{
 					Type: sdk.KeyTypeSSH,
 				},
-				"app-pgp-" + repoManagerName: exportentities.VariableValue{
+				"app-pgp-" + repoManagerName: exportentities.KeyValue{
 					Type: sdk.KeyTypePGP,
 				},
 			},

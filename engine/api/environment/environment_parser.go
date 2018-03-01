@@ -81,6 +81,25 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		if !strings.HasPrefix(kname, "env-") {
 			return nil, sdk.WrapError(sdk.ErrInvalidKeyName, "ParseAndImport>> Unable to parse key")
 		}
+
+		var oldKey *sdk.EnvironmentKey
+		var keepOldValue bool
+		//If env doesn't exist, skip the regen mecanism to generate key
+		if oldEnv == nil {
+			kval.Regen = nil
+		} else {
+			//If env exist, check the key exist
+			oldKey = oldEnv.GetKey(kname)
+			//If the key doesn't exist, skip the regen mecanism to generate key
+			if oldKey == nil {
+				kval.Regen = nil
+			}
+		}
+
+		if kval.Regen != nil && !*kval.Regen {
+			keepOldValue = true
+		}
+
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
 			return nil, sdk.WrapError(err, "ParseAndImport>> Unable to parse key")
@@ -90,6 +109,11 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 			Key:           *kk,
 			EnvironmentID: env.ID,
 		}
+
+		if keepOldValue && oldKey != nil {
+			k.Key = oldKey.Key
+		}
+
 		env.Keys = append(env.Keys, k)
 	}
 

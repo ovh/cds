@@ -8,7 +8,7 @@ import (
 type Environment struct {
 	Name        string                   `json:"name" yaml:"name"`
 	Values      map[string]VariableValue `json:"values,omitempty" yaml:"values,omitempty"`
-	Keys        map[string]VariableValue `json:"keys,omitempty" yaml:"keys,omitempty"`
+	Keys        map[string]KeyValue      `json:"keys,omitempty" yaml:"keys,omitempty"`
 	Permissions map[string]int           `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
@@ -29,9 +29,9 @@ func NewEnvironment(e sdk.Environment, withPermissions bool, keys []EncryptedKey
 			env.Permissions[p.Group.Name] = p.Permission
 		}
 	}
-	env.Keys = make(map[string]VariableValue, len(keys))
+	env.Keys = make(map[string]KeyValue, len(keys))
 	for _, k := range keys {
-		env.Keys[k.Name] = VariableValue{
+		env.Keys[k.Name] = KeyValue{
 			Type:  k.Type,
 			Value: k.Content,
 		}
