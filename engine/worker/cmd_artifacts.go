@@ -93,6 +93,13 @@ func artifactsCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			cdsError := sdk.DecodeError(body)
 			sdk.Exit("artifacts failed: %v\n", cdsError)
 		}
+
+		// step: read the response body
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			sdk.Exit("artifacts failed ReadAll: %v\n", err)
+		}
+		fmt.Println(string(respBody))
 	}
 }
 

@@ -144,12 +144,12 @@ type WorkflowNodeRunArtifact struct {
 	WorkflowID        int64     `json:"workflow_id" db:"workflow_run_id"`
 	WorkflowNodeRunID int64     `json:"workflow_node_run_id" db:"workflow_node_run_id"`
 	ID                int64     `json:"id" db:"id"`
-	Name              string    `json:"name" db:"name"`
-	Tag               string    `json:"tag" db:"tag"`
+	Name              string    `json:"name" db:"name" cli:"name"`
+	Tag               string    `json:"tag" db:"tag" cli:"tag"`
 	DownloadHash      string    `json:"download_hash" db:"download_hash"`
 	Size              int64     `json:"size,omitempty" db:"size"`
 	Perm              uint32    `json:"perm,omitempty" db:"perm"`
-	MD5sum            string    `json:"md5sum,omitempty" db:"md5sum"`
+	MD5sum            string    `json:"md5sum,omitempty" db:"md5sum" cli:"md4sum"`
 	ObjectPath        string    `json:"object_path,omitempty" db:"object_path"`
 	Created           time.Time `json:"created,omitempty" db:"created"`
 	TempURL           string    `json:"temp_url,omitempty" db:"-"`
