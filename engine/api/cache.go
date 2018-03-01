@@ -19,15 +19,15 @@ func (api *API) postPushCacheHandler() Handler {
 		if r.Body == nil {
 			return sdk.ErrWrongRequest
 		}
+		defer r.Body.Close()
 
 		cacheObject := sdk.Cache{
-			Name:    "cache.tar.gz",
+			Name:    "cache.tar",
 			Project: projectKey,
 			Tag:     tag,
 		}
 
 		_, errO := objectstore.StoreArtifact(&cacheObject, r.Body)
-		defer r.Body.Close()
 		if errO != nil {
 			return sdk.WrapError(errO, "SaveFile>Cannot store cache")
 		}
@@ -44,17 +44,17 @@ func (api *API) getPullCacheHandler() Handler {
 
 		cacheObject := sdk.Cache{
 			Project: projectKey,
-			Name:    "cache.tar.gz",
+			Name:    "cache.tar",
 			Tag:     tag,
 		}
 
 		fURL, err := objectstore.FetchTempURL(&cacheObject)
 		if err != nil {
-			return sdk.WrapError(err, "pullCacheHandler> Cannot fetch cache object")
+			return sdk.WrapError(err, "getPullCacheHandler> Cannot fetch cache object")
 		}
 
-		w.Header().Add("Content-Type", "application/octet-stream")
-		w.Header().Add("Content-Disposition", "attachment; filename=\"cache.tar.gz\"")
+		w.Header().Add("Content-Type", "application/x-tar")
+		w.Header().Add("Content-Disposition", "attachment; filename=\"cache.tar\"")
 		http.Redirect(w, r, fURL, http.StatusMovedPermanently)
 		return nil
 	}

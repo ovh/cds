@@ -23,11 +23,11 @@ func cmdCache(w *currentWorker) *cobra.Command {
 	cmdCacheRoot := &cobra.Command{
 		Use: "cache",
 		Long: `
-  Inside a project, you can create or retrieve a cache from your worker with a tag (useful for vendors for example)
+Inside a project, you can create or retrieve a cache from your worker with a tag (useful for vendors for example)
 
-	You can access to this cache from any workflow inside a project. You just have to choose a tag that fits with your needs.
+You can access to this cache from any workflow inside a project. You just have to choose a tag that fits with your needs.
 
-	For example if you need a different cache for each workflow so choose a tag scoped with your workflow name and workflow version (example of tag value: {{.cds.workflow}}-{{.cds.version}})
+For example if you need a different cache for each workflow so choose a tag scoped with your workflow name and workflow version (example of tag value: {{.cds.workflow}}-{{.cds.version}})
     `,
 		Short: "Inside a project, you can create or retrieve a cache from your worker with a tag",
 	}
@@ -66,9 +66,24 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("worker cache push > Wrong usage: Example : worker cache push myTagValue filea fileb filec")
 		}
 
+		// check tag name pattern
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(args[0]) {
+			sdk.Exit("worker cache push > Wrong tag pattern, must satisfy %s\n", sdk.NamePattern)
+		}
+
+		files := make([]string, len(args)-1)
+		for i, arg := range args[1:] {
+			absPath, err := filepath.Abs(arg)
+			if err != nil {
+				sdk.Exit("worker cache push > cannot have absolute path for (%s)\n", absPath)
+			}
+			files[i] = absPath
+		}
+
 		c := sdk.Cache{
 			Tag:   args[0],
-			Files: args[1:],
+			Files: files,
 		}
 
 		data, errMarshal := json.Marshal(c)
@@ -103,32 +118,39 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		errRead = sdk.WrapError(errRead, "Cannot read body")
+		writeError(w, r, errRead)
 		return
 	}
 
 	var c sdk.Cache
 	if err := json.Unmarshal(data, &c); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		err = sdk.WrapError(err, "Cannot unmarshall body")
+		writeError(w, r, err)
 		return
 	}
 	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
 
 	res, errTar := sdk.CreateTarFromPaths(c.Files)
 	if errTar != nil {
-		sendLog("worker cache push > Cannot tar : " + errTar.Error())
-		w.WriteHeader(http.StatusBadRequest)
+		errTar = sdk.WrapError(errTar, "worker cache push > Cannot tar")
+		sendLog(errTar.Error())
+		writeError(w, r, errTar)
 		return
 	}
 	if wk.currentJob.wJob == nil {
-		sendLog("worker cache push > Cannot find workflow job info")
-		w.WriteHeader(http.StatusBadRequest)
+		errW := fmt.Errorf("worker cache push > Cannot find workflow job info")
+		sendLog(errW.Error())
+		writeError(w, r, errW)
 		return
 	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
 	if err := wk.client.WorkflowCachePush(projectKey, vars["tag"], res); err != nil {
-		sendLog(fmt.Sprintf("worker cache push > Cannot push cache: %s", err))
+		err = sdk.WrapError(err, "worker cache push > Cannot push cache")
+		sendLog(err.Error())
+		writeError(w, r, err)
+		return
 	}
 }
 
@@ -189,15 +211,19 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
 
 	if wk.currentJob.wJob == nil {
-		sendLog("worker cache pull > Cannot find workflow job info")
-		w.WriteHeader(http.StatusBadRequest)
+		errW := fmt.Errorf("worker cache pull > Cannot find workflow job info")
+		sendLog(errW.Error())
+		writeError(w, r, errW)
 		return
 	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
 	bts, err := wk.client.WorkflowCachePull(projectKey, vars["tag"])
 	if err != nil {
-		sendLog(fmt.Sprintf("worker cache pull > Cannot push cache: %s", err))
+		err = sdk.WrapError(err, "worker cache pull > Cannot push cache")
+		sendLog(err.Error())
+		writeError(w, r, err)
+		return
 	}
 
 	tr := tar.NewReader(bts)
@@ -207,8 +233,9 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 			break
 		}
 		if err != nil {
-			sendLog(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("worker cache pull > Unable to read tar file")).Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("worker cache pull > Unable to read tar file"))
+			sendLog(err.Error())
+			writeError(w, r, err)
 			return
 		}
 
@@ -218,33 +245,37 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 
 		currentDir, err := os.Getwd()
 		if err != nil {
-			sendLog("worker cache pull > Unable to get current directory")
-			w.WriteHeader(http.StatusInternalServerError)
+			err = sdk.WrapError(err, "worker cache pull > Unable to get current directory")
+			sendLog(err.Error())
+			writeError(w, r, err)
 			return
 		}
 		// the target location where the dir/file should be created
 		target := filepath.Join(currentDir, hdr.Name)
 
-		if _, err := os.Stat(filepath.Dir(target)); err != nil {
-			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
-				sendLog(sdk.WrapError(err, "worker cache pull > Cannot create directory %s ", target).Error())
-				w.WriteHeader(http.StatusInternalServerError)
+		if _, errS := os.Stat(filepath.Dir(target)); errS != nil {
+			if errM := os.MkdirAll(filepath.Dir(target), 0755); errM != nil {
+				errM = sdk.WrapError(errM, "worker cache pull > Cannot create directory %s ", target)
+				sendLog(errM.Error())
+				writeError(w, r, errM)
 				return
 			}
 		}
 
 		f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(hdr.Mode))
 		if err != nil {
-			sendLog(sdk.WrapError(err, "worker cache pull > Cannot create file %s ", target).Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			err = sdk.WrapError(err, "worker cache pull > Cannot create file %s ", target)
+			sendLog(err.Error())
+			writeError(w, r, err)
 			return
 		}
 
 		// copy over contents
 		if _, err := io.Copy(f, tr); err != nil {
-			sendLog(sdk.WrapError(err, "worker cache pull > Cannot copy content file ").Error())
-			w.WriteHeader(http.StatusInternalServerError)
+			err = sdk.WrapError(err, "worker cache pull > Cannot copy content file ")
+			sendLog(err.Error())
 			f.Close()
+			writeError(w, r, err)
 			return
 		}
 		f.Close()

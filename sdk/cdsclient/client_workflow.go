@@ -241,7 +241,7 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 }
 
 func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader) error {
-	url := fmt.Sprintf("/project/%s/cache/%s/push", projectKey, tag)
+	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
 
 	mods := []RequestModifier{
 		(func(r *http.Request) {
@@ -262,7 +262,7 @@ func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader)
 }
 
 func (c *client) WorkflowCachePull(projectKey, tag string) (io.Reader, error) {
-	url := fmt.Sprintf("/project/%s/cache/%s/pull", projectKey, tag)
+	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
 
 	mods := []RequestModifier{
 		(func(r *http.Request) {

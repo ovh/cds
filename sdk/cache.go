@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -17,14 +18,7 @@ type Cache struct {
 	Name    string `json:"name" cli:"name"`
 	Tag     string `json:"tag"`
 
-	DownloadHash     string   `json:"download_hash" cli:"download_hash"`
-	Size             int64    `json:"size,omitempty" cli:"size"`
-	Perm             uint32   `json:"perm,omitempty"`
-	MD5sum           string   `json:"md5sum,omitempty" cli:"md5sum"`
-	ObjectPath       string   `json:"object_path,omitempty"`
-	TempURL          string   `json:"temp_url,omitempty"`
-	TempURLSecretKey string   `json:"-"`
-	Files            []string `json:"files"`
+	Files []string `json:"files"`
 }
 
 //GetName returns the name the artifact
@@ -84,8 +78,18 @@ func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
 	}
 	defer filR.Close()
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		return WrapError(err, "tarWrite> cannot find working directory")
+	}
+
+	filename, err := filepath.Rel(cwd, path)
+	if err != nil {
+		return WrapError(err, "tarWrite> cannot find relative path")
+	}
+
 	hdr := &tar.Header{
-		Name:     path,
+		Name:     filename,
 		Mode:     0600,
 		Size:     fi.Size(),
 		Typeflag: tar.TypeReg,
