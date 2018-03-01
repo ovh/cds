@@ -1405,23 +1405,6 @@
         <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/cli/worker/cache/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/worker/cache/">
-        <span>cache</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/worker/cache/pull/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/worker/cache/pull/">
-          <span>pull</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/worker/cache/push/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/worker/cache/push/">
-          <span>push</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/cli/worker/download/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/download/">
           <span>download</span>
@@ -1658,9 +1641,9 @@
 <li><a href="#get-admin-services">GET <code>/admin/services</code></a></li>
 <li><a href="#get-admin-services-service">GET <code>/admin/services/&lt;service&gt;</code></a></li>
 <li><a href="#post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></a></li>
-<li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#delete-admin-warning">DELETE <code>/admin/warning</code></a></li>
 </ul></li>
 </ul></li>
@@ -1965,34 +1948,6 @@
 </tbody>
 </table>
 
-<h3 id="put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/&lt;service&gt;/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></h3>
 
 <table>
@@ -2045,6 +2000,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22">deleteAdminServiceCallHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/services/&lt;service&gt;/call</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>
