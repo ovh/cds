@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -82,6 +83,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 		},
+		Groups: []sdk.GroupPermission{{Group: proj.ProjectGroups[0].Group, Permission: permission.PermissionReadExecute}},
 	}
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
@@ -418,6 +420,8 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 		"permWorkflowName": ctx.workflow.Name,
 		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
+
+	t.Logf("######ctx.user.Groups[0]:%+v", ctx.user.Groups[0])
 
 	//Register the worker
 	testRegisterWorker(t, api, router, &ctx)

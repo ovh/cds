@@ -84,7 +84,7 @@ func UpdateGroupRoleInProject(db gorp.SqlExecutor, projectID, groupID int64, rol
 
 // InsertGroupInProject Attach a group to a project
 func InsertGroupInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
-	query := `INSERT INTO project_group (project_id, group_id,role) VALUES($1,$2,$3)`
+	query := `INSERT INTO project_group (project_id, group_id, role) VALUES($1,$2,$3)`
 	_, err := db.Exec(query, projectID, groupID, role)
 	return err
 }
