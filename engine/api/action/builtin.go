@@ -171,11 +171,7 @@ Tag the current branch and push it.`
 		Description: "Set a list of artifacts, separate by , . You can also use regexp.",
 		Type:        sdk.StringParameter,
 	})
-	if err := checkBuiltinAction(db, gitrelease); err != nil {
-		return err
-	}
-
-	return nil
+	return checkBuiltinAction(db, gitrelease)
 }
 
 // checkBuiltinAction add builtin actions in database if needed

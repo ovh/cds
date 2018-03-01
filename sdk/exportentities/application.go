@@ -21,6 +21,7 @@ type Application struct {
 	VCSDefaultBranch  string                   `json:"vcs_default_branch,omitempty" yaml:"vcs_default_branch,omitempty"`
 	VCSPGPKey         string                   `json:"vcs_pgp_key,omitempty" yaml:"vcs_pgp_key,omitempty"`
 }
+
 type ApplicationVersion string
 
 const ApplicationVersion1 = "v1.0"

@@ -802,7 +802,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 			return nil, nil
 		}
 
-		//We don't need to pass apiURL and uiURL because they are not usefull for commit
+		//We don't need to pass apiURL and uiURL because they are not useful for commit
 		client, _ = repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
 	}
 
