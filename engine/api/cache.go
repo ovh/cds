@@ -16,6 +16,12 @@ func (api *API) postPushCacheHandler() Handler {
 		projectKey := vars["key"]
 		tag := vars["tag"]
 
+		// check tag name pattern
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(tag) {
+			return sdk.ErrInvalidName
+		}
+
 		if r.Body == nil {
 			return sdk.ErrWrongRequest
 		}

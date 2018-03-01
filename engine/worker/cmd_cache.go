@@ -118,37 +118,48 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
-		errRead = sdk.WrapError(errRead, "Cannot read body")
+		errRead = sdk.Error{
+			Message: "worker cache push > Cannot read body : " + errRead.Error(),
+			Status:  http.StatusInternalServerError,
+		}
 		writeError(w, r, errRead)
 		return
 	}
 
 	var c sdk.Cache
 	if err := json.Unmarshal(data, &c); err != nil {
-		err = sdk.WrapError(err, "Cannot unmarshall body")
+		err = sdk.Error{
+			Message: "worker cache push > Cannot unmarshall body : " + err.Error(),
+			Status:  http.StatusInternalServerError,
+		}
 		writeError(w, r, err)
 		return
 	}
-	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
 
 	res, errTar := sdk.CreateTarFromPaths(c.Files)
 	if errTar != nil {
-		errTar = sdk.WrapError(errTar, "worker cache push > Cannot tar")
-		sendLog(errTar.Error())
+		errTar = sdk.Error{
+			Message: "worker cache push > Cannot tar : " + errTar.Error(),
+			Status:  http.StatusInternalServerError,
+		}
 		writeError(w, r, errTar)
 		return
 	}
 	if wk.currentJob.wJob == nil {
-		errW := fmt.Errorf("worker cache push > Cannot find workflow job info")
-		sendLog(errW.Error())
+		errW := sdk.Error{
+			Message: "worker cache push > Cannot find workflow job info",
+			Status:  http.StatusInternalServerError,
+		}
 		writeError(w, r, errW)
 		return
 	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
 	if err := wk.client.WorkflowCachePush(projectKey, vars["tag"], res); err != nil {
-		err = sdk.WrapError(err, "worker cache push > Cannot push cache")
-		sendLog(err.Error())
+		err = sdk.Error{
+			Message: "worker cache push > Cannot push cache : " + err.Error(),
+			Status:  http.StatusInternalServerError,
+		}
 		writeError(w, r, err)
 		return
 	}
@@ -176,7 +187,7 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		port, errPort := strconv.Atoi(portS)
 		if errPort != nil {
-			sdk.Exit("worker cache pull > cannot parse '%s' as a port number", portS)
+			sdk.Exit("worker cache pull > cannot parse '%s' as a port number: %s", portS, errPort)
 		}
 
 		if len(args) < 1 {
@@ -186,7 +197,7 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Worker cache pull in progress... (tag: %s)\n", args[0])
 		req, errRequest := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull", port, args[0]), nil)
 		if errRequest != nil {
-			sdk.Exit("worker cache pull > cannot post worker cache pull (Request): %s\n", errRequest)
+			sdk.Exit("worker cache pull > cannot post worker cache pull with tag %s (Request): %s\n", args[0], errRequest)
 		}
 
 		client := http.DefaultClient
@@ -198,7 +209,16 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		if resp.StatusCode >= 300 {
-			sdk.Exit("worker cache pull > Cannot cache pull HTTP ERROR %d\n", resp.StatusCode)
+			var errorMsg string
+			defer resp.Body.Close()
+			if data, errRead := ioutil.ReadAll(resp.Body); errRead == nil {
+				var httpErr sdk.Error
+				if err := json.Unmarshal(data, &httpErr); err == nil {
+					errorMsg = httpErr.Message
+				}
+			}
+
+			sdk.Exit("worker cache pull > Cannot cache pull HTTP ERROR %d : %s\n", resp.StatusCode, errorMsg)
 		}
 
 		fmt.Printf("Worker cache pull with success (tag: %s)\n", args[0])
@@ -208,11 +228,8 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
-
 	if wk.currentJob.wJob == nil {
 		errW := fmt.Errorf("worker cache pull > Cannot find workflow job info")
-		sendLog(errW.Error())
 		writeError(w, r, errW)
 		return
 	}
@@ -220,8 +237,10 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 	projectKey := sdk.ParameterValue(params, "cds.project")
 	bts, err := wk.client.WorkflowCachePull(projectKey, vars["tag"])
 	if err != nil {
-		err = sdk.WrapError(err, "worker cache pull > Cannot push cache")
-		sendLog(err.Error())
+		err = sdk.Error{
+			Message: "worker cache pull > Cannot push cache : " + err.Error(),
+			Status:  http.StatusInternalServerError,
+		}
 		writeError(w, r, err)
 		return
 	}
@@ -233,8 +252,10 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 			break
 		}
 		if err != nil {
-			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("worker cache pull > Unable to read tar file"))
-			sendLog(err.Error())
+			err = sdk.Error{
+				Message: "worker cache pull > Unable to read tar file : " + err.Error(),
+				Status:  http.StatusBadRequest,
+			}
 			writeError(w, r, err)
 			return
 		}
@@ -245,8 +266,10 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 
 		currentDir, err := os.Getwd()
 		if err != nil {
-			err = sdk.WrapError(err, "worker cache pull > Unable to get current directory")
-			sendLog(err.Error())
+			err = sdk.Error{
+				Message: "worker cache pull > Unable to get current directory : " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
 			writeError(w, r, err)
 			return
 		}
@@ -255,8 +278,10 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 
 		if _, errS := os.Stat(filepath.Dir(target)); errS != nil {
 			if errM := os.MkdirAll(filepath.Dir(target), 0755); errM != nil {
-				errM = sdk.WrapError(errM, "worker cache pull > Cannot create directory %s ", target)
-				sendLog(errM.Error())
+				errM = sdk.Error{
+					Message: "worker cache pull > Cannot create directory : " + errM.Error(),
+					Status:  http.StatusInternalServerError,
+				}
 				writeError(w, r, errM)
 				return
 			}
@@ -264,17 +289,21 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 
 		f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(hdr.Mode))
 		if err != nil {
-			err = sdk.WrapError(err, "worker cache pull > Cannot create file %s ", target)
-			sendLog(err.Error())
+			err = sdk.Error{
+				Message: "worker cache pull > Cannot create file : " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
 			writeError(w, r, err)
 			return
 		}
 
 		// copy over contents
 		if _, err := io.Copy(f, tr); err != nil {
-			err = sdk.WrapError(err, "worker cache pull > Cannot copy content file ")
-			sendLog(err.Error())
 			f.Close()
+			err = sdk.Error{
+				Message: "worker cache pull > Cannot copy content file : " + err.Error(),
+				Status:  http.StatusInternalServerError,
+			}
 			writeError(w, r, err)
 			return
 		}
