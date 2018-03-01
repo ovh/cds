@@ -3,6 +3,7 @@ import {Observable} from 'rxjs/Observable';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {HttpClient, HttpParams, HttpHeaders} from '@angular/common/http';
 import {GroupPermission} from '../../model/group.model';
+import {deepClone} from 'fast-json-patch/lib/core';
 
 @Injectable()
 export class WorkflowService {
@@ -64,8 +65,9 @@ export class WorkflowService {
      */
     updateWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
         // reinit node id
-        Workflow.reinitID(workflow);
-        return this._http.put<Workflow>('/project/' + key + '/workflows/' + name, workflow);
+        let w = deepClone(workflow);
+        Workflow.prepareRequestForAPI(w);
+        return this._http.put<Workflow>('/project/' + key + '/workflows/' + name, w);
     }
 
     /**

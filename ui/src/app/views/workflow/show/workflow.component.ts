@@ -212,7 +212,7 @@ export class WorkflowShowComponent {
                 modal.approve(true);
             }
             if (this.workflowGraph) {
-                this.workflowGraph.toggleLinkJoin(false);
+                this._workflowCoreService.linkJoinEvent(null);
             }
             this._router.navigate(['/project', this.project.key, 'workflow', w.name]);
         });

@@ -23,7 +23,6 @@
                       </div>
                     </div>
                     <div class="ui attached segment">
-
                       <div [ngSwitch]="currentStep">
                         <!-- ######### WORKFLOW FIRST STEP ######### -->
                         <form class="ui form" *ngSwitchCase="0">
@@ -34,12 +33,12 @@
                                     <div class="two ui buttons">
                                       <button class="ui button"
                                         type="button"
-                                        [class.active]="!asCode"
+                                        [class.active]="!asCode" [class.blue]="!asCode"
                                         [class.disabled]="!project.application_names || !project.application_names.length"
                                         (click)="asCode = false">
                                         {{'common_create' | translate}}
                                       </button>
-                                      <button class="ui button" type="button" [class.active]="asCode" (click)="asCode = true">
+                                      <button class="ui button" type="button" [class.blue]="asCode" [class.active]="asCode" (click)="asCode = true">
                                         {{'common_import' | translate}}
                                       </button>
                                     </div>
