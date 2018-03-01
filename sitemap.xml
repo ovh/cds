@@ -390,11 +390,19 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/worker/artifacts/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/auth/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/cli/api/build/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/worker/cache/</loc>
   </url>
   
   <url>
@@ -886,7 +894,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/worker/cache/pull/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/push/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/worker/cache/push/</loc>
   </url>
   
   <url>

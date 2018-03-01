@@ -1405,6 +1405,28 @@
         <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/cli/worker/artifacts/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/artifacts/">
+          <span>artifacts</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/worker/cache/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/worker/cache/">
+        <span>cache</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/worker/cache/pull/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/cache/pull/">
+          <span>pull</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/cache/push/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/cache/push/">
+          <span>push</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/worker/download/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/download/">
           <span>download</span>
@@ -1635,15 +1657,15 @@
 <li><a href="#getprofile-responds-with-the-pprof-formatted-profile-named-by-the-request">getProfile responds with the pprof-formatted profile named by the request.</a></li>
 <li><a href="#getcpuprofile-responds-with-the-pprof-formatted-cpu-profile">getCPUProfile responds with the pprof-formatted cpu profile.</a></li>
 <li><a href="#gettrace-responds-with-the-execution-trace-in-binary-form">getTrace responds with the execution trace in binary form.</a></li>
-<li><a href="#get-admin-maintenance">GET <code>/admin/maintenance</code></a></li>
-<li><a href="#post-admin-maintenance">POST <code>/admin/maintenance</code></a></li>
 <li><a href="#delete-admin-maintenance">DELETE <code>/admin/maintenance</code></a></li>
+<li><a href="#post-admin-maintenance">POST <code>/admin/maintenance</code></a></li>
+<li><a href="#get-admin-maintenance">GET <code>/admin/maintenance</code></a></li>
 <li><a href="#get-admin-services">GET <code>/admin/services</code></a></li>
 <li><a href="#get-admin-services-service">GET <code>/admin/services/&lt;service&gt;</code></a></li>
 <li><a href="#post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></a></li>
-<li><a href="#get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></a></li>
-<li><a href="#delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#delete-admin-warning">DELETE <code>/admin/warning</code></a></li>
 </ul></li>
 </ul></li>
@@ -1780,7 +1802,7 @@
 </tbody>
 </table>
 
-<h3 id="get-admin-maintenance">GET <code>/admin/maintenance</code></h3>
+<h3 id="delete-admin-maintenance">DELETE <code>/admin/maintenance</code></h3>
 
 <table>
 <thead>
@@ -1793,7 +1815,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -1803,7 +1825,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminMaintenanceHandler%22">getAdminMaintenanceHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminMaintenanceHandler%22">deleteAdminMaintenanceHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1836,7 +1858,7 @@
 </tbody>
 </table>
 
-<h3 id="delete-admin-maintenance">DELETE <code>/admin/maintenance</code></h3>
+<h3 id="get-admin-maintenance">GET <code>/admin/maintenance</code></h3>
 
 <table>
 <thead>
@@ -1849,7 +1871,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>GET</td>
 </tr>
 
 <tr>
@@ -1859,7 +1881,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminMaintenanceHandler%22">deleteAdminMaintenanceHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminMaintenanceHandler%22">getAdminMaintenanceHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -1948,7 +1970,7 @@
 </tbody>
 </table>
 
-<h3 id="get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></h3>
+<h3 id="put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></h3>
 
 <table>
 <thead>
@@ -1961,7 +1983,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -1971,7 +1993,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22">getAdminServiceCallHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2004,7 +2026,7 @@
 </tbody>
 </table>
 
-<h3 id="put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></h3>
+<h3 id="get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></h3>
 
 <table>
 <thead>
@@ -2017,7 +2039,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>GET</td>
 </tr>
 
 <tr>
@@ -2027,7 +2049,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22">getAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>

@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="en" class="js csstransforms3d">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="generator" content="Hugo 0.32.2" />
+    <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
+
+
+    <title>pull :: CDS - Continuous Delivery Service</title>
+    <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
+    <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
+    <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://ovh.github.io/cds/css/solarized-light.css" rel="stylesheet">
+    <link href="https://ovh.github.io/cds/css/featherlight.min.css" rel="stylesheet">
+    <link href="https://ovh.github.io/cds/css/auto-complete.css" rel="stylesheet">
+    
+    <link href="https://ovh.github.io/cds/css/theme.css" rel="stylesheet">
+    
+    
+      <link href="https://ovh.github.io/cds/css/theme-custom.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://ovh.github.io/cds/css/bootstrap.min.css">
+    <script src="https://ovh.github.io/cds/js/jquery-2.x.min.js"></script>
+    <style type="text/css">
+      :root #header + #content > #left > #rlblock_left {
+        display:none !important;
+      }
+    </style>
+
+    
+<link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
+  </head>
+  <body class="" data-url="/cli/worker/cache/pull/">
+    <nav id="sidebar" class="">
+
+
+
+<div class="highlightable">
+  <div id="header-wrapper">
+    <div id="header">
+      <a href="https://ovh.github.io/cds/" title="CDS Documentation Home Page"> 
+	<p><img src="https://ovh.github.io/cds/images/cds-transparent.png?width=40px" alt="CDS" /></p>
+ 
+
+</a>
+    </div>
+    
+        <div class="searchbox">
+    <label for="search-by"><i class="fa fa-search"></i></label>
+    <input data-search-input id="search-by" type="text" placeholder="Search...">
+    <span data-search-clear=""><i class="fa fa-close"></i></span>
+</div>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/lunr.min.js"></script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/auto-complete.js"></script>
+<script type="text/javascript">
+    var baseurl = "https:\/\/ovh.github.io\/cds";
+</script>
+<script type="text/javascript" src="https://ovh.github.io/cds/js/search.js"></script>
+
+    
+  </div>
+
+  <div id="sidebar-body">
+    <ul class="topics">
+        
+
+        
+          
+          
+    <li data-nav-id="/introduction/" class="dd-item">
+      <a href="https://ovh.github.io/cds/introduction/">
+        <span>Introduction</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/introduction/concepts/" class="dd-item">
+      <a href="https://ovh.github.io/cds/introduction/concepts/">
+        <span>Concepts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/introduction/concepts/pipeline/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/concepts/pipeline/">
+          <span>Pipeline</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/concepts/stage/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/concepts/stage/">
+          <span>Stage</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/concepts/job/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/concepts/job/">
+          <span>Job</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/concepts/step/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/concepts/step/">
+          <span>Step</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/introduction/scopes/" class="dd-item">
+      <a href="https://ovh.github.io/cds/introduction/scopes/">
+        <span>Scopes &amp; ACLs</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/introduction/scopes/project/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/project/">
+          <span>Project</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/scopes/application/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/application/">
+          <span>Application</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/scopes/environment/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/environment/">
+          <span>Environment</span>
+        </a>
+    </li>
+      <li data-nav-id="/introduction/scopes/permissions/" class="dd-item">
+        <a href="https://ovh.github.io/cds/introduction/scopes/permissions/">
+          <span>Permissions</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+          
+          
+    <li data-nav-id="/workflows/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/">
+        <span>Building CDS Workflows</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/workflows/design/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/design/">
+        <span>Design your Workflow</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/design/payload/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/payload/">
+          <span>Payload</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/design/pipeline-context/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/pipeline-context/">
+          <span>Pipeline Context</span>
+        </a>
+    </li>
+    <li data-nav-id="/workflows/design/hooks/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/design/hooks/">
+        <span>Hooks</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/design/hooks/scheduler/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/hooks/scheduler/">
+          <span>Scheduler</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/design/hooks/webhook/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/hooks/webhook/">
+          <span>Webhook</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/design/hooks/git-poller/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/hooks/git-poller/">
+          <span>Git Poller hook</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/design/hooks/git-repo-webhook/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/">
+          <span>Git Repository Webhook</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/design/hooks/kafka-hook/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/hooks/kafka-hook/">
+          <span>Kafka hook</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/workflows/design/run-conditions/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/run-conditions/">
+          <span>Run conditions on pipeline</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/design/join/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/join/">
+          <span>Join</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/design/mutex/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/mutex/">
+          <span>Mutex</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/design/sidebar/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/sidebar/">
+          <span>Sidebar</span>
+        </a>
+    </li>
+    <li data-nav-id="/workflows/design/advanced/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/design/advanced/">
+        <span>Workflows Advanced</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/design/advanced/update-run-number/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/advanced/update-run-number/">
+          <span>Update a Workflow run number</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/workflows/pipelines/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/">
+        <span>Building Pipelines</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/variables/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/variables/">
+          <span>Variables</span>
+        </a>
+    </li>
+    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/actions/">
+        <span>Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/workflows/pipelines/actions/builtin/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/">
+        <span>Built-in Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/artifact-download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-download/">
+          <span>Artifact Download</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/artifact-upload/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-upload/">
+          <span>Artifact Upload</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/gitclone/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gitclone/">
+          <span>GitClone</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/junit/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/junit/">
+          <span>JUnit</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/script/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">
+          <span>Script</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/workflows/pipelines/actions/user/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/">
+        <span>User Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-docker-package/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-docker-package/">
+          <span>cds-docker-package</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-go-build/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-go-build/">
+          <span>cds-go-build</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-nexus-upload/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-nexus-upload/">
+          <span>cds-nexus-upload</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-perl-test/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-perl-test/">
+          <span>cds-perl-test</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-publish-ovh-metrics/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-publish-ovh-metrics/">
+          <span>cds-publish-ovh-metrics</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-python-pylint/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-python-pylint/">
+          <span>cds-python-pylint</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/">
+        <span>Plugins Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/write-plugin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/">
+          <span>Write a Plugin</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/">
+          <span>plugin-download</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-group-tmpl/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-group-tmpl/">
+          <span>plugin-group-tmpl</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-kafka-publish/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-kafka-publish/">
+          <span>plugin-kafka-publish</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-marathon/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-marathon/">
+          <span>plugin-marathon</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-ssh-cmd/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-ssh-cmd/">
+          <span>plugin-ssh-cmd</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-tmpl/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-tmpl/">
+          <span>plugin-tmpl</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-venom/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-venom/">
+          <span>plugin-venom</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/workflows/pipelines/requirements/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/">
+        <span>Job&#39;s Requirements</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/workflows/pipelines/requirements/service/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/">
+        <span>Service Link</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
+          <span>Service Requirement Nginx</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/">
+          <span>Service Requirement PostgreSQL</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/workflows/pipelines/requirements/worker-model/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">
+        <span>Worker Model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker-simple/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/">
+          <span>Worker Model From Docker Hub</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker-customized/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/">
+          <span>Worker Model with your own image</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
+          <span>Openstack Worker Model</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
+          <span>VSphere Worker Model</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/workflows/pipelines/configuration-file/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/configuration-file/">
+          <span>Use Configuration File</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+          
+          
+    <li data-nav-id="/worker/" class="dd-item">
+      <a href="https://ovh.github.io/cds/worker/">
+        <span>Worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/worker/setup-your-worker/" class="dd-item">
+        <a href="https://ovh.github.io/cds/worker/setup-your-worker/">
+          <span>Setup your worker</span>
+        </a>
+    </li>
+      <li data-nav-id="/worker/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/worker/update/">
+          <span>Update your worker</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+          
+          
+    <li data-nav-id="/hatchery/" class="dd-item">
+      <a href="https://ovh.github.io/cds/hatchery/">
+        <span>Hatchery</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/hatchery/local/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/local/">
+          <span>Hatchery Local</span>
+        </a>
+    </li>
+      <li data-nav-id="/hatchery/kubernetes/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/kubernetes/">
+          <span>Hatchery Kubernetes</span>
+        </a>
+    </li>
+      <li data-nav-id="/hatchery/marathon/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/marathon/">
+          <span>Hatchery Marathon</span>
+        </a>
+    </li>
+      <li data-nav-id="/hatchery/openstack/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/openstack/">
+          <span>Hatchery Openstack</span>
+        </a>
+    </li>
+      <li data-nav-id="/hatchery/swarm/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/swarm/">
+          <span>Hatchery Swarm</span>
+        </a>
+    </li>
+      <li data-nav-id="/hatchery/vsphere/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/vsphere/">
+          <span>Hatchery Vsphere</span>
+        </a>
+    </li>
+      <li data-nav-id="/hatchery/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/update/">
+          <span>Update your hatchery</span>
+        </a>
+    </li>
+      <li data-nav-id="/hatchery/create/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hatchery/create/">
+          <span>Write your own hatchery</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+          
+          
+    <li data-nav-id="/cli/" class="dd-item parent">
+      <a href="https://ovh.github.io/cds/cli/">
+        <span>Command Line &amp; REST API</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/cli/api/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/api/">
+        <span>REST API</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/api/action/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/action/">
+          <span>action</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/admin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/admin/">
+          <span>admin</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/artifact/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/artifact/">
+          <span>artifact</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/auth/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/auth/">
+          <span>auth</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/build/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/build/">
+          <span>build</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/config/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/config/">
+          <span>config</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/download/">
+          <span>download</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/group/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/group/">
+          <span>group</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/hatchery/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/hatchery/">
+          <span>hatchery</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/hook/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/hook/">
+          <span>hook</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/login/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/login/">
+          <span>login</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/mon/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/mon/">
+          <span>mon</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/navbar/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/navbar/">
+          <span>navbar</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/notification/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/notification/">
+          <span>notification</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/parameter/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/parameter/">
+          <span>parameter</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/pipeline/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/pipeline/">
+          <span>pipeline</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/platform/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/platform/">
+          <span>platform</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/plugin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/plugin/">
+          <span>plugin</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/project/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/project/">
+          <span>project</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/queue/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/queue/">
+          <span>queue</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/repositories_manager/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/repositories_manager/">
+          <span>repositories_manager</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/requirement/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/requirement/">
+          <span>requirement</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/suggest/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/suggest/">
+          <span>suggest</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/user/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/user/">
+          <span>user</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/variable/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/variable/">
+          <span>variable</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/worker/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/worker/">
+          <span>worker</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/workflow/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/workflow/">
+          <span>workflow</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/">
+        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/action/">
+        <span>action</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/action/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/action/doc/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/doc/">
+          <span>doc</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/action/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/action/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/action/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/action/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/action/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/">
+        <span>admin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/cli/cdsctl/admin/hooks/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/hooks/">
+        <span>hooks</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/hooks/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/hooks/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/admin/services/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/">
+        <span>services</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/services/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/application/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/application/">
+        <span>application</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/application/create/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/create/">
+          <span>create</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/export/">
+          <span>export</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/application/group/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/">
+        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/application/group/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/import/">
+          <span>import</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/import/">
+          <span>import</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/application/keys/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/application/keys/">
+        <span>keys</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/application/keys/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/keys/add/">
+          <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/keys/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/keys/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/keys/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/keys/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/show/">
+          <span>show</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/application/variable/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/">
+        <span>variable</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/application/variable/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/add/">
+          <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/variable/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/variable/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/application/variable/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/update/">
+          <span>update</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/encrypt/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/encrypt/">
+          <span>encrypt</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/environment/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/environment/">
+        <span>environment</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/environment/create/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/create/">
+          <span>create</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/export/">
+          <span>export</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/environment/group/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/">
+        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/environment/group/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/group/import/">
+          <span>import</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/import/">
+          <span>import</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/environment/keys/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/environment/keys/">
+        <span>keys</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/environment/keys/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/keys/add/">
+          <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/keys/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/keys/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/keys/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/keys/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/list/">
+          <span>list</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/environment/variable/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/">
+        <span>variable</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/environment/variable/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/add/">
+          <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/variable/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/variable/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/environment/variable/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/update/">
+          <span>update</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/group/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/group/">
+        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/group/create/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/create/">
+          <span>create</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/show/">
+          <span>show</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/group/user/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/group/user/">
+        <span>user</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/group/user/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/user/add/">
+          <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/user/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/user/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/user/removeadmin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/user/removeadmin/">
+          <span>removeAdmin</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/user/setadmin/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/user/setadmin/">
+          <span>setAdmin</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/health/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/health/">
+        <span>health</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/health/dbmigrate/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/health/dbmigrate/">
+          <span>dbmigrate</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/health/dbtimes/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/health/dbtimes/">
+          <span>dbtimes</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/health/status/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/health/status/">
+          <span>status</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/login/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/login/">
+          <span>login</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/monitoring/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/monitoring/">
+          <span>monitoring</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/pipeline/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/">
+        <span>pipeline</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/pipeline/create/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/create/">
+          <span>create</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/pipeline/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/pipeline/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/export/">
+          <span>export</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/pipeline/group/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/">
+        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/pipeline/group/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/">
+          <span>import</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/pipeline/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/pipeline/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/project/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/project/">
+        <span>project</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/project/create/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/create/">
+          <span>create</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/project/group/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/project/group/">
+        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/project/group/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/group/import/">
+          <span>import</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/project/keys/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/project/keys/">
+        <span>keys</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/project/keys/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/keys/add/">
+          <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/keys/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/keys/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/keys/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/keys/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/show/">
+          <span>show</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/project/variable/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/">
+        <span>variable</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/project/variable/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/add/">
+          <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/variable/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/variable/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/variable/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/update/">
+          <span>update</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/shell/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/shell/">
+          <span>shell</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/signup/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/signup/">
+          <span>signup</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/token/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/token/">
+        <span>token</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/token/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/token/find/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/find/">
+          <span>find</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/token/generate/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/generate/">
+          <span>generate</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/token/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/token/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/update/">
+          <span>update</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/user/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/user/">
+        <span>user</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/user/confirm/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/user/confirm/">
+          <span>confirm</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/user/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/user/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/user/me/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/user/me/">
+          <span>me</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/user/reset/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/user/reset/">
+          <span>reset</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/user/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/user/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/version/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/version/">
+          <span>version</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/worker/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/worker/">
+        <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/worker/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/list/">
+          <span>list</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/worker/model/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/">
+        <span>model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/worker/model/add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/add/">
+          <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/worker/model/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">
+        <span>workflow</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/cli/cdsctl/workflow/advanced/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/">
+        <span>advanced</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/workflow/advanced/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/workflow/advanced/number/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/">
+        <span>number</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/workflow/advanced/number/set/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/set/">
+          <span>set</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/advanced/number/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/number/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/workflow/artifact/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/">
+        <span>artifact</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/workflow/artifact/download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/download/">
+          <span>download</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/artifact/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/history/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/history/">
+          <span>history</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/init/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/init/">
+          <span>init</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/pull/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/pull/">
+          <span>pull</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/push/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/push/">
+          <span>push</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/run/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/run/">
+          <span>run</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/show/">
+          <span>show</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/status/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/status/">
+          <span>status</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/stop/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/stop/">
+          <span>stop</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/engine/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/engine/">
+        <span>engine</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/cli/engine/config/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/engine/config/">
+        <span>config</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/engine/config/check/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/engine/config/check/">
+          <span>check</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/engine/config/new/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/engine/config/new/">
+          <span>new</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/engine/database/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/engine/database/">
+        <span>database</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/engine/database/downgrade/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/engine/database/downgrade/">
+          <span>downgrade</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/engine/database/status/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/engine/database/status/">
+          <span>status</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/engine/database/upgrade/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/engine/database/upgrade/">
+          <span>upgrade</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/engine/start/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/engine/start/">
+          <span>start</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/engine/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/engine/update/">
+          <span>update</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/engine/version/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/engine/version/">
+          <span>version</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/worker/" class="dd-item parent">
+      <a href="https://ovh.github.io/cds/cli/worker/">
+        <span>worker</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/worker/artifacts/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/artifacts/">
+          <span>artifacts</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/worker/cache/" class="dd-item parent">
+      <a href="https://ovh.github.io/cds/cli/worker/cache/">
+        <span>cache</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/worker/cache/pull/" class="dd-item active">
+        <a href="https://ovh.github.io/cds/cli/worker/cache/pull/">
+          <span>pull</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/cache/push/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/cache/push/">
+          <span>push</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/worker/download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/download/">
+          <span>download</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/exit/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/exit/">
+          <span>exit</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/register/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/register/">
+          <span>register</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/tag/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/tag/">
+          <span>tag</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/tmpl/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/tmpl/">
+          <span>tmpl</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/update/">
+          <span>update</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/upload/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/upload/">
+          <span>upload</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/version/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/version/">
+          <span>version</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+          
+          
+    <li data-nav-id="/hosting/" class="dd-item">
+      <a href="https://ovh.github.io/cds/hosting/">
+        <span>Hosting your own instance</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/hosting/requirements/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/requirements/">
+          <span>Requirements</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/download/">
+          <span>Download</span>
+        </a>
+    </li>
+    <li data-nav-id="/hosting/ready-to-run/" class="dd-item">
+      <a href="https://ovh.github.io/cds/hosting/ready-to-run/">
+        <span>Ready to RUN</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/hosting/ready-to-run/docker-compose/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/">
+          <span>Docker Compose</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/hosting/configuration/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/configuration/">
+          <span>Configuration</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/database/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/database/">
+          <span>Database Management</span>
+        </a>
+    </li>
+    <li data-nav-id="/hosting/repositories-manager/" class="dd-item">
+      <a href="https://ovh.github.io/cds/hosting/repositories-manager/">
+        <span>Repositories Manager</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
+          <span>Github</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/">
+          <span>Bitbucket</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
+          <span>Gitlab</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/hosting/monitoring/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/monitoring/">
+          <span>Monitoring</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/upgrade/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/upgrade/">
+          <span>Upgrade your CDS Instance</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+          
+          
+    <li data-nav-id="/contribute/" class="dd-item">
+      <a href="https://ovh.github.io/cds/contribute/">
+        <span>Opensource / Contribute</span>
+      </a>
+    </li>
+          
+        
+
+        
+        <section id="shortcuts">
+            
+                <li class="" role="">
+                    <h3></h3>
+                    <a href="https://github.com/ovh/cds"><i class='fa fa-github'></i> Source Code</a>
+                    
+                </li>
+            
+                <li class="" role="">
+                    
+                    <a href="https://github.com/ovh/cds/releases"><i class='fa fa-download'></i> Releases</a>
+                    
+                </li>
+            
+                <li class="" role="">
+                    
+                    <a href="https://gitter.im/ovh-cds/Lobby"><i class='fa fa-commenting'></i> Gitter</a>
+                    
+                </li>
+            
+        </section>
+
+        
+
+        
+    </ul>
+    </div>
+
+    <section id="footer">
+      
+<section style="text-align:center">
+  <p>Built with <a href="http://gohugo.io/">Hugo</a> and <a href="https://github.com/vjeantet/hugo-theme-docdock">docdock theme</a></i></p>
+  <p><a href="https://ovh.com"><img src="https://ovh.github.io/tat/imgs/ovh-logo.png"></a></p>
+</section>
+    </section>
+  </div>
+</nav>
+
+
+
+
+        <section id="body">
+        <div id="overlay"></div>
+        <div class="padding highlightable">
+        
+          <div id="top-bar">
+            
+              
+              
+              
+            <div id="top-github-link">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/worker/cache/pull.md" target="blank">
+                <i class="fa fa-code-fork"></i>
+                Edit page
+              </a>
+            </div><div id="breadcrumbs" itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb">
+                <span id="sidebar-toggle-span">
+                  <a href="#" id="sidebar-toggle" data-sidebar-toggle="">
+                    <i class="fa fa-bars"></i>
+                  </a>
+                </span>
+                <span id="toc-menu"><i class="fa fa-list-alt"></i></span>
+                <span class="links">
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/worker/'>worker</a> > <a href='https://ovh.github.io/cds/cli/worker/cache/'>cache</a> > pull
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+                </span>
+            </div>
+            <div class="progress">
+    <div class="wrapper">
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#worker-cache-pull">worker cache pull</a>
+<ul>
+<li><a href="#synopsis">Synopsis</a></li>
+<li><a href="#options">Options</a></li>
+<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
+<li><a href="#see-also">SEE ALSO</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+    </div>
+</div>
+
+          </div>
+        
+        
+        <div id="body-inner">
+          
+            <div id="page-title">
+                <h1>pull</h1>
+                <p></p>
+            </div>
+          
+
+
+
+
+
+
+<h2 id="worker-cache-pull">worker cache pull</h2>
+
+<p>worker cache pull tagValue</p>
+
+<h3 id="synopsis">Synopsis</h3>
+
+<p>Inside a project, you can fetch a cache from your worker with a tag</p>
+
+<pre><code>worker cache pull [flags]
+</code></pre>
+
+<h3 id="options">Options</h3>
+
+<pre><code>  -h, --help   help for pull
+</code></pre>
+
+<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
+
+<pre><code>      --api string             URL of CDS API
+      --hatchery int           Hatchery ID spawing worker
+      --hatchery-name string   Hatchery Name spawing worker
+      --insecure               (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
+      --log-level string       Log Level: debug, info, notice, warning, critical (default &quot;notice&quot;)
+      --model int              Model of worker
+      --name string            Name of worker
+      --token string           CDS Token
+</code></pre>
+
+<h3 id="see-also">SEE ALSO</h3>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/cli/worker/cache/">worker cache</a>     - Inside a project, you can create or retrieve a cache from your worker with a tag</li>
+</ul>
+
+
+<footer class=" footline" >
+	
+</footer>
+
+
+
+
+        
+
+      </div>
+    </div>
+
+    
+ 
+    
+
+    <div id="navigation">
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/worker/cache/" title="cache"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/worker/cache/push/" title="push" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+
+    </section>
+    <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
+      <div style="border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;"></div>
+    </div>    
+
+    <script src="https://ovh.github.io/cds/js/clipboard.min.js"></script>
+<script src="https://ovh.github.io/cds/js/featherlight.min.js"></script>
+<script src="https://ovh.github.io/cds/js/html5shiv-printshiv.min.js"></script>
+<script src="https://ovh.github.io/cds/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script src="https://ovh.github.io/cds/js/modernizr.custom.71422.js"></script>
+<script src="https://ovh.github.io/cds/js/learn.js"></script>
+<script src="https://ovh.github.io/cds/js/hugo-learn.js"></script>
+    
+<script src="https://ovh.github.io/cds/js/jquery.sticky-kit.min.js"></script>
+<script src="https://ovh.github.io/cds/js/custom.js"></script>
+  </body>
+</html>
+
