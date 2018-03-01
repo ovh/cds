@@ -59,11 +59,11 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		port, errPort := strconv.Atoi(portS)
 		if errPort != nil {
-			sdk.Exit("worker cache push > Cannot parse '%s' as a port number", portS)
+			sdk.Exit("worker cache push > Cannot parse '%s' as a port number : %s\n", portS, errPort)
 		}
 
 		if len(args) < 2 {
-			sdk.Exit("worker cache push > Wrong usage: Example : worker cache push myTagValue filea fileb filec")
+			sdk.Exit("worker cache push > Wrong usage: Example : worker cache push myTagValue filea fileb filec\n")
 		}
 
 		// check tag name pattern
@@ -76,7 +76,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		for i, arg := range args[1:] {
 			absPath, err := filepath.Abs(arg)
 			if err != nil {
-				sdk.Exit("worker cache push > cannot have absolute path for (%s)\n", absPath)
+				sdk.Exit("worker cache push > cannot have absolute path for (%s) : %s\n", absPath, err)
 			}
 			files[i] = absPath
 		}
