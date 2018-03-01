@@ -398,6 +398,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/worker/cache/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-docker-package/</loc>
   </url>
   
@@ -886,7 +890,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/worker/cache/pull/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/push/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/worker/cache/push/</loc>
   </url>
   
   <url>

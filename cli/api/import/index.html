@@ -1405,6 +1405,23 @@
         <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+    <li data-nav-id="/cli/worker/cache/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/worker/cache/">
+        <span>cache</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/worker/cache/pull/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/cache/pull/">
+          <span>pull</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/cache/push/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/cache/push/">
+          <span>push</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/worker/download/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/download/">
           <span>download</span>
@@ -1706,7 +1723,7 @@
 
 <h4 id="request-body">Request Body</h4>
 
-<pre><code>{&quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;https&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;master&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{&quot;branch&quot;:&quot;master&quot;}}}
+<pre><code>{&quot;vcs_Server&quot;:&quot;github&quot;, &quot;url&quot;:&quot;https://github.com/fsamin/go-repo.git&quot;,&quot;strategy&quot;:{&quot;connection_type&quot;:&quot;https&quot;,&quot;ssh_key&quot;:&quot;&quot;,&quot;user&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;branch&quot;:&quot;&quot;,&quot;default_branch&quot;:&quot;master&quot;,&quot;pgp_key&quot;:&quot;&quot;},&quot;setup&quot;:{&quot;checkout&quot;:{&quot;branch&quot;:&quot;master&quot;}}}
 </code></pre>
 
 <h4 id="response-body">Response Body</h4>
