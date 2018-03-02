@@ -698,6 +698,7 @@
   "workflow_node_launch": "Pipeline actions",
   "workflow_node_context_pipeline_parameter": "Pipeline parameters",
   "workflow_node_context_payload": "Default payload",
+  "workflow_node_context_payload_read_only": "Payload (read-only)",
   "workflow_run_node_job_queued": "Queued {{time}} ago",
   "workflow_update_name_error": "Invalid workflow name. Allowed pattern is: ^[a-zA-Z0-9._-]{1,}$",
   "workflow_wizard_description": "Choose your workflow options",

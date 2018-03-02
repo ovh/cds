@@ -71,6 +71,7 @@ export class WorkflowNodeRunParamComponent {
     loading = false;
     loadingCommits = false;
     loadingBranches = false;
+    readOnly = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
                 private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService,
@@ -119,6 +120,14 @@ export class WorkflowNodeRunParamComponent {
         this.payloadString = JSON.stringify(currentPayload, undefined, 4);
         if (this.num != null) {
             this.getCommits(this.num, false);
+        }
+
+        if (this.workflowRun && this.workflowRun.workflow.root_id !== this.nodeToRun.id) {
+            this.readOnly = true;
+            this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: true});
+        } else {
+            this.readOnly = false;
+            this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: false});
         }
     }
 
