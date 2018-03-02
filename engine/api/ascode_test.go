@@ -165,7 +165,11 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	repositoryService := services.NewRepository(func() *gorp.DbMap {
 		return db
 	}, api.Cache)
-	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler", Type: services.TypeRepositories}
+	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_Repo", Type: services.TypeRepositories}
+	repositoryService.Delete(mockService)
+	test.NoError(t, repositoryService.Insert(mockService))
+
+	mockService = &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_VCS", Type: services.TypeVCS}
 	repositoryService.Delete(mockService)
 	test.NoError(t, repositoryService.Insert(mockService))
 
@@ -174,37 +178,59 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {
-			body := new(bytes.Buffer)
-			w := new(http.Response)
-			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			t.Logf("RequestURI: %s", r.URL.Path)
+			switch r.URL.Path {
+			case "/task/bulk":
+				hooks := map[string]sdk.WorkflowNodeHook{}
+				if err := UnmarshalBody(r, &hooks); err != nil {
+					return nil, sdk.WrapError(err, "Hooks> postTaskBulkHandler")
+				}
 
-			ope := new(sdk.Operation)
-			ope.URL = "https://github.com/fsamin/go-repo.git"
-			ope.UUID = UUID
-			ope.RepositoryInfo = &sdk.OperationRepositoryInfo{
-				Name:          "go-repo",
-				FetchURL:      ope.URL,
-				DefaultBranch: "master",
-			}
-			ope.Status = sdk.OperationStatusDone
-			ope.LoadFiles.Pattern = workflowAsCodePattern
-			ope.LoadFiles.Results = map[string][]byte{
-				"w-go-repo.yml": []byte(`name: w-go-repo
+				body := new(bytes.Buffer)
+				w := new(http.Response)
+				enc := json.NewEncoder(body)
+				w.Body = ioutil.NopCloser(body)
+				if err := enc.Encode(hooks); err != nil {
+					return writeError(w, err)
+				}
+
+				w.StatusCode = http.StatusOK
+				return w, nil
+			default:
+				body := new(bytes.Buffer)
+				w := new(http.Response)
+				enc := json.NewEncoder(body)
+				w.Body = ioutil.NopCloser(body)
+
+				ope := new(sdk.Operation)
+				ope.URL = "https://github.com/fsamin/go-repo.git"
+				ope.UUID = UUID
+				ope.VCSServer = "github"
+				ope.RepoFullName = "fsamin/go-repo"
+				ope.RepositoryInfo = &sdk.OperationRepositoryInfo{
+					Name:          "go-repo",
+					FetchURL:      ope.URL,
+					DefaultBranch: "master",
+				}
+				ope.Status = sdk.OperationStatusDone
+				ope.LoadFiles.Pattern = workflowAsCodePattern
+				ope.LoadFiles.Results = map[string][]byte{
+					"w-go-repo.yml": []byte(`name: w-go-repo
 version: v1.0
 pipeline: build
 application: go-repo`),
-				"go-repo.app.yml": []byte(`name: go-repo
+					"go-repo.app.yml": []byte(`name: go-repo
 version: v1.0`),
-				"go-repo.pip.yml": []byte(`name: build
+					"go-repo.pip.yml": []byte(`name: build
 version: v1.0`),
-			}
-			if err := enc.Encode(ope); err != nil {
-				return writeError(w, err)
-			}
+				}
+				if err := enc.Encode(ope); err != nil {
+					return writeError(w, err)
+				}
 
-			w.StatusCode = http.StatusOK
-			return w, nil
+				w.StatusCode = http.StatusOK
+				return w, nil
+			}
 		},
 	)
 

@@ -305,8 +305,32 @@ func (api *API) workflowPush(ctx context.Context, key string, tr *tar.Reader, op
 		if !opts.IsDefaultBranch {
 			wf.DerivationBranch = opts.Branch
 		}
+
+		if wf.FromRepository != "" {
+			if len(wf.Root.Hooks) == 0 {
+				wf.Root.Hooks = append(wf.Root.Hooks, sdk.WorkflowNodeHook{
+					WorkflowHookModel: sdk.RepositoryWebHookModel,
+					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
+				})
+			}
+
+			if wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname == "" {
+				wf.Root.Context.Application.VCSServer = opts.VCSServer
+				wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
+				wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
+			}
+		}
+
 		if err := workflow.Update(tx, api.Cache, wf, wf, proj, getUser(ctx)); err != nil {
-			return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
+			return nil, nil, sdk.WrapError(err, "workflowPush> Unable to update workflow", err)
+		}
+
+		defaultPayload, errHr := workflow.HookRegistration(tx, api.Cache, nil, *wf, proj)
+		if errHr != nil {
+			return nil, nil, sdk.WrapError(errHr, "workflowPush> hook registration failed")
+		}
+		if defaultPayload != nil && isDefaultPayloadEmpty(*wf) {
+			wf.Root.Context.DefaultPayload = *defaultPayload
 		}
 	}
 
