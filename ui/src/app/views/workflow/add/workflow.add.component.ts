@@ -9,7 +9,7 @@ import {first, finalize} from 'rxjs/operators';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {Operation} from '../../../model/operation.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
-import {RepositoriesManager, Repository} from '../../../model/repositories.model';
+import {Repository} from '../../../model/repositories.model';
 import {VCSStrategy} from '../../../model/vcs.model';
 import {ImportAsCodeService} from '../../../service/import-as-code/import.service';
 import {CDSWorker} from '../../../shared/worker/worker';
@@ -38,7 +38,7 @@ export class WorkflowAddComponent {
     wfToImport: string;
 
     repos: Array<Repository>;
-    selectedRepoManager: RepositoriesManager;
+    selectedRepoManager: string;
     selectedRepo: Repository;
     selectedStrategy: VCSStrategy;
     pollingImport = false;
@@ -142,7 +142,7 @@ export class WorkflowAddComponent {
         } else {
             operationRequest.url = this.selectedRepo.ssh_url;
         }
-        operationRequest.vcs_server = this.selectedRepoManager.name;
+        operationRequest.vcs_server = this.selectedRepoManager;
         operationRequest.repo_fullname = this.selectedRepo.fullname;
         this._import.import(this.project.key, operationRequest).pipe(first(), finalize(() => {
 
