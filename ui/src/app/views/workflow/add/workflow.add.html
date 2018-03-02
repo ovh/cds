@@ -111,7 +111,7 @@
                                         </div>
                                         <div class="ui field" *ngIf="selectedRepoManager">
                                             <label>{{ 'workflow_wizard_select_repo' | translate}}</label>
-                                            <div class="ui info message" *ngIf="loadingRepo">{{'workflow_wiazrd_select_repo_loading' | translate }}</div>
+                                            <div class="ui info message" *ngIf="loadingRepo">{{'workflow_wizard_select_repo_loading' | translate }}</div>
                                             <ng-container *ngIf="!loadingRepo">
                                                 <sui-select class="selection"
                                                             name="repo"
@@ -127,8 +127,29 @@
                                             </ng-container>
                                         </div>
                                         <div class="ui field" *ngIf="selectedRepo">
-                                            <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy" (strategyChange)="createWorkflowFromRepo()" [hideBranch]="true"></app-vcs-strategy>
-                                            {{ selectedStrategy | json }}
+                                            <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy" (strategyChange)="createWorkflowFromRepo()" [hideBranch]="true" [hideButton]="true"></app-vcs-strategy>
+                                        </div>
+                                        <div class="right aligned field" *ngIf="!pollingResponse">
+                                            <button class="ui green button" type="button" [class.loading]="loading" [disabled]="loading" (click)="createWorkflowFromRepo()">{{ 'btn_inspect_repo' | translate }}</button>
+                                        </div>
+                                        <div class="ui field" *ngIf="pollingResponse">
+                                            <ng-container *ngIf="pollingImport">
+                                                <div class="ui blue small active inline loader"></div>{{ 'workflow_wizard_repo_analyse' | translate }}
+                                            </ng-container>
+
+                                            <div class="ui error message" *ngIf="pollingResponse.status === 3">{{pollingResponse.error}}</div>
+                                            <ng-container *ngIf="pollingResponse && pollingResponse.load_files && pollingResponse.load_files.results">
+                                                {{ 'wizard_repo_files' | translate}}
+                                                <ul >
+                                                    <li *ngFor="let f of pollingResponse.load_files.results | keys">
+                                                        {{f}}
+                                                    </li>
+                                                </ul>
+                                            </ng-container>
+
+                                            <div class="right aligned field" *ngIf="pollingResponse.status === 2">
+                                                <button class="ui green button" type="button" [class.loading]="loading" [disabled]="loading" (click)="perform()">{{ 'btn_create_workflow' | translate }}</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

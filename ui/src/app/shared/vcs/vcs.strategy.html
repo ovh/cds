@@ -73,7 +73,7 @@
             </div>
         </ng-container>
     </div>
-    <div class="right aligned field">
+    <div class="right aligned field" *ngIf="!hideButton">
         <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="saveStrategy()">{{ 'btn_save' | translate }}</button>
     </div>
 </div>

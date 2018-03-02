@@ -1,11 +1,11 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, NgZone, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode} from '../../../model/workflow.model';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {first, finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {Operation} from '../../../model/operation.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
@@ -52,7 +52,6 @@ export class WorkflowAddComponent {
     duplicateWorkflowName = false;
 
 
-
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
                 private _router: Router, private _workflowStore: WorkflowStore, private _import: ImportAsCodeService,
                 private _translate: TranslateService, private _toast: ToastService, private _repoManSerivce: RepoManagerService) {
@@ -90,17 +89,17 @@ export class WorkflowAddComponent {
     }
 
     goToNextStep(stepNum: number): void {
-      if (Array.isArray(this.project.workflow_names) && this.project.workflow_names.find((w) => w === this.workflow.name)) {
-        this.duplicateWorkflowName = true;
-        return;
-      }
+        if (Array.isArray(this.project.workflow_names) && this.project.workflow_names.find((w) => w === this.workflow.name)) {
+            this.duplicateWorkflowName = true;
+            return;
+        }
 
-      this.duplicateWorkflowName = false;
-      if (stepNum != null) {
-        this.currentStep = stepNum;
-      } else {
-        this.currentStep++;
-      }
+        this.duplicateWorkflowName = false;
+        if (stepNum != null) {
+            this.currentStep = stepNum;
+        } else {
+            this.currentStep++;
+        }
     }
 
     importWorkflow() {
@@ -122,9 +121,8 @@ export class WorkflowAddComponent {
         })
     }
 
-    filterRepo( options: Array<Repository>, query: string): Array<Repository>|false {
+    filterRepo(options: Array<Repository>, query: string): Array<Repository> | false {
         if (!options) {
-            console.log('return false');
             return false;
         }
         if (!query || query.length < 3) {
@@ -144,16 +142,13 @@ export class WorkflowAddComponent {
         }
         operationRequest.vcs_server = this.selectedRepoManager;
         operationRequest.repo_fullname = this.selectedRepo.fullname;
+        this.loading = true;
         this._import.import(this.project.key, operationRequest).pipe(first(), finalize(() => {
-
+            this.loading = false;
         })).subscribe(res => {
             this.pollingImport = true;
             this.pollingResponse = res;
-
-
-            if (res.status > 1) {
-                this.perform(this.pollingResponse);
-            } else {
+            if (res.status < 2) {
                 this.startOperationWorker(res.uuid);
             }
         });
@@ -161,6 +156,7 @@ export class WorkflowAddComponent {
 
     startOperationWorker(uuid: string): void {
         // poll operation
+        let zone = new NgZone({enableLongStackTrace: false});
         let webworker = new CDSWorker('./assets/worker/web/import-as-code.js')
         webworker.start({
             'user': this._authStore.getUser(),
@@ -171,21 +167,23 @@ export class WorkflowAddComponent {
         });
         this.webworkerSub = webworker.response().subscribe(ope => {
             if (ope) {
-                this.pollingResponse = JSON.parse(ope);
-                console.log(ope);
-
-                if (this.pollingResponse.status > 1) {
-                    this.pollingImport = false;
-                    webworker.stop();
-                    this.perform(this.pollingResponse);
-                } else {
-                    console.log('>>>', this.pollingResponse);
-                }
+                zone.run(() => {
+                    this.pollingResponse = JSON.parse(ope);
+                    if (this.pollingResponse.status > 1) {
+                        this.pollingImport = false;
+                        webworker.stop();
+                    }
+                });
             }
         });
     }
 
-    perform(ope: Operation): void {
-       console.log('PERFORM');
+    perform(): void {
+        this.loading = true;
+        this._import.create(this.project.key, this.pollingResponse.uuid).pipe(first(), finalize(() => {
+            this.loading = false;
+        })).subscribe(res => {
+            console.log(res);
+        });
     }
 }

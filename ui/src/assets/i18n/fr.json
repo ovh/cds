@@ -117,9 +117,11 @@
   "btn_close": "Fermer",
   "btn_continue": "Continuer",
   "btn_create": "Créer",
+  "btn_create_workflow": "Création du workflow",
   "btn_finish": "Terminer",
   "btn_detach": "Détacher le pipeline",
   "btn_delete": "Supprimer",
+  "btn_inspect_repo": "Inspecter le dépôt",
   "btn_link": "Connecter",
   "btn_or": "ou",
   "btn_resync_repo": "Resynchroniser",
@@ -799,5 +801,7 @@
 
   "workflow_wizard_select_repo_man": "Sélectionner un gestionnaire de dépôt",
   "workflow_wizard_select_repo": "Sélectionner un dépot",
-  "workflow_wiazrd_select_repo_loading": "Chargement des dépots..."
+  "workflow_wiazrd_select_repo_loading": "Chargement des dépots...",
+  "workflow_wizard_repo_analyse" : "Analyse du dépôt...",
+  "wizard_repo_files" : "Fichiers trouvés : "
 }

@@ -1,9 +1,5 @@
 import {VCSStrategy} from './vcs.model';
 
-export class OperationRequest {
-
-}
-
 export class Operation {
     uuid: string;
     url: string;

@@ -13,7 +13,7 @@ type Operation struct {
 		Checkout OperationCheckout `json:"checkout,omitempty"`
 	} `json:"setup,omitempty"`
 	LoadFiles      OperationLoadFiles       `json:"load_files,omitempty"`
-	Status         OperationStatus          `json:"status,omitempty"`
+	Status         OperationStatus          `json:"status"`
 	Error          string                   `json:"error,omitempty"`
 	RepositoryInfo *OperationRepositoryInfo `json:"repository_info,omitempty"`
 }

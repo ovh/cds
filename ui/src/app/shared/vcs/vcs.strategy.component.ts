@@ -15,6 +15,7 @@ export class VCSStrategyComponent implements OnInit {
     @Input() appName: string;
     @Input() loading: boolean;
     @Input() hideBranch = false;
+    @Input() hideButton = false;
 
     _strategy: VCSStrategy;
     @Input('strategy')

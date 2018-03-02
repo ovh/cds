@@ -16,7 +16,7 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 		Active: true,
 		Events: []string{"push"},
 		Config: WebHookConfig{
-			URL:         g.apiURL + hook.URL,
+			URL:         hook.URL,
 			ContentType: "json",
 		},
 	}

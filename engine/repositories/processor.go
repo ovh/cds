@@ -54,7 +54,7 @@ func (s *Service) do(op sdk.Operation) error {
 		op.Status = sdk.OperationStatusError
 	}
 
-	log.Info("repositories > processing done > %+v", op)
+	log.Debug("repositories > processing done > %+v", op)
 
 	return s.dao.saveOperation(&op)
 }

@@ -11,4 +11,8 @@ export class ImportAsCodeService {
     import(key: string, ope: Operation): Observable<Operation> {
         return this._http.post<Operation>('/import/' + key, ope);
     }
+
+    create(key: string, uuid: string): Observable<Array<string>> {
+        return this._http.post<Array<string>>('/import/' + key + '/' + uuid + '/perform', null);
+    }
 }

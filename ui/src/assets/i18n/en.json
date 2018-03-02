@@ -117,9 +117,11 @@
   "btn_continue": "Continue",
   "btn_close": "Close",
   "btn_create": "Create",
+  "btn_create_workflow": "Create workflow",
   "btn_finish": "Finish",
   "btn_delete": "Delete",
   "btn_detach": "Unlink pipeline",
+  "btn_inspect_repo": "Inspect repository",
   "btn_link": "Connect",
   "btn_or": "or",
   "btn_logs": "Display logs",
@@ -799,5 +801,7 @@
 
   "workflow_wizard_select_repo_man": "Select a repository manager",
   "workflow_wizard_select_repo": "Select a repository",
-  "workflow_wiazrd_select_repo_loading": "Loading repositories..."
+  "workflow_wizard_select_repo_loading": "Loading repositories...",
+  "workflow_wizard_repo_analyse" : "Analyzing repository...",
+  "wizard_repo_files" : "Files found: "
 }
