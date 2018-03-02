@@ -7,7 +7,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {finalize, first} from 'rxjs/operators';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {Operation} from '../../../model/operation.model';
+import {Operation, PerformAsCodeResponse} from '../../../model/operation.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {Repository} from '../../../model/repositories.model';
 import {VCSStrategy} from '../../../model/vcs.model';
@@ -44,13 +44,13 @@ export class WorkflowAddComponent {
     pollingImport = false;
     pollingResponse: Operation;
     webworkerSub: Subscription;
+    asCodeResult: PerformAsCodeResponse;
 
     updated = false;
     loading = false;
     loadingRepo = false;
     currentStep = 0;
     duplicateWorkflowName = false;
-
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
                 private _router: Router, private _workflowStore: WorkflowStore, private _import: ImportAsCodeService,
@@ -183,7 +183,11 @@ export class WorkflowAddComponent {
         this._import.create(this.project.key, this.pollingResponse.uuid).pipe(first(), finalize(() => {
             this.loading = false;
         })).subscribe(res => {
-            console.log(res);
+            this.asCodeResult = res;
         });
+    }
+
+    goToWorkflow(): void {
+        this._router.navigate(['/project', this.project.key, 'workflow', this.asCodeResult.workflowName]);
     }
 }

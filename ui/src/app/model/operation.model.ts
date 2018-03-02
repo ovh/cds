@@ -1,5 +1,12 @@
 import {VCSStrategy} from './vcs.model';
 
+export class PerformAsCodeResponse {
+    workflowName: string;
+    msgs: any;
+
+    constructor() {
+    }
+}
 export class Operation {
     uuid: string;
     url: string;

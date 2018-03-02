@@ -121,6 +121,7 @@
   "btn_finish": "Terminer",
   "btn_detach": "Détacher le pipeline",
   "btn_delete": "Supprimer",
+  "btn_goto_workflow": "Voir le workflow",
   "btn_inspect_repo": "Inspecter le dépôt",
   "btn_link": "Connecter",
   "btn_or": "ou",
