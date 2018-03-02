@@ -40,7 +40,6 @@ func (s *Service) do(op sdk.Operation) error {
 		op.Error = "unrecognized setup"
 		op.Status = sdk.OperationStatusError
 	}
-
 	switch {
 	case op.LoadFiles.Pattern != "":
 		if err := s.processLoadFiles(&op); err != nil {
@@ -55,7 +54,7 @@ func (s *Service) do(op sdk.Operation) error {
 		op.Status = sdk.OperationStatusError
 	}
 
-	log.Debug("repositories > processing done > %+v", op)
+	log.Info("repositories > processing done > %+v", op)
 
 	return s.dao.saveOperation(&op)
 }
