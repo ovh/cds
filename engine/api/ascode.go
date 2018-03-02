@@ -10,6 +10,8 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -24,6 +26,9 @@ const workflowAsCodePattern = ".cds/**/*.yml"
 // @responseBody {"uuid":"ee3946ac-3a77-46b1-af78-77868fde75ec","url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}
 func (api *API) postImportAsCodeHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+
 		var ope = new(sdk.Operation)
 		if err := UnmarshalBody(r, ope); err != nil {
 			return sdk.WrapError(err, "postImportAsCodeHandler")
@@ -42,6 +47,27 @@ func (api *API) postImportAsCodeHandler() Handler {
 		}
 
 		querier := services.Querier(api.mustDB(), api.Cache)
+
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errP != nil {
+			sdk.WrapError(errP, "postImportAsCodeHandler> Cannot load project")
+		}
+		vcsServer := repositoriesmanager.GetProjectVCSServer(p, ope.VCSServer)
+		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		if erra != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postImportAsCodeHandler> Cannot get client got %s %s : %s", key, ope.VCSServer, erra)
+		}
+		branches, errB := client.Branches(ope.RepoFullName)
+		if errB != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postImportAsCodeHandler> Cannot list branches for %s/%s", ope.VCSServer, ope.RepoFullName)
+		}
+		for _, b := range branches {
+			if b.Default {
+				ope.Setup.Checkout.Branch = b.DisplayID
+				break
+			}
+		}
+
 		srvs, err := querier.FindByType(services.TypeRepositories)
 		if err != nil {
 			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to found repositories service")

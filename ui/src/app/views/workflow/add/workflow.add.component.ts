@@ -7,16 +7,29 @@ import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {first, finalize} from 'rxjs/operators';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
+import {Operation} from '../../../model/operation.model';
+import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {RepositoriesManager, Repository} from '../../../model/repositories.model';
+import {VCSStrategy} from '../../../model/vcs.model';
+import {ImportAsCodeService} from '../../../service/import-as-code/import.service';
+import {CDSWorker} from '../../../shared/worker/worker';
+import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {environment} from '../../../../environments/environment';
 
 @Component({
     selector: 'app-workflow-add',
     templateUrl: './workflow.add.html',
     styleUrls: ['./workflow.add.scss']
 })
+@AutoUnsubscribe()
 export class WorkflowAddComponent {
 
     workflow: Workflow;
     project: Project;
+
+    creationMode = 'graphical';
 
     @ViewChild('codeMirror')
     codemirror: CodemirrorComponent;
@@ -24,16 +37,28 @@ export class WorkflowAddComponent {
     codeMirrorConfig: any;
     wfToImport: string;
 
+    repos: Array<Repository>;
+    selectedRepoManager: RepositoriesManager;
+    selectedRepo: Repository;
+    selectedStrategy: VCSStrategy;
+    pollingImport = false;
+    pollingResponse: Operation;
+    webworkerSub: Subscription;
+
     updated = false;
     loading = false;
+    loadingRepo = false;
     currentStep = 0;
     duplicateWorkflowName = false;
 
-    constructor(private _activatedRoute: ActivatedRoute,
-                private _router: Router, private _workflowStore: WorkflowStore,
-                private _translate: TranslateService, private _toast: ToastService) {
-        this.workflow = new Workflow();
 
+
+    constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
+                private _router: Router, private _workflowStore: WorkflowStore, private _import: ImportAsCodeService,
+                private _translate: TranslateService, private _toast: ToastService, private _repoManSerivce: RepoManagerService) {
+        this.workflow = new Workflow();
+        this.selectedStrategy = new VCSStrategy();
+        this.selectedStrategy.branch = 'master';
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -86,5 +111,81 @@ export class WorkflowAddComponent {
                 this._toast.success('', this._translate.instant('workflow_added'));
                 this.goToProject();
             });
+    }
+
+    fetchRepos(repoMan: string): void {
+        this.loadingRepo = true;
+        this._repoManSerivce.getRepositories(this.project.key, repoMan, false).pipe(first(), finalize(() => {
+            this.loadingRepo = false
+        })).subscribe(rs => {
+            this.repos = rs;
+        })
+    }
+
+    filterRepo( options: Array<Repository>, query: string): Array<Repository>|false {
+        if (!options) {
+            console.log('return false');
+            return false;
+        }
+        if (!query || query.length < 3) {
+            return options.slice(0, 100);
+        }
+        let results = options.filter(repo => repo.fullname.toLowerCase().indexOf(query.toLowerCase()) !== -1);
+        return results;
+    }
+
+    createWorkflowFromRepo() {
+        let operationRequest = new Operation();
+        operationRequest.strategy = this.selectedStrategy;
+        if (operationRequest.strategy.connection_type === 'https') {
+            operationRequest.url = this.selectedRepo.http_url;
+        } else {
+            operationRequest.url = this.selectedRepo.ssh_url;
+        }
+        operationRequest.vcs_server = this.selectedRepoManager.name;
+        operationRequest.repo_fullname = this.selectedRepo.fullname;
+        this._import.import(this.project.key, operationRequest).pipe(first(), finalize(() => {
+
+        })).subscribe(res => {
+            this.pollingImport = true;
+            this.pollingResponse = res;
+
+
+            if (res.status > 1) {
+                this.perform(this.pollingResponse);
+            } else {
+                this.startOperationWorker(res.uuid);
+            }
+        });
+    }
+
+    startOperationWorker(uuid: string): void {
+        // poll operation
+        let webworker = new CDSWorker('./assets/worker/web/import-as-code.js')
+        webworker.start({
+            'user': this._authStore.getUser(),
+            'session': this._authStore.getSessionToken(),
+            'api': environment.apiURL,
+            key: this.project.key,
+            uuid: uuid,
+        });
+        this.webworkerSub = webworker.response().subscribe(ope => {
+            if (ope) {
+                this.pollingResponse = JSON.parse(ope);
+                console.log(ope);
+
+                if (this.pollingResponse.status > 1) {
+                    this.pollingImport = false;
+                    webworker.stop();
+                    this.perform(this.pollingResponse);
+                } else {
+                    console.log('>>>', this.pollingResponse);
+                }
+            }
+        });
+    }
+
+    perform(ope: Operation): void {
+       console.log('PERFORM');
     }
 }

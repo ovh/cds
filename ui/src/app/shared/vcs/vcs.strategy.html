@@ -45,7 +45,7 @@
                     </div>
                 </div>
             </ng-container>
-            <div class="inline fields">
+            <div class="inline fields" *ngIf="!hideBranch">
                 <div class="two wide field">
                     <label>{{ 'vcs_branch' | translate }}</label>
                 </div>
@@ -53,7 +53,7 @@
                     <input type="text" class="ui input" [(ngModel)]="strategy.branch">
                 </div>
             </div>
-            <div class="inline fields">
+            <div class="inline fields" *ngIf="!hideBranch">
                 <div class="two wide field">
                     <label>{{ 'vcs_default_branch' | translate }}</label>
                 </div>

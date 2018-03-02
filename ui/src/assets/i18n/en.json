@@ -212,6 +212,7 @@
   "common_copy_clipboard": "Copy to clipboad",
   "common_select": "Select",
   "common_create": "Create",
+  "common_create_repo" : "From repository",
   "common_import": "Import",
   "common_show_all": "Show all",
   "common_hide_all": "Hide all",
@@ -794,5 +795,9 @@
   "workflow_notification_email_user": "Mails",
   "workflow_notification_list": "Notifications list",
   "workflow_notification_form": "Add a notification",
-  "workflow_notification_copy": "Copy"
+  "workflow_notification_copy": "Copy",
+
+  "workflow_wizard_select_repo_man": "Select a repository manager",
+  "workflow_wizard_select_repo": "Select a repository",
+  "workflow_wiazrd_select_repo_loading": "Loading repositories..."
 }

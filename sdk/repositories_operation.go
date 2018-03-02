@@ -6,6 +6,7 @@ import "encoding/base64"
 type Operation struct {
 	UUID               string             `json:"uuid"`
 	VCSServer          string             `json:"vcs_server,omitempty"`
+	RepoFullName       string             `json:"repo_fullname,omitempty"`
 	URL                string             `json:"url"`
 	RepositoryStrategy RepositoryStrategy `json:"strategy,omitempty"`
 	Setup              struct {

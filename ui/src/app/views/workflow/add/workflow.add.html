@@ -30,17 +30,24 @@
                                 <div class="ui row">
                                   <div class="one wide column"></div>
                                   <div class="fourteen wide column">
-                                    <div class="two ui buttons">
+                                    <div class="three ui buttons">
                                       <button class="ui button"
                                         type="button"
-                                        [class.active]="!asCode" [class.blue]="!asCode"
+                                        [class.active]="creationMode === 'graphical'"  [class.blue]="creationMode === 'graphical'"
                                         [class.disabled]="!project.application_names || !project.application_names.length"
-                                        (click)="asCode = false">
+                                        (click)="creationMode = 'graphical'">
                                         {{'common_create' | translate}}
                                       </button>
-                                      <button class="ui button" type="button" [class.blue]="asCode" [class.active]="asCode" (click)="asCode = true">
+                                      <button class="ui button" type="button" [class.blue]="creationMode === 'text'" [class.active]="creationMode === 'text'" (click)="creationMode = 'text'">
                                         {{'common_import' | translate}}
                                       </button>
+                                        <button class="ui button"
+                                                type="button"
+                                                [class.active]="creationMode === 'repository'"
+                                                [class.blue]="creationMode === 'repository'"
+                                                [class.disabled]="!project.application_names || !project.application_names.length"
+                                                (click)="creationMode = 'repository'">{{'common_create_repo' | translate}}</button>
+
                                     </div>
                                   </div>
                                 </div>
@@ -48,7 +55,7 @@
                                     <div class="one wide column">
 
                                     </div>
-                                    <div class="fourteen wide column" *ngIf="!asCode">
+                                    <div class="fourteen wide column" *ngIf="creationMode === 'graphical'">
                                         <div class="field" [class.error]="name.invalid || duplicateWorkflowName">
                                             <label>{{ 'workflow_name' | translate}}</label>
                                             <input
@@ -72,7 +79,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="fourteen wide column" *ngIf="asCode">
+                                    <div class="fourteen wide column" *ngIf="creationMode === 'text'">
                                         <div class="field">
                                             <codemirror
                                                 name="wfToImport"
@@ -86,6 +93,42 @@
                                             <button class="ui right floated green button" type="button" (click)="importWorkflow()" *ngIf="asCode"
                                                     [disabled]="!wfToImport" [class.loading]="loading">{{ 'btn_create' | translate }}
                                             </button>
+                                        </div>
+                                    </div>
+                                    <div class="fourteen wide column" *ngIf="creationMode === 'repository'">
+                                        <div class="ui field">
+                                            <label>{{ 'workflow_wizard_select_repo_man' | translate}}</label>
+                                            <sui-select class="selection"
+                                                        name="repoman"
+                                                        [(ngModel)]="selectedRepoManager"
+                                                        (selectedOptionChange)="fetchRepos($event)"
+                                                        [options]="project.vcs_servers"
+                                                        [isSearchable]="true" #select>
+                                                <sui-select-option *ngFor="let vcs of select.filteredOptions"
+                                                                   [value]="vcs.name">
+                                                </sui-select-option>
+                                            </sui-select>
+                                        </div>
+                                        <div class="ui field" *ngIf="selectedRepoManager">
+                                            <label>{{ 'workflow_wizard_select_repo' | translate}}</label>
+                                            <div class="ui info message" *ngIf="loadingRepo">{{'workflow_wiazrd_select_repo_loading' | translate }}</div>
+                                            <ng-container *ngIf="!loadingRepo">
+                                                <sui-select class="selection"
+                                                            name="repo"
+                                                            [(ngModel)]="selectedRepo"
+                                                            [options]="repos"
+                                                            [optionsFilter]="filterRepo"
+                                                            labelField="fullname"
+                                                            [isSearchable]="true" #repositorySelect>
+                                                    <sui-select-option *ngFor="let r of repositorySelect.filteredOptions" [value]="r">
+
+                                                    </sui-select-option>
+                                                </sui-select>
+                                            </ng-container>
+                                        </div>
+                                        <div class="ui field" *ngIf="selectedRepo">
+                                            <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy" (strategyChange)="createWorkflowFromRepo()" [hideBranch]="true"></app-vcs-strategy>
+                                            {{ selectedStrategy | json }}
                                         </div>
                                     </div>
                                 </div>

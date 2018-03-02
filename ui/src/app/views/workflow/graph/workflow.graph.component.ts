@@ -42,6 +42,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     workflow: Workflow;
     _workflowRun: WorkflowRun;
     sidebarOpen: boolean;
+    creationMode = 'graphical';
 
     @Input('workflowData')
     set workflowData(data: Workflow) {

@@ -384,7 +384,7 @@ See $ engine config command for more details.
 		})
 
 		for _, s := range services {
-			go start(ctx, s.service, s.cfg)
+			go start(ctx, s.service, s.cfg, s.arg)
 
 			//Stupid trick: when API is starting wait a bit before start the other
 			if s.arg == "API" || s.arg == "api" {
@@ -400,11 +400,11 @@ See $ engine config command for more details.
 	},
 }
 
-func start(c context.Context, s Service, cfg interface{}) {
+func start(c context.Context, s Service, cfg interface{}, serviceName string) {
 	if err := s.ApplyConfiguration(cfg); err != nil {
-		sdk.Exit("Unable to init service: %v", err)
+		sdk.Exit("Unable to init service %s: %v", serviceName, err)
 	}
 	if err := s.Serve(c); err != nil {
-		sdk.Exit("Service has been stopped: %v", err)
+		sdk.Exit("Service has been stopped: %s %v", serviceName, err)
 	}
 }
