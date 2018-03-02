@@ -21,8 +21,8 @@
                     <div class="inline fields" *ngFor="let k of p.config | keys">
                         <div class="four wide field"><label>{{k}}</label></div>
                         <div class="twelve wide field">
-                            <input type="text" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'string'" (ngModelChange)="p.hasChanged = true">
-                            <input type="password" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (ngModelChange)="p.hasChanged = true">
+                            <input type="text" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'string'" (keydown)="p.hasChanged = true">
+                            <input type="password" name="platformpassword" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (keydown)="p.hasChanged = true">
                         </div>
                     </div>
                 </div>
