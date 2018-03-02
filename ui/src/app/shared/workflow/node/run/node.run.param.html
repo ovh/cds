@@ -22,7 +22,8 @@
                                     [paramsRef]="_nodeToRun.pipeline.parameters" mode="launcher"
                                     [suggest]="[]"></app-parameter-list>
             </ng-container>
-            <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
+            <h3 *ngIf="!readOnly">{{ 'workflow_node_context_payload' | translate}}</h3>
+            <h3 *ngIf="readOnly">{{ 'workflow_node_context_payload_read_only' | translate}}</h3>
             <ng-container *ngIf="!loadingBranches">
                 <codemirror
                   [class.invalid]="invalidJSON"
@@ -48,7 +49,7 @@
             </div>
         </div>
         <div class="ui wide" *ngIf="nodeToRun.context.application">
-            <h3 *ngIf="!loadingCommits">{{ 'pipeline_parent_commit_to_deploy' | translate}}</h3>
+            <h3>{{ 'pipeline_parent_commit_to_deploy' | translate}}</h3>
             <div class="scrollable" *ngIf="!loadingCommits && commits != null && commits.length !== 0">
                 <app-commit-list [commits]="commits"></app-commit-list>
             </div>
