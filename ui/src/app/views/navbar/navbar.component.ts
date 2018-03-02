@@ -133,10 +133,23 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     navigateToResult(result: string) {
         let splittedSelection = result.split('/', 2);
         let project = this.navProjects.projects.find(p => p.name === splittedSelection[0]);
+
         if (splittedSelection.length === 1) {
             this.navigateToProject(project.key);
         } else if (splittedSelection.length === 2) {
-            this.navigateToApplication(project.key, project.application_names.find(a => a === splittedSelection[1]));
+            if (Array.isArray(project.workflow_names)) {
+                let workflowFound = project.workflow_names.find(w => w === splittedSelection[1]);
+                if (workflowFound) {
+                    return this.navigateToWorkflow(project.key, workflowFound);
+                }
+            }
+
+            if (Array.isArray(project.application_names)) {
+                let appFound = project.application_names.find(a => a === splittedSelection[1]);
+                if (appFound) {
+                    return this.navigateToApplication(project.key, appFound);
+                }
+            }
         }
     }
 
@@ -176,5 +189,12 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      */
     navigateToApplication(key: string, appName: string): void {
         this._router.navigate(['project', key, 'application', appName]);
+    }
+
+    /**
+     * Navigate to the selected application.
+     */
+    navigateToWorkflow(key: string, workflowName: string): void {
+        this._router.navigate(['project', key, 'workflow', workflowName]);
     }
 }
