@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -65,6 +66,33 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 				return sdk.ErrNoWorkerModel
 			}
 			workerModel = wm.Name
+		}
+
+		pbj, errl := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		if errl != nil {
+			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> Cannot load job nodeJobRunID:%d", id)
+		}
+
+		// a worker can have only one group
+		groups := getUser(ctx).Groups
+		if len(groups) != 1 {
+			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> too many groups detected on worker:%d", len(groups))
+		}
+
+		var isGroupOK bool
+		if len(pbj.ExecGroups) == 0 {
+			isGroupOK = true
+		} else {
+			for _, g := range pbj.ExecGroups {
+				if g.ID == groups[0].ID {
+					isGroupOK = true
+					break
+				}
+			}
+		}
+
+		if !isGroupOK {
+			return sdk.WrapError(sdk.ErrForbidden, "postTakeWorkflowJobHandler> this worker is not authorized to take this job:%d execGroups:%+v", id, pbj.ExecGroups)
 		}
 
 		chanEvent := make(chan interface{}, 1)
@@ -537,7 +565,13 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 		for i, g := range getUser(ctx).Groups {
 			groupsID[i] = g.ID
 		}
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since)
+
+		permissions := permission.PermissionReadExecute
+		if !isHatcheryOrWorker(r) {
+			permissions = permission.PermissionRead
+		}
+
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, &since)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}

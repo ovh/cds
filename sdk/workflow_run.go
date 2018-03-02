@@ -182,6 +182,7 @@ type WorkflowNodeJobRun struct {
 	Model             string      `json:"model,omitempty" db:"model"`
 	BookedBy          Hatchery    `json:"bookedby" db:"-"`
 	SpawnInfos        []SpawnInfo `json:"spawninfos" db:"-"`
+	ExecGroups        []Group     `json:"exec_groups" db:"-"`
 }
 
 //WorkflowNodeJobRunInfo represents info on a job

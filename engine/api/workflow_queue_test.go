@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -56,6 +57,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionReadExecute))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -90,6 +92,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
+
+	test.NoError(t, workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{Group: proj.ProjectGroups[0].Group, Permission: permission.PermissionReadExecute}))
 
 	//Prepare request
 	vars := map[string]string{

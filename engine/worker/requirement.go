@@ -41,6 +41,10 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, 
 	log.Debug("checkRequirements> for JobID:%d model of worker: %+v", bookedJobID, w.model)
 	log.Debug("checkRequirements> for JobID:%d execGroups: %+v", bookedJobID, execGroups)
 
+	// DEPRECATED
+	// this code is useful for pipelineBuildJob
+	// with CDS Workflows, the queue contains only jobs executable by worker
+	// after removing pbBuildJob, check execGroups here can be removed
 	if execGroups != nil && len(execGroups) > 0 && w.model.GroupID > 0 {
 		checkGroup := false
 		for _, g := range execGroups {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -71,7 +72,7 @@ func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	if since == nil {
 		since = new(time.Time)
 	}
@@ -90,10 +91,29 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int6
 
 	jobs := make([]sdk.WorkflowNodeJobRun, len(sqlJobs))
 	for i := range sqlJobs {
-		getHatcheryInfo(store, &sqlJobs[i])
 		if err := sqlJobs[i].PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (PostGet)")
 		}
+
+		var keepJobInQueue bool
+		// a shared.infra group can see all jobs
+		// a user (not a hatchery or worker) can see all jobs, even if jobs are only RO for him
+		if isSharedInfraGroup || rights == permission.PermissionRead {
+			keepJobInQueue = true
+		} else {
+			// if no shared.infra, we have to filter only executable jobs for worker or hatchery
+			for _, g := range sqlJobs[i].ExecGroups {
+				if sdk.IsInInt64Array(g.ID, groupsID) {
+					keepJobInQueue = true
+					break
+				}
+			}
+		}
+
+		if !keepJobInQueue {
+			continue
+		}
+		getHatcheryInfo(store, &sqlJobs[i])
 		jobs[i] = sdk.WorkflowNodeJobRun(sqlJobs[i])
 	}
 
@@ -206,8 +226,13 @@ func (j *JobRun) PostUpdate(s gorp.SqlExecutor) error {
 		return errP
 	}
 
-	query := "update workflow_node_run_job set job = $2, variables = $3 where id = $1"
-	if n, err := s.Exec(query, j.ID, jobJSON, paramsJSON); err != nil {
+	execGroupsJSON, errG := json.Marshal(j.ExecGroups)
+	if errG != nil {
+		return sdk.WrapError(errG, "PostUpdate> err on marshal j.ExecGroups")
+	}
+
+	query := "update workflow_node_run_job set job = $2, variables = $3, exec_groups = $4 where id = $1"
+	if n, err := s.Exec(query, j.ID, jobJSON, paramsJSON, execGroupsJSON); err != nil {
 		return err
 	} else if n, _ := n.RowsAffected(); n == 0 {
 		return fmt.Errorf("Unable to update workflow_node_run_job id = %d", j.ID)
@@ -225,9 +250,9 @@ func getHatcheryInfo(store cache.Store, j *JobRun) {
 
 // PostGet is a db hook on workflow_node_run_job
 func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
-	query := "SELECT job, variables FROM workflow_node_run_job WHERE id = $1"
-	var params, job []byte
-	if err := s.QueryRow(query, j.ID).Scan(&job, &params); err != nil {
+	query := "SELECT job, variables, exec_groups FROM workflow_node_run_job WHERE id = $1"
+	var params, job, execGroups []byte
+	if err := s.QueryRow(query, j.ID).Scan(&job, &params, &execGroups); err != nil {
 		return sdk.WrapError(err, "PostGet> s.QueryRow id:%d", j.ID)
 	}
 	if err := json.Unmarshal(job, &j.Job); err != nil {
@@ -235,6 +260,12 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 	}
 	if err := json.Unmarshal(params, &j.Parameters); err != nil {
 		return sdk.WrapError(err, "PostGet> json.Unmarshal params")
+	}
+
+	if len(execGroups) > 0 {
+		if err := json.Unmarshal(execGroups, &j.ExecGroups); err != nil {
+			return sdk.WrapError(err, "PostGet> error on unmarshal exec_groups")
+		}
 	}
 
 	rows, err := s.Query("SELECT DISTINCT UNNEST(spawn_attempts) FROM workflow_node_run_job WHERE id = $1", j.ID)
