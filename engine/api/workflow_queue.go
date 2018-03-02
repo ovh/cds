@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -565,7 +566,12 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 			groupsID[i] = g.ID
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, isUser(r), groupsID, &since)
+		permissions := permission.PermissionReadExecute
+		if !isHatcheryOrWorker(r) {
+			permissions = permission.PermissionRead
+		}
+
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, &since)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}

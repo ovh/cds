@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -71,7 +72,7 @@ func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, isUser bool, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	if since == nil {
 		since = new(time.Time)
 	}
@@ -93,23 +94,23 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, isUser bool, gr
 		if err := sqlJobs[i].PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (PostGet)")
 		}
-		var toadd bool
 
+		var keepJobInQueue bool
 		// a shared.infra group can see all jobs
 		// a user (not a hatchery or worker) can see all jobs, even if jobs are only RO for him
-		if isSharedInfraGroup || isUser {
-			toadd = true
+		if isSharedInfraGroup || rights == permission.PermissionRead {
+			keepJobInQueue = true
 		} else {
 			// if no shared.infra, we have to filter only executable jobs for worker or hatchery
 			for _, g := range sqlJobs[i].ExecGroups {
 				if sdk.IsInInt64Array(g.ID, groupsID) {
-					toadd = true
+					keepJobInQueue = true
 					break
 				}
 			}
 		}
 
-		if !toadd {
+		if !keepJobInQueue {
 			continue
 		}
 		getHatcheryInfo(store, &sqlJobs[i])

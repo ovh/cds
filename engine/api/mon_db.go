@@ -9,6 +9,7 @@ import (
 
 	"github.com/rubenv/sql-migrate"
 
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -100,7 +101,12 @@ func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context, r *http.Reques
 	}
 	since := time.Unix(0, 0)
 	s1 := time.Now()
-	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, isUser(r), groupsID, &since); err != nil {
+	permissions := permission.PermissionReadExecute
+	if !isHatcheryOrWorker(r) {
+		permissions = permission.PermissionRead
+	}
+
+	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, &since); err != nil {
 		return fmt.Sprintf("getMonDBTimesDBQueueWorkflow> Unable to load queue:: %s", err)
 	}
 	return elapsed("getMonDBTimesDBQueueWorkflow", s1)

@@ -277,14 +277,14 @@ func getAgent(r *http.Request) string {
 	return r.Header.Get("User-Agent")
 }
 
-func isUser(r *http.Request) bool {
+func isHatcheryOrWorker(r *http.Request) bool {
 	switch getAgent(r) {
 	case sdk.HatcheryAgent:
-		return false
-	case sdk.WorkerAgent:
-		return false
-	default:
 		return true
+	case sdk.WorkerAgent:
+		return true
+	default:
+		return false
 	}
 }
 
