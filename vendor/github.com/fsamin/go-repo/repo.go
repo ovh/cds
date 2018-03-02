@@ -45,7 +45,11 @@ func New(path string, opts ...Option) (Repo, error) {
 	}
 	dotGit := filepath.Join(path, ".git")
 	if _, err := os.Stat(dotGit); err != nil || os.IsNotExist(err) {
+<<<<<<< HEAD
 		return r, err
+=======
+		return Repo{ path}, err
+>>>>>>> chore: update vendor
 	}
 	return r, nil
 }

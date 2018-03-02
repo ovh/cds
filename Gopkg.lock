@@ -210,7 +210,11 @@
   branch = "master"
   name = "github.com/fsamin/go-repo"
   packages = ["."]
+<<<<<<< HEAD
   revision = "2b23591bd8d5c87e5cfcc9348e34b23bea7c326e"
+=======
+  revision = "d193d883560a342f9044fec3b641d74209ed535f"
+>>>>>>> chore: update vendor
 
 [[projects]]
   name = "github.com/fsamin/go-shredder"
