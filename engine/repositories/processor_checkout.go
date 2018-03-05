@@ -17,10 +17,17 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 	}
 
 	// Get the git repository
-	gitRepo, err := repo.New(r.Basedir)
+	opts := []repo.Option{repo.WithVerbose()}
+	if op.RepositoryStrategy.ConnectionType == "ssh" {
+		opts = append(opts, repo.WithSSHAuth([]byte(op.RepositoryStrategy.SSHKey)))
+	} else if op.RepositoryStrategy.User != "" && op.RepositoryStrategy.Password != "" {
+		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, op.RepositoryStrategy.Password))
+	}
+
+	gitRepo, err := repo.New(r.Basedir, opts...)
 	if err != nil {
 		log.Debug("Repositories> processCheckout> cloning %s", r.URL)
-		if _, err = repo.Clone(r.Basedir, r.URL); err != nil {
+		if _, err = repo.Clone(r.Basedir, r.URL, opts...); err != nil {
 			log.Error("Repositories> processCheckout> error %v", err)
 			return err
 		}

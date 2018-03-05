@@ -2,10 +2,17 @@ package repo
 
 import "time"
 
+// Repo is the main type of this lib
 type Repo struct {
-	path string
+	path    string
+	url     string
+	sshKey  *sshKey
+	pgpKey  *pgpKey
+	verbose bool
+	logger  func(format string, i ...interface{})
 }
 
+// Commit represent a git commit
 type Commit struct {
 	LongHash string
 	Hash     string
