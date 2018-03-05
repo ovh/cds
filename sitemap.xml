@@ -119,6 +119,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</loc>
   </url>
   

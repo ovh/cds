@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Job&#39;s Requirements :: CDS - Continuous Delivery Service</title>
+    <title>Run with binaries :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/workflows/pipelines/requirements/">
+  <body class="" data-url="/hosting/ready-to-run/from-binaries/">
     <nav id="sidebar" class="">
 
 
@@ -131,10 +131,9 @@
     </li>
           
           
-    <li data-nav-id="/workflows/" class="dd-item parent">
+    <li data-nav-id="/workflows/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/">
-        <span>Building CDS Workflows</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Building CDS Workflows</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/design/" class="dd-item">
@@ -218,10 +217,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/" class="dd-item parent">
+    <li data-nav-id="/workflows/pipelines/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/pipelines/">
-        <span>Building Pipelines</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Building Pipelines</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/variables/" class="dd-item">
@@ -352,10 +350,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/requirements/" class="dd-item parent active">
+    <li data-nav-id="/workflows/pipelines/requirements/" class="dd-item">
       <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/">
-        <span>Job&#39;s Requirements</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Job&#39;s Requirements</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/pipelines/requirements/service/" class="dd-item">
@@ -1479,9 +1476,10 @@
     </li>
           
           
-    <li data-nav-id="/hosting/" class="dd-item">
+    <li data-nav-id="/hosting/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/hosting/">
-        <span>Hosting your own instance</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Hosting your own instance</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/hosting/requirements/" class="dd-item">
@@ -1494,9 +1492,10 @@
           <span>Download</span>
         </a>
     </li>
-    <li data-nav-id="/hosting/ready-to-run/" class="dd-item">
+    <li data-nav-id="/hosting/ready-to-run/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/hosting/ready-to-run/">
-        <span>Ready to RUN</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Ready to RUN</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/hosting/ready-to-run/docker-compose/" class="dd-item">
@@ -1504,7 +1503,7 @@
           <span>Docker Compose</span>
         </a>
     </li>
-      <li data-nav-id="/hosting/ready-to-run/from-binaries/" class="dd-item">
+      <li data-nav-id="/hosting/ready-to-run/from-binaries/" class="dd-item active">
         <a href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/">
           <span>Run with binaries</span>
         </a>
@@ -1617,7 +1616,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/pipelines/requirements/_index.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/hosting/ready-to-run/from-binaries.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1640,7 +1639,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > Job's Requirements
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/hosting/'>Hosting your own instance</a> > <a href='https://ovh.github.io/cds/hosting/ready-to-run/'>Ready to RUN</a> > Run with binaries
 
  
 
@@ -1657,15 +1656,17 @@
 <ul>
 <li>
 <ul>
-<li><a href="#note-on-service-requirement">Note on Service Requirement</a>
+<li><a href="#run-from-binaries">Run from binaries</a>
 <ul>
-<li><a href="#how-to">How to</a>
-<ul>
-<li><a href="#environment-variables">Environment variables</a></li>
+<li><a href="#prerequisite">Prerequisite</a></li>
+<li><a href="#get-latest-release-from-github">Get latest release from Github</a></li>
+<li><a href="#prepare-database">Prepare Database</a></li>
+<li><a href="#launch-cds-api">Launch CDS API</a></li>
+<li><a href="#launch-cds-ui">Launch CDS UI</a></li>
+<li><a href="#launch-cds-local-hatchery">Launch CDS Local Hatchery</a></li>
 </ul></li>
-<li><a href="#tutorials">Tutorials</a></li>
 </ul></li>
-</ul></li>
+<li><a href="#go-further">Go further</a></li>
 </ul>
 </nav>
     </div>
@@ -1677,7 +1678,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Job&#39;s Requirements</h1>
+                <h1>Run with binaries</h1>
                 <p></p>
             </div>
           
@@ -1687,69 +1688,141 @@
 
 
 
-<p>Type of requirements:</p>
+<h2 id="run-from-binaries">Run from binaries</h2>
+
+<p>This article contains the steps to start CDS locally, with API, UI and a local Hatchery.</p>
 
 <ul>
-<li>Binary</li>
-<li>Model</li>
-<li>Hostname</li>
-<li>Network</li>
-<li>Service</li>
-<li>Memory</li>
-<li>OS &amp; Architecture</li>
+<li>Download CDS from Github</li>
+<li>Prepare Database</li>
+<li>Launch CDS API, CDS UI and a Local Hatchery</li>
 </ul>
 
-<p>A <a href="https://ovh.github.io/cds/introduction/concepts/job/">Job</a> will be executed by a <strong>worker</strong>.</p>
-
-<p>CDS will choose and provision a worker for dependending on the <strong>requirements</strong> you define on your job.</p>
-
-<p>You can set as many requirements as you want, following these rules:</p>
+<h3 id="prerequisite">Prerequisite</h3>
 
 <ul>
-<li>Only one model can be set as requirement</li>
-<li>Only one hostname can be set as requirement</li>
-<li>Only one OS &amp; Architecture requirement can be set as at a time</li>
-<li>Memory and Services requirements are availabe only on Docker models</li>
+<li>a redis</li>
+<li>a postgresql 9.4 min</li>
 </ul>
 
-<h2 id="note-on-service-requirement">Note on Service Requirement</h2>
+<h3 id="get-latest-release-from-github">Get latest release from Github</h3>
 
-<p>A Service in CDS is a docker container which is linked with your base image. To summarize, if you add mysql as service requirement to your pipeline job, the required image will then be used to create a container that is linked to the build container.</p>
+<pre><code class="language-bash">mkdir $HOME/cds
+cd cds
 
-<h3 id="how-to">How to</h3>
+LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d '&quot;' -f 4)
+OS=linux # could be linux, darwin, windows
+ARCH=amd64 # could be 386, arm, amd64
 
-<p>When editing a pipeline job, choose your model as usual, then add a new  <strong>service</strong> requirement, the name you set will be the service&rsquo;s hostname, set the docker image for the service as the value.</p>
+# GET Binaries from github
+wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH
+wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-worker-$OS-$ARCH
+wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH
+wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/ui.tar.gz
+wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/sql.tar.gz
+chmod +x *-$OS-$ARCH
 
-<p>When the pipeline will be triggered, a worker defined by the model will be spawned with a <a href="https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/">docker link</a> to the service you defined as requirement.</p>
-
-<h4 id="environment-variables">Environment variables</h4>
-
-<p>You can defined environment variables of the service by setting requirement value as :</p>
-
-<pre><code class="language-bash">    registry.ovh.net/official/postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword
 </code></pre>
 
-<p>To define your job&rsquo;s requirements in the UI, you just have to go on the job&rsquo;s edition page and click on requirements :</p>
+<h3 id="prepare-database">Prepare Database</h3>
 
-<p><img src="https://ovh.github.io/cds/images/job_requirements_ui.png" alt="Job's requirement UI" /></p>
+<p>For this example, we consider that the database is installed on <code>localhost</code>,
+port <code>5432</code>, with an existing empty database and user named <code>cds</code> and a password &lsquo;cds&rsquo;.</p>
 
-<p>Then a modal will appear in order to select your requirements :</p>
+<pre><code class="language-bash">cd $HOME/cds
+tar xzf sql.tar.gz
+./cds-engine-linux-amd64 database upgrade --db-host localhost --db-user cds --db-password cds --db-name cds --db-sslmode disable --db-port 5432 --migrate-dir sql
+</code></pre>
 
-<p><img src="https://ovh.github.io/cds/images/requirements_ui.png" alt="Job's requirement modal" /></p>
+<h3 id="launch-cds-api">Launch CDS API</h3>
 
-<h3 id="tutorials">Tutorials</h3>
+<p>Generate a <strong><a href="">Configuration File</a></strong></p>
+
+<pre><code class="language-bash">cd $HOME/cds
+
+./cds-engine-linux-amd64 config new &gt; $HOME/cds/conf.toml
+./cds-engine-linux-amd64 start api --config $HOME/cds/conf.toml
+</code></pre>
+
+<p>Check that CDS is up and running:</p>
+
+<pre><code class="language-bash">curl http://localhost:8081/mon/version
+curl http://localhost:8081/mon/status
+</code></pre>
+
+<h3 id="launch-cds-ui">Launch CDS UI</h3>
+
+<pre><code class="language-bash">cd $HOME/cds
+tar xzf ui.tar.gz # this command generates a $HOME/cds/dist/ directory
+</code></pre>
+
+<p>The <code>dist/</code> directory contains all HTML, Javascript, css&hellip; files.</p>
+
+<p>You can serve theses files with a simple web server, but there is a ready-to-run Caddyfile to launch CDS UI quickly.</p>
+
+<pre><code class="language-bash">cd dist/
+
+# BACKEND_HOST contains a url to CDS Engine
+export BACKEND_HOST=&quot;http://localhost:8081&quot;
+
+# if you expose CDS on a domain as https://your-domain/your-cds, enter &quot;/your-cds&quot;
+BASE_URL=&quot;/&quot;
+sed -i &quot;s#base href=\&quot;/\&quot;#base href=\&quot;${BASE_URL}\&quot;#g&quot; index.html
+
+# Get Caddy
+wget https://github.com/ovh/cds/releases/download/0.8.0/caddy-linux-amd64 
+chmod +x caddy-linux-amd64 
+
+# RUN CDS UI
+./caddy-linux-amd64 
+</code></pre>
+
+<p>Then, open a browser on <a href="http://localhost:2015/">http://localhost:2015/</a></p>
+
+<h3 id="launch-cds-local-hatchery">Launch CDS Local Hatchery</h3>
+
+<p>The previously generated configuration file contains all CDS configuration.</p>
+
+<p>To be able to start a local hatchery, enter a hatchery name in the section <code>hatchery.local.commonConfiguration</code></p>
+
+<pre><code class="language-toml">
+...
+[hatchery.local]
+
+    # BaseDir for worker workspace
+    basedir = &quot;/tmp&quot;
+
+    # Nb Workers to provision
+    nbProvision = 1
+
+    [hatchery.local.commonConfiguration]
+
+      # Name of Hatchery
+      name = &quot;my-local-hatchery&quot;
+...
+
+</code></pre>
+
+<p>Then, start the local hatchery</p>
+
+<pre><code class="language-bash">./cds-engine-linux-amd64 start hatchery:local --config $HOME/cds/conf.toml
+
+# notice that you can run api and hatchery with a one common only:
+# ./cds-engine-linux-amd64 start api hatchery:local --config $HOME/cds/conf.toml
+</code></pre>
+
+<h1 id="go-further">Go further</h1>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">Tutorial - Service Link Requirement Nginx</a></li>
-<li><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/">Tutorial - Service Link Requirement PostgreSQL</a></li>
+<li>How to use Openstack infrastructure to spawn CDS container <a href="https://ovh.github.io/cds/hatchery/openstack/">read more</a></li>
+<li>Link CDS to a repository manager, as Github, Bitbucket Server or Gitlab <a href="https://ovh.github.io/cds/hosting/repositories-manager/">read more</a></li>
+<li>Learn more about CDS variables <a href="https://ovh.github.io/cds/workflows/pipelines/variables/">read more</a></li>
 </ul>
 
 
 <footer class=" footline" >
 	
 </footer>
-
-
 
 
 
@@ -1764,8 +1837,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-venom/" title="plugin-venom"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/" title="Service Link" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/" title="Docker Compose"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/hosting/configuration/" title="Configuration" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -1785,3 +1858,4 @@
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
+
