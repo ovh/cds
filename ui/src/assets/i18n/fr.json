@@ -680,6 +680,7 @@
   "workflow_context_invalid": "JSON invalide",
   "workflow_create": "Création d'un workflow",
   "workflow_deleted": "Workflow supprimé",
+  "workflow_deleted_warning": "Attention si vous supprimez ce pipeline avec tout ses enfants vous allez automatiquement supprimer tout votre workflow et sa configuration",
   "workflow_delete_label": "Suppression du workflow",
   "workflow_delete_description": "Une fois le workflow supprimé, il n'y a pas de retour possible.",
   "workflow_description": "Description du workflow",
