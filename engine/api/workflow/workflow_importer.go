@@ -15,7 +15,7 @@ import (
 )
 
 //Import is able to create a new workflow and all its components
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message) error {
+func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message, dryRun bool) error {
 	w.ProjectKey = proj.Key
 	w.ProjectID = proj.ID
 
@@ -119,9 +119,11 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		return sdk.WrapError(err, "Import> Unable to update workflow")
 	}
 
-	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-	if _, errHr := HookRegistration(db, store, oldW, *w, proj); errHr != nil {
-		return sdk.WrapError(errHr, "Import> Cannot register hook")
+	if !dryRun {
+		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
+		if _, errHr := HookRegistration(db, store, oldW, *w, proj); errHr != nil {
+			return sdk.WrapError(errHr, "Import> Cannot register hook")
+		}
 	}
 
 	if err := importWorkflowGroups(db, w); err != nil {

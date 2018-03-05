@@ -30,7 +30,7 @@ type WorkflowPushOption struct {
 	RepositoryName     string
 	RepositoryStrategy sdk.RepositoryStrategy
 	DryRun             bool
-	IsExecution        bool
+	HookUUID           string
 }
 
 // CreateFromRepository a workflow from a repository
@@ -38,6 +38,14 @@ func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, 
 	ope, err := createOperationRequest(*w, opts)
 	if err != nil {
 		return sdk.WrapError(err, "CreateFromRepository> Unable to create operation request")
+	}
+
+	// update user permission if  we come from hook
+	if opts.Hook != nil {
+		u.Groups = make([]sdk.Group, len(p.ProjectGroups))
+		for i, gp := range p.ProjectGroups {
+			u.Groups[i] = gp.Group
+		}
 	}
 
 	if err := PostRepositoryOperation(db, store, &ope); err != nil {
@@ -48,14 +56,18 @@ func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, 
 		return sdk.WrapError(err, "CreateFromRepository> Cannot analyse repository")
 	}
 
-	if err := extractWorkflow(db, store, p, w, ope, u, decryptFunc); err != nil {
+	var uuid string
+	if opts.Hook != nil {
+		uuid = opts.Hook.WorkflowNodeHookUUID
+	}
+	if err := extractWorkflow(db, store, p, w, ope, u, decryptFunc, uuid); err != nil {
 		return sdk.WrapError(err, "CreateFromRepository> Unable to extract workflow")
 	}
 
 	return nil
 }
 
-func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc) error {
+func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc, hookUUID string) error {
 	// Read files
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
@@ -69,8 +81,9 @@ func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.W
 		FromRepository:     ope.RepositoryInfo.FetchURL,
 		IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		DryRun:             true,
-		IsExecution:        true,
+		HookUUID:           hookUUID,
 	}
+
 	_, workflowPushed, errP := Push(db, store, p, tr, opt, u, decryptFunc)
 	if errP != nil {
 		return sdk.WrapError(errP, "extractWorkflow> Unable to get workflow from file")

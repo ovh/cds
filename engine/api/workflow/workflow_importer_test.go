@@ -417,7 +417,7 @@ func TestImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := workflow.Import(db, cache, proj, tt.args.w, u, tt.args.force, nil); err != nil {
+			if err := workflow.Import(db, cache, proj, tt.args.w, u, tt.args.force, nil, false); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
 				} else {

@@ -766,11 +766,18 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		allMsg = append(allMsg, msgList...)
 
 		// Update application data on project
+		found := false
 		for i, a := range proj.Applications {
 			if a.Name == appDB.Name {
 				proj.Applications[i] = *appDB
+				found = true
+				break
 			}
 		}
+		if !found {
+			proj.Applications = append(proj.Applications, *appDB)
+		}
+
 		log.Debug("workflowPush> -- %s OK", filename)
 	}
 
@@ -783,11 +790,17 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		}
 		allMsg = append(allMsg, msgList...)
 
-		// Update application data on project
+		// Update environment data on project
+		found := false
 		for i, e := range proj.Environments {
 			if e.Name == envDB.Name {
 				proj.Environments[i] = *envDB
+				found = true
+				break
 			}
+		}
+		if !found {
+			proj.Environments = append(proj.Environments, *envDB)
 		}
 
 		log.Debug("workflowPush> -- %s OK", filename)
@@ -802,17 +815,23 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		}
 		allMsg = append(allMsg, msgList...)
 
-		// Update application data on project
+		// Update pipeline data on project
+		found := false
 		for i, pi := range proj.Pipelines {
 			if pi.Name == pipDB.Name {
 				proj.Pipelines[i] = *pipDB
+				found = true
+				break
 			}
+		}
+		if !found {
+			proj.Pipelines = append(proj.Pipelines, *pipDB)
 		}
 
 		log.Debug("workflowPush> -- %s OK", filename)
 	}
 
-	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u)
+	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, opts.DryRun)
 	if err != nil {
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
 		return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
@@ -826,10 +845,11 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		}
 
 		if wf.FromRepository != "" {
-			if len(wf.Root.Hooks) == 0 && !opts.IsExecution {
+			if len(wf.Root.Hooks) == 0 {
 				wf.Root.Hooks = append(wf.Root.Hooks, sdk.WorkflowNodeHook{
 					WorkflowHookModel: sdk.RepositoryWebHookModel,
 					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
+					UUID:              opts.HookUUID,
 				})
 			}
 
@@ -844,7 +864,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 			return nil, nil, sdk.WrapError(err, "workflowPush> Unable to update workflow", err)
 		}
 
-		if !opts.IsExecution {
+		if !opts.DryRun {
 			defaultPayload, errHr := HookRegistration(tx, store, nil, *wf, proj)
 			if errHr != nil {
 				return nil, nil, sdk.WrapError(errHr, "workflowPush> hook registration failed")

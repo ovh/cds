@@ -121,7 +121,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(tx, api.Cache, proj, ew, force, getUser(ctx))
+		wrkflw, msgList, globalError := workflow.ParseAndImport(tx, api.Cache, proj, ew, force, getUser(ctx), false)
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {
