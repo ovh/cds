@@ -14,6 +14,21 @@ func (r Repo) runCmd(name string, args ...string) (stdOut string, err error) {
 	cmd.Stderr = buffErr
 	cmd.Stdout = buffOut
 
+	if r.sshKey != nil {
+		envs, err := r.setuoSSHKey()
+		if err != nil {
+			return "", err
+		}
+		cmd.Env = append(cmd.Env, envs...)
+		if r.verbose {
+			r.log("Using %v\n", envs)
+		}
+	}
+
+	if r.verbose {
+		r.log("Running command %+v\n", cmd)
+	}
+
 	if err := cmd.Run(); err != nil {
 		return "", err
 	}
