@@ -608,14 +608,40 @@ func (api *API) postWorkflowRunHandler() Handler {
 		if lastRun != nil {
 			wf = &lastRun.Workflow
 		} else {
-			var errl error
+			// Test workflow as code or not
 			options := workflow.LoadOptions{
-				DeepPipeline: true,
-				Base64Keys:   true,
+				OnlyRootNode: true,
+				DeepPipeline: false,
 			}
-			wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
-			if errl != nil {
-				return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
+			wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+			if errW != nil {
+				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
+			}
+
+			if wf.FromRepository != "" {
+				proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+					project.LoadOptions.WithGroups,
+					project.LoadOptions.WithApplications,
+					project.LoadOptions.WithEnvironments,
+					project.LoadOptions.WithPipelines)
+
+				if errp != nil {
+					return sdk.WrapError(errp, "postWorkflowRunHandler> Cannot load project %s", key)
+				}
+				// Get workflow from repository
+				if errCreate := workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, getUser(ctx), project.DecryptWithBuiltinKey); errCreate != nil {
+					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository")
+				}
+			} else {
+				var errl error
+				options := workflow.LoadOptions{
+					DeepPipeline: true,
+					Base64Keys:   true,
+				}
+				wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+				if errl != nil {
+					return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow %s/%s", key, name)
+				}
 			}
 		}
 

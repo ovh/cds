@@ -138,6 +138,7 @@ var (
 	ErrInvalidJobRequirementDuplicateModel    = Error{ID: 123, Status: http.StatusBadRequest}
 	ErrInvalidJobRequirementDuplicateHostname = Error{ID: 124, Status: http.StatusBadRequest}
 	ErrInvalidKeyName                         = Error{ID: 125, Status: http.StatusBadRequest}
+	ErrRepoOperationTimeout                   = Error{ID: 126, Status: http.StatusRequestTimeout}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -264,6 +265,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidJobRequirementDuplicateModel.ID:    "Invalid job requirements: you can't select multiple worker models",
 	ErrInvalidJobRequirementDuplicateHostname.ID: "Invalid job requirements: you can't select multiple hostname",
 	ErrInvalidKeyName.ID:                         "Invalid key name. Application key must have prefix 'app-'; environment key must have prefix 'env-'",
+	ErrRepoOperationTimeout.ID:                   "Analyzing repository took too much time",
 }
 
 var errorsFrench = map[int]string{
@@ -390,6 +392,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidJobRequirementDuplicateModel.ID:    "Pré-requis de job invalides: vous ne pouvez pas séléctionnez plusieurs modèles de worker",
 	ErrInvalidJobRequirementDuplicateHostname.ID: "Pré-requis de job invalides: vous ne pouvez pas séléctionnez plusieurs hostname",
 	ErrInvalidKeyName.ID:                         "Nom de clé invalide. Les clés d'application doivent être préfixées par 'app-', les clés d'environnement doivent être préfixées par 'env-'",
+	ErrRepoOperationTimeout.ID:                   "L'analyse du dépôt a pris trop de temps",
 }
 
 var errorsLanguages = []map[int]string{

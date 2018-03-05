@@ -269,12 +269,14 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	wn.WorkflowID = w.ID
 	wn.Ref = fmt.Sprintf("%d", dbwn.ID)
 
-	//Load triggers
-	triggers, errTrig := loadTriggers(db, store, w, &wn, u, opts)
-	if errTrig != nil {
-		return nil, sdk.WrapError(errTrig, "LoadNode> Unable to load triggers of %d", id)
+	if !opts.OnlyRootNode {
+		//Load triggers
+		triggers, errTrig := loadTriggers(db, store, w, &wn, u, opts)
+		if errTrig != nil {
+			return nil, sdk.WrapError(errTrig, "LoadNode> Unable to load triggers of %d", id)
+		}
+		wn.Triggers = triggers
 	}
-	wn.Triggers = triggers
 
 	//Load context
 	ctx, errCtx := LoadNodeContext(db, store, w.ProjectKey, wn.ID, u, opts)

@@ -1,12 +1,10 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -18,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
@@ -116,7 +113,7 @@ func (api *API) postWorkflowHandler() Handler {
 		if errHr != nil {
 			return sdk.WrapError(errHr, "postWorkflowHandler")
 		}
-		if defaultPayload != nil && isDefaultPayloadEmpty(wf) {
+		if defaultPayload != nil && workflow.IsDefaultPayloadEmpty(wf) {
 			wf.Root.Context.DefaultPayload = *defaultPayload
 		}
 
@@ -200,7 +197,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errHr, "putWorkflowHandler")
 		}
 
-		if defaultPayload != nil && isDefaultPayloadEmpty(wf) {
+		if defaultPayload != nil && workflow.IsDefaultPayloadEmpty(wf) {
 			wf.Root.Context.DefaultPayload = *defaultPayload
 			if err := workflow.UpdateNodeContext(tx, wf.Root.Context); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> updateNodeContext")
@@ -237,20 +234,6 @@ func (api *API) putWorkflowHandler() Handler {
 
 		return WriteJSON(w, wf1, http.StatusOK)
 	}
-}
-
-func isDefaultPayloadEmpty(wf sdk.Workflow) bool {
-	e := dump.NewDefaultEncoder(new(bytes.Buffer))
-	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-	e.ExtraFields.DetailedMap = false
-	e.ExtraFields.DetailedStruct = false
-	e.ExtraFields.Len = false
-	e.ExtraFields.Type = false
-	m, err := e.ToStringMap(wf.Root.Context.DefaultPayload)
-	if err != nil {
-		log.Warning("isDefaultPayloadEmpty>error while dump wf.Root.Context.DefaultPayload")
-	}
-	return len(m) == 0 // if empty, return true
 }
 
 // putWorkflowHandler deletes a workflow

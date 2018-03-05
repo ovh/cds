@@ -1,23 +1,17 @@
 package api
 
 import (
-	"archive/tar"
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
-	"path/filepath"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
-
-const workflowAsCodePattern = ".cds/**/*.yml"
 
 // postImportAsCodeHandler
 // @title Import workflow as code
@@ -39,14 +33,12 @@ func (api *API) postImportAsCodeHandler() Handler {
 		}
 
 		if ope.LoadFiles.Pattern == "" {
-			ope.LoadFiles.Pattern = workflowAsCodePattern
+			ope.LoadFiles.Pattern = workflow.WorkflowAsCodePattern
 		}
 
-		if ope.LoadFiles.Pattern != workflowAsCodePattern {
+		if ope.LoadFiles.Pattern != workflow.WorkflowAsCodePattern {
 			return sdk.ErrWrongRequest
 		}
-
-		querier := services.Querier(api.mustDB(), api.Cache)
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
@@ -69,13 +61,8 @@ func (api *API) postImportAsCodeHandler() Handler {
 			}
 		}
 
-		srvs, err := querier.FindByType(services.TypeRepositories)
-		if err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to found repositories service")
-		}
-
-		if _, err := services.DoJSONRequest(srvs, http.MethodPost, "/operations", ope, ope); err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to perform operation")
+		if err := workflow.PostRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+			return sdk.WrapError(err, "postImportAsCodeHandler> Cannot create repository operation")
 		}
 
 		return WriteJSON(w, ope, http.StatusCreated)
@@ -93,15 +80,9 @@ func (api *API) getImportAsCodeHandler() Handler {
 		uuid := vars["uuid"]
 
 		var ope = new(sdk.Operation)
-
-		querier := services.Querier(api.mustDB(), api.Cache)
-		srvs, err := querier.FindByType(services.TypeRepositories)
-		if err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to found repositories service")
-		}
-
-		if _, err := services.DoJSONRequest(srvs, http.MethodGet, "/operations/"+uuid, nil, ope); err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to get operation")
+		ope.UUID = uuid
+		if err := workflow.GetRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+			return sdk.WrapError(err, "getImportAsCodeHandler> Cannot get repository operation status")
 		}
 		return WriteJSON(w, ope, http.StatusOK)
 	}
@@ -119,49 +100,22 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		uuid := vars["uuid"]
 
 		var ope = new(sdk.Operation)
+		ope.UUID = uuid
 
-		querier := services.Querier(api.mustDB(), api.Cache)
-		srvs, err := querier.FindByType(services.TypeRepositories)
-		if err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to found repositories service")
-		}
-
-		if _, err := services.DoJSONRequest(srvs, http.MethodGet, "/operations/"+uuid, nil, ope); err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to get operation")
+		if err := workflow.GetRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to get repository operation")
 		}
 
 		if ope.Status != sdk.OperationStatusDone {
 			return sdk.ErrMethodNotAllowed
 		}
 
-		// Create a buffer to write our archive to.
-		buf := new(bytes.Buffer)
-		// Create a new tar archive.
-		tw := tar.NewWriter(buf)
-		// Add some files to the archive.
-		for fname, fcontent := range ope.LoadFiles.Results {
-			log.Debug("postImportAsCodeHandler> Reading %s", fname)
-			hdr := &tar.Header{
-				Name: filepath.Base(fname),
-				Mode: 0600,
-				Size: int64(len(fcontent)),
-			}
-			if err := tw.WriteHeader(hdr); err != nil {
-				return err
-			}
-			if n, err := tw.Write(fcontent); err != nil {
-				return err
-			} else if n == 0 {
-				return fmt.Errorf("nothing to write")
-			}
-		}
-		// Make sure to check the error on Close.
-		if err := tw.Close(); err != nil {
-			return err
+		tr, err := workflow.ReadCDSFiles(ope.LoadFiles.Results)
+		if err != nil {
+			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to read cds files")
 		}
 
-		tr := tar.NewReader(buf)
-		opt := &workflowPushOption{
+		opt := &workflow.WorkflowPushOption{
 			VCSServer:          ope.VCSServer,
 			RepositoryName:     ope.RepositoryInfo.Name,
 			RepositoryStrategy: ope.RepositoryStrategy,
@@ -169,11 +123,26 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			FromRepository:     ope.RepositoryInfo.FetchURL,
 			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
-		allMsg, wrkflw, err := api.workflowPush(ctx, key, tr, opt)
+
+		//Load project
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithApplications,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithPipelines)
+		if errp != nil {
+			return sdk.WrapError(errp, "postImportAsCodeHandler> Cannot load project %s", key)
+		}
+
+		allMsg, wrkflw, err := workflow.Push(api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "workflowPush> Unable to push workflow")
 		}
 		msgListString := translate(r, allMsg)
+
+		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
+			return sdk.WrapError(err, "workflowPush> Unable to update project")
+		}
 
 		if wrkflw != nil {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))

@@ -23,7 +23,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 	if doUpdate {
 		oldApp, errlo := LoadByName(db, store, proj.Key, app.Name, u, LoadOptions.WithGroups, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword)
 		if errlo != nil {
-			return sdk.WrapError(errlo, "application.Import> Unable to check if application exists")
+			return sdk.WrapError(errlo, "application.Import> Unable to load application by name: %s", app.Name)
 		}
 		//Delete all Variables
 		if err := DeleteAllVariable(db, oldApp.ID); err != nil {
