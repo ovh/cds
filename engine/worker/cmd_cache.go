@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func cmdCache(w *currentWorker) *cobra.Command {
@@ -122,6 +123,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot read body : " + errRead.Error(),
 			Status:  http.StatusInternalServerError,
 		}
+		log.Error("%s", errRead)
 		writeError(w, r, errRead)
 		return
 	}
@@ -132,6 +134,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot unmarshall body : " + err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
+		log.Error("%s", err)
 		writeError(w, r, err)
 		return
 	}
@@ -142,6 +145,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot tar : " + errTar.Error(),
 			Status:  http.StatusInternalServerError,
 		}
+		log.Error("%s", errTar)
 		writeError(w, r, errTar)
 		return
 	}
@@ -150,6 +154,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot find workflow job info",
 			Status:  http.StatusInternalServerError,
 		}
+		log.Error("%s", errW)
 		writeError(w, r, errW)
 		return
 	}
@@ -160,6 +165,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot push cache : " + err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
+		log.Error("%s", err)
 		writeError(w, r, err)
 		return
 	}
