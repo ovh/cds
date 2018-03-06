@@ -87,7 +87,7 @@ export class WorkflowNodeHookFormComponent {
                 if (this._hook && this._hook.model) {
                     this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
                 }
-                if (this.selectedHookModel != null) {
+                if (this.selectedHookModel != null && this.hook.id) {
                   this.updateMode = true;
                 }
                 this.operators = wtc.operators;
@@ -100,6 +100,7 @@ export class WorkflowNodeHookFormComponent {
         .subscribe();
 
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookFormModal);
+        this.modalConfig.mustScroll = true;
         this.modal = this._modalService.open(this.modalConfig);
     }
 
