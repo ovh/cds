@@ -107,7 +107,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		if resp.StatusCode >= 300 {
-			sdk.Exit("worker cache push > Cannot cache push HTTP ERROR %d / %s\n", resp.StatusCode)
+			sdk.Exit("worker cache push > Cannot cache push HTTP ERROR %d\n", resp.StatusCode)
 		}
 
 		fmt.Printf("Worker cache push with success (tag: %s)\n", args[0])
