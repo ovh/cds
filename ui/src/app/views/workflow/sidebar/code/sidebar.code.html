@@ -10,17 +10,17 @@
         <div class="ui bottomBtnsWrapper segment">
             <div class="ui grid">
                 <div class="sixteen wide column">
-                    <button class="ui fluid blue button" name="addbtn" [disabled]="loading" [class.loading]="loading" (click)="preview()">
+                    <button class="ui fluid blue button" name="previewbtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)" [class.loading]="loading" (click)="preview()">
                         <i class="unhide icon"></i> {{'common_preview' | translate}}
                     </button>
                 </div>
                 <div class="eight wide column">
-                    <button class="ui fluid green button" name="updatebtn" [disabled]="loading" [class.loading]="loading" (click)="save()">
+                    <button class="ui fluid green button" name="updatebtn" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)" [class.loading]="loading" (click)="save()">
                         <i class="save icon"></i>{{ 'btn_save' | translate }}
                     </button>
                 </div>
                 <div class="eight wide column">
-                    <button class="ui fluid red button" name="updatebtn" [disabled]="loading" [class.loading]="loading" (click)="cancel()">
+                    <button class="ui fluid red button" name="cancelbtn" [disabled]="loading" [class.loading]="loading" (click)="cancel()">
                         <i class="remove icon"></i>{{ 'btn_cancel' | translate }}
                     </button>
                 </div>

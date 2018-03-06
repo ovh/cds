@@ -107,8 +107,8 @@
                     <div *ngSwitchCase="'permissions'" class="padded">
                         <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
                         <app-permission-list [permissions]="detailedWorkflow.groups" (event)="groupManagement($event)"
-                                             [edit]="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
-                        <ng-container *ngIf="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+                                             [edit]="(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)?false:detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+                        <ng-container *ngIf="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
                             <h3>{{ 'workflow_permission_form_title' | translate }}</h3>
                             <app-permission-form (createGroupPermissionEvent)="groupManagement($event)"
                                                  [loading]="permFormLoading"></app-permission-form>
