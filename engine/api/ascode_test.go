@@ -187,6 +187,9 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(db)
+
+	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
