@@ -201,7 +201,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	repositoryService.Delete(mockService)
 	test.NoError(t, repositoryService.Insert(mockService))
 
-	mockService = &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_VCS", Type: services.TypeVCS}
+	mockService = &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_VCS", Type: services.TypeHooks}
 	repositoryService.Delete(mockService)
 	test.NoError(t, repositoryService.Insert(mockService))
 
