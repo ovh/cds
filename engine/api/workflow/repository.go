@@ -88,7 +88,7 @@ func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.W
 	if errP != nil {
 		return sdk.WrapError(errP, "extractWorkflow> Unable to get workflow from file")
 	}
-	w = workflowPushed
+	*w = *workflowPushed
 	return nil
 }
 
@@ -169,6 +169,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 			Pattern: WorkflowAsCodePattern,
 		},
 	}
+	log.Warning("OPE: %+v", ope)
 
 	var branch, commit string
 	if opts.Hook != nil {

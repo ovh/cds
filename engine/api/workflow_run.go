@@ -613,7 +613,8 @@ func (api *API) postWorkflowRunHandler() Handler {
 				OnlyRootNode: true,
 				DeepPipeline: false,
 			}
-			wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+			var errW error
+			wf, errW = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 			if errW != nil {
 				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
 			}
@@ -647,7 +648,6 @@ func (api *API) postWorkflowRunHandler() Handler {
 
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-
 		go startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx))
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
@@ -695,7 +695,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent)
 		if errfh != nil {
 			errorOccured = true
-			chError <- sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
+			chError <- sdk.WrapError(errfh, "startWorkflowRun> Unable to run workflow from hook")
 		}
 	} else {
 		//Default manual run

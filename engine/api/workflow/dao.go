@@ -696,15 +696,15 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		}
 		if err != nil {
 			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, nil, sdk.WrapError(err, "workflowPush>")
+			return nil, nil, sdk.WrapError(err, "Push>")
 		}
 
-		log.Debug("workflowPush> Reading %s", hdr.Name)
+		log.Debug("Push> Reading %s", hdr.Name)
 
 		buff := new(bytes.Buffer)
 		if _, err := io.Copy(buff, tr); err != nil {
 			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, nil, sdk.WrapError(err, "workflowPush>")
+			return nil, nil, sdk.WrapError(err, "Push>")
 		}
 
 		b := buff.Bytes()
@@ -712,7 +712,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		case strings.Contains(hdr.Name, ".app."):
 			var app exportentities.Application
 			if err := yaml.Unmarshal(b, &app); err != nil {
-				log.Error("workflowPush> Unable to unmarshal application %s: %v", hdr.Name, err)
+				log.Error("Push> Unable to unmarshal application %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal application %s: %v", hdr.Name, err))
 				continue
 			}
@@ -720,7 +720,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		case strings.Contains(hdr.Name, ".pip."):
 			var pip exportentities.PipelineV1
 			if err := yaml.Unmarshal(b, &pip); err != nil {
-				log.Error("workflowPush> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
+				log.Error("Push> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal pipeline %s: %v", hdr.Name, err))
 				continue
 			}
@@ -728,14 +728,14 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		case strings.Contains(hdr.Name, ".env."):
 			var env exportentities.Environment
 			if err := yaml.Unmarshal(b, &env); err != nil {
-				log.Error("workflowPush> Unable to unmarshal environment %s: %v", hdr.Name, err)
+				log.Error("Push> Unable to unmarshal environment %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal environment %s: %v", hdr.Name, err))
 				continue
 			}
 			envs[hdr.Name] = env
 		default:
 			if err := yaml.Unmarshal(b, &wrkflw); err != nil {
-				log.Error("workflowPush> Unable to unmarshal workflow %s: %v", hdr.Name, err)
+				log.Error("Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
 				continue
 			}
@@ -751,17 +751,17 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, nil, sdk.WrapError(err, "workflowPush> Unable to start tx")
+		return nil, nil, sdk.WrapError(err, "Push> Unable to start tx")
 	}
 	defer tx.Rollback()
 
 	allMsg := []sdk.Message{}
 	for filename, app := range apps {
-		log.Debug("workflowPush> Parsing %s", filename)
+		log.Debug("Push> Parsing %s", filename)
 		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, true, decryptFunc, u)
 		if err != nil {
 			err = sdk.SetError(err, "unable to import application %s", app.Name)
-			return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
+			return nil, nil, sdk.WrapError(err, "Push> ", err)
 		}
 		allMsg = append(allMsg, msgList...)
 
@@ -778,15 +778,15 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 			proj.Applications = append(proj.Applications, *appDB)
 		}
 
-		log.Debug("workflowPush> -- %s OK", filename)
+		log.Debug("Push> -- %s OK", filename)
 	}
 
 	for filename, env := range envs {
-		log.Debug("workflowPush> Parsing %s", filename)
+		log.Debug("Push> Parsing %s", filename)
 		envDB, msgList, err := environment.ParseAndImport(tx, store, proj, &env, true, decryptFunc, u)
 		if err != nil {
 			err = sdk.SetError(err, "unable to import environment %s", env.Name)
-			return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
+			return nil, nil, sdk.WrapError(err, "Push> ", err)
 		}
 		allMsg = append(allMsg, msgList...)
 
@@ -803,15 +803,15 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 			proj.Environments = append(proj.Environments, *envDB)
 		}
 
-		log.Debug("workflowPush> -- %s OK", filename)
+		log.Debug("Push> -- %s OK", filename)
 	}
 
 	for filename, pip := range pips {
-		log.Debug("workflowPush> Parsing %s", filename)
+		log.Debug("Push> Parsing %s", filename)
 		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, true, u)
 		if err != nil {
 			err = sdk.SetError(err, "unable to import pipeline %s", pip.Name)
-			return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
+			return nil, nil, sdk.WrapError(err, "Push> ", err)
 		}
 		allMsg = append(allMsg, msgList...)
 
@@ -828,13 +828,13 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 			proj.Pipelines = append(proj.Pipelines, *pipDB)
 		}
 
-		log.Debug("workflowPush> -- %s OK", filename)
+		log.Debug("Push> -- %s OK", filename)
 	}
 
 	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, opts.DryRun)
 	if err != nil {
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
-		return nil, nil, sdk.WrapError(err, "workflowPush> ", err)
+		return nil, nil, sdk.WrapError(err, "Push> ", err)
 	}
 
 	// TODO workflow as code, manage derivation workflow
@@ -853,21 +853,25 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 				})
 			}
 
-			if wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname == "" {
+			if wf.Root.Context.Application != nil && (wf.Root.Context.Application.RepositoryFullname == "" || wf.Root.Context.Application.VCSServer == "") {
 				wf.Root.Context.Application.VCSServer = opts.VCSServer
 				wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
 				wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
+
+				if err := application.Update(tx, store, wf.Root.Context.Application, u); err != nil {
+					return nil, nil, sdk.WrapError(err, "Push> Unable to update application vcs datas")
+				}
 			}
 		}
 
 		if err := Update(tx, store, wf, wf, proj, u); err != nil {
-			return nil, nil, sdk.WrapError(err, "workflowPush> Unable to update workflow", err)
+			return nil, nil, sdk.WrapError(err, "Push> Unable to update workflow", err)
 		}
 
 		if !opts.DryRun {
 			defaultPayload, errHr := HookRegistration(tx, store, nil, *wf, proj)
 			if errHr != nil {
-				return nil, nil, sdk.WrapError(errHr, "workflowPush> hook registration failed")
+				return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
 			}
 			if defaultPayload != nil && IsDefaultPayloadEmpty(*wf) {
 				wf.Root.Context.DefaultPayload = *defaultPayload
@@ -882,7 +886,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		_ = tx.Rollback()
 	} else {
 		if err := tx.Commit(); err != nil {
-			return nil, nil, sdk.WrapError(err, "workflowPush> Cannot commit transaction")
+			return nil, nil, sdk.WrapError(err, "Push> Cannot commit transaction")
 		}
 	}
 
