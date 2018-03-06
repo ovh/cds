@@ -371,48 +371,36 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 }
 
 func getJobExecutablesGroups(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
-	query := `
-	SELECT distinct("group".id), "group".name FROM "group"
-	LEFT JOIN workflow_group ON workflow_group.group_id = "group".id
-	LEFT JOIN workflow_node ON workflow_node.id = $1
-	LEFT JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
-	LEFT OUTER JOIN environment_group ON workflow_node_context.environment_id = environment_group.environment_id
-	WHERE workflow_node.id = $1
-		AND workflow_node_context.workflow_node_id = workflow_node.id
-		AND workflow_group.workflow_id = workflow_node.workflow_id
-		AND workflow_group.role >= $2
-		AND (workflow_node_context.environment_id is NULL or environment_group.role >= $2);
-	`
+	wr, errWR := LoadRunByID(db, run.WorkflowRunID, false)
+	if errWR != nil {
+		return nil, sdk.WrapError(errWR, "getJobExecutablesGroups> Cannot load workflow run %d", run.WorkflowRunID)
+	}
+
+	node := wr.Workflow.GetNode(run.WorkflowNodeID)
+	if node == nil {
+		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getJobExecutablesGroups> Cannot find node")
+	}
 
 	var groups []sdk.Group
-	rows, err := db.Query(query, run.WorkflowNodeID, permission.PermissionReadExecute)
-	if err != nil {
-		return nil, sdk.WrapError(err, "getJobExecutablesGroups> err query")
-	}
-	defer rows.Close()
-
-	var sharedInfraIn bool
-	for rows.Next() {
-		var g sdk.Group
-		var groupID sql.NullInt64
-		var groupName sql.NullString
-
-		if err := rows.Scan(&groupID, &groupName); err != nil {
-			return nil, sdk.WrapError(err, "getJobExecutablesGroups> err scan")
+	if node.Context.Environment != nil {
+		for _, e := range node.Context.Environment.EnvironmentGroups {
+			if e.Permission >= permission.PermissionReadExecute {
+				for _, gp := range wr.Workflow.Groups {
+					if gp.Group.ID == e.Group.ID && gp.Permission >= permission.PermissionReadExecute {
+						groups = append(groups, gp.Group)
+					}
+				}
+			}
 		}
-
-		if groupID.Valid {
-			g.ID = groupID.Int64
-			g.Name = groupName.String
-		}
-		groups = append(groups, g)
-		if g.ID == group.SharedInfraGroup.ID {
-			sharedInfraIn = true
+	} else {
+		for _, gp := range wr.Workflow.Groups {
+			if gp.Permission >= permission.PermissionReadExecute {
+				groups = append(groups, gp.Group)
+			}
 		}
 	}
-	if !sharedInfraIn {
-		groups = append(groups, *group.SharedInfraGroup)
-	}
+
+	groups = append(groups, *group.SharedInfraGroup)
 
 	return groups, nil
 }
