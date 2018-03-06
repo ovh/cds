@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 )
 
 type mockHTTPClient struct {
@@ -120,7 +121,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 			ope.URL = "https://github.com/fsamin/go-repo.git"
 			ope.UUID = UUID
 			ope.Status = sdk.OperationStatusDone
-			ope.LoadFiles.Pattern = workflowAsCodePattern
+			ope.LoadFiles.Pattern = workflow.WorkflowAsCodePattern
 			ope.LoadFiles.Results = map[string][]byte{
 				"w-go-repo.yml": []byte(`name: w-go-repo
 					version: v1.0
@@ -213,7 +214,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 					DefaultBranch: "master",
 				}
 				ope.Status = sdk.OperationStatusDone
-				ope.LoadFiles.Pattern = workflowAsCodePattern
+				ope.LoadFiles.Pattern = workflow.WorkflowAsCodePattern
 				ope.LoadFiles.Results = map[string][]byte{
 					"w-go-repo.yml": []byte(`name: w-go-repo
 version: v1.0
