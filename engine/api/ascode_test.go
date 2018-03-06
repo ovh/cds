@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -46,12 +47,24 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(db)
 
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
 	repositoryService := services.NewRepository(func() *gorp.DbMap {
 		return db
 	}, api.Cache)
 	mockService := &sdk.Service{Name: "Test_postImportAsCodeHandler", Type: services.TypeRepositories}
 	repositoryService.Delete(mockService)
 	test.NoError(t, repositoryService.Insert(mockService))
+
+	mockVCSservice := &sdk.Service{Name: "Test_VCSService", Type: services.TypeVCS}
+	test.NoError(t, repositoryService.Insert(mockVCSservice))
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -61,28 +74,43 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 			enc := json.NewEncoder(body)
 			w.Body = ioutil.NopCloser(body)
 
-			ope := new(sdk.Operation)
-			btes, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				return writeError(w, err)
-			}
-			defer r.Body.Close()
-			if err := json.Unmarshal(btes, ope); err != nil {
-				return writeError(w, err)
-			}
-			ope.UUID = sdk.UUID()
-			if err := enc.Encode(ope); err != nil {
-				return writeError(w, err)
+			switch r.URL.String() {
+			case "/vcs/github/repos/myrepo/branches":
+				bs := []sdk.VCSBranch{}
+				b := sdk.VCSBranch{
+					DisplayID: "master",
+				}
+				bs = append(bs, b)
+				if err := enc.Encode(bs); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				ope := new(sdk.Operation)
+				btes, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				defer r.Body.Close()
+				if err := json.Unmarshal(btes, ope); err != nil {
+					return writeError(w, err)
+				}
+				ope.UUID = sdk.UUID()
+				if err := enc.Encode(ope); err != nil {
+					return writeError(w, err)
+				}
+
+				w.StatusCode = http.StatusCreated
 			}
 
-			w.StatusCode = http.StatusCreated
 			return w, nil
 		},
 	)
 
-	ope := `{"url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
+	ope := `{"repo_fullname":"myrepo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
 
-	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, nil)
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": p.Key,
+	})
 	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
 	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)

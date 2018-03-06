@@ -831,7 +831,11 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		log.Debug("Push> -- %s OK", filename)
 	}
 
-	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, opts.DryRun)
+	var dryRun bool
+	if opts != nil {
+		dryRun = opts.DryRun
+	}
+	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, dryRun)
 	if err != nil {
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
 		return nil, nil, sdk.WrapError(err, "Push> ", err)
@@ -882,7 +886,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 
 	allMsg = append(allMsg, msgList...)
 
-	if opts.DryRun {
+	if dryRun {
 		_ = tx.Rollback()
 	} else {
 		if err := tx.Commit(); err != nil {

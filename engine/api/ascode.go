@@ -47,7 +47,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 		vcsServer := repositoriesmanager.GetProjectVCSServer(p, ope.VCSServer)
 		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 		if erra != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postImportAsCodeHandler> Cannot get client got %s %s : %s", key, ope.VCSServer, erra)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postImportAsCodeHandler> Cannot get client for %s %s : %s", key, ope.VCSServer, erra)
 		}
 
 		branches, errB := client.Branches(ope.RepoFullName)
