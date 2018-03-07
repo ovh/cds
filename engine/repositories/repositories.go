@@ -107,6 +107,12 @@ func (s *Service) Serve(c context.Context) error {
 		}
 	}()
 
+	go func() {
+		if err := s.vacuumCleaner(ctx); err != nil {
+			log.Info("Repositories> Shutdown vacuumCleaner")
+		}
+	}()
+
 	//Gracefully shutdown the http server
 	go func() {
 		select {

@@ -359,3 +359,23 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	}
 	return nil
 }
+
+func (s *RedisStore) Lock(key string, expiration time.Duration) bool {
+	var errRedis error
+	var res bool
+	for i := 0; i < 3; i++ {
+		res, errRedis = s.Client.SetNX(key, "true", expiration).Result()
+		if errRedis == nil {
+			break
+		}
+		time.Sleep(retryWaitDuration)
+	}
+	if errRedis != nil {
+		log.Error("redis> set error %s: %v", key, errRedis)
+	}
+	return res
+}
+
+func (s *RedisStore) Unlock(key string) {
+	s.Delete(key)
+}

@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -14,7 +15,12 @@ func (s *Service) processor(ctx context.Context) error {
 		if uuid != "" {
 			op := s.dao.loadOperation(uuid)
 			if err := s.do(*op); err != nil {
-				log.Error("repositories > processor > %v", err)
+				if err == errLockUnavailable {
+					log.Info("repositories > processor > lock unavailabe. Retry")
+					s.dao.pushOperation(op)
+				} else {
+					log.Error("repositories > processor > %v", err)
+				}
 			}
 		}
 		if ctx.Err() != nil {
@@ -26,6 +32,12 @@ func (s *Service) processor(ctx context.Context) error {
 func (s *Service) do(op sdk.Operation) error {
 	log.Info("repositories > processing > %v", op.UUID)
 	log.Debug("repositories > processing > %+v", op)
+
+	r := s.Repo(op)
+	if s.dao.lock(r.ID()) == errLockUnavailable {
+		return errLockUnavailable
+	}
+	defer s.dao.unlock(r.ID(), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRentention))
 
 	switch {
 	case op.Setup.Checkout.Branch != "":
@@ -40,6 +52,11 @@ func (s *Service) do(op sdk.Operation) error {
 		op.Error = "unrecognized setup"
 		op.Status = sdk.OperationStatusError
 	}
+
+	if op.Error != "" {
+		return s.dao.saveOperation(&op)
+	}
+
 	switch {
 	case op.LoadFiles.Pattern != "":
 		if err := s.processLoadFiles(&op); err != nil {

@@ -1,6 +1,9 @@
 package sdk
 
-import "encoding/base64"
+import (
+	"encoding/base64"
+	"time"
+)
 
 // Operation is the main business object use in repositories service
 type Operation struct {
@@ -14,6 +17,7 @@ type Operation struct {
 	Status             OperationStatus          `json:"status"`
 	Error              string                   `json:"error,omitempty"`
 	RepositoryInfo     *OperationRepositoryInfo `json:"repository_info,omitempty"`
+	Date               *time.Time               `json:"date,omitempty"`
 }
 
 type OperationSetup struct {
