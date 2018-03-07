@@ -1,7 +1,6 @@
 package cdsclient
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -243,19 +242,19 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader) error {
 	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
 
-	mods := []RequestModifier{
-		(func(r *http.Request) {
-			r.Header.Set("Content-Type", "application/tar")
-		}),
+	req, errRequest := http.NewRequest("POST", url, tarContent)
+	if errRequest != nil {
+		return sdk.WrapError(errRequest, "WorkflowCachePush> Unable to create request")
 	}
+	req.Header.Set("Content-Type", "application/tar")
 
-	_, _, code, err := c.Request("POST", url, tarContent, mods...)
+	resp, err := NoTimeout(c.HTTPClient).Do(req)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("HTTP Code %d", code)
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("HTTP Code %d", resp.StatusCode)
 	}
 
 	return nil
@@ -264,20 +263,19 @@ func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader)
 func (c *client) WorkflowCachePull(projectKey, tag string) (io.Reader, error) {
 	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
 
-	mods := []RequestModifier{
-		(func(r *http.Request) {
-			r.Header.Set("Content-Type", "application/tar")
-		}),
+	req, errRequest := http.NewRequest("GET", url, nil)
+	if errRequest != nil {
+		return nil, sdk.WrapError(errRequest, "WorkflowCachePull> Unable to create request")
 	}
-
-	res, _, code, err := c.Request("GET", url, nil, mods...)
+	req.Header.Set("Content-Type", "application/tar")
+	resp, err := NoTimeout(c.HTTPClient).Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Code %d", code)
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("HTTP Code %d", resp.StatusCode)
 	}
 
-	return bytes.NewBuffer(res), nil
+	return resp.Body, nil
 }
