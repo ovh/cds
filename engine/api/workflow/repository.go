@@ -34,10 +34,10 @@ type WorkflowPushOption struct {
 }
 
 // CreateFromRepository a workflow from a repository
-func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption, u *sdk.User, decryptFunc keys.DecryptFunc) error {
+func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
 	ope, err := createOperationRequest(*w, opts)
 	if err != nil {
-		return sdk.WrapError(err, "CreateFromRepository> Unable to create operation request")
+		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to create operation request")
 	}
 
 	// update user permission if  we come from hook
@@ -49,29 +49,30 @@ func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, 
 	}
 
 	if err := PostRepositoryOperation(db, store, &ope); err != nil {
-		return sdk.WrapError(err, "CreateFromRepository> Unable to post repository operation")
+		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to post repository operation")
 	}
 
 	if err := pollRepositoryOperation(c, db, store, &ope); err != nil {
-		return sdk.WrapError(err, "CreateFromRepository> Cannot analyse repository")
+		return nil, sdk.WrapError(err, "CreateFromRepository> Cannot analyse repository")
 	}
 
 	var uuid string
 	if opts.Hook != nil {
 		uuid = opts.Hook.WorkflowNodeHookUUID
 	}
-	if err := extractWorkflow(db, store, p, w, ope, u, decryptFunc, uuid); err != nil {
-		return sdk.WrapError(err, "CreateFromRepository> Unable to extract workflow")
+	allMsg, errE := extractWorkflow(db, store, p, w, ope, u, decryptFunc, uuid)
+	if errE != nil {
+		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to extract workflow")
 	}
 
-	return nil
+	return allMsg, nil
 }
 
-func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc, hookUUID string) error {
+func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
 	// Read files
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
-		return sdk.WrapError(err, "extractWorkflow> Unable to read cds files")
+		return nil, sdk.WrapError(err, "extractWorkflow> Unable to read cds files")
 	}
 	opt := &WorkflowPushOption{
 		VCSServer:          ope.VCSServer,
@@ -84,12 +85,12 @@ func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.W
 		HookUUID:           hookUUID,
 	}
 
-	_, workflowPushed, errP := Push(db, store, p, tr, opt, u, decryptFunc)
+	allMsg, workflowPushed, errP := Push(db, store, p, tr, opt, u, decryptFunc)
 	if errP != nil {
-		return sdk.WrapError(errP, "extractWorkflow> Unable to get workflow from file")
+		return nil, sdk.WrapError(errP, "extractWorkflow> Unable to get workflow from file")
 	}
 	*w = *workflowPushed
-	return nil
+	return allMsg, nil
 }
 
 func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
@@ -169,7 +170,6 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 			Pattern: WorkflowAsCodePattern,
 		},
 	}
-	log.Warning("OPE: %+v", ope)
 
 	var branch, commit string
 	if opts.Hook != nil {

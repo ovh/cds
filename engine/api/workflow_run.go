@@ -596,6 +596,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		}
 
 		var lastRun *sdk.WorkflowRun
+		var asCodeInfosMsg []sdk.Message
 		if opts.Number != nil {
 			var errlr error
 			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, false)
@@ -630,7 +631,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 					return sdk.WrapError(errp, "postWorkflowRunHandler> Cannot load project %s", key)
 				}
 				// Get workflow from repository
-				if errCreate := workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, getUser(ctx), project.DecryptWithBuiltinKey); errCreate != nil {
+				var errCreate error
+				asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, getUser(ctx), project.DecryptWithBuiltinKey)
+				if errCreate != nil {
 					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository")
 				}
 			} else {
@@ -648,7 +651,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-		go startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx))
+		go startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx), asCodeInfosMsg)
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
@@ -677,7 +680,7 @@ type workerOpts struct {
 	chanEvent      chan<- interface{}
 }
 
-func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) {
+func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) {
 	const nbWorker int = 5
 	defer close(chEvent)
 	defer close(chError)
@@ -692,7 +695,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	//Run from hook
 	if opts.Hook != nil {
 		var errfh error
-		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent)
+		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent, asCodeInfos)
 		if errfh != nil {
 			errorOccured = true
 			chError <- sdk.WrapError(errfh, "startWorkflowRun> Unable to run workflow from hook")
@@ -757,7 +760,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 
 		if lastRun == nil {
 			var errmr error
-			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent)
+			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent, asCodeInfos)
 			if errmr != nil {
 				errorOccured = true
 				chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")

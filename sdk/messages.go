@@ -74,12 +74,13 @@ var (
 	MsgWorkflowNodeMutexRelease            = &Message{"MsgWorkflowNodeMutexRelease", trad{FR: "Lancement du pipeline %s", EN: "Triggering pipeline %s"}, nil}
 	MsgWorkflowImportedUpdated             = &Message{"MsgWorkflowImportedUpdated", trad{FR: "Le workflow %s a été mis à jour", EN: "Workflow %s has been updated"}, nil}
 	MsgWorkflowImportedInserted            = &Message{"MsgWorkflowImportedInserted", trad{FR: "Le workflow %s a été créé", EN: "Workflow %s has been created"}, nil}
-	MsgSpawnInfoHatcheryCannotStartJob     = &Message{"MsgSpawnInfoHatcheryCannotStart", trad{FR: "Aucune hatchery n'a pu démarrer de worker respectant vos pré-requis de job, merci de les vérifier.", EN: "No hatchery can spawn a worker corresponding your job's requirements. Please check your job's requirements."}, nil}
+	MsgSpawnInfoHatcheryCannotStartJob     = &Message{"MsgSpawnInfoHatcheryCannotStartJob", trad{FR: "Aucune hatchery n'a pu démarrer de worker respectant vos pré-requis de job, merci de les vérifier.", EN: "No hatchery can spawn a worker corresponding your job's requirements. Please check your job's requirements."}, nil}
 )
 
 // Messages contains all sdk Messages
 var Messages = map[string]*Message{
 	MsgAppCreated.ID:                          MsgAppCreated,
+	MsgAppUpdated.ID:                          MsgAppUpdated,
 	MsgPipelineCreated.ID:                     MsgPipelineCreated,
 	MsgPipelineCreationAborted.ID:             MsgPipelineCreationAborted,
 	MsgPipelineExists.ID:                      MsgPipelineExists,
@@ -89,6 +90,7 @@ var Messages = map[string]*Message{
 	MsgAppGroupSetPermission.ID:               MsgAppGroupSetPermission,
 	MsgAppVariablesCreated.ID:                 MsgAppVariablesCreated,
 	MsgHookCreated.ID:                         MsgHookCreated,
+	MsgAppKeyCreated.ID:                       MsgAppKeyCreated,
 	MsgEnvironmentExists.ID:                   MsgEnvironmentExists,
 	MsgEnvironmentCreated.ID:                  MsgEnvironmentCreated,
 	MsgEnvironmentVariableUpdated.ID:          MsgEnvironmentVariableUpdated,
@@ -101,6 +103,7 @@ var Messages = map[string]*Message{
 	MsgEnvironmentGroupCannotBeCreated.ID:     MsgEnvironmentGroupCannotBeCreated,
 	MsgEnvironmentGroupDeleted.ID:             MsgEnvironmentGroupDeleted,
 	MsgEnvironmentGroupCannotBeDeleted.ID:     MsgEnvironmentGroupCannotBeDeleted,
+	MsgEnvironmentKeyCreated.ID:               MsgEnvironmentKeyCreated,
 	MsgJobNotValidActionNotFound.ID:           MsgJobNotValidActionNotFound,
 	MsgJobNotValidInvalidActionParameter.ID:   MsgJobNotValidInvalidActionParameter,
 	MsgPipelineGroupUpdated.ID:                MsgPipelineGroupUpdated,
@@ -146,6 +149,7 @@ func NewMessage(m *Message, args ...interface{}) Message {
 	return Message{
 		Format: m.Format,
 		Args:   args,
+		ID:     m.ID,
 	}
 }
 

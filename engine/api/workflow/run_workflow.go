@@ -21,7 +21,7 @@ const (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, chanEvent chan<- interface{}) (*sdk.WorkflowRun, error) {
+func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, chanEvent chan<- interface{}, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, error) {
 	hooks := w.GetHooks()
 	h, ok := hooks[e.WorkflowNodeHookUUID]
 	if !ok {
@@ -55,6 +55,11 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 			wr.Tag(tagTriggeredBy, trigg)
 		} else {
 			wr.Tag(tagTriggeredBy, "cds.hook")
+		}
+
+		// Add ass code spawn info
+		for _, msg := range asCodeMsg {
+			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 		}
 
 		//Insert it
@@ -130,7 +135,7 @@ func ManualRunFromNode(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Stor
 }
 
 //ManualRun is the entry point to trigger a workflow manually
-func ManualRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}) (*sdk.WorkflowRun, error) {
+func ManualRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}, asCodeInfos []sdk.Message) (*sdk.WorkflowRun, error) {
 	number, err := nextRunNumber(db, w)
 	if err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to get next number")
@@ -146,6 +151,10 @@ func ManualRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sd
 		Status:       sdk.StatusWaiting.String(),
 	}
 	wr.Tag(tagTriggeredBy, e.User.Username)
+
+	for _, msg := range asCodeInfos {
+		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
+	}
 
 	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
