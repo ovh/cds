@@ -705,7 +705,24 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		}
 		wg.Add(len(fromNodes))
 		for i := 0; i < nbWorker && i < len(fromNodes); i++ {
-			go runFromNode(db, store, *opts, p, wf, lastRun, u, workerOptions)
+			optsCopy := sdk.WorkflowRunPostHandlerOption{
+				FromNodeIDs: opts.FromNodeIDs,
+				Number:      opts.Number,
+			}
+			if opts.Manual != nil {
+				optsCopy.Manual = &sdk.WorkflowNodeRunManual{
+					PipelineParameters: opts.Manual.PipelineParameters,
+					User:               opts.Manual.User,
+					Payload:            opts.Manual.Payload,
+				}
+			}
+			if opts.Hook != nil {
+				optsCopy.Hook = &sdk.WorkflowNodeRunHookEvent{
+					Payload:              opts.Hook.Payload,
+					WorkflowNodeHookUUID: opts.Hook.WorkflowNodeHookUUID,
+				}
+			}
+			go runFromNode(db, store, optsCopy, p, wf, lastRun, u, workerOptions)
 		}
 		for _, fromNode := range fromNodes {
 			workerOptions.chanNodesToRun <- *fromNode
@@ -775,7 +792,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 		if len(opts.Manual.PipelineParameters) == 0 {
 			opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
 		}
-		log.Debug("Manual run: %#v", opts.Manual)
+		log.Debug("Manual run: %+v", opts.Manual)
 
 		//Manual run
 		if lastRun != nil {
