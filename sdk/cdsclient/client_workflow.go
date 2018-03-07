@@ -1,7 +1,6 @@
 package cdsclient
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"log"
