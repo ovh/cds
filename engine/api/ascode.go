@@ -115,7 +115,7 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to read cds files")
 		}
 
-		opt := &workflow.WorkflowPushOption{
+		opt := &workflow.PushOption{
 			VCSServer:          ope.VCSServer,
 			RepositoryName:     ope.RepositoryInfo.Name,
 			RepositoryStrategy: ope.RepositoryStrategy,

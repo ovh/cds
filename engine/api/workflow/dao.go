@@ -682,7 +682,7 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 }
 
 // Push push a workflow from cds files
-func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *WorkflowPushOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
+func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
 	apps := make(map[string]exportentities.Application)
 	pips := make(map[string]exportentities.PipelineV1)
 	envs := make(map[string]exportentities.Environment)
@@ -873,12 +873,8 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		}
 
 		if !opts.DryRun {
-			defaultPayload, errHr := HookRegistration(tx, store, nil, *wf, proj)
-			if errHr != nil {
+			if errHr := HookRegistration(tx, store, nil, *wf, proj); errHr != nil {
 				return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
-			}
-			if defaultPayload != nil && IsDefaultPayloadEmpty(*wf) {
-				wf.Root.Context.DefaultPayload = *defaultPayload
 			}
 		}
 

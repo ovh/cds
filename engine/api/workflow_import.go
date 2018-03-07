@@ -170,9 +170,9 @@ func (api *API) postWorkflowPushHandler() Handler {
 
 		tr := tar.NewReader(bytes.NewReader(btes))
 
-		var pushOptions *workflow.WorkflowPushOption
+		var pushOptions *workflow.PushOption
 		if r.Header.Get(sdk.WorkflowAsCodeHeader) != "" {
-			pushOptions = &workflow.WorkflowPushOption{
+			pushOptions = &workflow.PushOption{
 				FromRepository: r.Header.Get(sdk.WorkflowAsCodeHeader),
 			}
 		}

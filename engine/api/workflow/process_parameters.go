@@ -247,6 +247,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	return params, errm
 }
 
+// IsDefaultPayloadEmpty checks if the default payload is empty
 func IsDefaultPayloadEmpty(wf sdk.Workflow) bool {
 	e := dump.NewDefaultEncoder(new(bytes.Buffer))
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}

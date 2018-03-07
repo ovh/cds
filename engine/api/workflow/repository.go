@@ -22,7 +22,8 @@ import (
 // WorkflowAsCodePattern is the default code pattern to find cds files
 const WorkflowAsCodePattern = ".cds/**/*.yml"
 
-type WorkflowPushOption struct {
+// PushOption is the set of options for workflow push
+type PushOption struct {
 	VCSServer          string
 	FromRepository     string
 	Branch             string
@@ -74,7 +75,7 @@ func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.W
 	if err != nil {
 		return nil, sdk.WrapError(err, "extractWorkflow> Unable to read cds files")
 	}
-	opt := &WorkflowPushOption{
+	opt := &PushOption{
 		VCSServer:          ope.VCSServer,
 		RepositoryName:     ope.RepositoryInfo.Name,
 		RepositoryStrategy: ope.RepositoryStrategy,
@@ -93,6 +94,7 @@ func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.W
 	return allMsg, nil
 }
 
+// ReadCDSFiles reads CDS files
 func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 	// Create a buffer to write our archive to.
 	buf := new(bytes.Buffer)
