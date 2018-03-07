@@ -886,7 +886,11 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 
 	allMsg = append(allMsg, msgList...)
 
-	if dryRun {
+	isDefaultBranch := false
+	if opts != nil {
+		isDefaultBranch = opts.IsDefaultBranch
+	}
+	if dryRun && !isDefaultBranch {
 		_ = tx.Rollback()
 	} else {
 		if err := tx.Commit(); err != nil {
