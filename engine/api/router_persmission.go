@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -125,10 +124,6 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 				return err
 			}
 			u.Groups = append(u.Groups, group)
-		}
-
-		if u.Admin {
-			u.Groups = append(u.Groups, *group.SharedInfraGroup)
 		}
 
 		store.SetWithTTL(kp, u.Permissions, 120)
