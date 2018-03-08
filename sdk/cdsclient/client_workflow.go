@@ -240,7 +240,7 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 }
 
 func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader) error {
-	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
+	url := fmt.Sprintf("%s/project/%s/cache/%s", c.APIURL(), projectKey, tag)
 
 	req, errRequest := http.NewRequest("POST", url, tarContent)
 	if errRequest != nil {
@@ -261,7 +261,7 @@ func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader)
 }
 
 func (c *client) WorkflowCachePull(projectKey, tag string) (io.Reader, error) {
-	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
+	url := fmt.Sprintf("%s/project/%s/cache/%s", c.APIURL(), projectKey, tag)
 
 	req, errRequest := http.NewRequest("GET", url, nil)
 	if errRequest != nil {
