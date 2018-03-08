@@ -117,7 +117,7 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 	return w.runJob(ctx, a, buildID, params, stepOrder, stepName)
 }
 
-func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) {
+func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) error {
 	if w.currentJob.wJob != nil { // cds workflow, use helper from interpolate
 		tmp := map[string]string{}
 		for _, v := range w.currentJob.buildVariables {
@@ -131,7 +131,7 @@ func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 			var err error
 			a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, tmp)
 			if err != nil {
-				log.Error("replaceVariablesPlaceholder> Error on interpolate: %s", err)
+				return sdk.WrapError(err, "Unable to interpolate action parameters")
 			}
 		}
 	} else { // pipeline build Job
@@ -144,13 +144,20 @@ func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 			}
 		}
 	}
+	return nil
 }
 
 func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
 	log.Info("runJob> start run %d stepOrder:%d", buildID, stepOrder)
 	defer func() { log.Info("runJob> end run %d stepOrder:%d", buildID, stepOrder) }()
 	// Replace variable placeholder that may have been added by last step
-	w.replaceVariablesPlaceholder(a, *params)
+	if err := w.replaceVariablesPlaceholder(a, *params); err != nil {
+		return sdk.Result{
+			Status:  sdk.StatusDisabled.String(),
+			BuildID: buildID,
+			Reason:  "Unable to interpolate action parameters",
+		}
+	}
 	// Set the params
 	w.currentJob.params = *params
 	// Unset the params at the end
