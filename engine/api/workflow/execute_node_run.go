@@ -758,7 +758,6 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 			ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
 			Args: []interface{}{vcsInfos.branch},
 		})
-		wr.Status = sdk.StatusFail.String()
 		return vcsInfos, sdk.WrapError(fmt.Errorf("computeVCSInfos> branch has benn deleted"), "")
 	}
 
