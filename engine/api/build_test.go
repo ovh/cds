@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/moby/moby/pkg/namesgenerator"
+	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"

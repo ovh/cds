@@ -1,7 +1,6 @@
 package swarm
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -10,12 +9,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fsouza/go-dockerclient"
-	"github.com/moby/moby/pkg/namesgenerator"
+	types "github.com/docker/docker/api/types"
+	container "github.com/docker/docker/api/types/container"
+	mount "github.com/docker/docker/api/types/mount"
+	network "github.com/docker/docker/api/types/network"
+	docker "github.com/docker/docker/client"
+	nat "github.com/docker/go-connections/nat"
+	context "golang.org/x/net/context"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new Hatchery Swarm
@@ -99,13 +105,13 @@ func (h *HatcherySwarm) Init() error {
 	}
 
 	var errc error
-	h.dockerClient, errc = docker.NewClientFromEnv()
+	h.dockerClient, errc = docker.NewEnvClient()
 	if errc != nil {
 		log.Error("Unable to connect to a docker client:%s", errc)
 		return errc
 	}
 
-	if errPing := h.dockerClient.Ping(); errPing != nil {
+	if _, errPing := h.dockerClient.Ping(context.Background()); errPing != nil {
 		log.Error("Unable to ping docker host:%s", errPing)
 		return errPing
 	}
@@ -117,19 +123,19 @@ func (h *HatcherySwarm) Init() error {
 //This a embeded cache for containers list
 var containersCache = struct {
 	mu   sync.RWMutex
-	list []docker.APIContainers
+	list []types.Container
 }{
 	mu:   sync.RWMutex{},
-	list: []docker.APIContainers{},
+	list: []types.Container{},
 }
 
-func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
+func (h *HatcherySwarm) getContainers() ([]types.Container, error) {
 	containersCache.mu.RLock()
 	nbServers := len(containersCache.list)
 	containersCache.mu.RUnlock()
 
 	if nbServers == 0 {
-		s, err := h.dockerClient.ListContainers(docker.ListContainersOptions{
+		s, err := h.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{
 			All: true,
 		})
 		if err != nil {
@@ -146,7 +152,7 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 		go func() {
 			time.Sleep(2 * time.Second)
 			containersCache.mu.Lock()
-			containersCache.list = []docker.APIContainers{}
+			containersCache.list = []types.Container{}
 			containersCache.mu.Unlock()
 		}()
 	}
@@ -154,7 +160,7 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 	return containersCache.list, nil
 }
 
-func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error) {
+func (h *HatcherySwarm) getContainer(name string) (*types.Container, error) {
 	containers, err := h.getContainers()
 	if err != nil {
 		return nil, sdk.WrapError(err, "getContainer> cannot getContainers")
@@ -171,18 +177,13 @@ func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error)
 
 func (h *HatcherySwarm) killAndRemoveContainer(ID string) {
 	log.Debug("killAndRemove>Remove container %s", ID)
-	if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
-		ID:     ID,
-		Signal: docker.SIGKILL,
-	}); err != nil {
+	if err := h.dockerClient.ContainerKill(context.Background(), ID, "SIGKILL"); err != nil {
 		if !strings.Contains(err.Error(), "is not running") && !strings.Contains(err.Error(), "No such container") {
 			log.Warning("killAndRemove> Unable to kill container %s", err)
 		}
 	}
 
-	if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-		ID: ID,
-	}); err != nil {
+	if err := h.dockerClient.ContainerRemove(context.Background(), ID, types.ContainerRemoveOptions{true, true, true}); err != nil {
 		// container could be already removed by a previous call to docker
 		if !strings.Contains(err.Error(), "No such container") {
 			log.Warning("killAndRemove> Unable to remove container %s", err)
@@ -191,7 +192,7 @@ func (h *HatcherySwarm) killAndRemoveContainer(ID string) {
 }
 
 func (h *HatcherySwarm) killAndRemove(ID string) {
-	container, err := h.dockerClient.InspectContainer(ID)
+	container, err := h.dockerClient.ContainerInspect(context.Background(), ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "No such container") {
 			log.Debug("killAndRemove> cannot InspectContainer: %v", err)
@@ -203,7 +204,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) {
 	}
 
 	for _, cnetwork := range container.NetworkSettings.Networks {
-		network, err := h.dockerClient.NetworkInfo(cnetwork.NetworkID)
+		network, err := h.dockerClient.NetworkInspect(context.Background(), cnetwork.NetworkID)
 		if err != nil {
 			log.Info("killAndRemove> cannot NetworkInfo: %v", err)
 			h.killAndRemoveContainer(ID)
@@ -383,13 +384,12 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 //create the docker bridge
 func (h *HatcherySwarm) createNetwork(name string) error {
 	log.Debug("createNetwork> Create network %s", name)
-	_, err := h.dockerClient.CreateNetwork(docker.CreateNetworkOptions{
-		Name:           name,
+	_, err := h.dockerClient.NetworkCreate(context.Background(), name, types.NetworkCreate{
 		Driver:         "bridge",
 		Internal:       false,
 		CheckDuplicate: true,
 		EnableIPv6:     false,
-		IPAM: docker.IPAMOptions{
+		IPAM: &network.IPAM{
 			Driver: "default",
 		},
 		Labels: map[string]string{
@@ -418,58 +418,54 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	}
 	log.Debug("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
 
-	var exposedPorts map[docker.Port]struct{}
-	var mounts []docker.Mount
+	var exposedPorts nat.PortSet
+	var mounts []mount.Mount
 	if cArgs.dockerOpts != nil {
 		if len(cArgs.dockerOpts.ports) > 0 {
 			for port := range cArgs.dockerOpts.ports {
-				exposedPorts = map[docker.Port]struct{}{port: {}}
+				exposedPorts = map[nat.Port]struct{}{port: {}}
 			}
 		}
 
 		if len(cArgs.dockerOpts.mounts) > 0 {
 			for _, v := range cArgs.dockerOpts.mounts {
-				mounts = append(mounts, docker.Mount{Source: v.Source, Destination: v.Target})
+				mounts = append(mounts, mount.Mount{Source: v.Source, Target: v.Target})
 			}
 		}
 	}
 
-	opts := docker.CreateContainerOptions{
-		Name: cArgs.name,
-		Config: &docker.Config{
-			Image:        cArgs.image,
-			Cmd:          cArgs.cmd,
-			Env:          cArgs.env,
-			Labels:       cArgs.labels,
-			Memory:       cArgs.memory * 1024 * 1024, //from MB to B
-			MemorySwap:   -1,
-			ExposedPorts: exposedPorts,
-			Mounts:       mounts,
-		},
-		NetworkingConfig: &docker.NetworkingConfig{
-			EndpointsConfig: map[string]*docker.EndpointConfig{
-				cArgs.network: &docker.EndpointConfig{
-					Aliases: []string{cArgs.networkAlias, cArgs.name},
-				},
+	name := cArgs.name
+	config := &container.Config{
+		Image:        cArgs.image,
+		Cmd:          cArgs.cmd,
+		Env:          cArgs.env,
+		Labels:       cArgs.labels,
+		ExposedPorts: exposedPorts,
+	}
+	hostConfig := &container.HostConfig{
+		PortBindings: cArgs.dockerOpts.ports,
+		Privileged:   cArgs.dockerOpts.privileged,
+		Mounts:       mounts,
+	}
+	hostConfig.Resources = container.Resources{
+		Memory:     cArgs.memory * 1024 * 1024, //from MB to B
+		MemorySwap: -1,
+	}
+	networkingConfig := &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			cArgs.network: &network.EndpointSettings{
+				Aliases: []string{cArgs.networkAlias, cArgs.name},
 			},
 		},
 	}
 
-	if cArgs.dockerOpts != nil {
-		opts.HostConfig = &docker.HostConfig{
-			PortBindings: cArgs.dockerOpts.ports,
-			Privileged:   cArgs.dockerOpts.privileged,
-			Mounts:       cArgs.dockerOpts.mounts,
-		}
-	}
-
-	c, err := h.dockerClient.CreateContainer(opts)
+	c, err := h.dockerClient.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, name)
 	if err != nil {
-		log.Warning("startAndCreateContainer> Unable to create container with opts: %+v err:%s", opts, err)
+		log.Warning("startAndCreateContainer> Unable to create container %s err:%s", name, err)
 		return err
 	}
 
-	if err := h.dockerClient.StartContainer(c.ID, nil); err != nil {
+	if err := h.dockerClient.ContainerStart(context.Background(), c.ID, types.ContainerStartOptions{}); err != nil {
 		log.Warning("startAndCreateContainer> Unable to start container %s err:%s", c.ID, err)
 		return err
 	}
@@ -479,9 +475,9 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 var regexPort = regexp.MustCompile("^--port=(.*):(.*)$")
 
 type dockerOpts struct {
-	ports      map[docker.Port][]docker.PortBinding
+	ports      nat.PortMap
 	privileged bool
-	mounts     []docker.HostMount
+	mounts     []mount.Mount
 }
 
 func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
@@ -575,19 +571,19 @@ func (d *dockerOpts) computeDockerOptsOnVolumeMountRequirement(opt string) error
 		return fmt.Errorf("Invalid mount option - one arg is empty. Example:type=bind,source=/hostDir/sourceDir,destination=/dirInJob current:%s", opt)
 	}
 
-	mount := docker.HostMount{
+	m := mount.Mount{
 		Target:   destination,
 		Source:   source,
-		Type:     mtype,
+		Type:     mount.Type(mtype),
 		ReadOnly: readonly,
 	}
 	// rprivate is the default value
 	// see https://docs.docker.com/engine/admin/volumes/bind-mounts/#choosing-the--v-or-mount-flag
 	if bindPropagation != "" {
-		mount.BindOptions = &docker.BindOptions{Propagation: bindPropagation}
+		m.BindOptions = &mount.BindOptions{Propagation: mount.Propagation(bindPropagation)}
 	}
 
-	d.mounts = append(d.mounts, mount)
+	d.mounts = append(d.mounts, m)
 
 	return nil
 }
@@ -605,14 +601,14 @@ func (d *dockerOpts) computeDockerOptsPorts(arg string) error {
 			containerPort += "/tcp"
 		}
 		if d.ports == nil {
-			d.ports = map[docker.Port][]docker.PortBinding{}
+			d.ports = nat.PortMap{}
 		}
-		if _, ok := d.ports[docker.Port(containerPort)]; !ok {
-			d.ports[docker.Port(containerPort)] = []docker.PortBinding{}
+		if _, ok := d.ports[nat.Port(containerPort)]; !ok {
+			d.ports[nat.Port(containerPort)] = []nat.PortBinding{}
 		}
 		//  "8182/tcp": {{HostIP: "0.0.0.0", HostPort: "8081"}}
-		d.ports[docker.Port(containerPort)] = append(d.ports[docker.Port(containerPort)],
-			docker.PortBinding{HostIP: "0.0.0.0", HostPort: s[1]})
+		d.ports[nat.Port(containerPort)] = append(d.ports[nat.Port(containerPort)],
+			nat.PortBinding{HostIP: "0.0.0.0", HostPort: s[1]})
 		return nil // no error
 	}
 	return fmt.Errorf("Wrong format of ports arguments. Example: --port=8081:8182/tcp")
