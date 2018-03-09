@@ -125,6 +125,7 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 			}
 			u.Groups = append(u.Groups, group)
 		}
+
 		store.SetWithTTL(kp, u.Permissions, 120)
 		store.SetWithTTL(kg, u.Groups, 120)
 
