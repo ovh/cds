@@ -17,7 +17,7 @@ import (
 )
 
 const loadNodeJobRun = `from workflow_node_run_job
-and workflow_node_run_job.queued >= $1
+where workflow_node_run_job.queued >= $1
 and workflow_node_run_job.status = ANY(string_to_array($2, ','))`
 
 // loadPrepareGroup returns true if groupsID contains shareInfraGroup
