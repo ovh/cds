@@ -59,7 +59,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 
 	query := `select distinct workflow_node_run_job.* 
 	from workflow_node_run_job
-	and workflow_node_run_job.queued >= $1
+	where workflow_node_run_job.queued >= $1
 	and workflow_node_run_job.status = ANY(string_to_array($2, ','))`
 
 	isSharedInfraGroup := isSharedInfraGroup(groupsID)
