@@ -672,7 +672,7 @@ type vcsInfos struct {
 	httpurl    string
 }
 
-func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, ignoreError bool, previousGitRepo string) (vcsInfos, error) {
+func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, ignoreError bool, previousGitRepo string) (vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.repository = gitValues[tagGitRepository]
 	vcsInfos.branch = gitValues[tagGitBranch]
@@ -754,7 +754,12 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValu
 	}
 
 	if branch == nil && previousGitRepo != "" && previousGitRepo == node.Context.Application.RepositoryFullname {
-		return vcsInfos, sdk.WrapError(sdk.ErrNoBranch, "computeVCSInfos> Branch %s has been deleted.", vcsInfos.branch)
+		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
+			Args: []interface{}{vcsInfos.branch},
+		})
+		wr.Status = sdk.StatusFail.String()
+		return vcsInfos, sdk.WrapError(fmt.Errorf("computeVCSInfos> branch has benn deleted"), "")
 	}
 
 	//Get the default branch

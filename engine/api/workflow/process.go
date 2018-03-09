@@ -502,9 +502,14 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	if pGitRepo != nil {
 		previousGitRepo = pGitRepo.Value
 	}
-	vcsInfos, errVcs := getVCSInfos(db, store, p, gitValues, n, run, !isRoot, previousGitRepo)
+	vcsInfos, errVcs := getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitRepo)
 	if errVcs != nil {
-		return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
+		if isRoot {
+			return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
+		} else {
+			return false, nil
+		}
+
 	}
 
 	run.VCSRepository = vcsInfos.repository
