@@ -1,8 +1,10 @@
 package cdsclient
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -240,42 +242,47 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 }
 
 func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader) error {
-	url := fmt.Sprintf("%s/project/%s/cache/%s", c.APIURL(), projectKey, tag)
+	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
 
-	req, errRequest := http.NewRequest("POST", url, tarContent)
-	if errRequest != nil {
-		return sdk.WrapError(errRequest, "WorkflowCachePush> Unable to create request")
+	mods := []RequestModifier{
+		(func(r *http.Request) {
+			r.Header.Set("Content-Type", "application/tar")
+		}),
 	}
-	req.Header.Set("Content-Type", "application/tar")
 
-	resp, err := NoTimeout(c.HTTPClient).Do(req)
+	_, _, code, err := c.Stream("POST", url, tarContent, true, mods...)
 	if err != nil {
 		return err
 	}
 
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("HTTP Code %d", resp.StatusCode)
+	if code >= 400 {
+		return fmt.Errorf("HTTP Code %d", code)
 	}
 
 	return nil
 }
 
 func (c *client) WorkflowCachePull(projectKey, tag string) (io.Reader, error) {
-	url := fmt.Sprintf("%s/project/%s/cache/%s", c.APIURL(), projectKey, tag)
+	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
 
-	req, errRequest := http.NewRequest("GET", url, nil)
-	if errRequest != nil {
-		return nil, sdk.WrapError(errRequest, "WorkflowCachePull> Unable to create request")
+	mods := []RequestModifier{
+		(func(r *http.Request) {
+			r.Header.Set("Content-Type", "application/tar")
+		}),
 	}
-	req.Header.Set("Content-Type", "application/tar")
-	resp, err := NoTimeout(c.HTTPClient).Do(req)
+
+	res, _, code, err := c.Stream("GET", url, nil, true, mods...)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP Code %d", resp.StatusCode)
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Code %d", code)
 	}
 
-	return resp.Body, nil
+	body, err := ioutil.ReadAll(res)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewBuffer(body), nil
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -60,14 +61,29 @@ func (api *API) getPullCacheHandler() Handler {
 			Tag:     tag,
 		}
 
-		fURL, err := objectstore.FetchTempURL(&cacheObject)
-		if err != nil {
-			return sdk.WrapError(err, "getPullCacheHandler> Cannot fetch cache object")
+		if objectstore.Instance().TemporaryURLSupported {
+			fURL, err := objectstore.FetchTempURL(&cacheObject)
+			if err != nil {
+				return sdk.WrapError(err, "getPullCacheHandler> Cannot fetch cache object")
+			}
+			w.Header().Add("Content-Type", "application/x-tar")
+			w.Header().Add("Content-Disposition", "attachment; filename=\"cache.tar\"")
+			http.Redirect(w, r, fURL, http.StatusMovedPermanently)
+			return nil
 		}
 
-		w.Header().Add("Content-Type", "application/x-tar")
-		w.Header().Add("Content-Disposition", "attachment; filename=\"cache.tar\"")
-		http.Redirect(w, r, fURL, http.StatusMovedPermanently)
+		ioread, err := objectstore.FetchArtifact(&cacheObject)
+		if err != nil {
+			return sdk.WrapError(err, "getPullCacheHandler> Cannot fetch artifact cache.tar")
+		}
+		if _, err := io.Copy(w, ioread); err != nil {
+			_ = ioread.Close()
+			return sdk.WrapError(err, "getPullCacheHandler> Cannot stream artifact")
+		}
+
+		if err := ioread.Close(); err != nil {
+			return sdk.WrapError(err, "getPullCacheHandler> Cannot close artifact")
+		}
 		return nil
 	}
 }
