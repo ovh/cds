@@ -93,8 +93,6 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	test.NoError(t, workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{Group: proj.ProjectGroups[0].Group, Permission: permission.PermissionReadExecute}))
-
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
