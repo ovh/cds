@@ -16,10 +16,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-const loadNodeJobRun = `from workflow_node_run_job
-where workflow_node_run_job.queued >= $1
-and workflow_node_run_job.status = ANY(string_to_array($2, ','))`
-
 // loadPrepareGroup returns true if groupsID contains shareInfraGroup
 // and list of groups, comma separated
 func isSharedInfraGroup(groupsID []int64) bool {
@@ -28,21 +24,15 @@ func isSharedInfraGroup(groupsID []int64) bool {
 
 // CountNodeJobRunQueue count all workflow_node_run_job accessible
 func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, since *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
-	if since == nil {
-		since = new(time.Time)
-	}
 
-	if len(statuses) == 0 {
-		statuses = []string{sdk.StatusWaiting.String()}
-	}
-
-	query := "select count(1) " + loadNodeJobRun
 	c := sdk.WorkflowNodeJobRunCount{}
-	count, err := db.SelectInt(query, since, strings.Join(statuses, ","))
+
+	queue, err := LoadNodeJobRunQueue(db, store, permission.PermissionRead, groupsID, since, statuses...)
 	if err != nil {
-		return c, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
+		return c, sdk.WrapError(err, "CountNodeJobRunQueue> unable to load queue")
 	}
-	c.Count = count
+
+	c.Count = int64(len(queue))
 	c.Since = *since
 	return c, nil
 }
@@ -68,7 +58,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
 	}
 
-	jobs := make([]sdk.WorkflowNodeJobRun, len(sqlJobs))
+	jobs := []sdk.WorkflowNodeJobRun{}
 	for i := range sqlJobs {
 		if err := sqlJobs[i].PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (PostGet)")
@@ -93,7 +83,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 			continue
 		}
 		getHatcheryInfo(store, &sqlJobs[i])
-		jobs[i] = sdk.WorkflowNodeJobRun(sqlJobs[i])
+		jobs = append(jobs, sdk.WorkflowNodeJobRun(sqlJobs[i]))
 	}
 
 	return jobs, nil
