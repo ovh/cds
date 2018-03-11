@@ -110,6 +110,7 @@ func TestManualRun1(t *testing.T) {
 	//TestLoadNodeRun
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
 	test.NoError(t, err)
+	nodeRun.Stages[0].RunJobs[0].QueuedSeconds = 0
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.RootID][0], nodeRun)
 
 	//TestLoadNodeJobRun
