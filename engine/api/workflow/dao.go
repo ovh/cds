@@ -345,6 +345,11 @@ func loadWorkflowRoot(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u
 
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
+	// If the workflow has no permission, inherit from the project
+	if len(w.Groups) == 0 {
+		w.Groups = p.ProjectGroups
+	}
+
 	if err := IsValid(w, p); err != nil {
 		return err
 	}
@@ -389,6 +394,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
 		}
+	}
+
+	if err := upsertAllGroups(db, w, w.Groups); err != nil {
+		return sdk.WrapError(err, "Insert> Unable to insert workflow(%d) permissions (%#v)", w.ID, w.Groups)
 	}
 
 	return updateLastModified(db, store, w, u)
@@ -540,6 +549,10 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		return sdk.WrapError(err, "Update> Unable to update workflow")
 	}
 
+	if err := upsertAllGroups(db, w, w.Groups); err != nil {
+		return sdk.WrapError(err, "Update> Unable to update workflow(%d) permissions (%#v)", w.ID, w.Groups)
+	}
+
 	return updateLastModified(db, store, w, u)
 }
 
@@ -597,6 +610,10 @@ func HasAccessTo(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error
 
 // IsValid cheks workflow validity
 func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
+	if len(w.Groups) == 0 {
+		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("The workflow should have at least one granted group"))
+	}
+
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
