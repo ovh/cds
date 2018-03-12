@@ -150,7 +150,7 @@
                                                             </ng-container>
                                                         </div>
                                                         <div class="ui field" *ngIf="selectedRepo">
-                                                            <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy"
+                                                            <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy" [createOnProject]="true"
                                                                               (strategyChange)="createWorkflowFromRepo()"
                                                                               [hideBranch]="true" [hideButton]="true"></app-vcs-strategy>
                                                         </div>

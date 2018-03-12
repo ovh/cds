@@ -278,6 +278,8 @@
   "group_btn_set_admin": "Admin",
   "group_btn_unset_admin": "Admin",
 
+  "key_or_create":  "(Create)",
+
   "token_description": "Description",
   "token_value": "Token",
   "token_type": "Type",

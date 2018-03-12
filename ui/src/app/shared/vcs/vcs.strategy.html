@@ -17,7 +17,7 @@
             <ng-container *ngSwitchCase="connectionType.SSH">
                 <div class="inline fields">
                     <div class="two wide field">
-                        <label>{{ 'vcs_ssh_key' | translate }}</label>
+                        <label>{{ 'vcs_ssh_key' | translate }}<span class="keyLink" (click)="openCreatekeyModal()" *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
                     </div>
                     <div class="fourteen wide field">
                         <div class="ssh">
@@ -77,3 +77,9 @@
         <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="saveStrategy()">{{ 'btn_save' | translate }}</button>
     </div>
 </div>
+<ng-template let-context let-modal="modal" #createSSHKey>
+    <div class="header">{{ 'keys_add_title' | translate }}</div>
+    <div class="content">
+        <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="proj-"></app-keys-form>
+    </div>
+</ng-template>
