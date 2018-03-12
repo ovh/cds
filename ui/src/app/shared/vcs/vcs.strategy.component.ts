@@ -40,8 +40,9 @@ export class VCSStrategyComponent implements OnInit {
     keys: AllKeys;
     connectionType = VCSConnections;
     displayVCSStrategy = false;
+    defaultKeyType = 'ssh';
 
-    @ViewChild('createSSHKey')
+    @ViewChild('createKey')
     sshModalTemplate: ModalTemplate<boolean, boolean, void>;
     sshModal: ActiveModal<boolean, boolean, void>;
 
@@ -61,14 +62,15 @@ export class VCSStrategyComponent implements OnInit {
         this.strategyChange.emit(this.strategy);
     }
 
-    openCreatekeyModal(): void {
+    openCreateKeyModal(k): void {
+        this.defaultKeyType = k;
         if (this.sshModalTemplate) {
             const config = new TemplateModalConfig<boolean, boolean, void>(this.sshModalTemplate);
             this.sshModal = this._modalService.open(config);
         }
     }
 
-    manageKeyEvent(event: KeyEvent): void {
+    addKey(event: KeyEvent): void {
         this.loading = true;
         this._projectStore.addKey(this.project.key, event.key).pipe(first(), finalize(() => {
             this.loading = false;
