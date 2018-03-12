@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/fsouza/go-dockerclient"
+	"github.com/docker/go-connections/nat"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -29,19 +29,19 @@ func Test_computeDockerOpts(t *testing.T) {
 		{
 			name:    "Simple Test with Ports",
 			args:    args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.ModelRequirement, Value: "golang:1.9.1 --port=8080:8081/tcp"}}},
-			want:    &dockerOpts{ports: map[docker.Port][]docker.PortBinding{docker.Port("8081/tcp"): []docker.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}}}},
+			want:    &dockerOpts{ports: nat.PortMap{nat.Port("8081/tcp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}}}},
 			wantErr: false,
 		},
 		{
 			name:    "Simple Test with Ports, without tcp, tcp is the default",
 			args:    args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.ModelRequirement, Value: "golang:1.9.1 --port=8080:8081"}}},
-			want:    &dockerOpts{ports: map[docker.Port][]docker.PortBinding{docker.Port("8081/tcp"): []docker.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}}}},
+			want:    &dockerOpts{ports: nat.PortMap{nat.Port("8081/tcp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}}}},
 			wantErr: false,
 		},
 		{
 			name:    "Simple Test with Ports, with udp",
 			args:    args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.ModelRequirement, Value: "golang:1.9.1 --port=8080:8081/udp"}}},
-			want:    &dockerOpts{ports: map[docker.Port][]docker.PortBinding{docker.Port("8081/udp"): []docker.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}}}},
+			want:    &dockerOpts{ports: nat.PortMap{nat.Port("8081/udp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}}}},
 			wantErr: false,
 		},
 		{
@@ -65,9 +65,9 @@ func Test_computeDockerOpts(t *testing.T) {
 		{
 			name: "Simple Test with privileged and two ports",
 			args: args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.ModelRequirement, Value: "golang:1.9.1 --port=8080:8081/tcp --privileged --port=9080:9081/tcp"}}},
-			want: &dockerOpts{privileged: true, ports: map[docker.Port][]docker.PortBinding{
-				docker.Port("8081/tcp"): []docker.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
-				docker.Port("9081/tcp"): []docker.PortBinding{{HostIP: "0.0.0.0", HostPort: "9080"}},
+			want: &dockerOpts{privileged: true, ports: nat.PortMap{
+				nat.Port("8081/tcp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+				nat.Port("9081/tcp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "9080"}},
 			}},
 			wantErr: false,
 		},

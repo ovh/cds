@@ -676,12 +676,14 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 	}
 
-	var images []docker.APIImages
+	var images []types.ImageSummary
 	// if we don't need to force pull links, we check if model is "latest"
 	// if model is not "latest" tag too, ListImages to get images locally
 	if listImagesToDoForLinkedImages || !strings.HasSuffix(model.Image, ":latest") {
 		var errl error
-		images, errl = h.dockerClient.ListImages(docker.ListImagesOptions{})
+		images, errl = h.dockerClient.ImageList(context.Background(), types.ImageListOptions{
+			All: true,
+		})
 		if errl != nil {
 			log.Warning("CanSpawn> Unable to list images: %s", errl)
 		}
@@ -704,16 +706,14 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 
 	if !imageFound {
 		//Pull the worker image
-		opts := docker.PullImageOptions{
-			Repository:   model.Image,
-			OutputStream: nil,
-		}
-		auth := docker.AuthConfiguration{}
+		opts := types.ImagePullOptions{}
 		log.Info("CanSpawn> pulling image %s", model.Image)
-		if err := h.dockerClient.PullImage(opts, auth); err != nil {
+		res, err := h.dockerClient.ImagePull(context.Background(), model.Image, opts)
+		if err != nil {
 			log.Warning("CanSpawn> Unable to pull image %s : %s", model.Image, err)
 			return false
 		}
+		_ = res.Close()
 	}
 
 	//Pull the service image
@@ -734,16 +734,14 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 
 		if !imageFound2 {
-			opts := docker.PullImageOptions{
-				Repository:   i,
-				OutputStream: nil,
-			}
-			auth := docker.AuthConfiguration{}
+			opts := types.ImagePullOptions{}
 			log.Info("CanSpawn> pulling image %s", i)
-			if err := h.dockerClient.PullImage(opts, auth); err != nil {
+			res, err := h.dockerClient.ImagePull(context.Background(), i, opts)
+			if err != nil {
 				log.Warning("CanSpawn> Unable to pull image %s : %s", i, err)
 				return false
 			}
+			_ = res.Close()
 		}
 	}
 
@@ -752,7 +750,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return true
 }
 
-func (h *HatcherySwarm) getWorkersStarted(containers []docker.APIContainers) ([]docker.APIContainers, error) {
+func (h *HatcherySwarm) getWorkersStarted(containers []types.Container) ([]types.Container, error) {
 	if containers == nil {
 		var errList error
 		containers, errList = h.getContainers()
@@ -762,7 +760,7 @@ func (h *HatcherySwarm) getWorkersStarted(containers []docker.APIContainers) ([]
 		}
 	}
 
-	res := []docker.APIContainers{}
+	res := []types.Container{}
 	//We only count worker
 	for _, c := range containers {
 		cont, err := h.getContainer(c.Names[0])
@@ -850,7 +848,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 	}
 
 	//Checking workers
-	oldContainers := []docker.APIContainers{}
+	oldContainers := []types.Container{}
 	for _, c := range containers {
 		//If there isn't any worker registered on the API. Kill the container
 		if len(apiworkers) == 0 {
@@ -908,14 +906,14 @@ func (h *HatcherySwarm) killAwolWorker() {
 	}
 
 	//Checking networks
-	nets, errLN := h.dockerClient.ListNetworks()
+	nets, errLN := h.dockerClient.NetworkList(context.Background(), types.NetworkListOptions{})
 	if errLN != nil {
 		log.Warning("killAwolWorker> Cannot get networks: %s", errLN)
 		return
 	}
 
 	for i := range nets {
-		n, err := h.dockerClient.NetworkInfo(nets[i].ID)
+		n, err := h.dockerClient.NetworkInspect(context.Background(), nets[i].ID)
 		if err != nil {
 			log.Warning("killAwolWorker> Unable to get network info: %v", err)
 			continue
@@ -934,7 +932,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 		}
 
 		log.Debug("killAwolWorker> Delete network %s", n.Name)
-		if err := h.dockerClient.RemoveNetwork(n.ID); err != nil {
+		if err := h.dockerClient.NetworkRemove(context.Background(), n.ID); err != nil {
 			log.Warning("killAwolWorker> Unable to delete network %s err:%s", n.Name, err)
 		}
 	}
