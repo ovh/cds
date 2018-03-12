@@ -1,0 +1,33 @@
+version: v1.0
+name: tag-push-pull
+stages:
+- Stage 1
+- Stage 2
+jobs:
+- job: New Job
+  stage: Stage 1
+  steps:
+  - script:
+    - mkdir mydir
+    - echo "this is a test" > mydir/test.txt
+    - ""
+    - worker cache push abcd ./mydir
+- job: New Job
+  stage: Stage 2
+  steps:
+  - script:
+    - '#!/bin/bash'
+    - ""
+    - mkdir result
+    - cd result
+    - worker cache pull abcd
+    - 'ls -R '
+    - fileContent=`cat mydir/test.txt`
+    - ""
+    - if [ "x${fileContent}" = "xthis is a test" ]; then
+    - "\techo \"Cache OK\""
+    - else
+    - "\techo \"Cache KO\""
+    - '    exit 1'
+    - fi
+    - ""

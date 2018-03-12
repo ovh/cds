@@ -44,6 +44,7 @@ func cmdCachePush(w *currentWorker) *cobra.Command {
 		Short:   "worker cache push tagValue {{.cds.workspace}}/pathToUpload",
 		Long: `
 Inside a project, you can create a cache from your worker with a tag (useful for vendors for example)
+	worker push <tagValue> dir/file
 		`,
 		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload",
 		Run:     cachePushCmd(w),
@@ -178,6 +179,7 @@ func cmdCachePull(w *currentWorker) *cobra.Command {
 		Short:   "worker cache pull tagValue",
 		Long: `
 Inside a project, you can fetch a cache from your worker with a tag
+	worker pull <tagValue>
 		`,
 		Run: cachePullCmd(w),
 	}
@@ -200,8 +202,13 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("worker cache pull > Wrong usage: Example : worker cache pull myTagValue")
 		}
 
+		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			sdk.Exit("worker cache pull > cannot get current path: %s\n", err)
+		}
+
 		fmt.Printf("Worker cache pull in progress... (tag: %s)\n", args[0])
-		req, errRequest := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull", port, args[0]), nil)
+		req, errRequest := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull?path=%s", port, args[0], dir), nil)
 		if errRequest != nil {
 			sdk.Exit("worker cache pull > cannot post worker cache pull with tag %s (Request): %s\n", args[0], errRequest)
 		}
@@ -234,6 +241,8 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
+	path := r.FormValue("path")
+
 	if wk.currentJob.wJob == nil {
 		errW := fmt.Errorf("worker cache pull > Cannot find workflow job info")
 		writeError(w, r, errW)
@@ -244,7 +253,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 	bts, err := wk.client.WorkflowCachePull(projectKey, vars["tag"])
 	if err != nil {
 		err = sdk.Error{
-			Message: "worker cache pull > Cannot push cache : " + err.Error(),
+			Message: "worker cache pull > Cannot pull cache : " + err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
 		writeError(w, r, err)
@@ -270,18 +279,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 			continue
 		}
 
-		currentDir, err := os.Getwd()
-		if err != nil {
-			err = sdk.Error{
-				Message: "worker cache pull > Unable to get current directory : " + err.Error(),
-				Status:  http.StatusInternalServerError,
-			}
-			writeError(w, r, err)
-			return
-		}
-		// the target location where the dir/file should be created
-		target := filepath.Join(currentDir, hdr.Name)
-
+		target := filepath.Join(path, hdr.Name)
 		if _, errS := os.Stat(filepath.Dir(target)); errS != nil {
 			if errM := os.MkdirAll(filepath.Dir(target), 0755); errM != nil {
 				errM = sdk.Error{
@@ -296,7 +294,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 		f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(hdr.Mode))
 		if err != nil {
 			err = sdk.Error{
-				Message: "worker cache pull > Cannot create file : " + err.Error(),
+				Message: "worker cache pull > Cannot create file: " + err.Error(),
 				Status:  http.StatusInternalServerError,
 			}
 			writeError(w, r, err)
