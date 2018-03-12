@@ -309,6 +309,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/sdk/examples/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gitclone/</loc>
   </url>
   
@@ -321,12 +325,20 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/sdk/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/tags/</loc>
     <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/sdk/examples/go-workers-list/</loc>
   </url>
   
   <url>

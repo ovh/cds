@@ -482,7 +482,7 @@
           
     <li data-nav-id="/cli/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/">
-        <span>Command Line &amp; REST API</span>
+        <span>Command Line - REST API - SDK</span>
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
@@ -631,6 +631,25 @@
         <a href="https://ovh.github.io/cds/cli/api/workflow/">
           <span>workflow</span>
         </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/sdk/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/sdk/">
+        <span>SDK Golang</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/cli/sdk/examples/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/sdk/examples/">
+        <span>Examples</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/sdk/examples/go-workers-list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/sdk/examples/go-workers-list/">
+          <span>Workers List</span>
+        </a>
+    </li>
+        </ul>
     </li>
         </ul>
     </li>
@@ -1639,7 +1658,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line & REST API</a> > <a href='https://ovh.github.io/cds/cli/api/'>REST API</a> > admin
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/api/'>REST API</a> > admin
 
  
 
@@ -1667,10 +1686,10 @@
 <li><a href="#delete-admin-maintenance">DELETE <code>/admin/maintenance</code></a></li>
 <li><a href="#get-admin-services">GET <code>/admin/services</code></a></li>
 <li><a href="#get-admin-services-service">GET <code>/admin/services/&lt;service&gt;</code></a></li>
-<li><a href="#get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></a></li>
-<li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
-<li><a href="#post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#delete-admin-warning">DELETE <code>/admin/warning</code></a></li>
 </ul></li>
 </ul></li>
@@ -1947,6 +1966,34 @@
 </tbody>
 </table>
 
+<h3 id="delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/services/&lt;service&gt;/call</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22">deleteAdminServiceCallHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></h3>
 
 <table>
@@ -1971,34 +2018,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22">getAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/&lt;service&gt;/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2031,7 +2050,7 @@
 </tbody>
 </table>
 
-<h3 id="delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></h3>
+<h3 id="put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></h3>
 
 <table>
 <thead>
@@ -2044,7 +2063,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -2054,7 +2073,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22">deleteAdminServiceCallHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>
