@@ -13,7 +13,7 @@ testcases:
 
 - name: import workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow push ./tests/fixtures/ITSCWRKFLW4/*.yml
+  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW4 ./tests/fixtures/ITSCWRKFLW4/*.yml --skip-update-files
 
 - name: run workflow
   steps:
