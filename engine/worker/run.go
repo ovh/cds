@@ -153,7 +153,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	// Replace variable placeholder that may have been added by last step
 	if err := w.replaceVariablesPlaceholder(a, *params); err != nil {
 		return sdk.Result{
-			Status:  sdk.StatusDisabled.String(),
+			Status:  sdk.StatusFail.String(),
 			BuildID: buildID,
 			Reason:  "Unable to interpolate action parameters",
 		}
