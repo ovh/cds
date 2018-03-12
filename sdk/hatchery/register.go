@@ -253,7 +253,7 @@ func workerRegister(h Interface, models []sdk.Model, nRegister *int64) error {
 
 		if h.NeedRegistration(&models[k]) {
 			if err := h.Client().WorkerModelBook(models[k].ID); err != nil {
-				log.Error("workerRegister> WorkerModelBook on model %s err: %s", models[k].Name, err)
+				log.Warning("workerRegister> WorkerModelBook on model %s err: %s", models[k].Name, err)
 			} else {
 				log.Info("workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
 				atomic.AddInt64(nRegister, 1)
