@@ -345,11 +345,6 @@ func loadWorkflowRoot(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u
 
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
-	// If the workflow has no permission, inherit from the project
-	if len(w.Groups) == 0 {
-		w.Groups = p.ProjectGroups
-	}
-
 	if err := IsValid(w, p); err != nil {
 		return err
 	}
