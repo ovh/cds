@@ -110,18 +110,24 @@
                                                 </div>
                                                 <div class="fourteen wide column" *ngIf="creationMode === 'repository'">
                                                     <ng-container *ngIf="!asCodeResult">
-                                                        <div class="ui field">
-                                                            <label>{{ 'workflow_wizard_select_repo_man' | translate}}</label>
-                                                            <sui-select class="selection"
-                                                                        name="repoman"
-                                                                        [(ngModel)]="selectedRepoManager"
-                                                                        (selectedOptionChange)="fetchRepos($event)"
-                                                                        [options]="project.vcs_servers"
-                                                                        [isSearchable]="true" #select>
-                                                                <sui-select-option *ngFor="let vcs of select.filteredOptions"
-                                                                                   [value]="vcs.name">
-                                                                </sui-select-option>
-                                                            </sui-select>
+                                                        <div class="ui fields">
+                                                            <div class="ui eight wide field">
+                                                                <label>{{ 'workflow_wizard_select_repo_man' | translate}}</label>
+                                                                <sui-select class="selection"
+                                                                            name="repoman"
+                                                                            [(ngModel)]="selectedRepoManager"
+                                                                            (selectedOptionChange)="fetchRepos($event)"
+                                                                            [options]="project.vcs_servers"
+                                                                            [isSearchable]="true" #select>
+                                                                    <sui-select-option *ngFor="let vcs of select.filteredOptions"
+                                                                                       [value]="vcs.name">
+                                                                    </sui-select-option>
+                                                                </sui-select>
+                                                            </div>
+                                                            <div class="ui eight wide field">
+                                                                <label>{{ 'workflow_wizard_select_repo_man_add' | translate}}</label>
+                                                                <app-repomanager-form [project]="project"></app-repomanager-form>
+                                                            </div>
                                                         </div>
                                                         <div class="ui field" *ngIf="selectedRepoManager">
                                                             <label>{{ 'workflow_wizard_select_repo' | translate}}</label>
@@ -148,7 +154,7 @@
                                                                               (strategyChange)="createWorkflowFromRepo()"
                                                                               [hideBranch]="true" [hideButton]="true"></app-vcs-strategy>
                                                         </div>
-                                                        <div class="right aligned field" *ngIf="!pollingResponse">
+                                                        <div class="right aligned field" *ngIf="!pollingResponse && selectedRepo">
                                                             <button class="ui green button" type="button" [class.loading]="loading"
                                                                     [disabled]="loading" (click)="createWorkflowFromRepo()">{{
                                                                 'btn_inspect_repo' | translate }}

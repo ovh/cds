@@ -1,17 +1,17 @@
 import {Component, ViewChild, Input} from '@angular/core';
-import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
-import {ProjectStore} from '../../../../../../service/project/project.store';
 import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../../../../shared/toast/ToastService';
-import {Project} from '../../../../../../model/project.model';
-import {WarningModalComponent} from '../../../../../../shared/modal/warning/warning.component';
+import {Project} from '../../../model/project.model';
+import {WarningModalComponent} from '../../modal/warning/warning.component';
+import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {ToastService} from '../../toast/ToastService';
+import {ProjectStore} from '../../../service/project/project.store';
 
 @Component({
-    selector: 'app-project-repomanager-form',
-    templateUrl: './project.repomanager.form.html',
-    styleUrls: ['./project.repomanager.form.scss']
+    selector: 'app-repomanager-form',
+    templateUrl: './repomanager.form.html',
+    styleUrls: ['./repomanager.form.scss']
 })
-export class ProjectRepoManagerFormComponent  {
+export class RepoManagerFormComponent  {
 
     // project
     @Input() project: Project;

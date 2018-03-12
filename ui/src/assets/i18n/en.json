@@ -804,5 +804,6 @@
   "workflow_wizard_select_repo": "Select a repository",
   "workflow_wizard_select_repo_loading": "Loading repositories...",
   "workflow_wizard_repo_analyse" : "Analyzing repository...",
+  "workflow_wizard_select_repo_man_add" : "Or add a repository manager",
   "wizard_repo_files" : "Files found: "
 }

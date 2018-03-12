@@ -78,6 +78,7 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
 import {KeysFormComponent} from './keys/form/keys.form.component';
 import {KeysListComponent} from './keys/list/keys.list.component';
 import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
+import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -111,6 +112,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         PrerequisitesFormComponent,
         RequirementsListComponent,
         RequirementsFormComponent,
+        RepoManagerFormComponent,
         StatusIconComponent,
         TruncatePipe,
         VariableComponent,
@@ -193,6 +195,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         PrerequisitesFormComponent,
         PipelineLaunchModalComponent,
         ReactiveFormsModule,
+        RepoManagerFormComponent,
         StatusIconComponent,
         SuiModule,
         TranslateModule,

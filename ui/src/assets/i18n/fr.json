@@ -804,5 +804,6 @@
   "workflow_wizard_select_repo": "Sélectionner un dépot",
   "workflow_wiazrd_select_repo_loading": "Chargement des dépots...",
   "workflow_wizard_repo_analyse" : "Analyse du dépôt...",
+  "workflow_wizard_select_repo_man_add" : "Ou ajouter un gestionnaire de dépôt",
   "wizard_repo_files" : "Fichiers trouvés : "
 }
