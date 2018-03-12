@@ -44,6 +44,7 @@ func cmdCachePush(w *currentWorker) *cobra.Command {
 		Short:   "worker cache push tagValue {{.cds.workspace}}/pathToUpload",
 		Long: `
 Inside a project, you can create a cache from your worker with a tag (useful for vendors for example)
+	worker push <tagValue> dir/file
 		`,
 		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload",
 		Run:     cachePushCmd(w),
@@ -178,6 +179,7 @@ func cmdCachePull(w *currentWorker) *cobra.Command {
 		Short:   "worker cache pull tagValue",
 		Long: `
 Inside a project, you can fetch a cache from your worker with a tag
+	worker pull <tagValue>
 		`,
 		Run: cachePullCmd(w),
 	}

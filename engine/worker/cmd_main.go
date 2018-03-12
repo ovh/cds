@@ -18,31 +18,31 @@ func cmdMain(w *currentWorker) *cobra.Command {
 		Run:   mainCommandRun(w),
 	}
 
-	pflags := mainCmd.PersistentFlags()
+	flags := mainCmd.Flags()
 
-	pflags.String("log-level", "notice", "Log Level: debug, info, notice, warning, critical")
-	viper.BindPFlag("log_level", pflags.Lookup("log-level"))
+	flags.String("log-level", "notice", "Log Level: debug, info, notice, warning, critical")
+	viper.BindPFlag("log_level", flags.Lookup("log-level"))
 
-	pflags.String("api", "", "URL of CDS API")
-	viper.BindPFlag("api", pflags.Lookup("api"))
+	flags.String("api", "", "URL of CDS API")
+	viper.BindPFlag("api", flags.Lookup("api"))
 
-	pflags.Bool("insecure", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
-	viper.BindPFlag("insecure", pflags.Lookup("insecure"))
+	flags.Bool("insecure", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
+	viper.BindPFlag("insecure", flags.Lookup("insecure"))
 
-	pflags.String("token", "", "CDS Token")
-	viper.BindPFlag("token", pflags.Lookup("token"))
+	flags.String("token", "", "CDS Token")
+	viper.BindPFlag("token", flags.Lookup("token"))
 
-	pflags.String("name", "", "Name of worker")
-	viper.BindPFlag("name", pflags.Lookup("name"))
+	flags.String("name", "", "Name of worker")
+	viper.BindPFlag("name", flags.Lookup("name"))
 
-	pflags.Int("model", 0, "Model of worker")
-	viper.BindPFlag("model", pflags.Lookup("model"))
+	flags.Int("model", 0, "Model of worker")
+	viper.BindPFlag("model", flags.Lookup("model"))
 
-	pflags.Int("hatchery", 0, "Hatchery ID spawing worker")
-	viper.BindPFlag("hatchery", pflags.Lookup("hatchery"))
+	flags.Int("hatchery", 0, "Hatchery ID spawing worker")
+	viper.BindPFlag("hatchery", flags.Lookup("hatchery"))
 
-	pflags.String("hatchery-name", "", "Hatchery Name spawing worker")
-	viper.BindPFlag("hatchery_name", pflags.Lookup("hatchery-name"))
+	flags.String("hatchery-name", "", "Hatchery Name spawing worker")
+	viper.BindPFlag("hatchery_name", flags.Lookup("hatchery-name"))
 
 	initFlagsRun(mainCmd)
 
