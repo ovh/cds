@@ -15,15 +15,15 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-var cmdDownloadFromGithub bool
-
 func cmdUpdate(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "update",
 		Short: "Update worker from CDS API or from CDS Release",
 		Run:   updateCmd(w),
 	}
-	c.Flags().BoolVar(&cmdDownloadFromGithub, "from-github", false, "Update binary from latest github release")
+	c.Flags().Bool("from-github", false, "Update binary from latest github release")
+	c.Flags().String(flagAPI, "", "URL of CDS API")
+	c.Flags().Bool(flagInsecure, false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	return c
 }
 
@@ -31,7 +31,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 		var urlBinary string
-		if !cmdDownloadFromGithub {
+		if !FlagBool(cmd, "from-github") {
 			w.apiEndpoint = FlagString(cmd, flagAPI)
 			if w.apiEndpoint == "" {
 				sdk.Exit("--api not provided, aborting update.")
