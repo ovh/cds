@@ -72,6 +72,35 @@ func Test_computeDockerOpts(t *testing.T) {
 			}},
 			wantErr: false,
 		},
+		{
+			name: "Simple Test with volume",
+			args: args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.VolumeRequirement, Value: "type=bind,source=/hostDir/sourceDir,destination=/dirInJob"}}},
+			want: &dockerOpts{
+				mounts: []mount.Mount{
+					{
+						Type:   mount.TypeBind,
+						Source: "/hostDir/sourceDir",
+						Target: "/dirInJob",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Simple Test with readonly volume",
+			args: args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.VolumeRequirement, Value: "type=bind,source=/hostDir/sourceDir,destination=/dirInJob,readonly"}}},
+			want: &dockerOpts{
+				mounts: []mount.Mount{
+					{
+						Type:     mount.TypeBind,
+						Source:   "/hostDir/sourceDir",
+						Target:   "/dirInJob",
+						ReadOnly: true,
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
