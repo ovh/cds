@@ -5,6 +5,7 @@ import (
 
 	docker "github.com/docker/docker/client"
 	"github.com/ovh/cds/sdk/log"
+	context "golang.org/x/net/context"
 )
 
 func init() {
@@ -16,6 +17,11 @@ func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 	dockerClient, err := docker.NewEnvClient()
 	if err != nil {
 		t.Skipf("unable to get docker client: %v. Skipping this test", err)
+		return nil
+	}
+
+	if _, err := dockerClient.Info(context.Background()); err != nil {
+		t.Skipf("unable to ping docker client: %v. Skipping this test", err)
 		return nil
 	}
 
