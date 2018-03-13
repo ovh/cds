@@ -6,52 +6,75 @@ import (
 	types "github.com/docker/docker/api/types"
 	context "golang.org/x/net/context"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (h *HatcherySwarm) killAndRemove(ID string) {
+func (h *HatcherySwarm) killAndRemove(ID string) error {
 	container, err := h.dockerClient.ContainerInspect(context.Background(), ID)
 	if err != nil {
+		//If there is an error, we try to remove the container
 		if strings.Contains(err.Error(), "No such container") {
 			log.Debug("killAndRemove> cannot InspectContainer: %v", err)
+			return nil
 		} else {
 			log.Info("killAndRemove> cannot InspectContainer: %v", err)
 		}
-		h.killAndRemoveContainer(ID)
-		return
+	}
+	if err := h.killAndRemoveContainer(ID); err != nil {
+		return sdk.WrapError(err, "killAndRemove> %s", ID[:7])
+	}
+
+	//If there is no network settings, stop here
+	if container.NetworkSettings == nil {
+		return nil
 	}
 
 	for _, cnetwork := range container.NetworkSettings.Networks {
+		//Get the network
 		network, err := h.dockerClient.NetworkInspect(context.Background(), cnetwork.NetworkID)
 		if err != nil {
 			log.Info("killAndRemove> cannot NetworkInfo: %v", err)
-			h.killAndRemoveContainer(ID)
-			return
+			return sdk.WrapError(err, "killAndRemove> unable to get network for %s", ID[:7])
 		}
+
 		// If we succeed to get the network, kill and remove all the container on the network
 		if netname, ok := network.Labels["worker_net"]; ok {
 			log.Debug("killAndRemove> Remove network %s", netname)
 			for id := range network.Containers {
-				h.killAndRemoveContainer(id)
+				if err := h.killAndRemoveContainer(id); err != nil {
+					log.Error("killAndRemove> unable to kill and remove %d", id[:12])
+				}
 			}
 		}
+
+		//Finally remove the network
+		if err := h.dockerClient.NetworkRemove(context.Background(), network.ID); err != nil {
+			log.Error("killAndRemove> unable to kill and remove network %d", network.ID[:12])
+		}
 	}
+	return nil
 }
 
-func (h *HatcherySwarm) killAndRemoveContainer(ID string) {
-	log.Debug("killAndRemove>Remove container %s", ID)
+func (h *HatcherySwarm) killAndRemoveContainer(ID string) error {
+	log.Debug("killAndRemove> remove container %s", ID)
 	if err := h.dockerClient.ContainerKill(context.Background(), ID, "SIGKILL"); err != nil {
 		if !strings.Contains(err.Error(), "is not running") && !strings.Contains(err.Error(), "No such container") {
-			log.Warning("killAndRemove> Unable to kill container %s", err)
+			log.Warning("killAndRemove> Unable to kill container %v", err)
+		} else {
+			return err
 		}
 	}
 
-	if err := h.dockerClient.ContainerRemove(context.Background(), ID, types.ContainerRemoveOptions{RemoveLinks: true, RemoveVolumes: true, Force: true}); err != nil {
+	if err := h.dockerClient.ContainerRemove(context.Background(), ID, types.ContainerRemoveOptions{Force: true}); err != nil {
 		// container could be already removed by a previous call to docker
 		if !strings.Contains(err.Error(), "No such container") {
-			log.Warning("killAndRemove> Unable to remove container %s", err)
+			log.Warning("killAndRemove> Unable to remove container %s: %v", ID, err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 func (h *HatcherySwarm) killAwolNetworks() error {

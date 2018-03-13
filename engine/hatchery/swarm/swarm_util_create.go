@@ -39,7 +39,7 @@ type containerArgs struct {
 	cmd, env                           []string
 	labels                             map[string]string
 	memory                             int64
-	dockerOpts                         *dockerOpts
+	dockerOpts                         dockerOpts
 }
 
 //shortcut to create+start(=run) a container
@@ -47,36 +47,21 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	//Memory is set to 1GB by default
 	if cArgs.memory <= 4 {
 		cArgs.memory = 1024
-	} else {
-		//Moaaaaar memory
-		cArgs.memory = cArgs.memory * 110 / 100
 	}
 	log.Debug("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
 
 	var exposedPorts nat.PortSet
 	var mounts []mount.Mount
-	if cArgs.dockerOpts != nil {
-		if len(cArgs.dockerOpts.ports) > 0 {
-			for port := range cArgs.dockerOpts.ports {
-				exposedPorts = map[nat.Port]struct{}{port: {}}
-			}
-		}
-
-		if len(cArgs.dockerOpts.mounts) > 0 {
-			for _, v := range cArgs.dockerOpts.mounts {
-				mounts = append(mounts, mount.Mount{Source: v.Source, Target: v.Target})
-			}
-		}
-	}
 
 	name := cArgs.name
 	config := &container.Config{
 		Image:        cArgs.image,
-		Cmd:          cArgs.cmd,
 		Env:          cArgs.env,
+		Cmd:          cArgs.cmd,
 		Labels:       cArgs.labels,
 		ExposedPorts: exposedPorts,
 	}
+
 	hostConfig := &container.HostConfig{
 		PortBindings: cArgs.dockerOpts.ports,
 		Privileged:   cArgs.dockerOpts.privileged,
@@ -86,23 +71,24 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 		Memory:     cArgs.memory * 1024 * 1024, //from MB to B
 		MemorySwap: -1,
 	}
+
 	networkingConfig := &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			cArgs.network: &network.EndpointSettings{
-				Aliases: []string{cArgs.networkAlias, cArgs.name},
-			},
-		},
+		EndpointsConfig: map[string]*network.EndpointSettings{},
+	}
+
+	if cArgs.network != "" && len(cArgs.networkAlias) > 0 {
+		networkingConfig.EndpointsConfig[cArgs.network] = &network.EndpointSettings{
+			Aliases: []string{cArgs.networkAlias, cArgs.name},
+		}
 	}
 
 	c, err := h.dockerClient.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, name)
 	if err != nil {
-		log.Warning("startAndCreateContainer> Unable to create container %s err:%s", name, err)
-		return err
+		return sdk.WrapError(err, "startAndCreateContainer> Unable to create container %s", name)
 	}
 
 	if err := h.dockerClient.ContainerStart(context.Background(), c.ID, types.ContainerStartOptions{}); err != nil {
-		log.Warning("startAndCreateContainer> Unable to start container %s err:%s", c.ID, err)
-		return err
+		return sdk.WrapError(err, "startAndCreateContainer> Unable to start container %v %s", c.ID[:12])
 	}
 	return nil
 }
@@ -162,7 +148,7 @@ func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(isSharedInfra bool, re
 	// example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
 	for idx, opt := range strings.Split(req.Value, " ") {
 		if isSharedInfra {
-			return fmt.Errorf("You could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option.", opt)
+			return fmt.Errorf("you could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option", opt)
 		}
 
 		if idx == 0 {

@@ -2,7 +2,6 @@ package swarm
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -213,7 +212,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		env:          env,
 		labels:       labels,
 		memory:       memory,
-		dockerOpts:   dockerOpts,
+		dockerOpts:   *dockerOpts,
 	}
 
 	//start the worker
@@ -481,22 +480,25 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 	return oldContainers, nil
 }
 
-func (h *HatcherySwarm) killAwolWorker() {
+func (h *HatcherySwarm) killAwolWorker() error {
 	oldContainers, err := h.listAwolWorkers()
 	if err != nil {
-		log.Error("killAwolWorker> %v", err)
+		log.Warning("killAwolWorker> Cannot list workers %s", err)
+		return err
 	}
 
 	//Delete the workers
 	for _, c := range oldContainers {
 		log.Debug("killAwolWorker> Delete worker %s", c.Names[0])
-		h.killAndRemove(c.ID)
+		if err := h.killAndRemove(c.ID); err != nil {
+			log.Error("killAwolWorker> %v", err)
+		}
 	}
 
 	containers, errC := h.getContainers()
 	if errC != nil {
 		log.Warning("killAwolWorker> Cannot list containers: %s", errC)
-		os.Exit(1)
+		return errC
 	}
 
 	//Checking services
@@ -512,13 +514,13 @@ func (h *HatcherySwarm) killAwolWorker() {
 	}
 
 	for _, c := range oldContainers {
-		h.killAndRemove(c.ID)
 		log.Debug("killAwolWorker> Delete worker %s", c.Names[0])
+		if err := h.killAndRemove(c.ID); err != nil {
+			log.Error("killAwolWorker> %v", err)
+		}
 	}
 
-	if err := h.killAwolNetworks(); err != nil {
-		log.Error("killAwolWorker> ", err)
-	}
+	return h.killAwolNetworks()
 }
 
 // NeedRegistration return true if worker model need regsitration

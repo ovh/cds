@@ -12,6 +12,7 @@ import (
 func (h *HatcherySwarm) pullImage(img string, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
 	//Pull the worker image
 	opts := types.ImagePullOptions{}
 	log.Info("CanSpawn> pulling image %s", img)
@@ -20,6 +21,5 @@ func (h *HatcherySwarm) pullImage(img string, timeout time.Duration) error {
 		log.Warning("CanSpawn> Unable to pull image %s : %s", img, err)
 		return err
 	}
-	_ = res.Close()
-	return nil
+	return res.Close()
 }

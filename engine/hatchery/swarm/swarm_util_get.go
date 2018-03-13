@@ -60,6 +60,7 @@ func (h *HatcherySwarm) getContainer(name string) (*types.Container, error) {
 
 	for i := range containers {
 		if strings.Replace(containers[i].Names[0], "/", "", 1) == strings.Replace(name, "/", "", 1) {
+			log.Debug("getContainer> found container %s", containers[i].ID)
 			return &containers[i], nil
 		}
 	}

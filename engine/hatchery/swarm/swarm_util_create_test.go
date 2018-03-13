@@ -4,8 +4,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
-
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -84,4 +85,90 @@ func Test_computeDockerOpts(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
+	h := testSwarmHatchery(t)
+	args := containerArgs{
+		name:   "my-nginx",
+		image:  "nginx:latest",
+		env:    []string{"FROM_CDS", "FROM_CDS"},
+		labels: map[string]string{"FROM_CDS": "FROM_CDS"},
+		memory: 256,
+	}
+
+	err := h.pullImage(args.image, timeoutPullImage)
+	test.NoError(t, err)
+
+	err = h.createAndStartContainer(args)
+	test.NoError(t, err)
+
+	cntr, err := h.getContainer(args.name)
+	test.NoError(t, err)
+
+	err = h.killAndRemove(cntr.ID)
+	test.NoError(t, err)
+}
+
+func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
+	h := testSwarmHatchery(t)
+	args := containerArgs{
+		name:   "my-nginx",
+		image:  "nginx:latest",
+		cmd:    []string{"uname"},
+		env:    []string{"FROM_CDS", "FROM_CDS"},
+		labels: map[string]string{"FROM_CDS": "FROM_CDS"},
+		memory: 256,
+		dockerOpts: dockerOpts{
+			mounts: []mount.Mount{
+				{
+					Source:   "/tmp",
+					Target:   "/tmp",
+					Type:     mount.TypeBind,
+					ReadOnly: true,
+					BindOptions: &mount.BindOptions{
+						Propagation: mount.PropagationRPrivate,
+					},
+				},
+			},
+		},
+	}
+
+	err := h.pullImage(args.image, timeoutPullImage)
+	test.NoError(t, err)
+
+	err = h.createAndStartContainer(args)
+	test.NoError(t, err)
+
+	cntr, err := h.getContainer(args.name)
+	test.NoError(t, err)
+
+	err = h.killAndRemove(cntr.ID)
+	test.NoError(t, err)
+}
+
+func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
+	h := testSwarmHatchery(t)
+	args := containerArgs{
+		name:         "my-nginx",
+		image:        "nginx:latest",
+		cmd:          []string{"uname"},
+		env:          []string{"FROM_CDS", "FROM_CDS"},
+		labels:       map[string]string{"FROM_CDS": "FROM_CDS"},
+		memory:       256,
+		network:      "my-network",
+		networkAlias: "my-container",
+	}
+
+	err := h.createNetwork(args.network)
+	test.NoError(t, err)
+
+	err = h.createAndStartContainer(args)
+	test.NoError(t, err)
+
+	cntr, err := h.getContainer(args.name)
+	test.NoError(t, err)
+
+	err = h.killAndRemove(cntr.ID)
+	test.NoError(t, err)
 }
