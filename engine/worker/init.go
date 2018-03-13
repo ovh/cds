@@ -84,7 +84,7 @@ func FlagBool(cmd *cobra.Command, key string) bool {
 		if os.Getenv(envKey) == "true" || os.Getenv(envKey) == "1" {
 			return true
 		}
-	} else if cmd.Flag(key).Value.String() == "true" {
+	} else if cmd.Flag(key) != nil && cmd.Flag(key).Value.String() == "true" {
 		return true
 	}
 

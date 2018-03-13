@@ -31,7 +31,18 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 		var urlBinary string
-		if !FlagBool(cmd, "from-github") {
+		// flag from-github is defined on command update, not on root command
+		if cmd.Flag("from-github") != nil && cmd.Flag("from-github").Value.String() == "true" {
+			// no need to have apiEndpoint here
+			w.client = cdsclient.NewWorker("", "download", nil)
+
+			var errGH error
+			urlBinary, errGH = w.client.DownloadURLFromGithub("worker", runtime.GOOS, runtime.GOARCH)
+			if errGH != nil {
+				sdk.Exit("Error while getting URL from Github: %s", errGH)
+			}
+			fmt.Printf("Updating worker binary from Github on %s...\n", urlBinary)
+		} else {
 			w.apiEndpoint = FlagString(cmd, flagAPI)
 			if w.apiEndpoint == "" {
 				sdk.Exit("--api not provided, aborting update.")
@@ -45,16 +56,6 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 			urlBinary = w.client.DownloadURLFromAPI("worker", runtime.GOOS, runtime.GOARCH)
 			fmt.Printf("Updating worker binary from CDS API on %s...\n", urlBinary)
-		} else {
-			// no need to have apiEndpoint here
-			w.client = cdsclient.NewWorker("", "download", nil)
-
-			var errGH error
-			urlBinary, errGH = w.client.DownloadURLFromGithub("worker", runtime.GOOS, runtime.GOARCH)
-			if errGH != nil {
-				sdk.Exit("Error while getting URL from Github: %s", errGH)
-			}
-			fmt.Printf("Updating worker binary from Github on %s...\n", urlBinary)
 		}
 
 		resp, err := http.Get(urlBinary)
