@@ -10,13 +10,10 @@ import (
 	"github.com/facebookgo/httpcontrol"
 	"github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
-
-var cmdDownloadFromGithub bool
 
 func cmdUpdate(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
@@ -24,27 +21,25 @@ func cmdUpdate(w *currentWorker) *cobra.Command {
 		Short: "Update worker from CDS API or from CDS Release",
 		Run:   updateCmd(w),
 	}
-	c.Flags().BoolVar(&cmdDownloadFromGithub, "from-github", false, "Update binary from latest github release")
+	c.Flags().Bool("from-github", false, "Update binary from latest github release")
+	c.Flags().String(flagAPI, "", "URL of CDS API")
+	c.Flags().Bool(flagInsecure, false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	return c
 }
 
 func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
-
-		viper.SetEnvPrefix("cds")
-		viper.AutomaticEnv()
-
 		var urlBinary string
-		if !cmdDownloadFromGithub {
-			w.apiEndpoint = viper.GetString("api")
+		if !FlagBool(cmd, "from-github") {
+			w.apiEndpoint = FlagString(cmd, flagAPI)
 			if w.apiEndpoint == "" {
 				sdk.Exit("--api not provided, aborting update.")
 			}
 			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", &http.Client{
 				Timeout: time.Second * 10,
 				Transport: &httpcontrol.Transport{
-					TLSClientConfig: &tls.Config{InsecureSkipVerify: viper.GetBool("insecure")},
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: FlagBool(cmd, flagInsecure)},
 				},
 			})
 

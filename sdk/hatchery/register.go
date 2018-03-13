@@ -124,7 +124,7 @@ func Create(h Interface) error {
 				// count + 1 here, and remove -1 if worker is not started
 				// this avoid to spawn to many workers compare
 				atomic.AddInt64(&workersStarted, 1)
-				if isRun, temptToSpawn, _ := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.SpawnAttempts, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
+				if isRun, temptToSpawn, _ := receiveJob(h, true, job.ExecGroups, job.ID, job.QueuedSeconds, job.SpawnAttempts, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				} else if temptToSpawn {
@@ -252,7 +252,7 @@ func workerRegister(h Interface, models []sdk.Model, nRegister *int64) error {
 
 		if h.NeedRegistration(&models[k]) {
 			if err := h.Client().WorkerModelBook(models[k].ID); err != nil {
-				log.Error("workerRegister> WorkerModelBook on model %s err: %s", models[k].Name, err)
+				log.Warning("workerRegister> WorkerModelBook on model %s err: %s", models[k].Name, err)
 			} else {
 				log.Info("workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
 				atomic.AddInt64(nRegister, 1)

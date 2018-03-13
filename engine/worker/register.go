@@ -9,7 +9,7 @@ import (
 )
 
 // Workers need to register to main api so they can run actions
-func (w *currentWorker) register(form sdk.WorkerRegistrationForm, autoUpdate bool) error {
+func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	log.Info("Registering %s on %s", form.Name, w.apiEndpoint)
 	sdk.InitEndpoint(w.apiEndpoint)
 	sdk.Authorization("")
@@ -42,7 +42,7 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm, autoUpdate boo
 	log.Info("%s Registered on %s", form.Name, w.apiEndpoint)
 
 	if !uptodate {
-		if autoUpdate {
+		if w.autoUpdate {
 			log.Warning("-=-=-=-=- your worker binary is not up to date %s %s %s. Auto-updating it... -=-=-=-=-", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 			sdk.Exit("Exiting this cds worker process - auto updating worker")
 		}

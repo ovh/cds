@@ -479,12 +479,6 @@
   version = "1.0.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jinzhu/now"
-  packages = ["."]
-  revision = "d939ba741945c047cac69c329c5fb0d6b4a06520"
-
-[[projects]]
   name = "github.com/json-iterator/go"
   packages = ["."]
   revision = "f7279a603edee96fe7764d3de9c6ff8cf9970994"
@@ -640,11 +634,6 @@
   name = "github.com/ovh/go-ovh"
   packages = ["ovh"]
   revision = "02f7e9439689eda7ce4752c7f37e50cb678f2679"
-
-[[projects]]
-  name = "github.com/ovh/tat"
-  packages = ["."]
-  revision = "43966f33245defc6b16e7904c5558448e365fe3e"
 
 [[projects]]
   name = "github.com/ovh/venom"
@@ -1240,6 +1229,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "771efd43575c8d96062ba2c49e864d0cd497cb45509b8e68274eb2f741979fe8"
+  inputs-digest = "be8742ad858090075dc912c76e3577af33a821837dd3d12aa7335990dadf7f25"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -10,6 +10,8 @@ import (
 )
 
 type currentWorker struct {
+	autoUpdate    bool
+	singleUse     bool
 	apiEndpoint   string
 	token         string
 	id            string
@@ -30,8 +32,9 @@ type currentWorker struct {
 		name string
 	}
 	grpc struct {
-		address string
-		conn    *grpc.ClientConn
+		address  string
+		conn     *grpc.ClientConn
+		insecure bool
 	}
 	currentJob struct {
 		pbJob          sdk.PipelineBuildJob
