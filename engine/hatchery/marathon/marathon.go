@@ -118,8 +118,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryMarathon server
 func (h *HatcheryMarathon) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID must returns hatchery id

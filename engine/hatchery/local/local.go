@@ -69,8 +69,7 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryLocal server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID must returns hatchery id

@@ -119,8 +119,7 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryKubernetes server
 func (h *HatcheryKubernetes) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID must returns hatchery id

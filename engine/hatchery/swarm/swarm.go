@@ -24,8 +24,7 @@ func New() *HatcherySwarm {
 
 // Serve start the HatcherySwarm server
 func (h *HatcherySwarm) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 //Init connect the hatchery to the docker api

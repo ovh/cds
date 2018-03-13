@@ -3,7 +3,6 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
@@ -12,7 +11,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Init create new client for vsphere
@@ -37,8 +35,7 @@ func (h *HatcheryVSphere) Init() error {
 	// Connect and login to ESX or vCenter
 	c, errNc := h.newClient(ctx)
 	if errNc != nil {
-		log.Error("Unable to vsphere.newClient: %s", errNc)
-		os.Exit(11)
+		return fmt.Errorf("Unable to vsphere.newClient: %s", errNc)
 	}
 	h.vclient = c
 
@@ -47,15 +44,13 @@ func (h *HatcheryVSphere) Init() error {
 
 	var errDc error
 	if h.datacenter, errDc = finder.DatacenterOrDefault(ctx, h.datacenterString); errDc != nil {
-		log.Error("Unable to find datacenter %s : %s", h.datacenterString, errDc)
-		os.Exit(12)
+		return fmt.Errorf("Unable to find datacenter %s : %s", h.datacenterString, errDc)
 	}
 	finder.SetDatacenter(h.datacenter)
 
 	var errN error
 	if h.network, errN = finder.NetworkOrDefault(ctx, h.networkString); errN != nil {
-		log.Error("Unable to find network %s : %s", h.networkString, errN)
-		os.Exit(13)
+		return fmt.Errorf("Unable to find network %s : %s", h.networkString, errN)
 	}
 
 	go h.main()
