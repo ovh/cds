@@ -15,8 +15,8 @@ func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 	log.SetLogger(t)
 	dockerClient, err := docker.NewEnvClient()
 	if err != nil {
-		t.Logf("unable to get docker client: %v. Skipping this test", err)
-		t.SkipNow()
+		t.Skipf("unable to get docker client: %v. Skipping this test", err)
+		return nil
 	}
 
 	h := &HatcherySwarm{
