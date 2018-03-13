@@ -18,32 +18,6 @@ func cmdMain(w *currentWorker) *cobra.Command {
 		Run:   mainCommandRun(w),
 	}
 
-	flags := mainCmd.Flags()
-
-	flags.String("log-level", "notice", "Log Level: debug, info, notice, warning, critical")
-	viper.BindPFlag("log_level", flags.Lookup("log-level"))
-
-	flags.String("api", "", "URL of CDS API")
-	viper.BindPFlag("api", flags.Lookup("api"))
-
-	flags.Bool("insecure", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
-	viper.BindPFlag("insecure", flags.Lookup("insecure"))
-
-	flags.String("token", "", "CDS Token")
-	viper.BindPFlag("token", flags.Lookup("token"))
-
-	flags.String("name", "", "Name of worker")
-	viper.BindPFlag("name", flags.Lookup("name"))
-
-	flags.Int("model", 0, "Model of worker")
-	viper.BindPFlag("model", flags.Lookup("model"))
-
-	flags.Int("hatchery", 0, "Hatchery ID spawing worker")
-	viper.BindPFlag("hatchery", flags.Lookup("hatchery"))
-
-	flags.String("hatchery-name", "", "Hatchery Name spawing worker")
-	viper.BindPFlag("hatchery_name", flags.Lookup("hatchery-name"))
-
 	initFlagsRun(mainCmd)
 
 	return mainCmd
@@ -95,6 +69,30 @@ func initFlagsRun(cmd *cobra.Command) {
 
 	flags.String("graylog-extra-value", "", "Ex: --graylog-extra-value=xxxx-yyyy")
 	viper.BindPFlag("graylog_extra_value", flags.Lookup("graylog-extra-value"))
+
+	flags.String("log-level", "notice", "Log Level: debug, info, notice, warning, critical")
+	viper.BindPFlag("log_level", flags.Lookup("log-level"))
+
+	flags.String("api", "", "URL of CDS API")
+	viper.BindPFlag("api", flags.Lookup("api"))
+
+	flags.Bool("insecure", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
+	viper.BindPFlag("insecure", flags.Lookup("insecure"))
+
+	flags.String("token", "", "CDS Token")
+	viper.BindPFlag("token", flags.Lookup("token"))
+
+	flags.String("name", "", "Name of worker")
+	viper.BindPFlag("name", flags.Lookup("name"))
+
+	flags.Int("model", 0, "Model of worker")
+	viper.BindPFlag("model", flags.Lookup("model"))
+
+	flags.Int("hatchery", 0, "Hatchery ID spawing worker")
+	viper.BindPFlag("hatchery", flags.Lookup("hatchery"))
+
+	flags.String("hatchery-name", "", "Hatchery Name spawing worker")
+	viper.BindPFlag("hatchery_name", flags.Lookup("hatchery-name"))
 }
 
 func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
