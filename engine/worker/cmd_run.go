@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -35,9 +34,9 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
 
-		initViper(w)
+		initFlags(cmd, w)
 
-		if viper.GetString("log_level") == "debug" {
+		if FlagString(cmd, flagLogLevel) == "debug" {
 			if err := agent.Listen(nil); err != nil {
 				sdk.Exit("Error on starting gops agent", err)
 			}
@@ -50,8 +49,8 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		log.Info("CDS Worker starting")
 		log.Info("version: %s", sdk.VERSION)
 		log.Info("hostname: %s", hostname)
-		log.Info("auto-update: %t", viper.GetBool("auto_update"))
-		log.Info("single-use: %t", viper.GetBool("single_use"))
+		log.Info("auto-update: %t", w.autoUpdate)
+		log.Info("single-use: %t", w.singleUse)
 
 		w.initServer(ctx)
 
@@ -74,7 +73,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}()
 
-		time.AfterFunc(time.Duration(viper.GetInt("ttl"))*time.Minute, func() {
+		time.AfterFunc(time.Duration(FlagInt(cmd, flagTTL))*time.Minute, func() {
 			if w.nbActionsDone == 0 {
 				log.Debug("Suicide")
 				cancel()
@@ -89,7 +88,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				cancel()
 				os.Exit(1)
 			}
-			if err := w.doRegister(viper.GetBool("auto_update")); err != nil {
+			if err := w.doRegister(); err != nil {
 				log.Error("Unable to register to CDS (%v). Retry", err)
 			}
 			time.Sleep(2 * time.Second)
@@ -135,7 +134,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			w.unregister()
 			cancel()
 
-			if viper.GetBool("force_exit") {
+			if FlagBool(cmd, flagForceExit) {
 				log.Info("Exiting worker with force_exit true")
 				return
 			}
@@ -200,7 +199,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				if !viper.GetBool("single_use") {
+				if !w.singleUse {
 					//Continue
 					log.Debug("PipelineBuildJob is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
@@ -242,7 +241,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				if !viper.GetBool("single_use") {
+				if !w.singleUse {
 					//Continue
 					log.Debug("Job is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
@@ -255,9 +254,9 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				log.Info("Job is done. Unregistering...")
 				cancel()
 			case <-registerTick.C:
-				w.doRegister(viper.GetBool("auto_update"))
+				w.doRegister()
 			case <-updateTick.C:
-				w.doUpdate(viper.GetBool("auto_update"))
+				w.doUpdate()
 			}
 		}
 	}
@@ -325,8 +324,8 @@ func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) {
 	wjobs <- *wjob
 }
 
-func (w *currentWorker) doUpdate(autoUpdate bool) {
-	if autoUpdate {
+func (w *currentWorker) doUpdate() {
+	if w.autoUpdate {
 		version, err := w.client.Version()
 		if err != nil {
 			log.Error("Error while getting version from CDS API: %s", err)
@@ -337,7 +336,7 @@ func (w *currentWorker) doUpdate(autoUpdate bool) {
 	}
 }
 
-func (w *currentWorker) doRegister(autoUpdate bool) error {
+func (w *currentWorker) doRegister() error {
 	if w.id == "" {
 		var info string
 		if w.bookedPBJobID > 0 {
@@ -354,7 +353,7 @@ func (w *currentWorker) doRegister(autoUpdate bool) error {
 			HatcheryName: w.hatchery.name,
 			ModelID:      w.model.ID,
 		}
-		if err := w.register(form, autoUpdate); err != nil {
+		if err := w.register(form); err != nil {
 			log.Info("Cannot register: %s", err)
 			return err
 		}
