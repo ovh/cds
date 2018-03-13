@@ -44,7 +44,7 @@ const (
 	flagName                = "name"
 	flagModel               = "model"
 	flagHatchery            = "hatchery"
-	flagNatcherName         = "hatchery-name"
+	flagHatcheryName        = "hatchery-name"
 )
 
 func initFlagsRun(cmd *cobra.Command) {
@@ -71,7 +71,7 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.String(flagName, "", "Name of worker")
 	flags.Int(flagModel, 0, "Model of worker")
 	flags.Int(flagHatchery, 0, "Hatchery ID spawing worker")
-	flags.String(flagNatcherName, "", "Hatchery Name spawing worker")
+	flags.String(flagHatcheryName, "", "Hatchery Name spawing worker")
 }
 
 // FlagBool replaces viper.GetBool
@@ -178,7 +178,7 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 	}
 
 	// could be empty
-	w.hatchery.name = FlagString(cmd, flagNatcherName)
+	w.hatchery.name = FlagString(cmd, flagHatcheryName)
 	w.apiEndpoint = FlagString(cmd, flagAPI)
 	if w.apiEndpoint == "" {
 		log.Error("--api not provided, aborting.")
