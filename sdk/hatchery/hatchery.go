@@ -39,11 +39,11 @@ type CommonConfiguration struct {
 		RegisterFrequency int  `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds"`
 		WorkerLogsOptions struct {
 			Graylog struct {
-				Host       string `toml:"host"`
-				Port       int    `toml:"port"`
-				Protocol   string `toml:"protocol"`
-				ExtraKey   string `toml:"extraKey"`
-				ExtraValue string `toml:"extraValue"`
+				Host       string `toml:"host" comment:"Example: thot.ovh.com"`
+				Port       int    `toml:"port" comment:"Example: 12202"`
+				Protocol   string `toml:"protocol" default:"tcp" comment:"tcp or udp"`
+				ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN. You can use many keys: aaa,bbb"`
+				ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb"`
 			} `toml:"graylog"`
 		} `toml:"workerLogsOptions" comment:"Worker Log Configuration"`
 	} `toml:"provision"`
