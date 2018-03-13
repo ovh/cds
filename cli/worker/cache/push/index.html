@@ -1686,7 +1686,6 @@
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#examples">Examples</a></li>
 <li><a href="#options">Options</a></li>
-<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
 <li><a href="#see-also">SEE ALSO</a></li>
 </ul></li>
 </ul></li>
@@ -1717,7 +1716,8 @@
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Inside a project, you can create a cache from your worker with a tag (useful for vendors for example)</p>
+<p>Inside a project, you can create a cache from your worker with a tag (useful for vendors for example)
+    worker push <tagValue> dir/file</p>
 
 <pre><code>worker cache push [flags]
 </code></pre>
@@ -1730,18 +1730,6 @@
 <h3 id="options">Options</h3>
 
 <pre><code>  -h, --help   help for push
-</code></pre>
-
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
-
-<pre><code>      --api string             URL of CDS API
-      --hatchery int           Hatchery ID spawing worker
-      --hatchery-name string   Hatchery Name spawing worker
-      --insecure               (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
-      --log-level string       Log Level: debug, info, notice, warning, critical (default &quot;notice&quot;)
-      --model int              Model of worker
-      --name string            Name of worker
-      --token string           CDS Token
 </code></pre>
 
 <h3 id="see-also">SEE ALSO</h3>
