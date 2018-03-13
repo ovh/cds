@@ -24,6 +24,9 @@ export class VCSStrategyComponent implements OnInit {
     @Input() hideBranch = false;
     @Input() hideButton = false;
     @Input() createOnProject = false;
+    @Input() sshWarning = false;
+
+    selectedPublicKey: string;
 
     _strategy: VCSStrategy;
     @Input('strategy')
@@ -32,6 +35,7 @@ export class VCSStrategyComponent implements OnInit {
             this._strategy = data;
         }
     }
+
     get strategy() {
         return this._strategy;
     }
@@ -47,7 +51,8 @@ export class VCSStrategyComponent implements OnInit {
     sshModal: ActiveModal<boolean, boolean, void>;
 
     constructor(private _keyService: KeyService, private _modalService: SuiModalService, private _toast: ToastService,
-                private _translate: TranslateService, private _projectStore: ProjectStore) { }
+                private _translate: TranslateService, private _projectStore: ProjectStore) {
+    }
 
     ngOnInit() {
         if (!this.strategy) {
@@ -79,5 +84,16 @@ export class VCSStrategyComponent implements OnInit {
                 this.keys = k;
             })
         })).subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
+    }
+
+    updatePublicKey(keyName): void {
+        if (this.project && this.project.keys) {
+            for (let i = 0; i < this.project.keys.length; i++) {
+                if (this.project.keys[i].name === keyName) {
+                    this.selectedPublicKey = this.project.keys[i].public;
+                    break;
+                }
+            }
+        }
     }
 }

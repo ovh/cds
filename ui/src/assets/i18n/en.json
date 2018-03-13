@@ -278,7 +278,9 @@
   "group_btn_set_admin": "Admin",
   "group_btn_unset_admin": "Admin",
 
+  "key_copy_public": "Copy public key",
   "key_or_create":  "(Create)",
+  "key_warning_add_repo_title": "Don't forget to add your ssh key on your repository",
 
   "token_description": "Description",
   "token_value": "Token",

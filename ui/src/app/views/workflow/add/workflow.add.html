@@ -151,7 +151,7 @@
                                                         </div>
                                                         <div class="ui field" *ngIf="selectedRepo">
                                                             <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy" [createOnProject]="true"
-                                                                              (strategyChange)="createWorkflowFromRepo()"
+                                                                              (strategyChange)="createWorkflowFromRepo()" [sshWarning]="true"
                                                                               [hideBranch]="true" [hideButton]="true"></app-vcs-strategy>
                                                         </div>
                                                         <div class="right aligned field" *ngIf="!pollingResponse && selectedRepo">

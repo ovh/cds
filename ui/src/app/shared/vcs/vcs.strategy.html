@@ -19,10 +19,15 @@
                     <div class="two wide field">
                         <label>{{ 'vcs_ssh_key' | translate }}<span class="keyLink" (click)="openCreateKeyModal('ssh')" *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
                     </div>
-                    <div class="fourteen wide field">
+                    <div class="thirteen wide field">
                         <div class="ssh">
-                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys" [(value)]="strategy.ssh_key"></app-parameter-value>
+                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys" [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)"></app-parameter-value>
                         </div>
+                    </div>
+                    <div class="one wide field">
+                        <button class="ui icon button copyButton" [title]="'key_copy_public' | translate" ngxClipboard [cbContent]="selectedPublicKey">
+                            <i class="copy icon"></i>
+                        </button>
                     </div>
                 </div>
             </ng-container>
@@ -72,6 +77,12 @@
                 </div>
             </div>
         </ng-container>
+    </div>
+    <div class="field" *ngIf="sshWarning && strategy.connection_type === 'ssh'">
+        <div class="ui warning message">
+            <i class="close icon"></i>
+            <div class="header">{{ 'key_warning_add_repo_title' | translate }}</div>
+        </div>
     </div>
     <div class="right aligned field" *ngIf="!hideButton">
         <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="saveStrategy()">{{ 'btn_save' | translate }}</button>

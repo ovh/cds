@@ -278,7 +278,9 @@
   "group_btn_set_admin": "administrateur",
   "group_btn_unset_admin": "administrateur",
 
+  "key_copy_public": "Copier la clé publique",
   "key_or_create":  "(Créer)",
+  "key_warning_add_repo_title": "N'oubliez pas d'ajouter votre clé SSH sur votre dépôt",
 
   "token_description": "Description",
   "token_value": "Token",

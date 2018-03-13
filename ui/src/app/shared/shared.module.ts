@@ -79,9 +79,10 @@ import {KeysFormComponent} from './keys/form/keys.form.component';
 import {KeysListComponent} from './keys/list/keys.list.component';
 import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
 import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.component';
+import {ClipboardModule} from 'ngx-clipboard';
 
 @NgModule({
-    imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
+    imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
         CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, SuiModule ],
     declarations: [
         ActionComponent,
@@ -166,6 +167,7 @@ import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.comp
         CodemirrorModule,
         CommitListComponent,
         CommonModule,
+        ClipboardModule,
         CutPipe,
         DeleteButtonComponent,
         DragulaModule,
