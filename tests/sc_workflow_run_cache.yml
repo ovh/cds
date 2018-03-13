@@ -24,7 +24,7 @@ testcases:
 
 - name: the workflow should be successfull
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW4 ITSCWRKFLW4 --format json
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW4 ITSCWRKFLW4 1 --format json
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Success
