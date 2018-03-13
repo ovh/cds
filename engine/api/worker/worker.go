@@ -407,8 +407,12 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGrou
 	var err error
 	models := []sdk.Model{}
 
-	if sharedinfraGroupID == groupID { // shared infra, return all models
-		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE ORDER by name`)
+	// note about restricted field on worker model:
+	// if restricted = true, worker model can be launched by a user hatchery only
+	// so, a 'shared.infra' hatchery need all worker models, with restricted = false
+
+	if sharedinfraGroupID == groupID { // shared infra, return all models, excepts restricted
+		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND restricted = FALSE ORDER by name`)
 	} else { // not shared infra, returns only selected worker models
 		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND group_id = $1 ORDER by name`, groupID)
 	}

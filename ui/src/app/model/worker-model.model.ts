@@ -12,5 +12,6 @@ export class WorkerModel {
     created_by: User;
     owner_id: number;
     group_id: number;
+    restricted: boolean;
     group: Group;
 }

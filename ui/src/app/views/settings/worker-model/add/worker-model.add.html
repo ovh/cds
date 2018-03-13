@@ -6,7 +6,7 @@
     <form class="ui form">
       <div class="ui grid">
         <div class="ten wide column">
-            <div class="two fields">
+            <div class="three fields">
               <div class="field">
                   <label>{{'worker_model_name' | translate}}</label>
                   <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name" [disabled]="loading">
@@ -21,6 +21,13 @@
                       [options]="{'fullTextSearch': true}">
                       <option *ngFor="let group of workerModelGroups" [value]="group.id">{{group.name}}</option>
                   </sm-select>
+              </div>
+              <div class="field">
+                <label>{{'worker_model_restricted' | translate}}</label>
+                <div class="ui checkbox">
+                    <input type="checkbox" id="restricted" name="restricted" [(ngModel)]="workerModel.restricted" [disabled]="loading">
+                    <label for="restricted">{{'worker_model_restricted_help' | translate}}</label>
+                </div>
               </div>
             </div>
             <div class="field">
@@ -50,7 +57,7 @@
                     <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
                 </sm-select>
               </div>
-              <div class="four wide field">
+              <div class="four wide field" *ngIf="currentUser.admin">
                   <label>{{'worker_model_provision' | translate}}</label>
                   <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision" [disabled]="loading">
               </div>

@@ -579,7 +579,7 @@
   "variable_updated": "Variable mise à jour",
   "variable_value": "Valeur",
 
-  "ui_updated": "L'interface vient d'être mise à jour. Merci de cliquer ici pour rafraichir votre page.",
+  "ui_updated": "L'interface vient d'être mise à jour. Merci de cliquer ici pour rafraîchir votre page.",
 
   "user_label_fullname": "Nom complet de l'utilisateur",
   "user_label_username": "Nom d'utilisateur",
@@ -665,6 +665,8 @@
   "worker_model_name": "Nom",
   "worker_model_none": "Aucun modèle de worker",
   "worker_model_provision": "Provision de workers",
+  "worker_model_restricted": "Restreint",
+  "worker_model_restricted_help": "Ne peut être utilisé que par une hatchery utilisateur - cocher si oui",
   "worker_model_run_script": "Script de lancement",
   "worker_model_status": "Statut",
   "worker_model_template": "Template",
