@@ -92,27 +92,25 @@
 [[projects]]
   name = "github.com/docker/docker"
   packages = [
-    "api",
     "api/types",
     "api/types/blkiodev",
     "api/types/container",
     "api/types/events",
     "api/types/filters",
-    "api/types/image",
     "api/types/mount",
     "api/types/network",
+    "api/types/reference",
     "api/types/registry",
     "api/types/strslice",
     "api/types/swarm",
-    "api/types/swarm/runtime",
     "api/types/time",
     "api/types/versions",
     "api/types/volume",
-    "client"
+    "client",
+    "pkg/tlsconfig"
   ]
-  revision = "abf46e077144077673a05ebcd4d622e86af0f05c"
-  source = "https://github.com/yesnault/moby.git"
-  version = "17.03.3-ce-cds-yes"
+  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
+  version = "v1.13.1"
 
 [[projects]]
   branch = "go1.10"
@@ -636,21 +634,6 @@
   name = "github.com/olekukonko/tablewriter"
   packages = ["."]
   revision = "daf2955e742cf123959884fdff4685aa79b63135"
-
-[[projects]]
-  name = "github.com/opencontainers/go-digest"
-  packages = ["."]
-  revision = "279bed98673dd5bef374d3b6e4b09e2af76183bf"
-  version = "v1.0.0-rc1"
-
-[[projects]]
-  name = "github.com/opencontainers/image-spec"
-  packages = [
-    "specs-go",
-    "specs-go/v1"
-  ]
-  revision = "d60099175f88c47cd379c4738d158884749ed235"
-  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -1257,6 +1240,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "847c9aed7a272fd51610bc0c3f3fb755f6b913852f5ef8edf251b39574190afc"
+  inputs-digest = "771efd43575c8d96062ba2c49e864d0cd497cb45509b8e68274eb2f741979fe8"
   solver-name = "gps-cdcl"
   solver-version = 1

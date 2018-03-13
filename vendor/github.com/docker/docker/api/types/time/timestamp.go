@@ -29,8 +29,10 @@ func GetTimestamp(value string, reference time.Time) (string, error) {
 	}
 
 	var format string
+	var parseInLocation bool
+
 	// if the string has a Z or a + or three dashes use parse otherwise use parseinlocation
-	parseInLocation := !(strings.ContainsAny(value, "zZ+") || strings.Count(value, "-") == 3)
+	parseInLocation = !(strings.ContainsAny(value, "zZ+") || strings.Count(value, "-") == 3)
 
 	if strings.Contains(value, ".") {
 		if parseInLocation {
@@ -82,7 +84,7 @@ func GetTimestamp(value string, reference time.Time) (string, error) {
 	}
 
 	if err != nil {
-		// if there is a `-` then it's an RFC3339 like timestamp otherwise assume unixtimestamp
+		// if there is a `-` then its an RFC3339 like timestamp otherwise assume unixtimestamp
 		if strings.Contains(value, "-") {
 			return "", err // was probably an RFC3339 like timestamp but the parser failed with an error
 		}
@@ -116,7 +118,7 @@ func ParseTimestamps(value string, def int64) (int64, int64, error) {
 	if err != nil {
 		return s, n, err
 	}
-	// should already be in nanoseconds but just in case convert n to nanoseconds
+	// should already be in nanoseconds but just in case convert n to nanoseonds
 	n = int64(float64(n) * math.Pow(float64(10), float64(9-len(sa[1]))))
 	return s, n, nil
 }

@@ -3,7 +3,6 @@ package client
 import (
 	"io"
 	"net/url"
-	"strings"
 
 	"golang.org/x/net/context"
 
@@ -16,7 +15,7 @@ import (
 func (cli *Client) ImageImport(ctx context.Context, source types.ImageImportSource, ref string, options types.ImageImportOptions) (io.ReadCloser, error) {
 	if ref != "" {
 		//Check if the given image name can be resolved
-		if _, err := reference.ParseNormalizedNamed(ref); err != nil {
+		if _, err := reference.ParseNamed(ref); err != nil {
 			return nil, err
 		}
 	}
@@ -26,9 +25,6 @@ func (cli *Client) ImageImport(ctx context.Context, source types.ImageImportSour
 	query.Set("repo", ref)
 	query.Set("tag", options.Tag)
 	query.Set("message", options.Message)
-	if options.Platform != "" {
-		query.Set("platform", strings.ToLower(options.Platform))
-	}
 	for _, change := range options.Changes {
 		query.Add("changes", change)
 	}
