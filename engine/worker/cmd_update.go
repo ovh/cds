@@ -10,7 +10,6 @@ import (
 	"github.com/facebookgo/httpcontrol"
 	"github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -31,20 +30,16 @@ func cmdUpdate(w *currentWorker) *cobra.Command {
 func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
-
-		viper.SetEnvPrefix("cds")
-		viper.AutomaticEnv()
-
 		var urlBinary string
 		if !cmdDownloadFromGithub {
-			w.apiEndpoint = viper.GetString("api")
+			w.apiEndpoint = FlagString(cmd, flagAPI)
 			if w.apiEndpoint == "" {
 				sdk.Exit("--api not provided, aborting update.")
 			}
 			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", &http.Client{
 				Timeout: time.Second * 10,
 				Transport: &httpcontrol.Transport{
-					TLSClientConfig: &tls.Config{InsecureSkipVerify: viper.GetBool("insecure")},
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: FlagBool(cmd, flagInsecure)},
 				},
 			})
 
