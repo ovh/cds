@@ -17,9 +17,8 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 		if strings.Contains(err.Error(), "No such container") {
 			log.Debug("killAndRemove> cannot InspectContainer: %v", err)
 			return nil
-		} else {
-			log.Info("killAndRemove> cannot InspectContainer: %v", err)
 		}
+		log.Info("killAndRemove> cannot InspectContainer: %v", err)
 	}
 	if err := h.killAndRemoveContainer(ID); err != nil {
 		return sdk.WrapError(err, "killAndRemove> %s", ID[:7])
@@ -59,8 +58,8 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 func (h *HatcherySwarm) killAndRemoveContainer(ID string) error {
 	log.Debug("killAndRemove> remove container %s", ID)
 	if err := h.dockerClient.ContainerKill(context.Background(), ID, "SIGKILL"); err != nil {
-		if !strings.Contains(err.Error(), "is not running") && !strings.Contains(err.Error(), "No such container") {
-			log.Warning("killAndRemove> Unable to kill container %v", err)
+		if strings.Contains(err.Error(), "is not running") || strings.Contains(err.Error(), "No such container") {
+			log.Debug("killAndRemove> container already killed %v", err)
 		} else {
 			return err
 		}
