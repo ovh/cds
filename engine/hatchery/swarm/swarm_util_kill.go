@@ -36,6 +36,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			if !strings.Contains(err.Error(), "No such network") {
 				return sdk.WrapError(err, "killAndRemove> unable to get network for %s", ID[:7])
 			}
+			continue
 		}
 
 		// If we succeed to get the network, kill and remove all the container on the network
