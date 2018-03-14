@@ -38,6 +38,9 @@ func PublishDeleteProject(p *sdk.Project, u *sdk.User) {
 
 // PublishAddProjectVariable publishes an event for the creation of the given variable
 func PublishAddProjectVariable(p *sdk.Project, v sdk.Variable, u *sdk.User) {
+	if sdk.NeedPlaceholder(v.Type) {
+		v.Value = sdk.PasswordPlaceholder
+	}
 	e := sdk.EventAddProjectVariable{
 		Variable:   v,
 		ProjectKey: p.Key,
@@ -63,6 +66,9 @@ func PublishUpdateProjectVariable(p *sdk.Project, newVar sdk.Variable, oldVar sd
 
 // PublishDeleteProjectVariable publishes an event on project variable deletion
 func PublishDeleteProjectVariable(p *sdk.Project, v sdk.Variable, u *sdk.User) {
+	if sdk.NeedPlaceholder(v.Type) {
+		v.Value = sdk.PasswordPlaceholder
+	}
 	e := sdk.EventDeleteProjectVariable{
 		ProjectKey: p.Key,
 		Variable:   v,
@@ -94,6 +100,28 @@ func PublishDeleteProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u *s
 	e := sdk.EventDeleteProjectPermission{
 		ProjectKey: p.Key,
 		Permission: gp,
+	}
+	Publish(e, u)
+}
+
+// PublishAddProjectKey publishes an event on adding a project key
+func PublishAddProjectKey(p *sdk.Project, k sdk.ProjectKey, u *sdk.User) {
+	k.Private = sdk.PasswordPlaceholder
+	e := sdk.EventAddProjectKey{
+		ProjectKey: p.Key,
+		Key:        k,
+	}
+	Publish(e, u)
+}
+
+// PublishDeleteProjectKey publishes an event on deleting a project key
+func PublishDeleteProjectKey(p *sdk.Project, k sdk.ProjectKey, u *sdk.User) {
+	if sdk.NeedPlaceholder(k.Type) {
+		k.Private = sdk.PasswordPlaceholder
+	}
+	e := sdk.EventAddProjectKey{
+		ProjectKey: p.Key,
+		Key:        k,
 	}
 	Publish(e, u)
 }
