@@ -334,6 +334,7 @@ func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 }
 
 // DeleteAllVariable Delete all variables from the given project
+// Deprecated
 func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)
