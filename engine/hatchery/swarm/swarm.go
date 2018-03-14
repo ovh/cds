@@ -234,7 +234,7 @@ const (
 // CanSpawn checks if the model can be spawned by this hatchery
 func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	//List all containers to check if we can spawn a new one
-	cs, errList := h.getContainers()
+	cs, errList := h.getContainers(types.ContainerListOptions{})
 	if errList != nil {
 		log.Error("CanSpawn> Unable to list containers: %s", errList)
 		return false
@@ -356,7 +356,8 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 func (h *HatcherySwarm) getWorkersStarted(containers []types.Container) ([]types.Container, error) {
 	if containers == nil {
 		var errList error
-		containers, errList = h.getContainers()
+		// get only started containers
+		containers, errList = h.getContainers(types.ContainerListOptions{})
 		if errList != nil {
 			log.Error("WorkersStarted> Unable to list containers: %s", errList)
 			return nil, errList
@@ -366,7 +367,7 @@ func (h *HatcherySwarm) getWorkersStarted(containers []types.Container) ([]types
 	res := []types.Container{}
 	//We only count worker
 	for _, c := range containers {
-		cont, err := h.getContainer(c.Names[0])
+		cont, err := h.getContainer(c.Names[0], types.ContainerListOptions{})
 		if err != nil {
 			log.Error("WorkersStarted> Unable to get worker %s: %v", c.Names[0], err)
 			continue
@@ -432,7 +433,7 @@ func (h *HatcherySwarm) ID() int64 {
 
 func (h *HatcherySwarm) killAwolWorkerRoutine() {
 	for {
-		time.Sleep(30 * time.Second)
+		time.Sleep(10 * time.Second)
 		h.killAwolWorker()
 	}
 }
@@ -494,7 +495,7 @@ func (h *HatcherySwarm) killAwolWorker() error {
 		}
 	}
 
-	containers, errC := h.getContainers()
+	containers, errC := h.getContainers(types.ContainerListOptions{All: true})
 	if errC != nil {
 		log.Warning("killAwolWorker> Cannot list containers: %s", errC)
 		return errC
@@ -506,7 +507,7 @@ func (h *HatcherySwarm) killAwolWorker() error {
 			continue
 		}
 		//check if the service is linked to a worker which doesn't exist
-		if w, _ := h.getContainer(c.Labels["service_worker"]); w == nil {
+		if w, _ := h.getContainer(c.Labels["service_worker"], types.ContainerListOptions{All: true}); w == nil {
 			oldContainers = append(oldContainers, c)
 			continue
 		}
