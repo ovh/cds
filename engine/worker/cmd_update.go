@@ -21,7 +21,7 @@ func cmdUpdate(w *currentWorker) *cobra.Command {
 		Short: "Update worker from CDS API or from CDS Release",
 		Run:   updateCmd(w),
 	}
-	c.Flags().Bool("from-github", false, "Update binary from latest github release")
+	c.Flags().Bool(flagFromGithub, false, "Update binary from latest github release")
 	c.Flags().String(flagAPI, "", "URL of CDS API")
 	c.Flags().Bool(flagInsecure, false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	return c

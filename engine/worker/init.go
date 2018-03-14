@@ -24,6 +24,7 @@ const (
 	envFlagPrefix           = "cds_"
 	flagSingleUse           = "single-use"
 	flagAutoUpdate          = "auto-update"
+	flagFromGithub          = "from-github"
 	flagForceExit           = "force-exit"
 	flagBaseDir             = "basedir"
 	flagTTL                 = "ttl"
@@ -51,6 +52,7 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags := cmd.Flags()
 	flags.Bool(flagSingleUse, false, "Exit after executing an action")
 	flags.Bool(flagAutoUpdate, false, "Auto update worker binary from CDS API")
+	flags.Bool(flagFromGithub, false, "Update binary from latest github release")
 	flags.Bool(flagForceExit, false, "If single_use=true, force exit. This is useful if it's spawned by an Hatchery (default: worker wait 30min for being killed by hatchery)")
 	flags.String(flagBaseDir, "", "This directory (default TMPDIR os environment var) will contains worker working directory and temporary files")
 	flags.Int(flagTTL, 30, "Worker time to live (minutes)")
@@ -84,7 +86,7 @@ func FlagBool(cmd *cobra.Command, key string) bool {
 		if os.Getenv(envKey) == "true" || os.Getenv(envKey) == "1" {
 			return true
 		}
-	} else if cmd.Flag(key).Value.String() == "true" {
+	} else if cmd.Flag(key) != nil && cmd.Flag(key).Value.String() == "true" {
 		return true
 	}
 
