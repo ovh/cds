@@ -125,3 +125,21 @@ func PublishDeleteProjectKey(p *sdk.Project, k sdk.ProjectKey, u *sdk.User) {
 	}
 	Publish(e, u)
 }
+
+// PublishAddVCSServer publishes an event on adding a project server
+func PublishAddVCSServer(p *sdk.Project, vcsServerName string, u *sdk.User) {
+	e := sdk.EventAddProjectVCSServer{
+		ProjectKey:    p.Key,
+		VCSServerName: vcsServerName,
+	}
+	Publish(e, u)
+}
+
+// PublishDeleteVCSServer publishes an event on deleting a project server
+func PublishDeleteVCSServer(p *sdk.Project, vcsServerName string, u *sdk.User) {
+	e := sdk.EventDeleteProjectVCSServer{
+		ProjectKey:    p.Key,
+		VCSServerName: vcsServerName,
+	}
+	Publish(e, u)
+}
