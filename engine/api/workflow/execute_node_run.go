@@ -679,6 +679,8 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 	vcsInfos.hash = gitValues[tagGitHash]
 	vcsInfos.author = gitValues[tagGitAuthor]
 	vcsInfos.message = gitValues[tagGitMessage]
+	vcsInfos.url = gitValues[tagGitURL]
+	vcsInfos.httpurl = gitValues[tagGitHTTPURL]
 
 	if node.Context == nil || node.Context.Application == nil || node.Context.Application.VCSServer == "" {
 		return vcsInfos, nil

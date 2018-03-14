@@ -487,7 +487,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	gitValues := map[string]string{}
 	for _, param := range jobParams {
 		switch param.Name {
-		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository:
+		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
 			gitValues[param.Name] = param.Value
 		}
 	}
@@ -506,10 +506,8 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	if errVcs != nil {
 		if isRoot {
 			return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
-		} else {
-			return false, nil
 		}
-
+		return false, nil
 	}
 
 	run.VCSRepository = vcsInfos.repository
@@ -521,8 +519,8 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.url", sdk.StringParameter, vcsInfos.url)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.http_url", sdk.StringParameter, vcsInfos.httpurl)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.url)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.httpurl)
 
 	//Check
 	if h != nil {
