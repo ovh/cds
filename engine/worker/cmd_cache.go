@@ -45,7 +45,7 @@ Here, an example of a script inside a CDS Job using the cache feature:
 	tag=($(md5sum pom.xml))
 
 	# download the cache of .m2/
-	worker cache pull tag 
+	worker cache pull $tag 
 
 	# update the directory .m2/
 	# as there is a cache, mvn does not need to download all dependencies
@@ -53,7 +53,7 @@ Here, an example of a script inside a CDS Job using the cache feature:
 	mvn install 
 
 	# put in cache the updated .m2/ directory
-	worker cache push tag .m2/
+	worker cache push $tag .m2/
 
 
     `,
