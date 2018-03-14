@@ -24,11 +24,35 @@ func cmdCache(w *currentWorker) *cobra.Command {
 	cmdCacheRoot := &cobra.Command{
 		Use: "cache",
 		Long: `
-Inside a project, you can create or retrieve a cache from your worker with a tag (useful for vendors for example)
+Inside a project, you can create or retrieve a cache from your worker with a tag (useful for vendors for example).
 
 You can access to this cache from any workflow inside a project. You just have to choose a tag that fits with your needs.
 
 For example if you need a different cache for each workflow so choose a tag scoped with your workflow name and workflow version (example of tag value: {{.cds.workflow}}-{{.cds.version}})
+
+## Use Case
+Java Developers often use maven to manage dependencies. The mvn install command could be long due as there is no existing .m2/ directory on a fresh CDS Job.
+With the worker cache feature, you don't have to wait the download of the dependencies if they didn't been updated on the upstream, since the last run of the job:
+
+- cache push: take the current .m2/ directory and set it as a cache
+- cache pull: download a cache of .m2 directory
+
+Here, an example of a script inside a CDS Job using the cache feature:
+
+	#!/bin/bash
+
+	# download the cache of .m2/
+	worker cache pull latest_m2 
+
+	# update the directory .m2/
+	# as there is a cache, mvn does not need to download all dependencies
+	# if they are not updated on upstream
+	mvn install 
+
+	# put in cache the updated .m2/ directory
+	worker cache push latest_m2 .m2/
+
+
     `,
 		Short: "Inside a project, you can create or retrieve a cache from your worker with a tag",
 	}
@@ -179,7 +203,19 @@ func cmdCachePull(w *currentWorker) *cobra.Command {
 		Short:   "worker cache pull tagValue",
 		Long: `
 Inside a project, you can fetch a cache from your worker with a tag
+
 	worker pull <tagValue>
+
+If you push a cache with:
+
+	worker cache push latest {{.cds.workspace}}/pathToUpload
+
+The command:
+
+	worker cache pull latest
+
+will create the directory {{.cds.workspace}}/pathToUpload with the content of the cache
+
 		`,
 		Run: cachePullCmd(w),
 	}
