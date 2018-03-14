@@ -37,6 +37,8 @@ func DeleteGroupAndDependencies(db gorp.SqlExecutor, group *sdk.Group) error {
 		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group %s: %s", group.Name)
 	}
 
+	// TODO EVENT Send event for all dependencies
+
 	return nil
 }
 
