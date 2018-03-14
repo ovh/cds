@@ -51,7 +51,7 @@
                                     <div class="ui buttons" *ngIf="nodeRun.status !== pipelineStatusEnum.BUILDING && nodeRun.status !== pipelineStatusEnum.WAITING">
                                         <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runNewWithParameter()">{{ 'pipeline_label_run_with_parameter' | translate }}</button>
                                     </div>
-                                    <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="stop()" *ngIf="nodeRun.status === pipelineStatusEnum.BUILDING">{{ 'pipeline_label_stop' | translate }}</button>
+                                    <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="stop()" *ngIf="nodeRun.status === pipelineStatusEnum.WAITING || nodeRun.status === pipelineStatusEnum.BUILDING">{{ 'pipeline_label_stop' | translate }}</button>
                                 </div>
                             </div>
                         </div>
