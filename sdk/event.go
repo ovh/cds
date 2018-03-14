@@ -15,6 +15,7 @@ type Event struct {
 	EventType string                 `json:"type_event"` // go type of payload
 	Payload   map[string]interface{} `json:"payload"`
 	Attempts  int                    `json:"attempt"`
+	User      *User                  `json:"attempt,omitempty"`
 }
 
 // EventEngine contains event data for engine
