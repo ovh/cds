@@ -30,7 +30,6 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		log.Initialize(&log.Conf{})
 
 		if autoUpdate {
-			log.Info("api=%s", FlagString(cmd, flagAPI))
 			updateCmd(w)(cmd, args)
 		}
 

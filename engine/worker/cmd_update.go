@@ -21,7 +21,7 @@ func cmdUpdate(w *currentWorker) *cobra.Command {
 		Short: "Update worker from CDS API or from CDS Release",
 		Run:   updateCmd(w),
 	}
-	c.Flags().Bool("from-github", false, "Update binary from latest github release")
+	c.Flags().Bool(flagFromGithub, false, "Update binary from latest github release")
 	c.Flags().String(flagAPI, "", "URL of CDS API")
 	c.Flags().Bool(flagInsecure, false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	return c
@@ -31,18 +31,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 		var urlBinary string
-		// flag from-github is defined on command update, not on root command
-		if cmd.Flag("from-github") != nil && cmd.Flag("from-github").Value.String() == "true" {
-			// no need to have apiEndpoint here
-			w.client = cdsclient.NewWorker("", "download", nil)
-
-			var errGH error
-			urlBinary, errGH = w.client.DownloadURLFromGithub("worker", runtime.GOOS, runtime.GOARCH)
-			if errGH != nil {
-				sdk.Exit("Error while getting URL from Github: %s", errGH)
-			}
-			fmt.Printf("Updating worker binary from Github on %s...\n", urlBinary)
-		} else {
+		if !FlagBool(cmd, "from-github") {
 			w.apiEndpoint = FlagString(cmd, flagAPI)
 			if w.apiEndpoint == "" {
 				sdk.Exit("--api not provided, aborting update.")
@@ -56,6 +45,16 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 			urlBinary = w.client.DownloadURLFromAPI("worker", runtime.GOOS, runtime.GOARCH)
 			fmt.Printf("Updating worker binary from CDS API on %s...\n", urlBinary)
+		} else {
+			// no need to have apiEndpoint here
+			w.client = cdsclient.NewWorker("", "download", nil)
+
+			var errGH error
+			urlBinary, errGH = w.client.DownloadURLFromGithub("worker", runtime.GOOS, runtime.GOARCH)
+			if errGH != nil {
+				sdk.Exit("Error while getting URL from Github: %s", errGH)
+			}
+			fmt.Printf("Updating worker binary from Github on %s...\n", urlBinary)
 		}
 
 		resp, err := http.Get(urlBinary)
