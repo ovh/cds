@@ -14,7 +14,7 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
-	"github.com/moby/moby/pkg/namesgenerator"
+	"github.com/ovh/cds/sdk/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -118,8 +118,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryMarathon server
 func (h *HatcheryMarathon) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID must returns hatchery id

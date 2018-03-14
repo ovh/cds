@@ -17,7 +17,7 @@ import (
 )
 
 // Create creates hatchery
-func Create(h Interface) {
+func Create(h Interface) error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -40,14 +40,12 @@ func Create(h Interface) {
 	}()
 
 	if err := h.Init(); err != nil {
-		log.Error("Create> Init error: %s", err)
-		os.Exit(10)
+		return fmt.Errorf("Create> Init error: %v", err)
 	}
 
 	hostname, errh := os.Hostname()
 	if errh != nil {
-		log.Error("Create> Cannot retrieve hostname: %s", errh)
-		os.Exit(10)
+		return fmt.Errorf("Create> Cannot retrieve hostname: %s", errh)
 	}
 
 	go hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
@@ -60,6 +58,7 @@ func Create(h Interface) {
 	go func(ctx context.Context) {
 		if err := h.Client().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued); err != nil {
 			log.Error("Queues polling stopped: %v", err)
+			cancel()
 		}
 	}(ctx)
 
@@ -71,6 +70,12 @@ func Create(h Interface) {
 	tickerRegister := time.NewTicker(time.Duration(h.Configuration().Provision.RegisterFrequency) * time.Second)
 	tickerCountWorkersStarted := time.NewTicker(time.Duration(2 * time.Second))
 	tickerGetModels := time.NewTicker(time.Duration(3 * time.Second))
+	defer func() {
+		tickerProvision.Stop()
+		tickerRegister.Stop()
+		tickerCountWorkersStarted.Stop()
+		tickerGetModels.Stop()
+	}()
 
 	var models []sdk.Model
 
@@ -84,13 +89,7 @@ func Create(h Interface) {
 	for {
 		select {
 		case <-ctx.Done():
-			if err := ctx.Err(); err != nil {
-				log.Error("Exiting Hatchery: %v", err)
-			} else {
-				log.Info("Exiting Hatchery")
-			}
-			tickerRegister.Stop()
-			return
+			return ctx.Err()
 		case <-tickerCountWorkersStarted.C:
 			workersStarted = int64(h.WorkersStarted())
 			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {

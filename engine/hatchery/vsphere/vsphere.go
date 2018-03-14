@@ -75,8 +75,7 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryVSphere server
 func (h *HatcheryVSphere) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // CanSpawn return wether or not hatchery can spawn model
