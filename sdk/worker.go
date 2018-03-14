@@ -95,6 +95,7 @@ type Model struct {
 	Template         *map[string]string `json:"template"  db:"template" cli:"-"`
 	RunScript        string             `json:"run_script"  db:"run_script" cli:"-"`
 	Disabled         bool               `json:"disabled"  db:"disabled" cli:"disabled"`
+	Restricted       bool               `json:"restricted"  db:"restricted" cli:"restricted"`
 	NeedRegistration bool               `json:"need_registration"  db:"need_registration" cli:"-"`
 	LastRegistration time.Time          `json:"last_registration"  db:"last_registration" cli:"-"`
 	UserLastModified time.Time          `json:"user_last_modified"  db:"user_last_modified" cli:"-"`

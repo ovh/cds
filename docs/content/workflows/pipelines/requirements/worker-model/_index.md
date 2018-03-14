@@ -18,18 +18,6 @@ There are 2 types of worker models:
  * Docker images, see [how to create a worker model docker]({{< relref "workflows/pipelines/requirements/worker-model/docker-simple.md" >}})
  * Openstack images, see [how to create a worker model openstack]({{< relref "workflows/pipelines/requirements/worker-model/openstack.md" >}})
 
-### Capabilities
-
-Capabilities have a name, a type and a value.
-
-Existing capability types are:
-
- * Binary
- * Network access
- * Hostname
- * Memory
- * Service
-
 ### Behavior
 
-All registered CDS [hatcheries]({{< relref "hatchery/_index.md" >}}) get the number of instances of each model needed. Then, they start/kill workers accordingly.    
+All registered CDS [hatcheries]({{< relref "hatchery/_index.md" >}}) start/kill workers as needed.

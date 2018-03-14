@@ -17,14 +17,14 @@
                 </div>
                 <div class="one wide inline field">
                     <div class="ui checkbox">
-                        <input type="checkbox" name="enabled" [(ngModel)]="editableAction.enabled"
+                        <input type="checkbox" id="enabled" name="enabled" [(ngModel)]="editableAction.enabled"
                                (change)="editableAction.hasChanged = true" [disabled]="!edit">
-                        <label>{{ 'common_enable' | translate }}</label>
+                        <label for="enabled">{{ 'common_enable' | translate }}</label>
                     </div>
                     <div class="ui checkbox mt10" *ngIf="editableAction.type !== 'Joined'">
-                        <input type="checkbox" name="deprecated" [(ngModel)]="editableAction.deprecated"
+                        <input type="checkbox" id="deprecated" name="deprecated" [(ngModel)]="editableAction.deprecated"
                                (change)="editableAction.hasChanged = true" [disabled]="!edit">
-                        <label>{{ 'common_deprecated' | translate }}</label>
+                        <label for="deprecated">{{ 'common_deprecated' | translate }}</label>
                     </div>
                 </div>
                 <div class="two wide right aligned field labelPadding">

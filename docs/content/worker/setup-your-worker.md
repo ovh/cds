@@ -30,10 +30,12 @@ $ cdsctl token generate yourgroup persistent
 Simple enough, run
 
 ```bash
-$ wget -nv https://your-cds-api/download/worker/`uname -m` -O worker
+$ wget -nv https://your-cds-api/download/worker/linux/`uname -m` -O worker
 ```
 
-or download from https://github.com/ovh/cds/releases
+Others OS / Architectures are available on your cds instance `http://your-cds-ui/settings/downloads`
+or on https://github.com/ovh/cds/releases.
+
 
 #### Startup the worker
 

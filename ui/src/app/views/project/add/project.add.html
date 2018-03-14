@@ -25,8 +25,8 @@
                 </div>
                 <div class="field">
                     <div class="ui checkbox">
-                        <input type="checkbox" name="sshkey" [(ngModel)]="addSshKey">
-                        <label>{{ 'project_add_ssh_key' | translate }}</label>
+                        <input type="checkbox" id="sshkey" name="sshkey" [(ngModel)]="addSshKey">
+                        <label for="sshkey">{{ 'project_add_ssh_key' | translate }}</label>
                     </div>
                 </div>
                 <div class="field" *ngIf="addSshKey">

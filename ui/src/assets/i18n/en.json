@@ -665,6 +665,8 @@
   "worker_model_need_register": "Need to be registered: ",
   "worker_model_none": "No worker model",
   "worker_model_provision": "Workers provisioning",
+  "worker_model_restricted": "Restricted",
+  "worker_model_restricted_help": "Can be used only by user's hatchery. Check if yes.",
   "worker_model_run_script": "Run Script",
   "worker_model_saved": "Worker model saved",
   "worker_model_status": "Status",
