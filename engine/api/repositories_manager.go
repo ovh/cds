@@ -164,7 +164,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		go event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
 
 		//Redirect on UI advanced project page
 		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)
@@ -239,7 +239,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		go event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
 
 		return WriteJSON(w, proj, http.StatusOK)
 	}
@@ -280,7 +280,7 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot commit transaction")
 		}
 
-		go event.PublishDeleteVCSServer(p, vcsServer.Name, getUser(ctx))
+		event.PublishDeleteVCSServer(p, vcsServer.Name, getUser(ctx))
 
 		return WriteJSON(w, p, http.StatusOK)
 	}

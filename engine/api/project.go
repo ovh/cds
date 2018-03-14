@@ -115,7 +115,7 @@ func (api *API) updateProjectHandler() Handler {
 		if errUp := project.Update(api.mustDB(), api.Cache, proj, getUser(ctx)); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
-		go event.PublishUpdateProject(proj, p, getUser(ctx))
+		event.PublishUpdateProject(proj, p, getUser(ctx))
 		return WriteJSON(w, proj, http.StatusOK)
 	}
 }
@@ -310,7 +310,7 @@ func (api *API) addProjectHandler() Handler {
 			return sdk.WrapError(err, "addProjectHandler> Cannot commit transaction")
 		}
 
-		go event.PublishAddProject(p, getUser(ctx))
+		event.PublishAddProject(p, getUser(ctx))
 
 		return WriteJSON(w, p, http.StatusCreated)
 	}
@@ -351,7 +351,7 @@ func (api *API) deleteProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteProject> Cannot commit transaction")
 		}
 
-		go event.PublishDeleteProject(p, getUser(ctx))
+		event.PublishDeleteProject(p, getUser(ctx))
 
 		log.Info("Project %s deleted.", p.Name)
 

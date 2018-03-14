@@ -66,7 +66,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot commit transaction")
 		}
 
-		go event.PublishDeleteProjectPermission(p, gp, getUser(ctx))
+		event.PublishDeleteProjectPermission(p, gp, getUser(ctx))
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -146,7 +146,7 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 			Permission: groupProject.Permission,
 			Group:      gpInProject.Group,
 		}
-		go event.PublishUpdateProjectPermission(p, newGP, gpInProject, getUser(ctx))
+		event.PublishUpdateProjectPermission(p, newGP, gpInProject, getUser(ctx))
 
 		return WriteJSON(w, groupProject, http.StatusOK)
 	}
@@ -269,7 +269,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot commit transaction")
 		}
 
-		go event.PublishAddProjectPermission(p, groupProject, getUser(ctx))
+		event.PublishAddProjectPermission(p, groupProject, getUser(ctx))
 
 		if err := group.LoadGroupByProject(api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot load groups on project %s", p.Key)

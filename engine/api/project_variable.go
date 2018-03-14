@@ -100,7 +100,7 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot commit transaction")
 		}
 
-		go event.PublishDeleteProjectVariable(p, *varToDelete, getUser(ctx))
+		event.PublishDeleteProjectVariable(p, *varToDelete, getUser(ctx))
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -149,7 +149,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		}
 
-		go event.PublishUpdateProjectVariable(p, newVar, *previousVar, getUser(ctx))
+		event.PublishUpdateProjectVariable(p, newVar, *previousVar, getUser(ctx))
 
 		return WriteJSON(w, newVar, http.StatusOK)
 	}
@@ -213,7 +213,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 		}
 
 		// Send Add variable event
-		go event.PublishAddProjectVariable(p, newVar, getUser(ctx))
+		event.PublishAddProjectVariable(p, newVar, getUser(ctx))
 
 		p.Variable, err = project.GetAllVariableInProject(api.mustDB(), p.ID)
 		if err != nil {

@@ -81,7 +81,7 @@ func (api *API) putProjectPlatformHandler() Handler {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot commit transaction")
 		}
 
-		go event.PublishUpdateProjectPlatform(p, ppBody, ppDB, getUser(ctx))
+		event.PublishUpdateProjectPlatform(p, ppBody, ppDB, getUser(ctx))
 
 		return WriteJSON(w, ppBody, http.StatusOK)
 
@@ -123,7 +123,7 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 			return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot commit transaction")
 		}
 
-		go event.PublishDeleteProjectPlatform(p, deletedPlatform, getUser(ctx))
+		event.PublishDeleteProjectPlatform(p, deletedPlatform, getUser(ctx))
 		return nil
 	}
 }
@@ -184,7 +184,7 @@ func (api *API) postProjectPlatformHandler() Handler {
 			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot commit transaction")
 		}
 
-		go event.PublishAddProjectPlatform(p, pp, getUser(ctx))
+		event.PublishAddProjectPlatform(p, pp, getUser(ctx))
 
 		return WriteJSON(w, pp, http.StatusOK)
 	}

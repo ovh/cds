@@ -116,7 +116,7 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot commit transaction")
 		}
 
-		go event.PublishDeleteProjectKey(p, deletedKey, getUser(ctx))
+		event.PublishDeleteProjectKey(p, deletedKey, getUser(ctx))
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -179,7 +179,7 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot commit transaction")
 		}
 
-		go event.PublishAddProjectKey(p, newKey, getUser(ctx))
+		event.PublishAddProjectKey(p, newKey, getUser(ctx))
 
 		return WriteJSON(w, newKey, http.StatusOK)
 	}
