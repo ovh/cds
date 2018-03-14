@@ -103,10 +103,8 @@ func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
 		return WrapError(err, "tarWrite> cannot write header")
 	}
 
-	if n, err := io.Copy(tw, filR); err != nil {
+	if _, err := io.Copy(tw, filR); err != nil {
 		return err
-	} else if n == 0 {
-		return fmt.Errorf("nothing to write for %s", fi.Name())
 	}
 	return nil
 }
