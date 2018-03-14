@@ -21,15 +21,13 @@ var containersCache = struct {
 	list: []types.Container{},
 }
 
-func (h *HatcherySwarm) getContainers() ([]types.Container, error) {
+func (h *HatcherySwarm) getContainers(options types.ContainerListOptions) ([]types.Container, error) {
 	containersCache.mu.RLock()
 	nbServers := len(containersCache.list)
 	containersCache.mu.RUnlock()
 
 	if nbServers == 0 {
-		s, err := h.dockerClient.ContainerList(context.Background(), types.ContainerListOptions{
-			All: true,
-		})
+		s, err := h.dockerClient.ContainerList(context.Background(), options)
 		if err != nil {
 			return nil, sdk.WrapError(err, "getContainers> unable to list containers")
 		}
@@ -52,8 +50,8 @@ func (h *HatcherySwarm) getContainers() ([]types.Container, error) {
 	return containersCache.list, nil
 }
 
-func (h *HatcherySwarm) getContainer(name string) (*types.Container, error) {
-	containers, err := h.getContainers()
+func (h *HatcherySwarm) getContainer(name string, options types.ContainerListOptions) (*types.Container, error) {
+	containers, err := h.getContainers(options)
 	if err != nil {
 		return nil, sdk.WrapError(err, "getContainer> cannot getContainers")
 	}

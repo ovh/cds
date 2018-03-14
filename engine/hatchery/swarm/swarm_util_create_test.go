@@ -4,8 +4,10 @@ import (
 	"reflect"
 	"testing"
 
+	types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
+
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
@@ -132,7 +134,7 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	err = h.createAndStartContainer(args)
 	test.NoError(t, err)
 
-	cntr, err := h.getContainer(args.name)
+	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
 	test.NoError(t, err)
 
 	err = h.killAndRemove(cntr.ID)
@@ -169,7 +171,7 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	err = h.createAndStartContainer(args)
 	test.NoError(t, err)
 
-	cntr, err := h.getContainer(args.name)
+	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
 	test.NoError(t, err)
 
 	err = h.killAndRemove(cntr.ID)
@@ -195,7 +197,7 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	err = h.createAndStartContainer(args)
 	test.NoError(t, err)
 
-	cntr, err := h.getContainer(args.name)
+	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
 	test.NoError(t, err)
 
 	err = h.killAndRemove(cntr.ID)

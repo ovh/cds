@@ -17,9 +17,8 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 		if strings.Contains(err.Error(), "No such container") {
 			log.Debug("killAndRemove> cannot InspectContainer: %v", err)
 			return nil
-		} else {
-			log.Info("killAndRemove> cannot InspectContainer: %v", err)
 		}
+		log.Info("killAndRemove> cannot InspectContainer: %v", err)
 	}
 	if err := h.killAndRemoveContainer(ID); err != nil {
 		return sdk.WrapError(err, "killAndRemove> %s", ID[:7])
@@ -34,8 +33,10 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 		//Get the network
 		network, err := h.dockerClient.NetworkInspect(context.Background(), cnetwork.NetworkID)
 		if err != nil {
-			log.Info("killAndRemove> cannot NetworkInfo: %v", err)
-			return sdk.WrapError(err, "killAndRemove> unable to get network for %s", ID[:7])
+			if !strings.Contains(err.Error(), "No such network") {
+				return sdk.WrapError(err, "killAndRemove> unable to get network for %s", ID[:7])
+			}
+			continue
 		}
 
 		// If we succeed to get the network, kill and remove all the container on the network
@@ -60,17 +61,14 @@ func (h *HatcherySwarm) killAndRemoveContainer(ID string) error {
 	log.Debug("killAndRemove> remove container %s", ID)
 	if err := h.dockerClient.ContainerKill(context.Background(), ID, "SIGKILL"); err != nil {
 		if !strings.Contains(err.Error(), "is not running") && !strings.Contains(err.Error(), "No such container") {
-			log.Warning("killAndRemove> Unable to kill container %v", err)
-		} else {
-			return err
+			return sdk.WrapError(err, "killAndRemove> err on kill container %v", err)
 		}
 	}
 
 	if err := h.dockerClient.ContainerRemove(context.Background(), ID, types.ContainerRemoveOptions{Force: true}); err != nil {
 		// container could be already removed by a previous call to docker
 		if !strings.Contains(err.Error(), "No such container") {
-			log.Warning("killAndRemove> Unable to remove container %s: %v", ID, err)
-			return err
+			return sdk.WrapError(err, "killAndRemove> Unable to remove container %s", ID)
 		}
 	}
 
