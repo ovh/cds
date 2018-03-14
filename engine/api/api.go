@@ -530,12 +530,12 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Warning("Cleanup SQL connections")
 			s.Shutdown(ctx)
 			a.DBConnectionFactory.Close()
-			event.Publish(sdk.EventEngine{Message: "shutdown"})
+			event.Publish(sdk.EventEngine{Message: "shutdown"}, nil)
 			event.Close()
 		}
 	}()
 
-	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)})
+	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too

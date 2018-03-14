@@ -1,5 +1,23 @@
 package sdk
 
+// EventAddProject represents the event when adding a project
+type EventAddProject struct {
+	ProjectKey  string            `json:"projectKey"`
+	Variables   []Variable        `json:"variables"`
+	Permissions []GroupPermission `json:"groups_permission"`
+	Keys        []ProjectKey      `json:"keys"`
+	Metadata    Metadata          `json:"metadata"`
+}
+
+// EventUpdateProject represents the event when updating a project
+type EventUpdateProject struct {
+	ProjectKey  string   `json:"projectKey"`
+	OldName     string   `json:"old_name"`
+	NewName     string   `json:"new_name"`
+	OldMetadata Metadata `json:"old_metadata"`
+	NewMetadata Metadata `json:"new_metadata"`
+}
+
 // EventDeleteProject represents the event when deleting a project
 type EventDeleteProject struct {
 	ProjectKey string `json:"projectKey"`

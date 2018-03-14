@@ -264,10 +264,9 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 }
 
 // UpdateVariable Update a variable in the given project
-func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, previousVar *sdk.Variable, u *sdk.User) error {
 	varValue := variable.Value
 	// Clear password for audit
-	previousVar, err := GetVariableByID(db, proj.ID, variable.ID, WithClearPassword())
 
 	//Check variable name
 	rx := sdk.NamePatternRegex
