@@ -234,14 +234,14 @@ const (
 // CanSpawn checks if the model can be spawned by this hatchery
 func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	//List all containers to check if we can spawn a new one
-	cs, errList := h.getContainers(types.ContainerListOptions{})
+	cs, errList := h.getContainers(types.ContainerListOptions{All: true})
 	if errList != nil {
 		log.Error("CanSpawn> Unable to list containers: %s", errList)
 		return false
 	}
 
 	//List all workers
-	ws, errWList := h.getWorkersStarted(cs)
+	ws, errWList := h.getWorkerContainers(cs, types.ContainerListOptions{})
 	if errWList != nil {
 		log.Error("CanSpawn> Unable to list workers: %s", errWList)
 		return false
@@ -353,11 +353,11 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return true
 }
 
-func (h *HatcherySwarm) getWorkersStarted(containers []types.Container) ([]types.Container, error) {
+func (h *HatcherySwarm) getWorkerContainers(containers []types.Container, option types.ContainerListOptions) ([]types.Container, error) {
 	if containers == nil {
 		var errList error
 		// get only started containers
-		containers, errList = h.getContainers(types.ContainerListOptions{})
+		containers, errList = h.getContainers(option)
 		if errList != nil {
 			log.Error("WorkersStarted> Unable to list containers: %s", errList)
 			return nil, errList
@@ -367,9 +367,13 @@ func (h *HatcherySwarm) getWorkersStarted(containers []types.Container) ([]types
 	res := []types.Container{}
 	//We only count worker
 	for _, c := range containers {
-		cont, err := h.getContainer(c.Names[0], types.ContainerListOptions{})
+		cont, err := h.getContainer(c.Names[0], option)
 		if err != nil {
 			log.Error("WorkersStarted> Unable to get worker %s: %v", c.Names[0], err)
+			continue
+		}
+		// the container could be nil
+		if cont == nil {
 			continue
 		}
 		if _, ok := cont.Labels["worker_name"]; ok {
@@ -384,13 +388,13 @@ func (h *HatcherySwarm) getWorkersStarted(containers []types.Container) ([]types
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcherySwarm) WorkersStarted() int {
-	workers, _ := h.getWorkersStarted(nil)
+	workers, _ := h.getWorkerContainers(nil, types.ContainerListOptions{})
 	return len(workers)
 }
 
 // WorkersStartedByModel returns the number of started workers
 func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
-	workers, errList := h.getWorkersStarted(nil)
+	workers, errList := h.getWorkerContainers(nil, types.ContainerListOptions{})
 	if errList != nil {
 		log.Error("WorkersStartedByModel> Unable to list containers: %s", errList)
 		return 0
@@ -444,7 +448,7 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 		return nil, sdk.WrapError(err, "listAwolWorkers> Cannot get workers")
 	}
 
-	containers, errList := h.getWorkersStarted(nil)
+	containers, errList := h.getWorkerContainers(nil, types.ContainerListOptions{All: true})
 	if errList != nil {
 		return nil, sdk.WrapError(err, "listAwolWorkers> Cannot list containers")
 	}
