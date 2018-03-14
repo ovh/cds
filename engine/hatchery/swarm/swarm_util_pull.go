@@ -1,6 +1,7 @@
 package swarm
 
 import (
+	"io/ioutil"
 	"time"
 
 	types "github.com/docker/docker/api/types"
@@ -15,11 +16,17 @@ func (h *HatcherySwarm) pullImage(img string, timeout time.Duration) error {
 
 	//Pull the worker image
 	opts := types.ImagePullOptions{}
-	log.Info("CanSpawn> pulling image %s", img)
+	log.Info("pullImage> pulling image %s", img)
 	res, err := h.dockerClient.ImagePull(ctx, img, opts)
 	if err != nil {
-		log.Warning("CanSpawn> Unable to pull image %s : %s", img, err)
+		log.Warning("pullImage> Unable to pull image %s : %s", img, err)
 		return err
 	}
-	return res.Close()
+
+	btes, _ := ioutil.ReadAll(res)
+	log.Debug("pullImage> %s", string(btes))
+	if err := res.Close(); err != nil {
+		return err
+	}
+	return nil
 }
