@@ -62,7 +62,7 @@ func Initialize(conf *Conf) {
 			TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
 		}
 
-		var extra map[string]interface{}
+		extra := map[string]interface{}{}
 		if conf.GraylogExtraKey != "" && conf.GraylogExtraValue != "" {
 			keys := strings.Split(conf.GraylogExtraKey, ",")
 			values := strings.Split(conf.GraylogExtraValue, ",")
