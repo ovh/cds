@@ -31,8 +31,9 @@ You can access to this cache from any workflow inside a project. You just have t
 For example if you need a different cache for each workflow so choose a tag scoped with your workflow name and workflow version (example of tag value: {{.cds.workflow}}-{{.cds.version}})
 
 ## Use Case
-Java Developers often use maven to manage dependencies. The mvn install command could be long due as there is no existing .m2/ directory on a fresh CDS Job.
-With the worker cache feature, you don't have to wait the download of the dependencies if they didn't been updated on the upstream, since the last run of the job:
+Java Developers often use maven to manage dependencies. The mvn install command could be long because all the maven dependencies have to be downloaded on a fresh CDS Job workspace.
+With the worker cache feature, you don't have to download the dependencies if they haven't been updated since the last run of the job.
+
 
 - cache push: take the current .m2/ directory and set it as a cache
 - cache pull: download a cache of .m2 directory
@@ -41,8 +42,10 @@ Here, an example of a script inside a CDS Job using the cache feature:
 
 	#!/bin/bash
 
+	tag=($(md5sum pom.xml))
+
 	# download the cache of .m2/
-	worker cache pull latest_m2 
+	worker cache pull tag 
 
 	# update the directory .m2/
 	# as there is a cache, mvn does not need to download all dependencies
@@ -50,7 +53,7 @@ Here, an example of a script inside a CDS Job using the cache feature:
 	mvn install 
 
 	# put in cache the updated .m2/ directory
-	worker cache push latest_m2 .m2/
+	worker cache push tag .m2/
 
 
     `,
