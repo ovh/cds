@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
@@ -80,6 +81,8 @@ func (api *API) putProjectPlatformHandler() Handler {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot commit transaction")
 		}
 
+		go event.PublishUpdateProjectPlatform(p, ppBody, ppDB, getUser(ctx))
+
 		return WriteJSON(w, ppBody, http.StatusOK)
 
 	}
@@ -101,8 +104,10 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 			return sdk.WrapError(errT, "deleteProjectPlatformHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
+		var deletedPlatform sdk.ProjectPlatform
 		for _, plat := range p.Platforms {
 			if plat.Name == platformName {
+				deletedPlatform = plat
 				if err := project.DeletePlatform(tx, plat); err != nil {
 					return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot delete project platform")
 				}
@@ -117,6 +122,8 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot commit transaction")
 		}
+
+		go event.PublishDeleteProjectPlatform(p, deletedPlatform, getUser(ctx))
 		return nil
 	}
 }
@@ -176,6 +183,8 @@ func (api *API) postProjectPlatformHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot commit transaction")
 		}
+
+		go event.PublishAddProjectPlatform(p, pp, getUser(ctx))
 
 		return WriteJSON(w, pp, http.StatusOK)
 	}

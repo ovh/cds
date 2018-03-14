@@ -143,3 +143,49 @@ func PublishDeleteVCSServer(p *sdk.Project, vcsServerName string, u *sdk.User) {
 	}
 	Publish(e, u)
 }
+
+// PublishAddProjectPlatform publishes an event on adding a project platform
+func PublishAddProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, u *sdk.User) {
+	for k, v := range pf.Config {
+		if sdk.NeedPlaceholder(v.Type) {
+			v.Value = sdk.PasswordPlaceholder
+			pf.Config[k] = v
+		}
+	}
+	e := sdk.EventAddProjectPlatform{
+		ProjectKey: p.Key,
+		Platform:   pf,
+	}
+	Publish(e, u)
+}
+
+// PublishUpdateProjectPlatform publishes an event on updating a project platform
+func PublishUpdateProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, pfOld sdk.ProjectPlatform, u *sdk.User) {
+	for k, v := range pf.Config {
+		if sdk.NeedPlaceholder(v.Type) {
+			v.Value = sdk.PasswordPlaceholder
+			pf.Config[k] = v
+		}
+	}
+	for k, v := range pfOld.Config {
+		if sdk.NeedPlaceholder(v.Type) {
+			v.Value = sdk.PasswordPlaceholder
+			pfOld.Config[k] = v
+		}
+	}
+	e := sdk.EventUpdateProjectPlatform{
+		ProjectKey:   p.Key,
+		NewsPlatform: pf,
+		OldPlatform:  pfOld,
+	}
+	Publish(e, u)
+}
+
+// PublishDeleteProjectPlatform publishes an event on deleting project platform
+func PublishDeleteProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, u *sdk.User) {
+	e := sdk.EventDeleteProjectPlatform{
+		ProjectKey: p.Key,
+		Platform:   pf,
+	}
+	Publish(e, u)
+}
