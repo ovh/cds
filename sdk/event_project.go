@@ -75,14 +75,14 @@ type EventDeleteProjectKey struct {
 
 // EventAddProjectVCSServer represents the event when adding a project vcs server
 type EventAddProjectVCSServer struct {
-	ProjectKey string           `json:"projectKey"`
-	VCSServer  ProjectVCSServer `json:"vcs_server"`
+	ProjectKey    string `json:"projectKey"`
+	VCSServerName string `json:"vcs_server"`
 }
 
 // EventDeleteProjectVCSServer represents the event when deleting a project vcs server
 type EventDeleteProjectVCSServer struct {
-	ProjectKey string           `json:"projectKey"`
-	VCSServer  ProjectVCSServer `json:"vcs_server"`
+	ProjectKey    string `json:"projectKey"`
+	VCSServerName string `json:"vcs_server"`
 }
 
 // EventAddProjectPlatform represents the event when adding a project platform
