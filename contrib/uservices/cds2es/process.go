@@ -15,14 +15,17 @@ import (
 var esConn *elastigo.Conn
 
 func consume(config Configuration, c chan<- sdk.Event) {
-	event.ConsumeKafka(config.Kafka.Brokers, config.Kafka.Topic, config.Kafka.Group, config.Kafka.User, config.Kafka.Password,
+	log.Infof("Consuming kafka message")
+	if err := event.ConsumeKafka(config.Kafka.Brokers, config.Kafka.Topic, config.Kafka.Group, config.Kafka.User, config.Kafka.Password,
 		func(e sdk.Event) error {
-			log.Info("Receiving message %s", e.EventType)
+			log.Infof("Receiving message %s", e.EventType)
 			c <- e
 			return nil
 		},
 		log.Errorf,
-	)
+	); err != nil {
+		log.Fatalf("Cannot consume kafka %s", err)
+	}
 }
 
 func sendToES(config Configuration, c <-chan sdk.Event) {
