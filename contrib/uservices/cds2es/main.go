@@ -6,13 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
 	"github.com/pelletier/go-toml"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -51,7 +51,6 @@ func main() {
 	default:
 		log.SetLevel(log.DebugLevel)
 	}
-
 	router := gin.New()
 	router.Use(gin.Recovery())
 
@@ -69,7 +68,7 @@ func main() {
 	})
 
 	s := &http.Server{
-		Addr:           ":" + viper.GetString("listen_port"),
+		Addr:           ":" + strconv.Itoa(conf.Http.Port),
 		Handler:        router,
 		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   30 * time.Second,
@@ -79,8 +78,7 @@ func main() {
 	c := make(chan sdk.Event)
 	go consume(conf, c)
 	go sendToES(conf, c)
-
-	log.Infof("Running cds2es on %s", viper.GetString("listen_port"))
+	log.Infof("Running cds2es on %d", conf.Http.Port)
 	if err := s.ListenAndServe(); err != nil {
 		log.Errorf("Error while running ListenAndServe: %s", err.Error())
 	}

@@ -5,9 +5,15 @@ type Configuration struct {
 	Kafka         KafkaConf
 	ElasticSearch ElasticSearchConf
 	Debug         DebugConf
+	Http          HttpConf
 }
 
-// KafkaConf
+// HttpConf represents http configuration
+type HttpConf struct {
+	Port int `toml:"port"`
+}
+
+// KafkaConf represents kafka configuration
 type KafkaConf struct {
 	Brokers  string `toml:"brokers"`
 	Topic    string `toml:"topic"`
@@ -16,6 +22,7 @@ type KafkaConf struct {
 	Group    string `toml:"group"`
 }
 
+// ElasticSearchConf represents elastic search configuration
 type ElasticSearchConf struct {
 	Protocol string `toml:"protocol"`
 	Domain   string `toml:"domain"`
@@ -25,6 +32,7 @@ type ElasticSearchConf struct {
 	Index    string `toml:"index"`
 }
 
+// DebugConf reprents log configuration
 type DebugConf struct {
 	LogLevel string `toml:"log_level"`
 }
