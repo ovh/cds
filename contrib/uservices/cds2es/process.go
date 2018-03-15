@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -15,13 +17,16 @@ import (
 var esConn *elastigo.Conn
 
 func consume(config Configuration, c chan<- sdk.Event) {
-	event.ConsumeKafka(config.Kafka.Brokers, config.Kafka.Topic, config.Kafka.Group, config.Kafka.User, config.Kafka.Password,
+	log.Infof("Consuming kafka message")
+	if err := event.ConsumeKafka(config.Kafka.Brokers, config.Kafka.Topic, config.Kafka.Group, config.Kafka.User, config.Kafka.Password,
 		func(e sdk.Event) error {
 			c <- e
 			return nil
 		},
 		log.Errorf,
-	)
+	); err != nil {
+		log.Fatalf("Cannot consume kafka %s", err)
+	}
 }
 
 func sendToES(config Configuration, c <-chan sdk.Event) {
@@ -52,10 +57,16 @@ func sendToES(config Configuration, c <-chan sdk.Event) {
 			"Timestamp": event.Timestamp,
 			"Event":     string(jsonPayload),
 		}
-		_, err := esConn.IndexWithParameters(esIndex, event.EventType, "0", "", 0, "", "", event.Timestamp.Format(time.RFC3339), 0, "", "", false, nil, dataES)
+		_, err := esConn.IndexWithParameters(esIndex, event.EventType, getMD5Hash(string(jsonPayload)), "", 0, "", "", event.Timestamp.Format(time.RFC3339), 0, "", "", false, nil, dataES)
 		time.Sleep(time.Duration(viper.GetInt("pause_es")) * time.Millisecond)
 		if err != nil {
 			log.Errorf("cannot index message %+v in :%s", dataES, err)
 		}
 	}
+}
+
+func getMD5Hash(text string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(text))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
