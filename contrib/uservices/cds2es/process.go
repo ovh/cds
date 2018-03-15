@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/mattbaird/elastigo/lib"
@@ -34,7 +35,13 @@ func sendToES(config Configuration, c <-chan sdk.Event) {
 	esConn.Password = config.ElasticSearch.Password
 
 	esIndex := config.ElasticSearch.Index
+
 	for event := range c {
+		jsonPayload, errM := json.Marshal(event.Payload)
+		if errM != nil {
+			log.Errorf("cannot marshal payload :%s", errM)
+			continue
+		}
 		dataES := map[string]interface{}{
 			"Username":  event.Username,
 			"Email":     event.UserMail,
@@ -43,7 +50,7 @@ func sendToES(config Configuration, c <-chan sdk.Event) {
 			"Hostname":  event.Hostname,
 			"Attempts":  event.Attempts,
 			"Timestamp": event.Timestamp,
-			"Event":     event.Payload,
+			"Event":     string(jsonPayload),
 		}
 		_, err := esConn.IndexWithParameters(esIndex, event.EventType, "0", "", 0, "", "", event.Timestamp.Format(time.RFC3339), 0, "", "", false, nil, dataES)
 		time.Sleep(time.Duration(viper.GetInt("pause_es")) * time.Millisecond)
