@@ -17,6 +17,7 @@ var esConn *elastigo.Conn
 func consume(config Configuration, c chan<- sdk.Event) {
 	event.ConsumeKafka(config.Kafka.Brokers, config.Kafka.Topic, config.Kafka.Group, config.Kafka.User, config.Kafka.Password,
 		func(e sdk.Event) error {
+			log.Info("Receiving message %s", e.EventType)
 			c <- e
 			return nil
 		},
