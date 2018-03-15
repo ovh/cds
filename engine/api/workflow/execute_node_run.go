@@ -753,14 +753,6 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 		}
 	}
 
-	if branch == nil && previousGitRepo != "" && previousGitRepo == node.Context.Application.RepositoryFullname {
-		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
-			Args: []interface{}{vcsInfos.branch},
-		})
-		return vcsInfos, sdk.WrapError(fmt.Errorf("computeVCSInfos> branch has benn deleted"), "")
-	}
-
 	//Get the default branch
 	if branch == nil {
 		branches, errR := client.Branches(vcsInfos.repository)
@@ -771,7 +763,17 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 		branch = &_branch
 		vcsInfos.branch = branch.DisplayID
 	}
-	if vcsInfos.hash == "" {
+
+	//Check if the branch is still valid
+	if branch == nil && previousGitRepo != "" && previousGitRepo == node.Context.Application.RepositoryFullname {
+		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
+			Args: []interface{}{vcsInfos.branch},
+		})
+		return vcsInfos, sdk.WrapError(fmt.Errorf("branch has benn deleted"), "computeVCSInfos> ")
+	}
+
+	if branch != nil && vcsInfos.hash == "" {
 		vcsInfos.hash = branch.LatestCommit
 	}
 
