@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -8,8 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	"crypto/md5"
-	"encoding/hex"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/event"
 )
