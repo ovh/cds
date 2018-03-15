@@ -1,7 +1,6 @@
 +++
-title = "Introduction"
-weight = 2
-chapter = true
+title = "Concepts"
+weight = 20
 
 +++
 
@@ -52,3 +51,5 @@ An application is composed of one or multiple pipelines, that can be triggered:
 - An action will start on any worker **matching all its requirements**
 - **Every action runs in a different worker**, all build data needed for the next step should be **uploaded as artifact**
 - It is possible to run some of your pipelines on-premise, some on CDS workers
+
+

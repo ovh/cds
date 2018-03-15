@@ -15,7 +15,7 @@ Type of requirements:
 - Memory
 - OS & Architecture
 
-A [Job]({{< relref "introduction/concepts/job.md" >}}) will be executed by a **worker**.
+A [Job]({{< relref "gettingstarted/concepts/job.md" >}}) will be executed by a **worker**.
 
 CDS will choose and provision a worker for dependending on the **requirements** you define on your job.
 
