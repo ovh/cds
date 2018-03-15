@@ -1684,10 +1684,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#purpose">Purpose</a></li>
-<li><a href="#types">Types</a></li>
-<li><a href="#capabilities">Capabilities</a></li>
-<li><a href="#behavior">Behavior</a></li>
+<li><a href="#examples">Examples</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1711,39 +1708,23 @@
 
 
 
-<h3 id="purpose">Purpose</h3>
+<p>The Service Link prerequisite allow you to use any docker image as a dependency of a job.</p>
 
-<p>The goal of CDS is to start a worker when you need it, which should match all your requirements exactly.
-In order to scale automatically on demand, it is possible to register a worker model.</p>
+<p>This is pretty useful if you want to make some tests with a real database, or put your builded application as a job prerequisite for doing some tests.</p>
 
-<p>The goal of a worker model is to describe the capabilities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.</p>
+<h3 id="examples">Examples</h3>
 
-<h3 id="types">Types</h3>
 
-<p>There are 2 types of worker models:</p>
 
-<ul>
-<li>Docker images, see <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/">how to create a worker model docker</a></li>
-<li>Openstack images, see <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">how to create a worker model openstack</a></li>
+<ul class="children children-ul"><ul>
+	<a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/" >Service Requirement Nginx</a></ul><ul>
+	<a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/" >Service Requirement PostgreSQL</a></ul>
 </ul>
 
-<h3 id="capabilities">Capabilities</h3>
 
-<p>Capabilities have a name, a type and a value.</p>
 
-<p>Existing capability types are:</p>
 
-<ul>
-<li>Binary</li>
-<li>Network access</li>
-<li>Hostname</li>
-<li>Memory</li>
-<li>Service</li>
-</ul>
 
-<h3 id="behavior">Behavior</h3>
-
-<p>All registered CDS <a href="https://ovh.github.io/cds/hatchery/">hatcheries</a> get the number of instances of each model needed. Then, they start/kill workers accordingly.</p>
 
 
 <footer class=" footline" >

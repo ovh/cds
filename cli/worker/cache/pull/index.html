@@ -1715,8 +1715,22 @@
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Inside a project, you can fetch a cache from your worker with a tag
-    worker pull <tagValue></p>
+<p>Inside a project, you can fetch a cache from your worker with a tag</p>
+
+<pre><code>worker pull &lt;tagValue&gt;
+</code></pre>
+
+<p>If you push a cache with:</p>
+
+<pre><code>worker cache push latest {{.cds.workspace}}/pathToUpload
+</code></pre>
+
+<p>The command:</p>
+
+<pre><code>worker cache pull latest
+</code></pre>
+
+<p>will create the directory {{.cds.workspace}}/pathToUpload with the content of the cache</p>
 
 <pre><code>worker cache pull [flags]
 </code></pre>

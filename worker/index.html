@@ -1671,7 +1671,7 @@
 <ul>
 <li><a href="#why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</a></li>
 </ul></li>
-<li><a href="#how-does-this-work">How does this work ?</a></li>
+<li><a href="#about-worker-model">About worker model</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1697,8 +1697,6 @@
 
 <p>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.</p>
 
-<p>Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing <code>npm</code> tools, importing <code>bower</code> packages (these are <code>nodeJs</code> tools), building webfonts with <code>fontforge</code>&hellip;</p>
-
 <h2 id="what-is-a-worker">What is a worker</h2>
 
 <p>Basically, a worker is a binary. This binary can be launched inside a Docker Container, or on a Host (as an Openstack VM). A worker executes a <a href="https://ovh.github.io/cds/introduction/concepts/job/">CDS Job</a>.</p>
@@ -1723,14 +1721,13 @@
 <li>Perform integration tests in a specific network</li>
 </ul>
 
-<h3 id="how-does-this-work">How does this work ?</h3>
+<p><a href="https://ovh.github.io/cds/worker/setup-your-worker/">Setup a worker</a></p>
 
-<p>Workers authenticate on CDS with a token and have the same permissions as the user who generated it.</p>
+<h3 id="about-worker-model">About worker model</h3>
 
-<p>To generate a token, run the following command, replace yourgroup with your group</p>
+<p>Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing <code>npm</code> tools, importing <code>bower</code> packages (these are <code>nodeJs</code> tools), building webfonts with <code>fontforge</code>&hellip;</p>
 
-<pre><code class="language-bash">$ cdsctl token generate yourgroup persistent
-</code></pre>
+<p><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">More about worker model</a></p>
 
 
 <footer class=" footline" >

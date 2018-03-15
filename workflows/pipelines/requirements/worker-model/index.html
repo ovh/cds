@@ -1686,7 +1686,6 @@
 <ul>
 <li><a href="#purpose">Purpose</a></li>
 <li><a href="#types">Types</a></li>
-<li><a href="#capabilities">Capabilities</a></li>
 <li><a href="#behavior">Behavior</a></li>
 </ul></li>
 </ul></li>
@@ -1727,23 +1726,9 @@ In order to scale automatically on demand, it is possible to register a worker m
 <li>Openstack images, see <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">how to create a worker model openstack</a></li>
 </ul>
 
-<h3 id="capabilities">Capabilities</h3>
-
-<p>Capabilities have a name, a type and a value.</p>
-
-<p>Existing capability types are:</p>
-
-<ul>
-<li>Binary</li>
-<li>Network access</li>
-<li>Hostname</li>
-<li>Memory</li>
-<li>Service</li>
-</ul>
-
 <h3 id="behavior">Behavior</h3>
 
-<p>All registered CDS <a href="https://ovh.github.io/cds/hatchery/">hatcheries</a> get the number of instances of each model needed. Then, they start/kill workers accordingly.</p>
+<p>All registered CDS <a href="https://ovh.github.io/cds/hatchery/">hatcheries</a> start/kill workers as needed.</p>
 
 
 <footer class=" footline" >
