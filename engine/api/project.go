@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
@@ -114,7 +115,7 @@ func (api *API) updateProjectHandler() Handler {
 		if errUp := project.Update(api.mustDB(), api.Cache, proj, getUser(ctx)); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
-
+		event.PublishUpdateProject(proj, p, getUser(ctx))
 		return WriteJSON(w, proj, http.StatusOK)
 	}
 }
@@ -309,6 +310,8 @@ func (api *API) addProjectHandler() Handler {
 			return sdk.WrapError(err, "addProjectHandler> Cannot commit transaction")
 		}
 
+		event.PublishAddProject(p, getUser(ctx))
+
 		return WriteJSON(w, p, http.StatusCreated)
 	}
 }
@@ -347,6 +350,9 @@ func (api *API) deleteProjectHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteProject> Cannot commit transaction")
 		}
+
+		event.PublishDeleteProject(p, getUser(ctx))
+
 		log.Info("Project %s deleted.", p.Name)
 
 		return nil

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -32,7 +33,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		p, err := project.Load(tx, api.Cache, key, getUser(ctx))
+		p, err := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot load %s", key)
 		}
@@ -40,6 +41,17 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 		g, err := group.LoadGroup(tx, groupName)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot find %s", groupName)
+		}
+
+		var gp sdk.GroupPermission
+		for _, gpp := range p.ProjectGroups {
+			if gpp.Group.ID == g.ID {
+				gp = gpp
+				break
+			}
+		}
+		if gp.Permission == 0 {
+			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteGroupFromProjectHandler: Group %s doesn't exist on poject %s", groupName, p.Key)
 		}
 
 		if err := group.DeleteGroupFromProject(tx, p.ID, g.ID); err != nil {
@@ -53,6 +65,8 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot commit transaction")
 		}
+
+		event.PublishDeleteProjectPermission(p, gp, getUser(ctx))
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -80,7 +94,7 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		p, errl := project.Load(tx, api.Cache, key, getUser(ctx))
+		p, errl := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errl != nil {
 			return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load %s: %s", key)
 		}
@@ -90,12 +104,18 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 			return sdk.WrapError(errlg, "updateGroupRoleHandler: Cannot find %s", groupProject.Group.Name)
 		}
 
-		groupInProject, errcg := group.CheckGroupInProject(tx, p.ID, g.ID)
-		if errcg != nil {
-			return sdk.WrapError(errcg, "updateGroupRoleHandler: Cannot check if group %s is already in the project %s", g.Name, p.Name)
+		var gpInProject sdk.GroupPermission
+		nbGrpWrite := 0
+		for _, gp := range p.ProjectGroups {
+			if gp.Group.ID == g.ID {
+				gpInProject = gp
+			}
+			if gp.Permission == permission.PermissionReadWriteExecute {
+				nbGrpWrite++
+			}
 		}
 
-		if !groupInProject {
+		if gpInProject.Permission == 0 {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleHandler: Group is not attached to this project: %s")
 		}
 
@@ -104,12 +124,8 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 		}
 
 		if groupProject.Permission != permission.PermissionReadWriteExecute {
-			permissions, err := group.LoadAllProjectGroupByRole(tx, p.ID, permission.PermissionReadWriteExecute)
-			if err != nil {
-				return sdk.WrapError(err, "updateGroupRoleHandler: Cannot load group for the given project %s", p.Name)
-			}
 			// If the updated group is the only one in write mode, return error
-			if len(permissions) == 1 && permissions[0].Group.ID == g.ID {
+			if nbGrpWrite == 1 && gpInProject.Permission == permission.PermissionReadWriteExecute {
 				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleHandler: Cannot remove write permission for this group %s on this project %s", g.Name, p.Name)
 			}
 		}
@@ -125,68 +141,14 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot start transaction: %s")
 		}
+
+		newGP := sdk.GroupPermission{
+			Permission: groupProject.Permission,
+			Group:      gpInProject.Group,
+		}
+		event.PublishUpdateProjectPermission(p, newGP, gpInProject, getUser(ctx))
+
 		return WriteJSON(w, groupProject, http.StatusOK)
-	}
-}
-
-// Deprecated
-func (api *API) updateGroupsInProjectHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
-		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-
-		var groupProject []sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupProject); err != nil {
-			return sdk.WrapError(err, "updateGroupsInProject> unable to unmarshal")
-		}
-
-		if len(groupProject) == 0 {
-			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInProject: Cannot remove all groups.")
-		}
-
-		found := false
-		for _, gp := range groupProject {
-			if gp.Permission == permission.PermissionReadWriteExecute {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInProject: Need one group with write permission.")
-		}
-
-		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "updateGroupsInProject: Cannot load %s")
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "updateGroupsInProject: Cannot start transaction")
-		}
-		defer tx.Rollback()
-
-		err = group.DeleteGroupProjectByProject(tx, p.ID)
-		if err != nil {
-			return sdk.WrapError(err, "updateGroupsInProject: Cannot delete groups from project %s", p.Name)
-		}
-
-		for _, g := range groupProject {
-			groupData, errl := group.LoadGroup(tx, g.Group.Name)
-			if errl != nil {
-				return sdk.WrapError(errl, "updateGroupsInProject: Cannot load group %s", g.Group.Name)
-			}
-
-			if err := group.InsertGroupInProject(tx, p.ID, groupData.ID, g.Permission); err != nil {
-				return sdk.WrapError(err, "updateGroupsInProject: Cannot add group %s in project %s", g.Group.Name, p.Name)
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateGroupsInProject: Cannot commit transaction")
-		}
-		return nil
 	}
 }
 
@@ -306,6 +268,8 @@ func (api *API) addGroupInProjectHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot commit transaction")
 		}
+
+		event.PublishAddProjectPermission(p, groupProject, getUser(ctx))
 
 		if err := group.LoadGroupByProject(api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot load groups on project %s", p.Key)

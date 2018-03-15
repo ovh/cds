@@ -8,28 +8,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadAllProjectGroupByRole load all group for the given project and role
-func LoadAllProjectGroupByRole(db gorp.SqlExecutor, projectID int64, role int) ([]sdk.GroupPermission, error) {
-	groupsPermission := []sdk.GroupPermission{}
-	query := `
-		SELECT project_group.group_id, project_group.role
-		FROM project_group
-		JOIN project ON project_group.project_id = project.id
-		WHERE project.id = $1 AND role = $2;
-	`
-	rows, err := db.Query(query, projectID, role)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var gPermission sdk.GroupPermission
-		rows.Scan(&gPermission.Group.ID, &gPermission.Permission)
-		groupsPermission = append(groupsPermission, gPermission)
-	}
-	return groupsPermission, nil
-}
-
 func checkAtLeastOneGroupWithWriteRoleOnProject(db gorp.SqlExecutor, projectID int64) (bool, error) {
 	query := `select count(group_id) from project_group where project_id = $1 and role = $2`
 	nb, err := db.SelectInt(query, projectID, 7)
@@ -90,6 +68,7 @@ func InsertGroupInProject(db gorp.SqlExecutor, projectID, groupID int64, role in
 }
 
 // DeleteGroupProjectByProject removes group associated with project
+// Only use by delete project
 func DeleteGroupProjectByProject(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_group WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)

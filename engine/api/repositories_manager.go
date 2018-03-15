@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
@@ -163,6 +164,8 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
+
 		//Redirect on UI advanced project page
 		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
@@ -236,6 +239,8 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
+
 		return WriteJSON(w, proj, http.StatusOK)
 	}
 }
@@ -274,6 +279,8 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot commit transaction")
 		}
+
+		event.PublishDeleteVCSServer(p, vcsServer.Name, getUser(ctx))
 
 		return WriteJSON(w, p, http.StatusOK)
 	}
