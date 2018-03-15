@@ -55,7 +55,7 @@ func sendToES(config Configuration, c <-chan sdk.Event) {
 		_, err := esConn.IndexWithParameters(esIndex, event.EventType, "0", "", 0, "", "", event.Timestamp.Format(time.RFC3339), 0, "", "", false, nil, dataES)
 		time.Sleep(time.Duration(viper.GetInt("pause_es")) * time.Millisecond)
 		if err != nil {
-			log.Errorf("cannot index message %s in :%s", esIndex, err)
+			log.Errorf("cannot index message %+v in :%s", dataES, err)
 		}
 	}
 }
