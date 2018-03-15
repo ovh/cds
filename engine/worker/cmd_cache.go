@@ -47,8 +47,6 @@ Here, an example of a script inside a CDS Job using the cache feature:
 	# download the cache of .m2/
 	if worker cache pull $tag; then
 		echo ".m2/ getted from cache";
-	else
-		mkdir .m2;
 	fi
 
 	# update the directory .m2/
