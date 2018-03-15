@@ -287,11 +287,6 @@ func workflowInitRun(c cli.Values) error {
 		Name:            name,
 		ApplicationName: appName,
 		PipelineName:    pipName,
-		PipelineHooks: []exportentities.HookEntry{
-			{
-				Model: sdk.RepositoryWebHookModel.Name,
-			},
-		},
 	}
 
 	b, err := exportentities.Marshal(wkflw, exportentities.FormatYAML)
@@ -309,6 +304,10 @@ func workflowInitRun(c cli.Values) error {
 
 	// Crafting the application
 	if shouldCreateApplication {
+		connectionType := "ssh"
+		if strings.HasPrefix(fetchURL, "https") {
+			connectionType = "https"
+		}
 		defaultBranch, _ := gitRepo.DefaultBranch()
 		app := exportentities.Application{
 			Name:              appName,
@@ -316,8 +315,7 @@ func workflowInitRun(c cli.Values) error {
 			VCSServer:         repoManagerName,
 			VCSBranch:         "{{.git.branch}}",
 			VCSDefaultBranch:  defaultBranch,
-			VCSConnectionType: "ssh",
-			VCSSSHKey:         "app-ssh-" + repoManagerName,
+			VCSConnectionType: connectionType,
 			VCSPGPKey:         "app-pgp-" + repoManagerName,
 			Keys: map[string]exportentities.KeyValue{
 				"app-ssh-" + repoManagerName: exportentities.KeyValue{
@@ -382,7 +380,7 @@ func workflowInitRun(c cli.Values) error {
 	fmt.Println("Pushing workflow to CDS...")
 	mods := []cdsclient.RequestModifier{
 		func(r *http.Request) {
-			r.Header.Set(sdk.WorkflowAsCodeHeader, repoName)
+			r.Header.Set(sdk.WorkflowAsCodeHeader, fetchURL)
 		},
 	}
 
@@ -415,7 +413,7 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	if len(keysList) != 0 {
-		fmt.Printf("You should consider add the following keys in %v", cli.Magenta(repoManagerName))
+		fmt.Printf("You should consider add the following keys in %v \n", cli.Magenta(repoManagerName))
 		for _, k := range keysList {
 			fmt.Println(cli.Magenta(k.Type))
 			fmt.Println(k.Public)

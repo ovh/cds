@@ -3,10 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -90,6 +94,22 @@ func workflowRunManualRun(v cli.Values) error {
 			return fmt.Errorf("Error payload isn't a valid json")
 		}
 		manual.Payload = data
+	} else {
+		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			return fmt.Errorf("Unable to get current path: %s", err)
+		}
+		var gitBranch string
+		r, errP := repo.New(dir)
+		if errP == nil {
+			gitBranch, _ = r.CurrentBranch()
+		}
+		if gitBranch != "" {
+			m := map[string]string{}
+			m["git.branch"] = gitBranch
+			manual.Payload = m
+		}
+
 	}
 
 	pipParams := v.GetStringSlice("parameter")
