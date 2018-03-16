@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	zglob "github.com/mattn/go-zglob"
 )
 
 // DebPacker represents a packagin configuration
@@ -15,7 +17,9 @@ type DebPacker struct {
 	PackageName          string               `yaml:"package-name"`
 	Architecture         string               `yaml:"architecture"`
 	BinaryFile           string               `yaml:"binary-file"`
-	ConfigurationFiles   []string             `yaml:"configuration-file,omitempty"`
+	ConfigurationFiles   []string             `yaml:"configuration-files,omitempty"`
+	CopyFiles            []string             `yaml:"copy-files,omitempty"`
+	Mkdirs               []string             `yaml:"mkdirs,omitempty"`
 	Version              string               `yaml:"version"`
 	Description          string               `yaml:"description"`
 	Maintainer           string               `yaml:"maintainer"`
@@ -90,6 +94,14 @@ func (p DebPacker) Prepare() error {
 		return err
 	}
 
+	if err := p.mkDirs(); err != nil {
+		return err
+	}
+
+	if err := p.copyOtherFiles(); err != nil {
+		return err
+	}
+
 	if err := p.writeSystemdServiceFile(); err != nil {
 		return err
 	}
@@ -117,7 +129,9 @@ func (p DebPacker) Build() (err error) {
 	fmt.Println(bufErr.String())
 	fmt.Println(bufOut.String())
 
-	fmt.Printf("your package is ready: %s.deb\n", filepath.Join(filepath.Dir(p.outputDirectory), p.PackageName))
+	if err != nil {
+		fmt.Printf("your package is ready: %s.deb\n", filepath.Join(filepath.Dir(p.outputDirectory), p.PackageName))
+	}
 
 	return err
 }
@@ -190,6 +204,65 @@ func (p DebPacker) copyConfigurationFiles() error {
 		}
 	}
 
+	return nil
+}
+
+func (p DebPacker) copyOtherFiles() error {
+	if len(p.CopyFiles) == 0 {
+		return nil
+	}
+
+	path := filepath.Join(p.outputDirectory, "var", "lib", p.PackageName)
+	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+		return err
+	}
+
+	for _, c := range p.CopyFiles {
+		fmt.Println("searching files", c)
+
+		matches, err := zglob.Glob(c)
+		if err != nil && err.Error() != "file does not exist" {
+			return err
+		}
+
+		for _, m := range matches {
+			originFile, err := os.Open(m)
+			if err != nil {
+				return err
+			}
+			defer originFile.Close()
+
+			destFileName := filepath.Join(path, filepath.Base(originFile.Name()))
+			destFile, err := os.OpenFile(destFileName, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
+			if err != nil {
+				return err
+			}
+			defer destFile.Close()
+			fmt.Printf("copying file %s to %s\n", originFile.Name(), destFileName)
+
+			if _, err := io.Copy(destFile, originFile); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (p DebPacker) mkDirs() error {
+	path := filepath.Join(p.outputDirectory, "var", "lib", p.PackageName)
+	fmt.Println("creating directory", path)
+	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+		return err
+	}
+
+	for _, d := range p.Mkdirs {
+		path2 := filepath.Join(p.outputDirectory, "var", "lib", p.PackageName, d)
+		fmt.Println("creating directory", path2)
+		if err := os.MkdirAll(path2, os.FileMode(0755)); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
