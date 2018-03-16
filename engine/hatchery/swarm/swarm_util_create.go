@@ -60,7 +60,7 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 		Cmd:          cArgs.cmd,
 		Labels:       cArgs.labels,
 		ExposedPorts: exposedPorts,
-		Entrypoint:   nil,
+		Entrypoint:   []string{},
 	}
 
 	hostConfig := &container.HostConfig{
