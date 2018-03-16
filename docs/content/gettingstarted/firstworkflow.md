@@ -2,7 +2,7 @@
 title = "First Workflow from repository"
 weight = 1
 aliases = [
-    "/gettingstarted"
+    "/gettingstarted/"
 ]
 +++
 
@@ -93,4 +93,15 @@ This will ask you to choose:
  ```
  
  * Run your workflow
+ ```
+ >cdsctl workflow run
+ Workflow cdsdemo #1 has been launched
+ http://localhost:2015/project/FIRSTPROJECT/workflow/cdsdemo/run/1
+
+ ```
  
+ * Track execution
+```
+>cdsctl workflow status --track
+cdsdemo [b226e84 | steven.guiheux] #1.0 ➤ ✓ MyPipeline     
+```
