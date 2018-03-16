@@ -135,9 +135,15 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if errDo != nil {
 			sdk.Exit("worker cache push > cannot post worker cache push (Do): %s\n", errDo)
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
-			sdk.Exit("worker cache push > Cannot cache push HTTP ERROR %d\n", resp.StatusCode)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				sdk.Exit("cache push HTTP error %v\n", err)
+			}
+			cdsError := sdk.DecodeError(body)
+			sdk.Exit("Error: %v\n", cdsError)
 		}
 
 		fmt.Printf("Worker cache push with success (tag: %s)\n", args[0])
@@ -263,16 +269,12 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		if resp.StatusCode >= 300 {
-			var errorMsg string
-			defer resp.Body.Close()
-			if data, errRead := ioutil.ReadAll(resp.Body); errRead == nil {
-				var httpErr sdk.Error
-				if err := json.Unmarshal(data, &httpErr); err == nil {
-					errorMsg = httpErr.Message
-				}
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				sdk.Exit("cache pull HTTP error %v\n", err)
 			}
-
-			sdk.Exit("worker cache pull > Cannot cache pull HTTP ERROR %d : %s\n", resp.StatusCode, errorMsg)
+			cdsError := sdk.DecodeError(body)
+			sdk.Exit("Error: %v\n", cdsError)
 		}
 
 		fmt.Printf("Worker cache pull with success (tag: %s)\n", args[0])
