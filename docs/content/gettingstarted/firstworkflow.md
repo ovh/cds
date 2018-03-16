@@ -9,7 +9,7 @@ aliases = [
 ## Prerequisites
 
  * Have an account on your CDS instance
- * Repository manager has been set up on your CDS Instance
+ * Have a CDS project and a repository manager has been set up on your CDS Instance!  **[Repository manager]({{< relref "../hosting/repositories-manager" >}})**
  * Have cdsctl command line [Download](https://github.com/ovh/cds/releases)
  
 ## To get started with CDS
@@ -87,21 +87,95 @@ This will ask you to choose:
   app-ssh-github@cds
 ```
 
+ * CDS generated 3 files for you :
+ 
+   One for your application
+   
+   ```
+   version: v1.0
+   name: cdsdemo
+   vcs_server: github
+   repo: sguiheux/cdsdemo
+   keys:
+     app-pgp-github:
+       type: pgp
+       value: b59c70ed26bb4948994927448d506d1d
+   vcs_branch: '{{.git.branch}}'
+   vcs_default_branch: master
+   vcs_pgp_key: app-pgp-github
+   ```
+   
+   One for the pipeline
+   
+   ```
+   version: v1.0
+   name: MyPipeline
+   jobs:
+   - job: First job
+     steps:
+     - checkout: '{{.cds.workspace}}'
+     requirements:
+     - binary: git
+   ```
+   
+   One for the workflow
+   
+   ```
+    name: cdsdemo
+    version: v1.0
+    pipeline: MyPipeline
+    payload:
+      git.author: ""
+      git.branch: ""
+      git.hash: ""
+      git.hash.before: ""
+      git.message: ""
+      git.repository: sguiheux/cdsdemo
+    application: cdsdemo
+    pipeline_hooks:
+    - type: RepositoryWebHook
+
+   ```     
+
  * Commit and push cds files
  ```
  git add .cds/ && git commit -s -m "chore: init CDS workflow files"
- ```
+ ``` 
  
- * Run your workflow
+ * CDS triggered your workflow from your git push. You can track execution
  ```
- >cdsctl workflow run
- Workflow cdsdemo #1 has been launched
- http://localhost:2015/project/FIRSTPROJECT/workflow/cdsdemo/run/1
-
- ```
- 
- * Track execution
-```
 >cdsctl workflow status --track
 cdsdemo [b226e84 | steven.guiheux] #1.0 ➤ ✓ MyPipeline     
+ ```
+
+ * On CDS UI
+ 
+![Run1](/images/getting.started.run1.png)
+
+## Update pipeline to execute a mvn package
+
+ * Edit the pipeline file to add 
+ 
 ```
+version: v1.0
+name: MyPipeline
+jobs:
+- job: First job
+  steps:
+  - checkout: '{{.cds.workspace}}'
+  - script : mvn package
+  - artifactUpload : target/*.jar
+  requirements:
+  - binary: mvn
+  - binary: git
+
+```
+
+```
+>cdsctl workflow status --track
+cdsdemo [d98bd14 | steven.guiheux] #2.0 ➤ ✓ MyPipeline
+```
+
+ * On CDS UI
+ 
+![Run2](/images/getting.started.run2.png)

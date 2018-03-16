@@ -84,15 +84,12 @@ func newSteps(a sdk.Action) []Step {
 				}
 				s["artifactDownload"] = artifactDownloadArgs
 			case sdk.ArtifactUpload:
-				artifactUploadArgs := map[string]string{}
+				var artifactUploadArgs string
 				path := sdk.ParameterFind(&act.Parameters, "path")
 				if path != nil {
-					artifactUploadArgs["path"] = path.Value
+					artifactUploadArgs = path.Value
 				}
-				tag := sdk.ParameterFind(&act.Parameters, "tag")
-				if tag != nil {
-					artifactUploadArgs["tag"] = tag.Value
-				}
+
 				s["artifactUpload"] = artifactUploadArgs
 			case sdk.GitCloneAction:
 				gitCloneArgs := map[string]string{}
@@ -328,16 +325,21 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 		return nil, false, nil
 	}
 
-	if reflect.ValueOf(bI).Kind() != reflect.Map {
+	if reflect.ValueOf(bI).Kind() != reflect.Map && reflect.ValueOf(bI).Kind() != reflect.String {
 		return nil, false, nil
 	}
 
-	argss := map[string]string{}
-	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "Malformatted Step")
+	var a sdk.Action
+	switch bI.(type) {
+	case string:
+		a = sdk.NewStepArtifactUpload(bI)
+	case map[string]string:
+		argss := map[string]string{}
+		if err := mapstructure.Decode(bI, &argss); err != nil {
+			return nil, true, sdk.WrapError(err, "Malformatted Step")
+		}
+		a = sdk.NewStepArtifactUpload(argss)
 	}
-
-	a := sdk.NewStepArtifactUpload(argss)
 
 	var err error
 	a.Enabled, err = s.IsFlagged("enabled")
