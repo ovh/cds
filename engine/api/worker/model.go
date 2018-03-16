@@ -30,6 +30,7 @@ const columns = `
 	worker_model.communication,
 	worker_model.run_script,
 	worker_model.provision,
+	worker_model.restricted,
 	worker_model.user_last_modified,
 	worker_model.last_spawn_err,
 	worker_model.nb_spawn_err,
