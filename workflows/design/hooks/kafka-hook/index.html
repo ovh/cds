@@ -1677,7 +1677,19 @@
             </div>
             <div class="progress">
     <div class="wrapper">
-
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#how-to-use-it">How to use it</a>
+<ul>
+<li><a href="#link-your-project-to-a-kafka-platform">Link your project to a Kafka platform</a></li>
+<li><a href="#add-a-kafka-hook-on-the-root-pipeline-of-your-workflow">Add a Kafka hook on the root pipeline of your workflow</a></li>
+<li><a href="#add-run-condition">Add run condition</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
     </div>
 </div>
 
@@ -1695,18 +1707,43 @@
 
 
 
+
+
 <p>You want to run a workflow from a kafka message? This kind of hook is for you.</p>
 
 <p>This kind of hook will connect to a kafka topic and consume message. For each message, it will trigger your workflow.</p>
 
-<p>You have to:</p>
+<p>The kafka message have to be a JSON message, it in will be used as a payload for your workflow <a href="https://ovh.github.io/cds/workflows/design/payload/">See playload documentation</a>.</p>
+
+<h2 id="how-to-use-it">How to use it</h2>
+
+<h3 id="link-your-project-to-a-kafka-platform">Link your project to a Kafka platform</h3>
+
+<p>On your CDS Project, select the platforms section then add a Kafka platform.</p>
+
+<p><img src="https://ovh.github.io/cds/images/workflows.design.hooks.kafka-hook.platform.png" alt="Platform" /></p>
+
+<h3 id="add-a-kafka-hook-on-the-root-pipeline-of-your-workflow">Add a Kafka hook on the root pipeline of your workflow</h3>
+
+<p>Click on the pipeline root of a workflow, then choose &lsquo;Add a Hook&rsquo; on the sidebar</p>
+
+<p><img src="https://ovh.github.io/cds/images/workflows.design.hooks.kafka-hook.add.png" alt="Select Pipeline" /></p>
+
+<p>Select the Kafka Hook and complete the information:</p>
 
 <ul>
-<li>link your project to a Kafka platform, on Advanced Section.</li>
-<li>add a Kafka hook on the root pipeline of your workflow</li>
+<li>The Consumer group</li>
+<li>Select the kafka platform</li>
+<li>The kafka topic to read</li>
 </ul>
 
-<p>The kafka message will be used as a payload for your workflow <a href="https://ovh.github.io/cds/workflows/design/payload/">See playload documentation</a>.</p>
+<p><img src="https://ovh.github.io/cds/images/workflows.design.hooks.kafka-hook.add.modal.png" alt="Add Hook" /></p>
+
+<h3 id="add-run-condition">Add run condition</h3>
+
+<p>The workflow will be triggered for all message received in kafka queue.</p>
+
+<p>If you don&rsquo;t want to launch the root pipeline for each message, you can add a <a href="https://ovh.github.io/cds/workflows/design/run-conditions/">run condition</a>.</p>
 
 
 <footer class=" footline" >
