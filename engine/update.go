@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"runtime"
+	"strings"
 
 	"github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
@@ -35,9 +36,9 @@ var updateCmd = &cobra.Command{
 		if isUptodate {
 			displayIsUptodate(client)
 			return
-		} else {
-			fmt.Printf("CDS engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 		}
+
+		fmt.Printf("CDS engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 
 		if updateFromGithub {
 			// no need to have apiEndpoint here
@@ -89,7 +90,7 @@ func displayIsUptodate(client cdsclient.Interface) {
 		if errR != nil {
 			sdk.Exit("Error while reading VERSION file: %v\n", errR)
 		}
-		versionTxt = string(respB)
+		versionTxt = strings.TrimSpace(string(respB))
 	} else {
 		remoteVersion, errv := client.MonVersion()
 		if errv != nil {
