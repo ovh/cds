@@ -78,7 +78,7 @@ func applicationPipelineEnvironmentUsers(db gorp.SqlExecutor, appID, pipID, envI
 	return users, nil
 }
 
-// projectPermissionUsers Get users that access to given project
+// projectPermissionUsers Get users that access to given project, without default group
 func projectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([]sdk.User, error) {
 	var query string
 	users := []sdk.User{}
@@ -90,9 +90,10 @@ func projectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([
 	        JOIN "user" ON group_user.user_id = "user".id
 			WHERE project_group.project_id = $1
 			AND project_group.role >=$2
+			AND	"group".id <> $3
 		`
 
-	rows, err := db.Query(query, projectID, access)
+	rows, err := db.Query(query, projectID, access, permission.DefaultGroupID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return users, nil
