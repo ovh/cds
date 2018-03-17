@@ -32,6 +32,14 @@ export class GroupService {
     }
 
     /**
+     * Get all groups that the user can access, without the default group.
+     * @returns {Observable<Group[]>}
+     */
+    getGroupsWithoutDefault(): Observable<Group[]> {
+        return this._http.get<Group[]>('/group?withoutDefault=true');
+    }
+
+    /**
      * Get all tokens linked to a specific group that the user can access.
      * @returns {Observable<Token[]>}
      */

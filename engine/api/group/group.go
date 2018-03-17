@@ -54,7 +54,7 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	query := `SELECT id FROM "group" WHERE "group".name = $1`
 	rows, errq := db.Query(query, group.Name)
 	if errq != nil {
-		return 0, false, sdk.WrapError(errq, "AddGroup: Cannot check if group %s exist: %s", group.Name)
+		return 0, false, sdk.WrapError(errq, "AddGroup: Cannot check if group %s exists: %s", group.Name)
 	}
 	defer rows.Close()
 
@@ -208,7 +208,7 @@ func LoadGroupByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Group, error) {
 		FROM "group"
 		JOIN "group_user" ON "group".id = "group_user".group_id
 		WHERE "group_user".user_id = $1
-    ORDER BY "group".name
+    	ORDER BY "group".name
 		`
 	rows, err := db.Query(query, userID)
 	if err != nil {
