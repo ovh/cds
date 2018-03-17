@@ -30,7 +30,7 @@ func cmdRun(w *currentWorker) *cobra.Command {
 
 func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		//Initliaze context
+		//Initialize  context
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
 

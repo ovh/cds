@@ -15,6 +15,7 @@ func cmdRegister(w *currentWorker) *cobra.Command {
 		Short: "worker register",
 		Run:   cmdRegisterRun(w),
 	}
+	initFlagsRun(cmdRegister)
 	return cmdRegister
 }
 
