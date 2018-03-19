@@ -3,21 +3,19 @@ package sessionstore
 import (
 	"context"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //Status for session store
 var Status sdk.MonitoringStatusLine
 
 //Get is a factory
-func Get(c context.Context, redisHost, redisPassword string, ttl int) (Store, error) {
-	r, err := NewRedis(c, redisHost, redisPassword, ttl)
-	if err != nil {
-		log.Error("sessionstore.factory> unable to connect to redis %s : %s", redisHost, err)
-		Status = sdk.MonitoringStatusLine{Component: "Sessions-Store", Value: "KO", Status: sdk.MonitoringStatusAlert}
-	} else {
-		Status = sdk.MonitoringStatusLine{Component: "Sessions-Store", Value: "OK", Status: sdk.MonitoringStatusOK}
-	}
-	return r, err
+func Get(c context.Context, s cache.Store, ttl int) (Store, error) {
+	Status = sdk.MonitoringStatusLine{Component: "Sessions-Store", Value: "OK", Status: sdk.MonitoringStatusOK}
+
+	return &sessionstore{
+		cache: s,
+		ttl:   ttl,
+	}, nil
 }

@@ -467,9 +467,8 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	storeOptions := sessionstore.Options{
-		TTL:           a.Config.Cache.TTL,
-		RedisHost:     a.Config.Cache.Redis.Host,
-		RedisPassword: a.Config.Cache.Redis.Password,
+		TTL:   a.Config.Cache.TTL * 60, // Second to minutes
+		Cache: a.Cache,
 	}
 
 	var errdriver error
