@@ -617,6 +617,7 @@
   "warning_application": "Another user has just updated the application.",
   "warning_application_title": "Warnings list for application {{app}}",
   "warning_pipeline": "Another user has just updated the pipeline.",
+  "warning_workflow": "Another user has just updated the workflow.",
   "warning_build_title": "The build is in success state but there are/is {{nb}} optional step(s) in error",
 
   "wizard_app_clone": "Clone an application",

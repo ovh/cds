@@ -617,6 +617,7 @@
   "warning_application": "Un autre utilisateur vient de modifier l'application.",
   "warning_application_title": "Liste des warnings sur l'application {{app}}",
   "warning_pipeline": "Un autre utilisateur vient de modifier le pipeline.",
+  "warning_workflow": "Un autre utilisateur vient de modifier le workflow.",
   "warning_build_title": "Le build est en succès mais il y a {{nb}} étape(s) optionnelle(s) en erreur",
 
   "wizard_app_clone": "Cloner une application",
