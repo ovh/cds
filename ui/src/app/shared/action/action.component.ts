@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter, OnDestroy} from '@angular/core';
+import {Component, Input, Output, EventEmitter, OnDestroy, OnInit} from '@angular/core';
 import {Action} from '../../model/action.model';
 import {SharedService} from '../shared.service';
 import {RequirementEvent} from '../requirements/requirement.event.model';
@@ -18,7 +18,7 @@ import {cloneDeep} from 'lodash';
     templateUrl: './action.html',
     styleUrls: ['./action.scss']
 })
-export class ActionComponent implements OnDestroy {
+export class ActionComponent implements OnDestroy, OnInit {
     editableAction: Action;
     steps: Array<Action> = new Array<Action>();
     publicActions: Array<Action>;
@@ -48,10 +48,6 @@ export class ActionComponent implements OnDestroy {
     collapsed = true;
     configRequirements: {disableModel?: boolean, disableHostname?: boolean} = {};
     constructor(private sharedService: SharedService, private _actionStore: ActionStore, private dragulaService: DragulaService) {
-        this._actionStore.getActions().subscribe(mapActions => {
-            this.publicActions = mapActions.toArray();
-        });
-
         dragulaService.setOptions('bag-nonfinal', {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
@@ -65,6 +61,12 @@ export class ActionComponent implements OnDestroy {
         });
         this.dragulaService.drop.subscribe( () => {
             this.editableAction.hasChanged = true;
+        });
+    }
+
+    ngOnInit() {
+        this._actionStore.getActions().subscribe(mapActions => {
+            this.publicActions = mapActions.toArray().filter((action) => action.name !== this.editableAction.name);
         });
     }
 
@@ -167,13 +169,14 @@ export class ActionComponent implements OnDestroy {
                 }
                 let indexAdd = this.editableAction.parameters.findIndex(param => p.parameter.name === param.name);
                 if (indexAdd === -1) {
-                    this.editableAction.parameters.push(p.parameter);
+                    this.editableAction.parameters = this.editableAction.parameters.concat([p.parameter]);
                 }
                 break;
             case 'delete':
                 let indexDelete = this.editableAction.parameters.indexOf(p.parameter);
                 if (indexDelete >= 0) {
                     this.editableAction.parameters.splice(indexDelete, 1);
+                    this.editableAction.parameters = this.editableAction.parameters.concat([]);
                 }
                 break;
         }
