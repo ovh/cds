@@ -29,6 +29,6 @@
 
 ## Run it
 
-```go
+```bash
 cds2es -f config.yml
 ```
