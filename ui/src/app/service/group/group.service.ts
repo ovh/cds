@@ -29,7 +29,9 @@ export class GroupService {
      */
     getGroups(withoutDefault?: boolean): Observable<Group[]> {
         let params = new HttpParams();
-        params = params.append('withoutDefault', String(withoutDefault));
+        if (withoutDefault === true) {
+            params = params.append('withoutDefault', 'true');
+        }
         return this._http.get<Group[]>('/group', {params: params});
     }
 
