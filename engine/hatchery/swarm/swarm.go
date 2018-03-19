@@ -132,6 +132,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					env:          env,
 					labels:       labels,
 					memory:       serviceMemory,
+					entryPoint:   nil,
 				}
 
 				if err := h.createAndStartContainer(args); err != nil {
@@ -212,6 +213,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		labels:       labels,
 		memory:       memory,
 		dockerOpts:   *dockerOpts,
+		entryPoint:   []string{},
 	}
 
 	//start the worker
