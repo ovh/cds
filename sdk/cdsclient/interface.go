@@ -111,7 +111,7 @@ type EnvironmentVariableClient interface {
 type DownloadClient interface {
 	Download() ([]sdk.Download, error)
 	DownloadURLFromAPI(name, os, arch string) string
-	DownloadURLFromGithub(name, os, arch string) (string, error)
+	DownloadURLFromGithub(filename string) (string, error)
 }
 
 // ActionClient exposes actions related functions
@@ -256,6 +256,7 @@ type WorkflowClient interface {
 // MonitoringClient exposes monitoring functions
 type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
+	MonVersion() (*sdk.Version, error)
 	MonDBTimes() (*sdk.MonDBTimes, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
 }
