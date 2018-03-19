@@ -38,7 +38,7 @@ weight = 3
   name = "Docs"
   weight = 5
   identifier = "docs"
-  url = "/introduction/"
+  url = "/gettingstarted/"
 
 
   # Anything with a weight > 100 gets an external icon
