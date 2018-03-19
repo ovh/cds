@@ -32,7 +32,7 @@ type CommonConfiguration struct {
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
 	} `toml:"api"`
 	Provision struct {
-		Disabled          bool `toml:"disabled" default:"false" comment:"Disabled provisionning. Format:true or false"`
+		Disabled          bool `toml:"disabled" default:"false" comment:"Disabled provisioning. Format:true or false"`
 		Frequency         int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds"`
 		MaxWorker         int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers"`
 		GraceTimeQueued   int  `toml:"graceTimeQueued" default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`

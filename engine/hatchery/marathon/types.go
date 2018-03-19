@@ -25,7 +25,7 @@ type HatcheryConfiguration struct {
 	MarathonPassword string `mapstructure:"password" toml:"password" default:"" commented:"false" comment:"Marathon Password, you need a marathon User to use it"`
 
 	// MarathonLabelsStr "marathon-labels"
-	MarathonLabels string `mapstructure:"labels" toml:"labels" default:"" commented:"false" comment:"Use this option if you want to add labels on workers spawned by this hatchery.\n Format: MarathonLabels = \"A_LABEL=value-of-label\""`
+	MarathonLabels string `mapstructure:"labels" toml:"labels" default:"" commented:"false" comment:"Use this option if you want to add labels on workers spawned by this hatchery.\n Format: MarathonLabels = \"A_LABEL=value-of-label,B_LABEL=value-of-label-b\""`
 
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo"`
