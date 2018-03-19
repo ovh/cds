@@ -2,10 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"runtime"
-	"strings"
 
 	"github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
@@ -15,13 +13,12 @@ import (
 )
 
 var updateFromGithub bool
-var isUptodate bool
 var updateURLAPI string
 
 var updateCmd = &cobra.Command{
 	Use:     "update",
 	Short:   "Update engine binary",
-	Example: "engine update --from-github --is-uptodate",
+	Example: "engine update --from-github",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if !updateFromGithub && updateURLAPI == "" {
@@ -31,12 +28,6 @@ var updateCmd = &cobra.Command{
 		var urlBinary string
 		conf := cdsclient.Config{Host: updateURLAPI}
 		client := cdsclient.New(conf)
-
-		// if isUptodate: check if current binary is uptodate or not, display true or false
-		if isUptodate {
-			displayIsUptodate(client)
-			return
-		}
 
 		fmt.Printf("CDS engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 
@@ -72,32 +63,4 @@ var updateCmd = &cobra.Command{
 		}
 		fmt.Println("Update engine done.")
 	},
-}
-
-func displayIsUptodate(client cdsclient.Interface) {
-	var versionTxt string
-	if updateFromGithub {
-		urlVersionFile, errGH := client.DownloadURLFromGithub("VERSION")
-		if errGH != nil {
-			sdk.Exit("Error while getting URL from Github url:%s err:%s\n", urlVersionFile, errGH)
-		}
-		resp, errG := http.Get(urlVersionFile)
-		if errG != nil {
-			sdk.Exit("Error while getting binary from CDS API: %s\n", errG)
-		}
-		defer resp.Body.Close()
-		respB, errR := ioutil.ReadAll(resp.Body)
-		if errR != nil {
-			sdk.Exit("Error while reading VERSION file: %v\n", errR)
-		}
-		versionTxt = strings.TrimSpace(string(respB))
-	} else {
-		remoteVersion, errv := client.MonVersion()
-		if errv != nil {
-			sdk.Exit("Error while getting version from GithubAPI err:%s\n", errv)
-		}
-		versionTxt = remoteVersion.Version
-	}
-
-	fmt.Printf("%t\n", versionTxt == sdk.VERSION)
 }

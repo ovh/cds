@@ -54,8 +54,11 @@ func init() {
 	//Update  command
 	mainCmd.AddCommand(updateCmd)
 	updateCmd.Flags().BoolVar(&updateFromGithub, "from-github", false, "Update binary from latest github release")
-	updateCmd.Flags().BoolVar(&isUptodate, "is-uptodate", false, "Display true or false is engine binary is uptodate or not")
 	updateCmd.Flags().StringVar(&updateURLAPI, "api", "", "Update binary from a CDS Engine API")
+
+	mainCmd.AddCommand(uptodateCmd)
+	uptodateCmd.Flags().BoolVar(&updateFromGithub, "from-github", false, "Update binary from latest github release")
+	uptodateCmd.Flags().StringVar(&updateURLAPI, "api", "", "Update binary from a CDS Engine API")
 
 	//Database command
 	mainCmd.AddCommand(database.DBCmd)
