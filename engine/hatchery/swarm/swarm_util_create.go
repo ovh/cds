@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
 	context "golang.org/x/net/context"
 
@@ -40,6 +41,7 @@ type containerArgs struct {
 	labels                             map[string]string
 	memory                             int64
 	dockerOpts                         dockerOpts
+	entryPoint                         strslice.StrSlice
 }
 
 //shortcut to create+start(=run) a container
@@ -60,7 +62,10 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 		Cmd:          cArgs.cmd,
 		Labels:       cArgs.labels,
 		ExposedPorts: exposedPorts,
-		Entrypoint:   []string{},
+	}
+
+	if cArgs.entryPoint != nil {
+		config.Entrypoint = cArgs.entryPoint
 	}
 
 	hostConfig := &container.HostConfig{
