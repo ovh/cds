@@ -67,7 +67,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, errPerm := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
+					u, errPerm := applicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Jabber].SendPipelineBuild> error while loading permission:%s", errPerm.Error())
 					}
@@ -77,7 +77,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, errEnv := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
+					u, errEnv := applicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
 					if errEnv != nil {
 						log.Error("notification[Jabber].SendPipelineBuild> error while loading permission:%s", errEnv.Error())
 					}
@@ -104,7 +104,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, errEnv := permission.ApplicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
+					u, errEnv := applicationPipelineEnvironmentUsers(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, permission.PermissionRead)
 					if errEnv != nil {
 						log.Error("notification[Email].SendPipelineBuild> error while loading permission:%s", errEnv.Error())
 						return nil
@@ -172,7 +172,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, errPerm := permission.ProjectPermissionUsers(db, wr.Workflow.ProjectID, permission.PermissionRead)
+					u, errPerm := projectPermissionUsers(db, wr.Workflow.ProjectID, permission.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Jabber]. error while loading permission:%s", errPerm.Error())
 					}
@@ -197,7 +197,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, errPerm := permission.ProjectPermissionUsers(db, wr.Workflow.ProjectID, permission.PermissionRead)
+					u, errPerm := projectPermissionUsers(db, wr.Workflow.ProjectID, permission.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Email].SendPipelineBuild> error while loading permission:%s", errPerm.Error())
 						return nil
@@ -336,7 +336,6 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 }
 
 func getEvent(pb *sdk.PipelineBuild, notif *sdk.JabberEmailUserNotificationSettings, params map[string]string) sdk.EventNotif {
-
 	subject := notif.Template.Subject
 	body := notif.Template.Body
 	for k, value := range params {

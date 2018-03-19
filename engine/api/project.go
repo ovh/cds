@@ -224,7 +224,10 @@ func (api *API) addProjectHandler() Handler {
 			if strings.TrimSpace(groupPermission.Group.Name) == "" {
 				continue
 			}
-			groupAttached = true
+			// the default group could not be selected on ui 'Project Add'
+			if !group.IsDefaultGroupID(groupPermission.Group.ID) {
+				groupAttached = true
+			}
 		}
 		if !groupAttached {
 			// check if new auto group does not already exists
@@ -232,7 +235,7 @@ func (api *API) addProjectHandler() Handler {
 				if errl == sdk.ErrGroupNotFound {
 					// group name does not exists, add it on project
 					permG := sdk.GroupPermission{
-						Group:      sdk.Group{Name: p.Name},
+						Group:      sdk.Group{Name: strings.Replace(p.Name, " ", "", -1)},
 						Permission: permission.PermissionReadWriteExecute,
 					}
 					p.ProjectGroups = append(p.ProjectGroups, permG)
@@ -266,6 +269,10 @@ func (api *API) addProjectHandler() Handler {
 			}
 			groupPermission.Group.ID = groupID
 
+			if group.IsDefaultGroupID(groupID) {
+				groupPermission.Permission = permission.PermissionRead
+			}
+
 			// Add group on project
 			if err := group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission); err != nil {
 				return sdk.WrapError(err, "addProjectHandler> Cannot add group %s in project %s", groupPermission.Group.Name, p.Name)
@@ -289,17 +296,17 @@ func (api *API) addProjectHandler() Handler {
 			k.ProjectID = p.ID
 			switch k.Type {
 			case sdk.KeyTypeSSH:
-				kTemp, errK := keys.GenerateSSHKey(k.Name)
+				keyTemp, errK := keys.GenerateSSHKey(k.Name)
 				if errK != nil {
 					return sdk.WrapError(errK, "addProjectHandler> Cannot generate ssh key for project %s", p.Name)
 				}
-				k.Key = kTemp
+				k.Key = keyTemp
 			case sdk.KeyTypePGP:
-				kTemp, errK := keys.GeneratePGPKeyPair(k.Name)
+				keyTemp, errK := keys.GeneratePGPKeyPair(k.Name)
 				if errK != nil {
 					return sdk.WrapError(errK, "addProjectHandler> Cannot generate pgp key for project %s", p.Name)
 				}
-				k.Key = kTemp
+				k.Key = keyTemp
 			}
 			if errK := project.InsertKey(tx, &k); errK != nil {
 				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name)
