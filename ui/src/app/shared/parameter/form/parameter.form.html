@@ -19,7 +19,7 @@
             <textarea [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
         </div>
         <div class="two wide center field">
-            <button class="ui blue button"><i class="plus icon"></i>{{ 'btn_add' | translate}}</button>
+            <button class="ui blue button" [disabled]="!newParameter.name"><i class="plus icon"></i>{{ 'btn_add' | translate}}</button>
         </div>
     </div>
 </form>

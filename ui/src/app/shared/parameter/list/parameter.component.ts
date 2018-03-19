@@ -33,6 +33,7 @@ export class ParameterListComponent extends Table {
     @Input() suggest: Array<string>;
     @Input() keys: AllKeys;
     @Input() canDelete: boolean;
+    @Input() hideSave = false;
 
     // edit/launcher/ro/job
     @Input() mode = 'edit';

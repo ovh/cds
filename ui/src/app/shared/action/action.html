@@ -62,8 +62,13 @@
         <div class="field">
             <label>{{ 'common_parameters' | translate }}</label>
             <div>
-                <app-parameter-list [project]="project" [parameters]="editableAction.parameters" [mode]="edit? 'edit': 'ro'"
-                                    (event)="parameterEvent($event)"></app-parameter-list>
+                <app-parameter-list
+                  [project]="project"
+                  [parameters]="editableAction.parameters"
+                  [mode]="edit? 'edit': 'ro'"
+                  [hideSave]="true"
+                  (event)="parameterEvent($event)">
+                </app-parameter-list>
             </div>
             <div>
                 <app-parameter-form *ngIf="edit" [project]="project" (createParameterEvent)="parameterEvent($event)"></app-parameter-form>
@@ -73,7 +78,7 @@
 
     <div class="subtitle normalStep">
         <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
-        <div class="right floated">
+        <div class="right floated" *ngIf="steps && steps.length > 0">
           <button class="ui blue button" (click)="collapsed = !collapsed">
               <ng-container *ngIf="collapsed">
                   <i class="hide icon"></i>
@@ -83,7 +88,6 @@
                   <i class="eye icon"></i>
                   {{'common_show_all' | translate}}
               </ng-container>
-
           </button>
         </div>
     </div>
