@@ -213,8 +213,13 @@ export class WorkflowStore {
             let workflowKey = key + '-' + detailedWorkflow.name;
             let store = this._workflows.getValue();
             let workflowToUpdate = store.get(workflowKey);
-            workflowToUpdate.groups = w.groups;
-            workflowToUpdate.last_modified = w.last_modified;
+            if (workflowToUpdate) {
+              workflowToUpdate.groups = w.groups;
+              workflowToUpdate.last_modified = w.last_modified;
+            } else {
+              workflowToUpdate = w;
+            }
+
             this._workflows.next(store.set(workflowKey, workflowToUpdate));
             return w;
         });
