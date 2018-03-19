@@ -8,11 +8,8 @@ weight = 1
 
 * Name: `mypg`. This will be the service hostname
 * Type: `service`
-* Value: `nginx:1.11.1`. This is the name of docker image to link to current job
+* Docker Image: `nginx:1.11.1`. This is the name of docker image to link to current job
 
-And a requirement model which allow you to execute `apt-get install -y postgresql-client`
-
-worker-model-docker-simple.md
 
 ![Requirement](/images/tutorials_service_link_nginx_requirements.png)
 
