@@ -15,7 +15,7 @@ func (c *client) PipelineExport(projectKey, name string, exportWithPermissions b
 		return nil, err
 	}
 
-	p := exportentities.NewPipeline(*pip, exportWithPermissions)
+	p := exportentities.NewPipelineV1(*pip, exportWithPermissions)
 
 	if !exportWithPermissions {
 		p.Permissions = nil
@@ -38,7 +38,19 @@ func (c *client) ApplicationExport(projectKey, name string, exportWithPermission
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	body, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func (c *client) EnvironmentExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error) {
+	path := fmt.Sprintf("/project/%s/export/environment/%s?format=%s", projectKey, name, exportFormat)
+	if exportWithPermissions {
+		path += "&withPermissions=true"
+	}
+	body, _, _, err := c.Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +62,7 @@ func (c *client) WorkflowExport(projectKey, name string, exportWithPermissions b
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	bodyReader, _, err := c.Stream("GET", path, nil, true)
+	bodyReader, _, _, err := c.Stream("GET", path, nil, true)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +80,7 @@ func (c *client) WorkflowPull(projectKey, name string, exportWithPermissions boo
 	if exportWithPermissions {
 		path += "?withPermissions=true"
 	}
-	body, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}

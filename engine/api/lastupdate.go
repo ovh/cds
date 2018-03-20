@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,19 +27,20 @@ type lastUpdateBrokerSubscribe struct {
 
 // lastUpdateBroker keeps connected client of the current route,
 type lastUpdateBroker struct {
-	clients    map[string]*lastUpdateBrokerSubscribe
-	newClients chan *lastUpdateBrokerSubscribe
-	messages   chan string
-	mutex      *sync.Mutex
+	clients  map[string]lastUpdateBrokerSubscribe
+	messages chan string
+	mutex    *sync.Mutex
+	dbFunc   func() *gorp.DbMap
+	cache    cache.Store
 }
 
 //Init the lastUpdateBroker
-func (b *lastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+func (b *lastUpdateBroker) Init(c context.Context) {
 	// Start cache Subscription
-	go CacheSubscribe(c, b.messages, store)
+	go CacheSubscribe(c, b.messages, b.cache)
 
 	// Start processing events
-	go b.Start(c, DBFunc, store)
+	go b.Start(c)
 }
 
 // CacheSubscribe subscribe to a channel and push received message in a channel
@@ -65,8 +67,39 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string, store cache.S
 	}
 }
 
+func (b *lastUpdateBroker) UpdateUserPermissions(username string) {
+	var user *sdk.User
+
+	// get the user
+	b.mutex.Lock()
+	for _, c := range b.clients {
+		if c.User.Username == username {
+			user = c.User
+			break
+		}
+	}
+	b.mutex.Unlock()
+
+	if user == nil {
+		return
+	}
+	// load permission without being in the mutex lock
+	if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+		log.Error("lastUpdate.UpdateUserPermissions> Cannot load user permission:%s", err)
+	}
+
+	// then, relock map and update user
+	b.mutex.Lock()
+	for _, c := range b.clients {
+		if c.User.Username == username {
+			c.User = user
+		}
+	}
+	b.mutex.Unlock()
+}
+
 // Start the broker
-func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+func (b *lastUpdateBroker) Start(c context.Context) {
 	for {
 		select {
 		case <-c.Done():
@@ -80,11 +113,6 @@ func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 				log.Error("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
 				return
 			}
-		case s := <-b.newClients:
-			// Register new client
-			b.mutex.Lock()
-			b.clients[s.UIID] = s
-			b.mutex.Unlock()
 		case msg := <-b.messages:
 			var lastModif sdk.LastModification
 			if err := json.Unmarshal([]byte(msg), &lastModif); err != nil {
@@ -95,34 +123,27 @@ func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 			//Receive new message
 			b.mutex.Lock()
 			for _, i := range b.clients {
-				if err := loadUserPermissions(DBFunc(), store, i.User); err != nil {
-					log.Warning("lastUpdate.CacheSubscribe> Cannot load user permission: %s", err)
-					continue
-				}
-
 				if i.User.Admin {
 					i.Queue <- msg
 					continue
 				}
-
-				switch lastModif.Type {
-				case sdk.ProjectLastModificationType:
+				switch strings.Split(lastModif.Type, ".")[0] {
+				case "project":
 					if permission.ProjectPermission(lastModif.Key, i.User) >= permission.PermissionRead {
 						i.Queue <- msg
 						continue
 					}
-				case sdk.ApplicationLastModificationType:
+				case "application":
 					if permission.ApplicationPermission(lastModif.Key, lastModif.Name, i.User) >= permission.PermissionRead {
 						i.Queue <- msg
 						continue
 					}
-				case sdk.PipelineLastModificationType:
+				case "pipeline":
 					if permission.PipelinePermission(lastModif.Key, lastModif.Name, i.User) >= permission.PermissionRead {
 						i.Queue <- msg
 						continue
 					}
 				}
-
 			}
 			b.mutex.Unlock()
 		}
@@ -142,14 +163,22 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 		if errS != nil {
 			return sdk.WrapError(errS, "lastUpdateBroker.Serve> Cannot generate UUID")
 		}
-		messageChan := &lastUpdateBrokerSubscribe{
+
+		user := getUser(ctx)
+		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+			return sdk.WrapError(err, "lastUpdate.CacheSubscribe> Cannot load user permission")
+		}
+
+		messageChan := lastUpdateBrokerSubscribe{
 			UIID:  string(uuid),
-			User:  getUser(ctx),
-			Queue: make(chan string),
+			User:  user,
+			Queue: make(chan string, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.newClients <- messageChan
+		b.mutex.Lock()
+		b.clients[string(uuid)] = messageChan
+		b.mutex.Unlock()
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -160,16 +189,26 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 		fmt.Fprint(w, "data: ACK\n\n")
 		f.Flush()
 
+		tick := time.NewTicker(time.Second)
 	leave:
 		for {
 			select {
+			case <-ctx.Done():
+				b.mutex.Lock()
+				delete(b.clients, messageChan.UIID)
+				b.mutex.Unlock()
+				break leave
 			case <-w.(http.CloseNotifier).CloseNotify():
 				b.mutex.Lock()
 				delete(b.clients, messageChan.UIID)
 				b.mutex.Unlock()
 				break leave
 			case msg := <-messageChan.Queue:
-				fmt.Fprintf(w, "data: %s\n\n", msg)
+				w.Write([]byte("data: "))
+				w.Write([]byte(msg))
+				w.Write([]byte("\n\n"))
+				f.Flush()
+			case <-tick.C:
 				f.Flush()
 			}
 		}

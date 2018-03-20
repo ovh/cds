@@ -1,7 +1,7 @@
 import {Component, Input, NgZone, OnDestroy, ElementRef, ViewChild} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
+import {Workflow} from '../../../../../model/workflow.model';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {CDSWorker} from '../../../../../shared/worker/worker';
 import {AuthentificationStore} from '../../../../../service/auth/authentification.store';
@@ -11,6 +11,7 @@ import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.mo
 import {cloneDeep} from 'lodash';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
+import {Router} from '@angular/router';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',
@@ -65,10 +66,8 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     ready = false;
     filteredTags: {[key: number]: WorkflowRunTags[]} = {};
 
-    private readonly MAX_TAGS_TO_DISPLAY = 2;
-
     constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService,
-      private _duration: DurationService) {
+      private _duration: DurationService, private _router: Router) {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
@@ -132,7 +131,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         if (!Array.isArray(tags) || !this.tagToDisplay) {
             return [];
         }
-        return tags.filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1);
+        return tags
+          .filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1)
+          .sort((tga, tgb) => this.tagToDisplay.indexOf(tga.tag) - this.tagToDisplay.indexOf(tgb.tag));
     }
 
     getFilteredTagsString(tags: WorkflowRunTags[]): string {
@@ -151,7 +152,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         return tagsFormatted;
     }
 
-    getDuration(status: string, start: string, done: string) {
+    getDuration(status: string, start: string, done: string): string {
         if (status === PipelineStatus.BUILDING || status === PipelineStatus.WAITING) {
             return this._duration.duration(new Date(start), new Date());
         }
@@ -178,15 +179,16 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                   });
               });
             }
-            this.filteredWorkflowRuns.forEach((r) => this.filteredTags[r.id] = this.getFilteredTags(r.tags));
+            this.filteredWorkflowRuns.forEach((r) => {
+              this.filteredTags[r.id] = this.getFilteredTags(r.tags);
+              r.duration = this.getDuration(r.status, r.start, r.last_execution);
+            });
         }
     }
 
-    canDisplayTag(tg: WorkflowRunTags): boolean {
-        if (this.tagToDisplay) {
-            return this.tagToDisplay.indexOf(tg.tag) !== -1;
-        }
-        return false;
+    changeRun(num: number) {
+        this.runNumber = num;
+        this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', num]);
     }
 
     ngOnDestroy(): void {

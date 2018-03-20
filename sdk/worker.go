@@ -9,7 +9,7 @@ import (
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
 	ID            string    `json:"id" cli:"-"`
-	Name          string    `json:"name" cli:"name"`
+	Name          string    `json:"name" cli:"name,key"`
 	LastBeat      time.Time `json:"-" cli:"lastbeat"`
 	GroupID       int64     `json:"group_id" cli:"-"`
 	ModelID       int64     `json:"model_id" cli:"-"`
@@ -20,6 +20,28 @@ type Worker struct {
 	JobType       string    `json:"job_type" cli:"-"`    // sdk.JobType...
 	Status        Status    `json:"status" cli:"status"` // Waiting, Building, Disabled, Unknown
 	Uptodate      bool      `json:"up_to_date" cli:"-"`
+}
+
+// WorkerRegistrationForm represents the arguments needed to register a worker
+type WorkerRegistrationForm struct {
+	Name               string
+	Token              string
+	ModelID            int64
+	Hatchery           int64
+	HatcheryName       string
+	BinaryCapabilities []string
+	Version            string
+	OS                 string
+	Arch               string
+}
+
+// WorkerTakeForm contains booked JobID if exists
+type WorkerTakeForm struct {
+	BookedJobID int64
+	Time        time.Time
+	OS          string
+	Arch        string
+	Version     string
 }
 
 // Existing worker type
@@ -61,6 +83,7 @@ type SpawnErrorForm struct {
 
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
+//easyjson:json
 type Model struct {
 	ID               int64              `json:"id" db:"id" cli:"-"`
 	Name             string             `json:"name"  db:"name" cli:"name"`
@@ -72,6 +95,7 @@ type Model struct {
 	Template         *map[string]string `json:"template"  db:"template" cli:"-"`
 	RunScript        string             `json:"run_script"  db:"run_script" cli:"-"`
 	Disabled         bool               `json:"disabled"  db:"disabled" cli:"disabled"`
+	Restricted       bool               `json:"restricted"  db:"restricted" cli:"restricted"`
 	NeedRegistration bool               `json:"need_registration"  db:"need_registration" cli:"-"`
 	LastRegistration time.Time          `json:"last_registration"  db:"last_registration" cli:"-"`
 	UserLastModified time.Time          `json:"user_last_modified"  db:"user_last_modified" cli:"-"`

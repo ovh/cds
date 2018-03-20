@@ -10,7 +10,7 @@ func (c *client) GroupUserAdd(groupname string, users []string) error {
 }
 
 func (c *client) GroupUserRemove(groupname, username string) error {
-	_, _, err := c.Request("DELETE", "/group/"+url.QueryEscape(groupname)+"/user/"+url.QueryEscape(username), nil)
+	_, _, _, err := c.Request("DELETE", "/group/"+url.QueryEscape(groupname)+"/user/"+url.QueryEscape(username), nil)
 	return err
 }
 
@@ -20,6 +20,6 @@ func (c *client) GroupUserAdminSet(groupname string, username string) error {
 }
 
 func (c *client) GroupUserAdminRemove(groupname, username string) error {
-	_, _, err := c.Request("DELETE", "/group/"+url.QueryEscape(groupname)+"/user/"+url.QueryEscape(username)+"/admin", nil)
+	_, _, _, err := c.Request("DELETE", "/group/"+url.QueryEscape(groupname)+"/user/"+url.QueryEscape(username)+"/admin", nil)
 	return err
 }

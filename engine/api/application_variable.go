@@ -8,8 +8,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -26,7 +24,7 @@ func (api *API) getVariablesAuditInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariablesAuditInApplicationHandler> Cannot get variable audit for application %s", appName)
 
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -41,11 +39,6 @@ func (api *API) restoreAuditHandler() Handler {
 		auditID, err := strconv.ParseInt(auditIDString, 10, 64)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrInvalidID, "restoreAuditHandler> Cannot parse auditID %s", auditIDString)
-		}
-
-		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
-		if err != nil {
-			return sdk.WrapError(err, "restoreAuditHandler> Cannot load %s", key)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
@@ -87,16 +80,6 @@ func (api *API) restoreAuditHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnknownError, "restoreAuditHandler> Cannot commit transaction: %s", err)
 		}
 
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("restoreAuditHandler> Cannot check warnings: %s", err)
-			}
-
-			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-				log.Warning("restoreAuditHandler> Cannot check application sanity: %s")
-			}
-		}()
-
 		return nil
 	}
 }
@@ -123,7 +106,7 @@ func (api *API) getVariableAuditInApplicationHandler() Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -144,7 +127,7 @@ func (api *API) getVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariableInApplicationHandler> Cannot get variable %s for application %s", varName, appName)
 		}
 
-		return WriteJSON(w, r, variable, http.StatusOK)
+		return WriteJSON(w, variable, http.StatusOK)
 	}
 }
 
@@ -159,7 +142,7 @@ func (api *API) getVariablesInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariablesInApplicationHandler> Cannot get variables for application %s", appName)
 		}
 
-		return WriteJSON(w, r, variables, http.StatusOK)
+		return WriteJSON(w, variables, http.StatusOK)
 	}
 }
 
@@ -196,28 +179,12 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot commit transaction")
 		}
 
-		go func() {
-			p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
-			if err != nil {
-				log.Warning("deleteVariableFromApplicationHandler> Cannot load project %s: %v", key, err)
-			}
-
-			app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
-			if err != nil {
-				log.Warning("deleteVariableInApplicationHandler> Cannot load application: %s: %v", appName, err)
-			}
-
-			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-				log.Warning("restoreAuditHandler> Cannot check application sanity: %s", err)
-			}
-		}()
-
 		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot load variables")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -297,26 +264,6 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnknownError, "updateVariablesInApplicationHandler> Cannot commit transaction:  %s", err)
 		}
 
-		go func() {
-			p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
-			if err != nil {
-				log.Warning("updateVariablesInApplicationHandler> Cannot load %s: %v", key, err)
-			}
-
-			app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
-			if err != nil {
-				log.Warning("updateVariablesInApplicationHandler> Cannot load application %s: %v", appName, err)
-			}
-
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("updateVariableInApplicationHandler> Cannot check warnings: %s", err)
-			}
-
-			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-				log.Warning("updateVariableInApplicationHandler> Cannot check application sanity: %s", err)
-			}
-		}()
-
 		return nil
 	}
 }
@@ -360,27 +307,7 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot load variables")
 		}
 
-		go func() {
-			p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
-			if err != nil {
-				log.Warning("updateVariableInApplicationHandler> Cannot load project %s: %v", key, err)
-			}
-
-			app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
-			if err != nil {
-				log.Warning("updateVariableInApplicationHandler> Cannot load application: %s: %v", appName, err)
-			}
-
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("updateVariableInApplicationHandler> Cannot check warnings: %v", err)
-			}
-
-			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-				log.Warning("updateVariableInApplicationHandler> Cannot check application sanity: %s", err)
-			}
-		}()
-
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -432,26 +359,6 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot get variables")
 		}
 
-		go func() {
-			p, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
-			if errp != nil {
-				log.Warning("addVariableInApplicationHandler> Cannot load %s: %v", key, errp)
-			}
-
-			app, erra := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
-			if erra != nil {
-				log.Warning("addVariableInApplicationHandler> Cannot load application %s: %v", appName, erra)
-			}
-
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("addVariableInApplicationHandler> Cannot check warnings: %s", err)
-			}
-
-			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-				log.Warning("addVariableInApplicationHandler> Cannot check application sanity: %s", err)
-			}
-		}()
-
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }

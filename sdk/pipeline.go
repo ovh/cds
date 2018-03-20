@@ -110,11 +110,12 @@ type PipelineBuildWarning struct {
 	Action Action `json:"action"`
 }
 
+// This constant deals with pipelines
 const (
 	// Different types of Pipeline
-	BuildPipeline      = "build"
-	DeploymentPipeline = "deployment"
-	TestingPipeline    = "testing"
+	BuildPipeline      = "build"      // DEPRECATED with workflows
+	DeploymentPipeline = "deployment" // DEPRECATED with workflows
+	TestingPipeline    = "testing"    // DEPRECATED with workflows
 	// Different types of warning for PipelineBuild
 	OptionalStepFailed = "optional_step_failed"
 )
@@ -320,12 +321,17 @@ func RunPipeline(key, appName, name, env string, stream bool, request RunRequest
 }
 
 // GetPipelineBuildHistory retrieves recent build history for given pipeline
-func GetPipelineBuildHistory(key, appName, name, env string) ([]PipelineBuild, error) {
+func GetPipelineBuildHistory(key, appName, name, env, buildNumber string) ([]PipelineBuild, error) {
 	var res []PipelineBuild
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/history", key, appName, name)
+	sep := "?"
 	if env != "" {
-		path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
+		path = fmt.Sprintf("%s%senvName=%s", path, sep, url.QueryEscape(env))
+		sep = "&"
+	}
+	if buildNumber != "" {
+		path = fmt.Sprintf("%s%sbuildNumber=%s", path, sep, url.QueryEscape(buildNumber))
 	}
 	data, _, err := Request("GET", path, nil)
 	if err != nil {
@@ -388,14 +394,12 @@ func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, fo
 
 			data, _, err := Request("GET", path, nil)
 			if err != nil {
-				fmt.Printf("Cannot stream logs: %s\n", err)
 				close(ch)
 				return
 			}
 
 			err = json.Unmarshal([]byte(data), &logs)
 			if err != nil {
-				fmt.Printf("Cannot unmarshall logs: %s\n", err)
 				close(ch)
 				return
 			}
@@ -491,7 +495,7 @@ func RemoveGroupFromPipeline(projectKey, pipelineName, groupName string) error {
 // UpdateGroupInPipeline  call api to update group permission on pipeline
 func UpdateGroupInPipeline(projectKey, pipelineName, groupName string, permission int) error {
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("permission should be between 4-7")
 	}
 
 	groupPipeline := GroupPermission{
@@ -518,7 +522,7 @@ func UpdateGroupInPipeline(projectKey, pipelineName, groupName string, permissio
 // AddGroupInPipeline  add a group in a pipeline
 func AddGroupInPipeline(projectKey, pipelineName, groupName string, permission int) error {
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("permission should be between 4-7")
 	}
 
 	groupPipeline := GroupPermission{

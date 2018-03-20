@@ -1,0 +1,85 @@
+version: v1.0
+name: ITSCWRKFLW2-PIPELINE
+stages:
+- Build
+- Package
+options:
+  Build:
+    conditions:
+      git.branch: master
+jobs:
+
+- job: Engine Build linux amd64
+  stage: Build
+  description: Compile CDS Engine
+  steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: /go/src/github.com/ovh/cds/
+      url: '{{.cds.app.repo}}'
+  - script:
+    - cd /go/src/github.com/ovh/cds/engine
+    - export OS=linux
+    - export ARCH=amd64
+    - make build
+    - cd dist
+    - tar czf cds-engine-linux-amd64.tar.gz cds-engine-linux-amd64
+  - artifactUpload:
+      path: /go/src/github.com/ovh/cds/engine/dist/sql.tar.gz
+      tag: '{{.cds.version}}'
+  - artifactUpload:
+      path: /go/src/github.com/ovh/cds/engine/dist/cds-engine-linux-amd64.tar.gz
+      tag: '{{.cds.version}}'
+  requirements:
+  - binary: git
+  - model: Go-official-1.9.1
+
+- job: Worker Build linux amd64
+  stage: Build
+  description: Compile CDS Worker
+  steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: /go/src/github.com/ovh/cds/
+      url: '{{.cds.app.repo}}'
+  - script:
+    - cd /go/src/github.com/ovh/cds/engine/worker
+    - export ARCH=amd64
+    - export OS=linux
+    - export CGO_ENABLED=0
+    - make build
+  - artifactUpload:
+      path: /go/src/github.com/ovh/cds/engine/worker/dist/*
+      tag: '{{.cds.version}}'
+  - script:
+    - cd /go/src/github.com/ovh/cds/engine/worker
+    - export ARCH=386
+    - export OS=linux
+    - make build
+  - artifactUpload:
+      path: /go/src/github.com/ovh/cds/engine/worker/dist/*
+      tag: '{{.cds.version}}'
+  requirements:
+  - binary: git
+  - model: Go-official-1.9.1
+
+- job: Package Engine
+  stage: Package
+  steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: /go/src/github.com/ovh/cds/
+      password: ""
+      privateKey: ""
+      url: '{{.cds.app.repo}}'
+      user: ""
+  - artifactDownload:
+      path: engine/.
+      tag: '{{.cds.version}}'
+  - script:
+    - docker build
+  requirements:
+  - binary: docker

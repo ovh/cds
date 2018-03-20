@@ -179,7 +179,9 @@ func (b *bitbucketClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 
 	url := fmt.Sprintf("/projects/%s/repos/%s/webhooks/%s", project, slug, hook.ID)
 	if err := b.do("DELETE", "core", url, nil, nil, nil); err != nil {
-		return sdk.WrapError(err, "vcs> bitbucket> DeleteHook> Unable to get enable webhook")
+		if err != sdk.ErrNotFound {
+			return sdk.WrapError(err, "vcs> bitbucket> DeleteHook> Unable to get enable webhook")
+		}
 	}
 	return nil
 }

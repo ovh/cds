@@ -22,7 +22,7 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, name string, f e
 
 // ExportPipeline a pipeline
 func ExportPipeline(p sdk.Pipeline, f exportentities.Format, withPermissions bool, w io.Writer) (int, error) {
-	e := exportentities.NewPipeline(p, withPermissions)
+	e := exportentities.NewPipelineV1(p, withPermissions)
 
 	// Marshal to the desired format
 	b, err := exportentities.Marshal(e, f)

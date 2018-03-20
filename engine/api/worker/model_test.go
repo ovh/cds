@@ -52,7 +52,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 		Type:    sdk.Docker,
 		Image:   "foo/bar:3.4",
 		GroupID: groupID,
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa_1",
 				Type:  sdk.BinaryRequirement,

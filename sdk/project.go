@@ -17,9 +17,9 @@ type Project struct {
 	Workflows         []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
 	WorkflowNames     []string           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
 	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	PipelineNames     []string           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	PipelineNames     []IDName           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
 	Applications      []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ApplicationNames  []string           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ApplicationNames  []IDName           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
 	ProjectGroups     []GroupPermission  `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
 	Variable          []Variable         `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments      []Environment      `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
@@ -30,6 +30,29 @@ type Project struct {
 	WorkflowMigration string             `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys              []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
 	VCSServers        []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
+}
+
+// SSHKeys returns the slice of ssh key for an application
+func (a Project) SSHKeys() []ProjectKey {
+	keys := []ProjectKey{}
+	for _, k := range a.Keys {
+		if k.Type == KeyTypeSSH {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// PGPKeys returns the slice of pgp key for an application
+func (a Project) PGPKeys() []ProjectKey {
+	keys := []ProjectKey{}
+	for _, k := range a.Keys {
+		if k.Type == KeyTypePGP {
+			keys = append(keys, k)
+		}
+	}
+	return keys
 }
 
 // ProjectVCSServer represents associations between a project and a vcs server
@@ -81,6 +104,10 @@ const (
 	ProjectWorkflowLastModificationType = "project.workflow"
 	// ProjectVariableLastModificationType represent key for last update event about project.variable (rename, delete or add a variable)
 	ProjectVariableLastModificationType = "project.variable"
+	// ProjectKeysLastModificationType represent key for last update event about project.keys (add, delete a key)
+	ProjectKeysLastModificationType = "project.keys"
+	// ProjectPlatformsLastModificationType represent key for last update event about project.platforms (add, update, delete a platform)
+	ProjectPlatformsLastModificationType = "project.platforms"
 )
 
 //ProjectLastUpdates update times of project, application and pipelines
@@ -191,7 +218,7 @@ func RemoveGroupFromProject(projectKey, groupname string) error {
 // UpdateGroupInProject  call api to update group permission on project
 func UpdateGroupInProject(projectKey, groupname string, permission int) error {
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("permission should be between 4-7")
 	}
 
 	groupProject := GroupPermission{
@@ -218,7 +245,7 @@ func UpdateGroupInProject(projectKey, groupname string, permission int) error {
 // AddGroupInProject  add a group in a project
 func AddGroupInProject(projectKey, groupname string, permission int) error {
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("permission should be between 4-7")
 	}
 
 	groupProject := GroupPermission{

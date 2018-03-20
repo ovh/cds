@@ -1,5 +1,0 @@
-name: User Command TestSuite
-testcases:
-- name: cds user
-  steps:
-  - script: {{.cds.build.cds}} user list

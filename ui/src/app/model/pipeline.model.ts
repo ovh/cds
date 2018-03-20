@@ -3,13 +3,14 @@ import {Stage} from './stage.model';
 import {GroupPermission} from './group.model';
 import {User} from './user.model';
 import {Application} from './application.model';
-import {Workflow} from './workflow.model';
 import {Environment} from './environment.model';
 import {Artifact} from './artifact.model';
 import {ActionWarning} from './action.model';
 import {Job} from './job.model';
 import {Commit} from './repositories.model';
 import {Usage} from './usage.model';
+
+export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
 export class PipelineStatus {
     static BUILDING = 'Building';
@@ -69,6 +70,18 @@ export class Pipeline {
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;
 
+    // Return true if pattern is good
+    public static checkName(name: string): boolean {
+      if (!name) {
+          return false;
+      }
+
+      if (!pipelineNamePattern.test(name)) {
+          return false;
+      }
+      return true;
+    }
+
     public static hasParameterWithoutValue(pipeline: Pipeline) {
         if (pipeline.parameters) {
             let emptyParams = pipeline.parameters.filter(p => {
@@ -79,6 +92,26 @@ export class Pipeline {
         return false;
     }
 
+    public static mergeAndKeepOld(ref: Array<Parameter>, current: Array<Parameter>): Array<Parameter> {
+        if (!current) {
+            return ref;
+        }
+        if (!ref) {
+            return current;
+        }
+
+        let mapParam = current.reduce((m, o) => {
+            m[o.name] = o;
+            return m;
+        }, {});
+        ref.forEach( a => {
+            if (!mapParam[a.name]) {
+                current.push(a)
+            }
+        });
+
+        return current;
+    }
     /**
      * Merge parameters
      * @param ref

@@ -1,17 +1,17 @@
 <div class="parameter" *ngIf="ready">
     <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead [hidden]="mode === 'launcher' || mode === 'job'">
-        <tr>
-            <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_name' | translate }}</th>
-            <th class="two wide" *ngIf="mode !=='launcher' && mode !== 'job'">{{ 'parameter_type' | translate }}</th>
-            <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_value' | translate }}</th>
-            <th class="four wide" *ngIf="mode !== 'launcher' && mode !== 'job'">{{ 'parameter_description' | translate }}</th>
-            <th class="two wide"></th>
-        </tr>
+          <tr>
+              <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_name' | translate }}</th>
+              <th class="two wide" *ngIf="mode !=='launcher' && mode !== 'job'">{{ 'parameter_type' | translate }}</th>
+              <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_value' | translate }}</th>
+              <th class="four wide" *ngIf="mode !== 'launcher' && mode !== 'job'">{{ 'parameter_description' | translate }}</th>
+              <th class="two wide"></th>
+          </tr>
         </thead>
         <tbody>
         <tr *ngFor="let p of getDataForCurrentPage()" class="ui form">
-            <td>
+            <td class="middle-aligned">
                 <div class="ui fluid input" *ngIf="mode === 'edit'">
                     <input class="ui input" [(ngModel)]="p.name" (keydown)="p.hasChanged = true" [disabled]="p.updating">
                 </div>
@@ -28,13 +28,17 @@
             </td>
             <td *ngIf="mode !=='launcher' && mode !== 'job'">
                 <div class="ui form" *ngIf="mode === 'edit'">
-                    <sm-select class="search"
-                        [(model)]="p.type"
-                        [options]="{'fullTextSearch': true}"
-                        [disabled]="p.updating"
-                        (onChange)="p.hasChanged = true">
-                        <option *ngFor="let type of parameterTypes" value="{{type}}">{{type}}</option>
-                    </sm-select>
+                    <sui-select class="selection"
+                                isSearchable="true"
+                                [isDisabled]="p.updating"
+                                [(ngModel)]="p.type"
+                                (ngModelChange)="p.hasChanged = true"
+                                [options]="parameterTypes"
+                                #selectType>
+                        <sui-select-option *ngFor="let option of selectType.filteredOptions"
+                                           [value]="option">
+                        </sui-select-option>
+                    </sui-select>
                 </div>
                 <span *ngIf="mode !== 'edit'">
                     {{p.type}}
@@ -44,16 +48,24 @@
             <app-parameter-value [project]="project"
                  [suggest]="suggest"
                  [ref]="getRef(p)"
-                 [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'"
+                 [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'" [keys]="keys"
                  [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true; sendEvent()"></app-parameter-value>
             </td>
             <td *ngIf="mode !== 'launcher' && mode !== 'job'">
-                <textarea *ngIf="mode !== launcher" class="ui textarea" [class.lock]="mode !== 'edit'" [(ngModel)]="p.description" rows="{{_sharedService.getTextAreaheight(p.description)}}" [readonly]="mode === 'launcher'"></textarea>
+                <textarea
+                  *ngIf="mode !== launcher"
+                  class="ui textarea"
+                  (keydown)="p.hasChanged = true; sendEvent()"
+                  [class.lock]="mode !== 'edit'"
+                  [(ngModel)]="p.description"
+                  rows="{{_sharedService.getTextAreaheight(p.description)}}"
+                  [readonly]="mode === 'launcher'">
+                </textarea>
                 <span *ngIf="mode === 'launcher' && (!p.description && p.description === '')">{{'common_no_description' | translate}}</span>
             </td>
             <td class="center" *ngIf="mode !== 'launcher' && mode !== 'job'">
                 <ng-container *ngIf="mode === 'edit'">
-                    <div *ngIf="p.hasChanged;then save;else remove"></div>
+                    <div *ngIf="p.hasChanged && !hideSave;then save;else remove"></div>
                     <ng-template #save>
                         <button class="ui green button" [class.loading]="p.updating" [class.disabled]="p.updating" name="btnupdatevparam" (click)="sendEvent('update', p)">
                             <i class="save icon"></i>
@@ -64,6 +76,9 @@
                         <app-delete-button (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
                     </ng-template>
                 </ng-container>
+            </td>
+            <td class="center" *ngIf="mode === 'launcher' && canDelete">
+              <app-delete-button (event)="sendEvent('delete', p)" [loading]="p.updating"></app-delete-button>
             </td>
         </tr>
         </tbody>

@@ -27,121 +27,146 @@ const (
 	defaultLimit = 10
 )
 
-func (api *API) getWorkflowRunsHandler() Handler {
+func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r *http.Request, vars map[string]string, route, key, name string) error {
+	// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
+	var limit, offset int
+
+	offsetS := r.FormValue("offset")
+	var errAtoi error
+	if offsetS != "" {
+		offset, errAtoi = strconv.Atoi(offsetS)
+		if errAtoi != nil {
+			return sdk.ErrWrongRequest
+		}
+	}
+	limitS := r.FormValue("limit")
+	if limitS != "" {
+		limit, errAtoi = strconv.Atoi(limitS)
+		if errAtoi != nil {
+			return sdk.ErrWrongRequest
+		}
+	}
+
+	if offset < 0 {
+		offset = 0
+	}
+	if limit == 0 {
+		limit = defaultLimit
+	}
+
+	//Parse all form values
+	mapFilters := map[string]string{}
+	for k := range r.Form {
+		if k != "offset" && k != "limit" && k != "workflow" {
+			mapFilters[k] = r.FormValue(k)
+		}
+	}
+
+	//Maximim range is set to 50
+	w.Header().Add("Accept-Range", "run 50")
+	if limit-offset > rangeMax {
+		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", (limit - offset))
+	}
+
+	runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit, mapFilters)
+	if err != nil {
+		return sdk.WrapError(err, "searchWorkflowRun> Unable to load workflow runs")
+	}
+
+	if offset > count {
+		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", (limit - offset))
+	}
+
+	code := http.StatusOK
+
+	//RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"
+	if len(runs) < count {
+		baseLinkURL := api.Router.URL + route
+		code = http.StatusPartialContent
+
+		//First page
+		firstLimit := limit - offset
+		if firstLimit > count {
+			firstLimit = count
+		}
+		firstLink := fmt.Sprintf(`<%s?offset=0&limit=%d>; rel="first"`, baseLinkURL, firstLimit)
+		link := firstLink
+
+		//Prev page
+		if offset != 0 {
+			prevOffset := offset - (limit - offset)
+			prevLimit := offset
+			if prevOffset < 0 {
+				prevOffset = 0
+			}
+			prevLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="prev"`, baseLinkURL, prevOffset, prevLimit)
+			link = link + ", " + prevLink
+		}
+
+		//Next page
+		if limit < count {
+			nextOffset := limit
+			nextLimit := limit + (limit - offset)
+
+			if nextLimit >= count {
+				nextLimit = count
+			}
+
+			nextLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="next"`, baseLinkURL, nextOffset, nextLimit)
+			link = link + ", " + nextLink
+		}
+
+		//Last page
+		lastOffset := count - (limit - offset)
+		if lastOffset < 0 {
+			lastOffset = 0
+		}
+		lastLimit := count
+		lastLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="last"`, baseLinkURL, lastOffset, lastLimit)
+		link = link + ", " + lastLink
+
+		w.Header().Add("Link", link)
+	}
+
+	w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
+
+	for i := range runs {
+		runs[i].Translate(r.Header.Get("Accept-Language"))
+	}
+
+	// Return empty array instead of nil
+	if runs == nil {
+		runs = []sdk.WorkflowRun{}
+	}
+	return WriteJSON(w, runs, code)
+}
+
+func (api *API) getWorkflowAllRunsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 		vars := mux.Vars(r)
-		var limit, offset int
-
-		offsetS := r.FormValue("offset")
-		var errAtoi error
-		if offsetS != "" {
-			offset, errAtoi = strconv.Atoi(offsetS)
-			if errAtoi != nil {
-				return sdk.ErrWrongRequest
-			}
-		}
-		limitS := r.FormValue("limit")
-		if limitS != "" {
-			limit, errAtoi = strconv.Atoi(limitS)
-			if errAtoi != nil {
-				return sdk.ErrWrongRequest
-			}
-		}
-
-		if offset < 0 {
-			offset = 0
-		}
-		if limit == 0 {
-			limit = defaultLimit
-		}
-
-		//Maximim range is set to 50
-		w.Header().Add("Accept-Range", "run 50")
-		if limit-offset > rangeMax {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", (limit - offset))
-		}
-
-		key := vars["key"]
-		name := vars["permWorkflowName"]
-		runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit)
-		if err != nil {
-			return sdk.WrapError(err, "getWorkflowRunsHandler> Unable to load workflow runs")
-		}
-
-		if offset > count {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", (limit - offset))
-		}
-
-		code := http.StatusOK
-
-		//RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"
-		if len(runs) < count {
-			baseLinkURL := api.Router.URL +
-				api.Router.GetRoute("GET", api.getWorkflowRunsHandler, map[string]string{
-					"permProjectKey": key,
-					"workflowName":   name,
-				})
-			code = http.StatusPartialContent
-
-			//First page
-			firstLimit := limit - offset
-			if firstLimit > count {
-				firstLimit = count
-			}
-			firstLink := fmt.Sprintf(`<%s?offset=0&limit=%d>; rel="first"`, baseLinkURL, firstLimit)
-			link := firstLink
-
-			//Prev page
-			if offset != 0 {
-				prevOffset := offset - (limit - offset)
-				prevLimit := offset
-				if prevOffset < 0 {
-					prevOffset = 0
-				}
-				prevLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="prev"`, baseLinkURL, prevOffset, prevLimit)
-				link = link + ", " + prevLink
-			}
-
-			//Next page
-			if limit < count {
-				nextOffset := limit
-				nextLimit := limit + (limit - offset)
-
-				if nextLimit >= count {
-					nextLimit = count
-				}
-
-				nextLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="next"`, baseLinkURL, nextOffset, nextLimit)
-				link = link + ", " + nextLink
-			}
-
-			//Last page
-			lastOffset := count - (limit - offset)
-			if lastOffset < 0 {
-				lastOffset = 0
-			}
-			lastLimit := count
-			lastLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="last"`, baseLinkURL, lastOffset, lastLimit)
-			link = link + ", " + lastLink
-
-			w.Header().Add("Link", link)
-		}
-
-		w.Header().Add("Content-Range", fmt.Sprintf("%d-%d/%d", offset, limit, count))
-
-		for i := range runs {
-			runs[i].Translate(r.Header.Get("Accept-Language"))
-		}
-
-		// Return empty array instead of nil
-		if runs == nil {
-			runs = []sdk.WorkflowRun{}
-		}
-		return WriteJSON(w, r, runs, code)
+		key := vars["permProjectKey"]
+		name := r.FormValue("workflow")
+		route := api.Router.GetRoute("GET", api.getWorkflowAllRunsHandler, map[string]string{
+			"permProjectKey": key,
+		})
+		return api.searchWorkflowRun(ctx, w, r, vars, route, key, name)
 	}
 }
 
+func (api *API) getWorkflowRunsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		route := api.Router.GetRoute("GET", api.getWorkflowRunsHandler, map[string]string{
+			"key":          key,
+			"workflowName": name,
+		})
+		return api.searchWorkflowRun(ctx, w, r, vars, route, key, name)
+	}
+}
+
+// getWorkflowRunNumHandler returns the last run number for the given workflow
 func (api *API) getWorkflowRunNumHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -153,15 +178,11 @@ func (api *API) getWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunNumHandler> Cannot load current run num")
 		}
 
-		m := struct {
-			Num int64 `json:"num"`
-		}{
-			Num: num,
-		}
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, sdk.WorkflowRunNumber{Num: num}, http.StatusOK)
 	}
 }
 
+// postWorkflowRunNumHandler updates the current run number for the given workflow
 func (api *API) postWorkflowRunNumHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -185,15 +206,26 @@ func (api *API) postWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowRunNumHandler> Cannot num must be > %d, got %d", num, m.Num)
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		options := workflow.LoadOptions{
+			WithoutNode: true,
+		}
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "postWorkflowRunNumHandler > Cannot load workflow")
 		}
-		if err := workflow.UpdateRunNum(api.mustDB(), wf, m.Num); err != nil {
-			return sdk.WrapError(err, "postWorkflowRunNumHandler> ")
+
+		var errDb error
+		if num == 0 {
+			errDb = workflow.InsertRunNum(api.mustDB(), wf, m.Num)
+		} else {
+			errDb = workflow.UpdateRunNum(api.mustDB(), wf, m.Num)
 		}
 
-		return WriteJSON(w, r, m, http.StatusOK)
+		if errDb != nil {
+			return sdk.WrapError(errDb, "postWorkflowRunNumHandler> ")
+		}
+
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }
 
@@ -207,7 +239,7 @@ func (api *API) getLatestWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -237,7 +269,7 @@ func (api *API) resyncWorkflowRunHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "resyncWorkflowRunHandler> Cannot commit transaction")
 		}
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -252,10 +284,10 @@ func (api *API) getWorkflowRunHandler() Handler {
 		}
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number, true)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
+			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load workflow %s run number %d", name, number)
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -290,7 +322,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 		}
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -304,11 +336,15 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 	}
 	defer tx.Rollback()
 
+	spwnMsg := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}}
+
 	stopInfos := sdk.SpawnInfo{
 		APITime:    time.Now(),
 		RemoteTime: time.Now(),
-		Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}},
+		Message:    spwnMsg,
 	}
+
+	workflow.AddWorkflowRunInfo(run, false, spwnMsg)
 
 	for _, wn := range run.WorkflowNodeRuns {
 		for _, wnr := range wn {
@@ -326,9 +362,10 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 		}
 	}
 
+	run.LastExecution = time.Now()
 	run.Status = sdk.StatusStopped.String()
-	if errU := workflow.UpdateWorkflowRunStatus(tx, run); errU != nil {
-		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run status %d", run.ID)
+	if errU := workflow.UpdateWorkflowRun(tx, run); errU != nil {
+		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run %d", run.ID)
 		return
 	}
 	chEvent <- *run
@@ -362,7 +399,83 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 		if !ok {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowNodeRunHistoryHandler")
 		}
-		return WriteJSON(w, r, nodeRuns, http.StatusOK)
+		return WriteJSON(w, nodeRuns, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowCommitsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		nodeName := vars["nodeName"]
+		branch := FormString(r, "branch")
+		hash := FormString(r, "hash")
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project %s", key)
+		}
+
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
+		if errW != nil {
+			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow %s", name)
+		}
+
+		var errCtx error
+		var nodeCtx *sdk.WorkflowNodeContext
+		var wNode *sdk.WorkflowNode
+		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, false)
+		if errW == nil {
+			wNode = wfRun.Workflow.GetNodeByName(nodeName)
+		}
+
+		if wNode == nil || errW != nil {
+			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, getUser(ctx), name, nodeName, workflow.LoadOptions{})
+			if errCtx != nil {
+				return sdk.WrapError(errCtx, "getWorkflowCommitsHandler> Unable to load workflow node context")
+			}
+		} else if wNode != nil {
+			nodeCtx = wNode.Context
+		} else {
+			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow node run")
+		}
+
+		if nodeCtx == nil || nodeCtx.Application == nil {
+			return WriteJSON(w, []sdk.VCSCommit{}, http.StatusOK)
+		}
+
+		if wfRun == nil {
+			wfRun = &sdk.WorkflowRun{Number: number}
+		}
+		wfNodeRun := &sdk.WorkflowNodeRun{}
+		if branch != "" {
+			wfNodeRun.VCSBranch = branch
+		}
+		if hash != "" {
+			wfNodeRun.VCSHash = hash
+		} else if wNode != nil && errW == nil {
+			// Find hash and branch of ancestor node run
+			nodeIDsAncestors := wNode.Ancestors(&wfRun.Workflow, false)
+			for _, ancestorID := range nodeIDsAncestors {
+				if wfRun.WorkflowNodeRuns[ancestorID][0].VCSRepository == nodeCtx.Application.RepositoryFullname {
+					wfNodeRun.VCSHash = wfRun.WorkflowNodeRuns[ancestorID][0].VCSHash
+					wfNodeRun.VCSBranch = wfRun.WorkflowNodeRuns[ancestorID][0].VCSBranch
+					break
+				}
+			}
+		}
+
+		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
+		if errC != nil {
+			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits")
+		}
+
+		return WriteJSON(w, commits, http.StatusOK)
 	}
 }
 
@@ -402,7 +515,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		}
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
-		return WriteJSON(w, r, nodeRun, http.StatusOK)
+		return WriteJSON(w, nodeRun, http.StatusOK)
 	}
 }
 
@@ -462,7 +575,7 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		}
 
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, r, run, http.StatusOK)
+		return WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -496,7 +609,11 @@ func (api *API) postWorkflowRunHandler() Handler {
 			wf = &lastRun.Workflow
 		} else {
 			var errl error
-			wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+			options := workflow.LoadOptions{
+				DeepPipeline: true,
+				Base64Keys:   true,
+			}
+			wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 			if errl != nil {
 				return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
 			}
@@ -511,6 +628,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
+		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		// Purge workflow run
@@ -521,7 +639,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			wr = &workflowRuns[0]
 			wr.Translate(r.Header.Get("Accept-Language"))
 		}
-		return WriteJSON(w, r, wr, http.StatusAccepted)
+		return WriteJSON(w, wr, http.StatusAccepted)
 	}
 }
 
@@ -537,6 +655,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	const nbWorker int = 5
 	defer close(chEvent)
 	defer close(chError)
+	errorOccured := false
 
 	tx, errb := db.Begin()
 	if errb != nil {
@@ -547,8 +666,9 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	//Run from hook
 	if opts.Hook != nil {
 		var errfh error
-		_, errfh = workflow.RunFromHook(tx, store, p, wf, opts.Hook, chEvent)
+		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent)
 		if errfh != nil {
+			errorOccured = true
 			chError <- sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
 		}
 	} else {
@@ -566,6 +686,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			for _, fromNodeID := range opts.FromNodeIDs {
 				fromNode := lastRun.Workflow.GetNode(fromNodeID)
 				if fromNode == nil {
+					errorOccured = true
 					chError <- sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node %d", fromNodeID)
 				}
 				fromNodes = append(fromNodes, fromNode)
@@ -584,7 +705,24 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		}
 		wg.Add(len(fromNodes))
 		for i := 0; i < nbWorker && i < len(fromNodes); i++ {
-			go runFromNode(db, store, *opts, p, wf, lastRun, u, workerOptions)
+			optsCopy := sdk.WorkflowRunPostHandlerOption{
+				FromNodeIDs: opts.FromNodeIDs,
+				Number:      opts.Number,
+			}
+			if opts.Manual != nil {
+				optsCopy.Manual = &sdk.WorkflowNodeRunManual{
+					PipelineParameters: opts.Manual.PipelineParameters,
+					User:               opts.Manual.User,
+					Payload:            opts.Manual.Payload,
+				}
+			}
+			if opts.Hook != nil {
+				optsCopy.Hook = &sdk.WorkflowNodeRunHookEvent{
+					Payload:              opts.Hook.Payload,
+					WorkflowNodeHookUUID: opts.Hook.WorkflowNodeHookUUID,
+				}
+			}
+			go runFromNode(db, store, optsCopy, p, wf, lastRun, u, workerOptions)
 		}
 		for _, fromNode := range fromNodes {
 			workerOptions.chanNodesToRun <- *fromNode
@@ -595,7 +733,11 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			select {
 			case <-workerOptions.chanNodeRun:
 			case err := <-workerOptions.chanError:
+				if err == nil {
+					continue
+				}
 				if chError != nil {
+					errorOccured = true
 					chError <- err
 				} else {
 					log.Warning("postWorkflowRunHandler> Cannot run from node %v", err)
@@ -606,16 +748,19 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 
 		if lastRun == nil {
 			var errmr error
-			_, errmr = workflow.ManualRun(tx, store, p, wf, opts.Manual, chEvent)
+			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent)
 			if errmr != nil {
+				errorOccured = true
 				chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 			}
 		}
 	}
 
-	//Commit and return success
-	if err := tx.Commit(); err != nil {
-		chError <- sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+	if !errorOccured {
+		//Commit and return success
+		if err := tx.Commit(); err != nil {
+			chError <- sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+		}
 	}
 }
 
@@ -647,11 +792,11 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 		if len(opts.Manual.PipelineParameters) == 0 {
 			opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
 		}
-		log.Debug("Manual run: %#v", opts.Manual)
+		log.Debug("Manual run: %+v", opts.Manual)
 
 		//Manual run
 		if lastRun != nil {
-			_, errmr := workflow.ManualRunFromNode(tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, workerOptions.chanEvent)
+			_, errmr := workflow.ManualRunFromNode(db, tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, workerOptions.chanEvent)
 			if errmr != nil {
 				workerOptions.chanError <- sdk.WrapError(errmr, "runFromNode> Unable to run workflow from node")
 				tx.Rollback()
@@ -722,7 +867,16 @@ func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
 			return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
 		}
 
-		return WriteJSON(w, r, nodeRun.Artifacts, http.StatusOK)
+		//Fetch artifacts
+		for i := range nodeRun.Artifacts {
+			a := &nodeRun.Artifacts[i]
+			url, _ := objectstore.FetchTempURL(a)
+			if url != "" {
+				a.TempURL = url
+			}
+		}
+
+		return WriteJSON(w, nodeRun.Artifacts, http.StatusOK)
 	}
 }
 
@@ -737,7 +891,10 @@ func (api *API) getDownloadArtifactHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getDownloadArtifactHandler> Invalid node job run ID")
 		}
 
-		work, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		options := workflow.LoadOptions{
+			WithoutNode: true,
+		}
+		work, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")
 		}
@@ -794,10 +951,22 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 				return runs[i].SubNumber > runs[j].SubNumber
 			})
 
+			wg := &sync.WaitGroup{}
+			for i := range runs[0].Artifacts {
+				wg.Add(1)
+				go func(a *sdk.WorkflowNodeRunArtifact) {
+					defer wg.Done()
+					url, _ := objectstore.FetchTempURL(a)
+					if url != "" {
+						a.TempURL = url
+					}
+				}(&runs[0].Artifacts[i])
+			}
+			wg.Wait()
 			arts = append(arts, runs[0].Artifacts...)
 		}
 
-		return WriteJSON(w, r, arts, http.StatusOK)
+		return WriteJSON(w, arts, http.StatusOK)
 	}
 }
 
@@ -821,11 +990,6 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 		stepOrder, errS := requestVarInt(r, "stepOrder")
 		if errS != nil {
 			return sdk.WrapError(errS, "getWorkflowNodeRunJobBuildLogsHandler> stepOrder: invalid number")
-		}
-
-		// Check workflow is in project
-		if _, errW := workflow.Load(api.mustDB(), api.Cache, projectKey, workflowName, getUser(ctx)); errW != nil {
-			return sdk.WrapError(errW, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
 		}
 
 		// Check nodeRunID is link to workflow
@@ -872,7 +1036,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 			StepLogs: *ls,
 		}
 
-		return WriteJSON(w, r, result, http.StatusOK)
+		return WriteJSON(w, result, http.StatusOK)
 	}
 }
 
@@ -887,6 +1051,6 @@ func (api *API) getWorkflowRunTagsHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunTagsHandler> Error")
 		}
 
-		return WriteJSON(w, r, res, http.StatusOK)
+		return WriteJSON(w, res, http.StatusOK)
 	}
 }

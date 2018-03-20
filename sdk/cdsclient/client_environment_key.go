@@ -20,6 +20,6 @@ func (c *client) EnvironmentKeyCreate(projectKey string, envName string, keyEnvi
 }
 
 func (c *client) EnvironmentKeysDelete(projectKey string, envName string, keyName string) error {
-	_, _, err := c.Request("DELETE", "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/keys/"+url.QueryEscape(keyName), nil)
+	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/keys/"+url.QueryEscape(keyName), nil)
 	return err
 }

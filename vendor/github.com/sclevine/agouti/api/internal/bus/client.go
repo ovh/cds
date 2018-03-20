@@ -61,6 +61,7 @@ func (c *Client) makeRequest(url, method string, body []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %s", err)
 	}
+	defer response.Body.Close()
 
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {

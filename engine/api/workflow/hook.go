@@ -13,8 +13,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HookRegistration ensures hooks registration on Hoohs micro service
-func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) error {
+// HookRegistration ensures hooks registration on Hook µService
+func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) (*sdk.WorkflowNodeContextDefaultPayloadVCS, error) {
 	var hookToUpdate map[string]sdk.WorkflowNodeHook
 	var hookToDelete map[string]sdk.WorkflowNodeHook
 
@@ -24,63 +24,68 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		hookToUpdate = wf.GetHooks()
 	}
 
+	var defaultPayload *sdk.WorkflowNodeContextDefaultPayloadVCS
+
 	if len(hookToUpdate) > 0 {
 		//Push the hook to hooks µService
 		dao := services.Querier(db, store)
 		//Load service "hooks"
-		srvs, err := dao.FindByType("hooks")
+		srvs, err := dao.FindByType(services.TypeHooks)
 		if err != nil {
-			return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
+			return nil, sdk.WrapError(err, "HookRegistration> Unable to get services dao")
 		}
 
 		// Update in VCS
 		for i := range hookToUpdate {
 			h := hookToUpdate[i]
 			if oldW != nil && wf.Name != oldW.Name {
-				configValue := h.Config["workflow"]
+				configValue := h.Config[sdk.HookConfigWorkflow]
 				configValue.Value = wf.Name
-				h.Config["workflow"] = configValue
+				h.Config[sdk.HookConfigWorkflow] = configValue
 				hookToUpdate[i] = h
 			}
 		}
 
 		//Perform the request on one off the hooks service
 		if len(srvs) < 1 {
-			return sdk.WrapError(fmt.Errorf("HookRegistration> No hooks service available, please try again"), "Unable to get services dao")
+			return nil, sdk.WrapError(fmt.Errorf("HookRegistration> No hooks service available, please try again"), "Unable to get services dao")
 		}
 
 		var hooksUpdated map[string]sdk.WorkflowNodeHook
 		code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hooksUpdated)
 		if errHooks != nil || code >= 400 {
-			return sdk.WrapError(errHooks, "HookRegistration> Unable to create hooks [%d]", code)
+			return nil, sdk.WrapError(errHooks, "HookRegistration> Unable to create hooks [%d]", code)
 		}
 
 		for i := range hooksUpdated {
 			h := hooksUpdated[i]
-			if h.Config["vcsServer"].Value != "" {
+			v, ok := h.Config["webHookID"]
+			if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
 				if err := createVCSConfiguration(db, store, p, &h); err != nil {
-					return sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
+					return nil, sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
+				}
+				defaultPayload = &sdk.WorkflowNodeContextDefaultPayloadVCS{
+					GitRepository: h.Config["repoFullName"].Value,
 				}
 			}
 			if err := UpdateHook(db, &h); err != nil {
-				return sdk.WrapError(err, "HookRegistration> Cannot update hook")
+				return nil, sdk.WrapError(err, "HookRegistration> Cannot update hook")
 			}
 		}
 	}
 
 	if len(hookToDelete) > 0 {
 		if err := deleteHookConfiguration(db, store, p, hookToDelete); err != nil {
-			return sdk.WrapError(err, "HookRegistration> Cannot remove hook configuration")
+			return nil, sdk.WrapError(err, "HookRegistration> Cannot remove hook configuration")
 		}
-
 	}
-	return nil
+	return defaultPayload, nil
 }
 
 func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {
 	// Delete from vcs configuration if needed
 	for _, h := range hookToDelete {
-		if h.WorkflowHookModel.Name == RepositoryWebHookModel.Name {
+		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
 			if projectVCSServer != nil {
@@ -95,7 +100,7 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 					ID:       h.Config["webHookID"].Value,
 				}
 				if err := client.DeleteHook(h.Config["repoFullName"].Value, vcsHook); err != nil {
-					return sdk.WrapError(err, "deleteHookConfiguration> Cannot delete hook on repository")
+					log.Error("deleteHookConfiguration> Cannot delete hook on repository %s", err)
 				}
 				h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 					Value:        vcsHook.ID,
@@ -103,18 +108,19 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 				}
 			}
 		}
-		return nil
 	}
 
 	//Push the hook to hooks µService
 	dao := services.Querier(db, store)
 	//Load service "hooks"
-	srvs, err := dao.FindByType("hooks")
+	srvs, err := dao.FindByType(services.TypeHooks)
 	if err != nil {
 		return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
 	}
-	code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, fmt.Sprintf("/task/bulk"), hookToDelete, nil)
+	code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
+		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
+		// so, it's just a warn log
 		log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
@@ -158,28 +164,18 @@ func diffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.
 	hookToUpdate = make(map[string]sdk.WorkflowNodeHook)
 	hookToDelete = make(map[string]sdk.WorkflowNodeHook)
 
-	for kNew := range newHooks {
-		hold, ok := oldHooks[kNew]
+	for key, hNew := range newHooks {
+		hold, ok := oldHooks[key]
 		// if new hook
-		if !ok {
-			hookToUpdate[kNew] = newHooks[kNew]
+		if !ok || !hNew.Equals(hold) {
+			hookToUpdate[key] = newHooks[key]
 			continue
-		}
-
-	next:
-		for k, v := range newHooks[kNew].Config {
-			for kold, vold := range hold.Config {
-				if kold == k && v != vold {
-					hookToUpdate[kNew] = newHooks[kNew]
-					break next
-				}
-			}
 		}
 	}
 
-	for kHold := range oldHooks {
-		if _, ok := newHooks[kHold]; !ok {
-			hookToDelete[kHold] = oldHooks[kHold]
+	for key := range oldHooks {
+		if _, ok := newHooks[key]; !ok {
+			hookToDelete[key] = oldHooks[key]
 		}
 	}
 	return

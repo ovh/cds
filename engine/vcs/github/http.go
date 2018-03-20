@@ -78,8 +78,8 @@ func (c *githubClient) setETag(path string, headers http.Header) {
 	}
 
 	if etag != "" {
-		//Put etag for this path in cache for 59 minutes
-		c.Cache.SetWithTTL(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
+		//Put etag for this path in cache for 15 minutes
+		c.Cache.SetWithTTL(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 15*60)
 	}
 }
 
@@ -146,7 +146,12 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 		path = APIURL + path
 	}
 
-	req, err := http.NewRequest(http.MethodGet, path, nil)
+	callURL, err := url.ParseRequestURI(path)
+	if err != nil {
+		return 0, nil, nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, callURL.String(), nil)
 	if err != nil {
 		return 0, nil, nil, err
 	}
@@ -236,7 +241,7 @@ func (c *githubClient) delete(path string) error {
 	}
 
 	if res.StatusCode != 204 {
-		return fmt.Errorf("github>delete wrong status code %d on url", res.StatusCode, path)
+		return fmt.Errorf("github>delete wrong status code %d on url %s", res.StatusCode, path)
 	}
 	return nil
 }

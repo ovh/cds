@@ -9,11 +9,6 @@ controls= true
 progress= true
 history= true
 center= true
-
-[menu.main]
-parent = ""
-identifier = "YYY"
-weight = 100
 +++
 
 # Slide 1

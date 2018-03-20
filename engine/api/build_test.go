@@ -1,22 +1,27 @@
 package api
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"testing"
 
-	"github.com/loopfz/gadgeto/iffy"
+	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func Test_updateStepStatusHandler(t *testing.T) {
@@ -24,9 +29,6 @@ func Test_updateStepStatusHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -83,15 +85,31 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	vars := map[string]string{
 		"id": strconv.FormatInt(pbJob.ID, 10),
 	}
-	route := router.GetRoute("POST", api.updateStepStatusHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(204), iffy.DumpResponse(t))
-	tester.Run()
-	tester.Reset()
+
+	jsonBody, _ := json.Marshal(request)
+	body := bytes.NewBuffer(jsonBody)
+	uri := router.GetRoute("POST", api.updateStepStatusHandler, vars)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 204, w.Code)
 
 	request.Status = "Success"
-	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(204), iffy.DumpResponse(t))
-	tester.Run()
+	jsonBody, _ = json.Marshal(request)
+	body = bytes.NewBuffer(jsonBody)
+	uri = router.GetRoute("POST", api.updateStepStatusHandler, vars)
+	req, err = http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 204, w.Code)
 
 	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), api.Cache, pbJob.ID)
 	if errC != nil {
@@ -117,9 +135,6 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	if err := group.InsertUserInGroup(api.mustDB(), g.ID, u.ID, true); err != nil {
 		t.Fatal(err)
 	}
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -171,7 +186,6 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	vars := map[string]string{
 		"id": strconv.FormatInt(pbJob.ID, 10),
 	}
-	route := router.GetRoute("POST", api.addSpawnInfosPipelineBuildJobHandler, vars)
 
 	h := http.Header{}
 	h.Set("User-Agent", string(sdk.HatcheryAgent))
@@ -180,12 +194,13 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	if errg != nil {
 		t.Fatal(errg)
 	}
-	if err := token.InsertToken(api.mustDB(), g.ID, tk, sdk.Daily); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, tk, sdk.Daily, "", ""); err != nil {
 		t.Fatal(err)
 	}
 
+	name := "HATCHERY_TEST_" + namesgenerator.GetRandomName(0)
 	hatch := sdk.Hatchery{
-		Name:    "HATCHERY_TEST",
+		Name:    name,
 		GroupID: g.ID,
 	}
 	if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
@@ -198,13 +213,23 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		},
 	}
 
+	jsonBody, _ := json.Marshal(request)
+	body := bytes.NewBuffer(jsonBody)
+	uri := router.GetRoute("POST", api.addSpawnInfosPipelineBuildJobHandler, vars)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
 	basedHash := base64.StdEncoding.EncodeToString([]byte(hatch.UID))
-	h.Set(sdk.AuthHeader, basedHash)
-	h.Add(sdk.SessionTokenHeader, tk)
-	h.Add("User-Agent", sdk.HatcheryAgent)
+	req.Header.Add(sdk.AuthHeader, basedHash)
+	req.Header.Add(cdsclient.RequestedNameHeader, name)
+	req.Header.Add(sdk.SessionTokenHeader, tk)
+	req.Header.Add("User-Agent", sdk.HatcheryAgent)
 
-	tester.AddCall("Test_addSpawnInfosPipelineBuildJobHandler", "POST", route, request).Headers(h).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
-	tester.Run()
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &app))
 
 	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), api.Cache, pbJob.ID)
 	if errC != nil {

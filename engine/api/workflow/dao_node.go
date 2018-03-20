@@ -37,14 +37,13 @@ func updateWorkflowTriggerJoinSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 }
 
 func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
-	log.Debug("insertNode> insert or update node %d (%s) on %s(%#v)", n.ID, n.Ref, n.Pipeline.Name, n.Context)
+	log.Debug("insertNode> insert or update node %s %d (%s) on %s(%#v)", n.Name, n.ID, n.Ref, n.Pipeline.Name, n.Context)
 
 	if !nodeNamePattern.MatchString(n.Name) {
 		return sdk.WrapError(sdk.ErrInvalidNodeNamePattern, "insertNode> node has a wrong name %s", n.Name)
 	}
 
 	n.WorkflowID = w.ID
-	n.ID = 0
 
 	// Set pipeline ID
 	if n.PipelineID == 0 {
@@ -63,12 +62,31 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		n.Context.EnvironmentID = n.Context.Environment.ID
 	}
 
-	//Insert new node
-	dbwn := Node(*n)
-	if err := db.Insert(&dbwn); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
+	//Checks pipeline parameters
+	if len(n.Context.DefaultPipelineParameters) > 0 {
+		for i := range n.Context.DefaultPipelineParameters {
+			var paramFound bool
+			param := &n.Context.DefaultPipelineParameters[i]
+			for _, pipParam := range n.Pipeline.Parameter {
+				if pipParam.Name == param.Name {
+					param.Type = pipParam.Type
+					paramFound = true
+				}
+			}
+			if !paramFound {
+				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid parameter %s in pipeline %s", param.Name, n.Pipeline.Name))
+			}
+		}
 	}
-	n.ID = dbwn.ID
+
+	if n.ID == 0 {
+		//Insert new node
+		dbwn := Node(*n)
+		if err := db.Insert(&dbwn); err != nil {
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node %s-%s", n.Name, n.Ref)
+		}
+		n.ID = dbwn.ID
+	}
 
 	if skipDependencies {
 		return nil
@@ -81,20 +99,33 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	}
 
 	//Insert hooks
+	hooksUUIDs := []string{}
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
+
+		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && n.Context.ApplicationID == 0 {
+			// Remove repository webhook
+			hooksUUIDs = append(hooksUUIDs, h.UUID)
+			continue
+		}
+
 		//Configure the hook
-		h.Config["project"] = sdk.WorkflowNodeHookConfigValue{
+		h.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
 			Value:        w.ProjectKey,
 			Configurable: false,
 		}
 
-		h.Config["workflow"] = sdk.WorkflowNodeHookConfigValue{
+		h.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{
 			Value:        w.Name,
 			Configurable: false,
 		}
 
-		if h.WorkflowHookModel.Name == RepositoryWebHookModel.Name {
+		h.Config[sdk.HookConfigWorkflowID] = sdk.WorkflowNodeHookConfigValue{
+			Value:        fmt.Sprint(w.ID),
+			Configurable: false,
+		}
+
+		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName || h.WorkflowHookModel.Name == sdk.GitPollerModelName {
 			if n.Context.Application == nil {
 				app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)
 				if errA != nil {
@@ -104,7 +135,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 			}
 
 			if n.Context.Application == nil || n.Context.Application.RepositoryFullname == "" || n.Context.Application.VCSServer == "" {
-				return sdk.WrapError(sdk.ErrForbidden, "InsertOrUpdateNode> Cannot create an repository webhook on an application without a repository")
+				return sdk.WrapError(sdk.ErrForbidden, "InsertOrUpdateNode> Cannot create a git poller or repository webhook on an application without a repository")
 			}
 			h.Config["vcsServer"] = sdk.WorkflowNodeHookConfigValue{
 				Value:        n.Context.Application.VCSServer,
@@ -122,14 +153,31 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		}
 	}
 
+	// Delete hook if needed
+	if len(hooksUUIDs) > 0 {
+		hooks := []sdk.WorkflowNodeHook{}
+		for _, h := range n.Hooks {
+			found := false
+			for _, uuid := range hooksUUIDs {
+				if uuid == h.UUID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				hooks = append(hooks, h)
+			}
+		}
+		n.Hooks = hooks
+	}
+
 	//Insert triggers
 	for i := range n.Triggers {
 		t := &n.Triggers[i]
-		if err := insertTrigger(db, store, w, n, t, u); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
+		if errT := insertTrigger(db, store, w, n, t, u); errT != nil {
+			return sdk.WrapError(errT, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}
-
 	return nil
 }
 
@@ -141,16 +189,15 @@ type sqlContext struct {
 	DefaultPayload            sql.NullString `db:"default_payload"`
 	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
 	Conditions                sql.NullString `db:"conditions"`
+	Mutex                     sql.NullBool   `db:"mutex"`
 }
 
-func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
-	if err := db.QueryRow("INSERT INTO workflow_node_context (workflow_node_id) VALUES ($1) RETURNING id", c.WorkflowNodeID).Scan(&c.ID); err != nil {
-		return sdk.WrapError(err, "insertNodeContext> Unable to insert workflow node context")
-	}
-
+// UpdateNodeContext updates the node context in database
+func UpdateNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	var sqlContext = sqlContext{}
 	sqlContext.ID = c.ID
 	sqlContext.WorkflowNodeID = c.WorkflowNodeID
+	sqlContext.Mutex = sql.NullBool{Bool: c.Mutex, Valid: true}
 
 	// Set ApplicationID in context
 	if c.ApplicationID != 0 {
@@ -166,7 +213,7 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	if c.DefaultPayload != nil {
 		b, errM := json.Marshal(c.DefaultPayload)
 		if errM != nil {
-			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default payload", c.ID)
+			return sdk.WrapError(errM, "updateNodeContext> Unable to marshall workflow node context(%d) default payload", c.ID)
 		}
 		sqlContext.DefaultPayload = sql.NullString{String: string(b), Valid: true}
 	}
@@ -175,7 +222,7 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	if c.DefaultPipelineParameters != nil {
 		b, errM := json.Marshal(c.DefaultPipelineParameters)
 		if errM != nil {
-			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default pipeline parameters", c.ID)
+			return sdk.WrapError(errM, "updateNodeContext> Unable to marshall workflow node context(%d) default pipeline parameters", c.ID)
 		}
 		sqlContext.DefaultPipelineParameters = sql.NullString{String: string(b), Valid: true}
 	}
@@ -183,14 +230,21 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	var errC error
 	sqlContext.Conditions, errC = gorpmapping.JSONToNullString(c.Conditions)
 	if errC != nil {
-		return sdk.WrapError(errC, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) conditions", c.ID)
+		return sdk.WrapError(errC, "updateNodeContext> Unable to marshall workflow node context(%d) conditions", c.ID)
 	}
 
 	if _, err := db.Update(&sqlContext); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow node context(%d)", c.ID)
+		return sdk.WrapError(err, "updateNodeContext> Unable to update workflow node context(%d)", c.ID)
+	}
+	return nil
+}
+
+func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
+	if err := db.QueryRow("INSERT INTO workflow_node_context (workflow_node_id) VALUES ($1) RETURNING id", c.WorkflowNodeID).Scan(&c.ID); err != nil {
+		return sdk.WrapError(err, "insertNodeContext> Unable to insert workflow node context")
 	}
 
-	return nil
+	return UpdateNodeContext(db, c)
 }
 
 // CountPipeline Count the number of workflow that use the given pipeline
@@ -202,7 +256,7 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 }
 
 // loadNode loads a node in a workflow
-func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64, u *sdk.User) (*sdk.WorkflowNode, error) {
+func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
 	dbwn := Node{}
 	if err := db.SelectOne(&dbwn, "select * from workflow_node where workflow_id = $1 and id = $2", w.ID, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -216,16 +270,14 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	wn.Ref = fmt.Sprintf("%d", dbwn.ID)
 
 	//Load triggers
-	triggers, errTrig := loadTriggers(db, store, w, &wn, u)
+	triggers, errTrig := loadTriggers(db, store, w, &wn, u, opts)
 	if errTrig != nil {
 		return nil, sdk.WrapError(errTrig, "LoadNode> Unable to load triggers of %d", id)
 	}
 	wn.Triggers = triggers
 
-	//TODO: Check user permission
-
 	//Load context
-	ctx, errCtx := loadNodeContext(db, store, &wn, u)
+	ctx, errCtx := LoadNodeContext(db, store, w.ProjectKey, wn.ID, u, opts)
 	if errCtx != nil {
 		return nil, sdk.WrapError(errCtx, "LoadNode> Unable to load context of %d", id)
 	}
@@ -239,7 +291,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	wn.Hooks = hooks
 
 	//Load pipeline
-	pip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, true)
+	pip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, opts.DeepPipeline)
 	if err != nil {
 		return nil, sdk.WrapError(err, "LoadNode> Unable to load pipeline of %d", id)
 	}
@@ -252,18 +304,52 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	return &wn, nil
 }
 
-func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNode, u *sdk.User) (*sdk.WorkflowNodeContext, error) {
+// LoadNodeContextByNodeName load the context for a given node name and user
+func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User, workflowName, nodeName string, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
-	if err := db.SelectOne(&dbnc, "select id from workflow_node_context where workflow_node_id = $1", wn.ID); err != nil {
-		return nil, sdk.WrapError(err, "loadNodeContext> Unable to load node context %d", wn.ID)
+	query := `
+		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id
+		FROM workflow_node_context
+		JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
+		JOIN workflow ON workflow.id = workflow_node.workflow_id
+		JOIN project ON workflow.project_id = project.id
+		WHERE workflow_node.name = $1
+		AND project.id = $2
+		AND workflow.name = $3
+	`
+	if err := db.SelectOne(&dbnc, query, nodeName, proj.ID, workflowName); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context %s in workflow %s in project %s", nodeName, workflowName, proj.Name)
 	}
 	ctx := sdk.WorkflowNodeContext(dbnc)
-	ctx.WorkflowNodeID = wn.ID
 
+	if err := postLoadNodeContext(db, store, proj.Key, u, &ctx, opts); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context dependencies")
+	}
+
+	return &ctx, nil
+}
+
+// LoadNodeContext load the context for a given node id and user
+func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey string, nodeID int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
+	dbnc := NodeContext{}
+	if err := db.SelectOne(&dbnc, "select id from workflow_node_context where workflow_node_id = $1", nodeID); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load node context %d", nodeID)
+	}
+	ctx := sdk.WorkflowNodeContext(dbnc)
+	ctx.WorkflowNodeID = nodeID
+
+	if err := postLoadNodeContext(db, store, projectKey, u, &ctx, opts); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load node context dependencies")
+	}
+
+	return &ctx, nil
+}
+
+func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey string, u *sdk.User, ctx *sdk.WorkflowNodeContext, opts LoadOptions) error {
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
-		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions from workflow_node_context where id = $1", ctx.ID); err != nil {
-		return nil, err
+		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex from workflow_node_context where id = $1", ctx.ID); err != nil {
+		return err
 	}
 	if sqlContext.AppID.Valid {
 		ctx.ApplicationID = sqlContext.AppID.Int64
@@ -271,27 +357,42 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 	if sqlContext.EnvID.Valid {
 		ctx.EnvironmentID = sqlContext.EnvID.Int64
 	}
+	if sqlContext.Mutex.Valid {
+		ctx.Mutex = sqlContext.Mutex.Bool
+	}
 
 	//Unmarshal payload
-	if sqlContext.DefaultPayload.Valid {
-		if err := json.Unmarshal([]byte(sqlContext.DefaultPayload.String), &ctx.DefaultPayload); err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d default payload %d", ctx.ID)
-		}
+	if err := gorpmapping.JSONNullString(sqlContext.DefaultPayload, &ctx.DefaultPayload); err != nil {
+		return sdk.WrapError(err, "postLoadNodeContext> Unable to unmarshall context %d default payload", ctx.ID)
 	}
 
 	//Unmarshal pipeline parameters
-	if sqlContext.DefaultPipelineParameters.Valid {
-		if err := json.Unmarshal([]byte(sqlContext.DefaultPipelineParameters.String), &ctx.DefaultPipelineParameters); err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d default pipeline parameters %d", ctx.ID)
-		}
+	if err := gorpmapping.JSONNullString(sqlContext.DefaultPipelineParameters, &ctx.DefaultPipelineParameters); err != nil {
+		return sdk.WrapError(err, "postLoadNodeContext> Unable to unmarshall context %d default pipeline parameters", ctx.ID)
 	}
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
 		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables)
 		if err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to load application %d", ctx.ApplicationID)
+			return sdk.WrapError(err, "postLoadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}
+		if opts.Base64Keys {
+			if err := application.LoadAllBase64Keys(db, app); err != nil {
+				return sdk.WrapError(err, "postLoadNodeContext> Unable to load application %d base64keys", ctx.ApplicationID)
+			}
+		} else {
+			if err := application.LoadAllKeys(db, app); err != nil {
+				return sdk.WrapError(err, "postLoadNodeContext> Unable to load application %d keys", ctx.ApplicationID)
+			}
+		}
+
+		if u != nil {
+			if err := application.LoadPermission(db, store, app, u); err != nil {
+				return sdk.WrapError(err, "postLoadNodeContext> Unable to load application permission %d", ctx.ApplicationID)
+			}
+		}
+
 		ctx.Application = app
 	}
 
@@ -299,16 +400,24 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 	if ctx.EnvironmentID != 0 {
 		env, err := environment.LoadEnvironmentByID(db, ctx.EnvironmentID)
 		if err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to load env %d", ctx.EnvironmentID)
+			return sdk.WrapError(err, "postLoadNodeContext> Unable to load env %d", ctx.EnvironmentID)
 		}
 		ctx.Environment = env
+
+		if opts.Base64Keys {
+			if errE := environment.LoadAllBase64Keys(db, env); errE != nil {
+				return sdk.WrapError(errE, "postLoadNodeContext> Unable to load env %d keys", ctx.EnvironmentID)
+			}
+		}
+
+		ctx.Environment.Permission = environment.Permission(env.ProjectKey, env.Name, u)
 	}
 
 	if err := gorpmapping.JSONNullString(sqlContext.Conditions, &ctx.Conditions); err != nil {
-		return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
+		return sdk.WrapError(err, "postLoadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
 	}
 
-	return &ctx, nil
+	return nil
 }
 
 //deleteNode deletes nodes and all its children
@@ -317,7 +426,7 @@ func deleteNode(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, u 
 
 	dbwn := Node(*node)
 	if _, err := db.Delete(&dbwn); err != nil {
-		return sdk.WrapError(err, "DeleteNode> Unable to delete node %d", dbwn.ID)
+		return sdk.WrapError(err, "deleteNode> Unable to delete node %d", dbwn.ID)
 	}
 
 	node.ID = 0

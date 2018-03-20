@@ -6,9 +6,8 @@ app-status-icon {
 }
 .step {
   &.action {
-    padding-left: 40px !important;
+    padding-left: 35px !important;
     padding-right: 0px !important;
-    cursor: auto !important;
   }
   .title{
     &.action {
@@ -16,4 +15,5 @@ app-status-icon {
       font-weight: initial !important;
     }
   }
+  border: none !important;;
 }

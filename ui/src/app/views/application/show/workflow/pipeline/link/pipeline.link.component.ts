@@ -2,7 +2,6 @@ import {Component, Input, ViewChild} from '@angular/core';
 import {Application} from '../../../../../../model/application.model';
 import {Project} from '../../../../../../model/project.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Pipeline} from '../../../../../../model/pipeline.model';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
@@ -47,11 +46,11 @@ export class ApplicationPipelineLinkComponent {
         let pipelines = new Array<string>();
         if (this.project && Array.isArray(this.project.pipeline_names) && this.application) {
             if (!this.application.pipelines) {
-                pipelines.push(...this.project.pipeline_names);
+                pipelines.push(...this.project.pipeline_names.map((p) => p.name));
             } else {
-                this.project.pipeline_names.forEach(pipName => {
-                    if (!this.application.pipelines.find(appPip => appPip.pipeline.name === pipName)) {
-                        pipelines.push(pipName);
+                this.project.pipeline_names.forEach(pip => {
+                    if (!this.application.pipelines.find(appPip => appPip.pipeline.name === pip.name)) {
+                        pipelines.push(pip.name);
                     }
                 });
             }

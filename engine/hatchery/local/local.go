@@ -8,13 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moby/moby/pkg/namesgenerator"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new hatchery local
@@ -70,8 +69,7 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryLocal server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID must returns hatchery id
@@ -147,9 +145,9 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	if spawnArgs.JobID > 0 {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s) - %s", wName, spawnArgs.Model.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) - %s", wName, spawnArgs.Model.Image, spawnArgs.LogInfo)
 	}
 
 	var args []string
@@ -160,6 +158,7 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
 	args = append(args, fmt.Sprintf("--hatchery-name=%s", h.hatch.Name))
+	args = append(args, fmt.Sprintf("--insecure=%t", h.Config.API.HTTP.Insecure))
 
 	if h.Config.Provision.WorkerLogsOptions.Graylog.Host != "" {
 		args = append(args, fmt.Sprintf("--graylog-host=%s", h.Config.Provision.WorkerLogsOptions.Graylog.Host))

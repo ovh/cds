@@ -10,6 +10,8 @@ import (
 )
 
 type currentWorker struct {
+	autoUpdate    bool
+	singleUse     bool
 	apiEndpoint   string
 	token         string
 	id            string
@@ -30,8 +32,9 @@ type currentWorker struct {
 		name string
 	}
 	grpc struct {
-		address string
-		conn    *grpc.ClientConn
+		address  string
+		conn     *grpc.ClientConn
+		insecure bool
 	}
 	currentJob struct {
 		pbJob          sdk.PipelineBuildJob
@@ -56,10 +59,19 @@ func main() {
 	cmd := cmdMain(w)
 	cmd.AddCommand(cmdExport)
 	cmd.AddCommand(cmdUpload(w))
+	cmd.AddCommand(cmdArtifacts(w))
+	cmd.AddCommand(cmdDownload(w))
 	cmd.AddCommand(cmdTmpl(w))
 	cmd.AddCommand(cmdTag(w))
+	cmd.AddCommand(cmdRun(w))
+	cmd.AddCommand(cmdUpdate(w))
 	cmd.AddCommand(cmdExit(w))
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister(w))
+	cmd.AddCommand(cmdCache(w))
+
+	// last command: doc, this command is hidden
+	cmd.AddCommand(cmdDoc(cmd))
+
 	cmd.Execute()
 }

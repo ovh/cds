@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
+
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -19,13 +23,12 @@ type statusData struct {
 	repoFullName string
 	hash         string
 	urlPipeline  string
+	context      string
 }
 
 //SetStatus Users with push access can create commit statuses for a given ref:
 //https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(event sdk.Event) error {
-	log.Debug("github.SetStatus> receive: type:%s all: %+v", event.EventType, event)
-
 	if g.DisableStatus {
 		log.Warning("github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
@@ -51,13 +54,11 @@ func (g *githubClient) SetStatus(event sdk.Event) error {
 		return nil
 	}
 
-	var context = fmt.Sprintf("continuous-delivery/CDS/%s", data.pipName)
-
 	ghStatus := CreateStatus{
 		Description: data.desc,
 		TargetURL:   data.urlPipeline,
 		State:       data.status,
-		Context:     context,
+		Context:     data.context,
 	}
 
 	path := fmt.Sprintf("/repos/%s/statuses/%s", data.repoFullName, data.hash)
@@ -94,14 +95,62 @@ func (g *githubClient) SetStatus(event sdk.Event) error {
 	return nil
 }
 
+func (g *githubClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+	url := "/repos/" + repo + "/statuses/" + ref
+	status, body, _, err := g.get(url)
+	if err != nil {
+		return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "githubClient.ListStatuses")
+	}
+	if status >= 400 {
+		return []sdk.VCSCommitStatus{}, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
+	}
+	ss := []Status{}
+
+	//Github may return 304 status because we are using conditional request with ETag based headers
+	if status == http.StatusNotModified {
+		//If repo isn't updated, lets get them from cache
+		g.Cache.Get(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), &ss)
+	} else {
+		if err := json.Unmarshal(body, &ss); err != nil {
+			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "githubClient.ListStatuses> Unable to parse github commit: %s", ref)
+		}
+		//Put the body on cache for one hour and one minute
+		g.Cache.SetWithTTL(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), ss, 61*60)
+	}
+
+	vcsStatuses := []sdk.VCSCommitStatus{}
+	for _, s := range ss {
+		if !strings.HasPrefix(s.Context, "CDS/") {
+			continue
+		}
+		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
+			CreatedAt:  s.CreatedAt,
+			Decription: s.Context,
+			Ref:        ref,
+			State:      processGithubState(s),
+		})
+	}
+
+	return vcsStatuses, nil
+}
+
+func processGithubState(s Status) string {
+	switch s.State {
+	case "success":
+		return sdk.StatusSuccess.String()
+	case "error", "failure":
+		return sdk.StatusFail.String()
+	default:
+		return sdk.StatusBuilding.String()
+	}
+}
+
 func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStatusDetail bool) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventWorkflowNodeRun
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "githubClient.processEventWorkflowNodeRun> Error durring consumption")
 	}
-
-	log.Debug("Process event:%+v", event)
 	//We only manage status Success and Failure
 	if eventNR.Status == sdk.StatusChecking.String() ||
 		eventNR.Status == sdk.StatusDisabled.String() ||
@@ -124,7 +173,7 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 	data.repoFullName = eventNR.RepositoryFullName
 	data.pipName = eventNR.NodeName
 
-	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%s",
+	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 		githubURL,
 		eventNR.ProjectKey,
 		eventNR.WorkflowName,
@@ -136,7 +185,8 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 		data.urlPipeline = ""
 	}
 
-	data.desc = fmt.Sprintf("Pipeline %s: %s", eventNR.PipelineName, eventNR.Status)
+	data.context = sdk.VCSCommitStatusDescription(eventNR)
+	data.desc = eventNR.NodeName + ": " + eventNR.Status
 	return data, nil
 }
 
@@ -146,8 +196,6 @@ func processEventPipelineBuild(event sdk.Event, githubURL string, disabledStatus
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
 		return data, sdk.WrapError(err, "githubClient.processEventPipelineBuild> Error durring consumption")
 	}
-
-	log.Debug("Process event:%+v", event)
 	//We only manage status Success and Failure
 	if eventpb.Status == sdk.StatusChecking ||
 		eventpb.Status == sdk.StatusDisabled ||

@@ -13,12 +13,14 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	msg, errProcessed := sdk.ProcessError(err, al)
 	sdkErr := sdk.Error{Message: msg}
 
-	// ErrAlreadyTaken is not useful to log in warning
-	if sdk.ErrorIs(errProcessed, sdk.ErrAlreadyTaken) {
-		log.Info("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
+	// ErrAlreadyTaken and ErrWorkerModelAlreadyBooked are not useful to log in warning
+	if sdk.ErrorIs(errProcessed, sdk.ErrAlreadyTaken) ||
+		sdk.ErrorIs(errProcessed, sdk.ErrWorkerModelAlreadyBooked) ||
+		sdk.ErrorIs(errProcessed, sdk.ErrJobAlreadyBooked) {
+		log.Debug("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
 	} else {
 		log.Warning("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
 	}
 
-	WriteJSON(w, r, sdkErr, errProcessed.Status)
+	_ = WriteJSON(w, sdkErr, errProcessed.Status)
 }

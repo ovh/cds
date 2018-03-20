@@ -71,7 +71,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	//Check result
 	models := []sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &models))
-	assert.Len(t, models, 3, "")
+	assert.Len(t, models, 2, "")
 }
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
@@ -135,7 +135,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	//Check result
 	models := []sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &models))
-	assert.Len(t, models, 3, "")
+	assert.Len(t, models, 2, "")
 }
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
@@ -145,7 +145,7 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"model": workflow.WebHookModel.Name,
+		"model": sdk.WebHookModelName,
 	}
 	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelHandler, vars)
 	test.NotEmpty(t, uri)
@@ -158,11 +158,11 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 	//Check result
 	model := sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &model))
-	assert.Equal(t, workflow.WebHookModel.Name, model.Name)
-	assert.Equal(t, workflow.WebHookModel.Command, model.Command)
-	assert.Equal(t, workflow.WebHookModel.Description, model.Description)
-	assert.Equal(t, workflow.WebHookModel.Disabled, model.Disabled)
-	assert.Len(t, model.DefaultConfig, len(workflow.WebHookModel.DefaultConfig))
+	assert.Equal(t, sdk.WebHookModelName, model.Name)
+	assert.Equal(t, sdk.WebHookModel.Command, model.Command)
+	assert.Equal(t, sdk.WebHookModel.Description, model.Description)
+	assert.Equal(t, sdk.WebHookModel.Disabled, model.Disabled)
+	assert.Len(t, model.DefaultConfig, len(sdk.WebHookModel.DefaultConfig))
 }
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
@@ -172,7 +172,7 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"model": workflow.WebHookModel.Name,
+		"model": sdk.WebHookModelName,
 	}
 	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelHandler, vars)
 	test.NotEmpty(t, uri)
@@ -185,7 +185,7 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	//Check result
 	model := sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &model))
-	assert.Equal(t, workflow.WebHookModel.Name, model.Name)
+	assert.Equal(t, sdk.WebHookModelName, model.Name)
 
 	//Now update it
 	model.Disabled = false
@@ -202,7 +202,7 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	//Check result
 	model = sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &model))
-	assert.Equal(t, workflow.WebHookModel.Name, model.Name)
+	assert.Equal(t, sdk.WebHookModelName, model.Name)
 	assert.Equal(t, false, model.Disabled)
 
 }
@@ -215,7 +215,7 @@ func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"model": workflow.WebHookModel.Name,
+		"model": sdk.WebHookModelName,
 	}
 	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelHandler, vars)
 	test.NotEmpty(t, uri)
@@ -228,7 +228,7 @@ func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 	//Check result
 	model := sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &model))
-	assert.Equal(t, workflow.WebHookModel.Name, model.Name)
+	assert.Equal(t, sdk.WebHookModelName, model.Name)
 
 	//Now update it
 	model.Disabled = false

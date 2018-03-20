@@ -19,6 +19,7 @@ cover.html
 .bash_aliases
 npm-debug.log
 debug.test
+.tmp
 
 # UI
 ui/node_modules
@@ -29,3 +30,11 @@ ui/src/app/**/*.js
 ui/semantic
 ui/e2e/*.png
 ui/documentation
+ui/dist
+
+# doc
+docs/content/cli/cdsctl/
+docs/content/cli/engine/
+docs/content/cli/worker/
+docs/content/cli/api/*
+!docs/content/cli/api/_index.md

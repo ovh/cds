@@ -1,0 +1,31 @@
+<div class="ui right floated sidebar codebar" [ngClass]="{'visible animated fadeInRight': open}">
+    <div class="ui row fullheight" *ngIf="!loadingGet">
+        <ng-container *ngIf="open">
+            <codemirror
+                [(ngModel)]="exportedWf"
+                (keydown)="updated = true"
+                [config]="codeMirrorConfig" #codeMirror>
+            </codemirror>
+        </ng-container>
+        <div class="ui bottomBtnsWrapper segment">
+            <div class="ui grid">
+                <div class="sixteen wide column">
+                    <button class="ui fluid blue button" name="addbtn" [disabled]="loading" [class.loading]="loading" (click)="preview()">
+                        <i class="unhide icon"></i> {{'common_preview' | translate}}
+                    </button>
+                </div>
+                <div class="eight wide column">
+                    <button class="ui fluid green button" name="updatebtn" [disabled]="loading" [class.loading]="loading" (click)="save()">
+                        <i class="save icon"></i>{{ 'btn_save' | translate }}
+                    </button>
+                </div>
+                <div class="eight wide column">
+                    <button class="ui fluid red button" name="updatebtn" [disabled]="loading" [class.loading]="loading" (click)="cancel()">
+                        <i class="remove icon"></i>{{ 'btn_cancel' | translate }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="loadingGet" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+</div>

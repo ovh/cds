@@ -7,6 +7,7 @@ import {SettingsSidebarComponent} from './sidebar/settings-sidebar.component';
 import {ActionAddComponent} from './action/add/action.add.component';
 import {ActionEditComponent} from './action/edit/action.edit.component';
 import {ActionListComponent} from './action/list/action.list.component';
+import {DownloadComponent} from './download/download.component';
 import {GroupEditComponent} from './group/edit/group.edit.component';
 import {GroupListComponent} from './group/list/group.list.component';
 import {UserEditComponent} from './user/edit/user.edit.component';
@@ -22,6 +23,7 @@ import {WorkerModelListComponent} from './worker-model/list/worker-model.list.co
         ActionAddComponent,
         ActionEditComponent,
         ActionListComponent,
+        DownloadComponent,
         GroupEditComponent,
         GroupListComponent,
         UserEditComponent,

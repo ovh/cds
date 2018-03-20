@@ -2,7 +2,7 @@ import {Component, ViewChild} from '@angular/core';
 import {Project} from '../../../model/project.model';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs/Subscription';
-import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger, WorkflowNodeTrigger} from '../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {TranslateService} from '@ngx-translate/core';
@@ -10,18 +10,13 @@ import {ToastService} from '../../../shared/toast/ToastService';
 import {cloneDeep} from 'lodash';
 import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {WorkflowRunRequest} from '../../../model/workflow.run.model';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {PermissionValue} from '../../../model/permission.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {User} from '../../../model/user.model';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {finalize, first} from 'rxjs/operators';
-
-declare var _: any;
 
 @Component({
     selector: 'app-workflow',
@@ -33,7 +28,9 @@ export class WorkflowShowComponent {
 
     project: Project;
     detailedWorkflow: Workflow;
+    previewWorkflow: Workflow;
     workflowSubscription: Subscription;
+    workflowPreviewSubscription: Subscription;
     direction: string;
 
     @ViewChild('workflowGraph')
@@ -46,9 +43,7 @@ export class WorkflowShowComponent {
     permWarningModal: WarningModalComponent;
 
     selectedNode: WorkflowNode;
-    selectedTrigger: WorkflowNodeTrigger;
     selectedJoin: WorkflowNodeJoin;
-    selectedJoinTrigger: WorkflowNodeJoinTrigger;
 
     selectedTab = 'workflows';
 
@@ -58,15 +53,10 @@ export class WorkflowShowComponent {
     loading = false;
     // For usage
     usageCount = 0;
-    currentUser: User;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
+                private _translate: TranslateService, private _toast: ToastService,
                 private _workflowCoreService: WorkflowCoreService) {
-        // TODO: DELETE THIS WHEN WORKFLOW IS PUBLIC
-        this.currentUser = new User();
-        this.currentUser.admin = true;
-
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -80,21 +70,26 @@ export class WorkflowShowComponent {
 
         this.activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
-            if (this.project.key && workflowName) {
+            let projkey = params['key'];
+
+            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+            this._workflowCoreService.setWorkflowPreview(null);
+            if (projkey && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
                 }
 
-                this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
+                this.workflowSubscription = this._workflowStore.getWorkflows(projkey, workflowName).subscribe(ws => {
                     if (ws) {
-                        let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
+                        let updatedWorkflow = ws.get(projkey + '-' + workflowName);
                         if (updatedWorkflow && !updatedWorkflow.externalChange) {
                             if (this.detailedWorkflow && this.detailedWorkflow.last_modified === updatedWorkflow.last_modified) {
                                 return;
                             }
                             this.detailedWorkflow = updatedWorkflow;
 
-                            this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
+                            this.direction = this._workflowStore.getDirection(projkey, this.detailedWorkflow.name);
+                            this._workflowStore.updateRecentWorkflow(projkey, updatedWorkflow);
 
                             if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
                                 return;
@@ -105,13 +100,25 @@ export class WorkflowShowComponent {
                             }, 0);
                         }
                     }
-                }, (err) => {
-                    this._router.navigate(['/project', this.project.key]);
+                }, () => {
+                    this._router.navigate(['/project', projkey]);
                 });
             }
         });
 
         this._workflowCoreService.setCurrentWorkflowRun(null);
+
+        this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
+            .subscribe((wfPreview) => {
+                this.previewWorkflow = wfPreview
+                if (wfPreview != null) {
+                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+                }
+            });
+    }
+
+    savePreview() {
+        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
     }
 
     changeDirection() {
@@ -132,6 +139,10 @@ export class WorkflowShowComponent {
         if (this.workflowJoinTriggerSrc) {
             this.workflowJoinTriggerSrc.show();
         }
+    }
+
+    showAsCodeEditor() {
+      this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
     }
 
     groupManagement(event: PermissionEvent, skip?: boolean): void {
@@ -201,19 +212,9 @@ export class WorkflowShowComponent {
                 modal.approve(true);
             }
             if (this.workflowGraph) {
-                this.workflowGraph.toggleLinkJoin(false);
+                this._workflowCoreService.linkJoinEvent(null);
             }
-        });
-    }
-
-    runWorkflow(): void {
-        this.loading = true;
-        let request = new WorkflowRunRequest();
-        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow.name, request).pipe(first()).subscribe(wr => {
-            this.loading = false;
-            this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name, 'run', wr.num]);
-        }, () => {
-            this.loading = false;
+            this._router.navigate(['/project', this.project.key, 'workflow', w.name]);
         });
     }
 

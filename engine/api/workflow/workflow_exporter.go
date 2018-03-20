@@ -18,7 +18,7 @@ import (
 
 // Export a workflow
 func Export(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
-	wf, errload := Load(db, cache, key, name, u)
+	wf, errload := Load(db, cache, key, name, u, LoadOptions{})
 	if errload != nil {
 		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
 	}
@@ -43,7 +43,10 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, withPermissions bo
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
 func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer) error {
-	wf, errload := Load(db, cache, key, name, u)
+	options := LoadOptions{
+		DeepPipeline: true,
+	}
+	wf, errload := Load(db, cache, key, name, u, options)
 	if errload != nil {
 		return sdk.WrapError(errload, "workflow.Pull> Cannot load workflow %s", name)
 	}
@@ -51,6 +54,34 @@ func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exp
 	apps := wf.GetApplications()
 	envs := wf.GetEnvironments()
 	pips := wf.GetPipelines()
+
+	//Reload app to retrieve secrets
+	for i := range apps {
+		app := &apps[i]
+		vars, errv := application.GetAllVariable(db, key, app.Name, application.WithClearPassword())
+		if errv != nil {
+			return sdk.WrapError(errv, "workflow.Pull> Cannot load application variables %s", app.Name)
+		}
+		app.Variable = vars
+
+		if errk := application.LoadAllDecryptedKeys(db, app); errk != nil {
+			return sdk.WrapError(errk, "workflow.Pull> Cannot load application keys %s", app.Name)
+		}
+	}
+
+	//Reload env to retrieve secrets
+	for i := range envs {
+		env := &envs[i]
+		vars, errv := environment.GetAllVariable(db, key, env.Name, environment.WithClearPassword())
+		if errv != nil {
+			return sdk.WrapError(errv, "workflow.Pull> Cannot load environment variables %s", env.Name)
+		}
+		env.Variable = vars
+
+		if errk := environment.LoadAllDecryptedKeys(db, env); errk != nil {
+			return sdk.WrapError(errk, "workflow.Pull> Cannot load environment keys %s", env.Name)
+		}
+	}
 
 	tw := tar.NewWriter(w)
 

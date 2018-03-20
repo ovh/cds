@@ -17,7 +17,7 @@ type Repository struct {
 // Application represent an application in a project
 type Application struct {
 	ID                 int64                 `json:"id" db:"id"`
-	Name               string                `json:"name" db:"name" cli:"name"`
+	Name               string                `json:"name" db:"name" cli:"name,key"`
 	Description        string                `json:"description"  db:"description"`
 	ProjectID          int64                 `json:"-" db:"project_id"`
 	ProjectKey         string                `json:"project_key" db:"-"`
@@ -31,6 +31,7 @@ type Application struct {
 	VCSServer          string                `json:"vcs_server,omitempty" db:"vcs_server"`
 	RepositoryFullname string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
 	RepositoryPollers  []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
+	RepositoryStrategy RepositoryStrategy    `json:"vcs_strategy,omitempty" db:"-"`
 	Hooks              []Hook                `json:"hooks,omitempty" db:"-"`
 	Workflows          []CDPipeline          `json:"workflows,omitempty" db:"-"`
 	Schedulers         []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
@@ -38,6 +39,39 @@ type Application struct {
 	WorkflowMigration  string                `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys               []ApplicationKey      `json:"keys" yaml:"keys" db:"-"`
 	Usage              *Usage                `json:"usage,omitempty" db:"-" cli:"-"`
+}
+
+// SSHKeys returns the slice of ssh key for an application
+func (a Application) SSHKeys() []ApplicationKey {
+	keys := []ApplicationKey{}
+	for _, k := range a.Keys {
+		if k.Type == KeyTypeSSH {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// PGPKeys returns the slice of pgp key for an application
+func (a Application) PGPKeys() []ApplicationKey {
+	keys := []ApplicationKey{}
+	for _, k := range a.Keys {
+		if k.Type == KeyTypePGP {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// RepositoryStrategy represent the way to use the repository
+type RepositoryStrategy struct {
+	ConnectionType string `json:"connection_type"`
+	SSHKey         string `json:"ssh_key"`
+	User           string `json:"user"`
+	Password       string `json:"password"`
+	Branch         string `json:"branch"`
+	DefaultBranch  string `json:"default_branch"`
+	PGPKey         string `json:"pgp_key"`
 }
 
 // ApplicationVariableAudit represents an audit on an application variable
@@ -59,6 +93,16 @@ type ApplicationPipeline struct {
 	Parameters   []Parameter       `json:"parameters"`
 	LastModified int64             `json:"last_modified"`
 	Triggers     []PipelineTrigger `json:"triggers,omitempty"`
+}
+
+// GetKey return a key by name
+func (a Application) GetKey(kname string) *ApplicationKey {
+	for i := range a.Keys {
+		if a.Keys[i].Name == kname {
+			return &a.Keys[i]
+		}
+	}
+	return nil
 }
 
 // NewApplication instanciate a new NewApplication
@@ -512,9 +556,5 @@ func DeletePipelineScheduler(projectKey, appName, pipelineName string, s *Pipeli
 		return err
 	}
 
-	if err := DecodeError(data); err != nil {
-		return err
-	}
-
-	return nil
+	return DecodeError(data)
 }

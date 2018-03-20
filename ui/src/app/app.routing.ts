@@ -7,7 +7,6 @@ const routes: Routes = [
     { path: 'account', loadChildren: 'app/views/account/account.module#AccountModule' },
     { path: 'project', loadChildren: 'app/views/project/project.module#ProjectModule' },
     { path: 'settings', loadChildren: 'app/views/settings/settings.module#SettingsModule' },
-    { path: 'warnings', loadChildren: 'app/views/warnings/warnings.module#WarningsModule' },
     { path: 'admin', loadChildren: 'app/views/admin/admin.module#AdminModule'}
 ];
 

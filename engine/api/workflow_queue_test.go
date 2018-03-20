@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -56,6 +57,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		Type:       sdk.BuildPipeline,
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionReadExecute))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -84,11 +86,12 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	test.NoError(t, workflow.AddGroup(api.mustDB(), &w, proj.ProjectGroups[0]))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -135,18 +138,64 @@ func testCountGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRu
 
 	count := sdk.WorkflowNodeJobRunCount{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &count))
-	assert.Equal(t, int64(1), count.Count)
+	assert.True(t, count.Count > 0)
 
 	if t.Failed() {
 		t.FailNow()
 	}
 }
 
-func testGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
+func testGetWorkflowJobAsRegularUser(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	jobs := []sdk.WorkflowNodeJobRun{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
+	assert.True(t, len(jobs) > 1)
+
+	if t.Failed() {
+		t.FailNow()
+	}
+
+	ctx.job = &jobs[0]
+}
+
+func testGetWorkflowJobAsWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
+	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
+	test.NotEmpty(t, uri)
+
+	//Register the worker
+	testRegisterWorker(t, api, router, ctx)
+
+	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "GET", uri, nil)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	jobs := []sdk.WorkflowNodeJobRun{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &jobs))
+	assert.Len(t, jobs, 1)
+
+	if t.Failed() {
+		t.FailNow()
+	}
+
+	ctx.job = &jobs[0]
+}
+
+func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
+	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
+	test.NotEmpty(t, uri)
+
+	//Register the worker
+	testRegisterHatchery(t, api, router, ctx)
+
+	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -168,9 +217,9 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 	ctx.workerToken, err = token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent))
+	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent, "", ""))
 	//Register the worker
-	params := &worker.RegistrationForm{
+	params := &sdk.WorkerRegistrationForm{
 		Name:  sdk.RandomString(10),
 		Token: ctx.workerToken,
 	}
@@ -183,7 +232,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 	tk, err := token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent))
+	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
 
 	ctx.hatchery = &sdk.Hatchery{
 		UID:      tk,
@@ -199,7 +248,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
-	testGetWorkflowJob(t, api, router, &ctx)
+	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	// count job in queue
@@ -274,10 +323,10 @@ func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
-	testGetWorkflowJob(t, api, router, &ctx)
+	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}
@@ -315,7 +364,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 func Test_postBookWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
-	testGetWorkflowJob(t, api, router, &ctx)
+	testGetWorkflowJobAsHatchery(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -342,7 +391,7 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 func Test_postWorkflowJobResultHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
-	testGetWorkflowJob(t, api, router, &ctx)
+	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -359,7 +408,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}
@@ -409,7 +458,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
-	testGetWorkflowJob(t, api, router, &ctx)
+	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -438,7 +487,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}
@@ -522,7 +571,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
-	testGetWorkflowJob(t, api, router, &ctx)
+	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -539,7 +588,7 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}
@@ -573,7 +622,7 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
-	testGetWorkflowJob(t, api, router, &ctx)
+	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	// Init store
@@ -603,7 +652,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}

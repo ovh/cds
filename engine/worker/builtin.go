@@ -22,6 +22,7 @@ func init() {
 	mapBuiltinActions[sdk.GitCloneAction] = runGitClone
 	mapBuiltinActions[sdk.GitTagAction] = runGitTag
 	mapBuiltinActions[sdk.ReleaseAction] = runRelease
+	mapBuiltinActions[sdk.CheckoutApplicationAction] = runCheckoutApplication
 }
 
 // BuiltInAction defines builtin action signature
@@ -43,9 +44,9 @@ func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
 }
 
 func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int) sdk.Result {
-	log.Info("runBuiltin> Begin %p", ctx)
+	log.Info("runBuiltin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
 	defer func() {
-		log.Info("runBuiltin> End %p (%s)", ctx, ctx.Err())
+		log.Info("runBuiltin> End buildID:%d stepOrder:%d", buildID, stepOrder)
 	}()
 	defer w.drainLogsAndCloseLogger(ctx)
 
@@ -65,9 +66,9 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 }
 
 func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
-	log.Info("runPlugin> Begin %p", ctx)
+	log.Info("runPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
 	defer func() {
-		log.Info("runPlugin> End %p (%s)", ctx, ctx.Err())
+		log.Info("runPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
 	}()
 
 	chanRes := make(chan sdk.Result, 1)
@@ -89,6 +90,9 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		//set up environment variables from pipeline build job parameters
 		for _, p := range params {
 			// avoid put private key in environment var as it's a binary value
+			if (p.Type == sdk.KeyPGPParameter || p.Type == sdk.KeySSHParameter) && strings.HasSuffix(p.Name, ".priv") {
+				continue
+			}
 			if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
 				continue
 			}
@@ -119,6 +123,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		}
 
 		sendLog(fmt.Sprintf("Starting plugin: %s version %s\n", _plugin.Name(), _plugin.Version()))
+		log.Info("runPlugin> Starting plugin:%s version:%s stepOrder:%d", _plugin.Name(), _plugin.Version(), stepOrder)
 
 		//Manage all parameters
 		pluginSecrets := plugin.Secrets{
@@ -162,9 +167,11 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		pluginResult := _plugin.Run(pluginAction)
 		if pluginResult == plugin.Success {
 			res.Status = sdk.StatusSuccess.String()
+			log.Info("runPlugin> plugin success on stepOrder:%d", stepOrder)
 		} else {
 			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("Plugin Failure")
+			res.Reason = fmt.Sprintf("Plugin Failure: %v", pluginResult)
+			log.Info("runPlugin> plugin failure on stepOrder:%d", stepOrder)
 		}
 
 		chanRes <- res

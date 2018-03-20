@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/moby/moby/pkg/namesgenerator"
+	"github.com/ovh/cds/sdk/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -27,9 +27,9 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 	}
 
 	if spawnArgs.JobID > 0 {
-		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, spawnArgs.Model.Name, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s model:%s for job %d - %s", name, spawnArgs.Model.Name, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s model:%s - %s", name, spawnArgs.Model.Name, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s model:%s - %s", name, spawnArgs.Model.Name, spawnArgs.LogInfo)
 	}
 
 	var omd sdk.OpenstackModelData
@@ -89,7 +89,7 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 cd $HOME
 # Download and start worker with curl
 rm -f worker
-curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
+curl  "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
 chmod +x worker
 export CDS_SINGLE_USE=1
 export CDS_FORCE_EXIT=1
@@ -124,7 +124,7 @@ export CDS_TTL={{.TTL}}
 				if spawnArgs.JobID != 0 {
 					jobInfo = fmt.Sprintf(" job:%d", spawnArgs.JobID)
 				}
-				log.Info("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArgs.LogInfo)
+				log.Debug("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArgs.LogInfo)
 				imageID = img.ID
 				break
 			}

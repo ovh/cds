@@ -6,12 +6,33 @@
             <app-workflow-node-form [project]="project" [(node)]="editableNode"></app-workflow-node-form>
             <ng-container *ngIf="pipParamsReady && editableNode.context.default_pipeline_parameters && editableNode.context.default_pipeline_parameters.length > 0">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
-                <app-parameter-list [project]="project" [parameters]="editableNode.context.default_pipeline_parameters" mode="launcher"
-                                    [suggest]="[]"></app-parameter-list>
+                <app-parameter-list
+                    [project]="project"
+                    [parameters]="editableNode.context.default_pipeline_parameters"
+                    [paramsRef]="currentPipeline.parameters"
+                    mode="launcher"
+                    [suggest]="suggest"
+                    [canDelete]="true"
+                    (event)="parameterEvent($event)">
+                </app-parameter-list>
             </ng-container>
             <ng-container *ngIf="(node.hooks && node.hooks.length > 0) || (node.id === workflow.root.id)">
                 <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
-                <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig" (change)="updateValue($event)" #textareaCodeMirror></codemirror>
+                <ng-container *ngIf="!loadingBranches">
+                    <codemirror
+                        [class.invalid]="invalidJSON"
+                        [(ngModel)]="payloadString"
+                        [config]="codeMirrorConfig"
+                        (click)="changeCodeMirror($event)"
+                        (change)="changeCodeMirror($event)"
+                        #textareaCodeMirror>
+                    </codemirror>
+                </ng-container>
+                <ng-container *ngIf="loadingBranches">
+                    <div class="ui info message">
+                        {{ 'common_loading' | translate }}
+                    </div>
+                </ng-container>
                 <div class="extra">
                     <ng-container *ngIf="invalidJSON">
                         {{ 'workflow_context_invalid' | translate}}

@@ -11,21 +11,22 @@ import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {ProjectStore} from '../project/project.store';
 import {Trigger} from '../../model/trigger.model';
-import {ApplyTemplateRequest} from '../../model/template.model';
+import {NavbarRecentData} from '../../model/navbar.model';
 import {Notification} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
 import 'rxjs/add/observable/of';
+import {Key} from '../../model/keys.model';
 
 
 @Injectable()
 export class ApplicationStore {
 
-    static RECENT_APPLICATION_KEY = 'CDS-RECENT-APPLICATION';
+    static RECENT_APPLICATIONS_KEY = 'CDS-RECENT-APPLICATIONS';
 
     // List of all applications.
     private _application: BehaviorSubject<Map<string, Application>> = new BehaviorSubject(Map<string, Application>());
 
-    private _recentApplications: BehaviorSubject<List<Application>> = new BehaviorSubject(List<Application>());
+    private _recentApplications: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
 
 
     constructor(private _applicationService: ApplicationService, private _projectStore: ProjectStore) {
@@ -34,7 +35,7 @@ export class ApplicationStore {
     }
 
     loadRecentApplication(): void {
-        let arrayApp = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATION_KEY));
+        let arrayApp = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATIONS_KEY));
         this._recentApplications.next(List.of(...arrayApp));
     }
 
@@ -72,19 +73,23 @@ export class ApplicationStore {
      * @param application Application to add
      */
     updateRecentApplication(key: string, application: Application): void {
-        application.project_key = key;
-        let currentRecentApps: Array<Application> = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATION_KEY));
+        let navbarRecentData = new NavbarRecentData();
+        navbarRecentData.project_key = key;
+        navbarRecentData.name = application.name;
+        let currentRecentApps: Array<NavbarRecentData> = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATIONS_KEY));
         if (currentRecentApps) {
-            let index: number = currentRecentApps.findIndex(app => app.name === application.name && app.project_key === key);
+            let index: number = currentRecentApps.findIndex(app =>
+                app.name === navbarRecentData.name && app.project_key === navbarRecentData.project_key
+            );
             if (index >= 0) {
                 currentRecentApps.splice(index, 1);
             }
         } else {
-            currentRecentApps = new Array<Application>();
+            currentRecentApps = new Array<NavbarRecentData>();
         }
-        currentRecentApps.splice(0, 0, application);
+        currentRecentApps.splice(0, 0, navbarRecentData);
         currentRecentApps = currentRecentApps.splice(0, 15);
-        localStorage.setItem(ApplicationStore.RECENT_APPLICATION_KEY, JSON.stringify(currentRecentApps));
+        localStorage.setItem(ApplicationStore.RECENT_APPLICATIONS_KEY, JSON.stringify(currentRecentApps));
         this._recentApplications.next(List(currentRecentApps));
     }
 
@@ -132,16 +137,13 @@ export class ApplicationStore {
     }
 
     /**
-     * Application template to create an application.
+     * Create application
      * @param key Project unique key
-     * @param request Request
-     * @returns {Observable<Project>}
+     * @param app New application data
+     * @returns Observable<Application>
      */
-    applyTemplate(key: string, request: ApplyTemplateRequest): Observable<Project> {
-        return this._applicationService.applyTemplate(key, request).map(p => {
-            this._projectStore.updateApplicationsAndPipelines(key, p);
-            return p;
-        });
+    createApplication(key: string, app: Application): Observable<Application> {
+        return this._applicationService.createApplication(key, app).map(appResult => appResult);
     }
 
     /**
@@ -151,8 +153,8 @@ export class ApplicationStore {
      * @param application Application to update
      * @returns {Observable<Application>}
      */
-    renameApplication(key: string, oldName: string, newName: string): Observable<Application> {
-        return this._applicationService.renameApplication(key, oldName, newName).map(app => {
+    updateApplication(key: string, oldName: string, appli: Application): Observable<Application> {
+        return this._applicationService.updateApplication(key, oldName, appli).map(app => {
             let cache = this._application.getValue();
             let appKey = key + '-' + oldName;
             if (cache.get(appKey)) {
@@ -161,9 +163,9 @@ export class ApplicationStore {
                 pToUpdate.name = app.name;
                 this._application.next(cache.set(key + '-' + app.name, pToUpdate).remove(appKey));
             }
-
-            this._projectStore.updateApplicationName(key, oldName, newName);
-
+            if (oldName !== appli.name) {
+                this._projectStore.updateApplicationName(key, oldName, appli.name);
+            }
             return app;
         });
     }
@@ -599,6 +601,52 @@ export class ApplicationStore {
     detachPipeline(key: string, appName: string, pipName: string): Observable<Application> {
         return this._applicationService.detachPipelines(key, appName, pipName).map( app => {
             return this.refreshApplicationPipelineCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Add a key on the application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param k Key to add
+     * @returns {OperatorFunction<Key>}
+     */
+    addKey(key: string, appName: string, k: Key): Observable<Key> {
+        return this._applicationService.addKey(key, appName, k).map( () => {
+            let cache = this._application.getValue();
+            let appKey = key + '-' + appName;
+            let appToUpdate = cache.get(appKey);
+            if (appToUpdate) {
+                if (!appToUpdate.keys) {
+                    appToUpdate.keys = new Array<Key>();
+                }
+                appToUpdate.keys.push(k);
+                this._application.next(cache.set(appKey, appToUpdate));
+            }
+            return k;
+        });
+    }
+
+    /**
+     * Remove a key from the application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param k Key to remove
+     * @returns {OperatorFunction<boolean>}
+     */
+    removeKey(key: string, appName: string, k: Key): Observable<boolean> {
+        return this._applicationService.removeKey(key, appName, k.name).map( () => {
+            let cache = this._application.getValue();
+            let appKey = key + '-' + appName;
+            let appToUpdate = cache.get(appKey);
+            if (appToUpdate) {
+                let i = appToUpdate.keys.findIndex(kkey => kkey.name === k.name);
+                if (i > -1) {
+                    appToUpdate.keys.splice(i, 1);
+                }
+                this._application.next(cache.set(appKey, appToUpdate));
+            }
+            return true;
         });
     }
 

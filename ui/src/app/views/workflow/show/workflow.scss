@@ -4,6 +4,9 @@
   flex-direction: column;
   align-content: stretch;
   height: 100%;
+  .ml5 {
+    margin-left: 5px;
+  }
   .over {
     z-index: 1;
     background: white;

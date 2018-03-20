@@ -342,7 +342,6 @@ func (c *Client) Start() (addr net.Addr, err error) {
 	if len(cmd.Env) == 0 {
 		cmd.Env = os.Environ()
 	}
-
 	cmd.Env = append(cmd.Env, env...)
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = stderr_w

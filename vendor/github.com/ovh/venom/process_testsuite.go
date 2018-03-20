@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/fsamin/go-dump"
 	log "github.com/sirupsen/logrus"
 )
@@ -29,9 +30,11 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 
 	var o string
 	if ts.Failures > 0 || ts.Errors > 0 {
-		o = fmt.Sprintf("❌ %s", rightPad(ts.Package, " ", 47))
+		red := color.New(color.FgRed).SprintFunc()
+		o = fmt.Sprintf("%s %s", red("FAILURE"), rightPad(ts.Package, " ", 47))
 	} else {
-		o = fmt.Sprintf("✅ %s", rightPad(ts.Package, " ", 47))
+		green := color.New(color.FgGreen).SprintFunc()
+		o = fmt.Sprintf("%s %s", green("SUCCESS"), rightPad(ts.Package, " ", 47))
 	}
 	if v.OutputDetails == DetailsLow {
 		o += fmt.Sprintf("%s", elapsed)

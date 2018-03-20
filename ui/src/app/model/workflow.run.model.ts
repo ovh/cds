@@ -33,6 +33,11 @@ export class WorkflowRun {
     nodes: { [key: string]: Array<WorkflowNodeRun>; };
     tags: Array<WorkflowRunTags>;
     join_triggers_run: Map<number, TriggerRun>;
+    commits: Array<Commit>;
+    infos: Array<SpawnInfo>;
+
+    // Useful for UI
+    duration: string;
 }
 
 export class WorkflowRunTags {
@@ -55,13 +60,14 @@ export class WorkflowNodeRun {
     hook_event: WorkflowNodeRunHookEvent;
     manual: WorkflowNodeRunManual;
     source_node_runs: Array<number>;
-    payload: Array<Parameter>;
+    payload: {};
     pipeline_parameters: Array<Parameter>;
     build_parameters: Array<Parameter>;
     artifacts: Array<WorkflowNodeRunArtifact>;
     tests: Tests;
     commits: Array<Commit>;
-    triggers_run: Map<number, TriggerRun>
+    triggers_run: Map<string, TriggerRun>
+    can_be_run: boolean
 }
 
 export class TriggerRun {

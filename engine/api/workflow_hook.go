@@ -19,7 +19,7 @@ func (api *API) getWorkflowHooksHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowHooksHandler")
 		}
 
-		return WriteJSON(w, r, hooks, http.StatusOK)
+		return WriteJSON(w, hooks, http.StatusOK)
 	}
 }
 
@@ -33,12 +33,12 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			return sdk.WrapError(errN, "getWorkflowHookModelsHandler")
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, workflowName, getUser(ctx))
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, workflowName, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
 		}
@@ -55,7 +55,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 
 		// Post processing  on repositoryWebHook
 		hasRepoManager := false
-		repoWebHookEnable := false
+		repoWebHookEnable, repoPollerEnable := false, false
 		if node.Context.Application != nil && node.Context.Application.RepositoryFullname != "" {
 			hasRepoManager = true
 		}
@@ -74,26 +74,45 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 					return sdk.WrapError(errWH, "getWorkflowHookModelsHandler> Cannot get vcs web hook info")
 				}
 				repoWebHookEnable = webHookInfo.WebhooksSupported && !webHookInfo.WebhooksDisabled
-			}
-		}
 
-		indexToDelete := -1
-		for i := range m {
-			if m[i].Name == workflow.RepositoryWebHookModel.Name {
-				if !repoWebHookEnable {
-					indexToDelete = i
-					break
-				} else {
-					m[i].Icon = webHookInfo.Icon
+				pollInfo, errPoll := repositoriesmanager.GetPollingInfos(client)
+				if errPoll != nil {
+					return sdk.WrapError(errPoll, "getWorkflowHookModelsHandler> Cannot get vcs poller info")
 				}
+				repoPollerEnable = pollInfo.PollingSupported && !pollInfo.PollingDisabled
 			}
-
-		}
-		if indexToDelete > -1 {
-			m = append(m[0:indexToDelete], m[indexToDelete+1:]...)
 		}
 
-		return WriteJSON(w, r, m, http.StatusOK)
+		hasKafka := false
+		for _, platform := range p.Platforms {
+			if platform.Model.Name == sdk.KafkaPlatformModel {
+				hasKafka = true
+				break
+			}
+		}
+
+		models := []sdk.WorkflowHookModel{}
+		for i := range m {
+			switch m[i].Name {
+			case sdk.RepositoryWebHookModelName:
+				if repoWebHookEnable {
+					m[i].Icon = webHookInfo.Icon
+					models = append(models, m[i])
+				}
+			case sdk.GitPollerModelName:
+				if repoPollerEnable {
+					models = append(models, m[i])
+				}
+			case sdk.KafkaHookModelName:
+				if hasKafka {
+					models = append(models, m[i])
+				}
+			default:
+				models = append(models, m[i])
+			}
+		}
+
+		return WriteJSON(w, models, http.StatusOK)
 	}
 }
 
@@ -105,7 +124,7 @@ func (api *API) getWorkflowHookModelHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelHandler")
 		}
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }
 
@@ -130,7 +149,7 @@ func (api *API) postWorkflowHookModelHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler> Unable to commit transaction")
 		}
 
-		return WriteJSON(w, r, m, http.StatusCreated)
+		return WriteJSON(w, m, http.StatusCreated)
 	}
 }
 
@@ -156,6 +175,6 @@ func (api *API) putWorkflowHookModelHandler() Handler {
 			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to commit transaction")
 		}
 
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }

@@ -19,10 +19,6 @@ import (
 
 func runScriptAction(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		log.Debug("runScriptAction> Begin %p", ctx)
-		defer func() {
-			log.Debug("runScriptAction> End %p (%s)", ctx, ctx.Err())
-		}()
 		chanRes := make(chan sdk.Result)
 
 		go func() {
@@ -30,7 +26,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 
 			// Get script content
 			var scriptContent string
-			a := sdk.ParameterFind(a.Parameters, "script")
+			a := sdk.ParameterFind(&a.Parameters, "script")
 			scriptContent = a.Value
 
 			// Check that script content is there
@@ -154,16 +150,21 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			//set up environment variables from pipeline build job parameters
 			for _, p := range *params {
 				// avoid put private key in environment var as it's a binary value
+				if strings.HasPrefix(p.Name, "cds.key.") && strings.HasSuffix(p.Name, ".priv") {
+					continue
+				}
 				if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
 					continue
 				}
 				envName := strings.Replace(p.Name, ".", "_", -1)
+				envName = strings.Replace(envName, "-", "_", -1)
 				envName = strings.ToUpper(envName)
 				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
 			}
 
 			for _, p := range w.currentJob.buildVariables {
 				envName := strings.Replace(p.Name, ".", "_", -1)
+				envName = strings.Replace(envName, "-", "_", -1)
 				envName = strings.ToUpper(envName)
 				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
 			}

@@ -8,17 +8,14 @@ function generateUserActionsDocumentation {
   filename=$(basename "$action")
   actionName=${filename/.hcl/}
 
-  ACTION_FILE="content/building-pipelines/building-pipelines.actions.user.${actionName}.md"
+  mkdir -p content/workflows/pipelines/actions/user
+  ACTION_FILE="content/workflows/pipelines/actions/user/${actionName}.md"
 
   echo "generate ${ACTION_FILE}"
 
 cat << EOF > ${ACTION_FILE}
 +++
 title = "${actionName}"
-
-[menu.main]
-parent = "actions-user"
-identifier = "${actionName}"
 
 +++
 EOF
@@ -36,8 +33,9 @@ function generatePluginsDocumentation {
     continue;
   fi
 
+  mkdir -p content/workflows/pipelines/actions/plugins
   OLD=`pwd`
-  PLUGIN_FILE="$OLD/content/building-pipelines/building-pipelines.actions.plugins.${plugin}.md"
+  PLUGIN_FILE="$OLD/content/workflows/pipelines/actions/plugins/${plugin}.md"
 
   cd ../contrib/plugins/${plugin}
 
@@ -50,10 +48,6 @@ cat << EOF > ${PLUGIN_FILE}
 +++
 title = "${plugin}"
 
-[menu.main]
-parent = "actions-plugins"
-identifier = "${plugin}"
-
 +++
 EOF
 
@@ -64,43 +58,5 @@ EOF
   done;
 }
 
-function generateTemplatesDocumentation {
-  for template in `ls ../contrib/templates/`; do
-
-  if [[ "${template}" != cds-template-* ]]; then
-    echo "skip ../contrib/templates/${template}"
-    continue;
-  fi
-
-  OLD=`pwd`
-  TEMPLATE_FILE="$OLD/content/building-pipelines/building-pipelines.templates.${template}.md"
-
-  cd ../contrib/templates/${template}
-
-  echo "Compile template ${template}"
-  go build
-
-  echo "generate ${TEMPLATE_FILE}"
-
-cat << EOF > ${TEMPLATE_FILE}
-+++
-title = "${template}"
-chapter = true
-
-[menu.main]
-parent = "templates"
-identifier = "${template}"
-
-+++
-EOF
-
-  ./${template} info >> $TEMPLATE_FILE
-
-  cd $OLD
-
-  done;
-}
-
 generateUserActionsDocumentation
 generatePluginsDocumentation
-generateTemplatesDocumentation

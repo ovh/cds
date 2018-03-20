@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -15,8 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// Deprecated
-// GetVariableAudit Get variable audit for the given project
+// GetVariableAudit Get variable audit for the given project. DEPRECATED
 func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `
@@ -56,8 +54,7 @@ func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, err
 	return audits, nil
 }
 
-// Deprecated
-// GetAudit retrieve the current project variable audit
+// GetAudit retrieve the current project variable audit. DEPRECATED
 func GetAudit(db gorp.SqlExecutor, key string, auditID int64) ([]sdk.Variable, error) {
 	query := `
 		SELECT project_variable_audit_old.data
@@ -199,14 +196,14 @@ func GetVariableByID(db gorp.SqlExecutor, projectID int64, variableID int64, arg
 	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM project_variable
 		  WHERE id=$1 AND project_id=$2`
 	var varValue sql.NullString
-	var cipher_value []byte
-	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipher_value)
+	var cipherValue []byte
+	err := db.QueryRow(query, variableID, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipherValue)
 	if err != nil {
 		return variable, err
 	}
 
 	var errD error
-	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipher_value, c.clearsecret)
+	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipherValue, c.clearsecret)
 	return variable, errD
 }
 
@@ -221,13 +218,13 @@ func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName str
 	query := `SELECT id, var_name, var_value, var_type, cipher_value FROM project_variable
 		  WHERE var_name=$1 AND project_id=$2`
 	var varValue sql.NullString
-	var cipher_value []byte
-	err := db.QueryRow(query, variableName, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipher_value)
+	var cipherValue []byte
+	err := db.QueryRow(query, variableName, projectID).Scan(&variable.ID, &variable.Name, &varValue, &variable.Type, &cipherValue)
 	if err != nil {
 		return variable, err
 	}
 	var errD error
-	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipher_value, c.clearsecret)
+	variable.Value, errD = secret.DecryptS(variable.Type, varValue, cipherValue, c.clearsecret)
 	return variable, errD
 }
 
@@ -267,10 +264,9 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 }
 
 // UpdateVariable Update a variable in the given project
-func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, previousVar *sdk.Variable, u *sdk.User) error {
 	varValue := variable.Value
 	// Clear password for audit
-	previousVar, err := GetVariableByID(db, proj.ID, variable.ID, WithClearPassword())
 
 	//Check variable name
 	rx := sdk.NamePatternRegex
@@ -337,7 +333,8 @@ func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 }
 
 // DeleteAllVariable Delete all variables from the given project
-func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
+// Only use by delete project
+func deleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)
 	if err != nil {
@@ -349,25 +346,15 @@ func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 
 // AddKeyPair generate a ssh key pair and add them as project variables
 func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u *sdk.User) error {
-	pubR, privR, errGenerate := keys.GenerateSSHKeyPair(keyname)
+	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return errGenerate
-	}
-
-	pub, errPub := ioutil.ReadAll(pubR)
-	if errPub != nil {
-		return sdk.WrapError(errPub, "project.Insert> Unable to read public key")
-	}
-
-	priv, errPriv := ioutil.ReadAll(privR)
-	if errPriv != nil {
-		return sdk.WrapError(errPriv, "project.Insert>  Unable to read private key")
 	}
 
 	v := &sdk.Variable{
 		Name:  keyname,
 		Type:  sdk.KeyVariable,
-		Value: string(priv),
+		Value: k.Private,
 	}
 
 	if err := InsertVariable(db, proj, v, u); err != nil {
@@ -377,7 +364,7 @@ func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u *sdk.U
 	p := &sdk.Variable{
 		Name:  keyname + ".pub",
 		Type:  sdk.TextVariable,
-		Value: string(pub),
+		Value: k.Public,
 	}
 
 	return InsertVariable(db, proj, p, u)

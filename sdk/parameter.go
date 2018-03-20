@@ -14,6 +14,8 @@ const (
 	StringParameter      = "string"
 	TextParameter        = "text"
 	BooleanParameter     = "boolean"
+	KeySSHParameter      = "ssh-key"
+	KeyPGPParameter      = "pgp-key"
 	KeyParameter         = "key"
 )
 
@@ -27,7 +29,8 @@ var (
 		BooleanParameter,
 		ListParameter,
 		PipelineParameter,
-		KeyParameter,
+		KeySSHParameter,
+		KeyPGPParameter,
 	}
 )
 
@@ -71,18 +74,28 @@ func AddParameter(array *[]Parameter, name string, parameterType string, value s
 }
 
 // ParameterFind return a parameter given its name if it exists in array
-func ParameterFind(vars []Parameter, s string) *Parameter {
-	for _, v := range vars {
+func ParameterFind(vars *[]Parameter, s string) *Parameter {
+	for i, v := range *vars {
 		if v.Name == s {
-			return &v
+			return &(*vars)[i]
 		}
 	}
 	return nil
 }
 
+// ParameterAddOrSetValue add a new parameter or update a value
+func ParameterAddOrSetValue(vars *[]Parameter, name string, parameterType string, value string) {
+	p := ParameterFind(vars, name)
+	if p == nil {
+		AddParameter(vars, name, parameterType, value)
+	} else {
+		p.Value = value
+	}
+}
+
 // ParameterValue return a parameter value given its name if it exists in array, else it returns empty string
 func ParameterValue(vars []Parameter, s string) string {
-	p := ParameterFind(vars, s)
+	p := ParameterFind(&vars, s)
 	if p == nil {
 		return ""
 	}
@@ -161,7 +174,11 @@ func ParametersMapMerge(params map[string]string, otherParams map[string]string)
 	for k, v := range otherParams {
 		if val, ok := params[k]; ok {
 			if val != v {
-				params[k] = fmt.Sprintf("%s,%s", val, v)
+				if val == "" { // val empty, take v, even if v is empty
+					params[k] = fmt.Sprintf("%s", v)
+				} else { // take val, if v is empty or not
+					params[k] = fmt.Sprintf("%s", val)
+				}
 				continue
 			}
 			continue

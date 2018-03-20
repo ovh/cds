@@ -99,7 +99,7 @@ func TestRun(t *testing.T) {
 	res := p.Run(action)
 	defer os.Remove(outputfile)
 
-	if res == plugin.Fail {
+	if res != plugin.Success {
 		t.Errorf("unexpected error on Run")
 		return
 	}

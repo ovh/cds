@@ -44,11 +44,11 @@ func Init(user, password, from, host, port string, tls, disable bool) {
 }
 
 // Status verification of smtp configuration, returns OK or KO
-func Status() string {
+func Status() sdk.MonitoringStatusLine {
 	if _, err := smtpClient(); err != nil {
-		return fmt.Sprintf("KO (%s)", err)
+		return sdk.MonitoringStatusLine{Component: "SMTP", Value: "KO: " + err.Error(), Status: sdk.MonitoringStatusAlert}
 	}
-	return "OK"
+	return sdk.MonitoringStatusLine{Component: "SMTP", Value: "Connect OK", Status: sdk.MonitoringStatusOK}
 }
 
 func smtpClient() (*smtp.Client, error) {
@@ -82,6 +82,12 @@ func smtpClient() (*smtp.Client, error) {
 			log.Warning("Error with c.NewClient:%s\n", err.Error())
 			return nil, err
 		}
+		// TLS config
+		tlsconfig := &tls.Config{
+			InsecureSkipVerify: false,
+			ServerName:         smtpHost,
+		}
+		c.StartTLS(tlsconfig)
 	} else {
 		c, err = smtp.Dial(servername)
 		if err != nil {
@@ -110,7 +116,7 @@ func SendMailVerifyToken(userMail, username, token, callback string) error {
 	if err != nil {
 		return err
 	}
-	return SendEmail("Welcome to CDS", &mailContent, userMail)
+	return SendEmail("Welcome to CDS", &mailContent, userMail, false)
 }
 
 func getCallbackURL(username, token, callback string) string {
@@ -141,7 +147,7 @@ func createTemplate(templ, callbackURL string) (bytes.Buffer, error) {
 }
 
 //SendEmail is the core function to send an email
-func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error {
+func SendEmail(subject string, mailContent *bytes.Buffer, userMail string, isHTML bool) error {
 	from := mail.Address{
 		Name:    "",
 		Address: smtpFrom,
@@ -156,6 +162,10 @@ func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error
 	headers["From"] = smtpFrom
 	headers["To"] = to.String()
 	headers["Subject"] = subject
+
+	if isHTML {
+		headers["Content-Type"] = `text/html; charset="utf-8"`
+	}
 
 	// Setup message
 	message := ""

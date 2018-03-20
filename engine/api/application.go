@@ -17,9 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
@@ -36,7 +34,7 @@ func (api *API) getApplicationsHandler() Handler {
 			return sdk.WrapError(err, "getApplicationsHandler> Cannot load applications from db")
 		}
 
-		return WriteJSON(w, r, applications, http.StatusOK)
+		return WriteJSON(w, applications, http.StatusOK)
 	}
 }
 
@@ -51,7 +49,7 @@ func (api *API) getApplicationTreeHandler() Handler {
 			return sdk.WrapError(err, "getApplicationTreeHandler> Cannot load CD Tree for applications %s", applicationName)
 		}
 
-		return WriteJSON(w, r, tree, http.StatusOK)
+		return WriteJSON(w, tree, http.StatusOK)
 	}
 }
 
@@ -96,7 +94,7 @@ func (api *API) getPipelineBuildBranchHistoryHandler() Handler {
 			return sdk.WrapError(errL, "getPipelineBranchHistoryHandler> Cannot get history by branch")
 		}
 
-		return WriteJSON(w, r, pbs, http.StatusOK)
+		return WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
@@ -113,7 +111,7 @@ func (api *API) getApplicationDeployHistoryHandler() Handler {
 			return sdk.WrapError(errL, "getPipelineDeployHistoryHandler> Cannot get history by env")
 		}
 
-		return WriteJSON(w, r, pbs, http.StatusOK)
+		return WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
@@ -135,7 +133,7 @@ func (api *API) getApplicationBranchVersionHandler() Handler {
 			return sdk.WrapError(err, "getApplicationBranchVersionHandler: Cannot load version for application %s on branch %s with remote %s", applicationName, branch, remote)
 		}
 
-		return WriteJSON(w, r, versions, http.StatusOK)
+		return WriteJSON(w, versions, http.StatusOK)
 	}
 }
 
@@ -179,7 +177,7 @@ func (api *API) getApplicationTreeStatusHandler() Handler {
 			hooks,
 		}
 
-		return WriteJSON(w, r, response, http.StatusOK)
+		return WriteJSON(w, response, http.StatusOK)
 	}
 }
 
@@ -245,8 +243,12 @@ func (api *API) getApplicationHandler() Handler {
 		}
 
 		if withWorkflow {
+			brName := branchName
+			if brName == "" {
+				brName = "master"
+			}
 			var errWorflow error
-			app.Workflows, errWorflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, remote, 0)
+			app.Workflows, errWorflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), brName, remote, 0)
 			if errWorflow != nil {
 				return sdk.WrapError(errWorflow, "getApplicationHandler> Cannot load CD Tree for applications %s", app.Name)
 			}
@@ -285,7 +287,7 @@ func (api *API) getApplicationHandler() Handler {
 			app.Usage = &usage
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -362,7 +364,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 
 		//Yo analyze branch and delete pipeline_build for old branches...
 
-		return WriteJSON(w, r, branches, http.StatusOK)
+		return WriteJSON(w, branches, http.StatusOK)
 	}
 }
 
@@ -422,7 +424,7 @@ func (api *API) getApplicationRemoteHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, r, remotes, http.StatusOK)
+		return WriteJSON(w, remotes, http.StatusOK)
 	}
 }
 
@@ -434,7 +436,7 @@ func (api *API) addApplicationHandler() Handler {
 
 		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errl != nil {
-			return sdk.WrapError(errl, "addApplicationHandler: Cannot load %s: %s", key)
+			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s: %s", key)
 		}
 
 		var app sdk.Application
@@ -467,10 +469,15 @@ func (api *API) addApplicationHandler() Handler {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot add groups on application")
 		}
 
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectApplicationLastModificationType); err != nil {
+			return sdk.WrapError(err, "addApplicationHandler> Cannot update last modified on project")
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot commit transaction")
 		}
-		return nil
+
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -573,13 +580,12 @@ func (api *API) cloneApplicationHandler() Handler {
 			return sdk.WrapError(err, "cloneApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, newApp, http.StatusOK)
+		return WriteJSON(w, newApp, http.StatusOK)
 	}
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
 func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application, u *sdk.User) error {
-	newApp.Pipelines = appToClone.Pipelines
 	newApp.ApplicationGroups = appToClone.ApplicationGroups
 
 	// Create Application
@@ -617,55 +623,8 @@ func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
 		}
 	}
 
-	// Attach pipeline + Set pipeline parameters
-	for _, appPip := range newApp.Pipelines {
-		if _, err := application.AttachPipeline(db, newApp.ID, appPip.Pipeline.ID); err != nil {
-			return err
-		}
-
-		if err := application.UpdatePipelineApplication(db, store, newApp, appPip.Pipeline.ID, appPip.Parameters, u); err != nil {
-			return err
-		}
-	}
-
-	// Load trigger to clone
-	triggers, err := trigger.LoadTriggerByApp(db, appToClone.ID)
-	if err != nil {
-		return err
-	}
-
-	// Clone trigger
-	for _, t := range triggers {
-		// Insert new trigger
-		if t.DestApplication.ID == appToClone.ID {
-			t.DestApplication = *newApp
-		}
-		t.SrcApplication = *newApp
-		if err := trigger.InsertTrigger(db, &t); err != nil {
-			return err
-		}
-	}
-
-	//Reload trigger
-	for i := range newApp.Pipelines {
-		appPip := &newApp.Pipelines[i]
-		var errTrig error
-		appPip.Triggers, errTrig = trigger.LoadTriggersByAppAndPipeline(db, newApp.ID, appPip.Pipeline.ID)
-		if errTrig != nil {
-			return sdk.WrapError(errTrig, "cloneApplication> Cannot load triggers")
-		}
-	}
-
 	// Insert Permission
-	if err := application.AddGroup(db, store, proj, newApp, u, newApp.ApplicationGroups...); err != nil {
-		return err
-	}
-
-	if err := sanity.CheckApplication(db, proj, newApp); err != nil {
-		return sdk.WrapError(err, "cloneApplication> Cannot check application sanity")
-	}
-
-	return nil
+	return application.AddGroup(db, store, proj, newApp, u, newApp.ApplicationGroups...)
 }
 
 func (api *API) updateApplicationHandler() Handler {
@@ -679,11 +638,6 @@ func (api *API) updateApplicationHandler() Handler {
 		if errload != nil {
 			return sdk.WrapError(errload, "updateApplicationHandler> Cannot load project %s", projectKey)
 		}
-		envs, errloadenv := environment.LoadEnvironments(api.mustDB(), projectKey, true, getUser(ctx))
-		if errloadenv != nil {
-			return sdk.WrapError(errloadenv, "updateApplicationHandler> Cannot load environments %s", projectKey)
-		}
-		p.Environments = envs
 
 		app, errloadbyname := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if errloadbyname != nil {
@@ -701,9 +655,19 @@ func (api *API) updateApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "updateApplicationHandler> Application name %s do not respect pattern %s", appPost.Name, sdk.NamePattern)
 		}
 
+		if appPost.RepositoryStrategy.Password != sdk.PasswordPlaceholder && appPost.RepositoryStrategy.Password != "" {
+			if errP := application.EncryptVCSStrategyPassword(&appPost); errP != nil {
+				return sdk.WrapError(errP, "updateApplicationHandler> Cannot encrypt password")
+			}
+		}
+		if appPost.RepositoryStrategy.Password == sdk.PasswordPlaceholder {
+			appPost.RepositoryStrategy.Password = app.RepositoryStrategy.Password
+		}
+
 		//Update name and Metadata
 		app.Name = appPost.Name
 		app.Metadata = appPost.Metadata
+		app.RepositoryStrategy = appPost.RepositoryStrategy
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -728,13 +692,7 @@ func (api *API) updateApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateApplicationHandler> Cannot commit transaction")
 		}
 
-		go func() {
-			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-				log.Warning("updateApplicationHandler: Cannot check application sanity: %s", err)
-			}
-		}()
-
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 
 	}
 }

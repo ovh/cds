@@ -3,7 +3,11 @@
         <div class="eight wide field paramName">
             <span>
                 <i class="move icon" *ngIf="edit"></i>
-                {{step.name}}
+                <span class="pointing" (click)="collapsed = !collapsed">
+                    {{step.name}}
+                    <i class="caret down icon" *ngIf="collapsed"></i>
+                    <i class="caret right icon" *ngIf="!collapsed"></i>
+                </span>
             </span>
             <span class="textOrange" *ngIf="action.deprecated">
                 <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
@@ -21,7 +25,7 @@
                         <input type="checkbox" name="active" [checked]="step.optional" (change)="step.optional = updateStepBool(step.optional)">
                         <label>{{ 'action_optional' | translate}}</label>
                     </div>
-                    <span [smDirTooltip]="'action_optional_details' | translate" smDirPosition="top center">
+                    <span suiPopup [popupText]="'action_optional_details' | translate" popupPlacement="top center">
                       <i class="info circle icon"></i>
                     </span>
                 </div>
@@ -30,7 +34,7 @@
                         <input type="checkbox" name="active" [checked]="step.always_executed" (change)="step.always_executed = updateStepBool(step.always_executed)">
                         <label>{{ 'action_always_executed' | translate}}</label>
                     </div>
-                    <span [smDirTooltip]="'action_always_executed_details' | translate" smDirPosition="top center">
+                    <span suiPopup [popupText]="'action_always_executed_details' | translate" popupPlacement="top center">
                       <i class="info circle icon"></i>
                     </span>
                 </div>
@@ -48,12 +52,12 @@
         </div>
     </div>
 </div>
-<div class="ui stackable grid">
+<div class="ui stackable grid" *ngIf="collapsed">
     <div class="row" *ngFor="let p of step.parameters">
         <div class="two wide column">
             <label>
               <b>{{p.name}}</b>
-              <span *ngIf="p.description" [smDirTooltip]="p.description" smDirPosition="right center">
+              <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
                 <i class="info circle icon"></i>
               </span>
             </label>

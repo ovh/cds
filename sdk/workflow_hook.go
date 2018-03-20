@@ -1,12 +1,13 @@
 package sdk
 
+// Those are icon for hooks
 const (
 	GitlabIcon    = "Gitlab"
 	GitHubIcon    = "Github"
 	BitbucketIcon = "Bitbucket"
 )
 
-// FilterHooksConfig filter all hooks configuration and remove somme configuration key
+// FilterHooksConfig filter all hooks configuration and remove some configuration key
 func (w *Workflow) FilterHooksConfig(s ...string) {
 	if w.Root == nil {
 		return
@@ -22,6 +23,10 @@ func (w *Workflow) FilterHooksConfig(s ...string) {
 
 // GetHooks returns the list of all hooks in the workflow tree
 func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
+	if w == nil {
+		return nil
+	}
+
 	if w.Root == nil {
 		return nil
 	}
@@ -55,7 +60,37 @@ type WorkflowNodeHook struct {
 	Config              WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
-var WorkflowHookModelBuiltin = "builtin"
+//Equals checks functionnal equality between two hooks
+func (h WorkflowNodeHook) Equals(h1 WorkflowNodeHook) bool {
+	if h.UUID != h1.UUID {
+		return false
+	}
+	if h.WorkflowHookModelID != h1.WorkflowHookModelID {
+		return false
+	}
+	for k, cfg := range h.Config {
+		cfg1, has := h1.Config[k]
+		if !has {
+			return false
+		}
+		if cfg.Value == cfg1.Value {
+			return true
+		}
+	}
+	for k, cfg1 := range h1.Config {
+		cfg, has := h.Config[k]
+		if !has {
+			return false
+		}
+		if cfg.Value == cfg1.Value {
+			return true
+		}
+	}
+	return true
+}
+
+// WorkflowHookModelBuiltin is a constant for the builtin hook models
+const WorkflowHookModelBuiltin = "builtin"
 
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
@@ -64,7 +99,9 @@ type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
 func (cfg WorkflowNodeHookConfig) Values() map[string]string {
 	r := make(map[string]string)
 	for k, v := range cfg {
-		r[k] = v.Value
+		if v.Configurable {
+			r[k] = v.Value
+		}
 	}
 	return r
 }
@@ -73,7 +110,15 @@ func (cfg WorkflowNodeHookConfig) Values() map[string]string {
 type WorkflowNodeHookConfigValue struct {
 	Value        string `json:"value"`
 	Configurable bool   `json:"configurable"`
+	Type         string `json:"type"`
 }
+
+const (
+	// HookConfigTypeString type string
+	HookConfigTypeString = "string"
+	// HookConfigTypeString type platform
+	HookConfigTypePlatform = "platform"
+)
 
 //WorkflowHookModel represents a hook which can be used in workflows.
 type WorkflowHookModel struct {

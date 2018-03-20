@@ -18,7 +18,9 @@ export class WorkflowRunJobVariableComponent {
         this.init();
         if (data) {
             data.forEach(p => {
-                if (p.name.indexOf('cds.proj.', 0) === 0) {
+                if (p.name.indexOf('cds.key.', 0) === 0) {
+                    this.varKey.push(p);
+                } else if (p.name.indexOf('cds.proj.', 0) === 0) {
                     this.varProject.push(p);
                 } else if (p.name.indexOf('cds.app.', 0) === 0) {
                     this.varApplication.push(p);
@@ -49,6 +51,7 @@ export class WorkflowRunJobVariableComponent {
         this.varGit = this.sort(this.varGit);
         this.varWorkflow = this.sort(this.varWorkflow);
         this.varCDS = this.sort(this.varCDS);
+        this.varKey = this.sort(this.varKey);
     }
 
     varGit: Array<Parameter>;
@@ -60,7 +63,7 @@ export class WorkflowRunJobVariableComponent {
     varProject: Array<Parameter>;
     varParent: Array<Parameter>;
     varWorkflow: Array<Parameter>;
-
+    varKey: Array<Parameter>;
 
     constructor() {
     }
@@ -75,6 +78,7 @@ export class WorkflowRunJobVariableComponent {
         this.varProject = new Array<Parameter>();
         this.varParent = new Array<Parameter>();
         this.varWorkflow = new Array<Parameter>();
+        this.varKey = new Array<Parameter>();
     }
 
     show(data: {}): void {

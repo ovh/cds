@@ -7,6 +7,8 @@ import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
 import {Notification} from '../../model/notification.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
+import {Key} from '../../model/keys.model';
+import {ProjectPlatform} from '../../model/platform.model';
 
 /**
  * Service to access Project from API.
@@ -308,10 +310,78 @@ export class ProjectService {
     }
 
     /**
+     * Get all projects keys
+     * @param key
+     * @returns {Observable<Array<Key>>}
+     */
+    getKeys(key: string): Observable<Array<Key>> {
+        return this._http.get<Array<Key>>('/project/' + key + '/keys');
+    }
+
+    /**
+     * Add a project key
+     * @param projKey Project unique key
+     * @param key Key to add
+     * @returns {Observable<Key>}
+     */
+    addKey(projKey: string, key: Key): Observable<Key> {
+        return this._http.post<Key>('/project/' + projKey + '/keys', key);
+    }
+
+    /**
+     * Remove a key from the project
+     * @param key project unique key
+     * @param name key name
+     * @returns {Observable<any>}
+     */
+    removeKey(key: string, name: string): Observable<any> {
+        return this._http.delete('/project/' + key + '/keys/' + name)
+    }
+
+    /**
      * Get all applications in project
      * @param key Project unique key
      */
     getApplications(key: string): Observable<Array<Application>> {
         return this._http.get<Array<Application>>('/project/' + key + '/applications');
+    }
+
+    /**
+     * Get all platforms in project
+     * @param key Project unique key
+     * @returns {Observable<Object>}
+     */
+    getPlatforms(key: string): Observable<Array<ProjectPlatform>> {
+        return this._http.get<Array<ProjectPlatform>>('/project/' + key + '/platforms');
+    }
+
+    /**
+     * Add a platform to a project
+     * @param key Project unique key
+     * @param p Platform to add
+     * @returns {Observable<ProjectPlatform>}
+     */
+    addPlatform(key: string, p: ProjectPlatform): Observable<ProjectPlatform> {
+        return this._http.post<ProjectPlatform>('/project/' + key + '/platforms', p);
+    }
+
+    /**
+     * Remove a project platform
+     * @param key project unique key
+     * @param name platform name
+     * @returns {Observable<Object>}
+     */
+    removePlatform(key: string, name: string): Observable<any> {
+        return this._http.delete('/project/' + key + '/platforms/' + name);
+    }
+
+    /**
+     * Update project platform configuration
+     * @param key Project unique key
+     * @param platform Platform to update
+     * @returns {Observable<ProjectPlatform>}
+     */
+    updatePlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
+        return this._http.put<ProjectPlatform>('/project/' + key + '/platforms/' + platform.name, platform);
     }
 }

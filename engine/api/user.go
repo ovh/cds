@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -24,7 +25,7 @@ func (api *API) deleteUserHandler() Handler {
 		username := vars["username"]
 
 		if !getUser(ctx).Admin && username != getUser(ctx).Username {
-			return WriteJSON(w, r, nil, http.StatusForbidden)
+			return WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		u, errLoad := user.LoadUserWithoutAuth(api.mustDB(), username)
@@ -57,7 +58,7 @@ func (api *API) getUserHandler() Handler {
 		username := vars["username"]
 
 		if !getUser(ctx).Admin && username != getUser(ctx).Username {
-			return WriteJSON(w, r, nil, http.StatusForbidden)
+			return WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		u, err := user.LoadUserWithoutAuth(api.mustDB(), username)
@@ -69,7 +70,7 @@ func (api *API) getUserHandler() Handler {
 			return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
 		}
 
-		return WriteJSON(w, r, u, http.StatusOK)
+		return WriteJSON(w, u, http.StatusOK)
 	}
 }
 
@@ -80,7 +81,7 @@ func (api *API) getUserGroupsHandler() Handler {
 		username := vars["username"]
 
 		if !getUser(ctx).Admin && username != getUser(ctx).Username {
-			return WriteJSON(w, r, nil, http.StatusForbidden)
+			return WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		u, errl := user.LoadUserWithoutAuth(api.mustDB(), username)
@@ -105,7 +106,7 @@ func (api *API) getUserGroupsHandler() Handler {
 		res["groups"] = groups
 		res["groups_admin"] = groupsAdmin
 
-		return WriteJSON(w, r, res, http.StatusOK)
+		return WriteJSON(w, res, http.StatusOK)
 	}
 }
 
@@ -116,7 +117,7 @@ func (api *API) updateUserHandler() Handler {
 		username := vars["username"]
 
 		if !getUser(ctx).Admin && username != getUser(ctx).Username {
-			return WriteJSON(w, r, nil, http.StatusForbidden)
+			return WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		userDB, errload := user.LoadUserWithoutAuth(api.mustDB(), username)
@@ -139,7 +140,7 @@ func (api *API) updateUserHandler() Handler {
 			return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
 		}
 
-		return WriteJSON(w, r, userBody, http.StatusOK)
+		return WriteJSON(w, userBody, http.StatusOK)
 	}
 }
 
@@ -150,7 +151,7 @@ func (api *API) getUsersHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 		}
-		return WriteJSON(w, r, users, http.StatusOK)
+		return WriteJSON(w, users, http.StatusOK)
 	}
 }
 
@@ -223,7 +224,7 @@ func (api *API) addUserHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, r, u, http.StatusCreated)
+		return WriteJSON(w, u, http.StatusCreated)
 	}
 }
 
@@ -263,7 +264,7 @@ func (api *API) resetUserHandler() Handler {
 
 		go mail.SendMailVerifyToken(userDb.Email, userDb.Username, tokenVerify, resetUserRequest.Callback)
 
-		return WriteJSON(w, r, userDb, http.StatusCreated)
+		return WriteJSON(w, userDb, http.StatusCreated)
 	}
 }
 
@@ -277,7 +278,7 @@ func (api *API) authModeHandler() Handler {
 		res := map[string]string{
 			"auth_mode": mode,
 		}
-		return WriteJSON(w, r, res, http.StatusOK)
+		return WriteJSON(w, res, http.StatusOK)
 	}
 }
 
@@ -348,7 +349,7 @@ func (api *API) confirmUserHandler() Handler {
 		response.Password = password
 
 		response.User.Auth = sdk.Auth{}
-		return WriteJSON(w, r, response, http.StatusOK)
+		return WriteJSON(w, response, http.StatusOK)
 	}
 }
 
@@ -414,7 +415,8 @@ func (api *API) loginUserHandler() Handler {
 		}
 
 		response.User.Auth = sdk.Auth{}
-		return WriteJSON(w, r, response, http.StatusOK)
+		response.User.Permissions = sdk.UserPermissions{}
+		return WriteJSON(w, response, http.StatusOK)
 	}
 }
 
@@ -453,6 +455,33 @@ func (api *API) importUsersHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, r, errors, http.StatusOK)
+		return WriteJSON(w, errors, http.StatusOK)
+	}
+}
+
+func (api *API) getUserTokenListHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "getUserTokenListHandler> cannot load group for user %s", getUser(ctx).Username)
+		}
+
+		return WriteJSON(w, tokens, http.StatusOK)
+	}
+}
+
+func (api *API) getUserTokenHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		tok, err := token.LoadTokenWithGroup(api.mustDB(), vars["token"])
+		if err == sdk.ErrInvalidToken {
+			return sdk.ErrTokenNotFound
+		}
+		if err != nil {
+			return sdk.WrapError(err, "getUserTokenHandler> cannot load token for user %s", getUser(ctx).Username)
+		}
+		tok.Token = ""
+
+		return WriteJSON(w, tok, http.StatusOK)
 	}
 }

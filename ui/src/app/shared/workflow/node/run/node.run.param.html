@@ -2,27 +2,65 @@
     <div class="header">
         {{'workflow_run_with_parameters' | translate}}
         <div class="extra" *ngIf="num">
-            <button type="button" class="ui small green button" [class.loading]="loading" [disabled]="loading" (click)="resync()">{{ 'workflow_resync' | translate }}</button>
+            <button
+              type="button"
+              class="ui small green button"
+              suiPopup
+              [popupText]="'workflow_run_resync_help' | translate"
+              [class.loading]="loading"
+              [disabled]="loading"
+              (click)="resync()">
+              {{ 'workflow_resync' | translate }}
+            </button>
         </div>
     </div>
     <div class="content">
-        <div class="ui form" *ngIf="workflow">
+        <div class="ui form">
             <ng-container *ngIf="_nodeToRun">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
                 <app-parameter-list [project]="project" [parameters]="_nodeToRun.context.default_pipeline_parameters"
                                     [paramsRef]="_nodeToRun.pipeline.parameters" mode="launcher"
                                     [suggest]="[]"></app-parameter-list>
             </ng-container>
-            <ng-container>
-                <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
-                <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig" #textareaCodeMirror></codemirror>
-                <div class="extra">
-                    <ng-container *ngIf="invalidJSON">
-                        {{ 'workflow_context_invalid' | translate}}
-                    </ng-container>
-                    <ng-container *ngIf="!invalidJSON">
-                        <button class="ui small blue button" (click)="reindent()">Reindent</button>
-                    </ng-container>
+            <h3 *ngIf="!readOnly">{{ 'workflow_node_context_payload' | translate}}</h3>
+            <h3 *ngIf="readOnly">{{ 'workflow_node_context_payload_read_only' | translate}}</h3>
+            <ng-container *ngIf="!loadingBranches">
+                <codemirror
+                  [class.invalid]="invalidJSON"
+                  [(ngModel)]="payloadString"
+                  [config]="codeMirrorConfig"
+                  (click)="changeCodeMirror($event)"
+                  (change)="changeCodeMirror($event)"
+                  #textareaCodeMirror>
+                </codemirror>
+            </ng-container>
+            <ng-container *ngIf="loadingBranches">
+                <div class="ui info message">
+                    {{ 'common_loading' | translate }}
+                </div>
+            </ng-container>
+            <div class="extra">
+                <ng-container *ngIf="invalidJSON">
+                    {{ 'workflow_context_invalid' | translate}}
+                </ng-container>
+                <ng-container *ngIf="!invalidJSON">
+                    <button class="ui small blue button" (click)="reindent()">Reindent</button>
+                </ng-container>
+            </div>
+        </div>
+        <div class="ui wide" *ngIf="nodeToRun.context.application">
+            <h3>{{ 'pipeline_parent_commit_to_deploy' | translate}}</h3>
+            <div class="scrollable" *ngIf="!loadingCommits && commits != null && commits.length !== 0">
+                <app-commit-list [commits]="commits"></app-commit-list>
+            </div>
+            <ng-container *ngIf="!loadingCommits && (commits == null || commits.length === 0)">
+                <div class="ui info message">
+                    {{ 'pipeline_commit_no' | translate }}
+                </div>
+            </ng-container>
+            <ng-container *ngIf="loadingCommits">
+                <div class="ui info message">
+                    {{ 'pipeline_commits_loading' | translate }}
                 </div>
             </ng-container>
         </div>

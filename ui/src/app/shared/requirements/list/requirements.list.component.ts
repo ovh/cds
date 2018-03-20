@@ -1,8 +1,8 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {Component, Input, Output, OnInit, EventEmitter} from '@angular/core';
 import {Table} from '../../table/table';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
-import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
+import {RequirementStore} from '../../../service/requirement/requirement.store';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
 import {finalize, first} from 'rxjs/operators';
@@ -12,7 +12,7 @@ import {finalize, first} from 'rxjs/operators';
     templateUrl: './requirements.list.html',
     styleUrls: ['./requirements.list.scss']
 })
-export class RequirementsListComponent extends Table {
+export class RequirementsListComponent extends Table  implements OnInit {
 
     @Input() requirements: Requirement[];
     @Input() edit: boolean;
@@ -34,6 +34,10 @@ export class RequirementsListComponent extends Table {
         return this._suggestWithWorkerModel;
     }
 
+    get suggestWithOSArch() {
+        return this._suggestWithOSArch;
+    }
+
     @Output() event = new EventEmitter<RequirementEvent>();
     @Output() onChange = new EventEmitter<Requirement[]>();
 
@@ -41,16 +45,22 @@ export class RequirementsListComponent extends Table {
     workerModels: Array<WorkerModel>;
     _suggest: string[] = [];
     _suggestWithWorkerModel: Array<string> = [];
+    _suggestWithOSArch: Array<string> = [];
+
     loading = true;
 
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         super();
-        this._requirementStore.getAvailableRequirements()
-            .subscribe(r => {
-                this.availableRequirements = new Array<string>();
-                this.availableRequirements.push(...r.toArray());
-            });
+        this.nbElementsByPage = 5;
 
+        this._requirementStore.getAvailableRequirements()
+        .subscribe(r => {
+            this.availableRequirements = new Array<string>();
+            this.availableRequirements.push(...r.toArray());
+        });
+    }
+
+    ngOnInit() {
         this._workerModelService.getWorkerModels()
         .pipe(finalize(() => this.loading = false), first())
         .subscribe(wms => {
@@ -62,6 +72,10 @@ export class RequirementsListComponent extends Table {
                 })
                 this._suggestWithWorkerModel = this._suggestWithWorkerModel.concat(this._suggest);
             }
+        });
+
+        this._requirementStore.getRequirementsTypeValues('os-architecture').pipe(first()).subscribe( values => {
+            this._suggestWithOSArch = values.concat(this.suggest);
         });
     }
 

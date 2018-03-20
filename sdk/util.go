@@ -5,8 +5,18 @@ import (
 	"time"
 )
 
-// IsInArray Check if the element is in the array
-func IsInArray(elt int64, array []int64) bool {
+// IsInArray checks if the element is in the array
+func IsInArray(elt string, array []string) bool {
+	for _, item := range array {
+		if item == elt {
+			return true
+		}
+	}
+	return false
+}
+
+// IsInInt64Array checks if the element is in the array (int64)
+func IsInInt64Array(elt int64, array []int64) bool {
 	for _, item := range array {
 		if item == elt {
 			return true
@@ -24,4 +34,15 @@ func RandomString(strlen int) string {
 		result[i] = chars[rand.Intn(len(chars))]
 	}
 	return string(result)
+}
+
+// DeleteEmptyValueFromArray deletes empty value from an array of string
+func DeleteEmptyValueFromArray(array []string) []string {
+	var out []string
+	for _, str := range array {
+		if str != "" {
+			out = append(out, str)
+		}
+	}
+	return out
 }

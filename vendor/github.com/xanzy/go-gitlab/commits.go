@@ -150,6 +150,7 @@ func (s *CommitsService) GetCommit(pid interface{}, sha string, options ...Optio
 type CreateCommitOptions struct {
 	Branch        *string         `url:"branch" json:"branch"`
 	CommitMessage *string         `url:"commit_message" json:"commit_message"`
+	StartBranch   *string         `url:"start_branch,omitempty" json:"start_branch,omitempty"`
 	Actions       []*CommitAction `url:"actions" json:"actions"`
 	AuthorEmail   *string         `url:"author_email,omitempty" json:"author_email,omitempty"`
 	AuthorName    *string         `url:"author_name,omitempty" json:"author_name,omitempty"`

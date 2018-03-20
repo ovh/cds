@@ -1,4 +1,4 @@
-<div class="variable" *ngIf="ready">
+<div class="variable" *ngIf="ready && variableTypes">
     <div class="ui grid">
         <div class="ui right aligned column">
             <div class="ui input">
@@ -32,13 +32,17 @@
             </td>
             <td>
                 <div class="ui form" *ngIf="mode === 'edit'">
-                    <sm-select class="search"
-                        [options]="{'fullTextSearch': true}"
-                        [disabled]="v.updating"
-                        [(model)]="v.type"
-                        (onChange)="v.hasChanged = true">
-                        <option *ngFor="let type of variableTypes" [value]="type">{{type}}</option>
-                    </sm-select>
+                    <sui-select class="selection"
+                                isSearchable="true"
+                                [isDisabled]="v.updating"
+                                [(ngModel)]="v.type"
+                                (ngModelChange)="v.hasChanged = true"
+                                [options]="variableTypes"
+                                #selectType>
+                        <sui-select-option *ngFor="let option of selectType.filteredOptions"
+                                           [value]="option">
+                        </sui-select-option>
+                    </sui-select>
                 </div>
                 <div class="ui input field" *ngIf="mode !== 'edit'">{{v.type}}</div>
             </td>

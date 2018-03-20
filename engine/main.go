@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"sort"
 	"strings"
 	"syscall"
@@ -18,14 +19,17 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -47,6 +51,15 @@ func init() {
 	startCmd.Flags().StringVar(&vaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
 	//Version  command
 	mainCmd.AddCommand(versionCmd)
+	//Update  command
+	mainCmd.AddCommand(updateCmd)
+	updateCmd.Flags().BoolVar(&updateFromGithub, "from-github", false, "Update binary from latest github release")
+	updateCmd.Flags().StringVar(&updateURLAPI, "api", "", "Update binary from a CDS Engine API")
+
+	mainCmd.AddCommand(uptodateCmd)
+	uptodateCmd.Flags().BoolVar(&updateFromGithub, "from-github", false, "Update binary from latest github release")
+	uptodateCmd.Flags().StringVar(&updateURLAPI, "api", "", "Update binary from a CDS Engine API")
+
 	//Database command
 	mainCmd.AddCommand(database.DBCmd)
 	//Start command
@@ -57,6 +70,9 @@ func init() {
 
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
+
+	// doc command (hidden command)
+	mainCmd.AddCommand(docCmd)
 }
 
 func main() {
@@ -68,19 +84,39 @@ var mainCmd = &cobra.Command{
 	Short: "CDS Engine",
 	Long: `
 CDS
+
 Continuous Delivery Service
+
 Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform
+
 https://ovh.github.io/cds/
 
-Copyright (c) 2013-2017, OVH SAS.
-All rights reserved.`,
+## Download
+
+You'll find last release of CDS ` + "`engine`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+`,
 }
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Display CDS version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(sdk.VERSION)
+		fmt.Printf("CDS Engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+	},
+}
+
+var docCmd = &cobra.Command{
+	Use:    "doc <generation-path> <git-directory>",
+	Short:  "generate hugo doc for building http://ovh.github.com/cds",
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 2 {
+			cmd.Usage()
+			os.Exit(1)
+		}
+		if err := doc.GenerateDocumentation(mainCmd, args[0], args[1]); err != nil {
+			sdk.Exit(err.Error())
+		}
 	},
 }
 
@@ -107,6 +143,7 @@ Comming soon...`,
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
+		conf.Repositories.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
 		conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
@@ -213,25 +250,40 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start CDS",
 	Long: `
-Start CDS Engine Services:
- * API:
- 	This is the core component of CDS.
- * Hatcheries:
-	They are the components responsible for spawning workers. Supported platforms/orchestrators are:
-	 * Local machine
-	 * Openstack
-	 * Docker Swarm
-	 * Openstack
-	 * Vsphere
- * Hooks:
- 	This component operates CDS workflow hooks
- * VCS:
- 	This component operates CDS VCS connectivity
+Start CDS Engine Services
+
+#### API
+
+This is the core component of CDS.
+
+
+#### Hatcheries
+
+They are the components responsible for spawning workers. Supported platforms/orchestrators are:
+
+* Local machine
+* Openstack
+* Docker Swarm
+* Openstack
+* Vsphere
+
+#### Hooks
+This component operates CDS workflow hooks
+
+#### Repositories
+This component operates CDS workflow repositories
+
+#### VCS
+This component operates CDS VCS connectivity
 
 Start all of this with a single command:
-	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
+
+	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs] [repositories]
+
 All the services are using the same configuration file format.
+
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
+
 You can also use or override toml file with environment variable.
 
 See $ engine config command for more details.
@@ -269,8 +321,10 @@ See $ engine config command for more details.
 		// Gracefully shutdown all
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
-		defer func() {
+		go func() {
+			<-c
 			signal.Stop(c)
+			cancel()
 		}()
 
 		type serviceConf struct {
@@ -290,6 +344,9 @@ See $ engine config command for more details.
 			case "hatchery:local":
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
+			case "hatchery:kubernetes":
+				services = append(services, serviceConf{arg: a, service: kubernetes.New(), cfg: conf.Hatchery.Kubernetes})
+				names = append(names, conf.Hatchery.Kubernetes.Name)
 			case "hatchery:marathon":
 				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)
@@ -308,6 +365,9 @@ See $ engine config command for more details.
 			case "vcs":
 				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: conf.VCS})
 				names = append(names, conf.VCS.Name)
+			case "repositories":
+				services = append(services, serviceConf{arg: a, service: repositories.New(), cfg: conf.Repositories})
+				names = append(names, conf.Repositories.Name)
 			default:
 				fmt.Printf("Error: service '%s' unknown\n", a)
 				os.Exit(1)
@@ -324,6 +384,7 @@ See $ engine config command for more details.
 			GraylogExtraValue:      conf.Log.Graylog.ExtraValue,
 			GraylogFieldCDSVersion: sdk.VERSION,
 			GraylogFieldCDSName:    strings.Join(names, "_"),
+			Ctx:                    ctx,
 		})
 
 		for _, s := range services {
@@ -336,11 +397,9 @@ See $ engine config command for more details.
 		}
 
 		//Wait for the end
-		select {
-		case <-c:
-			cancel()
-			os.Exit(0)
-		case <-ctx.Done():
+		<-ctx.Done()
+		if ctx.Err() != nil {
+			fmt.Printf("Exiting (%v)\n", ctx.Err())
 		}
 	},
 }

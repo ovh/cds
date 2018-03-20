@@ -142,6 +142,17 @@ func (e *Element) GetLocation() (x, y int, err error) {
 	return round(location.X), round(location.Y), nil
 }
 
+func (e *Element) GetSize() (width, height int, err error) {
+	var size struct {
+		Width float64 `json:"width"`
+		Height float64 `json:"height"`
+	}
+	if err := e.Send("GET", "size", nil, &size); err != nil {
+		return 0, 0, err
+	}
+	return round(size.Width), round(size.Height), nil
+}
+
 func round(number float64) int {
 	return int(number + 0.5)
 }

@@ -1,4 +1,8 @@
+@import '../../../../../common';
 .workflowHook {
+  &.active {
+    color: $cds_color_teal;
+  }
   i {
     font-size: 2em;
     padding-left: 8px;

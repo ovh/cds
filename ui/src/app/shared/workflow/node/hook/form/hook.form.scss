@@ -6,6 +6,17 @@
   }
 }
 
+codemirror {
+  width: 100%;
+  &.invalid {
+    border: 1px solid red;
+  }
+}
+
 input:read-only {
   background-color: #dedede !important;
+}
+
+.mb15 {
+  margin-bottom: 15px;
 }

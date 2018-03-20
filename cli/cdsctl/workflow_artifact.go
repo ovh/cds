@@ -21,17 +21,19 @@ var (
 
 	workflowArtifact = cli.NewCommand(workflowArtifactCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(workflowArtifactListCmd, workflowArtifactListRun, nil),
-			cli.NewCommand(workflowArtifactDownloadCmd, workflowArtifactDownloadRun, nil),
+			cli.NewListCommand(workflowArtifactListCmd, workflowArtifactListRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowArtifactDownloadCmd, workflowArtifactDownloadRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var workflowArtifactListCmd = cli.Command{
 	Name:  "list",
 	Short: "List artifacts of one Workflow Run",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow"},
 		{Name: "number"},
 	},
 }
@@ -41,7 +43,7 @@ func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("number parameter have to be an integer")
 	}
-	workflowArtifacts, err := client.WorkflowRunArtifacts(v["project-key"], v["workflow"], number)
+	workflowArtifacts, err := client.WorkflowRunArtifacts(v[_ProjectKey], v[_WorkflowName], number)
 	if err != nil {
 		return nil, err
 	}
@@ -51,9 +53,11 @@ func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
 var workflowArtifactDownloadCmd = cli.Command{
 	Name:  "download",
 	Short: "Download artifacts of one Workflow Run",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
-		{Name: "workflow"},
 		{Name: "number"},
 	},
 	OptionalArgs: []cli.Arg{
@@ -67,7 +71,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		return fmt.Errorf("number parameter have to be an integer")
 	}
 
-	artifacts, err := client.WorkflowRunArtifacts(v["project-key"], v["workflow"], number)
+	artifacts, err := client.WorkflowRunArtifacts(v[_ProjectKey], v[_WorkflowName], number)
 	if err != nil {
 		return err
 	}
@@ -82,7 +86,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			return err
 		}
 		fmt.Printf("Downloading %s...\n", a.Name)
-		if err := client.WorkflowNodeRunArtifactDownload(v["project-key"], v["workflow"], a.ID, f); err != nil {
+		if err := client.WorkflowNodeRunArtifactDownload(v[_ProjectKey], v[_WorkflowName], a, f); err != nil {
 			return err
 		}
 		if err := f.Close(); err != nil {

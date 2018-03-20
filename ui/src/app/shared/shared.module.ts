@@ -4,6 +4,7 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {TranslateModule} from '@ngx-translate/core';
 import {NgSemanticModule} from 'ng-semantic/ng-semantic';
 import {NgForNumber} from './pipes/ngfor.number.pipe';
+import {TokenListComponent} from './token/list/token.list.component';
 import {VariableValueComponent} from './variable/value/variable.value.component';
 import {VariableFormComponent} from './variable/form/variable.form';
 import {SharedService} from './shared.service';
@@ -23,12 +24,13 @@ import {ParameterFormComponent} from './parameter/form/parameter.form';
 import {ParameterValueComponent} from './parameter/value/parameter.value.component';
 import {DragulaModule} from 'ng2-dragula/ng2-dragula';
 import {WarningModalComponent} from './modal/warning/warning.component';
+import {DeleteModalComponent} from './modal/delete/delete.component';
 import {CommonModule} from '@angular/common';
 import {CutPipe} from './pipes/cut.pipe';
 import {MomentModule} from 'angular2-moment';
 import {CodemirrorModule} from 'ng2-codemirror-typescript/Codemirror';
 import {GroupFormComponent} from './group/form/group.form.component';
-import {MarkdownModule} from 'angular2-markdown';
+import {MarkdownModule} from 'ngx-md';
 import {HistoryComponent} from './history/history.component';
 import {StatusIconComponent} from './status/status.component';
 import {KeysPipe} from './pipes/keys.pipe';
@@ -45,6 +47,7 @@ import {PipelineLaunchModalComponent} from './pipeline/launch/pipeline.launch.mo
 import {CommitListComponent} from './commit/commit.list.component';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {WorkflowNodeComponent} from './workflow/node/workflow.node.component';
+import {WorkflowNodeAddWizardComponent} from './workflow/node/wizard/node.wizard.component';
 import {WorkflowTriggerComponent} from './workflow/trigger/workflow.trigger.component';
 import {WorkflowNodeFormComponent} from './workflow/node/form/workflow.node.form.component';
 import {WorkflowDeleteNodeComponent} from './workflow/node/delete/workflow.node.delete.component';
@@ -59,8 +62,9 @@ import {PermissionEnvironmentFormComponent} from './permission/environment/form/
 import {NgxAutoScroll} from 'ngx-auto-scroll/src/ngx-auto-scroll.directive';
 import {SuiModule} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
-import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook.component';
+import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
+import {WorkflowNodeHookDetailsComponent} from './workflow/node/hook/details/hook.details.component';
 import {UsageWorkflowsComponent} from './usage/workflows/usage.workflows.component';
 import {UsageApplicationsComponent} from './usage/applications/usage.applications.component';
 import {UsagePipelinesComponent} from './usage/pipelines/usage.pipelines.component';
@@ -71,6 +75,9 @@ import {WorkflowNodeConditionListComponent} from './workflow/node/conditions/con
 import {WorkflowNodeConditionsComponent} from './workflow/node/conditions/node.conditions.component';
 import {DiffComponent} from './diff/diff.component';
 import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
+import {KeysFormComponent} from './keys/form/keys.form.component';
+import {KeysListComponent} from './keys/list/keys.list.component';
+import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -87,7 +94,10 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         GroupFormComponent,
         HistoryComponent,
         KeysPipe,
+        KeysFormComponent,
+        KeysListComponent,
         NgForNumber,
+        TokenListComponent,
         NgxAutoScroll,
         ParameterDescriptionComponent,
         ParameterListComponent,
@@ -109,7 +119,9 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
+        DeleteModalComponent,
         WorkflowNodeComponent,
+        WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
         WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
@@ -120,6 +132,7 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         WorkflowNodeConditionsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
+        WorkflowNodeHookDetailsComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         WorkflowNodeConditionFormComponent,
@@ -132,7 +145,8 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         UsageEnvironmentsComponent,
         UsageComponent,
         DiffComponent,
-        SpanColoredComponent
+        SpanColoredComponent,
+        VCSStrategyComponent
     ],
     entryComponents: [SpanColoredComponent],
     providers: [
@@ -158,9 +172,12 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         GroupFormComponent,
         HistoryComponent,
         KeysPipe,
+        KeysFormComponent,
+        KeysListComponent,
         MarkdownModule,
         MomentModule,
         NgForNumber,
+        TokenListComponent,
         NgSemanticModule,
         NgxAutoScroll,
         ParameterDescriptionComponent,
@@ -184,7 +201,9 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         VariableFormComponent,
         VariableValueComponent,
         WarningModalComponent,
+        DeleteModalComponent,
         WorkflowNodeComponent,
+        WorkflowNodeAddWizardComponent,
         WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
         WorkflowJoinComponent,
@@ -194,6 +213,7 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         WorkflowNodeConditionsComponent,
         WorkflowNodeRunParamComponent,
         WorkflowNodeHookComponent,
+        WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
@@ -205,7 +225,8 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         UsageEnvironmentsComponent,
         UsageComponent,
         DiffComponent,
-        SpanColoredComponent
+        SpanColoredComponent,
+        VCSStrategyComponent
     ]
 })
 export class SharedModule {

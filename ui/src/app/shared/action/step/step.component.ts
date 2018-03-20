@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import {Action} from '../../../model/action.model';
 import {StepEvent} from './step.event';
 import {Parameter} from '../../../model/parameter.model';
@@ -26,12 +26,15 @@ export class ActionStepComponent {
             }
         }
     }
+    @Input() collapsed;
 
     @Output() removeEvent = new EventEmitter<StepEvent>();
 
     originalParam = new Map<string, Parameter>();
 
-    constructor() { }
+    constructor() {
+         this.collapsed = true;
+    }
 
     updateStepBool(b: boolean): boolean {
         this.action.hasChanged = true;

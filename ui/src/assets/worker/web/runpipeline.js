@@ -18,7 +18,7 @@ onmessage = function (e) {
 
 function loadBuild (user, session, api) {
     loop(2, function () {
-        var url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '?withArtifacts=true&withTests=true&envName=' + envName;
+        var url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '?withArtifacts=true&withTests=true&envName=' + encodeURIComponent(envName);
 
         var xhr = httpCall(url, api, user, session);
         if (xhr.status >= 400) {

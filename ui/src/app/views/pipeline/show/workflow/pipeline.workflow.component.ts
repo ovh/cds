@@ -1,4 +1,4 @@
-import {Component, DoCheck, Input, OnInit, OnDestroy, ViewChild} from '@angular/core';
+import {Component, Input, OnInit, OnDestroy, ViewChild} from '@angular/core';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
@@ -209,11 +209,13 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
         switch (event.type) {
             case 'update':
-                this._pipelineStore.updateJob(this.project.key, this.pipeline.name, this.selectedStage.id, job).subscribe(() => {
+                this._pipelineStore.updateJob(this.project.key, this.pipeline.name, this.selectedStage.id, job).subscribe((pip) => {
                     this._toast.success('', this._translate.instant('stage_job_updated'));
                     job.action.loading = false;
                     job.action.hasChanged = false;
-
+                    this.pipeline = pip;
+                    this.selectedStage = this.pipeline.stages.find((s) => this.selectedStage.id === s.id) || this.selectedStage;
+                    this.selectedJob = this.selectedStage.jobs.find((j) => this.selectedJob.action.id === j.action.id) || this.selectedJob;
                 }, () => {
                     job.action.loading = false;
                 });

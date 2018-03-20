@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/ovh/cds/engine/api/event"
@@ -21,85 +22,48 @@ import (
 // VersionHandler returns version of current uservice
 func VersionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		s := sdk.Version{Version: sdk.VERSION}
-		return WriteJSON(w, r, s, http.StatusOK)
+		s := sdk.Version{
+			Version:      sdk.VERSION,
+			Architecture: runtime.GOARCH,
+			OS:           runtime.GOOS,
+		}
+		return WriteJSON(w, s, http.StatusOK)
 	}
 }
 
 func (api *API) statusHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var output []string
-
-		// Version
-		output = append(output, fmt.Sprintf("Version: %s", sdk.VERSION))
-		log.Debug("Status> Version: %s", sdk.VERSION)
-
-		// Uptime
-		output = append(output, fmt.Sprintf("Uptime: %s", time.Since(api.StartupTime)))
-		log.Debug("Status> Uptime: %s", time.Since(api.StartupTime))
-
-		output = append(output, fmt.Sprintf("Hostname: %s", event.GetHostname()))
-		log.Debug("Status> Hostname: %s", event.GetHostname())
-
-		output = append(output, fmt.Sprintf("CDSName: %s", event.GetCDSName()))
-		log.Debug("Status> CDSName: %s", event.GetCDSName())
-
 		t := time.Now()
-		output = append(output, fmt.Sprintf("Time: %dh%dm%ds", t.Hour(), t.Minute(), t.Second()))
-		log.Debug("Status> Time:  %dh%dm%ds", t.Hour(), t.Minute(), t.Second())
+		output := sdk.MonitoringStatus{Now: t}
 
-		//Nb Panics
-		output = append(output, fmt.Sprintf("Nb of Panics: %d", api.Router.nbPanic))
-		log.Debug("Status> Nb of Panics: %d", api.Router.nbPanic)
-
-		// Check Scheduler
-		output = append(output, fmt.Sprintf("Scheduler: %s", scheduler.Status()))
-		log.Debug("Status> Scheduler: %s", scheduler.Status())
-
-		// Check Event
-		output = append(output, fmt.Sprintf("Event: %s", event.Status()))
-		log.Debug("Status> Event: %s", event.Status())
-
-		// Check Event
-		output = append(output, fmt.Sprintf("Internal Events Queue: %s", repositoriesmanager.EventsStatus(api.Cache)))
-		log.Debug("Status> Internal Events Queue: %s", repositoriesmanager.EventsStatus(api.Cache))
-
-		// Check redis
-		output = append(output, fmt.Sprintf("Cache: %s", api.Cache.Status()))
-		log.Debug("Status> Cache: %s", api.Cache.Status())
-
-		// Check session-store
-		output = append(output, fmt.Sprintf("Session-Store: %s", sessionstore.Status))
-		log.Debug("Status> Session-Store: %s", sessionstore.Status)
-
-		// Check object-store
-		output = append(output, fmt.Sprintf("Object-Store: %s", objectstore.Status()))
-		log.Debug("Status> Object-Store: %s", objectstore.Status())
-
-		// Check mail
-		mailStatus := mail.Status()
-		output = append(output, fmt.Sprintf("SMTP: %s", mailStatus))
-		log.Debug("Status> SMTP: %s", mailStatus)
-
-		// Check database
-		output = append(output, api.DBConnectionFactory.Status())
-		log.Debug("Status> %s", api.DBConnectionFactory.Status())
-
-		// Check LastUpdate Connected User
-		output = append(output, fmt.Sprintf("LastUpdate Connected: %d", len(api.lastUpdateBroker.clients)))
-		log.Debug("Status> LastUpdate ConnectedUser> %d", len(api.lastUpdateBroker.clients))
-
-		// Check Worker Model Error
-		wmStatus := worker.Status(api.mustDB())
-		output = append(output, fmt.Sprintf("Worker Model Errors: %s", wmStatus))
-		log.Debug("Status> Worker Model Errors: %s", wmStatus)
+		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK}))
+		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(api.StartupTime)), Status: sdk.MonitoringStatusOK}))
+		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK}))
+		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK}))
+		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK}))
+		output.Lines = append(output.Lines, getStatusLine(api.Router.StatusPanic()))
+		output.Lines = append(output.Lines, getStatusLine(scheduler.Status()))
+		output.Lines = append(output.Lines, getStatusLine(event.Status()))
+		output.Lines = append(output.Lines, getStatusLine(repositoriesmanager.EventsStatus(api.Cache)))
+		output.Lines = append(output.Lines, getStatusLine(api.Cache.Status()))
+		output.Lines = append(output.Lines, getStatusLine(sessionstore.Status))
+		output.Lines = append(output.Lines, getStatusLine(objectstore.Status()))
+		output.Lines = append(output.Lines, getStatusLine(mail.Status()))
+		output.Lines = append(output.Lines, getStatusLine(api.DBConnectionFactory.Status()))
+		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "LastUpdate Connected", Value: fmt.Sprintf("%d", len(api.lastUpdateBroker.clients)), Status: sdk.MonitoringStatusOK}))
+		output.Lines = append(output.Lines, getStatusLine(worker.Status(api.mustDB())))
 
 		var status = http.StatusOK
 		if api.Router.panicked {
 			status = http.StatusServiceUnavailable
 		}
-		return WriteJSON(w, r, output, status)
+		return WriteJSON(w, output, status)
 	}
+}
+
+func getStatusLine(s sdk.MonitoringStatusLine) sdk.MonitoringStatusLine {
+	log.Debug("Status> %s", s.String())
+	return s
 }
 
 func (api *API) smtpPingHandler() Handler {
@@ -109,12 +73,10 @@ func (api *API) smtpPingHandler() Handler {
 		}
 
 		message := "mail sent"
-		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), getUser(ctx).Email); err != nil {
+		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), getUser(ctx).Email, false); err != nil {
 			message = err.Error()
 		}
 
-		return WriteJSON(w, r, map[string]string{
-			"message": message,
-		}, http.StatusOK)
+		return WriteJSON(w, map[string]string{"message": message}, http.StatusOK)
 	}
 }

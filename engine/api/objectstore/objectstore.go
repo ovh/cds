@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -12,11 +14,10 @@ var storage Driver
 var instance sdk.ArtifactsStore
 
 //Status is for status handler
-func Status() string {
+func Status() sdk.MonitoringStatusLine {
 	if storage == nil {
-		return "KO : Store not initialized"
+		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Store not initialized", Status: sdk.MonitoringStatusAlert}
 	}
-
 	return storage.Status()
 }
 
@@ -62,6 +63,21 @@ func StorePlugin(art sdk.ActionPlugin, data io.ReadCloser) (string, error) {
 	return "", fmt.Errorf("store not initialized")
 }
 
+//FetchTempURL returns a temp URL
+func FetchTempURL(o Object) (string, error) {
+	if storage == nil {
+		return "", fmt.Errorf("store not initialized")
+	}
+
+	s, ok := storage.(DriverWithRedirect)
+	if !ok {
+		return "", fmt.Errorf("temp URL not supported")
+	}
+
+	url, _, err := s.FetchURL(o)
+	return url, err
+}
+
 //FetchPlugin call Fetch on the common driver
 func FetchPlugin(art sdk.ActionPlugin) (io.ReadCloser, error) {
 	if storage != nil {
@@ -78,43 +94,22 @@ func DeletePlugin(art sdk.ActionPlugin) error {
 	return fmt.Errorf("store not initialized")
 }
 
-//StoreTemplateExtension call Store on the common driver
-func StoreTemplateExtension(tmpl sdk.TemplateExtension, data io.ReadCloser) (string, error) {
-	if storage != nil {
-		return storage.Store(&tmpl, data)
-	}
-	return "", fmt.Errorf("store not initialized")
-}
-
-//FetchTemplateExtension call Fetch on the common driver
-func FetchTemplateExtension(tmpl sdk.TemplateExtension) (io.ReadCloser, error) {
-	if storage != nil {
-		return storage.Fetch(&tmpl)
-	}
-	return nil, fmt.Errorf("store not initialized")
-}
-
-//DeleteTemplateExtension call Delete on the common driver
-func DeleteTemplateExtension(tmpl sdk.TemplateExtension) error {
-	if storage != nil {
-		return storage.Delete(&tmpl)
-	}
-	return fmt.Errorf("store not initialized")
-}
-
 // Driver allows artifact to be stored and retrieve the same way to any backend
 // - Openstack / Swift
 // - Filesystem
 type Driver interface {
-	Status() string
+	Status() sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error
 }
 
+// DriverWithRedirect has to be implemented if your storage backend supports temp url
 type DriverWithRedirect interface {
-	StoreURL(o Object) (string, string, error)
-	FetchURL(o Object) (string, string, error)
+	// StoreURL returns a temporary url and a secret key to store an object
+	StoreURL(o Object) (url string, key string, err error)
+	// FetchURL returns a temporary url and a secret key to fetch an object
+	FetchURL(o Object) (url string, key string, err error)
 }
 
 // Initialize setup wanted ObjectStore driver
@@ -169,19 +164,7 @@ type ConfigOptionsFilesystem struct {
 // New initialise a new ArtifactStorage
 func New(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
-	case Openstack:
-		instance = sdk.ArtifactsStore{
-			Name:                  "Openstack",
-			Private:               false,
-			TemporaryURLSupported: false,
-		}
-		return NewOpenstackStore(c, cfg.Options.Openstack.Address,
-			cfg.Options.Openstack.Username,
-			cfg.Options.Openstack.Password,
-			cfg.Options.Openstack.Tenant,
-			cfg.Options.Openstack.Region,
-			cfg.Options.Openstack.ContainerPrefix)
-	case Swift:
+	case Openstack, Swift:
 		instance = sdk.ArtifactsStore{
 			Name:                  "Swift",
 			Private:               false,
@@ -203,4 +186,12 @@ func New(c context.Context, cfg Config) (Driver, error) {
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}
+}
+
+func escape(container, object string) (string, string) {
+	container = url.QueryEscape(container)
+	container = strings.Replace(container, "/", "-", -1)
+	object = url.QueryEscape(object)
+	object = strings.Replace(object, "/", "-", -1)
+	return container, object
 }

@@ -1,7 +1,9 @@
 package workflow
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -17,7 +19,7 @@ import (
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
+func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
 	defer func(j *sdk.WorkflowNodeJobRun, chanE chan<- interface{}) {
@@ -62,7 +64,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 
 		wf.LastExecution = time.Now()
-		if err := updateWorkflowRun(db, wf); err != nil {
+		if err := UpdateWorkflowRun(db, wf); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowRun %d", wf.ID)
 		}
 	default:
@@ -92,7 +94,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 		return syncTakeJobInNodeRun(db, nodeRun, job, stageIndex, chanEvent)
 	}
-	return execute(db, store, p, node, chanEvent)
+	return execute(dbCopy, db, store, p, node, chanEvent)
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
@@ -122,7 +124,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
+func TakeNodeJobRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
 	// first load without FOR UPDATE WAIT to quick check status
 	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
 	if errS != nil {
@@ -154,7 +156,7 @@ func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobI
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
 	}
 
-	if err := UpdateNodeJobRunStatus(db, store, p, job, sdk.StatusBuilding, chanEvent); err != nil {
+	if err := UpdateNodeJobRunStatus(dbCopy, db, store, p, job, sdk.StatusBuilding, chanEvent); err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", jobID)
 	}
@@ -181,17 +183,17 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 
 	for _, k := range p.Keys {
 		params = append(params, sdk.Parameter{
-			Name:  "cds.proj." + k.Name + ".pub",
+			Name:  "cds.key." + k.Name + ".pub",
 			Type:  "string",
 			Value: k.Public,
 		})
 		params = append(params, sdk.Parameter{
-			Name:  "cds.proj." + k.Name + ".id",
+			Name:  "cds.key." + k.Name + ".id",
 			Type:  "string",
 			Value: k.KeyID,
 		})
 		secrets = append(secrets, sdk.Variable{
-			Name:  "cds.proj." + k.Name + ".priv",
+			Name:  "cds.key." + k.Name + ".priv",
 			Type:  "string",
 			Value: k.Private,
 		})
@@ -200,52 +202,62 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 	//Load node definition
 	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
 	if n == nil {
-		return nil, nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+		return nil, nil, sdk.WrapError(fmt.Errorf("LoadNodeJobRunKeys> Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
 	}
 	if n.Context != nil && n.Context.Application != nil {
-		a, errA := application.LoadByID(db, store, n.Context.Application.ID, nil, application.LoadOptions.WithKeys)
-		if errA != nil {
-			return nil, nil, sdk.WrapError(errA, "loadActionBuildKeys> Cannot load application keys")
-		}
-		for _, k := range a.Keys {
+		for _, k := range n.Context.Application.Keys {
 			params = append(params, sdk.Parameter{
-				Name:  "cds.app." + k.Name + ".pub",
+				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
 			})
 			params = append(params, sdk.Parameter{
-				Name:  "cds.app." + k.Name + ".id",
+				Name:  "cds.key." + k.Name + ".id",
 				Type:  "string",
 				Value: k.KeyID,
 			})
+
+			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
+			if err64 != nil {
+				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot app decode key %s", k.Name)
+			}
+			decrypted, errD := secret.Decrypt([]byte(unBase64))
+			if errD != nil {
+				log.Error("LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", n.Context.Application.Name, k.Name, errD)
+			}
 			secrets = append(secrets, sdk.Variable{
-				Name:  "cds.app." + k.Name + ".priv",
+				Name:  "cds.key." + k.Name + ".priv",
 				Type:  "string",
-				Value: k.Private,
+				Value: string(decrypted),
 			})
 		}
 	}
 
 	if n.Context != nil && n.Context.Environment != nil && n.Context.Environment.ID != sdk.DefaultEnv.ID {
-		e, errE := environment.LoadEnvironmentByID(db, n.Context.Environment.ID)
-		if errE != nil {
-			return nil, nil, sdk.WrapError(errE, "loadActionBuildKeys> Cannot load environment keys")
-		}
-		for _, k := range e.Keys {
+		for _, k := range n.Context.Environment.Keys {
 			params = append(params, sdk.Parameter{
-				Name:  "cds.env." + k.Name + ".pub",
+				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
 			})
 			params = append(params, sdk.Parameter{
-				Name:  "cds.env." + k.Name + ".id",
+				Name:  "cds.key." + k.Name + ".id",
 				Type:  "string",
 				Value: k.KeyID,
 			})
+
+			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
+			if err64 != nil {
+				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot decode env key %s", k.Name)
+			}
+			decrypted, errD := secret.Decrypt([]byte(unBase64))
+			if errD != nil {
+				log.Error("LoadNodeJobRunKeys> Unable to decrypt env private key %s/%s: %v", n.Context.Environment.Name, k.Name, errD)
+			}
 			secrets = append(secrets, sdk.Variable{
-				Name:  "cds.env." + k.Name + ".priv",
+				Name:  "cds.key." + k.Name + ".priv",
 				Type:  "string",
-				Value: k.Private,
+				Value: string(decrypted),
 			})
 		}
 
@@ -276,6 +288,15 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 		}
 		av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
 		av = sdk.VariablesPrefix(av, "cds.app.")
+
+		if err := application.DecryptVCSStrategyPassword(n.Context.Application); err != nil {
+			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot decrypt vcs configuration")
+		}
+		av = append(av, sdk.Variable{
+			Name:  "git.http.password",
+			Type:  sdk.SecretVariable,
+			Value: n.Context.Application.RepositoryStrategy.Password,
+		})
 	}
 	secrets = append(secrets, av...)
 
@@ -313,6 +334,27 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.H
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
+//AddNodeJobAttempt add an hatchery attempt to spawn a job
+func AddNodeJobAttempt(db gorp.SqlExecutor, id, hatcheryID int64) ([]int64, error) {
+	var ids []int64
+	query := "UPDATE workflow_node_run_job SET spawn_attempts = array_append(spawn_attempts, $1) WHERE id = $2"
+	if _, err := db.Exec(query, hatcheryID, id); err != nil && err != sql.ErrNoRows {
+		return ids, sdk.WrapError(err, "AddNodeJobAttempt> cannot update node run job")
+	}
+
+	rows, err := db.Query("SELECT DISTINCT unnest(spawn_attempts) FROM workflow_node_run_job WHERE id = $1", id)
+	var hID int64
+	defer rows.Close()
+	for rows.Next() {
+		if errS := rows.Scan(&hID); errS != nil {
+			return ids, sdk.WrapError(errS, "AddNodeJobAttempt> cannot scan")
+		}
+		ids = append(ids, hID)
+	}
+
+	return ids, err
+}
+
 //AddLog adds a build log
 func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) error {
 	if job != nil {
@@ -330,7 +372,9 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 			return sdk.WrapError(err, "AddLog> Cannot insert log")
 		}
 	} else {
-		existingLogs.Val += logs.Val
+		logbuf := bytes.NewBufferString(existingLogs.Val)
+		logbuf.WriteString(logs.Val)
+		existingLogs.Val = logbuf.String()
 		existingLogs.LastModified = logs.LastModified
 		existingLogs.Done = logs.Done
 		if err := updateLog(db, existingLogs); err != nil {
@@ -356,7 +400,9 @@ func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun
 		step.Done = time.Time{}
 		if l != nil { // log could be nil here
 			l.Done = nil
-			l.Val += "\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n"
+			logbuf := bytes.NewBufferString(l.Val)
+			logbuf.WriteString("\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n")
+			l.Val = logbuf.String()
 			if err := updateLog(db, l); err != nil {
 				return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while update step log")
 			}

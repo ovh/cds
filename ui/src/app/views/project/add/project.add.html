@@ -25,13 +25,17 @@
                 </div>
                 <div class="field">
                     <div class="ui checkbox">
-                        <input type="checkbox" name="sshkey" [(ngModel)]="addSshKey">
-                        <label>{{ 'project_add_ssh_key' | translate }}</label>
+                        <input type="checkbox" id="sshkey" name="sshkey" [(ngModel)]="addSshKey">
+                        <label for="sshkey">{{ 'project_add_ssh_key' | translate }}</label>
                     </div>
                 </div>
                 <div class="field" *ngIf="addSshKey">
                     <label>{{ 'wizard_ssh_key_name' | translate }}</label>
-                    <input type="text" name="keyname" [(ngModel)]="sshKeyVar.name">
+                    <div class="ui labeled input">
+                        <div class="ui label">proj-</div>
+                        <input type="text" name="keyname" [(ngModel)]="sshKey.name">
+                    </div>
+
                 </div>
                 <div class="ui error message" *ngIf="sshError">
                     {{ 'project_ssh_error' | translate }}

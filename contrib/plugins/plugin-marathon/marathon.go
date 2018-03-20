@@ -19,6 +19,7 @@ import (
 	"github.com/gambol99/go-marathon"
 	"github.com/xeipuuv/gojsonschema"
 
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
@@ -36,7 +37,7 @@ func (m MarathonPlugin) Name() string {
 func (m MarathonPlugin) Description() string {
 	return `This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
 
-Your marathon.json file can be templated with cds variables "{{.cds.variables}}". Enable "waitForDeployment" option to ensure deployment is successfull.`
+Your marathon.json file can be templated with cds variables "{{.cds.variables}}". Enable "waitForDeployment" option to ensure deployment is successful.`
 }
 
 //Author of the plugin
@@ -144,6 +145,7 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 	//Run tmpl on configuration file to replace all cds variables
 	conf, err := tmplApplicationConfigFile(a, tmplConf)
 	if err != nil {
+		plugin.SendLog(a, "Templating Configuration File KO (tmplApplicationConfigFile): %s\n", err.Error())
 		return plugin.Fail
 	}
 	defer os.RemoveAll(conf)
@@ -152,6 +154,7 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 	//Validate json file and load application
 	appConfig, err := parseApplicationConfigFile(a, conf)
 	if err != nil {
+		plugin.SendLog(a, "Templating Configuration File KO (parseApplicationConfigFile): %s\n", err.Error())
 		return plugin.Fail
 	}
 	plugin.SendLog(a, "Parsing Configuration File: OK\n")
@@ -165,6 +168,21 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 	(*appConfig.Labels)["CDS_PROJECT"] = a.Arguments().Get("cds.project")
 	(*appConfig.Labels)["CDS_APPLICATION"] = a.Arguments().Get("cds.application")
 	(*appConfig.Labels)["CDS_ENVIRONMENT"] = a.Arguments().Get("cds.environment")
+
+	cdsWorkflow := a.Arguments().Get("cds.workflow")
+	if cdsWorkflow != "" {
+		(*appConfig.Labels)["CDS_WORKFLOW"] = cdsWorkflow
+	}
+
+	cdsRunNumber := a.Arguments().Get("cds.run")
+	if cdsRunNumber != "" {
+		(*appConfig.Labels)["CDS_RUN"] = cdsRunNumber
+	}
+
+	gitRepository := a.Arguments().Get("git.repository")
+	if gitRepository != "" {
+		(*appConfig.Labels)["CDS_GIT_REPOSITORY"] = gitRepository
+	}
 
 	gitBranch := a.Arguments().Get("git.branch")
 	if gitBranch != "" {
@@ -182,7 +200,7 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 	val := url.Values{"id": []string{appConfig.ID}}
 	applications, err := client.Applications(val)
 	if err != nil {
-		plugin.SendLog(a, "Failed to list applications : %s\n", err.Error())
+		plugin.SendLog(a, "Failed to list applications: %s\n", err.Error())
 		return plugin.Fail
 	}
 
@@ -200,7 +218,7 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 		plugin.SendLog(a, "Application updated %s: OK\n", appConfig.ID)
 	} else {
 		if _, err := client.CreateApplication(appConfig); err != nil {
-			plugin.SendLog(a, "Application %S creation failed :%s\n", appConfig.ID, err)
+			plugin.SendLog(a, "Application %s creation failed:%s\n", appConfig.ID, err)
 			return plugin.Fail
 		}
 		plugin.SendLog(a, "Application creation %s: OK\n", appConfig.ID)
@@ -287,7 +305,7 @@ func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
 	}
 
 	// apply cds.var on marathon.json file
-	out, errapp := plugin.ApplyArguments(a.Arguments().Data, buff)
+	out, errapp := interpolate.Do(string(buff), a.Arguments().Data)
 	if errapp != nil {
 		plugin.SendLog(a, "Apply cds variables error: %s\n", errapp)
 		return "", errapp
@@ -302,8 +320,7 @@ func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
 	outPath := outfile.Name()
 
 	// write new content in new marathon.json
-	_, errw := outfile.Write(out)
-	if errw != nil {
+	if _, errw := outfile.Write([]byte(out)); errw != nil {
 		plugin.SendLog(a, "Error writing content to file: %s\n", errw.Error())
 		return "", errw
 	}
@@ -359,12 +376,16 @@ func parseApplicationConfigFile(a plugin.IJob, f string) (*marathon.Application,
 		plugin.SendLog(a, "Unable to validate document %s\n", err)
 		return nil, err
 	}
+	if result == nil {
+		plugin.SendLog(a, "Unable to validate document (result validate is nil)\n")
+		return nil, fmt.Errorf("Unable to validate document (result validate is nil)")
+	}
 	if !result.Valid() {
 		plugin.SendLog(a, "The document is not valid. see following errors\n")
 		for _, desc := range result.Errors() {
 			plugin.SendLog(a, " - %s", desc.Details())
 		}
-		return nil, fmt.Errorf("IMarathonPluginnvalid json document")
+		return nil, fmt.Errorf("IMarathonPlugin invalid json document")
 	}
 
 	return appConfig, nil

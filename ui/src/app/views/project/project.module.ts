@@ -15,6 +15,10 @@ import {ProjectVariablesComponent} from './show/variable/variable.list.component
 import {ProjectPermissionsComponent} from './show/permission/permission.component';
 import {ProjectApplicationListComponent} from './show/application/application.list.component';
 import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.component';
+import {ProjectKeysComponent} from './show/keys/project.keys.component';
+import {ProjectPlatformsComponent} from './show/platforms/project.platforms.component';
+import {ProjectPlatformFormComponent} from './show/platforms/form/platform.form.component';
+import {ProjectPlatformListComponent} from './show/platforms/list/platform.list.component';
 
 @NgModule({
     declarations: [
@@ -24,13 +28,17 @@ import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.compon
         ProjectEnvironmentFormComponent,
         ProjectEnvironmentListComponent,
         ProjectEnvironmentComponent,
+        ProjectKeysComponent,
         ProjectPipelinesComponent,
         ProjectVariablesComponent,
         ProjectPermissionsComponent,
         ProjectRepoManagerComponent,
         ProjectRepoManagerFormComponent,
         ProjectShowComponent,
-        ProjectWorkflowListComponent
+        ProjectWorkflowListComponent,
+        ProjectPlatformsComponent,
+        ProjectPlatformFormComponent,
+        ProjectPlatformListComponent
     ],
     imports: [
         SharedModule,

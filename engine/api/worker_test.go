@@ -53,7 +53,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 			GroupID: g.ID,
 			Type:    sdk.Docker,
 			Image:   "buildpack-deps:jessie",
-			Capabilities: []sdk.Requirement{
+			Capabilities: sdk.RequirementList{
 				{
 					Name:  "capa1",
 					Type:  sdk.BinaryRequirement,
@@ -77,7 +77,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, "", ""); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
@@ -146,7 +146,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 			GroupID: g.ID,
 			Type:    sdk.Docker,
 			Image:   "buildpack-deps:jessie",
-			Capabilities: []sdk.Requirement{
+			Capabilities: sdk.RequirementList{
 				{
 					Name:  "capa1",
 					Type:  sdk.BinaryRequirement,
@@ -170,7 +170,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, "", ""); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 

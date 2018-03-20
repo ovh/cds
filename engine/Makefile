@@ -14,7 +14,7 @@ GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOVERALLS = ${GOPATH}/bin/goveralls
 GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
 
-TEST_PKGS = $(shell go list ./... | grep -v vendor)
+TEST_PKGS = $(shell go list ../... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
 TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
 TEST_DB_PORT = $(if ${CDS_API_DATABASE_PORT},${CDS_API_DATABASE_PORT},5432)
 TEST_DB_USER = $(if ${CDS_API_DATABASE_USER},${CDS_API_DATABASE_USER},cds)
@@ -46,18 +46,20 @@ default: build
 
 clean:
 	@rm -rf $(TARGET_DIR)
-	@for TST in `find . -name "tests.log"`; do \
+	@for TST in `find ../ -name "tests.log"`; do \
 		rm $$TST; \
 	done;
-	@for profile in `find . -name "*.coverprofile"`; do \
+	@for profile in `find ../ -name "*.coverprofile"`; do \
 		rm $$profile; \
 	done;
 
 build: $(TARGET_DIR)
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
-			echo Compiling $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH $(VERSION); \
-			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH; \
+			EXTENSION=""; \
+			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
+			echo Compiling $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
+			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done
 	@tar czf dist/sql.tar.gz sql/*

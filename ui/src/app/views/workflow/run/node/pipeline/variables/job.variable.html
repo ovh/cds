@@ -18,6 +18,8 @@
         <app-parameter-list *ngIf="varParent.length > 0" [parameters]="varParent" mode="job"></app-parameter-list>
         <h4 *ngIf="varWorkflow.length > 0">{{ 'pipeline_job_variable_workflow' | translate }}</h4>
         <app-parameter-list *ngIf="varWorkflow.length > 0" [parameters]="varWorkflow" mode="job"></app-parameter-list>
+        <h4 *ngIf="varKey.length > 0">{{ 'pipeline_job_variable_key' | translate }}</h4>
+        <app-parameter-list *ngIf="varKey.length > 0" [parameters]="varKey" mode="job"></app-parameter-list>
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="jobVariablesModal.hide()">{{ 'btn_close' | translate }}</button>

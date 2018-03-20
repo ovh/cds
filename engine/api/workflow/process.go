@@ -16,8 +16,8 @@ import (
 
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
-func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64, chanEvent chan<- interface{}) (bool, error) {
-	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess int
+func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64, chanEvent chan<- interface{}) (bool, error) {
+	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess, nodesRunSkipped, nodesRunDisabled int
 	t0 := time.Now()
 	log.Debug("processWorkflowRun> Begin [#%d]%s", w.Number, w.Workflow.Name)
 	defer func() {
@@ -59,7 +59,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				return false, sdk.ErrWorkflowNodeParentNotRun
 			}
 		}
-		conditionOK, errP := processWorkflowNodeRun(db, store, p, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual, chanEvent)
+		conditionOK, errP := processWorkflowNodeRun(dbCopy, db, store, p, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual, chanEvent)
 		if errP != nil {
 			return false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -80,7 +80,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			},
 		})
 
-		conditionOK, errP := processWorkflowNodeRun(db, store, p, w, w.Workflow.Root, 0, nil, hookEvent, manual, chanEvent)
+		conditionOK, errP := processWorkflowNodeRun(dbCopy, db, store, p, w, w.Workflow.Root, 0, nil, hookEvent, manual, chanEvent)
 		if errP != nil {
 			return false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -96,14 +96,14 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 			haveToUpdate := false
 
-			log.Debug("last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
+			log.Debug("processWorkflowRun> last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
-				computeNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped)
+				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
 			}
 
-			//Trigger only if the node is over (successfull or not)
-			if nodeRun.Status == sdk.StatusSuccess.String() || nodeRun.Status == sdk.StatusFail.String() {
+			//Trigger only if the node is over (successful or not)
+			if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt.String() {
 				//Find the node in the workflow
 				node := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
 				if node == nil {
@@ -125,14 +125,13 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					}
 
 					if !abortTrigger {
-
 						//Keep the subnumber of the previous node in the graph
-						conditionOk, errPwnr := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, chanEvent)
+						conditionOk, errPwnr := processWorkflowNodeRun(dbCopy, db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, chanEvent)
 						if errPwnr != nil {
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, errPwnr)
 							AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 								ID:   sdk.MsgWorkflowError.ID,
-								Args: []interface{}{errPwnr},
+								Args: []interface{}{errPwnr.Error()},
 							})
 						}
 						if conditionOk {
@@ -213,7 +212,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 			log.Debug("Checking source %s (#%d.%d) status = %s", w.Workflow.GetNode(nodeRun.WorkflowNodeID).Name, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 
-			if (nodeRun.Status != string(sdk.StatusSuccess) && nodeRun.Status != string(sdk.StatusFail)) || nodeRun.SubNumber < maxsn {
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() || nodeRun.SubNumber < maxsn {
 				//One of the sources have not been completed
 				ok = false
 				break
@@ -248,11 +247,11 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 				if !abortTrigger {
 					//Keep the subnumber of the previous node in the graph
-					conditionOK, err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil, chanEvent)
+					conditionOK, err := processWorkflowNodeRun(dbCopy, db, store, p, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil, chanEvent)
 					if err != nil {
 						AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 							ID:   sdk.MsgWorkflowError.ID,
-							Args: []interface{}{err},
+							Args: []interface{}{err.Error()},
 						})
 						log.Error("processWorkflowRun> Unable to process node ID=%d: %v", t.WorkflowDestNode.ID, err)
 					}
@@ -286,8 +285,37 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		}
 	}
 
-	w.Status = getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped)
-	if err := updateWorkflowRun(db, w); err != nil {
+	// Recompute status counter, it's mandatory to resync
+	// the map of workflow node runs of the wornflow run to get the right statuses
+	// After resync, recompute all status counter compute the workflow status
+	// All of this is useful to get the right workflow status is the last node status is skipped
+	if err := syncNodeRuns(db, w, false); err != nil {
+		return false, sdk.WrapError(err, "processWorkflowRun> Unable to sync workflow node runs")
+	}
+	// Reinit the counters
+	nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled = 0, 0, 0, 0, 0, 0
+	for k, v := range w.WorkflowNodeRuns {
+		lastCurrentSn := lastSubNumber(w.WorkflowNodeRuns[k])
+		// Subversion of workflowNodeRun
+		for i := range v {
+			nodeRun := &w.WorkflowNodeRuns[k][i]
+			// Compute for the last subnumber only
+			if lastCurrentSn == nodeRun.SubNumber {
+				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
+			}
+		}
+	}
+
+	w.Status = getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled)
+	if sdk.StatusIsTerminated(w.Status) {
+		w.LastExecution = time.Now()
+		defer func() {
+			if err := resyncCommitStatus(dbCopy, store, p, w); err != nil {
+				log.Error("processWorkflowRun> %v", err)
+			}
+		}()
+	}
+	if err := UpdateWorkflowRun(db, w); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun>")
 	}
 
@@ -295,7 +323,8 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 }
 
 //processWorkflowNodeRun triggers execution of a node run
-func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}) (bool, error) {
+func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}) (bool, error) {
+	//TODO: Check user permission
 	t0 := time.Now()
 	log.Debug("processWorkflowNodeRun> Begin [#%d.%d]%s.%d", w.Number, subnumber, w.Workflow.Name, n.ID)
 	defer func() {
@@ -307,17 +336,23 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	copy(stages, n.Pipeline.Stages)
 
 	run := &sdk.WorkflowNodeRun{
-		LastModified:   time.Now(),
-		Start:          time.Now(),
-		Number:         w.Number,
-		SubNumber:      int64(subnumber),
-		WorkflowRunID:  w.ID,
-		WorkflowNodeID: n.ID,
-		Status:         string(sdk.StatusWaiting),
-		Stages:         stages,
+		LastModified:     time.Now(),
+		Start:            time.Now(),
+		Number:           w.Number,
+		SubNumber:        int64(subnumber),
+		WorkflowRunID:    w.ID,
+		WorkflowNodeID:   n.ID,
+		WorkflowNodeName: n.Name,
+		Status:           string(sdk.StatusWaiting),
+		Stages:           stages,
 	}
 
 	runPayload := map[string]string{}
+
+	//If the pipeline has parameter but none are defined on context, use the defaults
+	if len(n.Pipeline.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
+		n.Context.DefaultPipelineParameters = n.Pipeline.Parameter
+	}
 
 	parentStatus := sdk.StatusSuccess.String()
 	run.SourceNodeRuns = sourceNodeRuns
@@ -349,7 +384,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			if errm1 != nil {
 				AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 					ID:   sdk.MsgWorkflowError.ID,
-					Args: []interface{}{errm1},
+					Args: []interface{}{errm1.Error()},
 				})
 				log.Error("processWorkflowNodeRun> Unable to compute hook payload: %v", errm1)
 			}
@@ -365,6 +400,12 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
+
+	run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
+		Name:  "cds.node",
+		Type:  sdk.StringParameter,
+		Value: run.WorkflowNodeName,
+	})
 
 	run.Manual = m
 	if m != nil {
@@ -398,6 +439,12 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			Type:  sdk.StringParameter,
 			Value: "true",
 		})
+	} else {
+		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
+			Name:  "cds.manual",
+			Type:  sdk.StringParameter,
+			Value: "false",
+		})
 	}
 
 	cdsStatusParam := sdk.Parameter{
@@ -417,10 +464,10 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	if errParam != nil {
 		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errParam},
+			Args: []interface{}{errParam.Error()},
 		})
 		// if there an error -> display it in workflowRunInfo and not stop the launch
-		log.Error("processWorkflowNodeRun> getNodeRunBuildParameters failed. Project:%s Begin [#%d.%d]%s.%d err:%s", p.Name, w.Number, subnumber, w.Workflow.Name, n.ID, errParam)
+		log.Error("processWorkflowNodeRun> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%s", p.Name, w.Number, subnumber, w.Workflow.Name, n.ID, run.Payload, errParam)
 	}
 	run.BuildParameters = append(run.BuildParameters, jobParams...)
 
@@ -435,6 +482,45 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
 	}
+
+	//Parse job params to get the VCS infos
+	gitValues := map[string]string{}
+	for _, param := range jobParams {
+		switch param.Name {
+		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
+			gitValues[param.Name] = param.Value
+		}
+	}
+
+	var isRoot bool
+	if n.ID == w.Workflow.Root.ID {
+		isRoot = true
+	}
+
+	var previousGitRepo string
+	pGitRepo := sdk.ParameterFind(&run.BuildParameters, tagGitRepository)
+	if pGitRepo != nil {
+		previousGitRepo = pGitRepo.Value
+	}
+	vcsInfos, errVcs := getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitRepo)
+	if errVcs != nil {
+		if isRoot {
+			return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
+		}
+		return false, nil
+	}
+
+	run.VCSRepository = vcsInfos.repository
+	run.VCSBranch = vcsInfos.branch
+	run.VCSHash = vcsInfos.hash
+
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.url)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.httpurl)
 
 	//Check
 	if h != nil {
@@ -453,22 +539,25 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 
 		if !checkNodeRunCondition(w, *dest, params) {
-			log.Info("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
+			log.Debug("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
 			return false, nil
 		}
 	} else {
 		if !checkNodeRunCondition(w, *n, run.BuildParameters) {
-			log.Info("processWorkflowNodeRun> Condition failed")
+			log.Debug("processWorkflowNodeRun> Condition failed %d/%d", w.ID, n.ID)
 			return false, nil
 		}
 	}
 
-	for _, p := range jobParams {
-		switch p.Name {
-		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor:
-			w.Tag(p.Name, p.Value)
-		}
+	//Tag VCS infos
+	w.Tag(tagGitRepository, run.VCSRepository)
+	w.Tag(tagGitBranch, run.VCSBranch)
+	if len(run.VCSHash) >= 7 {
+		w.Tag(tagGitHash, run.VCSHash[:7])
+	} else {
+		w.Tag(tagGitHash, run.VCSHash)
 	}
+	w.Tag(tagGitAuthor, vcsInfos.author)
 
 	// Add env tag
 	if n.Context != nil && n.Context.Environment != nil {
@@ -478,6 +567,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	for _, info := range w.Infos {
 		if info.IsError {
 			run.Status = string(sdk.StatusFail)
+			run.Done = time.Now()
 			break
 		}
 	}
@@ -495,12 +585,45 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
-	if err := updateWorkflowRun(db, w); err != nil {
+
+	if err := UpdateWorkflowRun(db, w); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}
 
+	//Check the context.mutex to know if we are allowed to run it
+	if n.Context.Mutex {
+		//Check if there are builing workflownoderun with the same workflow_node_name for the same workflow
+		mutexQuery := `select count(1)
+		from workflow_node_run
+		join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+		join workflow on workflow.id = workflow_run.workflow_id
+		where workflow.id = $1
+		and workflow_node_run.id <> $2
+		and workflow_node_run.workflow_node_name = $3
+		and workflow_node_run.status = $4`
+		nbMutex, err := db.SelectInt(mutexQuery, n.WorkflowID, run.ID, n.Name, string(sdk.StatusBuilding))
+		if err != nil {
+			return false, sdk.WrapError(err, "processWorkflowNodeRun> unable to check mutexes")
+		}
+		if nbMutex > 0 {
+			log.Debug("processWorkflowNodeRun> Noderun %s processed but not executed because of mutex", n.Name)
+			AddWorkflowRunInfo(w, false, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowNodeMutex.ID,
+				Args: []interface{}{n.Name},
+			})
+
+			if err := UpdateWorkflowRun(db, w); err != nil {
+				return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
+			}
+
+			//Mutex is locked. exit without error
+			return true, nil
+		}
+		//Mutex is free, continue
+	}
+
 	//Execute the node run !
-	if err := execute(db, store, p, run, chanEvent); err != nil {
+	if err := execute(dbCopy, db, store, p, run, chanEvent); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to execute workflow run")
 	}
 
@@ -523,7 +646,14 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 	if node.Context.Conditions.LuaScript == "" {
 		conditionsOK, errc = sdk.WorkflowCheckConditions(node.Context.Conditions.PlainConditions, params)
 	} else {
-		luacheck := luascript.NewCheck()
+		luacheck, err := luascript.NewCheck()
+		if err != nil {
+			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
+			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{err.Error()},
+			})
+		}
 		luacheck.SetVariables(sdk.ParametersToMap(params))
 		errc = luacheck.Perform(node.Context.Conditions.LuaScript)
 		conditionsOK = luacheck.Result
@@ -532,7 +662,7 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 		log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
 		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errc},
+			Args: []interface{}{errc.Error()},
 		})
 		return false
 	}
@@ -550,33 +680,41 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, isError bool, infos ...sdk.SpawnMs
 	}
 }
 
-// getWorkflowRunStatus return the status depending on number of workflowNodeRuns in success, building, stopped and fail
-func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped int) string {
+// getRunStatus return the status depending on number of runs in success, building, stopped and fail
+func getRunStatus(successStatus, buildingStatus, failStatus, stoppedStatus, skippedStatus, disabledStatus int) string {
 	switch {
-	case nodesRunBuilding > 0:
-		return string(sdk.StatusBuilding)
-	case nodesRunFailed > 0:
-		return string(sdk.StatusFail)
-	case nodesRunStopped > 0:
-		return string(sdk.StatusStopped)
-	case nodesRunSuccess > 0:
-		return string(sdk.StatusSuccess)
+	case buildingStatus > 0:
+		return sdk.StatusBuilding.String()
+	case failStatus > 0:
+		return sdk.StatusFail.String()
+	case stoppedStatus > 0:
+		return sdk.StatusStopped.String()
+	case successStatus > 0:
+		return sdk.StatusSuccess.String()
+	case skippedStatus > 0:
+		return sdk.StatusSkipped.String()
+	case disabledStatus > 0:
+		return sdk.StatusDisabled.String()
 	default:
-		return string(sdk.StatusNeverBuilt)
+		return sdk.StatusNeverBuilt.String()
 	}
 }
 
-// updateNodesRunStatus is useful to compute number of nodeRun in success, building and fail
-func computeNodesRunStatus(status string, success, building, fail, stop *int) {
+// computeRunStatus is useful to compute number of runs in success, building and fail
+func computeRunStatus(status string, success, building, fail, stop, skipped, disabled *int) {
 	switch status {
-	case string(sdk.StatusSuccess):
+	case sdk.StatusSuccess.String():
 		*success++
-	case string(sdk.StatusBuilding), string(sdk.StatusWaiting):
+	case sdk.StatusBuilding.String(), sdk.StatusWaiting.String():
 		*building++
-	case string(sdk.StatusFail):
+	case sdk.StatusFail.String():
 		*fail++
-	case string(sdk.StatusStopped):
+	case sdk.StatusStopped.String():
 		*stop++
+	case sdk.StatusSkipped.String():
+		*skipped++
+	case sdk.StatusDisabled.String():
+		*disabled++
 	}
 }
 

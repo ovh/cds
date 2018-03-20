@@ -1,13 +1,15 @@
 package log
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 
-	loghook "github.com/ovh/logrus-ovh-hook"
+	loghook "github.com/ovh/cds/sdk/log/hook"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,10 +23,12 @@ type Conf struct {
 	GraylogExtraValue      string
 	GraylogFieldCDSName    string
 	GraylogFieldCDSVersion string
+	Ctx                    context.Context
 }
 
 var (
 	logger Logger
+	hook   *loghook.Hook
 )
 
 // Logger defines the logs levels used
@@ -58,34 +62,54 @@ func Initialize(conf *Conf) {
 			TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
 		}
 
-		var extra map[string]interface{}
+		extra := map[string]interface{}{}
 		if conf.GraylogExtraKey != "" && conf.GraylogExtraValue != "" {
-			extra = map[string]interface{}{
-				conf.GraylogExtraKey: conf.GraylogExtraValue,
+			keys := strings.Split(conf.GraylogExtraKey, ",")
+			values := strings.Split(conf.GraylogExtraValue, ",")
+			if len(keys) != len(values) {
+				log.Errorf("Error while initialize log: extraKey (len:%d) does not have same corresponding number of values on extraValue (len:%d)", len(keys), len(values))
+			} else {
+				for i := range keys {
+					extra[keys[i]] = values[i]
+				}
 			}
 		}
 
 		if conf.GraylogFieldCDSName != "" {
 			extra["CDSName"] = conf.GraylogFieldCDSName
 		}
-
 		if conf.GraylogFieldCDSVersion != "" {
 			extra["CDSVersion"] = conf.GraylogFieldCDSVersion
 		}
+
+		extra["CDSOS"] = runtime.GOOS
+		extra["CDSArch"] = runtime.GOARCH
 
 		// no need to check error here
 		hostname, _ := os.Hostname()
 		extra["CDSHostname"] = hostname
 
-		h, err := loghook.NewHook(graylogcfg, extra)
+		var errhook error
+		hook, errhook = loghook.NewHook(graylogcfg, extra)
 
-		if err != nil {
-			log.Errorf("Error while initialize graylog hook: %s", err)
+		if errhook != nil {
+			log.Errorf("Error while initialize graylog hook: %v", errhook)
 		} else {
-			log.AddHook(h)
+			log.AddHook(hook)
 			log.SetOutput(ioutil.Discard)
 		}
 	}
+
+	if conf.Ctx == nil {
+		conf.Ctx = context.Background()
+	}
+	go func() {
+		<-conf.Ctx.Done()
+		log.Info("Draining logs")
+		if hook != nil {
+			hook.Flush()
+		}
+	}()
 }
 
 // Debug prints debug log

@@ -7,69 +7,17 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Here are the default hooks
 var (
-	WebHookModel = &sdk.WorkflowHookModel{
-		Author:     "CDS",
-		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: "github.com/ovh/cds/hook/builtin/webhook",
-		Name:       "WebHook",
-		Icon:       "Linkify",
-		DefaultConfig: sdk.WorkflowNodeHookConfig{
-			"method": {
-				Value:        "POST",
-				Configurable: true,
-			},
-		},
-	}
-
-	RepositoryWebHookModel = &sdk.WorkflowHookModel{
-		Author:     "CDS",
-		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: "github.com/ovh/cds/hook/builtin/repositorywebhook",
-		Name:       "RepositoryWebHook",
-		Icon:       "Linkify",
-		DefaultConfig: sdk.WorkflowNodeHookConfig{
-			"method": {
-				Value:        "POST",
-				Configurable: false,
-			},
-		},
-	}
-
-	GitPollerModel = &sdk.WorkflowHookModel{
-		Author:     "CDS",
-		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: "github.com/ovh/cds/hook/builtin/poller",
-		Name:       "Git Repository Poller",
-		Icon:       "git square",
-	}
-
-	SchedulerModel = &sdk.WorkflowHookModel{
-		Author:     "CDS",
-		Type:       sdk.WorkflowHookModelBuiltin,
-		Identifier: "github.com/ovh/cds/hook/builtin/scheduler",
-		Name:       "Scheduler",
-		Icon:       "fa-clock-o",
-		DefaultConfig: sdk.WorkflowNodeHookConfig{
-			"cron": {
-				Value:        "0 * * * *",
-				Configurable: true,
-			},
-			"timezone": {
-				Value:        "UTC",
-				Configurable: true,
-			},
-		},
-	}
-
 	builtinModels = []*sdk.WorkflowHookModel{
-		WebHookModel,
-		RepositoryWebHookModel,
-		GitPollerModel,
-		SchedulerModel,
+		&sdk.WebHookModel,
+		&sdk.RepositoryWebHookModel,
+		&sdk.GitPollerModel,
+		&sdk.SchedulerModel,
+		&sdk.KafkaHookModel,
 	}
 )
 
@@ -127,8 +75,15 @@ func CreateBuiltinWorkflowHookModels(db *gorp.DbMap) error {
 		}
 
 		if !ok {
+			log.Debug("CreateBuiltinWorkflowHookModels> inserting hooks config: %s", h.Name)
 			if err := InsertHookModel(tx, h); err != nil {
-				return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels")
+				return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels error on insert")
+			}
+		} else {
+			log.Debug("CreateBuiltinWorkflowHookModels> updating hooks config: %s", h.Name)
+			// update default values
+			if err := UpdateHookModel(tx, h); err != nil {
+				return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels  error on update")
 			}
 		}
 	}
@@ -152,13 +107,14 @@ func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 	if _, err := db.Select(&dbModels, "select id, name, type, command, author, description, identifier, icon from workflow_hook_model"); err != nil {
 		return nil, sdk.WrapError(err, "LoadHookModels> Unable to load WorkflowHookModel")
 	}
-	models := []sdk.WorkflowHookModel{}
+
+	models := make([]sdk.WorkflowHookModel, len(dbModels))
 	for i := range dbModels {
 		m := dbModels[i]
 		if err := m.PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "LoadHookModels> Unable to load WorkflowHookModel")
 		}
-		models = append(models, sdk.WorkflowHookModel(m))
+		models[i] = sdk.WorkflowHookModel(m)
 	}
 	return models, nil
 }

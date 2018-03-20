@@ -2,6 +2,7 @@ package worker
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -29,6 +30,7 @@ const columns = `
 	worker_model.communication,
 	worker_model.run_script,
 	worker_model.provision,
+	worker_model.restricted,
 	worker_model.user_last_modified,
 	worker_model.last_spawn_err,
 	worker_model.nb_spawn_err,
@@ -164,7 +166,7 @@ func DeleteWorkerModel(db gorp.SqlExecutor, ID int64) error {
 }
 
 // LoadWorkerModelCapabilities retrieves capabilities of given worker model
-func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Requirement, error) {
+func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) (sdk.RequirementList, error) {
 	query := `SELECT name, type, argument FROM worker_capability WHERE worker_model_id = $1 ORDER BY name`
 
 	rows, err := db.Query(query, workerID)
@@ -173,7 +175,7 @@ func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Req
 	}
 	defer rows.Close()
 
-	var capas []sdk.Requirement
+	var capas sdk.RequirementList
 	for rows.Next() {
 		var c sdk.Requirement
 		if err := rows.Scan(&c.Name, &c.Type, &c.Value); err != nil {
@@ -187,10 +189,15 @@ func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Req
 // ComputeRegistrationNeeds checks if worker models need to be register
 // if requirements contains "binary" type: all workers model need to be registered again by
 // setting flag need_registration to true in DB.
-func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs []sdk.Requirement, reqs []sdk.Requirement) error {
+func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.RequirementList, reqs sdk.RequirementList) error {
 	log.Debug("ComputeRegistrationNeeds>")
+	var nbModelReq int
+	var nbOSArchReq int
+	var nbHostnameReq int
+
 	for _, r := range reqs {
-		if r.Type == sdk.BinaryRequirement {
+		switch r.Type {
+		case sdk.BinaryRequirement:
 			exist := false
 			for _, e := range allBinaryReqs {
 				if e.Value == r.Value {
@@ -201,8 +208,25 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs []sdk.Requireme
 			if !exist {
 				return updateAllToNeedRegistration(db)
 			}
+		case sdk.OSArchRequirement:
+			nbOSArchReq++
+		case sdk.ModelRequirement:
+			nbModelReq++
+		case sdk.HostnameRequirement:
+			nbHostnameReq++
 		}
 	}
+
+	if nbOSArchReq > 1 {
+		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid os-architecture requirement usage"))
+	}
+	if nbModelReq > 1 {
+		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid model requirement usage"))
+	}
+	if nbHostnameReq > 1 {
+		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid hostname requirement usage"))
+	}
+
 	return nil
 }
 

@@ -17,14 +17,14 @@
                 </div>
                 <div class="one wide inline field">
                     <div class="ui checkbox">
-                        <input type="checkbox" name="enabled" [(ngModel)]="editableAction.enabled"
+                        <input type="checkbox" id="enabled" name="enabled" [(ngModel)]="editableAction.enabled"
                                (change)="editableAction.hasChanged = true" [disabled]="!edit">
-                        <label>{{ 'common_enable' | translate }}</label>
+                        <label for="enabled">{{ 'common_enable' | translate }}</label>
                     </div>
                     <div class="ui checkbox mt10" *ngIf="editableAction.type !== 'Joined'">
-                        <input type="checkbox" name="deprecated" [(ngModel)]="editableAction.deprecated"
+                        <input type="checkbox" id="deprecated" name="deprecated" [(ngModel)]="editableAction.deprecated"
                                (change)="editableAction.hasChanged = true" [disabled]="!edit">
-                        <label>{{ 'common_deprecated' | translate }}</label>
+                        <label for="deprecated">{{ 'common_deprecated' | translate }}</label>
                     </div>
                 </div>
                 <div class="two wide right aligned field labelPadding">
@@ -40,8 +40,12 @@
                                         [requirements]="editableAction.requirements" [edit]="edit"
                                         (onChange)="editableAction.hasChanged = true"
                                         (event)="requirementEvent($event)"></app-requirements-list>
-                                    <div class="requirementForm" *ngIf="edit">
-                                        <app-requirements-form [groupsPermission]="pipeline.groups" [suggest]="suggest" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
+                                    <div class="requirementForm" *ngIf="edit && pipeline">
+                                        <h3>{{ 'requirement_add' | translate }}</h3>
+                                        <app-requirements-form [groupsPermission]="pipeline.groups" [config]="configRequirements" [suggest]="suggest" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
+                                    </div>
+                                    <div class="requirementForm" *ngIf="edit && !pipeline">
+                                        <app-requirements-form [suggest]="suggest" [config]="configRequirements" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>
                                 </div>
                             </div>
@@ -58,8 +62,13 @@
         <div class="field">
             <label>{{ 'common_parameters' | translate }}</label>
             <div>
-                <app-parameter-list [project]="project" [parameters]="editableAction.parameters" [mode]="edit? 'edit': 'ro'"
-                                    (event)="parameterEvent($event)"></app-parameter-list>
+                <app-parameter-list
+                  [project]="project"
+                  [parameters]="editableAction.parameters"
+                  [mode]="edit? 'edit': 'ro'"
+                  [hideSave]="true"
+                  (event)="parameterEvent($event)">
+                </app-parameter-list>
             </div>
             <div>
                 <app-parameter-form *ngIf="edit" [project]="project" (createParameterEvent)="parameterEvent($event)"></app-parameter-form>
@@ -69,12 +78,31 @@
 
     <div class="subtitle normalStep">
         <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
+        <div class="right floated" *ngIf="steps && steps.length > 0">
+          <button class="ui blue button" (click)="collapsed = !collapsed">
+              <ng-container *ngIf="collapsed">
+                  <i class="hide icon"></i>
+                  {{'common_hide_all' | translate}}
+              </ng-container>
+              <ng-container *ngIf="!collapsed">
+                  <i class="eye icon"></i>
+                  {{'common_show_all' | translate}}
+              </ng-container>
+          </button>
+        </div>
     </div>
     <div class="ui segment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="steps" *ngIf="steps">
             <div *ngFor="let step of steps" class="step" [class.off]="!step.enabled">
-                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest" [publicActions]="publicActions"
-                                 (removeEvent)="stepManagement($event)"></app-action-step>
+                <app-action-step
+                    [action]="editableAction"
+                    [step]="step"
+                    [edit]="edit"
+                    [suggest]="suggest"
+                    [publicActions]="publicActions"
+                    [collapsed]="collapsed"
+                    (removeEvent)="stepManagement($event)">
+                </app-action-step>
                 <hr>
             </div>
         </div>

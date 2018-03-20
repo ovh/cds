@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk"
 )
 
 // PubSub represents a subscriber
@@ -31,7 +31,7 @@ type Store interface {
 	Publish(queueName string, value interface{})
 	Subscribe(queueName string) PubSub
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
-	Status() string
+	Status() sdk.MonitoringStatusLine
 	SetAdd(rootKey string, memberKey string, member interface{})
 	SetRemove(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int
@@ -40,6 +40,5 @@ type Store interface {
 
 //New init a cache
 func New(redisHost, redisPassword string, TTL int) (Store, error) {
-	log.Info("Cache> Initialize redis cache (Host=%s, TTL=%d seconds)", redisHost, TTL)
 	return NewRedisStore(redisHost, redisPassword, TTL)
 }

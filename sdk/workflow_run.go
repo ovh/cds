@@ -12,18 +12,18 @@ import (
 //WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
 	ID               int64                            `json:"id" db:"id"`
-	Number           int64                            `json:"num" db:"num"`
+	Number           int64                            `json:"num" db:"num" cli:"num"`
 	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
 	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
-	Status           string                           `json:"status" db:"status"`
+	Status           string                           `json:"status" db:"status" cli:"status"`
 	Workflow         Workflow                         `json:"workflow" db:"-"`
-	Start            time.Time                        `json:"start" db:"start"`
+	Start            time.Time                        `json:"start" db:"start" cli:"start"`
 	LastModified     time.Time                        `json:"last_modified" db:"last_modified"`
 	WorkflowNodeRuns map[int64][]WorkflowNodeRun      `json:"nodes" db:"-"`
 	Infos            []WorkflowRunInfo                `json:"infos" db:"-"`
-	Tags             []WorkflowRunTag                 `json:"tags" db:"-"`
+	Tags             []WorkflowRunTag                 `json:"tags" db:"-" cli:"tags"`
 	LastSubNumber    int64                            `json:"last_subnumber" db:"last_sub_num"`
-	LastExecution    time.Time                        `json:"last_execution" db:"last_execution"`
+	LastExecution    time.Time                        `json:"last_execution" db:"last_execution" cli:"last_execution"`
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 }
@@ -44,6 +44,11 @@ type WorkflowRunPostHandlerOption struct {
 	FromNodeIDs []int64                   `json:"from_nodes,omitempty"`
 }
 
+//WorkflowRunNumber contains a workflow run number
+type WorkflowRunNumber struct {
+	Num int64 `json:"num" cli:"run-number"`
+}
+
 // Translate translates messages in WorkflowNodeRun
 func (r *WorkflowRun) Translate(lang string) {
 	for ki, info := range r.Infos {
@@ -52,10 +57,10 @@ func (r *WorkflowRun) Translate(lang string) {
 	}
 }
 
-// Tag push a new Tag in WorkflowRunTag
-func (r *WorkflowRun) Tag(tag, value string) {
+// Tag push a new Tag in WorkflowRunTag and return if a tag was added or no
+func (r *WorkflowRun) Tag(tag, value string) bool {
 	if value == "" {
-		return
+		return false
 	}
 	var found bool
 	for i := range r.Tags {
@@ -68,7 +73,10 @@ func (r *WorkflowRun) Tag(tag, value string) {
 	}
 	if !found {
 		r.Tags = append(r.Tags, WorkflowRunTag{Tag: tag, Value: value})
+		return true
 	}
+
+	return false
 }
 
 //WorkflowRunInfo is an info on workflow run
@@ -83,8 +91,8 @@ type WorkflowRunInfo struct {
 //WorkflowRunTag is a tag on workflow run
 type WorkflowRunTag struct {
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
-	Tag           string `json:"tag" db:"tag"`
-	Value         string `json:"value" db:"value"`
+	Tag           string `json:"tag" db:"tag" cli:"tag"`
+	Value         string `json:"value" db:"value" cli:"value"`
 }
 
 //WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
@@ -92,6 +100,7 @@ type WorkflowNodeRun struct {
 	WorkflowRunID      int64                            `json:"workflow_run_id"`
 	ID                 int64                            `json:"id"`
 	WorkflowNodeID     int64                            `json:"workflow_node_id"`
+	WorkflowNodeName   string                           `json:"workflow_node_name"`
 	Number             int64                            `json:"num"`
 	SubNumber          int64                            `json:"subnumber"`
 	Status             string                           `json:"status"`
@@ -109,6 +118,10 @@ type WorkflowNodeRun struct {
 	Tests              *venom.Tests                     `json:"tests,omitempty"`
 	Commits            []VCSCommit                      `json:"commits,omitempty"`
 	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
+	VCSRepository      string                           `json:"vcs_repository"`
+	VCSBranch          string                           `json:"vcs_branch"`
+	VCSHash            string                           `json:"vcs_hash"`
+	CanBeRun           bool                             `json:"can_be_run"`
 }
 
 // WorkflowNodeTriggerRun Represent the state of a trigger
@@ -131,14 +144,26 @@ type WorkflowNodeRunArtifact struct {
 	WorkflowID        int64     `json:"workflow_id" db:"workflow_run_id"`
 	WorkflowNodeRunID int64     `json:"workflow_node_run_id" db:"workflow_node_run_id"`
 	ID                int64     `json:"id" db:"id"`
-	Name              string    `json:"name" db:"name"`
-	Tag               string    `json:"tag" db:"tag"`
+	Name              string    `json:"name" db:"name" cli:"name"`
+	Tag               string    `json:"tag" db:"tag" cli:"tag"`
 	DownloadHash      string    `json:"download_hash" db:"download_hash"`
 	Size              int64     `json:"size,omitempty" db:"size"`
 	Perm              uint32    `json:"perm,omitempty" db:"perm"`
-	MD5sum            string    `json:"md5sum,omitempty" db:"md5sum"`
+	MD5sum            string    `json:"md5sum,omitempty" db:"md5sum" cli:"md5sum"`
 	ObjectPath        string    `json:"object_path,omitempty" db:"object_path"`
 	Created           time.Time `json:"created,omitempty" db:"created"`
+	TempURL           string    `json:"temp_url,omitempty" db:"-"`
+	TempURLSecretKey  string    `json:"-" db:"-"`
+}
+
+// Equal returns true if w WorkflowNodeRunArtifact equals c
+func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
+	return w.WorkflowID == c.WorkflowID &&
+		w.WorkflowNodeRunID == c.WorkflowNodeRunID &&
+		w.DownloadHash == c.DownloadHash &&
+		w.Tag == c.Tag &&
+		w.TempURL == c.TempURL &&
+		w.MD5sum == c.MD5sum
 }
 
 //WorkflowNodeJobRun represents an job to be run
@@ -149,6 +174,7 @@ type WorkflowNodeJobRun struct {
 	Parameters        []Parameter `json:"parameters,omitempty" db:"-"`
 	Status            string      `json:"status"  db:"status"`
 	Retry             int         `json:"retry"  db:"retry"`
+	SpawnAttempts     []int64     `json:"spawn_attempts,omitempty"  db:"-"`
 	Queued            time.Time   `json:"queued,omitempty" db:"queued"`
 	QueuedSeconds     int64       `json:"queued_seconds,omitempty" db:"-"`
 	Start             time.Time   `json:"start,omitempty" db:"start"`
@@ -156,6 +182,7 @@ type WorkflowNodeJobRun struct {
 	Model             string      `json:"model,omitempty" db:"model"`
 	BookedBy          Hatchery    `json:"bookedby" db:"-"`
 	SpawnInfos        []SpawnInfo `json:"spawninfos" db:"-"`
+	ExecGroups        []Group     `json:"exec_groups" db:"-"`
 }
 
 //WorkflowNodeJobRunInfo represents info on a job

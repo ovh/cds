@@ -6,6 +6,7 @@ import {Parameter} from './parameter.model';
 import {WorkflowHookModel} from './workflow.hook.model';
 import {GroupPermission} from './group.model';
 import {Usage} from './usage.model';
+import {notificationTypes, UserNotificationSettings} from 'app/model/notification.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -24,14 +25,17 @@ export class Workflow {
     usage: Usage;
     history_length: number;
     purge_tags: Array<string>;
+    notifications: Array<WorkflowNotification>;
 
     // UI params
     externalChange: boolean;
+    forceRefresh: boolean;
+    previewMode: boolean;
 
     // Do not remove root node
     static removeNodeWithoutChild(workflow: Workflow, node: WorkflowNode): boolean {
         if (node.id === workflow.root.id) {
-            if ( (workflow.root.triggers && workflow.root.triggers.length > 1) || (workflow.joins && workflow.joins.length > 1)) {
+            if ((workflow.root.triggers && workflow.root.triggers.length > 1) || (workflow.joins && workflow.joins.length > 1)) {
                 return false;
             }
             if (workflow.root.triggers) {
@@ -158,6 +162,40 @@ export class Workflow {
         return node;
     }
 
+    static findNode(w: Workflow, compareFunc): WorkflowNode {
+        let node = WorkflowNode.findNode(w.root, compareFunc);
+        if (!node && w.joins) {
+            quit: for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        node = WorkflowNode.findNode(w.joins[i].triggers[j].workflow_dest_node, compareFunc);
+                        if (node) {
+                            break quit;
+                        }
+                    }
+                }
+            }
+        }
+        return node;
+    }
+
+    static getHookByID(id: number, w: Workflow): WorkflowNodeHook {
+        let hook = WorkflowNode.getHookByID(w.root, id);
+        if (!hook && w.joins) {
+            quit: for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        hook = WorkflowNode.getHookByID(w.joins[i].triggers[j].workflow_dest_node, id);
+                        if (hook) {
+                            break quit;
+                        }
+                    }
+                }
+            }
+        }
+        return hook;
+    }
+
     static removeOldRef(w: Workflow) {
         if (!w.joins) {
             return;
@@ -176,10 +214,11 @@ export class Workflow {
         w.joins.forEach(j => {
             j.source_node_ref = intersection(j.source_node_ref, refs);
         });
+
+        w.joins = w.joins.filter(j => j.source_node_ref.length > 0);
     }
 
     static getNodeNameImpact(workflow: Workflow, name: string): WorkflowPipelineNameImpact {
-        let varName = 'workflow.' + name;
         let warnings = new WorkflowPipelineNameImpact();
         WorkflowNode.getNodeNameImpact(workflow.root, name, warnings);
         if (workflow.joins) {
@@ -194,6 +233,39 @@ export class Workflow {
         return warnings;
     }
 
+    static getMapNodes(data: Workflow): Map<number, WorkflowNode> {
+        let nodes = new Map<number, WorkflowNode>();
+        nodes = WorkflowNode.getMapNodes(nodes, data.root);
+
+        if (data.joins) {
+            data.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        nodes = WorkflowNode.getMapNodes(nodes, t.workflow_dest_node);
+                    });
+                }
+            });
+        }
+        return nodes;
+    }
+
+    static getAllNodes(data: Workflow): Array<WorkflowNode> {
+        let nodes = new Array<WorkflowNode>();
+
+        nodes.push(...WorkflowNode.getAllNodes(data.root));
+
+        if (data.joins) {
+            data.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        nodes.push(...WorkflowNode.getAllNodes(t.workflow_dest_node));
+                    });
+                }
+            });
+        }
+        return nodes;
+    }
+
     static getJoinById(id: number, workflow: Workflow): WorkflowNodeJoin {
         if (!workflow || !Array.isArray(workflow.joins)) {
             return null;
@@ -201,13 +273,150 @@ export class Workflow {
         return workflow.joins.find((join) => join.id === id);
     }
 
+    static prepareRequestForAPI(workflow: Workflow) {
+        WorkflowNode.prepareRequestForAPI(workflow.root);
+        if (workflow.joins) {
+            workflow.joins.forEach(j => {
+                j.id = 0;
+                j.source_node_id = [];
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        WorkflowNode.prepareRequestForAPI(t.workflow_dest_node);
+                    });
+                }
+            });
+        }
+        delete workflow.usage;
+    }
+
+    static getParentNodeIds(workflow: Workflow, currentNodeID: number): number[] {
+        let ancestors = {};
+
+        if (workflow.joins) {
+            for (let join of workflow.joins) {
+                if (join.triggers) {
+                    for (let trigger of join.triggers) {
+                        if (trigger.workflow_dest_node) {
+                            let parentNodeInfos = this.getParentNode(workflow, trigger.workflow_dest_node, currentNodeID);
+                            if (parentNodeInfos.found) {
+                                if (parentNodeInfos.node) {
+                                    ancestors[parentNodeInfos.node.id] = true;
+                                } else {
+                                    ancestors[workflow.root.id] = true;
+                                    join.source_node_id.forEach((source) => ancestors[source] = true);
+                                    return Object.keys(ancestors).map((ancestor) => parseInt(ancestor, 10));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (let sourceNodeId of join.source_node_id) {
+                    let nodeFound = Workflow.getNodeByID(sourceNodeId, workflow);
+                    if (nodeFound) {
+                        let parentNodeInfos = this.getParentNode(workflow, nodeFound, currentNodeID);
+                        if (parentNodeInfos.found) {
+                            if (parentNodeInfos.node) {
+                                ancestors[parentNodeInfos.node.id] = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        let parentNodeInfosFromRoot = this.getParentNode(workflow, workflow.root, currentNodeID);
+        if (parentNodeInfosFromRoot.found) {
+            if (parentNodeInfosFromRoot.node) {
+                ancestors[parentNodeInfosFromRoot.node.id] = true;
+            } else {
+                ancestors[workflow.root.id] = true;
+            }
+        }
+
+        return Object.keys(ancestors).map((id) => parseInt(id, 10));
+    }
+
+    static getParentNode(workflow: Workflow, workflowNode: WorkflowNode, currentNodeID: number): { found: boolean, node?: WorkflowNode } {
+        if (!workflowNode) {
+            return {found: false};
+        }
+        if (workflowNode.id === currentNodeID) {
+            return {found: true};
+        }
+
+        if (!Array.isArray(workflowNode.triggers)) {
+            return {found: false};
+        }
+
+        for (let trigger of workflowNode.triggers) {
+            let parentNodeInfos = this.getParentNode(workflow, trigger.workflow_dest_node, currentNodeID);
+            if (parentNodeInfos.found) {
+                if (parentNodeInfos.node) {
+                    return parentNodeInfos;
+                } else {
+                    return {found: true, node: workflowNode};
+                }
+            }
+        }
+
+        return {found: false};
+    }
+
+    static removeNodeInNotifications(workflow: Workflow, node: WorkflowNode): Workflow {
+        if (!Array.isArray(workflow.notifications) || !workflow.notifications.length) {
+            return workflow;
+        }
+
+        workflow.notifications = workflow.notifications.map((notif) => {
+            notif.source_node_id = notif.source_node_id.filter((srcId) => srcId !== node.id);
+            notif.source_node_ref = notif.source_node_ref.filter((ref) => ref !== node.ref);
+            return notif;
+        });
+
+        return workflow;
+    }
+
+    static removeNodesInNotifications(workflow: Workflow, currentNode: WorkflowNode, nodeId: number, deleteNode: boolean): Workflow {
+        if (!currentNode || !Array.isArray(workflow.notifications) || !workflow.notifications.length) {
+            return workflow;
+        }
+        if (currentNode.id === nodeId) {
+            deleteNode = true;
+        }
+
+        if (deleteNode) {
+            workflow = Workflow.removeNodeInNotifications(workflow, currentNode);
+        }
+
+        if (currentNode.id === workflow.root.id && Array.isArray(workflow.joins)) { // Check from joins
+            workflow.joins.forEach((join) => {
+                join.triggers.forEach((trig) => {
+                    workflow = Workflow.removeNodesInNotifications(workflow, trig.workflow_dest_node, nodeId, deleteNode);
+                });
+            });
+        }
+
+        if (Array.isArray(currentNode.triggers)) {
+            currentNode.triggers.forEach((trig) => {
+                workflow = Workflow.removeNodesInNotifications(workflow, trig.workflow_dest_node, nodeId, deleteNode);
+            });
+        }
+
+        return workflow;
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
+
+
 }
 
 export class WorkflowNodeJoin {
     id: number;
+    ref: string;
     workflow_id: number;
     source_node_id: Array<number>;
     source_node_ref: Array<string>;
@@ -256,7 +465,7 @@ export class WorkflowNode {
         if (trigger.workflow_dest_node.triggers) {
             for (let i = 0; i < trigger.workflow_dest_node.triggers.length; i++) {
                 let t = trigger.workflow_dest_node.triggers[i];
-                let p = WorkflowNode.removeNodeWithoutChild(t.workflow_dest_node, t, id, i);
+                let p = WorkflowNode.removeNodeWithoutChild(trigger.workflow_dest_node, t, id, i);
                 if (p) {
                     return p;
                 }
@@ -281,7 +490,7 @@ export class WorkflowNode {
         if (trigger.workflow_dest_node.triggers) {
             for (let i = 0; i < trigger.workflow_dest_node.triggers.length; i++) {
                 let t = trigger.workflow_dest_node.triggers[i];
-                let p = WorkflowNode.removeNodeWithoutChild(t.workflow_dest_node, t, id, i);
+                let p = WorkflowNode.removeNodeWithoutChild(trigger.workflow_dest_node, t, id, i);
                 if (p) {
                     return;
                 }
@@ -290,7 +499,7 @@ export class WorkflowNode {
         return null;
     }
 
-    static getNodeByID(node: WorkflowNode, id: number) {
+    static getNodeByID(node: WorkflowNode, id: number): WorkflowNode {
         if (node.id === id) {
             return node;
         }
@@ -305,6 +514,43 @@ export class WorkflowNode {
             }
         }
         return nodeToFind;
+    }
+
+    static findNode(node: WorkflowNode, compareFunc): WorkflowNode {
+        if (compareFunc(node)) {
+            return node;
+        }
+        let nodeToFind: WorkflowNode;
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                let n = WorkflowNode.findNode(node.triggers[i].workflow_dest_node, compareFunc);
+                if (n) {
+                    nodeToFind = n;
+                    break;
+                }
+            }
+        }
+        return nodeToFind;
+    }
+
+    static getHookByID(node: WorkflowNode, id: number): WorkflowNodeHook {
+        if (Array.isArray(node.hooks) && node.hooks.length) {
+            let hook = node.hooks.find((h) => h.id === id);
+            if (hook != null) {
+                return hook;
+            }
+        }
+        let hookToFind: WorkflowNodeHook;
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                let h = WorkflowNode.getHookByID(node.triggers[i].workflow_dest_node, id);
+                if (h) {
+                    hookToFind = h;
+                    break;
+                }
+            }
+        }
+        return hookToFind;
     }
 
     static addRef(refs: string[], root: WorkflowNode) {
@@ -370,11 +616,61 @@ export class WorkflowNode {
         }
     }
 
+    static getMapNodes(map: Map<number, WorkflowNode>, n: WorkflowNode): Map<number, WorkflowNode> {
+        let smallNode = new WorkflowNode();
+        smallNode.id = n.id;
+        smallNode.name = n.name;
+        map.set(n.id, smallNode);
+
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                map = WorkflowNode.getMapNodes(map, t.workflow_dest_node);
+            });
+        }
+
+        return map;
+    }
+
+    static getAllNodes(n: WorkflowNode): Array<WorkflowNode> {
+        let nodes = new Array<WorkflowNode>();
+
+        let smallNode = new WorkflowNode();
+        smallNode.id = n.id;
+        smallNode.name = n.name;
+        nodes.push(smallNode);
+
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                nodes.push(...WorkflowNode.getAllNodes(t.workflow_dest_node));
+            });
+        }
+        return nodes;
+    }
+
+    static prepareRequestForAPI(n: WorkflowNode) {
+        n.id = 0;
+        if (n.pipeline_id === 0 && n.pipeline) {
+            n.pipeline_id = n.pipeline.id;
+        }
+        delete n.pipeline;
+        if (n.context.application && n.context.application.id > 0) {
+            n.context.application_id = n.context.application.id;
+            delete n.context.application;
+        }
+        if (n.context.environment && n.context.environment.id > 0) {
+            n.context.environment_id = n.context.environment.id;
+            delete n.context.environment;
+        }
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                WorkflowNode.prepareRequestForAPI(t.workflow_dest_node);
+            });
+        }
+    }
+
     constructor() {
         this.context = new WorkflowNodeContext();
     }
-
-
 }
 
 export class WorkflowPipelineNameImpact {
@@ -392,6 +688,7 @@ export class WorkflowNodeContext {
     default_payload: {};
     default_pipeline_parameters: Array<Parameter>;
     conditions: WorkflowNodeConditions;
+    mutex: boolean;
 }
 
 // WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
@@ -405,6 +702,7 @@ export class WorkflowNodeHook {
 export class WorkflowNodeHookConfigValue {
     value: string;
     configurable: boolean;
+    type: string;
 }
 
 // WorkflowNodeTrigger is a ling betweeb two pipelines in a workflow
@@ -438,10 +736,16 @@ export class WorkflowTriggerConditionCache {
 }
 
 export class WorkflowNotification {
+    id: number;
+    source_node_id: Array<number>;
     source_node_ref: Array<string>;
-    notifications: any;
+    type: string;
+    settings: UserNotificationSettings;
 
     constructor() {
-        this.notifications = {};
+        this.type = notificationTypes[0];
+        this.settings = new UserNotificationSettings();
+        this.source_node_ref = new Array<string>();
+        this.source_node_id = new Array<number>();
     }
 }

@@ -1,13 +1,19 @@
 package workflow
 
 import (
+	"bytes"
+	"database/sql"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -64,7 +70,7 @@ func syncTakeJobInNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.Wo
 	return nil
 }
 
-func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) (errExecute error) {
+func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) (errExecute error) {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
@@ -86,27 +92,40 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 		newStatus = sdk.StatusSuccess.String()
 	}
 
+	stagesTerminated := 0
 	//Browse stages
 	for stageIndex := range n.Stages {
 		stage := &n.Stages[stageIndex]
 		log.Debug("workflow.execute> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status.String() == "" {
+			stage.Status = sdk.StatusWaiting
+
 			if stageIndex == 0 {
 				newStatus = sdk.StatusWaiting.String()
 			}
 
-			stage.Status = sdk.StatusWaiting
-			//Add job to Queue
-			//Insert data in workflow_node_run_job
-			log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
-			if err := addJobsToQueue(db, stage, n, chanEvent); err != nil {
-				return err
+			if len(stage.Jobs) == 0 {
+				newStatus = sdk.StatusSuccess.String()
+				stage.Status = sdk.StatusSuccess
+			} else {
+				//Add job to Queue
+				//Insert data in workflow_node_run_job
+				log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
+				if err := addJobsToQueue(db, stage, n, chanEvent); err != nil {
+					return err
+				}
 			}
-			if stage.Status == sdk.StatusSkipped || stage.Status == sdk.StatusDisabled {
+
+			if sdk.StatusIsTerminated(stage.Status.String()) {
+				stagesTerminated++
 				continue
 			}
 			break
+		}
+
+		if sdk.StatusIsTerminated(stage.Status.String()) {
+			stagesTerminated++
 		}
 
 		//If stage is waiting, nothing to do
@@ -117,7 +136,6 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 
 		if stage.Status == sdk.StatusBuilding {
 			newStatus = sdk.StatusBuilding.String()
-
 			var end bool
 			end, errSync := syncStage(db, store, stage)
 			if errSync != nil {
@@ -130,22 +148,40 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 				if stage.Status == sdk.StatusFail {
 					n.Done = time.Now()
 					newStatus = sdk.StatusFail.String()
+					stagesTerminated++
 					break
 				}
 				if stage.Status == sdk.StatusStopped {
 					n.Done = time.Now()
 					newStatus = sdk.StatusStopped.String()
+					stagesTerminated++
 					break
 				}
+
+				if sdk.StatusIsTerminated(stage.Status.String()) {
+					n.Done = time.Now()
+				}
+
 				if stageIndex == len(n.Stages)-1 {
 					n.Done = time.Now()
 					newStatus = sdk.StatusSuccess.String()
+					stagesTerminated++
 					break
 				}
 				if stageIndex != len(n.Stages)-1 {
 					continue
 				}
 			}
+		}
+	}
+
+	if stagesTerminated >= len(n.Stages) || (stagesTerminated >= len(n.Stages)-1 && (n.Stages[len(n.Stages)-1].Status == sdk.StatusDisabled || n.Stages[len(n.Stages)-1].Status == sdk.StatusSkipped)) {
+		var success, building, fail, stop, skipped, disabled int
+		if len(n.Stages) > 0 {
+			for _, stage := range n.Stages {
+				computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop, &skipped, &disabled)
+			}
+			newStatus = getRunStatus(success, building, fail, stop, skipped, disabled)
 		}
 	}
 
@@ -172,7 +208,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 		}
 
 		if n.Status != sdk.StatusStopped.String() {
-			if _, err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
+			if _, err := processWorkflowRun(dbCopy, db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 			}
 		}
@@ -181,13 +217,65 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
 		}
+
+		node := updatedWorkflowRun.Workflow.GetNode(n.WorkflowNodeID)
+		//Do we release a mutex ?
+		//Try to find one node run of the same node from the same workflow at status Waiting
+		if node != nil && node.Context != nil && node.Context.Mutex {
+			mutexQuery := `select workflow_node_run.id
+			from workflow_node_run
+			join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+			join workflow on workflow.id = workflow_run.workflow_id
+			where workflow.id = $1
+			and workflow_node_run.workflow_node_name = $2
+			and workflow_node_run.status = $3
+			order by workflow_node_run.start asc
+			limit 1`
+			waitingRunID, errID := db.SelectInt(mutexQuery, updatedWorkflowRun.WorkflowID, node.Name, string(sdk.StatusWaiting))
+			if errID != nil && errID != sql.ErrNoRows {
+				log.Error("workflow.execute> Unable to load mutex-locked workflow node run ID: %v", errID)
+				return nil
+			}
+			//If not more run is found, stop the loop
+			if waitingRunID == 0 {
+				return nil
+			}
+			waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, false)
+			if errRun != nil && errRun != sql.ErrNoRows {
+				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errRun)
+				return nil
+			}
+			//If not more run is found, stop the loop
+			if waitingRun == nil {
+				return nil
+			}
+
+			workflowRun, errWRun := LoadRunByID(db, waitingRun.WorkflowRunID, false)
+			if errWRun != nil {
+				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
+				return nil
+			}
+			AddWorkflowRunInfo(workflowRun, false, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
+				Args: []interface{}{waitingRun.WorkflowNodeName},
+			})
+
+			if err := UpdateWorkflowRun(db, workflowRun); err != nil {
+				return sdk.WrapError(err, "workflow.execute> Unable to update workflow run %d after mutex release", workflowRun.ID)
+			}
+
+			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
+			//TODO: how to manage the chanEvent ? Need to discuss about it
+			if err := execute(dbCopy, db, store, p, waitingRun, nil); err != nil {
+				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
+			}
+		}
 	}
 	return nil
 }
 
 func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) error {
 	log.Debug("addJobsToQueue> add %d in stage %s", run.ID, stage.Name)
-
 	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
 	if err != nil {
 		return sdk.WrapError(err, "addJobsToQueue> Cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
@@ -200,6 +288,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 		stage.Status = sdk.StatusDisabled
 	}
 
+	skippedOrDisabledJobs := 0
 	//Browse the jobs
 	for j := range stage.Jobs {
 		job := &stage.Jobs[j]
@@ -218,6 +307,11 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 		// add requirements in job parameters, to use them as {{.job.requirement...}} in job
 		jobParams = append(jobParams, prepareRequirementsToNodeJobRunParameters(jobRequirements)...)
 
+		groups, errGroups := getJobExecutablesGroups(db, run)
+		if errGroups != nil {
+			return sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
+		}
+
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
 			WorkflowNodeRunID: run.ID,
@@ -225,6 +319,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 			Queued:            time.Now(),
 			Status:            sdk.StatusWaiting.String(),
 			Parameters:        jobParams,
+			ExecGroups:        groups,
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
@@ -232,8 +327,10 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 
 		if !stage.Enabled || !wjob.Job.Enabled {
 			wjob.Status = sdk.StatusDisabled.String()
+			skippedOrDisabledJobs++
 		} else if !conditionsOK {
 			wjob.Status = sdk.StatusSkipped.String()
+			skippedOrDisabledJobs++
 		}
 
 		if errParam != nil {
@@ -266,7 +363,46 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 		stage.RunJobs = append(stage.RunJobs, wjob)
 	}
 
+	if skippedOrDisabledJobs == len(stage.Jobs) {
+		stage.Status = sdk.StatusSkipped
+	}
+
 	return nil
+}
+
+func getJobExecutablesGroups(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
+	wr, errWR := LoadRunByID(db, run.WorkflowRunID, false)
+	if errWR != nil {
+		return nil, sdk.WrapError(errWR, "getJobExecutablesGroups> Cannot load workflow run %d", run.WorkflowRunID)
+	}
+
+	node := wr.Workflow.GetNode(run.WorkflowNodeID)
+	if node == nil {
+		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getJobExecutablesGroups> Cannot find node")
+	}
+
+	var groups []sdk.Group
+	if node.Context.Environment != nil {
+		for _, e := range node.Context.Environment.EnvironmentGroups {
+			if e.Permission >= permission.PermissionReadExecute {
+				for _, gp := range wr.Workflow.Groups {
+					if gp.Group.ID == e.Group.ID && gp.Permission >= permission.PermissionReadExecute {
+						groups = append(groups, gp.Group)
+					}
+				}
+			}
+		}
+	} else {
+		for _, gp := range wr.Workflow.Groups {
+			if gp.Permission >= permission.PermissionReadExecute {
+				groups = append(groups, gp.Group)
+			}
+		}
+	}
+
+	groups = append(groups, *group.SharedInfraGroup)
+
+	return groups, nil
 }
 
 func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, error) {
@@ -340,36 +476,57 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	return stageEnd, nil
 }
 
-//NodeBuildParameters returns build_parameters for a node given its id
-func NodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRun, id int64, u *sdk.User) ([]sdk.Parameter, error) {
-	refNode := wf.GetNode(id)
-	if refNode == nil {
-		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
+// NodeBuildParametersFromRun return build parameters from previous workflow run
+func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, error) {
+	params := []sdk.Parameter{}
+
+	nodesRun, ok := wr.WorkflowNodeRuns[id]
+	if !ok || len(nodesRun) == 0 {
+		return params, nil
 	}
+
+	for _, p := range nodesRun[0].BuildParameters {
+		sdk.AddParameter(&params, p.Name, p.Type, p.Value)
+	}
+
+	return params, nil
+}
+
+//NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
+func NodeBuildParametersFromWorkflow(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.WorkflowNode, ancestorsIds []int64) ([]sdk.Parameter, error) {
 
 	res := []sdk.Parameter{}
-
-	if wr != nil {
-		for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
-			oldNode := wr.Workflow.GetNode(nodeID)
-			if oldNode == nil {
-				log.Warning("getWorkflowTriggerConditionHandler> Unable to find last run")
-				break
-			}
-			if oldNode.EqualsTo(refNode) {
-				for _, p := range nodeRuns[0].BuildParameters {
-					sdk.AddParameter(&res, p.Name, p.Type, p.Value)
-				}
-				break
-			}
-		}
-	}
-
 	if len(res) == 0 {
 		var err error
 		res, err = GetNodeBuildParameters(db, store, proj, wf, refNode, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
+		}
+	}
+
+	// Process ancestor
+	for _, aID := range ancestorsIds {
+		ancestor := wf.GetNode(aID)
+		if ancestor == nil {
+			continue
+		}
+		sdk.AddParameter(&res, "workflow."+ancestor.Name+".status", "string", "")
+	}
+
+	// Add payload from root
+	if wf.Root.Context.DefaultPayload != nil {
+		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		e.ExtraFields.DetailedMap = false
+		e.ExtraFields.DetailedStruct = false
+		e.ExtraFields.Len = false
+		e.ExtraFields.Type = false
+
+		tempParams := sdk.ParametersToMap(res)
+		m1, errm1 := e.ToStringMap(wf.Root.Context.DefaultPayload)
+		if errm1 == nil {
+			mergedParameters := sdk.ParametersMapMerge(tempParams, m1)
+			res = sdk.ParametersFromMap(mergedParameters)
 		}
 	}
 
@@ -415,11 +572,13 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 			runj := &stag.RunJobs[iR]
 			if !sdk.StatusIsTerminated(runj.Status) {
 				runj.Status = sdk.StatusStopped.String()
+				runj.Done = time.Now()
 			}
 			for iStep := range runj.Job.StepStatus {
 				stepStat := &runj.Job.StepStatus[iStep]
 				if !sdk.StatusIsTerminated(stepStat.Status) {
 					stepStat.Status = sdk.StatusStopped.String()
+					stepStat.Done = time.Now()
 				}
 			}
 		}
@@ -429,6 +588,7 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 	}
 
 	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Done = time.Now()
 	if errU := UpdateNodeRun(db, &nodeRun); errU != nil {
 		return sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
 	}
@@ -461,7 +621,7 @@ func stopWorkflowNodeJobRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project
 		}
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
-		if err := UpdateNodeJobRunStatus(tx, store, proj, njr, sdk.StatusStopped, chanNodeJobRun); err != nil {
+		if err := UpdateNodeJobRunStatus(db, tx, store, proj, njr, sdk.StatusStopped, chanNodeJobRun); err != nil {
 			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
 			tx.Rollback()
 			wg.Done()
@@ -500,4 +660,139 @@ func SyncNodeRunRunJob(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJo
 	}
 
 	return found, nil
+}
+
+type vcsInfos struct {
+	repository string
+	branch     string
+	hash       string
+	author     string
+	message    string
+	url        string
+	httpurl    string
+}
+
+func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, ignoreError bool, previousGitRepo string) (vcsInfos, error) {
+	var vcsInfos vcsInfos
+	vcsInfos.repository = gitValues[tagGitRepository]
+	vcsInfos.branch = gitValues[tagGitBranch]
+	vcsInfos.hash = gitValues[tagGitHash]
+	vcsInfos.author = gitValues[tagGitAuthor]
+	vcsInfos.message = gitValues[tagGitMessage]
+	vcsInfos.url = gitValues[tagGitURL]
+	vcsInfos.httpurl = gitValues[tagGitHTTPURL]
+
+	if node.Context == nil || node.Context.Application == nil || node.Context.Application.VCSServer == "" {
+		return vcsInfos, nil
+	}
+
+	vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
+	if vcsServer == nil {
+		return vcsInfos, nil
+	}
+
+	//Get the RepositoriesManager Client
+	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+	if errclient != nil {
+		return vcsInfos, sdk.WrapError(errclient, "computeVCSInfos> Cannot get client")
+	}
+
+	// Set default values
+	if vcsInfos.repository == "" {
+		vcsInfos.repository = node.Context.Application.RepositoryFullname
+	} else if vcsInfos.repository != node.Context.Application.RepositoryFullname {
+		//The input repository is not the same as the application, we have to check if it is a fork
+		forks, err := client.ListForks(node.Context.Application.RepositoryFullname)
+		if err != nil {
+			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get forks for %s", node.Context.Application.RepositoryFullname)
+		}
+		var forkFound bool
+		for _, fork := range forks {
+			if vcsInfos.repository == fork.Fullname {
+				forkFound = true
+				break
+			}
+		}
+
+		//If it's not a fork; reset this value to the application repository
+		if !forkFound {
+			if !ignoreError {
+				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.repository))
+			}
+			vcsInfos.repository = node.Context.Application.RepositoryFullname
+		}
+	}
+
+	//Get the url and http_url
+	repo, err := client.RepoByFullname(vcsInfos.repository)
+	if err != nil {
+		if !ignoreError {
+			return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
+		}
+		//If we ignore errors
+		vcsInfos.repository = node.Context.Application.RepositoryFullname
+		repo, err = client.RepoByFullname(node.Context.Application.RepositoryFullname)
+		if err != nil {
+			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get repo %s", node.Context.Application.RepositoryFullname)
+		}
+	}
+	vcsInfos.url = repo.SSHCloneURL
+	vcsInfos.httpurl = repo.HTTPCloneURL
+
+	//Check that the branch exist, if it isn't existing, let the default branch
+	var branch *sdk.VCSBranch
+	if vcsInfos.branch != "" {
+		branch, err = client.Branch(vcsInfos.repository, vcsInfos.branch)
+		if err != nil {
+			if !ignoreError {
+				return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
+			}
+		}
+
+		if branch == nil {
+			log.Error("computeVCSInfos> unable to get branch %s", vcsInfos.branch)
+			vcsInfos.branch = ""
+		}
+	}
+
+	//Get the default branch
+	if branch == nil {
+		branches, errR := client.Branches(vcsInfos.repository)
+		if errR != nil {
+			return vcsInfos, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", vcsInfos.repository)
+		}
+		_branch := sdk.GetDefaultBranch(branches)
+		branch = &_branch
+		vcsInfos.branch = branch.DisplayID
+	}
+
+	//Check if the branch is still valid
+	if branch == nil && previousGitRepo != "" && previousGitRepo == node.Context.Application.RepositoryFullname {
+		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
+			Args: []interface{}{vcsInfos.branch},
+		})
+		return vcsInfos, sdk.WrapError(fmt.Errorf("branch has benn deleted"), "computeVCSInfos> ")
+	}
+
+	if branch != nil && vcsInfos.hash == "" {
+		vcsInfos.hash = branch.LatestCommit
+	}
+
+	//Get the latest commit
+	commit, errCm := client.Commit(vcsInfos.repository, vcsInfos.hash)
+	if errCm != nil {
+		if !ignoreError {
+			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.repository, vcsInfos.hash)
+		}
+		vcsInfos.hash = branch.LatestCommit
+		commit, errCm = client.Commit(vcsInfos.repository, vcsInfos.hash)
+		if errCm != nil {
+			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.repository, vcsInfos.hash)
+		}
+	}
+	vcsInfos.author = commit.Author.Name
+	vcsInfos.message = commit.Message
+
+	return vcsInfos, nil
 }

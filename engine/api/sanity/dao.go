@@ -252,7 +252,7 @@ func InsertActionWarnings(tx gorp.SqlExecutor, projectID, pipelineID int64, acti
 }
 
 // DeleteAllApplicationWarnings deletes all warnings for application only (ie. not related to an action)
-func DeleteAllApplicationWarnings(tx gorp.SqlExecutor, projectID, appID int64) error {
+func DeleteAllApplicationWarnings(tx gorp.SqlExecutor, appID int64) error {
 	if _, err := tx.Exec(`DELETE FROM warning WHERE app_id = $1 and action_id is null`, appID); err != nil {
 		return err
 	}

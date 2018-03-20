@@ -3,39 +3,62 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func deleteUserPermissionCache(ctx context.Context, store cache.Store) {
+func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store) {
 	if getUser(ctx) != nil {
-		kp := cache.Key("users", getUser(ctx).Username, "perms")
-		kg := cache.Key("users", getUser(ctx).Username, "groups")
+		username := getUser(ctx).Username
+		kp := cache.Key("users", username, "perms")
+		kg := cache.Key("users", username, "groups")
 		store.Delete(kp)
 		store.Delete(kg)
+		// refresh user persmission for Last Update SSE
+		api.lastUpdateBroker.UpdateUserPermissions(username)
 	}
 }
 
+// Accepted is a helper function used by asynchronous handlers
+func Accepted(w http.ResponseWriter) error {
+	const msg = "request accepted"
+	w.Header().Add("Content-Type", "text/plain")
+	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(msg)))
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte(msg))
+	return nil
+}
+
+// Write is a helper function
+func Write(w http.ResponseWriter, btes []byte, status int, contentType string) error {
+	w.Header().Add("Content-Type", contentType)
+	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(btes)))
+	writeProcessTime(w)
+	w.WriteHeader(status)
+	w.Write(btes)
+	return nil
+}
+
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
-func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {
+func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	b, e := json.Marshal(data)
 	if e != nil {
 		return sdk.WrapError(e, "WriteJSON> unable to marshal : %s", e)
 	}
 
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(b)
-	return nil
+	return Write(w, b, status, "application/json")
 }
 
 // writeNoContentPostMiddleware writes StatusNoContent (204) for each response with No Header Content-Type
@@ -48,9 +71,23 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 		if headerName == "Content-Type" {
 			return ctx, nil
 		}
+		if headerName == "Location" {
+			return ctx, nil
+		}
 	}
+	writeProcessTime(w)
 	w.WriteHeader(http.StatusNoContent)
 	return ctx, nil
+}
+
+func writeProcessTime(w http.ResponseWriter) {
+	if h := w.Header().Get(cdsclient.ResponseAPINanosecondsTimeHeader); h != "" {
+		start, err := strconv.ParseInt(h, 10, 64)
+		if err != nil {
+			log.Error("writeProcessTime> error on ParseInt header ResponseAPINanosecondsTimeHeader: %s", err)
+		}
+		w.Header().Add(cdsclient.ResponseProcessTimeHeader, fmt.Sprintf("%d", time.Now().UnixNano()-start))
+	}
 }
 
 // UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.

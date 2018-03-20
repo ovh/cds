@@ -5,12 +5,11 @@ import {Variable} from '../../model/variable.model';
 import {RepositoryPoller} from '../../model/polling.model';
 import {GroupPermission} from '../../model/group.model';
 import {Trigger} from '../../model/trigger.model';
-import {ApplyTemplateRequest} from '../../model/template.model';
-import {Project} from '../../model/project.model';
-import {Notification} from '../../model/notification.model';
+import {Notification, UserNotificationSettings} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
 import {Hook} from '../../model/hook.model';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
+import {Key} from '../../model/keys.model';
 
 @Injectable()
 export class ApplicationService {
@@ -30,6 +29,7 @@ export class ApplicationService {
         params = params.append('withWorkflow', 'true');
         params = params.append('withNotifs', 'true');
         params = params.append('withUsage', 'true');
+        params = params.append('withKeys', 'true');
 
         if (filter) {
             if (filter.branch) {
@@ -39,7 +39,10 @@ export class ApplicationService {
                 params = params.append('remote', filter.remote);
             }
         }
-        return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params});
+        return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params}).map(a => {
+            a.vcs_strategy.password = '**********';
+            return a;
+        });
     }
 
     /**
@@ -48,10 +51,8 @@ export class ApplicationService {
      * @param application Application to update
      * @returns {Observable<Application>}
      */
-    renameApplication(key: string, appOldName: string, appNewName: string): Observable<Application> {
-        let appRenamed = new Application();
-        appRenamed.name = appNewName;
-        return this._http.put<Application>('/project/' + key + '/application/' + appOldName, appRenamed);
+    updateApplication(key: string, appOldName: string, app: Application): Observable<Application> {
+        return this._http.put<Application>('/project/' + key + '/application/' + appOldName, app);
     }
 
     /**
@@ -65,13 +66,16 @@ export class ApplicationService {
         return this._http.post<Application>('/project/' + key + '/application/' + appName + '/clone', application);
     }
 
-    /***
-     * Apply a template to a project to create an application
+    /**
+     * Create application
      * @param key Project unique key
+     * @param application Application data
+     * @returns {Observable<Application>}
      */
-    applyTemplate(key: string, request: ApplyTemplateRequest): Observable<Project> {
-        return this._http.post<Project>('/project/' + key + '/template', request);
+    createApplication(key: string, application: Application): Observable<Application> {
+        return this._http.post<Application>('/project/' + key + '/applications', application);
     }
+
 
     /**
      * Delete an application
@@ -321,6 +325,14 @@ export class ApplicationService {
      * @returns {Observable<Notification>}
      */
     updateNotification(key: string, appName: string, pipName: string, notification: Notification): Observable<Application> {
+        if (Array.isArray(notification.notifications)) {
+            notification.notifications.forEach((n: UserNotificationSettings) => {
+                if (Array.isArray(n.recipients)) {
+                    n.recipients = n.recipients.map(r => r.trim());
+                }
+            });
+        }
+
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
         return this._http.put<Application>(url, notification);
     }
@@ -357,6 +369,26 @@ export class ApplicationService {
      */
     detachPipelines(key: string, appName: string, pipName: string): Observable<Application> {
         return this._http.delete<Application>('/project/' + key + '/application/' + appName + '/pipeline/' + pipName);
+    }
+
+    /**
+     * Add a key
+     * @param key Project unique key
+     * @param appName Application name
+     * @param k Key to add
+     */
+    addKey(key: string, appName: string, k: Key): Observable<Key> {
+        return this._http.post<Key>('/project/' + key + '/application/' + appName + '/keys', k);
+    }
+
+    /**
+     * Remove a key
+     * @param key Project unique key
+     * @param appName Application name
+     * @param kName Key to remove
+     */
+    removeKey(key: string, appName: string, kName: string): Observable<any> {
+        return this._http.delete('/project/' + key + '/application/' + appName + '/keys/' + kName);
     }
 
 

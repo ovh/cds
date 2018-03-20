@@ -18,6 +18,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -96,16 +97,6 @@ type HandlerConfigParam func(*HandlerConfig)
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
 type HandlerConfigFunc func(Handler, ...HandlerConfigParam) *HandlerConfig
 
-// ServeAbsoluteFile Serve file to download
-func (r *Router) ServeAbsoluteFile(uri, path, filename string) {
-	f := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=\"%s\"", filename))
-		http.ServeFile(w, r, path)
-	}
-	r.Mux.HandleFunc(r.Prefix+uri, f)
-}
-
 func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 	return handlers.CompressHandlerLevel(fn, gzip.DefaultCompression).ServeHTTP
 }
@@ -160,13 +151,15 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 
 // DefaultHeaders is a set of default header for the router
 func DefaultHeaders() map[string]string {
+	now := time.Now()
 	return map[string]string{
-		"Access-Control-Allow-Origin":   "*",
-		"Access-Control-Allow-Methods":  "GET,OPTIONS,PUT,POST,DELETE",
-		"Access-Control-Allow-Headers":  "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition",
-		"Access-Control-Expose-Headers": "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition",
-		"X-Api-Time":                    time.Now().Format(time.RFC3339),
-		"ETag":                          fmt.Sprintf("%d", time.Now().Unix()),
+		"Access-Control-Allow-Origin":              "*",
+		"Access-Control-Allow-Methods":             "GET,OPTIONS,PUT,POST,DELETE",
+		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition, " + sdk.WorkflowAsCodeHeader,
+		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition, " + sdk.ResponseWorkflowIDHeader + ", " + sdk.ResponseWorkflowNameHeader,
+		cdsclient.ResponseAPINanosecondsTimeHeader: fmt.Sprintf("%d", now.UnixNano()),
+		cdsclient.ResponseAPITimeHeader:            now.Format(time.RFC3339),
+		cdsclient.ResponseEtagHeader:               fmt.Sprintf("%d", now.Unix()),
 	}
 }
 
@@ -219,7 +212,6 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			latency := end.Sub(start)
 			if rc.IsDeprecated {
 				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
-				w.Header().Add("X-CDS-WARNING", "deprecated route")
 			} else {
 				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
 			}
@@ -320,8 +312,7 @@ func (r *Router) Asynchronous(handler AsynchronousHandlerFunc, retry int) Handle
 			}
 			log.Debug("Router> Asynchronous call of %s", r.URL.String())
 			chanRequest <- async
-			w.WriteHeader(http.StatusAccepted)
-			return nil
+			return Accepted(w)
 		}
 	}
 }
@@ -462,4 +453,15 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 		log.Warning("%-7s | %13v | %v", req.Method, latency, req.URL)
 	}()
 	WriteError(w, req, sdk.ErrNotFound)
+}
+
+// StatusPanic returns router status. If nbPanic > 30 -> Alert, if nbPanic > 0 -> Warn
+func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
+	statusPanic := sdk.MonitoringStatusOK
+	if r.nbPanic > 30 {
+		statusPanic = sdk.MonitoringStatusAlert
+	} else if r.nbPanic > 0 {
+		statusPanic = sdk.MonitoringStatusWarn
+	}
+	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
 }

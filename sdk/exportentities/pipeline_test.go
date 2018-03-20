@@ -37,23 +37,22 @@ var (
 								Actions: []sdk.Action{
 									{
 
-										Type:           sdk.BuiltinAction,
-										Name:           sdk.ScriptAction,
-										Enabled:        true,
-										AlwaysExecuted: true,
-										Optional:       false,
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.ScriptAction,
+										Enabled: true,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "script",
 												Type:  sdk.TextParameter,
-												Value: "echo lol",
+												Value: "echo lol\n#This is a script",
 											},
 										},
 									},
 									{
 
-										Type: sdk.BuiltinAction,
-										Name: sdk.ScriptAction,
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.ScriptAction,
+										Enabled: true,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "script",
@@ -65,6 +64,7 @@ var (
 									{
 										Type:           sdk.BuiltinAction,
 										Name:           sdk.JUnitAction,
+										Enabled:        true,
 										AlwaysExecuted: true,
 										Optional:       false,
 										Parameters: []sdk.Parameter{
@@ -76,8 +76,9 @@ var (
 										},
 									},
 									{
-										Type: sdk.BuiltinAction,
-										Name: sdk.ArtifactDownload,
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.ArtifactDownload,
+										Enabled: true,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "path",
@@ -93,8 +94,9 @@ var (
 									},
 									{
 
-										Type: sdk.BuiltinAction,
-										Name: sdk.ArtifactUpload,
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.ArtifactUpload,
+										Enabled: true,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "path",
@@ -402,7 +404,7 @@ var (
 
 func TestExportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(&tc.arg)
+		p := NewPipeline(tc.arg, false)
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
@@ -416,7 +418,7 @@ func TestExportPipeline_YAML(t *testing.T) {
 
 func TestExportPipeline_JSON(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(&tc.arg)
+		p := NewPipeline(tc.arg, false)
 		b, err := Marshal(p, FormatJSON)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
@@ -430,16 +432,20 @@ func TestExportPipeline_JSON(t *testing.T) {
 
 func TestExportAndImportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(&tc.arg)
+		t.Log(tc.name)
+		p := NewPipeline(tc.arg, true)
 
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
 
 		importedP := Pipeline{}
+
 		test.NoError(t, yaml.Unmarshal(b, &importedP))
 		transformedP, err := importedP.Pipeline()
 
 		test.NoError(t, err)
+
+		t.Log(string(b))
 
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
 		assert.Equal(t, tc.arg.Type, transformedP.Type)
@@ -447,10 +453,12 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool
+
 			for _, s1 := range transformedP.Stages {
 				if stage.Name != s1.Name {
 					continue
 				}
+
 				stageFound = true
 
 				assert.Equal(t, stage.BuildOrder, s1.BuildOrder, "Build order does not match")
@@ -541,6 +549,23 @@ steps:
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 7)
 }
 
+func Test_ImportPipelineWithCheckout(t *testing.T) {
+	in := `name: build-all-images
+steps:
+- checkout: '.'
+`
+
+	payload := &Pipeline{}
+	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
+
+	p, err := payload.Pipeline()
+	test.NoError(t, err)
+
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 1)
+	assert.Equal(t, sdk.CheckoutApplicationAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 1)
+}
+
 func Test_IsFlagged(t *testing.T) {
 	testc := []struct {
 		flag     string
@@ -590,4 +615,100 @@ func Test_IsFlagged(t *testing.T) {
 		assert.Equal(t, tc.expected, resp, fmt.Sprintf("Flag %s have bad value in this step", tc.flag))
 	}
 
+}
+
+func TestExportPipelineV1_YAML(t *testing.T) {
+	for _, tc := range testcases {
+		p := NewPipelineV1(tc.arg, false)
+		b, err := Marshal(p, FormatYAML)
+		test.NoError(t, err)
+		t.Log("\n" + string(b))
+
+		p1 := PipelineV1{}
+		test.NoError(t, yaml.Unmarshal(b, &p1))
+
+		test.Equal(t, p, p1)
+	}
+}
+
+func TestExportPipelineV1_JSON(t *testing.T) {
+	for _, tc := range testcases {
+		p := NewPipelineV1(tc.arg, false)
+		b, err := Marshal(p, FormatJSON)
+		test.NoError(t, err)
+		t.Log("\n" + string(b))
+
+		p1 := PipelineV1{}
+		test.NoError(t, json.Unmarshal(b, &p1))
+
+		test.Equal(t, p, p1)
+	}
+}
+
+func TestExportAndImportPipelineV1_YAML(t *testing.T) {
+	for _, tc := range testcases {
+		t.Log(tc.name)
+		p := NewPipelineV1(tc.arg, true)
+
+		b, err := Marshal(p, FormatYAML)
+		test.NoError(t, err)
+
+		importedP := PipelineV1{}
+
+		test.NoError(t, yaml.Unmarshal(b, &importedP))
+		transformedP, err := importedP.Pipeline()
+
+		test.NoError(t, err)
+
+		t.Log(string(b))
+
+		assert.Equal(t, tc.arg.Name, transformedP.Name)
+		assert.Equal(t, tc.arg.Type, transformedP.Type)
+		test.EqualValuesWithoutOrder(t, tc.arg.GroupPermission, transformedP.GroupPermission)
+		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
+		for _, stage := range tc.arg.Stages {
+			var stageFound bool
+
+			for _, s1 := range transformedP.Stages {
+				if stage.Name != s1.Name {
+					continue
+				}
+
+				stageFound = true
+
+				assert.Equal(t, stage.BuildOrder, s1.BuildOrder, "Build order does not match")
+				assert.Equal(t, stage.Enabled, s1.Enabled, "Enabled does not match")
+				test.EqualValuesWithoutOrder(t, stage.Prerequisites, s1.Prerequisites)
+
+				for _, j := range stage.Jobs {
+					var jobFound bool
+					for _, j1 := range s1.Jobs {
+						if j.Action.Name != j1.Action.Name {
+							continue
+						}
+						jobFound = true
+
+						assert.Equal(t, j.Enabled, j1.Enabled)
+						assert.Equal(t, j.Action.Name, j1.Action.Name)
+						assert.Equal(t, j.Enabled, j1.Action.Enabled)
+						assert.Equal(t, j.Action.AlwaysExecuted, j1.Action.AlwaysExecuted)
+						assert.Equal(t, j.Action.Optional, j1.Action.Optional)
+
+						for i, s := range j.Action.Actions {
+							s1 := j1.Action.Actions[i]
+							if s.Name == s1.Name {
+								assert.Equal(t, s.Enabled, s1.Enabled, s.Name, j1.Action.Name+"/"+s1.Name)
+								assert.Equal(t, s.AlwaysExecuted, s1.AlwaysExecuted, j1.Action.Name+"/"+s1.Name)
+								assert.Equal(t, s.Optional, s1.Optional, j1.Action.Name+"/"+s1.Name)
+								test.EqualValuesWithoutOrder(t, s.Parameters, s1.Parameters)
+							}
+						}
+					}
+					assert.True(t, jobFound, "Job not found")
+				}
+
+			}
+			assert.True(t, stageFound, "Stage not found")
+		}
+	}
 }

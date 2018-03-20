@@ -1,0 +1,33 @@
+name: ITSCWRKFLW3-WORKFLOW
+version: v1.0
+workflow:
+  root:
+    pipeline: root
+    conditions:
+      check:
+      - variable: git.branch
+        operator: eq
+        value: master
+  build_front:
+    pipeline: build_front
+    depends_on:
+      - root
+    application: ITSCWRKFLW3-APP
+  build_api:
+    pipeline: build_api
+    depends_on:
+      - root
+    application: ITSCWRKFLW3-APP
+  tests:
+    pipeline: tests
+    depends_on:
+      - build_front
+      - build_api
+    application: ITSCWRKFLW3-APP
+    environment: ITSCWRKFLW3-ENV-PREPROD
+  deploy:
+    pipeline: deploy
+    depends_on:
+      - tests
+    application: ITSCWRKFLW3-APP
+    environment: ITSCWRKFLW3-ENV-PROD

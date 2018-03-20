@@ -1,0 +1,9 @@
+<div id="Projectkey" *ngIf="ready">
+    <ng-container *ngIf="project.keys && project.keys.length > 0">
+        <h3>{{ 'keys_list_title' | translate}}</h3>
+        <app-keys-list [keys]="keys" [edit]="project.permission" (deleteEvent)="manageKeyEvent($event)"></app-keys-list>
+    </ng-container>
+    <h3>{{ 'keys_add_title' | translate }}</h3>
+    <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="proj-"></app-keys-form>
+</div>
+<div class="ui text active loader" *ngIf="!ready">{{ 'keys_loading' | translate}}</div>

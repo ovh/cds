@@ -32,8 +32,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	topic := job.Arguments().Get("topic")
 
 	if user == "" || password == "" || kafka == "" || topic == "" {
-		Logf("Kafka is not configured : %+v", job.Arguments().Data)
-		return plugin.Fail
+		return plugin.Result(fmt.Sprintf("Kafka is not configured : %+v", job.Arguments().Data))
 	}
 
 	waitForAckString := job.Arguments().Get("waitForAck")
@@ -45,8 +44,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 		timeout, _ = strconv.Atoi(timeoutStr)
 		if ackTopic == "" && timeout == 0 {
-			Logf("Error: ackTopic and waitForAckTimeout parameters are mandatory")
-			return plugin.Fail
+			return plugin.Result("Error: ackTopic and waitForAckTimeout parameters are mandatory")
 		}
 
 	}
@@ -54,29 +52,26 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	message := job.Arguments().Get("message")
 	messageFile, err := tmplMessage(job, []byte(message))
 	if err != nil {
-		return plugin.Fail
+		return plugin.Result(fmt.Sprintf("Error on tmpMessage: %v", err))
 	}
 	files := []string{messageFile}
 
 	//Check if every file exist
 	artifactsList := job.Arguments().Get("artifacts")
 	if strings.TrimSpace(artifactsList) != "" {
-
 		var artifacts []string
 		//If the parameter contains a comma, consider it as a list; else glob it
 		if strings.Contains(artifactsList, ",") {
 			artifacts := strings.Split(artifactsList, ",")
 			for _, f := range artifacts {
 				if _, err := os.Stat(f); os.IsNotExist(err) {
-					Logf("%s : no such file", f)
-					return plugin.Fail
+					return plugin.Result(fmt.Sprintf("%s : no such file", f))
 				}
 			}
 		} else {
 			filesPath, err := filepath.Glob(artifactsList)
 			if err != nil {
-				Logf("Unable to parse files %s: %s", artifactsList, err)
-				return plugin.Fail
+				return plugin.Result(fmt.Sprintf("Unable to parse files %s: %s", artifactsList, err))
 			}
 			artifacts = filesPath
 		}
@@ -89,19 +84,16 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 	producer, err := initKafkaProducer(kafka, user, password)
 	if err != nil {
-		Logf("Unable to connect to kafka : %s", err)
-		return plugin.Fail
+		return plugin.Result(fmt.Sprintf("Unable to connect to kafka : %s", err))
 	}
 
 	btes, err := json.Marshal(ctx)
 	if err != nil {
-		Logf("Error : %s", err)
-		return plugin.Fail
+		return plugin.Result(fmt.Sprintf("Error : %s", err))
 	}
 
 	if _, _, err := sendDataOnKafka(producer, topic, [][]byte{btes}); err != nil {
-		Logf("Unable to send on kafka : %s", err)
-		return plugin.Fail
+		return plugin.Result(fmt.Sprintf("Unable to send on kafka : %s", err))
 	}
 
 	pubKey := job.Arguments().Get("publicKey")
@@ -110,8 +102,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	for _, f := range files {
 		aes, err := getAESEncryptionOptions(password)
 		if err != nil {
-			Logf("Unable to shred file %s : %s", f, err)
-			return plugin.Fail
+			return plugin.Result(fmt.Sprintf("Unable to shred file %s : %s", f, err))
 		}
 		var opts = &shredder.Opts{
 			ChunkSize:     512 * 1024,
@@ -128,22 +119,19 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 		chunks, err := shredder.ShredFile(f, fmt.Sprintf("%d", job.ID()), opts)
 		if err != nil {
-			Logf("Unable to shred file %s : %s", f, err)
-			return plugin.Fail
+			return plugin.Result(fmt.Sprintf("Unable to shred file %s : %s", f, err))
 		}
 
 		datas, err := kafkapublisher.KafkaMessages(chunks)
 		if err != nil {
-			Logf("Unable to compute chunks for file %s : %s", f, err)
-			return plugin.Fail
+			return plugin.Result(fmt.Sprintf("Unable to compute chunks for file %s : %s", f, err))
 		}
 		if _, _, err := sendDataOnKafka(producer, topic, datas); err != nil {
-			Logf("Unable to send chunks through kafka : %s", err)
-			return plugin.Fail
+			return plugin.Result(fmt.Sprintf("Unable to send chunks through kafka : %s", err))
 		}
 	}
 
-	Logf("Data sent to %s : %v", topic, files)
+	Logf("Data sent to topic %s, action id: %d : %v", topic, job.ID(), files)
 
 	//Don't wait for ack
 	if waitForAckString != "true" {
@@ -173,8 +161,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	//Wait for ack
 	ack, err := ackFromKafka(kafka, ackTopic, group, user, password, time.Duration(timeout)*time.Second, job.ID())
 	if err != nil {
-		Logf("Failed to get ack on topic %s: %s", ackTopic, err)
-		return plugin.Fail
+		return plugin.Result(fmt.Sprintf("Failed to get ack on topic %s: %s", ackTopic, err))
 	}
 
 	//Check the ack
@@ -186,7 +173,8 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 		return plugin.Success
 	}
 
-	return plugin.Fail
+	plugin.Trace.Printf("Ack Received: %+v\n", ack)
+	return plugin.Result(fmt.Sprintf("Plugin failed with ACK.Result:%s", ack.Result))
 }
 
 func tmplMessage(j plugin.IJob, buff []byte) (string, error) {

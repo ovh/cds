@@ -26,7 +26,7 @@ function loadLog (user, session, api) {
             '/pipeline/' + pipName + '/build/' + buildNumber +
             '/action/' + jobID + '/step/' + stepOrder + '/log';
         if (envName !== '') {
-            url += '?envName=' + envName;
+            url += '?envName=' + encodeURIComponent(envName);
         }
 
         var xhr = httpCall(url, api, user, session);

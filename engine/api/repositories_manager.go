@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
@@ -31,7 +32,7 @@ func (api *API) getRepositoriesManagerHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getRepositoriesManagerHandler> error")
 		}
-		return WriteJSON(w, r, rms, http.StatusOK)
+		return WriteJSON(w, rms, http.StatusOK)
 	}
 }
 
@@ -45,7 +46,7 @@ func (api *API) getRepositoriesManagerForProjectHandler() Handler {
 			return errproj
 		}
 
-		return WriteJSON(w, r, proj.VCSServers, http.StatusOK)
+		return WriteJSON(w, proj.VCSServers, http.StatusOK)
 	}
 }
 
@@ -85,7 +86,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
-		return WriteJSON(w, r, data, http.StatusOK)
+		return WriteJSON(w, data, http.StatusOK)
 	}
 }
 
@@ -163,6 +164,8 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
+
 		//Redirect on UI advanced project page
 		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
@@ -236,7 +239,9 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, proj, http.StatusOK)
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
+
+		return WriteJSON(w, proj, http.StatusOK)
 	}
 }
 
@@ -275,7 +280,9 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		event.PublishDeleteVCSServer(p, vcsServer.Name, getUser(ctx))
+
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -321,7 +328,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "getReposFromRepositoriesManagerHandler> Cannot get repos")
 
 		}
-		return WriteJSON(w, r, repos, http.StatusOK)
+		return WriteJSON(w, repos, http.StatusOK)
 	}
 }
 
@@ -358,7 +365,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getRepoFromRepositoriesManagerHandler> Cannot get repos")
 		}
-		return WriteJSON(w, r, repo, http.StatusOK)
+		return WriteJSON(w, repo, http.StatusOK)
 	}
 }
 
@@ -412,7 +419,7 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -485,7 +492,7 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -559,7 +566,7 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusCreated)
+		return WriteJSON(w, app, http.StatusCreated)
 	}
 }
 
@@ -644,7 +651,7 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 

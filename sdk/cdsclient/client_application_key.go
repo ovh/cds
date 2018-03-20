@@ -20,6 +20,6 @@ func (c *client) ApplicationKeyCreate(projectKey string, appName string, keyAppl
 }
 
 func (c *client) ApplicationKeysDelete(projectKey string, appName string, keyName string) error {
-	_, _, err := c.Request("DELETE", "/project/"+projectKey+"/application/"+appName+"/keys/"+url.QueryEscape(keyName), nil)
+	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/application/"+appName+"/keys/"+url.QueryEscape(keyName), nil)
 	return err
 }

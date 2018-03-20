@@ -212,7 +212,7 @@ func (api *API) listArtifactsBuildHandler() Handler {
 			return sdk.WrapError(errArt, "listArtifactsBuildHandler> Cannot load artifacts")
 		}
 
-		return WriteJSON(w, r, art, http.StatusOK)
+		return WriteJSON(w, art, http.StatusOK)
 	}
 }
 
@@ -261,13 +261,13 @@ func (api *API) listArtifactsHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "listArtifactHandler> %s-%s-%s-%s/%s: not found", key, appName, env.Name, pipelineName, tag)
 		}
 
-		return WriteJSON(w, r, art, http.StatusOK)
+		return WriteJSON(w, art, http.StatusOK)
 	}
 }
 
 func (api *API) getArtifactsStoreHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, objectstore.Instance(), http.StatusOK)
+		return WriteJSON(w, objectstore.Instance(), http.StatusOK)
 	}
 }
 
@@ -371,7 +371,7 @@ func (api *API) postArtifactWithTempURLHandler() Handler {
 		cacheKey := cache.Key("artifacts", art.GetPath(), art.GetName())
 		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
 
-		return WriteJSON(w, r, art, http.StatusOK)
+		return WriteJSON(w, art, http.StatusOK)
 	}
 }
 

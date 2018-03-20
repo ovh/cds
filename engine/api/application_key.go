@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -30,7 +29,7 @@ func (api *API) getKeysInApplicationHandler() Handler {
 			return sdk.WrapError(errK, "getKeysInApplicationHandler> Cannot load application keys")
 		}
 
-		return WriteJSON(w, r, app.Keys, http.StatusOK)
+		return WriteJSON(w, app.Keys, http.StatusOK)
 	}
 }
 
@@ -66,7 +65,7 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -94,39 +93,18 @@ func (api *API) addKeyInApplicationHandler() Handler {
 		newKey.ApplicationID = app.ID
 
 		switch newKey.Type {
-		case sdk.KeyTypeSsh:
-			pubR, privR, errGenerate := keys.GenerateSSHKeyPair(newKey.Name)
-			if errGenerate != nil {
-				return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate sshKey")
+		case sdk.KeyTypeSSH:
+			k, errK := keys.GenerateSSHKey(newKey.Name)
+			if errK != nil {
+				return sdk.WrapError(errK, "addKeyInApplicationHandler> Cannot generate ssh key")
 			}
-			pub, errPub := ioutil.ReadAll(pubR)
-			if errPub != nil {
-				return sdk.WrapError(errPub, "addKeyInApplicationHandler> Unable to read public key")
-			}
-
-			priv, errPriv := ioutil.ReadAll(privR)
-			if errPriv != nil {
-				return sdk.WrapError(errPriv, "addKeyInApplicationHandler>  Unable to read private key")
-			}
-			newKey.Private = string(priv)
-			newKey.Public = string(pub)
-		case sdk.KeyTypePgp:
-			keyID, pubR, privR, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
+			newKey.Key = k
+		case sdk.KeyTypePGP:
+			k, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate pgpKey")
 			}
-			pub, errPub := ioutil.ReadAll(pubR)
-			if errPub != nil {
-				return sdk.WrapError(errPub, "addKeyInApplicationHandler> Unable to read public key")
-			}
-
-			priv, errPriv := ioutil.ReadAll(privR)
-			if errPriv != nil {
-				return sdk.WrapError(errPriv, "addKeyInApplicationHandler>  Unable to read private key")
-			}
-			newKey.Private = string(priv)
-			newKey.Public = string(pub)
-			newKey.KeyID = keyID
+			newKey.Key = k
 		default:
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInApplicationHandler> unknown key of type: %s", newKey.Type)
 		}
@@ -149,6 +127,6 @@ func (api *API) addKeyInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, newKey, http.StatusOK)
+		return WriteJSON(w, newKey, http.StatusOK)
 	}
 }

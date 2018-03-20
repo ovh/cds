@@ -1,14 +1,8 @@
-import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input} from '@angular/core';
+import {Router, ActivatedRoute} from '@angular/router';
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
-import {WorkflowService} from '../../../../service/workflow/workflow.service';
-import {ToastService} from '../../../toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {WorkflowNodeHookFormComponent} from './form/node.hook.component';
 import {Project} from '../../../../model/project.model';
-import {HookEvent} from './hook.event';
 import {cloneDeep} from 'lodash';
-import {WorkflowStore} from '../../../../service/workflow/workflow.store';
-import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -37,13 +31,21 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
     @Input() project: Project;
     @Input() node: WorkflowNode;
 
-    @ViewChild('editHook')
-    editHook: WorkflowNodeHookFormComponent;
     icon: string;
     loading = false;
+    selectedHookId: number;
 
-    constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
-                private _translate: TranslateService) {
+    constructor(private elementRef: ElementRef,
+        private _route: ActivatedRoute,
+        private _router: Router) {
+
+        this._route.queryParams.subscribe((qp) => {
+            if (qp['selectedHookId']) {
+                this.selectedHookId = parseInt(qp['selectedHookId'], 10);
+            } else {
+                this.selectedHookId = null;
+            }
+        });
     }
 
     ngAfterViewInit() {
@@ -51,26 +53,41 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
         this.elementRef.nativeElement.style.top = '5px';
     }
 
-    openEditHookModal(): void {
-        if (this.editHook) {
-            this.editHook.show();
+    openEditHookSidebar(): void {
+        if (this.workflow.previewMode) {
+          return;
         }
-    }
 
-    updateHook(h: HookEvent): void {
-        let workflowToUpdate = cloneDeep(this.workflow);
-        this.loading = true;
-        if (h.type === 'delete') {
-            Workflow.removeHook(workflowToUpdate, h.hook);
+        let qps = cloneDeep(this._route.snapshot.queryParams);
+        qps['selectedJoinId'] = null;
+        qps['selectedNodeId'] = null;
+
+        if (!this._route.snapshot.params['number']) {
+            qps['selectedNodeRunId'] = null;
+            qps['selectedNodeRunNum'] = null;
+            qps['selectedJoinRunId'] = null;
+            qps['selectedJoinRunNum'] = null;
+
+            this._router.navigate([
+                '/project', this.project.key,
+                'workflow', this.workflow.name
+            ], { queryParams: Object.assign({}, qps, {selectedHookId: this.hook.id })});
         } else {
-            Workflow.updateHook(workflowToUpdate, h.hook);
+            qps['selectedJoinId'] = null;
+            qps['selectedNodeId'] = null;
+            qps['selectedNodeRunId'] = null;
+            qps['selectedNodeRunNum'] = null;
+            qps['selectedJoinRunId'] = null;
+            qps['selectedJoinRunNum'] = null;
 
+            this._router.navigate([
+                '/project', this.project.key,
+                'workflow', this.workflow.name,
+                'run', this._route.snapshot.params['number']], {
+                    queryParams: Object.assign({}, qps, {
+                        selectedHookId: this.hook.id
+                    })
+                });
         }
-        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate).pipe(finalize(() => {
-            this.loading = false;
-        })).subscribe(() => {
-            this.editHook.modal.approve(true);
-            this._toast.success('', this._translate.instant('workflow_updated'));
-        });
     }
 }

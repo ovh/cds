@@ -5,11 +5,16 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Resync a workflow in the given workflow run
 func Resync(db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, u *sdk.User) error {
-	wf, errW := LoadByID(db, store, wr.Workflow.ID, u)
+	options := LoadOptions{
+		DeepPipeline: true,
+		Base64Keys:   true,
+	}
+	wf, errW := LoadByID(db, store, wr.Workflow.ID, u, options)
 	if errW != nil {
 		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}
@@ -28,7 +33,7 @@ func Resync(db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, u *sdk.
 		}
 	}
 
-	return updateWorkflowRun(db, wr)
+	return UpdateWorkflowRun(db, wr)
 }
 
 func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
@@ -55,11 +60,11 @@ func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
 
 //ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
 func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent chan<- interface{}) error {
-	var success, building, failed, stopped int
+	var success, building, failed, stopped, skipped, disabled int
 	for _, wnrs := range wr.WorkflowNodeRuns {
 		for _, wnr := range wnrs {
 			if wr.LastSubNumber == wnr.SubNumber {
-				computeNodesRunStatus(wnr.Status, &success, &building, &failed, &stopped)
+				computeRunStatus(wnr.Status, &success, &building, &failed, &stopped, &skipped, &disabled)
 			}
 		}
 	}
@@ -74,7 +79,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent c
 	}
 
 	if !isInError {
-		newStatus = getWorkflowRunStatus(success, building, failed, stopped)
+		newStatus = getRunStatus(success, building, failed, stopped, skipped, disabled)
 	}
 
 	if newStatus != wr.Status {
@@ -84,4 +89,61 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent c
 	}
 
 	return nil
+}
+
+// ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
+func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeRuns []sdk.WorkflowNodeRun) {
+	for _, nodeRun := range nodeRuns {
+		if len(nodeRun.Commits) > 0 {
+			continue
+		}
+		go func(nr sdk.WorkflowNodeRun) {
+			wr, errL := LoadRunByID(db, nr.WorkflowRunID, false)
+			if errL != nil {
+				log.Error("ResyncNodeRuns> Unable to load workflowRun by id %d", nr.WorkflowRunID)
+				return
+			}
+
+			n := wr.Workflow.GetNode(nr.WorkflowNodeID)
+			if n == nil {
+				log.Error("ResyncNodeRuns> Unable to find node by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
+				return
+			}
+
+			if n.Context == nil || n.Context.Application == nil {
+				log.Debug("ResyncNodeRuns> no application linked")
+				return
+			}
+
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
+			if err != nil {
+				log.Error("ResyncNodeRuns> cannot get build commits on a node run %v", err)
+			} else {
+				nr.Commits = commits
+			}
+
+			if len(commits) > 0 {
+				if err := updateNodeRunCommits(db, nr.ID, commits); err != nil {
+					log.Error("ResyncNodeRuns> Unable to update node run commits %v", err)
+				}
+			}
+
+			tagsUpdated := false
+			if curVCSInfos.Branch != "" {
+				tagsUpdated = wr.Tag(tagGitBranch, curVCSInfos.Branch)
+			}
+			if curVCSInfos.Hash != "" {
+				tagsUpdated = wr.Tag(tagGitHash, curVCSInfos.Hash)
+			}
+			if curVCSInfos.Remote != "" {
+				tagsUpdated = wr.Tag(tagGitRepository, curVCSInfos.Remote)
+			}
+
+			if tagsUpdated {
+				if err := UpdateWorkflowRunTags(db, wr); err != nil {
+					log.Error("ResyncNodeRuns> Unable to update workflow run tags %v", err)
+				}
+			}
+		}(nodeRun)
+	}
 }

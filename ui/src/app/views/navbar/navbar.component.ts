@@ -1,8 +1,8 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
-import {ProjectStore} from '../../service/project/project.store';
+import {AfterViewInit, Component, OnInit, ChangeDetectorRef} from '@angular/core';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
 import {ApplicationStore} from '../../service/application/application.store';
+import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {Application} from '../../model/application.model';
 import {User} from '../../model/user.model';
 import {NavigationEnd, Router} from '@angular/router';
@@ -12,11 +12,9 @@ import {LanguageStore} from '../../service/language/language.store';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {RouterService} from '../../service/router/router.service';
-import {WarningStore} from '../../service/warning/warning.store';
-import {WarningUI} from '../../model/warning.model';
-import {WarningService} from '../../service/warning/warning.service';
+import {NavbarRecentData} from '../../model/navbar.model';
 import {filter} from 'rxjs/operators';
-import {NavbarData, NavbarProjectData} from 'app/model/navbar.model';
+import {NavbarData} from 'app/model/navbar.model';
 
 @Component({
     selector: 'app-navbar',
@@ -32,28 +30,29 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     // List of projects in the nav bar
     navProjects: NavbarData;
     navRecentApp: List<Application>;
+    navRecentWorkflows: List<NavbarRecentData>;
     searchItems: Array<string>;
 
     listApplications: List<Application>;
+    listWorkflows: List<NavbarRecentData>;
 
     currentCountry: string;
     langSubscrition: Subscription;
 
-    warnings: Map<string, WarningUI>;
-    warningsCount: number;
     currentRoute: {};
 
     userSubscription: Subscription;
-    warningSubscription: Subscription;
 
     public currentUser: User;
 
     constructor(private _navbarService: NavbarService,
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
+                private _workflowStore: WorkflowStore,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
-                private _translate: TranslateService, private _warningStore: WarningStore,
-                private _authentificationStore: AuthentificationStore, private _warningService: WarningService) {
+                private _translate: TranslateService,
+                private _authentificationStore: AuthentificationStore,
+                private _cd: ChangeDetectorRef) {
         this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
             this.currentUser = u;
         });
@@ -62,16 +61,10 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             this.currentCountry = l;
         });
 
-        this.warningSubscription = this._warningStore.getWarnings().subscribe(ws => {
-            this.warnings = ws;
-            this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
-        });
-
         this._router.events.pipe(
             filter(e => e instanceof NavigationEnd),
         ).forEach(() => {
             this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
-            this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
         });
     }
 
@@ -100,6 +93,15 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 this.listApplications = apps;
             }
         });
+
+        // Listen change on recent workflows viewed
+        this._workflowStore.getRecentWorkflows().subscribe(workflows => {
+            if (workflows) {
+                this.navRecentWorkflows = workflows;
+                this.listWorkflows = workflows;
+                this._cd.detectChanges();
+            }
+        });
     }
 
     /**
@@ -112,9 +114,15 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 this.searchItems = new Array<string>();
 
                 this.navProjects.projects.forEach(p => {
+                    this.searchItems.push(p.name);
                     if (p.application_names && p.application_names.length > 0) {
                         p.application_names.forEach(a => {
                             this.searchItems.push(p.name + '/' + a);
+                        })
+                    }
+                    if (p.workflow_names && p.workflow_names.length > 0) {
+                        p.workflow_names.forEach(w => {
+                            this.searchItems.push(p.name + '/' + w);
                         })
                     }
                 });
@@ -125,10 +133,23 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     navigateToResult(result: string) {
         let splittedSelection = result.split('/', 2);
         let project = this.navProjects.projects.find(p => p.name === splittedSelection[0]);
+
         if (splittedSelection.length === 1) {
             this.navigateToProject(project.key);
         } else if (splittedSelection.length === 2) {
-            this.navigateToApplication(project.key, project.application_names.find(a => a === splittedSelection[1]));
+            if (Array.isArray(project.workflow_names)) {
+                let workflowFound = project.workflow_names.find(w => w === splittedSelection[1]);
+                if (workflowFound) {
+                    return this.navigateToWorkflow(project.key, workflowFound);
+                }
+            }
+
+            if (Array.isArray(project.application_names)) {
+                let appFound = project.application_names.find(a => a === splittedSelection[1]);
+                if (appFound) {
+                    return this.navigateToApplication(project.key, appFound);
+                }
+            }
         }
     }
 
@@ -168,5 +189,12 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      */
     navigateToApplication(key: string, appName: string): void {
         this._router.navigate(['project', key, 'application', appName]);
+    }
+
+    /**
+     * Navigate to the selected application.
+     */
+    navigateToWorkflow(key: string, workflowName: string): void {
+        this._router.navigate(['project', key, 'workflow', workflowName]);
     }
 }

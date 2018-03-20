@@ -1,6 +1,8 @@
 package environment
 
 import (
+	"strings"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
@@ -43,13 +45,24 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 		env.EnvironmentGroups = proj.ProjectGroups
 	}
 	if err := group.InsertGroupsInEnvironment(db, env.EnvironmentGroups, env.ID); err != nil {
-		return sdk.WrapError(err, "environment.Import> unable to import groups in environment %s, ", env.Name)
+		return sdk.WrapError(err, "environment.Import> unable to import groups in environment %s ", env.Name)
 	}
 
 	//Insert all variables
 	for i := range env.Variable {
 		if err := InsertVariable(db, env.ID, &env.Variable[i], u); err != nil {
 			return err
+		}
+	}
+
+	//Insert keys
+	for _, k := range env.Keys {
+		k.EnvironmentID = env.ID
+		if err := InsertKey(db, &k); err != nil {
+			return sdk.WrapError(err, "environment.Import> Unable to insert key %s", k.Name)
+		}
+		if msgChan != nil {
+			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentKeyCreated, strings.ToUpper(k.Type), k.Name, env.Name)
 		}
 	}
 

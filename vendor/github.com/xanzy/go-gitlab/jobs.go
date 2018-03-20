@@ -44,6 +44,7 @@ type JobsService struct {
 type Job struct {
 	Commit        *Commit    `json:"commit"`
 	CreatedAt     *time.Time `json:"created_at"`
+	Coverage      float64    `json:"coverage"`
 	ArtifactsFile struct {
 		Filename string `json:"filename"`
 		Size     int    `json:"size"`
@@ -104,7 +105,7 @@ func (s *JobsService) ListPipelineJobs(pid interface{}, pipelineID int, opts *Li
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/pipelines/%d/jobs", project, pipelineID)
+	u := fmt.Sprintf("projects/%s/pipelines/%d/jobs", url.QueryEscape(project), pipelineID)
 
 	req, err := s.client.NewRequest("GET", u, opts, options)
 	if err != nil {
@@ -129,7 +130,7 @@ func (s *JobsService) GetJob(pid interface{}, jobID int, options ...OptionFunc) 
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/%d", project, jobID)
+	u := fmt.Sprintf("projects/%s/jobs/%d", url.QueryEscape(project), jobID)
 
 	req, err := s.client.NewRequest("GET", u, nil, options)
 	if err != nil {
@@ -154,7 +155,7 @@ func (s *JobsService) GetJobArtifacts(pid interface{}, jobID int, options ...Opt
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/%d/artifacts", project, jobID)
+	u := fmt.Sprintf("projects/%s/jobs/%d/artifacts", url.QueryEscape(project), jobID)
 
 	req, err := s.client.NewRequest("GET", u, nil, options)
 	if err != nil {
@@ -180,7 +181,7 @@ func (s *JobsService) DownloadArtifactsFile(pid interface{}, refName string, job
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/artifacts/%s/download?job=%s", project, refName, job)
+	u := fmt.Sprintf("projects/%s/jobs/artifacts/%s/download?job=%s", url.QueryEscape(project), refName, job)
 
 	req, err := s.client.NewRequest("GET", u, nil, options)
 	if err != nil {
@@ -205,7 +206,7 @@ func (s *JobsService) GetTraceFile(pid interface{}, jobID int, options ...Option
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/%d/trace", project, jobID)
+	u := fmt.Sprintf("projects/%s/jobs/%d/trace", url.QueryEscape(project), jobID)
 
 	req, err := s.client.NewRequest("GET", u, nil, options)
 	if err != nil {
@@ -230,7 +231,7 @@ func (s *JobsService) CancelJob(pid interface{}, jobID int, options ...OptionFun
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/%d/cancel", project, jobID)
+	u := fmt.Sprintf("projects/%s/jobs/%d/cancel", url.QueryEscape(project), jobID)
 
 	req, err := s.client.NewRequest("POST", u, nil, options)
 	if err != nil {
@@ -255,7 +256,7 @@ func (s *JobsService) RetryJob(pid interface{}, jobID int, options ...OptionFunc
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/%d/retry", project, jobID)
+	u := fmt.Sprintf("projects/%s/jobs/%d/retry", url.QueryEscape(project), jobID)
 
 	req, err := s.client.NewRequest("POST", u, nil, options)
 	if err != nil {
@@ -281,7 +282,7 @@ func (s *JobsService) EraseJob(pid interface{}, jobID int, options ...OptionFunc
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/%d/erase", project, jobID)
+	u := fmt.Sprintf("projects/%s/jobs/%d/erase", url.QueryEscape(project), jobID)
 
 	req, err := s.client.NewRequest("POST", u, nil, options)
 	if err != nil {
@@ -307,7 +308,7 @@ func (s *JobsService) KeepArtifacts(pid interface{}, jobID int, options ...Optio
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/%d/artifacts/keep", project, jobID)
+	u := fmt.Sprintf("projects/%s/jobs/%d/artifacts/keep", url.QueryEscape(project), jobID)
 
 	req, err := s.client.NewRequest("POST", u, nil, options)
 	if err != nil {
@@ -332,7 +333,7 @@ func (s *JobsService) PlayJob(pid interface{}, jobID int, options ...OptionFunc)
 	if err != nil {
 		return nil, nil, err
 	}
-	u := fmt.Sprintf("projects/%s/jobs/%d/play", project, jobID)
+	u := fmt.Sprintf("projects/%s/jobs/%d/play", url.QueryEscape(project), jobID)
 
 	req, err := s.client.NewRequest("POST", u, nil, options)
 	if err != nil {

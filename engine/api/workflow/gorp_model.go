@@ -27,6 +27,9 @@ type Join sdk.WorkflowNodeJoin
 // JoinTrigger  is a gorp wrapper around sdk.WorkflowNodeJoinTrigger
 type JoinTrigger sdk.WorkflowNodeJoinTrigger
 
+// Notification is a gorp wrapper around sdk.WorkflowNotification
+type Notification sdk.WorkflowNotification
+
 // Run is a gorp wrapper around sdk.WorkflowRun
 type Run sdk.WorkflowRun
 
@@ -35,6 +38,7 @@ type NodeRun struct {
 	WorkflowRunID      int64          `db:"workflow_run_id"`
 	ID                 int64          `db:"id"`
 	WorkflowNodeID     int64          `db:"workflow_node_id"`
+	WorkflowNodeName   string         `db:"workflow_node_name"`
 	Number             int64          `db:"num"`
 	SubNumber          int64          `db:"sub_num"`
 	Status             string         `db:"status"`
@@ -51,6 +55,9 @@ type NodeRun struct {
 	Commits            sql.NullString `db:"commits"`
 	Stages             sql.NullString `db:"stages"`
 	TriggersRun        sql.NullString `db:"triggers_run"`
+	VCSRepository      sql.NullString `db:"vcs_repository"`
+	VCSBranch          sql.NullString `db:"vcs_branch"`
+	VCSHash            sql.NullString `db:"vcs_hash"`
 }
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
@@ -83,4 +90,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_node_run_artifacts", true, "id"))
 	gorpmapping.Register(gorpmapping.New(RunTag{}, "workflow_run_tag", false, "workflow_run_id", "tag"))
 	gorpmapping.Register(gorpmapping.New(NodeHookModel{}, "workflow_hook_model", true, "id"))
+	gorpmapping.Register(gorpmapping.New(Notification{}, "workflow_notification", true, "id"))
 }

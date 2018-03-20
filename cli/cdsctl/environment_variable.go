@@ -15,18 +15,20 @@ var (
 
 	environmentVariable = cli.NewCommand(environmentVariableCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(environmentVariableCreateCmd, environmentCreateVariableRun, nil),
-			cli.NewListCommand(environmentVariableListCmd, environmentListVariableRun, nil),
-			cli.NewCommand(environmentVariableDeleteCmd, environmentDeleteVariableRun, nil),
-			cli.NewCommand(environmentVariableUpdateCmd, environmentUpdateVariableRun, nil),
+			cli.NewCommand(environmentVariableCreateCmd, environmentCreateVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(environmentVariableListCmd, environmentListVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(environmentVariableDeleteCmd, environmentDeleteVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(environmentVariableUpdateCmd, environmentUpdateVariableRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var environmentVariableCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new variable on environment. variable type can be one of password, text, string, key, boolean, number, repository",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "env-name"},
 		{Name: "variable-name"},
 		{Name: "variable-type"},
@@ -40,20 +42,22 @@ func environmentCreateVariableRun(v cli.Values) error {
 		Type:  v["variable-type"],
 		Value: v["variable-value"],
 	}
-	return client.EnvironmentVariableCreate(v["project-key"], v["env-name"], variable)
+	return client.EnvironmentVariableCreate(v[_ProjectKey], v["env-name"], variable)
 }
 
 var environmentVariableListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environment variables",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "env-name"},
 	},
 }
 
 func environmentListVariableRun(v cli.Values) (cli.ListResult, error) {
-	variables, err := client.EnvironmentVariablesList(v["project-key"], v["env-name"])
+	variables, err := client.EnvironmentVariablesList(v[_ProjectKey], v["env-name"])
 	if err != nil {
 		return nil, err
 	}
@@ -63,22 +67,26 @@ func environmentListVariableRun(v cli.Values) (cli.ListResult, error) {
 var environmentVariableDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS environment variable",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "env-name"},
 		{Name: "variable-name"},
 	},
 }
 
 func environmentDeleteVariableRun(v cli.Values) error {
-	return client.EnvironmentVariableDelete(v["project-key"], v["env-name"], v["variable-name"])
+	return client.EnvironmentVariableDelete(v[_ProjectKey], v["env-name"], v["variable-name"])
 }
 
 var environmentVariableUpdateCmd = cli.Command{
 	Name:  "update",
 	Short: "Update CDS environment variable value",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "env-name"},
 		{Name: "variable-oldname"},
 		{Name: "variable-name"},
@@ -88,12 +96,12 @@ var environmentVariableUpdateCmd = cli.Command{
 }
 
 func environmentUpdateVariableRun(v cli.Values) error {
-	variable, err := client.EnvironmentVariableGet(v["project-key"], v["env-name"], v["variable-oldname"])
+	variable, err := client.EnvironmentVariableGet(v[_ProjectKey], v["env-name"], v["variable-oldname"])
 	if err != nil {
 		return err
 	}
 	variable.Name = v["variable-name"]
 	variable.Value = v["variable-value"]
 	variable.Type = v["variable-type"]
-	return client.EnvironmentVariableUpdate(v["project-key"], v["env-name"], variable)
+	return client.EnvironmentVariableUpdate(v[_ProjectKey], v["env-name"], variable)
 }

@@ -10,7 +10,7 @@ import (
 // Environment represent a deployment environment
 type Environment struct {
 	ID                int64             `json:"id" yaml:"-"`
-	Name              string            `json:"name" yaml:"name" cli:"name"`
+	Name              string            `json:"name" yaml:"name" cli:"name,key"`
 	EnvironmentGroups []GroupPermission `json:"groups,omitempty" yaml:"groups"`
 	Variable          []Variable        `json:"variables,omitempty" yaml:"variables"`
 	ProjectID         int64             `json:"-" yaml:"-"`
@@ -31,6 +31,16 @@ type EnvironmentVariableAudit struct {
 	VariableAfter  *Variable `json:"variable_after,omitempty" yaml:"-" db:"-"`
 	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
 	Author         string    `json:"author" yaml:"-" db:"author"`
+}
+
+// GetKey return a key by name
+func (e Environment) GetKey(kname string) *EnvironmentKey {
+	for i := range e.Keys {
+		if e.Keys[i].Name == kname {
+			return &e.Keys[i]
+		}
+	}
+	return nil
 }
 
 // NewEnvironment instanciate a new Environment

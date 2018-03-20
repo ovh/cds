@@ -10,7 +10,7 @@
         </thead>
         <tbody>
         <tr *ngFor="let c of getDataForCurrentPage()">
-            <td valign="middle">
+            <td valign="middle" class="middle">
                 <div class="vcenter">
                     <img [src]="c.author.avatar">
                     <div class="author">
@@ -18,13 +18,13 @@
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="middle">
                 <a [href]="c.url">{{ c.id | cut : 7 }}</a>
             </td>
-            <td>
+            <td class="middle">
                 <pre [innerHTML]="c.message"></pre>
             </td>
-            <td>
+            <td class="middle">
                 {{ c.authorTimestamp | amTimeAgo }}
             </td>
         </tr>

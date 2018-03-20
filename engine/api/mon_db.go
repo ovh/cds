@@ -9,6 +9,7 @@ import (
 
 	"github.com/rubenv/sql-migrate"
 
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -25,7 +26,7 @@ func (api *API) getMonDBStatusMigrateHandler() Handler {
 		for _, r := range records {
 			m = append(m, sdk.MonDBMigrate{ID: r.Id, AppliedAt: r.AppliedAt})
 		}
-		return WriteJSON(w, r, m, http.StatusOK)
+		return WriteJSON(w, m, http.StatusOK)
 	}
 }
 
@@ -42,10 +43,10 @@ func (api *API) getMonDBTimesDBHandler() Handler {
 		o.ProjectLoadAllWithApps = api.getMonDBTimesDBProjectLoadWithAppsHandler(ctx)
 		o.ProjectLoadAllRaw = api.getMonDBTimesDBProjectLoadAllRawHandler(ctx)
 		o.ProjectCount = api.getMonDBTimesDBProjectCountHandler(ctx)
-		o.QueueWorkflow = api.getMonDBTimesDBQueueWorkflow(ctx)
+		o.QueueWorkflow = api.getMonDBTimesDBQueueWorkflow(ctx, r)
 
 		log.Info("getMonDBTimesDBHandler> elapsed %s", elapsed("getMonDBTimesDBHandler", o.Now))
-		return WriteJSON(w, r, o, http.StatusOK)
+		return WriteJSON(w, o, http.StatusOK)
 	}
 }
 
@@ -93,14 +94,19 @@ func (api *API) getMonDBTimesDBProjectLoadAllRawHandler(ctx context.Context) str
 	return elapsed("getMonDBTimesDBProjectLoadAllRawHandler", s1)
 }
 
-func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context) string {
+func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context, r *http.Request) string {
 	groupsID := []int64{}
 	for _, g := range getUser(ctx).Groups {
 		groupsID = append(groupsID, g.ID)
 	}
 	since := time.Unix(0, 0)
 	s1 := time.Now()
-	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since); err != nil {
+	permissions := permission.PermissionReadExecute
+	if !isHatcheryOrWorker(r) {
+		permissions = permission.PermissionRead
+	}
+
+	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, &since); err != nil {
 		return fmt.Sprintf("getMonDBTimesDBQueueWorkflow> Unable to load queue:: %s", err)
 	}
 	return elapsed("getMonDBTimesDBQueueWorkflow", s1)

@@ -34,10 +34,14 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	log.Info("Export variable HTTP server: %s", listener.Addr().String())
 	r := mux.NewRouter()
 	r.HandleFunc("/var", w.addBuildVarHandler)
+	r.HandleFunc("/artifacts", w.artifactsHandler)
 	r.HandleFunc("/upload", w.uploadHandler)
+	r.HandleFunc("/download", w.downloadHandler)
 	r.HandleFunc("/tmpl", w.tmplHandler)
 	r.HandleFunc("/tag", w.tagHandler)
 	r.HandleFunc("/log", w.logHandler)
+	r.HandleFunc("/cache/{tag}/push", w.cachePushHandler)
+	r.HandleFunc("/cache/{tag}/pull", w.cachePullHandler)
 	r.HandleFunc("/exit", w.exitHandler)
 
 	srv := &http.Server{

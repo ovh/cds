@@ -12,6 +12,7 @@ import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {User} from '../../../../model/user.model';
 import {finalize, first} from 'rxjs/operators';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-application-admin',
@@ -64,7 +65,9 @@ export class ApplicationAdminComponent implements OnInit {
             this.updateWarningModal.show();
         } else {
             this.loading = true;
-            this._applicationStore.renameApplication(this.project.key, this.application.name, this.newName)
+            let app = cloneDeep(this.application);
+            app.name = this.newName;
+            this._applicationStore.updateApplication(this.project.key, this.application.name, app)
                 .pipe(first()).subscribe( () => {
                 this.loading = false;
                 this._toast.success('', this._translate.instant('application_update_ok'));

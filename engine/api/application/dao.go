@@ -28,6 +28,7 @@ var LoadOptions = struct {
 	WithHooks                      LoadOptionFunc
 	WithNotifs                     LoadOptionFunc
 	WithKeys                       LoadOptionFunc
+	WithClearKeys                  LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,
 	WithVariables:                  &loadVariables,
@@ -38,6 +39,20 @@ var LoadOptions = struct {
 	WithHooks:                      &loadHooks,
 	WithNotifs:                     &loadNotifs,
 	WithKeys:                       &loadKeys,
+	WithClearKeys:                  &loadClearKeys,
+}
+
+// LoadOldApplicationWorkflowToClean load application to clean
+func LoadOldApplicationWorkflowToClean(db gorp.SqlExecutor) ([]sdk.Application, error) {
+	apps := []sdk.Application{}
+	query := `SELECT application.* FROM application where workflow_migration = 'CLEANING'`
+	if _, err := db.Select(&apps, query); err != nil {
+		if err == sql.ErrNoRows {
+			return apps, nil
+		}
+		return nil, sdk.WrapError(err, "LoadOldApplicationWorkflowToClean> Cannot load application to clean")
+	}
+	return apps, nil
 }
 
 // Exists checks if an application given its name exists
@@ -87,6 +102,43 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 	}
 
 	return load(db, store, projectKey, u, opts, query, args...)
+}
+
+// LoadAndLockByID load and lock given application
+func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
+	var query string
+	var args []interface{}
+
+	if u == nil || u.Admin {
+		query = `
+                SELECT application.*
+                FROM application
+                WHERE application.id = $1 FOR UPDATE NOWAIT`
+		args = []interface{}{id}
+	} else {
+		query = `
+            SELECT distinct application.*
+            FROM application
+            JOIN application_group on application.id = application_group.application_id
+            WHERE application.id = $1
+            AND (
+				application_group.group_id = ANY(string_to_array($2, ',')::int[])
+				OR
+				$3 = ANY(string_to_array($2, ',')::int[])
+			) FOR UPDATE NOWAIT`
+		var groupID string
+
+		for i, g := range u.Groups {
+			if i == 0 {
+				groupID = fmt.Sprintf("%d", g.ID)
+			} else {
+				groupID += "," + fmt.Sprintf("%d", g.ID)
+			}
+		}
+		args = []interface{}{id, groupID, group.SharedInfraGroup.ID}
+	}
+
+	return load(db, store, "", u, opts, query, args...)
 }
 
 // LoadByID load an application from DB
@@ -202,7 +254,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOpti
 	}
 
 	if u != nil {
-		loadPermission(db, store, &app, u)
+		LoadPermission(db, store, &app, u)
 	}
 
 	for _, f := range opts {
@@ -221,11 +273,12 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Insert: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
 	}
 
-	// TODO Remove after application migration to workflow
-	if app.WorkflowMigration == "" {
+	switch proj.WorkflowMigration {
+	case "NOT_BEGUN":
 		app.WorkflowMigration = "NOT_BEGUN"
+	default:
+		app.WorkflowMigration = "DONE"
 	}
-
 	app.ProjectID = proj.ID
 	app.ProjectKey = proj.Key
 	app.LastModified = time.Now()
@@ -325,20 +378,20 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 }
 
 // LoadAllNames returns all application names
-func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName, error) {
 	var query string
 	var args []interface{}
 
 	if u == nil || u.Admin {
 		query = `
-		SELECT application.name
+		SELECT application.id, application.name
 		FROM application
 		WHERE application.project_id= $1
 		ORDER BY application.name ASC`
 		args = []interface{}{projID}
 	} else {
 		query = `
-			SELECT distinct application.name
+			SELECT distinct(application.id) AS id, application.name
 			FROM application
 			WHERE application.id IN (
 				SELECT application_group.application_id
@@ -351,7 +404,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, err
 		args = []interface{}{projID, u.ID}
 	}
 
-	res := []string{}
+	res := []sdk.IDName{}
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil

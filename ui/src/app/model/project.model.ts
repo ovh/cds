@@ -5,6 +5,8 @@ import {Variable} from './variable.model';
 import {Environment} from './environment.model';
 import {RepositoriesManager} from './repositories.model';
 import {Workflow} from './workflow.model';
+import {Key} from './keys.model';
+import {ProjectPlatform} from './platform.model';
 
 export class Project {
     key: string;
@@ -12,9 +14,9 @@ export class Project {
     workflows: Array<Workflow>;
     workflow_names: Array<string>;
     pipelines: Array<Pipeline>;
-    pipeline_names: Array<string>;
+    pipeline_names: Array<IdName>;
     applications: Array<Application>;
-    application_names: Array<string>;
+    application_names: Array<IdName>;
     groups: Array<GroupPermission>;
     variables: Array<Variable>;
     environments: Array<Environment>;
@@ -22,6 +24,8 @@ export class Project {
     last_modified: string;
     workflow_migration: string;
     vcs_servers: Array<RepositoriesManager>;
+    keys: Array<Key>;
+    platforms: Array<ProjectPlatform>;
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
 }
@@ -31,4 +35,9 @@ export class LoadOpts {
     public queryParam: string,
     public fieldName: string
   ) { }
+}
+
+export class IdName {
+  id: number;
+  name: string;
 }

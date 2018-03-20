@@ -8,6 +8,10 @@ import {Hook} from './hook.model';
 import {Usage} from './usage.model';
 import {WorkflowItem} from './application.workflow.model';
 import {Scheduler} from './scheduler.model';
+import {Key} from './keys.model';
+import {VCSStrategy} from './vcs.model';
+
+export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
 export class Application {
     id: number;
@@ -27,6 +31,8 @@ export class Application {
     schedulers: Array<Scheduler>;
     workflow_migration: string;
     usage: Usage;
+    keys: Array<Key>;
+    vcs_strategy: VCSStrategy;
 
     project_key: string; // project unique key
 
@@ -35,6 +41,18 @@ export class Application {
 
     // workflow depth for horizontal tree view
     horizontalDepth: number;
+
+    // Return true if pattern is good
+    public static checkName(name: string): boolean {
+      if (!name) {
+          return false;
+      }
+
+      if (!applicationNamePattern.test(name)) {
+          return false;
+      }
+      return true;
+    }
 }
 
 export class ApplicationPipeline {

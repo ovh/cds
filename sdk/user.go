@@ -3,7 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 // User represent a CDS user.
@@ -19,49 +18,24 @@ type User struct {
 	Permissions UserPermissions `json:"permissions,omitempty" yaml:"-" cli:"-"`
 }
 
+// UserPermissions is the set of permissions for a user
+//easyjson:json
 type UserPermissions struct {
-	Groups           []string
-	GroupsAdmin      []string
-	ProjectsPerm     map[string]int
-	ApplicationsPerm UserPermissionsMap
-	WorkflowsPerm    UserPermissionsMap
-	PipelinesPerm    UserPermissionsMap
-	EnvironmentsPerm UserPermissionsMap
+	Groups           []string           `json:"Groups,omitempty"` // json key are capitalized to ensure exising data in cache are still valid
+	GroupsAdmin      []string           `json:"GroupsAdmin,omitempty"`
+	ProjectsPerm     map[string]int     `json:"ProjectsPerm,omitempty"`
+	ApplicationsPerm UserPermissionsMap `json:"ApplicationsPerm,omitempty"`
+	WorkflowsPerm    UserPermissionsMap `json:"WorkflowsPerm,omitempty"`
+	PipelinesPerm    UserPermissionsMap `json:"PipelinesPerm,omitempty"`
+	EnvironmentsPerm UserPermissionsMap `json:"EnvironmentsPerm,omitempty"`
 }
 
-type UserPermissionsMap map[UserPermissionKey]int
+// UserPermissionsMap is a type of map. The in key the key and name of the object and value is the level of permissions
+//easyjson:json
+type UserPermissionsMap map[string]int
 
-type UserPermissionKey struct {
-	Key  string
-	Name string
-}
-
-//MarshalJSON is the json.Marshaller implementation usefull to serialize UserPermissionsMap
-func (m UserPermissionsMap) MarshalJSON() ([]byte, error) {
-	var data = make(map[string]int, len(m))
-	for k, v := range m {
-		data[k.Key+"/"+k.Name] = v
-	}
-	return json.Marshal(data)
-}
-
-//UnmarshalJSON is the json.Unmarshaller implementation usefull to deserialize UserPermissionsMap
-func (m *UserPermissionsMap) UnmarshalJSON(b []byte) error {
-	data := map[string]int{}
-	if err := json.Unmarshal(b, &data); err != nil {
-		return err
-	}
-
-	*m = make(map[UserPermissionKey]int)
-
-	for k, v := range data {
-		t := strings.SplitN(k, "/", 2)
-		if len(t) != 2 {
-			return fmt.Errorf("json: unable to unmarshal permissions")
-		}
-		(*m)[UserPermissionKey{Key: t[0], Name: t[1]}] = v
-	}
-	return nil
+func UserPermissionKey(k, n string) string {
+	return k + "/" + n
 }
 
 // UserAPIRequest  request for rest API

@@ -52,7 +52,7 @@ func getPermissionByMethod(method string, isExecution bool) int {
 
 func (api *API) deletePermissionMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
-		deleteUserPermissionCache(ctx, api.Cache)
+		api.deleteUserPermissionCache(ctx, api.Cache)
 	}
 	return ctx, nil
 }
@@ -107,32 +107,28 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			return ctx, sdk.WrapError(err, "Router> Unable to refresh worker")
 		}
 
-		g, perm, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, workerCtx.GroupID)
-		if err != nil {
-			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err)
-		}
-		getUser(ctx).Permissions = perm
-		getUser(ctx).Groups = append(getUser(ctx).Groups, g)
-
 		if workerCtx.ModelID != 0 {
-			//Load model
+			// worker have a model, load model, then load model's group
 			m, err := worker.LoadWorkerModelByID(api.mustDB(), workerCtx.ModelID)
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s - name:%s modelID:%d", err, workerCtx.Name, workerCtx.ModelID)
 			}
 
-			//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
 			if m.GroupID == group.SharedInfraGroup.ID {
-				getUser(ctx).Groups = append(getUser(ctx).Groups, *group.SharedInfraGroup)
-			} else {
-				log.Debug("Router> loading groups permission for model %d", workerCtx.ModelID)
-				modelGroup, perm, errLoad2 := loadPermissionsByGroupID(api.mustDB(), api.Cache, m.GroupID)
-				if errLoad2 != nil {
-					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2)
+				// it's a shared.infra model, load group from token only: workerCtx.GroupID
+				if err := api.setGroupsAndPermissionsFromGroupID(ctx, workerCtx.GroupID); err != nil {
+					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> model shared.infra:%d", m.GroupID)
 				}
-				//Anyway, add the group of the model as a group of the user
-				getUser(ctx).Permissions = perm
-				getUser(ctx).Groups = append(getUser(ctx).Groups, modelGroup)
+			} else {
+				// this model is not attached to shared.infra group, load group with m.GroupID
+				if err := api.setGroupsAndPermissionsFromGroupID(ctx, m.GroupID); err != nil {
+					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> model not shared.infra:%d", m.GroupID)
+				}
+			}
+		} else {
+			// worker does not have a model, take group from token only
+			if err := api.setGroupsAndPermissionsFromGroupID(ctx, workerCtx.GroupID); err != nil {
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> no model, worker not shared.infra:%d", workerCtx.GroupID)
 			}
 		}
 	case getUser(ctx) != nil:
@@ -186,6 +182,16 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	return ctx, nil
 
+}
+
+func (api *API) setGroupsAndPermissionsFromGroupID(ctx context.Context, groupID int64) error {
+	g, perm, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, groupID)
+	if err != nil {
+		return sdk.WrapError(sdk.ErrUnauthorized, "setGroupsAndPermissionsFromGroupID> cannot load permissions: %s", err)
+	}
+	getUser(ctx).Permissions = perm
+	getUser(ctx).Groups = append(getUser(ctx).Groups, g)
+	return err
 }
 
 func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, rc *HandlerConfig, routeVar map[string]string) bool {
@@ -256,7 +262,7 @@ func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName strin
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.PipelinesPerm[sdk.UserPermissionKey{Key: projectKey, Name: pipelineName}] >= perm
+			return getUser(ctx).Permissions.PipelinesPerm[sdk.UserPermissionKey(projectKey, pipelineName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -271,7 +277,7 @@ func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string,
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: projectKey, Name: envName}] >= perm
+			return getUser(ctx).Permissions.EnvironmentsPerm[sdk.UserPermissionKey(projectKey, envName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -286,7 +292,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey{Key: projectKey, Name: workflowName}] >= perm
+			return getUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -305,7 +311,7 @@ func (api *API) checkApplicationPermissions(ctx context.Context, applicationName
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.ApplicationsPerm[sdk.UserPermissionKey{Key: projectKey, Name: applicationName}] >= perm
+			return getUser(ctx).Permissions.ApplicationsPerm[sdk.UserPermissionKey(projectKey, applicationName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")

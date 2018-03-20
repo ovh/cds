@@ -52,13 +52,39 @@ input[disabled] {
   overflow: hidden !important;
 }
 
+.fullheight {
+  .CodeMirror {
+    height: 100% !important;
+  }
+  // Code mirror
+  .CodeMirror-scroll {
+    height: 100% !important;
+    overflow: auto !important;
+  }
+}
+
+$scrollbarsize: 10px;
+$scrollbarradius: 0px;
 // Override semantic-ui to show warning in form
 .ui.form .warning.message, .ui.form .error.message {
   display: inherit;
 }
 
 // Override semantic-ui color to apply CDS theme
-
+body ::-webkit-scrollbar {
+  width: $scrollbarsize;
+  height: $scrollbarsize;
+}
+* ::-webkit-scrollbar {
+  width: $scrollbarsize;
+  height: $scrollbarsize;
+}
+body ::-webkit-scrollbar-thumb {
+  border-radius: $scrollbarradius;
+}
+* ::-webkit-scrollbar-thumb {
+  border-radius: $scrollbarradius;
+}
 // dropdown
 .ui.buttons {
   sm-dropdown>.ui.dropdown:last-child .menu {
@@ -86,7 +112,7 @@ input[disabled] {
 .ui {
   i.icon.blue {
     color: $cds_color_teal !important;
-  } 
+  }
 
   i.icon.red {
     color: $cds_color_red !important;
@@ -557,9 +583,10 @@ foreignObject {
 // Ovveride of ng2-semantic-ui
 sui-search {
   .ui.input {
-    input {
+    .prompt {
       background-color: transparent;
       border-color: #233332;
+      color: rgba(255, 255, 255, 0.9);
     }
   }
 }

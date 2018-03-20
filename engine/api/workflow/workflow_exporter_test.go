@@ -92,6 +92,8 @@ func TestPull(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
+		Metadata:   sdk.Metadata{"triggered_by": "bla"},
+		PurgeTags:  []string{"aa", "bb"},
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 			Triggers: []sdk.WorkflowNodeTrigger{
@@ -112,8 +114,10 @@ func TestPull(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
+	test.Equal(t, w.Metadata, w1.Metadata)
+	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
 	buff := new(bytes.Buffer)
 	test.NoError(t, workflow.Pull(db, cache, proj.Key, w1.Name, exportentities.FormatYAML, false, project.EncryptWithBuiltinKey, u, buff))

@@ -15,18 +15,20 @@ var (
 
 	projectVariable = cli.NewCommand(projectVariableCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(projectVariableCreateCmd, projectCreateVariableRun, nil),
-			cli.NewListCommand(projectVariableListCmd, projectListVariableRun, nil),
-			cli.NewCommand(projectVariableDeleteCmd, projectDeleteVariableRun, nil),
-			cli.NewCommand(projectVariableUpdateCmd, projectUpdateVariableRun, nil),
+			cli.NewCommand(projectVariableCreateCmd, projectCreateVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewListCommand(projectVariableListCmd, projectListVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(projectVariableDeleteCmd, projectDeleteVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(projectVariableUpdateCmd, projectUpdateVariableRun, nil, withAllCommandModifiers()...),
 		})
 )
 
 var projectVariableCreateCmd = cli.Command{
 	Name:  "add",
 	Short: "Add a new variable on project. Variable type can be one of password, text, string, key, boolean, number, repository",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "variable-name"},
 		{Name: "variable-type"},
 		{Name: "variable-value"},
@@ -39,20 +41,22 @@ func projectCreateVariableRun(v cli.Values) error {
 		Type:  v["variable-type"],
 		Value: v["variable-value"],
 	}
-	return client.ProjectVariableCreate(v["project-key"], variable)
+	return client.ProjectVariableCreate(v[_ProjectKey], variable)
 }
 
 var projectVariableListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS project variables",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "env-name"},
 	},
 }
 
 func projectListVariableRun(v cli.Values) (cli.ListResult, error) {
-	variables, err := client.ProjectVariablesList(v["project-key"])
+	variables, err := client.ProjectVariablesList(v[_ProjectKey])
 	if err != nil {
 		return nil, err
 	}
@@ -62,22 +66,26 @@ func projectListVariableRun(v cli.Values) (cli.ListResult, error) {
 var projectVariableDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS project variable",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "env-name"},
 		{Name: "variable-name"},
 	},
 }
 
 func projectDeleteVariableRun(v cli.Values) error {
-	return client.ProjectVariableDelete(v["project-key"], v["variable-name"])
+	return client.ProjectVariableDelete(v[_ProjectKey], v["variable-name"])
 }
 
 var projectVariableUpdateCmd = cli.Command{
 	Name:  "update",
 	Short: "Update CDS project variable value",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "variable-oldname"},
 		{Name: "variable-name"},
 		{Name: "variable-type"},
@@ -86,12 +94,12 @@ var projectVariableUpdateCmd = cli.Command{
 }
 
 func projectUpdateVariableRun(v cli.Values) error {
-	variable, err := client.ProjectVariableGet(v["project-key"], v["variable-oldname"])
+	variable, err := client.ProjectVariableGet(v[_ProjectKey], v["variable-oldname"])
 	if err != nil {
 		return err
 	}
 	variable.Name = v["variable-name"]
 	variable.Value = v["variable-value"]
 	variable.Type = v["variable-type"]
-	return client.ProjectVariableUpdate(v["project-key"], variable)
+	return client.ProjectVariableUpdate(v[_ProjectKey], variable)
 }

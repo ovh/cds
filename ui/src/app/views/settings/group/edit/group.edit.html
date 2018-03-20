@@ -6,97 +6,112 @@
   <div id="GroupEdit">
     <form class="ui form">
       <div class="ui grid">
-        <div class="ten wide column">
-          <div class="two fields">
-            <div class="field">
-                <label>{{'group_name' | translate}}</label>
-                <input class="ui input" type="text" name="name" [(ngModel)]="group.name" [disabled]="loading">
-            </div>
-            <div class="buttons" *ngIf="currentUser.admin || currentUserIsAdminOnGroup">
-                <app-delete-button *ngIf="group.id" class="right floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
-                <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
-                  <i class="save icon"></i>{{ 'btn_save' | translate }}
-                </button>
-            </div>
-            <div class="buttons" *ngIf="!group.id">
-                <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
-                  <i class="plus icon"></i>{{ 'btn_add' | translate }}
-                </button>
-            </div>
-          </div>
-
-          <div class="ui divider" *ngIf="group.id"></div>
-
-          <div class="ten wide column" *ngIf="group.id">
-            <div class="two fields" *ngIf="users">
+        <div class="ui row">
+          <div class="ten wide column">
+            <div class="two fields">
               <div class="field">
-                  <label>{{ 'group_members' | translate }}</label>
-                  <sm-select  *ngIf="currentUser.admin || currentUserIsAdminOnGroup" class="search"
-                      [options]="{'fullTextSearch': true}"
-                      [disabled]="loading"
-                      [(model)]="addUserUsername">
-                      <option *ngFor="let user of users" [value]="user.username">{{user.fullname}} - {{user.username}}</option>
-                  </sm-select>
+                  <label>{{'group_name' | translate}}</label>
+                  <input class="ui input" type="text" name="name" [(ngModel)]="group.name" [disabled]="loading">
               </div>
               <div class="buttons" *ngIf="currentUser.admin || currentUserIsAdminOnGroup">
-                <button class="ui green button" [class.loading]="loading" (click)="clickAddUserButton()">
-                  <i class="add icon"></i>{{ 'btn_add' | translate }}
-                </button>
+                  <app-delete-button *ngIf="group.id" class="right floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
+                  <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
+                    <i class="save icon"></i>{{ 'btn_save' | translate }}
+                  </button>
+              </div>
+              <div class="buttons" *ngIf="!group.id">
+                  <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
+                    <i class="plus icon"></i>{{ 'btn_add' | translate }}
+                  </button>
               </div>
             </div>
 
-            <div class="ui info message" *ngIf="!group.users || group.users?.length === 0">
-                {{ 'group_no_member' | translate }}
-            </div>
+            <div class="ui divider" *ngIf="group.id"></div>
 
-            <table class="ui fixed celled table" *ngIf="members && members?.length > 0">
-                <thead>
-                <tr>
-                    <th class="three wide">{{ 'user_label_username' | translate }}</th>
-                    <th class="three wide">{{ 'user_label_fullname' | translate }}</th>
-                    <th class="three wide">{{ 'user_label_email' | translate }}</th>
-                    <th class="eight wide"></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr *ngFor="let v of members">
-                    <td>
-                        <div class="ui">
-                          <i class="fa fa-user-circle-o" *ngIf="v.admin" title="{{ 'group_user_is_admin' | translate }}"></i>
-                          {{v?.username}}
+            <div class="ten wide column" *ngIf="group.id">
+              <div class="two fields" *ngIf="users">
+                <div class="field">
+                    <label>{{ 'group_members' | translate }}</label>
+                    <sm-select  *ngIf="currentUser.admin || currentUserIsAdminOnGroup" class="search"
+                        [options]="{'fullTextSearch': true}"
+                        [disabled]="loading"
+                        [(model)]="addUserUsername">
+                        <option *ngFor="let user of users" [value]="user.username">{{user.fullname}} - {{user.username}}</option>
+                    </sm-select>
+                </div>
+                <div class="buttons" *ngIf="currentUser.admin || currentUserIsAdminOnGroup">
+                  <button class="ui green button" [class.loading]="loading" (click)="clickAddUserButton()">
+                    <i class="add icon"></i>{{ 'btn_add' | translate }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="ui info message" *ngIf="members && members?.length === 0">
+                  {{ 'group_no_member' | translate }}
+              </div>
+
+              <table class="ui fixed celled table" *ngIf="members && members?.length > 0">
+                  <thead>
+                  <tr>
+                      <th class="three wide">{{ 'user_label_username' | translate }}</th>
+                      <th class="three wide">{{ 'user_label_fullname' | translate }}</th>
+                      <th class="three wide">{{ 'user_label_email' | translate }}</th>
+                      <th class="eight wide"></th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let v of members">
+                      <td>
+                          <div class="ui">
+                            <i class="fa fa-user-circle-o" *ngIf="v.admin" title="{{ 'group_user_is_admin' | translate }}"></i>
+                            {{v?.username}}
+                          </div>
+                      </td>
+                      <td>
+                          <div class="ui">{{v?.fullname}}</div>
+                      </td>
+                      <td>
+                          <div class="ui">{{v?.email}}</div>
+                      </td>
+                      <td>
+                        <div *ngIf="currentUser.admin || currentUserIsAdminOnGroup">
+                          <app-delete-button *ngIf="v?.username" class="right floated" (event)="clickRemoveUserButton(v.username)" [loading]="deleteLoading"></app-delete-button>
+                          <button *ngIf="!v.admin" class="ui right floated button" [class.loading]="loading" (click)="clickAddAdminButton(v.username)">
+                            <i class="add icon"></i>{{ 'group_btn_set_admin' | translate }}
+                          </button>
+                          <button *ngIf="v.admin" class="ui right floated button" [class.loading]="loading" (click)="clickRemoveAdminButton(v.username)">
+                            <i class="minus icon"></i>{{ 'group_btn_unset_admin' | translate }}
+                          </button>
                         </div>
-                    </td>
-                    <td>
-                        <div class="ui">{{v?.fullname}}</div>
-                    </td>
-                    <td>
-                        <div class="ui">{{v?.email}}</div>
-                    </td>
-                    <td>
-                      <div *ngIf="currentUser.admin || currentUserIsAdminOnGroup">
-                        <app-delete-button *ngIf="v?.username" class="right floated" (event)="clickRemoveUserButton(v.username)" [loading]="deleteLoading"></app-delete-button>
-                        <button *ngIf="!v.admin" class="ui right floated button" [class.loading]="loading" (click)="clickAddAdminButton(v.username)">
-                          <i class="add icon"></i>{{ 'group_btn_set_admin' | translate }}
-                        </button>
-                        <button *ngIf="v.admin" class="ui right floated button" [class.loading]="loading" (click)="clickRemoveAdminButton(v.username)">
-                          <i class="minus icon"></i>{{ 'group_btn_unset_admin' | translate }}
-                        </button>
-                      </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                      </td>
+                  </tr>
+                  </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
         <div class="six wide column">
           <div class="ui tall stacked segment">
             <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
-            <a href="https://ovh.github.io/cds">https://ovh.github.io/cds</a>
+            <a href="https://ovh.github.io/cds" target="_blank">https://ovh.github.io/cds</a>
           </div>
         </div>
 
       </div>
+      <div class="ui row" *ngIf="currentUserIsAdminOnGroup || currentUser.admin">
+        <div class="sixteen wide column">
+            <h3>{{'token_title_handling' | translate}}</h3>
+            <app-token-list [tokens]="group.tokens" [displayAdd]="true" (event)="tokenEvent($event)"></app-token-list>
+            <div class="ui green message animated fadeIn" *ngIf="tokenGenerated != null">
+              <i class="close icon" (click)="tokenGenerated = null"></i>
+              <div class="header">
+                {{'token_generated' | translate}} <span *ngIf="tokenGenerated.description">({{tokenGenerated.description}})</span>
+              </div>
+              <p>{{tokenGenerated.token}}</p>
+            </div>
+        </div>
+      </div>
+    </div>
     </form>
   </div>
 </ng-template>

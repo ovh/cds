@@ -47,7 +47,7 @@ age=42`
 	res := p.Run(action)
 	defer os.Remove(tmplfile.Name() + ".out")
 
-	if res == plugin.Fail {
+	if res != plugin.Success {
 		t.Errorf("unexpected error on Run")
 		return
 	}

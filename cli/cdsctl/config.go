@@ -2,23 +2,39 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/user"
 	"path"
+	"runtime"
 	"strconv"
 
-	"github.com/BurntSushi/toml"
+	repo "github.com/fsamin/go-repo"
 
+	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/keychain"
+)
+
+var (
+	_ProjectKey      = "project-key"
+	_ApplicationName = "application-name"
+	_WorkflowName    = "workflow-name"
 )
 
 type config struct {
 	Host                  string
-	user                  string
-	token                 string
+	User                  string
+	Token                 string
 	InsecureSkipVerifyTLS bool
+}
+
+func userHomeDir() string {
+	env := "HOME"
+	if runtime.GOOS == "windows" {
+		env = "USERPROFILE"
+	} else if runtime.GOOS == "plan9" {
+		env = "home"
+	}
+	return os.Getenv(env)
 }
 
 func loadConfig(configFile string) (*cdsclient.Config, error) {
@@ -26,11 +42,11 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 
 	c := &config{}
 	c.Host = os.Getenv("CDS_API_URL")
-	c.user = os.Getenv("CDS_USER")
-	c.token = os.Getenv("CDS_TOKEN")
+	c.User = os.Getenv("CDS_USER")
+	c.Token = os.Getenv("CDS_TOKEN")
 	c.InsecureSkipVerifyTLS, _ = strconv.ParseBool(os.Getenv("CDS_INSECURE"))
 
-	if c.Host != "" && c.user != "" {
+	if c.Host != "" && c.User != "" {
 		if verbose {
 			fmt.Println("Configuration loaded from environment variables")
 		}
@@ -41,10 +57,7 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 		return nil, err
 	}
 
-	u, err := user.Current()
-	if err != nil {
-		return nil, err
-	}
+	homedir := userHomeDir()
 
 	var configFiles []string
 	if configFile != "" {
@@ -52,23 +65,29 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	} else {
 		configFiles = []string{
 			path.Join(dir, ".cdsrc"),
-			path.Join(u.HomeDir, ".cdsrc"),
+			path.Join(homedir, ".cdsrc"),
 		}
 	}
 
 	var i int
 	for c.Host == "" && i < len(configFiles) {
 		if _, err := os.Stat(configFiles[i]); err == nil {
-			b, err := ioutil.ReadFile(configFiles[i])
+			f, err := os.Open(configFiles[i])
 			if err != nil {
 				if verbose {
 					fmt.Printf("Unable to read %s \n", configFiles[i])
 				}
 				return nil, err
 			}
-			if _, err := toml.Decode(string(b), c); err != nil {
+			defer f.Close()
+
+			if err := loadSecret(f, c); err != nil {
+				if verbose {
+					fmt.Printf("Unable to load configuration %s \n", configFiles[i])
+				}
 				return nil, err
 			}
+
 			if verbose {
 				fmt.Println("Configuration loaded from", configFiles[i])
 			}
@@ -82,20 +101,174 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 
 	conf := &cdsclient.Config{
 		Host:    c.Host,
-		User:    c.user,
-		Token:   c.token,
+		User:    c.User,
+		Token:   c.Token,
 		Verbose: verbose,
 	}
 
 	return conf, nil
 }
 
-func loadClient(c *cdsclient.Config) (cdsclient.Interface, error) {
-	user, secret, err := keychain.GetSecret(c.Host)
+func withAllCommandModifiers() []cli.CommandModifier {
+	return []cli.CommandModifier{cli.CommandWithExtraFlags, cli.CommandWithExtraAliases, withAutoConf()}
+}
+
+func withAutoConf() cli.CommandModifier {
+	return cli.CommandWithPreRun(
+		func(c *cli.Command, args *[]string) error {
+			if len(*args) >= len(c.Ctx)+len(c.Args) {
+				return nil
+			}
+
+			if _, err := repo.New("."); err != nil {
+				//Ignore error
+				return nil
+			}
+
+			if err := discoverConf(); err != nil {
+				return err
+			}
+
+			preargs := []string{}
+			for _, arg := range c.Ctx {
+				if arg.Name == _ProjectKey {
+					preargs = []string{autoDiscoveredProj}
+				}
+				if arg.Name == _ApplicationName {
+					preargs = append(preargs, autoDiscoveredApp)
+				}
+				if arg.Name == _WorkflowName {
+					preargs = append(preargs, autoDiscoveredWorkflow)
+				}
+			}
+
+			*args = append(preargs, *args...)
+
+			return nil
+		},
+	)
+}
+
+var (
+	autoDiscoveredProj     string
+	autoDiscoveredApp      string
+	autoDiscoveredWorkflow string
+)
+
+func discoverConf() error {
+	r, err := repo.New(".")
 	if err != nil {
-		return nil, err
+		return err
 	}
-	c.User = user
-	c.Token = secret
-	return cdsclient.New(*c), nil
+
+	if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
+		//It's already configured
+		autoDiscoveredProj = proj
+		autoDiscoveredApp, _ = r.LocalConfigGet("cds", "application")
+		autoDiscoveredWorkflow, _ = r.LocalConfigGet("cds", "workflow")
+		return nil
+	}
+
+	fetchURL, err := r.FetchURL()
+	if err != nil {
+		return err
+	}
+
+	name, err := r.Name()
+	if err != nil {
+		return err
+	}
+
+	if cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL)) {
+		projs, err := client.ProjectList(true, true, cdsclient.Filter{
+			Name:  "repo",
+			Value: name,
+		})
+		if err != nil {
+			return err
+		}
+
+		var chosenProj *sdk.Project
+
+		filteredProjs := []sdk.Project{}
+		for i, p := range projs {
+			if len(p.Applications) > 0 || len(p.Workflows) > 0 {
+				filteredProjs = append(filteredProjs, projs[i])
+			}
+		}
+		projs = nil
+
+		//Set cds.project
+		if len(filteredProjs) == 1 {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS project %s - %s. Is it correct?", filteredProjs[0].Key, filteredProjs[0].Name)) {
+				chosenProj = &filteredProjs[0]
+			}
+		} else {
+			opts := make([]string, len(filteredProjs))
+			for i := range filteredProjs {
+				opts[i] = fmt.Sprintf("%s - %s", filteredProjs[i].Key, filteredProjs[i].Name)
+			}
+			choice := cli.MultiChoice("Choose the CDS project", opts...)
+
+			for i := range filteredProjs {
+				if choice == fmt.Sprintf("%s - %s", filteredProjs[i].Key, filteredProjs[i].Name) {
+					chosenProj = &filteredProjs[i]
+				}
+			}
+
+			if err := r.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
+				return err
+			}
+		}
+
+		if chosenProj == nil {
+			return nil
+		}
+
+		//Set cds.application
+		if len(chosenProj.Applications) == 1 {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS application %s. Is it correct?", chosenProj.Applications[0].Name)) {
+				if err := r.LocalConfigSet("cds", "application", chosenProj.Applications[0].Name); err != nil {
+					return err
+				}
+			}
+		} else {
+			opts := make([]string, len(chosenProj.Applications))
+			for i := range chosenProj.Applications {
+				opts[i] = chosenProj.Applications[i].Name
+			}
+			choice := cli.MultiChoice("Choose the CDS application", opts...)
+
+			for i := range chosenProj.Applications {
+				if choice == chosenProj.Applications[i].Name {
+					if err := r.LocalConfigSet("cds", "application", chosenProj.Applications[i].Name); err != nil {
+						return err
+					}
+					break
+				}
+			}
+		}
+
+		//Set cds.workflow
+		if len(chosenProj.Workflows) == 1 {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS workflow %s. Is it correct?", chosenProj.Workflows[0].Name)) {
+				if err := r.LocalConfigSet("cds", "workflow", chosenProj.Workflows[0].Name); err != nil {
+					return err
+				}
+			}
+		} else {
+			opts := make([]string, len(chosenProj.Workflows))
+			for i := range chosenProj.Workflows {
+				opts[i] = chosenProj.Workflows[i].Name
+			}
+			choice := cli.MultiChoice("Choose the CDS workflow", opts...)
+
+			for i := range chosenProj.Workflows {
+				if choice == chosenProj.Workflows[i].Name {
+					return r.LocalConfigSet("cds", "workflow", chosenProj.Workflows[i].Name)
+				}
+			}
+		}
+	}
+	return nil
 }

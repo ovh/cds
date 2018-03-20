@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -27,6 +28,7 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 	sdk.ServiceRequirement:       checkServiceRequirement,
 	sdk.MemoryRequirement:        checkMemoryRequirement,
 	sdk.VolumeRequirement:        checkVolumeRequirement,
+	sdk.OSArchRequirement:        checkOSArchRequirement,
 }
 
 func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, bookedJobID int64) (bool, []sdk.Requirement) {
@@ -39,6 +41,10 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, 
 	log.Debug("checkRequirements> for JobID:%d model of worker: %+v", bookedJobID, w.model)
 	log.Debug("checkRequirements> for JobID:%d execGroups: %+v", bookedJobID, execGroups)
 
+	// DEPRECATED
+	// this code is useful for pipelineBuildJob
+	// with CDS Workflows, the queue contains only jobs executable by worker
+	// after removing pbBuildJob, check execGroups here can be removed
 	if execGroups != nil && len(execGroups) > 0 && w.model.GroupID > 0 {
 		checkGroup := false
 		for _, g := range execGroups {
@@ -198,4 +204,13 @@ func checkVolumeRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func checkOSArchRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
+	osarch := strings.Split(r.Value, "/")
+	if len(osarch) != 2 {
+		return false, fmt.Errorf("invalid requirement %s", r.Value)
+	}
+
+	return osarch[0] == strings.ToLower(runtime.GOOS) && osarch[1] == strings.ToLower(runtime.GOARCH), nil
 }

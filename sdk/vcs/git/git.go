@@ -33,6 +33,7 @@ type AuthOpts struct {
 	Username   string
 	Password   string
 	PrivateKey vcs.SSHKey
+	SignKey    vcs.PGPKey
 }
 
 // OutputOpts is a optional structs for git clone command
@@ -152,7 +153,7 @@ func runGitCommandRaw(cmds cmds, output *OutputOpts, envs ...string) error {
 					if verbose {
 						LogFunc("Command status code %d", status.ExitStatus())
 					}
-					return fmt.Errorf("Command fail : %d", status.ExitStatus())
+					return fmt.Errorf("Command fail: %d", status.ExitStatus())
 				}
 				return exiterr
 			}

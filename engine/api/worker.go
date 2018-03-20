@@ -16,7 +16,7 @@ import (
 
 func (api *API) registerWorkerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		params := &worker.RegistrationForm{}
+		params := &sdk.WorkerRegistrationForm{}
 		if err := UnmarshalBody(r, params); err != nil {
 			return sdk.WrapError(err, "registerWorkerHandler> Unable to parse registration form")
 		}
@@ -43,7 +43,7 @@ func (api *API) registerWorkerHandler() Handler {
 		log.Debug("New worker: [%s] - %s", worker.ID, worker.Name)
 
 		// Return worker info to worker itself
-		return WriteJSON(w, r, worker, http.StatusOK)
+		return WriteJSON(w, worker, http.StatusOK)
 	}
 }
 
@@ -58,7 +58,7 @@ func (api *API) getWorkersHandler() Handler {
 			return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
 		}
 
-		return WriteJSON(w, r, workers, http.StatusOK)
+		return WriteJSON(w, workers, http.StatusOK)
 	}
 }
 

@@ -10,7 +10,7 @@
         </thead>
         <tbody>
         <tr *ngFor="let c of getDataForCurrentPage()">
-            <td>
+            <td class="middle-aligned">
                 <div class="ui input field">{{c.variable}}</div>
             </td>
             <td>
@@ -27,8 +27,18 @@
             <td>
                 <div *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE; then valueWrite;else valueRead"></div>
                 <ng-template #valueWrite>
-                    <div class="ui input">
-                        <input type="text" [(ngModel)]="c.value">
+                    <div class="ui fluid input">
+                      <ng-container *ngIf="isStatusVariable(c)">
+                          <sui-select class="selection"
+                              name="value"
+                              [(ngModel)]="c.value"
+                              [options]="statuses"
+                              #selectStatus>
+                              <sui-select-option *ngFor="let s of selectStatus.filteredOptions" [value]="s">
+                              </sui-select-option>
+                          </sui-select>
+                      </ng-container>
+                      <input type="text" [(ngModel)]="c.value" *ngIf="!isStatusVariable(c)">
                     </div>
                 </ng-template>
                 <ng-template #valueRead>

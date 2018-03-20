@@ -5,9 +5,16 @@
             <sm-menu title="" class="pointing secondary">
                 <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs" (click)="showTab('workflows')">
                     <i class="share alternate icon"></i>
-                    {{'common_workflows' | translate }}</a>
+                    {{'common_workflows' | translate }}
+                    <i class="orange warning sign icon ml5"
+                        *ngIf="previewWorkflow"
+                        suiPopup
+                        [popupText]="'Votre workflow est dans un état temporaire de prévisualisation'"
+                        popupPlacement="top center">
+                    </i>
+                </a>
                 <a sm-item [class.active]="selectedTab === 'notifications'" id="WorkflowNotificationTabs" (click)="showTab('notifications')">
-                    <i class="share alternate icon"></i>
+                    <i class="alarm icon"></i>
                     {{'common_notifications' | translate }}</a>
                 <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs" (click)="showTab('permissions')">
                     <i class="users icon"></i>
@@ -15,10 +22,10 @@
                 <a sm-item [class.active]="selectedTab === 'usage'" id="WorkflowUsageTabs"
                    [class.disabled]="usageCount === 0"
                    (click)="usageCount !== 0 && showTab('usage')">
-                    <i class="plug icon"></i>
+                    <i class="map signs icon"></i>
                     {{'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs" (click)="showTab('advanced')">
+                <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs" (click)="showTab('advanced')" *ngIf="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE">
                     <i class="graduation icon"></i>
                     {{'common_advanced' | translate }}</a>
             </sm-menu>
@@ -36,7 +43,7 @@
                                             <div class="content">
                                                 <div class="ui grid">
                                                     <div class="row">
-                                                        <div class="five wide column" title="{{'workflow_first_execution' | translate}}">
+                                                        <div class="five wide column" title="{{'common_orientation' | translate}}">
                                                             <button class="ui icon button"
                                                                     *ngIf="direction === 'TB'"
                                                                     (click)="changeDirection()">
@@ -48,18 +55,31 @@
                                                                 <i class="resize vertical icon"></i>
                                                             </button>
                                                         </div>
-                                                        <div class="six wide column centered" title="{{'common_version' | translate}}">
+                                                        <div class="six wide column centered">
+                                                            <div class="ui buttons">
+                                                              <div class="ui blue button" (click)="showAsCodeEditor()" [class.loading]="loading">
+                                                                  <i class="terminal icon"></i> {{'workflow_edit_as_code' | translate}}
+                                                                  <i class="orange warning sign icon ml5"
+                                                                      *ngIf="previewWorkflow"
+                                                                      suiPopup
+                                                                      [popupText]="'workflow_preview_mode' | translate"
+                                                                      popupPlacement="top center">
+                                                                  </i>
+                                                              </div>
+                                                              <div *ngIf="previewWorkflow" class="ui green button" (click)="savePreview()" [class.loading]="loading">
+                                                                  <i class="save icon"></i> {{'btn_save' | translate}}
+                                                              </div>
+                                                            </div>
 
                                                         </div>
-                                                        <div class="right aligned five wide column" title="{{'workflow_last_execution' | translate}}">
+                                                        <div class="right aligned five wide column" title="{{'btn_run_custom_worklow' | translate}}">
                                                             <div class="ui green buttons">
-                                                                <div class="ui button" (click)="runWorkflow()" [class.loading]="loading">{{
-                                                                    'btn_run_workflow' | translate }}
+                                                                <div class="ui button"
+                                                                    [class.disabled]="detailedWorkflow.permission < permissionEnum.READ_EXECUTE"
+                                                                    (click)="runWithParameter()"
+                                                                    [class.loading]="loading">
+                                                                    {{'btn_run_workflow' | translate }}
                                                                 </div>
-                                                                <sm-dropdown class="icon button">
-                                                                    <a sm-item (click)="runWithParameter()">{{ 'btn_run_custom_worklow' |
-                                                                        translate }}</a>
-                                                                </sm-dropdown>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -70,9 +90,9 @@
                                     <div class="two wide column"></div>
                                 </div>
                             </div>
-                            <ng-container>
+                            <ng-container *ngIf="detailedWorkflow">
                                 <div class="graph">
-                                    <app-workflow-graph [workflowData]="detailedWorkflow" [project]="project"
+                                    <app-workflow-graph [workflowData]="previewWorkflow || detailedWorkflow" [project]="project"
                                                         [direction]="direction"
                                                         (addSrcToJoinEvent)="addSourceToJoin($event)"
                                                         (deleteJoinSrcEvent)="openDeleteJoinSrcModal($event)"
@@ -82,7 +102,7 @@
                         </div>
                     </div>
                     <div *ngSwitchCase="'notifications'">
-                        <app-workflow-notification [workflow]="detailedWorkflow"></app-workflow-notification>
+                        <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow"></app-workflow-notification-list>
                     </div>
                     <div *ngSwitchCase="'permissions'" class="padded">
                         <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
@@ -104,8 +124,7 @@
                         <app-usage [project]="project"
                                    [pipelines]="detailedWorkflow.usage.pipelines"
                                    [applications]="detailedWorkflow.usage.applications"
-                                   [environments]="detailedWorkflow.usage.environments"
-                                   [currentUser]="currentUser">
+                                   [environments]="detailedWorkflow.usage.environments">
                         </app-usage>
                     </div>
                 </div>
@@ -122,5 +141,5 @@
     </div>
 </ng-template>
 <ng-template #loadingPart>
-    <div class="ui text active loader" *ngIf="!detailedWorkflow || !project">Loading workflow...</div>
+    <div class="ui text active loader">{{ 'common_loading_workflow' | translate }}</div>
 </ng-template>

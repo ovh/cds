@@ -103,6 +103,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	if err != nil {
 		return new(empty.Empty), err
 	}
+	workflow.ResyncNodeRunsWithCommits(db, h.store, p, workflowNodeRuns)
 	go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 	return new(empty.Empty), nil

@@ -1,0 +1,61 @@
+<div class="sidebar-hook-run">
+    <h3 class="ui header ml5">
+        <i class="settings icon"></i>
+        <div class="content">
+            <span>Hook</span>
+            <div class="sub header">
+              <span>{{'common_details' | translate}}</span>
+            </div>
+        </div>
+    </h3>
+    <div class="ui fluid vertical menu noborder">
+      <a class="item noborder" (click)="openHookConfigModal()" [class.disabled]="readonly">
+        Configuration <i class="angle right icon"></i>
+      </a>
+    </div>
+    <h4 class="ui header ml5">
+        <i class="newspaper icon"></i>
+        <div class="content">
+            <span>Logs</span>
+        </div>
+    </h4>
+    <ng-container *ngIf="!loading && hookDetails != null && hookDetails.executions != null">
+        <div class="ui list divided no-mrt">
+            <div class="item padding pointing" *ngFor="let exec of hookDetails.executions" (click)="openHookDetailsModal(exec)">
+                <i class="icon ribbon-state"
+                    [class.success]="exec.status === hookStatus.DONE"
+                    [class.waiting]="exec.status === hookStatus.DOING"
+                    [class.fail]="exec.status === hookStatus.FAIL">
+                </i>
+                <div class="content">
+                  <div class="infoLine" *ngIf="exec.workflow_run">
+                      <i class="tag icon"></i> {{ exec.workflow_run }}
+                  </div>
+                  <div class="infoLine" *ngIf="exec.config && exec.config['method'] && exec.config['method'].value">
+                      <i class="code icon"></i> {{ exec.config['method'].value }}
+                  </div>
+                  <div class="infoLine">
+                      <i class="calendar icon"></i> {{ (exec.timestamp / 1000000) | date:'short' }}
+                  </div>
+                  <div class="infoLine" *ngIf="exec.processing_timestamp">
+                      <i class="checked calendar icon"></i> {{ (exec.processing_timestamp / 1000000) | date:'short' }}
+                  </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+    <div class="ui active centered inline loader" *ngIf="loading"></div>
+</div>
+<ng-container *ngIf="hook && node">
+    <app-workflow-node-hook-form
+      [project]="project"
+      [workflow]="workflow"
+      [node]="node"
+      (hookEvent)="updateHook($event)"
+      [loading]="loading"
+      [readonly]="true"
+      [hook]="hook" #workflowConfigHook>
+    </app-workflow-node-hook-form>
+</ng-container>
+<app-workflow-node-hook-details #workflowDetailsHook>
+</app-workflow-node-hook-details>

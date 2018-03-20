@@ -66,7 +66,7 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} application add ITCLIPIPPRJ TestApp
   - script: {{.cds.build.cds}} application pipeline add ITCLIPIPPRJ TestApp HelloPipeline -p "VAR_2=Parametre var2"
-  - script: {{.cds.build.cds}} pipeline run ITCLIPIPPRJ TestApp HelloPipeline
+  - script: {{.cds.build.cds}} pipeline run ITCLIPIPPRJ TestApp HelloPipeline --timeout 30
 
 - name: pipeline history
   steps:

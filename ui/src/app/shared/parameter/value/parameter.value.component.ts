@@ -1,4 +1,4 @@
-import {Component, Input, EventEmitter, OnInit, ViewChild, Output, ChangeDetectorRef} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {SharedService} from '../../shared.service';
 import {Project} from '../../../model/project.model';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
@@ -7,6 +7,7 @@ import {RepoManagerService} from '../../../service/repomanager/project.repomanag
 import {cloneDeep} from 'lodash';
 import {Parameter} from '../../../model/parameter.model';
 import {first} from 'rxjs/operators';
+import {AllKeys} from '../../../model/keys.model';
 
 declare var CodeMirror: any;
 
@@ -17,10 +18,11 @@ declare var CodeMirror: any;
 })
 export class ParameterValueComponent implements OnInit {
 
-    editableValue: string|number|boolean;
+    editableValue: string | number | boolean;
     @Input() type: string;
+    @Input() keys: AllKeys;
     @Input('value')
-    set value (data: string|number|boolean) {
+    set value(data: string | number | boolean) {
         this.castValue(data);
     };
 
@@ -28,10 +30,13 @@ export class ParameterValueComponent implements OnInit {
     @Input() edit = true;
     @Input() suggest: Array<string>;
     @Input() projectKey: string;
+
     @Input('ref')
-    set ref(data: Parameter) {
-        if (data && data.type === 'list') {
-            this.refValue = (<string>data.value).split(';');
+    set ref(data: Parameter|Array<string>) {
+        if (data && (<Parameter>data).type === 'list') {
+            this.refValue = (<string>(<Parameter>data).value).split(';');
+        } else if (data && Array.isArray(data)) {
+            this.list = data;
         }
     }
     refValue: Array<string>;
@@ -51,7 +56,7 @@ export class ParameterValueComponent implements OnInit {
 
     projectRo: Project;
 
-    @Output() valueChange = new EventEmitter<string|number|boolean>();
+    @Output() valueChange = new EventEmitter<string | number | boolean>();
     @Output() valueUpdating = new EventEmitter<boolean>();
 
     @ViewChild('codeMirror')
@@ -82,13 +87,14 @@ export class ParameterValueComponent implements OnInit {
         if (!this.suggest) {
             this.suggest = new Array<string>();
         }
+        this.updateListRepo();
         setTimeout(() => {
             this.valueChange.emit(this.editableValue);
         }, 1);
 
     }
 
-    castValue(data: string|number|boolean): string|number|boolean {
+    castValue(data: string | number | boolean): string | number | boolean {
         if (this.type === 'boolean') {
             this.editableValue = (data === 'true' || data === true);
             return;
@@ -158,11 +164,11 @@ export class ParameterValueComponent implements OnInit {
      * Update list of repo when changing repo manager
      */
     updateListRepo(): void {
-        if (this.selectedRepoManager) {
+        if (this.selectedRepoManager && this.type === 'repository') {
             this.loadingRepos = true;
             delete this.selectedRepo;
             this._repoManagerService.getRepositories(this.projectKey, this.selectedRepoManager.name, false).pipe(first())
-                .subscribe( repos => {
+                .subscribe(repos => {
                     this.selectedRepo = repos[0].fullname;
                     this.repositories = repos;
                     this.loadingRepos = false;

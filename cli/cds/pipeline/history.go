@@ -35,7 +35,7 @@ func historyPipeline(cmd *cobra.Command, args []string) {
 	if len(args) == 4 {
 		envName = args[3]
 	}
-	builds, err := sdk.GetPipelineBuildHistory(projectKey, appName, pipelineName, envName)
+	builds, err := sdk.GetPipelineBuildHistory(projectKey, appName, pipelineName, envName, "")
 	if err != nil {
 		sdk.Exit("Error: cannot retrieve build history (%s)\n", err)
 	}

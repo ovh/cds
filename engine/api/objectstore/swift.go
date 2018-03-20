@@ -36,12 +36,16 @@ func NewSwiftStore(authURL, user, password, region, tenant, containerprefix stri
 }
 
 // Status returns the status of swift account
-func (s *SwiftStore) Status() string {
+func (s *SwiftStore) Status() sdk.MonitoringStatusLine {
 	info, _, err := s.Account()
 	if err != nil {
-		return "Swift KO: " + err.Error()
+		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Swift KO" + err.Error(), Status: sdk.MonitoringStatusAlert}
 	}
-	return fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Containers, info.BytesUsed)
+	return sdk.MonitoringStatusLine{
+		Component: "Object-Store",
+		Value:     fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Containers, info.BytesUsed),
+		Status:    sdk.MonitoringStatusOK,
+	}
 }
 
 // Store stores in swift
@@ -110,6 +114,10 @@ func (s *SwiftStore) Delete(o Object) error {
 	escape(container, object)
 
 	if err := s.ObjectDelete(container, object); err != nil {
+		if err.Error() == "Object Not Found" {
+			log.Info("Delete.SwiftStore: %s/%s: %s", container, object, err)
+			return nil
+		}
 		return sdk.WrapError(err, "SwiftStore> Unable to delete object")
 	}
 	return nil
@@ -143,7 +151,7 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 
 	key := headers["X-Container-Meta-Temp-Url-Key"]
 	if key == "" {
-		log.Info("SwiftStore> Creating new session key for %s", container)
+		log.Debug("SwiftStore> Creating new session key for %s", container)
 		skey, _ := sessionstore.NewSessionKey()
 		key = string(skey)
 

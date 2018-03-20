@@ -86,7 +86,7 @@ func (api *API) addPluginHandler() Handler {
 		// Check that action does not already exists
 		conflict, err := action.Exists(api.mustDB(), ap.Name)
 		if err != nil {
-			return sdk.WrapError(err, "updatePluginHandler>%T", err)
+			return sdk.WrapError(err, "addPluginHandler>%T", err)
 		}
 		if conflict {
 			return sdk.ErrConflict
@@ -116,7 +116,7 @@ func (api *API) addPluginHandler() Handler {
 			return sdk.WrapError(err, "addPluginHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, a, http.StatusCreated)
+		return WriteJSON(w, a, http.StatusCreated)
 	}
 }
 
@@ -213,7 +213,7 @@ func (api *API) updatePluginHandler() Handler {
 			return sdk.WrapError(err, "updatePluginHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 
@@ -247,8 +247,21 @@ func (api *API) downloadPluginHandler() Handler {
 		if name == "" {
 			return sdk.ErrWrongRequest
 		}
+		p := sdk.ActionPlugin{Name: name}
 
-		f, err := objectstore.FetchPlugin(sdk.ActionPlugin{Name: name})
+		acceptRedirect := FormBool(r, "accept-redirect")
+		if acceptRedirect {
+			url, err := objectstore.FetchTempURL(&p)
+			if url != "" {
+				http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+				return nil
+			}
+			if err != nil {
+				log.Warning("downloadPluginHandler> Unable to get temp url: %v", err)
+			}
+		}
+
+		f, err := objectstore.FetchPlugin(p)
 		if err != nil {
 			return sdk.WrapError(err, "downloadPluginHandler> Error while fetching plugin", name)
 		}

@@ -1,0 +1,6 @@
+<iframe class='embedded-iframe' src="{{ if .IsNamedParams }} {{.Get "src"}} {{else}} {{.Get 0 }} {{end}}"
+    width="{{ if .IsNamedParams }} {{.Get "width" | default "90%"}} {{else}} {{.Get 0 | default "90%"}} {{end}}"
+    height="{{ if .IsNamedParams }} {{.Get "height" | default "900"}} {{else}} {{.Get 0 | default "900"}} {{end}}">
+    <p>Your browser does not support iframes.</p>
+    <p>{{.Inner | safeHTML}}</p>
+</iframe>

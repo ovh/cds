@@ -104,8 +104,7 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryOpenstack server
 func (h *HatcheryOpenstack) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID returns hatchery id
@@ -255,7 +254,7 @@ func (h *HatcheryOpenstack) killAwolServers() {
 				h.killAwolServersComputeImage(workerModelName, workerModelNameLastModified, s.ID, model, flavor)
 			}
 
-			log.Info("killAwolServers> Deleting server %s status: %s last update: %s registerOnly:%s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), registerOnly, toDeleteKilled, inWorkersList)
+			log.Debug("killAwolServers> Deleting server %s status: %s last update: %s registerOnly:%s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), registerOnly, toDeleteKilled, inWorkersList)
 			if err := servers.Delete(h.openstackClient, s.ID).ExtractErr(); err != nil {
 				log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
 				continue
@@ -433,6 +432,6 @@ func (h *HatcheryOpenstack) NeedRegistration(m *sdk.Model) bool {
 	if m.NeedRegistration || fmt.Sprintf("%d", m.UserLastModified.Unix()) != oldDateLastModified {
 		out = true
 	}
-	log.Info("NeedRegistration> %t for %s - m.NeedRegistration:%t m.UserLastModified:%d oldDateLastModified:%s", out, m.Name, m.NeedRegistration, m.UserLastModified.Unix(), oldDateLastModified)
+	log.Debug("NeedRegistration> %t for %s - m.NeedRegistration:%t m.UserLastModified:%d oldDateLastModified:%s", out, m.Name, m.NeedRegistration, m.UserLastModified.Unix(), oldDateLastModified)
 	return out
 }

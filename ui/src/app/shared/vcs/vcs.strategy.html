@@ -1,0 +1,79 @@
+<div class="ui form">
+    <div class="inline fields">
+        <div class="two wide field">
+            <label>{{ 'vcs_connection' | translate }}</label>
+        </div>
+        <div class="fourteen wide field">
+            <ng-container *ngFor="let c of connectionType.values()">
+                <div class="ui radio checkbox">
+                    <input type="radio" name="connection" [value]="c" [(ngModel)]="strategy.connection_type">
+                    <label>{{c}}</label>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+    <div class="field">
+        <ng-container [ngSwitch]="strategy.connection_type">
+            <ng-container *ngSwitchCase="connectionType.SSH">
+                <div class="inline fields">
+                    <div class="two wide field">
+                        <label>{{ 'vcs_ssh_key' | translate }}</label>
+                    </div>
+                    <div class="fourteen wide field">
+                        <div class="ssh">
+                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys" [(value)]="strategy.ssh_key"></app-parameter-value>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+            <ng-container *ngSwitchCase="connectionType.HTTPS">
+                <div class="inline fields">
+                    <div class="two wide field">
+                        <label>{{ 'vcs_user' | translate }}</label>
+                    </div>
+                    <div class="fourteen wide field">
+                        <input type="text" class="ui input" [(ngModel)]="strategy.user">
+                    </div>
+
+                </div>
+                <div class="inline fields">
+                    <div class="two wide field">
+                        <label>{{ 'vcs_password' | translate }}</label>
+                    </div>
+                    <div class="fourteen wide field">
+                        <input type="password" class="ui input" [(ngModel)]="strategy.password">
+                    </div>
+                </div>
+            </ng-container>
+            <div class="inline fields">
+                <div class="two wide field">
+                    <label>{{ 'vcs_branch' | translate }}</label>
+                </div>
+                <div class="fourteen wide field">
+                    <input type="text" class="ui input" [(ngModel)]="strategy.branch">
+                </div>
+            </div>
+            <div class="inline fields">
+                <div class="two wide field">
+                    <label>{{ 'vcs_default_branch' | translate }}</label>
+                </div>
+                <div class="fourteen wide field">
+                    <input type="text" class="ui input" [(ngModel)]="strategy.default_branch">
+                </div>
+            </div>
+            <div class="inline fields">
+                <div class="two wide field">
+                    <label>{{ 'vcs_pgp_key' | translate }}</label>
+                </div>
+                <div class="fourteen wide field">
+                    <div class="ssh">
+                        <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [keys]="keys" [(value)]="strategy.pgp_key"></app-parameter-value>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+    <div class="right aligned field">
+        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="saveStrategy()">{{ 'btn_save' | translate }}</button>
+    </div>
+</div>

@@ -47,6 +47,79 @@
             to: CodeMirror.Pos(cur.line, cur.ch)
         };
     });
+
+    CodeMirror.registerHelper("hint", "condition", function(cm, options) {
+        var cdsPrefix = 'cds_';
+        var workflowPrefix = 'workflow_';
+        var gitPrefix = 'git_';
+        // Suggest list
+        var cdsCompletionList = options.cdsCompletionList;
+
+        // Get cursor position
+        var cur = cm.getCursor(0);
+
+        // Get current line
+        var text = cm.doc.children[0].lines[cur.line].text;
+        if (text.indexOf(cdsPrefix) === -1 && text.indexOf(workflowPrefix) === -1 && text.indexOf(gitPrefix) === -1) {
+            return null;
+        }
+
+        var areaBefore = text.substring(0, cur.ch);
+        var cdsPrefixCh = areaBefore.lastIndexOf(cdsPrefix);
+        var workflowPrefixCh = areaBefore.lastIndexOf(workflowPrefix);
+        var gitPrefixCh = areaBefore.lastIndexOf(gitPrefix);
+
+        var ch = Math.max(cdsPrefixCh, workflowPrefixCh, gitPrefixCh);
+        return {
+            list: cdsCompletionList.filter(function (l) {
+                return l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(cdsPrefix))) !== -1 ||
+                    l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(workflowPrefix))) !== -1 ||
+                    l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(gitPrefix))) !== -1;
+            }),
+            from: { line: cur.line, ch: ch},
+            to: CodeMirror.Pos(cur.line, cur.ch)
+        };
+    });
+
+    CodeMirror.registerHelper("hint", "payload", function(cm, options) {
+        var branchPrefix = '"git.branch":';
+        // Suggest list
+        var payloadCompletionList = options.payloadCompletionList;
+
+        // Get cursor position
+        var cur = cm.getCursor(0);
+        var from = 0;
+
+        // Get current line
+        var text = cm.doc.children[0].lines[cur.line].text;
+
+        // Show nothing if there is no branchPrefix on the line
+        if (text.indexOf(branchPrefix) === -1) {
+            return null;
+        }
+
+        var lastIndexOfBranchPrefix = text.lastIndexOf(branchPrefix);
+        var areaAfterPrefix = text.substring(lastIndexOfBranchPrefix + branchPrefix.length + 1);
+        var lastIndexOfComma = areaAfterPrefix.indexOf(',');
+        var indexOfComma = text.indexOf(',');
+        if (indexOfComma !== -1 && cur.ch >= indexOfComma) {
+            return null;
+        }
+
+        var areaBefore = text.substring(0, cur.ch);
+
+        if (lastIndexOfComma === -1) {
+            lastIndexOfComma += text.length + 1;
+        } else if (lastIndexOfComma === 0) {
+            lastIndexOfComma += (lastIndexOfBranchPrefix + branchPrefix.length);
+        } else {
+            lastIndexOfComma += (lastIndexOfBranchPrefix + branchPrefix.length + 1);
+        }
+
+        return {
+            list: payloadCompletionList,
+            from: { line: cur.line, ch: lastIndexOfBranchPrefix + branchPrefix.length + 1},
+            to: CodeMirror.Pos(cur.line, lastIndexOfComma)
+        };
+    });
 });
-
-

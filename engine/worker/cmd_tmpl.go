@@ -13,14 +13,35 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func cmdTmpl(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "tmpl",
-		Short: "worker tmpl <input file> <output file>",
-		Run:   tmplCmd(w),
+		Short: "worker tmpl inputFile outputFile",
+		Long: `
+
+Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+
+	# create a file
+	cat << EOF > myFile
+	this a a line in the file, with a CDS variable {{.cds.version}}
+	EOF
+
+	# worker tmpl <input file> <output file>
+	worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile
+
+
+The file ` + "`outputFile`" + ` will contain the string:
+
+	this a a line in the file, with a CDS variable 2
+
+
+if it's the RUN n°2 of the current workflow.
+		`,
+		Run: tmplCmd(w),
 	}
 	return c
 }
@@ -102,7 +123,7 @@ func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := sdk.ParametersToMap(wk.currentJob.params)
 
-	res, err := sdk.Interpolate(string(btes), vars)
+	res, err := interpolate.Do(string(btes), vars)
 	if err != nil {
 		log.Error("Unable to interpolate: %v", err)
 		newError := sdk.NewError(sdk.ErrWrongRequest, err)

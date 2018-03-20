@@ -1,0 +1,100 @@
+<div class="ui token">
+    <div class="ui grid">
+        <div class="ui right aligned column">
+            <div class="ui input">
+                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+            </div>
+        </div>
+    </div>
+
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'token_no' | translate }}
+    </div>
+
+    <table class="ui celled fixed table">
+        <thead>
+        <tr>
+            <th class="four wide center">{{ 'token_description' | translate }}</th>
+            <th class="two wide center">{{ 'token_type' | translate }}</th>
+            <th class="three wide center">{{ 'token_group_name' | translate }}</th>
+            <th class="three wide center">{{ 'token_creator' | translate }}</th>
+            <th class="three wide center">{{ 'token_created' | translate }}</th>
+            <th class="three wide"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let t of getDataForCurrentPage()">
+            <td class="border center">
+                {{t.description}}
+            </td>
+            <td class="border center">
+                {{expirationToString[t.expiration]}}
+            </td>
+            <td class="border center">
+                {{t.group_name}}
+            </td>
+            <td class="border center">
+                {{t.creator}}
+            </td>
+            <td class="border center">
+                {{t.created | date}}
+            </td>
+            <td class="border center">
+                <app-delete-button (event)="sendEvent('delete', t)" [loading]="t.updating"></app-delete-button>
+            </td>
+        </tr>
+        <tr *ngIf="displayAdd">
+            <td class="border center">
+                <div class="ui fluid input focus">
+                    <input class="ui input" placeholder="Description" [(ngModel)]="newToken.description">
+                </div>
+            </td>
+            <td class="border center">
+                <sui-select class="selection"
+                    [(ngModel)]="newToken.expirationString"
+                    placeholder="Type"
+                    #select>
+                    <sui-select-option *ngFor="let expiration of expirationToString"
+                                       [value]="expiration">
+                    </sui-select-option>
+                </sui-select>
+            </td>
+            <td class="border center">
+                <div class="ui fluid input focus disabled">
+                    <input class="ui input">
+                </div>
+            </td>
+            <td class="border center">
+                <div class="ui fluid input focus disabled">
+                    <input class="ui input">
+                </div>
+            </td>
+            <td class="border center">
+                <div class="ui fluid input focus disabled">
+                    <input class="ui input">
+                </div>
+            </td>
+            <td class="border center">
+                <button class="ui blue button" (click)="sendEvent('add', newToken)" [class.loading]="newToken.updating" [class.disabled]="newToken.expirationString == null">
+                    <i class="plus icon"></i>{{ 'btn_add' | translate}}
+                </button>
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="6">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+</div>

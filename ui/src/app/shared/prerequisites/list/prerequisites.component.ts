@@ -16,6 +16,7 @@ export class PrerequisiteComponent extends Table {
 
     constructor() {
         super();
+        this.nbElementsByPage = 5;
     }
 
     getData(): any[] {

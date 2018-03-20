@@ -3,7 +3,6 @@ package environment
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -12,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -70,6 +70,19 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *
 		}
 	}
 	return envs, nil
+}
+
+// Lock locks an environment given its ID
+func LockByID(db gorp.SqlExecutor, envID int64) error {
+	_, err := db.Exec(`
+	SELECT *
+	FROM environment
+	WHERE id = $1 FOR UPDATE NOWAIT
+	`, envID)
+	if err == sql.ErrNoRows {
+		return sdk.ErrNoEnvironment
+	}
+	return err
 }
 
 // Lock locks an environment given its ID
@@ -447,27 +460,30 @@ func LoadEnvironmentByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.Environme
 	return res, nil
 }
 
+// Permission Get the permission for the given environment and user
+func Permission(key string, envName string, u *sdk.User) int {
+	if u == nil {
+		return 0
+	}
+
+	if u.Admin {
+		return permission.PermissionReadWriteExecute
+	}
+
+	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, envName)]
+}
+
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
 func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.User) error {
-	pubR, privR, errGenerate := keys.GenerateSSHKeyPair(keyname)
+	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return errGenerate
-	}
-
-	pub, errPub := ioutil.ReadAll(pubR)
-	if errPub != nil {
-		return sdk.WrapError(errPub, "AddKeyPairToEnvironment> Unable to read public key")
-	}
-
-	priv, errPriv := ioutil.ReadAll(privR)
-	if errPriv != nil {
-		return sdk.WrapError(errPriv, "AddKeyPairToEnvironment> Unable to read private key")
 	}
 
 	v := &sdk.Variable{
 		Name:  keyname,
 		Type:  sdk.KeyVariable,
-		Value: string(priv),
+		Value: k.Private,
 	}
 
 	if err := InsertVariable(db, envID, v, u); err != nil {
@@ -477,7 +493,7 @@ func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u
 	p := &sdk.Variable{
 		Name:  keyname + ".pub",
 		Type:  sdk.TextVariable,
-		Value: string(pub),
+		Value: k.Public,
 	}
 
 	return InsertVariable(db, envID, p, u)

@@ -1,0 +1,8 @@
+<div id="Applicationkey">
+    <ng-container *ngIf="application.keys && application.keys.length > 0">
+        <h3>{{ 'keys_list_title' | translate}}</h3>
+        <app-keys-list [keys]="application.keys" [loading]="loading" [edit]="application.permission" (deleteEvent)="manageKeyEvent($event)"></app-keys-list>
+    </ng-container>
+    <h3>{{ 'keys_add_title' | translate }}</h3>
+    <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="app-"></app-keys-form>
+</div>

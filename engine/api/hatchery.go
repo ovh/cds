@@ -48,7 +48,7 @@ func (api *API) registerHatcheryHandler() Handler {
 		hatch.Uptodate = hatch.Version == sdk.VERSION
 
 		log.Debug("registerHatcheryHandler> Welcome %d", hatch.ID)
-		return WriteJSON(w, r, hatch, http.StatusOK)
+		return WriteJSON(w, hatch, http.StatusOK)
 	}
 }
 
@@ -61,5 +61,21 @@ func (api *API) refreshHatcheryHandler() Handler {
 			return sdk.WrapError(err, "refreshHatcheryHandler> cannot refresh last beat of %s", hatcheryID)
 		}
 		return nil
+	}
+}
+
+func (api *API) hatcheryCountHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		wfNodeRunID, err := requestVarInt(r, "workflowNodeRunID")
+		if err != nil {
+			return sdk.WrapError(err, "cannot convert workflow node run ID")
+		}
+
+		count, err := hatchery.CountHatcheries(api.mustDB(), wfNodeRunID)
+		if err != nil {
+			return sdk.WrapError(err, "hatcheryCountHandler> cannot get hatcheries count")
+		}
+
+		return WriteJSON(w, count, http.StatusOK)
 	}
 }

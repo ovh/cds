@@ -188,6 +188,58 @@ func LoadArtifacts(db gorp.SqlExecutor, pipelineID int64, applicationID int64, e
 	return arts, nil
 }
 
+// LoadArtifactByApplicationID Load artifact by application ID
+func LoadArtifactByApplicationID(db gorp.SqlExecutor, applicationID int64) ([]sdk.Artifact, error) {
+	query := `SELECT 	artifact.id, 
+						artifact.name, 
+						artifact.tag, 
+						artifact.download_hash, 
+						artifact.size, 
+						artifact.perm, 
+						artifact.md5sum, 
+						artifact.object_path,  
+						pipeline.name, 
+						project.projectKey, 
+						application.name, 
+						environment.name
+		FROM artifact
+		JOIN pipeline ON artifact.pipeline_id = pipeline.id
+		JOIN project ON pipeline.project_id = project.id
+		JOIN application ON application.id = artifact.application_id
+		JOIN environment ON environment.id = artifact.environment_id	
+		WHERE application_id = $1`
+	rows, err := db.Query(query, applicationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var arts []sdk.Artifact
+	for rows.Next() {
+		art := sdk.Artifact{}
+		var md5sum, objectpath sql.NullString
+		var size, perm sql.NullInt64
+		err = rows.Scan(&art.ID, &art.Name, &art.Tag, &art.DownloadHash, &size, &perm, &md5sum, &objectpath, &art.Pipeline, &art.Project, &art.Application, &art.Environment)
+		if err != nil {
+			return nil, err
+		}
+		if md5sum.Valid {
+			art.MD5sum = md5sum.String
+		}
+		if objectpath.Valid {
+			art.ObjectPath = objectpath.String
+		}
+		if size.Valid {
+			art.Size = size.Int64
+		}
+		if perm.Valid {
+			art.Perm = uint32(perm.Int64)
+		}
+		arts = append(arts, art)
+	}
+	return arts, nil
+}
+
 // LoadArtifact Load artifact by ID
 func LoadArtifact(db gorp.SqlExecutor, id int64) (*sdk.Artifact, error) {
 	query := `SELECT 

@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -28,6 +29,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-querystring/query"
 )
@@ -60,12 +62,47 @@ type AccessLevelValue int
 //
 // GitLab API docs: https://docs.gitlab.com/ce/permissions/permissions.html
 const (
+	NoPermissions        AccessLevelValue = 0
 	GuestPermissions     AccessLevelValue = 10
 	ReporterPermissions  AccessLevelValue = 20
 	DeveloperPermissions AccessLevelValue = 30
 	MasterPermissions    AccessLevelValue = 40
 	OwnerPermission      AccessLevelValue = 50
 )
+
+// ISOTime represents an ISO 8601 formatted date
+type ISOTime time.Time
+
+// ISO 8601 date format
+const iso8601 = "2006-01-02"
+
+// MarshalJSON implements the json.Marshaler interface
+func (t ISOTime) MarshalJSON() ([]byte, error) {
+	if y := time.Time(t).Year(); y < 0 || y >= 10000 {
+		// ISO 8901 uses 4 digits for the years
+		return nil, errors.New("ISOTime.MarshalJSON: year outside of range [0,9999]")
+	}
+
+	b := make([]byte, 0, len(iso8601)+2)
+	b = append(b, '"')
+	b = time.Time(t).AppendFormat(b, iso8601)
+	b = append(b, '"')
+
+	return b, nil
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface
+func (t *ISOTime) UnmarshalJSON(data []byte) error {
+	// Ignore null, like in the main JSON package
+	if string(data) == "null" {
+		return nil
+	}
+
+	isotime, err := time.Parse(`"`+iso8601+`"`, string(data))
+	*t = ISOTime(isotime)
+
+	return err
+}
 
 // NotificationLevelValue represents a notification level.
 type NotificationLevelValue int
@@ -92,6 +129,8 @@ func (l *NotificationLevelValue) UnmarshalJSON(data []byte) error {
 		*l = NotificationLevelValue(raw)
 	case string:
 		*l = notificationLevelTypes[raw]
+	case nil:
+		// No action needed.
 	default:
 		return fmt.Errorf("json: cannot unmarshal %T into Go value of type %T", raw, *l)
 	}
@@ -165,8 +204,10 @@ type Client struct {
 	BuildVariables       *BuildVariablesService
 	Commits              *CommitsService
 	DeployKeys           *DeployKeysService
+	Environments         *EnvironmentsService
 	Features             *FeaturesService
 	Groups               *GroupsService
+	GroupMembers         *GroupMembersService
 	Issues               *IssuesService
 	Jobs                 *JobsService
 	Labels               *LabelsService
@@ -175,21 +216,26 @@ type Client struct {
 	Namespaces           *NamespacesService
 	Notes                *NotesService
 	NotificationSettings *NotificationSettingsService
+	Pipelines            *PipelinesService
+	PipelineTriggers     *PipelineTriggersService
 	Projects             *ProjectsService
 	ProjectMembers       *ProjectMembersService
 	ProjectSnippets      *ProjectSnippetsService
-	Pipelines            *PipelinesService
-	PipelineTriggers     *PipelineTriggersService
+	ProtectedBranches    *ProtectedBranchesService
 	Repositories         *RepositoriesService
 	RepositoryFiles      *RepositoryFilesService
+	Runners              *RunnersService
 	Services             *ServicesService
 	Session              *SessionService
 	Settings             *SettingsService
+	Snippets             *SnippetsService
 	SystemHooks          *SystemHooksService
 	Tags                 *TagsService
 	Todos                *TodosService
 	Users                *UsersService
+	Validate             *ValidateService
 	Version              *VersionService
+	Wikis                *WikisService
 }
 
 // ListOptions specifies the optional parameters to various List methods that
@@ -235,8 +281,10 @@ func newClient(httpClient *http.Client, tokenType tokenType, token string) *Clie
 	c.BuildVariables = &BuildVariablesService{client: c}
 	c.Commits = &CommitsService{client: c}
 	c.DeployKeys = &DeployKeysService{client: c}
+	c.Environments = &EnvironmentsService{client: c}
 	c.Features = &FeaturesService{client: c}
 	c.Groups = &GroupsService{client: c}
+	c.GroupMembers = &GroupMembersService{client: c}
 	c.Issues = &IssuesService{client: c, timeStats: timeStats}
 	c.Jobs = &JobsService{client: c}
 	c.Labels = &LabelsService{client: c}
@@ -245,21 +293,26 @@ func newClient(httpClient *http.Client, tokenType tokenType, token string) *Clie
 	c.Namespaces = &NamespacesService{client: c}
 	c.Notes = &NotesService{client: c}
 	c.NotificationSettings = &NotificationSettingsService{client: c}
+	c.Pipelines = &PipelinesService{client: c}
+	c.PipelineTriggers = &PipelineTriggersService{client: c}
 	c.Projects = &ProjectsService{client: c}
 	c.ProjectMembers = &ProjectMembersService{client: c}
 	c.ProjectSnippets = &ProjectSnippetsService{client: c}
-	c.Pipelines = &PipelinesService{client: c}
-	c.PipelineTriggers = &PipelineTriggersService{client: c}
+	c.ProtectedBranches = &ProtectedBranchesService{client: c}
 	c.Repositories = &RepositoriesService{client: c}
 	c.RepositoryFiles = &RepositoryFilesService{client: c}
+	c.Runners = &RunnersService{client: c}
 	c.Services = &ServicesService{client: c}
 	c.Session = &SessionService{client: c}
 	c.Settings = &SettingsService{client: c}
+	c.Snippets = &SnippetsService{client: c}
 	c.SystemHooks = &SystemHooksService{client: c}
 	c.Tags = &TagsService{client: c}
 	c.Todos = &TodosService{client: c}
 	c.Users = &UsersService{client: c}
+	c.Validate = &ValidateService{client: c}
 	c.Version = &VersionService{client: c}
+	c.Wikis = &WikisService{client: c}
 
 	return c
 }
@@ -312,6 +365,10 @@ func (c *Client) NewRequest(method, path string, opt interface{}, options []Opti
 	}
 
 	for _, fn := range options {
+		if fn == nil {
+			continue
+		}
+
 		if err := fn(req); err != nil {
 			return nil, err
 		}
@@ -363,7 +420,7 @@ type Response struct {
 	LastPage  int
 }
 
-// newResponse creats a new Response for the provided http.Response.
+// newResponse creates a new Response for the provided http.Response.
 func newResponse(r *http.Response) *Response {
 	response := &Response{Response: r}
 	response.populatePageValues()
@@ -371,7 +428,7 @@ func newResponse(r *http.Response) *Response {
 }
 
 // populatePageValues parses the HTTP Link response headers and populates the
-// various pagination link values in the Reponse.
+// various pagination link values in the Response.
 func (r *Response) populatePageValues() {
 	if links, ok := r.Response.Header["Link"]; ok && len(links) > 0 {
 		for _, link := range strings.Split(links[0], ",") {
@@ -547,16 +604,12 @@ type OptionFunc func(*http.Request) error
 // WithSudo takes either a username or user ID and sets the SUDO request header
 func WithSudo(uid interface{}) OptionFunc {
 	return func(req *http.Request) error {
-		switch uid := uid.(type) {
-		case int:
-			req.Header.Set("SUDO", strconv.Itoa(uid))
-			return nil
-		case string:
-			req.Header.Set("SUDO", uid)
-			return nil
-		default:
-			return fmt.Errorf("uid must be either a username or user ID")
+		user, err := parseID(uid)
+		if err != nil {
+			return err
 		}
+		req.Header.Set("SUDO", user)
+		return nil
 	}
 }
 

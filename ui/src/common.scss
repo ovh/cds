@@ -26,6 +26,10 @@ $cds_trigger_color: #9a9a9a;
   word-break:  break-all;
 }
 
+.CodeMirror-hints {
+  z-index: 999999999999999 !important;
+}
+
 pre {
   .string { color: green; }
   .number { color: darkorange; }
@@ -108,8 +112,18 @@ pre {
   tbody tr td {
     border: none;
     overflow: visible;
-    padding-top: 4px;
+    padding-top: 8px;
     padding-bottom: 4px;
+    vertical-align: top;
+  }
+
+  tbody tr td.border {
+    border: none;
+    border-top: 1px solid rgba(34, 36, 38, 0.15);
+  }
+
+  tbody tr:first-child td.border {
+    border: none;
   }
 
   tbody tr:not(:hover) {
@@ -132,4 +146,12 @@ pre {
   text-align: center;
 }
 
+.xcentered {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ycentered {
+  left: 50%;
+  transform: translateX(-50%);
+}
 // End table

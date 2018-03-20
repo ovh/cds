@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -19,8 +21,6 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
-
-	"github.com/ovh/cds/sdk"
 )
 
 //HTTP Constants
@@ -58,7 +58,7 @@ func SetTrace(traceHandle io.Writer) {
 
 //Init is a common function for all plugins
 func (p *Common) Init(o IOptions) string {
-	SetTrace(ioutil.Discard)
+	SetTrace(os.Stdout)
 	auth = o
 
 	if auth.TLSSkipVerify() {
@@ -89,18 +89,10 @@ func (*Common) Version() string {
 
 // Main func call by plugin, display info only
 func Main(p CDSAction) {
-	var format string
-
 	var cmdInfo = &cobra.Command{
 		Use:   "info",
-		Short: "Print plugin Information anything to the screen: info --format <yml>",
+		Short: "info: Print plugin Information anything to the screen",
 		Run: func(cmd *cobra.Command, args []string) {
-			if format != "markdown" {
-				if err := sdk.Output(format, p, fmt.Printf); err != nil {
-					fmt.Printf("Error:%s", err)
-				}
-				return
-			}
 			fmt.Print(InfoMarkdown(p))
 		},
 	}
@@ -109,11 +101,9 @@ func Main(p CDSAction) {
 		Use:   "version",
 		Short: "Print plugin version",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Print(sdk.VERSION)
+			fmt.Printf("CDS Plugin version:%s os:%s architecture:%s\n", VERSION, runtime.GOOS, runtime.GOARCH)
 		},
 	}
-
-	cmdInfo.Flags().StringVarP(&format, "format", "", "markdown", "--format:yaml, json, xml, markdown")
 
 	var rootCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
@@ -241,21 +231,29 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 
 	data, err := json.Marshal(l)
 	if err != nil {
-		return err
+		e := fmt.Errorf("err on Marshal:%s", err)
+		Trace.Println(e)
+		return e
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/log", j.WorkerHTTPPort()), bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("send log to worker /log: %s", err)
+		e := fmt.Errorf("send log to worker /log: %s", err)
+		Trace.Println(e)
+		return e
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("cannot send log to worker /log: %s", err)
+		e := fmt.Errorf("cannot send log to worker /log: %s", err)
+		Trace.Println(e)
+		return e
 	}
 
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("cannot send log to worker /log: HTTP %d", resp.StatusCode)
+		e := fmt.Errorf("cannot send log to worker /log: HTTP %d", resp.StatusCode)
+		Trace.Println(e)
+		return e
 	}
 
 	return nil

@@ -62,7 +62,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -71,6 +71,8 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.ID, w1.Root.Pipeline.ID)
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	assertEqualNode(t, w.Root, w1.Root)
+
+	assert.False(t, w1.Root.Context.Mutex)
 
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
@@ -158,18 +160,21 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 			Context: &sdk.WorkflowNodeContext{
 				Application: &app,
 				Environment: &env,
+				Mutex:       true,
 			},
 		},
 	}
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.Root.Context.ApplicationID, w1.Root.Context.ApplicationID)
 	assert.Equal(t, w.Root.Context.EnvironmentID, w1.Root.Context.EnvironmentID)
+	assert.Equal(t, w.Root.Context.Mutex, w1.Root.Context.Mutex)
+
 }
 
 func TestInsertComplexeWorkflowAndExport(t *testing.T) {
@@ -284,7 +289,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -433,10 +438,10 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	w1old, err := workflow.Load(db, cache, key, "test_1", u)
+	w1old, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
@@ -449,7 +454,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
-	w2, err := workflow.LoadByID(db, cache, w1.ID, u)
+	w2, err := workflow.LoadByID(db, cache, w1.ID, u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
@@ -604,7 +609,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -863,11 +868,28 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 				},
 			},
 		},
+		Notifications: []sdk.WorkflowNotification{
+			sdk.WorkflowNotification{
+				Type:           "jabber",
+				SourceNodeRefs: []string{"pip6", "pip5"},
+				Settings: &sdk.JabberEmailUserNotificationSettings{
+					OnFailure:    sdk.UserNotificationAlways,
+					OnStart:      true,
+					OnSuccess:    sdk.UserNotificationAlways,
+					SendToAuthor: true,
+					SendToGroups: true,
+					Template: sdk.UserNotificationTemplate{
+						Body:    "body",
+						Subject: "title",
+					},
+				},
+			},
+		},
 	}
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	workflow.Sort(&w)
@@ -951,7 +973,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	w1old := w1
@@ -977,7 +999,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
-	w2, err := workflow.LoadByID(db, cache, w1.ID, u)
+	w2, err := workflow.LoadByID(db, cache, w1.ID, u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	m1, _ := dump.ToMap(w1)
@@ -1046,7 +1068,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 			Hooks: []sdk.WorkflowNodeHook{
 				{
 					WorkflowHookModel: sdk.WorkflowHookModel{
-						Name: workflow.WebHookModel.Name,
+						Name: sdk.WebHookModelName,
 					},
 					Config: sdk.WorkflowNodeHookConfig{
 						"method": sdk.WorkflowNodeHookConfigValue{
@@ -1069,7 +1091,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)

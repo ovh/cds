@@ -15,14 +15,15 @@ import (
 )
 
 type dbProject sdk.Project
-type dbVariable sdk.Variable
 type dbProjectVariableAudit sdk.ProjectVariableAudit
 type dbProjectKey sdk.ProjectKey
+type dbProjectPlatform sdk.ProjectPlatform
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbProject{}, "project", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableAudit{}, "project_variable_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectKey{}, "project_key", false))
+	gorpmapping.Register(gorpmapping.New(dbProjectPlatform{}, "project_platform", true, "id"))
 }
 
 // PostGet is a db hook
@@ -49,6 +50,8 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 		if len(clearVCSServer) > 0 {
 			if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
 				log.Error("Unable to load project %d: %v", p.ID, err)
+				p.VCSServers = nil
+				db.Update(p)
 			}
 		}
 	}
@@ -58,25 +61,26 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 
 // PostUpdate is a db hook
 func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
-	b, err := json.Marshal(p.Metadata)
-	if err != nil {
+	bm, errm := json.Marshal(p.Metadata)
+	if errm != nil {
+		return errm
+	}
+
+	if len(p.VCSServers) > 0 {
+		b1, err := yaml.Marshal(p.VCSServers)
+		if err != nil {
+			return err
+		}
+		encryptedVCSServerStr, err := secret.Encrypt(b1)
+		if err != nil {
+			return err
+		}
+		_, err = db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, bm, encryptedVCSServerStr)
 		return err
 	}
 
-	b1, err := yaml.Marshal(p.VCSServers)
-	if err != nil {
-		return err
-	}
-
-	encryptedVCSServerStr, err := secret.Encrypt(b1)
-	if err != nil {
-		return err
-	}
-
-	if _, err := db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, b, encryptedVCSServerStr); err != nil {
-		return err
-	}
-	return nil
+	_, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, bm)
+	return err
 }
 
 // PostInsert is a db hook

@@ -23,11 +23,11 @@ var (
 
 	pipeline = cli.NewCommand(pipelineCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil),
-			cli.NewCommand(pipelineCreateCmd, pipelineCreateRun, nil),
-			cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil),
-			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil),
-			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil),
+			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(pipelineCreateCmd, pipelineCreateRun, nil, withAllCommandModifiers()...),
+			cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
 			pipelineGroup,
 		})
 )
@@ -35,13 +35,13 @@ var (
 var pipelineListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS pipelines",
-	Args: []cli.Arg{
-		{Name: "project-key"},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
 	},
 }
 
 func pipelineListRun(v cli.Values) (cli.ListResult, error) {
-	pipelines, err := client.PipelineList(v["project-key"])
+	pipelines, err := client.PipelineList(v[_ProjectKey])
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +51,10 @@ func pipelineListRun(v cli.Values) (cli.ListResult, error) {
 var pipelineCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS pipeline",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "pipeline-name"},
 	},
 	Flags: []cli.Flag{
@@ -74,14 +76,16 @@ var pipelineCreateCmd = cli.Command{
 
 func pipelineCreateRun(v cli.Values) error {
 	pip := &sdk.Pipeline{Name: v["pipeline-name"], Type: v.GetString("type")}
-	return client.PipelineCreate(v["project-key"], pip)
+	return client.PipelineCreate(v[_ProjectKey], pip)
 }
 
 var pipelineExportCmd = cli.Command{
 	Name:  "export",
 	Short: "Export CDS pipeline",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "pipeline-name"},
 	},
 	Flags: []cli.Flag{
@@ -112,7 +116,7 @@ var pipelineExportCmd = cli.Command{
 }
 
 func pipelineExportRun(v cli.Values) error {
-	btes, err := client.PipelineExport(v["project-key"], v["pipeline-name"], v.GetBool("with-permission"), v["format"])
+	btes, err := client.PipelineExport(v[_ProjectKey], v["pipeline-name"], v.GetBool("with-permission"), v["format"])
 	if err != nil {
 		return err
 	}
@@ -124,8 +128,10 @@ var pipelineImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import CDS pipeline",
 	Long:  "PATH: Path or URL of pipeline to import",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "path"},
 	},
 	Flags: []cli.Flag{
@@ -174,7 +180,7 @@ func pipelineImportRun(v cli.Values) error {
 		}
 	}
 
-	msgs, err := client.PipelineImport(v["project-key"], reader, format, v.GetBool("force"))
+	msgs, err := client.PipelineImport(v[_ProjectKey], reader, format, v.GetBool("force"))
 	if err != nil {
 		return err
 	}
@@ -187,14 +193,16 @@ func pipelineImportRun(v cli.Values) error {
 var pipelineDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS pipeline",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
 	Args: []cli.Arg{
-		{Name: "project-key"},
 		{Name: "pipeline-name"},
 	},
 }
 
 func pipelineDeleteRun(v cli.Values) error {
-	err := client.PipelineDelete(v["project-key"], v["pipeline-name"])
+	err := client.PipelineDelete(v[_ProjectKey], v["pipeline-name"])
 	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 		fmt.Println(err.Error())
 		os.Exit(0)

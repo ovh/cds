@@ -7,13 +7,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/migrate"
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 )
@@ -51,41 +46,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 				return sdk.WrapError(errA, "migrationApplicationWorkflowHandler> Cannot load app")
 			}
 
-			for _, appPip := range appToClean.Pipelines {
-				if err := trigger.DeletePipelineTriggers(tx, appPip.Pipeline.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-				}
-				if err := application.DeleteAllApplicationPipeline(tx, appToClean.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-				}
-				// Delete test results
-				if err := pipeline.DeletePipelineTestResults(tx, appPip.Pipeline.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-				}
-			}
-			if err := scheduler.DeleteByApplicationID(tx, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-			}
-
-			if err := poller.DeleteAll(tx, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-			}
-
-			if err := artifact.DeleteArtifactsByApplicationID(tx, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-			}
-
-			// Delete application_pipeline_notif
-			query := `DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (SELECT id FROM application_pipeline WHERE application_id = $1)`
-			if _, err := tx.Exec(query, appID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Delete notification")
-			}
-
-			if err := pipeline.DeletePipelineBuildByApplicationID(tx, appToClean.ID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeletePipelineBuildByApplicationID")
-			}
-
-			appToClean.WorkflowMigration = migrate.STATUS_DONE
+			appToClean.WorkflowMigration = migrate.STATUS_CLEANING
 			appToClean.ProjectID = p.ID
 			if err := application.Update(tx, api.Cache, appToClean, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
@@ -123,7 +84,7 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 
 		force := r.FormValue("force") == "true"
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments)
+		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errP != nil {
 			return sdk.WrapError(errP, "migrationApplicationWorkflowHandler")
 		}
@@ -144,7 +105,7 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		defer tx.Rollback()
 
 		if len(cdTree) == 0 {
-			app.WorkflowMigration = migrate.STATUS_DONE
+			app.WorkflowMigration = migrate.STATUS_CLEANING
 		} else {
 			if errM := migrate.MigrateToWorkflow(tx, api.Cache, cdTree, p, getUser(ctx), force); errM != nil {
 				return sdk.WrapError(errM, "migrationApplicationWorkflowHandler")

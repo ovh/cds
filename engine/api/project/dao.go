@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -16,6 +15,49 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+// LoadAllByRepo returns all projects whith an application linked to the repo
+func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+	var query string
+	var args []interface{}
+
+	// Admin can gets all project
+	// Users can gets only their projects
+	if u == nil || u.Admin {
+		query = `SELECT project.*
+		FROM  project
+		JOIN  application on project.id = application.project_id
+		WHERE application.repo_fullname = $1
+		ORDER by project.name, project.projectkey ASC`
+	} else {
+		query = `SELECT project.*
+		FROM  project
+		JOIN  application on project.id = application.project_id
+		WHERE application.repo_fullname = $3
+		AND   project.id IN (
+			SELECT project_group.project_id
+			FROM project_group
+			WHERE
+				project_group.group_id = ANY(string_to_array($1, ',')::int[])
+				OR
+				$2 = ANY(string_to_array($1, ',')::int[])
+		)`
+
+		var groupID string
+		for i, g := range u.Groups {
+			if i == 0 {
+				groupID = fmt.Sprintf("%d", g.ID)
+			} else {
+				groupID += "," + fmt.Sprintf("%d", g.ID)
+			}
+		}
+		args = []interface{}{groupID, group.SharedInfraGroup.ID}
+	}
+
+	args = append(args, repo)
+
+	return loadprojects(db, store, u, opts, query, args...)
+}
 
 // LoadAll returns all projects
 func LoadAll(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
@@ -120,7 +162,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 	}
 
 	if proj.WorkflowMigration == "" {
-		proj.WorkflowMigration = "NOT_BEGUN"
+		proj.WorkflowMigration = "DONE"
 	}
 
 	proj.LastModified = time.Now()
@@ -130,27 +172,17 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 	}
 	*proj = sdk.Project(dbProj)
 
-	keyID, pubR, privR, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
+	k, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
 	if err != nil {
 		return sdk.WrapError(err, "project.Insert> Unable to generate PGPKeyPair: %v", err)
 	}
 
-	pub, errPub := ioutil.ReadAll(pubR)
-	if errPub != nil {
-		return sdk.WrapError(errPub, "project.Insert> Unable to read public key")
-	}
-
-	priv, errPriv := ioutil.ReadAll(privR)
-	if errPriv != nil {
-		return sdk.WrapError(errPriv, "project.Insert>  Unable to read private key")
-	}
-
 	pk := sdk.ProjectKey{}
-	pk.Key.KeyID = keyID
+	pk.Key.KeyID = k.KeyID
 	pk.Key.Name = BuiltinGPGKey
-	pk.Key.Private = string(priv)
-	pk.Key.Public = string(pub)
-	pk.Type = sdk.KeyTypePgp
+	pk.Key.Private = k.Private
+	pk.Key.Public = k.Public
+	pk.Type = sdk.KeyTypePGP
 	pk.ProjectID = proj.ID
 	pk.Builtin = true
 
@@ -216,7 +248,7 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 		return err
 	}
 
-	if err := DeleteAllVariable(db, id); err != nil {
+	if err := deleteAllVariable(db, id); err != nil {
 		return err
 	}
 
@@ -234,6 +266,7 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 	return nil
 }
 
+// LoadOptionFunc is used as options to loadProject functions
 type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User) error
 
 // LoadOptions provides all options on project loads functions
@@ -255,6 +288,9 @@ var LoadOptions = struct {
 	WithWorkflowNames              LoadOptionFunc
 	WithLock                       LoadOptionFunc
 	WithLockNoWait                 LoadOptionFunc
+	WithClearKeys                  LoadOptionFunc
+	WithPlatforms                  LoadOptionFunc
+	WithClearPlatforms             LoadOptionFunc
 }{
 	Default:                        &loadDefault,
 	WithPipelines:                  &loadPipelines,
@@ -273,6 +309,9 @@ var LoadOptions = struct {
 	WithWorkflowNames:              &loadWorkflowNames,
 	WithLock:                       &lockProject,
 	WithLockNoWait:                 &lockAndWaitProject,
+	WithClearKeys:                  &loadClearKeys,
+	WithPlatforms:                  &loadPlatforms,
+	WithClearPlatforms:             &loadClearPlatforms,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id

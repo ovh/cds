@@ -42,7 +42,7 @@ var (
 
 	loadApplicationNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		var err error
-		var apps []string
+		var apps []sdk.IDName
 
 		if apps, err = application.LoadAllNames(db, proj.ID, u); err != nil {
 			return sdk.WrapError(err, "application.loadApplications")
@@ -95,10 +95,32 @@ var (
 		return LoadAllKeys(db, proj)
 	}
 
+	loadClearKeys = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		return LoadAllDecryptedKeys(db, proj)
+	}
+
+	loadPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		pf, err := LoadPlatformsByID(db, proj.ID, false)
+		if err != nil {
+			return sdk.WrapError(err, "loadPlatforms> Cannot load platforms")
+		}
+		proj.Platforms = pf
+		return nil
+	}
+
+	loadClearPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		pf, err := LoadPlatformsByID(db, proj.ID, true)
+		if err != nil {
+			return sdk.WrapError(err, "loadClearPlatforms> Cannot load platforms")
+		}
+		proj.Platforms = pf
+		return nil
+	}
+
 	loadWorkflows = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		workflows, errW := workflow.LoadAll(db, proj.Key)
 		if errW != nil {
-			return sdk.WrapError(errW, " workflow.LoadAll")
+			log.Error("Unable to load workflows for project %s: %v", proj.Key, errW)
 		}
 		proj.Workflows = workflows
 		return nil
@@ -153,7 +175,7 @@ var (
 
 	loadPipelineNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		var err error
-		var pips []string
+		var pips []sdk.IDName
 
 		if pips, err = pipeline.LoadAllNames(db, store, proj.ID, u); err != nil {
 			return sdk.WrapError(err, "pipeline.loadpipelinenames")
@@ -181,7 +203,6 @@ var (
 
 	loadPermission = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		proj.Permission = permission.ProjectPermission(proj.Key, u)
-		log.Debug(">>Project permission: %s %d", u.Username, proj.Permission)
 		return nil
 	}
 )

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
@@ -42,9 +43,15 @@ func (c *client) ProjectGet(key string, mods ...RequestModifier) (*sdk.Project, 
 	return p, nil
 }
 
-func (c *client) ProjectList() ([]sdk.Project, error) {
+func (c *client) ProjectList(withApplications, withWorkflows bool, filters ...Filter) ([]sdk.Project, error) {
 	p := []sdk.Project{}
-	if _, err := c.GetJSON("/project", &p); err != nil {
+	path := fmt.Sprintf("/project?application=%v&workflow=%v", withApplications, withWorkflows)
+
+	for _, f := range filters {
+		path += fmt.Sprintf("&%s=%s", url.QueryEscape(f.Name), url.QueryEscape(f.Value))
+	}
+
+	if _, err := c.GetJSON(path, &p); err != nil {
 		return nil, err
 	}
 	return p, nil
@@ -58,7 +65,7 @@ func (c *client) ProjectGroupsImport(projectKey string, content io.Reader, forma
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, errReq := c.Request("POST", url, content)
+	btes, _, _, errReq := c.Request("POST", url, content)
 	if errReq != nil {
 		return proj, errReq
 	}

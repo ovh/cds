@@ -74,6 +74,11 @@ func IsInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64) (bool, e
 
 // checkAtLeastOneGroupWithWriteRoleOnEnvironment is clear enough i think
 func checkAtLeastOneGroupWithWriteRoleOnEnvironment(db gorp.SqlExecutor, envID int64) (bool, error) {
+	// no check for default env
+	if sdk.DefaultEnv.ID == envID {
+		return true, nil
+	}
+
 	query := `select count(group_id) from environment_group where environment_id = $1 and role = $2`
 	nb, err := db.SelectInt(query, envID, 7)
 	if err != nil {
@@ -84,6 +89,10 @@ func checkAtLeastOneGroupWithWriteRoleOnEnvironment(db gorp.SqlExecutor, envID i
 
 // InsertGroupInEnvironment add permissions on Environment to Group
 func InsertGroupInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64, role int) error {
+	// avoid insert default env
+	if sdk.DefaultEnv.ID == environmentID {
+		return nil
+	}
 	query := `INSERT INTO environment_group (environment_id, group_id,role) VALUES($1,$2,$3)`
 	if _, err := db.Exec(query, environmentID, groupID, role); err != nil {
 		return sdk.WrapError(err, "InsertGroupInEnvironment")

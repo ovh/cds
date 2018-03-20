@@ -14,8 +14,9 @@ import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
 import {Application} from '../../../model/application.model';
-import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
-import {finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
+import {AllKeys} from '../../../model/keys.model';
+import {KeyService} from '../../../service/keys/keys.service';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -53,15 +54,18 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     @ViewChild('paramWarning')
     parameterModalWarning: WarningModalComponent;
 
+    keys: AllKeys;
+
     // Selected tab
     selectedTab = 'pipeline';
 
     constructor(private _routeActivated: ActivatedRoute, private _pipStore: PipelineStore,
         private _router: Router, private _toast: ToastService, public _translate: TranslateService,
-        private _appPipService: ApplicationPipelineService, private _authentificationStore: AuthentificationStore) {
+        private _authentificationStore: AuthentificationStore, private _keyService: KeyService) {
         this.currentUser = this._authentificationStore.getUser();
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
+        this.workflowName = this._routeActivated.snapshot.queryParams['workflow'];
 
         this.buildNumber = this.getQueryParam('buildNumber');
         this.version = this.getQueryParam('version');
@@ -98,6 +102,10 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 this.selectedTab = tab;
             }
         });
+
+        this._keyService.getAllKeys(this.project.key).pipe(first()).subscribe(k => {
+            this.keys = k;
+        })
     }
 
     refreshDatas(key: string, pipName: string): void {

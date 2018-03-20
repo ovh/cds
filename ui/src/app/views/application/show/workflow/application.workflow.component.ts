@@ -23,6 +23,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     @Input() project: Project;
     @Input() application: Application;
     @Input() applicationFilter: any;
+    @Input() tab: string;
     @Output() changeWorkerEvent = new EventEmitter<boolean>();
 
     // Allow angular update from work started outside angular context
@@ -69,43 +70,32 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     fetchRepositoryInfos() {
         this.remotes = null;
         this.branches = null;
-        if (this.application.repository_fullname) {
-            this.loading.remote = true;
-            this.loading.branch = true;
-            Observable.zip(
-                this._appWorkflow.getRemotes(this.project.key, this.application.name),
-                this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote),
-                (remotes, branches) => {
-                    this.remotes = remotes;
-                    this.branches = branches;
-                    if (Array.isArray(remotes) && remotes.length) {
-                        let remoteFound = remotes.find((r) => r.name === this.applicationFilter.remote);
-                        this.applicationFilter.remote = remoteFound ? remoteFound.name : remotes[0].name;
-                    }
-
-                    if (!this.applicationFilter.branch) {
-                      this.setDefaultBranchFilter();
-                    }
-
-                    this.loadVersions(this.project.key, this.application.name).subscribe();
+        this.loading.remote = true;
+        this.loading.branch = true;
+        Observable.zip(
+            this._appWorkflow.getRemotes(this.project.key, this.application.name),
+            this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote),
+            (remotes, branches) => {
+                this.remotes = remotes;
+                this.branches = branches;
+                if (Array.isArray(remotes) && remotes.length) {
+                    let remoteFound = remotes.find((r) => r.name === this.applicationFilter.remote);
+                    this.applicationFilter.remote = remoteFound ? remoteFound.name : remotes[0].name;
                 }
-            ).pipe(
-                finalize(() => {
-                    this.loading.remote = false;
-                    this.loading.branch = false;
-                })
-            ).subscribe();
-        } else {
-            this.loading.branch = false;
-            this.loading.remote = false;
 
-            this.loadVersions(this.project.key, this.application.name).subscribe(() => {
-                this.applicationFilter.branch = 'master';
-                this.applicationFilter.remote = '';
-                this.remotes = [];
-                this.branches = [];
-            });
-        }
+                if (!this.applicationFilter.branch) {
+                  this.setDefaultBranchFilter();
+                  this.changeWorkerEvent.emit(false);
+                }
+
+                this.loadVersions(this.project.key, this.application.name).subscribe();
+            }
+        ).pipe(
+            finalize(() => {
+                this.loading.remote = false;
+                this.loading.branch = false;
+            })
+        ).subscribe();
     }
 
     setDefaultBranchFilter() {
@@ -256,13 +246,10 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     /**
      * Action when changing branch
      */
-    changeBranch(): void {
-        if (!this.application.repository_fullname) {
-            return;
-        }
+    changeBranch(event): void {
         // Load the versions of the new branch
         this.loadVersions(this.project.key, this.application.name)
-            .subscribe(() => this.changeVersion());
+            .subscribe(() => this.changeVersion(true));
     }
     /**
      * Action when changing remote
@@ -275,20 +262,23 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
           .subscribe(branches => {
               this.branches = branches;
 
+              let branchFound: Branch;
               if (Array.isArray(branches) && branches.length) {
-                let branchFound = branches.find((br) => br.display_id === this.applicationFilter.branch);
+                branchFound = branches.find((br) => br.display_id === this.applicationFilter.branch);
                 this.applicationFilter.branch = branchFound ? branchFound.display_id : branches[0].display_id;
               }
 
               this.loadVersions(this.project.key, this.application.name)
-                  .subscribe(() => this.changeVersion());
+                  .subscribe(() => {
+                    this.changeVersion(branchFound == null)
+                  });
           });
     }
 
     /**
      * Action when changing version
      */
-    changeVersion(version?: string): void {
+    changeVersion(branchFound: boolean, version?: string): void {
         this.applicationFilter.branch = this.applicationFilter.branch.trim();
 
         if (!version && Array.isArray(this.versions) && this.versions.length) {
@@ -301,14 +291,17 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
 
         this._router.navigate(['/project/', this.project.key, 'application', this.application.name], {
           queryParams: {
-            tab: 'workflow',
+            tab: this.tab,
             branch: this.applicationFilter.branch,
             version: this.applicationFilter.version,
             remote: this.applicationFilter.remote
           }
         });
-        this.changeWorkerEvent.emit(true);
-        this.clearTree(this.application.workflows);
+
+        if (branchFound || (version && version !== ' ')) {
+            this.changeWorkerEvent.emit(true);
+            this.clearTree(this.application.workflows);
+        }
     }
 
     /**
@@ -323,12 +316,14 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     }
 
     clearTree(items: Array<WorkflowItem>): void {
-        items.forEach(w => {
-            delete w.pipeline.last_pipeline_build;
-            if (w.subPipelines) {
-                this.clearTree(w.subPipelines);
-            }
-        });
+        if (items) {
+            items.forEach(w => {
+                delete w.pipeline.last_pipeline_build;
+                if (w.subPipelines) {
+                    this.clearTree(w.subPipelines);
+                }
+            });
+        }
     }
 
     openLinkPipelineModal(): void {

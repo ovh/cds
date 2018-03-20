@@ -30,7 +30,10 @@ var statusCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if !stream {
-			fmt.Printf(strings.Join(status(nil, cmd, args), "\n") + "\n")
+			out := status(nil, cmd, args)
+			for _, s := range out.Lines {
+				fmt.Println(s.String())
+			}
 			return
 		}
 
@@ -38,17 +41,20 @@ var statusCmd = &cobra.Command{
 		writer.Start()
 		for {
 			out := status(writer, cmd, args)
-			fmt.Fprintf(writer, strings.Join(out, "\n"))
+			for _, s := range out.Lines {
+				fmt.Fprintf(writer, s.String()+"\n")
+			}
+
 			if err := writer.Flush(); err != nil {
 				fmt.Printf("Error while flushing: %s", err)
 			}
-			processStatusLine(out)
+			processStatusLine(out.Lines)
 			processWait()
 		}
 	},
 }
 
-func status(w *uilive.Writer, cmd *cobra.Command, args []string) []string {
+func status(w *uilive.Writer, cmd *cobra.Command, args []string) *sdk.MonitoringStatus {
 	output, err := sdk.GetStatus()
 	if err != nil {
 		if !stream {
@@ -56,7 +62,6 @@ func status(w *uilive.Writer, cmd *cobra.Command, args []string) []string {
 		}
 		processExecError(err)
 	}
-
 	return output
 }
 
@@ -79,13 +84,9 @@ func processExecError(err error) {
 	s.Stop()
 }
 
-func processStatusLine(lines []string) {
+func processStatusLine(lines []sdk.MonitoringStatusLine) {
 	for _, l := range lines {
-		if stream && (strings.HasPrefix(l, "Version") ||
-			strings.HasPrefix(l, "Uptime") ||
-			strings.HasPrefix(l, "Nb of Panics: 0") ||
-			strings.HasPrefix(l, "Secret Backend") ||
-			strings.Contains(l, "OK")) {
+		if stream && l.Status == sdk.MonitoringStatusOK {
 			continue
 		}
 		for _, ex := range execMsg {
@@ -95,12 +96,9 @@ func processStatusLine(lines []string) {
 }
 
 func execCmd(toExec string) {
-
 	opts := strings.Split(toExec, " ")
 	if toExec != "" {
-
-		_, err := exec.LookPath(opts[0])
-		if err != nil {
+		if _, err := exec.LookPath(opts[0]); err != nil {
 			sdk.Exit("Invalid --exec path for %s, err: %s", opts[0], err.Error())
 			return
 		}
@@ -117,5 +115,4 @@ func execCmd(toExec string) {
 		}
 		s.Stop()
 	}
-
 }

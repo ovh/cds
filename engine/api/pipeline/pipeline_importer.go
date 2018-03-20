@@ -192,6 +192,25 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			}
 		}
 	}
+
+	for _, param := range pip.Parameter {
+		found := false
+		for _, oldParam := range oldPipeline.Parameter {
+			if param.Name == oldParam.Name {
+				found = true
+				if err := UpdateParameterInPipeline(db, pip.ID, oldParam.Name, param); err != nil {
+					return sdk.WrapError(err, "ImportUpdate> cannot update parameter %s", param.Name)
+				}
+				break
+			}
+		}
+		if !found {
+			if err := InsertParameterInPipeline(db, pip.ID, &param); err != nil {
+				return sdk.WrapError(err, "ImportUpdate> cannot insert parameter %s", param.Name)
+			}
+		}
+	}
+
 	return nil
 }
 

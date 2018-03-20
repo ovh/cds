@@ -1,117 +1,85 @@
 <div class="requirement" *ngIf="requirements">
     <table class="ui fixed celled table">
         <thead>
-        <tr>
-            <th class="three wide">{{ 'requirement_type' | translate }}</th>
-            <th class="ten wide">{{ 'requirement_value' | translate }}</th>
-            <th class="three wide"></th>
-        </tr>
+            <tr>
+                <th class="three wide">{{ 'requirement_type' | translate }}</th>
+                <th class="ten wide">{{ 'requirement_value' | translate }}</th>
+                <th class="three wide"></th>
+            </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let r of getDataForCurrentPage()">
-            <td>
-                <div *ngIf="edit;else rType">
-                    <div class="ui form">
-                        <sm-select class="search"
-                            *ngIf="availableRequirements.length > 0"
-                            [options]="{'fullTextSearch': true}"
-                            [(model)]="r.type"
-                            (modelChange)="change()">
-                            <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
-                        </sm-select>
+            <tr *ngFor="let r of getDataForCurrentPage()">
+                <td class="border">
+                    <div *ngIf="edit;else rType">
+                        <div class="ui form">
+                            <sm-select class="search" *ngIf="availableRequirements.length > 0" [options]="{'fullTextSearch': true}" [(model)]="r.type" (modelChange)="change()">
+                                <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
+                            </sm-select>
+                        </div>
                     </div>
-                </div>
-                <ng-template #rType>
-                    <span>{{r.type}}</span>
-                </ng-template>
-            </td>
-            <td>
-                <div  *ngIf="!loading && r.type === 'service'">
-                    <div class="ui fluid" *ngIf="edit;else rName">
-                        <label for="requirementname">
+                    <ng-template #rType>
+                        <span>{{r.type}}</span>
+                    </ng-template>
+                </td>
+                <td class="border">
+                    <div *ngIf="!loading && r.type === 'service'">
+                        <div class="ui fluid" *ngIf="edit;else rName">
+                            <label for="requirementname">
                             {{ 'requirement_hostname_service' | translate }}
                         </label>
-                        <input
-                            name="requirementname"
-                            auto-complete
-                            autocomplete="off"
-                            type="text"
-                            [source]="suggest"
-                            [min-chars]="3"
-                            [(ngModel)]="r.name"
-                            (ngModelChange)="change()"
-                            [no-match-found-text]="false">
+                            <input name="requirementname" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="r.name" (ngModelChange)="change()" [no-match-found-text]="false">
+                        </div>
+                        <ng-template #rName>
+                            <span>{{r.name}}</span>
+                        </ng-template>
                     </div>
-                    <ng-template #rName>
-                        <span>{{r.name}}</span>
+
+                    <div *ngIf="edit;else rValue">
+                        <div *ngIf="r.type !== 'model' && r.type !== 'os-architecture'">
+                            <label for="requirementvalue" *ngIf="!loading && (r.type === 'service')">
+                                {{ 'requirement_value_service' | translate }}
+                            </label>
+                            <input name="requirementvalue" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="r.value" (ngModelChange)="change()" [no-match-found-text]="false">
+                        </div>
+                        <div *ngIf="!loading && r.type === 'os-architecture'">
+                            <input name="value-os-architecture" auto-complete autocomplete="off" type="text" [source]="suggestWithOSArch" [min-chars]="0" [(ngModel)]="r.value" (ngModelChange)="change()" [no-match-found-text]="false">
+                        </div>
+                        <div *ngIf="!loading && r.type === 'model' && workerModels">
+                            <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="r.value" (ngModelChange)="change()" [no-match-found-text]="false">
+                        </div>
+                        <div *ngIf="!loading && (r.type === 'model' || r.type === 'service')">
+                            <label for="opts">
+                                {{ 'requirement_options' | translate }}
+                            </label>
+                            <textarea [(ngModel)]="r.opts" (ngModelChange)="change()" rows="3" placeholder="{{'requirement_placeholder_opts_' + r.type | translate}}"></textarea>
+                        </div>
+                    </div>
+                    <ng-template #rValue>
+                        <span>{{r.value}}</span>
                     </ng-template>
-                </div>
-                
-                <div *ngIf="edit;else rValue">
-                    <div *ngIf="r.type !== 'model'">
-                        <label for="requirementvalue" *ngIf="!loading && (r.type === 'service')">
-                            {{ 'requirement_value_service' | translate }}
-                        </label>
-                        <input
-                            name="requirementvalue"
-                            auto-complete
-                            autocomplete="off"
-                            type="text"
-                            [source]="suggest"
-                            [min-chars]="3"
-                            [(ngModel)]="r.value"
-                            (ngModelChange)="change()"
-                            [no-match-found-text]="false">
-                    </div>
-                    <div *ngIf="!loading && r.type === 'model' && workerModels">
-                        <input
-                            name="value-workermodel"
-                            auto-complete
-                            autocomplete="off"
-                            type="text"
-                            [source]="suggestWithWorkerModel"
-                            [min-chars]="0"
-                            [(ngModel)]="r.value"
-                            (ngModelChange)="change()"
-                            [no-match-found-text]="false">
-                    </div>
-                    <div *ngIf="!loading && (r.type === 'model' || r.type === 'service')">
-                        <label for="opts">
-                            {{ 'requirement_options' | translate }}
-                        </label>
-                        <textarea
-                            [(ngModel)]="r.opts"
-                            (ngModelChange)="change()"
-                            rows="3"
-                            placeholder="{{'requirement_placeholder_opts_' + r.type | translate}}"></textarea>
-                    </div>
-                </div>
-                <ng-template #rValue>
-                    <span>{{r.value}}</span>
-                </ng-template>
-                
-            </td>
-            <td class="center">
-                <ng-container *ngIf="edit">
-                    <app-delete-button (event)="deleteEvent(r)"></app-delete-button>
-                </ng-container>
-            </td>
-        </tr>
+
+                </td>
+                <td class="center border">
+                    <ng-container *ngIf="edit">
+                        <app-delete-button (event)="deleteEvent(r)"></app-delete-button>
+                    </ng-container>
+                </td>
+            </tr>
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
-        <tr>
-            <th colspan="4">
-                <div class="ui right floated pagination menu" >
-                    <a class="icon item" (click)="downPage()">
-                        <i class="left chevron icon"></i>
-                    </a>
-                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
-                    <a class="icon item" (click)="upPage()">
-                        <i class="right chevron icon"></i>
-                    </a>
-                </div>
-            </th>
-        </tr>
+            <tr>
+                <th colspan="3">
+                    <div class="ui right floated pagination menu">
+                        <a class="icon item" (click)="downPage()">
+                            <i class="left chevron icon"></i>
+                        </a>
+                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                        <a class="icon item" (click)="upPage()">
+                            <i class="right chevron icon"></i>
+                        </a>
+                    </div>
+                </th>
+            </tr>
         </tfoot>
     </table>
 </div>

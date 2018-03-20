@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
 )
@@ -90,10 +91,6 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 }
 
 func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
-	log.Debug("startAction> Begin %p", ctx)
-	defer func() {
-		log.Debug("startAction> End %p (%v)", ctx, ctx.Err())
-	}()
 	// Process action build arguments
 	for _, abp := range *params {
 		// Process build variable for root action
@@ -103,25 +100,64 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 			}
 		}
 	}
+
+	if a.Name != sdk.ScriptAction {
+		// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
+		var getFilteredEnv = func(s string) string {
+			if strings.HasPrefix(s, "CDS_") {
+				return s
+			}
+			return os.Getenv(s)
+		}
+		for i := range a.Parameters {
+			a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+		}
+	}
+
 	return w.runJob(ctx, a, buildID, params, stepOrder, stepName)
 }
 
-func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) {
-	for i := range a.Parameters {
+func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) error {
+	if w.currentJob.wJob != nil { // cds workflow, use helper from interpolate
+		tmp := map[string]string{}
 		for _, v := range w.currentJob.buildVariables {
-			a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+			tmp[v.Name] = v.Value
 		}
 		for _, v := range params {
-			a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+			tmp[v.Name] = v.Value
+		}
+
+		for i := range a.Parameters {
+			var err error
+			a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, tmp)
+			if err != nil {
+				return sdk.WrapError(err, "Unable to interpolate action parameters")
+			}
+		}
+	} else { // pipeline build Job
+		for i := range a.Parameters {
+			for _, v := range w.currentJob.buildVariables {
+				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+			}
+			for _, v := range params {
+				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+			}
 		}
 	}
+	return nil
 }
 
 func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
-	log.Info("runJob> start run %d stepOrder:%d %p", buildID, stepOrder, ctx)
-	defer func() { log.Info("runJob> end run %d stepOrder:%d %p (%s)", buildID, stepOrder, ctx, ctx.Err()) }()
+	log.Info("runJob> start run %d stepOrder:%d", buildID, stepOrder)
+	defer func() { log.Info("runJob> end run %d stepOrder:%d", buildID, stepOrder) }()
 	// Replace variable placeholder that may have been added by last step
-	w.replaceVariablesPlaceholder(a, *params)
+	if err := w.replaceVariablesPlaceholder(a, *params); err != nil {
+		return sdk.Result{
+			Status:  sdk.StatusFail.String(),
+			BuildID: buildID,
+			Reason:  "Unable to interpolate action parameters",
+		}
+	}
 	// Set the params
 	w.currentJob.params = *params
 	// Unset the params at the end
@@ -221,7 +257,11 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 				criticalStepFailed = true
 			}
 
-			w.sendLog(buildID, fmt.Sprintf("End of step %s [%s]", childName, r.Status), w.currentJob.currentStep, true)
+			if r.Reason != "" {
+				w.sendLog(buildID, fmt.Sprintf("End of step %s [%s] with reason: %s", childName, r.Status, r.Reason), w.currentJob.currentStep, true)
+			} else {
+				w.sendLog(buildID, fmt.Sprintf("End of step %s [%s]", childName, r.Status), w.currentJob.currentStep, true)
+			}
 
 			// Update step status
 			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, r.Status); err != nil {
@@ -244,7 +284,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 	return r, nbDisabledChildren
 }
 
-func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status string) error {
+func (w *currentWorker) updateStepStatus(buildID int64, stepOrder int, status string) error {
 	step := sdk.StepStatus{
 		StepOrder: stepOrder,
 		Status:    status,
@@ -258,22 +298,22 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 
 	var path string
 	if w.currentJob.wJob != nil {
-		path = fmt.Sprintf("/queue/workflows/%d/step", pbJobID)
+		path = fmt.Sprintf("/queue/workflows/%d/step", buildID)
 	} else {
-		path = fmt.Sprintf("/build/%d/step", pbJobID)
+		path = fmt.Sprintf("/build/%d/step", buildID)
 	}
 
 	for try := 1; try <= 10; try++ {
-		log.Info("updateStepStatus> Sending step status...")
+		log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
 		_, code, lasterr := sdk.Request("POST", path, body)
 		if lasterr == nil && code < 300 {
-			log.Info("updateStepStatus> Send step status OK")
+			log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d OK", status, buildID, stepOrder)
 			return nil
 		}
-		log.Warning("updateStepStatus> Cannot send step result: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)
+		log.Warning("updateStepStatus> Cannot send step %d result: HTTP %d err: %s - try: %d - new try in 5s", stepOrder, code, lasterr, try)
 		time.Sleep(5 * time.Second)
 	}
-	return fmt.Errorf("updateStepStatus> Could not send built result 10 times, giving up. job: %d", pbJobID)
+	return fmt.Errorf("updateStepStatus> Could not send built result 10 times on step %d, giving up. job: %d", stepOrder, buildID)
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
@@ -297,8 +337,7 @@ func teardownBuildDirectory(wd string) error {
 func generateWorkingDirectory() (string, error) {
 	size := 16
 	bs := make([]byte, size)
-	_, err := rand.Read(bs)
-	if err != nil {
+	if _, err := rand.Read(bs); err != nil {
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
@@ -316,8 +355,6 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	t0 := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
 
-	log.Debug("processJob> Begin %p", ctx)
-	defer log.Debug("processJob> End %p", ctx)
 	defer func() { log.Info("processJob> Process Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String()) }()
 	defer cancel()
 	defer w.drainLogsAndCloseLogger(ctx)
@@ -417,10 +454,6 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
 	defer cancel()
 
-	log.Debug("run> Begin %p", ctx)
-	defer func() {
-		log.Debug("run> End %p (%v)", ctx, ctx.Err())
-	}()
 	t0 := time.Now()
 	defer func() {
 		log.Info("run> Run Pipeline Build Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String())

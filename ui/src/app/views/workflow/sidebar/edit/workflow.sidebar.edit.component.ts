@@ -1,9 +1,10 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input} from '@angular/core';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {Project} from '../../../../model/project.model';
 import {
     Workflow,
     WorkflowNode,
+    WorkflowNodeHook,
     WorkflowNodeJoin
 } from '../../../../model/workflow.model';
 
@@ -20,6 +21,7 @@ export class WorkflowSidebarEditComponent {
     @Input() workflow: Workflow;
     @Input() node: WorkflowNode;
     @Input() join: WorkflowNodeJoin;
+    @Input() hook: WorkflowNodeHook;
     // Flag indicate if sidebar is open
     @Input() open: boolean;
 

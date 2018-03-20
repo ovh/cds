@@ -17,6 +17,7 @@
 package gitlab
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
 )
@@ -93,7 +94,7 @@ type GetRawFileOptions struct {
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/repository_files.html#get-raw-file-from-repository
-func (s *RepositoryFilesService) GetRawFile(pid interface{}, fileName string, opt *GetRawFileOptions, options ...OptionFunc) (*File, *Response, error) {
+func (s *RepositoryFilesService) GetRawFile(pid interface{}, fileName string, opt *GetRawFileOptions, options ...OptionFunc) ([]byte, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
@@ -105,13 +106,13 @@ func (s *RepositoryFilesService) GetRawFile(pid interface{}, fileName string, op
 		return nil, nil, err
 	}
 
-	f := new(File)
-	resp, err := s.client.Do(req, f)
+	var f bytes.Buffer
+	resp, err := s.client.Do(req, &f)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return f, resp, err
+	return f.Bytes(), resp, err
 }
 
 // FileInfo represents file details of a GitLab repository file.

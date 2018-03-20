@@ -3,12 +3,36 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
-// GetStatus retrieve generic health infos to CDS
-func GetStatus() ([]string, error) {
-	var output []string
+// This constants deals with Monitoring statuses
+const (
+	MonitoringStatusAlert = "AL"
+	MonitoringStatusWarn  = "WARN"
+	MonitoringStatusOK    = "OK"
+)
 
+// MonitoringStatus contains status of CDS Component
+type MonitoringStatus struct {
+	Now   time.Time              `json:"now"`
+	Lines []MonitoringStatusLine `json:"lines"`
+}
+
+// MonitoringStatusLine represents a CDS Component Status
+type MonitoringStatusLine struct {
+	Status    string `json:"status" cli:"status"`
+	Component string `json:"component" cli:"component"`
+	Value     string `json:"value" cli:"value"`
+}
+
+func (m MonitoringStatusLine) String() string {
+	return fmt.Sprintf("%s - %s: %s", m.Status, m.Component, m.Value)
+}
+
+// GetStatus retrieve generic health infos to CDS
+func GetStatus() (*MonitoringStatus, error) {
+	output := MonitoringStatus{}
 	data, code, err := Request("GET", "/mon/status", nil)
 	if err != nil {
 		return nil, err
@@ -18,12 +42,10 @@ func GetStatus() ([]string, error) {
 		return nil, fmt.Errorf("HTTP %d", code)
 	}
 
-	err = json.Unmarshal(data, &output)
-	if err != nil {
+	if err := json.Unmarshal(data, &output); err != nil {
 		return nil, err
 	}
-
-	return output, nil
+	return &output, nil
 }
 
 // GetVersion returns API version
@@ -41,8 +63,7 @@ func GetVersion() (string, error) {
 		Version string `json:"version"`
 	}{}
 
-	err = json.Unmarshal(data, &s)
-	if err != nil {
+	if err := json.Unmarshal(data, &s); err != nil {
 		return "", err
 	}
 

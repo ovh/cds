@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getGroupHandler() Handler {
@@ -31,7 +30,22 @@ func (api *API) getGroupHandler() Handler {
 			return sdk.WrapError(err, "getGroupHandler: Cannot load user group from db")
 		}
 
-		return WriteJSON(w, r, g, http.StatusOK)
+		isGroupAdmin := false
+		currentUser := getUser(ctx)
+		for _, grAdmin := range g.Admins {
+			if currentUser.ID == grAdmin.ID {
+				isGroupAdmin = true
+			}
+		}
+		if isGroupAdmin {
+			tokens, errT := group.LoadTokens(api.mustDB(), name)
+			if errT != nil {
+				return sdk.WrapError(errT, "getGroupHandler: Cannot load tokens group from db")
+			}
+			g.Tokens = tokens
+		}
+
+		return WriteJSON(w, g, http.StatusOK)
 	}
 }
 
@@ -180,12 +194,13 @@ func (api *API) getGroupsHandler() Handler {
 		var groups []sdk.Group
 		var err error
 
-		public := r.FormValue("withPublic")
+		public := FormBool(r, "withPublic")
+		withoutDefault := FormBool(r, "withoutDefault")
 		if getUser(ctx).Admin {
 			groups, err = group.LoadGroups(api.mustDB())
 		} else {
 			groups, err = group.LoadGroupByUser(api.mustDB(), getUser(ctx).ID)
-			if public == "true" {
+			if public {
 				publicGroups, errl := group.LoadPublicGroups(api.mustDB())
 				if errl != nil {
 					return sdk.WrapError(errl, "GetGroups: Cannot load group from db")
@@ -197,7 +212,21 @@ func (api *API) getGroupsHandler() Handler {
 			return sdk.WrapError(err, "GetGroups: Cannot load group from db")
 		}
 
-		return WriteJSON(w, r, groups, http.StatusOK)
+		// withoutDefault is use by project Add, to avoid
+		// user select the default group on project creation
+		if withoutDefault {
+			var filteredGroups []sdk.Group
+			for _, g := range groups {
+				if group.IsDefaultGroupID(g.ID) {
+					continue
+				} else {
+					filteredGroups = append(filteredGroups, g)
+				}
+			}
+			return WriteJSON(w, filteredGroups, http.StatusOK)
+		}
+		return WriteJSON(w, groups, http.StatusOK)
+
 	}
 }
 
@@ -207,7 +236,7 @@ func (api *API) getPublicGroupsHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "GetGroups: Cannot load group from db")
 		}
-		return WriteJSON(w, r, groups, http.StatusOK)
+		return WriteJSON(w, groups, http.StatusOK)
 	}
 }
 
@@ -276,7 +305,6 @@ func (api *API) removeUserFromGroupHandler() Handler {
 			return sdk.WrapError(err, "removeUserFromGroupHandler: Cannot delete user %s from group %s", userName, g.Name)
 		}
 
-		log.Info("User %s removed from group %s", userName, name)
 		return nil
 	}
 }

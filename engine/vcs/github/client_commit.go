@@ -99,7 +99,6 @@ func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 	if g.Cache.Get(cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
 		return commitsResult, nil
 	}
-
 	var sinceDate time.Time
 	// Calculate since commit
 	if since == "" {

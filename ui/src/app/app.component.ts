@@ -1,16 +1,14 @@
-import { registerLocaleData } from '@angular/common';
-import { RouterService } from './service/router/router.service';
+import {registerLocaleData} from '@angular/common';
 import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
-import {environment} from '../environments/environment';
-import {WarningStore} from './service/warning/warning.store';
-import { ResolveEnd, ResolveStart, Router } from '@angular/router';
+import {ResolveEnd, ResolveStart, Router} from '@angular/router';
 import {CDSWorker} from './shared/worker/worker';
 import {Subscription} from 'rxjs/Subscription';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
+import {ToastService} from './shared/toast/ToastService';
 import {AppService} from './app.service';
 import {LastUpdateService} from './service/sse/lastupdate.sservice';
 import {LastModification} from './model/lastupdate.model';
@@ -39,11 +37,14 @@ export class AppComponent  implements OnInit {
     versionWorkerSubscription: Subscription;
 
     displayResolver = false;
+    toasterConfig: any;
 
-    constructor(private _translate: TranslateService, private _language: LanguageStore, private _routerService: RouterService,
-                private _authStore: AuthentificationStore, private _warnStore: WarningStore, private _router: Router,
-                private _notification: NotificationService, private _appService: AppService, private _last: LastUpdateService) {
+    constructor(_translate: TranslateService, private _language: LanguageStore,
+                private _authStore: AuthentificationStore, private _router: Router,
+                private _notification: NotificationService, private _appService: AppService,
+                private _last: LastUpdateService, private _toastService: ToastService) {
         this.zone = new NgZone({enableLongStackTrace: false});
+        this.toasterConfig = this._toastService.getConfig();
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');
         let browserLang = navigator.language.match(/fr/) ? 'fr' : 'en';
@@ -69,7 +70,6 @@ export class AppComponent  implements OnInit {
             } else {
                 this.isConnected = true;
                 this.startLastUpdateSSE();
-                this.startWarningWorker();
             }
             this.startVersionWorker();
         });
@@ -103,26 +103,6 @@ export class AppComponent  implements OnInit {
         });
     }
 
-    /**
-     * Start worker to pull warnings.
-     * WebWorker for Safari and EDGE
-     * SharedWorker for the others  (worker shared between tabs)
-     */
-    startWarningWorker(): void {
-        this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
-        this.warningWorker = new CDSWorker('./assets/worker/web/warning.js');
-        this.warningWorker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL});
-        this.warningWorker.response().subscribe( msg => {
-            if (msg) {
-                this.zone.run(() => {
-                    this._warnStore.updateWarnings(JSON.parse(msg));
-                });
-            }
-        });
-    }
 
     startVersionWorker(): void {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);

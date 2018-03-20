@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// GitlabClient implements RepositoriesManagerClient interface
+// gitlabClient implements VCSAuthorizedClient interface
 type gitlabClient struct {
 	client              *gitlab.Client
 	uiURL               string
@@ -15,7 +15,7 @@ type gitlabClient struct {
 	disableStatusDetail bool
 }
 
-//gitlabConsumer implements vcs.Server and it's used to instanciate a githubClient
+// gitlabConsumer implements vcs.Server and it's used to instanciate a githubClient
 type gitlabConsumer struct {
 	URL                      string `json:"url"`
 	appID                    string
@@ -27,6 +27,7 @@ type gitlabConsumer struct {
 	disableStatusDetail      bool
 }
 
+// New instanciate a new gitlab consumer
 func New(appID string, clientSecret string, URL string, callbackURL string, uiURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
 	return &gitlabConsumer{
 		URL:    URL,

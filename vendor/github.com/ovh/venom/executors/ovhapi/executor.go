@@ -1,9 +1,11 @@
 package ovhapi
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"time"
 
@@ -28,11 +30,12 @@ type Headers map[string]string
 
 // Executor struct. Json and yaml descriptor are used for json output
 type Executor struct {
-	Method   string `json:"method" yaml:"method"`
-	NoAuth   bool   `json:"no_auth" yaml:"noAuth"`
-	Path     string `json:"path" yaml:"path"`
-	Body     string `json:"body" yaml:"body"`
-	BodyFile string `json:"bodyfile" yaml:"bodyfile"`
+	Method   string  `json:"method" yaml:"method"`
+	NoAuth   bool    `json:"no_auth" yaml:"noAuth"`
+	Path     string  `json:"path" yaml:"path"`
+	Body     string  `json:"body" yaml:"body"`
+	BodyFile string  `json:"bodyfile" yaml:"bodyfile"`
+	Headers  Headers `json:"headers" yaml:"headers"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -89,7 +92,6 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			return nil, err
 		}
 	}
-
 	// set default values
 	if e.Method == "" {
 		e.Method = "GET"
@@ -110,16 +112,52 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		return nil, err
 	}
 
+	if insecure, err := ctx.GetBool("insecureTLS"); err == nil && insecure {
+		client.Client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+
 	// get request body from file or from field
 	requestBody, err := e.getRequestBody()
 	if err != nil {
 		return nil, err
 	}
 
-	// do api call
-	resp := new(interface{})
+	req, err := client.NewRequest(e.Method, e.Path, requestBody, !e.NoAuth)
+	if err != nil {
+		return nil, err
+	}
 
-	if err = client.CallAPI(e.Method, e.Path, requestBody, resp, !e.NoAuth); err != nil {
+	var contextHeader map[string]string
+	err = ctx.GetComplex("headers", &contextHeader)
+	if err != nil && err != defaultctx.NotFound("headers") {
+		l.Warnf("fail to read headers from context : '%s'", err)
+	}
+	for key, value := range contextHeader {
+		req.Header.Add(key, value)
+	}
+
+	if e.Headers != nil {
+		for key := range e.Headers {
+			req.Header.Add(key, e.Headers[key])
+		}
+	}
+	if e.Headers != nil {
+		for key := range e.Headers {
+			req.Header.Add(key, e.Headers[key])
+		}
+	}
+
+	// do api call
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	res := new(interface{})
+	if err = client.UnmarshalResponse(resp, res); err != nil {
 		apiError, ok := err.(*ovh.APIError)
 		if !ok {
 			return nil, err
@@ -135,9 +173,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	r.TimeHuman = fmt.Sprintf("%s", elapsed)
 
 	// Add response to result body
-	if resp != nil {
-		r.BodyJSON = *resp
-		bb, err := json.Marshal(resp)
+	if res != nil {
+		r.BodyJSON = *res
+		bb, err := json.Marshal(res)
 		if err != nil {
 			return nil, err
 		}

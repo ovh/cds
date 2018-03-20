@@ -7,13 +7,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Deprecated
@@ -27,7 +24,7 @@ func (api *API) getEnvironmentsAuditHandler() Handler {
 		if errAudit != nil {
 			return sdk.WrapError(errAudit, "getEnvironmentsAuditHandler: Cannot get environment audit for project %s", key)
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -91,29 +88,13 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			return sdk.WrapError(err, "restoreEnvironmentAuditHandler: Cannot commit transaction")
 		}
 
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Error("restoreEnvironmentAuditHandler: Cannot check warnings: %s", err)
-			}
-		}()
-
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "restoreEnvironmentAuditHandler: Cannot load environments")
 		}
 
-		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
-		if errApps != nil {
-			return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
-		}
-		for _, a := range apps {
-			if err := sanity.CheckApplication(api.mustDB(), p, &a); err != nil {
-				return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
-			}
-		}
-
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -139,7 +120,7 @@ func (api *API) getVariableAuditInEnvironmentHandler() Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInEnvironmentHandler> Cannot load audit for variable %s", varName)
 		}
-		return WriteJSON(w, r, audits, http.StatusOK)
+		return WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
@@ -155,7 +136,7 @@ func (api *API) getVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(errVar, "getVariableInEnvironmentHandler: Cannot get variable %s for environment %s", name, envName)
 		}
 
-		return WriteJSON(w, r, v, http.StatusOK)
+		return WriteJSON(w, v, http.StatusOK)
 	}
 }
 
@@ -170,7 +151,7 @@ func (api *API) getVariablesInEnvironmentHandler() Handler {
 			return sdk.WrapError(errVar, "getVariablesInEnvironmentHandler: Cannot get variables for environment %s", envName)
 		}
 
-		return WriteJSON(w, r, variables, http.StatusOK)
+		return WriteJSON(w, variables, http.StatusOK)
 	}
 }
 
@@ -219,23 +200,13 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 		}
 
-		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
-		if errApps != nil {
-			return sdk.WrapError(errApps, "deleteVariableFromEnvironmentHandler: Cannot load applications")
-		}
-		for _, a := range apps {
-			if err := sanity.CheckApplication(api.mustDB(), p, &a); err != nil {
-				return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot check application sanity")
-			}
-		}
-
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -283,29 +254,13 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Error("updateVariableInEnvironmentHandler: Cannot check warnings: %s", err)
-			}
-		}()
-
-		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
-		if errApps != nil {
-			return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
-		}
-		for _, a := range apps {
-			if err := sanity.CheckApplication(api.mustDB(), p, &a); err != nil {
-				return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot check application sanity")
-			}
-		}
-
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }
 
@@ -363,30 +318,12 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}
 
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Error("addVariableInEnvironmentHandler: Cannot check warnings: %s", err)
-			}
-		}()
-
-		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
-		if errApps != nil {
-			return sdk.WrapError(errApps, "addVariableInEnvironmentHandler: Cannot load applications")
-		}
-		go func() {
-			for _, a := range apps {
-				if err := sanity.CheckApplication(api.mustDB(), p, &a); err != nil {
-					log.Warning("addVariableInEnvironmentHandler: Cannot check application sanity: %s", err)
-				}
-			}
-		}()
-
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, p, http.StatusOK)
 	}
 }

@@ -1,11 +1,11 @@
 package defaultctx
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/ovh/venom"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Name is Context Type name.
@@ -117,12 +117,12 @@ func (tcc *DefaultTestCaseContext) GetComplex(key string, arg interface{}) error
 		return NotFound(key)
 	}
 
-	val, err := json.Marshal(tcc.datas[key])
+	val, err := yaml.Marshal(tcc.datas[key])
 	if err != nil {
 		return err
 	}
 
-	err = json.Unmarshal(val, arg)
+	err = yaml.Unmarshal(val, arg)
 	if err != nil {
 		return err
 	}

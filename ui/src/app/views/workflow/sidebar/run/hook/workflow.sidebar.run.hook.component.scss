@@ -1,0 +1,85 @@
+@import '../../../../../../common';
+.sidebar-hook-run {
+  .header {
+      margin-top: 10px;
+  }
+
+  .infoLine {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-size: 0.85em;
+  }
+
+  .ml5 {
+      margin-left: 5px;
+  }
+
+  .content {
+      width: 100%;
+  }
+  .paddingContent {
+      padding-top: 11px;
+      padding-left: 5px;
+      vertical-align: middle !important;
+      font-size: medium;
+  }
+
+  .no-mrt {
+    margin-top: 0px;
+  }
+  .padding {
+    padding-bottom: 4px;
+    padding-top: 4px;
+  }
+  .noborder {
+    border-left: none !important;
+    border-right: none !important;
+  }
+  .item {
+    &.active {
+      background-color: $cds_color_light_grey;
+    }
+    &:focus{
+      outline: none;
+    }
+    &:hover {
+      background-color: $cds_color_light_grey;
+    }
+    .tiny {
+      font-size: 0.90em;
+    }
+  }
+
+  i {
+    &.ribbon-state {
+      width: 5px;
+      &.success {
+        background-color: $cds_color_green;
+      }
+      &.success {
+        background-color: $cds_color_green;
+      }
+      &.running {
+        background-color: $cds_color_teal;
+      }
+      &.fail {
+        background-color: $cds_color_red;
+      }
+      &.waiting {
+        background-color: $cds_color_teal;
+      }
+    }
+  }
+  .success {
+    color: $cds_color_green !important;
+  }
+  .running {
+    color: $cds_color_teal !important;
+  }
+  .fail {
+    color: $cds_color_red !important;
+  }
+  .waiting {
+    color: $cds_color_teal !important;
+  }
+}

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/fatih/color"
 	tap "github.com/mndrix/tap-go"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
@@ -38,7 +39,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 		if errm != nil {
 			log.Fatalf("Error: cannot format xml output: %s", errm)
 		}
-		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>\n`), dataxml...)
+		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
 	}
 
 	if v.OutputDetails == "high" {
@@ -96,9 +97,10 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 
 func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
 	if v.OutputResumeFailures {
+		red := color.New(color.FgRed).SprintFunc()
 		for _, t := range tests.TestSuites {
 			if t.Failures > 0 || t.Errors > 0 {
-				v.PrintFunc("FAILED %s\n", t.Name)
+				v.PrintFunc("%s %s\n", red("FAILED"), t.Name)
 				v.PrintFunc("--------------\n")
 
 				for _, tc := range t.TestCases {
@@ -116,9 +118,10 @@ func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
 
 	totalTestCases := 0
 	totalTestSteps := 0
+	red := color.New(color.FgRed).SprintFunc()
 	for _, t := range tests.TestSuites {
 		if t.Failures > 0 || t.Errors > 0 {
-			v.PrintFunc("FAILED %s\n", t.Name)
+			v.PrintFunc("%s %s\n", red("FAILED"), t.Name)
 		}
 		totalTestCases += len(t.TestCases)
 		for _, tc := range t.TestCases {

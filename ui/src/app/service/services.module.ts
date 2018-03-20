@@ -6,7 +6,6 @@ import {AuthentificationStore} from './auth/authentification.store';
 import {UserService} from './user/user.service';
 import {CanActivateAuthRoute} from './auth/authenRouteActivate';
 import {CanActivateAuthAdminRoute} from './auth/authenAdminRouteActivate';
-import {WarningStore} from './warning/warning.store';
 import {PipelineStore} from './pipeline/pipeline.store';
 import {PipelineService} from './pipeline/pipeline.service';
 import {ApplicationService} from './application/application.service';
@@ -16,9 +15,10 @@ import {VariableService} from './variable/variable.service';
 import {GroupService} from './group/group.service';
 import {RepoManagerService} from './repomanager/project.repomanager.service';
 import {ApplicationWorkflowService} from './application/application.workflow.service';
-import {RequirementService} from './worker-model/requirement/requirement.service';
-import {RequirementStore} from './worker-model/requirement/requirement.store';
+import {RequirementService} from './requirement/requirement.service';
+import {RequirementStore} from './requirement/requirement.store';
 import {ParameterService} from './parameter/parameter.service';
+import {MonitoringService} from './monitoring/monitoring.service';
 import {ActionService} from './action/action.service';
 import {ActionStore} from './action/action.store';
 import {PipelineResolver} from './pipeline/pipeline.resolver';
@@ -26,10 +26,8 @@ import {ApplicationResolver, ApplicationQueryParamResolver} from './application/
 import {
     ProjectResolver,
     ProjectForApplicationResolver,
-    ProjectForWorkflowResolver,
-    ProjectForPipelineCreateResolver
+    ProjectForWorkflowResolver
 } from './project/project.resolver';
-import {ApplicationTemplateService} from './application/application.template.service';
 import {ProjectAuditService} from './project/project.audit.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {ApplicationAuditService} from './application/application.audit.service';
@@ -41,7 +39,6 @@ import {WorkflowStore} from './workflow/workflow.store';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
 import {WorkflowCoreService} from './workflow/workflow.core.service';
 import {RouterService} from './router/router.service';
-import {WarningService} from './warning/warning.service';
 import {LastUpdateService} from './sse/lastupdate.sservice';
 import {HTTP_INTERCEPTORS} from '@angular/common/http';
 import {AuthentificationInterceptor} from './auth.interceptor.service';
@@ -51,6 +48,9 @@ import {PipelineAuditService} from './pipeline/pipeline.audit.service';
 import {EnvironmentService} from './environment/environment.service';
 import {ApplicationMigrateService} from './application/application.migration.service';
 import {NavbarService} from './navbar/navbar.service';
+import {DownloadService} from './download/download.service';
+import {KeyService} from './keys/keys.service';
+import {PlatformService} from './platform/platform.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -67,28 +67,30 @@ export class ServicesModule {
                 ApplicationService,
                 ApplicationWorkflowService,
                 ApplicationPipelineService,
-                ApplicationTemplateService,
                 ApplicationMigrateService,
                 ApplicationStore,
                 AuthentificationStore,
+                DownloadService,
                 CanActivateAuthRoute,
                 CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 EnvironmentService,
                 GroupService,
                 HookService,
+                KeyService,
                 LanguageStore,
                 LastUpdateService,
                 NavbarService,
                 NotificationService,
                 ParameterService,
+                MonitoringService,
                 PipelineResolver,
                 PipelineService,
                 PipelineAuditService,
                 PipelineStore,
+                PlatformService,
                 ProjectResolver,
                 ProjectForApplicationResolver,
-                ProjectForPipelineCreateResolver,
                 ProjectForWorkflowResolver,
                 ProjectService,
                 ProjectAuditService,
@@ -99,8 +101,6 @@ export class ServicesModule {
                 RouterService,
                 UserService,
                 VariableService,
-                WarningService,
-                WarningStore,
                 WorkerModelService,
                 WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
@@ -132,24 +132,26 @@ export {
     ApplicationStore,
     ApplicationPipelineService,
     ApplicationWorkflowService,
-    ApplicationTemplateService,
     ApplicationMigrateService,
     AuthentificationStore,
     CanActivateAuthRoute,
     CanActivateAuthAdminRoute,
+    DownloadService,
     EnvironmentAuditService,
     GroupService,
     HookService,
+    KeyService,
     LanguageStore,
     LastUpdateService,
     ParameterService,
+    MonitoringService,
     PipelineResolver,
     PipelineStore,
     PipelineAuditService,
+    PlatformService,
     ProjectResolver,
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
-    ProjectForPipelineCreateResolver,
     ProjectStore,
     ProjectAuditService,
     RepoManagerService,
@@ -157,8 +159,6 @@ export {
     RouterService,
     UserService,
     VariableService,
-    WarningStore,
-    WarningService,
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,

@@ -1,7 +1,8 @@
+import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import {Table} from '../../table/table';
 import {GroupPermission} from '../../../model/group.model';
 import {PermissionService} from '../permission.service';
-import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {PermissionEvent} from '../permission.event.model';
 
 @Component({
@@ -21,7 +22,7 @@ export class PermissionListComponent extends Table {
 
     private permissionsList;
 
-    constructor(_permService: PermissionService) {
+    constructor(_permService: PermissionService, private _translate: TranslateService) {
         super();
         this.permissionsList = _permService.getPermissions();
     }
@@ -45,7 +46,10 @@ export class PermissionListComponent extends Table {
         }
     }
 
-    castPermission(gp: GroupPermission) {
-        gp.permission = Number(gp.permission);
+    formatPermission() {
+        let translate = this._translate;
+        return function(event) {
+            return translate.instant(event.name);
+        };
     }
 }

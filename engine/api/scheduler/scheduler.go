@@ -124,9 +124,9 @@ func Next(db gorp.SqlExecutor, s *sdk.PipelineScheduler) (*sdk.PipelineScheduler
 }
 
 // Status returns Event status
-func Status() string {
+func Status() sdk.MonitoringStatusLine {
 	if schedulerStatus != "OK" {
-		return "⚠ " + schedulerStatus
+		return sdk.MonitoringStatusLine{Component: "Scheduler", Value: "⚠ " + schedulerStatus, Status: sdk.MonitoringStatusWarn}
 	}
-	return schedulerStatus
+	return sdk.MonitoringStatusLine{Component: "Scheduler", Value: schedulerStatus, Status: sdk.MonitoringStatusOK}
 }

@@ -9,12 +9,14 @@ import (
 	"github.com/fatih/structs"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/vcs"
 )
 
@@ -26,8 +28,8 @@ type Configuration struct {
 			Host       string `toml:"host" comment:"Example: thot.ovh.com"`
 			Port       int    `toml:"port" comment:"Example: 12202"`
 			Protocol   string `toml:"protocol" default:"tcp" comment:"tcp or udp"`
-			ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN"`
-			ExtraValue string `toml:"extraValue" comment:"value for extraKey field"`
+			ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN. You can use many keys: aaa,bbb"`
+			ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb"`
 		} `toml:"graylog"`
 	} `toml:"log" comment:"#####################\n CDS Logs Settings \n####################"`
 	Debug struct {
@@ -36,14 +38,16 @@ type Configuration struct {
 	} `toml:"debug" comment:"#####################\n Debug with gops \n####################"`
 	API      api.Configuration `toml:"api" comment:"#####################\n API Configuration \n####################"`
 	Hatchery struct {
-		Local     local.HatcheryConfiguration     `toml:"local" comment:"Hatchery Local."`
-		Marathon  marathon.HatcheryConfiguration  `toml:"marathon" comment:"Hatchery Marathon."`
-		Openstack openstack.HatcheryConfiguration `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`
-		Swarm     swarm.HatcheryConfiguration     `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
-		VSphere   vsphere.HatcheryConfiguration   `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
+		Local      local.HatcheryConfiguration      `toml:"local" comment:"Hatchery Local."`
+		Kubernetes kubernetes.HatcheryConfiguration `toml:"kubernetes" comment:"Hatchery Kubernetes."`
+		Marathon   marathon.HatcheryConfiguration   `toml:"marathon" comment:"Hatchery Marathon."`
+		Openstack  openstack.HatcheryConfiguration  `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`
+		Swarm      swarm.HatcheryConfiguration      `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
+		VSphere    vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
 	} `toml:"hatchery"`
-	Hooks hooks.Configuration `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################"`
-	VCS   vcs.Configuration   `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################"`
+	Hooks        hooks.Configuration        `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################"`
+	VCS          vcs.Configuration          `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################"`
+	Repositories repositories.Configuration `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################"`
 }
 
 type ServiceServeOptions struct {

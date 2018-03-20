@@ -5,12 +5,13 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {Project, LoadOpts} from '../../model/project.model';
 import {ProjectService} from './project.service';
 import {EnvironmentService} from '../environment/environment.service';
-import {PipelineService} from '../pipeline/pipeline.service';
 import {VariableService} from '../variable/variable.service';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
 import 'rxjs/add/observable/of';
+import {Key} from '../../model/keys.model';
+import {ProjectPlatform} from '../../model/platform.model';
 
 
 @Injectable()
@@ -25,7 +26,6 @@ export class ProjectStore {
     constructor(
         private _projectService: ProjectService,
         private _environmentService: EnvironmentService,
-        private _pipelineService: PipelineService,
         private _variableService: VariableService
       ) {
 
@@ -85,10 +85,39 @@ export class ProjectStore {
             let proj = store.get(key);
             if (proj) {
                 proj = Object.assign({}, proj, res);
+                if (opts) {
+                    opts.forEach( o => {
+                       switch (o.fieldName) {
+                           case 'workflow_names':
+                               if (!res.workflow_names) {
+                                   proj.workflow_names = [];
+                               }
+                               break;
+                           case 'pipeline_names':
+                               if (!res.pipeline_names) {
+                                   proj.pipeline_names = [];
+                               }
+                               break;
+                           case 'application_names':
+                               if (!res.application_names) {
+                                   proj.application_names = [];
+                               }
+                               break;
+                           case 'environments':
+                               if (!res.environments) {
+                                   proj.environments = [];
+                               }
+                               break;
+                           case 'platforms':
+                               if (!res.platforms) {
+                                   proj.platforms = [];
+                               }
+                       }
+                    });
+                }
             } else {
                 proj = res;
             }
-
             this._projectCache.next(store.set(key, proj));
             return proj;
         });
@@ -158,36 +187,14 @@ export class ProjectStore {
           });
     }
 
-    /**
-     * Use by router to preload project
-     * @param key
-     * @returns {Observable<Project>}
-     */
-    getProjectPipelinesResolver(key: string): Observable<Project> {
+    getProjectKeysResolver(key: string): Observable<Project> {
         let store = this._projectCache.getValue();
-        let missingEnv = store.size === 0 || !store.get(key) || !store.get(key).pipelines || !store.get(key).pipelines.length;
-
-        if (missingEnv) {
-            return this.resyncPipelines(key);
+        let missingKeys = store.size === 0 || !store.get(key) || !store.get(key).keys || !store.get(key).keys.length;
+        if (missingKeys) {
+            return this.resyncKeys(key);
         } else {
             return Observable.of(store.get(key));
         }
-    }
-
-    /**
-     * Get project from API and store result
-     * @param key
-     * @returns {Observable<R>}
-     */
-    resyncPipelines(key: string): Observable<Project> {
-        return this._pipelineService.getPipelines(key)
-          .map((res) => {
-              let store = this._projectCache.getValue();
-              let proj = store.get(key);
-              proj.pipelines = res;
-              this._projectCache.next(store.set(key, proj));
-              return proj;
-          });
     }
 
     /**
@@ -204,6 +211,17 @@ export class ProjectStore {
         } else {
             return Observable.of(store.get(key));
         }
+    }
+
+    resyncKeys(key: string): Observable<Project> {
+        return this._projectService.getKeys(key)
+            .map((res) => {
+                let store = this._projectCache.getValue();
+                let proj = store.get(key);
+                proj.keys = res;
+                this._projectCache.next(store.set(key, proj));
+                return proj;
+            });
     }
 
     /**
@@ -281,22 +299,6 @@ export class ProjectStore {
             }
             return res;
         });
-    }
-
-    /**
-     * Update applications and pipelines on a project
-     * @param key project key
-     * @param project project to update
-     */
-    updateApplicationsAndPipelines(key: string, project: Project): void {
-        let cache = this._projectCache.getValue();
-        let projectToUpdate = cache.get(key);
-        if (projectToUpdate) {
-            projectToUpdate.applications = project.applications;
-            projectToUpdate.pipelines = project.pipelines;
-            projectToUpdate.last_modified = project.last_modified;
-            this._projectCache.next(cache.set(key, projectToUpdate));
-        }
     }
 
     /**
@@ -698,6 +700,47 @@ export class ProjectStore {
         });
     }
 
+    /**
+     * Ad a key on the project
+     * @param projKey Project unique key
+     * @param key SSH/PGP key to add
+     * @returns {Observable<Key>}
+     */
+    addKey(projKey: string, key: Key): Observable<Key> {
+        return this._projectService.addKey(projKey, key).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(projKey);
+            if (projectUpdate) {
+                if (!projectUpdate.keys) {
+                    projectUpdate.keys = new Array<Key>();
+                }
+                projectUpdate.keys.push(res);
+                this._projectCache.next(cache.set(projKey, projectUpdate));
+            }
+            return res;
+        });
+    }
+
+    /**
+     * Remove a key from project (api + cache)
+     * @param key project unique key
+     * @param name key name to delete
+     * @returns {Observable<boolean>}
+     */
+    removeKey(key: string, name: string): Observable<boolean> {
+        return this._projectService.removeKey(key, name).map(() => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate && projectUpdate.keys) {
+                let i = projectUpdate.keys.findIndex(kkey => kkey.name === name);
+                if (i > -1) {
+                    projectUpdate.keys.splice(i, 1);
+                }
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return true;
+        });
+    }
 
     externalModification(key: string) {
         let cache = this._projectCache.getValue();
@@ -708,5 +751,89 @@ export class ProjectStore {
         }
     }
 
+    /**
+     * Use by router to preload project
+     * @param key
+     * @returns {Observable<Project>}
+     */
+    getProjectPlatformsResolver(key: string): Observable<Project> {
+        let store = this._projectCache.getValue();
+        let missingPlatforms = store.size === 0 || !store.get(key) || !store.get(key).platforms || !store.get(key).platforms.length;
+
+        if (missingPlatforms) {
+            return this.resyncPlatforms(key);
+        } else {
+            return Observable.of(store.get(key));
+        }
+    }
+
+    /**
+     * Get project platforms
+     * @param key
+     * @returns {Observable<R>}
+     */
+    resyncPlatforms(key: string): Observable<Project> {
+        return this._projectService.getPlatforms(key)
+            .map((res) => {
+                let store = this._projectCache.getValue();
+                let proj = store.get(key);
+                proj.platforms = res;
+                this._projectCache.next(store.set(key, proj));
+                return proj;
+            });
+    }
+
+    /**
+     * Add a platform to a project
+     * @param key Project unique key
+     * @param platform Platform to add
+     */
+    addPlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
+        return this._projectService.addPlatform(key, platform).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate) {
+                if (!projectUpdate.platforms) {
+                    projectUpdate.platforms = new Array<ProjectPlatform>();
+                }
+                projectUpdate.platforms.push(res);
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return res;
+        });
+    }
+
+    deleteProjectPlatform(key: string, platformName: string) {
+        return this._projectService.removePlatform(key, platformName).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate) {
+                if (!projectUpdate.platforms) {
+                    return res;
+                }
+                projectUpdate.platforms = projectUpdate.platforms.filter(p => p.name !== platformName);
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return res;
+        });
+    }
+
+    updateProjectPlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
+        return this._projectService.updatePlatform(key, platform).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate) {
+                if (!projectUpdate.platforms) {
+                    return res;
+                }
+                let index = projectUpdate.platforms.findIndex(p => p.name === platform.name);
+                if (index !== -1) {
+                    projectUpdate.platforms[index] = res;
+                }
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return res;
+        });
+    }
 
 }

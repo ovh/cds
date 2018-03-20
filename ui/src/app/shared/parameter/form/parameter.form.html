@@ -12,14 +12,14 @@
         </div>
         <div class="four wide field">
             <label>{{'parameter_value' | translate}}</label>
-            <app-parameter-value [project]="project" [suggest]="suggest" [type]="newParameter.type" [(value)]="newParameter.value" [editList]="true"></app-parameter-value>
+            <app-parameter-value [project]="project" [suggest]="suggest" [type]="newParameter.type" [(value)]="newParameter.value" [editList]="true" [keys]="keys"></app-parameter-value>
         </div>
         <div class="four wide field">
             <label>{{'parameter_description' | translate}}</label>
             <textarea [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
         </div>
         <div class="two wide center field">
-            <button class="ui blue button"><i class="plus icon"></i>{{ 'btn_add' | translate}}</button>
+            <button class="ui blue button" [disabled]="!newParameter.name"><i class="plus icon"></i>{{ 'btn_add' | translate}}</button>
         </div>
     </div>
 </form>

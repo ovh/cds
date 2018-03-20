@@ -28,7 +28,8 @@ func Initialize(db *gorp.DbMap, sharedInfraToken string) error {
 	}
 
 	log.Info("Initialize> create token for %s group", sdk.SharedInfraGroupName)
-	if err := InsertToken(db, permission.SharedInfraGroupID, sharedInfraToken, sdk.Persistent); err != nil {
+	description := "Default token created by CDS at first launch"
+	if err := InsertToken(db, permission.SharedInfraGroupID, sharedInfraToken, sdk.Persistent, description, "CDS"); err != nil {
 		return sdk.WrapError(err, "Initialize> cannot insert new token for %s", sdk.SharedInfraGroupName)
 	}
 

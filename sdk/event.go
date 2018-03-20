@@ -15,6 +15,8 @@ type Event struct {
 	EventType string                 `json:"type_event"` // go type of payload
 	Payload   map[string]interface{} `json:"payload"`
 	Attempts  int                    `json:"attempt"`
+	Username  string                 `json:"username,omitempty"`
+	UserMail  string                 `json:"user_mail,omitempty"`
 }
 
 // EventEngine contains event data for engine
@@ -25,7 +27,7 @@ type EventEngine struct {
 // EventWorkflowNodeJobRun contains event data for a workflow node run job
 type EventWorkflowNodeJobRun struct {
 	ID                int64  `json:"id"`
-	WorkflowNodeRunID int64  `json:"workflow_node_run_id,omitempty""`
+	WorkflowNodeRunID int64  `json:"workflow_node_run_id,omitempty"`
 	Status            string `json:"status"`
 	Queued            int64  `json:"queued,omitempty"`
 	Start             int64  `json:"start,omitempty"`
@@ -37,7 +39,7 @@ type EventWorkflowNodeJobRun struct {
 type EventWorkflowNodeRun struct {
 	ID                    int64                     `json:"id,omitempty"`
 	Number                int64                     `json:"num,omitempty"`
-	SubNumber             int64                     `json:"num,omitempty"`
+	SubNumber             int64                     `json:"subnum,omitempty"`
 	Status                string                    `json:"status,omitempty"`
 	Start                 int64                     `json:"start,omitempty"`
 	Done                  int64                     `json:"done,omitempty"`
@@ -49,7 +51,7 @@ type EventWorkflowNodeRun struct {
 	Payload               interface{}               `json:"payload,omitempty"`
 	HookEvent             *WorkflowNodeRunHookEvent `json:"hook_event"`
 	Manual                *WorkflowNodeRunManual    `json:"manual"`
-	SourceNodeRuns        []int64                   `json:"manual"`
+	SourceNodeRuns        []int64                   `json:"source_node_runs"`
 	WorkflowRunID         int64                     `json:"workflow_run_id"`
 	RepositoryManagerName string                    `json:"repository_manager_name"`
 	RepositoryFullName    string                    `json:"repository_full_name"`

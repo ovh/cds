@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -287,7 +286,6 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 
 // UpdateVariable Update a variable in the given application
 func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
-	varValue := variable.Value
 	variableBefore, err := LoadVariableByID(db, app.ID, variable.ID, WithClearPassword())
 	if err != nil {
 		return sdk.WrapError(err, "UpdateVariable> cannot load variable %d", variable.ID)
@@ -299,15 +297,15 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	}
 
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
-		varValue = variableBefore.Value
+		variable.Value = variableBefore.Value
 	}
-	clear, cipher, err := secret.EncryptS(variable.Type, varValue)
+	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
 		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret %s", variable.Name)
 	}
 
-	query := `UPDATE application_variable SET var_name= $1, var_value=$2, cipher_value=$3 WHERE id = $4`
-	result, err := db.Exec(query, variable.Name, clear, cipher, variable.ID)
+	query := `UPDATE application_variable SET var_name= $1, var_value=$2, cipher_value=$3, var_type = $5 WHERE id = $4`
+	result, err := db.Exec(query, variable.Name, clear, cipher, variable.ID, variable.Type)
 	if err != nil {
 		return sdk.WrapError(err, "Cannot update variable %s", variable.Name)
 	}
@@ -384,25 +382,15 @@ func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 // AddKeyPairToApplication generate a ssh key pair and add them as application variables
 // DEPCRECATED
 func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, keyname string, u *sdk.User) error {
-	pubR, privR, errGenerate := keys.GenerateSSHKeyPair(keyname)
+	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return sdk.WrapError(errGenerate, "AddKeyPairToApplication> Cannot generate key")
-	}
-
-	pub, errPub := ioutil.ReadAll(pubR)
-	if errPub != nil {
-		return sdk.WrapError(errPub, "AddKeyPairToApplication> Unable to read public key")
-	}
-
-	priv, errPriv := ioutil.ReadAll(privR)
-	if errPriv != nil {
-		return sdk.WrapError(errPriv, "AddKeyPairToApplication> Unable to read private key")
 	}
 
 	v := sdk.Variable{
 		Name:  keyname,
 		Type:  sdk.KeyVariable,
-		Value: string(priv),
+		Value: k.Private,
 	}
 
 	if err := InsertVariable(db, store, app, v, u); err != nil {
@@ -412,7 +400,7 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Ap
 	p := sdk.Variable{
 		Name:  keyname + ".pub",
 		Type:  sdk.TextVariable,
-		Value: string(pub),
+		Value: k.Public,
 	}
 
 	return InsertVariable(db, store, app, p, u)

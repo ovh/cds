@@ -33,7 +33,7 @@ type TagsService struct {
 //
 // GitLab API docs: https://docs.gitlab.com/ce/api/tags.html
 type Tag struct {
-	Commit  *Commit `json:"commit"`
+	Commit *Commit `json:"commit"`
 	Release struct {
 		TagName     string `json:"tag_name"`
 		Description string `json:"description"`
@@ -46,19 +46,27 @@ func (t Tag) String() string {
 	return Stringify(t)
 }
 
+// ListTagsOptions represents the available ListTags() options.
+//
+// GitLab API docs:
+// https://docs.gitlab.com/ce/api/branches.html#list-repository-tags
+type ListTagsOptions struct {
+	ListOptions
+}
+
 // ListTags gets a list of tags from a project, sorted by name in reverse
 // alphabetical order.
 //
 // GitLab API docs:
 // https://docs.gitlab.com/ce/api/tags.html#list-project-repository-tags
-func (s *TagsService) ListTags(pid interface{}, options ...OptionFunc) ([]*Tag, *Response, error) {
+func (s *TagsService) ListTags(pid interface{}, opt *ListTagsOptions, options ...OptionFunc) ([]*Tag, *Response, error) {
 	project, err := parseID(pid)
 	if err != nil {
 		return nil, nil, err
 	}
 	u := fmt.Sprintf("projects/%s/repository/tags", url.QueryEscape(project))
 
-	req, err := s.client.NewRequest("GET", u, nil, options)
+	req, err := s.client.NewRequest("GET", u, opt, options)
 	if err != nil {
 		return nil, nil, err
 	}

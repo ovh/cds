@@ -1,14 +1,17 @@
 package api
 
 import (
-	"io/ioutil"
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
@@ -18,9 +21,6 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -42,17 +42,12 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	pub, _ := ioutil.ReadAll(pubR)
-	priv, _ := ioutil.ReadAll(privR)
-
-	k.Public = string(pub)
-	k.Private = string(priv)
-	k.KeyID = kid
+	k.Key = pgpK
 
 	if err := application.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
@@ -64,12 +59,19 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.GetRoute("GET", api.getKeysInApplicationHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	uri := router.GetRoute("GET", api.getKeysInApplicationHandler, vars)
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var keys []sdk.ApplicationKey
-	tester.AddCall("Test_getKeysInApplicationHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t), iffy.UnmarshalResponse(&keys))
-	tester.Run()
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &keys))
+	assert.Equal(t, len(keys), 1)
 }
 
 func Test_deleteKeyInApplicationHandler(t *testing.T) {
@@ -77,9 +79,6 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -113,12 +112,20 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.GetRoute("DELETE", api.deleteKeyInApplicationHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	uri := router.GetRoute("DELETE", api.deleteKeyInApplicationHandler, vars)
+
+	req, err := http.NewRequest("DELETE", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var keys []sdk.ApplicationKey
-	tester.AddCall("Test_deleteKeyInApplicationHandler", "DELETE", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(0), iffy.DumpResponse(t), iffy.UnmarshalResponse(&keys))
-	tester.Run()
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &keys))
+	assert.Equal(t, len(keys), 0)
 }
 
 func Test_addKeyInApplicationHandler(t *testing.T) {
@@ -126,9 +133,6 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
-
-	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -154,12 +158,19 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 	}
 
-	route := router.GetRoute("POST", api.addKeyInApplicationHandler, vars)
-	headers := assets.AuthHeaders(t, u, pass)
+	jsonBody, _ := json.Marshal(k)
+	body := bytes.NewBuffer(jsonBody)
+	uri := router.GetRoute("POST", api.addKeyInApplicationHandler, vars)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
 
 	var key sdk.ApplicationKey
-	tester.AddCall("Test_addKeyInApplicationHandler", "POST", route, k).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.UnmarshalResponse(&key))
-	tester.Run()
-
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &key))
 	assert.Equal(t, app.ID, key.ApplicationID)
 }

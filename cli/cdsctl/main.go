@@ -16,16 +16,35 @@ var (
 	noWarnings            bool
 	insecureSkipVerifyTLS bool
 	client                cdsclient.Interface
+	root                  *cobra.Command
 )
 
 func main() {
+	root = getRoot(false)
+	if err := root.Execute(); err != nil {
+		cli.ExitOnError(err)
+	}
+}
+
+func getRoot(isShell bool) *cobra.Command {
 	login := cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
 	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
+	update := cli.NewCommand(updateCmd, updateRun, nil, cli.CommandWithoutExtraFlags)
 	version := cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
+	shell := cli.NewCommand(shellCmd, shellRun, nil, cli.CommandWithoutExtraFlags)
+	doc := cli.NewCommand(docCmd, docRun, nil, cli.CommandWithoutExtraFlags)
 	monitoring := cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
 
-	root := cli.NewCommand(mainCmd, mainRun,
-		[]*cobra.Command{
+	var cmds []*cobra.Command
+
+	if isShell {
+		cmds = []*cobra.Command{
+			project(),
+			admin(),
+		}
+	} else {
+		cmds = []*cobra.Command{
+			doc, // hidden command
 			action,
 			login,
 			signup,
@@ -34,23 +53,29 @@ func main() {
 			pipeline,
 			group,
 			health,
-			project,
+			project(),
 			worker,
 			workflow,
+			update,
 			usr,
+			shell,
 			monitoring,
-			health,
 			version,
-		},
-	)
+			encrypt,
+			token,
+			admin(),
+		}
+	}
+
+	root = cli.NewCommand(mainCmd, mainRun, cmds)
 
 	root.PersistentFlags().StringVarP(&configFile, "file", "f", "", "set configuration file")
 	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 	root.PersistentFlags().BoolVarP(&noWarnings, "no-warnings", "w", false, "do not display warnings")
 	root.PersistentFlags().BoolVarP(&insecureSkipVerifyTLS, "insecure", "k", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-		//Do not load config nor display warnings on login
-		if cmd == login || cmd == signup || (cmd.Run == nil && cmd.RunE == nil) {
+		//Do not load config on login
+		if cmd == login || cmd == signup || cmd == doc || (cmd.Run == nil && cmd.RunE == nil) {
 			return
 		}
 
@@ -58,32 +83,47 @@ func main() {
 		cfg, err = loadConfig(configFile)
 		cli.ExitOnError(err, login.Help)
 
-		if cfg.Host != "" && cfg.User != "" && cfg.Token != "" {
-			client = cdsclient.New(*cfg)
-		} else {
-			client, err = loadClient(cfg)
-			cli.ExitOnError(err)
-		}
-
-		//Manage warnings
-		/*		if !internal.NoWarnings && cmd != user.Cmd {
-					displayWarnings()
-				}
-		*/
+		client = cdsclient.New(*cfg)
 	}
-
-	if err := root.Execute(); err != nil {
-		cli.ExitOnError(err)
-	}
-
+	return root
 }
 
 var mainCmd = cli.Command{
 	Name:  "cdsctl",
 	Short: "CDS Command line utility",
+	Long: `
+
+## Download
+
+You'll find last release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+
+
+## Authentication
+
+Per default, the command line ` + "`cdsctl`" + ` uses your keychain on your os:
+
+* OSX: Keychain Access
+* Linux System: Secret-tool (libsecret)
+* Windows: Windows Credentials service
+
+You can bypass keychain tools by using environment variables:
+
+	CDS_API_URL="https://instance.cds.api" CDS_USER="username" CDS_TOKEN="yourtoken" cdsctl [command]
+
+
+Want to debug something? You can use ` + "`CDS_VERBOSE`" + ` environment variable.
+
+	CDS_VERBOSE=true cdsctl [command]
+
+
+If you're using a self-signed certificate on CDS API, you probably want to use ` + "`CDS_INSECURE`" + ` variable.
+
+	CDS_INSECURE=true cdsctl [command]
+
+`,
 }
 
 func mainRun(vals cli.Values) error {
-	fmt.Println("Welcome on CDS")
+	fmt.Println("Welcome to CDS")
 	return nil
 }

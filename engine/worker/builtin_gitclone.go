@@ -17,15 +17,14 @@ import (
 
 func runGitClone(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		url := sdk.ParameterFind(a.Parameters, "url")
-		privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
-		user := sdk.ParameterFind(a.Parameters, "user")
-		password := sdk.ParameterFind(a.Parameters, "password")
-		branch := sdk.ParameterFind(a.Parameters, "branch")
+		url := sdk.ParameterFind(&a.Parameters, "url")
+		privateKey := sdk.ParameterFind(&a.Parameters, "privateKey")
+		user := sdk.ParameterFind(&a.Parameters, "user")
+		password := sdk.ParameterFind(&a.Parameters, "password")
+		branch := sdk.ParameterFind(&a.Parameters, "branch")
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
-		commit := sdk.ParameterFind(a.Parameters, "commit")
-		directory := sdk.ParameterFind(a.Parameters, "directory")
-		cdsVersion := sdk.ParameterFind(*params, "cds.version")
+		commit := sdk.ParameterFind(&a.Parameters, "commit")
+		directory := sdk.ParameterFind(&a.Parameters, "directory")
 
 		if url == nil {
 			res := sdk.Result{
@@ -118,122 +117,250 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			dir = directory.Value
 		}
 
-		//Prepare all options - logs
-		stdErr := new(bytes.Buffer)
-		stdOut := new(bytes.Buffer)
+		return gitClone(w, params, url.Value, dir, auth, clone, sendLog)
+	}
+}
+func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string, auth *git.AuthOpts, clone *git.CloneOpts, sendLog LoggerFunc) sdk.Result {
+	//Prepare all options - logs
+	stdErr := new(bytes.Buffer)
+	stdOut := new(bytes.Buffer)
 
-		output := &git.OutputOpts{
-			Stderr: stdErr,
-			Stdout: stdOut,
+	output := &git.OutputOpts{
+		Stderr: stdErr,
+		Stdout: stdOut,
+	}
+
+	git.LogFunc = log.Info
+
+	//Perform the git clone
+	err := git.Clone(url, dir, auth, clone, output)
+
+	//Send the logs
+	if len(stdOut.Bytes()) > 0 {
+		sendLog(stdOut.String())
+	}
+	if len(stdErr.Bytes()) > 0 {
+		sendLog(stdErr.String())
+	}
+
+	if err != nil {
+		res := sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Unable to git clone: %s", err),
 		}
+		sendLog(res.Reason)
+		return res
+	}
 
-		git.LogFunc = log.Info
+	// extract info only if we git clone the same repo as current application linked to the pipeline
+	gitURLSSH := sdk.ParameterValue(*params, "git.url")
+	gitURLHTTP := sdk.ParameterValue(*params, "git.http_url")
+	if gitURLSSH == url || gitURLHTTP == url {
+		extractInfo(w, dir, params, clone.Branch, clone.CheckoutCommit, sendLog)
+	}
 
-		//Perform the git clone
-		err := git.Clone(url.Value, dir, auth, clone, output)
+	stdTaglistErr := new(bytes.Buffer)
+	stdTagListOut := new(bytes.Buffer)
+	outputGitTag := &git.OutputOpts{
+		Stderr: stdTaglistErr,
+		Stdout: stdTagListOut,
+	}
 
-		//Send the logs
-		if len(stdOut.Bytes()) > 0 {
-			sendLog(stdOut.String())
+	errTag := git.TagList(url, dir, auth, outputGitTag)
+
+	if len(stdTaglistErr.Bytes()) > 0 {
+		sendLog(stdTaglistErr.String())
+	}
+
+	if errTag != nil {
+		res := sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Unable to list tag for getting current version: %s", errTag),
 		}
-		if len(stdErr.Bytes()) > 0 {
-			sendLog(stdErr.String())
+		sendLog(res.Reason)
+		return res
+	}
+
+	v, errorMake := semver.Make("0.0.1")
+	if errorMake != nil {
+		res := sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Unable init semver: %s", errorMake),
 		}
+		sendLog(res.Reason)
+		return res
+	}
 
-		if err != nil {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable to git clone: %s", err),
-			}
-			sendLog(res.Reason)
-			return res
-		}
-
-		stdTaglistErr := new(bytes.Buffer)
-		stdTagListOut := new(bytes.Buffer)
-		outputGitTag := &git.OutputOpts{
-			Stderr: stdTaglistErr,
-			Stdout: stdTagListOut,
-		}
-
-		errTag := git.TagList(url.Value, dir, auth, outputGitTag)
-
-		if len(stdTaglistErr.Bytes()) > 0 {
-			sendLog(stdTaglistErr.String())
-		}
-
-		if errTag != nil {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable to list tag for getting current version: %s", errTag),
-			}
-			sendLog(res.Reason)
-			return res
-		}
-
-		v, errorMake := semver.Make("0.0.1")
-		if errorMake != nil {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable init semver: %s", errorMake),
-			}
-			sendLog(res.Reason)
-			return res
-		}
-
-		//Send the logs
-		if len(stdTagListOut.Bytes()) > 0 {
-			// search for version
-			lines := strings.Split(stdTagListOut.String(), "\n")
-			versions := semver.Versions{}
-			re := regexp.MustCompile("refs/tags/(.*)")
-			for _, l := range lines {
-				match := re.FindStringSubmatch(l)
-				if len(match) >= 1 {
-					tag := match[1]
-					if sv, err := semver.Parse(tag); err == nil {
-						versions = append(versions, sv)
-					}
+	//Send the logs
+	if len(stdTagListOut.Bytes()) > 0 {
+		// search for version
+		lines := strings.Split(stdTagListOut.String(), "\n")
+		versions := semver.Versions{}
+		re := regexp.MustCompile("refs/tags/(.*)")
+		for _, l := range lines {
+			match := re.FindStringSubmatch(l)
+			if len(match) >= 1 {
+				tag := match[1]
+				if sv, err := semver.Parse(tag); err == nil {
+					versions = append(versions, sv)
 				}
 			}
-			semver.Sort(versions)
-			if len(versions) > 0 {
-				// and we increment the last version found
-				v = versions[len(versions)-1]
-				v.Patch++
-			}
 		}
-
-		pr, errPR := semver.NewPRVersion("snapshot")
-		if errPR != nil {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable create snapshot version: %s", errTag),
-			}
-			sendLog(res.Reason)
-			return res
+		semver.Sort(versions)
+		if len(versions) > 0 {
+			// and we increment the last version found
+			v = versions[len(versions)-1]
+			v.Patch++
 		}
-		v.Pre = append(v.Pre, pr)
-
-		if cdsVersion != nil {
-			v.Build = append(v.Build, cdsVersion.Value, "cds")
-		}
-
-		semverVar := sdk.Variable{
-			Name:  "cds.semver",
-			Type:  sdk.StringVariable,
-			Value: v.String(),
-		}
-
-		if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
-			}
-			sendLog(res.Reason)
-			return res
-		}
-
-		return sdk.Result{Status: sdk.StatusSuccess.String()}
 	}
+
+	pr, errPR := semver.NewPRVersion("snapshot")
+	if errPR != nil {
+		res := sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Unable create snapshot version: %s", errTag),
+		}
+		sendLog(res.Reason)
+		return res
+	}
+	v.Pre = append(v.Pre, pr)
+
+	cdsVersion := sdk.ParameterFind(params, "cds.version")
+	if cdsVersion != nil {
+		v.Build = append(v.Build, cdsVersion.Value, "cds")
+	}
+
+	semverVar := sdk.Variable{
+		Name:  "cds.semver",
+		Type:  sdk.StringVariable,
+		Value: v.String(),
+	}
+
+	if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
+		res := sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
+		}
+		sendLog(res.Reason)
+		return res
+	}
+
+	return sdk.Result{Status: sdk.StatusSuccess.String()}
+}
+
+func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, commit string, sendLog LoggerFunc) error {
+	author := sdk.ParameterValue(*params, "git.author")
+	authorEmail := sdk.ParameterValue(*params, "git.author.email")
+	message := sdk.ParameterValue(*params, "git.message")
+
+	info := git.ExtractInfo(dir)
+
+	if info.GitDescribe != "" {
+		gitDescribe := sdk.Variable{
+			Name:  "git.describe",
+			Type:  sdk.StringVariable,
+			Value: info.GitDescribe,
+		}
+
+		if _, err := w.addVariableInPipelineBuild(gitDescribe, params); err != nil {
+			return fmt.Errorf("Error on addVariableInPipelineBuild (describe): %s", err)
+		}
+		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
+	}
+
+	if branch == "" || branch == "{{.git.branch}}" {
+		if info.Branch != "" {
+			gitBranch := sdk.Variable{
+				Name:  "git.branch",
+				Type:  sdk.StringVariable,
+				Value: info.Branch,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitBranch, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (branch): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.branch: %s", info.Branch))
+		} else {
+			sendLog("git.branch: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.branch: %s", branch))
+	}
+
+	if commit == "" || commit == "{{.git.hash}}" {
+		if info.Hash != "" {
+			gitHash := sdk.Variable{
+				Name:  "git.hash",
+				Type:  sdk.StringVariable,
+				Value: info.Hash,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitHash, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.hash: %s", info.Hash))
+		} else {
+			sendLog("git.hash: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.hash: %s", commit))
+	}
+
+	if message == "" {
+		if info.Message != "" {
+			gitMessage := sdk.Variable{
+				Name:  "git.message",
+				Type:  sdk.StringVariable,
+				Value: info.Message,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitMessage, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (message): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.message: %s", info.Message))
+		} else {
+			sendLog("git.message: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.message: %s", message))
+	}
+
+	if author == "" {
+		if info.Author != "" {
+			gitAuthor := sdk.Variable{
+				Name:  "git.author",
+				Type:  sdk.StringVariable,
+				Value: info.Author,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitAuthor, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (author): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.author: %s", info.Author))
+		} else {
+			sendLog("git.author: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.author: %s", author))
+	}
+
+	if authorEmail == "" {
+		if info.AuthorEmail != "" {
+			gitAuthorEmail := sdk.Variable{
+				Name:  "git.author.email",
+				Type:  sdk.StringVariable,
+				Value: info.AuthorEmail,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitAuthorEmail, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (authorEmail): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.author.email: %s", info.AuthorEmail))
+		} else {
+			sendLog("git.author.email: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.author.email: %s", authorEmail))
+	}
+	return nil
 }

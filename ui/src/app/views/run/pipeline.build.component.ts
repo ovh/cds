@@ -11,8 +11,6 @@ import {ApplicationPipelineService} from '../../service/application/pipeline/app
 import {DurationService} from '../../shared/duration/duration.service';
 import {RouterService} from '../../service/router/router.service';
 
-declare var Duration: any;
-
 @Component({
     selector: 'app-pipeline-build',
     templateUrl: './pipeline.build.html',

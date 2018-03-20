@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -72,7 +71,7 @@ func (api *API) addWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "addWorkerModel> cannot add worker model")
 		}
 
-		return WriteJSON(w, r, model, http.StatusOK)
+		return WriteJSON(w, model, http.StatusOK)
 	}
 }
 
@@ -120,7 +119,7 @@ func (api *API) spawnErrorWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Cannot commit tx")
 		}
 
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -180,6 +179,11 @@ func (api *API) updateWorkerModelHandler() Handler {
 		//If the model modelID has not been set, keep the old modelID
 		if model.ID == 0 {
 			model.ID = old.ID
+		}
+
+		// provision is allowed only for CDS Admin
+		if !getUser(ctx).Admin && model.Provision > 0 {
+			model.Provision = 0
 		}
 
 		//User must be admin of the group set in the new model
@@ -255,19 +259,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "updateWorkerModel> unable to commit transaction")
 		}
 
-		// Recompute warnings
-		go func() {
-			warnings, err := sanity.LoadAllWarnings(api.mustDB(), "")
-			if err != nil {
-				log.Warning("updateWorkerModel> cannot load warnings: %s", err)
-			}
-
-			for _, warning := range warnings {
-				sanity.CheckPipeline(api.mustDB(), api.Cache, &warning.Project, &warning.Pipeline)
-			}
-		}()
-
-		return WriteJSON(w, r, model, http.StatusOK)
+		return WriteJSON(w, model, http.StatusOK)
 	}
 }
 
@@ -300,7 +292,7 @@ func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name stri
 	if err != nil {
 		return sdk.WrapError(err, "getWorkerModel> cannot load worker model")
 	}
-	return WriteJSON(w, r, m, http.StatusOK)
+	return WriteJSON(w, m, http.StatusOK)
 }
 
 func (api *API) getWorkerModelsEnabledHandler() Handler {
@@ -312,7 +304,7 @@ func (api *API) getWorkerModelsEnabledHandler() Handler {
 		if errgroup != nil {
 			return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", getHatchery(ctx).ID, getHatchery(ctx).GroupID)
 		}
-		return WriteJSON(w, r, models, http.StatusOK)
+		return WriteJSON(w, models, http.StatusOK)
 	}
 }
 
@@ -339,24 +331,18 @@ func (api *API) getWorkerModelsHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> this route can't be called by worker or hatchery")
 		}
 
-		return WriteJSON(w, r, models, http.StatusOK)
+		return WriteJSON(w, models, http.StatusOK)
 	}
 }
 
 func (api *API) getWorkerModelTypesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
+		return WriteJSON(w, sdk.AvailableWorkerModelType, http.StatusOK)
 	}
 }
 
 func (api *API) getWorkerModelCommunicationsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, sdk.AvailableWorkerModelCommunication, http.StatusOK)
-	}
-}
-
-func (api *API) getWorkerModelCapaTypesHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
+		return WriteJSON(w, sdk.AvailableWorkerModelCommunication, http.StatusOK)
 	}
 }

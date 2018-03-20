@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -20,6 +21,19 @@ type Flag struct {
 // Values represents commands flags and args values accessible with their name
 type Values map[string]string
 
+// GetInt64 returns a int64
+func (v *Values) GetInt64(s string) (int64, error) {
+	ns := (*v)[s]
+	if ns == "" {
+		return 0, nil
+	}
+	n, err := strconv.ParseInt(ns, 10, 64)
+	if err != nil {
+		return -1, fmt.Errorf("%s invalid: not a integer", s)
+	}
+	return n, nil
+}
+
 // GetString returns a string
 func (v *Values) GetString(s string) string {
 	return (*v)[s]
@@ -28,6 +42,11 @@ func (v *Values) GetString(s string) string {
 // GetBool returns a string
 func (v *Values) GetBool(s string) bool {
 	return strings.ToLower((*v)[s]) == "true" || strings.ToLower((*v)[s]) == "yes" || strings.ToLower((*v)[s]) == "y" || strings.ToLower((*v)[s]) == "1"
+}
+
+// GetStringSlice returns a string slice
+func (v *Values) GetStringSlice(s string) []string {
+	return strings.Split((*v)[s], "||")
 }
 
 // Arg represent a command argument
@@ -70,12 +89,17 @@ func (s args) Swap(i, j int) {
 // Command represents the way to instanciate a cobra.Command
 type Command struct {
 	Name         string
+	Ctx          []Arg
 	Args         []Arg
 	OptionalArgs []Arg
+	VariadicArgs Arg
 	Short        string
 	Long         string
+	Example      string
 	Flags        []Flag
 	Aliases      []string
+	Hidden       bool
+	PreRun       func(c *Command, args *[]string) error
 }
 
 // CommandModifier is a function type to extend a command
@@ -159,6 +183,13 @@ func CommandWithExtraAliases(c *Command, run interface{}) {
 		extraAliases = []string{"rm", "remove", "del"}
 	}
 	c.Aliases = append(c.Aliases, extraAliases...)
+}
+
+// CommandWithPreRun to add pre run function
+func CommandWithPreRun(f func(c *Command, args *[]string) error) func(c *Command, run interface{}) {
+	return func(c *Command, run interface{}) {
+		c.PreRun = f
+	}
 }
 
 // ErrWrongUsage is a common error

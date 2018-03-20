@@ -90,7 +90,7 @@ func (api *API) addPollerHandler() Handler {
 			return sdk.WrapError(errW, "addPollerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -166,7 +166,7 @@ func (api *API) updatePollerHandler() Handler {
 			return sdk.WrapError(errW, "updatePollerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, r, app, http.StatusOK)
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -187,7 +187,7 @@ func (api *API) getApplicationPollersHandler() Handler {
 			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application poller %s/%s", projectName, appName)
 		}
 
-		return WriteJSON(w, r, a.RepositoryPollers, http.StatusOK)
+		return WriteJSON(w, a.RepositoryPollers, http.StatusOK)
 	}
 }
 
@@ -216,7 +216,7 @@ func (api *API) getPollersHandler() Handler {
 
 		}
 
-		return WriteJSON(w, r, poller, http.StatusOK)
+		return WriteJSON(w, poller, http.StatusOK)
 	}
 }
 
@@ -275,6 +275,6 @@ func (api *API) deletePollerHandler() Handler {
 			return sdk.WrapError(errW, "deletePollerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, r, a, http.StatusOK)
+		return WriteJSON(w, a, http.StatusOK)
 	}
 }

@@ -1,0 +1,40 @@
+name: Create a simple workflow (ITSCWRKFLW2) and run it
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW2/pipeline.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW2/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW2"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW2 "
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW2 ITSCWRKFLW2"
+  - script: "{{.cds.build.cdsctl}} application add ITSCWRKFLW2 ITSCWRKFLW2-APPLICATION"
+
+- name: import pipeline
+  steps:
+  - script: {{.cds.build.cdsctl}} pipeline import --force ITSCWRKFLW2 ./tests/fixtures/ITSCWRKFLW2/pipeline.yml
+
+- name: import workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW2 ./tests/fixtures/ITSCWRKFLW2/workflow.yml
+
+- name: run workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Building
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by

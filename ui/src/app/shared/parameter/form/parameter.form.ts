@@ -4,6 +4,7 @@ import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../parameter.event.model';
 import {ParameterService} from '../../../service/parameter/parameter.service';
 import {Project} from '../../../model/project.model';
+import {AllKeys} from '../../../model/keys.model';
 
 @Component({
     selector: 'app-parameter-form',
@@ -17,6 +18,7 @@ export class ParameterFormComponent {
 
     @Input() project: Project;
     @Input() suggest: Array<string>;
+    @Input() keys: AllKeys;
     @ViewChild('selectType') selectType: ElementRef;
 
     @Output() createParameterEvent = new EventEmitter<ParameterEvent>();

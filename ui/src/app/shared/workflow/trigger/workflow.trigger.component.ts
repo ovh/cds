@@ -3,9 +3,11 @@ import {
     Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeTrigger
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
+import {PipelineStatus} from '../../../model/pipeline.model';
+import {WorkflowNodeAddWizardComponent} from '../../../shared/workflow/node/wizard/node.wizard.component';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-trigger',
@@ -18,12 +20,17 @@ export class WorkflowTriggerComponent {
     triggerModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
+    @ViewChild('nodeWizard')
+    nodeWizard: WorkflowNodeAddWizardComponent;
+
     @Output() triggerChange = new EventEmitter<WorkflowNodeTrigger>();
     @Input() triggerSrcNode: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
     @Input() trigger: WorkflowNodeTrigger;
     @Input() loading: boolean;
+
+    currentSection = 'pipeline';
 
     constructor(private _modalService: SuiModalService) {
     }
@@ -41,19 +48,32 @@ export class WorkflowTriggerComponent {
         this.trigger.workflow_dest_node = node;
     }
 
+    pipelineSectionChanged(pipSection: string) {
+        this.currentSection = pipSection;
+    }
+
     saveTrigger(): void {
-        if (!this.trigger.workflow_dest_node.id) {
-            if (!this.trigger.workflow_dest_node.context) {
-                this.trigger.workflow_dest_node.context = new WorkflowNodeContext();
+        this.loading = true;
+        this.nodeWizard.goToNextSection()
+          .pipe(finalize(() => this.loading = false))
+          .subscribe(() => {
+            if (!this.trigger.workflow_dest_node.id) {
+                if (!this.trigger.workflow_dest_node.context) {
+                    this.trigger.workflow_dest_node.context = new WorkflowNodeContext();
+                }
+                this.trigger.workflow_dest_node.context.conditions = new WorkflowNodeConditions();
+                this.trigger.workflow_dest_node.context.conditions.plain = new Array<WorkflowNodeCondition>();
+                let c = new  WorkflowNodeCondition();
+                c.variable = 'cds.status';
+                c.value = PipelineStatus.SUCCESS;
+                c.operator = 'eq';
+                this.trigger.workflow_dest_node.context.conditions.plain.push(c);
             }
-            this.trigger.workflow_dest_node.context.conditions = new WorkflowNodeConditions();
-            this.trigger.workflow_dest_node.context.conditions.plain = new Array<WorkflowNodeCondition>();
-            let c = new  WorkflowNodeCondition();
-            c.variable = 'cds.status';
-            c.value = 'Success';
-            c.operator = 'eq';
-            this.trigger.workflow_dest_node.context.conditions.plain.push(c);
-        }
-        this.triggerChange.emit(this.trigger);
+            this.triggerChange.emit(this.trigger);
+          });
+    }
+
+    nextStep() {
+      this.nodeWizard.goToNextSection().subscribe((section) => this.currentSection = section);
     }
 }

@@ -1,12 +1,17 @@
 package workflow
 
 import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/venom"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -108,13 +113,23 @@ func fromDBNodeRun(rr NodeRun) (*sdk.WorkflowNodeRun, error) {
 	r.WorkflowRunID = rr.WorkflowRunID
 	r.ID = rr.ID
 	r.WorkflowNodeID = rr.WorkflowNodeID
+	r.WorkflowNodeName = rr.WorkflowNodeName
 	r.Number = rr.Number
 	r.SubNumber = rr.SubNumber
 	r.Status = rr.Status
 	r.Start = rr.Start
 	r.Done = rr.Done
 	r.LastModified = rr.LastModified
-	//r.Done              = rr. <<---- WHERE ?
+
+	if rr.VCSHash.Valid {
+		r.VCSHash = rr.VCSHash.String
+	}
+	if rr.VCSRepository.Valid {
+		r.VCSRepository = rr.VCSRepository.String
+	}
+	if rr.VCSBranch.Valid {
+		r.VCSBranch = rr.VCSBranch.String
+	}
 
 	if err := gorpmapping.JSONNullString(rr.TriggersRun, &r.TriggersRun); err != nil {
 		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run trigger %d", r.ID)
@@ -175,12 +190,20 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB.ID = n.ID
 	nodeRunDB.WorkflowRunID = n.WorkflowRunID
 	nodeRunDB.WorkflowNodeID = n.WorkflowNodeID
+	nodeRunDB.WorkflowNodeName = n.WorkflowNodeName
 	nodeRunDB.Number = n.Number
 	nodeRunDB.SubNumber = n.SubNumber
 	nodeRunDB.Status = n.Status
 	nodeRunDB.Start = n.Start
 	nodeRunDB.Done = n.Done
 	nodeRunDB.LastModified = n.LastModified
+
+	nodeRunDB.VCSHash.Valid = true
+	nodeRunDB.VCSHash.String = n.VCSHash
+	nodeRunDB.VCSBranch.Valid = true
+	nodeRunDB.VCSBranch.String = n.VCSBranch
+	nodeRunDB.VCSRepository.Valid = true
+	nodeRunDB.VCSRepository.String = n.VCSRepository
 
 	if n.TriggersRun != nil {
 		s, err := gorpmapping.JSONToNullString(n.TriggersRun)
@@ -256,17 +279,6 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	return nodeRunDB, nil
 }
 
-//updateNodeRunStatus update status of a workflow run node
-func updateNodeRunStatus(db gorp.SqlExecutor, ID int64, status string) error {
-	//Update workflow node run status
-	query := "UPDATE workflow_node_run SET status = $1, last_modified = $2, done = $3 WHERE id = $4"
-	now := time.Now()
-	if _, err := db.Exec(query, status, now, now, ID); err != nil {
-		return sdk.WrapError(err, "UpdateNodeRunStatus> Unable to set workflow_node_run id %d with status %s", ID, status)
-	}
-	return nil
-}
-
 //UpdateNodeRun updates in table workflow_node_run
 func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	log.Debug("workflow.UpdateNodeRun> node.id=%d, status=%s", n.ID, n.Status)
@@ -278,4 +290,247 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		return err
 	}
 	return nil
+}
+
+// GetNodeRunBuildCommits gets commits for given node run and return current vcs info
+func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow, wNodeName string, number int64, nodeRun *sdk.WorkflowNodeRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
+	var cur sdk.BuildNumberAndHash
+	if app == nil {
+		return nil, cur, nil
+	}
+
+	if app.VCSServer == "" {
+		return nil, cur, nil
+	}
+	cur.BuildNumber = number
+
+	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
+	if vcsServer == nil {
+		return nil, cur, nil
+	}
+
+	res := []sdk.VCSCommit{}
+	//Get the RepositoriesManager Client
+	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+	if errclient != nil {
+		return nil, cur, sdk.WrapError(errclient, "GetNodeRunBuildCommits> Cannot get client")
+	}
+
+	cur.Remote = nodeRun.VCSRepository
+	cur.Branch = nodeRun.VCSBranch
+	cur.Hash = nodeRun.VCSHash
+
+	if cur.Remote == "" {
+		cur.Remote = app.RepositoryFullname
+	}
+
+	if cur.Branch == "" {
+		branches, errBr := client.Branches(cur.Remote)
+		if errBr != nil {
+			return nil, cur, sdk.WrapError(errBr, "GetNodeRunBuildCommits> Cannot load branches from vcs api remote %s", cur.Remote)
+		}
+		found := false
+		for _, br := range branches {
+			if br.Default {
+				cur.Branch = br.DisplayID
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, cur, sdk.WrapError(fmt.Errorf("Cannot find default branch from vcs api"), "GetNodeRunBuildCommits>")
+		}
+	}
+
+	var envID int64
+	if env != nil {
+		envID = env.ID
+	}
+
+	repo := app.RepositoryFullname
+	if cur.Remote != "" {
+		repo = cur.Remote
+	}
+
+	var lastCommit sdk.VCSCommit
+	if cur.Hash == "" {
+		//If we only have the current branch, search for the branch
+		br, err := client.Branch(repo, cur.Branch)
+		if err != nil {
+			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
+		}
+		if br != nil {
+			if br.LatestCommit == "" {
+				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "GetNodeRunBuildCommits> Branch or lastest commit not found")
+			}
+
+			//and return the last commit of the branch
+			log.Debug("get the last commit : %s", br.LatestCommit)
+			cm, errcm := client.Commit(repo, br.LatestCommit)
+			if errcm != nil {
+				return nil, cur, sdk.WrapError(errcm, "GetNodeRunBuildCommits> Cannot get commits")
+			}
+			lastCommit = cm
+			cur.Hash = cm.Hash
+		}
+	}
+
+	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
+	prev, errcurr := PreviousNodeRunVCSInfos(db, p.Key, wf, wNodeName, cur, app.ID, envID)
+	if errcurr != nil {
+		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeName=%s, applicationID=%d)", number, wNodeName, app.ID)
+	}
+
+	if prev.Hash == "" {
+		log.Debug("GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
+	} else {
+		log.Debug("GetNodeRunBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+	}
+
+	if prev.Hash != "" && cur.Hash == prev.Hash {
+		log.Debug("GetNodeRunBuildCommits> there is not difference between the previous build and the current build")
+	} else if prev.Hash != "" {
+		if cur.Hash == "" {
+			br, err := client.Branch(repo, cur.Branch)
+			if err != nil {
+				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
+			}
+			cur.Hash = br.LatestCommit
+		}
+		//If we are lucky, return a true diff
+		commits, err := client.Commits(repo, cur.Branch, prev.Hash, cur.Hash)
+		if err != nil {
+			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+		}
+		res = commits
+	} else if prev.Hash == "" {
+		if lastCommit.Hash != "" {
+			res = []sdk.VCSCommit{lastCommit}
+		}
+	} else {
+		//If we only get current node run hash
+		log.Debug("GetNodeRunBuildCommits>  Looking for every commit until %s ", cur.Hash)
+		c, err := client.Commits(repo, cur.Branch, "", cur.Hash)
+		if err != nil {
+			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+		}
+		res = c
+	}
+
+	return res, cur, nil
+}
+
+// PreviousNodeRun find previous node run
+func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.WorkflowNode, workflowID int64) (sdk.WorkflowNodeRun, error) {
+	query := `
+					SELECT workflow_node_run.* FROM workflow_node_run
+					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
+					WHERE vcs_branch = $3 AND workflow_node_run.num <= $4 AND workflow_node_run.workflow_node_id = $5 AND workflow_node_run.id != $6
+					ORDER BY workflow_node_run.num, workflow_node_run.sub_num DESC
+					LIMIT 1
+				`
+	var nodeRun sdk.WorkflowNodeRun
+	var rr = NodeRun{}
+	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
+		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run: %s [%s %d %s %d %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID)
+	}
+	pNodeRun, errF := fromDBNodeRun(rr)
+	if errF != nil {
+		return nodeRun, sdk.WrapError(errF, "PreviousNodeRun> Cannot read node run")
+	}
+	nodeRun = *pNodeRun
+	return nodeRun, nil
+}
+
+//PreviousNodeRunVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url
+//for the current node run and the previous one on the same branch.
+//Returned value may be zero if node run are not found
+//If you don't have environment linked set envID to 0 or -1
+func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Workflow, nodeName string, current sdk.BuildNumberAndHash, appID int64, envID int64) (sdk.BuildNumberAndHash, error) {
+	var previous sdk.BuildNumberAndHash
+	var prevHash, prevBranch, prevRepository sql.NullString
+	var previousBuildNumber sql.NullInt64
+	lastRun, errL := LoadLastRun(db, projectKey, wf.Name, false)
+	if errL == sql.ErrNoRows || lastRun == nil {
+		return previous, nil
+	}
+	if errL != nil {
+		return previous, sdk.WrapError(errL, "PreviousNodeRunVCSInfos> Unable to load last run")
+	}
+
+	node := lastRun.Workflow.GetNodeByName(nodeName)
+	if node == nil {
+		return previous, nil
+	}
+
+	queryPrevious := `
+		SELECT workflow_node_run.vcs_branch, workflow_node_run.vcs_hash, workflow_node_run.vcs_repository, workflow_node_run.num
+		FROM workflow_node_run
+		JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
+		JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
+		WHERE workflow_node_run.vcs_hash IS NOT NULL
+		AND workflow_node_run.workflow_node_id = $3
+		AND workflow_node_run.num < $4
+    AND workflow_node_context.application_id = $5
+	`
+
+	argPrevious := []interface{}{nodeName, wf.ID, node.ID, current.BuildNumber, appID}
+	if envID > 0 {
+		argPrevious = append(argPrevious, envID)
+		queryPrevious += "AND workflow_node_context.environment_id = $6"
+	}
+	queryPrevious += fmt.Sprintf(" ORDER BY workflow_node_run.num DESC LIMIT 1")
+
+	errPrev := db.QueryRow(queryPrevious, argPrevious...).Scan(&prevBranch, &prevHash, &prevRepository, &previousBuildNumber)
+	if errPrev == sql.ErrNoRows {
+		log.Warning("PreviousNodeRunVCSInfos> no result with previous %d %s", current.BuildNumber, nodeName)
+		return previous, nil
+	}
+	if errPrev != nil {
+		return previous, errPrev
+	}
+
+	if prevBranch.Valid {
+		previous.Branch = prevBranch.String
+	}
+	if prevHash.Valid {
+		previous.Hash = prevHash.String
+	}
+	if prevRepository.Valid {
+		previous.Remote = prevRepository.String
+	}
+	if previousBuildNumber.Valid {
+		previous.BuildNumber = previousBuildNumber.Int64
+	}
+
+	return previous, nil
+}
+
+func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
+	log.Debug("updateNodeRunCommits> Updating %d commits for workflow_node_run #%d", len(commits), id)
+	commitsBtes, errMarshal := json.Marshal(commits)
+	if errMarshal != nil {
+		return sdk.WrapError(errMarshal, "updateNodeRunCommits> Unable to marshal commits")
+	}
+
+	if _, err := db.Exec("UPDATE workflow_node_run SET commits = $1 where id = $2", commitsBtes, id); err != nil {
+		return sdk.WrapError(err, "updateNodeRunCommits> Unable to update workflow_node_run id=%d", id)
+	}
+	return nil
+}
+
+// RunExist Check if run exist or not
+func RunExist(db gorp.SqlExecutor, projectKey string, workflowID int64, hash string) (bool, error) {
+	query := `
+	SELECT COUNT(1)
+		FROM workflow_node_run
+			JOIN workflow_run ON workflow_run.id = workflow_node_run.workflow_run_id
+			JOIN project ON project.id = workflow_run.project_id
+	WHERE project.projectkey = $1
+	AND workflow_run.workflow_id = $2
+	AND workflow_node_run.vcs_hash = $3
+	`
+
+	count, err := db.SelectInt(query, projectKey, workflowID, hash)
+	return count != 0, err
 }

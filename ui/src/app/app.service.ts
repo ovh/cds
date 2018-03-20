@@ -55,6 +55,18 @@ export class AppService {
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
+            case 'project.platforms':
+                opts = [
+                  new LoadOpts('withPlatforms', 'platforms')
+                ];
+                this.updateProjectCache(lastUpdate, opts);
+                break;
+            case 'project.keys':
+                opts = [
+                  new LoadOpts('withKeys', 'keys')
+                ];
+                this.updateProjectCache(lastUpdate, opts);
+                break;
             case 'project.application':
                 opts = [
                     new LoadOpts('withApplicationNames', 'application_names')
@@ -93,7 +105,7 @@ export class AppService {
                 if (params['key'] && params['key'] === lastUpdate.key) {
                     if (lastUpdate.username !== this._authStore.getUser().username) {
                         this._projStore.externalModification(lastUpdate.key);
-                        this._notif.create(this._translate.instant('project_modification', {username: lastUpdate.username}));
+                        this._notif.create(this._translate.instant('warning_project', {username: lastUpdate.username}));
                     }
 
                     // If working on sub resources - resync project
@@ -127,7 +139,7 @@ export class AppService {
 
                     if (lastUpdate.username !== this._authStore.getUser().username) {
                         this._appStore.externalModification(appKey);
-                        this._notif.create(this._translate.instant('application_modification', {username: lastUpdate.username}));
+                        this._notif.create(this._translate.instant('warning_application', {username: lastUpdate.username}));
                     }
 
                     if (params['pipName'] || lastUpdate.username === this._authStore.getUser().username) {
@@ -167,7 +179,7 @@ export class AppService {
                 if (params['key'] && params['key'] === lastUpdate.key && params['pipName'] === lastUpdate.name) {
                     if (lastUpdate.username !== this._authStore.getUser().username) {
                         this._pipStore.externalModification(pipKey);
-                        this._notif.create(this._translate.instant('pipeline_modification', {username: lastUpdate.username}));
+                        this._notif.create(this._translate.instant('warning_pipeline', {username: lastUpdate.username}));
                     }
 
                     if (params['buildNumber'] || lastUpdate.username === this._authStore.getUser().username) {
@@ -194,22 +206,14 @@ export class AppService {
             if (new Date(wfs.get(wfKey).last_modified).getTime() < lastUpdate.last_modified * 1000) {
                 let params = this._routerService.getRouteParams({}, this._routeActivated);
 
-                // delete linked applications from cache
-                this._wfStore.getWorkflowResolver(lastUpdate.key, lastUpdate.name)
-                    .subscribe((pip) => {
-                        if (pip && pip.usage && Array.isArray(pip.usage.applications)) {
-                            pip.usage.applications.forEach((app) => this._appStore.removeFromStore(lastUpdate.key + '-' + app.name));
-                        }
-                    });
-
-                // update pipeline
-                if (params['key'] && params['key'] === lastUpdate.key && params['pipName'] === lastUpdate.name) {
+                // update workflow
+                if (params['key'] && params['key'] === lastUpdate.key && params['workflowName'] === lastUpdate.name) {
                     if (lastUpdate.username !== this._authStore.getUser().username) {
                         this._wfStore.externalModification(wfKey);
-                        this._notif.create(this._translate.instant('pipeline_modification', {username: lastUpdate.username}));
+                        this._notif.create(this._translate.instant('warning_workflow', {username: lastUpdate.username}));
                     }
 
-                    if (params['buildNumber'] || lastUpdate.username === this._authStore.getUser().username) {
+                    if (lastUpdate.username === this._authStore.getUser().username) {
                         this._wfStore.resync(lastUpdate.key, lastUpdate.name);
                     }
                 } else {

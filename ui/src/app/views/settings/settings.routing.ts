@@ -5,6 +5,7 @@ import {SettingsComponent} from './settings.component';
 import {ActionAddComponent} from './action/add/action.add.component';
 import {ActionEditComponent} from './action/edit/action.edit.component';
 import {ActionListComponent} from './action/list/action.list.component';
+import {DownloadComponent} from './download/download.component';
 import {GroupEditComponent} from './group/edit/group.edit.component';
 import {GroupListComponent} from './group/list/group.list.component';
 import {UserEditComponent} from './user/edit/user.edit.component';
@@ -30,7 +31,8 @@ const routes: Routes = [
             { path: 'user/:username', component: UserEditComponent },
             { path: 'action', component: ActionListComponent },
             { path: 'action/add', component: ActionAddComponent },
-            { path: 'action/:name', component: ActionEditComponent }
+            { path: 'action/:name', component: ActionEditComponent },
+            { path: 'downloads', component: DownloadComponent }
         ]
     }
 ];

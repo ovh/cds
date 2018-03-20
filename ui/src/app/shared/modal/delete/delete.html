@@ -1,0 +1,12 @@
+<ng-template let-context let-modal="modal" #myDeleteModal>
+    <div class="header">
+      {{title}}
+    </div>
+    <div class="content">
+        {{msg}}
+    </div>
+    <div class="actions">
+        <div class="ui grey button" (click)="close()">{{'btn_cancel' | translate}}</div>
+        <div class="ui red button" (click)="eventAndClose(myDeleteModal)">{{'btn_delete' | translate}}</div>
+    </div>
+</ng-template>

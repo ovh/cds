@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -285,11 +284,13 @@ var LoadPipelineBuildOpts = struct {
 	WithRemoteName  LoadOptionFunc
 	WithEmptyRemote LoadOptionFunc
 	WithStatus      LoadOptionFunc
+	WithBuildNumber LoadOptionFunc
 }{
 	WithBranchName:  withBranchName,
 	WithRemoteName:  withRemoteName,
 	WithStatus:      withStatus,
 	WithEmptyRemote: withEmptyRemote,
+	WithBuildNumber: withBuildNumber,
 }
 
 func withBranchName(branchName string) ExecOptionFunc {
@@ -322,8 +323,16 @@ func withStatus(status string) ExecOptionFunc {
 		if status == "" {
 			return "", "", nbArg
 		}
-
 		return fmt.Sprintf(" AND pb.status = $%d", nbArg), status, nbArg + 1
+	}
+}
+
+func withBuildNumber(buildNumber string) ExecOptionFunc {
+	return func(nbArg int) (string, string, int) {
+		if buildNumber == "" {
+			return "", "", nbArg
+		}
+		return fmt.Sprintf(" AND pb.build_number = $%d", nbArg), buildNumber, nbArg + 1
 	}
 }
 
@@ -746,7 +755,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 		res = commits
 	} else if cur.Hash != "" {
 		//If we only get current pipeline build hash
-		log.Info("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
+		log.Debug("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(repo, cur.Branch, "", cur.Hash)
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
@@ -793,7 +802,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 			return nil, nil
 		}
 
-		//We don't need to pass apiURL and uiURL because they are not usefull for commit
+		//We don't need to pass apiURL and uiURL because they are not useful for commit
 		client, _ = repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
 	}
 
@@ -1016,9 +1025,6 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 	pb.Parameters = params
 	pb.Application = *app
 	pb.Environment = *env
-
-	// Update stats
-	stats.PipelineEvent(tx, p.Type, proj.ID, app.ID)
 
 	//Send notification
 	//Load previous pipeline (some app, pip, env and branch)
@@ -1470,19 +1476,10 @@ func GetRemotes(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.VCSRemote, err
 	return remotes, nil
 }
 
-//BuildNumberAndHash represents BuildNumber, Commit Hash and Branch for a Pipeline Build
-type BuildNumberAndHash struct {
-	BuildNumber int64
-	Hash        string
-	Branch      string
-	Remote      string
-	RemoteURL   string
-}
-
 //CurrentAndPreviousPipelineBuildVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url
 //for the current pipeline build and the previous one on the same branch.
 //Returned pointers may be null if pipeline build are not found
-func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, pipelineID, applicationID, environmentID int64) (*BuildNumberAndHash, *BuildNumberAndHash, error) {
+func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, pipelineID, applicationID, environmentID int64) (*sdk.BuildNumberAndHash, *sdk.BuildNumberAndHash, error) {
 	query := `
 			SELECT
 				current_pipeline.build_number, current_pipeline.vcs_changes_hash, current_pipeline.vcs_changes_branch, current_pipeline.vcs_remote, current_pipeline.vcs_remote_url,
@@ -1524,7 +1521,7 @@ func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, p
 		return nil, nil, err
 	}
 
-	cur := &BuildNumberAndHash{}
+	cur := &sdk.BuildNumberAndHash{}
 	if curBuildNumber.Valid {
 		cur.BuildNumber = curBuildNumber.Int64
 	}
@@ -1541,7 +1538,7 @@ func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, p
 		cur.RemoteURL = curRemoteURL.String
 	}
 
-	prev := &BuildNumberAndHash{}
+	prev := &sdk.BuildNumberAndHash{}
 	if prevBuildNumber.Valid {
 		prev.BuildNumber = prevBuildNumber.Int64
 	} else {

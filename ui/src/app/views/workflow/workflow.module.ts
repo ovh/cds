@@ -11,7 +11,7 @@ import {WorkflowBreadCrumbComponent} from './breadcrumb/workflow.breadcrumb.comp
 import {WorkflowRunJobVariableComponent} from './run/node/pipeline/variables/job.variables.component';
 import {WorkflowRunJobSpawnInfoComponent} from './run/node/pipeline/spawninfo/spawninfo.component';
 import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.component';
-import {WorkflowComponent} from './workflow.compoment';
+import {WorkflowComponent} from './workflow.component';
 import {WorkflowSidebarRunListComponent} from './sidebar/run/list/workflow.sidebar.run.component';
 import {WorkflowSidebarRunNodeComponent} from './sidebar/run/node/workflow.sidebar.run.node.component';
 import {StageStepSummaryComponent} from './sidebar/run/node/stage/stage.summary.component';
@@ -20,6 +20,9 @@ import {ActionStepSummaryComponent} from './sidebar/run/node/stage/job/action/ac
 import {WorkflowSidebarEditComponent} from './sidebar/edit/workflow.sidebar.edit.component';
 import {WorkflowSidebarEditJoinComponent} from './sidebar/edit/join/workflow.sidebar.edit.join.component';
 import {WorkflowSidebarEditNodeComponent} from './sidebar/edit/node/workflow.sidebar.edit.node.component';
+import {WorkflowSidebarHookComponent} from './sidebar/edit/hook/workflow.sidebar.hook.component';
+import {WorkflowSidebarRunHookComponent} from './sidebar/run/hook/workflow.sidebar.run.hook.component';
+import {WorkflowSidebarCodeComponent} from './sidebar/code/sidebar.code.component';
 import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.list.component';
 import {WorkflowRunTestsResultComponent} from './run/node/test/tests.component';
 import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.component';
@@ -27,7 +30,8 @@ import {WorkflowRunSummaryComponent} from './run/summary/workflow.run.summary.co
 import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
 import {WorkflowAdminComponent} from './show/admin/workflow.admin.component';
-import {WorkflowNotificationComponent} from './show/notification/workflow.notification.component';
+import {WorkflowNotificationFormComponent} from './show/notification/form/workflow.notification.form.component';
+import {WorkflowNotificationListComponent} from './show/notification/list/workflow.notification.list.component';
 
 @NgModule({
     declarations: [
@@ -37,7 +41,6 @@ import {WorkflowNotificationComponent} from './show/notification/workflow.notifi
         WorkflowBreadCrumbComponent,
         WorkflowGraphComponent,
         WorkflowRunComponent,
-        WorkflowNotificationComponent,
         WorkflowNodeRunComponent,
         WorkflowRunJobVariableComponent,
         WorkflowRunJobSpawnInfoComponent,
@@ -49,15 +52,20 @@ import {WorkflowNotificationComponent} from './show/notification/workflow.notifi
         WorkflowSidebarEditComponent,
         WorkflowSidebarEditNodeComponent,
         WorkflowSidebarEditJoinComponent,
+        WorkflowSidebarHookComponent,
+        WorkflowSidebarRunHookComponent,
         WorkflowNodeRunHistoryComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
+        WorkflowSidebarCodeComponent,
         StageStepSummaryComponent,
         JobStepSummaryComponent,
         ActionStepSummaryComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
-        WorkflowNodeRunSummaryComponent
+        WorkflowNodeRunSummaryComponent,
+        WorkflowNotificationFormComponent,
+        WorkflowNotificationListComponent
     ],
     imports: [
         SharedModule,

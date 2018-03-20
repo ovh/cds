@@ -4,25 +4,100 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/fsamin/go-dump"
 )
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID            int64              `json:"id" db:"id" cli:"-"`
-	Name          string             `json:"name" db:"name" cli:"name,key"`
-	Description   string             `json:"description,omitempty" db:"description" cli:"description"`
-	LastModified  time.Time          `json:"last_modified" db:"last_modified"`
-	ProjectID     int64              `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey    string             `json:"project_key" db:"-" cli:"-"`
-	RootID        int64              `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
-	Root          *WorkflowNode      `json:"root" db:"-" cli:"-"`
-	Joins         []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
-	Groups        []GroupPermission  `json:"groups,omitempty" db:"-" cli:"-"`
-	Permission    int                `json:"permission,omitempty" db:"-" cli:"-"`
-	Metadata      Metadata           `json:"metadata" yaml:"metadata" db:"-"`
-	Usage         *Usage             `json:"usage,omitempty" db:"-" cli:"-"`
-	HistoryLength int64              `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags     []string           `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	ID                      int64                  `json:"id" db:"id" cli:"-"`
+	Name                    string                 `json:"name" db:"name" cli:"name,key"`
+	Description             string                 `json:"description,omitempty" db:"description" cli:"description"`
+	LastModified            time.Time              `json:"last_modified" db:"last_modified"`
+	ProjectID               int64                  `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey              string                 `json:"project_key" db:"-" cli:"-"`
+	RootID                  int64                  `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
+	Root                    *WorkflowNode          `json:"root" db:"-" cli:"-"`
+	Joins                   []WorkflowNodeJoin     `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups                  []GroupPermission      `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission              int                    `json:"permission,omitempty" db:"-" cli:"-"`
+	Metadata                Metadata               `json:"metadata" yaml:"metadata" db:"-"`
+	Usage                   *Usage                 `json:"usage,omitempty" db:"-" cli:"-"`
+	HistoryLength           int64                  `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags               []string               `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	Notifications           []WorkflowNotification `json:"notifications,omitempty" db:"-" cli:"-"`
+	FromRepository          string                 `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
+	DerivedFromWorkflowID   int64                  `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
+	DerivedFromWorkflowName string                 `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
+	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
+}
+
+// WorkflowNotification represents notifications on a workflow
+type WorkflowNotification struct {
+	ID             int64                        `json:"id,omitempty" db:"id"`
+	WorkflowID     int64                        `json:"workflow_id,omitempty" db:"workflow_id"`
+	SourceNodeRefs []string                     `json:"source_node_ref,omitempty" db:"-"`
+	SourceNodeIDs  []int64                      `json:"source_node_id,omitempty" db:"-"`
+	Type           UserNotificationSettingsType `json:"type"  db:"type"`
+	Settings       UserNotificationSettings     `json:"settings"  db:"-"`
+}
+
+//UnmarshalJSON parses the JSON-encoded data and stores the result in n
+func (n *WorkflowNotification) UnmarshalJSON(b []byte) error {
+	notif, err := parseWorkflowNotification(b)
+	if err != nil {
+		return err
+	}
+	*n = *notif
+	return nil
+}
+
+//workflowNotificationInput is a way to parse notification
+type workflowNotificationInput struct {
+	Notification   interface{}                  `json:"settings"`
+	ID             int64                        `json:"id,omitempty"`
+	WorkflowID     int64                        `json:"workflow_id,omitempty"`
+	SourceNodeRefs []string                     `json:"source_node_ref,omitempty"`
+	SourceNodeIDs  []int64                      `json:"source_node_id,omitempty"`
+	Type           UserNotificationSettingsType `json:"type"`
+}
+
+//parseWorkflowNotification transform jsons to UserNotificationSettings map
+func parseWorkflowNotification(body []byte) (*WorkflowNotification, error) {
+	var input = &workflowNotificationInput{}
+	if err := json.Unmarshal(body, &input); err != nil {
+		return nil, err
+	}
+	settingsBody, err := json.Marshal(input.Notification)
+	if err != nil {
+		return nil, err
+	}
+
+	var notif1 = &WorkflowNotification{
+		ID:             input.ID,
+		SourceNodeIDs:  input.SourceNodeIDs,
+		SourceNodeRefs: input.SourceNodeRefs,
+		WorkflowID:     input.WorkflowID,
+		Type:           UserNotificationSettingsType(input.Type),
+	}
+
+	var errParse error
+	notif1.Settings, errParse = ParseWorkflowUserNotificationSettings(notif1.Type, settingsBody)
+	return notif1, errParse
+}
+
+//ParseWorkflowUserNotificationSettings transforms json to UserNotificationSettings map
+func ParseWorkflowUserNotificationSettings(t UserNotificationSettingsType, userNotif []byte) (UserNotificationSettings, error) {
+	switch t {
+	case EmailUserNotification, JabberUserNotification:
+		var x JabberEmailUserNotificationSettings
+		if err := json.Unmarshal(userNotif, &x); err != nil {
+			return nil, ErrParseUserNotification
+		}
+		return &x, nil
+	default:
+		return nil, ErrNotSupportedUserNotification
+	}
 }
 
 //JoinsID returns joins ID
@@ -34,15 +109,36 @@ func (w *Workflow) JoinsID() []int64 {
 	return res
 }
 
+// ResetIDs resets all nodes and joins ids
+func (w *Workflow) ResetIDs() {
+	if w.Root == nil {
+		return
+	}
+	(w.Root).ResetIDs()
+	for i := range w.Joins {
+		j := &w.Joins[i]
+		j.ID = 0
+		j.SourceNodeIDs = nil
+		for tid := range j.Triggers {
+			t := &j.Triggers[tid]
+			(&t.WorkflowDestNode).ResetIDs()
+		}
+	}
+}
+
 //Nodes returns nodes IDs excluding the root ID
-func (w *Workflow) Nodes() []int64 {
+func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	if w.Root == nil {
 		return nil
 	}
 
-	res := []int64{}
-	for _, t := range w.Root.Triggers {
-		res = append(res, t.WorkflowDestNode.Nodes()...)
+	res := []WorkflowNode{}
+	if withRoot {
+		res = append(res, w.Root.Nodes()...)
+	} else {
+		for _, t := range w.Root.Triggers {
+			res = append(res, t.WorkflowDestNode.Nodes()...)
+		}
 	}
 
 	for _, j := range w.Joins {
@@ -51,6 +147,53 @@ func (w *Workflow) Nodes() []int64 {
 		}
 	}
 	return res
+}
+
+//AddTrigger adds a trigger to the destination node from the node found by its name
+func (w *Workflow) AddTrigger(name string, dest WorkflowNode) {
+	if w.Root == nil {
+		return
+	}
+
+	w.Root.AddTrigger(name, dest)
+	for i := range w.Joins {
+		for j := range w.Joins[i].Triggers {
+			w.Joins[i].Triggers[j].WorkflowDestNode.AddTrigger(name, dest)
+		}
+	}
+}
+
+//AddTrigger adds a trigger to the destination node from the node found by its name
+func (n *WorkflowNode) AddTrigger(name string, dest WorkflowNode) {
+	if n.Name == name {
+		n.Triggers = append(n.Triggers, WorkflowNodeTrigger{
+			WorkflowDestNode: dest,
+		})
+		return
+	}
+	for i := range n.Triggers {
+		destNode := &n.Triggers[i].WorkflowDestNode
+		destNode.AddTrigger(name, dest)
+	}
+}
+
+//GetNodeByRef returns the node given its ref
+func (w *Workflow) GetNodeByRef(ref string) *WorkflowNode {
+	n := w.Root.GetNodeByRef(ref)
+	if n != nil {
+		return n
+	}
+	for ji := range w.Joins {
+		j := &w.Joins[ji]
+		for ti := range j.Triggers {
+			t := &j.Triggers[ti]
+			n2 := (&t.WorkflowDestNode).GetNodeByRef(ref)
+			if n2 != nil {
+				return n2
+			}
+		}
+	}
+	return nil
 }
 
 //GetNodeByName returns the node given its name
@@ -259,9 +402,30 @@ func (w *Workflow) InvolvedEnvironments() []int64 {
 	return res
 }
 
+//Visit all the workflow and apply the visitor func on all nodes
+func (w *Workflow) Visit(visitor func(*WorkflowNode)) {
+	w.Root.Visit(visitor)
+	for i := range w.Joins {
+		for j := range w.Joins[i].Triggers {
+			n := &w.Joins[i].Triggers[j].WorkflowDestNode
+			n.Visit(visitor)
+		}
+	}
+}
+
+//Visit all the workflow and apply the visitor func on the current node and the children
+func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
+	visitor(n)
+	for i := range n.Triggers {
+		d := &n.Triggers[i].WorkflowDestNode
+		d.Visit(visitor)
+	}
+}
+
 //WorkflowNodeJoin aims to joins multiple node into multiple triggers
 type WorkflowNodeJoin struct {
 	ID             int64                     `json:"id" db:"id"`
+	Ref            string                    `json:"ref" db:"-"`
 	WorkflowID     int64                     `json:"workflow_id" db:"workflow_id"`
 	SourceNodeIDs  []int64                   `json:"source_node_id,omitempty" db:"-"`
 	SourceNodeRefs []string                  `json:"source_node_ref,omitempty" db:"-"`
@@ -311,6 +475,24 @@ func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 	return true
 }
 
+//GetNodeByRef returns the node given its ref
+func (n *WorkflowNode) GetNodeByRef(ref string) *WorkflowNode {
+	if n == nil {
+		return nil
+	}
+	if n.Ref == ref {
+		return n
+	}
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		n2 := (&t.WorkflowDestNode).GetNodeByRef(ref)
+		if n2 != nil {
+			return n2
+		}
+	}
+	return nil
+}
+
 //GetNodeByName returns the node given its name
 func (n *WorkflowNode) GetNodeByName(name string) *WorkflowNode {
 	if n == nil {
@@ -320,9 +502,9 @@ func (n *WorkflowNode) GetNodeByName(name string) *WorkflowNode {
 		return n
 	}
 	for _, t := range n.Triggers {
-		n = t.WorkflowDestNode.GetNodeByName(name)
-		if n != nil {
-			return n
+		n2 := t.WorkflowDestNode.GetNodeByName(name)
+		if n2 != nil {
+			return n2
 		}
 	}
 	return nil
@@ -345,9 +527,18 @@ func (n *WorkflowNode) GetNode(id int64) *WorkflowNode {
 	return nil
 }
 
+// ResetIDs resets node id for the following node and its triggers
+func (n *WorkflowNode) ResetIDs() {
+	n.ID = 0
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		(&t.WorkflowDestNode).ResetIDs()
+	}
+}
+
 //Nodes returns a slice with all node IDs
-func (n *WorkflowNode) Nodes() []int64 {
-	res := []int64{n.ID}
+func (n *WorkflowNode) Nodes() []WorkflowNode {
+	res := []WorkflowNode{*n}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.Nodes()...)
 	}
@@ -547,7 +738,7 @@ type WorkflowNodeConditions struct {
 	LuaScript       string                  `json:"lua_script,omitempty" yaml:"script,omitempty"`
 }
 
-//WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+//WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type WorkflowNodeCondition struct {
 	Variable string `json:"variable"`
 	Operator string `json:"operator"`
@@ -565,6 +756,34 @@ type WorkflowNodeContext struct {
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters,omitempty" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`
+	Mutex                     bool                   `json:"mutex"`
+}
+
+// HasDefaultPayload returns true if the node has a default payload
+func (c *WorkflowNodeContext) HasDefaultPayload() bool {
+	if c == nil {
+		return false
+	}
+	if c.DefaultPayload == nil {
+		return false
+	}
+	dumper := dump.NewDefaultEncoder(nil)
+	dumper.ExtraFields.DetailedMap = false
+	dumper.ExtraFields.DetailedStruct = false
+	dumper.ExtraFields.Len = false
+	dumper.ExtraFields.Type = false
+	m, _ := dumper.ToStringMap(c.DefaultPayload)
+	return len(m) > 0
+}
+
+//WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook
+type WorkflowNodeContextDefaultPayloadVCS struct {
+	GitBranch     string `json:"git.branch" db:"-"`
+	GitHash       string `json:"git.hash" db:"-"`
+	GitAuthor     string `json:"git.author" db:"-"`
+	GitHashBefore string `json:"git.hash.before" db:"-"`
+	GitRepository string `json:"git.repository" db:"-"`
+	GitMessage    string `json:"git.message" db:"-"`
 }
 
 //WorkflowList return the list of the workflows for a project

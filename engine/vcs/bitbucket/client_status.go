@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -17,11 +19,10 @@ type statusData struct {
 	status      string
 	url         string
 	hash        string
+	description string
 }
 
 func (b *bitbucketClient) SetStatus(event sdk.Event) error {
-	log.Info("bitbucketClient.SetStatus> receive: type:%s all: %+v", event.EventType, event)
-
 	if b.consumer.disableStatus {
 		log.Warning("bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
 		return nil
@@ -43,10 +44,11 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 	}
 
 	status := Status{
-		Key:   statusData.key,
-		Name:  fmt.Sprintf("%s%d", statusData.key, statusData.buildNumber),
-		State: getBitbucketStateFromStatus(statusData.status),
-		URL:   statusData.url,
+		Key:         statusData.key,
+		Name:        fmt.Sprintf("%s%d", statusData.key, statusData.buildNumber),
+		State:       getBitbucketStateFromStatus(statusData.status),
+		URL:         statusData.url,
+		Description: statusData.description,
 	}
 
 	log.Debug("SetStatus> hash:%s status:%+v", statusData.hash, status)
@@ -55,8 +57,59 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to marshall status")
 	}
-	log.Debug("SetStatus> Values: %+v", values)
 	return b.do("POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil)
+}
+
+func (b *bitbucketClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+	ss := []Status{}
+
+	path := fmt.Sprintf("/commits/%s", ref)
+	params := url.Values{}
+	nextPage := 0
+	for {
+		if nextPage != 0 {
+			params.Set("start", fmt.Sprintf("%d", nextPage))
+		}
+
+		var response ResponseStatus
+		if err := b.do("GET", "build-status", path, nil, nil, &response); err != nil {
+			return nil, sdk.WrapError(err, "vcs> bitbucket> Repos> Unable to get statuses")
+		}
+
+		ss = append(ss, response.Values...)
+
+		if response.IsLastPage {
+			break
+		} else {
+			nextPage = response.NextPageStart
+		}
+	}
+
+	vcsStatuses := []sdk.VCSCommitStatus{}
+	for _, s := range ss {
+		if !strings.HasPrefix(s.Description, "CDS/") {
+			continue
+		}
+		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
+			CreatedAt:  time.Unix(s.Timestamp/1000, 0),
+			Decription: s.Description,
+			Ref:        ref,
+			State:      processBitbucketState(s),
+		})
+	}
+
+	return vcsStatuses, nil
+}
+
+func processBitbucketState(s Status) string {
+	switch s.State {
+	case successful:
+		return sdk.StatusSuccess.String()
+	case failed:
+		return sdk.StatusFail.String()
+	default:
+		return sdk.StatusBuilding.String()
+	}
 }
 
 const (
@@ -71,13 +124,12 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "bitbucketClient.processWorkflowNodeRunEvent> Error during consumption")
 	}
-	log.Debug("bitbucketClient.processWorkflowNodeRunEvent>Process event:%+v", event)
 	data.key = fmt.Sprintf("%s-%s-%s",
 		eventNR.ProjectKey,
 		eventNR.WorkflowName,
 		eventNR.NodeName,
 	)
-	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%s",
+	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 		uiURL,
 		eventNR.ProjectKey,
 		eventNR.WorkflowName,
@@ -86,6 +138,7 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 	data.buildNumber = eventNR.Number
 	data.status = eventNR.Status
 	data.hash = eventNR.Hash
+	data.description = sdk.VCSCommitStatusDescription(eventNR)
 
 	return data, nil
 }
@@ -96,9 +149,6 @@ func processPipelineBuildEvent(event sdk.Event, uiURL string) (statusData, error
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
 		return data, sdk.WrapError(err, "bitbucketClient.processPipelineBuildEvent> Error during consumption")
 	}
-
-	log.Debug("bitbucketClient.processPipelineBuildEvent> Process event:%+v", event)
-
 	cdsProject := eventpb.ProjectKey
 	cdsApplication := eventpb.ApplicationName
 	cdsPipelineName := eventpb.PipelineName

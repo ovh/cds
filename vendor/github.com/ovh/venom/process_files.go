@@ -8,21 +8,23 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/hcl"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
 )
 
-func getFilesPath(path []string, exclude []string) ([]string, error) {
-	var filesPath []string
+func getFilesPath(path []string, exclude []string) (filePaths []string, err error) {
 	var fpathsExcluded []string
 
 	if len(exclude) > 0 {
 		for _, p := range exclude {
-			pe, erre := filepath.Glob(p)
-			if erre != nil {
-				log.Fatalf("Error reading files on path:%s :%s", path, erre)
+			pe, err := filepath.Glob(p)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error reading files in path %q", path)
 			}
+
 			fpathsExcluded = append(fpathsExcluded, pe...)
 		}
 	}
@@ -37,11 +39,12 @@ func getFilesPath(path []string, exclude []string) ([]string, error) {
 			p = p + string(os.PathSeparator) + "*.yml"
 		}
 
-		fpaths, errg := filepath.Glob(p)
-		if errg != nil {
-			log.Errorf("Error reading files on path:%s :%s", path, errg)
-			return nil, errg
+		fpaths, err := filepath.Glob(p)
+		if err != nil {
+			log.Errorf("Error reading files on path:%s :%s", path, err)
+			return nil, errors.Wrapf(err, "error reading files on path %q", path)
 		}
+
 		for _, fp := range fpaths {
 			toExclude := false
 			for _, te := range fpathsExcluded {
@@ -50,24 +53,29 @@ func getFilesPath(path []string, exclude []string) ([]string, error) {
 					break
 				}
 			}
-			if !toExclude && strings.HasSuffix(fp, ".yml") {
-				filesPath = append(filesPath, fp)
+
+			if !toExclude {
+				switch ext := filepath.Ext(fp); ext {
+				case ".hcl",
+					".yml", ".yaml":
+					filePaths = append(filePaths, fp)
+				}
 			}
 		}
 	}
 
-	sort.Strings(filesPath)
-	return filesPath, nil
+	sort.Strings(filePaths)
+	return filePaths, nil
 }
 
-func (v *Venom) readFiles(filesPath []string) error {
+func (v *Venom) readFiles(filesPath []string) (err error) {
 	v.outputProgressBar = make(map[string]*pb.ProgressBar)
 
 	for _, f := range filesPath {
 		log.Info("Reading ", f)
-		dat, errr := ioutil.ReadFile(f)
-		if errr != nil {
-			return fmt.Errorf("Error while reading file %s err:%s", f, errr)
+		dat, err := ioutil.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("Error while reading file %s err:%s", f, err)
 		}
 
 		ts := TestSuite{}
@@ -85,9 +93,18 @@ func (v *Venom) readFiles(filesPath []string) error {
 			out = tmp
 		}
 
-		if err := yaml.Unmarshal(out, &ts); err != nil {
-			return fmt.Errorf("Error while unmarshal file %s err:%v", f, err)
+		switch ext := filepath.Ext(f); ext {
+		case ".hcl":
+			err = hcl.Unmarshal(out, &ts)
+		case ".yaml", ".yml":
+			err = yaml.Unmarshal(out, &ts)
+		default:
+			return fmt.Errorf("unsupported test suite file extension: %q", ext)
 		}
+		if err != nil {
+			return fmt.Errorf("Error while unmarshal file %s err: %v", f, err)
+		}
+
 		ts.Name += " [" + f + "]"
 
 		nSteps := 0
@@ -99,7 +116,7 @@ func (v *Venom) readFiles(filesPath []string) error {
 		}
 		ts.Total = len(ts.TestCases)
 
-		b := pb.New(nSteps).Prefix(rightPad("⚙ "+ts.Package, " ", 47))
+		b := pb.New(nSteps).Prefix(rightPad("READING "+ts.Package, " ", 47))
 		b.ShowCounters = false
 		b.Output = v.LogOutput
 		if v.OutputDetails == DetailsLow {

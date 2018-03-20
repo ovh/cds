@@ -20,7 +20,7 @@ func (c *client) ProjectVariableCreate(projectKey string, variable *sdk.Variable
 }
 
 func (c *client) ProjectVariableDelete(projectKey string, varName string) error {
-	_, _, err := c.Request("DELETE", "/project/"+projectKey+"/variable/"+url.QueryEscape(varName), nil)
+	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/variable/"+url.QueryEscape(varName), nil)
 	return err
 }
 
@@ -32,6 +32,18 @@ func (c *client) ProjectVariableUpdate(projectKey string, variable *sdk.Variable
 func (c *client) ProjectVariableGet(projectKey string, varName string) (*sdk.Variable, error) {
 	variable := &sdk.Variable{}
 	if _, err := c.GetJSON("/project/"+projectKey+"/variable/"+url.QueryEscape(varName), variable, nil); err != nil {
+		return nil, err
+	}
+	return variable, nil
+}
+
+func (c *client) VariableEncrypt(projectKey string, varName string, content string) (*sdk.Variable, error) {
+	variable := &sdk.Variable{
+		Name:  varName,
+		Value: content,
+		Type:  sdk.SecretVariable,
+	}
+	if _, err := c.PostJSON("/project/"+projectKey+"/encrypt", variable, variable); err != nil {
 		return nil, err
 	}
 	return variable, nil

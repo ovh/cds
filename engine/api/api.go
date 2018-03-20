@@ -20,9 +20,11 @@ import (
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
+	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -30,7 +32,6 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -65,7 +66,6 @@ type Configuration struct {
 		MaxConn        int    `toml:"maxconn" default:"20" comment:"DB Max connection"`
 		ConnectTimeout int    `toml:"connectTimeout" default:"10" comment:"Maximum wait for connection, in seconds"`
 		Timeout        int    `toml:"timeout" default:"3000" comment:"Statement timeout value in milliseconds"`
-		Secret         string `toml:"secret"`
 	} `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
@@ -102,7 +102,7 @@ type Configuration struct {
 		User     string `toml:"user"`
 		Password string `toml:"password"`
 		From     string `toml:"from" default:"no-reply@cds.local"`
-	} `toml:"smtp" comment:"#####################n# CDS SMTP Settings \n####################"`
+	} `toml:"smtp" comment:"#####################\n# CDS SMTP Settings \n####################"`
 	Artifact struct {
 		Mode  string `toml:"mode" default:"local" comment:"swift or local"`
 		Local struct {
@@ -190,7 +190,7 @@ func DirectoryExists(path string) (bool, error) {
 func (a *API) CheckConfiguration(config interface{}) error {
 	aConfig, ok := config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid configuration")
+		return fmt.Errorf("Invalid API configuration")
 	}
 
 	if aConfig.URL.API == "" {
@@ -246,7 +246,6 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	if len(aConfig.Secrets.Key) != 32 {
 		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
 	}
-
 	return nil
 }
 
@@ -276,6 +275,17 @@ func getUser(c context.Context) *sdk.User {
 
 func getAgent(r *http.Request) string {
 	return r.Header.Get("User-Agent")
+}
+
+func isHatcheryOrWorker(r *http.Request) bool {
+	switch getAgent(r) {
+	case sdk.HatcheryAgent:
+		return true
+	case sdk.WorkerAgent:
+		return true
+	default:
+		return false
+	}
 }
 
 func getWorker(c context.Context) *sdk.Worker {
@@ -324,7 +334,7 @@ func (a *API) mustDB() *gorp.DbMap {
 
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
-	log.Info("Starting CDS API Server %s...", sdk.VERSION)
+	log.Info("Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
 
@@ -332,6 +342,7 @@ func (a *API) Serve(ctx context.Context) error {
 	secret.Init(a.Config.Secrets.Key)
 
 	//Initialize mail package
+	log.Info("Initializing mail driver...")
 	mail.Init(a.Config.SMTP.User,
 		a.Config.SMTP.Password,
 		a.Config.SMTP.From,
@@ -341,6 +352,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.Disable)
 
 	//Initialize artifacts storage
+	log.Info("Initializing %s objectstore...", a.Config.Artifact.Mode)
 	var objectstoreKind objectstore.Kind
 	switch a.Config.Artifact.Mode {
 	case "openstack":
@@ -350,7 +362,7 @@ func (a *API) Serve(ctx context.Context) error {
 	case "filesystem", "local":
 		objectstoreKind = objectstore.Filesystem
 	default:
-		log.Fatalf("Unsupported objecstore mode : %s", a.Config.Artifact.Mode)
+		return fmt.Errorf("unsupported objecstore mode : %s", a.Config.Artifact.Mode)
 	}
 
 	cfg := objectstore.Config{
@@ -371,9 +383,10 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	if err := objectstore.Initialize(ctx, cfg); err != nil {
-		log.Fatalf("Cannot initialize storage: %s", err)
+		return fmt.Errorf("cannot initialize storage: %v", err)
 	}
 
+	log.Info("Initializing database connection...")
 	//Intialize database
 	var errDB error
 	a.DBConnectionFactory, errDB = database.Init(
@@ -387,22 +400,27 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Database.Timeout,
 		a.Config.Database.MaxConn)
 	if errDB != nil {
-		log.Error("Cannot connect to database: %s", errDB)
-		os.Exit(3)
+		return fmt.Errorf("cannot connect to database: %v", errDB)
 	}
 
+	log.Info("Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,
 		SharedInfraToken: a.Config.Auth.SharedInfraToken,
 	}
 	if err := bootstrap.InitiliazeDB(defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
-		log.Error("Cannot setup databases: %s", err)
+		return fmt.Errorf("cannot setup databases: %v", err)
 	}
 
 	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
-		log.Error("Cannot setup builtin workflow hook models: %s", err)
+		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
+	if err := platform.CreateModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup platforms: %v", err)
+	}
+
+	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	//Init the cache
 	var errCache error
 	a.Cache, errCache = cache.New(
@@ -410,15 +428,20 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
 	if errCache != nil {
-		log.Error("Cannot connect to cache store: %s", errCache)
-		os.Exit(3)
+		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
 
+	log.Info("Initializing HTTP router")
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
 	}
 	a.InitRouter()
+
+	//Temporary migration code
+	if err := bootstrap.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
+		log.Error("Bootstrap Error: %v", err)
+	}
 
 	//Init events package
 	event.Cache = a.Cache
@@ -429,6 +452,7 @@ func (a *API) Serve(ctx context.Context) error {
 	//Intialize notification package
 	notification.Init(a.Config.URL.API, a.Config.URL.UI)
 
+	log.Info("Initializing Authentication driver...")
 	// Initialize the auth driver
 	var authMode string
 	var authOptions interface{}
@@ -448,17 +472,17 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	storeOptions := sessionstore.Options{
-		TTL:           a.Config.Cache.TTL,
-		RedisHost:     a.Config.Cache.Redis.Host,
-		RedisPassword: a.Config.Cache.Redis.Password,
+		TTL:   a.Config.Cache.TTL * 60, // Second to minutes
+		Cache: a.Cache,
 	}
 
 	var errdriver error
 	a.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions, a.DBConnectionFactory.GetDBMap)
 	if errdriver != nil {
-		log.Fatalf("Error: %v", errdriver)
+		return fmt.Errorf("error: %v", errdriver)
 	}
 
+	log.Info("Initializing event broker...")
 	kafkaOptions := event.KafkaConfig{
 		Enabled:         a.Config.Events.Kafka.Enabled,
 		BrokerAddresses: a.Config.Events.Kafka.Broker,
@@ -467,33 +491,33 @@ func (a *API) Serve(ctx context.Context) error {
 		Topic:           a.Config.Events.Kafka.Topic,
 	}
 	if err := event.Initialize(kafkaOptions); err != nil {
-		log.Warning("⚠ Error while initializing event system: %s", err)
+		log.Error("error while initializing event system: %s", err)
 	} else {
 		go event.DequeueEvent(ctx)
 	}
 
 	if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-		log.Warning("⚠ Error while initializing workers routine: %s", err)
+		log.Error("error while initializing workers routine: %s", err)
 	}
 
+	log.Info("Initializing internal routines...")
 	go queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap)
 	go auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
 	go repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	go stats.StartRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go services.KillDeadServices(ctx, services.NewRepository(a.mustDB, a.Cache))
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
-
+	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
+	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	if !a.Config.Schedulers.Disabled {
 		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
-
 	go workflow.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 
 	s := &http.Server{
@@ -510,23 +534,23 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Warning("Cleanup SQL connections")
 			s.Shutdown(ctx)
 			a.DBConnectionFactory.Close()
-			event.Publish(sdk.EventEngine{Message: "shutdown"})
+			event.Publish(sdk.EventEngine{Message: "shutdown"}, nil)
 			event.Close()
 		}
 	}()
 
-	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)})
+	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
 		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Port, false, "", ""); err != nil {
-			log.Fatalf("Cannot start grpc cds-server: %s", err)
+			log.Error("Cannot start GRPC server: %v", err)
 		}
 	}()
 
 	log.Info("Starting CDS API HTTP Server on port %d", a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
-		log.Fatalf("Cannot start cds-server: %s", err)
+		return fmt.Errorf("Cannot start HTTP server: %v", err)
 	}
 
 	return nil

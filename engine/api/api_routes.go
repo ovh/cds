@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"path"
 	"sync"
 )
 
@@ -13,12 +12,13 @@ func (api *API) InitRouter() {
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware)
 	api.lastUpdateBroker = &lastUpdateBroker{
-		make(map[string]*lastUpdateBrokerSubscribe),
-		make(chan *lastUpdateBrokerSubscribe),
-		make(chan string),
-		&sync.Mutex{},
+		clients:  make(map[string]lastUpdateBrokerSubscribe),
+		messages: make(chan string),
+		mutex:    &sync.Mutex{},
+		cache:    api.Cache,
+		dbFunc:   api.DBConnectionFactory.GetDBMap,
 	}
-	api.lastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap, api.Cache)
+	api.lastUpdateBroker.Init(api.Router.Background)
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
@@ -26,9 +26,11 @@ func (api *API) InitRouter() {
 	// Action
 	r.Handle("/action", r.GET(api.getActionsHandler))
 	r.Handle("/action/import", r.POST(api.importActionHandler, NeedAdmin(true)))
+
 	r.Handle("/action/requirement", r.GET(api.getActionsRequirements, Auth(false)))
 	r.Handle("/action/{permActionName}", r.GET(api.getActionHandler), r.POST(api.addActionHandler), r.PUT(api.updateActionHandler), r.DELETE(api.deleteActionHandler))
 	r.Handle("/action/{actionName}/using", r.GET(api.getPipelinesUsingActionHandler, NeedAdmin(true)))
+	r.Handle("/action/{permActionName}/export", r.GET(api.getActionExportHandler))
 	r.Handle("/action/{actionID}/audit", r.GET(api.getActionAuditHandler, NeedAdmin(true)))
 
 	// Admin
@@ -38,6 +40,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)))
+	r.Handle("/admin/services", r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
+	r.Handle("/admin/services/{service}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
+	r.Handle("/admin/services/{service}/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
 
 	// Action plugin
 	r.Handle("/plugin", r.POST(api.addPluginHandler, NeedAdmin(true)), r.PUT(api.updatePluginHandler, NeedAdmin(true)))
@@ -45,24 +50,8 @@ func (api *API) InitRouter() {
 	r.Handle("/plugin/download/{name}", r.GET(api.downloadPluginHandler))
 
 	// Download file
-	r.ServeAbsoluteFile("/download/cli/x86_64", path.Join(api.Config.Directories.Download, "cds-linux-amd64"), "cds")
-	r.ServeAbsoluteFile("/download/worker/x86_64", path.Join(api.Config.Directories.Download, "cds-worker-linux-amd64"), "worker")
-	r.ServeAbsoluteFile("/download/worker/windows_x86_64", path.Join(api.Config.Directories.Download, "cds-worker-windows-amd64"), "worker.exe")
-	r.ServeAbsoluteFile("/download/worker/i386", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
-	r.ServeAbsoluteFile("/download/worker/i686", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
-
-	r.ServeAbsoluteFile("/download/cdsctl-windows-amd64", path.Join(api.Config.Directories.Download, "cdsctl-windows-amd64"), "cdsctl-windows-amd64")
-	r.ServeAbsoluteFile("/download/cdsctl-linux-amd64", path.Join(api.Config.Directories.Download, "cdsctl-linux-amd64"), "cdsctl-linux-amd64")
-	r.ServeAbsoluteFile("/download/cdsctl-freebsd-amd64", path.Join(api.Config.Directories.Download, "cdsctl-freebsd-amd64"), "cdsctl-freebsd-amd64")
-	r.ServeAbsoluteFile("/download/cdsctl-darwin-amd64", path.Join(api.Config.Directories.Download, "cdsctl-darwin-amd64"), "cdsctl-darwin-amd64")
-	r.ServeAbsoluteFile("/download/cds-engine-darwin-amd64", path.Join(api.Config.Directories.Download, "cds-engine-darwin-amd64"), "cds-engine-darwin-amd64")
-	r.ServeAbsoluteFile("/download/cds-worker-windows-amd64", path.Join(api.Config.Directories.Download, "cds-worker-windows-amd64"), "cds-worker-windows-amd64")
-	r.ServeAbsoluteFile("/download/cds-worker-linux-amd64", path.Join(api.Config.Directories.Download, "cds-worker-linux-amd64"), "cds-worker-linux-amd64")
-	r.ServeAbsoluteFile("/download/cds-worker-linux-386", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "cds-worker-linux-386")
-	r.ServeAbsoluteFile("/download/cds-engine-windows-amd64", path.Join(api.Config.Directories.Download, "cds-engine-windows-amd64"), "cds-engine-windows-amd64")
-	r.ServeAbsoluteFile("/download/cds-worker-freebsd-amd64", path.Join(api.Config.Directories.Download, "cds-worker-freebsd-amd64"), "cds-worker-freebsd-amd64")
-	r.ServeAbsoluteFile("/download/cds-worker-darwin-amd64", path.Join(api.Config.Directories.Download, "cds-worker-darwin-amd64"), "cds-worker-darwin-amd64")
-	r.ServeAbsoluteFile("/download/cds-engine-linux-amd64", path.Join(api.Config.Directories.Download, "cds-engine-linux-amd64"), "cds-engine-linux-amd64")
+	r.Handle("/download", r.GET(api.downloadsHandler))
+	r.Handle("/download/{name}/{os}/{arch}", r.GET(api.downloadHandler, Auth(false)))
 
 	// Group
 	r.Handle("/group", r.GET(api.getGroupsHandler), r.POST(api.addGroupHandler))
@@ -71,20 +60,25 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/user", r.POST(api.addUserInGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}", r.DELETE(api.removeUserFromGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}/admin", r.POST(api.setUserGroupAdminHandler), r.DELETE(api.removeUserGroupAdminHandler))
-	r.Handle("/group/{permGroupName}/token/{expiration}", r.POST(api.generateTokenHandler))
+	r.Handle("/group/{permGroupName}/token", r.GET(api.getGroupTokenListHandler), r.POST(api.generateTokenHandler))
+	r.Handle("/group/{permGroupName}/token/{tokenid}", r.DELETE(api.deleteTokenHandler))
 
 	// Hatchery
 	r.Handle("/hatchery", r.POST(api.registerHatcheryHandler, Auth(false)))
+	r.Handle("/hatchery/count/{workflowNodeRunID}", r.GET(api.hatcheryCountHandler))
 	r.Handle("/hatchery/{id}", r.PUT(api.refreshHatcheryHandler))
 
 	// Hooks
 	r.Handle("/hook", r.POST(api.receiveHookHandler, Auth(false) /* Public handler called by third parties */))
+	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
+
+	// Platform
+	r.Handle("/platform/models", r.GET(api.getPlatformModels))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))
 	r.Handle("/mon/smtp/ping", r.GET(api.smtpPingHandler, Auth(true)))
 	r.Handle("/mon/version", r.GET(VersionHandler, Auth(false)))
-	r.Handle("/mon/stats", r.GET(api.getStatsHandler, Auth(false)))
 	r.Handle("/mon/db/migrate", r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
 	r.Handle("/mon/db/times", r.GET(api.getMonDBTimesDBHandler, NeedAdmin(true)))
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
@@ -92,22 +86,29 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 
-	// Specific web ui routes
-	r.Handle("/ui/navbar", r.GET(api.getUINavbarHandler))
+	r.Handle("/navbar", r.GET(api.getNavbarHandler))
+
+	// Import As Code
+	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))
+	r.Handle("/import/{permProjectKey}/{uuid}", r.GET(api.getImportAsCodeHandler))
+	r.Handle("/import/{permProjectKey}/{uuid}/perform", r.POST(api.postPerformImportAsCodeHandler))
 
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))
 	r.Handle("/project/{permProjectKey}", r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
-	r.Handle("/project/{permProjectKey}/group", r.POST(api.addGroupInProjectHandler), r.PUT(api.updateGroupsInProjectHandler, DEPRECATED))
-	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler))
+	r.Handle("/project/{permProjectKey}/group", r.POST(api.addGroupInProjectHandler))
+	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/group/{group}", r.PUT(api.updateGroupRoleOnProjectHandler), r.DELETE(api.deleteGroupFromProjectHandler))
-	r.Handle("/project/{permProjectKey}/variable", r.GET(api.getVariablesInProjectHandler), r.PUT(api.updateVariablesInProjectHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/variable", r.GET(api.getVariablesInProjectHandler))
+	r.Handle("/project/{permProjectKey}/encrypt", r.POST(api.postEncryptVariableHandler))
 	r.Handle("/project/{key}/variable/audit", r.GET(api.getVariablesAuditInProjectnHandler))
-	r.Handle("/project/{key}/variable/audit/{auditID}", r.PUT(api.restoreProjectVariableAuditHandler, DEPRECATED))
-	r.Handle("/project/{permProjectKey}/variable/{name}", r.GET(api.getVariableInProjectHandler, DEPRECATED), r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
+	r.Handle("/project/{permProjectKey}/variable/{name}", r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", r.GET(api.getVariableAuditInProjectHandler))
 	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler), r.POST(api.addApplicationHandler))
+	r.Handle("/project/{permProjectKey}/platforms", r.GET(api.getProjectPlatformsHandler), r.POST(api.postProjectPlatformHandler))
+	r.Handle("/project/{permProjectKey}/platforms/{platformName}", r.GET(api.getProjectPlatformHandler, AllowServices(true)), r.PUT(api.putProjectPlatformHandler), r.DELETE(api.deleteProjectPlatformHandler))
 	r.Handle("/project/{permProjectKey}/notifications", r.GET(api.getProjectNotificationsHandler))
+	r.Handle("/project/{permProjectKey}/all/keys", r.GET(api.getAllKeysProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys", r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys/{name}", r.DELETE(api.deleteKeyInProjectHandler))
 	// Import Application
@@ -124,7 +125,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/version", r.GET(api.getApplicationBranchVersionHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/clone", r.POST(api.cloneApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/group", r.POST(api.addGroupInApplicationHandler), r.PUT(api.updateGroupsInApplicationHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/group/import", r.POST(api.importGroupsInApplicationHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/group/import", r.POST(api.importGroupsInApplicationHandler, DEPRECATED))
 	r.Handle("/project/{key}/application/{permApplicationName}/group/{group}", r.PUT(api.updateGroupRoleOnApplicationHandler), r.DELETE(api.deleteGroupFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/history/branch", r.GET(api.getPipelineBuildBranchHistoryHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/history/env/deploy", r.GET(api.getApplicationDeployHistoryHandler))
@@ -167,7 +168,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/pipeline", r.GET(api.getPipelinesHandler), r.POST(api.addPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group", r.POST(api.addGroupInPipelineHandler), r.PUT(api.updateGroupsOnPipelineHandler, DEPRECATED))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/import", r.POST(api.importGroupsInPipelineHandler))
+	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/import", r.POST(api.importGroupsInPipelineHandler, DEPRECATED))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/{group}", r.PUT(api.updateGroupRoleOnPipelineHandler), r.DELETE(api.deleteGroupFromPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter", r.GET(api.getParametersInPipelineHandler), r.PUT(api.updateParametersInPipelineHandler, DEPRECATED))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter/{name}", r.POST(api.addParameterInPipelineHandler), r.PUT(api.updateParameterInPipelineHandler), r.DELETE(api.deleteParameterFromPipelineHandler))
@@ -191,32 +192,38 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", r.GET(api.getWorkflowHookHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/hook/model", r.GET(api.getWorkflowHookModelsHandler))
 
+	// Preview workflows
+	r.Handle("/project/{permProjectKey}/preview/workflows", r.POST(api.postWorkflowPreviewHandler))
 	// Import workflows
 	r.Handle("/project/{permProjectKey}/import/workflows", r.POST(api.postWorkflowImportHandler))
 	// Export workflows
 	r.Handle("/project/{key}/export/workflows/{permWorkflowName}", r.GET(api.getWorkflowExportHandler))
 	// Pull workflows
 	r.Handle("/project/{key}/pull/workflows/{permWorkflowName}", r.GET(api.getWorkflowPullHandler))
+	// Push workflows
+	r.Handle("/project/{permProjectKey}/push/workflows", r.POST(api.postWorkflowPushHandler))
 
 	// Workflows run
+	r.Handle("/project/{permProjectKey}/runs", r.GET(api.getWorkflowAllRunsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true)))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POST(api.stopWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POSTEXECUTE(api.stopWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}", r.GET(api.getWorkflowNodeRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", r.POST(api.stopWorkflowNodeRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", r.POSTEXECUTE(api.stopWorkflowNodeRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeID}/history", r.GET(api.getWorkflowNodeRunHistoryHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/{nodeName}/commits", r.GET(api.getWorkflowCommitsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/artifacts", r.GET(api.getWorkflowNodeRunArtifactsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/join/{joinID}/triggers/condition", r.GET(api.getWorkflowTriggerJoinConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
 
 	// DEPRECATED
@@ -233,8 +240,8 @@ func (api *API) InitRouter() {
 
 	// Environment
 	r.Handle("/project/{permProjectKey}/environment", r.GET(api.getEnvironmentsHandler), r.POST(api.addEnvironmentHandler), r.PUT(api.updateEnvironmentsHandler, DEPRECATED))
-	r.Handle("/project/{permProjectKey}/environment/import", r.POST(api.importNewEnvironmentHandler))
-	r.Handle("/project/{key}/environment/import/{permEnvironmentName}", r.POST(api.importIntoEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/import", r.POST(api.importNewEnvironmentHandler, DEPRECATED))
+	r.Handle("/project/{key}/environment/import/{permEnvironmentName}", r.POST(api.importIntoEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}", r.GET(api.getEnvironmentHandler), r.PUT(api.updateEnvironmentHandler), r.DELETE(api.deleteEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/usage", r.GET(api.getEnvironmentUsageHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/keys", r.GET(api.getKeysInEnvironmentHandler), r.POST(api.addKeyInEnvironmentHandler))
@@ -244,7 +251,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/audit/{auditID}", r.PUT(api.restoreEnvironmentAuditHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/group", r.POST(api.addGroupInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/groups", r.POST(api.addGroupsInEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/import", r.POST(api.importGroupsInEnvironmentHandler))
+	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/import", r.POST(api.importGroupsInEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/{group}", r.PUT(api.updateGroupRoleOnEnvironmentHandler), r.DELETE(api.deleteGroupFromEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable", r.GET(api.getVariablesInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}", r.GET(api.getVariableInEnvironmentHandler), r.POST(api.addVariableInEnvironmentHandler), r.PUT(api.updateVariableInEnvironmentHandler), r.DELETE(api.deleteVariableFromEnvironmentHandler))
@@ -264,6 +271,9 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/download/{id}", r.GET(api.downloadArtifactHandler))
 	r.Handle("/artifact/store", r.GET(api.getArtifactsStoreHandler, Auth(false)))
 	r.Handle("/artifact/{hash}", r.GET(api.downloadArtifactDirectHandler, Auth(false)))
+
+	// Cache
+	r.Handle("/project/{key}/cache/{tag}", r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker()), r.GET(api.getPullCacheHandler, NeedWorker()))
 
 	// Hooks
 	r.Handle("/project/{key}/application/{permApplicationName}/hook", r.GET(api.getApplicationHooksHandler))
@@ -290,6 +300,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery()))
+	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery()))
 	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 3), NeedHatchery()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker()))
@@ -299,6 +310,8 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/artifact/{tag}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", r.GET(api.getParameterTypeHandler))
@@ -327,20 +340,21 @@ func (api *API) InitRouter() {
 	// Suggest
 	r.Handle("/suggest/variable/{permProjectKey}", r.GET(api.getVariablesHandler))
 
-	// Templates
-	r.Handle("/template", r.GET(api.getTemplatesHandler, Auth(false)))
-	r.Handle("/template/add", r.POST(api.addTemplateHandler, NeedAdmin(true)))
-	r.Handle("/template/build", r.GET(api.getBuildTemplatesHandler, Auth(false)))
-	r.Handle("/template/deploy", r.GET(api.getDeployTemplatesHandler, Auth(false)))
-	r.Handle("/template/{id}", r.PUT(api.updateTemplateHandler, NeedAdmin(true)), r.DELETE(api.deleteTemplateHandler, NeedAdmin(true)))
-	r.Handle("/project/{permProjectKey}/template", r.POST(api.applyTemplateHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/template", r.POST(api.applyTemplateOnApplicationHandler))
+	//Requirements
+	r.Handle("/requirement/types", r.GET(api.getRequirementTypesHandler))
+	r.Handle("/requirement/types/{type}", r.GET(api.getRequirementTypeValuesHandler))
 
-	// UI
+	//Requirements
+	r.Handle("/requirement/types", r.GET(api.getRequirementTypesHandler))
+	r.Handle("/requirement/types/{type}", r.GET(api.getRequirementTypeValuesHandler))
+
+	// config
 	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(true)))
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
+	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
+	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
 	r.Handle("/user/import", r.POST(api.importUsersHandler, NeedAdmin(true)))
 	r.Handle("/user/{username}", r.GET(api.getUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.updateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.deleteUserHandler, NeedUsernameOrAdmin(true)))
@@ -361,11 +375,11 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model", r.POST(api.addWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
 	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/error/{permModelID}", r.PUT(api.spawnErrorWorkerModelHandler, NeedHatchery()))
-	r.Handle("/worker/model/enabled", r.GET(api.getWorkerModelsEnabledHandler))
+	r.Handle("/worker/model/enabled", r.GET(api.getWorkerModelsEnabledHandler, NeedHatchery()))
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/{permModelID}", r.PUT(api.updateWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
-	r.Handle("/worker/model/capability/type", r.GET(api.getWorkerModelCapaTypesHandler))
+	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 
 	// Workflows
 	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler, NeedService()))

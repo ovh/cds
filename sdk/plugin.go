@@ -14,7 +14,7 @@ import (
 func DownloadPlugin(name string, destdir string) error {
 	var lasterr error
 	for retry := 5; retry >= 0; retry-- {
-		uri := fmt.Sprintf("/plugin/download/%s", name)
+		uri := fmt.Sprintf("/plugin/download/%s?accept-redirect=true", name)
 		reader, code, err := Stream("GET", uri, nil)
 		if err != nil {
 			lasterr = err
@@ -40,11 +40,9 @@ func DownloadPlugin(name string, destdir string) error {
 		}
 
 		if err := f.Close(); err == nil {
-			fmt.Printf("Download %s completed\n", destPath)
 			return nil
 		}
 	}
-
 	return fmt.Errorf("x5: %s", lasterr)
 }
 
@@ -86,7 +84,7 @@ func UploadPlugin(filePath string, update bool) ([]byte, error) {
 	}
 
 	if code >= 300 {
-		return nil, fmt.Errorf("HTTP Error %d\n", code)
+		return nil, fmt.Errorf("HTTP Error %d", code)
 	}
 
 	return btes, nil

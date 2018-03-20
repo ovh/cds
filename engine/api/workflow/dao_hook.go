@@ -48,6 +48,11 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	}
 	hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 
+	//TODO: to delete when all previous scheduler are updated
+	if _, ok := hook.Config[sdk.SchedulerModelPayload]; hook.WorkflowHookModel.Name == sdk.SchedulerModelName && !ok {
+		hook.Config[sdk.SchedulerModelPayload] = sdk.SchedulerModel.DefaultConfig[sdk.SchedulerModelPayload]
+	}
+
 	errmu := sdk.MultiError{}
 	// Check configuration of the hook vs the model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
@@ -110,7 +115,6 @@ func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	r.Config = conf
-
 	//Load the model
 	model, err := LoadHookModelByID(db, r.WorkflowHookModelID)
 	if err != nil {
@@ -163,4 +167,27 @@ func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeH
 		nodes = append(nodes, sdk.WorkflowNodeHook(res[i]))
 	}
 	return nodes, nil
+}
+
+// LoadHookByUUID loads a single hook
+func LoadHookByUUID(db gorp.SqlExecutor, uuid string) (*sdk.WorkflowNodeHook, error) {
+	query := `
+		SELECT id, uuid, workflow_hook_model_id, workflow_node_id
+			FROM workflow_node_hook
+		WHERE uuid = $1`
+
+	res := NodeHook{}
+	if err := db.SelectOne(&res, query, uuid); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadHookByUUID>")
+	}
+
+	if err := res.PostGet(db); err != nil {
+		return nil, sdk.WrapError(err, "LoadHookByUUID> cannot load postget")
+	}
+	wNodeHook := sdk.WorkflowNodeHook(res)
+
+	return &wNodeHook, nil
 }

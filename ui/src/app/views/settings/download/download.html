@@ -1,0 +1,25 @@
+<div class="status ui segment">
+    <h3>{{'downloads_title' | translate }}</h3>
+
+    <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+
+    <table class="ui definition table" *ngIf="downloads && !loading">
+        <tbody>
+        <tr *ngFor="let line of downloads">
+            <td>
+                    {{line.name}}
+            </td>
+            <td>
+
+                <div class="ui grid" *ngFor="let osArch of line.osArchs">
+                    <div class="four wide column">{{osArch.os}}</div>
+                    <div class="four wide column"  *ngFor="let a of osArch.archs">
+                            <a *ngIf="a.available" href="{{apiURL}}/download/{{line.name}}/{{osArch.os}}/{{a.arch}}">[{{a.arch}}]</a> 
+                            <span *ngIf="!a.available" title="{{'common_ask_cds_administrator' | translate}}">{{a.arch}}: n.a</span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

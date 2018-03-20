@@ -319,7 +319,7 @@ func (ui *Termui) monitoringColorSelected() {
 
 func (ui *Termui) updateStatus() string {
 	start := time.Now()
-	status, err := client.MonStatus()
+	statusEngine, err := client.MonStatus()
 	if err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 		return ""
@@ -333,23 +333,11 @@ func (ui *Termui) updateStatus() string {
 	}
 
 	items := []string{}
-	for _, l := range status {
-		if strings.HasPrefix(l, "Version") ||
-			strings.HasPrefix(l, "Uptime") ||
-			strings.HasPrefix(l, "Time") ||
-			strings.HasPrefix(l, "Hostname") ||
-			strings.HasPrefix(l, "CDSName") ||
-			strings.HasPrefix(l, "Nb of Panics: 0") ||
-			strings.HasPrefix(l, "Internal Events Queue: 0") ||
-			strings.HasPrefix(l, "Secret Backend") ||
-			strings.HasPrefix(l, "Cache: local") ||
-			strings.HasPrefix(l, "Session-Store: In Memory") ||
-			strings.HasPrefix(l, "LastUpdate Connected") ||
-			strings.HasPrefix(l, "Worker Model Errors: 0") ||
-			strings.Contains(l, "OK") {
-			items = append(items, fmt.Sprintf("[%s](%s)", l, selected))
+	for _, l := range statusEngine.Lines {
+		if l.Status != sdk.MonitoringStatusOK {
+			items = append(items, fmt.Sprintf("[%s](bg-red)", l.String()))
 		} else {
-			items = append(items, fmt.Sprintf("[%s](bg-red)", l))
+			items = append(items, fmt.Sprintf("[%s](%s)", l.String(), selected))
 		}
 	}
 	ui.status.Items = items
@@ -590,7 +578,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	}
 	ui.queue.Items = items
 
-	t := fmt.Sprintf("Queue - wf:%d - pb:%d - Max Waiting:%s ", nWJobs.Count, len(pbJobs), sdk.Round(maxQueued, time.Second).String())
+	t := fmt.Sprintf("Queue - ALL:%d wf:%d - pb:%d - Max Waiting:%s ", nWJobs.Count+int64(len(pbJobs)), nWJobs.Count, len(pbJobs), sdk.Round(maxQueued, time.Second).String())
 	for name, total := range booked {
 		t += fmt.Sprintf("%s:%d ", name, total)
 	}

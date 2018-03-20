@@ -180,7 +180,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 							"key1": 4,
 						},
 						WorkflowsPerm: sdk.UserPermissionsMap{
-							sdk.UserPermissionKey{Key: "key1", Name: "workflow1"}: 7,
+							sdk.UserPermissionKey("key1", "workflow1"): 7,
 						},
 					},
 				},
@@ -200,7 +200,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 							"key1": 4,
 						},
 						WorkflowsPerm: sdk.UserPermissionsMap{
-							sdk.UserPermissionKey{Key: "key2", Name: "workflow1"}: 7,
+							sdk.UserPermissionKey("key2", "workflow1"): 7,
 						},
 					},
 				},
@@ -220,7 +220,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 							"key1": 4,
 						},
 						WorkflowsPerm: sdk.UserPermissionsMap{
-							sdk.UserPermissionKey{Key: "key2", Name: "workflow1"}: 7,
+							sdk.UserPermissionKey("key2", "workflow1"): 7,
 						},
 					},
 				},
@@ -240,7 +240,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 							"key1": 4,
 						},
 						WorkflowsPerm: sdk.UserPermissionsMap{
-							sdk.UserPermissionKey{Key: "key1", Name: "workflow1"}: 5,
+							sdk.UserPermissionKey("key1", "workflow1"): 5,
 						},
 					},
 				},
@@ -260,7 +260,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 							"key1": 4,
 						},
 						WorkflowsPerm: sdk.UserPermissionsMap{
-							sdk.UserPermissionKey{Key: "key1", Name: "workflow1"}: 5,
+							sdk.UserPermissionKey("key1", "workflow1"): 5,
 						},
 					},
 				},
@@ -280,7 +280,7 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 							"key1": 4,
 						},
 						WorkflowsPerm: sdk.UserPermissionsMap{
-							sdk.UserPermissionKey{Key: "key1", Name: "workflow1"}: 4,
+							sdk.UserPermissionKey("key1", "workflow1"): 4,
 						},
 					},
 				},

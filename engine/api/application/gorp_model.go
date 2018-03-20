@@ -23,19 +23,31 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbApplicationKey{}, "application_key", false))
 }
 
+type sqlApplicationJSON struct {
+	Metadata    sql.NullString `db:"metadata"`
+	VCSStrategy sql.NullString `db:"vcs_strategy"`
+}
+
 // PostGet is a db hook
 func (a *dbApplication) PostGet(db gorp.SqlExecutor) error {
-	metadataStr, err := db.SelectNullStr("select metadata from application where id = $1", a.ID)
-	if err != nil {
-		return err
+	var appContext = sqlApplicationJSON{}
+	if err := db.SelectOne(&appContext, "select metadata, vcs_strategy from application where id = $1", a.ID); err != nil {
+		return sdk.WrapError(err, "dbApplication>PostGet Cannot load metadata and vcs strategy")
 	}
 
-	if metadataStr.Valid {
+	if appContext.Metadata.Valid {
 		metadata := sdk.Metadata{}
-		if err := json.Unmarshal([]byte(metadataStr.String), &metadata); err != nil {
+		if err := json.Unmarshal([]byte(appContext.Metadata.String), &metadata); err != nil {
 			return err
 		}
 		a.Metadata = metadata
+	}
+	if appContext.VCSStrategy.Valid {
+		vcs := sdk.RepositoryStrategy{}
+		if err := json.Unmarshal([]byte(appContext.VCSStrategy.String), &vcs); err != nil {
+			return err
+		}
+		a.RepositoryStrategy = vcs
 	}
 	return nil
 }
@@ -46,7 +58,13 @@ func (a *dbApplication) PostUpdate(db gorp.SqlExecutor) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec("update application set metadata = $2 where id = $1", a.ID, b); err != nil {
+
+	v, err := json.Marshal(a.RepositoryStrategy)
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("update application set metadata = $2, vcs_strategy = $3 where id = $1", a.ID, b, v); err != nil {
 		return err
 	}
 	return nil

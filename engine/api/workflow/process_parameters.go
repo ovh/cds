@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -23,7 +24,7 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 	errm := &sdk.MultiError{}
 
 	for k, v := range tmp {
-		s, err := sdk.Interpolate(v, tmp)
+		s, err := interpolate.Do(v, tmp)
 		if err != nil {
 			errm.Append(err)
 			continue
@@ -96,7 +97,6 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 	}
 
 	// compute payload
-	errm := &sdk.MultiError{}
 	e := dump.NewDefaultEncoder(new(bytes.Buffer))
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
@@ -106,7 +106,6 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 	tmpVars, errdump := e.ToStringMap(payload)
 	if errdump != nil {
 		log.Error("GetNodeBuildParameters> do-dump error: %v", errdump)
-		errm.Append(errdump)
 	}
 
 	//Merge the dumped payload with vars
@@ -120,16 +119,37 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = n.Pipeline.Name
 
+	if n.Context != nil && n.Context.Application != nil && n.Context.Application.RepositoryStrategy.ConnectionType != "" {
+		vars["git.connection.type"] = n.Context.Application.RepositoryStrategy.ConnectionType
+		if n.Context.Application.RepositoryStrategy.SSHKey != "" {
+			vars["git.ssh.key"] = n.Context.Application.RepositoryStrategy.SSHKey
+		}
+		if n.Context.Application.RepositoryStrategy.PGPKey != "" {
+			vars["git.pgp.key"] = n.Context.Application.RepositoryStrategy.PGPKey
+		}
+		if n.Context.Application.RepositoryStrategy.User != "" {
+			vars["git.http.user"] = n.Context.Application.RepositoryStrategy.User
+		}
+
+		if _, ok := vars["git.branch"]; !ok && n.Context.Application.RepositoryStrategy.Branch != "" {
+			vars["git.branch"] = n.Context.Application.RepositoryStrategy.Branch
+		}
+		if _, ok := vars["git.default_branch"]; !ok && n.Context.Application.RepositoryStrategy.DefaultBranch != "" {
+			vars["git.default_branch"] = n.Context.Application.RepositoryStrategy.Branch
+		}
+	} else {
+		// remove vcs strategy variable
+		delete(vars, "git.ssh.key")
+		delete(vars, "git.pgp.key")
+		delete(vars, "git.http.user")
+	}
+
 	params := []sdk.Parameter{}
 	for k, v := range vars {
 		sdk.AddParameter(&params, k, sdk.StringParameter, v)
 	}
 
-	if errm.IsEmpty() {
-		return params, nil
-	}
-
-	return params, errm
+	return params, errdump
 }
 
 func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {
@@ -212,7 +232,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk
 
 	params = []sdk.Parameter{}
 	for k, v := range tmp {
-		s, err := sdk.Interpolate(v, tmp)
+		s, err := interpolate.Do(v, tmp)
 		if err != nil {
 			errm.Append(err)
 			continue

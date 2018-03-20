@@ -23,7 +23,7 @@ var (
 	MsgAppUpdated                          = &Message{"MsgAppUpdated", trad{FR: "L'application %s a été mise à jour avec succès", EN: "Application %s successfully updated"}, nil}
 	MsgPipelineCreated                     = &Message{"MsgPipelineCreated", trad{FR: "Le pipeline %s a été créé avec succès", EN: "Pipeline %s successfully created"}, nil}
 	MsgPipelineCreationAborted             = &Message{"MsgPipelineCreationAborted", trad{FR: "La création du pipeline %s a été abandonnée", EN: "Pipeline %s creation aborted"}, nil}
-	MsgPipelineExists                      = &Message{"MsgPipelineExists", trad{FR: "Le pipeline %s existe déjà", EN: "Pipeline %s already exist"}, nil}
+	MsgPipelineExists                      = &Message{"MsgPipelineExists", trad{FR: "Le pipeline %s existe déjà", EN: "Pipeline %s already exists"}, nil}
 	MsgPipelineAttached                    = &Message{"MsgPipelineAttached", trad{FR: "Le pipeline %s a été attaché à l'application %s", EN: "Pipeline %s has been attached to application %s"}, nil}
 	MsgPipelineTriggerCreated              = &Message{"MsgPipelineTriggerCreated", trad{FR: "Le trigger du pipeline %s de l'application %s vers le pipeline %s l'application %s a été créé avec succès", EN: "Trigger from pipeline %s of application %s to pipeline %s attached to application %s successfully created"}, nil}
 	MsgAppGroupInheritPermission           = &Message{"MsgAppGroupInheritPermission", trad{FR: "Les permissions du projet sont appliquées sur l'application %s", EN: "Application %s inherits project permissions"}, nil}
@@ -31,7 +31,7 @@ var (
 	MsgAppVariablesCreated                 = &Message{"MsgAppVariablesCreated", trad{FR: "Les variables ont été ajoutées avec succès sur l'application %s", EN: "Application variables for %s are successfully created"}, nil}
 	MsgHookCreated                         = &Message{"MsgHookCreated", trad{FR: "Hook créé sur le depôt %s vers le pipeline %s", EN: "Hook created on repository %s to pipeline %s"}, nil}
 	MsgAppKeyCreated                       = &Message{"MsgAppKeyCreated", trad{FR: "La clé %s %s a été créée sur l'application %s", EN: "%s key %s created on application %s"}, nil}
-	MsgEnvironmentExists                   = &Message{"MsgEnvironmentExists", trad{FR: "L'environnement %s existe déjà", EN: "Environment %s already exist"}, nil}
+	MsgEnvironmentExists                   = &Message{"MsgEnvironmentExists", trad{FR: "L'environnement %s existe déjà", EN: "Environment %s already exists"}, nil}
 	MsgEnvironmentCreated                  = &Message{"MsgEnvironmentCreated", trad{FR: "L'environnement %s a été créé avec succès", EN: "Environment %s successfully created"}, nil}
 	MsgEnvironmentVariableUpdated          = &Message{"MsgEnvironmentVariableUpdated", trad{FR: "La variable %s de l'environnement %s a été mise à jour", EN: "Variable %s on environment %s has been updated"}, nil}
 	MsgEnvironmentVariableCannotBeUpdated  = &Message{"MsgEnvironmentVariableCannotBeUpdated", trad{FR: "La variable %s de l'environnement %s n'a pu être mise à jour : %s", EN: "Variable %s on environment %s cannot be updated: %s"}, nil}
@@ -43,6 +43,7 @@ var (
 	MsgEnvironmentGroupCannotBeCreated     = &Message{"MsgEnvironmentGroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être ajouté : %s", EN: "Group %s on environment %s cannot be added: %s"}, nil}
 	MsgEnvironmentGroupDeleted             = &Message{"MsgEnvironmentGroupDeleted", trad{FR: "Le groupe %s de l'environnement %s a été supprimé", EN: "Group %s on environment %s has been deleted"}, nil}
 	MsgEnvironmentGroupCannotBeDeleted     = &Message{"MsgEnvironmentGMsgEnvironmentGroupCannotBeDeletedroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être supprimé : %s", EN: "Group %s on environment %s cannot be deleted: %s"}, nil}
+	MsgEnvironmentKeyCreated               = &Message{"MsgEnvironmentKeyCreated", trad{FR: "La clé %s %s a été créée sur l'environnement %s", EN: "%s key %s created on environment %s"}, nil}
 	MsgJobNotValidActionNotFound           = &Message{"MsgJobNotValidActionNotFound", trad{FR: "Erreur de validation du Job %s : L'action %s à l'étape %d n'a pas été trouvée", EN: "Job %s validation Failure: Unknown action %s on step #%d"}, nil}
 	MsgJobNotValidInvalidActionParameter   = &Message{"MsgJobNotValidInvalidActionParameter", trad{FR: "Erreur de validation du Job %s : Le paramètre %s de l'étape %d - %s est invalide", EN: "Job %s validation Failure: Invalid parameter %s on step #%d %s"}, nil}
 	MsgPipelineGroupUpdated                = &Message{"MsgPipelineGroupUpdated", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été mises à jour", EN: "Permission for group %s on pipeline %s has been updated"}, nil}
@@ -57,17 +58,24 @@ var (
 	MsgPipelineJobUpdated                  = &Message{"MsgPipelineJobUpdated", trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil}
 	MsgPipelineJobAdded                    = &Message{"MsgPipelineJobAdded", trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil}
 	MsgPipelineJobDeleted                  = &Message{"MsgPipelineJobDeleted", trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil}
-	MsgSpawnInfoHatcheryStarts             = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s (%s) a démarré le lancement du worker avec le model %s", EN: "Hatchery %s (%s) starts spawn worker with model %s"}, nil}
-	MsgSpawnInfoHatcheryErrorSpawn         = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s (%s) a démarré un worker avec le model %s après %s, err:%s", EN: "Error while Hatchery %s (%s) spawn worker with model %s after %s, err:%s"}, nil}
+	MsgSpawnInfoHatcheryStarts             = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s (%s) a démarré le lancement du worker avec le modèle %s", EN: "Hatchery %s (%s) starts spawn worker with model %s"}, nil}
+	MsgSpawnInfoHatcheryErrorSpawn         = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s (%s) a démarré un worker avec le modèle %s après %s, err:%s", EN: "Error while Hatchery %s (%s) spawn worker with model %s after %s, err:%s"}, nil}
 	MsgSpawnInfoHatcheryStartsSuccessfully = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery %s (%s) a démarré le worker %s avec succès en %s", EN: "Hatchery %s (%s) spawn worker %s successfully in %s"}, nil}
 	MsgSpawnInfoWorkerEnd                  = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "Worker %s finished working on this job and took %s to work on the steps"}, nil}
 	MsgSpawnInfoJobTaken                   = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job a été pris par le worker %s", EN: "Job was taken by worker %s"}, nil}
+	MsgSpawnInfoJobTakenWorkerVersion      = &Message{"MsgSpawnInfoJobTakenWorkerVersion", trad{FR: "Worker %s version:%s os:%s arch:%s", EN: "Worker %s version:%s os:%s arch:%s"}, nil}
 	MsgSpawnInfoWorkerForJob               = &Message{"MsgSpawnInfoWorkerForJob", trad{FR: "Ce worker %s a été créé pour lancer ce job", EN: "This worker %s was created to take this action"}, nil}
 	MsgSpawnInfoWorkerForJobError          = &Message{"MsgSpawnInfoWorkerForJobError", trad{FR: "Ce worker %s a été créé pour lancer ce job, mais ne possède pas tous les pré-requis. Vérifiez que les prérequis suivants:%s", EN: "This worker %s was created to take this action, but does not have all prerequisites. Please verify the following prerequisites:%s"}, nil}
 	MsgSpawnInfoJobError                   = &Message{"MsgSpawnInfoJobError", trad{FR: "Impossible de lancer ce job : %s", EN: "Unable to run this job: %s"}, nil}
 	MsgWorkflowStarting                    = &Message{"MsgWorkflowStarting", trad{FR: "Le workflow %s#%s a été démarré", EN: "Workflow %s#%s has been started"}, nil}
 	MsgWorkflowError                       = &Message{"MsgWorkflowError", trad{FR: "Une erreur est survenue: %v", EN: "An error has occured: %v"}, nil}
 	MsgWorkflowNodeStop                    = &Message{"MsgWorkflowNodeStop", trad{FR: "Le pipeline a été arrété par %s", EN: "The pipeline has been stopped by %s"}, nil}
+	MsgWorkflowNodeMutex                   = &Message{"MsgWorkflowNodeMutex", trad{FR: "Le pipeline %s est mis en attente tant qu'il est en cours sur un autre run", EN: "The pipeline %s is waiting while it's running on another run"}, nil}
+	MsgWorkflowNodeMutexRelease            = &Message{"MsgWorkflowNodeMutexRelease", trad{FR: "Lancement du pipeline %s", EN: "Triggering pipeline %s"}, nil}
+	MsgWorkflowImportedUpdated             = &Message{"MsgWorkflowImportedUpdated", trad{FR: "Le workflow %s a été mis à jour", EN: "Workflow %s has been updated"}, nil}
+	MsgWorkflowImportedInserted            = &Message{"MsgWorkflowImportedInserted", trad{FR: "Le workflow %s a été créé", EN: "Workflow %s has been created"}, nil}
+	MsgSpawnInfoHatcheryCannotStartJob     = &Message{"MsgSpawnInfoHatcheryCannotStart", trad{FR: "Aucune hatchery n'a pu démarrer de worker respectant vos pré-requis de job, merci de les vérifier.", EN: "No hatchery can spawn a worker corresponding your job's requirements. Please check your job's requirements."}, nil}
+	MsgWorkflowRunBranchDeleted            = &Message{"MsgWorkflowRunBranchDeleted", trad{FR: "La branche %s  a été supprimée", EN: "Branch %s has been deleted"}, nil}
 )
 
 // Messages contains all sdk Messages
@@ -113,12 +121,19 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoHatcheryStartsSuccessfully.ID: MsgSpawnInfoHatcheryStartsSuccessfully,
 	MsgSpawnInfoWorkerEnd.ID:                  MsgSpawnInfoWorkerEnd,
 	MsgSpawnInfoJobTaken.ID:                   MsgSpawnInfoJobTaken,
+	MsgSpawnInfoJobTakenWorkerVersion.ID:      MsgSpawnInfoJobTakenWorkerVersion,
 	MsgSpawnInfoWorkerForJob.ID:               MsgSpawnInfoWorkerForJob,
 	MsgSpawnInfoWorkerForJobError.ID:          MsgSpawnInfoWorkerForJobError,
 	MsgSpawnInfoJobError.ID:                   MsgSpawnInfoJobError,
 	MsgWorkflowStarting.ID:                    MsgWorkflowStarting,
 	MsgWorkflowError.ID:                       MsgWorkflowError,
 	MsgWorkflowNodeStop.ID:                    MsgWorkflowNodeStop,
+	MsgWorkflowImportedUpdated.ID:             MsgWorkflowImportedUpdated,
+	MsgWorkflowImportedInserted.ID:            MsgWorkflowImportedInserted,
+	MsgWorkflowNodeMutex.ID:                   MsgWorkflowNodeMutex,
+	MsgWorkflowNodeMutexRelease.ID:            MsgWorkflowNodeMutexRelease,
+	MsgSpawnInfoHatcheryCannotStartJob.ID:     MsgSpawnInfoHatcheryCannotStartJob,
+	MsgWorkflowRunBranchDeleted.ID:            MsgWorkflowRunBranchDeleted,
 }
 
 //Message represent a struc format translated messages

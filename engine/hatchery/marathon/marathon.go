@@ -14,7 +14,7 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
-	"github.com/moby/moby/pkg/namesgenerator"
+	"github.com/ovh/cds/sdk/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -118,8 +118,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryMarathon server
 func (h *HatcheryMarathon) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID must returns hatchery id
@@ -189,9 +188,9 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 // requirements services are not supported
 func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	if spawnArgs.JobID > 0 {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.LogInfo)
 	}
 
 	var logJob string
@@ -199,7 +198,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	// Estimate needed memory, we will set 110% of required memory
 	memory := int64(h.Config.DefaultMemory)
 
-	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
+	cmd := "rm -f worker && curl ${CDS_API}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker"
 	if spawnArgs.RegisterOnly {
 		cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
@@ -526,7 +525,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 
 		// then if it's not found, kill it !
 		if !found && time.Since(t) > 1*time.Minute {
-			log.Info("killAwolWorkers> killing awol worker %s", app.ID)
+			log.Debug("killAwolWorkers> killing awol worker %s", app.ID)
 			if _, err := h.marathonClient.DeleteApplication(app.ID, true); err != nil {
 				log.Warning("killAwolWorkers> Error while delete app %s err:%s", app.ID, err)
 				// continue to next app

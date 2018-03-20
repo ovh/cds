@@ -1,9 +1,9 @@
-<a class="step job animated fadeIn" (click)="open = !open">
+<a class="step job animated fadeIn" (click)="open = !open" (dblclick)="goToJobLogs()">
   <div>
     <app-status-icon [status]="job.status" class="job"></app-status-icon>
   </div>
   <div>
-    <div class="title job">{{job.job.action.name}}</div>
+    <div class="title job">{{job.job.action.name}} <i class="warning sign icon orange" *ngIf="warning"></i></div>
   </div>
   <div class="forceRight" *ngIf="job.job.step_status && job.job.step_status.length">
     <i class="caret icon" [class.right]="!open" [class.down]="open"></i>
@@ -13,6 +13,9 @@
   <ng-container *ngFor="let action_status of job.job?.step_status; let index = index;">
     <app-action-step-summary
       [action]="job.job.action.actions[index]"
+      [workflowRun]="workflowRun"
+      [stage]="stage"
+      [job]="job"
       [actionStatus]="action_status">
     </app-action-step-summary>
   </ng-container>

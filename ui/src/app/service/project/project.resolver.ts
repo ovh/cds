@@ -11,7 +11,11 @@ export class ProjectResolver implements Resolve<Project> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
-        let opts = [];
+        let opts = [
+            new LoadOpts('withApplicationNames', 'application_names'),
+            new LoadOpts('withPipelineNames', 'pipeline_names'),
+            new LoadOpts('withWorkflowNames', 'workflow_names')
+        ];
 
         return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());
     }
@@ -25,25 +29,11 @@ export class ProjectForWorkflowResolver implements Resolve<Project> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
         let opts = [
-            new LoadOpts('withPipelines', 'pipelines'),
-            new LoadOpts('withApplications', 'applications'),
+            new LoadOpts('withWorkflowNames', 'workflow_names'),
+            new LoadOpts('withPipelineNames', 'pipeline_names'),
+            new LoadOpts('withApplicationNames', 'application_names'),
             new LoadOpts('withEnvironments', 'environments'),
-        ];
-
-        return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());
-    }
-
-    constructor(private projectStore: ProjectStore, private routerService: RouterService) {}
-}
-
-@Injectable()
-export class ProjectForPipelineCreateResolver implements Resolve<Project> {
-
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-        let params = this.routerService.getRouteSnapshotParams({}, state.root);
-        let opts = [
-          new LoadOpts('withPipelineNames', 'pipeline_names'),
-          new LoadOpts('withApplications', 'applications'),
+            new LoadOpts('withPlatforms', 'platforms')
         ];
 
         return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());
@@ -58,6 +48,7 @@ export class ProjectForApplicationResolver implements Resolve<Project> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
         let opts = [
+          new LoadOpts('withWorkflowNames', 'workflow_names'),
           new LoadOpts('withPipelineNames', 'pipeline_names'),
           new LoadOpts('withApplicationNames', 'application_names'),
           new LoadOpts('withEnvironments', 'environments'),

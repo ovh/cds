@@ -18,6 +18,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// ShellMode will os.Exit if false, display only exit code if true
+var ShellMode bool
+
 //ExitOnError if the error is not nil; exit the process with printing help functions and the error
 func ExitOnError(err error, helpFunc ...func() error) {
 	if err == nil {
@@ -29,13 +32,25 @@ func ExitOnError(err error, helpFunc ...func() error) {
 		for _, f := range helpFunc {
 			f()
 		}
-		os.Exit(e.Code)
+		OSExit(e.Code)
 	}
 	fmt.Println("Error:", err.Error())
 	for _, f := range helpFunc {
 		f()
 	}
-	os.Exit(50)
+	OSExit(50)
+}
+
+// OSExit will os.Exit if ShellMode is false, display only exit code if true
+func OSExit(code int) {
+	if ShellMode {
+		// display code only if os.Exit is not ok
+		if code != 0 {
+			fmt.Printf("Command exit with code %d\n", code)
+		}
+	} else {
+		os.Exit(code)
+	}
 }
 
 // NewCommand creates a new cobra command with or without a RunFunc and eventually subCommands
@@ -60,16 +75,32 @@ func NewListCommand(c Command, run RunListFunc, subCommands []*cobra.Command, mo
 
 func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods ...CommandModifier) *cobra.Command {
 	cmd := &cobra.Command{}
+	cmd.SetOutput(os.Stdout)
 	cmd.Use = c.Name
 
 	sort.Sort(orderArgs(c.Args...))
 	sort.Sort(orderArgs(c.OptionalArgs...))
+
+	if len(c.Ctx) > 0 {
+		cmd.Use = cmd.Use + " ["
+	}
+
+	for _, a := range c.Ctx {
+		cmd.Use = cmd.Use + " " + strings.ToUpper(a.Name)
+	}
+
+	if len(c.Ctx) > 0 {
+		cmd.Use = cmd.Use + " ]"
+	}
 
 	for _, a := range c.Args {
 		cmd.Use = cmd.Use + " " + strings.ToUpper(a.Name)
 	}
 	for _, a := range c.OptionalArgs {
 		cmd.Use = cmd.Use + " [" + strings.ToUpper(a.Name) + "]"
+	}
+	if c.VariadicArgs.Name != "" {
+		cmd.Use = cmd.Use + " " + strings.ToUpper(c.VariadicArgs.Name) + " ..."
 	}
 
 	if len(mods) == 0 {
@@ -88,16 +119,22 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		case reflect.Bool:
 			b, _ := strconv.ParseBool(f.Default)
 			_ = cmd.Flags().BoolP(f.Name, f.ShortHand, b, f.Usage)
+		case reflect.Slice:
+			_ = cmd.Flags().StringSliceP(f.Name, f.ShortHand, nil, f.Usage)
 		default:
 			_ = cmd.Flags().StringP(f.Name, f.ShortHand, f.Default, f.Usage)
 		}
 	}
 
-	definedArgs := append(c.Args, c.OptionalArgs...)
+	definedArgs := append(c.Ctx, c.Args...)
+	definedArgs = append(definedArgs, c.OptionalArgs...)
 	sort.Sort(orderArgs(definedArgs...))
+	definedArgs = append(definedArgs, c.VariadicArgs)
 
 	cmd.Short = c.Short
 	cmd.Long = c.Long
+	cmd.Hidden = c.Hidden
+	cmd.Example = c.Example
 	cmd.AddCommand(subCommands...)
 
 	if run == nil || reflect.ValueOf(run).IsNil() {
@@ -106,24 +143,24 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		return cmd
 	}
 
-	cmd.Run = func(cmd *cobra.Command, args []string) {
-		//Command must receive as leat mandatory args
-		if len(c.Args) > len(args) {
-			ExitOnError(ErrWrongUsage, cmd.Help)
-		}
-		//If there is no optionnal args but there more args than expected
-		if len(c.OptionalArgs) == 0 && len(args) > len(c.Args) {
-			ExitOnError(ErrWrongUsage, cmd.Help)
-		}
-
+	var argsToVal = func(args []string) Values {
 		vals := Values{}
+		nbDefinedArgs := len(definedArgs)
+		if c.VariadicArgs.Name != "" {
+			nbDefinedArgs--
+		}
 		for i := range args {
-			s := definedArgs[i].Name
-			if definedArgs[i].IsValid != nil && !definedArgs[i].IsValid(args[i]) {
-				fmt.Printf("%s is invalid\n", s)
-				ExitOnError(ErrWrongUsage, cmd.Help)
+			if i < nbDefinedArgs {
+				s := definedArgs[i].Name
+				if definedArgs[i].IsValid != nil && !definedArgs[i].IsValid(args[i]) {
+					fmt.Printf("%s is invalid\n", s)
+					ExitOnError(ErrWrongUsage, cmd.Help)
+				}
+				vals[s] = args[i]
+			} else {
+				vals[c.VariadicArgs.Name] = strings.Join(args[i:], ",")
+				break
 			}
-			vals[s] = args[i]
 		}
 
 		for i := range c.Flags {
@@ -137,12 +174,45 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				b, err := cmd.Flags().GetBool(s)
 				ExitOnError(err)
 				vals[s] = fmt.Sprintf("%v", b)
+			case reflect.Slice:
+				slice, err := cmd.Flags().GetStringSlice(s)
+				ExitOnError(err)
+				vals[s] = strings.Join(slice, "||")
 			}
 			if c.Flags[i].IsValid != nil && !c.Flags[i].IsValid(vals[s]) {
 				fmt.Printf("%s is invalid\n", s)
 				ExitOnError(ErrWrongUsage, cmd.Help)
 			}
 		}
+		return vals
+	}
+
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		if c.PreRun != nil {
+			if err := c.PreRun(&c, &args); err != nil {
+				ExitOnError(ErrWrongUsage, cmd.Help)
+				return
+			}
+		}
+
+		//Command must receive as least mandatory args
+		if len(c.Args)+len(c.Ctx) > len(args) {
+			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
+		}
+
+		//If there is no optional args but there more args than expected
+		if c.VariadicArgs.Name == "" && len(c.OptionalArgs) == 0 && (len(args) > len(c.Args)+len(c.Ctx)) {
+			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
+		}
+		//If there is a variadic arg, we condider at least one arg mandatory
+		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+len(c.Ctx)+1) {
+			ExitOnError(ErrWrongUsage, cmd.Help)
+			return
+		}
+
+		vals := argsToVal(args)
 
 		format, _ := cmd.Flags().GetString("format")
 
@@ -150,14 +220,14 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		case RunFunc:
 			if f == nil {
 				cmd.Help()
-				os.Exit(0)
+				OSExit(0)
 			}
 			ExitOnError(f(vals))
-			os.Exit(0)
+			OSExit(0)
 		case RunGetFunc:
 			if f == nil {
 				cmd.Help()
-				os.Exit(0)
+				OSExit(0)
 			}
 			i, err := f(vals)
 			if err != nil {
@@ -173,13 +243,21 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			case "json":
 				b, err := json.Marshal(i)
 				ExitOnError(err)
-				fmt.Println(string(b))
+				if ShellMode {
+					fmt.Fprint(cmd.OutOrStdout(), string(b))
+				} else {
+					fmt.Println(string(b))
+				}
 			case "yaml":
 				b, err := yaml.Marshal(i)
 				ExitOnError(err)
-				fmt.Println(string(b))
+				if ShellMode {
+					fmt.Fprint(cmd.OutOrStdout(), string(b))
+				} else {
+					fmt.Println(string(b))
+				}
 			default:
-				w := tabwriter.NewWriter(os.Stdout, 10, 0, 1, ' ', 0)
+				w := tabwriter.NewWriter(cmd.OutOrStdout(), 10, 0, 1, ' ', 0)
 				e := dump.NewDefaultEncoder(new(bytes.Buffer))
 				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 				e.ExtraFields.DetailedMap = false
@@ -198,7 +276,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		case RunListFunc:
 			if f == nil {
 				cmd.Help()
-				os.Exit(0)
+				OSExit(0)
 			}
 
 			quiet, _ := cmd.Flags().GetBool("quiet")
@@ -231,7 +309,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				}
 
 				if quiet {
-					fmt.Println(item["key"])
+					fmt.Fprintln(cmd.OutOrStdout(), item["key"])
 					continue
 				}
 
@@ -278,7 +356,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 					fmt.Println("nothing to display...")
 					return
 				}
-				table := tablewriter.NewWriter(os.Stdout)
+				table := tablewriter.NewWriter(cmd.OutOrStdout())
 				table.SetHeader(tableHeader)
 				for _, v := range tableData {
 					table.Append(v)
@@ -290,14 +368,14 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		case RunDeleteFunc:
 			if f == nil {
 				cmd.Help()
-				os.Exit(0)
+				OSExit(0)
 			}
 
 			force, _ := cmd.Flags().GetBool("force")
 
-			if !force && !AskForConfirmation("Are you sure to delete ?") {
+			if !force && !AskForConfirmation("Are you sure to delete?") {
 				fmt.Println("Deletion aborted")
-				os.Exit(0)
+				OSExit(0)
 			}
 
 			err := f(vals)
@@ -305,7 +383,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				fmt.Println("Delete with success")
 			}
 			ExitOnError(err)
-			os.Exit(0)
+			OSExit(0)
 
 		default:
 			panic(fmt.Errorf("Unknown function type: %T", f))
@@ -324,7 +402,15 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 		s = reflect.ValueOf(i)
 	}
 
+	if s.Kind() != reflect.Struct {
+		return nil
+	}
+
 	t := reflect.TypeOf(i)
+	if t.Kind() == reflect.Ptr {
+		t = reflect.TypeOf(reflect.ValueOf(i).Elem().Interface())
+	}
+
 	var ok = true
 	for i := 0; i < s.NumField() && ok; i++ {
 		f := s.Field(i)

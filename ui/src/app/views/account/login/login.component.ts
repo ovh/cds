@@ -16,7 +16,7 @@ export class LoginComponent extends AccountComponent {
     redirect: string;
 
     constructor(private _userService: UserService, private _router: Router,
-        private _authStore: AuthentificationStore, private _route: ActivatedRoute) {
+        _authStore: AuthentificationStore, private _route: ActivatedRoute) {
         super(_authStore);
         this.user = new User();
 

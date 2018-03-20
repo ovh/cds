@@ -1,21 +1,20 @@
 package swarm
 
 import (
-	"context"
 	"fmt"
-	"os"
-	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/fsouza/go-dockerclient"
-	"github.com/moby/moby/pkg/namesgenerator"
+	types "github.com/docker/docker/api/types"
+	docker "github.com/docker/docker/client"
+	context "golang.org/x/net/context"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new Hatchery Swarm
@@ -23,61 +22,9 @@ func New() *HatcherySwarm {
 	return new(HatcherySwarm)
 }
 
-// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
-func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
-	if err := h.CheckConfiguration(cfg); err != nil {
-		return err
-	}
-
-	var ok bool
-	h.Config, ok = cfg.(HatcheryConfiguration)
-	if !ok {
-		return fmt.Errorf("Invalid configuration")
-	}
-
-	return nil
-}
-
-// CheckConfiguration checks the validity of the configuration object
-func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
-	hconfig, ok := cfg.(HatcheryConfiguration)
-	if !ok {
-		return fmt.Errorf("Invalid configuration")
-	}
-
-	if hconfig.API.HTTP.URL == "" {
-		return fmt.Errorf("API HTTP(s) URL is mandatory")
-	}
-
-	if hconfig.API.Token == "" {
-		return fmt.Errorf("API Token URL is mandatory")
-	}
-
-	if hconfig.MaxContainers <= 0 {
-		return fmt.Errorf("max-containers must be > 0")
-	}
-	if hconfig.WorkerTTL <= 0 {
-		return fmt.Errorf("worker-ttl must be > 0")
-	}
-	if hconfig.DefaultMemory <= 1 {
-		return fmt.Errorf("worker-memory must be > 1")
-	}
-
-	if hconfig.Name == "" {
-		return fmt.Errorf("please enter a name in your swarm hatchery configuration")
-	}
-
-	if os.Getenv("DOCKER_HOST") == "" {
-		return fmt.Errorf("Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
-	}
-
-	return nil
-}
-
 // Serve start the HatcherySwarm server
 func (h *HatcherySwarm) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 //Init connect the hatchery to the docker api
@@ -99,120 +46,19 @@ func (h *HatcherySwarm) Init() error {
 	}
 
 	var errc error
-	h.dockerClient, errc = docker.NewClientFromEnv()
+	h.dockerClient, errc = docker.NewEnvClient()
 	if errc != nil {
 		log.Error("Unable to connect to a docker client:%s", errc)
 		return errc
 	}
 
-	if errPing := h.dockerClient.Ping(); errPing != nil {
+	if _, errPing := h.dockerClient.Ping(context.Background()); errPing != nil {
 		log.Error("Unable to ping docker host:%s", errPing)
 		return errPing
 	}
 
 	go h.killAwolWorkerRoutine()
 	return nil
-}
-
-//This a embeded cache for containers list
-var containersCache = struct {
-	mu   sync.RWMutex
-	list []docker.APIContainers
-}{
-	mu:   sync.RWMutex{},
-	list: []docker.APIContainers{},
-}
-
-func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
-	containersCache.mu.RLock()
-	nbServers := len(containersCache.list)
-	containersCache.mu.RUnlock()
-
-	if nbServers == 0 {
-		s, err := h.dockerClient.ListContainers(docker.ListContainersOptions{
-			All: true,
-		})
-		if err != nil {
-			return nil, sdk.WrapError(err, "getContainers> error: %s")
-		}
-		containersCache.mu.Lock()
-		containersCache.list = s
-		containersCache.mu.Unlock()
-
-		for _, v := range s {
-			log.Debug("getContainers> container ID:%s names:%+v image:%s created:%d state:%s, status:%s", v.ID, v.Names, v.Image, v.Created, v.State, v.Status)
-		}
-		//Remove data from the cache after 2 seconds
-		go func() {
-			time.Sleep(2 * time.Second)
-			containersCache.mu.Lock()
-			containersCache.list = []docker.APIContainers{}
-			containersCache.mu.Unlock()
-		}()
-	}
-
-	return containersCache.list, nil
-}
-
-func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error) {
-	containers, err := h.getContainers()
-	if err != nil {
-		return nil, sdk.WrapError(err, "getContainer> cannot getContainers")
-	}
-
-	for i := range containers {
-		if strings.Replace(containers[i].Names[0], "/", "", 1) == strings.Replace(name, "/", "", 1) {
-			return &containers[i], nil
-		}
-	}
-
-	return nil, nil
-}
-
-func (h *HatcherySwarm) killAndRemoveContainer(ID string) {
-	log.Info("killAndRemove>Remove container %s", ID)
-	if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
-		ID:     ID,
-		Signal: docker.SIGKILL,
-	}); err != nil {
-		if !strings.Contains(err.Error(), "is not running") && !strings.Contains(err.Error(), "No such container") {
-			log.Warning("killAndRemove> Unable to kill container %s", err)
-		}
-	}
-
-	if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-		ID: ID,
-	}); err != nil {
-		// container could be already removed by a previous call to docker
-		if !strings.Contains(err.Error(), "No such container") {
-			log.Warning("killAndRemove> Unable to remove container %s", err)
-		}
-	}
-}
-
-func (h *HatcherySwarm) killAndRemove(ID string) {
-	container, err := h.dockerClient.InspectContainer(ID)
-	if err != nil {
-		log.Info("killAndRemove> cannot InspectContainer: %v", err)
-		h.killAndRemoveContainer(ID)
-		return
-	}
-
-	for _, cnetwork := range container.NetworkSettings.Networks {
-		network, err := h.dockerClient.NetworkInfo(cnetwork.NetworkID)
-		if err != nil {
-			log.Info("killAndRemove> cannot NetworkInfo: %v", err)
-			h.killAndRemoveContainer(ID)
-			return
-		}
-		// If we succeed to get the network, kill and remove all the container on the network
-		if netname, ok := network.Labels["worker_net"]; ok {
-			log.Info("killAndRemove> Remove network %s", netname)
-			for id := range network.Containers {
-				h.killAndRemoveContainer(id)
-			}
-		}
-	}
 }
 
 // SpawnWorker start a new docker container
@@ -225,7 +71,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		name = "register-" + name
 	}
 
-	log.Info("SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
+	log.Debug("SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
 
 	//Create a network
 	network := name + "-net"
@@ -286,6 +132,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					env:          env,
 					labels:       labels,
 					memory:       serviceMemory,
+					entryPoint:   nil,
 				}
 
 				if err := h.createAndStartContainer(args); err != nil {
@@ -304,7 +151,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
+	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
 
 	//CDS env needed by the worker binary
 	env := []string{
@@ -365,7 +212,8 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		env:          env,
 		labels:       labels,
 		memory:       memory,
-		dockerOpts:   dockerOpts,
+		dockerOpts:   *dockerOpts,
+		entryPoint:   []string{},
 	}
 
 	//start the worker
@@ -376,267 +224,33 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	return name, nil
 }
 
-//create the docker bridge
-func (h *HatcherySwarm) createNetwork(name string) error {
-	log.Debug("createNetwork> Create network %s", name)
-	_, err := h.dockerClient.CreateNetwork(docker.CreateNetworkOptions{
-		Name:           name,
-		Driver:         "bridge",
-		Internal:       false,
-		CheckDuplicate: true,
-		EnableIPv6:     false,
-		IPAM: docker.IPAMOptions{
-			Driver: "default",
-		},
-		Labels: map[string]string{
-			"worker_net": name,
-		},
-	})
-	return err
-}
-
-type containerArgs struct {
-	name, image, network, networkAlias string
-	cmd, env                           []string
-	labels                             map[string]string
-	memory                             int64
-	dockerOpts                         *dockerOpts
-}
-
-//shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
-	//Memory is set to 1GB by default
-	if cArgs.memory <= 4 {
-		cArgs.memory = 1024
-	} else {
-		//Moaaaaar memory
-		cArgs.memory = cArgs.memory * 110 / 100
-	}
-	log.Info("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
-
-	var exposedPorts map[docker.Port]struct{}
-	var mounts []docker.Mount
-	if cArgs.dockerOpts != nil {
-		if len(cArgs.dockerOpts.ports) > 0 {
-			for port := range cArgs.dockerOpts.ports {
-				exposedPorts = map[docker.Port]struct{}{port: {}}
-			}
-		}
-
-		if len(cArgs.dockerOpts.mounts) > 0 {
-			for _, v := range cArgs.dockerOpts.mounts {
-				mounts = append(mounts, docker.Mount{Source: v.Source, Destination: v.Target})
-			}
-		}
-	}
-
-	opts := docker.CreateContainerOptions{
-		Name: cArgs.name,
-		Config: &docker.Config{
-			Image:        cArgs.image,
-			Cmd:          cArgs.cmd,
-			Env:          cArgs.env,
-			Labels:       cArgs.labels,
-			Memory:       cArgs.memory * 1024 * 1024, //from MB to B
-			MemorySwap:   -1,
-			ExposedPorts: exposedPorts,
-			Mounts:       mounts,
-		},
-		NetworkingConfig: &docker.NetworkingConfig{
-			EndpointsConfig: map[string]*docker.EndpointConfig{
-				cArgs.network: &docker.EndpointConfig{
-					Aliases: []string{cArgs.networkAlias, cArgs.name},
-				},
-			},
-		},
-	}
-
-	if cArgs.dockerOpts != nil {
-		opts.HostConfig = &docker.HostConfig{
-			PortBindings: cArgs.dockerOpts.ports,
-			Privileged:   cArgs.dockerOpts.privileged,
-			Mounts:       cArgs.dockerOpts.mounts,
-		}
-	}
-
-	c, err := h.dockerClient.CreateContainer(opts)
-	if err != nil {
-		log.Warning("startAndCreateContainer> Unable to create container with opts: %+v err:%s", opts, err)
-		return err
-	}
-
-	if err := h.dockerClient.StartContainer(c.ID, nil); err != nil {
-		log.Warning("startAndCreateContainer> Unable to start container %s err:%s", c.ID, err)
-		return err
-	}
-	return nil
-}
-
-var regexPort = regexp.MustCompile("^--port=(.*):(.*)$")
-
-type dockerOpts struct {
-	ports      map[docker.Port][]docker.PortBinding
-	privileged bool
-	mounts     []docker.HostMount
-}
-
-func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
-	dockerOpts := &dockerOpts{}
-
-	for _, r := range requirements {
-		switch r.Type {
-		case sdk.ModelRequirement:
-			if err := dockerOpts.computeDockerOptsOnModelRequirement(isSharedInfra, r); err != nil {
-				return nil, err
-			}
-		case sdk.VolumeRequirement:
-			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(isSharedInfra, r); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return dockerOpts, nil
-}
-
-func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req sdk.Requirement) error {
-	// args are separated by a space
-	// example: golang:1.9.1 --port=8080:8080/tcp
-	for idx, opt := range strings.Split(req.Value, " ") {
-		if idx == 0 {
-			continue // it's image name
-		}
-		if isSharedInfra {
-			return fmt.Errorf("You could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option.", opt)
-		}
-		if strings.HasPrefix(opt, "--port=") {
-			if err := d.computeDockerOptsPorts(opt); err != nil {
-				return err
-			}
-		} else if opt == "--privileged" {
-			d.privileged = true
-		} else {
-			return fmt.Errorf("Options not supported: %s", opt)
-		}
-	}
-	return nil
-}
-
-func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(isSharedInfra bool, req sdk.Requirement) error {
-	// args are separated by a space
-	// example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
-	for idx, opt := range strings.Split(req.Value, " ") {
-		if isSharedInfra {
-			return fmt.Errorf("You could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option.", opt)
-		}
-
-		if idx == 0 {
-			// it's --mount flag
-			if err := d.computeDockerOptsOnVolumeMountRequirement(opt); err != nil {
-				return err
-			}
-		}
-
-	}
-	return nil
-}
-
-// computeDockerOptsOnVolumeMountRequirement compute Mount struct from value of requirement
-func (d *dockerOpts) computeDockerOptsOnVolumeMountRequirement(opt string) error {
-	// check that value begin with type= and contains source= / destination=
-	if !strings.HasPrefix(opt, "type=") || !strings.Contains(opt, "source=") || !strings.Contains(opt, "destination=") {
-		return fmt.Errorf("Invalid mount option. Example:type=bind,source=/hostDir/sourceDir,destination=/dirInJob current:%s", opt)
-	}
-
-	var mtype, source, destination, bindPropagation string
-	var readonly bool
-
-	// iterate over arg separated by ','
-	// type=bind,source=/hostDir/sourceDir,destination=/dirInJob ->
-	// [type=bind] [source=/hostDir/sourceDir] [destination=/dirInJob]
-	for _, o := range strings.Split(opt, ",") {
-		if strings.HasPrefix(o, "type=") {
-			mtype = strings.Split(o, "=")[1]
-		} else if strings.HasPrefix(o, "source=") {
-			source = strings.Split(o, "=")[1]
-		} else if strings.HasPrefix(o, "destination=") {
-			destination = strings.Split(o, "=")[1]
-		} else if strings.HasPrefix(o, "bind-propagation=") {
-			bindPropagation = strings.Split(o, "=")[1]
-		} else if o == "readonly" {
-			readonly = true
-		}
-	}
-	if mtype == "" || source == "" || destination == "" {
-		return fmt.Errorf("Invalid mount option - one arg is empty. Example:type=bind,source=/hostDir/sourceDir,destination=/dirInJob current:%s", opt)
-	}
-
-	mount := docker.HostMount{
-		Target:   destination,
-		Source:   source,
-		Type:     mtype,
-		ReadOnly: readonly,
-	}
-	// rprivate is the default value
-	// see https://docs.docker.com/engine/admin/volumes/bind-mounts/#choosing-the--v-or-mount-flag
-	if bindPropagation != "" {
-		mount.BindOptions = &docker.BindOptions{Propagation: bindPropagation}
-	}
-
-	d.mounts = append(d.mounts, mount)
-
-	return nil
-}
-
-func (d *dockerOpts) computeDockerOptsPorts(arg string) error {
-	if regexPort.MatchString(arg) {
-		s := regexPort.FindStringSubmatch(arg)
-		//s = --port=8081:8182/tcp // hostPort:containerPort
-		//s[0] = --port=8081:8182/tcp
-		//s[1] = 8081 // hostPort
-		//s[2] = 8182/tcp  // containerPort
-		containerPort := s[2]
-		if !strings.Contains(containerPort, "/") {
-			// tcp is the default
-			containerPort += "/tcp"
-		}
-		if d.ports == nil {
-			d.ports = map[docker.Port][]docker.PortBinding{}
-		}
-		if _, ok := d.ports[docker.Port(containerPort)]; !ok {
-			d.ports[docker.Port(containerPort)] = []docker.PortBinding{}
-		}
-		//  "8182/tcp": {{HostIP: "0.0.0.0", HostPort: "8081"}}
-		d.ports[docker.Port(containerPort)] = append(d.ports[docker.Port(containerPort)],
-			docker.PortBinding{HostIP: "0.0.0.0", HostPort: s[1]})
-		return nil // no error
-	}
-	return fmt.Errorf("Wrong format of ports arguments. Example: --port=8081:8182/tcp")
-}
-
 // ModelType returns type of hatchery
 func (*HatcherySwarm) ModelType() string {
 	return sdk.Docker
 }
 
+const (
+	timeoutPullImage = 10 * time.Minute
+)
+
 // CanSpawn checks if the model can be spawned by this hatchery
 func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	//List all containers to check if we can spawn a new one
-	cs, errList := h.getContainers()
+	cs, errList := h.getContainers(types.ContainerListOptions{All: true})
 	if errList != nil {
 		log.Error("CanSpawn> Unable to list containers: %s", errList)
 		return false
 	}
 
 	//List all workers
-	ws, errWList := h.getWorkersStarted(cs)
+	ws, errWList := h.getWorkerContainers(cs, types.ContainerListOptions{})
 	if errWList != nil {
 		log.Error("CanSpawn> Unable to list workers: %s", errWList)
 		return false
 	}
 
 	if len(cs) > h.Config.MaxContainers {
-		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
+		log.Debug("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
 		return false
 	}
 
@@ -676,12 +290,14 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 	}
 
-	var images []docker.APIImages
+	var images []types.ImageSummary
 	// if we don't need to force pull links, we check if model is "latest"
 	// if model is not "latest" tag too, ListImages to get images locally
 	if listImagesToDoForLinkedImages || !strings.HasSuffix(model.Image, ":latest") {
 		var errl error
-		images, errl = h.dockerClient.ListImages(docker.ListImagesOptions{})
+		images, errl = h.dockerClient.ImageList(context.Background(), types.ImageListOptions{
+			All: true,
+		})
 		if errl != nil {
 			log.Warning("CanSpawn> Unable to list images: %s", errl)
 		}
@@ -703,15 +319,8 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	}
 
 	if !imageFound {
-		//Pull the worker image
-		opts := docker.PullImageOptions{
-			Repository:   model.Image,
-			OutputStream: nil,
-		}
-		auth := docker.AuthConfiguration{}
-		log.Info("CanSpawn> pulling image %s", model.Image)
-		if err := h.dockerClient.PullImage(opts, auth); err != nil {
-			log.Warning("CanSpawn> Unable to pull image %s : %s", model.Image, err)
+		if err := h.pullImage(model.Image, timeoutPullImage); err != nil {
+			//the error is already logged
 			return false
 		}
 	}
@@ -734,14 +343,8 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 
 		if !imageFound2 {
-			opts := docker.PullImageOptions{
-				Repository:   i,
-				OutputStream: nil,
-			}
-			auth := docker.AuthConfiguration{}
-			log.Info("CanSpawn> pulling image %s", i)
-			if err := h.dockerClient.PullImage(opts, auth); err != nil {
-				log.Warning("CanSpawn> Unable to pull image %s : %s", i, err)
+			if err := h.pullImage(i, timeoutPullImage); err != nil {
+				//the error is already logged
 				return false
 			}
 		}
@@ -752,22 +355,27 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return true
 }
 
-func (h *HatcherySwarm) getWorkersStarted(containers []docker.APIContainers) ([]docker.APIContainers, error) {
+func (h *HatcherySwarm) getWorkerContainers(containers []types.Container, option types.ContainerListOptions) ([]types.Container, error) {
 	if containers == nil {
 		var errList error
-		containers, errList = h.getContainers()
+		// get only started containers
+		containers, errList = h.getContainers(option)
 		if errList != nil {
 			log.Error("WorkersStarted> Unable to list containers: %s", errList)
 			return nil, errList
 		}
 	}
 
-	res := []docker.APIContainers{}
+	res := []types.Container{}
 	//We only count worker
 	for _, c := range containers {
-		cont, err := h.getContainer(c.Names[0])
+		cont, err := h.getContainer(c.Names[0], option)
 		if err != nil {
 			log.Error("WorkersStarted> Unable to get worker %s: %v", c.Names[0], err)
+			continue
+		}
+		// the container could be nil
+		if cont == nil {
 			continue
 		}
 		if _, ok := cont.Labels["worker_name"]; ok {
@@ -782,13 +390,13 @@ func (h *HatcherySwarm) getWorkersStarted(containers []docker.APIContainers) ([]
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcherySwarm) WorkersStarted() int {
-	workers, _ := h.getWorkersStarted(nil)
+	workers, _ := h.getWorkerContainers(nil, types.ContainerListOptions{})
 	return len(workers)
 }
 
 // WorkersStartedByModel returns the number of started workers
 func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
-	workers, errList := h.getWorkersStarted(nil)
+	workers, errList := h.getWorkerContainers(nil, types.ContainerListOptions{})
 	if errList != nil {
 		log.Error("WorkersStartedByModel> Unable to list containers: %s", errList)
 		return 0
@@ -831,26 +439,24 @@ func (h *HatcherySwarm) ID() int64 {
 
 func (h *HatcherySwarm) killAwolWorkerRoutine() {
 	for {
-		time.Sleep(30 * time.Second)
+		time.Sleep(10 * time.Second)
 		h.killAwolWorker()
 	}
 }
 
-func (h *HatcherySwarm) killAwolWorker() {
+func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 	apiworkers, err := h.Client().WorkerList()
 	if err != nil {
-		log.Warning("killAwolWorker> Cannot get workers: %s", err)
-		os.Exit(1)
+		return nil, sdk.WrapError(err, "listAwolWorkers> Cannot get workers")
 	}
 
-	containers, errList := h.getWorkersStarted(nil)
+	containers, errList := h.getWorkerContainers(nil, types.ContainerListOptions{All: true})
 	if errList != nil {
-		log.Warning("killAwolWorker> Cannot list containers: %s", errList)
-		os.Exit(1)
+		return nil, sdk.WrapError(err, "listAwolWorkers> Cannot list containers")
 	}
 
 	//Checking workers
-	oldContainers := []docker.APIContainers{}
+	oldContainers := []types.Container{}
 	for _, c := range containers {
 		//If there isn't any worker registered on the API. Kill the container
 		if len(apiworkers) == 0 {
@@ -865,7 +471,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 				found = true
 				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
-					log.Debug("killAwolWorker> Worker %s is disabled. Kill it with fire !", c.Names[0])
+					log.Debug("listAwolWorkers> Worker %s is disabled. Kill it with fire !", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break
 				}
@@ -877,17 +483,28 @@ func (h *HatcherySwarm) killAwolWorker() {
 		}
 	}
 
-	//Delete the workers
-	for _, c := range oldContainers {
-		log.Info("killAwolWorker> Delete worker %s", c.Names[0])
-		h.killAndRemove(c.ID)
+	return oldContainers, nil
+}
+
+func (h *HatcherySwarm) killAwolWorker() error {
+	oldContainers, err := h.listAwolWorkers()
+	if err != nil {
+		log.Warning("killAwolWorker> Cannot list workers %s", err)
+		return err
 	}
 
-	var errC error
-	containers, errC = h.getContainers()
+	//Delete the workers
+	for _, c := range oldContainers {
+		log.Debug("killAwolWorker> Delete worker %s", c.Names[0])
+		if err := h.killAndRemove(c.ID); err != nil {
+			log.Error("killAwolWorker> %v", err)
+		}
+	}
+
+	containers, errC := h.getContainers(types.ContainerListOptions{All: true})
 	if errC != nil {
 		log.Warning("killAwolWorker> Cannot list containers: %s", errC)
-		os.Exit(1)
+		return errC
 	}
 
 	//Checking services
@@ -896,48 +513,20 @@ func (h *HatcherySwarm) killAwolWorker() {
 			continue
 		}
 		//check if the service is linked to a worker which doesn't exist
-		if w, _ := h.getContainer(c.Labels["service_worker"]); w == nil {
+		if w, _ := h.getContainer(c.Labels["service_worker"], types.ContainerListOptions{All: true}); w == nil {
 			oldContainers = append(oldContainers, c)
 			continue
 		}
 	}
 
 	for _, c := range oldContainers {
-		h.killAndRemove(c.ID)
-		log.Info("killAwolWorker> Delete worker %s", c.Names[0])
-	}
-
-	//Checking networks
-	nets, errLN := h.dockerClient.ListNetworks()
-	if errLN != nil {
-		log.Warning("killAwolWorker> Cannot get networks: %s", errLN)
-		return
-	}
-
-	for i := range nets {
-		n, err := h.dockerClient.NetworkInfo(nets[i].ID)
-		if err != nil {
-			log.Warning("killAwolWorker> Unable to get network info: %v", err)
-			continue
-		}
-
-		if n.Driver != "bridge" || n.Name == "docker0" || n.Name == "bridge" {
-			continue
-		}
-
-		if _, ok := n.Labels["worker_net"]; !ok {
-			continue
-		}
-
-		if len(n.Containers) > 0 {
-			continue
-		}
-
-		log.Info("killAwolWorker> Delete network %s", n.Name)
-		if err := h.dockerClient.RemoveNetwork(n.ID); err != nil {
-			log.Warning("killAwolWorker> Unable to delete network %s err:%s", n.Name, err)
+		log.Debug("killAwolWorker> Delete worker %s", c.Names[0])
+		if err := h.killAndRemove(c.ID); err != nil {
+			log.Error("killAwolWorker> %v", err)
 		}
 	}
+
+	return h.killAwolNetworks()
 }
 
 // NeedRegistration return true if worker model need regsitration

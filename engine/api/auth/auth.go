@@ -40,7 +40,7 @@ type Driver interface {
 //GetDriver is a factory
 func GetDriver(c context.Context, mode string, options interface{}, storeOptions sessionstore.Options, DBFunc func() *gorp.DbMap) (Driver, error) {
 	log.Info("Auth> Intializing driver (%s)", mode)
-	store, err := sessionstore.Get(c, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
+	store, err := sessionstore.Get(c, storeOptions.Cache, storeOptions.TTL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get AuthDriver : %v", err)
 	}
@@ -184,7 +184,8 @@ func CheckHatcheryAuth(ctx context.Context, db *gorp.DbMap, headers http.Header)
 		return ctx, fmt.Errorf("bad worker key syntax: %s", err)
 	}
 
-	h, err := hatchery.LoadHatchery(db, string(uid))
+	name := headers.Get(cdsclient.RequestedNameHeader)
+	h, err := hatchery.LoadHatchery(db, string(uid), name)
 	if err != nil {
 		return ctx, fmt.Errorf("Invalid Hatchery UID:%s err:%s", string(uid), err)
 	}

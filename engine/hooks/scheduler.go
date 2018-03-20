@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -124,7 +125,7 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey)
 
 		// Load the task execution
-		var t = TaskExecution{}
+		var t = sdk.TaskExecution{}
 		if !s.Cache.Get(taskKey, &t) {
 			continue
 		}
@@ -154,7 +155,5 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 
 		//Start (or restart) the task
 		s.startTask(c, task)
-
-		continue
 	}
 }

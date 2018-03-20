@@ -1,14 +1,13 @@
 package workflow_test
 
 import (
-	"sort"
 	"testing"
 	"time"
 
-	dump "github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -87,10 +86,14 @@ func TestManualRun1(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
+
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 		Payload: map[string]string{
 			"git.branch": "master",
@@ -98,75 +101,35 @@ func TestManualRun1(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
-	wr1, err := workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
-	m1, _ := dump.ToMap(wr1)
-
-	keys1 := []string{}
-	for k := range m1 {
-		keys1 = append(keys1, k)
-	}
-
-	sort.Strings(keys1)
-	for _, k := range keys1 {
-		t.Logf("%s: \t%s", k, m1[k])
-	}
-
+	//LoadLastRun
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
 	test.NoError(t, err)
-
 	assert.Equal(t, int64(2), lastrun.Number)
 
 	//TestLoadNodeRun
 	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
 	test.NoError(t, err)
+	//don't want to compare queueSeconds attributes
+	nodeRun.Stages[0].RunJobs[0].QueuedSeconds = 0
+	lastrun.WorkflowNodeRuns[w1.RootID][0].Stages[0].RunJobs[0].QueuedSeconds = 0
+
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.RootID][0], nodeRun)
 
 	//TestLoadNodeJobRun
-	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
-
-	//Print lastrun
-	m, _ := dump.ToMap(jobs)
-	keys := []string{}
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		t.Logf("%s: \t%s", k, m[k])
-	}
 	test.Equal(t, 2, len(jobs))
 
-	//Print jobs
-	m, _ = dump.ToMap(jobs)
-	keys = []string{}
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		t.Logf("%s: \t%s", k, m[k])
-	}
-
 	//TestprocessWorkflowRun
-	wr2, err := workflow.ManualRunFromNode(db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
+	wr2, err := workflow.ManualRunFromNode(db, db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
 	test.NoError(t, err)
 	assert.NotNil(t, wr2)
 
-	m, _ = dump.ToMap(wr2)
-	keys = []string{}
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		t.Logf("- %s: \t%s", k, m[k])
-	}
-
 	//TestLoadRuns
-	runs, offset, limit, count, err := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 50)
+	runs, offset, limit, count, err := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 50, nil)
 	test.NoError(t, err)
 	assert.Equal(t, 0, offset)
 	assert.Equal(t, 50, limit)
@@ -248,22 +211,26 @@ func TestManualRun2(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
+
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
-	_, err = workflow.ManualRunFromNode(db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
+	_, err = workflow.ManualRunFromNode(db, db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
 	test.NoError(t, err)
 
-	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	assert.Len(t, jobs, 3)
@@ -342,15 +309,19 @@ func TestManualRun3(t *testing.T) {
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
+
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
 	test.NoError(t, err)
 
-	workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
 
-	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	for i := range jobs {
@@ -385,7 +356,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TakeNodeJobRun
-		j, err = workflow.TakeNodeJobRun(db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		j, err = workflow.TakeNodeJobRun(db, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -406,9 +377,6 @@ func TestManualRun3(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		//TestLoadNodeJobRunSecrets
-		t.Logf("Proj.Variables: %+v", proj.Variable)
 
 		secrets, err := workflow.LoadNodeJobRunSecrets(db, cache, j, nodeRun, workflowRun, proj.Variable)
 		assert.NoError(t, err)
@@ -431,7 +399,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TestUpdateNodeJobRunStatus
-		assert.NoError(t, workflow.UpdateNodeJobRunStatus(db, cache, proj, j, sdk.StatusSuccess, nil))
+		assert.NoError(t, workflow.UpdateNodeJobRunStatus(db, db, cache, proj, j, sdk.StatusSuccess, nil))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
@@ -448,7 +416,7 @@ func TestManualRun3(t *testing.T) {
 		tx.Commit()
 	}
 
-	jobs, err = workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err = workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
 
@@ -456,4 +424,113 @@ func TestManualRun3(t *testing.T) {
 		assert.Equal(t, "Waiting", jobs[0].Status)
 		assert.Equal(t, "job20", jobs[0].Job.Job.Action.Name)
 	}
+}
+
+func TestNoStage(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	test.NoError(t, err)
+
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
+	test.NoError(t, err)
+
+	//TestLoadNodeRun
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
+	test.NoError(t, err)
+
+	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
+}
+
+func TestNoJob(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	test.NoError(t, err)
+
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
+	test.NoError(t, err)
+
+	//TestLoadNodeRun
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
+	test.NoError(t, err)
+
+	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
 }

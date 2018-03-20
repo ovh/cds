@@ -98,6 +98,21 @@ func (r *Repository) FindByType(t string) ([]sdk.Service, error) {
 	return services, nil
 }
 
+// All returns all registered services
+func (r *Repository) All() ([]sdk.Service, error) {
+	query := `
+	SELECT name, type, http_url, last_heartbeat, hash 
+	FROM services`
+	services, err := r.findAll(query)
+	if err != nil {
+		if err == sdk.ErrNotFound {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "All> Unable to find dead services")
+	}
+	return services, nil
+}
+
 func (r *Repository) findOne(query string, args ...interface{}) (*sdk.Service, error) {
 	sdb := service{}
 	if err := r.Tx().SelectOne(&sdb, query, args...); err != nil {

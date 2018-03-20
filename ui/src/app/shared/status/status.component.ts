@@ -10,6 +10,7 @@ export class StatusIconComponent {
 
     @Input() status: string;
     @Input() value: string;
+    @Input() optional: boolean;
     pipelineStatusEnum = PipelineStatus;
 
     constructor() { }

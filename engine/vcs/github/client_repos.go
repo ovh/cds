@@ -17,9 +17,19 @@ func (g *githubClient) Repos() ([]sdk.VCSRepo, error) {
 	var repos = []Repository{}
 	var nextPage = "/user/repos"
 
+	var noEtag bool
+	var attempt int
 	for {
 		if nextPage != "" {
-			status, body, headers, err := g.get(nextPage)
+			var opt getArgFunc
+			if noEtag {
+				opt = withoutETag
+			} else {
+				opt = withETag
+			}
+
+			attempt++
+			status, body, headers, err := g.get(nextPage, opt)
 			if err != nil {
 				log.Warning("githubClient.Repos> Error %s", err)
 				return nil, err
@@ -33,7 +43,13 @@ func (g *githubClient) Repos() ([]sdk.VCSRepo, error) {
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
 				g.Cache.Get(cache.Key("vcs", "github", "repos", g.OAuthToken, "/user/repos"), &repos)
-				break
+				if len(repos) != 0 || attempt > 5 {
+					//We found repos, let's exit the loop
+					break
+				}
+				//If we did not found any repos in cache, let's retry (same nextPage) without etag
+				noEtag = true
+				continue
 			} else {
 				if err := json.Unmarshal(body, &nextRepos); err != nil {
 					log.Warning("githubClient.Repos> Unable to parse github repositories: %s", err)

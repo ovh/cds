@@ -4,7 +4,7 @@ VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 
 TARGET_DIR = ./dist
 TARGET_BINARY = cds-
-TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
+TARGET_LDFLAGS = -ldflags "-X main.VERSION=$(VERSION)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 
@@ -48,9 +48,11 @@ build: clean $(TARGET_DIR)
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			for plugin in plugin-*; do \
-				echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH $(VERSION); \
+				EXTENSION=""; \
+				if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
+				echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
 				cd $$plugin; \
-				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o ../$(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH; \
+				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o ../$(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH$$EXTENSION; \
 				cd ..; \
 				done; \
 		done; \

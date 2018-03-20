@@ -7,10 +7,11 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 )
 
-func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) ([]sdk.Requirement, *sdk.MultiError) {
-	requirements := []sdk.Requirement{}
+func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) (sdk.RequirementList, *sdk.MultiError) {
+	requirements := sdk.RequirementList{}
 	tmp := map[string]string{}
 	errm := &sdk.MultiError{}
 
@@ -19,12 +20,12 @@ func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Workflow
 	}
 
 	for _, v := range j.Action.Requirements {
-		name, errName := sdk.Interpolate(v.Name, tmp)
+		name, errName := interpolate.Do(v.Name, tmp)
 		if errName != nil {
 			errm.Append(errName)
 			continue
 		}
-		value, errValue := sdk.Interpolate(v.Value, tmp)
+		value, errValue := interpolate.Do(v.Value, tmp)
 		if errValue != nil {
 			errm.Append(errValue)
 			continue
@@ -38,7 +39,7 @@ func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Workflow
 	return requirements, errm
 }
 
-func prepareRequirementsToNodeJobRunParameters(reqs []sdk.Requirement) []sdk.Parameter {
+func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {
 	params := []sdk.Parameter{}
 	for _, r := range reqs {
 		if r.Type == sdk.ServiceRequirement {
