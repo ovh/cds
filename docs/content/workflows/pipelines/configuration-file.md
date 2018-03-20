@@ -130,21 +130,21 @@ stages:
 You can export a full configuration of your pipeline with the CDS CLI using the `export` subcommand:
 
 ```bash
-cds pipeline export PROJECT_KEY pipeline_name
+cdsctl pipeline export PROJECT_KEY pipeline_name
 ```
 
 Usage:
 
 ```bash
-cds pipeline export <projectKey> <pipeline>
+Export CDS pipeline
 
 Usage:
-  cds pipeline export [flags]
+  cdsctl pipeline export [ PROJECT-KEY ] PIPELINE-NAME [flags]
 
 Flags:
-      --format string     Format: json|yaml|hcl (default "yaml")
-      --output string     Output filename
-      --withPermissions   Export pipeline configuration with permission
+      --format string     yml or json (default "yml")
+  -h, --help              help for export
+      --with-permission   true or false
 
 Global Flags:
   -f, --file string   set configuration file
@@ -158,23 +158,24 @@ Global Flags:
 You can import a full configuration of your pipeline with the CDS CLI using the `import` subcommand:
 
 ```bash
-cds pipeline import PROJECT_KEY pipelinefile
+cdsctl pipeline import PROJECT_KEY pipelinefile
 ```
 
 Usage:
 
 ```bash
+PATH: Path or URL of pipeline to import 
+
 Usage:
-  cds pipeline import [flags]
+  cdsctl pipeline import [ PROJECT-KEY ] PATH [flags]
 
 Flags:
-      --format string   Configuration file format (default "yaml")
-      --url string      Import pipeline from an URL
+      --force   Use force flag to update your pipeline
+  -h, --help    help for import
 
 Global Flags:
   -f, --file string   set configuration file
   -k, --insecure      (SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.
   -w, --no-warnings   do not display warnings
   -v, --verbose       verbose output
-
 ```
