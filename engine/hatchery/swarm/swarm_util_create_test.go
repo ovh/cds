@@ -103,6 +103,19 @@ func Test_computeDockerOpts(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Extra hosts",
+			args: args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.ModelRequirement, Value: "golang:1.9.1 --port=8080:8081/tcp --privileged --port=9080:9081/tcp --add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8"}}},
+			want: &dockerOpts{
+				privileged: true,
+				ports: nat.PortMap{
+					nat.Port("8081/tcp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+					nat.Port("9081/tcp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "9080"}},
+				},
+				extraHosts: []string{"aaa:1.2.3.4", "bbb:5.6.7.8"},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

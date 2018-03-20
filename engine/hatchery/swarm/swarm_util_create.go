@@ -53,7 +53,6 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	log.Debug("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
 
 	var exposedPorts nat.PortSet
-	var mounts []mount.Mount
 
 	name := cArgs.name
 	config := &container.Config{
@@ -71,7 +70,8 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	hostConfig := &container.HostConfig{
 		PortBindings: cArgs.dockerOpts.ports,
 		Privileged:   cArgs.dockerOpts.privileged,
-		Mounts:       mounts,
+		Mounts:       cArgs.dockerOpts.mounts,
+		ExtraHosts:   cArgs.dockerOpts.extraHosts,
 	}
 	hostConfig.Resources = container.Resources{
 		Memory:     cArgs.memory * 1024 * 1024, //from MB to B
@@ -105,6 +105,7 @@ type dockerOpts struct {
 	ports      nat.PortMap
 	privileged bool
 	mounts     []mount.Mount
+	extraHosts []string
 }
 
 func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
@@ -138,6 +139,10 @@ func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req
 		}
 		if strings.HasPrefix(opt, "--port=") {
 			if err := d.computeDockerOptsPorts(opt); err != nil {
+				return err
+			}
+		} else if strings.HasPrefix(opt, "--add-host=") {
+			if err := d.computeDockerOptsExtraHosts(opt); err != nil {
 				return err
 			}
 		} else if opt == "--privileged" {
@@ -212,6 +217,12 @@ func (d *dockerOpts) computeDockerOptsOnVolumeMountRequirement(opt string) error
 
 	d.mounts = append(d.mounts, m)
 
+	return nil
+}
+
+func (d *dockerOpts) computeDockerOptsExtraHosts(arg string) error {
+	value := strings.TrimPrefix(strings.TrimSpace(arg), "--add-host=")
+	d.extraHosts = append(d.extraHosts, value)
 	return nil
 }
 
