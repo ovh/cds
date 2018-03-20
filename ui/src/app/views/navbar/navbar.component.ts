@@ -14,7 +14,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {RouterService} from '../../service/router/router.service';
 import {NavbarRecentData} from '../../model/navbar.model';
 import {filter} from 'rxjs/operators';
-import {NavbarData} from 'app/model/navbar.model';
+import {NavbarData, NavbarSearchItem} from 'app/model/navbar.model';
 
 @Component({
     selector: 'app-navbar',
@@ -31,7 +31,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     navProjects: NavbarData;
     navRecentApp: List<Application>;
     navRecentWorkflows: List<NavbarRecentData>;
-    searchItems: Array<string>;
+    searchItems: Array<NavbarSearchItem> = [];
+    recentItems: Array<NavbarSearchItem> = [];
+    items: Array<NavbarSearchItem> = [];
 
     listApplications: List<Application>;
     listWorkflows: List<NavbarRecentData>;
@@ -91,6 +93,18 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             if (apps) {
                 this.navRecentApp = apps;
                 this.listApplications = apps;
+                this.recentItems = this.recentItems
+                    .filter((i) => i.type !== 'application')
+                    .concat(
+                        apps.toArray().map((app) => ({
+                            type: 'application',
+                            value: app.project_key + '/' + app.name,
+                            title: app.name,
+                            projectKey: app.project_key
+                        }))
+                    );
+                this.items = this.recentItems;
+                this._cd.detectChanges();
             }
         });
 
@@ -99,9 +113,28 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             if (workflows) {
                 this.navRecentWorkflows = workflows;
                 this.listWorkflows = workflows;
+                this.recentItems = workflows.toArray()
+                    .map((w) => ({
+                        type: 'workflow',
+                        value: w.project_key + '/' + w.name,
+                        title: w.name,
+                        projectKey: w.project_key
+                    }))
+                    .concat(this.recentItems.filter((i) => i.type !== 'workflow'));
+                this.items = this.recentItems;
                 this._cd.detectChanges();
             }
         });
+    }
+
+    searchEvent(event) {
+        if (!event || !event.target || !event.target.value) {
+            this.items = this.recentItems;
+        } else {
+            let value = event.target.value;
+            this.items = this.searchItems;
+            event.target.value = value;
+        }
     }
 
     /**
@@ -111,19 +144,19 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         this._navbarService.getData().subscribe(data => {
             if (data.projects && data.projects.length > 0) {
                 this.navProjects = data;
-                this.searchItems = new Array<string>();
+                this.searchItems = new Array<NavbarSearchItem>();
 
                 this.navProjects.projects.forEach(p => {
-                    this.searchItems.push(p.name);
+                    this.searchItems.push({value: p.key, title: p.name, type: 'project', projectKey: p.key});
                     if (p.application_names && p.application_names.length > 0) {
                         p.application_names.forEach(a => {
-                            this.searchItems.push(p.name + '/' + a);
-                        })
+                            this.searchItems.push({value: p.key + '/' + a, title: a, type: 'application', projectKey: p.key});
+                        });
                     }
                     if (p.workflow_names && p.workflow_names.length > 0) {
                         p.workflow_names.forEach(w => {
-                            this.searchItems.push(p.name + '/' + w);
-                        })
+                            this.searchItems.push({value: p.key + '/' + w, title: w, type: 'workflow', projectKey: p.key});
+                        });
                     }
                 });
             }
@@ -132,7 +165,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     navigateToResult(result: string) {
         let splittedSelection = result.split('/', 2);
-        let project = this.navProjects.projects.find(p => p.name === splittedSelection[0]);
+        let project = this.navProjects.projects.find(p => p.key === splittedSelection[0]);
 
         if (splittedSelection.length === 1) {
             this.navigateToProject(project.key);
@@ -140,6 +173,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             if (Array.isArray(project.workflow_names)) {
                 let workflowFound = project.workflow_names.find(w => w === splittedSelection[1]);
                 if (workflowFound) {
+                    this.items = this.recentItems;
                     return this.navigateToWorkflow(project.key, workflowFound);
                 }
             }
@@ -147,6 +181,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             if (Array.isArray(project.application_names)) {
                 let appFound = project.application_names.find(a => a === splittedSelection[1]);
                 if (appFound) {
+                    this.items = this.recentItems;
                     return this.navigateToApplication(project.key, appFound);
                 }
             }

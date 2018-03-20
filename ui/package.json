@@ -59,7 +59,7 @@
     "ng2-codemirror-typescript": "^1.1.1",
     "ng2-completer": "^1.4.0",
     "ng2-dragula": "^1.2.1",
-    "ng2-semantic-ui": "^0.9.6",
+    "ng2-semantic-ui": "git://github.com/bnjjj/ng2-semantic-ui.git#feat_search_empty_query",
     "ngx-auto-scroll": "https://github.com/NagRock/ngx-auto-scroll/tarball/b76673d546be89719015fc68dbdb4677b6596366",
     "rxjs": "5.5.2",
     "semantic-ui": "2.2.13",

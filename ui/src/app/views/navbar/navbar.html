@@ -1,27 +1,47 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
-    <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"></a>
+    <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"/></a>
 
-    <sui-search placeholder="{{'navbar_search' | translate}}" [options]="searchItems" [maxResults]="15" (resultSelected)="navigateToResult($event)"></sui-search>
 
-    <sm-dropdown icon="browser" *ngIf="currentUser" class="search">
-        <ng-container *ngFor="let prj of navProjects?.projects">
-            <a sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
-        </ng-container>
-    </sm-dropdown>
-
-    <sm-dropdown icon="clock" *ngIf="currentUser">
-        <ng-container *ngFor="let w of listWorkflows">
-            <a sm-item href="#" [routerLink]="['project', w.project_key, 'workflow', w.name]"><i class="share alternate icon"></i> {{ w.project_key + '/' + w.name}}</a>
-        </ng-container>
-        <ng-container *ngFor="let app of listApplications">
-            <a sm-item href="#" [routerLink]="['project', app.project_key, 'application', app.name]"><i class="rocket icon"></i> {{ app.project_key + '/' + app.name}}</a>
-        </ng-container>
-    </sm-dropdown>
-
-    <div class="right menu">
-        <div class="item link" *ngIf="currentUser">
-            <a id="createProjectURL" href="#" [routerLink]="['/project']"><i class="plus circle icon"></i>{{ 'project_create' | translate }}</a>
+    <ng-container *ngIf="currentUser">
+        <div class="ui pointing dropdown link item" suiDropdown>
+            <div class="text">{{'navbar_projects' | translate}}</div>
+            <i class="dropdown icon"></i>
+            <div class="menu" suiDropdownMenu>
+                <ng-container *ngFor="let prj of navProjects?.projects">
+                    <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
+                </ng-container>
+            </div>
         </div>
+    </ng-container>
+    <div class="item link" *ngIf="currentUser">
+        <a id="createProjectURL" href="#" [routerLink]="['/project']">{{ 'navbar_project_create' | translate }}</a>
+    </div>
+
+    <div class="right menu details">
+        <ng-template let-result let-query="query" #searchTemplate>
+            <div class="title">
+                {{result.title}}
+            </div>
+            <div class="info">
+                <span *ngIf="result.type === 'workflow'">{{'navbar_workflow_in' | translate}}</span>
+                <span *ngIf="result.type === 'application'">{{'navbar_application_in' | translate}}</span>
+                <span *ngIf="result.type === 'project'">{{'common_project' | translate}}</span>
+                <span class="ui text tiny blue" *ngIf="result.type !== 'project'">{{result.projectKey}}</span>
+            </div>
+        </ng-template>
+        <sui-search
+            placeholder="{{'navbar_search' | translate}}"
+            optionsField="title"
+            [resultTemplate]="searchTemplate"
+            [options]="items"
+            [maxResults]="8"
+            [allowEmptyQuery]="true"
+            [retainSelectedResult]="false"
+            [resetQueryOnChange]="false"
+            (keydown)="searchEvent($event)"
+            (resultSelected)="navigateToResult($event.value)">
+        </sui-search>
+
         <sm-dropdown icon="settings" *ngIf="currentUser">
             <a sm-item href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>

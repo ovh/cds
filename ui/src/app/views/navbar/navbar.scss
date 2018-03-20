@@ -25,6 +25,9 @@
   sm-dropdown {
     height: 50px;
     display: flex;
+    .item {
+      color: white;
+    }
   }
 
   sm-item a {
@@ -34,12 +37,24 @@
   .item {
     padding-top: 0px;
     padding-bottom: 0px;
+    color: white;
+    a {
+      color: white;
+    }
   }
 
   .item.link::before {
     width: 0px;
   }
 
+  .details {
+    .title {
+      font-size: 1.1em;
+    }
+    .info {
+      font-size: 0.8em;
+    }
+  }
 
 }
 

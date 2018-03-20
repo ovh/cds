@@ -139,6 +139,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_project": "Projet",
   "common_preview": "Prévisualisation",
   "common_details": "Détails",
   "common_settings": "Configuration",
@@ -305,6 +306,7 @@
   "job_spawn_title": "Informations",
 
   "navbar_actions": "Actions",
+  "navbar_project_create": "Créer un projet",
   "navbar_admin_migration": "Migration vers les workflows",
   "navbar_admin_status": "CDS Engine - Statut",
   "navbar_documentation": "Documentation",
@@ -313,10 +315,13 @@
   "navbar_home": "Accueil",
   "navbar_profile": "Votre Compte",
   "navbar_projects_placeholder": "Tous les projets",
+  "navbar_projects": "Projets",
   "navbar_users": "Utilisateurs",
   "navbar_search": "Rechercher...",
   "navbar_settings": "Paramètres",
   "navbar_worker_models": "Modèles de worker",
+  "navbar_application_in": "Application dans ",
+  "navbar_workflow_in": "Workflow dans ",
 
   "notifications_added": "Notifications ajoutées",
   "notification_clone": "Notification à cloner",
