@@ -91,6 +91,8 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "MigrateActionDEPRECATEDGitClone> Cannot commit transaction")
 		}
+
+		log.Info("MigrateActionDEPRECATEDGitClone> Migrate %s/%s DONE", p.ProjKey, p.PipName)
 	}
 
 	return nil
@@ -172,7 +174,7 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 	}
 
 	//Load the project
-	proj, err := project.Load(db, store, pkey, nil, project.LoadOptions.WithVariablesWithClearPassword)
+	proj, err := project.Load(db, store, pkey, nil, project.LoadOptions.WithVariables)
 	if err != nil {
 		return err
 	}
@@ -185,7 +187,7 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 
 	//Load the application
 	log.Debug("load application %s", appName)
-	app, err := application.LoadByName(db, store, pkey, appName, nil, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err := application.LoadByName(db, store, pkey, appName, nil, application.LoadOptions.WithVariables)
 	if err != nil {
 		log.Warning("MigrateActionDEPRECATEDGitCloneJob> application.LoadByName> %v", err)
 	}
