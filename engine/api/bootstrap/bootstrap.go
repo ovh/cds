@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -171,19 +172,32 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 	}
 
 	//Load the project
-	proj, err := project.Load(db, store, pkey, nil, project.LoadOptions.WithKeys)
+	proj, err := project.Load(db, store, pkey, nil, project.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		return err
 	}
-	projKeys := proj.SSHKeys()
+	projKeys := []sdk.Variable{}
+	for _, v := range proj.Variable {
+		if v.Type == sdk.KeyVariable {
+			projKeys = append(projKeys, v)
+		}
+	}
 
 	//Load the application
 	log.Debug("load application %s", appName)
-	app, err := application.LoadByName(db, store, pkey, appName, nil, application.LoadOptions.WithKeys)
+	app, err := application.LoadByName(db, store, pkey, appName, nil, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
-		return err
+		log.Warning("MigrateActionDEPRECATEDGitCloneJob> application.LoadByName> %v", err)
 	}
-	appKeys := app.SSHKeys()
+
+	appKeys := []sdk.Variable{}
+	if app != nil {
+		for _, v := range app.Variable {
+			if v.Type == sdk.KeyVariable {
+				appKeys = append(appKeys, v)
+			}
+		}
+	}
 
 	//Check all the steps of the job
 	for i := range j.Action.Actions {
@@ -215,9 +229,9 @@ func MigrateActionDEPRECATEDGitCloneJob(db gorp.SqlExecutor, store cache.Store, 
 			//If there is an application key or a project key, use it
 			switch {
 			case len(appKeys) > 0:
-				sdk.ParameterFind(&newGitClone.Parameters, "privateKey").Value = appKeys[0].Name
+				sdk.ParameterFind(&newGitClone.Parameters, "privateKey").Value = fmt.Sprintf("{{.cds.app.%s}}", appKeys[0].Name)
 			case len(projKeys) > 0:
-				sdk.ParameterFind(&newGitClone.Parameters, "privateKey").Value = projKeys[0].Name
+				sdk.ParameterFind(&newGitClone.Parameters, "privateKey").Value = fmt.Sprintf("{{.cds.proj.%s}}", projKeys[0].Name)
 			default:
 				sdk.ParameterFind(&newGitClone.Parameters, "privateKey").Value = ""
 			}
