@@ -10,9 +10,11 @@
                 <ng-container *ngFor="let prj of listProjects">
                     <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
                 </ng-container>
-                <a class="item" sm-item href="#" [routerLink]="['project', 'list', 'all']">
-                    <strong>{{ 'navbar_all_projects' | translate }}</strong>
-                </a>
+                <ng-container *ngIf="navProjects && navProjects.projects && navProjects.projects.length > 10">
+                    <a class="item" sm-item href="#" [routerLink]="['project', 'list', 'all']">
+                        <strong>{{ 'navbar_all_projects' | translate }}</strong>
+                    </a>
+                </ng-container>
             </div>
         </div>
     </ng-container>
