@@ -31,11 +31,11 @@ type Application struct {
 	VCSServer          string                `json:"vcs_server,omitempty" db:"vcs_server"`
 	RepositoryFullname string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
 	RepositoryPollers  []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
-	RepositoryStrategy RepositoryStrategy    `json:"vcs_strategy,omitempty" db:"-"`
+	RepositoryStrategy RepositoryStrategy    `json:"vcs_strategy,omitempty" db:"-" dbjson:"vcs_strategy"`
 	Hooks              []Hook                `json:"hooks,omitempty" db:"-"`
 	Workflows          []CDPipeline          `json:"workflows,omitempty" db:"-"`
 	Schedulers         []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
-	Metadata           Metadata              `json:"metadata" yaml:"metadata" db:"-"`
+	Metadata           Metadata              `json:"metadata" yaml:"metadata" db:"-" dbjson:"metadata"`
 	WorkflowMigration  string                `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys               []ApplicationKey      `json:"keys" yaml:"keys" db:"-"`
 	Usage              *Usage                `json:"usage,omitempty" db:"-" cli:"-"`
