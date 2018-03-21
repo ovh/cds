@@ -14,7 +14,8 @@ export class ProjectListComponent {
     loading = true;
 
     set filter(filter: string) {
-        this.filteredProjects = this.projects.filter((proj) => proj.name.indexOf(filter) !== -1);
+        let filterLower = filter.toLowerCase();
+        this.filteredProjects = this.projects.filter((proj) => proj.name.toLowerCase().indexOf(filterLower) !== -1);
     }
 
     constructor(private _projectService: ProjectService) {
