@@ -39,7 +39,7 @@ func DBMap(db *sql.DB) *gorp.DbMap {
 	}
 
 	for _, m := range gorpmapping.Mapping {
-		dbmap.AddTableWithName(m.Target, m.Name).SetKeys(m.AutoIncrement, m.Keys...)
+		dbmap.AddTableWithName(m.Target, m.Name).SetKeys(m.AutoIncrement, m.GetKeys()...)
 	}
 
 	lastDB = db
