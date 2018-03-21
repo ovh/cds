@@ -458,6 +458,11 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 	//Checking workers
 	oldContainers := []types.Container{}
 	for _, c := range containers {
+		if time.Now().Add(-1*time.Minute).Unix() < c.Created {
+			log.Debug("listAwolWorkers> container %s is too young", c.Names[0])
+			continue
+		}
+
 		//If there isn't any worker registered on the API. Kill the container
 		if len(apiworkers) == 0 {
 			oldContainers = append(oldContainers, c)
@@ -479,10 +484,12 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 		}
 		//If the container doesn't match any worker : Kill it.
 		if !found {
+			log.Debug("listAwolWorkers> %s not found, add to oldContainers", c.Names[0])
 			oldContainers = append(oldContainers, c)
 		}
 	}
 
+	log.Debug("listAwolWorkers> oldContainers: %d", len(oldContainers))
 	return oldContainers, nil
 }
 
@@ -514,15 +521,11 @@ func (h *HatcherySwarm) killAwolWorker() error {
 		}
 		//check if the service is linked to a worker which doesn't exist
 		if w, _ := h.getContainer(c.Labels["service_worker"], types.ContainerListOptions{All: true}); w == nil {
-			oldContainers = append(oldContainers, c)
+			log.Debug("killAwolWorker> Delete worker (service) %s", c.Names[0])
+			if err := h.killAndRemove(c.ID); err != nil {
+				log.Error("killAwolWorker> service %v", err)
+			}
 			continue
-		}
-	}
-
-	for _, c := range oldContainers {
-		log.Debug("killAwolWorker> Delete worker %s", c.Names[0])
-		if err := h.killAndRemove(c.ID); err != nil {
-			log.Error("killAwolWorker> %v", err)
 		}
 	}
 
