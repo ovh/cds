@@ -485,7 +485,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 
 	//Parse job params to get the VCS infos
 	gitValues := map[string]string{}
-	for _, param := range jobParams {
+	for _, param := range run.BuildParameters {
 		switch param.Name {
 		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
 			gitValues[param.Name] = param.Value
