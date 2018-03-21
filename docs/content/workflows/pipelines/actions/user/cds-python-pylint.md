@@ -17,7 +17,7 @@ by a ;
 * **module_path**: List of modules paths (absolute or relative) to launch pylint into, separated by a ;.
 If empty, will launch pylint inside the working directory
 * **pylintrc**: Path of the pylintrc file, or its content.
-If your pylintrc file is not used, try to use an absolute path using the variable {{.cds.workspace}} that points to the container default working directory
+ +If your pylintrc file is not used, try to use an absolute path using the variable {{.cds.workspace}} that points to the container default working directory
 * **raw_output**: Skip the xunit + Junit step and output a raw pylint result file.
 * **raw_output_file**: File to output the raw result if raw output is checked. If empty, will only log the results.
 * **xml_output_file**: File to output the result xunit xml, it should not be empty.
@@ -29,6 +29,6 @@ If your pylintrc file is not used, try to use an absolute path using the variabl
 * **virtualenv**: type: binary Value: virtualenv
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-python-pylint.hcl)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-python-pylint.yaml)
 
 

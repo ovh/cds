@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,9 +10,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var (
@@ -83,7 +86,7 @@ func actionDeleteRun(v cli.Values) error {
 
 var actionDocCmd = cli.Command{
 	Name:  "doc",
-	Short: "Generate Action Documentation: cdsctl action doc <path-to-hclFile>",
+	Short: "Generate Action Documentation: cdsctl action doc <path-to-file>",
 	Args: []cli.Arg{
 		{Name: "path"},
 	},
@@ -95,12 +98,26 @@ func actionDocRun(v cli.Values) error {
 		return fmt.Errorf("Error while reading file: %s", errRead)
 	}
 
-	action, errFrom := sdk.NewActionFromScript(btes)
-	if errFrom != nil {
-		return fmt.Errorf("Error loading file: %s", errFrom)
+	var ea = new(exportentities.Action)
+	var errapp error
+	if strings.HasSuffix(path.Base(v["path"]), ".json") {
+		errapp = json.Unmarshal(btes, ea)
+	} else if strings.HasSuffix(path.Base(v["path"]), ".yml") || strings.HasSuffix(path.Base(v["path"]), ".yaml") {
+		errapp = yaml.Unmarshal(btes, ea)
+	} else {
+		return fmt.Errorf("unsupported extension on %s", path.Base(v["path"]))
 	}
 
-	fmt.Println(sdk.ActionInfoMarkdown(action, path.Base(v["path"])))
+	if errapp != nil {
+		return errapp
+	}
+
+	act, errapp := ea.Action()
+	if errapp != nil {
+		return errapp
+	}
+
+	fmt.Println(sdk.ActionInfoMarkdown(act, path.Base(v["path"])))
 	return nil
 }
 

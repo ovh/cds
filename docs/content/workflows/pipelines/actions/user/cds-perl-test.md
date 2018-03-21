@@ -3,12 +3,13 @@ title = "cds-perl-test"
 
 +++
 
-Test with prove on perl source code
+
 
 ## Parameters
 
+* **perllib**: PERL_LIB, added to $PERL5LIB
 * **proveOptions**: Options passed to prove
-* **testDirectory**: Directory in which prove will be launched
+* **testDirectory**: 
 
 
 ## Requirements
@@ -18,6 +19,6 @@ Test with prove on perl source code
 * **prove**: type: binary Value: prove
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-perl-test.hcl)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-perl-test.yaml)
 
 

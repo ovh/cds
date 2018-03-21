@@ -1,0 +1,61 @@
+version: v1.0
+name: CDS_PublishOVHMetrics
+description: Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/
+  and doc on https://docs.ovh.com/gb/en/cloud/metrics/
+parameters:
+  file:
+    type: string
+    description: 'Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/'
+  labels:
+    type: text
+    default: |-
+      app {{.cds.application}}
+      env {{.cds.environment}}
+    description: Labels of your metric (one K/V per line separated by a space)
+  name:
+    type: string
+    default: cds
+    description: Name of you metric (optional)
+  region:
+    type: string
+    default: gra1-ovh
+    description: Metrics region
+  token:
+    type: string
+    description: Metrics write token
+  value:
+    type: string
+    default: T
+    description: 'Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/'
+requirements:
+- binary: bash
+- binary: curl
+steps:
+- script:
+  - '#!/bin/bash'
+  - ""
+  - set -e
+  - ""
+  - if [ "{{.name}}" != "" ]; then
+  - ""
+  - labels=`cat << EOF | sed 's/ /%20/g' | sed 's/%20/=/1' | tr '\n' ',' | sed 's/,
+    *$//'
+  - '{{.labels}}'
+  - EOF`
+  - ""
+  - echo "// {{.name}}{$labels} {{.value}}" >> .metrics
+  - ""
+  - curl -f -X POST https://warp10.{{.region}}.metrics.ovh.net/api/v0/update \
+  - '        -H ''X-Warp10-Token: {{.token}}'' \'
+  - '    --data-binary @.metrics'
+  - ""
+  - fi;
+  - ""
+  - ""
+  - if [ "{{.file}}" != "" ]; then
+  - curl -f -X POST https://warp10.{{.region}}.metrics.ovh.net/api/v0/update \
+  - '        -H ''X-Warp10-Token: {{.token}}'' \'
+  - '    --data-binary @{{.file}}'
+  - fi;
+  - ""
+
