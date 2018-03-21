@@ -829,4 +829,5 @@ func WorkflowDelete(projectkey, name string) error {
 type WorkflowNodeJobRunCount struct {
 	Count int64     `json:"version"`
 	Since time.Time `json:"since"`
+	Until time.Time `json:"until"`
 }

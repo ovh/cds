@@ -535,16 +535,12 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 
 func (api *API) countWorkflowJobQueueHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		sinceHeader := r.Header.Get("If-Modified-Since")
-		since := time.Unix(0, 0)
-		if sinceHeader != "" {
-			since, _ = time.Parse(time.RFC1123, sinceHeader)
-		}
+		since, until := getSinceUntilHeader(ctx, w, r)
 		groupsID := []int64{}
 		for _, g := range getUser(ctx).Groups {
 			groupsID = append(groupsID, g.ID)
 		}
-		count, err := workflow.CountNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since)
+		count, err := workflow.CountNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
@@ -555,12 +551,7 @@ func (api *API) countWorkflowJobQueueHandler() Handler {
 
 func (api *API) getWorkflowJobQueueHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		sinceHeader := r.Header.Get("If-Modified-Since")
-		since := time.Unix(0, 0)
-		if sinceHeader != "" {
-			since, _ = time.Parse(time.RFC1123, sinceHeader)
-		}
-
+		since, until := getSinceUntilHeader(ctx, w, r)
 		groupsID := make([]int64, len(getUser(ctx).Groups))
 		for i, g := range getUser(ctx).Groups {
 			groupsID[i] = g.ID
@@ -571,13 +562,29 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 			permissions = permission.PermissionRead
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, &since)
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
 
 		return WriteJSON(w, jobs, http.StatusOK)
 	}
+}
+
+func getSinceUntilHeader(ctx context.Context, w http.ResponseWriter, r *http.Request) (time.Time, time.Time) {
+	sinceHeader := r.Header.Get("If-Modified-Since")
+	since := time.Unix(0, 0)
+	if sinceHeader != "" {
+		since, _ = time.Parse(time.RFC1123, sinceHeader)
+	}
+
+	untilHeader := r.Header.Get("X-CDS-Until")
+	until := time.Now()
+	if untilHeader != "" {
+		until, _ = time.Parse(time.RFC1123, untilHeader)
+	}
+
+	return since, until
 }
 
 func (api *API) postWorkflowJobTestsResultsHandler() Handler {
