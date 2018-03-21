@@ -219,6 +219,7 @@
   "common_begin": "Begin",
   "common_end": "End",
   "common_error": "Error",
+  "common_loading_projects": "Loading projects...",
 
   "keys_added": "Key added",
   "keys_add_title": "Add a key",
@@ -317,11 +318,12 @@
   "navbar_projects_placeholder": "All Projects",
   "navbar_projects": "Projects",
   "navbar_users": "Users",
-  "navbar_search": "Search an application...",
+  "navbar_search": "Search...",
   "navbar_settings": "Settings",
   "navbar_worker_models": "Worker Models",
   "navbar_application_in": "Application in ",
   "navbar_workflow_in": "Workflow in ",
+  "navbar_all_projects": "All projects",
 
   "notifications_added": "Notifications added",
   "notification_clone": "Notification to clone",
@@ -441,6 +443,7 @@
   "prerequisite_title_s": "Run prerequisites",
   "prerequisite_value": "Expected value",
 
+  "project_list": "All projects",
   "project_advanced_title": "Project administration",
   "project_added": "Project has just been created",
   "project_add_ssh_key": "Generate a ssh key",

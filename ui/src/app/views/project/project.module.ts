@@ -1,4 +1,5 @@
 import {NgModule, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
+import {ProjectListComponent} from './list/project.list.component';
 import {ProjectShowComponent} from './show/project.component';
 import {ProjectAddComponent} from './add/project.add.component';
 import {projectRouting} from './project.routing';
@@ -23,6 +24,7 @@ import {ProjectPlatformListComponent} from './show/platforms/list/platform.list.
 @NgModule({
     declarations: [
         ProjectAddComponent,
+        ProjectListComponent,
         ProjectAdminComponent,
         ProjectApplicationListComponent,
         ProjectEnvironmentFormComponent,

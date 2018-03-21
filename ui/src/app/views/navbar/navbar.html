@@ -7,9 +7,12 @@
             <div class="text">{{'navbar_projects' | translate}}</div>
             <i class="dropdown icon"></i>
             <div class="menu" suiDropdownMenu>
-                <ng-container *ngFor="let prj of navProjects?.projects">
+                <ng-container *ngFor="let prj of listProjects">
                     <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
                 </ng-container>
+                <a class="item" sm-item href="#" [routerLink]="['project', 'list', 'all']">
+                    <strong>{{ 'navbar_all_projects' | translate }}</strong>
+                </a>
             </div>
         </div>
     </ng-container>

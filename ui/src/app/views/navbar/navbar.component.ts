@@ -14,7 +14,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {RouterService} from '../../service/router/router.service';
 import {NavbarRecentData} from '../../model/navbar.model';
 import {filter} from 'rxjs/operators';
-import {NavbarData, NavbarSearchItem} from 'app/model/navbar.model';
+import {NavbarData, NavbarSearchItem, NavbarProjectData} from 'app/model/navbar.model';
 
 @Component({
     selector: 'app-navbar',
@@ -29,6 +29,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     // List of projects in the nav bar
     navProjects: NavbarData;
+    listProjects: Array<NavbarProjectData> = [];
     navRecentApp: List<Application>;
     navRecentWorkflows: List<NavbarRecentData>;
     searchItems: Array<NavbarSearchItem> = [];
@@ -143,7 +144,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     getData(): void {
         this._navbarService.getData().subscribe(data => {
             if (data.projects && data.projects.length > 0) {
+                data.projects = data.projects.concat(data.projects).concat(data.projects).concat(data.projects).concat(data.projects);
                 this.navProjects = data;
+                this.listProjects = data.projects.slice(0, 10);
                 this.searchItems = new Array<NavbarSearchItem>();
 
                 this.navProjects.projects.forEach(p => {

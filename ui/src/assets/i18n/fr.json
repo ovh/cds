@@ -219,6 +219,7 @@
   "common_begin": "Début",
   "common_end": "Fin",
   "common_error": "Erreur",
+  "common_loading_projects": "Chargement des projets...",
 
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",
@@ -322,6 +323,7 @@
   "navbar_worker_models": "Modèles de worker",
   "navbar_application_in": "Application dans ",
   "navbar_workflow_in": "Workflow dans ",
+  "navbar_all_projects": "Tous les projets",
 
   "notifications_added": "Notifications ajoutées",
   "notification_clone": "Notification à cloner",
@@ -441,6 +443,7 @@
   "prerequisite_title_s": "Conditions de lancement",
   "prerequisite_value": "Valeur attendue",
 
+  "project_list": "Tous les projets",
   "project_advanced_title": "Administration du projet",
   "project_added": "Projet créé",
   "project_add_ssh_key": "Générer une clé ssh",
