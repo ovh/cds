@@ -144,7 +144,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     getData(): void {
         this._navbarService.getData().subscribe(data => {
             if (data.projects && data.projects.length > 0) {
-                data.projects = data.projects.concat(data.projects).concat(data.projects).concat(data.projects).concat(data.projects);
                 this.navProjects = data;
                 this.listProjects = data.projects.slice(0, 10);
                 this.searchItems = new Array<NavbarSearchItem>();
