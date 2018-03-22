@@ -121,6 +121,7 @@ export class WorkflowStore {
         return this._workflowService.updateWorkflow(key, name, workflow).map(w => {
             let workflowKey = key + '-' + workflow.name;
             let store = this._workflows.getValue();
+            w.permission = workflow.permission;
             this._workflows.next(store.set(workflowKey, w));
             return w;
         });
