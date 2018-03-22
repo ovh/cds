@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
@@ -477,6 +478,8 @@ func (api *API) addApplicationHandler() Handler {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot commit transaction")
 		}
 
+		event.PublishAddApplication(proj.Key, app, getUser(ctx))
+
 		return WriteJSON(w, app, http.StatusOK)
 	}
 }
@@ -579,6 +582,8 @@ func (api *API) cloneApplicationHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "cloneApplicationHandler> Cannot commit transaction")
 		}
+
+		event.PublishAddApplication(proj.Key, newApp, getUser(ctx))
 
 		return WriteJSON(w, newApp, http.StatusOK)
 	}

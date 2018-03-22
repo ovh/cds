@@ -331,7 +331,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", r.GET(api.getReposFromRepositoriesManagerHandler))
 
 	// RepositoriesManager for applications
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application", r.POST(api.addApplicationFromRepositoriesManagerHandler))
 	r.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/attach", r.POST(api.attachRepositoriesManagerHandler))
 	r.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/detach", r.POST(api.detachRepositoriesManagerHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook", r.POST(api.addHookOnRepositoriesManagerHandler))

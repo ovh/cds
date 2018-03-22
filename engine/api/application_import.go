@@ -11,6 +11,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -78,6 +79,11 @@ func (api *API) postApplicationImportHandler() Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postApplicationImportHandler> Cannot commit transaction")
+		}
+
+		newApp, errN := application.LoadByName(api.mustDB(), api.Cache, proj.Key, eapp.Name, getUser(ctx), application.LoadOptions.WithVariables, application.LoadOptions.WithGroups, application.LoadOptions.WithKeys)
+		if errN == nil {
+			event.PublishAddApplication(proj.Key, *newApp, getUser(ctx))
 		}
 
 		return WriteJSON(w, msgListString, http.StatusOK)
