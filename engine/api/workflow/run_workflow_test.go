@@ -321,6 +321,17 @@ func TestManualRun3(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
+	// test nil since/until
+	_, err = workflow.CountNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil, nil)
+	test.NoError(t, err)
+
+	// queue should be empty with since 0,0 until 0,0
+	t0 := time.Unix(0, 0)
+	t1 := time.Unix(0, 0)
+	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, &t0, &t1)
+	test.NoError(t, err)
+	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
+
 	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, nil, nil)
 	test.NoError(t, err)
 
@@ -423,7 +434,44 @@ func TestManualRun3(t *testing.T) {
 	if len(jobs) == 1 {
 		assert.Equal(t, "Waiting", jobs[0].Status)
 		assert.Equal(t, "job20", jobs[0].Job.Job.Action.Name)
+
+		// test since / until
+		t.Logf("##### jobs[0].Queued : %+v\n", jobs[0].Queued)
+		since := jobs[0].Queued
+
+		t0 := since.Add(-2 * time.Minute)
+		t1 := since.Add(-1 * time.Minute)
+		jobsSince, errW := workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, &t0, &t1)
+		test.NoError(t, errW)
+		for _, job := range jobsSince {
+			if jobs[0].ID == job.ID {
+				assert.Fail(t, " this job should not be in queue since/until")
+			}
+		}
+
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, &since, nil)
+		test.NoError(t, errW)
+		var found bool
+		for _, job := range jobsSince {
+			if jobs[0].ID == job.ID {
+				found = true
+			}
+		}
+		if !found {
+			assert.Fail(t, " this job should be in queue since")
+		}
+
+		t0 = since.Add(10 * time.Second)
+		t1 = since.Add(15 * time.Second)
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, &t0, &t1)
+		test.NoError(t, errW)
+		for _, job := range jobsSince {
+			if jobs[0].ID == job.ID {
+				assert.Fail(t, " this job should not be in queue since/until")
+			}
+		}
 	}
+
 }
 
 func TestNoStage(t *testing.T) {

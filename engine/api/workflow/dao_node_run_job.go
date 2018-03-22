@@ -32,8 +32,12 @@ func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int
 	}
 
 	c.Count = int64(len(queue))
-	c.Since = *since
-	c.Until = *until
+	if since != nil {
+		c.Since = *since
+	}
+	if until != nil {
+		c.Until = *until
+	}
 	return c, nil
 }
 
