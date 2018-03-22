@@ -132,6 +132,7 @@ type Configuration struct {
 			ApiURL       string `toml:"api_url"`
 			ClientID     string `toml:"client_id"`
 			ClientSecret string `toml:"client_secret"`
+			Token        string `toml;"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami"`
 		}
 	}
 	Schedulers struct {
