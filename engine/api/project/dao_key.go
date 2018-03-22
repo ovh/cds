@@ -40,6 +40,7 @@ func LoadAllKeysByID(db gorp.SqlExecutor, ID int64) ([]sdk.ProjectKey, error) {
 	keys := make([]sdk.ProjectKey, len(res))
 	for i := range res {
 		p := res[i]
+		p.Private = sdk.PasswordPlaceholder
 		keys[i] = sdk.ProjectKey(p)
 	}
 	return keys, nil

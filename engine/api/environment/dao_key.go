@@ -47,6 +47,7 @@ func LoadAllEnvironmentKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.E
 	keys := make([]sdk.EnvironmentKey, len(res))
 	for i := range res {
 		p := res[i]
+		p.Private = sdk.PasswordPlaceholder
 		keys[i] = sdk.EnvironmentKey(p)
 	}
 	return keys, nil
