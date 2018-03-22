@@ -7,6 +7,9 @@
             <div class="text">{{'navbar_projects' | translate}}</div>
             <i class="dropdown icon"></i>
             <div class="menu" suiDropdownMenu>
+                <ng-container *ngIf="loading">
+                  <div class="item">{{'common_loading' | translate}}</div>
+                </ng-container>
                 <ng-container *ngFor="let prj of listProjects">
                     <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
                 </ng-container>

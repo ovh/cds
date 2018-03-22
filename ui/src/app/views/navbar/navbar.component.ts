@@ -35,6 +35,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     searchItems: Array<NavbarSearchItem> = [];
     recentItems: Array<NavbarSearchItem> = [];
     items: Array<NavbarSearchItem> = [];
+    loading = true;
 
     listApplications: List<Application>;
     listWorkflows: List<NavbarRecentData>;
@@ -162,6 +163,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                     }
                 });
             }
+            this.loading = false;
         });
     }
 
