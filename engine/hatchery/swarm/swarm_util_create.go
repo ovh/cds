@@ -95,7 +95,7 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs, spawnArgs h
 		var errl error
 		images, errl = h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
 		if errl != nil {
-			log.Warning("CanSpawn> Unable to list images: %s", errl)
+			log.Warning("createAndStartContainer> Unable to list images: %s", errl)
 		}
 
 		var imageFound bool
@@ -111,18 +111,18 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs, spawnArgs h
 
 		if !imageFound {
 			if err := h.pullImage(cArgs.image, timeoutPullImage); err != nil {
-				return sdk.WrapError(err, "startAndCreateContainer> Unable to pull image %s", cArgs.image)
+				return sdk.WrapError(err, "createAndStartContainer> Unable to pull image %s", cArgs.image)
 			}
 		}
 	}
 
 	c, err := h.dockerClient.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, name)
 	if err != nil {
-		return sdk.WrapError(err, "startAndCreateContainer> Unable to create container %s", name)
+		return sdk.WrapError(err, "createAndStartContainer> Unable to create container %s", name)
 	}
 
 	if err := h.dockerClient.ContainerStart(context.Background(), c.ID, types.ContainerStartOptions{}); err != nil {
-		return sdk.WrapError(err, "startAndCreateContainer> Unable to start container %v %s", c.ID[:12])
+		return sdk.WrapError(err, "createAndStartContainer> Unable to start container %v %s", c.ID[:12])
 	}
 	return nil
 }
