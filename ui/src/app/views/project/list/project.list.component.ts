@@ -15,7 +15,9 @@ export class ProjectListComponent {
 
     set filter(filter: string) {
         let filterLower = filter.toLowerCase();
-        this.filteredProjects = this.projects.filter((proj) => proj.name.toLowerCase().indexOf(filterLower) !== -1);
+        this.filteredProjects = this.projects.filter((proj) => {
+          return proj.name.toLowerCase().indexOf(filterLower) !== -1 || proj.key === filter;
+        });
     }
 
     constructor(private _projectService: ProjectService) {

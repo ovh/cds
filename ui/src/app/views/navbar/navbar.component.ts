@@ -145,7 +145,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         this._navbarService.getData().subscribe(data => {
             if (data.projects && data.projects.length > 0) {
                 this.navProjects = data;
-                this.listProjects = data.projects.slice(0, 10);
+                this.listProjects = data.projects.slice(0, 7);
                 this.searchItems = new Array<NavbarSearchItem>();
 
                 this.navProjects.projects.forEach(p => {
@@ -192,6 +192,18 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     selectAllProjects(): void {
         this.listApplications = this.navRecentApp;
+    }
+
+    searchItem(list: Array<NavbarSearchItem>, query: string): boolean|Array<NavbarSearchItem> {
+      let found: Array<NavbarSearchItem> = [];
+      for (let elt of list) {
+        if (query === elt.projectKey) {
+          found.push(elt);
+        } else if (elt.title.toLowerCase().indexOf(query.toLowerCase()) !== -1) {
+          found.push(elt);
+        }
+      }
+      return found;
     }
 
     /**

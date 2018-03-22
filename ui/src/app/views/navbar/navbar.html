@@ -36,10 +36,10 @@
         </ng-template>
         <sui-search
             placeholder="{{'navbar_search' | translate}}"
-            optionsField="title"
+            [optionsFilter]="searchItem"
             [resultTemplate]="searchTemplate"
             [options]="items"
-            [maxResults]="8"
+            [maxResults]="10"
             [allowEmptyQuery]="true"
             [retainSelectedResult]="false"
             [resetQueryOnChange]="false"
