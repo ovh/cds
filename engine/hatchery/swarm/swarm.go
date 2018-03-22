@@ -139,7 +139,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					entryPoint:   nil,
 				}
 
-				if err := h.createAndStartContainer(args); err != nil {
+				if err := h.createAndStartContainer(args, spawnArgs); err != nil {
 					log.Warning("SpawnWorker>Unable to start required container: %s", err)
 					return "", err
 				}
@@ -221,7 +221,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	//start the worker
-	if err := h.createAndStartContainer(args); err != nil {
+	if err := h.createAndStartContainer(args, spawnArgs); err != nil {
 		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.Image, err)
 	}
 

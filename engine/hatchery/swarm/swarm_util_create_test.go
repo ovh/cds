@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 func Test_computeDockerOpts(t *testing.T) {
@@ -141,10 +142,9 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 		memory: 256,
 	}
 
-	err := h.pullImage(args.image, timeoutPullImage)
-	test.NoError(t, err)
-
-	err = h.createAndStartContainer(args)
+	// RegisterOnly = true, this will pull image if image is not found
+	spawnArgs := hatchery.SpawnArguments{RegisterOnly: true}
+	err := h.createAndStartContainer(args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
@@ -181,7 +181,8 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	err := h.pullImage(args.image, timeoutPullImage)
 	test.NoError(t, err)
 
-	err = h.createAndStartContainer(args)
+	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
+	err = h.createAndStartContainer(args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
@@ -207,7 +208,8 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	err := h.createNetwork(args.network)
 	test.NoError(t, err)
 
-	err = h.createAndStartContainer(args)
+	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
+	err = h.createAndStartContainer(args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})

@@ -14,6 +14,7 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -45,7 +46,7 @@ type containerArgs struct {
 }
 
 //shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
+func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
 	//Memory is set to 1GB by default
 	if cArgs.memory <= 4 {
 		cArgs.memory = 1024
@@ -85,6 +86,33 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	if cArgs.network != "" && len(cArgs.networkAlias) > 0 {
 		networkingConfig.EndpointsConfig[cArgs.network] = &network.EndpointSettings{
 			Aliases: []string{cArgs.networkAlias, cArgs.name},
+		}
+	}
+
+	// ensure that image exists for register
+	if spawnArgs.RegisterOnly {
+		var images []types.ImageSummary
+		var errl error
+		images, errl = h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+		if errl != nil {
+			log.Warning("CanSpawn> Unable to list images: %s", errl)
+		}
+
+		var imageFound bool
+	checkImage:
+		for _, img := range images {
+			for _, t := range img.RepoTags {
+				if cArgs.image == t {
+					imageFound = true
+					break checkImage
+				}
+			}
+		}
+
+		if !imageFound {
+			if err := h.pullImage(cArgs.image, timeoutPullImage); err != nil {
+				return sdk.WrapError(err, "startAndCreateContainer> Unable to pull image %s", cArgs.image)
+			}
 		}
 	}
 
