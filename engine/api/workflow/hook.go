@@ -64,8 +64,29 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 				if err := createVCSConfiguration(db, store, p, &h); err != nil {
 					return nil, sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
+				defaultBranch := "master"
+				projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
+				if projectVCSServer != nil {
+					client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
+					if errclient != nil {
+						return nil, sdk.WrapError(errclient, "HookRegistration> Cannot get authorized client from repository manager")
+					}
+
+					branches, errBr := client.Branches(h.Config["repoFullName"].Value)
+					if errBr != nil {
+						return nil, sdk.WrapError(errBr, "HookRegistration> Cannot get branches from repository manager %s", h.Config["repoFullName"].Value)
+					}
+
+					for _, branch := range branches {
+						if branch.Default {
+							defaultBranch = branch.DisplayID
+							break
+						}
+					}
+				}
 				defaultPayload = &sdk.WorkflowNodeContextDefaultPayloadVCS{
 					GitRepository: h.Config["repoFullName"].Value,
+					GitBranch:     defaultBranch,
 				}
 			}
 			if err := UpdateHook(db, &h); err != nil {
