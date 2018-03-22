@@ -776,6 +776,22 @@ func (c *WorkflowNodeContext) HasDefaultPayload() bool {
 	return len(m) > 0
 }
 
+// DefaultPayloadToMap returns default payload to map
+func (c *WorkflowNodeContext) DefaultPayloadToMap() (map[string]string, error) {
+	if c == nil {
+		return nil, fmt.Errorf("Workflow node context is nil")
+	}
+	if c.DefaultPayload == nil {
+		return map[string]string{}, nil
+	}
+	dumper := dump.NewDefaultEncoder(nil)
+	dumper.ExtraFields.DetailedMap = false
+	dumper.ExtraFields.DetailedStruct = false
+	dumper.ExtraFields.Len = false
+	dumper.ExtraFields.Type = false
+	return dumper.ToStringMap(c.DefaultPayload)
+}
+
 //WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook
 type WorkflowNodeContextDefaultPayloadVCS struct {
 	GitBranch     string `json:"git.branch" db:"-"`

@@ -1,7 +1,6 @@
 package migrate
 
 import (
-	dump "github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -56,12 +55,7 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 				continue
 			}
 
-			dumper := dump.NewDefaultEncoder(nil)
-			dumper.ExtraFields.DetailedMap = false
-			dumper.ExtraFields.DetailedStruct = false
-			dumper.ExtraFields.Len = false
-			dumper.ExtraFields.Type = false
-			m, errM := dumper.ToStringMap(wf.Root.Context.DefaultPayload)
+			m, errM := wf.Root.Context.DefaultPayloadToMap()
 			if errM != nil {
 				log.Warning("DefaultPayloadMigration> Cannot dump to map")
 				tx.Rollback()
