@@ -73,13 +73,10 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 	log.Debug("SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
 
-	//Create a network
-	network := name + "-net"
-	h.createNetwork(network)
-
 	//Memory for the worker
 	memory := int64(h.Config.DefaultMemory)
 
+	var network, networkAlias string
 	services := []string{}
 
 	if spawnArgs.JobID > 0 {
@@ -92,6 +89,13 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					return "", err
 				}
 			} else if r.Type == sdk.ServiceRequirement {
+				//Create a network if not already created
+				if network == "" {
+					network = name + "-net"
+					networkAlias = "worker"
+					h.createNetwork(network)
+				}
+
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
 				//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
 				tuple := strings.Split(r.Value, " ")
@@ -207,7 +211,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		name:         name,
 		image:        spawnArgs.Model.Image,
 		network:      network,
-		networkAlias: "worker",
+		networkAlias: networkAlias,
 		cmd:          cmd,
 		env:          env,
 		labels:       labels,
