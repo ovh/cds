@@ -73,13 +73,10 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 	log.Debug("SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
 
-	//Create a network
-	network := name + "-net"
-	h.createNetwork(network)
-
 	//Memory for the worker
 	memory := int64(h.Config.DefaultMemory)
 
+	var network, networkAlias string
 	services := []string{}
 
 	if spawnArgs.JobID > 0 {
@@ -92,6 +89,13 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					return "", err
 				}
 			} else if r.Type == sdk.ServiceRequirement {
+				//Create a network if not already created
+				if network == "" {
+					network = name + "-net"
+					networkAlias = "worker"
+					h.createNetwork(network)
+				}
+
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
 				//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
 				tuple := strings.Split(r.Value, " ")
@@ -135,7 +139,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					entryPoint:   nil,
 				}
 
-				if err := h.createAndStartContainer(args); err != nil {
+				if err := h.createAndStartContainer(args, spawnArgs); err != nil {
 					log.Warning("SpawnWorker>Unable to start required container: %s", err)
 					return "", err
 				}
@@ -207,7 +211,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		name:         name,
 		image:        spawnArgs.Model.Image,
 		network:      network,
-		networkAlias: "worker",
+		networkAlias: networkAlias,
 		cmd:          cmd,
 		env:          env,
 		labels:       labels,
@@ -217,7 +221,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	//start the worker
-	if err := h.createAndStartContainer(args); err != nil {
+	if err := h.createAndStartContainer(args, spawnArgs); err != nil {
 		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.Image, err)
 	}
 
@@ -458,6 +462,11 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 	//Checking workers
 	oldContainers := []types.Container{}
 	for _, c := range containers {
+		if time.Now().Add(-1*time.Minute).Unix() < c.Created {
+			log.Debug("listAwolWorkers> container %s is too young", c.Names[0])
+			continue
+		}
+
 		//If there isn't any worker registered on the API. Kill the container
 		if len(apiworkers) == 0 {
 			oldContainers = append(oldContainers, c)
@@ -483,6 +492,7 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 		}
 	}
 
+	log.Debug("listAwolWorkers> oldContainers: %d", len(oldContainers))
 	return oldContainers, nil
 }
 
@@ -514,15 +524,11 @@ func (h *HatcherySwarm) killAwolWorker() error {
 		}
 		//check if the service is linked to a worker which doesn't exist
 		if w, _ := h.getContainer(c.Labels["service_worker"], types.ContainerListOptions{All: true}); w == nil {
-			oldContainers = append(oldContainers, c)
+			log.Debug("killAwolWorker> Delete worker (service) %s", c.Names[0])
+			if err := h.killAndRemove(c.ID); err != nil {
+				log.Error("killAwolWorker> service %v", err)
+			}
 			continue
-		}
-	}
-
-	for _, c := range oldContainers {
-		log.Debug("killAwolWorker> Delete worker %s", c.Names[0])
-		if err := h.killAndRemove(c.ID); err != nil {
-			log.Error("killAwolWorker> %v", err)
 		}
 	}
 
