@@ -17,13 +17,13 @@
                                [disabled]="loading"
                                required
                                #formProjectUpdateName="ngModel">
-                        <div *ngIf="!formProjectUpdateName.valid && !formProjectUpdateName.pristine"
+                        <div *ngIf="formProjectUpdateName.invalid && !formProjectUpdateName.pristine"
                              class="ui error message">
                             <p>{{'project_update_name_error' | translate}}</p>
                         </div>
                     </div>
                     <div class="nine wide right aligned field">
-                        <button class="ui green button" name="btnrename" [class.loading]="loading">{{ 'btn_rename' | translate }}</button>
+                        <button class="ui green button" name="btnrename" [class.loading]="loading" [disabled]="projectUpdateFrom.invalid">{{ 'btn_rename' | translate }}</button>
                     </div>
                 </div>
             </form>
