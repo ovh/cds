@@ -2,7 +2,6 @@ package action
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -13,7 +12,6 @@ import (
 var cmdActionAddParams = struct {
 	Params       []string
 	Requirements []string
-	URL          string
 }{}
 
 func cmdActionAdd() *cobra.Command {
@@ -34,7 +32,6 @@ $cds action add --url $HOME/src/github.com/ovh/cds/contrib/actions/action-script
 
 	cmd.Flags().StringSliceVarP(&cmdActionAddParams.Params, "parameter", "p", nil, "Action parameters")
 	cmd.Flags().StringSliceVarP(&cmdActionAddParams.Requirements, "requirement", "r", nil, "Action requirements")
-	cmd.Flags().StringVarP(&cmdActionAddParams.URL, "url", "", "", "Load an action from an URL or local file (HCL Format)")
 
 	cmd.AddCommand(cmdActionAddRequirement())
 	cmd.AddCommand(cmdActionAddStep())
@@ -43,7 +40,7 @@ $cds action add --url $HOME/src/github.com/ovh/cds/contrib/actions/action-script
 
 func addAction(cmd *cobra.Command, args []string) {
 	name := ""
-	if len(args) == 0 && cmdActionAddParams.URL == "" {
+	if len(args) == 0 {
 		sdk.Exit("Wrong usage: %s\n", cmd.Short)
 	} else if len(args) > 0 {
 		name = args[0]
@@ -58,11 +55,7 @@ func addAction(cmd *cobra.Command, args []string) {
 		})
 	}
 
-	if cmdActionAddParams.URL != "" {
-		if _, err := addActionFromScript(); err != nil {
-			sdk.Exit("%s\n", err)
-		}
-	} else if err := sdk.AddAction(name, getCmdParameters(), req); err != nil {
+	if err := sdk.AddAction(name, getCmdParameters(), req); err != nil {
 		sdk.Exit("%s\n", err)
 	}
 
@@ -79,30 +72,6 @@ func getCmdParameters() []sdk.Parameter {
 		parameters = append(parameters, p)
 	}
 	return parameters
-}
-
-// addActionFromScript adds an action from an URL or a local file
-func addActionFromScript() (*sdk.Action, error) {
-	var action *sdk.Action
-	if strings.HasPrefix(cmdActionAddParams.URL, "http") {
-		var errNewAction error
-		action, errNewAction = sdk.NewActionFromRemoteScript(cmdActionAddParams.URL, getCmdParameters())
-		if errNewAction != nil {
-			return nil, errNewAction
-		}
-	} else {
-		btes, errRead := ioutil.ReadFile(cmdActionAddParams.URL)
-		if errRead != nil {
-			return nil, errRead
-		}
-
-		var errFrom error
-		action, errFrom = sdk.NewActionFromScript(btes)
-		if errFrom != nil {
-			return nil, errFrom
-		}
-	}
-	return sdk.ImportAction(action)
 }
 
 func cmdActionAddRequirement() *cobra.Command {
