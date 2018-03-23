@@ -131,7 +131,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                     }
                 }
             }, () => {
-                this._router.navigate(['/project', key]);
+                this._router.navigate(['/project', key], {queryParams: {tab: 'pipelines'}});
             });
         }
     }
