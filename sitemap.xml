@@ -19,6 +19,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/hosting/repositories-manager/github/</loc>
   </url>
   
@@ -68,10 +72,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</loc>
   </url>
   
   <url>
@@ -139,7 +139,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</loc>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/</loc>
   </url>
   
   <url>

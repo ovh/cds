@@ -377,15 +377,17 @@
         <span>Worker Model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker-simple/" class="dd-item">
-        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/">
-          <span>Worker Model From Docker Hub</span>
-        </a>
-    </li>
-      <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker-customized/" class="dd-item">
-        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/">
+    <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">
+        <span>Docker Worker Model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker/docker-customized/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/">
           <span>Worker Model with your own image</span>
         </a>
+    </li>
+        </ul>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
@@ -639,6 +641,18 @@
         <span>SDK Golang</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+    <li data-nav-id="/cli/sdk/examples/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/sdk/examples/">
+        <span>Examples</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/sdk/examples/go-workers-list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/sdk/examples/go-workers-list/">
+          <span>Workers List</span>
+        </a>
+    </li>
+        </ul>
+    </li>
         </ul>
     </li>
     <li data-nav-id="/cli/cdsctl/" class="dd-item">
@@ -1673,10 +1687,10 @@
 <li><a href="#list-all-public-actions">List all public actions</a></li>
 <li><a href="#get-action-actionid-audit">GET <code>/action/&lt;actionID&gt;/audit</code></a></li>
 <li><a href="#get-action-actionname-using">GET <code>/action/&lt;actionName&gt;/using</code></a></li>
-<li><a href="#put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></a></li>
-<li><a href="#get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></a></li>
 <li><a href="#post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></a></li>
 <li><a href="#delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></a></li>
+<li><a href="#get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></a></li>
+<li><a href="#put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></a></li>
 <li><a href="#get-action-permactionname-export">GET <code>/action/&lt;permActionName&gt;/export</code></a></li>
 <li><a href="#importaction-insert-or-update-an-existing-action">importAction insert OR update an existing action.</a></li>
 <li><a href="#get-action-requirement">GET <code>/action/requirement</code></a></li>
@@ -1787,62 +1801,6 @@
 </tbody>
 </table>
 
-<h3 id="put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22">updateActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22">getActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></h3>
 
 <table>
@@ -1895,6 +1853,62 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22">deleteActionHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22">getActionHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22">updateActionHandler</a></td>
 </tr>
 </tbody>
 </table>

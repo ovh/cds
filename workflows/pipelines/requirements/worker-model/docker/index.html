@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Worker Model with your own image :: CDS - Continuous Delivery Service</title>
+    <title>Docker Worker Model :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/workflows/pipelines/requirements/worker-model/docker-customized/">
+  <body class="" data-url="/workflows/pipelines/requirements/worker-model/docker/">
     <nav id="sidebar" class="">
 
 
@@ -358,6 +358,54 @@
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
+    <li data-nav-id="/workflows/pipelines/requirements/service/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/">
+        <span>Service Link</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
+          <span>Service Requirement Nginx</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/">
+          <span>Service Requirement PostgreSQL</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/workflows/pipelines/requirements/worker-model/" class="dd-item parent">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">
+        <span>Worker Model</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+      </a>
+        <ul>
+    <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker/" class="dd-item parent active">
+      <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">
+        <span>Docker Worker Model</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker/docker-customized/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/">
+          <span>Worker Model with your own image</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
+          <span>Openstack Worker Model</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
+          <span>VSphere Worker Model</span>
+        </a>
+    </li>
+        </ul>
+    </li>
         </ul>
     </li>
       <li data-nav-id="/workflows/pipelines/configuration-file/" class="dd-item">
@@ -1597,7 +1645,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/pipelines/requirements/worker-model/docker-customized.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/pipelines/requirements/worker-model/docker/_index.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1626,7 +1674,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/'>Job's Requirements</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/'>Worker Model</a> > Worker Model with your own image
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/'>Job's Requirements</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/'>Worker Model</a> > Docker Worker Model
 
  
 
@@ -1647,13 +1695,8 @@
 <ul>
 <li>
 <ul>
-<li><a href="#setup-docker-worker-model-with-your-own-image">Setup Docker Worker Model with your own image</a>
-<ul>
-<li><a href="#prerequisite">Prerequisite</a></li>
-<li><a href="#dockerfile">Dockerfile</a></li>
-<li><a href="#build-it-and-push-it">Build it and push it</a></li>
-<li><a href="#register-your-model-in-cds">Register your model in CDS</a></li>
-</ul></li>
+<li><a href="#register-a-worker-model-from-an-existing-docker-image">Register a worker Model from an existing Docker Image</a></li>
+<li><a href="#worker-model-docker-on-hatchery-swarm">Worker Model Docker on Hatchery Swarm</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -1666,7 +1709,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Worker Model with your own image</h1>
+                <h1>Docker Worker Model</h1>
                 <p></p>
             </div>
           
@@ -1676,111 +1719,55 @@
 
 
 
-<p>A worker model of type <code>docker</code> can be spawned by a Hatchery Docker Swarm</p>
+<p>A worker model of type <code>docker</code> can be spawned by a Hatchery Docker Swarm or a Hatchery Marathon.</p>
 
-<h2 id="setup-docker-worker-model-with-your-own-image">Setup Docker Worker Model with your own image</h2>
+<h2 id="register-a-worker-model-from-an-existing-docker-image">Register a worker Model from an existing Docker Image</h2>
 
-<p>In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a <code>grunt</code> task (optionnally) requires <code>fontforge</code> and <code>ttfautohint</code>.</p>
-
-<p>The following tools must be included in the model:</p>
-
-<ul>
-<li><code>NodeJs</code> and <code>npm</code></li>
-<li><code>bower</code></li>
-<li><code>grunt-cli</code></li>
-<li><code>gulp-cli</code></li>
-<li><code>fontforge</code></li>
-<li><code>ttfautohint</code></li>
-</ul>
-
-<p>We will use the official <strong>nodejs</strong> image from Docker. In this image, there is already a user named <strong>node</strong>. For the example, we will compile <code>ttfautohint</code>.</p>
-
-<h3 id="prerequisite">Prerequisite</h3>
-
-<p>To build a Docker model, you need:</p>
-
-<ul>
-<li>your favorite text editor</li>
-<li>a sane installation of Docker <a href="https://docs.docker.com/engine/installation/">https://docs.docker.com/engine/installation/</a></li>
-</ul>
-
-<h3 id="dockerfile">Dockerfile</h3>
-
-<p>Copy this content in a file named <code>Dockerfile</code></p>
-
-<pre><code class="language-dockerfile"># User official nodejs docker image
-FROM node:6.10.1
-
-#Answer 'yes' to each question
-ENV DEBIAN_FRONTEND noninteractive
-
-# Upgrade the debian packages
-RUN (apt-get update &amp;&amp; apt-get upgrade -y -q &amp;&amp; apt-get -y -q autoclean &amp;&amp; apt-get -y -q autoremove)
-
-#The official image comes with npm; so we can use it to install some packages
-RUN npm install -g grunt-cli gulp-cli bower
-
-# Install fontforge for our specific need
-RUN apt-get install -y fontforge
-
-# Install packages and compile ttfautohint (still for our specific need)
-RUN apt-get install -y libharfbuzz-dev libfreetype6-dev libqt4-dev\
-    &amp;&amp; cd /tmp \
-    &amp;&amp; curl -L http://download.savannah.gnu.org/releases/freetype/ttfautohint-1.6.tar.gz |tar xz\
-    &amp;&amp; cd ttfautohint-1.6\
-    &amp;&amp; ./configure\
-    &amp;&amp; make\
-    &amp;&amp; make install
-
-# Change user. If you do not specify this command, the user will be root, and in our case,
-# bower will shout as it cannot be launched by root
-USER node
-
-# Specify a working directory on which the current user has write access
-# Remember, a curl command will be, first, executed to download the worker
-WORKDIR /home/node
-</code></pre>
-
-<h3 id="build-it-and-push-it">Build it and push it</h3>
-
-<p>from you shell, type the following command to build the Docker image:</p>
-
-<pre><code>docker build --no-cache --pull -t registry.my.infra.net/my/beautiful/worker:latest .
-</code></pre>
-
-<p>If you want to test it, you can lauch your docker in bash mode :</p>
-
-<pre><code>docker run -it registry.my.infra.net/my/beautiful/worker:latest /bin/bash
-pwd
-fontforge -v
-exit
-</code></pre>
-
-<p>Now push it</p>
-
-<pre><code>docker push registry.my.infra.net/my/beautiful/worker:latest
-</code></pre>
-
-<h3 id="register-your-model-in-cds">Register your model in CDS</h3>
+<p>Docker Image <em>golang:1.8.1</em> have a &ldquo;curl&rdquo; in $PATH, so it can be used as it is.</p>
 
 <ul>
 <li>In the UI, click on the wheel on the hand right top corner and select *workers&rdquo; (or go the the route <em>#/worker</em>)</li>
 <li>At the bottom of the page, fill the form
 
 <ul>
-<li>Name of your worker <em>My Beautiful</em></li>
+<li>Name of your worker <em>Golang-1.8.1</em></li>
 <li>type <em>docker</em></li>
-<li>image <em>registry.my.infra.net/my/beautiful/worker:latest</em></li>
+<li>image <em>golang:1.8.1</em></li>
 </ul></li>
 <li>Click on <em>Add</em> button and that&rsquo;s it</li>
 </ul>
 
-<p>Now you can specify this model in prerequisite on your job. Create a new prerequisite of type &ldquo;model&rdquo;, then choose your worker model in list</p>
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.requirements.docker.worker-model.docker.add.png" alt="Add worker model" /></p>
+
+<h2 id="worker-model-docker-on-hatchery-swarm">Worker Model Docker on Hatchery Swarm</h2>
+
+<p>This hatchery offers some features on job pre-requisites, usable only on user&rsquo;s hatchery (ie. not a shared.infra hatchery).</p>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/">Service Link</a></li>
+<li>options on worker model prerequisite
+
+<ul>
+<li>Port mapping: <code>--port=8080:8081/tcp --port=9080:9081/tcp</code></li>
+<li>Priviledge flag: <code>--privileged</code></li>
+<li>Add host flag: <code>--add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8</code></li>
+<li>Use all: <code>--port=8080:8081/tcp --privileged --port=9080:9081/tcp --add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8</code></li>
+</ul></li>
+<li>options on volume prerequisite
+
+<ul>
+<li>Bind: <code>type=bind,source=/hostDir/sourceDir,destination=/dirInJob,readonly</code></li>
+</ul></li>
+</ul>
+
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.requirements.docker.worker-model.docker.png" alt="Job Prerequisites" /></p>
 
 
 <footer class=" footline" >
 	
 </footer>
+
+
 
 
 
@@ -1795,8 +1782,8 @@ exit
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/" title="Worker Model From Docker Hub"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/" title="Openstack Worker Model" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/" title="Worker Model"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/" title="Worker Model with your own image" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -1816,4 +1803,3 @@ exit
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
-
