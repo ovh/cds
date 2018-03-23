@@ -108,17 +108,13 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wfr := &sdk.WorkflowRun{
-			Number:     int64(i),
-			Status:     sdk.StatusSuccess.String(),
-			WorkflowID: w1.ID,
-			Workflow:   *w1,
-			ProjectID:  proj.ID,
-		}
-
-		wfr.Tag("git.branch", "master")
-
-		errWr := workflow.InsertWorkflowRun(db, wfr)
+		_, errWr := workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": "master",
+				"git.author": "test",
+			},
+		}, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -127,7 +123,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
-	test.Equal(t, 5, count, "Number of workflow run aren't correct")
+	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
 
 	toDeleteNb := 0
 	for _, wfRun := range wruns {
@@ -136,7 +132,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		}
 	}
 
-	test.Equal(t, 3, toDeleteNb, "Number of workflow run to be purged aren't correct")
+	test.Equal(t, 3, toDeleteNb, "Number of workflow runs to be purged isn't correct")
 }
 
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
@@ -187,22 +183,13 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		wfr := &sdk.WorkflowRun{
-			Number:     int64(i),
-			Status:     sdk.StatusSuccess.String(),
-			WorkflowID: w1.ID,
-			Workflow:   *w1,
-			ProjectID:  proj.ID,
-		}
-
-		if i <= 1 {
-			wfr.Tag("triggered_by", "toto")
-		}
-
-		wfr.Tag("git.branch", branches[i])
-		wfr.Tag("git.author", "test")
-
-		errWr := workflow.InsertWorkflowRun(db, wfr)
+		_, errWr := workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": branches[i],
+				"git.author": "test",
+			},
+		}, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -211,7 +198,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 
 	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
 	test.NoError(t, errRuns)
-	test.Equal(t, 10, count, "Number of workflow run aren't correct")
+	test.Equal(t, 10, count, "Number of workflow runs isn't correct")
 
 	toDeleteNb := 0
 	for _, wfRun := range wruns {
@@ -220,5 +207,5 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		}
 	}
 
-	test.Equal(t, 8, toDeleteNb, "Number of workflow run to be purged aren't correct")
+	test.Equal(t, 8, toDeleteNb, "Number of workflow runs to be purged isn't correct")
 }

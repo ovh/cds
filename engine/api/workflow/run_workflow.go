@@ -60,7 +60,7 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 		}
 
 		//Insert it
-		if err := InsertWorkflowRun(db, wr); err != nil {
+		if err := insertWorkflowRun(db, wr); err != nil {
 			return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 		}
 
@@ -149,7 +149,7 @@ func ManualRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sd
 	}
 	wr.Tag(tagTriggeredBy, e.User.Username)
 
-	if err := InsertWorkflowRun(db, wr); err != nil {
+	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 

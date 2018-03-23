@@ -15,8 +15,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// InsertWorkflowRun inserts in table "workflow_run""
-func InsertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+// insertWorkflowRun inserts in table "workflow_run""
+func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	runDB := Run(*wr)
 	if err := db.Insert(&runDB); err != nil {
 		return sdk.WrapError(err, "insertWorkflowRun> Unable to insert run")
