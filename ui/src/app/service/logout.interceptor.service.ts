@@ -4,6 +4,7 @@ import {Observable} from 'rxjs/Observable';
 import {ToastService} from '../shared/toast/ToastService';
 import {AuthentificationStore} from './auth/authentification.store';
 import {Router} from '@angular/router';
+import 'rxjs/add/observable/throw';
 
 @Injectable()
 export class LogoutInterceptor implements HttpInterceptor {
@@ -19,7 +20,6 @@ export class LogoutInterceptor implements HttpInterceptor {
                 } else if (e.status === 401) {
                     this._authStore.removeUser();
                     this._router.navigate(['/account/login']);
-                    return Observable.throw(e);
                 } else {
                     // error formatted from CDS API
                     if (e.error && e.error.message) {
@@ -28,6 +28,7 @@ export class LogoutInterceptor implements HttpInterceptor {
                         this._toast.error(e.statusText, JSON.parse(e.message));
                     }
                 }
+                return Observable.throw(e);
             }
         });
     }

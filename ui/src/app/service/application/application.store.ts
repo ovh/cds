@@ -122,6 +122,8 @@ export class ApplicationStore {
             this._application.next(store.set(appKey, res));
         }, err => {
             this._application.error(err);
+            this._application = new BehaviorSubject(Map<string, Application>());
+            this._application.next(store);
         });
     }
 
