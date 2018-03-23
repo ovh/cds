@@ -134,26 +134,39 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		t.Status = TaskExecutionDoing
 		s.Dao.SaveTaskExecution(&t)
 
+		var restartTask bool
+		var saveTaskExecution bool
+
 		task := s.Dao.FindTask(t.UUID)
 		if task == nil {
 			log.Error("Hooks> dequeueTaskExecutions failed: Task not found")
 			t.LastError = "Internal Error: Task not found"
 			t.NbErrors++
+			log.Info("Hooks> Deleting task execution %s", t.UUID)
+			s.Dao.DeleteTaskExecution(&t)
+
 		} else if task.Stopped {
 			t.LastError = "Executions skipped: Task has been stopped"
 			t.NbErrors++
+			saveTaskExecution = true
 		} else if err := s.doTask(c, task, &t); err != nil {
 			log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
 			t.LastError = err.Error()
 			t.NbErrors++
+			restartTask = true
+			saveTaskExecution = true
 		}
 
 		//Save the execution
-		t.Status = TaskExecutionDone
-		t.ProcessingTimestamp = time.Now().UnixNano()
-		s.Dao.SaveTaskExecution(&t)
+		if saveTaskExecution {
+			t.Status = TaskExecutionDone
+			t.ProcessingTimestamp = time.Now().UnixNano()
+			s.Dao.SaveTaskExecution(&t)
+		}
 
 		//Start (or restart) the task
-		s.startTask(c, task)
+		if restartTask {
+			s.startTask(c, task)
+		}
 	}
 }

@@ -438,6 +438,13 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
+	//Temporary migration code
+	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
+		if err := bootstrap.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
+			log.Error("Bootstrap Error: %v", err)
+		}
+	}
+
 	//Init events package
 	event.Cache = a.Cache
 
@@ -467,9 +474,8 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	storeOptions := sessionstore.Options{
-		TTL:           a.Config.Cache.TTL,
-		RedisHost:     a.Config.Cache.Redis.Host,
-		RedisPassword: a.Config.Cache.Redis.Password,
+		TTL:   a.Config.Cache.TTL * 60, // Second to minutes
+		Cache: a.Cache,
 	}
 
 	var errdriver error

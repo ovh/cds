@@ -115,7 +115,7 @@ export class ProjectAddComponent {
     }
 
     loadGroups(selected: string) {
-        this._groupService.getGroups().pipe(first()).subscribe(groups => {
+        this._groupService.getGroups(true).pipe(first()).subscribe(groups => {
             this.groupList = groups;
             this.loading = false;
             if (selected == null) {

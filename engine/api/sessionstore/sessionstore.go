@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+
+	"github.com/ovh/cds/engine/api/cache"
 )
 
 // NewSessionKey generates a random UUID according to RFC 4122
@@ -34,6 +36,80 @@ type Store interface {
 
 //Options is a struct to switch from in memory to redis session store
 type Options struct {
-	RedisHost, RedisPassword string
-	TTL                      int
+	Cache cache.Store
+	TTL   int
+}
+
+type sessionstore struct {
+	cache cache.Store
+	ttl   int
+}
+
+var cacheSessionStore = cache.Key("api:users:session")
+
+func (s *sessionstore) New(session SessionKey) (SessionKey, error) {
+	if session == "" {
+		var err error
+		session, err = NewSessionKey()
+		if err != nil {
+			return session, err
+		}
+	}
+
+	k := cache.Key(cacheSessionStore, string(session))
+	s.cache.SetWithTTL(k, 1, s.ttl)
+	return session, nil
+}
+
+func (s *sessionstore) Exists(session SessionKey) (bool, error) {
+	k := cache.Key(cacheSessionStore, string(session))
+	var sval int
+	exist := s.cache.Get(k, &sval)
+
+	if exist {
+		s.cache.SetWithTTL(k, 1, s.ttl)
+	}
+	return exist, nil
+}
+
+func (s *sessionstore) Get(session SessionKey, subkey string, i interface{}) error {
+	k := cache.Key(cacheSessionStore, string(session))
+	exist, err := s.Exists(session)
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return fmt.Errorf("session does not exist")
+	}
+
+	ks := cache.Key(k, subkey)
+	s.cache.Get(ks, i)
+	s.cache.SetWithTTL(ks, i, s.ttl)
+	return nil
+}
+
+func (s *sessionstore) Set(session SessionKey, subkey string, i interface{}) error {
+	k := cache.Key(cacheSessionStore, string(session))
+	exist, err := s.Exists(session)
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return fmt.Errorf("session does not exist")
+	}
+
+	ks := cache.Key(k, subkey)
+	s.cache.SetWithTTL(ks, i, s.ttl)
+
+	return nil
+}
+
+func (s *sessionstore) Delete(session SessionKey) error {
+	k := cache.Key(cacheSessionStore, string(session))
+	ks := cache.Key(cacheSessionStore, string(session), "*")
+	s.cache.DeleteAll(k)
+	s.cache.DeleteAll(ks)
+	return nil
 }

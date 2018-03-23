@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Group} from '../../model/group.model';
 import {Token} from '../../model/token.model';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
  * Service to access Group from API.
@@ -27,8 +27,12 @@ export class GroupService {
      * Get all groups that the user can access.
      * @returns {Observable<Group[]>}
      */
-    getGroups(): Observable<Group[]> {
-        return this._http.get<Group[]>('/group');
+    getGroups(withoutDefault?: boolean): Observable<Group[]> {
+        let params = new HttpParams();
+        if (withoutDefault === true) {
+            params = params.append('withoutDefault', 'true');
+        }
+        return this._http.get<Group[]>('/group', {params: params});
     }
 
     /**

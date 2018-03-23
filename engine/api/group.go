@@ -194,12 +194,13 @@ func (api *API) getGroupsHandler() Handler {
 		var groups []sdk.Group
 		var err error
 
-		public := r.FormValue("withPublic")
+		public := FormBool(r, "withPublic")
+		withoutDefault := FormBool(r, "withoutDefault")
 		if getUser(ctx).Admin {
 			groups, err = group.LoadGroups(api.mustDB())
 		} else {
 			groups, err = group.LoadGroupByUser(api.mustDB(), getUser(ctx).ID)
-			if public == "true" {
+			if public {
 				publicGroups, errl := group.LoadPublicGroups(api.mustDB())
 				if errl != nil {
 					return sdk.WrapError(errl, "GetGroups: Cannot load group from db")
@@ -211,7 +212,21 @@ func (api *API) getGroupsHandler() Handler {
 			return sdk.WrapError(err, "GetGroups: Cannot load group from db")
 		}
 
+		// withoutDefault is use by project Add, to avoid
+		// user select the default group on project creation
+		if withoutDefault {
+			var filteredGroups []sdk.Group
+			for _, g := range groups {
+				if group.IsDefaultGroupID(g.ID) {
+					continue
+				} else {
+					filteredGroups = append(filteredGroups, g)
+				}
+			}
+			return WriteJSON(w, filteredGroups, http.StatusOK)
+		}
 		return WriteJSON(w, groups, http.StatusOK)
+
 	}
 }
 

@@ -292,8 +292,9 @@ func load(db gorp.SqlExecutor, store cache.Store, opts LoadOptions, u *sdk.User,
 
 	res := sdk.Workflow(dbRes)
 	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
-
-	res.Permission = permission.WorkflowPermission(res.ProjectKey, res.Name, u)
+	if u != nil {
+		res.Permission = permission.WorkflowPermission(res.ProjectKey, res.Name, u)
+	}
 
 	// Load groups
 	gps, err := loadWorkflowGroups(db, res)

@@ -65,27 +65,6 @@ export class WorkflowStore {
     }
 
     /**
-     * Use by router to preload workflow
-     * @param key
-     * @param workflowName Workflow name
-     * @returns {Observable<Workflow>}
-     */
-    getWorkflowResolver(key: string, workflowName: string): Observable<Workflow> {
-        let store = this._workflows.getValue();
-        let workflowKey = key + '-' + workflowName;
-        if (store.size === 0 || !store.get(workflowKey)) {
-            return this._workflowService.getWorkflow(key, workflowName).map( res => {
-                this._workflows.next(store.set(workflowKey, res));
-                return res;
-            }, err => {
-                this._workflows.error(err);
-            });
-        } else {
-            return Observable.of(store.get(workflowKey));
-        }
-    }
-
-    /**
      * Get workflows
      * @returns {Observable<Application>}
      */
@@ -105,6 +84,8 @@ export class WorkflowStore {
             this._workflows.next(store.set(workflowKey, res));
         }, err => {
             this._workflows.error(err);
+            this._workflows = new BehaviorSubject(Map<string, Workflow>());
+            this._workflows.next(store);
         });
     }
 
@@ -121,6 +102,7 @@ export class WorkflowStore {
         return this._workflowService.updateWorkflow(key, name, workflow).map(w => {
             let workflowKey = key + '-' + workflow.name;
             let store = this._workflows.getValue();
+            w.permission = workflow.permission;
             this._workflows.next(store.set(workflowKey, w));
             return w;
         });

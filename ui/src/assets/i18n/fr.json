@@ -502,7 +502,7 @@
   "requirement_type": "Type",
   "requirement_value": "Valeur",
   "requirement_help_binary": "Pré-requis type 'binary': CDS choisira un worker possédant ce binaire dans son PATH.",
-  "requirement_help_model": "Pré-requis type 'model': <ul><li>Si vous sélectionnez un <a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/\">Worker Model</a>, CDS lancera votre Job dans une instance de celui-ci</li><li><a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/\">Créer un modèle de worker en utilisant une image depuis Docker Hub</a></li><li><a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/\">Créer un modèle de worker avec votre propre image docker</a></li><li><a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/\">Créer un modèle de worker Openstack</a></li><li><a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/\">En savoir plus</a></li></ul>",
+  "requirement_help_model": "Pré-requis type 'model': <ul><li>Si vous sélectionnez un <a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/\">Worker Model</a>, CDS lancera votre Job dans une instance de celui-ci</li><li><a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/\">Créer un modèle de worker en utilisant une image depuis Docker Hub</a></li><li><a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/\">Créer un modèle de worker avec votre propre image docker</a></li><li><a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/\">Créer un modèle de worker Openstack</a></li><li><a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/\">En savoir plus</a></li></ul>",
   "requirement_help_memory": "Pré-requis type 'memory': <ul><li>Si vous souhaitez 5Go, entrez la valeur suivante: <b>4096</b></li><li>Le prérequis memory est disponible uniquement avec les <a target=\"_blank\" href=\"https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/\">Worker Model</a> de type Docker</li></ul>",
   "requirement_help_network": "Pré-requis type 'network': <ul><li>CDS choisira un worker qui pourra atteindre cette IP</li></ul>",
   "requirement_help_hostname": "Pré-requis type 'hostname': <ul><li>Ce job sera lancé par un worker possédant ce Hostname</li></ul>",
@@ -625,6 +625,7 @@
   "warning_application": "Un autre utilisateur vient de modifier l'application.",
   "warning_application_title": "Liste des warnings sur l'application {{app}}",
   "warning_pipeline": "Un autre utilisateur vient de modifier le pipeline.",
+  "warning_workflow": "Un autre utilisateur vient de modifier le workflow.",
   "warning_build_title": "Le build est en succès mais il y a {{nb}} étape(s) optionnelle(s) en erreur",
 
   "wizard_app_clone": "Cloner une application",

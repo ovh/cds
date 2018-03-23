@@ -41,6 +41,28 @@ type Application struct {
 	Usage              *Usage                `json:"usage,omitempty" db:"-" cli:"-"`
 }
 
+// SSHKeys returns the slice of ssh key for an application
+func (a Application) SSHKeys() []ApplicationKey {
+	keys := []ApplicationKey{}
+	for _, k := range a.Keys {
+		if k.Type == KeyTypeSSH {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// PGPKeys returns the slice of pgp key for an application
+func (a Application) PGPKeys() []ApplicationKey {
+	keys := []ApplicationKey{}
+	for _, k := range a.Keys {
+		if k.Type == KeyTypePGP {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
 // RepositoryStrategy represent the way to use the repository
 type RepositoryStrategy struct {
 	ConnectionType string `json:"connection_type"`

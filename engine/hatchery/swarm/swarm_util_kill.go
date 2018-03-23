@@ -79,14 +79,14 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 	//Checking networks
 	nets, errLN := h.dockerClient.NetworkList(context.Background(), types.NetworkListOptions{})
 	if errLN != nil {
-		log.Warning("killAwolWorker> Cannot get networks: %s", errLN)
+		log.Warning("killAwolNetworks> Cannot get networks: %s", errLN)
 		return errLN
 	}
 
 	for i := range nets {
 		n, err := h.dockerClient.NetworkInspect(context.Background(), nets[i].ID)
 		if err != nil {
-			log.Warning("killAwolWorker> Unable to get network info: %v", err)
+			log.Warning("killAwolNetworks> Unable to get network info: %v", err)
 			continue
 		}
 
@@ -102,9 +102,9 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 			continue
 		}
 
-		log.Debug("killAwolWorker> Delete network %s", n.Name)
+		log.Debug("killAwolNetworks> Delete network %s", n.Name)
 		if err := h.dockerClient.NetworkRemove(context.Background(), n.ID); err != nil {
-			log.Warning("killAwolWorker> Unable to delete network %s err:%s", n.Name, err)
+			log.Warning("killAwolNetworks> Unable to delete network %s err:%s", n.Name, err)
 		}
 	}
 	return nil
