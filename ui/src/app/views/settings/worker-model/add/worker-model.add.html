@@ -64,7 +64,7 @@
                     <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
                 </sm-select>
               </div>
-              <div class="four wide field" *ngIf="currentUser.admin">
+              <div class="four wide field" *ngIf="currentUser.admin || workerModel.restricted">
                   <label>{{'worker_model_provision' | translate}}</label>
                   <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision" [disabled]="loading">
               </div>

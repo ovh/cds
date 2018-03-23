@@ -58,7 +58,12 @@ func (api *API) addWorkerModelHandler() Handler {
 		//User should have the right permission or be admin
 		if !getUser(ctx).Admin && !ok {
 			return sdk.ErrForbidden
+		}
 
+		// provision is allowed only for CDS Admin
+		// or by user with a restricted model
+		if !getUser(ctx).Admin && !model.Restricted {
+			model.Provision = 0
 		}
 
 		model.CreatedBy = sdk.User{
@@ -190,12 +195,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 			model.ID = old.ID
 		}
 
-		// provision is allowed only for CDS Admin
-		if !getUser(ctx).Admin && model.Provision > 0 {
-			model.Provision = 0
-		}
-
-		//User must be admin of the group set in the new model
+		//User must be admin of the group set in the model
 		var ok bool
 		for _, g := range getUser(ctx).Groups {
 			if g.ID == model.GroupID {
@@ -210,6 +210,12 @@ func (api *API) updateWorkerModelHandler() Handler {
 		//User should have the right permission or be admin
 		if !getUser(ctx).Admin && !ok {
 			return sdk.ErrForbidden
+		}
+
+		// provision is allowed only for CDS Admin
+		// or by user with a restricted model
+		if !getUser(ctx).Admin && !model.Restricted {
+			model.Provision = 0
 		}
 
 		if workerModelID != model.ID {
