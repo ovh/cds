@@ -34,9 +34,13 @@ func (api *API) addWorkerModelHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> groupID should be set")
 		}
 
+		if group.IsDefaultGroupID(model.GroupID) {
+			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> this group can't be owner of a worker model")
+		}
+
 		// check if worker model already exists
 		if _, err := worker.LoadWorkerModelByName(api.mustDB(), model.Name); err == nil {
-			return sdk.WrapError(sdk.ErrModelNameExist, "getWorkerModel> worker model already exists")
+			return sdk.WrapError(sdk.ErrModelNameExist, "addWorkerModel> worker model already exists")
 		}
 
 		//User must be admin of the group set in the model
@@ -97,7 +101,7 @@ func (api *API) spawnErrorWorkerModelHandler() Handler {
 
 		workerModelID, errr := requestVarInt(r, "permModelID")
 		if errr != nil {
-			return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
+			return sdk.WrapError(errr, "spawnErrorWorkerModelHandler> Invalid permModelID")
 		}
 
 		tx, errBegin := api.mustDB().Begin()
@@ -152,7 +156,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 			renamed = true
 			// check if worker model already exists
 			if _, err := worker.LoadWorkerModelByName(api.mustDB(), model.Name); err == nil {
-				return sdk.WrapError(sdk.ErrModelNameExist, "getWorkerModel> worker model already exists")
+				return sdk.WrapError(sdk.ErrModelNameExist, "updateWorkerModel> worker model already exists")
 			}
 		}
 
@@ -169,6 +173,11 @@ func (api *API) updateWorkerModelHandler() Handler {
 		//If the model GroupID has not been set, keep the old GroupID
 		if model.GroupID == 0 {
 			model.GroupID = old.GroupID
+		}
+
+		// we can't select the default group
+		if group.IsDefaultGroupID(model.GroupID) {
+			return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> this group can't be owner of a worker model")
 		}
 
 		//If the model Type has not been set, keep the old Type
@@ -302,7 +311,7 @@ func (api *API) getWorkerModelsEnabledHandler() Handler {
 		}
 		models, errgroup := worker.LoadWorkerModelsUsableOnGroup(api.mustDB(), getHatchery(ctx).GroupID, group.SharedInfraGroup.ID)
 		if errgroup != nil {
-			return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", getHatchery(ctx).ID, getHatchery(ctx).GroupID)
+			return sdk.WrapError(errgroup, "getWorkerModelsEnabled> cannot load worker models for hatchery %d with group %d", getHatchery(ctx).ID, getHatchery(ctx).GroupID)
 		}
 		return WriteJSON(w, models, http.StatusOK)
 	}
