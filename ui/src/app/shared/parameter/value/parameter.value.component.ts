@@ -90,7 +90,9 @@ export class ParameterValueComponent implements OnInit {
         this.updateListRepo();
         setTimeout(() => {
             this.valueChange.emit(this.editableValue);
-            this.codemirror.instance.refresh();
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.refresh();
+            }
         }, 1);
     }
 
