@@ -1,9 +1,14 @@
-package workflow
+package workflow_test
 
 import (
 	"testing"
 
+	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -51,6 +56,169 @@ func TestCanBeRun(t *testing.T) {
 
 	for _, tc := range ts {
 		wnrs[nodeRoot.ID][0].Status = tc.status
-		test.Equal(t, canBeRun(wr, wnr), tc.canBeRun)
+		test.Equal(t, workflow.CanBeRun(wr, wnr), tc.canBeRun)
 	}
+}
+
+func TestPurgeWorkflowRun(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_purge_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+		HistoryLength: 2,
+		PurgeTags:     []string{"git.branch"},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	w1, err := workflow.Load(db, cache, key, "test_purge_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	for i := 0; i < 5; i++ {
+		wfr := &sdk.WorkflowRun{
+			Number:     int64(i),
+			Status:     sdk.StatusSuccess.String(),
+			WorkflowID: w1.ID,
+			Workflow:   *w1,
+			ProjectID:  proj.ID,
+		}
+
+		wfr.Tag("git.branch", "master")
+
+		errWr := workflow.InsertWorkflowRun(db, wfr)
+		test.NoError(t, errWr)
+	}
+
+	errP := workflow.PurgeWorkflowRun(db, *w1)
+	test.NoError(t, errP)
+
+	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	test.NoError(t, errRuns)
+	test.Equal(t, 5, count, "Number of workflow run aren't correct")
+
+	toDeleteNb := 0
+	for _, wfRun := range wruns {
+		if wfRun.ToDelete {
+			toDeleteNb++
+		}
+	}
+
+	test.Equal(t, 3, toDeleteNb, "Number of workflow run to be purged aren't correct")
+}
+
+func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_purge_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+		HistoryLength: 2,
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	w1, err := workflow.Load(db, cache, key, "test_purge_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
+	for i := 0; i < 10; i++ {
+		wfr := &sdk.WorkflowRun{
+			Number:     int64(i),
+			Status:     sdk.StatusSuccess.String(),
+			WorkflowID: w1.ID,
+			Workflow:   *w1,
+			ProjectID:  proj.ID,
+		}
+
+		if i <= 1 {
+			wfr.Tag("triggered_by", "toto")
+		}
+
+		wfr.Tag("git.branch", branches[i])
+		wfr.Tag("git.author", "test")
+
+		errWr := workflow.InsertWorkflowRun(db, wfr)
+		test.NoError(t, errWr)
+	}
+
+	errP := workflow.PurgeWorkflowRun(db, *w1)
+	test.NoError(t, errP)
+
+	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	test.NoError(t, errRuns)
+	test.Equal(t, 10, count, "Number of workflow run aren't correct")
+
+	toDeleteNb := 0
+	for _, wfRun := range wruns {
+		if wfRun.ToDelete {
+			toDeleteNb++
+		}
+	}
+
+	test.Equal(t, 8, toDeleteNb, "Number of workflow run to be purged aren't correct")
 }

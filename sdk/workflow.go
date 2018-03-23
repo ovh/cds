@@ -8,6 +8,8 @@ import (
 	"github.com/fsamin/go-dump"
 )
 
+const DefaultHistoryLength int64 = 20
+
 //Workflow represents a pipeline based workflow
 type Workflow struct {
 	ID                      int64                  `json:"id" db:"id" cli:"-"`
