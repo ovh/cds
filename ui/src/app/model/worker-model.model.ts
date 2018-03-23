@@ -14,4 +14,6 @@ export class WorkerModel {
     group_id: number;
     restricted: boolean;
     group: Group;
+    is_official: boolean;
+    is_deprecated: boolean;
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -94,6 +95,11 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	m.CreatedBy.Groups = nil
 	m.CreatedBy.Permissions = sdk.UserPermissions{}
 	m.CreatedBy.Auth = sdk.Auth{}
+
+	if m.GroupID == group.SharedInfraGroup.ID {
+		m.IsOfficial = true
+	}
+
 	return nil
 }
 

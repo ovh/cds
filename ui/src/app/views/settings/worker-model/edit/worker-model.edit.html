@@ -28,7 +28,14 @@
                       <input type="checkbox" id="restricted" name="restricted" [(ngModel)]="workerModel.restricted" [disabled]="loading">
                       <label for="restricted">{{'worker_model_restricted_help' | translate}}</label>
                   </div>
+              </div>
+              <div class="field">
+                <label>{{'worker_model_is_deprecated' | translate}}</label>
+                <div class="ui checkbox">
+                    <input type="checkbox" id="deprecated" name="deprecated" [(ngModel)]="workerModel.is_deprecated" [disabled]="loading">
+                    <label for="deprecated">{{'worker_model_deprecated_help' | translate}}</label>
                 </div>
+              </div>
             </div>
             <div class="field">
               <label>{{'common_description' | translate}}</label>

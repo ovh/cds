@@ -142,6 +142,10 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *Model) {
 					in.AddError((*out.DateLastSpawnErr).UnmarshalJSON(data))
 				}
 			}
+		case "is_deprecated":
+			out.IsDeprecated = bool(in.Bool())
+		case "is_official":
+			out.IsOfficial = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -400,6 +404,26 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in Model) {
 		} else {
 			out.Raw((*in.DateLastSpawnErr).MarshalJSON())
 		}
+	}
+	{
+		const prefix string = ",\"is_deprecated\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.IsDeprecated))
+	}
+	{
+		const prefix string = ",\"is_official\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.IsOfficial))
 	}
 	out.RawByte('}')
 }

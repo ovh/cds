@@ -56,12 +56,9 @@
             </div>
         </div>
         <div class="one wide center mtop8" *ngIf="newRequirement.type === 'model' && workerModelLinked != null">
-            <div *ngIf="workerModelLinked.group.name === 'shared.infra'" [smDirTooltip]="'worker_model_official' | translate" smDirPosition="top center">
-                <i class="check circle outline icon large green"></i>
-            </div>
-            <div *ngIf="workerModelLinked.group.name !== 'shared.infra'" [smDirTooltip]="'worker_model_unofficial' | translate" smDirPosition="top center">
-                <i class="remove circle outline icon large red"></i>
-            </div>
+            <span *ngIf="workerModelLinked.is_official" [smDirTooltip]="'worker_model_official_tooltip' | translate" smDirPosition="top center"><i class="check circle outline icon large green"></i></span>
+            <span *ngIf="!workerModelLinked.is_official" [smDirTooltip]="'worker_model_unofficial' | translate" smDirPosition="top center"><i class="remove circle outline icon large red"></i></span>
+            <span *ngIf="workerModelLinked.is_deprecated" [smDirTooltip]="'worker_model_deprecated_tooltip' | translate" smDirPosition="top center"><i class="exclamation circle icon large orange"></i></span>
         </div>
         <div class="two wide center field">
             <div suiPopup
