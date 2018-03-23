@@ -1689,8 +1689,8 @@
 <li><a href="#getcpuprofile-responds-with-the-pprof-formatted-cpu-profile">getCPUProfile responds with the pprof-formatted cpu profile.</a></li>
 <li><a href="#gettrace-responds-with-the-execution-trace-in-binary-form">getTrace responds with the execution trace in binary form.</a></li>
 <li><a href="#delete-admin-maintenance">DELETE <code>/admin/maintenance</code></a></li>
-<li><a href="#get-admin-maintenance">GET <code>/admin/maintenance</code></a></li>
 <li><a href="#post-admin-maintenance">POST <code>/admin/maintenance</code></a></li>
+<li><a href="#get-admin-maintenance">GET <code>/admin/maintenance</code></a></li>
 <li><a href="#get-admin-services">GET <code>/admin/services</code></a></li>
 <li><a href="#get-admin-services-service">GET <code>/admin/services/&lt;service&gt;</code></a></li>
 <li><a href="#post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></a></li>
@@ -1861,34 +1861,6 @@
 </tbody>
 </table>
 
-<h3 id="get-admin-maintenance">GET <code>/admin/maintenance</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/maintenance</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminMaintenanceHandler%22">getAdminMaintenanceHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-admin-maintenance">POST <code>/admin/maintenance</code></h3>
 
 <table>
@@ -1913,6 +1885,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminMaintenanceHandler%22">postAdminMaintenanceHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-admin-maintenance">GET <code>/admin/maintenance</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/maintenance</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminMaintenanceHandler%22">getAdminMaintenanceHandler</a></td>
 </tr>
 </tbody>
 </table>
