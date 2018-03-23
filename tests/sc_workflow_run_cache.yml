@@ -28,5 +28,5 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Success
-    retry: 5
+    retry: 10
     delay: 10
