@@ -1718,28 +1718,30 @@
 
 
 
-<p>Build a Docker image and push it to a docker repository</p>
+<p>Build image and push it to docker repository</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>dockerOpts</strong>: Docker options, you can add <code>--no-cache --pull</code> for example</li>
-<li><strong>dockerRegistry</strong>: The Docker registry to push the image to.</li>
+<li><strong>dockerOpts</strong>: Docker options, Enter &ndash;no-cache &ndash;pull if you want for example</li>
+<li><strong>dockerRegistry</strong>: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag</li>
 <li><strong>dockerRegistryPassword</strong>: Docker Registry Password. Enter password to connect on your docker registry.</li>
 <li><strong>dockerRegistryUsername</strong>: Docker Registry Username. Enter username to connect on your docker registry.</li>
 <li><strong>dockerfileDirectory</strong>: Directory which contains your Dockerfile.</li>
-<li><strong>imageName</strong>: Name of your docker image, without tag.</li>
-<li><strong>imageTag</strong>: The Docker image tag. {{.cds.version}} can be a good tag value. You can use multiple tags. E.g., firsttag,secondtag,{{.cds.version}},latest</li>
+<li><strong>imageName</strong>: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag</li>
+<li><strong>imageTag</strong>: Tag og your docker image.
+Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS.
+You can use many tags: firstTag,SecondTag
+Example : {{.cds.version}},latest</li>
 </ul>
 
 <h2 id="requirements">Requirements</h2>
 
 <ul>
-<li><strong>bash</strong>: type: binary Value: bash</li>
 <li><strong>docker</strong>: type: binary Value: docker</li>
 </ul>
 
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/actions/cds-docker-package.hcl">Github</a></p>
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/actions/cds-docker-package.yaml">Github</a></p>
 
 
 <footer class=" footline" >

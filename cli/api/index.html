@@ -1673,7 +1673,16 @@
             </div>
             <div class="progress">
     <div class="wrapper">
-
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#how-to-request-cds-api">How to request CDS API?</a></li>
+<li><a href="#about-cds-token">About CDS Token</a></li>
+<li><a href="#cds-http-routes">CDS HTTP Routes</a></li>
+</ul></li>
+</ul>
+</nav>
     </div>
 </div>
 
@@ -1690,6 +1699,35 @@
 
 
 
+
+
+
+<h2 id="how-to-request-cds-api">How to request CDS API?</h2>
+
+<p>You need two HTTP Headers to request CDS API:</p>
+
+<ul>
+<li><code>Session-Token: your-cds-token</code></li>
+<li><code>X-Requested-With: X-CDS-SDK</code></li>
+</ul>
+
+<pre><code class="language-bash"># List CDS Project
+curl -H &quot;Session-Token: your-cds-token&quot; -H &quot;X-Requested-With: X-CDS-SDK&quot; https://your-cds-api/project
+</code></pre>
+
+<h2 id="about-cds-token">About CDS Token</h2>
+
+<p>The CDS UI uses a non-persistent token. If you want to play with CDS API, you probably need a persistent token.</p>
+
+<p>You can generate it with:</p>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/login/">cdsctl login</a></li>
+<li>Code it with the <a href="https://ovh.github.io/cds/cli/sdk/">Go SDK</a></li>
+<li>Call CDS API: POST <code>/login</code> with body <code>{&quot;username&quot;:&quot;your-username&quot;,&quot;password&quot;:&quot;your-password&quot;}</code></li>
+</ul>
+
+<h2 id="cds-http-routes">CDS HTTP Routes</h2>
 
 
 

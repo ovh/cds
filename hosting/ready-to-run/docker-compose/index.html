@@ -1826,7 +1826,8 @@ $ ./cds login
 
 <li><p>Import actions, example:</p>
 
-<pre><code class="language-bash">$ cds action add --url https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl
+<pre><code class="language-bash"># get cds-docker-package.hcl from https://github.com/ovh/cds/blob/master/contrib/actions/
+$ cdsctl action import cds-docker-package.hcl
 </code></pre></li>
 
 <li><p>Import plugins, example:</p>
