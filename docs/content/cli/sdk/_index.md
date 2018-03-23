@@ -2,7 +2,7 @@
 title = "SDK Golang"
 +++
 
-## Generate a persitent token
+## Generate a persistent token
 
 There is three ways to generate a persistent token:
 
