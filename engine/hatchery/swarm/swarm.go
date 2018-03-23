@@ -488,7 +488,6 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 		}
 		//If the container doesn't match any worker : Kill it.
 		if !found {
-			log.Debug("listAwolWorkers> %s not found, add to oldContainers", c.Names[0])
 			oldContainers = append(oldContainers, c)
 		}
 	}
