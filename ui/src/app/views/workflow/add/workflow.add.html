@@ -34,7 +34,6 @@
                                       <button class="ui button"
                                         type="button"
                                         [class.active]="!asCode" [class.blue]="!asCode"
-                                        [class.disabled]="!project.application_names || !project.application_names.length"
                                         (click)="asCode = false">
                                         {{'common_create' | translate}}
                                       </button>
