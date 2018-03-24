@@ -13,3 +13,10 @@ export class NavbarRecentData {
     project_key: string;
     name: string; // workflow name
 }
+
+export class NavbarSearchItem {
+  type: string;
+  value: string;
+  title: string;
+  projectKey: string;
+}
