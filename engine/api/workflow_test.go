@@ -306,3 +306,32 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 }
+
+func TestGetUpdatedMetadata(t *testing.T) {
+	tcs := []struct {
+		metadata sdk.Metadata
+		expected sdk.Metadata
+	}{
+		{
+			metadata: sdk.Metadata{},
+			expected: sdk.Metadata{
+				"default_tags": "git.branch,git.author",
+			},
+		},
+		{
+			metadata: sdk.Metadata{"default_tags": "git.hash,git.branch"},
+			expected: sdk.Metadata{
+				"default_tags": "git.hash,git.branch,git.author",
+			},
+		},
+		{
+			expected: sdk.Metadata{
+				"default_tags": "git.branch,git.author",
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		test.Equal(t, tc.expected, getUpdatedMetadata(tc.metadata))
+	}
+}
