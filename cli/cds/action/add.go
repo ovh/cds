@@ -20,11 +20,7 @@ func cmdActionAdd() *cobra.Command {
 		Short: "cds action add [<actionName>]",
 		Long: `cds action add [<actionName>]
 
-<actionName> is mandatory if you don't use --url flag
-
-Examples of usage:
-
-$cds action add --url $HOME/src/github.com/ovh/cds/contrib/actions/action-scripts/cds-docker-package.hcl
+<actionName> is mandatory
 
 		`,
 		Run: addAction,

@@ -36,8 +36,6 @@ func importCmd() *cobra.Command {
 				importFormat = "yaml"
 				if strings.HasSuffix(name, ".json") {
 					importFormat = "json"
-				} else if strings.HasSuffix(name, ".hcl") {
-					importFormat = "hcl"
 				}
 				var err error
 				btes, _, err = exportentities.ReadFile(name)
