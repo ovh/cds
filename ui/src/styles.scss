@@ -496,6 +496,12 @@ $verticalTreeHeightLine: 40px;
   .ui.dropdown {
     background-color: transparent;
     border-color: rgba(34, 36, 38, 0.35);
+    &.item {
+      i {
+        color: white;
+        opacity: 1;
+      }
+    }
   }
   .ui.selection.dropdown {
     color: rgba(191, 191, 191, 0.87);
@@ -582,14 +588,26 @@ foreignObject {
 
 // Ovveride of ng2-semantic-ui
 sui-search {
+  .results {
+    margin-top: 1.5em !important;
+  }
+
   .ui.input {
     .prompt {
-      background-color: transparent;
-      border-color: #233332;
-      color: rgba(255, 255, 255, 0.9);
+      background-color: rgba(225,226,229,.1);
+      border-color: transparent;
+      &:focus {
+        border: 1.5px solid #50cfd9;
+      }
+      color: white;
+      opacity: 1;
+    }
+    i {
+      &.search.icon {
+        opacity: 1;
+      }
+      color: white;
+      opacity: 1;
     }
   }
-}
-.ui.search .prompt {
-  border-radius: 5px;
 }
