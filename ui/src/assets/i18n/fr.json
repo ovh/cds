@@ -760,7 +760,7 @@
   "workflow_permission_list_title": "Liste des permissions sur le workflow",
   "workflow_permission_form_title": "Ajouter une permission sur le workflow",
   "workflow_rename_title": "Renommer le workflow",
-  "workflow_history_length_title": "Nombre de builds à conserver par tags",
+  "workflow_history_length_title": "Nombre de builds à conserver par tag",
   "workflow_history_length": "Nombre de builds",
   "workflow_root_context_application": "Application (facultatif)",
   "workflow_root_context_environment": "Environnement (facultatif)",

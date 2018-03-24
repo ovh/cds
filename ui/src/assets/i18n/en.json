@@ -758,7 +758,7 @@
   "workflow_node_name_warning_modal_hooks": "The node name is used on theses hooks: ",
   "workflow_node_name_warning_modal_triggers": "The node name is used on theses triggers: ",
   "workflow_rename_title": "Rename the workflow",
-  "workflow_history_length_title": "History's length of your builds to keep by tags",
+  "workflow_history_length_title": "History's length of your builds to keep by tag",
   "workflow_history_length": "History's length",
   "workflow_permission_list_title": "List workflow permissions",
   "workflow_permission_form_title": "Add a permission on workflow",

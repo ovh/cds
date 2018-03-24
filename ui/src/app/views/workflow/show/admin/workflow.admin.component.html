@@ -61,14 +61,14 @@
                                max="500">
                     </div>
                     <div class="eleven wide field">
-                        <sui-multi-select  class="selection" *ngIf="existingTags.length > 0"
-                           [(ngModel)]="_tagWorkflow.purge_tags"
+                        <sui-select  class="selection" *ngIf="existingTags.length > 0"
+                           [(ngModel)]="purgeTag"
                            [options]="existingTags"
                            [isSearchable]="true"
-                           #multiSelectPurge>
-                            <sui-select-option *ngFor="let i of multiSelectPurge.filteredOptions" [value]="i">
+                           #SelectPurge>
+                            <sui-select-option *ngFor="let i of SelectPurge.filteredOptions" [value]="i">
                             </sui-select-option>
-                        </sui-multi-select>
+                        </sui-select>
                     </div>
                     <div class="two wide right aligned field">
                         <button class="ui green button" name="btnhistorylength" [class.loading]="loading" (click)="updateWorkflow()">

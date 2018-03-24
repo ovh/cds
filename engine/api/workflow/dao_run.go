@@ -342,8 +342,8 @@ func loadRun(db gorp.SqlExecutor, withArtifacts bool, query string, args ...inte
 }
 
 //TODO: if no bugs are found, it could be used to refactor process.go
-// canBeRun return boolean to know if a wokrflow node run can be run or not
-func canBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun) bool {
+// CanBeRun return boolean to know if a wokrflow node run can be run or not
+func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun) bool {
 	if !sdk.StatusIsTerminated(workflowNodeRun.Status) {
 		return false
 	}
@@ -505,6 +505,7 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		WHERE workflow_run.workflow_id = $1 AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[]) ORDER BY workflow_run.id DESC) as wr
 		GROUP BY tag, value HAVING COUNT(id) > $3
 	`
+
 	if _, errS := db.Select(&ids, queryGetIds, wf.ID, strings.Join(wf.PurgeTags, ","), wf.HistoryLength); errS != nil {
 		log.Warning("PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
 		return errS
@@ -552,7 +553,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, withArtifacts bool) 
 		if err != nil {
 			return err
 		}
-		wnr.CanBeRun = canBeRun(wr, wnr)
+		wnr.CanBeRun = CanBeRun(wr, wnr)
 
 		if withArtifacts {
 			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
