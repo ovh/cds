@@ -90,8 +90,10 @@ export class ParameterValueComponent implements OnInit {
         this.updateListRepo();
         setTimeout(() => {
             this.valueChange.emit(this.editableValue);
+            if (this.codemirror && this.codemirror.instance) {
+                this.codemirror.instance.refresh();
+            }
         }, 1);
-
     }
 
     castValue(data: string | number | boolean): string | number | boolean {
