@@ -17,8 +17,8 @@
             <ng-container *ngIf="edit">
                 <div class="five wide field">
                     <div class="ui checkbox">
-                        <input type="checkbox" id="enabled" name="enabled" [checked]="step.enabled" (change)="step.enabled = updateStepBool(step.enabled)">
-                        <label for="enabled">{{ 'common_enable' | translate }}</label>
+                        <input type="checkbox" id="enabled_step" name="enabled" [checked]="step.enabled" (change)="step.enabled = updateStepBool(step.enabled)">
+                        <label for="enabled_step">{{ 'common_enable' | translate }}</label>
                     </div>
                 </div>
                 <div class="five wide field">
