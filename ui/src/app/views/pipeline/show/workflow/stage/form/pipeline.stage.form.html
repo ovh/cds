@@ -8,8 +8,8 @@
             </div>
             <div class="eight wide field">
                 <div class="ui checkbox">
-                    <input type="checkbox" name="enabled" [(ngModel)]="stage.enabled" (change)="stage.hasChanged = true" [disabled]="pipeline.permission !== permissionEnum.READ_WRITE_EXECUTE">
-                    <label>{{ 'common_enable' | translate }}</label>
+                    <input type="checkbox" id="enabled" name="enabled" [(ngModel)]="stage.enabled" (change)="stage.hasChanged = true" [disabled]="pipeline.permission !== permissionEnum.READ_WRITE_EXECUTE">
+                    <label for="enabled">{{ 'common_enable' | translate }}</label>
                 </div>
             </div>
         </div>

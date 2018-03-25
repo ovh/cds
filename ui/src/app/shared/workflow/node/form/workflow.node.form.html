@@ -45,8 +45,8 @@
     </div>
     <div class="fields">
         <div class="ui toggle checkbox ml10">
-                <input type="checkbox" name="mutex" [(ngModel)]="node.context.mutex">
-                <label>
+                <input type="checkbox" id="mutex" name="mutex" [(ngModel)]="node.context.mutex">
+                <label for="mutex">
                   <a href="https://ovh.github.io/cds/workflows/design/mutex" target="_blank">
                     {{ 'workflow_root_context_mutex' | translate }}
                     <i class="external icon"></i>
