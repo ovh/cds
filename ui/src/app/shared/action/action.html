@@ -111,26 +111,25 @@
         {{ 'step_nonfinal_no' | translate }}
     </div>
 
-    <div class="ui bottomBtnsWrapper segment">
+    <div class="ui bottomBtnsWrapper segment" *ngIf="edit">
         <div class="ui grid">
-                <div class="sixteen wide column" *ngIf="edit && publicActions.length > 0">
-                    <app-action-step-form [publicActions]="publicActions" (create)="stepManagement($event)"></app-action-step-form>
-                </div>
+            <div class="sixteen wide column" *ngIf="publicActions.length > 0">
+                <app-action-step-form [publicActions]="publicActions" (create)="stepManagement($event)"></app-action-step-form>
+            </div>
 
+            <div class="eight wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
+                <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading" [class.loading]="editableAction.loading">
+                    <i class="save icon"></i>{{ 'save' | translate }}
+                </button>
+            </div>
+            <div class="eight wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
+                <app-delete-button [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading" [class]="'fluid'"></app-delete-button>
+            </div>
 
-                <div class="eight wide column" *ngIf="edit && editableAction.id && !editableAction.showAddStep">
-                    <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading" [class.loading]="editableAction.loading">
-                        <i class="save icon"></i>{{ 'save' | translate }}
-                    </button>
-                </div>
-                <div class="eight wide column" *ngIf="edit && editableAction.id && !editableAction.showAddStep">
-                    <app-delete-button [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading" [class]="'fluid'"></app-delete-button>
-                </div>
-
-            <div class="sixteen wide column" *ngIf="edit && !editableAction.id && !editableAction.showAddStep">
-                    <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
-                        <i class="save icon"></i>{{ 'btn_create' | translate }}
-                    </button>
+            <div class="sixteen wide column" *ngIf="!editableAction.id && !editableAction.showAddStep">
+                <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
+                    <i class="save icon"></i>{{ 'btn_create' | translate }}
+                </button>
             </div>
         </div>
     </div>
