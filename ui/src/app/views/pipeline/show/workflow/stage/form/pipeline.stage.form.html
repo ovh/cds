@@ -20,7 +20,7 @@
                     [edit]="pipeline.permission === permissionEnum.READ_WRITE_EXECUTE"
                     (event)="prerequisiteEvent($event)"></app-prerequisites-list>
         </div>
-        <div class="field">
+        <div class="field" *ngIf="pipeline.permission === permissionEnum.READ_WRITE_EXECUTE">
             <label>{{'prerequisite_add' | translate }}</label>
             <app-prerequisites-form [prerequisites]="availablePrerequisites"
                                     (event)="prerequisiteEvent($event)"></app-prerequisites-form>
