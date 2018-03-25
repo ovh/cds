@@ -1,0 +1,76 @@
+
+<h2>{{ 'info_list_title' | translate }}</h2>
+
+<div *ngIf="infos;then showInfos;else loadInfos"></div>
+<ng-template #showInfos>
+  <div class="model">
+      <div class="ui form">
+          <div class="fields">
+            <div class="twelve wide field">
+              <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+            </div>
+            <div class="four wide field">
+              <a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
+            </div>
+          </div>
+      </div>
+
+      <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+          <thead>
+          <tr>
+              <th class="one wide">{{ 'info_id' | translate }}</th>
+              <th class="three wide">{{ 'info_created' | translate }}</th>
+              <th class="four wide">{{ 'info_title' | translate }}</th>
+              <th class="four wide">{{ 'info_level' | translate }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let v of getDataForCurrentPage()">
+              <td>
+                  <a class="ui" [routerLink]="[v.id]">
+                    <div class="ui">{{v.id}}</div>
+                  </a>
+              </td>
+              <td>
+                  <a class="ui" [routerLink]="[v.id]">
+                    <div class="ui">{{v.created | date:'short'}}</div>
+                  </a>
+              </td>
+              <td>
+                  <a class="ui" [routerLink]="[v.id]">
+                    <div class="ui">{{v.title}}
+                        <span *ngIf="v.archived" [smDirTooltip]="'info_archived' | translate" smDirPosition="top center"> <i class="archive icon large"></i> </span>
+                    </div>
+                  </a>
+              </td>
+              <td>
+                  <a class="ui" [routerLink]="[v.id]">
+                    <div class="ui">{{v.level}}</div>
+                  </a>
+              </td>
+          </tr>
+          </tbody>
+          <tfoot *ngIf="getNbOfPages() > 1">
+          <tr>
+              <th colspan="4">
+                  <div class="ui right floated pagination menu" >
+                      <a class="icon item" (click)="downPage()">
+                          <i class="left chevron icon"></i>
+                      </a>
+                      <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                      <a class="icon item" (click)="upPage()">
+                          <i class="right chevron icon"></i>
+                      </a>
+                  </div>
+              </th>
+          </tr>
+          </tfoot>
+      </table>
+      <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+          {{ 'info_none' | translate }}
+      </div>
+  </div>
+</ng-template>
+<ng-template #loadInfos>
+    <div class="ui text active loader">{{ 'info_load_infos' | translate }}</div>
+</ng-template>

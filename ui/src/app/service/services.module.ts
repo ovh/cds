@@ -52,6 +52,7 @@ import {DownloadService} from './download/download.service';
 import {KeyService} from './keys/keys.service';
 import {PlatformService} from './platform/platform.service';
 import {ImportAsCodeService} from './import-as-code/import.service';
+import {InfoService} from './info/info.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -79,6 +80,7 @@ export class ServicesModule {
                 GroupService,
                 HookService,
                 ImportAsCodeService,
+                InfoService,
                 KeyService,
                 LanguageStore,
                 LastUpdateService,
@@ -143,6 +145,7 @@ export {
     GroupService,
     HookService,
     ImportAsCodeService,
+    InfoService,
     KeyService,
     LanguageStore,
     LastUpdateService,

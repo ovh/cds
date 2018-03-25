@@ -6,15 +6,19 @@ import {AdminComponent} from './admin.component';
 import {MigrationOverviewComponent} from './migration/migration.overview.component';
 import {MigrationProjectComponent} from './migration/project/migration.project.component';
 import {StatusComponent} from './status/status.component';
-import {AdminSidebarComponent} from './sidebar/admin.sidebar.component';
+import {InfoAddComponent} from './info/add/info.add.component';
+import {InfoEditComponent} from './info/edit/info.edit.component';
+import {InfoListComponent} from './info/list/info.list.component';
 
 @NgModule({
     declarations: [
         AdminComponent,
-        AdminSidebarComponent,
         MigrationOverviewComponent,
         MigrationProjectComponent,
         StatusComponent,
+        InfoAddComponent,
+        InfoEditComponent,
+        InfoListComponent
     ],
     imports: [
       SharedModule,

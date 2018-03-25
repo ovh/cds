@@ -42,8 +42,6 @@
 
   "admin_status_title": "CDS Engine - Statut",
 
-  "admin_sidebar_status": "Statut",
-
   "application_create": "Créer une application",
   "application_created": "Application créée",
   "application_deleted": "Application supprimée",
@@ -271,6 +269,23 @@
   "favorite_select_type": "Sélectionnez un type de favoris",
   "favorite_project_select": "Sélectionnez un projet",
   "favorite_workflow_select": "Sélectionnez un workflow",
+  
+  "info_list_title": "Infos",
+  "info_new_title": "Ajouter une information",
+  "info_edit_title": "Éditer l'information",
+  "info_id": "N°",
+  "info_title": "Titre",
+  "info_message": "Message",
+  "info_archived": "Archivé",
+  "info_archived_help": "Cocher pour archive cet info",
+  "info_help_line_1": "",
+  "info_help_line_2": "",
+  "info_created": "Créée le",
+  "info_updated": "Modifiée le",
+  "info_deleted": "Info supprimée",
+  "info_saved": "Info sauvegardée",
+  "info_level": "Type",
+  "info_none": "Aucune information",
 
   "group_added": "Groupe ajouté",
   "group_deleted": "Groupe supprimé",
@@ -331,6 +346,7 @@
 
   "navbar_actions": "Actions",
   "navbar_project_create": "Créer un projet",
+  "navbar_admin_info": "Infos",
   "navbar_admin_migration": "Migration vers les workflows",
   "navbar_admin_status": "CDS Engine - Statut",
   "navbar_documentation": "Documentation",
