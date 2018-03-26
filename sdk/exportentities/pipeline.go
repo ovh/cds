@@ -32,8 +32,8 @@ type Pipeline struct {
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Stages       map[string]Stage          `json:"stages,omitempty" yaml:"stages,omitempty"`
 	Jobs         map[string]Job            `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	Requirements []Requirement             `json:"requirements,omitempty" yaml:"requirements,omitempty" hcl:"requirement,omitempty"`
-	Steps        []Step                    `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
+	Requirements []Requirement             `json:"requirements,omitempty" yaml:"requirements,omitempty"`
+	Steps        []Step                    `json:"steps,omitempty" yaml:"steps,omitempty"`
 }
 
 // Stage represents exported sdk.Stage
@@ -49,10 +49,10 @@ type Job struct {
 	Stage          string        `json:"stage,omitempty" yaml:"stage,omitempty"` //This will ONLY be set with Pipelinev1
 	Description    string        `json:"description,omitempty" yaml:"description,omitempty"`
 	Enabled        *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
-	Requirements   []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty" hcl:"requirement,omitempty"`
-	Optional       *bool         `json:"optional,omitempty" yaml:"optional,omitempty" hcl:"optional,omitempty"`
-	AlwaysExecuted *bool         `json:"always_executed,omitempty" yaml:"always_executed,omitempty" hcl:"always_executed,omitempty"`
+	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty"`
+	Requirements   []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty"`
+	Optional       *bool         `json:"optional,omitempty" yaml:"optional,omitempty"`
+	AlwaysExecuted *bool         `json:"always_executed,omitempty" yaml:"always_executed,omitempty"`
 }
 
 // Step represents exported step used in a job
