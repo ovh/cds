@@ -642,6 +642,7 @@
   "worker_model_deprecated_help": "Set the worker model as deprecated",
   "worker_model_deprecated_tooltip": "This worker model is deprecated",
   "worker_model_official_tooltip": "Official worker model maintained by CDS Administrators",
+  "worker_model_spawn_error_tooltip": "Model in error",
   "worker_model_enabled": "This worker model is enabled",
   "worker_model_error": "This worker model is in error. You can reset error by saving it.",
   "worker_model_group": "Group",
