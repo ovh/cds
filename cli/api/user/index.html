@@ -1680,9 +1680,9 @@
 <li>
 <ul>
 <li><a href="#getusers-fetches-all-users-from-databases">GetUsers fetches all users from databases</a></li>
-<li><a href="#updateuser-modifies-user-informations">UpdateUser modifies user informations</a></li>
 <li><a href="#getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</a></li>
 <li><a href="#deleteuser-removes-a-user">DeleteUser removes a user</a></li>
+<li><a href="#updateuser-modifies-user-informations">UpdateUser modifies user informations</a></li>
 <li><a href="#confirmuser-verify-token-send-via-email-and-mark-user-as-verified">ConfirmUser verify token send via email and mark user as verified</a></li>
 <li><a href="#getusergroups-returns-groups-of-the-user">getUserGroups returns groups of the user</a></li>
 <li><a href="#post-user-username-reset">POST <code>/user/&lt;username&gt;/reset</code></a></li>
@@ -1741,34 +1741,6 @@
 </tbody>
 </table>
 
-<h3 id="updateuser-modifies-user-informations">UpdateUser modifies user informations</h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/user/&lt;username&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedUsernameOrAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateUserHandler%22">updateUserHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</h3>
 
 <table>
@@ -1821,6 +1793,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteUserHandler%22">deleteUserHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="updateuser-modifies-user-informations">UpdateUser modifies user informations</h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedUsernameOrAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateUserHandler%22">updateUserHandler</a></td>
 </tr>
 </tbody>
 </table>
