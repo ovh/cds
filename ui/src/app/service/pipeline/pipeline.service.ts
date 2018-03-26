@@ -6,7 +6,7 @@ import {GroupPermission} from '../../model/group.model';
 import {Stage} from '../../model/stage.model';
 import {Job} from '../../model/job.model';
 import {Parameter} from '../../model/parameter.model';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpClient, HttpParams, HttpHeaders} from '@angular/common/http';
 
 /**
  * Service to access Pipeline from API.
@@ -47,6 +47,20 @@ export class PipelineService {
      */
     updatePipeline(key: string, oldName: string, pipeline: Pipeline): Observable<Pipeline> {
         return this._http.put<Pipeline>('/project/' + key + '/pipeline/' + oldName, pipeline);
+    }
+
+    /**
+     * Import a pipeline
+     * @param key Project unique key
+     * @param workflow pipelineCode to import
+     */
+    importPipeline(key: string, pipelineCode: string): Observable<Array<string>> {
+        let headers = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/x-yaml');
+        let params = new HttpParams();
+        params = params.append('format', 'yaml');
+
+        return this._http.post<Array<string>>(`/project/${key}/import/pipeline`, pipelineCode, {headers, params});
     }
 
     /**
