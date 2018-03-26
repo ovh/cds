@@ -106,6 +106,8 @@ type Model struct {
 	NbSpawnErr       int64              `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
 	LastSpawnErr     string             `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
 	DateLastSpawnErr *time.Time         `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
+	IsDeprecated     bool               `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
+	IsOfficial       bool               `json:"is_official" db:"-" cli:"official"`
 }
 
 // OpenstackModelData type details the "Image" field of Openstack type model

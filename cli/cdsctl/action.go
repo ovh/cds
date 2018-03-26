@@ -145,9 +145,12 @@ func actionImportRun(v cli.Values) error {
 		format = "json"
 	}
 
-	fmt.Printf("%s successfully imported\n", path)
+	if errImport := client.ActionImport(f, format); errImport != nil {
+		return errImport
+	}
 
-	return client.ActionImport(f, format)
+	fmt.Printf("%s successfully imported\n", path)
+	return nil
 }
 
 var actionExportCmd = cli.Command{

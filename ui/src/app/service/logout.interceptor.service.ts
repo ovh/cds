@@ -1,4 +1,5 @@
 import {Injectable} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {Observable} from 'rxjs/Observable';
 import {ToastService} from '../shared/toast/ToastService';
@@ -9,7 +10,11 @@ import 'rxjs/add/observable/throw';
 @Injectable()
 export class LogoutInterceptor implements HttpInterceptor {
 
-    constructor(private _toast: ToastService, private _authStore: AuthentificationStore, private _router: Router) {
+    constructor(
+        private _toast: ToastService,
+        private _authStore: AuthentificationStore,
+        private _router: Router,
+        private _translate: TranslateService) {
     }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -25,7 +30,11 @@ export class LogoutInterceptor implements HttpInterceptor {
                     if (e.error && e.error.message) {
                         this._toast.error(e.statusText, e.error.message);
                     } else {
-                        this._toast.error(e.statusText, JSON.parse(e.message));
+                        try {
+                            this._toast.error(e.statusText, JSON.parse(e.message));
+                        } catch (e) {
+                            this._toast.error(e.statusText, this._translate.instant('common_error'));
+                        }
                     }
                 }
                 return Observable.throw(e);

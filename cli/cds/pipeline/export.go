@@ -55,7 +55,7 @@ func exportCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&exportFormat, "format", "", "yaml", "Format: json|yaml|hcl")
+	cmd.Flags().StringVarP(&exportFormat, "format", "", "yaml", "Format: json|yaml")
 	cmd.Flags().StringVarP(&exportOutput, "output", "", "", "Output filename")
 	cmd.Flags().BoolVarP(&exportWithPermissions, "withPermissions", "", false, "Export pipeline configuration with permission")
 

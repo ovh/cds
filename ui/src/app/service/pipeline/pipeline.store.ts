@@ -97,6 +97,15 @@ export class PipelineStore {
     }
 
     /**
+     * Import a pipeline
+     * @param key Project unique key
+     * @param workflow pipelineCode to import
+     */
+    importPipeline(key: string, pipelineCode: string): Observable<Array<string>> {
+        return this._pipelineService.importPipeline(key, pipelineCode);
+    }
+
+    /**
      * Create a new pipeline and put it in the store
      * @param key Project unique key
      * @param pipeline Pipeline to create

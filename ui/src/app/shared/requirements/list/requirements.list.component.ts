@@ -13,7 +13,6 @@ import {finalize, first} from 'rxjs/operators';
     styleUrls: ['./requirements.list.scss']
 })
 export class RequirementsListComponent extends Table  implements OnInit {
-
     @Input() requirements: Requirement[];
     @Input() edit: boolean;
 
@@ -89,5 +88,9 @@ export class RequirementsListComponent extends Table  implements OnInit {
 
     change(): void {
         this.onChange.emit(this.requirements);
+    }
+
+    getWorkerModel(name: string): WorkerModel {
+        return this.workerModels.find(m => m.name === name);
     }
 }
