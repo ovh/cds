@@ -17,7 +17,7 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 
 	projs, errP := project.LoadAll(db, store, u)
 	if errP != nil {
-		log.Warning("DefaultPayloadMigration> Cannot load all project")
+		log.Warning("DefaultPayloadMigration> Cannot load all project: %s", errP)
 		return
 	}
 
