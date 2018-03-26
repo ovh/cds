@@ -145,8 +145,7 @@ func actionImportRun(v cli.Values) error {
 		format = "json"
 	}
 
-	errImport := client.ActionImport(f, format)
-	if errImport != nil {
+	if errImport := client.ActionImport(f, format); errImport != nil {
 		return errImport
 	}
 
