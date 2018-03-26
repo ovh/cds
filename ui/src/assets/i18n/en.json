@@ -690,6 +690,7 @@
   "workflow_run_summary": "Run summary",
   "workflow_context_invalid": "Invalid JSON",
   "workflow_create": "Create a workflow",
+  "workflow_create_btn": "Create a workflow",
   "workflow_deleted": "Workflow deleted",
   "workflow_deleted_warning": "Warning, if you delete this pipeline with all its children you are going to delete all the workflow and its configuration",
   "workflow_delete_label": "Delete workflow",
