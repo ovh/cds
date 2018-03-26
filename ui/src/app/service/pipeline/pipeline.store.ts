@@ -75,6 +75,10 @@ export class PipelineStore {
         let pipKey = key + '-' + pipName;
         this._pipelineService.getPipeline(key, pipName).subscribe(res => {
             this._pipeline.next(store.set(pipKey, res));
+        }, err => {
+            this._pipeline.error(err);
+            this._pipeline = new BehaviorSubject(Map<string, Pipeline>());
+            this._pipeline.next(store);
         });
     }
 

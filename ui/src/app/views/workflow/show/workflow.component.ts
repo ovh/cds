@@ -102,6 +102,7 @@ export class WorkflowShowComponent {
                     }
                 }, () => {
                     this._router.navigate(['/project', projkey]);
+
                 });
             }
         });
@@ -110,7 +111,7 @@ export class WorkflowShowComponent {
 
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {
-                this.previewWorkflow = wfPreview
+                this.previewWorkflow = wfPreview;
                 if (wfPreview != null) {
                     this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
                 }

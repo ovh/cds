@@ -25,8 +25,5 @@ func (h *HatcherySwarm) pullImage(img string, timeout time.Duration) error {
 
 	btes, _ := ioutil.ReadAll(res)
 	log.Debug("pullImage> %s", string(btes))
-	if err := res.Close(); err != nil {
-		return err
-	}
-	return nil
+	return res.Close()
 }

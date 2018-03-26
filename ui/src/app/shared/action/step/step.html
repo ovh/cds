@@ -13,35 +13,56 @@
                 <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
             </span>
         </div>
-        <div class="eight wide inline field">
+        <div class="twelve wide inline field">
+            <ng-container *ngIf="edit">
                 <div class="five wide field">
-                    <div class="ui checkbox" *ngIf="edit">
-                        <input type="checkbox" name="active" [checked]="step.enabled" (change)="step.enabled = updateStepBool(step.enabled)">
-                        <label>{{ 'common_enable' | translate }}</label>
+                    <div class="ui checkbox">
+                        <input type="checkbox" id="enabled_step" name="enabled" [checked]="step.enabled" (change)="step.enabled = updateStepBool(step.enabled)">
+                        <label for="enabled_step">{{ 'common_enable' | translate }}</label>
                     </div>
                 </div>
                 <div class="five wide field">
-                    <div class="ui checkbox" *ngIf="edit">
-                        <input type="checkbox" name="active" [checked]="step.optional" (change)="step.optional = updateStepBool(step.optional)">
-                        <label>{{ 'action_optional' | translate}}</label>
+                    <div class="ui checkbox">
+                        <input type="checkbox" id="active" name="active" [checked]="step.optional" (change)="step.optional = updateStepBool(step.optional)">
+                        <label for="active">{{ 'action_optional' | translate}}</label>
                     </div>
                     <span suiPopup [popupText]="'action_optional_details' | translate" popupPlacement="top center">
-                      <i class="info circle icon"></i>
+                        <i class="info circle icon"></i>
                     </span>
                 </div>
-                <div class="five wide field">
-                    <div class="ui checkbox" *ngIf="edit">
-                        <input type="checkbox" name="active" [checked]="step.always_executed" (change)="step.always_executed = updateStepBool(step.always_executed)">
-                        <label>{{ 'action_always_executed' | translate}}</label>
+                <div class="six wide field">
+                    <div class="ui checkbox">
+                        <input type="checkbox" id="always_executed" name="always_executed" [checked]="step.always_executed" (change)="step.always_executed = updateStepBool(step.always_executed)">
+                        <label for="always_executed">{{ 'action_always_executed' | translate}}</label>
                     </div>
                     <span suiPopup [popupText]="'action_always_executed_details' | translate" popupPlacement="top center">
-                      <i class="info circle icon"></i>
+                        <i class="info circle icon"></i>
                     </span>
                 </div>
-            <!-- </div> -->
+            </ng-container>
             <ng-container *ngIf="!edit">
-                <ng-container *ngIf="step.enabled">{{ 'common_enabled_f' | translate }}</ng-container>
-                <ng-container *ngIf="!step.enabled">{{ 'common_disabled_f' | translate }}</ng-container>
+                <ng-container *ngIf="step.enabled">
+                    <div class="five wide field">
+                        {{ 'common_enabled_f' | translate }}
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="!step.enabled">
+                    <div class="five wide field">
+                        {{ 'common_disabled_f' | translate }}
+                    </div>
+                </ng-container>
+
+                <ng-container *ngIf="step.optional">
+                    <div class="five wide field">
+                        {{ 'action_optional' | translate }}
+                    </div>
+                </ng-container>
+
+                <ng-container *ngIf="step.always_executed">
+                    <div class="five wide field">
+                        {{ 'action_always_executed' | translate }}
+                    </div>
+                </ng-container>
             </ng-container>
         </div>
 

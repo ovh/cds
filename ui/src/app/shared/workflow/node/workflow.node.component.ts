@@ -163,7 +163,11 @@ export class WorkflowNodeComponent implements OnInit {
                 '/project', this.project.key,
                 'workflow', this.workflowName,
                 'run', this.currentNodeRun.num,
-                'node', this.currentNodeRun.id], {queryParams: {name: pip}});
+                'node', this.currentNodeRun.id], {queryParams: {
+                    name: pip,
+                    selectedNodeRunId: this.currentNodeRun ? this.currentNodeRun.id : -1,
+                    selectedNodeRunNum: this.currentNodeRun ? this.currentNodeRun.num : 0,
+                    selectedNodeId: this.currentNodeRun ? this.currentNodeRun.workflow_node_id : this.node.id}});
         } else {
           this._router.navigate([
               '/project', this.project.key,

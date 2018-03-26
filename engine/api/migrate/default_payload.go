@@ -24,7 +24,7 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 	for _, proj := range projs {
 		workflowNames, err := workflow.LoadAllNames(db, proj.ID, u)
 		if err != nil {
-			log.Warning("DefaultPayloadMigration> Cannot load all workflow names")
+			log.Warning("DefaultPayloadMigration> Cannot load all workflow names : %s", err)
 			continue
 		}
 
@@ -92,13 +92,13 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 					wf.Root.Context.DefaultPayload = m
 
 					if err := workflow.UpdateNodeContext(tx, wf.Root.Context); err != nil {
-						log.Warning("DefaultPayloadMigration> Cannot update node context")
+						log.Warning("DefaultPayloadMigration> Cannot update node context : %s", err)
 						tx.Rollback()
 						continue
 					}
 
 					if err := tx.Commit(); err != nil {
-						log.Warning("DefaultPayloadMigration> Cannot commit transaction")
+						log.Warning("DefaultPayloadMigration> Cannot commit transaction : %s", err)
 						tx.Rollback()
 					}
 				}

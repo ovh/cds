@@ -21,6 +21,6 @@ Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metri
 * **curl**: type: binary Value: curl
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-publish-ovh-metrics.hcl)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-publish-ovh-metrics.yaml)
 
 

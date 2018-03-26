@@ -20,7 +20,7 @@ export class ProjectAdminComponent implements OnInit {
         private warningUpdateModal: WarningModalComponent;
 
     loading = false;
-    migrationValue = 0.0;
+    migrationValue = 0;
     user: User;
 
     constructor(private _projectStore: ProjectStore, private _toast: ToastService,

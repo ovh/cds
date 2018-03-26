@@ -14,14 +14,14 @@
                     </label>
                 <input name="name" [disabled]="newRequirement.type !== 'service'" auto-complete autocomplete="off" type="text" required pattern="[a-zA-Z0-9\-\._]*" placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}" [source]="suggest"
                     [min-chars]="3" [(ngModel)]="newRequirement.name" [no-match-found-text]="false">
-                <div *ngIf="!formAddRequirement.valid && !formAddRequirement.pristine" class="ui error message">
+                <div *ngIf="formAddRequirement.invalid && !formAddRequirement.pristine" class="ui error message">
                     <p>{{'requirement_hostname_error' | translate}}</p>
                 </div>
             </div>
             <div class="field" *ngIf="!loading && (newRequirement.type === 'os-architecture')">
                 <input name="name" [disabled]="newRequirement.type !== 'os-architecture'" auto-complete autocomplete="off" type="text" required placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}" [source]="suggestWithOsArch" [min-chars]="0"
                     [(ngModel)]="newRequirement.value" (keyup)="setName(formAddRequirement)" (blur)="setName(formAddRequirement)">
-                <div *ngIf="!formAddRequirement.valid && !formAddRequirement.pristine" class="ui error message">
+                <div *ngIf="formAddRequirement.invalid && !formAddRequirement.pristine" class="ui error message">
                     <p>{{'requirement_os-architecture_error' | translate}}</p>
                 </div>
             </div>

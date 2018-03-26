@@ -43,7 +43,7 @@ export class ProjectStore {
             this._projectNav.next(this._projectNav.getValue().push(...localProjects));
 
             // Get from API
-            this._projectService.getProjects().subscribe(res => {
+            this._projectService.getProjects(true).subscribe(res => {
                 localStorage.setItem('CDS-PROJECT-LIST', JSON.stringify(res));
                 this._projectNav.next(List(res));
             });

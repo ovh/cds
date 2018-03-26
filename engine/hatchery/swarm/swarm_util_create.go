@@ -14,6 +14,7 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -45,7 +46,7 @@ type containerArgs struct {
 }
 
 //shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
+func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
 	//Memory is set to 1GB by default
 	if cArgs.memory <= 4 {
 		cArgs.memory = 1024
@@ -53,7 +54,6 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	log.Debug("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
 
 	var exposedPorts nat.PortSet
-	var mounts []mount.Mount
 
 	name := cArgs.name
 	config := &container.Config{
@@ -71,7 +71,8 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	hostConfig := &container.HostConfig{
 		PortBindings: cArgs.dockerOpts.ports,
 		Privileged:   cArgs.dockerOpts.privileged,
-		Mounts:       mounts,
+		Mounts:       cArgs.dockerOpts.mounts,
+		ExtraHosts:   cArgs.dockerOpts.extraHosts,
 	}
 	hostConfig.Resources = container.Resources{
 		Memory:     cArgs.memory * 1024 * 1024, //from MB to B
@@ -88,13 +89,40 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 		}
 	}
 
+	// ensure that image exists for register
+	if spawnArgs.RegisterOnly {
+		var images []types.ImageSummary
+		var errl error
+		images, errl = h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+		if errl != nil {
+			log.Warning("createAndStartContainer> Unable to list images: %s", errl)
+		}
+
+		var imageFound bool
+	checkImage:
+		for _, img := range images {
+			for _, t := range img.RepoTags {
+				if cArgs.image == t {
+					imageFound = true
+					break checkImage
+				}
+			}
+		}
+
+		if !imageFound {
+			if err := h.pullImage(cArgs.image, timeoutPullImage); err != nil {
+				return sdk.WrapError(err, "createAndStartContainer> Unable to pull image %s", cArgs.image)
+			}
+		}
+	}
+
 	c, err := h.dockerClient.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, name)
 	if err != nil {
-		return sdk.WrapError(err, "startAndCreateContainer> Unable to create container %s", name)
+		return sdk.WrapError(err, "createAndStartContainer> Unable to create container %s", name)
 	}
 
 	if err := h.dockerClient.ContainerStart(context.Background(), c.ID, types.ContainerStartOptions{}); err != nil {
-		return sdk.WrapError(err, "startAndCreateContainer> Unable to start container %v %s", c.ID[:12])
+		return sdk.WrapError(err, "createAndStartContainer> Unable to start container %v %s", c.ID[:12])
 	}
 	return nil
 }
@@ -105,6 +133,7 @@ type dockerOpts struct {
 	ports      nat.PortMap
 	privileged bool
 	mounts     []mount.Mount
+	extraHosts []string
 }
 
 func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
@@ -138,6 +167,10 @@ func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req
 		}
 		if strings.HasPrefix(opt, "--port=") {
 			if err := d.computeDockerOptsPorts(opt); err != nil {
+				return err
+			}
+		} else if strings.HasPrefix(opt, "--add-host=") {
+			if err := d.computeDockerOptsExtraHosts(opt); err != nil {
 				return err
 			}
 		} else if opt == "--privileged" {
@@ -212,6 +245,12 @@ func (d *dockerOpts) computeDockerOptsOnVolumeMountRequirement(opt string) error
 
 	d.mounts = append(d.mounts, m)
 
+	return nil
+}
+
+func (d *dockerOpts) computeDockerOptsExtraHosts(arg string) error {
+	value := strings.TrimPrefix(strings.TrimSpace(arg), "--add-host=")
+	d.extraHosts = append(d.extraHosts, value)
 	return nil
 }
 

@@ -3,10 +3,12 @@
 set -e
 
 function generateUserActionsDocumentation {
-  for action in `ls ../contrib/actions/*.hcl`; do
+  for action in `ls ../contrib/actions/*.yaml`; do
+
+  echo "work on ${action}"
 
   filename=$(basename "$action")
-  actionName=${filename/.hcl/}
+  actionName=${filename/.yaml/}
 
   mkdir -p content/workflows/pipelines/actions/user
   ACTION_FILE="content/workflows/pipelines/actions/user/${actionName}.md"
@@ -20,7 +22,7 @@ title = "${actionName}"
 +++
 EOF
 
-  cds -w action doc ${action} >> $ACTION_FILE
+  cdsctl -w action doc ${action} >> $ACTION_FILE
 
   done;
 }

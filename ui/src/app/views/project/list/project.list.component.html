@@ -1,0 +1,40 @@
+<div *ngIf="!loading; then projectsPart;else loadingPart"></div>
+<ng-template #projectsPart>
+    <div class="projectList">
+        <div class="scrollingContent">
+            <div class="paddingContent">
+                <div class="viewContent">
+                    <div class="ui grid">
+                        <div class="eight wide column">
+                            <h3>{{ 'project_list' | translate }}</h3>
+                        </div>
+                        <div class="eight wide column" *ngIf="projects && projects.length > 0">
+                            <div class="floated right">
+                                <div class="ui icon input">
+                                    <input type="text" placeholder="{{'navbar_search' | translate}}" [(ngModel)]="filter">
+                                    <i class="search icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui segment">
+                        <div *ngIf="projects && projects.length > 0;then projectslist;else noprojectslist"></div>
+                        <ng-template #projectslist>
+                            <div class="ui stackable four column grid">
+                                <div class="center aligned column" *ngFor="let proj of filteredProjects">
+                                    <a [routerLink]="['/project', proj.key]">{{proj.name}}</a>
+                                </div>
+                            </div>
+                        </ng-template>
+                        <ng-template #noprojectslist>
+                            <span>{{ 'project_no' | translate }}</span>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+<ng-template #loadingPart>
+    <div class="ui text active loader">{{'common_loading_projects' | translate}}</div>
+</ng-template>
