@@ -404,11 +404,6 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/workflows/pipelines/configuration-file/" class="dd-item">
-        <a href="https://ovh.github.io/cds/workflows/pipelines/configuration-file/">
-          <span>Use Configuration File</span>
-        </a>
-    </li>
         </ul>
     </li>
         </ul>
@@ -1667,7 +1662,18 @@
             </div>
             <div class="progress">
     <div class="wrapper">
-
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#use-cdsctl">Use cdsctl</a></li>
+<li><a href="#use-cds-web-ui">Use CDS WEB UI</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
     </div>
 </div>
 
@@ -1687,9 +1693,29 @@
 
 
 
-<ul class="children children-h4"><h4>
-	<a href="https://ovh.github.io/cds/workflows/design/" >Design your Workflow</a></h4><h4>
-	<a href="https://ovh.github.io/cds/workflows/pipelines/" >Building Pipelines</a></h4>
+<p>A CDS Workflow is composed of pipelines and can use some features as join, hooks, mutex, payload&hellip;
+You can create a CDS Workflow with the web UI, you can also create a workflow with the command line <a href="https://ovh.github.io/cds/cli/cdsctl/">cdsctl</a>.</p>
+
+<p>A pipeline is composed of stages and jobs. You can create a pipeline with the web UI or you can import it with <a href="https://ovh.github.io/cds/cli/cdsctl/">cdsctl</a>.</p>
+
+<h3 id="use-cdsctl">Use cdsctl</h3>
+
+<ul>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/import/">cdsctl workflow import</a></li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/export/">cdsctl workflow export</a></li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/pull/">cdsctl workflow pull</a></li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/push/">cdsctl workflow push</a></li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/import/">cdsctl pipeline import</a></li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/export/">cdsctl pipeline export</a></li>
+</ul>
+
+<h3 id="use-cds-web-ui">Use CDS WEB UI</h3>
+
+
+
+<ul class="children children-li"><li>
+	<a href="https://ovh.github.io/cds/workflows/design/" >Design your Workflow</a></li><li>
+	<a href="https://ovh.github.io/cds/workflows/pipelines/" >Building Pipelines</a></li>
 </ul>
 
 

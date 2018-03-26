@@ -207,10 +207,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/configuration-file/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/</loc>
   </url>
   
