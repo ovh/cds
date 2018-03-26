@@ -43,6 +43,22 @@
                                     </div>
                                   </div>
                                 </div>
+                                <ng-container *ngIf="asCode">
+                                   <div class="ui row">
+                                     <div class="sixteen wide column centered">
+                                         <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)">
+                                         </app-upload-button>
+                                     </div>
+                                   </div>
+                                   <div class="ui row">
+                                     <div class="one wide column"></div>
+                                     <div class="fourteen wide column">
+                                         <div class="ui horizontal divider">
+                                           {{'common_or' | translate}}
+                                         </div>
+                                     </div>
+                                   </div>
+                               </ng-container>
                                 <div class="ui row">
                                     <div class="one wide column">
 

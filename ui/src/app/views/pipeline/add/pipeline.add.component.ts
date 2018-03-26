@@ -20,7 +20,16 @@ export class PipelineAddComponent {
     newPipeline = new Pipeline();
 
     codeMirrorConfig: any;
-    pipToImport: string;
+    pipToImport = `# Pipeline example
+version: v1.0
+name: root
+jobs:
+- job: run
+  stage: Stage 1
+  steps:
+  - script:
+    - echo "I'm the first step"
+`;
 
     pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     pipPatternError = false;
@@ -77,5 +86,9 @@ export class PipelineAddComponent {
                 this._toast.success('', this._translate.instant('pipeline_added'));
                 this.goToProject();
             });
+    }
+
+    fileEvent(event) {
+        this.pipToImport = event;
     }
 }

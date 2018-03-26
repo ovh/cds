@@ -12,6 +12,7 @@ import {PermissionService} from './permission/permission.service';
 import {PermissionListComponent} from './permission/list/permission.list.component';
 import {PermissionFormComponent} from './permission/form/permission.form.component';
 import {DeleteButtonComponent} from './button/delete/delete.button';
+import {UploadButtonComponent} from './button/upload/upload.button.component';
 import {ToastService} from './toast/ToastService';
 import {BreadcrumbComponent} from './breadcrumb/breadcrumb.component';
 import {ActionComponent} from './action/action.component';
@@ -90,6 +91,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         CommitListComponent,
         CutPipe,
         DeleteButtonComponent,
+        UploadButtonComponent,
         ForMapPipe,
         GroupFormComponent,
         HistoryComponent,
@@ -166,6 +168,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
         CommonModule,
         CutPipe,
         DeleteButtonComponent,
+        UploadButtonComponent,
         DragulaModule,
         ForMapPipe,
         FormsModule,

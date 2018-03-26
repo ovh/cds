@@ -58,7 +58,6 @@ export class PipelineService {
         let headers = new HttpHeaders();
         headers = headers.append('Content-Type', 'application/x-yaml');
         let params = new HttpParams();
-        params = params.append('forceUpdate', 'true');
         params = params.append('format', 'yaml');
 
         return this._http.post<Array<string>>(`/project/${key}/import/pipeline`, pipelineCode, {headers, params});

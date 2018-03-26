@@ -22,7 +22,18 @@ export class WorkflowAddComponent {
     codemirror: CodemirrorComponent;
 
     codeMirrorConfig: any;
-    wfToImport: string;
+    wfToImport = `# Example of workflow
+name: myWorkflow
+version: v1.0
+workflow:
+  myBuild:
+    pipeline: build
+  myTest:
+    depends_on:
+    - myBuild
+    when:
+    - success
+    pipeline: test`;
 
     updated = false;
     loading = false;
@@ -86,5 +97,9 @@ export class WorkflowAddComponent {
                 this._toast.success('', this._translate.instant('workflow_added'));
                 this.goToProject();
             });
+    }
+
+    fileEvent(event) {
+      this.wfToImport = event;
     }
 }
