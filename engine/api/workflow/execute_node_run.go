@@ -739,7 +739,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 	vcsInfos.url = repo.SSHCloneURL
 	vcsInfos.httpurl = repo.HTTPCloneURL
 
-	if vcsInfos.branch == "" {
+	if vcsInfos.branch == "" && !isChildNode {
 		return vcsInfos, sdk.WrapError(sdk.ErrBranchNameNotProvided, "computeVCSInfos> should not have an empty branch")
 	}
 
