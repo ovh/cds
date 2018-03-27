@@ -60,12 +60,19 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					continue
 				}
 				for _, e := range execs {
-
 					if e.Status == TaskExecutionDoing {
 						continue
 					}
+
+					if (e.Type == TypeScheduler || e.Type == TypeRepoPoller) && e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
+						log.Warning("Enqueing scheduler/repoPoller %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
+						s.Dao.EnqueueTaskExecution(&e)
+						continue
+					}
+
+					// old hooks
 					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-1*time.Hour).UnixNano() {
-						log.Warning("Enqueing %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
+						log.Warning("Enqueing very old hooks %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
