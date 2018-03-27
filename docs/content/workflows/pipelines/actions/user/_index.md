@@ -11,7 +11,7 @@ A user action is a combination of built-in or plugin actions. A user can import 
 ```bash
 $ git clone https://github.com/ovh/cds.git
 $ cd cds/contrib/actions/
-$ cdsctl action import cds-docker-package.hcl
+$ cdsctl action import cds-docker-package.yml
 ```
 
 See [cdsctl action import]({{< relref "/cli/cdsctl/action/import.md" >}}) documentation.
