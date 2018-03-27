@@ -65,12 +65,12 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 						continue
 					}
 					if e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
-						log.Warning("Enqueing %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
+						log.Warning("Enqueing processingTimestamp=0 %s %d/%d %s len:%d status:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError, len(e.LastError), e.Status)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
-						log.Warning("Enqueing %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
+						log.Warning("Enqueing with lastError %s %d/%d %s len:%d status:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError, len(e.LastError), e.Status)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}
