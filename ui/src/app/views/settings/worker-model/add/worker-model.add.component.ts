@@ -32,7 +32,7 @@ export class WorkerModelAddComponent implements OnInit {
                 private _route: ActivatedRoute, private _router: Router,
                 private _authentificationStore: AuthentificationStore) {
         this.currentUser = this._authentificationStore.getUser();
-        this._groupService.getGroups().subscribe( groups => {
+        this._groupService.getGroups(true).subscribe( groups => {
             this.workerModelGroups = groups;
         });
     }
