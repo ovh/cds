@@ -155,6 +155,9 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			t.NbErrors++
 			restartTask = true
 			saveTaskExecution = true
+		} else {
+			restartTask = true
+			saveTaskExecution = true
 		}
 
 		//Save the execution
