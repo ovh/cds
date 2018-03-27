@@ -114,7 +114,7 @@ func (api *API) postWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
+		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
 			if wf.Root.Context.DefaultPayload, err = getDefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> Cannot set default payload")
@@ -199,7 +199,7 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
+		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
 			if wf.Root.Context.DefaultPayload, err = getDefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> Cannot set default payload")
