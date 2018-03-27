@@ -65,7 +65,7 @@
             </td>
             <td class="center" *ngIf="mode !== 'launcher' && mode !== 'job'">
                 <ng-container *ngIf="mode === 'edit'">
-                    <div *ngIf="p.hasChanged;then save;else remove"></div>
+                    <div *ngIf="p.hasChanged && !hideSave;then save;else remove"></div>
                     <ng-template #save>
                         <button class="ui green button" [class.loading]="p.updating" [class.disabled]="p.updating" name="btnupdatevparam" (click)="sendEvent('update', p)">
                             <i class="save icon"></i>

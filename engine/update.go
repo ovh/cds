@@ -20,7 +20,6 @@ var updateCmd = &cobra.Command{
 	Short:   "Update engine binary",
 	Example: "engine update --from-github",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("CDS engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 
 		if !updateFromGithub && updateURLAPI == "" {
 			sdk.Exit(`You have to use "./engine update --from-github" or "./engine update --api http://intance/of/your/cds/api"`)
@@ -29,10 +28,13 @@ var updateCmd = &cobra.Command{
 		var urlBinary string
 		conf := cdsclient.Config{Host: updateURLAPI}
 		client := cdsclient.New(conf)
+
+		fmt.Printf("CDS engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+
 		if updateFromGithub {
 			// no need to have apiEndpoint here
 			var errGH error
-			urlBinary, errGH = client.DownloadURLFromGithub("engine", runtime.GOOS, runtime.GOARCH)
+			urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("engine", runtime.GOOS, runtime.GOARCH))
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github url:%s err:%s\n", urlBinary, errGH)
 			}

@@ -18,6 +18,8 @@ const (
 	tagGitTag        = "git.tag"
 	tagGitAuthor     = "git.author"
 	tagGitMessage    = "git.message"
+	tagGitURL        = "git.url"
+	tagGitHTTPURL    = "git.http_url"
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook

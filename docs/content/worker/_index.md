@@ -7,8 +7,6 @@ weight = 4
 
 A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
 
-Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing `npm` tools, importing `bower` packages (these are `nodeJs` tools), building webfonts with `fontforge`...
-
 ## What is a worker
 
 Basically, a worker is a binary. This binary can be launched inside a Docker Container, or on a Host (as an Openstack VM). A worker executes a [CDS Job]({{< relref "/gettingstarted/concepts/job.md" >}}).
@@ -31,12 +29,11 @@ There are several cases where one would need to setup his own worker:
  * Build on a specific architecture
  * Perform integration tests in a specific network
 
-### How does this work ?
+[Setup a worker]({{< relref "setup-your-worker.md" >}})
 
-Workers authenticate on CDS with a token and have the same permissions as the user who generated it.
+### About worker model
 
-To generate a token, run the following command, replace yourgroup with your group
+Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing `npm` tools, importing `bower` packages (these are `nodeJs` tools), building webfonts with `fontforge`...
 
-```bash
-$ cdsctl token generate yourgroup persistent
-```
+
+[More about worker model]({{< relref "/workflows/pipelines/requirements/worker-model/_index.md" >}})

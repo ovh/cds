@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -48,7 +49,19 @@ func workflowPushRun(c cli.Values) error {
 	var dir string
 
 	// Create a new tar archive.
+	filesToRead := []string{}
 	for _, file := range files {
+		fi, err := os.Lstat(file)
+		if err != nil {
+			fmt.Printf("Skipping file %s: %v\n", file, err)
+			continue
+		}
+
+		//Skip the directory
+		if fi.IsDir() {
+			continue
+		}
+
 		fmt.Println("Reading file ", cli.Magenta(file))
 		if dir == "" {
 			dir = filepath.Dir(file)
@@ -56,9 +69,15 @@ func workflowPushRun(c cli.Values) error {
 		if dir != filepath.Dir(file) {
 			return fmt.Errorf("files must be ine the same directory")
 		}
+
+		filesToRead = append(filesToRead, file)
 	}
 
-	if err := workflowFilesToTarWriter(files, buf); err != nil {
+	if len(filesToRead) == 0 {
+		return fmt.Errorf("wrong usage: you should specify your workflow YAML files. See %s workflow push --help for more details", os.Args[0])
+	}
+
+	if err := workflowFilesToTarWriter(filesToRead, buf); err != nil {
 		return err
 	}
 

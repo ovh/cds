@@ -467,9 +467,8 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	storeOptions := sessionstore.Options{
-		TTL:           a.Config.Cache.TTL,
-		RedisHost:     a.Config.Cache.Redis.Host,
-		RedisPassword: a.Config.Cache.Redis.Password,
+		TTL:   a.Config.Cache.TTL * 60, // Second to minutes
+		Cache: a.Cache,
 	}
 
 	var errdriver error
@@ -509,6 +508,16 @@ func (a *API) Serve(ctx context.Context) error {
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	go migrate.DefaultPayloadMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+
+	//Temporary migration code
+	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
+		go func() {
+			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
+				log.Error("Bootstrap Error: %v", err)
+			}
+		}()
+	}
 	if !a.Config.Schedulers.Disabled {
 		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {
@@ -530,12 +539,12 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Warning("Cleanup SQL connections")
 			s.Shutdown(ctx)
 			a.DBConnectionFactory.Close()
-			event.Publish(sdk.EventEngine{Message: "shutdown"})
+			event.Publish(sdk.EventEngine{Message: "shutdown"}, nil)
 			event.Close()
 		}
 	}()
 
-	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)})
+	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)}, nil)
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too

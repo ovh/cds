@@ -1,0 +1,32 @@
+name: Workflow (ITSCWRKFLW4) should use the worker cache command
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW4/tag-push-pull.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW4/ITSCWRKFLW4.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW4"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW4 "
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW4 ITSCWRKFLW4"
+
+- name: import workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW4 ./tests/fixtures/ITSCWRKFLW4/*.yml --skip-update-files
+
+- name: run workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW4 ITSCWRKFLW4
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW4 #1 has been launched"
+
+- name: the workflow should be successfull
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW4 ITSCWRKFLW4 1 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success
+    retry: 10
+    delay: 10

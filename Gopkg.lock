@@ -2,25 +2,10 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/Azure/go-ansiterm"
-  packages = [
-    ".",
-    "winterm"
-  ]
-  revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
-
-[[projects]]
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
   revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
   version = "v0.4.7"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/Nvveen/Gotty"
-  packages = ["."]
-  revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
 
 [[projects]]
   name = "github.com/Shopify/sarama"
@@ -74,12 +59,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/containerd/continuity"
-  packages = ["pathdriver"]
-  revision = "b2b946a77f5973f420514090d6f6dd58b08303f0"
-
-[[projects]]
-  branch = "master"
   name = "github.com/coreos/go-etcd"
   packages = ["etcd"]
   revision = "003851be7bb0694fe3cc457a49529a19388ee7cf"
@@ -102,37 +81,36 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/docker/distribution"
+  packages = [
+    "digest",
+    "reference"
+  ]
+  revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
+  version = "v2.6.2"
+
+[[projects]]
   name = "github.com/docker/docker"
   packages = [
     "api/types",
     "api/types/blkiodev",
     "api/types/container",
+    "api/types/events",
     "api/types/filters",
     "api/types/mount",
     "api/types/network",
+    "api/types/reference",
     "api/types/registry",
     "api/types/strslice",
     "api/types/swarm",
-    "api/types/swarm/runtime",
+    "api/types/time",
     "api/types/versions",
-    "opts",
-    "pkg/archive",
-    "pkg/fileutils",
-    "pkg/homedir",
-    "pkg/idtools",
-    "pkg/ioutils",
-    "pkg/jsonmessage",
-    "pkg/longpath",
-    "pkg/mount",
-    "pkg/pools",
-    "pkg/stdcopy",
-    "pkg/system",
-    "pkg/term",
-    "pkg/term/windows"
+    "api/types/volume",
+    "client",
+    "pkg/tlsconfig"
   ]
-  revision = "abf46e077144077673a05ebcd4d622e86af0f05c"
-  source = "https://github.com/yesnault/moby.git"
-  version = "17.03.3-ce-cds-yes"
+  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
+  version = "v1.13.1"
 
 [[projects]]
   branch = "go1.10"
@@ -148,7 +126,11 @@
 
 [[projects]]
   name = "github.com/docker/go-connections"
-  packages = ["nat"]
+  packages = [
+    "nat",
+    "sockets",
+    "tlsconfig"
+  ]
   revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
   version = "v0.3.0"
 
@@ -229,11 +211,6 @@
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   revision = "bd2828f9f176e52d7222e565abb2d338d3f3c103"
-
-[[projects]]
-  name = "github.com/fsouza/go-dockerclient"
-  packages = ["."]
-  revision = "7fcad055fea9a4651d56a3974caee0910785ea2f"
 
 [[projects]]
   name = "github.com/gambol99/go-marathon"
@@ -506,12 +483,6 @@
   version = "1.0.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jinzhu/now"
-  packages = ["."]
-  revision = "d939ba741945c047cac69c329c5fb0d6b4a06520"
-
-[[projects]]
   name = "github.com/json-iterator/go"
   packages = ["."]
   revision = "f7279a603edee96fe7764d3de9c6ff8cf9970994"
@@ -647,11 +618,6 @@
   revision = "56cca451570bb0366b29f30e1aeb5cf9736a1e18"
 
 [[projects]]
-  name = "github.com/moby/moby"
-  packages = ["pkg/namesgenerator"]
-  revision = "d4239a6e286f546f5eda507437f643b5a1548c5d"
-
-[[projects]]
   branch = "test"
   name = "github.com/ncw/swift"
   packages = ["."]
@@ -668,38 +634,10 @@
   revision = "daf2955e742cf123959884fdff4685aa79b63135"
 
 [[projects]]
-  name = "github.com/opencontainers/go-digest"
-  packages = ["."]
-  revision = "279bed98673dd5bef374d3b6e4b09e2af76183bf"
-  version = "v1.0.0-rc1"
-
-[[projects]]
-  name = "github.com/opencontainers/image-spec"
-  packages = [
-    "specs-go",
-    "specs-go/v1"
-  ]
-  revision = "d60099175f88c47cd379c4738d158884749ed235"
-  version = "v1.0.1"
-
-[[projects]]
-  name = "github.com/opencontainers/runc"
-  packages = [
-    "libcontainer/system",
-    "libcontainer/user"
-  ]
-  revision = "6cbd8e20efb1dc8f94001d475602c4a96636c4df"
-
-[[projects]]
   branch = "master"
   name = "github.com/ovh/go-ovh"
   packages = ["ovh"]
   revision = "02f7e9439689eda7ce4752c7f37e50cb678f2679"
-
-[[projects]]
-  name = "github.com/ovh/tat"
-  packages = ["."]
-  revision = "43966f33245defc6b16e7904c5558448e365fe3e"
 
 [[projects]]
   name = "github.com/ovh/venom"
@@ -929,6 +867,12 @@
   revision = "faddd6128c66c4708f45fdc007f575f75e592a3c"
 
 [[projects]]
+  name = "github.com/urfave/cli"
+  packages = ["."]
+  revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
+  version = "v1.20.0"
+
+[[projects]]
   name = "github.com/vmware/govmomi"
   packages = [
     ".",
@@ -1043,6 +987,7 @@
     "idna",
     "internal/timeseries",
     "lex/httplex",
+    "proxy",
     "trace"
   ]
   revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
@@ -1294,6 +1239,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2744f0ab59557863872684ef3b441820904cb0d7747f9bb7eae9c40e2d1036af"
+  inputs-digest = "793e87b45019696f89dac4dfa7c9e4a95c96f68bdd9c24150f83656557ecfc08"
   solver-name = "gps-cdcl"
   solver-version = 1

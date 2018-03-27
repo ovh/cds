@@ -16,13 +16,17 @@ var Cache cache.Store
 
 // Publish sends a event to a queue
 //func Publish(event sdk.Event, eventType string) {
-func Publish(payload interface{}) {
+func Publish(payload interface{}, u *sdk.User) {
 	event := sdk.Event{
 		Timestamp: time.Now(),
 		Hostname:  hostname,
 		CDSName:   cdsname,
 		EventType: fmt.Sprintf("%T", payload),
 		Payload:   structs.Map(payload),
+	}
+	if u != nil {
+		event.Username = u.Username
+		event.UserMail = u.Email
 	}
 
 	Cache.Enqueue("events", event)
@@ -50,14 +54,14 @@ func PublishActionBuild(pb *sdk.PipelineBuild, pbJob *sdk.PipelineBuildJob) {
 		Hash:            pb.Trigger.VCSChangesHash,
 	}
 
-	Publish(e)
+	Publish(e, nil)
 }
 
 // PublishPipelineBuild sends a pipelineBuild event
 func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) {
 	// get and send all user notifications
 	for _, event := range notification.GetUserEvents(db, pb, previous) {
-		Publish(event)
+		Publish(event, nil)
 	}
 
 	rmn := ""
@@ -84,7 +88,7 @@ func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *
 		Hash:                  pb.Trigger.VCSChangesHash,
 	}
 
-	Publish(e)
+	Publish(e, nil)
 }
 
 // PublishWorkflowRun publish event on a workflow run
@@ -98,14 +102,14 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		WorkflowName: wr.Workflow.Name,
 		Workflow:     wr.Workflow,
 	}
-	Publish(e)
+	Publish(e, nil)
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
 func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, previousWR sdk.WorkflowNodeRun, projectKey string) {
 	// get and send all user notifications
 	for _, event := range notification.GetUserWorkflowEvents(db, wr, previousWR, nr) {
-		Publish(event)
+		Publish(event, nil)
 	}
 
 	e := sdk.EventWorkflowNodeRun{
@@ -143,7 +147,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.
 	if nr.Status != sdk.StatusBuilding.String() && nr.Status != sdk.StatusWaiting.String() {
 		e.Done = nr.Done.Unix()
 	}
-	Publish(e)
+	Publish(e, nil)
 }
 
 // PublishWorkflowNodeJobRun publish event on a workflow node job run
@@ -159,5 +163,5 @@ func PublishWorkflowNodeJobRun(njr sdk.WorkflowNodeJobRun) {
 	if njr.Status != sdk.StatusBuilding.String() && njr.Status != sdk.StatusWaiting.String() {
 		e.Done = njr.Done.Unix()
 	}
-	Publish(e)
+	Publish(e, nil)
 }

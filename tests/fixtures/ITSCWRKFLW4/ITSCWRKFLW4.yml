@@ -1,0 +1,3 @@
+name: ITSCWRKFLW4
+version: v1.0
+pipeline: tag-push-pull

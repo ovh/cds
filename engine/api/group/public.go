@@ -65,6 +65,8 @@ func InitializeDefaultGroupName(db *gorp.DbMap, defaultGroupName string) error {
 		}
 
 		defaultGroupID = defaultGroup.ID
+		//Inject DefaultGroupID in permission package
+		permission.DefaultGroupID = defaultGroup.ID
 	}
 
 	return nil

@@ -22,8 +22,8 @@
                 </div>
                 <div class="field" *ngIf="currentUser.admin">
                     <div class="ui checkbox">
-                        <input type="checkbox" name="admin" [(ngModel)]="user.admin" [disabled]="loading">
-                        <label>{{'user_label_admin' | translate}}</label>
+                        <input type="checkbox" id="admin" name="admin" [(ngModel)]="user.admin" [disabled]="loading">
+                        <label for="admin">{{'user_label_admin' | translate}}</label>
                     </div>
                 </div>
                 <div class="field inline">

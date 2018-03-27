@@ -10,8 +10,8 @@ Type of requirements:
 - Binary
 - Model
 - Hostname
-- Network
-- Service
+- Network access
+- [Service]({{< relref "/workflows/pipelines/requirements/service/_index.md" >}})
 - Memory
 - OS & Architecture
 

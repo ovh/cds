@@ -8,13 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moby/moby/pkg/namesgenerator"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new hatchery local
@@ -70,8 +69,7 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryLocal server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID must returns hatchery id

@@ -8,11 +8,17 @@ weight = 2
 
 Requirement Service
 
-* Name: `mypg`. This will be the service hostname
 * Type: `service`
-* Value: `postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword`. This is the name of docker image to link to current job
+* Hostname: `mypg`. This will be the service hostname
+* Docker Image: `postgres:9.5.3`. This is the name of docker image to link to current job
+* Options:
 
-And a requirement model which allow you to execute `apt-get install -y postgresql-client`, see [HowTo]({{< relref "workflows/pipelines/requirements/worker-model/docker-simple.md" >}})
+```
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypassword
+```
+
+And a requirement model which allow you to execute `apt-get install -y postgresql-client`, see [HowTo]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}})
 
 
 ![Requirement](/images/tutorials_service_link_pg_requirements.png)

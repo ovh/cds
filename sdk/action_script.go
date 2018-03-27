@@ -2,13 +2,7 @@ package sdk
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"sort"
-	"time"
-
-	"github.com/facebookgo/httpcontrol"
-	"github.com/hashicorp/hcl"
 )
 
 //ActionScript represents the structure of a HCL action file
@@ -178,105 +172,6 @@ func NewStepDefault(n string, args map[string]string) (*Action, error) {
 	return &newAction, nil
 }
 
-//NewActionFromScript creates an action from a HCL file as bytes
-func NewActionFromScript(btes []byte) (*Action, error) {
-	as := ActionScript{}
-	if err := hcl.Decode(&as, string(btes)); err != nil {
-		return nil, err
-	}
-
-	a := Action{
-		Name:         as.Name,
-		Description:  as.Description,
-		Requirements: []Requirement{},
-		Parameters:   []Parameter{},
-		Actions:      []Action{},
-		Enabled:      true,
-	}
-
-	for k, v := range as.Requirements {
-		a.Requirements = append(a.Requirements, Requirement{
-			Name:  k,
-			Type:  v.Type,
-			Value: v.Value,
-		})
-	}
-
-	for k, v := range as.Parameters {
-		a.Parameters = append(a.Parameters, Parameter{
-			Name:        k,
-			Type:        v.Type,
-			Description: v.Description,
-			Value:       v.Value,
-		})
-	}
-
-	for _, v := range as.Steps {
-		var newAction Action
-		//Action builtin = Script
-		if v.Script != "" {
-			newAction = NewStepScript(v.Script)
-			goto next
-		}
-
-		//Action builtin =JUnitReport
-		if v.JUnitReport != "" {
-			newAction = NewStepJUnitReport(v.JUnitReport)
-			goto next
-		}
-
-		//Action builtin = ArtifactUpload
-		if v.ArtifactUpload != nil {
-			newAction = NewStepArtifactUpload(v.ArtifactUpload)
-			goto next
-		}
-
-		//Action builtin = ArtifactDownload
-		if v.ArtifactDownload != nil {
-			newAction = NewStepArtifactDownload(v.ArtifactDownload)
-			goto next
-		}
-
-		//Action builtin = GitClone
-		if v.GitClone != nil {
-			newAction = NewStepGitClone(v.GitClone)
-			goto next
-		}
-
-		// Action builtin = GitTag
-		if v.GitTag != nil {
-			newAction = NewStepGitTag(v.GitTag)
-		}
-
-		if v.Release != nil {
-			newAction = NewStepRelease(v.Release)
-		}
-
-		//Action builtin = Plugin
-		if v.Plugin != nil {
-			a, err := NewStepPlugin(v.Plugin)
-			if err != nil {
-				return nil, err
-			}
-			newAction = *a
-			goto next
-		}
-
-		return nil, fmt.Errorf("Unsupported action : %s", string(btes))
-
-	next:
-		if v.Enabled != nil {
-			newAction.Enabled = *v.Enabled
-		} else {
-			newAction.Enabled = true
-		}
-		newAction.AlwaysExecuted = v.AlwaysExecuted
-		a.Actions = append(a.Actions, newAction)
-	}
-
-	return &a, nil
-}
-
 // ActionInfoMarkdown returns string formatted with markdown
 func ActionInfoMarkdown(a *Action, filename string) string {
 	var sp, rq string
@@ -319,43 +214,6 @@ More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/ac
 		filename)
 
 	return info
-}
-
-func loadRemoteScript(url string) (*Action, error) {
-	client := &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout: time.Minute,
-			MaxTries:       3,
-		},
-	}
-	resp, err := client.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return NewActionFromScript(body)
-}
-
-//NewActionFromRemoteScript creates an action from an URL giving an HCL file
-func NewActionFromRemoteScript(url string, params []Parameter) (*Action, error) {
-	a, err := loadRemoteScript(url)
-	if err != nil {
-		return nil, err
-	}
-	//Override params value
-	for _, p := range params {
-		for _, pp := range a.Parameters {
-			if p.Name == pp.Name {
-				pp.Value = p.Value
-			}
-		}
-	}
-	return a, nil
 }
 
 //NewActionScript creates a builtin action script

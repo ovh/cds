@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -16,12 +15,13 @@ func cmdRegister(w *currentWorker) *cobra.Command {
 		Short: "worker register",
 		Run:   cmdRegisterRun(w),
 	}
+	initFlagsRun(cmdRegister)
 	return cmdRegister
 }
 
 func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		initViper(w)
+		initFlags(cmd, w)
 		form := sdk.WorkerRegistrationForm{
 			Name:         w.status.Name,
 			Token:        w.token,
@@ -30,14 +30,14 @@ func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			ModelID:      w.model.ID,
 		}
 
-		if err := w.register(form, false); err != nil {
+		if err := w.register(form); err != nil {
 			log.Error("Unable to register worker %s: %v", w.status.Name, err)
 		}
 		if err := w.unregister(); err != nil {
 			log.Error("Unable to unregister worker %s: %v", w.status.Name, err)
 		}
 
-		if viper.GetBool("force_exit") {
+		if FlagBool(cmd, flagForceExit) {
 			log.Info("Exiting worker with force_exit true")
 			return
 		}

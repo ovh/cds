@@ -1,7 +1,7 @@
 <div id="projectAdmin">
     <app-zone header="{{ 'project_workflow_migration_title' | translate }}" *ngIf="user.admin || project.workflow_migration !== 'NOT_BEGUN'">
         <app-zone-content class="bottom">
-            <sui-progress class="indicating" [value]="migrationValue" [showProgress]="true" [maximum]="project.applications?.length" [precision]="1" *ngIf="project.workflow_migration === 'STARTED'">
+            <sui-progress class="indicating" [value]="migrationValue" [showProgress]="true" [maximum]="project.application_names?.length" [precision]="0" *ngIf="project.workflow_migration === 'STARTED'">
             </sui-progress>
             <i class="green check icon" *ngIf="project.workflow_migration === 'DONE' || project.workflow_migration === 'CLEANING'"></i>
         </app-zone-content>
@@ -17,13 +17,13 @@
                                [disabled]="loading"
                                required
                                #formProjectUpdateName="ngModel">
-                        <div *ngIf="!formProjectUpdateName.valid && !formProjectUpdateName.pristine"
+                        <div *ngIf="formProjectUpdateName.invalid && !formProjectUpdateName.pristine"
                              class="ui error message">
                             <p>{{'project_update_name_error' | translate}}</p>
                         </div>
                     </div>
                     <div class="nine wide right aligned field">
-                        <button class="ui green button" name="btnrename" [class.loading]="loading">{{ 'btn_rename' | translate }}</button>
+                        <button class="ui green button" name="btnrename" [class.loading]="loading" [disabled]="projectUpdateFrom.invalid">{{ 'btn_rename' | translate }}</button>
                     </div>
                 </div>
             </form>

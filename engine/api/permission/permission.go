@@ -1,13 +1,7 @@
 package permission
 
 import (
-	"database/sql"
-	"encoding/json"
-
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -22,6 +16,9 @@ const (
 var (
 	// SharedInfraGroupID must be init from elsewhere with group.SharedInfraGroup
 	SharedInfraGroupID int64
+
+	// DefaultGroupID same as SharedInfraGroupID
+	DefaultGroupID int64
 )
 
 // ApplicationPermission  Get the permission for the given application
@@ -116,110 +113,4 @@ func AccessToEnvironment(key, env string, u *sdk.User, access int) bool {
 	}
 
 	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, env)] >= access
-}
-
-// ProjectPermissionUsers Get users that access to given project
-func ProjectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([]sdk.User, error) {
-	var query string
-	users := []sdk.User{}
-	query = `
-			SELECT DISTINCT "user".id, "user".username, "user".data
-			FROM "group"
-			JOIN project_group ON "group".id = project_group.group_id
-			JOIN group_user ON "group".id = group_user.group_id
-	        JOIN "user" ON group_user.user_id = "user".id
-			WHERE project_group.project_id = $1
-			AND project_group.role >=$2
-		`
-
-	rows, err := db.Query(query, projectID, access)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return users, nil
-		}
-		return users, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		u := sdk.User{}
-		var data string
-		if err := rows.Scan(&u.ID, &u.Username, &data); err != nil {
-			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while scanning user : %s", err)
-			continue
-		}
-
-		uTemp := &sdk.User{}
-		if err := json.Unmarshal([]byte(data), uTemp); err != nil {
-			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while parsing user : %s", err)
-			continue
-		}
-		users = append(users, *uTemp)
-	}
-	return users, nil
-}
-
-// ApplicationPipelineEnvironmentUsers returns users list with expected access to application/pipeline/environment
-func ApplicationPipelineEnvironmentUsers(db gorp.SqlExecutor, appID, pipID, envID int64, access int) ([]sdk.User, error) {
-	var query string
-	var args []interface{}
-	users := []sdk.User{}
-	if envID == sdk.DefaultEnv.ID {
-		query = `
-			SELECT 	DISTINCT "user".id, "user".username, "user".data
-			FROM 	"group"
-			JOIN 	application_group ON "group".id = application_group.group_id
-			JOIN 	pipeline_group ON "group".id = pipeline_group.group_id
-			JOIN	group_user ON "group".id = group_user.group_id
-			JOIN 	"user" ON group_user.user_id = "user".id
-			WHERE	application_group.application_id = $1
-			AND	pipeline_group.pipeline_id = $2
-			AND  	application_group.role >= $3
-			AND  	pipeline_group.role >= $3
-		`
-		args = []interface{}{appID, pipID, access}
-	} else {
-		query = `
-			SELECT 	DISTINCT "user".id, "user".username, "user".data
-			FROM 	"group"
-			JOIN 	application_group ON "group".id = application_group.group_id
-			JOIN 	pipeline_group ON "group".id = pipeline_group.group_id
-			JOIN 	environment_group ON "group".id = environment_group.group_id
-			JOIN	group_user ON "group".id = group_user.group_id
-			JOIN 	"user" ON group_user.user_id = "user".id
-			WHERE	application_group.application_id = $1
-			AND	pipeline_group.pipeline_id = $2
-			AND 	environment_group.environment_id = $3
-			AND  	application_group.role >= $4
-			AND  	pipeline_group.role >= $4
-			AND 	environment_group.role >= $4
-		`
-		args = []interface{}{appID, pipID, envID, access}
-	}
-
-	rows, err := db.Query(query, args...)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return users, nil
-		}
-		return users, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		u := sdk.User{}
-		var data string
-		if err := rows.Scan(&u.ID, &u.Username, &data); err != nil {
-			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while scanning user : %s", err)
-			continue
-		}
-
-		uTemp := &sdk.User{}
-		if err := json.Unmarshal([]byte(data), uTemp); err != nil {
-			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while parsing user : %s", err)
-			continue
-		}
-		users = append(users, *uTemp)
-	}
-	return users, nil
 }

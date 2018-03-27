@@ -99,14 +99,26 @@ func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
 		hdr.Typeflag = tar.TypeDir
 	}
 
+	if fi.Mode()&os.ModeSymlink != 0 {
+		symlink, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			return WrapError(err, "tarWrite> cannot get resolve path %s", path)
+		}
+
+		fil, err := os.Lstat(symlink)
+		if err != nil {
+			return WrapError(err, "tarWrite> cannot get resolve(lstat) link")
+		}
+
+		hdr.Size = fil.Size()
+	}
+
 	if err := tw.WriteHeader(hdr); err != nil {
 		return WrapError(err, "tarWrite> cannot write header")
 	}
 
-	if n, err := io.Copy(tw, filR); err != nil {
+	if _, err := io.Copy(tw, filR); err != nil {
 		return err
-	} else if n == 0 {
-		return fmt.Errorf("nothing to write for %s", fi.Name())
 	}
 	return nil
 }
@@ -128,9 +140,8 @@ func iterDirectory(dirPath string, tw *tar.Writer) error {
 				return err
 			}
 		} else {
-			fmt.Printf("adding... %s\n", curPath)
 			if err := tarWrite(curPath, tw, fi); err != nil {
-				return WrapError(err, "iterDirectory> cannot tar write")
+				return WrapError(err, "iterDirectory> cannot tar write (%s)", curPath)
 			}
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"runtime"
 	"sort"
 	"strconv"
 	"sync"
@@ -651,7 +652,18 @@ func (api *API) postWorkflowRunHandler() Handler {
 
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-		go startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx), asCodeInfosMsg)
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					buf := make([]byte, 1<<16)
+					runtime.Stack(buf, true)
+					log.Error("[PANIC] workflow.startWorkflowRun> %s", string(buf))
+				}
+			}()
+
+			startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx))
+		}()
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
@@ -661,7 +673,16 @@ func (api *API) postWorkflowRunHandler() Handler {
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		// Purge workflow run
-		go workflow.PurgeWorkflowRun(api.mustDB(), *wf)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					buf := make([]byte, 1<<16)
+					runtime.Stack(buf, true)
+					log.Error("[PANIC] workflow.PurgeWorkflowRun> %s", string(buf))
+				}
+			}()
+			workflow.PurgeWorkflowRun(api.mustDB(), *wf)
+		}()
 
 		var wr *sdk.WorkflowRun
 		if len(workflowRuns) > 0 {
@@ -734,7 +755,24 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		}
 		wg.Add(len(fromNodes))
 		for i := 0; i < nbWorker && i < len(fromNodes); i++ {
-			go runFromNode(db, store, *opts, p, wf, lastRun, u, workerOptions)
+			optsCopy := sdk.WorkflowRunPostHandlerOption{
+				FromNodeIDs: opts.FromNodeIDs,
+				Number:      opts.Number,
+			}
+			if opts.Manual != nil {
+				optsCopy.Manual = &sdk.WorkflowNodeRunManual{
+					PipelineParameters: opts.Manual.PipelineParameters,
+					User:               opts.Manual.User,
+					Payload:            opts.Manual.Payload,
+				}
+			}
+			if opts.Hook != nil {
+				optsCopy.Hook = &sdk.WorkflowNodeRunHookEvent{
+					Payload:              opts.Hook.Payload,
+					WorkflowNodeHookUUID: opts.Hook.WorkflowNodeHookUUID,
+				}
+			}
+			go runFromNode(db, store, optsCopy, p, wf, lastRun, u, workerOptions)
 		}
 		for _, fromNode := range fromNodes {
 			workerOptions.chanNodesToRun <- *fromNode
@@ -804,7 +842,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 		if len(opts.Manual.PipelineParameters) == 0 {
 			opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
 		}
-		log.Debug("Manual run: %#v", opts.Manual)
+		log.Debug("Manual run: %+v", opts.Manual)
 
 		//Manual run
 		if lastRun != nil {

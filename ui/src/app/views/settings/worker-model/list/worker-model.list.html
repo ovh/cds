@@ -18,8 +18,9 @@
       <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
           <thead>
           <tr>
-              <th class="one wide">{{ 'worker_model_type' | translate }}</th>
               <th class="four wide">{{ 'worker_model_name' | translate }}</th>
+              <th class="four wide">{{ 'worker_model_description' | translate }}</th>
+              <th class="two wide">{{ 'worker_model_type' | translate }}</th>
               <th class="three wide">{{ 'worker_model_image' | translate }}</th>
               <th class="three wide">{{ 'worker_model_group' | translate }}</th>
           </tr>
@@ -28,27 +29,19 @@
           <tr *ngFor="let v of getDataForCurrentPage()">
               <td>
                   <a class="ui" [routerLink]="[v.name]">
-                    <div class="ui">{{v.type}}</div>
+                    <div class="ui">
+                        {{v.name}}
+                        <span *ngIf="v.disabled"> {{ 'worker_model_disabled' | translate }}</span>
+                        <span *ngIf="v.nb_spawn_err > 0" [smDirTooltip]="'worker_model_spawn_error_tooltip' | translate" smDirPosition="top center">  <i class="exclamation triangle icon large red" title="{{ 'worker_model_warning' | translate }}"></i> </span>
+                        <span *ngIf="v.is_official" [smDirTooltip]="'worker_model_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
+                        <span *ngIf="v.is_deprecated" [smDirTooltip]="'worker_model_deprecated_tooltip' | translate" smDirPosition="top center"> <i class="exclamation circle icon large orange"></i> </span>
+                    </div> 
                   </a>
               </td>
-              <td>
-                  <a class="ui" [routerLink]="[v.name]">
-                    <div class="ui">{{v.name}}
-                        <span *ngIf="v.disabled==='true'"> {{ 'worker_model_disabled' | translate }}</span>
-                        <span *ngIf="v.nb_spawn_err > 0">  <i class="warning sign icon orange" title="{{ 'worker_model_warning' | translate }}"></i> </span>
-                    </div>
-                  </a>
-              </td>
-              <td>
-                  <a class="ui" [routerLink]="[v.name]">
-                    <div class="ui">{{v.image.substr(0, 60)}}</div>
-                  </a>
-              </td>
-              <td>
-                  <a class="ui" [routerLink]="[v.name]">
-                    <div class="ui">{{v.group.name}}</div>
-                  </a>
-              </td>
+              <td>{{v.description}}</td>
+              <td>{{v.type}}</td>
+              <td>{{v.image.substr(0, 60)}}</td>
+              <td>{{v.group.name}}</td>
           </tr>
           </tbody>
           <tfoot *ngIf="getNbOfPages() > 1">

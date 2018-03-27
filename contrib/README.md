@@ -22,7 +22,6 @@ See [CDS documentation](https://github.com/ovh/cds) for more details.
 ## µServices
 
 - [cds2xmpp](https://github.com/ovh/cds/tree/master/contrib/uservices/cds2xmpp)
-- [cds2tat](https://github.com/ovh/cds/tree/master/contrib/uservices/cds2tat)
 
 ## Contributions
 

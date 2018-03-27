@@ -119,7 +119,7 @@ func (api *API) postWorkflowHandler() Handler {
 
 		// Add group
 		for _, gp := range p.ProjectGroups {
-			if gp.Permission == permission.PermissionReadWriteExecute {
+			if gp.Permission >= permission.PermissionReadExecute {
 				if err := workflow.AddGroup(tx, &wf, gp); err != nil {
 					return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
 				}
@@ -182,6 +182,14 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errT, "putWorkflowHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
+
+		if wf.Root.Context.HasDefaultPayload() {
+			if defaultPayloadMap, err := wf.Root.Context.DefaultPayloadToMap(); err == nil {
+				if gitBranch, ok := defaultPayloadMap["git.branch"]; ok && gitBranch == "" {
+					return sdk.ErrInvalidGitBranch
+				}
+			}
+		}
 
 		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")

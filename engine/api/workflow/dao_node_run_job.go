@@ -16,80 +16,59 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-const loadNodeJobRun = `from workflow_node_run_job
-join workflow_node_run on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
-join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
-join workflow on workflow.id = workflow_run.workflow_id
-join project on project.id = workflow.project_id
-join project_group on project_group.project_id = project.id
-where (
-	project_group.group_id = ANY(string_to_array($1, ',')::int[])
-	or
-	true = $4
-)
-and workflow_node_run_job.queued >= $2
-and workflow_node_run_job.status = ANY(string_to_array($3, ','))`
-
 // loadPrepareGroup returns true if groupsID contains shareInfraGroup
 // and list of groups, comma separated
-func loadPrepareGroup(groupsID []int64) (bool, string) {
-	var groupsIDString string
-	var isSharedInfraGroup bool
-	for i, g := range groupsID {
-		if i == 0 {
-			groupsIDString = fmt.Sprintf("%d", g)
-		} else {
-			groupsIDString += "," + fmt.Sprintf("%d", g)
-		}
-		if g == group.SharedInfraGroup.ID {
-			isSharedInfraGroup = true
-			break
-		}
-	}
-	return isSharedInfraGroup, groupsIDString
+func isSharedInfraGroup(groupsID []int64) bool {
+	return sdk.IsInInt64Array(group.SharedInfraGroup.ID, groupsID)
 }
 
 // CountNodeJobRunQueue count all workflow_node_run_job accessible
-func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, since *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
-	if since == nil {
-		since = new(time.Time)
-	}
-
-	if len(statuses) == 0 {
-		statuses = []string{sdk.StatusWaiting.String()}
-	}
-
-	query := "select count(1) " + loadNodeJobRun
+func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
 	c := sdk.WorkflowNodeJobRunCount{}
-	isSharedInfraGroup, groupsIDString := loadPrepareGroup(groupsID)
-	count, err := db.SelectInt(query, groupsIDString, since, strings.Join(statuses, ","), isSharedInfraGroup)
+
+	queue, err := LoadNodeJobRunQueue(db, store, permission.PermissionRead, groupsID, since, until, statuses...)
 	if err != nil {
-		return c, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
+		return c, sdk.WrapError(err, "CountNodeJobRunQueue> unable to load queue")
 	}
-	c.Count = count
-	c.Since = *since
+
+	c.Count = int64(len(queue))
+	if since != nil {
+		c.Since = *since
+	}
+	if until != nil {
+		c.Until = *until
+	}
 	return c, nil
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, groupsID []int64, since *time.Time, until *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	if since == nil {
 		since = new(time.Time)
+	}
+
+	if until == nil {
+		now := time.Now()
+		until = &now
 	}
 
 	if len(statuses) == 0 {
 		statuses = []string{sdk.StatusWaiting.String()}
 	}
 
-	query := "select distinct workflow_node_run_job.* " + loadNodeJobRun
-	isSharedInfraGroup, groupsIDString := loadPrepareGroup(groupsID)
+	query := `select distinct workflow_node_run_job.* 
+	from workflow_node_run_job
+	where workflow_node_run_job.queued >= $1
+	and workflow_node_run_job.queued <= $2
+	and workflow_node_run_job.status = ANY(string_to_array($3, ','))`
 
+	isSharedInfraGroup := isSharedInfraGroup(groupsID)
 	sqlJobs := []JobRun{}
-	if _, err := db.Select(&sqlJobs, query, groupsIDString, *since, strings.Join(statuses, ","), isSharedInfraGroup); err != nil {
+	if _, err := db.Select(&sqlJobs, query, *since, *until, strings.Join(statuses, ",")); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
 	}
 
-	jobs := make([]sdk.WorkflowNodeJobRun, len(sqlJobs))
+	jobs := []sdk.WorkflowNodeJobRun{}
 	for i := range sqlJobs {
 		if err := sqlJobs[i].PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (PostGet)")
@@ -114,7 +93,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 			continue
 		}
 		getHatcheryInfo(store, &sqlJobs[i])
-		jobs[i] = sdk.WorkflowNodeJobRun(sqlJobs[i])
+		jobs = append(jobs, sdk.WorkflowNodeJobRun(sqlJobs[i]))
 	}
 
 	return jobs, nil

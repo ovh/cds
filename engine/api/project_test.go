@@ -34,8 +34,9 @@ func TestVariableInProject(t *testing.T) {
 	}
 
 	// 3. Test Update variable
-	var1.Value = "value1Updated"
-	err = project.UpdateVariable(api.mustDB(), project1, var1, &sdk.User{Username: "foo"})
+	var2 := var1
+	var2.Value = "value1Updated"
+	err = project.UpdateVariable(api.mustDB(), project1, var2, var1, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot update var1 in project1: %s", err)
 	}
@@ -51,12 +52,12 @@ func TestVariableInProject(t *testing.T) {
 	}
 
 	// 5. Insert new var
-	var2 := &sdk.Variable{
+	var3 := &sdk.Variable{
 		Name:  "var2",
 		Value: "value2",
 		Type:  "STRING",
 	}
-	err = project.InsertVariable(api.mustDB(), project1, var2, &sdk.User{Username: "foo"})
+	err = project.InsertVariable(api.mustDB(), project1, var3, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}

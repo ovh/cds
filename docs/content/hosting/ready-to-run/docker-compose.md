@@ -102,7 +102,7 @@ $ docker-compose up cds-hatchery-swarm
 A `swarm hatchery` spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.
 
-Now, you have to create worker model of type `docker`, please follow [how to create a worker model docker]({{< relref "workflows/pipelines/requirements/worker-model/docker-simple.md" >}}).
+Now, you have to create worker model of type `docker`, please follow [how to create a worker model docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}}).
 
 ## Next with Actions, Plugins
 
@@ -117,7 +117,8 @@ $ ./cds login
 
 - Import actions, example:
 ```bash
-$ cds action add --url https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl
+# get cds-docker-package.hcl from https://github.com/ovh/cds/blob/master/contrib/actions/
+$ cdsctl action import cds-docker-package.hcl
 ```
 
 - Import plugins, example:

@@ -248,7 +248,7 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 		return err
 	}
 
-	if err := DeleteAllVariable(db, id); err != nil {
+	if err := deleteAllVariable(db, id); err != nil {
 		return err
 	}
 

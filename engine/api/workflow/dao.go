@@ -301,8 +301,9 @@ func load(db gorp.SqlExecutor, store cache.Store, opts LoadOptions, u *sdk.User,
 
 	res := sdk.Workflow(dbRes)
 	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
-
-	res.Permission = permission.WorkflowPermission(res.ProjectKey, res.Name, u)
+	if u != nil {
+		res.Permission = permission.WorkflowPermission(res.ProjectKey, res.Name, u)
+	}
 
 	// Load groups
 	gps, err := loadWorkflowGroups(db, res)
@@ -358,8 +359,12 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return err
 	}
 
+	if w.HistoryLength == 0 {
+		w.HistoryLength = sdk.DefaultHistoryLength
+	}
+
 	w.LastModified = time.Now()
-	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id) VALUES ($1, $2, $3) RETURNING id", w.Name, w.Description, w.ProjectID).Scan(&w.ID); err != nil {
+	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id, history_length) VALUES ($1, $2, $3, $4) RETURNING id", w.Name, w.Description, w.ProjectID, w.HistoryLength).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 

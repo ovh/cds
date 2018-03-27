@@ -12,6 +12,7 @@ import {PermissionService} from './permission/permission.service';
 import {PermissionListComponent} from './permission/list/permission.list.component';
 import {PermissionFormComponent} from './permission/form/permission.form.component';
 import {DeleteButtonComponent} from './button/delete/delete.button';
+import {UploadButtonComponent} from './button/upload/upload.button.component';
 import {ToastService} from './toast/ToastService';
 import {BreadcrumbComponent} from './breadcrumb/breadcrumb.component';
 import {ActionComponent} from './action/action.component';
@@ -92,6 +93,7 @@ import {ClipboardModule} from 'ngx-clipboard';
         CommitListComponent,
         CutPipe,
         DeleteButtonComponent,
+        UploadButtonComponent,
         ForMapPipe,
         GroupFormComponent,
         HistoryComponent,
@@ -170,6 +172,7 @@ import {ClipboardModule} from 'ngx-clipboard';
         ClipboardModule,
         CutPipe,
         DeleteButtonComponent,
+        UploadButtonComponent,
         DragulaModule,
         ForMapPipe,
         FormsModule,

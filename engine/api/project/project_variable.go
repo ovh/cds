@@ -264,10 +264,9 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 }
 
 // UpdateVariable Update a variable in the given project
-func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, previousVar *sdk.Variable, u *sdk.User) error {
 	varValue := variable.Value
 	// Clear password for audit
-	previousVar, err := GetVariableByID(db, proj.ID, variable.ID, WithClearPassword())
 
 	//Check variable name
 	rx := sdk.NamePatternRegex
@@ -334,7 +333,8 @@ func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 }
 
 // DeleteAllVariable Delete all variables from the given project
-func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
+// Only use by delete project
+func deleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_variable WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)
 	if err != nil {

@@ -104,8 +104,7 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 
 // Serve start the HatcheryOpenstack server
 func (h *HatcheryOpenstack) Serve(ctx context.Context) error {
-	hatchery.Create(h)
-	return nil
+	return hatchery.Create(h)
 }
 
 // ID returns hatchery id

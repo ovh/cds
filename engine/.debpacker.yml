@@ -1,0 +1,29 @@
+package-name: "cds-engine"
+architecture: "amd64"
+binary-file: "cds-engine-linux-amd64"
+configuration-files:
+  - "config.toml"
+copy-files:
+  - "cds-engine-*"
+  - "cdsctl-*"
+  - "cds-worker-*"
+  - "cds-linux-amd64"
+  - "sql.tar.gz"
+mkdirs:
+  - "/keys"
+  - "/artifacts"
+version: "{{.cds.semver}}"
+description: "Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform"
+maintainer: "OVH <github@ovh.com>"
+systemd-configuration:
+  after: network.target
+  args: 
+    - "start"
+    - "${CDS_SERVICE}"
+    - "--config"
+    - "/etc/cds-engine/config.toml"
+  stop-command: /bin/kill $MAINPID
+  restart: always
+  wanted-by: multi-user.target
+  environments: 
+    CDS_SERVICE: "api vcs hooks repositories"

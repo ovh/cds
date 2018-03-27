@@ -22,7 +22,7 @@ func (c *client) DownloadURLFromAPI(name, os, arch string) string {
 	return fmt.Sprintf("%s/download/%s/%s/%s", c.APIURL(), name, os, arch)
 }
 
-func (c *client) DownloadURLFromGithub(name, os, arch string) (string, error) {
+func (c *client) DownloadURLFromGithub(filename string) (string, error) {
 	var httpClient = &http.Client{Timeout: 10 * time.Second}
 
 	r, err := httpClient.Get("https://api.github.com/repos/ovh/cds/releases/latest")
@@ -39,13 +39,13 @@ func (c *client) DownloadURLFromGithub(name, os, arch string) (string, error) {
 
 	if len(release.Assets) > 0 {
 		for _, asset := range release.Assets {
-			if *asset.Name == sdk.GetArtifactFilename(name, os, arch) {
+			if *asset.Name == filename {
 				return *asset.BrowserDownloadURL, nil
 			}
 		}
 	}
 
-	text := fmt.Sprintf("Invalid Artifacts on latest release (%s %s %s). Please try again in few minutes.\n", name, os, arch)
+	text := fmt.Sprintf("Invalid Artifacts on latest release (%s). Please try again in few minutes.\n", filename)
 	text += fmt.Sprintf("If the problem persists, please open an issue on %s\n", sdk.URLGithubIssues)
 	text += fmt.Sprintf("You can manually download binary from latest release: %s\n", sdk.URLGithubReleases)
 	return "", fmt.Errorf(text)

@@ -62,10 +62,16 @@ func Initialize(conf *Conf) {
 			TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
 		}
 
-		var extra map[string]interface{}
+		extra := map[string]interface{}{}
 		if conf.GraylogExtraKey != "" && conf.GraylogExtraValue != "" {
-			extra = map[string]interface{}{
-				conf.GraylogExtraKey: conf.GraylogExtraValue,
+			keys := strings.Split(conf.GraylogExtraKey, ",")
+			values := strings.Split(conf.GraylogExtraValue, ",")
+			if len(keys) != len(values) {
+				log.Errorf("Error while initialize log: extraKey (len:%d) does not have same corresponding number of values on extraValue (len:%d)", len(keys), len(values))
+			} else {
+				for i := range keys {
+					extra[keys[i]] = values[i]
+				}
 			}
 		}
 

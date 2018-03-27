@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
@@ -97,20 +98,25 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 			return sdk.WrapError(errT, "deleteKeyInProjectHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
+		var deletedKey sdk.ProjectKey
 		for _, k := range p.Keys {
 			if k.Name == keyName {
+				deletedKey = k
 				if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
 				}
 				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectKeysLastModificationType); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
 				}
+				break
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot commit transaction")
 		}
+
+		event.PublishDeleteProjectKey(p, deletedKey, getUser(ctx))
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -172,6 +178,8 @@ func (api *API) addKeyInProjectHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot commit transaction")
 		}
+
+		event.PublishAddProjectKey(p, newKey, getUser(ctx))
 
 		return WriteJSON(w, newKey, http.StatusOK)
 	}

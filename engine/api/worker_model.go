@@ -181,6 +181,11 @@ func (api *API) updateWorkerModelHandler() Handler {
 			model.ID = old.ID
 		}
 
+		// provision is allowed only for CDS Admin
+		if !getUser(ctx).Admin && model.Provision > 0 {
+			model.Provision = 0
+		}
+
 		//User must be admin of the group set in the new model
 		var ok bool
 		for _, g := range getUser(ctx).Groups {

@@ -35,7 +35,18 @@ export class WorkflowAddComponent {
     codemirror: CodemirrorComponent;
 
     codeMirrorConfig: any;
-    wfToImport: string;
+    wfToImport = `# Example of workflow
+name: myWorkflow
+version: v1.0
+workflow:
+  myBuild:
+    pipeline: build
+  myTest:
+    depends_on:
+    - myBuild
+    when:
+    - success
+    pipeline: test`;
 
     repos: Array<Repository>;
     selectedRepoManager: string;
@@ -189,5 +200,9 @@ export class WorkflowAddComponent {
 
     goToWorkflow(): void {
         this._router.navigate(['/project', this.project.key, 'workflow', this.asCodeResult.workflowName]);
+    }
+
+    fileEvent(event) {
+        this.wfToImport = event;
     }
 }

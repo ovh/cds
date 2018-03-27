@@ -14,8 +14,8 @@
                                         <div class="description">{{'workflow_wizard_description' | translate}}</div>
                                     </div>
                                 </div>
-                                <div class="step pointing" [class.disabled]="!workflow.name || duplicateWorkflowName"
-                                     [class.active]="currentStep === 1" (click)="goToNextStep(1)">
+                                <div class="step pointing" [class.disabled]="!workflow.name || duplicateWorkflowName" [class.active]="currentStep === 1"
+                                    (click)="goToNextStep(1)">
                                     <i class="sitemap icon"></i>
                                     <div class="content">
                                         <div class="title">{{'common_pipeline' | translate}}</div>

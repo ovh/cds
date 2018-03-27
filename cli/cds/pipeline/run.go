@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -16,6 +17,7 @@ var batch bool
 var env string
 var parentInfo string
 var parentBuildNumber int64
+var timeout int64
 
 func pipelineRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -30,6 +32,7 @@ func pipelineRunCmd() *cobra.Command {
 	cmd.Flags().StringSliceVarP(&cmdPipelineRunArguments, "parameter", "p", nil, "Pipeline parameters")
 	cmd.Flags().StringVarP(&parentInfo, "parent", "", "", "Parent build (format: app/pip[/env])")
 	cmd.Flags().Int64VarP(&parentBuildNumber, "parent-build", "", 0, "Parent build number")
+	cmd.Flags().Int64VarP(&timeout, "timeout", "", -1, "Wait for run timeout (in seconds)")
 
 	return cmd
 }
@@ -151,8 +154,23 @@ func streamResponse(ch chan sdk.Log) {
 	titles := []string{"DATE", "JOB-STEP", "LOG"}
 	fmt.Fprintln(w, strings.Join(titles, "\t"))
 
+	var pipelineStarted *bool
+	False := false
+	pipelineStarted = &False
+
+	if timeout > 0 {
+		go func(started *bool) {
+			time.Sleep(time.Duration(timeout) * time.Second)
+			if !*started {
+				close(ch)
+				sdk.Exit("pipeline run timeout exceeded")
+			}
+		}(pipelineStarted)
+	}
+
 	for l := range ch {
 		if l.Val != "" {
+			*pipelineStarted = true
 			vSplitted := strings.Split(l.Val, "\n")
 			for _, line := range vSplitted {
 				line = strings.Trim(line, " ")

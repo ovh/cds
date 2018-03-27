@@ -354,7 +354,15 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 		val := values[i]
 		memKey := Key(key, val)
 		if !s.Get(memKey, members[i]) {
-			return fmt.Errorf("Member (%s) not found", memKey)
+			//If the member is not found, return an error because the members are inconsistents
+			// but try to delete the member from the Redis ZSET
+			log.Error("redis>SetScan member %s not found", memKey)
+			if err := s.Client.ZRem(key, val).Err(); err != nil {
+				log.Error("redis>SetScan unable to delete member %s", memKey)
+				return err
+			}
+			log.Info("redis> member %s deleted", memKey)
+			return fmt.Errorf("SetScan member %s not found", memKey)
 		}
 	}
 	return nil

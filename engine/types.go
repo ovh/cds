@@ -28,8 +28,8 @@ type Configuration struct {
 			Host       string `toml:"host" comment:"Example: thot.ovh.com"`
 			Port       int    `toml:"port" comment:"Example: 12202"`
 			Protocol   string `toml:"protocol" default:"tcp" comment:"tcp or udp"`
-			ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN"`
-			ExtraValue string `toml:"extraValue" comment:"value for extraKey field"`
+			ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN. You can use many keys: aaa,bbb"`
+			ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb"`
 		} `toml:"graylog"`
 	} `toml:"log" comment:"#####################\n CDS Logs Settings \n####################"`
 	Debug struct {

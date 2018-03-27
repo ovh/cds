@@ -95,6 +95,7 @@ type Model struct {
 	Template         *map[string]string `json:"template"  db:"template" cli:"-"`
 	RunScript        string             `json:"run_script"  db:"run_script" cli:"-"`
 	Disabled         bool               `json:"disabled"  db:"disabled" cli:"disabled"`
+	Restricted       bool               `json:"restricted"  db:"restricted" cli:"restricted"`
 	NeedRegistration bool               `json:"need_registration"  db:"need_registration" cli:"-"`
 	LastRegistration time.Time          `json:"last_registration"  db:"last_registration" cli:"-"`
 	UserLastModified time.Time          `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
@@ -105,6 +106,8 @@ type Model struct {
 	NbSpawnErr       int64              `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
 	LastSpawnErr     string             `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
 	DateLastSpawnErr *time.Time         `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
+	IsDeprecated     bool               `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
+	IsOfficial       bool               `json:"is_official" db:"-" cli:"official"`
 }
 
 // OpenstackModelData type details the "Image" field of Openstack type model

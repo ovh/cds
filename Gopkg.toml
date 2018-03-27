@@ -124,11 +124,6 @@
   version = "1.18.1"
 
 [[override]]
-  name = "github.com/docker/docker"
-  branch = "ye-cds"
-  source = "https://github.com/yesnault/moby.git"
-
-[[override]]
   name = "github.com/go-gorp/gorp"
   branch = "ye-cds"
   source = "https://github.com/yesnault/gorp.git"

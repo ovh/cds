@@ -23,8 +23,6 @@ func GetFormat(f string) (Format, error) {
 		return FormatJSON, nil
 	case "toml", "tml":
 		return FormatTOML, nil
-	case "hcl":
-		return FormatHCL, nil
 	default:
 		return UnknownFormat, ErrUnsupportedFormat
 	}

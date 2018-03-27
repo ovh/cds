@@ -487,7 +487,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	gitValues := map[string]string{}
 	for _, param := range jobParams {
 		switch param.Name {
-		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository:
+		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
 			gitValues[param.Name] = param.Value
 		}
 	}
@@ -497,12 +497,21 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		isRoot = true
 	}
 
-	vcsInfos, errVcs := getVCSInfos(db, store, p, gitValues, n, run, !isRoot)
+	var previousGitRepo string
+	pGitRepo := sdk.ParameterFind(&run.BuildParameters, tagGitRepository)
+	if pGitRepo != nil {
+		previousGitRepo = pGitRepo.Value
+	}
+	vcsInfos, errVcs := getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitRepo)
 	if errVcs != nil {
 		if isRoot {
-			return false, errVcs
+			return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
 		}
-		log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
+		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowError.ID,
+			Args: []interface{}{errVcs.Error()},
+		})
+		return false, nil
 	}
 
 	run.VCSRepository = vcsInfos.repository
@@ -514,8 +523,8 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.url", sdk.StringParameter, vcsInfos.url)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, "git.http_url", sdk.StringParameter, vcsInfos.httpurl)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.url)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.httpurl)
 
 	//Check
 	if h != nil {

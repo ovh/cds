@@ -33,6 +33,28 @@ type Project struct {
 	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
 }
 
+// SSHKeys returns the slice of ssh key for an application
+func (a Project) SSHKeys() []ProjectKey {
+	keys := []ProjectKey{}
+	for _, k := range a.Keys {
+		if k.Type == KeyTypeSSH {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// PGPKeys returns the slice of pgp key for an application
+func (a Project) PGPKeys() []ProjectKey {
+	keys := []ProjectKey{}
+	for _, k := range a.Keys {
+		if k.Type == KeyTypePGP {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
 // ProjectVCSServer represents associations between a project and a vcs server
 type ProjectVCSServer struct {
 	Name string            `json:"name" yaml:"name" db:"-" cli:"-"`

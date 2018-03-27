@@ -2,7 +2,6 @@ package openstack
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
@@ -47,14 +46,12 @@ func (h *HatcheryOpenstack) Init() error {
 
 	provider, errac := openstack.AuthenticatedClient(authOpts)
 	if errac != nil {
-		log.Error("Unable to openstack.AuthenticatedClient: %s", errac)
-		os.Exit(11)
+		return fmt.Errorf("Unable to openstack.AuthenticatedClient: %v", errac)
 	}
 
 	openstackClient, errn := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{Region: h.Config.Region})
 	if errn != nil {
-		log.Error("Unable to openstack.NewComputeV2: %s", errn)
-		os.Exit(12)
+		return fmt.Errorf("Unable to openstack.NewComputeV2: %s", errn)
 	}
 	h.openstackClient = openstackClient
 

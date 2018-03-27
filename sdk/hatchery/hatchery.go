@@ -32,18 +32,18 @@ type CommonConfiguration struct {
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
 	} `toml:"api"`
 	Provision struct {
-		Disabled          bool `toml:"disabled" default:"false" comment:"Disabled provisionning. Format:true or false"`
+		Disabled          bool `toml:"disabled" default:"false" comment:"Disabled provisioning. Format:true or false"`
 		Frequency         int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds"`
 		MaxWorker         int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers"`
 		GraceTimeQueued   int  `toml:"graceTimeQueued" default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`
 		RegisterFrequency int  `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds"`
 		WorkerLogsOptions struct {
 			Graylog struct {
-				Host       string `toml:"host"`
-				Port       int    `toml:"port"`
-				Protocol   string `toml:"protocol"`
-				ExtraKey   string `toml:"extraKey"`
-				ExtraValue string `toml:"extraValue"`
+				Host       string `toml:"host" comment:"Example: thot.ovh.com"`
+				Port       int    `toml:"port" comment:"Example: 12202"`
+				Protocol   string `toml:"protocol" default:"tcp" comment:"tcp or udp"`
+				ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN. You can use many keys: aaa,bbb"`
+				ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb"`
 			} `toml:"graylog"`
 		} `toml:"workerLogsOptions" comment:"Worker Log Configuration"`
 	} `toml:"provision"`

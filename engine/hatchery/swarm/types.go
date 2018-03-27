@@ -1,7 +1,7 @@
 package swarm
 
 import (
-	"github.com/fsouza/go-dockerclient"
+	docker "github.com/docker/docker/client"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"

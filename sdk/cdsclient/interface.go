@@ -111,7 +111,7 @@ type EnvironmentVariableClient interface {
 type DownloadClient interface {
 	Download() ([]sdk.Download, error)
 	DownloadURLFromAPI(name, os, arch string) string
-	DownloadURLFromGithub(name, os, arch string) (string, error)
+	DownloadURLFromGithub(filename string) (string, error)
 }
 
 // ActionClient exposes actions related functions
@@ -185,7 +185,7 @@ type ProjectVariablesClient interface {
 // QueueClient exposes queue related functions
 type QueueClient interface {
 	QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error)
-	QueueCountWorkflowNodeJobRun() (sdk.WorkflowNodeJobRunCount, error)
+	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
@@ -256,6 +256,7 @@ type WorkflowClient interface {
 // MonitoringClient exposes monitoring functions
 type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
+	MonVersion() (*sdk.Version, error)
 	MonDBTimes() (*sdk.MonDBTimes, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
 }
