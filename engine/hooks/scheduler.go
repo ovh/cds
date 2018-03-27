@@ -60,6 +60,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					continue
 				}
 				for _, e := range execs {
+
 					if e.Status == TaskExecutionDoing {
 						continue
 					}
@@ -149,15 +150,14 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			t.LastError = "Executions skipped: Task has been stopped"
 			t.NbErrors++
 			saveTaskExecution = true
-		} else if err := s.doTask(c, task, &t); err != nil {
-			log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
-			t.LastError = err.Error()
-			t.NbErrors++
-			restartTask = true
-			saveTaskExecution = true
 		} else {
 			restartTask = true
-			saveTaskExecution = true
+			if err := s.doTask(c, task, &t); err != nil {
+				log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
+				t.LastError = err.Error()
+				t.NbErrors++
+				saveTaskExecution = true
+			}
 		}
 
 		//Save the execution
