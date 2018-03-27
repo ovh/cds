@@ -438,11 +438,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
-	//Temporary migration code
-	if err := bootstrap.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
-		log.Error("Bootstrap Error: %v", err)
-	}
-
 	//Init events package
 	event.Cache = a.Cache
 
@@ -513,6 +508,16 @@ func (a *API) Serve(ctx context.Context) error {
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	go migrate.DefaultPayloadMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+
+	//Temporary migration code
+	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
+		go func() {
+			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
+				log.Error("Bootstrap Error: %v", err)
+			}
+		}()
+	}
 	if !a.Config.Schedulers.Disabled {
 		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {

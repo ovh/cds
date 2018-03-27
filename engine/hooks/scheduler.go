@@ -60,16 +60,16 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					continue
 				}
 				for _, e := range execs {
+
 					if e.Status == TaskExecutionDoing {
 						continue
 					}
-					if e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
+					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-1*time.Hour).UnixNano() {
 						log.Warning("Enqueing %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
-						continue
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
-						log.Warning("Enqueing %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
+						log.Warning("Enqueing with lastError %s %d/%d %s len:%d status:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError, len(e.LastError), e.Status)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}
@@ -134,26 +134,42 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		t.Status = TaskExecutionDoing
 		s.Dao.SaveTaskExecution(&t)
 
+		var restartTask bool
+		var saveTaskExecution bool
+
 		task := s.Dao.FindTask(t.UUID)
 		if task == nil {
 			log.Error("Hooks> dequeueTaskExecutions failed: Task not found")
 			t.LastError = "Internal Error: Task not found"
 			t.NbErrors++
+			log.Info("Hooks> Deleting task execution %s", t.UUID)
+			s.Dao.DeleteTaskExecution(&t)
+
 		} else if task.Stopped {
 			t.LastError = "Executions skipped: Task has been stopped"
 			t.NbErrors++
-		} else if err := s.doTask(c, task, &t); err != nil {
-			log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
-			t.LastError = err.Error()
-			t.NbErrors++
+			saveTaskExecution = true
+		} else {
+			restartTask = true
+			saveTaskExecution = true
+			if err := s.doTask(c, task, &t); err != nil {
+				log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
+				t.LastError = err.Error()
+				t.NbErrors++
+				saveTaskExecution = true
+			}
 		}
 
 		//Save the execution
-		t.Status = TaskExecutionDone
-		t.ProcessingTimestamp = time.Now().UnixNano()
-		s.Dao.SaveTaskExecution(&t)
+		if saveTaskExecution {
+			t.Status = TaskExecutionDone
+			t.ProcessingTimestamp = time.Now().UnixNano()
+			s.Dao.SaveTaskExecution(&t)
+		}
 
 		//Start (or restart) the task
-		s.startTask(c, task)
+		if restartTask {
+			s.startTask(c, task)
+		}
 	}
 }

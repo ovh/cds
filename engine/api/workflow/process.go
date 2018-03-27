@@ -507,6 +507,10 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		if isRoot {
 			return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
 		}
+		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
+			ID:   sdk.MsgWorkflowError.ID,
+			Args: []interface{}{errVcs.Error()},
+		})
 		return false, nil
 	}
 

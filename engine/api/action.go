@@ -223,62 +223,36 @@ func (api *API) getActionExportHandler() Handler {
 func (api *API) importActionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var a *sdk.Action
-		url := r.Form.Get("url")
-		//Load action from url
-		if url != "" {
-			var errnew error
-			a, errnew = sdk.NewActionFromRemoteScript(url, nil)
-			if errnew != nil {
-				return errnew
-			}
-		} else if r.Header.Get("content-type") == "multipart/form-data" {
-			//Try to load from the file
-			r.ParseMultipartForm(64 << 20)
-			file, _, errUpload := r.FormFile("UploadFile")
-			if errUpload != nil {
-				return sdk.WrapError(sdk.ErrWrongRequest, "importActionHandler> Cannot load file uploaded: %s", errUpload)
-			}
-			btes, errRead := ioutil.ReadAll(file)
-			if errRead != nil {
-				return errRead
-			}
 
-			var errnew error
-			a, errnew = sdk.NewActionFromScript(btes)
-			if errnew != nil {
-				return errnew
-			}
-		} else { // a encoded action is posted in body
-			data, errRead := ioutil.ReadAll(r.Body)
-			if errRead != nil {
-				return errRead
-			}
-			defer r.Body.Close()
+		data, errRead := ioutil.ReadAll(r.Body)
+		if errRead != nil {
+			return errRead
+		}
+		defer r.Body.Close()
 
-			contentType := r.Header.Get("Content-Type")
-			if contentType == "" {
-				contentType = http.DetectContentType(data)
-			}
+		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = http.DetectContentType(data)
+		}
 
-			var ea = new(exportentities.Action)
-			var errapp error
-			switch contentType {
-			case "application/json":
-				errapp = json.Unmarshal(data, ea)
-			case "application/x-yaml", "text/x-yam":
-				errapp = yaml.Unmarshal(data, ea)
-			default:
-				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
-			}
+		var ea = new(exportentities.Action)
+		var errapp error
+		switch contentType {
+		case "application/json":
+			errapp = json.Unmarshal(data, ea)
+		case "application/x-yaml", "text/x-yam":
+			errapp = yaml.Unmarshal(data, ea)
+		default:
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
+		}
 
-			if errapp != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, errapp)
-			}
+		if errapp != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errapp)
+		}
 
-			a, errapp = ea.Action()
-			if errapp != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, errapp)
-			}
+		a, errapp = ea.Action()
+		if errapp != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errapp)
 		}
 
 		if a == nil {

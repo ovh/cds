@@ -105,7 +105,7 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 	e.ExtraFields.Type = false
 	tmpVars, errdump := e.ToStringMap(payload)
 	if errdump != nil {
-		log.Error("GetNodeBuildParameters> do-dump error: %v", errdump)
+		return nil, sdk.WrapError(errdump, "GetNodeBuildParameters> do-dump error")
 	}
 
 	//Merge the dumped payload with vars
@@ -149,7 +149,7 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 		sdk.AddParameter(&params, k, sdk.StringParameter, v)
 	}
 
-	return params, errdump
+	return params, nil
 }
 
 func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {
@@ -212,17 +212,12 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 
 	//Get node build parameters
-	errm := &sdk.MultiError{}
 	params, errparam := GetNodeBuildParameters(db, store, proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
 	if errparam != nil {
-		err, ok := errparam.(*sdk.MultiError)
-		if ok {
-			errm = err
-		} else {
-			return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to compute node build parameters")
-		}
+		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to compute node build parameters")
 	}
 
+	errm := &sdk.MultiError{}
 	//override default parameters value
 	tmp := sdk.ParametersToMap(params)
 	tmp["cds.version"] = fmt.Sprintf("%d", run.Number)

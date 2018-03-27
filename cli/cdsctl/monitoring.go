@@ -563,7 +563,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		idx++
 	}
 	start = time.Now()
-	nWJobs, errw := client.QueueCountWorkflowNodeJobRun()
+	nWJobs, errw := client.QueueCountWorkflowNodeJobRun(nil, nil)
 	elapsed = time.Since(start)
 	if errw != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", errw.Error())

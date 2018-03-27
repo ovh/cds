@@ -1,0 +1,98 @@
+version: v1.0
+name: CDS_GoBuild
+description: 'Go Build: compile a go program'
+parameters:
+  architecture:
+    type: list
+    default: amd64;386;arm
+    description: GOARCH
+  artifactUpload:
+    type: boolean
+    default: "false"
+    description: Upload Binary as CDS Artifact
+  binary:
+    type: string
+    default: '{{.cds.application}}'
+    description: 'Binary name: Put foo for go build -o foo'
+  cgoDisabled:
+    type: boolean
+    default: "false"
+  detectRaceCondition:
+    type: boolean
+    default: "false"
+    description: Enable data race detection. It's flag -race
+  flags:
+    type: string
+    description: flags for go build. Put -ldflags "-X main.xyz=abc" for go build -ldflags "-X main.xyz=abc"
+  os:
+    type: list
+    default: linux;darwin;windows
+    description: GOOS
+  package:
+    type: string
+    description: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar
+  preRun:
+    type: text
+    description: 'Pre-command. Example: export CGO_ENABLED=0'
+  runGoGet:
+    type: boolean
+    default: "false"
+    description: Run go get -u before go build
+requirements:
+- binary: bash
+- binary: go
+steps:
+- script:
+  - '#!/bin/bash'
+  - set -x
+  - ""
+  - export GOOS="{{.os}}"
+  - export GOARCH="{{.architecture}}"
+  - ""
+  - if [ ! -d "${GOPATH}/src/{{.package}}" ]; then
+  - '  echo "directory ''${GOPATH}/src/{{.package}}'' does not exist"'
+  - "\techo \"Please put your source under ${GOPATH}/src/{{.package}} before running this action\""
+  - "\texit 1;"
+  - fi;
+  - ""
+  - cd ${GOPATH}/src/{{.package}}
+  - ""
+  - if [ "xtrue" == "x{{.runGoGet}}" ]; then
+  - "\tgo get -v"
+  - else
+  - "\techo \"not running go get ({{.runGoGet}})\";"
+  - fi;
+  - ""
+  - GOARGS=""
+  - if [ "x" != "x{{.binary}}" ]; then
+  - '  GOARGS=" -o {{.binary}}"'
+  - fi;
+  - ""
+  - if [ "xtrue" == "x{{.detectRaceCondition}}" ]; then
+  - '  GOARGS="${GOARGS} -race"'
+  - fi;
+  - ""
+  - if [ "xtrue" == "x{{.cgoDisabled}}" ]; then
+  - '  export CGO_ENABLED=0'
+  - '  echo "run with CGO_ENABLED=0";'
+  - fi;
+  - ""
+  - if [ "x" != "x{{.preRun}}" ]; then
+  - cat << EOF > preRun.sh
+  - '{{.preRun}}'
+  - EOF
+  - chmod +x preRun.sh
+  - ./preRun.sh
+  - fi;
+  - ""
+  - go build -v {{.flags}} ${GOARGS}
+  - ""
+  - if [ "xtrue" == "x{{.artifactUpload}}" ]; then
+  - "\tif [ ! -f ${GOPATH}/src/{{.package}}/{{.binary}} ]; then"
+  - "    \techo \"File ${GOPATH}/src/{{.package}}/{{.binary}} not found!\""
+  - '        exit 1;'
+  - "\tfi"
+  - "\tworker upload --tag={{.cds.version}} \"${GOPATH}/src/{{.package}}/{{.binary}}\""
+  - else
+  - "\techo \"artifact upload: {{.artifactUpload}}. So, artifact is not uploaded\""
+  - fi;

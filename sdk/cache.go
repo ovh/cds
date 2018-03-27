@@ -99,14 +99,10 @@ func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
 		hdr.Typeflag = tar.TypeDir
 	}
 
-	var link string
 	if fi.Mode()&os.ModeSymlink != 0 {
-		if link, err = os.Readlink(path); err != nil {
-			return WrapError(err, "tarWrite> cannot get read link")
-		}
-		symlink, err := filepath.EvalSymlinks(link)
+		symlink, err := filepath.EvalSymlinks(path)
 		if err != nil {
-			return WrapError(err, "tarWrite> cannot get resolve link")
+			return WrapError(err, "tarWrite> cannot get resolve path %s", path)
 		}
 
 		fil, err := os.Lstat(symlink)

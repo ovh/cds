@@ -2,10 +2,45 @@
     <div id="AddPipeline">
         <div class="ui form">
             <h2>{{ 'pipeline_create' | translate }}</h2>
+
             <div class="ui grid">
+              <div class="ui row">
+                <div class="one wide column"></div>
+                <div class="fourteen wide column">
+                  <div class="two ui buttons">
+                    <button class="ui button"
+                      type="button"
+                      [class.active]="!asCode" [class.blue]="!asCode"
+                      (click)="asCode = false">
+                      {{'common_create' | translate}}
+                    </button>
+                    <button class="ui button" type="button" [class.blue]="asCode" [class.active]="asCode" (click)="asCode = true">
+                      {{'common_import' | translate}}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <ng-container *ngIf="asCode">
+                  <div class="ui row">
+                    <div class="sixteen wide column centered">
+                        <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)">
+                        </app-upload-button>
+                    </div>
+                  </div>
+                  <div class="ui row">
+                    <div class="one wide column"></div>
+                    <div class="fourteen wide column">
+                        <div class="ui horizontal divider">
+                          {{'common_or' | translate}}
+                        </div>
+                    </div>
+                  </div>
+              </ng-container>
+
+              <div class="ui row">
                 <div class="one wide column">
                 </div>
-                <div class="fourteen wide column">
+                <div class="fourteen wide column" *ngIf="!asCode">
                     <div class="field">
                         <label>{{'pipeline_name' | translate}}</label>
                         <input type="text" name="pipname" [(ngModel)]="newPipeline.name">
@@ -26,6 +61,23 @@
                         </button>
                     </div>
                 </div>
+                <div class="fourteen wide column" *ngIf="asCode">
+                    <div class="field">
+                        <codemirror
+                            name="pipToImport"
+                            [(ngModel)]="pipToImport"
+                            (keydown)="updated = true"
+                            [config]="codeMirrorConfig" #codeMirror>
+                        </codemirror>
+                    </div>
+                    <div class="field">
+                        <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' | translate }}</button>
+                        <button class="ui right floated green button" type="button" (click)="importPipeline()" *ngIf="asCode"
+                                [disabled]="!pipToImport" [class.loading]="loadingCreate">{{ 'btn_create' | translate }}
+                        </button>
+                    </div>
+                </div>
+              </div>
             </div>
         </div>
     </div>

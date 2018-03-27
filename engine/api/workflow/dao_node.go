@@ -329,6 +329,13 @@ func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	return &ctx, nil
 }
 
+// LockNodeContext lock the context for a given node id
+func LockNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey string, nodeID int64) error {
+	_, err := db.Exec("SELECT id from workflow_node_context where workflow_node_id = $1 FOR UPDATE NOWAIT", nodeID)
+
+	return err
+}
+
 // LoadNodeContext load the context for a given node id and user
 func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey string, nodeID int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}

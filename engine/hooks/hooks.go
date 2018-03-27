@@ -62,7 +62,7 @@ func (s *Service) Serve(c context.Context) error {
 	log.Info("Hooks> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 
 	//Instanciate a cds client
-	s.cds = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
+	s.cds = cdsclient.NewService(s.Cfg.API.HTTP.URL, 120*time.Second)
 
 	//First register(heartbeat)
 	if err := s.doHeartbeat(); err != nil {

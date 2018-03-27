@@ -1,16 +1,22 @@
 <div class="ui grid">
-    <div class="eight wide column">
+    <div class="six wide column">
         <h3>{{ 'project_applications_list' | translate }}</h3>
     </div>
-    <div class="right aligned eight wide column" *ngIf="project.permission === 7">
-        <a class="ui blue button" [routerLink]="['./application']">{{ 'application_create' | translate }}</a>
+    <div class="four wide column centered">
+      <a class="ui blue button" [routerLink]="['./application']">{{ 'application_create' | translate }}</a>
+    </div>
+    <div class="right aligned six wide column" *ngIf="project.permission === 7">
+        <div class="ui icon input">
+            <input type="text" placeholder="{{'navbar_search' | translate}}" [(ngModel)]="filter">
+            <i class="search icon"></i>
+        </div>
     </div>
 </div>
 <div class="ui segment">
     <div *ngIf="project.application_names && project.application_names.length > 0;then applications;else noapplications"></div>
     <ng-template #applications>
         <div class="ui stackable four column grid">
-            <div class="center aligned column" *ngFor="let app of project.application_names">
+            <div class="center aligned column" *ngFor="let app of filteredApplications">
                 <a [routerLink]="['./application', app.name]">{{app.name}}</a>
             </div>
         </div>

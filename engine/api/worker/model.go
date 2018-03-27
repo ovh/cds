@@ -35,6 +35,7 @@ const columns = `
 	worker_model.last_spawn_err,
 	worker_model.nb_spawn_err,
 	worker_model.date_last_spawn_err,
+	worker_model.is_deprecated,
 	"group".name as groupname`
 
 const bookRegisterTTLInSeconds = 360

@@ -27,7 +27,6 @@ export class ProjectEnvironmentFormComponent {
             this._projectStore.addProjectEnvironment(this.project.key, this.newEnvironment).subscribe(() => {
                 this._toast.success('', this._translate.instant('environment_created'));
                 this.loading = false;
-                this.project.environments.push(this.newEnvironment);
                 this.envCreated.emit(this.newEnvironment.name);
                 this.newEnvironment = new Environment();
             }, () => {

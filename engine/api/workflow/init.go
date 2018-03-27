@@ -14,7 +14,7 @@ import (
 //Initialize starts goroutines for workflows
 func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) {
 	rand.Seed(time.Now().Unix())
-	tickPurge := time.NewTicker(1 * time.Hour)
+	tickPurge := time.NewTicker(30 * time.Minute)
 
 	for {
 		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)

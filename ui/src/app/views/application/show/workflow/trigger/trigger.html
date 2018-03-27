@@ -39,9 +39,9 @@
 </div>
 <div class="manual">
     <div class="ui checkbox" *ngIf="trigger">
-        <input type="checkbox" name="manual" [(ngModel)]="trigger.manual"
+        <input type="checkbox" id="manual" name="manual" [(ngModel)]="trigger.manual"
                (change)="trigger.hasChanged = true">
-        <label>{{ 'trigger_manual_label' | translate }}</label>
+        <label for="manual">{{ 'trigger_manual_label' | translate }}</label>
     </div>
 </div>
 <h4 *ngIf="trigger && trigger.parameters && trigger.parameters.length > 0">{{ 'trigger_list_parameter_title' | translate}}</h4>
