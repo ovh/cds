@@ -12,6 +12,7 @@ import {RouterService} from '../../../../service/router/router.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../shared/duration/duration.service';
 import {first} from 'rxjs/operators';
+import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -39,7 +40,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
                 private _router: Router, private _routerService: RouterService, private _workflowRunService: WorkflowRunService,
-                private _durationService: DurationService) {
+                private _durationService: DurationService, private _workflowCoreSerivce: WorkflowCoreService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         this._activatedRoute.data.subscribe(datas => {
@@ -68,6 +69,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                     .pipe(first())
                     .subscribe(wr => {
                         this.workflowRun = wr;
+                        this._workflowCoreSerivce.setCurrentWorkflowRun(this.workflowRun);
                     });
 
                 this.startWorker(number, nodeRunId);
