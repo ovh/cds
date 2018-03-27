@@ -191,3 +191,26 @@ func LoadHookByUUID(db gorp.SqlExecutor, uuid string) (*sdk.WorkflowNodeHook, er
 
 	return &wNodeHook, nil
 }
+
+// LoadAndLockHookByUUID load hook given his uuid and lock it in database
+func LoadAndLockHookByUUID(db gorp.SqlExecutor, uuid string) (*sdk.WorkflowNodeHook, error) {
+	query := `
+		SELECT id, uuid, workflow_hook_model_id, workflow_node_id
+			FROM workflow_node_hook
+		WHERE uuid = $1 FOR UPDATE NOWAIT`
+
+	res := NodeHook{}
+	if err := db.SelectOne(&res, query, uuid); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadHookByUUID>")
+	}
+
+	if err := res.PostGet(db); err != nil {
+		return nil, sdk.WrapError(err, "LoadHookByUUID> cannot load postget")
+	}
+	wNodeHook := sdk.WorkflowNodeHook(res)
+
+	return &wNodeHook, nil
+}
