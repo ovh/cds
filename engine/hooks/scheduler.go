@@ -67,7 +67,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					continue
 				}
 				for _, e := range execs {
-					if e.Status == TaskExecutionDoing {
+					if e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled {
 						continue
 					}
 					// old hooks
