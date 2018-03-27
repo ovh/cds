@@ -1,12 +1,12 @@
 package sdk
 
-// EventAddApplication represents the event when adding an application
-type EventAddApplication struct {
+// EventApplicationAdd represents the event when adding an application
+type EventApplicationAdd struct {
 	Application
 }
 
-// EventUpdateApplication represents the event when updating an application
-type EventUpdateApplication struct {
+// EventApplicationUpdate represents the event when updating an application
+type EventApplicationUpdate struct {
 	OldName               string             `json:"old_name"`
 	NewName               string             `json:"new_name"`
 	OldMetadata           Metadata           `json:"old_metadata"`
@@ -15,68 +15,48 @@ type EventUpdateApplication struct {
 	NewRepositoryStrategy RepositoryStrategy `json:"new_vcs_strategy"`
 }
 
-// EventDeleteApplication represents the event when deleting an application
-type EventDeleteApplication struct {
+// EventApplicationDelete represents the event when deleting an application
+type EventApplicationDelete struct {
 }
 
-// EventAddApplicationVariable represents the event when adding an application variable
-type EventAddApplicationVariable struct {
+// EventApplicationVariableAdd represents the event when adding an application variable
+type EventApplicationVariableAdd struct {
 	Variable Variable `json:"variable"`
 }
 
-// EventUpdateApplicationVariable represents the event when updating an application variable
-type EventUpdateApplicationVariable struct {
+// EventApplicationVariableUpdate represents the event when updating an application variable
+type EventApplicationVariableUpdate struct {
 	OldVariable Variable `json:"old_variable"`
 	NewVariable Variable `json:"new_variable"`
 }
 
-// EventDeleteApplicationVariable represents the event when deleting an application variable
-type EventDeleteApplicationVariable struct {
+// EventApplicationVariableDelete represents the event when deleting an application variable
+type EventApplicationVariableDelete struct {
 	Variable Variable `json:"variable"`
 }
 
-// EventAddApplicationPermission represents the event when adding an application permission
-type EventAddApplicationPermission struct {
+// EventApplicationPermissionAdd represents the event when adding an application permission
+type EventApplicationPermissionAdd struct {
 	Permission GroupPermission `json:"group_permission"`
 }
 
-// EventUpdateApplicationPermission represents the event when updating an application permission
-type EventUpdateApplicationPermission struct {
+// EventApplicationPermissionUpdate represents the event when updating an application permission
+type EventApplicationPermissionUpdate struct {
 	OldPermission GroupPermission `json:"old_group_permission"`
 	NewPermission GroupPermission `json:"new_group_permission"`
 }
 
-// EventDeleteApplicationPermission represents the event when deleting an application permission
-type EventDeleteApplicationPermission struct {
+// EventApplicationPermissionDelete represents the event when deleting an application permission
+type EventApplicationPermissionDelete struct {
 	Permission GroupPermission `json:"group_permission"`
 }
 
-// EventAddApplicationKey represents the event when adding an application key
-type EventAddApplicationKey struct {
+// EventApplicationKeyAdd represents the event when adding an application key
+type EventApplicationKeyAdd struct {
 	Key ApplicationKey `json:"key"`
 }
 
-// EventDeleteApplicationKey represents the event when deleting an application key
-type EventDeleteApplicationKey struct {
+// EventApplicationKeyDelete represents the event when deleting an application key
+type EventApplicationKeyDelete struct {
 	Key ApplicationKey `json:"key"`
 }
-
-/*
-type Application struct {
-	ID          int64  `json:"id" db:"id"`
-	Name        string `json:"name" db:"name" cli:"name,key"`
-	Description string `json:"description"  db:"description"`
-
-
-
-	VCSServer          string              `json:"vcs_server,omitempty" db:"vcs_server"`
-	RepositoryFullname string              `json:"repository_fullname,omitempty" db:"repo_fullname"`
-
-	RepositoryStrategy RepositoryStrategy  `json:"vcs_strategy,omitempty" db:"-"`
-
-
-	Metadata           Metadata            `json:"metadata" yaml:"metadata" db:"-"`
-
-	Keys               []ApplicationKey    `json:"keys" yaml:"keys" db:"-"`
-}
-*/

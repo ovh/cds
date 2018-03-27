@@ -532,6 +532,8 @@ func (api *API) deleteApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteApplicationHandler> Cannot commit transaction")
 		}
 
+		event.PublishDeleteApplication(proj.Key, *app, getUser(ctx))
+
 		return nil
 	}
 }
@@ -669,6 +671,8 @@ func (api *API) updateApplicationHandler() Handler {
 			appPost.RepositoryStrategy.Password = app.RepositoryStrategy.Password
 		}
 
+		old := *app
+
 		//Update name and Metadata
 		app.Name = appPost.Name
 		app.Metadata = appPost.Metadata
@@ -696,6 +700,8 @@ func (api *API) updateApplicationHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateApplicationHandler> Cannot commit transaction")
 		}
+
+		event.PublishUpdateApplication(p.Key, *app, old, getUser(ctx))
 
 		return WriteJSON(w, app, http.StatusOK)
 

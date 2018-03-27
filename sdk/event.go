@@ -21,6 +21,7 @@ type Event struct {
 	ApplicationName string                 `json:"application_name,omitempty"`
 	PipelineName    string                 `json:"pipeline_name,omitempty"`
 	EnvironmentName string                 `json:"environment_name,omitempty"`
+	WorkflowName    string                 `json:"workflow_name,omitempty"`
 }
 
 // EventEngine contains event data for engine
