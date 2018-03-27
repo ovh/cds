@@ -46,7 +46,7 @@ func (s *Service) runScheduler(c context.Context) error {
 	return ctx.Err()
 }
 
-// Every x seconds, the scehduler try to relaunch all tasks which have never been processed, or in error
+// Every x seconds, the scheduler try to relaunch all tasks which have never been processed, or in error
 func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 	tick := time.NewTicker(time.Duration(s.Cfg.RetryDelay) * time.Second)
 	for {
@@ -86,7 +86,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 	}
 }
 
-// Every x seconds, the scehduler try to relaunch all tasks which have never been processed, or in error
+// Every 30 seconds, the scheduler try to launch all scheduled tasks (scheduler or repoPoller) which have never been processed
 func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error {
 	tick := time.NewTicker(time.Duration(30) * time.Second)
 	for {
@@ -112,7 +112,7 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 						// this will avoid to re-enqueue the same scheduled task execution if the dequeue take more than 30s (ticker of this goroutine)
 						e.Status = ""
 						s.Dao.SaveTaskExecution(&e)
-						log.Warning("Enqueing scheduler/repoPoller %s", e.UUID)
+						log.Info("Enqueing scheduler or repoPoller task %s", e.UUID)
 						s.Dao.EnqueueTaskExecution(&e)
 					}
 				}
