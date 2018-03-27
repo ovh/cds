@@ -49,10 +49,10 @@ func (s *Service) runScheduler(c context.Context) error {
 // Every x seconds, the scheduler try to relaunch all tasks which have never been processed, or in error
 func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 	tick := time.NewTicker(time.Duration(s.Cfg.RetryDelay) * time.Second)
+	defer tick.Stop()
 	for {
 		select {
 		case <-c.Done():
-			defer tick.Stop()
 			return c.Err()
 		case <-tick.C:
 			tasks, err := s.Dao.FindAllTasks()
@@ -89,10 +89,10 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 // Every 30 seconds, the scheduler try to launch all scheduled tasks (scheduler or repoPoller) which have never been processed
 func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error {
 	tick := time.NewTicker(time.Duration(30) * time.Second)
+	defer tick.Stop()
 	for {
 		select {
 		case <-c.Done():
-			defer tick.Stop()
 			return c.Err()
 		case <-tick.C:
 			tasks, err := s.Dao.FindAllTasks()
@@ -124,10 +124,10 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 // Every 60 seconds, old executions of each task are deleted
 func (s *Service) deleteTaskExecutionsRoutine(c context.Context) error {
 	tick := time.NewTicker(time.Duration(60) * time.Second)
+	defer tick.Stop()
 	for {
 		select {
 		case <-c.Done():
-			tick.Stop()
 			return c.Err()
 		case <-tick.C:
 			tasks, err := s.Dao.FindAllTasks()
