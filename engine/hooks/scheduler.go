@@ -52,7 +52,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 	for {
 		select {
 		case <-c.Done():
-			tick.Stop()
+			defer tick.Stop()
 			return c.Err()
 		case <-tick.C:
 			tasks, err := s.Dao.FindAllTasks()
@@ -92,7 +92,7 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 	for {
 		select {
 		case <-c.Done():
-			tick.Stop()
+			defer tick.Stop()
 			return c.Err()
 		case <-tick.C:
 			tasks, err := s.Dao.FindAllTasks()
