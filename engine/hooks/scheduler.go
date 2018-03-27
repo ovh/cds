@@ -147,6 +147,7 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			saveTaskExecution = true
 		} else {
 			restartTask = true
+			saveTaskExecution = true
 			if err := s.doTask(c, task, &t); err != nil {
 				log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
 				t.LastError = err.Error()
