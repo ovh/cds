@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,12 +11,11 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"encoding/json"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/event"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -41,21 +41,12 @@ type eventsBroker struct {
 }
 
 //Init the eventsBroker
-func (b *eventsBroker) Init(c context.Context, broker, topic, group, user, password string) {
+func (b *eventsBroker) Init(c context.Context) {
 	// Start cache Subscription
-	go ConsumeEvents(b.messages, broker, topic, group, user, password)
+	event.Subscribe(b.messages)
 
 	// Start processing events
 	go b.Start(c)
-}
-
-// CacheSubscribe subscribe to a channel and push received message in a channel
-func ConsumeEvents(cacheMsgChan chan<- sdk.Event, broker, topic, group, user, password string) {
-	event.ConsumeKafka(broker, topic, group, user, password, func(msg sdk.Event) error {
-		cacheMsgChan <- msg
-		return nil
-	}, log.Error)
-
 }
 
 func (b *eventsBroker) UpdateUserPermissions(username string) {

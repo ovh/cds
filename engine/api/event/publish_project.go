@@ -2,9 +2,11 @@ package event
 
 import (
 	"fmt"
-	"github.com/fatih/structs"
-	"github.com/ovh/cds/sdk"
 	"time"
+
+	"github.com/fatih/structs"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // PublishProjectEvent publish application event
