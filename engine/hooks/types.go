@@ -8,8 +8,9 @@ import (
 
 // Task execution status
 const (
-	TaskExecutionDoing = "DOING"
-	TaskExecutionDone  = "DONE"
+	TaskExecutionDoing     = "DOING"
+	TaskExecutionDone      = "DONE"
+	TaskExecutionScheduled = "SCHEDULED"
 )
 
 // Service is the stuct representing a hooks µService

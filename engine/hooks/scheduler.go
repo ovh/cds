@@ -29,6 +29,13 @@ func (s *Service) runScheduler(c context.Context) error {
 	}()
 
 	go func() {
+		if err := s.enqueueScheduledTaskExecutionsRoutine(ctx); err != nil {
+			log.Error("Hooks> runScheduler> retryTaskExecutionsRoutine> %v", err)
+			cancel()
+		}
+	}()
+
+	go func() {
 		if err := s.deleteTaskExecutionsRoutine(ctx); err != nil {
 			log.Error("Hooks> runScheduler> deleteTaskExecutionsRoutine> %v", err)
 			cancel()
@@ -63,13 +70,6 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					if e.Status == TaskExecutionDoing {
 						continue
 					}
-
-					if (e.Type == TypeScheduler || e.Type == TypeRepoPoller) && e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
-						log.Warning("Enqueing scheduler/repoPoller %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
-						s.Dao.EnqueueTaskExecution(&e)
-						continue
-					}
-
 					// old hooks
 					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-1*time.Hour).UnixNano() {
 						log.Warning("Enqueing very old hooks %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
@@ -79,6 +79,41 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 						log.Warning("Enqueing with lastError %s %d/%d %s len:%d status:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError, len(e.LastError), e.Status)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
+					}
+				}
+			}
+		}
+	}
+}
+
+// Every x seconds, the scehduler try to relaunch all tasks which have never been processed, or in error
+func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error {
+	tick := time.NewTicker(time.Duration(30) * time.Second)
+	for {
+		select {
+		case <-c.Done():
+			tick.Stop()
+			return c.Err()
+		case <-tick.C:
+			tasks, err := s.Dao.FindAllTasks()
+			if err != nil {
+				log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > Unable to find all tasks: %v", err)
+				continue
+			}
+			for _, t := range tasks {
+				execs, err := s.Dao.FindAllTaskExecutions(&t)
+				if err != nil {
+					log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > Unable to find all task executions (%s): %v", t.UUID, err)
+					continue
+				}
+				for _, e := range execs {
+					if e.Status == TaskExecutionScheduled && e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
+						// update status before enqueue
+						// this will avoid to re-enqueue the same scheduled task execution if the dequeue take more than 30s (ticker of this goroutine)
+						e.Status = ""
+						s.Dao.SaveTaskExecution(&e)
+						log.Warning("Enqueing scheduler/repoPoller %s", e.UUID)
+						s.Dao.EnqueueTaskExecution(&e)
 					}
 				}
 			}
