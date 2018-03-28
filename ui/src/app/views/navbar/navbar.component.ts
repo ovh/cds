@@ -115,14 +115,17 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             if (workflows) {
                 this.navRecentWorkflows = workflows;
                 this.listWorkflows = workflows;
-                this.recentItems = workflows.toArray()
-                    .map((w) => ({
-                        type: 'workflow',
-                        value: w.project_key + '/' + w.name,
-                        title: w.name,
-                        projectKey: w.project_key
-                    }))
-                    .concat(this.recentItems.filter((i) => i.type !== 'workflow'));
+                this.recentItems = new Array<NavbarSearchItem>();
+                workflows.toArray().forEach(w => {
+                    if (w.name) {
+                        this.recentItems.push({
+                            type: 'workflow',
+                            value: w.project_key + '/' + w.name,
+                            title: w.name,
+                            projectKey: w.project_key
+                        });
+                    }
+                });
                 this.items = this.recentItems;
                 this._cd.detectChanges();
             }

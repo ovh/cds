@@ -672,7 +672,7 @@ type vcsInfos struct {
 	httpurl    string
 }
 
-func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, ignoreError bool, previousGitRepo string) (vcsInfos, error) {
+func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.repository = gitValues[tagGitRepository]
 	vcsInfos.branch = gitValues[tagGitBranch]
@@ -716,7 +716,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 
 		//If it's not a fork; reset this value to the application repository
 		if !forkFound {
-			if !ignoreError {
+			if !isChildNode {
 				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.repository))
 			}
 			vcsInfos.repository = node.Context.Application.RepositoryFullname
@@ -726,7 +726,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 	//Get the url and http_url
 	repo, err := client.RepoByFullname(vcsInfos.repository)
 	if err != nil {
-		if !ignoreError {
+		if !isChildNode {
 			return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
 		}
 		//If we ignore errors
@@ -739,20 +739,20 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 	vcsInfos.url = repo.SSHCloneURL
 	vcsInfos.httpurl = repo.HTTPCloneURL
 
-	//Check that the branch exist, if it isn't existing, let the default branch
-	var branch *sdk.VCSBranch
-	if vcsInfos.branch != "" {
-		branch, err = client.Branch(vcsInfos.repository, vcsInfos.branch)
-		if err != nil {
-			if !ignoreError {
-				return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
-			}
-		}
+	if vcsInfos.branch == "" && !isChildNode {
+		return vcsInfos, sdk.WrapError(sdk.ErrBranchNameNotProvided, "computeVCSInfos> should not have an empty branch")
+	}
 
-		if branch == nil {
-			log.Error("computeVCSInfos> unable to get branch %s", vcsInfos.branch)
-			vcsInfos.branch = ""
+	branch, err := client.Branch(vcsInfos.repository, vcsInfos.branch)
+	if err != nil {
+		if !isChildNode {
+			return vcsInfos, sdk.NewError(sdk.ErrBranchNameNotProvided, err)
 		}
+	}
+
+	if branch == nil {
+		log.Error("computeVCSInfos> unable to get branch %s", vcsInfos.branch)
+		vcsInfos.branch = ""
 	}
 
 	//Get the default branch
@@ -772,7 +772,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 			ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
 			Args: []interface{}{vcsInfos.branch},
 		})
-		return vcsInfos, sdk.WrapError(fmt.Errorf("branch has benn deleted"), "computeVCSInfos> ")
+		return vcsInfos, sdk.WrapError(fmt.Errorf("branch has been deleted"), "computeVCSInfos> ")
 	}
 
 	if branch != nil && vcsInfos.hash == "" {
@@ -782,7 +782,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 	//Get the latest commit
 	commit, errCm := client.Commit(vcsInfos.repository, vcsInfos.hash)
 	if errCm != nil {
-		if !ignoreError {
+		if !isChildNode {
 			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.repository, vcsInfos.hash)
 		}
 		vcsInfos.hash = branch.LatestCommit

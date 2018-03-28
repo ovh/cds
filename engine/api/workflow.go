@@ -191,6 +191,14 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		if wf.Root.Context.HasDefaultPayload() {
+			if defaultPayloadMap, err := wf.Root.Context.DefaultPayloadToMap(); err == nil {
+				if gitBranch, ok := defaultPayloadMap["git.branch"]; ok && gitBranch == "" {
+					return sdk.ErrInvalidGitBranch
+				}
+			}
+		}
+
 		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
 		}

@@ -52,7 +52,7 @@ Here, an example of a script inside a CDS Job using the cache feature:
 	# update the directory .m2/
 	# as there is a cache, mvn does not need to download all dependencies
 	# if they are not updated on upstream
-	mvn install 
+	mvn install
 
 	# put in cache the updated .m2/ directory
 	worker cache push $tag .m2/
@@ -112,9 +112,15 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			files[i] = absPath
 		}
 
+		cwd, err := os.Getwd()
+		if err != nil {
+			sdk.Exit("worker cache push > Cannot find working directory : %s\n", err)
+		}
+
 		c := sdk.Cache{
-			Tag:   args[0],
-			Files: files,
+			Tag:              args[0],
+			Files:            files,
+			WorkingDirectory: cwd,
 		}
 
 		data, errMarshal := json.Marshal(c)
@@ -175,7 +181,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, errTar := sdk.CreateTarFromPaths(c.Files)
+	res, errTar := sdk.CreateTarFromPaths(c.WorkingDirectory, c.Files)
 	if errTar != nil {
 		errTar = sdk.Error{
 			Message: "worker cache push > Cannot tar : " + errTar.Error(),
