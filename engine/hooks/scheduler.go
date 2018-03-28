@@ -71,12 +71,12 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 						continue
 					}
 					// old hooks
-					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-1*time.Hour).UnixNano() {
-						log.Warning("Enqueing very old hooks %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
+					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-2*time.Minute).UnixNano() {
+						log.Warning("Enqueing very old hooks %s %d/%d type:%s status:%s err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
-						log.Warning("Enqueing with lastError %s %d/%d %s len:%d status:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError, len(e.LastError), e.Status)
+						log.Warning("Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}
@@ -112,7 +112,7 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 						// this will avoid to re-enqueue the same scheduled task execution if the dequeue take more than 30s (ticker of this goroutine)
 						e.Status = ""
 						s.Dao.SaveTaskExecution(&e)
-						log.Info("Enqueing scheduler or repoPoller task %s", e.UUID)
+						log.Info("Enqueing scheduler or repoPoller task %s type:%s", e.UUID, e.Type)
 						s.Dao.EnqueueTaskExecution(&e)
 					}
 				}
