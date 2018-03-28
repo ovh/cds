@@ -40,7 +40,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
                 private _router: Router, private _routerService: RouterService, private _workflowRunService: WorkflowRunService,
-                private _durationService: DurationService, private _workflowCoreSerivce: WorkflowCoreService) {
+                private _durationService: DurationService, private _workflowCoreService: WorkflowCoreService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         this._activatedRoute.data.subscribe(datas => {
@@ -69,7 +69,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                     .pipe(first())
                     .subscribe(wr => {
                         this.workflowRun = wr;
-                        this._workflowCoreSerivce.setCurrentWorkflowRun(this.workflowRun);
+                        this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
                     });
 
                 this.startWorker(number, nodeRunId);
@@ -94,6 +94,8 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                             this.nodeRunWorker = undefined;
                             this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
                         }
+
+                        this._workflowCoreService.setCurrentNodeRun(this.nodeRun);
                     });
                 });
             }
