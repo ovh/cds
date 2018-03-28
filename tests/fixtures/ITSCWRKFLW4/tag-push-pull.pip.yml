@@ -18,6 +18,8 @@ jobs:
     - cd ..
     - ""
     - worker cache push abcd ./mydir
+    - cd mydir
+    - worker cache push testpush toto.txt
 - job: New Job
   stage: Stage 2
   steps:
@@ -36,4 +38,6 @@ jobs:
     - "\techo \"Cache KO\""
     - '    exit 1'
     - fi
+    - worker cache pull testpush
+    - cat toto.txt
     - ""
