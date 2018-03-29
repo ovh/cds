@@ -122,7 +122,7 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType, sdk.ProjectWorkflowLastModificationType, sdk.ProjectApplicationLastModificationType); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType, sdk.ProjectWorkflowLastModificationType); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler %s", sdk.ProjectWorkflowLastModificationType)
 		}
 
