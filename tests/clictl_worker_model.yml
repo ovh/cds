@@ -6,7 +6,7 @@ testcases:
 
 - name: worker model add
   steps:
-  - script: {{.cds.build.cdsctl}} worker model add worker1 docker --image=foo/model/go:latest --group shared.infra
+  - script: {{.cds.build.cdsctl}} worker model add worker1 docker shared.infra --image=foo/model/go:latest 
 
 - name: worker model list
   steps:
