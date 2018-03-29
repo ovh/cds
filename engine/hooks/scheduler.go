@@ -60,16 +60,16 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					continue
 				}
 				for _, e := range execs {
+
 					if e.Status == TaskExecutionDoing {
 						continue
 					}
-					if e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
+					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-1*time.Hour).UnixNano() {
 						log.Warning("Enqueing %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
-						continue
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
-						log.Warning("Enqueing %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
+						log.Warning("Enqueing with lastError %s %d/%d %s len:%d status:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError, len(e.LastError), e.Status)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}
@@ -149,12 +149,15 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			t.LastError = "Executions skipped: Task has been stopped"
 			t.NbErrors++
 			saveTaskExecution = true
-		} else if err := s.doTask(c, task, &t); err != nil {
-			log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
-			t.LastError = err.Error()
-			t.NbErrors++
+		} else {
 			restartTask = true
 			saveTaskExecution = true
+			if err := s.doTask(c, task, &t); err != nil {
+				log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
+				t.LastError = err.Error()
+				t.NbErrors++
+				saveTaskExecution = true
+			}
 		}
 
 		//Save the execution

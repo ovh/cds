@@ -10,5 +10,7 @@
   </div>
 </a>
 <ng-container *ngIf="open">
-  <app-job-step-summary *ngFor="let job of stage.run_jobs" [job]="job" [stage]="stage" [workflowRun]="workflowRun"></app-job-step-summary>
+  <ng-container *ngFor="let job of stage.run_jobs">
+    <app-job-step-summary [job]="job" [stage]="stage" [workflowRun]="workflowRun"></app-job-step-summary>
+  </ng-container>
 </ng-container>

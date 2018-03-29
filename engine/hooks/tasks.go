@@ -190,7 +190,6 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) error {
 	default:
 		return fmt.Errorf("Unsupported task type %s", t.Type)
 	}
-	return nil
 }
 
 func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
