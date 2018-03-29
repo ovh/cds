@@ -2,7 +2,7 @@
 title = "First Workflow from repository"
 weight = 1
 aliases = [
-    "/gettingstarted/"
+    "/gettingstarted"
 ]
 +++
 
