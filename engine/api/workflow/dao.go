@@ -386,6 +386,17 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 	w.RootID = w.Root.ID
 
+	if w.Root.Context != nil && w.Root.Context.Application != nil && w.Root.Context.Application.RepositoryFullname != "" {
+		if w.Metadata == nil {
+			w.Metadata = sdk.Metadata{}
+		}
+		w.Metadata["default_tags"] = "git.branch,git.author"
+
+		if err := UpdateMetadata(db, w.ID, w.Metadata); err != nil {
+			return sdk.WrapError(err, "Insert> Unable to insert workflow metadata (%#v, %d)", w.Root, w.ID)
+		}
+	}
+
 	if _, err := db.Exec("UPDATE workflow SET root_node_id = $2 WHERE id = $1", w.ID, w.Root.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow (%#v, %d)", w.Root, w.ID)
 	}

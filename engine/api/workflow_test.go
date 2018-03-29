@@ -321,7 +321,13 @@ func TestGetUpdatedMetadata(t *testing.T) {
 		{
 			metadata: sdk.Metadata{"default_tags": "git.hash,git.branch"},
 			expected: sdk.Metadata{
-				"default_tags": "git.hash,git.branch,git.author",
+				"default_tags": "git.author,git.hash,git.branch",
+			},
+		},
+		{
+			metadata: sdk.Metadata{"default_tags": "git.hash,triggered_by"},
+			expected: sdk.Metadata{
+				"default_tags": "git.branch,git.author,git.hash,triggered_by",
 			},
 		},
 		{

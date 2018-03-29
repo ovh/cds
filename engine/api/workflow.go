@@ -214,7 +214,7 @@ func (api *API) putWorkflowHandler() Handler {
 			if err := workflow.UpdateNodeContext(tx, wf.Root.Context); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> updateNodeContext")
 			}
-		} else if defaultPayload != nil {
+		} else if defaultPayload != nil || (wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "") {
 			wf.Metadata = getUpdatedMetadata(wf.Metadata)
 			if err := workflow.UpdateMetadata(tx, wf.ID, wf.Metadata); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> cannot update metadata")
@@ -282,12 +282,12 @@ func getUpdatedMetadata(metadata sdk.Metadata) sdk.Metadata {
 			}
 		}
 
-		if !gitBranch {
-			defaultTags += ",git.branch"
+		if !gitAuthor {
+			defaultTags = "git.author," + defaultTags
 		}
 
-		if !gitAuthor {
-			defaultTags += ",git.author"
+		if !gitBranch {
+			defaultTags = "git.branch," + defaultTags
 		}
 	} else {
 		defaultTags = "git.branch,git.author"
