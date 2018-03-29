@@ -214,7 +214,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 }
 
 // UpdateLastModified updates last_modified date on a project given its key
-func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project, updateType string) error {
+func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project, updateTypes ...string) error {
 	var lastModified time.Time
 	query := "update project set last_modified = current_timestamp where projectkey = $1 RETURNING last_modified"
 
@@ -224,18 +224,21 @@ func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pro
 	}
 
 	if u != nil {
-		updates := sdk.LastModification{
-			Key:          proj.Key,
-			Name:         proj.Name,
-			LastModified: lastModified.Unix(),
-			Username:     u.Username,
-			Type:         updateType,
+		lastModifiedU := lastModified.Unix()
+		for _, updateType := range updateTypes {
+			updates := sdk.LastModification{
+				Key:          proj.Key,
+				Name:         proj.Name,
+				LastModified: lastModifiedU,
+				Username:     u.Username,
+				Type:         updateType,
+			}
+			b, errP := json.Marshal(updates)
+			if errP == nil {
+				store.Publish("lastUpdates", string(b))
+			}
+			return err
 		}
-		b, errP := json.Marshal(updates)
-		if errP == nil {
-			store.Publish("lastUpdates", string(b))
-		}
-		return err
 	}
 	return nil
 }

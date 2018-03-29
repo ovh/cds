@@ -122,8 +122,8 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
-			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType, sdk.ProjectWorkflowLastModificationType); err != nil {
+			return sdk.WrapError(err, "migrationApplicationWorkflowHandler %s", sdk.ProjectWorkflowLastModificationType)
 		}
 
 		if err := tx.Commit(); err != nil {
