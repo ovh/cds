@@ -78,11 +78,13 @@
         <div>
           <ng-container *ngIf="currentWorkflowNodeRun">
             <div class="ui vertical fluid steps">
-              <app-stage-step-summary *ngFor="let stage of currentWorkflowNodeRun.stages"
-                [stage]="stage"
-                [workflowRun]="currentWorkflowRun"
-                [workflowNodeRun]="currentWorkflowNodeRun">
-              </app-stage-step-summary>
+              <ng-container *ngFor="let stage of currentWorkflowNodeRun.stages">
+                <app-stage-step-summary
+                  [stage]="stage"
+                  [workflowRun]="currentWorkflowRun"
+                  [workflowNodeRun]="currentWorkflowNodeRun">
+                </app-stage-step-summary>
+              </ng-container>
             </div>
           </ng-container>
         </div>

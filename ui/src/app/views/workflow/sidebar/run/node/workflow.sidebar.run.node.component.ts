@@ -39,6 +39,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     runId: number;
     runNumber: number;
     currentWorkflowRunSub: Subscription;
+    currentNodeRunSub: Subscription;
     loading = true;
     currentWorkflowRun: WorkflowRun;
     currentWorkflowNodeRun: WorkflowNodeRun;
@@ -95,6 +96,19 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
             this.canBeRun = this.getCanBeRun();
           }
         );
+
+        this.currentNodeRunSub = this._workflowCoreService.getCurrentNodeRun()
+          .subscribe((nodeRun) => {
+            if (!nodeRun) {
+              return;
+            }
+            this.currentWorkflowNodeRun = nodeRun;
+            this.duration = this.getDuration();
+            this.canBeRun = this.getCanBeRun();
+            if (this.loading) {
+                this.loading = false;
+            }
+          });
     }
 
     displayLogs() {
