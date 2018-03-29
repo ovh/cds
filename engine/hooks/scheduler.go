@@ -181,7 +181,7 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 
 		task := s.Dao.FindTask(t.UUID)
 		if task == nil {
-			log.Error("Hooks> dequeueTaskExecutions failed: Task not found")
+			log.Error("Hooks> dequeueTaskExecutions failed: Task %s not found", t.UUID)
 			t.LastError = "Internal Error: Task not found"
 			t.NbErrors++
 			log.Info("Hooks> Deleting task execution %s", t.UUID)
@@ -195,7 +195,7 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			restartTask = true
 			saveTaskExecution = true
 			if err := s.doTask(c, task, &t); err != nil {
-				log.Error("Hooks> dequeueTaskExecutions failed [%d]: %v", t.NbErrors, err)
+				log.Error("Hooks> dequeueTaskExecutions %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
 				t.LastError = err.Error()
 				t.NbErrors++
 				saveTaskExecution = true
