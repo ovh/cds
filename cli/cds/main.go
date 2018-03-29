@@ -22,11 +22,9 @@ import (
 	"github.com/ovh/cds/cli/cds/project"
 	"github.com/ovh/cds/cli/cds/track"
 	"github.com/ovh/cds/cli/cds/trigger"
-	"github.com/ovh/cds/cli/cds/ui"
 	"github.com/ovh/cds/cli/cds/update"
 	"github.com/ovh/cds/cli/cds/user"
 	"github.com/ovh/cds/cli/cds/version"
-	"github.com/ovh/cds/cli/cds/worker"
 	"github.com/ovh/cds/cli/cds/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -108,11 +106,9 @@ func main() {
 	rootCmd.AddCommand(project.Cmd)
 	rootCmd.AddCommand(group.Cmd)
 	rootCmd.AddCommand(user.Cmd)
-	rootCmd.AddCommand(worker.Cmd)
 	rootCmd.AddCommand(update.Cmd)
 	rootCmd.AddCommand(version.Cmd)
 	rootCmd.AddCommand(trigger.Cmd())
-	rootCmd.AddCommand(ui.Cmd)
 	rootCmd.AddCommand(track.Cmd)
 	rootCmd.AddCommand(generate.Cmd())
 	rootCmd.AddCommand(admin.Cmd())

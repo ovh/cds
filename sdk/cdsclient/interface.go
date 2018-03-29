@@ -215,6 +215,7 @@ type UserClient interface {
 type WorkerClient interface {
 	WorkerModelBook(id int64) error
 	WorkerList() ([]sdk.Worker, error)
+	WorkerDisable(id string) error
 	WorkerModelAdd(name string, modelType string, image string, groupID int64) (sdk.Model, error)
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)
