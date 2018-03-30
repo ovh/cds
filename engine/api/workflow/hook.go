@@ -69,12 +69,12 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 				if projectVCSServer != nil {
 					client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
 					if errclient != nil {
-						return nil, sdk.WrapError(errclient, "HookRegistration> Cannot get authorized client from repository manager")
+						return sdk.WrapError(errclient, "HookRegistration> Cannot get authorized client from repository manager")
 					}
 
 					branches, errBr := client.Branches(h.Config["repoFullName"].Value)
 					if errBr != nil {
-						return nil, sdk.WrapError(errBr, "HookRegistration> Cannot get branches from repository manager %s", h.Config["repoFullName"].Value)
+						return sdk.WrapError(errBr, "HookRegistration> Cannot get branches from repository manager %s", h.Config["repoFullName"].Value)
 					}
 
 					for _, branch := range branches {
