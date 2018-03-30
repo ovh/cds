@@ -351,7 +351,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	}, nil)
+	}, nil, nil)
 	test.NoError(t, err)
 
 	//Prepare request
@@ -1044,7 +1044,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	}, nil)
+	}, nil, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, true)
