@@ -75,3 +75,28 @@ func (c *client) WorkerModelAdd(name string, modelType string, image string, gro
 
 	return modelCreated, nil
 }
+
+func (c *client) WorkerModelDelete(name string) error {
+	wms, err := c.workerModels(true)
+	if err != nil {
+		return err
+	}
+
+	var wm *sdk.Model
+	for i := range wms {
+		if wms[i].Name == name {
+			wm = &wms[i]
+			break
+		}
+	}
+	if wm == nil {
+		return fmt.Errorf("worker model not found")
+	}
+
+	uri := fmt.Sprintf("/worker/model/%d", wm.ID)
+	if _, err := c.DeleteJSON(uri, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
