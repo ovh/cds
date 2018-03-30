@@ -552,7 +552,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	booked := make(map[string]int)
 
 	items := []string{
-		fmt.Sprintf("[  %s %s%s %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("since", 9), pad("booked", 27), pad("job", 7), pad("project/application", 35), pad("pipeline/branch/env", 33), "requirements"),
+		fmt.Sprintf("[  %s %s%s %s ➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("since", 9), pad("booked", 27), pad("run", 7), pad("project/workflow", 30), pad("node", 20), pad("triggered by", 17), "requirements"),
 	}
 
 	var idx int
@@ -589,18 +589,24 @@ func (ui *Termui) updateQueue(baseURL string) string {
 func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, requirements []sdk.Requirement, queued time.Time, bookedBy sdk.Hatchery, baseURL string) (string, time.Duration) {
 	req := ""
 	for _, r := range requirements {
-		req += fmt.Sprintf("%s(%s):%s ", r.Name, r.Type, r.Value)
+		req += fmt.Sprintf("%s:%s ", r.Type, r.Value)
 	}
 	prj := getVarsInPbj("cds.project", parameters)
 	app := getVarsInPbj("cds.application", parameters)
 	pip := getVarsInPbj("cds.pipeline", parameters)
+	workflow := getVarsInPbj("cds.workflow", parameters)
+	node := getVarsInPbj("cds.node", parameters)
+	run := getVarsInPbj("cds.run", parameters)
+	runNumber := getVarsInPbj("cds.run.number", parameters)
 	build := getVarsInPbj("cds.buildNumber", parameters)
 	env := getVarsInPbj("cds.environment", parameters)
 	bra := getVarsInPbj("git.branch", parameters)
 	version := getVarsInPbj("cds.version", parameters)
+	triggeredBy := getVarsInPbj("cds.triggered_by.username", parameters)
 	duration := time.Since(queued)
+	var currentURL string
 
-	row := make([]string, 5)
+	row := make([]string, 6)
 	var c string
 	if duration > 60*time.Second {
 		c = "bg-red"
@@ -610,9 +616,17 @@ func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.
 		c = "bg-default"
 	}
 	if isWJob {
-		row[0] = pad(fmt.Sprintf("W %s", sdk.Round(duration, time.Second).String()), 9)
-	} else {
 		row[0] = pad(fmt.Sprintf(sdk.Round(duration, time.Second).String()), 9)
+		row[2] = pad(fmt.Sprintf("%s", run), 7)
+		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+workflow, 30), pad(node, 20))
+		currentURL = fmt.Sprintf("%s/project/%s/workflow/%s/run/%s", baseURL, prj, workflow, runNumber)
+	} else {
+		row[0] = pad(fmt.Sprintf("-%s", sdk.Round(duration, time.Second).String()), 9)
+		row[2] = pad(fmt.Sprintf("%d", id), 7)
+		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 30), pad(pip+"/"+bra+"/"+env, 20))
+		currentURL = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%s?envName=%s&branch=%s&version=%s",
+			baseURL, prj, app, pip, build, url.QueryEscape(env), url.QueryEscape(bra), version,
+		)
 	}
 
 	if bookedBy.ID != 0 {
@@ -621,14 +635,14 @@ func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.
 	} else {
 		row[1] = pad("", 27)
 	}
-	row[2] = pad(fmt.Sprintf("%d", id), 7)
-	row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 35), pad(pip+"/"+bra+"/"+env, 33))
-	row[4] = fmt.Sprintf("➤ %s", req)
 
-	item := fmt.Sprintf("  [%s](%s)[%s %s %s %s](bg-default)", row[0], c, row[1], row[2], row[3], row[4])
+	row[4] = fmt.Sprintf("➤ %s", pad(triggeredBy, 17))
+	row[5] = fmt.Sprintf("➤ %s", req)
+
+	item := fmt.Sprintf("  [%s](%s)[%s %s %s %s %s](bg-default)", row[0], c, row[1], row[2], row[3], row[4], row[5])
 
 	if idx == ui.queue.Cursor-1 {
-		ui.currentURL = computeURL(baseURL, prj, app, pip, build, env, bra, version)
+		ui.currentURL = currentURL
 	}
 	if maxQueued < duration {
 		return item, duration
@@ -652,12 +666,6 @@ func statusShort(status string) (string, string) {
 		return "✖", "fg-red"
 	}
 	return status, "fg-default"
-}
-
-func computeURL(baseURL, prj, app, pip, build, env, branch, version string) string {
-	return fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%s?envName=%s&branch=%s&version=%s",
-		baseURL, prj, app, pip, build, url.QueryEscape(env), url.QueryEscape(branch), version,
-	)
 }
 
 func pad(t string, size int) string {
