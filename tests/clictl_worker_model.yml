@@ -14,4 +14,4 @@ testcases:
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cdsctl}} worker model delete worker1
+  - script: {{.cds.build.cdsctl}} worker model delete worker1 --force
