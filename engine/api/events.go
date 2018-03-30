@@ -75,6 +75,7 @@ func (b *eventsBroker) UpdateUserPermissions(username string) {
 	for _, c := range b.clients {
 		if c.User.Username == username {
 			c.User = user
+			break
 		}
 	}
 	b.mutex.Unlock()
@@ -157,6 +158,7 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		f.Flush()
 
 		tick := time.NewTicker(time.Second)
+		defer tick.Stop()
 	leave:
 		for {
 			select {
@@ -187,31 +189,31 @@ func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscrib
 	if strings.HasPrefix(event.EventType, "EventProject") {
 		if permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
-			return
 		}
+		return
 	}
 	if strings.HasPrefix(event.EventType, "EventWorkflow") {
 		if permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
-			return
 		}
+		return
 	}
 	if strings.HasPrefix(event.EventType, "EventApplication") {
 		if permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
-			return
 		}
+		return
 	}
 	if strings.HasPrefix(event.EventType, "EventPipeline") {
 		if permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
-			return
 		}
+		return
 	}
 	if strings.HasPrefix(event.EventType, "EventEnvironment") {
 		if permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
-			return
 		}
+		return
 	}
 }

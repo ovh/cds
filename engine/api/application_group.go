@@ -170,6 +170,7 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 		for _, g := range app.ApplicationGroups {
 			if g.Group.Name == groupName {
 				gp = g
+				break
 			}
 		}
 
