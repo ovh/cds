@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -164,11 +165,23 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
 
+	// Insert application
+	app := sdk.Application{
+		Name:               "app1",
+		RepositoryFullname: "test/app1",
+		VCSServer:          "github",
+	}
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app, u))
+
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
 		Root: &sdk.WorkflowNode{
 			PipelineID: pip.ID,
+			Context: &sdk.WorkflowNodeContext{
+				ApplicationID: app.ID,
+				Application:   &app,
+			},
 		},
 	}
 
@@ -180,6 +193,14 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
 	assert.NotEqual(t, 0, workflow.ID)
+
+	assert.NotNil(t, workflow.Root.Context.Application)
+	assert.NotNil(t, workflow.Root.Context.DefaultPayload)
+
+	payload, err := workflow.Root.Context.DefaultPayloadToMap()
+	test.NoError(t, err)
+
+	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 }
 
 func Test_putWorkflowHandler(t *testing.T) {
@@ -191,6 +212,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -230,11 +252,23 @@ func Test_putWorkflowHandler(t *testing.T) {
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
 
+	// Insert application
+	app := sdk.Application{
+		Name:               "app1",
+		RepositoryFullname: "test/app1",
+		VCSServer:          "github",
+	}
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app, u))
+
 	var workflow1 = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description 2",
 		Root: &sdk.WorkflowNode{
 			PipelineID: pip.ID,
+			Context: &sdk.WorkflowNodeContext{
+				ApplicationID: app.ID,
+				Application:   &app,
+			},
 		},
 	}
 
@@ -249,6 +283,14 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 	assert.NotEqual(t, 0, workflow1.ID)
 	assert.Equal(t, "Description 2", workflow1.Description)
+
+	assert.NotNil(t, workflow1.Root.Context.Application)
+	assert.NotNil(t, workflow1.Root.Context.DefaultPayload)
+
+	payload, err := workflow1.Root.Context.DefaultPayloadToMap()
+	test.NoError(t, err)
+
+	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 }
 
 func Test_deleteWorkflowHandler(t *testing.T) {

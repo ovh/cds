@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -51,16 +52,53 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 			return nil, sdk.WrapError(fmt.Errorf("HookRegistration> No hooks service available, please try again"), "Unable to get services dao")
 		}
 
-		var hooksUpdated map[string]sdk.WorkflowNodeHook
-		code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hooksUpdated)
-		if errHooks != nil || code >= 400 {
-			return nil, sdk.WrapError(errHooks, "HookRegistration> Unable to create hooks [%d]", code)
-		}
-
-		for i := range hooksUpdated {
-			h := hooksUpdated[i]
+		for i := range hookToUpdate {
+			h := hookToUpdate[i]
 			v, ok := h.Config["webHookID"]
-			if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
+			if h.WorkflowHookModel.Name == sdk.SchedulerModelName {
+				// Add git.branch in scheduler payload
+				if wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "" && h.Config["payload"].Value != "" {
+					payload := map[string]string{}
+					if err := json.Unmarshal([]byte(h.Config["payload"].Value), &payload); err != nil {
+						return nil, sdk.WrapError(err, "HookRegistration> Unable to unmarshall payload")
+					}
+
+					if payload["git.branch"] == "" {
+						defaultBranch := "master"
+						projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, wf.Root.Context.Application.VCSServer)
+						if projectVCSServer != nil {
+							client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
+							if errclient != nil {
+								return nil, sdk.WrapError(errclient, "HookRegistration> Cannot get authorized client")
+							}
+
+							branches, errBr := client.Branches(wf.Root.Context.Application.RepositoryFullname)
+							if errBr != nil {
+								return nil, sdk.WrapError(errBr, "HookRegistration> Cannot get branches for %s", wf.Root.Context.Application.RepositoryFullname)
+							}
+
+							for _, branch := range branches {
+								if branch.Default {
+									defaultBranch = branch.DisplayID
+									break
+								}
+							}
+							payload["git.branch"] = defaultBranch
+							if _, ok := payload[""]; ok {
+								delete(payload, "")
+							}
+							payloadStr, errM := json.Marshal(&payload)
+							if errM != nil {
+								return nil, sdk.WrapError(errM, "HookRegistration> Cannot marshal hook config payload : %s", errM)
+							}
+							pl := h.Config["payload"]
+							pl.Value = string(payloadStr)
+							h.Config["payload"] = pl
+						}
+					}
+
+				}
+			} else if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
 				if err := createVCSConfiguration(db, store, p, &h); err != nil {
 					return nil, sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
@@ -89,9 +127,16 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 					GitBranch:     defaultBranch,
 				}
 			}
+
 			if err := UpdateHook(db, &h); err != nil {
 				return nil, sdk.WrapError(err, "HookRegistration> Cannot update hook")
 			}
+		}
+
+		var hooksUpdated map[string]sdk.WorkflowNodeHook
+		code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hooksUpdated)
+		if errHooks != nil || code >= 400 {
+			return nil, sdk.WrapError(errHooks, "HookRegistration> Unable to create hooks [%d]", code)
 		}
 	}
 
