@@ -81,6 +81,17 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 				sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, "")
 			}
 		}
+
+		if refNode.Context != nil && refNode.Context.Application != nil && refNode.Context.Application.RepositoryFullname != "" {
+			if sdk.ParameterFind(&params, "git.repository") == nil {
+				data.ConditionNames = append(data.ConditionNames, "git.repository")
+				data.ConditionNames = append(data.ConditionNames, "git.branch")
+				data.ConditionNames = append(data.ConditionNames, "git.message")
+				data.ConditionNames = append(data.ConditionNames, "git.author")
+				data.ConditionNames = append(data.ConditionNames, "git.hash")
+			}
+		}
+
 		for _, p := range params {
 			data.ConditionNames = append(data.ConditionNames, p.Name)
 		}

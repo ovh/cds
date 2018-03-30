@@ -40,6 +40,19 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 	return count > 0, nil
 }
 
+// UpdateMetadata update the metadata of a workflow
+func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata) error {
+	b, err := json.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec("update workflow set metadata = $1 where id = $2", b, workflowID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateLastModifiedDate Update workflow last modified date
 func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User, projKey string, w *sdk.Workflow) error {
 	t := time.Now()
@@ -97,11 +110,7 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 
 // PostUpdate is a db hook
 func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
-	b, err := json.Marshal(w.Metadata)
-	if err != nil {
-		return err
-	}
-	if _, err := db.Exec("update workflow set metadata = $1 where id = $2", b, w.ID); err != nil {
+	if err := UpdateMetadata(db, w.ID, w.Metadata); err != nil {
 		return err
 	}
 
@@ -376,6 +385,17 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.WrapError(errIN, "Insert> Unable to insert workflow root node")
 	}
 	w.RootID = w.Root.ID
+
+	if w.Root.Context != nil && w.Root.Context.Application != nil && w.Root.Context.Application.RepositoryFullname != "" {
+		if w.Metadata == nil {
+			w.Metadata = sdk.Metadata{}
+		}
+		w.Metadata["default_tags"] = "git.branch,git.author"
+
+		if err := UpdateMetadata(db, w.ID, w.Metadata); err != nil {
+			return sdk.WrapError(err, "Insert> Unable to insert workflow metadata (%#v, %d)", w.Root, w.ID)
+		}
+	}
 
 	if _, err := db.Exec("UPDATE workflow SET root_node_id = $2 WHERE id = $1", w.ID, w.Root.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow (%#v, %d)", w.Root, w.ID)
