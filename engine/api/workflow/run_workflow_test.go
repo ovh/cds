@@ -98,10 +98,10 @@ func TestManualRun1(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "master",
 		},
-	}, nil)
+	}, nil, nil)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
 	//LoadLastRun
@@ -220,10 +220,10 @@ func TestManualRun2(t *testing.T) {
 
 	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	}, nil)
+	}, nil, nil)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
@@ -318,7 +318,7 @@ func TestManualRun3(t *testing.T) {
 
 	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	}, nil)
+	}, nil, nil)
 	test.NoError(t, err)
 
 	// test nil since/until
@@ -513,7 +513,7 @@ func TestNoStage(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
@@ -570,7 +570,7 @@ func TestNoJob(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
