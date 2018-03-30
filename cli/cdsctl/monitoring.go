@@ -604,7 +604,7 @@ func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.
 	version := getVarsInPbj("cds.version", parameters)
 	triggeredBy := getVarsInPbj("cds.triggered_by.username", parameters)
 	duration := time.Since(queued)
-	var currentURL string
+	var currentURL, fgColor string
 
 	row := make([]string, 6)
 	var c string
@@ -615,18 +615,20 @@ func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.
 	} else {
 		c = "bg-default"
 	}
+
+	row[0] = pad(fmt.Sprintf(sdk.Round(duration, time.Second).String()), 9)
 	if isWJob {
-		row[0] = pad(fmt.Sprintf(sdk.Round(duration, time.Second).String()), 9)
+		fgColor = "fg-white"
 		row[2] = pad(fmt.Sprintf("%s", run), 7)
 		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+workflow, 30), pad(node, 20))
 		currentURL = fmt.Sprintf("%s/project/%s/workflow/%s/run/%s", baseURL, prj, workflow, runNumber)
 	} else {
-		row[0] = pad(fmt.Sprintf("P%s", sdk.Round(duration, time.Second).String()), 9)
 		row[2] = pad(fmt.Sprintf("%d", id), 7)
 		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 30), pad(pip+"/"+bra+"/"+env, 20))
 		currentURL = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%s?envName=%s&branch=%s&version=%s",
 			baseURL, prj, app, pip, build, url.QueryEscape(env), url.QueryEscape(bra), version,
 		)
+		fgColor = "fg-magenta"
 	}
 
 	if bookedBy.ID != 0 {
@@ -639,7 +641,7 @@ func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.
 	row[4] = fmt.Sprintf("➤ %s", pad(triggeredBy, 17))
 	row[5] = fmt.Sprintf("➤ %s", req)
 
-	item := fmt.Sprintf("  [%s](%s)[%s %s %s %s %s](bg-default)", row[0], c, row[1], row[2], row[3], row[4], row[5])
+	item := fmt.Sprintf("  [%s](%s)[%s %s %s %s %s](%s,bg-default)", row[0], c, row[1], row[2], row[3], row[4], row[5], fgColor)
 
 	if idx == ui.queue.Cursor-1 {
 		ui.currentURL = currentURL
