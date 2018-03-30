@@ -62,6 +62,7 @@
   "application_migration_generate": "Générer un workflow",
   "application_migration_regenerate": "Regénérer un workflow",
   "application_workflow_migration": "Migration vers les workflows",
+  "application_workflow_migration_success": "Migration effectuée avec succès",
   "application_workflow_migration_ok": "Migration OK",
   "application_workflow_migration_modal_title": "Suppression de l'ancien workflow",
   "application_workflow_migration_modal_content": "Attention, ceci va supprimer votre ancien workflow. il n'y a pas de retour possible. <ul><li>Tous vos pipelines seront détachés de votre application</li><li>L'ensemble des triggers seront supprimés</li><li>Votre historique de build sera supprimé</li><li>Vos artifacts seront supprimés</li></ul>Dans le cas d'un nettoyage suivant une migration vers les workflows, cet \"ancien workflow\" à supprimer correspond uniquement à ce qui était en place avant la migration.",

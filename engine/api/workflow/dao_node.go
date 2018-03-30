@@ -98,6 +98,14 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node %d context", n.ID)
 	}
 
+	if n.Context.Application == nil && n.Context.ApplicationID != 0 {
+		app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)
+		if errA != nil {
+			return sdk.WrapError(errA, "InsertOrUpdateNode> Cannot load application %d", n.Context.ApplicationID)
+		}
+		n.Context.Application = app
+	}
+
 	//Insert hooks
 	hooksUUIDs := []string{}
 	for i := range n.Hooks {
@@ -126,14 +134,6 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		}
 
 		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName || h.WorkflowHookModel.Name == sdk.GitPollerModelName {
-			if n.Context.Application == nil {
-				app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)
-				if errA != nil {
-					return sdk.WrapError(errA, "InsertOrUpdateNode> Cannot load application %d", n.Context.ApplicationID)
-				}
-				n.Context.Application = app
-			}
-
 			if n.Context.Application == nil || n.Context.Application.RepositoryFullname == "" || n.Context.Application.VCSServer == "" {
 				return sdk.WrapError(sdk.ErrForbidden, "InsertOrUpdateNode> Cannot create a git poller or repository webhook on an application without a repository")
 			}
