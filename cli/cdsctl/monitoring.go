@@ -621,7 +621,7 @@ func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.
 		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+workflow, 30), pad(node, 20))
 		currentURL = fmt.Sprintf("%s/project/%s/workflow/%s/run/%s", baseURL, prj, workflow, runNumber)
 	} else {
-		row[0] = pad(fmt.Sprintf("-%s", sdk.Round(duration, time.Second).String()), 9)
+		row[0] = pad(fmt.Sprintf("P%s", sdk.Round(duration, time.Second).String()), 9)
 		row[2] = pad(fmt.Sprintf("%d", id), 7)
 		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 30), pad(pip+"/"+bra+"/"+env, 20))
 		currentURL = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%s?envName=%s&branch=%s&version=%s",
