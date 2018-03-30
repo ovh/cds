@@ -130,10 +130,6 @@ func (api *API) postWorkflowImportHandler() Handler {
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {
-			myError, ok := globalError.(sdk.Error)
-			if ok {
-				return WriteJSON(w, msgListString, myError.Status)
-			}
 			return sdk.WrapError(globalError, "postWorkflowImportHandler> Unable import workflow %s", ew.Name)
 		}
 
