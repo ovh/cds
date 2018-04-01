@@ -10,10 +10,8 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} pipeline add ITSCGITCLONE GitClonePip --type build
   - script: {{.cds.build.cds}} app pipeline add ITSCGITCLONE TestApp GitClonePip
-  - script: {{.cds.build.cds}} action add IT_SC_cdsgitclonetest
-  - script: {{.cds.build.cds}} action add step IT_SC_cdsgitclonetest GitClone -p url=https://github.com/fsamin/go-dump.git
   - script: {{.cds.build.cds}} pipeline job add ITSCGITCLONE GitClonePip myJob1
-  - script: {{.cds.build.cds}} pipeline job append ITSCGITCLONE GitClonePip myJob1 IT_SC_cdsgitclonetest
+  - script: {{.cds.build.cds}} pipeline job append ITSCGITCLONE GitClonePip myJob1 GitClone -p url=https://github.com/fsamin/go-dump.git
   - script: {{.cds.build.cds}} pipeline run ITSCGITCLONE TestApp GitClonePip
   - script: {{.cds.build.cds}} pipeline logs ITSCGITCLONE TestApp GitClonePip
     assertions:
@@ -24,5 +22,4 @@ testcases:
 - name: cleanup
   steps:
   - script: {{.cds.build.cds}} project remove --force ITSCGITCLONE
-  - script: {{.cds.build.cds}} action remove IT_SC_cdsgitclonetest
   - script: {{.cds.build.cds}} group remove ITSCGITCLONE

@@ -2,16 +2,13 @@ name: SSH Key Check TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} action remove sshtest || true
   - script: {{.cds.build.cds}} project remove --force ITSSHKEYCHECK
   - script: {{.cds.build.cds}} project add ITSSHKEYCHECK ITSSHKEYCHECK ITSSHKEYCHECK
   - script: {{.cds.build.cds}} app add ITSSHKEYCHECK app
   - script: {{.cds.build.cds}} pipeline add ITSSHKEYCHECK pip
-  - script: {{.cds.build.cds}} action remove sshtest || true
-  - script: {{.cds.build.cds}} action add sshtest
-  - script: {{.cds.build.cds}} action add step sshtest Script -p script="env | grep PKEY; env | grep GIT_SSH; cat \${GIT_SSH}"
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_sshtest.yml
   - script: {{.cds.build.cds}} pipeline job add ITSSHKEYCHECK pip myJob1
-  - script: {{.cds.build.cds}} pipeline job append ITSSHKEYCHECK pip myJob1 sshtest
+  - script: {{.cds.build.cds}} pipeline job append ITSSHKEYCHECK pip myJob1 IT_sshtest
   - script: {{.cds.build.cds}} app pipeline add ITSSHKEYCHECK app pip
 - name: test
   steps:
@@ -41,6 +38,8 @@ testcases:
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring github
+
+- name: cleanup
+  steps:      
   - script: {{.cds.build.cds}} project remove --force ITSSHKEYCHECK
-  - script: {{.cds.build.cds}} action remove sshtest
   - script: {{.cds.build.cds}} group remove ITSSHKEYCHECK

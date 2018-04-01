@@ -1,0 +1,5 @@
+version: v1.0
+name: IT_sshtest
+steps:
+- script:
+  - env | grep PKEY; env | grep GIT_SSH; cat \${GIT_SSH}

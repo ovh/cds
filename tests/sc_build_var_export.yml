@@ -7,20 +7,14 @@ testcases:
   - script: {{.cds.build.cds}} project add ITBUILDVAR ITBUILDVAR ITBUILDVAR
   - script: {{.cds.build.cds}} pipeline add ITBUILDVAR pip
   - script: {{.cds.build.cds}} app add ITBUILDVAR app
-  - script: {{.cds.build.cds}} action remove vartestexport --force
-  - script: {{.cds.build.cds}} action add vartestexport
-  - script: {{.cds.build.cds}} action add step vartestexport Script -p script="set -e; worker export foo bar"
-  - script: {{.cds.build.cds}} action remove vartestimport --force
-  - script: {{.cds.build.cds}} action add vartestimport
-  - script: {{.cds.build.cds}} action add step vartestimport Script -p script="echo {{.cds.build.foo}}"
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_worker_export.yml
   - script: {{.cds.build.cds}} pipeline job add ITBUILDVAR pip myJob1
-  - script: {{.cds.build.cds}} pipeline job append ITBUILDVAR pip myJob1 vartestexport
+  - script: {{.cds.build.cds}} pipeline job append ITBUILDVAR pip myJob1 IT_worker_export
   - script: {{.cds.build.cds}} pipeline job add ITBUILDVAR pip myJob2 --stage=2
-  - script: {{.cds.build.cds}} pipeline job append ITBUILDVAR pip myJob2 vartestimport
+  - script: {{.cds.build.cds}} pipeline job append ITBUILDVAR pip myJob2 IT_echo -p name="echo {{.cds.build.foo}}"
   - script: {{.cds.build.cds}} app pipeline add ITBUILDVAR app pip
 - name: test
   steps:
-  - script: {{.cds.build.cds}} pipeline run ITBUILDVAR app pip
   - script: {{.cds.build.cds}} pipeline run ITBUILDVAR app pip
     assertions:
       - result.code ShouldEqual 0
