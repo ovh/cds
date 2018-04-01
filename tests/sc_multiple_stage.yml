@@ -4,21 +4,8 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} project remove --force ITSCMULT
   - script: {{.cds.build.cds}} group remove ITSCMULT_ACTION_Test_HelloWorld --force
-  - script: {{.cds.build.cds}} action remove ITSCMULT_ACTION_Test_HelloWorld --force
-  - script: {{.cds.build.cds}} action remove ITSCMULT_ACTION_Test_Echo --force
-  - script: {{.cds.build.cds}} action remove ITSCMULT_ACTION_Test_Sleep --force
   - script: {{.cds.build.cds}} project add ITSCMULT ITSCMULT ITSCMULT
   - script: {{.cds.build.cds}} application add ITSCMULT TestApp
-  - script: {{.cds.build.cds}} action add ITSCMULT_ACTION_Test_Echo --requirement="echo" -p name
-  - script: |
-            {{.cds.build.cds}} action add step ITSCMULT_ACTION_Test_Echo Script -p script=" \
-            echo {{.cds.version}} : Coucou {{.name}}  | tee logs.txt \
-            echo Coucou {{.name}}
-            "
-  - script: {{.cds.build.cds}} action add ITSCMULT_ACTION_Test_HelloWorld
-  - script: {{.cds.build.cds}} action add step ITSCMULT_ACTION_Test_HelloWorld ITSCMULT_ACTION_Test_Echo -p name="World!"
-  - script: {{.cds.build.cds}} action add ITSCMULT_ACTION_Test_Sleep --requirement="sleep"
-  - script: {{.cds.build.cds}} action add step ITSCMULT_ACTION_Test_Sleep Script -p script="sleep 1"
 
 - name: multiple stages
   steps:
@@ -26,16 +13,16 @@ testcases:
   - script: {{.cds.build.cds}} application pipeline add ITSCMULT TestApp MultiPass
 
   - script: {{.cds.build.cds}} pipeline job add ITSCMULT MultiPass myJob1 --stage=1
-  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob1 ITSCMULT_ACTION_Test_HelloWorld
+  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob1 IT_echo -p name="Stage 1"
 
   - script: {{.cds.build.cds}} pipeline job add ITSCMULT MultiPass myJob2 --stage=1
-  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob2 ITSCMULT_ACTION_Test_Sleep
+  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob2 IT_sleep
 
   - script: {{.cds.build.cds}} pipeline job add ITSCMULT MultiPass myJob3 --stage=2
-  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob3 ITSCMULT_ACTION_Test_Echo -p name="Stage 2"
+  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob3 IT_echo -p name="Stage 2"
 
   - script: {{.cds.build.cds}} pipeline job add ITSCMULT MultiPass myJob4 --stage=2
-  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob4 ITSCMULT_ACTION_Test_Sleep
+  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob4 IT_sleep
 
   - script: {{.cds.build.cds}} pipeline run ITSCMULT TestApp MultiPass -p git.branch="master"
     assertions:
@@ -45,6 +32,4 @@ testcases:
 - name: cleanup
   steps:
   - script: {{.cds.build.cds}} project remove --force ITSCMULT
-  - script: {{.cds.build.cds}} action remove ITSCMULT_ACTION_Test_HelloWorld
-  - script: {{.cds.build.cds}} action remove ITSCMULT_ACTION_Test_Echo
   - script: {{.cds.build.cds}} group remove ITSCMULT

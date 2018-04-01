@@ -1,0 +1,10 @@
+version: v1.0
+name: IT_echo
+parameters:
+  name:
+    type: string
+requirements:
+- binary: echo
+steps:
+- script:
+  - echo "{{.name}}"

@@ -3,15 +3,13 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cds.build.cds}} project remove --force ITSCFAIL
-  - script: {{.cds.build.cds}} action remove IT_SC_FAIL_TEST_Failure --force
   - script: {{.cds.build.cds}} group remove ITSCFAIL --force
   - script: {{.cds.build.cds}} project add ITSCFAIL ITSCFAIL ITSCFAIL
   - script: {{.cds.build.cds}} application add ITSCFAIL TestApp
 
 - name: failing action
   steps:
-  - script: {{.cds.build.cds}} action add IT_SC_FAIL_TEST_Failure
-  - script: {{.cds.build.cds}} action add step IT_SC_FAIL_TEST_Failure Script -p script="false"
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_failure.yml
 
 - name: failing pipeline
   steps:
@@ -19,7 +17,7 @@ testcases:
   - script: {{.cds.build.cds}} application pipeline add ITSCFAIL TestApp FailingPipeline
 
   - script: {{.cds.build.cds}} pipeline job add ITSCFAIL FailingPipeline myJob1
-  - script: {{.cds.build.cds}} pipeline job append ITSCFAIL FailingPipeline myJob1 IT_SC_FAIL_TEST_Failure
+  - script: {{.cds.build.cds}} pipeline job append ITSCFAIL FailingPipeline myJob1 IT_failure
   - script: {{.cds.build.cds}} pipeline run ITSCFAIL TestApp FailingPipeline
     assertions:
       - result.code ShouldNotEqual 0

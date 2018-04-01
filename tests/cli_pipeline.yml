@@ -6,7 +6,6 @@ testcases:
   - script: {{.cds.build.cds}} group remove ITCLIPIP_GRP --force
   - script: {{.cds.build.cds}} project add ITCLIPIPPRJ "Test Project" ITCLIPIP_GRP
   - script: {{.cds.build.cds}} group add ITCLIPIP_GRP_EDIT_TEST
-  - script: {{.cds.build.cds}} action remove IT_CLI_pipeline_Test_Echo --force
 
 - name: pipeline add
   steps:
@@ -58,9 +57,9 @@ testcases:
 
 - name: pipeline action add
   steps:
-  - script: {{.cds.build.cds}} action add IT_CLI_pipeline_Test_Echo --requirement="echo" -p name
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo.yml
   - script: {{.cds.build.cds}} pipeline job add ITCLIPIPPRJ HelloPipeline myJob1 --stage=1
-  - script: {{.cds.build.cds}} pipeline job append ITCLIPIPPRJ HelloPipeline myJob1 IT_CLI_pipeline_Test_Echo -p "name={{.cds.proj.VAR_2}}"
+  - script: {{.cds.build.cds}} pipeline job append ITCLIPIPPRJ HelloPipeline myJob1 IT_echo -p "name={{.cds.proj.VAR_2}}"
 
 - name: pipeline run
   steps:
@@ -77,4 +76,3 @@ testcases:
   - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJ
   - script: {{.cds.build.cds}} group remove ITCLIPIP_GRP_EDIT_TEST
   - script: {{.cds.build.cds}} group remove ITCLIPIP_GRP
-  - script: {{.cds.build.cds}} action remove IT_CLI_pipeline_Test_Echo
