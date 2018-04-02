@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -28,9 +30,9 @@ var applicationVariableCreateCmd = cli.Command{
 	Short: "Add a new variable on application. variable type can be one of password, text, string, key, boolean, number, repository",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
-		{Name: _ApplicationName},
 	},
 	Args: []cli.Arg{
+		{Name: _ApplicationName},
 		{Name: "variable-name"},
 		{Name: "variable-type"},
 		{Name: "variable-value"},
