@@ -4,7 +4,7 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCGITCLONE
   - script: {{.cds.build.cdsctl}} project add ITSCGITCLONE ITSCGITCLONE ITSCGITCLONE
-  - script: {{.cds.build.cds}} application add ITSCGITCLONE TestApp
+  - script: {{.cds.build.cdsctl}} application add ITSCGITCLONE TestApp
 
 - name: test GitClone
   steps:

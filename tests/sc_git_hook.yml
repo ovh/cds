@@ -5,7 +5,7 @@ testcases:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCGITHOOK
   - script: {{.cds.build.cdsctl}} group delete ITSCGITHOOK --force
   - script: {{.cds.build.cdsctl}} project add ITSCGITHOOK ITSCGITHOOK ITSCGITHOOK
-  - script: {{.cds.build.cds}} application add ITSCGITHOOK TestApp
+  - script: {{.cds.build.cdsctl}} application add ITSCGITHOOK TestApp
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo.yml
 
 - name: git hooks

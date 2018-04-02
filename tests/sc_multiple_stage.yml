@@ -5,7 +5,7 @@ testcases:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCMULT
   - script: {{.cds.build.cdsctl}} group delete ITSCMULT_ACTION_Test_HelloWorld --force
   - script: {{.cds.build.cdsctl}} project add ITSCMULT ITSCMULT ITSCMULT
-  - script: {{.cds.build.cds}} application add ITSCMULT TestApp
+  - script: {{.cds.build.cdsctl}} application add ITSCMULT TestApp
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_sleep.yml
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo.yml
 

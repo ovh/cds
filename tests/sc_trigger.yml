@@ -5,7 +5,7 @@ testcases:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCTRIGGER
   - script: {{.cds.build.cdsctl}} group delete ITSCTRIGGER --force
   - script: {{.cds.build.cdsctl}} project add ITSCTRIGGER ITSCTRIGGER ITSCTRIGGER
-  - script: {{.cds.build.cds}} application add ITSCTRIGGER TestApp
+  - script: {{.cds.build.cdsctl}} application add ITSCTRIGGER TestApp
 
 - name: trigger
   steps:

@@ -10,7 +10,7 @@ testcases:
 
 - name: application add
   steps:
-  - script: {{.cds.build.cds}} application add ITCLIAPPPRJ TestApp
+  - script: {{.cds.build.cdsctl}} application add ITCLIAPPPRJ TestApp
 
 - name: application list
   steps:

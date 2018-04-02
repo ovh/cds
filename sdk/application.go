@@ -113,24 +113,6 @@ func NewApplication(name string) *Application {
 	return a
 }
 
-// AddApplication create an application in the given project
-func AddApplication(key, appName string) error {
-
-	a := NewApplication(appName)
-	data, err := json.Marshal(a)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("/project/%s/applications", key)
-	data, _, err = Request("POST", url, data)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
 // ListApplications returns all available application for the given project
 func ListApplications(key string) ([]Application, error) {
 	url := fmt.Sprintf("/project/%s/applications", key)

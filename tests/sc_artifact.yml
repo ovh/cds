@@ -4,7 +4,7 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCARTIFACT
   - script: {{.cds.build.cdsctl}} project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
-  - script: {{.cds.build.cds}} application add ITSCARTIFACT TestApp
+  - script: {{.cds.build.cdsctl}} application add ITSCARTIFACT TestApp
   - script: {{.cds.build.cds}} environment add ITSCARTIFACT TestEnv
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo_upload.yml
 
@@ -13,7 +13,7 @@ testcases:
   - script: {{.cds.build.cds}} pipeline add ITSCARTIFACT ArtifactPip --type deployment
   - script: {{.cds.build.cds}} app pipeline add ITSCARTIFACT TestApp ArtifactPip
   - script: {{.cds.build.cds}} pipeline job add ITSCARTIFACT ArtifactPip myJob1
-  - script: {{.cds.build.cds}} pipeline job append ITSCARTIFACT ArtifactPip myJob1 IT_echo_upload
+  - script: {{.cds.build.cds}} pipeline job append ITSCARTIFACT ArtifactPip myJob1 IT_echo_upload -p name="tosearch"
   - script: {{.cds.build.cds}} pipeline run ITSCARTIFACT TestApp ArtifactPip TestEnv
 
 - name: listing artifact
@@ -22,7 +22,7 @@ testcases:
 
 - name: downloading artifact
   steps:
-  - script: {{.cds.build.cds}} artifact dl ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv && cat logs.txt | grep foo && rm logs.txt
+  - script: {{.cds.build.cds}} artifact dl ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv && cat logs.txt | grep tosearch && rm logs.txt
 
 - name: cleanup
   steps:
