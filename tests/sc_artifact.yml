@@ -5,7 +5,7 @@ testcases:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCARTIFACT
   - script: {{.cds.build.cdsctl}} project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
   - script: {{.cds.build.cdsctl}} application add ITSCARTIFACT TestApp
-  - script: {{.cds.build.cds}} environment add ITSCARTIFACT TestEnv
+  - script: {{.cds.build.cdsctl}} environment add ITSCARTIFACT TestEnv
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo_upload.yml
 
 - name: test artifact

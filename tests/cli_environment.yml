@@ -10,7 +10,7 @@ testcases:
 
 - name: environment add
   steps:
-  - script: {{.cds.build.cds}} environment add ITCLIENVPRJ PROD
+  - script: {{.cds.build.cdsctl}} environment add ITCLIENVPRJ PROD
 
 - name: environment list
   steps:
@@ -30,7 +30,7 @@ testcases:
 
 - name: environment add
   steps:
-  - script: {{.cds.build.cds}} environment add ITCLIENVPRJ PROD
+  - script: {{.cds.build.cdsctl}} environment add ITCLIENVPRJ PROD
 
 - name: environment variable add
   steps:

@@ -13,7 +13,6 @@ func Cmd() *cobra.Command {
 		Aliases: []string{"e", "env"},
 	}
 
-	cmd.AddCommand(environmentAddCmd())
 	cmd.AddCommand(environmentUpdateCmd())
 	cmd.AddCommand(environmentDeleteCmd())
 	cmd.AddCommand(environmentListCmd())

@@ -57,23 +57,6 @@ var DefaultEnv = Environment{
 	Name: "NoEnv",
 }
 
-// AddEnvironment create an environment
-func AddEnvironment(key, envName string) error {
-	env := NewEnvironment(envName)
-	data, err := json.Marshal(env)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("/project/%s/environment", key)
-	data, _, err = Request("POST", url, data)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
 // UpdateEnvironment create an environment
 func UpdateEnvironment(key, oldName, newName string) error {
 	env := NewEnvironment(newName)
