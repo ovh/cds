@@ -54,7 +54,7 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} pipeline export ITCLIPIPPRJIMP HelloPipeline3
     assertions:
-      - result.code ShouldEqual 1
+      - result.code ShouldEqual 50
 
 - name: cleanup
   steps:

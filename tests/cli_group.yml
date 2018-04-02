@@ -23,7 +23,7 @@ testcases:
 
 - name: group add user
   steps:
-  - script: {{.cds.build.cdsctl}} group adduser ITCLIGRP_TEST_2 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group user add ITCLIGRP_TEST_2 cds.integration.tests.ro
 
 - name: group set admin
   steps:

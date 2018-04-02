@@ -9,7 +9,7 @@ testcases:
   - script: {{.cds.build.cdsctl}} group add ITGRPRIGHTRO
   - script: {{.cds.build.cdsctl}} project add ITPRJRIGHTEXEC ITPRJRIGHTEXEC ITPRJRIGHTEXEC
   - script: {{.cds.build.cds}} project group add ITPRJRIGHTEXEC ITGRPRIGHTRO 4
-  - script: {{.cds.build.cdsctl}} group adduser ITGRPRIGHTRO cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group user add ITGRPRIGHTRO cds.integration.tests.ro
   - script: {{.cds.build.cdsro}} user list
   - script: {{.cds.build.cdsro}} pipeline run ITPRJRIGHTEXEC TestApp deploy foo
     assertions:
