@@ -11,7 +11,6 @@ func init() {
 	Cmd.AddCommand(cmdProjectInfo())
 	Cmd.AddCommand(cmdMetadata())
 	Cmd.AddCommand(group.CmdGroup)
-	Cmd.AddCommand(CmdVariable)
 	Cmd.AddCommand(repositoriesmanager.Cmd)
 }
 

@@ -18,7 +18,6 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(environmentListCmd())
 	cmd.AddCommand(environmentShowCmd())
 	cmd.AddCommand(environmentCloneCmd())
-	cmd.AddCommand(environmentVariableCmd)
 	cmd.AddCommand(environmentGroupCmd)
 
 	return cmd

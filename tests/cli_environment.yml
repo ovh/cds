@@ -34,15 +34,15 @@ testcases:
 
 - name: environment variable add
   steps:
-  - script: {{.cds.build.cds}} environment variable add ITCLIENVPRJ PROD var1 string value1
+  - script: {{.cds.build.cdsctl}} environment variable add ITCLIENVPRJ PROD var1 string value1
 
 - name: environment variable show
   steps:
-  - script: {{.cds.build.cds}} environment variable show ITCLIENVPRJ PROD
+  - script: {{.cds.build.cdsctl}} environment variable list ITCLIENVPRJ PROD
 
 - name: environment variable remove
   steps:
-  - script: {{.cds.build.cds}} environment variable remove ITCLIENVPRJ PROD var1
+  - script: {{.cds.build.cdsctl}} environment variable delete ITCLIENVPRJ PROD var1
 
 - name: environment group add
   steps:
