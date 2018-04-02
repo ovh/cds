@@ -17,7 +17,6 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(applicationRenameCmd())
 	cmd.AddCommand(applicationListCmd())
 	cmd.AddCommand(applicationShowCmd())
-	cmd.AddCommand(applicationVariableCmd)
 	cmd.AddCommand(applicationGroupCmd)
 	cmd.AddCommand(applicationPipelineCmd)
 	cmd.AddCommand(applicationRepositoriesManagerCmd)

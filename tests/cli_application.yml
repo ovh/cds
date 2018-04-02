@@ -14,15 +14,15 @@ testcases:
 
 - name: application list
   steps:
-  - script: {{.cds.build.cds}} application list ITCLIAPPPRJ
+  - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ
 
 - name: application show
   steps:
-  - script: {{.cds.build.cds}} application show ITCLIAPPPRJ TestApp
+  - script: {{.cds.build.cdsctl}} application show ITCLIAPPPRJ TestApp
 
 - name: application variable add
   steps:
-  - script: {{.cds.build.cds}} application variable add ITCLIAPPPRJ TestApp var1 value1 string
+  - script: {{.cds.build.cdsctl}} application variable add ITCLIAPPPRJ TestApp var1 string value1
 
 - name: application variable show
   steps:
@@ -30,7 +30,7 @@ testcases:
 
 - name: application variable remove
   steps:
-  - script: {{.cds.build.cds}} application variable remove ITCLIAPPPRJ TestApp var1
+  - script: {{.cds.build.cdsctl}} application variable delete ITCLIAPPPRJ TestApp var1
 
 - name: application group add
   steps:
