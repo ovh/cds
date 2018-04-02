@@ -55,7 +55,7 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} pipeline stage add ITCLIPIPPRJ HelloPipeline Stage1
 
-- name: pipeline action add
+- name: pipeline job add
   steps:
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo.yml
   - script: {{.cds.build.cds}} pipeline job add ITCLIPIPPRJ HelloPipeline myJob1 --stage=1

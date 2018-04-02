@@ -30,6 +30,8 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(pipelineStageCmd)
 	cmd.AddCommand(pipelineHookCmd)
 	cmd.AddCommand(pipelineParameterCmd)
+	cmd.AddCommand(pipelineJobCmd())
+	cmd.AddCommand(pipelineJoinedCmd())
 	cmd.AddCommand(pipelineBuildCmd())
 	cmd.AddCommand(exportCmd())
 	cmd.AddCommand(importCmd())
