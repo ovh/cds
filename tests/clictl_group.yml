@@ -9,9 +9,9 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} group add ITCLIGRP_TEST
 
-- name: group info
+- name: group show
   steps:
-  - script: {{.cds.build.cds}} group info ITCLIGRP_TEST
+  - script: {{.cds.build.cdsctl}} group show ITCLIGRP_TEST
 
 - name: group list
   steps:
@@ -19,7 +19,7 @@ testcases:
 
 - name: group rename
   steps:
-  - script: {{.cds.build.cds}} group rename ITCLIGRP_TEST ITCLIGRP_TEST_2
+  - script: {{.cds.build.cdsctl}} group rename ITCLIGRP_TEST ITCLIGRP_TEST_2
 
 - name: group add user
   steps:
@@ -27,19 +27,19 @@ testcases:
 
 - name: group set admin
   steps:
-  - script: {{.cds.build.cds}} group setadmin ITCLIGRP_TEST_2 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group setAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
 
-- name: group unset admin
+- name: group remove admin
   steps:
-  - script: {{.cds.build.cds}} group unsetadmin ITCLIGRP_TEST_2 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group removeAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
 
 - name: group remove user
   steps:
   - script: {{.cds.build.cdsctl}} group deleteuser ITCLIGRP_TEST_2 cds.integration.tests.ro
 
-- name: group info
+- name: group show
   steps:
-  - script: {{.cds.build.cds}} group info ITCLIGRP_TEST_2
+  - script: {{.cds.build.cdsctl}} group show ITCLIGRP_TEST_2
 
 - name: clean
   steps:

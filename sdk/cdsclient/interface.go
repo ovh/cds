@@ -136,6 +136,7 @@ type GroupClient interface {
 	GroupUserAdminRemove(groupname, username string) error
 	GroupUserAdd(groupname string, users []string) error
 	GroupUserRemove(groupname, username string) error
+	GroupRename(oldGroupname, newGroupname string) error
 }
 
 // HatcheryClient exposes hatcheries related functions

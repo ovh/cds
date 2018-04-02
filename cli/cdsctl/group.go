@@ -20,6 +20,7 @@ var (
 			cli.NewListCommand(groupListCmd, groupListRun, nil),
 			cli.NewGetCommand(groupShowCmd, groupShowRun, nil),
 			cli.NewCommand(groupCreateCmd, groupCreateRun, nil),
+			cli.NewCommand(groupRenameCmd, groupRenameRun, nil),
 			cli.NewDeleteCommand(groupDeleteCmd, groupDeleteRun, nil),
 			groupUser,
 		})
@@ -66,6 +67,19 @@ var groupCreateCmd = cli.Command{
 func groupCreateRun(v cli.Values) error {
 	gr := &sdk.Group{Name: v["group-name"]}
 	return client.GroupCreate(gr)
+}
+
+var groupRenameCmd = cli.Command{
+	Name:  "rename",
+	Short: "Rename a CDS group",
+	Args: []cli.Arg{
+		{Name: "old-group-name"},
+		{Name: "new-group-name"},
+	},
+}
+
+func groupRenameRun(v cli.Values) error {
+	return client.GroupRename(v["old-group-name"], v["new-group-name"])
 }
 
 var groupDeleteCmd = cli.Command{
