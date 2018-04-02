@@ -32,9 +32,9 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} pipeline import ITCLIPIPPRJIMP pip.yml
 
-- name: pipeline show
+- name: pipeline export
   steps:
-  - script: {{.cds.build.cds}} pipeline show ITCLIPIPPRJIMP HelloPipeline2
+  - script: {{.cds.build.cdsctl}} pipeline export ITCLIPIPPRJIMP HelloPipeline2
 
 - name: pipeline update yaml file with errors
   steps:
@@ -50,9 +50,9 @@ testcases:
     assertions:
       - result.code ShouldEqual 1
 
-- name: pipeline show should fail
+- name: pipeline export should fail
   steps:
-  - script: {{.cds.build.cds}} pipeline show ITCLIPIPPRJIMP HelloPipeline3
+  - script: {{.cds.build.cdsctl}} pipeline export ITCLIPIPPRJIMP HelloPipeline3
     assertions:
       - result.code ShouldEqual 1
 

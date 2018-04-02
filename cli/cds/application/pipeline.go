@@ -2,11 +2,8 @@ package application
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -17,13 +14,6 @@ var (
 		Short:   "cds application pipeline",
 		Aliases: []string{"p"},
 	}
-
-	cmdApplicationShowPipeline = &cobra.Command{
-		Use:   "show",
-		Short: "cds application pipeline show <projectKey> <applicationName> [--details]",
-		Run:   showPipelineInApplication,
-	}
-	cmdApplicationShowPipelineDetails bool
 
 	cmdApplicationAddPipeline = &cobra.Command{
 		Use:     "add",
@@ -41,7 +31,6 @@ var (
 )
 
 func init() {
-	applicationPipelineCmd.AddCommand(cmdApplicationShowPipeline)
 	applicationPipelineCmd.AddCommand(cmdApplicationAddPipeline)
 	applicationPipelineCmd.AddCommand(cmdApplicationRemovePipeline)
 	applicationPipelineCmd.AddCommand(cmdApplicationPipelineScheduler)
@@ -52,7 +41,6 @@ func init() {
 	cmdApplicationPipelineScheduler.AddCommand(cmdApplicationPipelineSchedulerDelete)
 
 	cmdApplicationAddPipeline.Flags().StringSliceVarP(&cmdApplicationAddPipelineParams, "parameter", "p", nil, "Pipeline parameters")
-	cmdApplicationShowPipeline.Flags().BoolVarP(&cmdApplicationShowPipelineDetails, "details", "", false, "Show pipeline details")
 
 	cmdApplicationPipelineSchedulerAdd.Flags().StringSliceVarP(&cmdApplicationAddPipelineParams, "parameter", "p", nil, "Pipeline parameters")
 	cmdApplicationPipelineSchedulerAdd.Flags().StringVarP(&cmdApplicationPipelineSchedulerAddEnv, "environment", "e", "", "Set environment")
@@ -61,43 +49,6 @@ func init() {
 	cmdApplicationPipelineSchedulerUpdate.Flags().StringSliceVarP(&cmdApplicationAddPipelineParams, "parameter", "p", nil, "Pipeline parameters")
 	cmdApplicationPipelineSchedulerUpdate.Flags().StringVarP(&cmdApplicationPipelineSchedulerUpdateCronExpr, "cron", "c", "", "Set cron expr")
 	cmdApplicationPipelineSchedulerUpdate.Flags().StringVarP(&cmdApplicationPipelineSchedulerUpdateDisable, "disable", "", "", "Disable scheduler")
-}
-
-func showPipelineInApplication(cmd *cobra.Command, args []string) {
-	if len(args) != 2 {
-		sdk.Exit("Wrong usage: %s\n", cmd.Short)
-	}
-	projectKey := args[0]
-	appName := args[1]
-
-	pipelines, err := sdk.ListApplicationPipeline(projectKey, appName)
-	if err != nil {
-		sdk.Exit("Error: cannot show pipelines for application %s (%s)\n", appName, err)
-	}
-
-	if cmdApplicationShowPipelineDetails {
-		data, err := yaml.Marshal(pipelines)
-		if err != nil {
-			sdk.Exit("Error: cannot format output (%s)\n", err)
-		}
-		fmt.Println(string(data))
-		return
-	}
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Pipeline", "Parameters"})
-	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	table.SetCenterSeparator("|")
-
-	for i := range pipelines {
-		param, err := yaml.Marshal(pipelines[i].Parameter)
-		if err != nil {
-			sdk.Exit("Error: cannot format output (%s)\n", err)
-		}
-		table.Append([]string{pipelines[i].Name, string(param)})
-	}
-	table.Render()
-
 }
 
 func addApplicationPipeline(cmd *cobra.Command, args []string) {

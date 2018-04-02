@@ -13,11 +13,11 @@ testcases:
 
 - name: pipeline list
   steps:
-  - script: {{.cds.build.cds}} pipeline list ITCLIPIPPRJ
+  - script: {{.cds.build.cdsctl}} pipeline list ITCLIPIPPRJ
 
-- name: pipeline show
+- name: pipeline export
   steps:
-  - script: {{.cds.build.cds}} pipeline show ITCLIPIPPRJ HelloPipeline
+  - script: {{.cds.build.cdsctl}} pipeline export ITCLIPIPPRJ HelloPipeline
 
 - name: pipeline group add
   steps:

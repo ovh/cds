@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -158,38 +157,10 @@ type RunRequest struct {
 	ParentApplicationID int64       `json:"parent_application_id,omitempty"`
 }
 
-// GetPipelineOptions are options for GetPipeline
-var GetPipelineOptions = struct {
-	WithApplications RequestModifier
-}{
-	WithApplications: func(r *http.Request) {
-		q := r.URL.Query()
-		q.Set("withApplications", "true")
-		r.URL.RawQuery = q.Encode()
-	},
-}
-
-// ListPipelines retrieves all available pipelines to called
-func ListPipelines(projectKey string) ([]Pipeline, error) {
-	url := fmt.Sprintf("/project/%s/pipeline", projectKey)
-
-	data, _, errr := Request("GET", url, nil)
-	if errr != nil {
-		return nil, errr
-	}
-
-	var pip []Pipeline
-	if err := json.Unmarshal(data, &pip); err != nil {
-		return nil, err
-	}
-
-	return pip, nil
-}
-
 // GetPipeline retrieves pipeline definition from CDS
-func GetPipeline(key, name string, opts ...RequestModifier) (*Pipeline, error) {
+func GetPipeline(key, name string) (*Pipeline, error) {
 	path := fmt.Sprintf("/project/%s/pipeline/%s", key, name)
-	data, _, errr := Request("GET", path, nil, opts...)
+	data, _, errr := Request("GET", path, nil)
 	if errr != nil {
 		return nil, errr
 	}
@@ -231,7 +202,6 @@ func DeleteJob(projectKey string, pipelineName string, jobID int64) error {
 
 // MoveActionInPipeline Move an action in a pipeline
 func MoveActionInPipeline(projectKey, pipelineName string, actionPipelineID int64, newOrder int) error {
-
 	pipeline, err := GetPipeline(projectKey, pipelineName)
 	if err != nil {
 		return err

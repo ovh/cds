@@ -49,9 +49,9 @@ testcases:
   - script: {{.cds.build.cds}} pipeline add ITCLIAPPPRJ Hello
   - script: {{.cds.build.cds}} application pipeline add ITCLIAPPPRJ TestApp Hello
 
-- name: application pipeline show
+- name: pipeline export
   steps:
-  - script: {{.cds.build.cds}} application pipeline show ITCLIAPPPRJ TestApp
+  - script: {{.cds.build.cdsctl}} pipeline export ITCLIAPPPRJ Hello
 
 - name: application pipeline remove
   steps:
