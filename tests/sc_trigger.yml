@@ -16,10 +16,10 @@ testcases:
   - script: {{.cds.build.cds}} pipeline job append ITSCTRIGGER build myJob1 Script -p script="echo buildNumber={{.cds.buildNumber}} and v{{.cds.version}}"
 
   - script: {{.cds.build.cdsctl}} environment create ITSCTRIGGER foo
-  - script: {{.cds.build.cds}} env variable add ITSCTRIGGER foo name foo string
+  - script: {{.cds.build.cdsctl}} environment variable add ITSCTRIGGER foo name string foo
 
   - script: {{.cds.build.cdsctl}} environment create ITSCTRIGGER bar
-  - script: {{.cds.build.cds}} env variable add ITSCTRIGGER bar name bar string
+  - script: {{.cds.build.cdsctl}} environment variable add ITSCTRIGGER bar name string bar
 
   - script: {{.cds.build.cds}} pipeline add ITSCTRIGGER deploy --type=deployment
   - script: {{.cds.build.cds}} application pipeline add ITSCTRIGGER TestApp deploy

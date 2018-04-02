@@ -21,7 +21,6 @@ var force *bool
 
 func init() {
 	environmentVariableCmd.AddCommand(cmdEnvironmentShowVariable())
-	environmentVariableCmd.AddCommand(cmdEnvironmentAddVariable())
 	environmentVariableCmd.AddCommand(cmdEnvironmentUpdateVariable())
 	environmentVariableCmd.AddCommand(cmdEnvironmentRemoveVariable())
 }
@@ -54,58 +53,6 @@ func showVarInEnvironment(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println(string(data))
-}
-
-func cmdEnvironmentAddVariable() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "add",
-		Short: "cds environment variable add <projectKey> <environmentName> <variableName> <variableValue> <variableType>",
-		Long:  ``,
-		Run:   addEnvironmentVariable,
-	}
-	force = cmd.Flags().BoolP("force", "", false, "force update if variable already exists")
-
-	return cmd
-}
-
-func addEnvironmentVariable(cmd *cobra.Command, args []string) {
-	var err error
-	if len(args) != 5 {
-		sdk.Exit("Wrong usage: %s\n", cmd.Short)
-	}
-	projectKey := args[0]
-	envName := args[1]
-	varName := args[2]
-	varValue := args[3]
-	varType := args[4]
-
-	if *force {
-		variables, errSh := sdk.ShowEnvironmentVariable(projectKey, envName)
-		if errSh != nil {
-			sdk.Exit("Error: cannot show existing variables for environment %s (%s)\n", envName, err)
-		}
-
-		varExist := false
-		for _, v := range variables {
-			if v.Name == varName {
-				varExist = true
-				break
-			}
-		}
-		if !varExist {
-			err = sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, varType)
-		} else {
-			err = sdk.UpdateEnvironmentVariable(projectKey, envName, varName, varName, varValue, varType)
-		}
-
-	} else {
-		err = sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, varType)
-	}
-
-	if err != nil {
-		sdk.Exit("Error: cannot add variable %s in environment %s (%s)\n", varName, envName, err)
-	}
-	fmt.Printf("OK\n")
 }
 
 func cmdEnvironmentUpdateVariable() *cobra.Command {
