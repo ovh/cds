@@ -7,7 +7,7 @@ testcases:
   - script: {{.cds.build.cds}} pipeline add ITIFNINITELOOP A
   - script: {{.cds.build.cds}} pipeline add ITIFNINITELOOP B
   - script: {{.cds.build.cds}} pipeline add ITIFNINITELOOP C
-  - script: {{.cds.build.cds}} app add ITIFNINITELOOP apploop
+  - script: {{.cds.build.cdsctl}} application add ITIFNINITELOOP apploop
   - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop A
   - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop B
   - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop C

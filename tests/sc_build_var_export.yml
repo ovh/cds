@@ -6,7 +6,7 @@ testcases:
   - script: {{.cds.build.cdsctl}} group delete ITBUILDVAR --force
   - script: {{.cds.build.cdsctl}} project add ITBUILDVAR ITBUILDVAR ITBUILDVAR
   - script: {{.cds.build.cdsctl}} pipeline import ITBUILDVAR ./tests/fixtures/pipeline_empty.yml
-  - script: {{.cds.build.cds}} app add ITBUILDVAR app
+  - script: {{.cds.build.cdsctl}} application add ITBUILDVAR app
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_worker_export.yml
   - script: {{.cds.build.cds}} pipeline job add ITBUILDVAR pipeline_empty myJob1
   - script: {{.cds.build.cds}} pipeline job append ITBUILDVAR pipeline_empty myJob1 IT_worker_export

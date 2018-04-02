@@ -4,7 +4,7 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITSSHKEYCHECK
   - script: {{.cds.build.cdsctl}} project add ITSSHKEYCHECK ITSSHKEYCHECK ITSSHKEYCHECK
-  - script: {{.cds.build.cds}} app add ITSSHKEYCHECK app
+  - script: {{.cds.build.cdsctl}} application add ITSSHKEYCHECK app
   - script: {{.cds.build.cds}} pipeline add ITSSHKEYCHECK pip
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_sshtest.yml
   - script: {{.cds.build.cds}} pipeline job add ITSSHKEYCHECK pip myJob1
