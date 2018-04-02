@@ -55,5 +55,5 @@ testcases:
 - name: clean
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITCLIENVPRJ
-  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP
-  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP_EDIT_TEST --force

@@ -60,6 +60,6 @@ testcases:
 - name: clean
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITCLIAPPPRJ
-  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP
-  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP_EDIT_TEST --force
 

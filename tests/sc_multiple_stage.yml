@@ -34,4 +34,4 @@ testcases:
 - name: cleanup
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCMULT
-  - script: {{.cds.build.cdsctl}} group delete ITSCMULT
+  - script: {{.cds.build.cdsctl}} group delete ITSCMULT --force

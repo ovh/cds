@@ -25,4 +25,4 @@ testcases:
     assertions:
       - result.code ShouldNotEqual 0
   - script: {{.cds.build.cdsctl}} project delete --force ITIFNINITELOOP
-  - script: {{.cds.build.cdsctl}} group delete ITIFNINITELOOP
+  - script: {{.cds.build.cdsctl}} group delete ITIFNINITELOOP --force

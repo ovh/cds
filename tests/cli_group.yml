@@ -44,4 +44,4 @@ testcases:
 - name: clean
   steps:
   - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST --force
-  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST_2
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST_2 --force
