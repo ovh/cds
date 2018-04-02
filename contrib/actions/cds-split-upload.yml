@@ -20,6 +20,7 @@ parameters:
     default:        "200m"
     description:    Size of each split files. Default size is 200MB. (Optional)
 requirements:
+  - binary:         bash
   - binary:         split
 steps:
 - script:
