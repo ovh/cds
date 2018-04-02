@@ -13,11 +13,11 @@ testcases:
 - name: test
   steps:
   - script: {{.cds.build.cdsctl}} project variable add ITSSHKEYCHECK fookey key ""
-  - script: {{.cds.build.cds}} project variable show ITSSHKEYCHECK
+  - script: {{.cds.build.cdsctl}} project variable list ITSSHKEYCHECK
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring fookey
-  - script: {{.cds.build.cds}} project variable show ITSSHKEYCHECK
+  - script: {{.cds.build.cds}} project variable list ITSSHKEYCHECK
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring fookey.pub

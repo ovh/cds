@@ -225,6 +225,27 @@ func (api *API) addVariableInProjectHandler() Handler {
 	}
 }
 
+func (api *API) getVariableInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		varName := vars["name"]
+
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		if err != nil {
+			return sdk.WrapError(err, "getVariableInProjectHandler: Cannot load %s", key)
+		}
+
+		variable, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
+		if errV != nil {
+			return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
+		}
+
+		return WriteJSON(w, variable, http.StatusOK)
+	}
+}
+
 func (api *API) getVariableAuditInProjectHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL

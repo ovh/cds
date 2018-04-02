@@ -26,7 +26,7 @@ testcases:
 
 - name: application variable show
   steps:
-  - script: {{.cds.build.cds}} application variable show ITCLIAPPPRJ TestApp
+  - script: {{.cds.build.cdsctl}} application variable show ITCLIAPPPRJ TestApp
 
 - name: application variable remove
   steps:

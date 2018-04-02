@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -20,38 +19,8 @@ var CmdVariable = &cobra.Command{
 var force *bool
 
 func init() {
-	CmdVariable.AddCommand(cmdProjectShowVariable())
 	CmdVariable.AddCommand(cmdProjectUpdateVariable())
 	CmdVariable.AddCommand(cmdProjectRemoveVariable())
-}
-
-func cmdProjectShowVariable() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "show",
-		Short: "cds project variable show <projectKey>",
-		Long:  ``,
-		Run:   showVarInProject,
-	}
-	return cmd
-}
-
-func showVarInProject(cmd *cobra.Command, args []string) {
-	if len(args) != 1 {
-		sdk.Exit("Wrong usage: %s\n", cmd.Short)
-	}
-	projectKey := args[0]
-
-	variables, err := sdk.ShowVariableInProject(projectKey)
-	if err != nil {
-		sdk.Exit("Error: cannot show variables for project %s (%s)\n", projectKey, err)
-	}
-
-	data, err := yaml.Marshal(variables)
-	if err != nil {
-		sdk.Exit("Error: cannot format output (%s)\n", err)
-	}
-
-	fmt.Println(string(data))
 }
 
 func cmdProjectUpdateVariable() *cobra.Command {

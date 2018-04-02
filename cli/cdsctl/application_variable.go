@@ -16,6 +16,7 @@ var (
 	applicationVariable = cli.NewCommand(applicationVariableCmd, nil,
 		[]*cobra.Command{
 			cli.NewCommand(applicationVariableCreateCmd, applicationCreateVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(applicationVariableShowCmd, applicationVariableShowRun, nil, withAllCommandModifiers()...),
 			cli.NewListCommand(applicationVariableListCmd, applicationListVariableRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(applicationVariableDeleteCmd, applicationDeleteVariableRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(applicationVariableUpdateCmd, applicationUpdateVariableRun, nil, withAllCommandModifiers()...),
@@ -76,6 +77,22 @@ var applicationVariableDeleteCmd = cli.Command{
 
 func applicationDeleteVariableRun(v cli.Values) error {
 	return client.ApplicationVariableDelete(v[_ProjectKey], v[_ApplicationName], v["variable-name"])
+}
+
+var applicationVariableShowCmd = cli.Command{
+	Name:  "show",
+	Short: "Show a CDS application variable",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName},
+	},
+	Args: []cli.Arg{
+		{Name: "variable-name"},
+	},
+}
+
+func applicationVariableShowRun(v cli.Values) (interface{}, error) {
+	return client.ApplicationVariableGet(v[_ProjectKey], v[_ApplicationName], v["variable-name"])
 }
 
 var applicationVariableUpdateCmd = cli.Command{

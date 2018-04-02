@@ -227,21 +227,6 @@ func AddGroupInProject(projectKey, groupname string, permission int) error {
 	return DecodeError(data)
 }
 
-// ShowVariableInProject  show variables for a project
-func ShowVariableInProject(projectKey string) ([]Variable, error) {
-	path := fmt.Sprintf("/project/%s/variable", projectKey)
-	data, _, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var variables []Variable
-	if err := json.Unmarshal(data, &variables); err != nil {
-		return nil, err
-	}
-	return variables, nil
-}
-
 // GetVariableInProject Get a variable by her name in the given project
 func GetVariableInProject(projectKey, name string) (*Variable, error) {
 	var v Variable
