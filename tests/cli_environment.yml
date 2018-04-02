@@ -2,7 +2,7 @@ name: Environment Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITCLIENVPRJ
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIENVPRJ
   - script: {{.cds.build.cds}} group remove ITCLIENV_GRP --force
   - script: {{.cds.build.cds}} group remove ITCLIENV_GRP_EDIT_TEST --force
   - script: {{.cds.build.cds}} project add ITCLIENVPRJ "Test Project" ITCLIENV_GRP
@@ -54,6 +54,6 @@ testcases:
 
 - name: clean
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITCLIENVPRJ
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIENVPRJ
   - script: {{.cds.build.cds}} group remove ITCLIENV_GRP
   - script: {{.cds.build.cds}} group remove ITCLIENV_GRP_EDIT_TEST

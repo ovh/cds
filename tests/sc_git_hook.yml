@@ -2,7 +2,7 @@ name: Git Hook TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCGITHOOK
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCGITHOOK
   - script: {{.cds.build.cds}} group remove ITSCGITHOOK --force
   - script: {{.cds.build.cds}} project add ITSCGITHOOK ITSCGITHOOK ITSCGITHOOK
   - script: {{.cds.build.cds}} application add ITSCGITHOOK TestApp
@@ -32,5 +32,5 @@ testcases:
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCGITHOOK
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCGITHOOK
   - script: {{.cds.build.cds}} group remove ITSCGITHOOK

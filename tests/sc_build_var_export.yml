@@ -2,7 +2,7 @@ name: Build Variable Export TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITBUILDVAR
+  - script: {{.cds.build.cdsctl}} project delete --force ITBUILDVAR
   - script: {{.cds.build.cds}} group remove ITBUILDVAR --force
   - script: {{.cds.build.cds}} project add ITBUILDVAR ITBUILDVAR ITBUILDVAR
   - script: {{.cds.build.cds}} pipeline add ITBUILDVAR pip
@@ -19,5 +19,5 @@ testcases:
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring bar
-  - script: {{.cds.build.cds}} project remove --force ITBUILDVAR
+  - script: {{.cds.build.cdsctl}} project delete --force ITBUILDVAR
   - script: {{.cds.build.cds}} group remove ITBUILDVAR

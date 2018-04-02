@@ -2,7 +2,7 @@ name: SSH Key Check TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSSHKEYCHECK
+  - script: {{.cds.build.cdsctl}} project delete --force ITSSHKEYCHECK
   - script: {{.cds.build.cds}} project add ITSSHKEYCHECK ITSSHKEYCHECK ITSSHKEYCHECK
   - script: {{.cds.build.cds}} app add ITSSHKEYCHECK app
   - script: {{.cds.build.cds}} pipeline add ITSSHKEYCHECK pip
@@ -41,5 +41,5 @@ testcases:
 
 - name: cleanup
   steps:      
-  - script: {{.cds.build.cds}} project remove --force ITSSHKEYCHECK
+  - script: {{.cds.build.cdsctl}} project delete --force ITSSHKEYCHECK
   - script: {{.cds.build.cds}} group remove ITSSHKEYCHECK

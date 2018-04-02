@@ -131,16 +131,6 @@ func NewProject(key string) *Project {
 	return p
 }
 
-// RemoveProject call api to delete a project
-func RemoveProject(key string) error {
-	url := fmt.Sprintf("/project/%s", key)
-	data, _, err := Request("DELETE", url, nil)
-	if err != nil {
-		return err
-	}
-	return DecodeError(data)
-}
-
 // UpdateProject call API to update project
 func UpdateProject(proj *Project) error {
 	data, err := json.Marshal(proj)

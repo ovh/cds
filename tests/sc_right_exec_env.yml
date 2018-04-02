@@ -2,7 +2,7 @@ name: Right Execution on environment TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITPRJRIGHTEXEC
+  - script: {{.cds.build.cdsctl}} project delete --force ITPRJRIGHTEXEC
   - script: {{.cds.build.cds}} group remove ITGRPRIGHTRO || true
 - name: Test Right Execution on environment
   steps:
@@ -14,6 +14,6 @@ testcases:
   - script: {{.cds.build.cdsro}} pipeline run ITPRJRIGHTEXEC TestApp deploy foo
     assertions:
       - result.code ShouldNotEqual 0
-  - script: {{.cds.build.cds}} project remove --force ITPRJRIGHTEXEC
+  - script: {{.cds.build.cdsctl}} project delete --force ITPRJRIGHTEXEC
   - script: {{.cds.build.cds}} group remove ITGRPRIGHTRO
   - script: {{.cds.build.cds}} group remove ITPRJRIGHTEXEC

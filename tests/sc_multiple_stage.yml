@@ -2,10 +2,12 @@ name: Multiple Stage TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCMULT
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCMULT
   - script: {{.cds.build.cds}} group remove ITSCMULT_ACTION_Test_HelloWorld --force
   - script: {{.cds.build.cds}} project add ITSCMULT ITSCMULT ITSCMULT
   - script: {{.cds.build.cds}} application add ITSCMULT TestApp
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_sleep.yml
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo.yml
 
 - name: multiple stages
   steps:
@@ -31,5 +33,5 @@ testcases:
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCMULT
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCMULT
   - script: {{.cds.build.cds}} group remove ITSCMULT

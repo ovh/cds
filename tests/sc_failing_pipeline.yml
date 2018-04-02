@@ -2,7 +2,7 @@ name: Failing Pipeline TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCFAIL
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCFAIL
   - script: {{.cds.build.cds}} group remove ITSCFAIL --force
   - script: {{.cds.build.cds}} project add ITSCFAIL ITSCFAIL ITSCFAIL
   - script: {{.cds.build.cds}} application add ITSCFAIL TestApp
@@ -33,5 +33,5 @@ testcases:
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCFAIL
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCFAIL
   - script: {{.cds.build.cds}} group remove ITSCFAIL
