@@ -3,7 +3,7 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCARTIFACT
-  - script: {{.cds.build.cds}} project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
+  - script: {{.cds.build.cdsctl}} project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
   - script: {{.cds.build.cds}} application add ITSCARTIFACT TestApp
   - script: {{.cds.build.cds}} environment add ITSCARTIFACT TestEnv
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo_upload.yml
@@ -27,4 +27,4 @@ testcases:
 - name: cleanup
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITSCARTIFACT
-  - script: {{.cds.build.cds}} group remove ITSCARTIFACT
+  - script: {{.cds.build.cdsctl}} group delete ITSCARTIFACT

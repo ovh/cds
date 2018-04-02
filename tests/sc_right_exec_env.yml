@@ -3,17 +3,17 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITPRJRIGHTEXEC
-  - script: {{.cds.build.cds}} group remove ITGRPRIGHTRO || true
+  - script: {{.cds.build.cdsctl}} group delete ITGRPRIGHTRO || true
 - name: Test Right Execution on environment
   steps:
-  - script: {{.cds.build.cds}} group add ITGRPRIGHTRO
-  - script: {{.cds.build.cds}} project add ITPRJRIGHTEXEC ITPRJRIGHTEXEC ITPRJRIGHTEXEC
+  - script: {{.cds.build.cdsctl}} group add ITGRPRIGHTRO
+  - script: {{.cds.build.cdsctl}} project add ITPRJRIGHTEXEC ITPRJRIGHTEXEC ITPRJRIGHTEXEC
   - script: {{.cds.build.cds}} project group add ITPRJRIGHTEXEC ITGRPRIGHTRO 4
-  - script: {{.cds.build.cds}} group adduser ITGRPRIGHTRO cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group adduser ITGRPRIGHTRO cds.integration.tests.ro
   - script: {{.cds.build.cdsro}} user list
   - script: {{.cds.build.cdsro}} pipeline run ITPRJRIGHTEXEC TestApp deploy foo
     assertions:
       - result.code ShouldNotEqual 0
   - script: {{.cds.build.cdsctl}} project delete --force ITPRJRIGHTEXEC
-  - script: {{.cds.build.cds}} group remove ITGRPRIGHTRO
-  - script: {{.cds.build.cds}} group remove ITPRJRIGHTEXEC
+  - script: {{.cds.build.cdsctl}} group delete ITGRPRIGHTRO
+  - script: {{.cds.build.cdsctl}} group delete ITPRJRIGHTEXEC

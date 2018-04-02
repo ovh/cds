@@ -92,32 +92,6 @@ func RenameGroup(oldName, newName string) error {
 	return DecodeError(data)
 }
 
-// RemoveGroup remove group
-func RemoveGroup(name string) error {
-	url := fmt.Sprintf("/group/%s", name)
-	data, _, err := Request("DELETE", url, nil)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
-// ListGroups returns all available group to caller
-func ListGroups() ([]Group, error) {
-	data, _, err := Request("GET", "/group", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var groups []Group
-	if err := json.Unmarshal(data, &groups); err != nil {
-		return nil, err
-	}
-
-	return groups, nil
-}
-
 // AddUsersInGroup call API to add users in the group
 func AddUsersInGroup(groupName string, users []string) error {
 	data, err := json.MarshalIndent(users, " ", " ")

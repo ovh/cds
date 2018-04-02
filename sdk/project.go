@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
-	"strings"
 	"time"
 )
 
@@ -159,35 +157,6 @@ func RenameProject(key, newName string) error {
 
 	url := fmt.Sprintf("/project/%s", key)
 	data, _, err = Request("PUT", url, data)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
-// AddProject creates a new project available only to creator by default
-func AddProject(name, key, groupName string) error {
-	regexp := regexp.MustCompile(ProjectKeyPattern)
-	if !regexp.MatchString(key) {
-		return fmt.Errorf("project key '%s' must contain only upper-case alphanumerical characters", key)
-	}
-
-	p := NewProject(key)
-	p.Name = name
-
-	group := Group{Name: groupName}
-	p.ProjectGroups = append(p.ProjectGroups, GroupPermission{Group: group, Permission: 7})
-
-	data, err := json.MarshalIndent(p, " ", " ")
-	if err != nil {
-		return err
-	}
-
-	data, code, err := Request("POST", "/project", data)
-	if code == 409 {
-		return ErrConflict
-	}
 	if err != nil {
 		return err
 	}
@@ -364,83 +333,6 @@ func RemoveVariableFromProject(projectKey, varName string) error {
 // Mod is the functional parameter type of sdk function to alter their behavior
 type Mod func(s string) string
 
-// WithApplicationStatus is a func parameter of ListProject
-func WithApplicationStatus() Mod {
-	f := func(s string) string {
-		return s + "&applicationStatus=true"
-	}
-
-	return f
-}
-
-// WithEnvironments is a func parameter of ListProject
-func WithEnvironments() Mod {
-	f := func(s string) string {
-		return s + "&environment=true"
-	}
-
-	return f
-}
-
-// WithEnvs is a func parameter of GetProject
-func WithEnvs() RequestModifier {
-	return func(r *http.Request) {
-		q := r.URL.Query()
-		q.Set("withEnvironments", "true")
-		r.URL.RawQuery = q.Encode()
-	}
-}
-
-// WithPipelines is a func parameter of ListProject
-func WithPipelines() Mod {
-	f := func(s string) string {
-		return s + "&pipeline=true"
-	}
-
-	return f
-}
-
-// WithEverything is a func parameter of ListProject
-func WithEverything() Mod {
-	f := func(s string) string {
-		return s + "&pipeline=true&environment=true&applicationStatus=true"
-	}
-
-	return f
-}
-
-// ListProject returns all available project to caller
-func ListProject(mods ...Mod) ([]Project, error) {
-	uri := "/project?application=true"
-	for _, m := range mods {
-		uri = m(uri)
-	}
-
-	data, _, err := Request("GET", uri, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var projects []Project
-	if err := json.Unmarshal(data, &projects); err != nil {
-		return nil, err
-	}
-
-	return projects, nil
-}
-
-// WithApplicationHistory is a functional parameter of GetProject
-func WithApplicationHistory(length int) Mod {
-	f := func(s string) string {
-		if strings.HasSuffix(s, "?") {
-			return fmt.Sprintf("%sapplicationHistory=%d", s, length)
-		}
-		return fmt.Sprintf("%s&applicationHistory=%d", s, length)
-	}
-
-	return f
-}
-
 // GetProject retrieves project informations from CDS
 func GetProject(key string, mods ...RequestModifier) (Project, error) {
 	var p Project
@@ -468,11 +360,4 @@ func GetProject(key string, mods ...RequestModifier) (Project, error) {
 	}
 
 	return p, nil
-}
-
-// DeleteProject removes a project and all its pipeline from CDS
-func DeleteProject(key string) error {
-	path := fmt.Sprintf("/project/%s", key)
-	_, _, err := Request("DELETE", path, nil)
-	return err
 }

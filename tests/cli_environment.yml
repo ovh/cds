@@ -3,10 +3,10 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITCLIENVPRJ
-  - script: {{.cds.build.cds}} group remove ITCLIENV_GRP --force
-  - script: {{.cds.build.cds}} group remove ITCLIENV_GRP_EDIT_TEST --force
-  - script: {{.cds.build.cds}} project add ITCLIENVPRJ "Test Project" ITCLIENV_GRP
-  - script: {{.cds.build.cds}} group add ITCLIENV_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP_EDIT_TEST --force
+  - script: {{.cds.build.cdsctl}} project add ITCLIENVPRJ "Test Project" ITCLIENV_GRP
+  - script: {{.cds.build.cdsctl}} group add ITCLIENV_GRP_EDIT_TEST
 
 - name: environment add
   steps:
@@ -55,5 +55,5 @@ testcases:
 - name: clean
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITCLIENVPRJ
-  - script: {{.cds.build.cds}} group remove ITCLIENV_GRP
-  - script: {{.cds.build.cds}} group remove ITCLIENV_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP_EDIT_TEST

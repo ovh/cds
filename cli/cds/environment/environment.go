@@ -21,8 +21,6 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(environmentCloneCmd())
 	cmd.AddCommand(environmentVariableCmd)
 	cmd.AddCommand(environmentGroupCmd)
-	cmd.AddCommand(exportCmd())
-	cmd.AddCommand(importCmd())
 
 	return cmd
 }

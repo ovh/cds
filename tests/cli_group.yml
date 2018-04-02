@@ -2,12 +2,12 @@ name: Group Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} group remove ITCLIGRP_TEST --force
-  - script: {{.cds.build.cds}} group remove ITCLIGRP_TEST_2 --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST_2 --force
 
 - name: group add
   steps:
-  - script: {{.cds.build.cds}} group add ITCLIGRP_TEST
+  - script: {{.cds.build.cdsctl}} group add ITCLIGRP_TEST
 
 - name: group info
   steps:
@@ -15,7 +15,7 @@ testcases:
 
 - name: group list
   steps:
-  - script: {{.cds.build.cds}} group list
+  - script: {{.cds.build.cdsctl}} group list
 
 - name: group rename
   steps:
@@ -23,7 +23,7 @@ testcases:
 
 - name: group add user
   steps:
-  - script: {{.cds.build.cds}} group adduser ITCLIGRP_TEST_2 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group adduser ITCLIGRP_TEST_2 cds.integration.tests.ro
 
 - name: group set admin
   steps:
@@ -35,7 +35,7 @@ testcases:
 
 - name: group remove user
   steps:
-  - script: {{.cds.build.cds}} group removeuser ITCLIGRP_TEST_2 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group deleteuser ITCLIGRP_TEST_2 cds.integration.tests.ro
 
 - name: group info
   steps:
@@ -43,5 +43,5 @@ testcases:
 
 - name: clean
   steps:
-  - script: {{.cds.build.cds}} group remove ITCLIGRP_TEST --force
-  - script: {{.cds.build.cds}} group remove ITCLIGRP_TEST_2
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST_2

@@ -3,10 +3,10 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITCLIAPPPRJ
-  - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP --force
-  - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP_EDIT_TEST --force
-  - script: {{.cds.build.cds}} project add ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
-  - script: {{.cds.build.cds}} group add ITCLIAPP_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP_EDIT_TEST --force
+  - script: {{.cds.build.cdsctl}} project add ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST
 
 - name: application add
   steps:
@@ -60,6 +60,6 @@ testcases:
 - name: clean
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITCLIAPPPRJ
-  - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP
-  - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP_EDIT_TEST
 

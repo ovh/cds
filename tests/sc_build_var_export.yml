@@ -3,8 +3,8 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITBUILDVAR
-  - script: {{.cds.build.cds}} group remove ITBUILDVAR --force
-  - script: {{.cds.build.cds}} project add ITBUILDVAR ITBUILDVAR ITBUILDVAR
+  - script: {{.cds.build.cdsctl}} group delete ITBUILDVAR --force
+  - script: {{.cds.build.cdsctl}} project add ITBUILDVAR ITBUILDVAR ITBUILDVAR
   - script: {{.cds.build.cds}} pipeline add ITBUILDVAR pip
   - script: {{.cds.build.cds}} app add ITBUILDVAR app
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_worker_export.yml
@@ -20,4 +20,4 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring bar
   - script: {{.cds.build.cdsctl}} project delete --force ITBUILDVAR
-  - script: {{.cds.build.cds}} group remove ITBUILDVAR
+  - script: {{.cds.build.cdsctl}} group delete ITBUILDVAR
