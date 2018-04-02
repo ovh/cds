@@ -15,7 +15,7 @@ testcases:
   - script: {{.cds.build.cds}} application pipeline add ITSCMULT TestApp MultiPass
 
   - script: {{.cds.build.cds}} pipeline job add ITSCMULT MultiPass myJob1 --stage=1
-  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob1 IT_echo -p name="Stage 1"
+  - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob1 IT_echo -p name="Hello World! Stage 1"
 
   - script: {{.cds.build.cds}} pipeline job add ITSCMULT MultiPass myJob2 --stage=1
   - script: {{.cds.build.cds}} pipeline job append ITSCMULT MultiPass myJob2 IT_sleep
