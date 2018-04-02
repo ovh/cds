@@ -11,7 +11,7 @@ testcases:
 - name: test artifact
   steps:
   - script: {{.cds.build.cds}} pipeline add ITSCARTIFACT ArtifactPip --type deployment
-  - script: {{.cds.build.cds}} app pipeline add ITSCARTIFACT TestApp ArtifactPip
+  - script: {{.cds.build.cds}} application pipeline add ITSCARTIFACT TestApp ArtifactPip
   - script: {{.cds.build.cds}} pipeline job add ITSCARTIFACT ArtifactPip myJob1
   - script: {{.cds.build.cds}} pipeline job append ITSCARTIFACT ArtifactPip myJob1 IT_echo_upload -p name="tosearch"
   - script: {{.cds.build.cds}} pipeline run ITSCARTIFACT TestApp ArtifactPip TestEnv

@@ -3,9 +3,8 @@ package project
 import (
 	"fmt"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -22,7 +21,6 @@ var force *bool
 
 func init() {
 	CmdVariable.AddCommand(cmdProjectShowVariable())
-	CmdVariable.AddCommand(cmdProjectAddVariable())
 	CmdVariable.AddCommand(cmdProjectUpdateVariable())
 	CmdVariable.AddCommand(cmdProjectRemoveVariable())
 }
@@ -54,56 +52,6 @@ func showVarInProject(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println(string(data))
-}
-
-func cmdProjectAddVariable() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "add",
-		Short: "cds project variable add <projectKey> <variableName> <variableValue> <variableType>",
-		Long:  ``,
-		Run:   addVarInProject,
-	}
-	force = cmd.Flags().BoolP("force", "", false, "force update if variable already exists")
-
-	return cmd
-}
-
-func addVarInProject(cmd *cobra.Command, args []string) {
-	var err error
-	if len(args) != 4 {
-		sdk.Exit("Wrong usage: %s\n", cmd.Short)
-	}
-	projectKey := args[0]
-	varName := args[1]
-	varValue := args[2]
-	varType := args[3]
-
-	if *force {
-		variables, errSh := sdk.ShowVariableInProject(projectKey)
-		if errSh != nil {
-			sdk.Exit("Error: cannot show existing variables for project %s (%s)\n", projectKey, err)
-		}
-
-		varExist := false
-		for _, v := range variables {
-			if v.Name == varName {
-				varExist = true
-				break
-			}
-		}
-		if !varExist {
-			err = sdk.AddVariableInProject(projectKey, varName, varValue, varType)
-		} else {
-			err = sdk.UpdateVariableInProject(projectKey, varName, varName, varValue, varType)
-		}
-	} else {
-		err = sdk.AddVariableInProject(projectKey, varName, varValue, varType)
-	}
-
-	if err != nil {
-		sdk.Exit("Error: cannot add variable %s in project %s (%s)\n", varName, projectKey, err)
-	}
-	fmt.Printf("OK\n")
 }
 
 func cmdProjectUpdateVariable() *cobra.Command {

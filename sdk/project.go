@@ -242,33 +242,6 @@ func ShowVariableInProject(projectKey string) ([]Variable, error) {
 	return variables, nil
 }
 
-// AddProjectVariable adds a project wide variable
-func AddProjectVariable(key, name, val string, t string) error {
-	return AddVariableInProject(key, name, val, string(t))
-}
-
-// AddVariableInProject  add a variable in a project
-func AddVariableInProject(projectKey, varName, varValue, varType string) error {
-	newVar := Variable{
-		Name:  varName,
-		Value: varValue,
-		Type:  varType,
-	}
-
-	data, err := json.Marshal(newVar)
-	if err != nil {
-		return err
-	}
-
-	path := fmt.Sprintf("/project/%s/variable/%s", projectKey, varName)
-	data, _, err = Request("POST", path, data)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
 // GetVariableInProject Get a variable by her name in the given project
 func GetVariableInProject(projectKey, name string) (*Variable, error) {
 	var v Variable

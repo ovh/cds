@@ -8,9 +8,9 @@ testcases:
   - script: {{.cds.build.cds}} pipeline add ITIFNINITELOOP B
   - script: {{.cds.build.cds}} pipeline add ITIFNINITELOOP C
   - script: {{.cds.build.cdsctl}} application add ITIFNINITELOOP apploop
-  - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop A
-  - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop B
-  - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop C
+  - script: {{.cds.build.cds}} application pipeline add ITIFNINITELOOP apploop A
+  - script: {{.cds.build.cds}} application pipeline add ITIFNINITELOOP apploop B
+  - script: {{.cds.build.cds}} application pipeline add ITIFNINITELOOP apploop C
 - name: test infinite loop
   steps:
   - script: {{.cds.build.cds}} trigger add ITIFNINITELOOP/apploop/A ITIFNINITELOOP/apploop/A

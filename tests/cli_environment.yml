@@ -34,7 +34,7 @@ testcases:
 
 - name: environment variable add
   steps:
-  - script: {{.cds.build.cds}} environment variable add ITCLIENVPRJ PROD var1 value1 string
+  - script: {{.cds.build.cds}} environment variable add ITCLIENVPRJ PROD var1 string value1
 
 - name: environment variable show
   steps:

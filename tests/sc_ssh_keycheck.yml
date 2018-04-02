@@ -9,10 +9,10 @@ testcases:
   - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_sshtest.yml
   - script: {{.cds.build.cds}} pipeline job add ITSSHKEYCHECK pip myJob1
   - script: {{.cds.build.cds}} pipeline job append ITSSHKEYCHECK pip myJob1 IT_sshtest
-  - script: {{.cds.build.cds}} app pipeline add ITSSHKEYCHECK app pip
+  - script: {{.cds.build.cds}} application pipeline add ITSSHKEYCHECK app pip
 - name: test
   steps:
-  - script: {{.cds.build.cds}} project variable add ITSSHKEYCHECK fookey "" key
+  - script: {{.cds.build.cdsctl}} project variable add ITSSHKEYCHECK fookey key ""
   - script: {{.cds.build.cds}} project variable show ITSSHKEYCHECK
     assertions:
       - result.code ShouldEqual 0
@@ -25,7 +25,7 @@ testcases:
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring fookey
-  - script: {{.cds.build.cds}} app variable add ITSSHKEYCHECK app github "" key
+  - script: {{.cds.build.cdsctl}} application variable add ITSSHKEYCHECK app github key ""
   - script: {{.cds.build.cds}} app variable show ITSSHKEYCHECK app
     assertions:
       - result.code ShouldEqual 0

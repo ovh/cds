@@ -99,7 +99,7 @@ func projectUpdateVariableRun(v cli.Values) error {
 		return err
 	}
 	variable.Name = v["variable-name"]
-	variable.Value = v["variable-value"]
 	variable.Type = v["variable-type"]
+	variable.Value = v["variable-value"]
 	return client.ProjectVariableUpdate(v[_ProjectKey], variable)
 }

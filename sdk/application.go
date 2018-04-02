@@ -245,27 +245,6 @@ func ShowApplicationVariable(projectKey, appName string) ([]Variable, error) {
 	return variables, nil
 }
 
-// AddApplicationVariable  add a variable in an application
-func AddApplicationVariable(projectKey, appName, varName, varValue string, varType string) error {
-	newVar := Variable{
-		Name:  varName,
-		Value: varValue,
-		Type:  varType,
-	}
-
-	data, err := json.Marshal(newVar)
-	if err != nil {
-		return err
-	}
-
-	path := fmt.Sprintf("/project/%s/application/%s/variable/%s", projectKey, appName, varName)
-	data, _, err = Request("POST", path, data)
-	if err != nil {
-		return err
-	}
-	return DecodeError(data)
-}
-
 // GetVariableInApplication Get a variable in the given application
 func GetVariableInApplication(projectKey, appName, name string) (*Variable, error) {
 	var v Variable
