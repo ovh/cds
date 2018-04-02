@@ -17,7 +17,7 @@ testcases:
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring fookey
-  - script: {{.cds.build.cds}} project variable list ITSSHKEYCHECK
+  - script: {{.cds.build.cdsctl}} project variable list ITSSHKEYCHECK
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring fookey.pub
@@ -26,11 +26,11 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring fookey
   - script: {{.cds.build.cdsctl}} application variable add ITSSHKEYCHECK app github key ""
-  - script: {{.cds.build.cds}} app variable show ITSSHKEYCHECK app
+  - script: {{.cds.build.cdsctl}} application variable list ITSSHKEYCHECK app
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring github
-  - script: {{.cds.build.cds}} app variable show ITSSHKEYCHECK app
+  - script: {{.cds.build.cdsctl}} application variable list ITSSHKEYCHECK app
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring github.pub
