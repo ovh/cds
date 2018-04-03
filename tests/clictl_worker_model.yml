@@ -1,0 +1,17 @@
+name: Worker Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model delete worker1 --force
+
+- name: worker model add
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model add worker1 docker shared.infra --image=foo/model/go:latest 
+
+- name: worker model list
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model list
+
+- name: cleanup
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model delete worker1 --force

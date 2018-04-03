@@ -24,6 +24,7 @@ var (
 	workerModel = cli.NewCommand(workerModelCmd, nil,
 		[]*cobra.Command{
 			cli.NewListCommand(workerModelListCmd, workerModelListRun, nil),
+			cli.NewDeleteCommand(workerModelDeleteCmd, workerModelDeleteRun, nil),
 			cli.NewCommand(workerModelAddCmd, workerModelAddRun, nil),
 		})
 )
@@ -157,5 +158,23 @@ func workerModelAddRun(c cli.Values) error {
 	}
 
 	fmt.Printf("Worker model %s added with success", name)
+	return nil
+}
+
+var workerModelDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete a CDS worker model",
+	VariadicArgs: cli.Arg{
+		Name: "name",
+	},
+}
+
+func workerModelDeleteRun(v cli.Values) error {
+	if err := client.WorkerModelDelete(v.GetString("name")); err != nil {
+		if err.Error() == "worker model not found" && v.GetBool("force") {
+			return nil
+		}
+		return err
+	}
 	return nil
 }
