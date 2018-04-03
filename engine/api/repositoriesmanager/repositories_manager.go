@@ -145,10 +145,27 @@ func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectV
 }
 
 func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out interface{}) (int, error) {
-	return services.DoJSONRequest(c.srvs, method, path, in, out, func(req *http.Request) {
+	code, err := services.DoJSONRequest(c.srvs, method, path, in, out, func(req *http.Request) {
 		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
 		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})
+
+	if code >= 400 {
+		switch code {
+		case http.StatusUnauthorized:
+			err = sdk.WrapError(sdk.ErrUnauthorized, "%s", err)
+		case http.StatusBadRequest:
+			err = sdk.WrapError(sdk.ErrWrongRequest, "%s", err)
+		case http.StatusNotFound:
+			err = sdk.WrapError(sdk.ErrNotFound, "%s", err)
+		case http.StatusForbidden:
+			err = sdk.WrapError(sdk.ErrForbidden, "%s", err)
+		default:
+			err = sdk.WrapError(sdk.ErrUnknownError, "%s", err)
+		}
+	}
+
+	return code, err
 }
 
 func (c *vcsClient) postMultipart(path string, fileContent []byte, out interface{}) (int, error) {
