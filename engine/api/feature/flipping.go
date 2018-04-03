@@ -4,26 +4,26 @@ import (
 	"github.com/ovhlabs/izanami-go-client"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 const (
-	FeatWorkflowAsCode = "WasC"
+	FeatWorkflowAsCode = "cds:wasc"
 
 	cacheFeatureKey = "feature:"
 )
 
 var c *client.Client
 
-// ProjectFeatures represents a project and the feature states
-type ProjectFeatures struct {
-	Key      string          `json:"key"`
-	Features map[string]bool `json:"features"`
-}
-
 // CheckContext represents the context send to izanami to check if the feature is enabled
 type CheckContext struct {
 	Key string `json:"key"`
+}
+
+// List all features
+func List() []string {
+	return []string{FeatWorkflowAsCode}
 }
 
 // Init initialize izanami client
@@ -33,6 +33,13 @@ func Init(apiURL, clientID, clientSecret string) error {
 	return errC
 }
 
+// GetFromCache get feature tree for the given project from cache
+func GetFromCache(store cache.Store, projectKey string) sdk.ProjectFeatures {
+	projFeats := sdk.ProjectFeatures{}
+	store.Get(cacheFeatureKey+projectKey, &projFeats)
+	return projFeats
+}
+
 // IsEnabled check if feature is enabled for the given project
 func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
 	// No feature flipping
@@ -40,7 +47,7 @@ func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
 		return true
 	}
 
-	var projFeats ProjectFeatures
+	var projFeats sdk.ProjectFeatures
 
 	// Get from cache
 	if !cache.Get(cacheFeatureKey+projectKey, &projFeats) {
