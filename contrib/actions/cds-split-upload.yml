@@ -1,0 +1,65 @@
+version:            v1.0
+name:               CDS_SplitUploadArtifact
+description:        "Split and Upload Artifact with size greater than 500 MB."
+parameters:
+  numericSuffixes:
+    type:           boolean
+    default:        "true"
+    description:    Use numeric suffixes instead of alphabetic. Default suffix is set to be Numeric. (Optional)
+  sourceFile:
+    type:           string
+    description:    Artifact File to be split and uploaded. (Mandatory).
+  prefixHandle:
+    type:           string
+    description:    Prefix to be added to destination files after split. (Mandatory)
+  tag:
+    type:           string
+    description:    Tag to identify uploaded artifacts. Default tag value is CDS run version number. (Optional)
+  splitSize:
+    type:           string
+    default:        "200m"
+    description:    Size of each split files. Default size is 200MB. (Optional)
+requirements:
+  - binary:         bash
+  - binary:         split
+steps:
+- script:
+  - '#!/bin/bash'
+  - set -e
+  - ""
+  - SOURCE="{{.sourceFile}}"
+  - PREFIX_HANDLE="{{.prefixHandle}}"
+  - NUM_SUFFIX="{{.numericSuffixes}}"
+  - TAG="{{.cds.version}}"
+  - ""
+  - if [[ -z "${SOURCE}" || -z "${PREFIX_HANDLE}" ]]; then
+  - "\techo -e \"\nTerminating Split-Upload Artifact\""
+  - "\techo -e \"Please check if any action parameters are missing...\n\""
+  - "\texit 1"
+  - else
+  - "\techo -e \"\nInitiating Split-Upload Artifact on: ${SOURCE} with prefix: ${PREFIX_HANDLE}...\n\""
+  - fi;
+  - ""
+  - 'ARGS=""'
+  - if [ "true" = "${NUM_SUFFIX}" ]; then
+  -   'ARGS="-d"'
+  - fi;
+  - ""
+  - if [ ! -z "{{.tag}}" ]; then
+  -   'TAG="{{.tag}}"'
+  - fi;
+  - ""
+  - 'x=$(md5sum ${SOURCE} | cut -d " " -f 1)'
+  - ""
+  - 'echo -e "md5sum of ${SOURCE} is $x\n"'
+  - 'worker export ${SOURCE}_md5 $x'
+  - ""
+  - 'echo -e "\n$x > ${SOURCE}-md5"'
+  - 'worker upload --tag={{.cds.version}} ${SOURCE}-md5'
+  - ""
+  - echo -e "\n"
+  - 'split --verbose --bytes={{.splitSize}} ${ARGS} ${SOURCE} ${PREFIX_HANDLE}-'
+  - ""
+  - echo -e "\n"
+  - 'worker upload --tag=${TAG} ./${PREFIX_HANDLE}-*'
+  - ""
