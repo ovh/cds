@@ -3,7 +3,7 @@
 set -e
 
 function generateUserActionsDocumentation {
-  for action in `ls ../contrib/actions/*.yaml`; do
+  for action in `ls ../contrib/actions/*.yml`; do
 
   echo "work on ${action}"
 
