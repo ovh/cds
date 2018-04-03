@@ -550,7 +550,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/worker/model/delete/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/delete/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/worker/disable/</loc>
   </url>
   
   <url>

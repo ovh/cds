@@ -1220,6 +1220,11 @@
         <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/cli/cdsctl/worker/disable/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/disable/">
+          <span>disable</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/worker/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/worker/list/">
           <span>list</span>
@@ -1233,6 +1238,11 @@
       <li data-nav-id="/cli/cdsctl/worker/model/add/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/add/">
           <span>add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/worker/model/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/delete/">
+          <span>delete</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/worker/model/list/" class="dd-item">
@@ -1745,7 +1755,7 @@ fi
 # update the directory .m2/
 # as there is a cache, mvn does not need to download all dependencies
 # if they are not updated on upstream
-mvn install 
+mvn install
 
 # put in cache the updated .m2/ directory
 worker cache push $tag .m2/
@@ -1784,7 +1794,7 @@ worker cache push $tag .m2/
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/worker/cache/push/" title="push"> <i class="fa fa-chevron-left"></i></a>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/worker/artifacts/" title="artifacts"> <i class="fa fa-chevron-left"></i></a>
             <a class="nav nav-next" href="https://ovh.github.io/cds/cli/worker/cache/pull/" title="pull" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
