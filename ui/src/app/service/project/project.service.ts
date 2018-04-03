@@ -76,6 +76,15 @@ export class ProjectService {
     }
 
     /**
+     * Update favorite project.
+     * @param project Project updated
+     * @returns {Observable<Project>}
+     */
+    updateFavorite(projectKey: string): Observable<Project> {
+        return this._http.post<Project>('/project/' + projectKey + '/favorite', {});
+    }
+
+    /**
      * Delete the given project
      * @param key Project unique key
      * @returns {Observable<boolean>}

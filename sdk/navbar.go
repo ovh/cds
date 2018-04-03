@@ -1,14 +1,11 @@
 package sdk
 
-// NavbarData is the struct returned by getNavbarHandler
-type NavbarData struct {
-	Projects []NavbarProjectData `json:"projects"`
-}
-
 // NavbarProjectData is the sub struct returned by getNavbarHandler
 type NavbarProjectData struct {
-	Key              string   `json:"key"`
-	Name             string   `json:"name"`
-	ApplicationNames []string `json:"application_names,omitempty"`
-	WorkflowNames    []string `json:"workflow_names,omitempty"`
+	Key             string `json:"key"`
+	Name            string `json:"name"`
+	ApplicationName string `json:"application_name,omitempty"`
+	WorkflowName    string `json:"workflow_name,omitempty"`
+	Type            string `json:"type,omitempty"`
+	Favorite        bool   `json:"favorite"`
 }

@@ -4,6 +4,9 @@
     <div class="CDSbreadcrumb">
         <app-breadcrumb [project]="project"  [workflow]="workflowName" [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun"
         [wPipeline]="workflowPipeline"></app-breadcrumb>
+        <div class="right floated">
+          <i class="pointing star icon" [class.favorite]="project.favorite" [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
+        </div>
     </div>
 
     <div class="CDSmenu">

@@ -1,40 +1,78 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
     <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"/></a>
-
-
     <ng-container *ngIf="currentUser">
+        <a class="item link" href="#" [routerLink]="['/project', 'list', 'all']" *ngIf="currentUser">
+            {{ 'navbar_projects' | translate }}
+        </a>
         <div class="ui pointing dropdown link item" suiDropdown>
-            <div class="text">{{'navbar_projects' | translate}}</div>
+            <div class="text">{{'navbar_favorites' | translate}}</div>
             <i class="dropdown icon"></i>
             <div class="menu" suiDropdownMenu>
                 <ng-container *ngIf="loading">
                   <div class="item">{{'common_loading' | translate}}</div>
                 </ng-container>
-                <ng-container *ngFor="let prj of listProjects">
-                    <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
-                </ng-container>
-                <ng-container *ngIf="navProjects && navProjects.projects && navProjects.projects.length > 10">
-                    <a class="item" sm-item href="#" [routerLink]="['project', 'list', 'all']">
-                        <strong>{{ 'navbar_all_projects' | translate }}</strong>
-                    </a>
+                <ng-container *ngFor="let prj of listFavs">
+                    <ng-container [ngSwitch]="prj.type">
+                      <ng-container *ngSwitchCase="'workflow'">
+                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
+                          <div class="details">
+                            <div class="title bold">
+                                {{prj.workflow_name}}
+                            </div>
+                            <div class="info mt">
+                                {{'navbar_workflow_in' | translate}} {{prj.key}}
+                            </div>
+                          </div>
+                        </a>
+                      </ng-container>
+                      <ng-container *ngSwitchCase="'application'">
+                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key, 'application', prj.application_name]">
+                          <div class="details">
+                            <div class="title bold">
+                                {{prj.application_name}}}
+                            </div>
+                            <div class="info mt">
+                                {{'navbar_application_in' | translate}} {{prj.key}}
+                            </div>
+                          </div>
+                        </a>
+                      </ng-container>
+                      <ng-container *ngSwitchDefault>
+                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">
+                          <div class="details">
+                            <div class="title bold">
+                                {{prj.name}}
+                            </div>
+                            <div class="info mt">
+                                {{'common_project' | translate}}
+                            </div>
+                          </div>
+                        </a>
+                      </ng-container>
+                    </ng-container>
                 </ng-container>
             </div>
         </div>
     </ng-container>
-    <div class="item link" *ngIf="currentUser">
-        <a id="createProjectURL" href="#" [routerLink]="['/project']">{{ 'navbar_project_create' | translate }}</a>
-    </div>
+    <a class="item link" href="#" [routerLink]="['/project']" *ngIf="currentUser">
+        {{ 'navbar_project_create' | translate }}
+    </a>
 
     <div class="right menu details">
         <ng-template let-result let-query="query" #searchTemplate>
-            <div class="title">
-                {{result.title}}
-            </div>
-            <div class="info">
-                <span *ngIf="result.type === 'workflow'">{{'navbar_workflow_in' | translate}}</span>
-                <span *ngIf="result.type === 'application'">{{'navbar_application_in' | translate}}</span>
-                <span *ngIf="result.type === 'project'">{{'common_project' | translate}}</span>
-                <span class="ui text tiny blue" *ngIf="result.type !== 'project'">{{result.projectKey}}</span>
+            <div>
+              <div class="title">
+                  {{result.title}}
+                  <div class="inline floated right" *ngIf="result.favorite">
+                    <i class="pointing star icon favorite"></i>
+                  </div>
+              </div>
+              <div class="info">
+                  <span *ngIf="result.type === 'workflow'">{{'navbar_workflow_in' | translate}}</span>
+                  <span *ngIf="result.type === 'application'">{{'navbar_application_in' | translate}}</span>
+                  <span *ngIf="result.type === 'project'">{{'common_project' | translate}}</span>
+                  <span class="ui text tiny blue" *ngIf="result.type !== 'project'">{{result.projectKey}}</span>
+              </div>
             </div>
         </ng-template>
         <sui-search
@@ -47,7 +85,7 @@
             [retainSelectedResult]="false"
             [resetQueryOnChange]="false"
             (keydown)="searchEvent($event)"
-            (resultSelected)="navigateToResult($event.value)">
+            (resultSelected)="navigateToResult($event)">
         </sui-search>
 
         <sm-dropdown icon="settings" *ngIf="currentUser">

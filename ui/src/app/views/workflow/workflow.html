@@ -1,5 +1,8 @@
 <div class="CDSbreadcrumb">
     <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name" [run]="number" [nodeName]="currentNodeName"></app-worflow-breadcrumb>
+    <div class="right floated">
+      <i class="pointing star icon" [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
+    </div>
 </div>
 <aside class="sidebar scrollable" [class.expanded]="sidebarOpen">
     <div class="floated right">

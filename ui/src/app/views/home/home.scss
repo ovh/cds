@@ -1,6 +1,11 @@
 #CDSHome {
-  padding-top: 20px;
+  padding-top: 15px;
+  height: 100%;
+  overflow: auto;
   h1 {
-    padding-bottom: 7em;
+    margin: 1em;
+  }
+  .ml5 {
+    margin-left: 5px;
   }
 }

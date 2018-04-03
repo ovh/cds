@@ -5,8 +5,10 @@ export class NavbarData {
 export class NavbarProjectData {
     key: string;
     name: string;
-    application_names: Array<string>;
-    workflow_names: Array<string>;
+    application_name: string;
+    workflow_name: string;
+    type: string;
+    favorite: boolean;
 }
 
 export class NavbarRecentData {
@@ -19,4 +21,5 @@ export class NavbarSearchItem {
   value: string;
   title: string;
   projectKey: string;
+  favorite?: boolean;
 }

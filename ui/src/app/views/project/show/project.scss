@@ -5,4 +5,20 @@
   flex-direction: column;
   align-content: stretch;
   height: 100%;
+
+  i {
+    &.favorite {
+      color: $cds_favorite_color;
+      &:hover {
+        opacity: 0.4;
+      }
+    }
+    &.unfavorite {
+      color: black;
+      opacity: 0.3;
+      &:hover {
+        color: $cds_favorite_color;
+      }
+    }
+  }
 }

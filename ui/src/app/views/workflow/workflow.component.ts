@@ -9,6 +9,8 @@ import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {ProjectStore} from '../../service/project/project.store';
 import {RouterService} from '../../service/router/router.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
+import {ToastService} from '../../shared/toast/ToastService';
+import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 
 @Component({
@@ -47,7 +49,9 @@ export class WorkflowComponent implements OnInit {
                 private _router: Router,
                 private _routerService: RouterService,
                 private _projectStore: ProjectStore,
-                private _workflowCore: WorkflowCoreService) {
+                private _workflowCore: WorkflowCoreService,
+                private _toast: ToastService,
+                private _translate: TranslateService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -199,6 +203,11 @@ export class WorkflowComponent implements OnInit {
               this.selectedHook = Workflow.getHookByID(this.selectedHookId, this.workflow);
           }
       });
+    }
+
+    updateFav() {
+      this._workflowStore.updateFavorite(this.project.key, this.workflow.name)
+        .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
     }
 
     toggleSidebar(): void {

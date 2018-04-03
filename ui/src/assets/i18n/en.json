@@ -222,6 +222,9 @@
   "common_end": "End",
   "common_error": "Error",
   "common_loading_projects": "Loading projects...",
+  "common_favorites_updated": "Bookmarks updated with success",
+  "common_favorites_delete": "Delete from bookmarks",
+  "common_no_favorites": "You didn't add projects or workflows in your bookmarks yet.",
 
   "keys_added": "Key added",
   "keys_add_title": "Add a key",
@@ -319,6 +322,7 @@
   "navbar_profile": "Profile",
   "navbar_projects_placeholder": "All Projects",
   "navbar_projects": "Projects",
+  "navbar_favorites": "Bookmarks",
   "navbar_users": "Users",
   "navbar_search": "Search...",
   "navbar_settings": "Settings",

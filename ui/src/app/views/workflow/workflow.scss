@@ -49,3 +49,19 @@ $sidebarWidth: 255px;
     z-index: 10;
   }
 }
+
+i {
+  &.favorite {
+    color: $cds_favorite_color;
+    &:hover {
+      opacity: 0.4;
+    }
+  }
+  &.unfavorite {
+    color: black;
+    opacity: 0.3;
+    &:hover {
+      color: $cds_favorite_color;
+    }
+  }
+}

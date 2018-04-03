@@ -3,6 +3,11 @@
 .ui.menu.navbar {
   background-color: $navbarColor;
 
+  i {
+    &.favorite {
+      color: $cds_favorite_color;
+    }
+  }
   img.item {
     height: 50px;
     padding: 5px 10px;
@@ -52,10 +57,16 @@
   .details {
     .title {
       font-size: 1.1em;
+      &.bold {
+        font-weight: bold;
+      }
     }
     .info {
       font-size: 0.8em;
       color: black;
+      &.mt {
+        margin-top: 4px;
+      }
     }
   }
 

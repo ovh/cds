@@ -1,10 +1,62 @@
 <div id="CDSHome">
-    <h1 class="ui center aligned header">{{ 'home_title' | translate }}</h1>
-
-
-    <div class="ui raised padded text container segment">
-        <h2 class="ui header">{{ 'home_documentation' | translate}}</h2>
-        <a href="https://ovh.github.io/cds" target="_blank">https://ovh.github.io/cds</a>
+    <h1 class="ui center aligned header">{{ 'home_title' | translate }} <a href="https://ovh.github.io/cds" target="_blank"><i class="fa fa-book ml5"></i></a></h1>
+    <div class="ui row" *ngIf="!loading">
+      <div class="ui grid">
+        <div class="two wide column">
+        </div>
+        <div class="twelve wide column">
+          <div class="ui centered cards">
+            <ng-container *ngFor="let fav of favorites">
+              <div class="card">
+                <div class="content">
+                  <ng-container [ngSwitch]="fav.type">
+                    <ng-container *ngSwitchCase="'workflow'">
+                      <div class="right floated">
+                        <i class="share alternate icon"></i>
+                      </div>
+                      <a class="header" sm-item href="#" [routerLink]="['/project', fav.key, 'workflow', fav.workflow_name]">
+                        {{fav.workflow_name}}
+                      </a>
+                      <div class="description">
+                        {{'navbar_workflow_in' | translate}} {{fav.key}}
+                      </div>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'application'">
+                      <a class="header" sm-item href="#" [routerLink]="['/project', fav.key, 'application', fav.application_name]">
+                        {{fav.application_name}}}
+                      </a>
+                      <div class="description">
+                        {{'navbar_application_in' | translate}} {{fav.key}}
+                      </div>
+                    </ng-container>
+                    <ng-container *ngSwitchDefault>
+                      <div class="right floated">
+                        <i class="briefcase icon"></i>
+                      </div>
+                      <a class="header" sm-item href="#" [routerLink]="['/project', fav.key]">
+                        {{fav.name}}
+                      </a>
+                      <div class="description">
+                        {{'common_project' | translate}}
+                      </div>
+                    </ng-container>
+                  </ng-container>
+                </div>
+                <div class="ui bottom attached button" (click)="deleteFav(fav)">
+                  <i class="ban icon"></i>
+                  {{'common_favorites_delete' | translate}}
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <div class="ui raised padded text container segment" *ngIf="!loading && (!favorites || !favorites.length)">
+        {{'common_no_favorites' | translate}}
+    </div>
+
+    <div class="ui active text loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
 
 </div>

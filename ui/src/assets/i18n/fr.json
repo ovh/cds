@@ -222,6 +222,9 @@
   "common_end": "Fin",
   "common_error": "Erreur",
   "common_loading_projects": "Chargement des projets...",
+  "common_favorites_updated": "Favoris mis à jour avec succès",
+  "common_favorites_delete": "Supprimer des favoris",
+  "common_no_favorites": "Vous n'avez pas encore ajouter de projets ou de workflows dans vos favoris.",
 
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",
@@ -319,6 +322,7 @@
   "navbar_profile": "Votre Compte",
   "navbar_projects_placeholder": "Tous les projets",
   "navbar_projects": "Projets",
+  "navbar_favorites": "Favoris",
   "navbar_users": "Utilisateurs",
   "navbar_search": "Rechercher...",
   "navbar_settings": "Paramètres",
