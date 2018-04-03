@@ -25,6 +25,6 @@ Upload file on Nexus
 * **curl**: type: binary Value: curl
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-nexus-upload.yaml)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-nexus-upload.yml)
 
 

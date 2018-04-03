@@ -29,6 +29,6 @@ If empty, will launch pylint inside the working directory
 * **virtualenv**: type: binary Value: virtualenv
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-python-pylint.yaml)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-python-pylint.yml)
 
 

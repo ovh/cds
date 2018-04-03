@@ -8,7 +8,7 @@ function generateUserActionsDocumentation {
   echo "work on ${action}"
 
   filename=$(basename "$action")
-  actionName=${filename/.yaml/}
+  actionN`ame=${filename/.yml/}
 
   mkdir -p content/workflows/pipelines/actions/user
   ACTION_FILE="content/workflows/pipelines/actions/user/${actionName}.md"
@@ -22,7 +22,7 @@ title = "${actionName}"
 +++
 EOF
 
-  cdsctl -w action doc ${action} >> $ACTION_FILE
+  cdsctl action doc ${action} >> $ACTION_FILE
 
   done;
 }
