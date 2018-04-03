@@ -484,11 +484,20 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	}
 
 	//Parse job params to get the VCS infos
-	gitValues := map[string]string{}
+	currentGitValues := map[string]string{}
 	for _, param := range jobParams {
 		switch param.Name {
 		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
-			gitValues[param.Name] = param.Value
+			currentGitValues[param.Name] = param.Value
+		}
+	}
+
+	//Parse job params to get the VCS infos
+	previousGitValues := map[string]string{}
+	for _, param := range run.BuildParameters {
+		switch param.Name {
+		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
+			previousGitValues[param.Name] = param.Value
 		}
 	}
 
@@ -497,12 +506,12 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		isRoot = true
 	}
 
-	var previousGitRepo string
-	pGitRepo := sdk.ParameterFind(&run.BuildParameters, tagGitRepository)
-	if pGitRepo != nil {
-		previousGitRepo = pGitRepo.Value
+	gitValues := currentGitValues
+	if previousGitValues[tagGitURL] == currentGitValues[tagGitURL] || previousGitValues[tagGitHTTPURL] == currentGitValues[tagGitHTTPURL] {
+		gitValues = previousGitValues
 	}
-	vcsInfos, errVcs := getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitRepo)
+
+	vcsInfos, errVcs := getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitValues[tagGitRepository])
 	if errVcs != nil {
 		if isRoot {
 			return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")

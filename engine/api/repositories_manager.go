@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -652,92 +651,5 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 		}
 
 		return WriteJSON(w, app, http.StatusOK)
-	}
-}
-
-//TODO Workflow as code here
-func (api *API) addApplicationFromRepositoriesManagerHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
-		rmName := vars["name"]
-
-		var data map[string]string
-		if err := UnmarshalBody(r, &data); err != nil {
-			return err
-		}
-
-		repoFullname := data["repository_fullname"]
-		if repoFullname == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "addApplicationFromRepositoriesManagerHandler>Repository fullname is mandatory")
-		}
-
-		proj, errlp := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
-		if errlp != nil {
-			return sdk.WrapError(sdk.ErrInvalidProject, "addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s", projectKey, errlp)
-		}
-
-		rm := repositoriesmanager.GetProjectVCSServer(proj, rmName)
-		if rm == nil {
-			return sdk.WrapError(sdk.ErrNoReposManager, "addApplicationFromRepositoriesManagerHandler> Unable to laod repo manager")
-		}
-
-		client, errac := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
-		if errac != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addApplicationFromRepositoriesManagerHandler> Cannot get client got %s %s: %s", projectKey, rmName, errac)
-		}
-
-		repo, errlr := client.RepoByFullname(repoFullname)
-		if errlr != nil {
-			return sdk.WrapError(sdk.ErrRepoNotFound, "addApplicationFromRepositoriesManagerHandler> Cannot get repo: %s", errlr)
-		}
-
-		app := sdk.Application{
-			Name:       repo.Slug,
-			ProjectKey: projectKey,
-			Variable: []sdk.Variable{
-				sdk.Variable{
-					Name:  "repo",
-					Type:  sdk.StringVariable,
-					Value: repo.SSHCloneURL,
-				},
-			},
-		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "addApplicationFromRepositoriesManagerHandler> Cannot start transaction")
-		}
-
-		defer tx.Rollback()
-
-		//Insert application in database
-		if err := application.Insert(tx, api.Cache, proj, &app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline")
-		}
-
-		//Fetch groups from project
-		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot load group from project")
-		}
-
-		//Add the  groups on the application
-		if err := application.AddGroup(tx, api.Cache, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
-			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot add groups on application")
-		}
-
-		//Commit the transaction
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot commit transaction")
-		}
-
-		//Attach the application to the repositories manager
-		app.VCSServer = rm.Name
-		app.RepositoryFullname = repoFullname
-		if err := repositoriesmanager.InsertForApplication(api.mustDB(), &app, projectKey); err != nil {
-			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot attach application")
-		}
-
-		return nil
 	}
 }

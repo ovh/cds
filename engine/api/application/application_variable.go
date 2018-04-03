@@ -285,11 +285,7 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 }
 
 // UpdateVariable Update a variable in the given application
-func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
-	variableBefore, err := LoadVariableByID(db, app.ID, variable.ID, WithClearPassword())
-	if err != nil {
-		return sdk.WrapError(err, "UpdateVariable> cannot load variable %d", variable.ID)
-	}
+func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, variableBefore *sdk.Variable, u *sdk.User) error {
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {

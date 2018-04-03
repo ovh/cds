@@ -122,16 +122,13 @@ func (api *API) postWorkflowHandler() Handler {
 			}
 		}
 
-		defaultPayload, errHr := workflow.HookRegistration(tx, api.Cache, nil, wf, p)
-		if errHr != nil {
-			return sdk.WrapError(errHr, "postWorkflowHandler")
-		}
-		if defaultPayload != nil && isDefaultPayloadEmpty(wf) {
-			wf.Root.Context.DefaultPayload = *defaultPayload
-		}
-
 		if err := workflow.Insert(tx, api.Cache, &wf, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
+		}
+
+		// HookRegistration must be after workflow insert
+		if errHr := workflow.HookRegistration(tx, api.Cache, nil, wf, p); errHr != nil {
+			return sdk.WrapError(errHr, "postWorkflowHandler")
 		}
 
 		// Add group
@@ -212,17 +209,11 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-		defaultPayload, errHr := workflow.HookRegistration(tx, api.Cache, oldW, wf, p)
-		if errHr != nil {
-			return sdk.WrapError(errHr, "putWorkflowHandler")
+		if errHr := workflow.HookRegistration(tx, api.Cache, oldW, wf, p); errHr != nil {
+			return sdk.WrapError(errHr, "putWorkflowHandler> HookRegistration")
 		}
 
-		if defaultPayload != nil && isDefaultPayloadEmpty(wf) {
-			wf.Root.Context.DefaultPayload = *defaultPayload
-			if err := workflow.UpdateNodeContext(tx, wf.Root.Context); err != nil {
-				return sdk.WrapError(err, "putWorkflowHandler> updateNodeContext")
-			}
-		} else if defaultPayload != nil || (wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "") {
+		if wf.Root.Context.DefaultPayload != nil || (wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "") {
 			wf.Metadata = getUpdatedMetadata(wf.Metadata)
 			if err := workflow.UpdateMetadata(tx, wf.ID, wf.Metadata); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> cannot update metadata")
@@ -406,28 +397,26 @@ func (api *API) getWorkflowHookHandler() Handler {
 
 func getDefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *sdk.User, wf *sdk.Workflow) (interface{}, error) {
 	var defaultPayload interface{}
-	appID := wf.Root.Context.ApplicationID
-	if wf.Root.Context.Application != nil {
-		appID = wf.Root.Context.Application.ID
+	if wf.Root.Context == nil || wf.Root.Context.Application == nil || wf.Root.Context.Application.ID == 0 {
+		app, errLa := application.LoadByID(db, store, wf.Root.Context.ApplicationID, u)
+		if errLa != nil {
+			return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "getDefaultPayload> unable to load application by id %d", wf.Root.Context.ApplicationID)
+		}
+		wf.Root.Context.Application = app
 	}
-	app, errLa := application.LoadByID(db, store, appID, u)
-	if errLa != nil {
-		return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "getDefaultPayload> unable to load application by id %d", appID)
-	}
-	wf.Root.Context.Application = app
 
-	if app.RepositoryFullname != "" {
+	if wf.Root.Context.Application.RepositoryFullname != "" {
 		defaultBranch := "master"
-		projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
+		projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, wf.Root.Context.Application.VCSServer)
 		if projectVCSServer != nil {
 			client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
 			if errclient != nil {
 				return wf.Root.Context.DefaultPayload, sdk.WrapError(errclient, "getDefaultPayload> Cannot get authorized client")
 			}
 
-			branches, errBr := client.Branches(app.RepositoryFullname)
+			branches, errBr := client.Branches(wf.Root.Context.Application.RepositoryFullname)
 			if errBr != nil {
-				return wf.Root.Context.DefaultPayload, sdk.WrapError(errBr, "getDefaultPayload> Cannot get branches for %s", app.RepositoryFullname)
+				return wf.Root.Context.DefaultPayload, sdk.WrapError(errBr, "getDefaultPayload> Cannot get branches for %s", wf.Root.Context.Application.RepositoryFullname)
 			}
 
 			for _, branch := range branches {
@@ -440,10 +429,12 @@ func getDefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u
 
 		if wf.Root.Context.HasDefaultPayload() {
 			defaultPayload = sdk.WorkflowNodeContextDefaultPayloadVCS{
-				GitBranch: defaultBranch,
+				GitBranch:     defaultBranch,
+				GitRepository: wf.Root.Context.Application.RepositoryFullname,
 			}
 		} else if defaultPayloadMap, err := wf.Root.Context.DefaultPayloadToMap(); err == nil && defaultPayloadMap["git.branch"] == "" {
 			defaultPayloadMap["git.branch"] = defaultBranch
+			defaultPayloadMap["git.repository"] = wf.Root.Context.Application.RepositoryFullname
 			defaultPayload = defaultPayloadMap
 		}
 	}

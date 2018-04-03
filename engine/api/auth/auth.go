@@ -187,7 +187,7 @@ func CheckHatcheryAuth(ctx context.Context, db *gorp.DbMap, headers http.Header)
 	name := headers.Get(cdsclient.RequestedNameHeader)
 	h, err := hatchery.LoadHatchery(db, string(uid), name)
 	if err != nil {
-		return ctx, fmt.Errorf("Invalid Hatchery UID:%s err:%s", string(uid), err)
+		return ctx, fmt.Errorf("Invalid Hatchery UID:%s name:%s err:%s", string(uid), name, err)
 	}
 
 	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: h.Name})
