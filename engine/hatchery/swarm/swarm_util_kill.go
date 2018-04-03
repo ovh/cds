@@ -44,14 +44,14 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			log.Debug("killAndRemove> Remove network %s", netname)
 			for id := range network.Containers {
 				if err := h.killAndRemoveContainer(id); err != nil {
-					log.Error("killAndRemove> unable to kill and remove %d", id[:12])
+					log.Error("killAndRemove> unable to kill and remove container %s err:%s", id[:12], err)
 				}
 			}
 		}
 
 		//Finally remove the network
 		if err := h.dockerClient.NetworkRemove(context.Background(), network.ID); err != nil {
-			log.Error("killAndRemove> unable to kill and remove network %d", network.ID[:12])
+			log.Error("killAndRemove> unable to kill and remove network %s err:%s", network.ID[:12], err)
 		}
 	}
 	return nil
