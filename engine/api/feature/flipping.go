@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	// FeatWorkflowAsCode is workflow as code feature id
 	FeatWorkflowAsCode = "cds:wasc"
 
 	cacheFeatureKey = "feature:"

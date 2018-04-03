@@ -31,7 +31,7 @@ type Project struct {
 	Keys              []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
 	VCSServers        []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
 	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
-	Features          ProjectFeatures    `json:"features" yaml:"platforms" db:"-" cli:"-"`
+	Features          ProjectFeatures    `json:"features" yaml:"features" db:"-" cli:"-"`
 }
 
 // ProjectFeatures represents a project and the feature states

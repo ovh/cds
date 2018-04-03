@@ -135,7 +135,7 @@ type Configuration struct {
 			ClientSecret string `toml:"client_secret"`
 			Token        string `toml;"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami"`
 		}
-	}
+	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################"`
 	Schedulers struct {
 		Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it"`
 	} `toml:"schedulers" comment:"###########################\n CDS Schedulers Settings \n##########################"`
