@@ -330,15 +330,16 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	}
 
 	var a sdk.Action
-	switch bI.(type) {
-	case string:
-		a = sdk.NewStepArtifactUpload(bI)
-	case map[string]string:
+	if s, ok := bI.(string); ok {
+		a = sdk.NewStepArtifactUpload(s)
+	} else if m, ok := bI.(map[interface{}]interface{}); ok {
 		argss := map[string]string{}
-		if err := mapstructure.Decode(bI, &argss); err != nil {
+		if err := mapstructure.Decode(m, &argss); err != nil {
 			return nil, true, sdk.WrapError(err, "Malformatted Step")
 		}
 		a = sdk.NewStepArtifactUpload(argss)
+	} else {
+		return nil, false, fmt.Errorf("AsArtifactUpload> Unknown type")
 	}
 
 	var err error
