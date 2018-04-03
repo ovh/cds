@@ -10,6 +10,8 @@ import (
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/urfave/cli"
+
+	"github.com/ovh/cds/sdk"
 )
 
 var (
@@ -23,8 +25,8 @@ func init() {
 func main() {
 	app := cli.NewApp()
 	app.Name = "os-ansible-inventory"
-	app.Usage = "Openstack Ansible Inventory base on metadata"
-	app.Version = "0.0.1"
+	app.Usage = "Openstack Ansible Inventory based on metadata"
+	app.Version = sdk.VERSION
 	app.Flags = []cli.Flag{
 		cli.StringSliceFlag{
 			Name: "filter",
