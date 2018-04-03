@@ -153,7 +153,21 @@ func getIPAdress(s *servers.Server, net string, netVersion int) string {
 		return address[net]
 	}
 
+	for net := range address {
+		return address[net]
+	}
+
 	return ""
+}
+
+func getAnsibleMetadata(s *servers.Server) map[string]string {
+	data := map[string]string{}
+	for k, v := range s.Metadata {
+		if strings.HasPrefix(k, "ansible_") {
+			data[k] = v
+		}
+	}
+	return data
 }
 
 func render(l *ServerList, groupBy string, net string) error {
@@ -167,8 +181,7 @@ func render(l *ServerList, groupBy string, net string) error {
 			g.Hosts = append(g.Hosts, Host{
 				Address: getIPAdress(&s, net, 4),
 				Name:    s.Name,
-				Port:    "22",
-				User:    "ubuntu",
+				Extra:   getAnsibleMetadata(&s),
 			})
 		}
 		i.Groups["all"] = g
@@ -191,6 +204,6 @@ func render(l *ServerList, groupBy string, net string) error {
 var iniFile = `
 {{- range $key, $value := .Groups }}
 [{{$key}}]
-{{ range $value.Hosts}}{{ .Name }}	ansible_connection=ssh	ansible_host={{ .Address }}	ansible_port={{ .Port }}	ansible_user={{ .User }}{{ end }}
+{{ range $value.Hosts}}{{ .Name }} ansible_connection=ssh ansible_host={{ .Address }} {{- range $ekey, $evalue := .Extra }} {{$ekey}}={{$evalue}} {{ end -}}{{ end }}
 {{ end -}}
 `

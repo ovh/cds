@@ -12,8 +12,7 @@ import (
 type Host struct {
 	Name    string
 	Address string
-	Port    string
-	User    string
+	Extra   map[string]string
 }
 
 // Group is struct that contains a list of hosts.
