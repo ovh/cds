@@ -683,7 +683,7 @@
   "worker_model_none": "Aucun modèle de worker",
   "worker_model_provision": "Provision de workers",
   "worker_model_restricted": "Restreint",
-  "worker_model_restricted_help": "Ne peut être utilisé que par une hatchery utilisateur - cocher si oui",
+  "worker_model_restricted_help": "Ne peut être utilisé que par une hatchery utilisateur - cocher si oui. <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/#what-s-a-restricted-worker-model'>Documentation</a>",
   "worker_model_run_script": "Script de lancement",
   "worker_model_status": "Statut",
   "worker_model_template": "Template",
