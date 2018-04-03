@@ -10,6 +10,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -30,7 +31,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			return err
 		}
 
-		app, errload := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errload := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithGroups)
 		if errload != nil {
 			return sdk.WrapError(errload, "updateGroupRoleOnApplicationHandler: Cannot load application %s", appName)
 		}
@@ -40,17 +41,27 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			return sdk.WrapError(errLoadGroup, "updateGroupRoleOnApplicationHandler: Cannot load group %s", groupName)
 		}
 
+		groupInWriteMode := 0
+		var oldGroup sdk.GroupPermission
+		for _, gp := range app.ApplicationGroups {
+			if gp.Group.Name == groupApplication.Group.Name {
+				oldGroup = gp
+			}
+			if gp.Permission == permission.PermissionReadWriteExecute {
+				groupInWriteMode++
+			}
+		}
+
 		if group.IsDefaultGroupID(g.ID) && groupApplication.Permission > permission.PermissionRead {
 			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "updateGroupRoleOnApplicationHandler: only read permission is allowed to default group")
 		}
 
-		if groupApplication.Permission != permission.PermissionReadWriteExecute {
-			permissions, err := group.LoadAllApplicationGroupByRole(api.mustDB(), app.ID, permission.PermissionReadWriteExecute)
-			if err != nil {
-				return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load group for application %s", appName)
-			}
+		if oldGroup.Permission == 0 {
+			return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleOnApplicationHandler> Group not found on application")
+		}
 
-			if len(permissions) == 1 && permissions[0].Group.ID == g.ID {
+		if groupApplication.Permission != permission.PermissionReadWriteExecute {
+			if groupInWriteMode == 1 && oldGroup.Permission == permission.PermissionReadWriteExecute {
 				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleOnApplicationHandler: Cannot remove write permission for group %s in application %s", groupName, appName)
 			}
 		}
@@ -77,69 +88,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load application groups")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
-	}
-}
-
-// Deprecated
-func (api *API) updateGroupsInApplicationHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
-		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
-
-		proj, errload := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errload != nil {
-			return sdk.WrapError(errload, "addGroupInApplicationHandler> Cannot load %s", key)
-		}
-
-		var groupsPermission []sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupsPermission); err != nil {
-			return err
-		}
-
-		if len(groupsPermission) == 0 {
-			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInApplicationHandler: Cannot remove all groups for application %s", appName)
-		}
-
-		found := false
-		for _, gp := range groupsPermission {
-			if gp.Permission == permission.PermissionReadWriteExecute {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInApplicationHandler: Need one group with write permission.")
-		}
-
-		app, errLoadName := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
-		if errLoadName != nil {
-			return sdk.WrapError(errLoadName, "updateGroupsInApplicationHandler: Cannot load application %s: %s", appName)
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot start transaction")
-		}
-		defer tx.Rollback()
-
-		if err := group.DeleteAllGroupFromApplication(tx, app.ID); err != nil {
-			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot delete groups from application %s", appName)
-		}
-
-		if err := application.AddGroup(tx, api.Cache, proj, app, getUser(ctx), groupsPermission...); err != nil {
-			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot add groups in application %s", app.Name)
-		}
-
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot commit transaction")
-		}
+		event.PublishApplicationPermissionUpdate(key, *app, groupApplication, oldGroup, getUser(ctx))
 
 		return WriteJSON(w, app, http.StatusOK)
 	}
@@ -194,6 +143,8 @@ func (api *API) addGroupInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot commit transaction")
 		}
 
+		event.PublishApplicationPermissionAdd(key, *app, groupPermission, getUser(ctx))
+
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load application groups")
 		}
@@ -210,9 +161,21 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		groupName := vars["group"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application %s", appName)
+		}
+
+		var gp sdk.GroupPermission
+		for _, g := range app.ApplicationGroups {
+			if g.Group.Name == groupName {
+				gp = g
+				break
+			}
+		}
+
+		if gp.Permission == 0 {
+			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteGroupFromApplicationHandler> Group does not exist on application")
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -236,6 +199,8 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application groups")
 		}
+
+		event.PublishApplicationPermissionDelete(key, *app, gp, getUser(ctx))
 
 		return WriteJSON(w, app, http.StatusOK)
 	}
