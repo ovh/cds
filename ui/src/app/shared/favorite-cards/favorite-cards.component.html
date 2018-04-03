@@ -1,0 +1,44 @@
+<div class="ui centered cards">
+  <ng-container *ngFor="let favorite of favorites">
+    <div class="card">
+      <div class="content">
+        <ng-container [ngSwitch]="favorite.type">
+          <ng-container *ngSwitchCase="'workflow'">
+            <div class="right floated">
+              <i class="share alternate icon"></i>
+            </div>
+            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key, 'workflow', favorite.workflow_name]">
+              {{favorite.workflow_name}}
+            </a>
+            <div class="description">
+              {{'navbar_workflow_in' | translate}} {{favorite.key}}
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'application'">
+            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key, 'application', favorite.application_name]">
+              {{favorite.application_name}}}
+            </a>
+            <div class="description">
+              {{'navbar_application_in' | translate}} {{favorite.key}}
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchDefault>
+            <div class="right floated">
+              <i class="briefcase icon"></i>
+            </div>
+            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key]">
+              {{favorite.name}}
+            </a>
+            <div class="description">
+              {{'common_project' | translate}}
+            </div>
+          </ng-container>
+        </ng-container>
+      </div>
+      <div class="ui bottom attached button" (click)="deleteFav(favorite)">
+        <i class="ban icon"></i>
+        {{'common_favorites_delete' | translate}}
+      </div>
+    </div>
+  </ng-container>
+</div>

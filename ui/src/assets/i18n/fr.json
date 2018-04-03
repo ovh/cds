@@ -225,6 +225,7 @@
   "common_favorites_updated": "Favoris mis à jour avec succès",
   "common_favorites_delete": "Supprimer des favoris",
   "common_no_favorites": "Vous n'avez pas encore ajouter de projets ou de workflows dans vos favoris.",
+  "common_favorites_all": "Tous les favoris",
 
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",
