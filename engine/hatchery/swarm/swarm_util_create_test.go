@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 )
 
 func Test_computeDockerOpts(t *testing.T) {
@@ -103,6 +104,19 @@ func Test_computeDockerOpts(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Extra hosts",
+			args: args{requirements: []sdk.Requirement{{Name: "go-official-1.9.1", Type: sdk.ModelRequirement, Value: "golang:1.9.1 --port=8080:8081/tcp --privileged --port=9080:9081/tcp --add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8"}}},
+			want: &dockerOpts{
+				privileged: true,
+				ports: nat.PortMap{
+					nat.Port("8081/tcp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+					nat.Port("9081/tcp"): []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "9080"}},
+				},
+				extraHosts: []string{"aaa:1.2.3.4", "bbb:5.6.7.8"},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -128,10 +142,9 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 		memory: 256,
 	}
 
-	err := h.pullImage(args.image, timeoutPullImage)
-	test.NoError(t, err)
-
-	err = h.createAndStartContainer(args)
+	// RegisterOnly = true, this will pull image if image is not found
+	spawnArgs := hatchery.SpawnArguments{RegisterOnly: true}
+	err := h.createAndStartContainer(args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
@@ -168,7 +181,8 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	err := h.pullImage(args.image, timeoutPullImage)
 	test.NoError(t, err)
 
-	err = h.createAndStartContainer(args)
+	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
+	err = h.createAndStartContainer(args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
@@ -194,7 +208,8 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 	err := h.createNetwork(args.network)
 	test.NoError(t, err)
 
-	err = h.createAndStartContainer(args)
+	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
+	err = h.createAndStartContainer(args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})

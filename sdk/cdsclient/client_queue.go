@@ -116,9 +116,16 @@ func (c *client) QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error) {
 	return wJobs, nil
 }
 
-func (c *client) QueueCountWorkflowNodeJobRun() (sdk.WorkflowNodeJobRunCount, error) {
+func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time) (sdk.WorkflowNodeJobRunCount, error) {
+	if since == nil {
+		since = new(time.Time)
+	}
+	if until == nil {
+		now := time.Now()
+		until = &now
+	}
 	countWJobs := sdk.WorkflowNodeJobRunCount{}
-	_, err := c.GetJSON("/queue/workflows/count", &countWJobs)
+	_, _, err := c.GetJSONWithHeaders("/queue/workflows/count", &countWJobs, SetHeader(RequestedIfModifiedSinceHeader, since.Format(time.RFC1123)), SetHeader("X-CDS-Until", until.Format(time.RFC1123)))
 	return countWJobs, err
 }
 

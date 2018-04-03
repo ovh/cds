@@ -30,4 +30,4 @@ This hatchery will now start worker of model 'docker' on you docker installation
 
 ## Setup a worker model
 
-See [Tutorial]({{< relref "workflows/pipelines/requirements/worker-model/docker-simple.md" >}})
+See [Tutorial]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}})

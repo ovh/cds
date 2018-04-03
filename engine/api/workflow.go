@@ -5,16 +5,19 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -112,6 +115,13 @@ func (api *API) postWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
+			var err error
+			if wf.Root.Context.DefaultPayload, err = getDefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
+				return sdk.WrapError(err, "putWorkflowHandler> Cannot set default payload")
+			}
+		}
+
 		defaultPayload, errHr := workflow.HookRegistration(tx, api.Cache, nil, wf, p)
 		if errHr != nil {
 			return sdk.WrapError(errHr, "postWorkflowHandler")
@@ -190,6 +200,13 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
+			var err error
+			if wf.Root.Context.DefaultPayload, err = getDefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
+				return sdk.WrapError(err, "putWorkflowHandler> Cannot set default payload")
+			}
+		}
+
 		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
 		}
@@ -204,6 +221,11 @@ func (api *API) putWorkflowHandler() Handler {
 			wf.Root.Context.DefaultPayload = *defaultPayload
 			if err := workflow.UpdateNodeContext(tx, wf.Root.Context); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> updateNodeContext")
+			}
+		} else if defaultPayload != nil || (wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "") {
+			wf.Metadata = getUpdatedMetadata(wf.Metadata)
+			if err := workflow.UpdateMetadata(tx, wf.ID, wf.Metadata); err != nil {
+				return sdk.WrapError(err, "putWorkflowHandler> cannot update metadata")
 			}
 		}
 
@@ -251,6 +273,40 @@ func isDefaultPayloadEmpty(wf sdk.Workflow) bool {
 		log.Warning("isDefaultPayloadEmpty>error while dump wf.Root.Context.DefaultPayload")
 	}
 	return len(m) == 0 // if empty, return true
+}
+
+func getUpdatedMetadata(metadata sdk.Metadata) sdk.Metadata {
+	defaultTags, ok := metadata["default_tags"]
+	if ok {
+		var gitAuthor, gitBranch bool
+		tagsList := strings.Split(defaultTags, ",")
+
+		for _, tag := range tagsList {
+			switch tag {
+			case "git.branch":
+				gitBranch = true
+			case "git.author":
+				gitAuthor = true
+			}
+		}
+
+		if !gitAuthor {
+			defaultTags = "git.author," + defaultTags
+		}
+
+		if !gitBranch {
+			defaultTags = "git.branch," + defaultTags
+		}
+	} else {
+		defaultTags = "git.branch,git.author"
+	}
+
+	if metadata == nil {
+		metadata = sdk.Metadata{}
+	}
+	metadata["default_tags"] = defaultTags
+
+	return metadata
 }
 
 // putWorkflowHandler deletes a workflow
@@ -325,4 +381,51 @@ func (api *API) getWorkflowHookHandler() Handler {
 
 		return WriteJSON(w, task, http.StatusOK)
 	}
+}
+
+func getDefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *sdk.User, wf *sdk.Workflow) (interface{}, error) {
+	var defaultPayload interface{}
+	appID := wf.Root.Context.ApplicationID
+	if wf.Root.Context.Application != nil {
+		appID = wf.Root.Context.Application.ID
+	}
+	app, errLa := application.LoadByID(db, store, appID, u)
+	if errLa != nil {
+		return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "getDefaultPayload> unable to load application by id %d", appID)
+	}
+	wf.Root.Context.Application = app
+
+	if app.RepositoryFullname != "" {
+		defaultBranch := "master"
+		projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
+		if projectVCSServer != nil {
+			client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
+			if errclient != nil {
+				return wf.Root.Context.DefaultPayload, sdk.WrapError(errclient, "getDefaultPayload> Cannot get authorized client")
+			}
+
+			branches, errBr := client.Branches(app.RepositoryFullname)
+			if errBr != nil {
+				return wf.Root.Context.DefaultPayload, sdk.WrapError(errBr, "getDefaultPayload> Cannot get branches for %s", app.RepositoryFullname)
+			}
+
+			for _, branch := range branches {
+				if branch.Default {
+					defaultBranch = branch.DisplayID
+					break
+				}
+			}
+		}
+
+		if wf.Root.Context.HasDefaultPayload() {
+			defaultPayload = sdk.WorkflowNodeContextDefaultPayloadVCS{
+				GitBranch: defaultBranch,
+			}
+		} else if defaultPayloadMap, err := wf.Root.Context.DefaultPayloadToMap(); err == nil && defaultPayloadMap["git.branch"] == "" {
+			defaultPayloadMap["git.branch"] = defaultBranch
+			defaultPayload = defaultPayloadMap
+		}
+	}
+
+	return defaultPayload, nil
 }

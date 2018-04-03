@@ -17,13 +17,13 @@ import (
 )
 
 // grpcInit initialize all GRPC services
-func grpcInit(dbConnectionFactory *database.DBConnectionFactory, port int, tls bool, certFile, keyFile string) error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+func grpcInit(dbConnectionFactory *database.DBConnectionFactory, addr string, port int, tls bool, certFile, keyFile string) error {
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
 		return err
 	}
 
-	log.Info("Starting GRPC services on port %d", port)
+	log.Info("Starting GRPC services on %s:%d", addr, port)
 
 	grpcHandlers := &grpcHandlers{
 		dbConnectionFactory: dbConnectionFactory,

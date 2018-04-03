@@ -10,8 +10,16 @@ jobs:
   - script:
     - mkdir mydir
     - echo "this is a test" > mydir/test.txt
+    - echo "test" > toto.txt
+    - echo "tata" > tata.txt
+    - cd mydir
+    - ln -s ../toto.txt toto.txt
+    - ln -s $HOME/tata.txt tata.txt
+    - cd ..
     - ""
     - worker cache push abcd ./mydir
+    - cd mydir
+    - worker cache push testpush toto.txt
 - job: New Job
   stage: Stage 2
   steps:
@@ -30,4 +38,6 @@ jobs:
     - "\techo \"Cache KO\""
     - '    exit 1'
     - fi
+    - worker cache pull testpush
+    - cat toto.txt
     - ""

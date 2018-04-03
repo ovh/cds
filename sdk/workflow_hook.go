@@ -73,8 +73,8 @@ func (h WorkflowNodeHook) Equals(h1 WorkflowNodeHook) bool {
 		if !has {
 			return false
 		}
-		if cfg.Value == cfg1.Value {
-			return true
+		if cfg.Value != cfg1.Value {
+			return false
 		}
 	}
 	for k, cfg1 := range h1.Config {
@@ -82,8 +82,8 @@ func (h WorkflowNodeHook) Equals(h1 WorkflowNodeHook) bool {
 		if !has {
 			return false
 		}
-		if cfg.Value == cfg1.Value {
-			return true
+		if cfg.Value != cfg1.Value {
+			return false
 		}
 	}
 	return true

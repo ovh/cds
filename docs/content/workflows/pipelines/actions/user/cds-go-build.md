@@ -7,13 +7,12 @@ Go Build: compile a go program
 
 ## Parameters
 
-* **architecture**: GOOS
+* **architecture**: GOARCH
 * **artifactUpload**: Upload Binary as CDS Artifact
 * **binary**: Binary name: Put foo for go build -o foo
-* **cgoDisabled**: if true (checked) -> export CGO_ENABLED=0 before go build
+* **cgoDisabled**: 
 * **detectRaceCondition**: Enable data race detection. It's flag -race
 * **flags**: flags for go build. Put -ldflags "-X main.xyz=abc" for go build -ldflags "-X main.xyz=abc"
-* **gopath**: set a $GOPATH. If empty, this action tries to get env $GOPATH. If $GOPATH is empty, the action will set it to $HOME/go
 * **os**: GOOS
 * **package**: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar
 * **preRun**: Pre-command. Example: export CGO_ENABLED=0
@@ -26,6 +25,6 @@ Go Build: compile a go program
 * **go**: type: binary Value: go
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-go-build.hcl)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-go-build.yaml)
 
 

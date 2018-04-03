@@ -161,8 +161,6 @@ func pipelineImportRun(v cli.Values) error {
 
 	if strings.HasSuffix(v["path"], ".json") {
 		format = "json"
-	} else if strings.HasSuffix(v["path"], ".hcl") {
-		format = "hcl"
 	}
 
 	isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, v["path"])

@@ -156,7 +156,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                             }
                         }
                     }, () => {
-                        this._router.navigate(['/project', key]);
+                        this._router.navigate(['/project', key], {queryParams: {tab: 'applications'}});
                     });
                 }
             }

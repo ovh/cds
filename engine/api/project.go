@@ -112,6 +112,7 @@ func (api *API) updateProjectHandler() Handler {
 		}
 		// Update in DB is made given the primary key
 		proj.ID = p.ID
+		proj.VCSServers = p.VCSServers
 		if errUp := project.Update(api.mustDB(), api.Cache, proj, getUser(ctx)); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}

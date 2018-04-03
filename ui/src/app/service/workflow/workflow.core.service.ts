@@ -3,12 +3,14 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
 import {WorkflowRun} from '../../model/workflow.run.model';
 import {WorkflowNode, Workflow} from '../../model/workflow.model';
+import {WorkflowNodeRun} from '../../model/workflow.run.model';
 
 @Injectable()
 export class WorkflowCoreService {
 
     private _sideBarStatus: BehaviorSubject<boolean> = new BehaviorSubject(true);
     private _currentWorkflowRun: BehaviorSubject<WorkflowRun> = new BehaviorSubject(null);
+    private _currentNodeRun: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
     private _linkJoinEvent: BehaviorSubject<WorkflowNode> = new BehaviorSubject(null);
     private _asCodeEditorEvent: BehaviorSubject<{open: boolean, save: boolean}> = new BehaviorSubject(null);
     private _previewWorkflow: BehaviorSubject<Workflow> = new BehaviorSubject(null);
@@ -55,5 +57,13 @@ export class WorkflowCoreService {
 
     setCurrentWorkflowRun(wr: WorkflowRun): void {
         this._currentWorkflowRun.next(wr);
+    }
+
+    getCurrentNodeRun(): Observable<WorkflowNodeRun> {
+        return new Observable<WorkflowNodeRun>(fn => this._currentNodeRun.subscribe(fn));
+    }
+
+    setCurrentNodeRun(wr: WorkflowNodeRun): void {
+        this._currentNodeRun.next(wr);
     }
 }

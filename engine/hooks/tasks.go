@@ -190,7 +190,6 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) error {
 	default:
 		return fmt.Errorf("Unsupported task type %s", t.Type)
 	}
-	return nil
 }
 
 func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
@@ -246,6 +245,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	//Craft a new execution
 	exec = &sdk.TaskExecution{
 		Timestamp: nextSchedule.UnixNano(),
+		Status:    TaskExecutionScheduled,
 		Type:      t.Type,
 		UUID:      t.UUID,
 		Config:    t.Config,

@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -50,8 +51,11 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
 		defer tx.Rollback()
+
+		var keyToDelete sdk.ApplicationKey
 		for _, k := range app.Keys {
 			if k.Name == keyName {
+				keyToDelete = k
 				if err := application.DeleteApplicationKey(tx, app.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot delete key %s", k.Name)
 				}
@@ -61,9 +65,15 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 			}
 		}
 
+		if keyToDelete.Name == "" {
+			return sdk.WrapError(sdk.ErrKeyNotFound, "deleteKeyInApplicationHandler> key %s not found on application %s", keyName, app.Name)
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot commit transaction")
 		}
+
+		event.PublishApplicationKeyDelete(key, *app, keyToDelete, getUser(ctx))
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -126,6 +136,8 @@ func (api *API) addKeyInApplicationHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot commit transaction")
 		}
+
+		event.PublishApplicationKeyAdd(key, *app, newKey, getUser(ctx))
 
 		return WriteJSON(w, newKey, http.StatusOK)
 	}

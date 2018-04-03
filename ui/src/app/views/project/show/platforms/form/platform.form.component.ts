@@ -34,10 +34,13 @@ export class ProjectPlatformFormComponent {
 
     create(): void {
         this.loading = true;
-        this._projectStore.addPlatform(this.project.key, this.newPlatform).pipe(first(), finalize(() => {
-            this.loading = false;
-        })).subscribe(() => {
+        this._projectStore.addPlatform(this.project.key, this.newPlatform)
+          .pipe(
+            first(),
+            finalize(() => this.loading = false)
+          ).subscribe(() => {
+            this.newPlatform = new ProjectPlatform();
             this._toast.success('', this._translate.instant('project_updated'));
-        });
+          });
     }
 }

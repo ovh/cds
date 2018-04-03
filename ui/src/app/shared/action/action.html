@@ -17,14 +17,14 @@
                 </div>
                 <div class="one wide inline field">
                     <div class="ui checkbox">
-                        <input type="checkbox" id="enabled" name="enabled" [(ngModel)]="editableAction.enabled"
+                        <input type="checkbox" id="enabled_action_{{editableAction.id}}" name="enabled" [(ngModel)]="editableAction.enabled"
                                (change)="editableAction.hasChanged = true" [disabled]="!edit">
-                        <label for="enabled">{{ 'common_enable' | translate }}</label>
+                        <label for="enabled_action_{{editableAction.id}}">{{ 'common_enable' | translate }}</label>
                     </div>
                     <div class="ui checkbox mt10" *ngIf="editableAction.type !== 'Joined'">
-                        <input type="checkbox" id="deprecated" name="deprecated" [(ngModel)]="editableAction.deprecated"
+                        <input type="checkbox" id="deprecated_{{editableAction.id}}" name="deprecated" [(ngModel)]="editableAction.deprecated"
                                (change)="editableAction.hasChanged = true" [disabled]="!edit">
-                        <label for="deprecated">{{ 'common_deprecated' | translate }}</label>
+                        <label for="deprecated_{{editableAction.id}}">{{ 'common_deprecated' | translate }}</label>
                     </div>
                 </div>
                 <div class="two wide right aligned field labelPadding">
@@ -93,7 +93,7 @@
     </div>
     <div class="ui segment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="steps" *ngIf="steps">
-            <div *ngFor="let step of steps" class="step" [class.off]="!step.enabled">
+            <div *ngFor="let step of steps; let idxStep = index" class="step" [class.off]="!step.enabled">
                 <app-action-step
                     [action]="editableAction"
                     [step]="step"
@@ -101,6 +101,7 @@
                     [suggest]="suggest"
                     [publicActions]="publicActions"
                     [collapsed]="collapsed"
+                    [order]="idxStep"
                     (removeEvent)="stepManagement($event)">
                 </app-action-step>
                 <hr>
@@ -111,26 +112,25 @@
         {{ 'step_nonfinal_no' | translate }}
     </div>
 
-    <div class="ui bottomBtnsWrapper segment">
+    <div class="ui bottomBtnsWrapper segment" *ngIf="edit">
         <div class="ui grid">
-                <div class="sixteen wide column" *ngIf="edit && publicActions.length > 0">
-                    <app-action-step-form [publicActions]="publicActions" (create)="stepManagement($event)"></app-action-step-form>
-                </div>
+            <div class="sixteen wide column" *ngIf="publicActions.length > 0">
+                <app-action-step-form [publicActions]="publicActions" (create)="stepManagement($event)"></app-action-step-form>
+            </div>
 
+            <div class="eight wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
+                <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading" [class.loading]="editableAction.loading">
+                    <i class="save icon"></i>{{ 'save' | translate }}
+                </button>
+            </div>
+            <div class="eight wide column" *ngIf="editableAction.id && !editableAction.showAddStep">
+                <app-delete-button [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading" [class]="'fluid'"></app-delete-button>
+            </div>
 
-                <div class="eight wide column" *ngIf="edit && editableAction.id && !editableAction.showAddStep">
-                    <button class="ui fluid green button" name="updatebtn" (click)="sendActionEvent('update')" [disabled]="!editableAction.hasChanged || editableAction.loading" [class.loading]="editableAction.loading">
-                        <i class="save icon"></i>{{ 'save' | translate }}
-                    </button>
-                </div>
-                <div class="eight wide column" *ngIf="edit && editableAction.id && !editableAction.showAddStep">
-                    <app-delete-button [disabled]="editableAction.hasChanged" (event)="sendActionEvent('delete')" [loading]="editableAction.loading" [class]="'fluid'"></app-delete-button>
-                </div>
-
-            <div class="sixteen wide column" *ngIf="edit && !editableAction.id && !editableAction.showAddStep">
-                    <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
-                        <i class="save icon"></i>{{ 'btn_create' | translate }}
-                    </button>
+            <div class="sixteen wide column" *ngIf="!editableAction.id && !editableAction.showAddStep">
+                <button class="ui green button" name="addbtn" (click)="sendActionEvent('insert')" [disabled]="editableAction.loading" [class.loading]="editableAction.loading">
+                    <i class="save icon"></i>{{ 'btn_create' | translate }}
+                </button>
             </div>
         </div>
     </div>

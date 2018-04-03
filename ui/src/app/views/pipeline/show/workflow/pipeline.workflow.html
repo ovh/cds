@@ -65,6 +65,6 @@
         <button class="ui green button" [disabled]="loadingStage" [class.loading]="loadingStage" (click)="stageEvent('update')"
                 *ngIf="selectedStage?.hasChanged">{{ 'btn_save' | translate }}
         </button>
-        <app-delete-button (event)="stageEvent('delete')" *ngIf="!selectedStage?.hasChanged"></app-delete-button>
+        <app-delete-button (event)="stageEvent('delete')" *ngIf="!selectedStage?.hasChanged && pipeline.permission === permissionValue.READ_WRITE_EXECUTE"></app-delete-button>
     </modal-actions>
 </sm-modal>

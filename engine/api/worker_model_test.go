@@ -281,6 +281,68 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	t.Logf("Body: %s", w.Body.String())
 }
 
+// Test_addWorkerModelAsAGroupAdminWithProvision test the provioning
+// For a group Admin, it is allowed to set a provision only for restricted model
+func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
+	Test_DeleteAllWorkerModel(t)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	//Create group
+	g := &sdk.Group{Name: sdk.RandomString(10)}
+
+	//Create user
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+
+	model := sdk.Model{
+		Name:       "Test-with-provision",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
+		Restricted: true,
+		Provision:  1, //
+		Image:      "buildpack-deps:jessie",
+	}
+
+	//Prepare request
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model))
+
+	assert.Equal(t, 200, w.Code, "Status code should equal 200")
+
+	t.Logf("Body: %s", w.Body.String())
+
+	var wm sdk.Model
+	json.Unmarshal(w.Body.Bytes(), &wm)
+	assert.Equal(t, 1, int(wm.Provision))
+
+	// update restricted flag -> provioning will be reset
+
+	vars := map[string]string{
+		"permModelID": fmt.Sprintf("%d", wm.ID),
+	}
+	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
+	test.NotEmpty(t, uri)
+
+	// API will set provisioning to 0 for a non-restricted model
+	wm.Restricted = false
+	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, wm)
+
+	//Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	var wmUpdated sdk.Model
+	json.Unmarshal(w.Body.Bytes(), &wmUpdated)
+	assert.Equal(t, 0, int(wmUpdated.Provision))
+}
+
 func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)

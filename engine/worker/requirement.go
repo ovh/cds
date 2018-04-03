@@ -134,9 +134,18 @@ func checkBinaryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 
 func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	t := strings.Split(r.Value, " ")
-	wm, err := sdk.GetWorkerModel(t[0])
+
+	wms, err := w.client.WorkerModels()
 	if err != nil {
-		return false, nil
+		return false, err
+	}
+
+	var wm sdk.Model
+	for _, m := range wms {
+		if m.Name == t[0] {
+			wm = m
+			break
+		}
 	}
 
 	if wm.ID == w.model.ID {
@@ -186,7 +195,7 @@ func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 
 func checkVolumeRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	// available only on worker booked
-	if w.bookedPBJobID == 0 || w.bookedWJobID == 0 {
+	if w.bookedPBJobID == 0 && w.bookedWJobID == 0 {
 		return false, nil
 	}
 

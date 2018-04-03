@@ -27,15 +27,14 @@ export class ActionStepComponent {
         }
     }
     @Input() collapsed;
+    @Input() order;
 
     @Output() removeEvent = new EventEmitter<StepEvent>();
 
     originalParam = new Map<string, Parameter>();
-
     constructor() {
          this.collapsed = true;
     }
-
     updateStepBool(b: boolean): boolean {
         this.action.hasChanged = true;
         return !b;

@@ -29,6 +29,13 @@
                     <label for="restricted">{{'worker_model_restricted_help' | translate}}</label>
                 </div>
               </div>
+              <div class="field">
+                <label>{{'worker_model_is_deprecated' | translate}}</label>
+                <div class="ui checkbox">
+                    <input type="checkbox" id="deprecated" name="deprecated" [(ngModel)]="workerModel.is_deprecated" [disabled]="loading">
+                    <label for="deprecated">{{'worker_model_deprecated_help' | translate}}</label>
+                </div>
+              </div>
             </div>
             <div class="field">
               <label>{{'common_description' | translate}}</label>
@@ -57,7 +64,7 @@
                     <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
                 </sm-select>
               </div>
-              <div class="four wide field" *ngIf="currentUser.admin">
+              <div class="four wide field" *ngIf="currentUser.admin || workerModel.restricted">
                   <label>{{'worker_model_provision' | translate}}</label>
                   <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision" [disabled]="loading">
               </div>
@@ -81,8 +88,8 @@
 
             <i class="fa fa-question-circle"></i> {{'worker_model_help_howtos' | translate}}
             <div class="ui list">
-              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/">{{'worker_model_help_howto_link_1' | translate}}</a>
-              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/">{{'worker_model_help_howto_link_2' | translate}}</a>
+              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">{{'worker_model_help_howto_link_1' | translate}}</a>
+              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/">{{'worker_model_help_howto_link_2' | translate}}</a>
               <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">{{'worker_model_help_howto_link_3' | translate}}</a>
               <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">{{'worker_model_help_howto_link_4' | translate}}</a>
             </div>

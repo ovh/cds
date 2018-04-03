@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"runtime"
 	"sort"
 	"strconv"
 	"sync"
@@ -622,7 +623,17 @@ func (api *API) postWorkflowRunHandler() Handler {
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
 
-		go startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx))
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					buf := make([]byte, 1<<16)
+					runtime.Stack(buf, true)
+					log.Error("[PANIC] workflow.startWorkflowRun> %s", string(buf))
+				}
+			}()
+
+			startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx))
+		}()
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
@@ -632,7 +643,16 @@ func (api *API) postWorkflowRunHandler() Handler {
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		// Purge workflow run
-		go workflow.PurgeWorkflowRun(api.mustDB(), *wf)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					buf := make([]byte, 1<<16)
+					runtime.Stack(buf, true)
+					log.Error("[PANIC] workflow.PurgeWorkflowRun> %s", string(buf))
+				}
+			}()
+			workflow.PurgeWorkflowRun(api.mustDB(), *wf)
+		}()
 
 		var wr *sdk.WorkflowRun
 		if len(workflowRuns) > 0 {

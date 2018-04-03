@@ -47,12 +47,13 @@ type Configuration struct {
 		UI  string `toml:"ui" default:"http://localhost:2015"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################"`
 	HTTP struct {
-		Addr       string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
+		Addr       string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1"`
 		Port       int    `toml:"port" default:"8081"`
 		SessionTTL int    `toml:"sessionTTL" default:"60"`
 	} `toml:"http"`
 	GRPC struct {
-		Port int `toml:"port" default:"8082"`
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen GRPC address without port, example: 127.0.0.1"`
+		Port int    `toml:"port" default:"8082"`
 	} `toml:"grpc"`
 	Secrets struct {
 		Key string `toml:"key"`
@@ -453,11 +454,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
-	//Temporary migration code
-	if err := bootstrap.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
-		log.Error("Bootstrap Error: %v", err)
-	}
-
 	//Init events package
 	event.Cache = a.Cache
 
@@ -528,6 +524,17 @@ func (a *API) Serve(ctx context.Context) error {
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	go migrate.DefaultPayloadMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	go migrate.DefaultTagsMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+
+	//Temporary migration code
+	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
+		go func() {
+			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
+				log.Error("Bootstrap Error: %v", err)
+			}
+		}()
+	}
 	if !a.Config.Schedulers.Disabled {
 		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {
@@ -558,12 +565,12 @@ func (a *API) Serve(ctx context.Context) error {
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
-		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Port, false, "", ""); err != nil {
+		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Addr, a.Config.GRPC.Port, false, "", ""); err != nil {
 			log.Error("Cannot start GRPC server: %v", err)
 		}
 	}()
 
-	log.Info("Starting CDS API HTTP Server on port %d", a.Config.HTTP.Port)
+	log.Info("Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
 		return fmt.Errorf("Cannot start HTTP server: %v", err)
 	}

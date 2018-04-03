@@ -28,6 +28,9 @@ export class WorkflowAdminComponent implements OnInit {
         if (data) {
             this._workflow = cloneDeep(data);
             this._tagWorkflow = cloneDeep(data);
+            if (this._workflow.purge_tags && this._workflow.purge_tags.length) {
+              this.purgeTag = this._workflow.purge_tags[0];
+            }
         }
     };
     get workflow() { return this._workflow};
@@ -38,6 +41,7 @@ export class WorkflowAdminComponent implements OnInit {
 
     existingTags = new Array<string>();
     selectedTags = new Array<string>();
+    purgeTag: string;
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
@@ -77,11 +81,12 @@ export class WorkflowAdminComponent implements OnInit {
 
     updateWorkflow(): void {
         this.loading = true;
-        this._workflowStore.updateWorkflow(this.project.key, this._tagWorkflow).pipe(finalize(() => {
-            this.loading = false;
-        })).subscribe(() => {
-            this._toast.success('', this._translate.instant('workflow_updated'));
-        });
+        this._tagWorkflow.purge_tags = [this.purgeTag];
+        this._workflowStore.updateWorkflow(this.project.key, this._tagWorkflow)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            });
     }
 
     updateTagMetadata(m): void {

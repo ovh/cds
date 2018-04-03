@@ -55,7 +55,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         }
         this.calculateDynamicWidth();
         this.changeDisplay();
-        this.workflowName = this.workflow.name;
     }
 
     @Input('workflowRun')
@@ -69,7 +68,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.changeDisplay();
         }
     }
-    @Input() workflowName: string;
 
     @Input() project: Project;
     @Input() webworker: CDSWorker;
@@ -468,7 +466,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
         componentRef.instance.disabled = this.linkWithJoin;
-        componentRef.instance.workflowName = this.workflowName;
 
         return componentRef;
     }

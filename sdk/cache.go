@@ -18,7 +18,8 @@ type Cache struct {
 	Name    string `json:"name" cli:"name"`
 	Tag     string `json:"tag"`
 
-	Files []string `json:"files"`
+	Files            []string `json:"files"`
+	WorkingDirectory string   `json:"working_directory"`
 }
 
 //GetName returns the name the artifact
@@ -34,7 +35,7 @@ func (c *Cache) GetPath() string {
 	return container
 }
 
-func CreateTarFromPaths(paths []string) (io.Reader, error) {
+func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
 	// Create a buffer to write our archive to.
 	buf := new(bytes.Buffer)
 
@@ -48,12 +49,12 @@ func CreateTarFromPaths(paths []string) (io.Reader, error) {
 		}
 
 		if fstat.IsDir() {
-			if err := iterDirectory(path, tw); err != nil {
+			if err := iterDirectory(cwd, path, tw); err != nil {
 				tw.Close()
 				return nil, err
 			}
 		} else {
-			if err := tarWrite(path, tw, fstat); err != nil {
+			if err := tarWrite(cwd, path, tw, fstat); err != nil {
 				tw.Close()
 				return nil, WrapError(err, "CreateTarFromPaths> Cannot tar write %s", path)
 			}
@@ -71,17 +72,12 @@ func CreateTarFromPaths(paths []string) (io.Reader, error) {
 	return res, nil
 }
 
-func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
+func tarWrite(cwd, path string, tw *tar.Writer, fi os.FileInfo) error {
 	filR, err := os.Open(path)
 	if err != nil {
 		return WrapError(err, "tarWrite> cannot open path")
 	}
 	defer filR.Close()
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		return WrapError(err, "tarWrite> cannot find working directory")
-	}
 
 	filename, err := filepath.Rel(cwd, path)
 	if err != nil {
@@ -99,14 +95,10 @@ func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
 		hdr.Typeflag = tar.TypeDir
 	}
 
-	var link string
 	if fi.Mode()&os.ModeSymlink != 0 {
-		if link, err = os.Readlink(path); err != nil {
-			return WrapError(err, "tarWrite> cannot get read link")
-		}
-		symlink, err := filepath.EvalSymlinks(link)
+		symlink, err := filepath.EvalSymlinks(path)
 		if err != nil {
-			return WrapError(err, "tarWrite> cannot get resolve link")
+			return WrapError(err, "tarWrite> cannot get resolve path %s", path)
 		}
 
 		fil, err := os.Lstat(symlink)
@@ -127,7 +119,7 @@ func tarWrite(path string, tw *tar.Writer, fi os.FileInfo) error {
 	return nil
 }
 
-func iterDirectory(dirPath string, tw *tar.Writer) error {
+func iterDirectory(cwd, dirPath string, tw *tar.Writer) error {
 	dir, err := os.Open(dirPath)
 	if err != nil {
 		return WrapError(err, "iterDirectory> cannot open path %s", dirPath)
@@ -140,11 +132,11 @@ func iterDirectory(dirPath string, tw *tar.Writer) error {
 	for _, fi := range fis {
 		curPath := dirPath + "/" + fi.Name()
 		if fi.IsDir() {
-			if err := iterDirectory(curPath, tw); err != nil {
+			if err := iterDirectory(cwd, curPath, tw); err != nil {
 				return err
 			}
 		} else {
-			if err := tarWrite(curPath, tw, fi); err != nil {
+			if err := tarWrite(cwd, curPath, tw, fi); err != nil {
 				return WrapError(err, "iterDirectory> cannot tar write (%s)", curPath)
 			}
 		}

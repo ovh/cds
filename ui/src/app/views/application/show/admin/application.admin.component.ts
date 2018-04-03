@@ -53,9 +53,12 @@ export class ApplicationAdminComponent implements OnInit {
 
     generateWorkflow(force: boolean): void {
         this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name, force)
-            .pipe(first()).pipe(finalize(() => {
-            this.loading = true;
-        })).subscribe(() => {
+            .pipe(
+              first(),
+              finalize(() => this.loading = true)
+            )
+            .subscribe(() => {
+            this._toast.success('', this._translate.instant('application_workflow_migration_success'));
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows'} });
         });
     }

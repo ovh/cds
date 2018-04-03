@@ -19,7 +19,6 @@ import {Router, ActivatedRoute} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {ApplicationStore} from '../../../service/application/application.store';
 
 @Component({
     selector: 'app-workflow-node',
@@ -32,7 +31,6 @@ export class WorkflowNodeComponent implements OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
-    @Input() workflowName: string;
 
     @ViewChild('workflowRunNode')
     workflowRunNode: WorkflowNodeRunParamComponent;
@@ -51,12 +49,10 @@ export class WorkflowNodeComponent implements OnInit {
     selectedNodeId: number;
 
     workflowCoreSub: Subscription;
-    applicationSub: Subscription;
 
     constructor(private elementRef: ElementRef, private _router: Router,
                 private _workflowCoreService: WorkflowCoreService,
-                private _route: ActivatedRoute,
-                private _appStore: ApplicationStore) {
+                private _route: ActivatedRoute) {
         this._route.queryParams.subscribe((qp) => {
             if (qp['selectedNodeId']) {
                 this.selectedNodeId = parseInt(qp['selectedNodeId'], 10);
@@ -96,11 +92,6 @@ export class WorkflowNodeComponent implements OnInit {
                 }
             };
         }
-
-        if (this.node.context.application && this.node.context.application_id !== 0) {
-          this.applicationSub = this._appStore.getApplicationResolver(this.project.key, this.node.context.application.name)
-            .subscribe((app) => this.node.context.application = app);
-        }
     }
 
     computeWarnings() {
@@ -137,7 +128,7 @@ export class WorkflowNodeComponent implements OnInit {
 
             this._router.navigate([
                 '/project', this.project.key,
-                'workflow', this.workflowName
+                'workflow', this.workflow.name
             ], { queryParams: Object.assign({}, qps, {selectedNodeId: this.node.id })});
         } else {
             qps['selectedJoinId'] = null;
@@ -145,7 +136,7 @@ export class WorkflowNodeComponent implements OnInit {
             qps['selectedHookId'] = null;
             this._router.navigate([
                 '/project', this.project.key,
-                'workflow', this.workflowName,
+                'workflow', this.workflow.name,
                 'run', this.currentNodeRun ? this.currentNodeRun.num : this._route.snapshot.params['number']], {
                     queryParams: Object.assign({}, qps, {
                         selectedNodeRunId: this.currentNodeRun ? this.currentNodeRun.id : -1,
@@ -161,9 +152,13 @@ export class WorkflowNodeComponent implements OnInit {
         if (this.currentNodeRun) {
             this._router.navigate([
                 '/project', this.project.key,
-                'workflow', this.workflowName,
+                'workflow', this.workflow.name,
                 'run', this.currentNodeRun.num,
-                'node', this.currentNodeRun.id], {queryParams: {name: pip}});
+                'node', this.currentNodeRun.id], {queryParams: {
+                    name: pip,
+                    selectedNodeRunId: this.currentNodeRun ? this.currentNodeRun.id : -1,
+                    selectedNodeRunNum: this.currentNodeRun ? this.currentNodeRun.num : 0,
+                    selectedNodeId: this.currentNodeRun ? this.currentNodeRun.workflow_node_id : this.node.id}});
         } else {
           this._router.navigate([
               '/project', this.project.key,
