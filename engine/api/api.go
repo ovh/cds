@@ -134,7 +134,7 @@ type Configuration struct {
 			ClientID     string `toml:"client_id"`
 			ClientSecret string `toml:"client_secret"`
 			Token        string `toml;"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami"`
-		}
+		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################"`
 	Schedulers struct {
 		Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it"`
@@ -362,9 +362,11 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.Disable)
 
 	// Initialize feature package
-	log.Info("Initializing feature flipping")
+	log.Info("Initializing feature flipping with izanami %s", a.Config.FeaturesFlipping.Izanami.ApiURL)
 	if a.Config.FeaturesFlipping.Izanami.ApiURL != "" {
-		feature.Init(a.Config.FeaturesFlipping.Izanami.ApiURL, a.Config.FeaturesFlipping.Izanami.ClientID, a.Config.FeaturesFlipping.Izanami.ClientSecret)
+		if err := feature.Init(a.Config.FeaturesFlipping.Izanami.ApiURL, a.Config.FeaturesFlipping.Izanami.ClientID, a.Config.FeaturesFlipping.Izanami.ClientSecret); err != nil {
+			return fmt.Errorf("Feature flipping not enabled with izanami: %s", err)
+		}
 	}
 
 	//Initialize artifacts storage
