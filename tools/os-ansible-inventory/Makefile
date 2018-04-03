@@ -3,7 +3,7 @@
 VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 
 TARGET_DIR = ./dist
-TARGET_BIN = debpacker
+TARGET_BIN = os-ansible-inventory
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
 TARGET_OS = linux
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
