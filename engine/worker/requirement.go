@@ -134,25 +134,8 @@ func checkBinaryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 
 func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	t := strings.Split(r.Value, " ")
-
-	wms, err := w.client.WorkerModels()
-	if err != nil {
-		return false, err
-	}
-
-	var wm sdk.Model
-	for _, m := range wms {
-		if m.Name == t[0] {
-			wm = m
-			break
-		}
-	}
-
-	if wm.ID == w.model.ID {
-		return true, nil
-	}
-
-	return false, nil
+	wm, err := w.client.WorkerModel(t[0])
+	return wm.ID == w.model.ID, err
 }
 
 func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
