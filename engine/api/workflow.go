@@ -47,7 +47,7 @@ func (api *API) getWorkflowHandler() Handler {
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
 
-		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{WithFavorite: true})
+		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}

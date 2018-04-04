@@ -13,8 +13,6 @@ import (
 
 // LoadNavbarData returns just the needed data for the ui navbar
 func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data []sdk.NavbarProjectData, err error) {
-	// var query string
-	// var args []interface{}
 	// Admin can gets all project
 	// Users can gets only their projects
 

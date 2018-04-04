@@ -210,10 +210,10 @@ var (
 		return nil
 	}
 
-	loadFavorite = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		var count int64
-		if err := db.QueryRow("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND user_id = $2", proj.ID, u.ID).Scan(&count); err != nil {
-			return sdk.WrapError(err, "project.loadFavorite>")
+	loadFavorites = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND user_id = $2", proj.ID, u.ID)
+		if err != nil {
+			return sdk.WrapError(err, "project.loadFavorites>")
 		}
 		proj.Favorite = count > 0
 

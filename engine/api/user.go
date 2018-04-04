@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -166,16 +165,13 @@ func (api *API) postUserFavoriteHandler() Handler {
 			return err
 		}
 
-		fmt.Println("params", params)
-
 		switch params.Type {
 		case "workflow":
-			wf, errW := workflow.Load(api.mustDB(), api.Cache, params.ProjectKey, params.WorkflowName, getUser(ctx), workflow.LoadOptions{WithFavorite: true})
+			wf, errW := workflow.Load(api.mustDB(), api.Cache, params.ProjectKey, params.WorkflowName, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
 			if errW != nil {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}
 
-			fmt.Println("todelete", wf.Favorite)
 			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, getUser(ctx), !wf.Favorite); err != nil {
 				return sdk.WrapError(err, "postUserFavoriteHandler> Cannot change workflow %s/%s favorite", params.ProjectKey, params.WorkflowName)
 			}
@@ -183,7 +179,7 @@ func (api *API) postUserFavoriteHandler() Handler {
 
 			return WriteJSON(w, wf, http.StatusOK)
 		case "project":
-			p, errProj := project.Load(api.mustDB(), api.Cache, params.ProjectKey, getUser(ctx), project.LoadOptions.WithFavorite)
+			p, errProj := project.Load(api.mustDB(), api.Cache, params.ProjectKey, getUser(ctx), project.LoadOptions.WithFavorites)
 			if errProj != nil {
 				return sdk.WrapError(errProj, "postUserFavoriteHandler> Cannot load project %s", params.ProjectKey)
 			}

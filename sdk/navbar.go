@@ -2,10 +2,10 @@ package sdk
 
 // NavbarProjectData is the sub struct returned by getNavbarHandler
 type NavbarProjectData struct {
-	Key             string `json:"key"`
-	Name            string `json:"name"`
-	ApplicationName string `json:"application_name,omitempty"`
-	WorkflowName    string `json:"workflow_name,omitempty"`
-	Type            string `json:"type,omitempty"`
-	Favorite        bool   `json:"favorite"`
+	Key             string `json:"key" db:"key"`
+	Name            string `json:"name" db:"project_name"`
+	ApplicationName string `json:"application_name,omitempty" db:"application_name"`
+	WorkflowName    string `json:"workflow_name,omitempty" db:"workflow_name"`
+	Type            string `json:"type,omitempty" db:"type"`
+	Favorite        bool   `json:"favorite" db:"favorite"`
 }

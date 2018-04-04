@@ -294,7 +294,7 @@ var LoadOptions = struct {
 	WithClearKeys                  LoadOptionFunc
 	WithPlatforms                  LoadOptionFunc
 	WithClearPlatforms             LoadOptionFunc
-	WithFavorite                   LoadOptionFunc
+	WithFavorites                  LoadOptionFunc
 	WithFeatures                   LoadOptionFunc
 }{
 	Default:                        &loadDefault,
@@ -317,7 +317,7 @@ var LoadOptions = struct {
 	WithClearKeys:                  &loadClearKeys,
 	WithPlatforms:                  &loadPlatforms,
 	WithClearPlatforms:             &loadClearPlatforms,
-	WithFavorite:                   &loadFavorite,
+	WithFavorites:                  &loadFavorites,
 	WithFeatures:                   &loadFeatures,
 }
 

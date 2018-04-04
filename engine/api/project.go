@@ -143,7 +143,7 @@ func (api *API) getProjectHandler() Handler {
 		withFeatures := FormBool(r, "withFeatures")
 
 		opts := []project.LoadOptionFunc{
-			project.LoadOptions.WithFavorite,
+			project.LoadOptions.WithFavorites,
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)

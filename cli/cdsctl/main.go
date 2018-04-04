@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
@@ -125,5 +126,33 @@ If you're using a self-signed certificate on CDS API, you probably want to use `
 
 func mainRun(vals cli.Values) error {
 	fmt.Println("Welcome to CDS")
+	navbarInfos, err := client.Navbar()
+	if err != nil {
+		return nil
+	}
+
+	projFavs := []sdk.NavbarProjectData{}
+	wfFavs := []sdk.NavbarProjectData{}
+	for _, elt := range navbarInfos {
+		if elt.Favorite {
+			switch elt.Type {
+			case "workflow":
+				wfFavs = append(wfFavs, elt)
+			case "project":
+				projFavs = append(projFavs, elt)
+			}
+		}
+	}
+
+	fmt.Println("\n -=-=-=-=- Projects bookmarked -=-=-=-=-")
+	for _, prj := range projFavs {
+		fmt.Printf("- %s with key %s\n", prj.Name, prj.Key)
+	}
+
+	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
+	for _, wf := range wfFavs {
+		fmt.Printf("- %s inside project %s\n", wf.Name, wf.Key)
+	}
+
 	return nil
 }

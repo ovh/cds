@@ -20,10 +20,10 @@ import (
 
 // LoadOptions custom option for loading workflow
 type LoadOptions struct {
-	DeepPipeline bool
-	WithoutNode  bool
-	WithFavorite bool
-	Base64Keys   bool
+	DeepPipeline  bool
+	WithoutNode   bool
+	WithFavorites bool
+	Base64Keys    bool
 }
 
 // Exists checks if a workflow exists
@@ -325,7 +325,7 @@ func load(db gorp.SqlExecutor, store cache.Store, opts LoadOptions, u *sdk.User,
 		res.Joins = joins
 	}
 
-	if opts.WithFavorite {
+	if opts.WithFavorites {
 		fav, errF := loadFavorite(db, &res, u)
 		if errF != nil {
 			return nil, sdk.WrapError(errF, "Load> unable to load favorite")
