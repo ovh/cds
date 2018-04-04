@@ -2,7 +2,7 @@ package-name: "cds-engine"
 architecture: "amd64"
 binary-file: "cds-engine-linux-amd64"
 configuration-files:
-  - "config.toml"
+  - "config.toml.sample"
 copy-files:
   - "cds-engine-*"
   - "cdsctl-*"

@@ -44,8 +44,13 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 				continue
 			}
 
-			errLock := workflow.LockNodeContext(tx, store, proj.Key, wf.Root.ID)
-			if errLock != nil {
+			if wf == nil || wf.Root == nil {
+				log.Warning("DefaultPayloadMigration> No ROOT linked to workflow %v", wf)
+				tx.Rollback()
+				continue
+			}
+
+			if errLock := workflow.LockNodeContext(tx, store, wf.Root.ID); errLock != nil {
 				log.Warning("DefaultPayloadMigration> Cannot lock node context for root %s : %s", wf.Root.Name, errLock)
 				tx.Rollback()
 				continue

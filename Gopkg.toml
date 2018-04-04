@@ -40,10 +40,6 @@
   version = "1.0.0"
 
 [[constraint]]
-  name = "github.com/fsamin/go-dump"
-  version = "1.0.3"
-
-[[constraint]]
   name = "github.com/fsamin/go-shredder"
   version = "1.0.0"
 

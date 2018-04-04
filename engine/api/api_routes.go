@@ -124,7 +124,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/remotes", r.GET(api.getApplicationRemoteHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/version", r.GET(api.getApplicationBranchVersionHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/clone", r.POST(api.cloneApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/group", r.POST(api.addGroupInApplicationHandler), r.PUT(api.updateGroupsInApplicationHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/group", r.POST(api.addGroupInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/group/import", r.POST(api.importGroupsInApplicationHandler, DEPRECATED))
 	r.Handle("/project/{key}/application/{permApplicationName}/group/{group}", r.PUT(api.updateGroupRoleOnApplicationHandler), r.DELETE(api.deleteGroupFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/history/branch", r.GET(api.getPipelineBuildBranchHistoryHandler))
@@ -138,9 +138,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler/{id}", r.DELETE(api.deleteSchedulerApplicationPipelineHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/tree", r.GET(api.getApplicationTreeHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/tree/status", r.GET(api.getApplicationTreeStatusHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/variable", r.GET(api.getVariablesInApplicationHandler), r.PUT(api.updateVariablesInApplicationHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/variable", r.GET(api.getVariablesInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/audit", r.GET(api.getVariablesAuditInApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/variable/audit/{auditID}", r.PUT(api.restoreAuditHandler, DEPRECATED))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
 
@@ -331,7 +330,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", r.GET(api.getReposFromRepositoriesManagerHandler))
 
 	// RepositoriesManager for applications
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application", r.POST(api.addApplicationFromRepositoriesManagerHandler))
 	r.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/attach", r.POST(api.attachRepositoriesManagerHandler))
 	r.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/detach", r.POST(api.detachRepositoriesManagerHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook", r.POST(api.addHookOnRepositoriesManagerHandler))
@@ -387,6 +385,9 @@ func (api *API) InitRouter() {
 
 	// SSE
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
+
+	// Feature
+	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.FeaturesFlipping.Izanami.Token), Auth(false)))
 
 	// Engine µServices
 	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false)))

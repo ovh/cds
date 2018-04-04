@@ -19,7 +19,6 @@ import {Router, ActivatedRoute} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {ApplicationStore} from '../../../service/application/application.store';
 
 @Component({
     selector: 'app-workflow-node',
@@ -50,12 +49,10 @@ export class WorkflowNodeComponent implements OnInit {
     selectedNodeId: number;
 
     workflowCoreSub: Subscription;
-    applicationSub: Subscription;
 
     constructor(private elementRef: ElementRef, private _router: Router,
                 private _workflowCoreService: WorkflowCoreService,
-                private _route: ActivatedRoute,
-                private _appStore: ApplicationStore) {
+                private _route: ActivatedRoute) {
         this._route.queryParams.subscribe((qp) => {
             if (qp['selectedNodeId']) {
                 this.selectedNodeId = parseInt(qp['selectedNodeId'], 10);
@@ -94,11 +91,6 @@ export class WorkflowNodeComponent implements OnInit {
                     });
                 }
             };
-        }
-
-        if (this.node.context.application && this.node.context.application_id !== 0) {
-          this.applicationSub = this._appStore.getApplicationResolver(this.project.key, this.node.context.application.name)
-            .subscribe((app) => this.node.context.application = app);
         }
     }
 

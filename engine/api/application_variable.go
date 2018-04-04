@@ -3,12 +3,11 @@ package api
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -25,62 +24,6 @@ func (api *API) getVariablesAuditInApplicationHandler() Handler {
 
 		}
 		return WriteJSON(w, audits, http.StatusOK)
-	}
-}
-
-// Deprecated
-func (api *API) restoreAuditHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
-		auditIDString := vars["auditID"]
-
-		auditID, err := strconv.ParseInt(auditIDString, 10, 64)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "restoreAuditHandler> Cannot parse auditID %s", auditIDString)
-		}
-
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrApplicationNotFound, "restoreAuditHandler> Cannot load application %s ", appName)
-		}
-
-		variables, err := application.GetAudit(api.mustDB(), key, appName, auditID)
-		if err != nil {
-			return sdk.WrapError(err, "restoreAuditHandler> Cannot get variable audit for application %s", appName)
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "restoreAuditHandler> Cannot start transaction ")
-		}
-		defer tx.Rollback()
-
-		err = application.DeleteAllVariable(tx, app.ID)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "restoreAuditHandler> Cannot delete variables for application %s %s", appName, err)
-		}
-
-		for _, v := range variables {
-			if sdk.NeedPlaceholder(v.Type) {
-				value, err := secret.Decrypt([]byte(v.Value))
-				if err != nil {
-					return sdk.WrapError(err, "restoreAuditHandler> Cannot decrypt variable %s for application %s", v.Name, appName)
-				}
-				v.Value = string(value)
-			}
-			err := application.InsertVariable(tx, api.Cache, app, v, getUser(ctx))
-			if err != nil {
-				return sdk.WrapError(err, "restoreAuditHandler> Cannot insert variable %s for application %s", v.Name, appName)
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "restoreAuditHandler> Cannot commit transaction: %s", err)
-		}
-
-		return nil
 	}
 }
 
@@ -184,87 +127,9 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot load variables")
 		}
 
+		event.PublishDeleteVariableApplication(key, *app, *varToDelete, getUser(ctx))
+
 		return WriteJSON(w, app, http.StatusOK)
-	}
-}
-
-// deprecated
-func (api *API) updateVariablesInApplicationHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
-
-		var varsToUpdate []sdk.Variable
-		if err := UnmarshalBody(r, &varsToUpdate); err != nil {
-			return err
-		}
-
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "updateVariablesInApplicationHandler> Cannot load application %s", appName)
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "updateVariablesInApplicationHandler> Cannot unmarshal body ")
-		}
-		defer tx.Rollback()
-
-		// Preload values, if one password variable has a password placeholder, we can't just insert
-		// the placeholder !
-		preload, err := application.GetAllVariable(tx, key, appName, application.WithClearPassword())
-		if err != nil {
-			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot preload variables values")
-		}
-
-		if err := application.DeleteAllVariable(tx, app.ID); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "updateVariablesInApplicationHandler> Cannot delete variables for application %s:  %s", appName, err)
-		}
-
-		for _, v := range varsToUpdate {
-			switch v.Type {
-			case sdk.SecretVariable:
-				if sdk.NeedPlaceholder(v.Type) && v.Value == sdk.PasswordPlaceholder {
-					for _, p := range preload {
-						if p.ID == v.ID {
-							v.Value = p.Value
-						}
-					}
-				}
-
-				if err := application.InsertVariable(tx, api.Cache, app, v, getUser(ctx)); err != nil {
-					return sdk.WrapError(err, "updateVariablesInApplicationHandler> Cannot insert variable %s for application %s", v.Name, appName)
-				}
-				break
-			case sdk.KeyVariable:
-				if v.Value == "" {
-					if err := application.AddKeyPairToApplication(tx, api.Cache, app, v.Name, getUser(ctx)); err != nil {
-						return sdk.WrapError(err, "updateVariablesInApplicationHandler> cannot generate keypair")
-					}
-				} else if v.Value == sdk.PasswordPlaceholder {
-					for _, p := range preload {
-						if p.ID == v.ID {
-							v.Value = p.Value
-						}
-					}
-					if err := application.InsertVariable(tx, api.Cache, app, v, getUser(ctx)); err != nil {
-						return sdk.WrapError(err, "updateVariablesInApplication> Cannot insert variable %s", v.Name)
-					}
-				}
-				break
-			default:
-				if err := application.InsertVariable(tx, api.Cache, app, v, getUser(ctx)); err != nil {
-					return sdk.WrapError(err, "updateVariablesInApplicationHandler> Cannot insert variable %s for application %s", v.Name, appName)
-				}
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "updateVariablesInApplicationHandler> Cannot commit transaction:  %s", err)
-		}
-
-		return nil
 	}
 }
 
@@ -288,13 +153,18 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot load application: %s", appName)
 		}
 
+		variableBefore, err := application.LoadVariableByID(api.mustDB(), app.ID, newVar.ID, application.WithClearPassword())
+		if err != nil {
+			return sdk.WrapError(err, "updateVariableInApplicationHandler> cannot load variable %d", variableBefore.ID)
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot create transaction")
 		}
 		defer tx.Rollback()
 
-		if err := application.UpdateVariable(tx, api.Cache, app, &newVar, getUser(ctx)); err != nil {
+		if err := application.UpdateVariable(tx, api.Cache, app, &newVar, variableBefore, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot update variable %s for application %s", varName, appName)
 		}
 
@@ -306,6 +176,8 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot load variables")
 		}
+
+		event.PublishUpdateVariableApplication(key, *app, newVar, *variableBefore, getUser(ctx))
 
 		return WriteJSON(w, app, http.StatusOK)
 	}
@@ -358,6 +230,8 @@ func (api *API) addVariableInApplicationHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot get variables")
 		}
+
+		event.PublishAddVariableApplication(key, *app, newVar, getUser(ctx))
 
 		return WriteJSON(w, app, http.StatusOK)
 	}
