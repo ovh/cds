@@ -326,26 +326,6 @@ func (api *API) addProjectHandler() Handler {
 	}
 }
 
-// postProjectFavoriteHandler add or delete this workflow from favorite user
-func (api *API) postProjectFavoriteHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithFavorite)
-		if errProj != nil {
-			return sdk.WrapError(errProj, "postProjectFavoriteHandler> Cannot load project %s", key)
-		}
-
-		if err := project.UpdateFavorite(api.mustDB(), p.ID, getUser(ctx), !p.Favorite); err != nil {
-			return sdk.WrapError(err, "postProjectFavoriteHandler> Cannot change workflow %s favorite", key)
-		}
-		p.Favorite = !p.Favorite
-
-		return WriteJSON(w, p, http.StatusOK)
-	}
-}
-
 func (api *API) deleteProjectHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL

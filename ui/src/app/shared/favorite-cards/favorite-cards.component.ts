@@ -10,23 +10,30 @@ import {WorkflowStore} from '../../service/workflow/workflow.store';
 })
 export class FavoriteCardsComponent {
 
-    @Input() favorites: NavbarProjectData;
+    @Input() favorites: Array<NavbarProjectData>;
+    @Input() projects: Array<NavbarProjectData>;
+    @Input() workflows: Array<NavbarProjectData>;
+
+    newFav = new NavbarProjectData();
 
     constructor(
       private _projectStore: ProjectStore,
       private _workflowStore: WorkflowStore
     ) { }
 
-    deleteFav(fav: NavbarProjectData) {
+    updateFav(fav: NavbarProjectData) {
       switch (fav.type) {
         case 'project':
           this._projectStore.updateFavorite(fav.key)
             .subscribe();
             break;
         case 'workflow':
-          this._workflowStore.updateFavorite(fav.key, fav.name)
+          this._workflowStore.updateFavorite(fav.key, fav.workflow_name)
             .subscribe();
             break;
+      }
+      if (this.newFav.type) {
+        this.newFav = new NavbarProjectData();
       }
     }
 }

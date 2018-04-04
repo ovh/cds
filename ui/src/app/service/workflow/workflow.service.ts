@@ -76,7 +76,11 @@ export class WorkflowService {
      * @param workflow Workflow to update
      */
     updateFavorite(key: string, name: string): Observable<Workflow> {
-        return this._http.post<Workflow>('/project/' + key + '/workflows/' + name + '/favorite', {});
+        return this._http.post<Workflow>('/user/favorite', {
+          type: 'workflow',
+          project_key: key,
+          workflow_name: name,
+        });
     }
 
     /**

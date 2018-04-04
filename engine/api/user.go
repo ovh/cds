@@ -11,9 +11,11 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -152,6 +154,51 @@ func (api *API) getUsersHandler() Handler {
 			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 		}
 		return WriteJSON(w, users, http.StatusOK)
+	}
+}
+
+type favoriteParams struct {
+	Type         string `json:"type"`
+	ProjectKey   string `json:"project_key"`
+	WorkflowName string `json:"workflow_name"`
+}
+
+// postUserFavoriteHandler post favorite user for workflow or project
+func (api *API) postUserFavoriteHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		params := favoriteParams{}
+		if err := UnmarshalBody(r, &params); err != nil {
+			return err
+		}
+
+		switch params.Type {
+		case "workflow":
+			wf, errW := workflow.Load(api.mustDB(), api.Cache, params.ProjectKey, params.WorkflowName, getUser(ctx), workflow.LoadOptions{WithFavorite: true})
+			if errW != nil {
+				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
+			}
+
+			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, getUser(ctx), !wf.Favorite); err != nil {
+				return sdk.WrapError(err, "postUserFavoriteHandler> Cannot change workflow %s/%s favorite", params.ProjectKey, params.WorkflowName)
+			}
+			wf.Favorite = !wf.Favorite
+
+			return WriteJSON(w, wf, http.StatusOK)
+		case "project":
+			p, errProj := project.Load(api.mustDB(), api.Cache, params.ProjectKey, getUser(ctx), project.LoadOptions.WithFavorite)
+			if errProj != nil {
+				return sdk.WrapError(errProj, "postUserFavoriteHandler> Cannot load project %s", params.ProjectKey)
+			}
+
+			if err := project.UpdateFavorite(api.mustDB(), p.ID, getUser(ctx), !p.Favorite); err != nil {
+				return sdk.WrapError(err, "postUserFavoriteHandler> Cannot change workflow %s favorite", p.Key)
+			}
+			p.Favorite = !p.Favorite
+
+			return WriteJSON(w, p, http.StatusOK)
+		}
+
+		return sdk.ErrInvalidFavoriteType
 	}
 }
 

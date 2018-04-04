@@ -252,27 +252,6 @@ func (api *API) putWorkflowHandler() Handler {
 	}
 }
 
-// postWorkflowFavoriteHandler add or delete this workflow from favorite user
-func (api *API) postWorkflowFavoriteHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowName"]
-
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{WithFavorite: true})
-		if errW != nil {
-			return sdk.WrapError(errW, "postWorkflowFavoriteHandler> Cannot load workflow %s/%s", key, name)
-		}
-
-		if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, getUser(ctx), !wf.Favorite); err != nil {
-			return sdk.WrapError(err, "postWorkflowFavoriteHandler> Cannot change workflow %s/%s favorite", key, name)
-		}
-		wf.Favorite = !wf.Favorite
-
-		return WriteJSON(w, wf, http.StatusOK)
-	}
-}
-
 func isDefaultPayloadEmpty(wf sdk.Workflow) bool {
 	e := dump.NewDefaultEncoder(new(bytes.Buffer))
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}

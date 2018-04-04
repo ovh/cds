@@ -96,7 +96,6 @@ func (api *API) InitRouter() {
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))
 	r.Handle("/project/{permProjectKey}", r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
-	r.Handle("/project/{permProjectKey}/favorite", r.POST(api.postProjectFavoriteHandler))
 	r.Handle("/project/{permProjectKey}/group", r.POST(api.addGroupInProjectHandler))
 	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/group/{group}", r.PUT(api.updateGroupRoleOnProjectHandler), r.DELETE(api.deleteGroupFromProjectHandler))
@@ -190,7 +189,6 @@ func (api *API) InitRouter() {
 
 	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/favorite", r.POST(api.postWorkflowFavoriteHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", r.GET(api.getWorkflowHookHandler))
@@ -353,6 +351,7 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
+	r.Handle("/user/favorite", r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))

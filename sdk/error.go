@@ -139,6 +139,7 @@ var (
 	ErrInvalidJobRequirementDuplicateHostname = Error{ID: 124, Status: http.StatusBadRequest}
 	ErrInvalidKeyName                         = Error{ID: 125, Status: http.StatusBadRequest}
 	ErrInvalidGitBranch                       = Error{ID: 126, Status: http.StatusBadRequest}
+	ErrInvalidFavoriteType                    = Error{ID: 127, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -266,6 +267,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidJobRequirementDuplicateHostname.ID: "Invalid job requirements: you can't select multiple hostname",
 	ErrInvalidKeyName.ID:                         "Invalid key name. Application key must have prefix 'app-'; environment key must have prefix 'env-'",
 	ErrInvalidGitBranch.ID:                       "Invalid git.branch value, you cannot have an empty git.branch value in your default payload",
+	ErrInvalidFavoriteType.ID:                    "Invalid favorite type: must be 'project' or 'workflow'",
 }
 
 var errorsFrench = map[int]string{
@@ -393,6 +395,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidJobRequirementDuplicateHostname.ID: "Pré-requis de job invalides: vous ne pouvez pas séléctionnez plusieurs hostname",
 	ErrInvalidKeyName.ID:                         "Nom de clé invalide. Les clés d'application doivent être préfixées par 'app-', les clés d'environnement doivent être préfixées par 'env-'",
 	ErrInvalidGitBranch.ID:                       "Valeur git.branch invalide, vous ne pouvez pas avoir de valeur git.branch avec une string vide dans votre payload par défaut",
+	ErrInvalidFavoriteType.ID:                    "Type de favori invalide: doit être 'projet' ou 'workflow'",
 }
 
 var errorsLanguages = []map[int]string{

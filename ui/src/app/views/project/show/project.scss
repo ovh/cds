@@ -9,6 +9,7 @@
   i {
     &.favorite {
       color: $cds_favorite_color;
+      font-size: 1.3em;
       &:hover {
         opacity: 0.4;
       }
@@ -16,6 +17,7 @@
     &.unfavorite {
       color: black;
       opacity: 0.3;
+      font-size: 1.3em;
       &:hover {
         color: $cds_favorite_color;
       }

@@ -259,6 +259,13 @@
 
   "filter": "Filter",
 
+  "favorite_title": "Bookmarks management",
+  "favorite_add": "Add a bookmark",
+  "favorite_add_btn": "Add to my bookmarks",
+  "favorite_select_type": "Select a favorite type",
+  "favorite_project_select": "Select a project",
+  "favorite_workflow_select": "Select a workflow",
+
   "group_added": "Group added",
   "group_deleted": "Group deleted",
   "group_create_title": "Create a group",

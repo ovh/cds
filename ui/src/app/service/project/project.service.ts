@@ -81,7 +81,10 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     updateFavorite(projectKey: string): Observable<Project> {
-        return this._http.post<Project>('/project/' + projectKey + '/favorite', {});
+        return this._http.post<Project>('/user/favorite', {
+          type: 'project',
+          project_key: projectKey
+        });
     }
 
     /**

@@ -157,7 +157,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                     return false
                   }
                   return p.favorite;
-                });
+                }).slice(0, 7);
 
                 this.navProjects.forEach(p => {
                     switch (p.type) {

@@ -1,6 +1,6 @@
 <div class="CDSbreadcrumb">
     <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name" [run]="number" [nodeName]="currentNodeName"></app-worflow-breadcrumb>
-    <div class="right floated">
+    <div class="right floated" [title]="'favorite_add_btn' | translate">
       <i class="pointing star icon" [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
     </div>
 </div>
