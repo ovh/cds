@@ -86,10 +86,6 @@ func (api *API) disableWorkerHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wor.Status)
 		}
 
-		if wor.HatcheryID == 0 {
-			return sdk.WrapError(sdk.ErrForbidden, "disableWorkerHandler> Cannot disable a worker (%s) not started by an hatchery", wor.Name)
-		}
-
 		if err := worker.UpdateWorkerStatus(tx, id, sdk.StatusDisabled); err != nil {
 			if err == worker.ErrNoWorker || err == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> handler %s does not exists", id)

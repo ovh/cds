@@ -21,6 +21,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/araddon/gou"
+  packages = ["."]
+  revision = "820e9f87cd0595dec4d179f058d4a44e1479f9c8"
+
+[[projects]]
+  branch = "master"
   name = "github.com/armon/consul-api"
   packages = ["."]
   revision = "dcfedd50ed5334f96adee43fc88518a4f095e15c"
@@ -35,6 +41,12 @@
   name = "github.com/bgentry/speakeasy"
   packages = ["."]
   revision = "a1ccbf2c40dfc8ce514b5c5c6e6d1429ea6880da"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/bitly/go-hostpool"
+  packages = ["."]
+  revision = "a3a6125de9329587178a9792dc8f4bc98e620d2d"
 
 [[projects]]
   name = "github.com/blang/semver"
@@ -183,10 +195,10 @@
   version = "v1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/fsamin/go-dump"
   packages = ["."]
-  revision = "7ae1b0fe42ebe02c8f87574289bad257adcc90c0"
-  version = "1.0.3"
+  revision = "734a5d211d37df9bdd6f6e4981258c0ed34d16ad"
 
 [[projects]]
   branch = "master"
@@ -521,6 +533,12 @@
   revision = "ae8357db35d721c58dcdc911318b55bef6b1b001"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/lytics/logrus"
+  packages = ["."]
+  revision = "4389a17ed024d8d196b5541116151f378705b0cc"
+
+[[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "0723e352fa358f9322c938cc2dadda874e9151a9"
@@ -546,6 +564,12 @@
   name = "github.com/maruel/panicparse"
   packages = ["stack"]
   revision = "25bcac0d793cf4109483505a0d66e066a3a90a80"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mattbaird/elastigo"
+  packages = ["lib"]
+  revision = "2fe47fd29e4b70353f852ede77a196830d2924ec"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -658,6 +682,12 @@
   ]
   revision = "0646fd4622983c00f65debeae319ee9d774b43d4"
   version = "0.17.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/ovhlabs/izanami-go-client"
+  packages = ["."]
+  revision = "73dedd898473df18326a6d22e9a79c84d89596c2"
 
 [[projects]]
   name = "github.com/patrickmn/go-cache"
@@ -1239,6 +1269,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "793e87b45019696f89dac4dfa7c9e4a95c96f68bdd9c24150f83656557ecfc08"
+  inputs-digest = "8abefc2b942440b3090791112c10106e3a4bd6bc2bc8c753fa41ecd19fe10898"
   solver-name = "gps-cdcl"
   solver-version = 1

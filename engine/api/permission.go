@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -59,6 +60,15 @@ func (api *API) deletePermissionMiddleware(ctx context.Context, w http.ResponseW
 
 func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	headers := req.Header
+
+	// Check Token
+	if h, ok := rc.Options["token"]; ok {
+		headerSplitted := strings.Split(h, ":")
+		receivedValue := req.Header.Get(headerSplitted[0])
+		if receivedValue != headerSplitted[1] {
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s", req.Method, req.URL, req.RemoteAddr)
+		}
+	}
 
 	//Check Authentication
 	if rc.Options["auth"] == "true" {
