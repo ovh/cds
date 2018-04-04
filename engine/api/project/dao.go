@@ -295,6 +295,7 @@ var LoadOptions = struct {
 	WithPlatforms                  LoadOptionFunc
 	WithClearPlatforms             LoadOptionFunc
 	WithFavorite                   LoadOptionFunc
+	WithFeatures                   LoadOptionFunc
 }{
 	Default:                        &loadDefault,
 	WithPipelines:                  &loadPipelines,
@@ -317,6 +318,7 @@ var LoadOptions = struct {
 	WithPlatforms:                  &loadPlatforms,
 	WithClearPlatforms:             &loadClearPlatforms,
 	WithFavorite:                   &loadFavorite,
+	WithFeatures:                   &loadFeatures,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id

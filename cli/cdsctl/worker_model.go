@@ -24,6 +24,7 @@ var (
 	workerModel = cli.NewCommand(workerModelCmd, nil,
 		[]*cobra.Command{
 			cli.NewListCommand(workerModelListCmd, workerModelListRun, nil),
+			cli.NewGetCommand(workerModelShowCmd, workerModelShowRun, nil, withAllCommandModifiers()...),
 			cli.NewDeleteCommand(workerModelDeleteCmd, workerModelDeleteRun, nil),
 			cli.NewCommand(workerModelAddCmd, workerModelAddRun, nil),
 		})
@@ -161,9 +162,26 @@ func workerModelAddRun(c cli.Values) error {
 	return nil
 }
 
+var workerModelShowCmd = cli.Command{
+	Name:  "show",
+	Short: "Show a Worker Model",
+	Args: []cli.Arg{
+		{Name: "name"},
+	},
+}
+
+func workerModelShowRun(v cli.Values) (interface{}, error) {
+	wm, err := client.WorkerModel(v["name"])
+	if err != nil {
+		return nil, err
+	}
+	return wm, nil
+}
+
 var workerModelDeleteCmd = cli.Command{
-	Name:  "delete",
-	Short: "Delete a CDS worker model",
+	Name:    "delete",
+	Short:   "Delete a CDS worker model",
+	Example: `cdsctl worker model delete myModelA myModelB`,
 	VariadicArgs: cli.Arg{
 		Name: "name",
 	},
@@ -171,7 +189,7 @@ var workerModelDeleteCmd = cli.Command{
 
 func workerModelDeleteRun(v cli.Values) error {
 	if err := client.WorkerModelDelete(v.GetString("name")); err != nil {
-		if err.Error() == "worker model not found" && v.GetBool("force") {
+		if sdk.ErrorIs(err, sdk.ErrNoWorkerModel) && v.GetBool("force") {
 			return nil
 		}
 		return err

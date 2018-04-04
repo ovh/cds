@@ -343,7 +343,11 @@ func (api *API) getWorkerModelsHandler() Handler {
 			}
 			log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", getUser(ctx).ID, getUser(ctx).Username, getUser(ctx).Admin, models)
 		} else {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> this route can't be called by worker or hatchery")
+			var username string
+			if getUser(ctx) != nil {
+				username = getUser(ctx).Username
+			}
+			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
 		}
 
 		return WriteJSON(w, models, http.StatusOK)

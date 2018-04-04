@@ -26,7 +26,7 @@
                 <label>{{'worker_model_restricted' | translate}}</label>
                 <div class="ui checkbox">
                     <input type="checkbox" id="restricted" name="restricted" [(ngModel)]="workerModel.restricted" [disabled]="loading">
-                    <label for="restricted">{{'worker_model_restricted_help' | translate}}</label>
+                    <label for="restricted">{{'worker_model_restricted_help' | translate}} <a target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/#what-s-a-restricted-worker-model">{{'common_see_documentation' | translate}}</a></label>
                 </div>
               </div>
               <div class="field">
