@@ -269,7 +269,7 @@ func (p DebPacker) mkDirs() error {
 func (p DebPacker) writePostinstFile() error {
 	path := filepath.Join(p.outputDirectory, "DEBIAN", "postinst")
 
-	if err := render(postinstTmpl, filepath.Join(path), p, os.FileMode(0755)); err != nil {
+	if err := render(postinstTmpl, path, p, os.FileMode(0755)); err != nil {
 		return err
 	}
 
