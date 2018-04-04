@@ -47,5 +47,6 @@ steps:
   - "\techo -e \"\nDownloaded Artifacts Are Matching...\""
   - else
   - "\techo -e \"\nDownloaded Artifacts Are Not Matching...\n\""
+  - "\texit 1"
   - fi;
   - ""
