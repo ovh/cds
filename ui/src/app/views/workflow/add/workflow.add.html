@@ -6,7 +6,7 @@
                 <div class="ui grid">
                     <div class="ui row">
                         <div class="sixteen wide column">
-                            <div class="ui three top attached steps">
+                            <div class="ui twos top attached steps">
                                 <div class="step pointing" [class.active]="currentStep === 0" (click)="goToNextStep(0)">
                                     <i class="share alternate icon"></i>
                                     <div class="content">
@@ -31,7 +31,7 @@
                                             <div class="ui row">
                                                 <div class="one wide column"></div>
                                                 <div class="fourteen wide column">
-                                                    <div class="three ui buttons">
+                                                    <div class="three ui buttons" [class.three]="project.features['cds:wasc']" [class.two]="!project.features['cds:wasc']">
                                                         <button class="ui button"
                                                                 type="button"
                                                                 [class.active]="creationMode === 'graphical'"
@@ -44,7 +44,7 @@
                                                                 [class.active]="creationMode === 'text'" (click)="creationMode = 'text'">
                                                             {{'common_import' | translate}}
                                                         </button>
-                                                        <button class="ui button"
+                                                        <button class="ui button" *ngIf="project.features['cds:wasc']"
                                                                 type="button"
                                                                 [class.active]="creationMode === 'repository'"
                                                                 [class.blue]="creationMode === 'repository'"

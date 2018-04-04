@@ -387,7 +387,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
 
 	// Feature
-	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.FeaturesFlipping.Izanami.Token), Auth(false)))
+	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))
 
 	// Engine µServices
 	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false)))
