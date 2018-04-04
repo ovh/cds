@@ -43,7 +43,7 @@ ExecStop={{.SystemdServiceConfig.ExecStop}}
 Restart={{.SystemdServiceConfig.Restart}}
 {{with .SystemdServiceConfig.Environments -}}
 {{ range $key, $value := . -}}
-Environment={{$key}}={{$value}}
+Environment="{{$key}}={{$value}}"
 {{- end}}
 {{- end}}
 
