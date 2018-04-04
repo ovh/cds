@@ -363,9 +363,8 @@ func loadWorkflowRoot(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u
 }
 
 func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
-	var count int64
-	query := "SELECT COUNT(1) FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2"
-	if err := db.QueryRow(query, u.ID, w.ID).Scan(&count); err != nil {
+	count, err := db.SelectInt("SELECT COUNT(1) FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2", u.ID, w.ID)
+	if err != nil {
 		return false, sdk.WrapError(err, "workflow.loadFavorite>")
 	}
 	return count > 0, nil
