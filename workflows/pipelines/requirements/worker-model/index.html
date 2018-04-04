@@ -1253,6 +1253,11 @@
           <span>list</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/worker/model/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/show/">
+          <span>show</span>
+        </a>
+    </li>
         </ul>
     </li>
         </ul>
@@ -1699,6 +1704,9 @@
 <li><a href="#purpose">Purpose</a></li>
 <li><a href="#types">Types</a></li>
 <li><a href="#behavior">Behavior</a></li>
+<li><a href="#add-a-worker-model">Add a worker model</a></li>
+<li><a href="#what-s-a-restricted-worker-model">What&rsquo;s a restricted worker model?</a></li>
+<li><a href="#what-s-workers-provisioning">What&rsquo;s workers provisioning?</a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1731,16 +1739,43 @@ In order to scale automatically on demand, it is possible to register a worker m
 
 <h3 id="types">Types</h3>
 
-<p>There are 2 types of worker models:</p>
+<p>There are 3 types of worker models:</p>
 
 <ul>
 <li>Docker images, see <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">how to create a worker model docker</a></li>
 <li>Openstack images, see <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">how to create a worker model openstack</a></li>
+<li>VSphere images, see <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">how to create a worker model VSphere</a></li>
 </ul>
 
 <h3 id="behavior">Behavior</h3>
 
 <p>All registered CDS <a href="https://ovh.github.io/cds/hatchery/">hatcheries</a> start/kill workers as needed.</p>
+
+<h3 id="add-a-worker-model">Add a worker model</h3>
+
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.requirements.docker.worker-model.add.png" alt="Add a worker model" /></p>
+
+<p>A user can add a worker model by setting a owner group if user is administrator of group.</p>
+
+<p>A CDS administrator can add a worker model, attach it to &lsquo;shared.infra&rsquo; group and set provision as he want.</p>
+
+<h3 id="what-s-a-restricted-worker-model">What&rsquo;s a restricted worker model?</h3>
+
+<p>A <code>shared.infra</code> hatchery can launch all worker models, except &lsquo;restricted&rsquo; worker models.</p>
+
+<p><strong>Use case</strong>: users can launch their own <a href="https://ovh.github.io/cds/hatchery/">hatchery</a>.
+To use their worker models only with their hatchery, they have to set worker model as &lsquo;restricted&rsquo;.</p>
+
+<h3 id="what-s-workers-provisioning">What&rsquo;s workers provisioning?</h3>
+
+<p>A <a href="https://ovh.github.io/cds/hatchery/">hatchery</a> can start workers based on worker models with provisioning &gt; 0.</p>
+
+<p>On &lsquo;restricted&rsquo; worker models, users can set provisioning, as they launch CDS Workers on their infrastructure.</p>
+
+<p>Otherwise, provisioning is only editable by CDS Administrators.</p>
+
+<p><strong>Notice</strong>: if you use <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/">Service Requirement</a>, you can&rsquo;t
+use provisioned workers.</p>
 
 
 <footer class=" footline" >
