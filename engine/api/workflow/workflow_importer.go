@@ -25,7 +25,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		pip, err := pipeline.LoadPipeline(db, proj.Key, n.Pipeline.Name, true)
 		if err != nil {
 			log.Warning("workflow.Import> %s > Pipeline %s not found", w.Name, n.Pipeline.Name)
-			mError.Append(sdk.NewError(sdk.ErrPipelineNotFound, fmt.Errorf("pipeline %s/%s not found", proj.Key, n.Pipeline.Name)))
+			mError.Append(fmt.Errorf("pipeline %s/%s not found", proj.Key, n.Pipeline.Name))
 			return
 		}
 		n.Pipeline = *pip
@@ -39,7 +39,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u)
 		if err != nil {
 			log.Warning("workflow.Import> %s > Application %s not found", w.Name, n.Context.Application.Name)
-			mError.Append(sdk.NewError(sdk.ErrApplicationNotFound, fmt.Errorf("application %s/%s not found", proj.Key, n.Context.Application.Name)))
+			mError.Append(fmt.Errorf("application %s/%s not found", proj.Key, n.Context.Application.Name))
 			return
 		}
 		n.Context.Application = app
@@ -53,7 +53,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		env, err := environment.LoadEnvironmentByName(db, proj.Key, n.Context.Environment.Name)
 		if err != nil {
 			log.Warning("workflow.Import> %s > Environment %s not found", w.Name, n.Context.Environment.Name)
-			mError.Append(sdk.NewError(sdk.ErrNoEnvironment, fmt.Errorf("environment %s/%s not found", proj.Key, n.Context.Environment.Name)))
+			mError.Append(fmt.Errorf("environment %s/%s not found", proj.Key, n.Context.Environment.Name))
 			return
 		}
 		n.Context.Environment = env
@@ -66,7 +66,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 			m, err := LoadHookModelByName(db, h.WorkflowHookModel.Name)
 			if err != nil {
 				log.Warning("workflow.Import> %s > Hook %s not found", w.Name, h.WorkflowHookModel.Name)
-				mError.Append(sdk.NewError(sdk.ErrNoEnvironment, fmt.Errorf("hook %s not found", h.WorkflowHookModel.Name)))
+				mError.Append(fmt.Errorf("hook %s not found", h.WorkflowHookModel.Name))
 				return
 			}
 			h.WorkflowHookModel = *m
@@ -98,7 +98,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		}
 
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-		if _, errHr := HookRegistration(db, store, nil, *w, proj); errHr != nil {
+		if errHr := HookRegistration(db, store, nil, *w, proj); errHr != nil {
 			return sdk.WrapError(errHr, "Import> Cannot register hook")
 		}
 
@@ -120,7 +120,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	}
 
 	// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-	if _, errHr := HookRegistration(db, store, oldW, *w, proj); errHr != nil {
+	if errHr := HookRegistration(db, store, oldW, *w, proj); errHr != nil {
 		return sdk.WrapError(errHr, "Import> Cannot register hook")
 	}
 

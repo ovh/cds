@@ -245,6 +245,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	//Craft a new execution
 	exec = &sdk.TaskExecution{
 		Timestamp: nextSchedule.UnixNano(),
+		Status:    TaskExecutionScheduled,
 		Type:      t.Type,
 		UUID:      t.UUID,
 		Config:    t.Config,

@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -14,7 +15,7 @@ import (
 )
 
 // HookRegistration ensures hooks registration on Hook µService
-func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) (*sdk.WorkflowNodeContextDefaultPayloadVCS, error) {
+func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) error {
 	var hookToUpdate map[string]sdk.WorkflowNodeHook
 	var hookToDelete map[string]sdk.WorkflowNodeHook
 
@@ -24,15 +25,13 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		hookToUpdate = wf.GetHooks()
 	}
 
-	var defaultPayload *sdk.WorkflowNodeContextDefaultPayloadVCS
-
 	if len(hookToUpdate) > 0 {
 		//Push the hook to hooks µService
 		dao := services.Querier(db, store)
 		//Load service "hooks"
 		srvs, err := dao.FindByType(services.TypeHooks)
 		if err != nil {
-			return nil, sdk.WrapError(err, "HookRegistration> Unable to get services dao")
+			return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
 		}
 
 		// Update in VCS
@@ -48,59 +47,69 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 
 		//Perform the request on one off the hooks service
 		if len(srvs) < 1 {
-			return nil, sdk.WrapError(fmt.Errorf("HookRegistration> No hooks service available, please try again"), "Unable to get services dao")
+			return sdk.WrapError(fmt.Errorf("HookRegistration> No hooks service available, please try again"), "Unable to get services dao")
 		}
 
-		var hooksUpdated map[string]sdk.WorkflowNodeHook
-		code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hooksUpdated)
+		// Update scheduler payload
+		for i := range hookToUpdate {
+			h := hookToUpdate[i]
+			if h.WorkflowHookModel.Name == sdk.SchedulerModelName {
+				// Add git.branch in scheduler payload
+				if wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "" && h.Config["payload"].Value != "" {
+					payload := map[string]string{}
+					if err := json.Unmarshal([]byte(h.Config["payload"].Value), &payload); err != nil {
+						return sdk.WrapError(err, "HookRegistration> Unable to unmarshall payload")
+					}
+
+					if payload["git.branch"] == "" {
+						defaultPayloadMap, errP := wf.Root.Context.DefaultPayloadToMap()
+						if errP != nil {
+							return sdk.WrapError(errP, "HookRegistration> Cannot read node default payload")
+						}
+						payload["git.branch"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"]
+
+						payloadStr, errM := json.Marshal(&payload)
+						if errM != nil {
+							return sdk.WrapError(errM, "HookRegistration> Cannot marshal hook config payload : %s", errM)
+						}
+						pl := h.Config["payload"]
+						pl.Value = string(payloadStr)
+						h.Config["payload"] = pl
+						hookToUpdate[i] = h
+					}
+
+				}
+			}
+		}
+
+		// Create hook on µservice
+		code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hookToUpdate)
 		if errHooks != nil || code >= 400 {
-			return nil, sdk.WrapError(errHooks, "HookRegistration> Unable to create hooks [%d]", code)
+			return sdk.WrapError(errHooks, "HookRegistration> Unable to create hooks [%d]", code)
 		}
 
-		for i := range hooksUpdated {
-			h := hooksUpdated[i]
+		// Create vcs configuration ( always after hook creation to have webhook URL) + update hook in DB
+		for i := range hookToUpdate {
+			h := hookToUpdate[i]
 			v, ok := h.Config["webHookID"]
 			if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
 				if err := createVCSConfiguration(db, store, p, &h); err != nil {
-					return nil, sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
-				}
-				defaultBranch := "master"
-				projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
-				if projectVCSServer != nil {
-					client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
-					if errclient != nil {
-						return nil, sdk.WrapError(errclient, "HookRegistration> Cannot get authorized client from repository manager")
-					}
-
-					branches, errBr := client.Branches(h.Config["repoFullName"].Value)
-					if errBr != nil {
-						return nil, sdk.WrapError(errBr, "HookRegistration> Cannot get branches from repository manager %s", h.Config["repoFullName"].Value)
-					}
-
-					for _, branch := range branches {
-						if branch.Default {
-							defaultBranch = branch.DisplayID
-							break
-						}
-					}
-				}
-				defaultPayload = &sdk.WorkflowNodeContextDefaultPayloadVCS{
-					GitRepository: h.Config["repoFullName"].Value,
-					GitBranch:     defaultBranch,
+					return sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
 			}
+
 			if err := UpdateHook(db, &h); err != nil {
-				return nil, sdk.WrapError(err, "HookRegistration> Cannot update hook")
+				return sdk.WrapError(err, "HookRegistration> Cannot update hook")
 			}
 		}
 	}
 
 	if len(hookToDelete) > 0 {
 		if err := deleteHookConfiguration(db, store, p, hookToDelete); err != nil {
-			return nil, sdk.WrapError(err, "HookRegistration> Cannot remove hook configuration")
+			return sdk.WrapError(err, "HookRegistration> Cannot remove hook configuration")
 		}
 	}
-	return defaultPayload, nil
+	return nil
 }
 
 func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {

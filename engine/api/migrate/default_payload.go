@@ -1,6 +1,8 @@
 package migrate
 
 import (
+	"encoding/json"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -62,8 +64,7 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 				continue
 			}
 
-			gitBranch, ok := m["git.branch"]
-			if wf.Root.Context.HasDefaultPayload() && ok && gitBranch == "" {
+			if wf.Root.Context.HasDefaultPayload() && m["git.branch"] == "" {
 				defaultBranch := "master"
 				projectVCSServer := repositoriesmanager.GetProjectVCSServer(&proj, wf.Root.Context.Application.VCSServer)
 				if projectVCSServer != nil {
@@ -104,6 +105,94 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 				}
 			} else {
 				tx.Rollback()
+			}
+
+			migrateSchedulerPayload(db, store, &proj, wf)
+		}
+	}
+
+	log.Info("DefaultPayloadMigration> Migration done")
+}
+
+func migrateSchedulerPayload(db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow) {
+	for _, hook := range wf.Root.Hooks {
+		if hook.WorkflowHookModel.Name == sdk.SchedulerModelName {
+			tx, errTx := db.Begin()
+			if errTx != nil {
+				log.Warning("DefaultPayloadMigration> Cannot start a transaction for hooks : %s", errTx)
+				continue
+			}
+			hookValue, errH := workflow.LoadAndLockHookByUUID(tx, hook.UUID)
+			if errH != nil {
+				log.Warning("DefaultPayloadMigration> Cannot LoadAndLockHooks : %s", errH)
+				tx.Rollback()
+				continue
+			}
+
+			hConfig := hookValue.Config.Values()
+			if hConfig["payload"] != "" {
+				payload := map[string]string{}
+				if err := json.Unmarshal([]byte(hConfig["payload"]), &payload); err != nil {
+					log.Warning("DefaultPayloadMigration> Cannot unmarshall payload to string for a scheduler : %s", err)
+					tx.Rollback()
+					continue
+				}
+
+				if payload["git.branch"] == "" {
+					defaultBranch := "master"
+					projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, wf.Root.Context.Application.VCSServer)
+					if projectVCSServer != nil {
+						client, errclient := repositoriesmanager.AuthorizedClient(tx, store, projectVCSServer)
+						if errclient != nil {
+							log.Warning("DefaultPayloadMigration> Cannot get authorized client")
+							tx.Rollback()
+							continue
+						}
+
+						branches, errBr := client.Branches(wf.Root.Context.Application.RepositoryFullname)
+						if errBr != nil {
+							log.Warning("DefaultPayloadMigration> Cannot get branches for %s", wf.Root.Context.Application.RepositoryFullname)
+							tx.Rollback()
+							continue
+						}
+
+						for _, branch := range branches {
+							if branch.Default {
+								defaultBranch = branch.DisplayID
+								break
+							}
+						}
+						payload["git.branch"] = defaultBranch
+						if _, ok := payload[""]; ok {
+							delete(payload, "")
+						}
+
+						payloadStr, errM := json.Marshal(&payload)
+						if errM != nil {
+							log.Warning("DefaultPayloadMigration> Cannot marshal hook config payload : %s", errM)
+							tx.Rollback()
+							continue
+						}
+						pl := hook.Config["payload"]
+						pl.Value = string(payloadStr)
+						hook.Config["payload"] = pl
+
+						if err := workflow.UpdateHook(tx, &hook); err != nil {
+							log.Warning("DefaultPayloadMigration> Cannot update hook : %s", err)
+							tx.Rollback()
+							continue
+						}
+
+						if err := tx.Commit(); err != nil {
+							log.Warning("DefaultPayloadMigration> Cannot commit hook : %s", err)
+							tx.Rollback()
+							continue
+						}
+					}
+
+				} else {
+					tx.Rollback()
+				}
 			}
 		}
 	}

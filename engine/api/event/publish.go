@@ -14,6 +14,13 @@ import (
 
 var Cache cache.Store
 
+func publishEvent(e sdk.Event) {
+
+	Cache.Enqueue("events", e)
+	// send to cache for cds repositories manager
+	Cache.Enqueue("events_repositoriesmanager", e)
+}
+
 // Publish sends a event to a queue
 //func Publish(event sdk.Event, eventType string) {
 func Publish(payload interface{}, u *sdk.User) {
@@ -28,10 +35,7 @@ func Publish(payload interface{}, u *sdk.User) {
 		event.Username = u.Username
 		event.UserMail = u.Email
 	}
-
-	Cache.Enqueue("events", event)
-	// send to cache for cds repositories manager
-	Cache.Enqueue("events_repositoriesmanager", event)
+	publishEvent(event)
 }
 
 // PublishActionBuild sends a actionBuild event

@@ -20,7 +20,7 @@ type Application struct {
 	Name               string                `json:"name" db:"name" cli:"name,key"`
 	Description        string                `json:"description"  db:"description"`
 	ProjectID          int64                 `json:"-" db:"project_id"`
-	ProjectKey         string                `json:"project_key" db:"-"`
+	ProjectKey         string                `json:"project_key" db:"-" cli:"project_key"`
 	ApplicationGroups  []GroupPermission     `json:"groups,omitempty" db:"-"`
 	Variable           []Variable            `json:"variables,omitempty" db:"-"`
 	Pipelines          []ApplicationPipeline `json:"pipelines,omitempty" db:"-"`
@@ -29,7 +29,7 @@ type Application struct {
 	Notifications      []UserNotification    `json:"notifications,omitempty" db:"-"`
 	LastModified       time.Time             `json:"last_modified" db:"last_modified"`
 	VCSServer          string                `json:"vcs_server,omitempty" db:"vcs_server"`
-	RepositoryFullname string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
+	RepositoryFullname string                `json:"repository_fullname,omitempty" db:"repo_fullname" cli:"repository_fullname"`
 	RepositoryPollers  []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
 	RepositoryStrategy RepositoryStrategy    `json:"vcs_strategy,omitempty" db:"-"`
 	Hooks              []Hook                `json:"hooks,omitempty" db:"-"`

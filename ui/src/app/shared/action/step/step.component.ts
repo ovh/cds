@@ -27,6 +27,7 @@ export class ActionStepComponent {
         }
     }
     @Input() collapsed;
+    @Input() order;
 
     @Output() removeEvent = new EventEmitter<StepEvent>();
 
