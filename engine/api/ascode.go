@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -40,10 +41,15 @@ func (api *API) postImportAsCodeHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithFeatures)
 		if errP != nil {
 			sdk.WrapError(errP, "postImportAsCodeHandler> Cannot load project")
 		}
+
+		if enabled, has := p.Features[feature.FeatWorkflowAsCode]; has && !enabled {
+			return sdk.WrapError(sdk.ErrForbidden, "postImportAsCodeHandler> Project %s is not allowed for %s", key, feature.FeatWorkflowAsCode)
+		}
+
 		vcsServer := repositoriesmanager.GetProjectVCSServer(p, ope.VCSServer)
 		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 		if erra != nil {
@@ -99,11 +105,26 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		key := vars["permProjectKey"]
 		uuid := vars["uuid"]
 
+		//Load project
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithApplications,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithFeatures)
+		if errp != nil {
+			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
+		}
+
+		if enabled, has := proj.Features[feature.FeatWorkflowAsCode]; has && !enabled {
+			return sdk.WrapError(sdk.ErrForbidden, "postPerformImportAsCodeHandler> Project %s is not allowed for %s", key, feature.FeatWorkflowAsCode)
+		}
+
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
 
 		if err := workflow.GetRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to get repository operation")
+			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to get repository operation")
 		}
 
 		if ope.Status != sdk.OperationStatusDone {
@@ -112,7 +133,7 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 
 		tr, err := workflow.ReadCDSFiles(ope.LoadFiles.Results)
 		if err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Unable to read cds files")
+			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to read cds files")
 		}
 
 		opt := &workflow.PushOption{
@@ -124,19 +145,9 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
 
-		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
-			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithApplications,
-			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines)
-		if errp != nil {
-			return sdk.WrapError(errp, "postImportAsCodeHandler> Cannot load project %s", key)
-		}
-
 		allMsg, wrkflw, err := workflow.Push(api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
-			return sdk.WrapError(err, "workflowPush> Unable to push workflow")
+			return sdk.WrapError(err, "postPerformImportAsCodeHandler.workflowPush> Unable to push workflow")
 		}
 		msgListString := translate(r, allMsg)
 

@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
@@ -122,6 +123,40 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	myOpe := new(sdk.Operation)
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), myOpe))
 	assert.NotEmpty(t, myOpe.UUID)
+}
+
+func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
+	api.Cache.Set("feature:"+p.Key, feature.ProjectFeatures{
+		Key: p.Key,
+		Features: map[string]bool{
+			feature.FeatWorkflowAsCode: false,
+		},
+	})
+
+	ope := `{"repo_fullname":"myrepo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
+
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": p.Key,
+	})
+	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 403, w.Code)
 }
 
 func Test_getImportAsCodeHandler(t *testing.T) {
@@ -279,4 +314,35 @@ version: v1.0`),
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
+}
+
+func Test_postPerformImportAsCodeDisabledFeatureHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+
+	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
+	//Insert Project
+	pkey := sdk.RandomString(10)
+	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+
+	api.Cache.Set("feature:"+pkey, feature.ProjectFeatures{
+		Key: pkey,
+		Features: map[string]bool{
+			feature.FeatWorkflowAsCode: false,
+		},
+	})
+
+	uri := api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
+		"permProjectKey": pkey,
+		"uuid":           "123456",
+	})
+	req, err := http.NewRequest("POST", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 403, w.Code)
 }

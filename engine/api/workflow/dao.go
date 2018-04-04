@@ -373,7 +373,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 
 	w.LastModified = time.Now()
-	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id, history_length) VALUES ($1, $2, $3, $4) RETURNING id", w.Name, w.Description, w.ProjectID, w.HistoryLength).Scan(&w.ID); err != nil {
+	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id, history_length, from_repository) VALUES ($1, $2, $3, $4, $5) RETURNING id", w.Name, w.Description, w.ProjectID, w.HistoryLength, w.FromRepository).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 

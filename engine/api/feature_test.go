@@ -28,7 +28,7 @@ func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...tes
 		Config:              Configuration{},
 		Cache:               cache,
 	}
-	api.Config.FeaturesFlipping.Izanami.Token = token
+	api.Config.Features.Izanami.Token = token
 	event.Cache = api.Cache
 	api.InitRouter()
 	return api, db, router
