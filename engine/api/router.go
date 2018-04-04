@@ -396,6 +396,14 @@ func NeedAdmin(admin bool) HandlerConfigParam {
 	return f
 }
 
+// NeedToken set the route for requests that have the given header
+func NeedToken(k, v string) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["token"] = fmt.Sprintf("%s:%s", k, v)
+	}
+	return f
+}
+
 // NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
 func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
 	f := func(rc *HandlerConfig) {
