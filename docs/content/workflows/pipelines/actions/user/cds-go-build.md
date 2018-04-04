@@ -25,6 +25,6 @@ Go Build: compile a go program
 * **go**: type: binary Value: go
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-go-build.yaml)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-go-build.yml)
 
 

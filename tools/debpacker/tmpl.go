@@ -24,6 +24,7 @@ adduser --system --group --no-create-home {{.SystemdServiceConfig.User}}
 mkdir -p /var/lib/{{.PackageName}}
 chown -R {{.SystemdServiceConfig.User}}:{{.SystemdServiceConfig.User}} /var/lib/{{.PackageName}}
 chmod 770 /var/lib/{{.PackageName}}
+chmod +x {{.SystemdServiceConfig.ExecStart}}
 
 echo "Starting service"
 systemctl start {{.PackageName}}
@@ -42,7 +43,7 @@ ExecStop={{.SystemdServiceConfig.ExecStop}}
 Restart={{.SystemdServiceConfig.Restart}}
 {{with .SystemdServiceConfig.Environments -}}
 {{ range $key, $value := . -}}
-Environment={{$key}}={{$value}}
+Environment="{{$key}}={{$value}}"
 {{- end}}
 {{- end}}
 

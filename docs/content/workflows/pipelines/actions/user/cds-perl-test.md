@@ -19,6 +19,6 @@ title = "cds-perl-test"
 * **prove**: type: binary Value: prove
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-perl-test.yaml)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-perl-test.yml)
 
 

@@ -2,15 +2,15 @@ name: Trigger Infinite Loop Check TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITIFNINITELOOP
-  - script: {{.cds.build.cds}} project add ITIFNINITELOOP ITIFNINITELOOP ITIFNINITELOOP
+  - script: {{.cds.build.cdsctl}} project delete --force ITIFNINITELOOP
+  - script: {{.cds.build.cdsctl}} project add ITIFNINITELOOP ITIFNINITELOOP ITIFNINITELOOP
   - script: {{.cds.build.cds}} pipeline add ITIFNINITELOOP A
   - script: {{.cds.build.cds}} pipeline add ITIFNINITELOOP B
   - script: {{.cds.build.cds}} pipeline add ITIFNINITELOOP C
-  - script: {{.cds.build.cds}} app add ITIFNINITELOOP apploop
-  - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop A
-  - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop B
-  - script: {{.cds.build.cds}} app pipeline add ITIFNINITELOOP apploop C
+  - script: {{.cds.build.cdsctl}} application add ITIFNINITELOOP apploop
+  - script: {{.cds.build.cds}} application pipeline add ITIFNINITELOOP apploop A
+  - script: {{.cds.build.cds}} application pipeline add ITIFNINITELOOP apploop B
+  - script: {{.cds.build.cds}} application pipeline add ITIFNINITELOOP apploop C
 - name: test infinite loop
   steps:
   - script: {{.cds.build.cds}} trigger add ITIFNINITELOOP/apploop/A ITIFNINITELOOP/apploop/A
@@ -24,5 +24,5 @@ testcases:
   - script: {{.cds.build.cds}} trigger add ITIFNINITELOOP/apploop/C ITIFNINITELOOP/apploop/A
     assertions:
       - result.code ShouldNotEqual 0
-  - script: {{.cds.build.cds}} project remove --force ITIFNINITELOOP
-  - script: {{.cds.build.cds}} group remove ITIFNINITELOOP
+  - script: {{.cds.build.cdsctl}} project delete --force ITIFNINITELOOP
+  - script: {{.cds.build.cdsctl}} group delete ITIFNINITELOOP --force

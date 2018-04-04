@@ -17,6 +17,7 @@ var (
 		[]*cobra.Command{
 			cli.NewCommand(environmentVariableCreateCmd, environmentCreateVariableRun, nil, withAllCommandModifiers()...),
 			cli.NewListCommand(environmentVariableListCmd, environmentListVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(environmentVariableShowCmd, environmentVariableShowRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(environmentVariableDeleteCmd, environmentDeleteVariableRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(environmentVariableUpdateCmd, environmentUpdateVariableRun, nil, withAllCommandModifiers()...),
 		})
@@ -78,6 +79,22 @@ var environmentVariableDeleteCmd = cli.Command{
 
 func environmentDeleteVariableRun(v cli.Values) error {
 	return client.EnvironmentVariableDelete(v[_ProjectKey], v["env-name"], v["variable-name"])
+}
+
+var environmentVariableShowCmd = cli.Command{
+	Name:  "show",
+	Short: "Show a CDS environment variable",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "env-name"},
+		{Name: "variable-name"},
+	},
+}
+
+func environmentVariableShowRun(v cli.Values) (interface{}, error) {
+	return client.EnvironmentVariableGet(v[_ProjectKey], v["env-name"], v["variable-name"])
 }
 
 var environmentVariableUpdateCmd = cli.Command{

@@ -37,11 +37,11 @@ Create an environment file to import :
 
 Then, import then environment:
 
-    cds environment import MYPROJECT your-environment.yml
+    cdsctl environment import MYPROJECT your-environment.yml
 
 Or push your workflow
 
-	cds workflow push MYPROJECT *.yml
+	cdsctl workflow push MYPROJECT *.yml
 `,
 	Example: `cdsctl encrypt MYPROJECT my-data my-super-secret-value
 my-data: 01234567890987654321`,

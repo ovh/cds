@@ -15,14 +15,14 @@ testcases:
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP
   - script: {{.cds.build.cdsctl}} project create ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
   - script: {{.cds.build.cdsctl}} application add ITCLIAPPPRJ apptest
-  - script: {{.cds.build.cdsctl}} pipeline add ITCLIAPPPRJ piptest
+  - script: {{.cds.build.cdsctl}} pipeline import ITCLIAPPPRJ ./tests/fixtures/pipeline_empty.yml
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST1
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST2
 
 - name: pipeline group import without force
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ piptest ./tests/fixtures/group_to_add.yml
+  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ pipeline_empty ./tests/fixtures/group_to_add.yml
     assertions:
       - result.code ShouldEqual 50
       - result.systemout ShouldContainSubstring exist
@@ -36,22 +36,22 @@ testcases:
 
 - name: pipeline group import without force
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ piptest ./tests/fixtures/group_to_add.yml
+  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ pipeline_empty ./tests/fixtures/group_to_add.yml
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring success
-      - result.systemout ShouldContainSubstring piptest
+      - result.systemout ShouldContainSubstring pipeline_empty
 
 - name: pipeline group import without force and existing groups
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ piptest ./tests/fixtures/group_to_add.yml
+  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ pipeline_empty ./tests/fixtures/group_to_add.yml
     assertions:
       - result.code ShouldEqual 50
       - result.systemout ShouldContainSubstring 'group already exists'
 
 - name: pipeline group import without force and unknown project
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIFAPPPRJ piptest ./tests/fixtures/group_to_add.yml
+  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIFAPPPRJ pipeline_empty ./tests/fixtures/group_to_add.yml
     assertions:
       - result.code ShouldEqual 50
       - result.systemout ShouldContainSubstring project
@@ -59,8 +59,8 @@ testcases:
 
 - name: pipeline group import with force
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ piptest ./tests/fixtures/group_to_add.yml --force
+  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ pipeline_empty ./tests/fixtures/group_to_add.yml --force
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring success
-      - result.systemout ShouldContainSubstring piptest
+      - result.systemout ShouldContainSubstring pipeline_empty

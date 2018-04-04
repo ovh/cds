@@ -12,13 +12,10 @@ import (
 
 func (c *client) ProjectCreate(p *sdk.Project, groupName string) error {
 	if groupName != "" {
-		gr := sdk.Group{}
-		if _, err := c.GetJSON("/group/"+groupName, &gr); err != nil {
-			return err
-		}
+		// if the group does not exist, POST /project will create it
 		p.ProjectGroups = []sdk.GroupPermission{
 			sdk.GroupPermission{
-				Group:      gr,
+				Group:      sdk.Group{Name: groupName},
 				Permission: permission.PermissionReadWriteExecute,
 			},
 		}

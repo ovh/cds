@@ -2,10 +2,9 @@ name: Pipeline Export / Import Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJIMP
-  - script: {{.cds.build.cds}} group remove ITCLIPIPIMP_GRP --force
-  - script: {{.cds.build.cds}} project add ITCLIPIPPRJIMP "Test Project" ITCLIPIPIMP_GRP
-  - script: {{.cds.build.cds}} action remove IT_CLI_pipeline_Test_Echo --force
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIPIPPRJIMP
+  - script: {{.cds.build.cdsctl}} group delete ITCLIPIPIMP_GRP --force
+  - script: {{.cds.build.cdsctl}} project add ITCLIPIPPRJIMP "Test Project" ITCLIPIPIMP_GRP
 
 - name: pipeline add
   steps:
@@ -15,11 +14,11 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} pipeline stage add ITCLIPIPPRJIMP HelloPipeline Stage1
 
-- name: pipeline action add
+- name: pipeline job add
   steps:
-  - script: {{.cds.build.cds}} action add IT_CLI_pipeline_Test_Echo --requirement="echo" -p name
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo.yml
   - script: {{.cds.build.cds}} pipeline job add ITCLIPIPPRJIMP HelloPipeline myJob1 --stage=1
-  - script: {{.cds.build.cds}} pipeline job append ITCLIPIPPRJIMP HelloPipeline myJob1 IT_CLI_pipeline_Test_Echo -p "name={{.cds.proj.VAR_2}}"
+  - script: {{.cds.build.cds}} pipeline job append ITCLIPIPPRJIMP HelloPipeline myJob1 IT_echo -p "name={{.cds.proj.VAR_2}}"
 
 - name: pipeline export
   steps:
@@ -33,9 +32,9 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} pipeline import ITCLIPIPPRJIMP pip.yml
 
-- name: pipeline show
+- name: pipeline export
   steps:
-  - script: {{.cds.build.cds}} pipeline show ITCLIPIPPRJIMP HelloPipeline2
+  - script: {{.cds.build.cdsctl}} pipeline export ITCLIPIPPRJIMP HelloPipeline2
 
 - name: pipeline update yaml file with errors
   steps:
@@ -43,7 +42,7 @@ testcases:
 
 - name: pipeline update yaml file with errors
   steps:
-  - script: sed -i "s/IT_CLI_pipeline_Test_Echo/IT_CLI_pipeline_Test_Echo_Error/g" pip.yml
+  - script: sed -i "s/IT_echo/IT_echo_Error/g" pip.yml
 
 - name: pipeline import should fail
   steps:
@@ -51,15 +50,14 @@ testcases:
     assertions:
       - result.code ShouldEqual 1
 
-- name: pipeline show should fail
+- name: pipeline export should fail
   steps:
-  - script: {{.cds.build.cds}} pipeline show ITCLIPIPPRJIMP HelloPipeline3
+  - script: {{.cds.build.cdsctl}} pipeline export ITCLIPIPPRJIMP HelloPipeline3
     assertions:
-      - result.code ShouldEqual 1
+      - result.code ShouldEqual 50
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJIMP
-  - script: {{.cds.build.cds}} group remove ITCLIPIPIMP_GRP
-  - script: {{.cds.build.cds}} action remove IT_CLI_pipeline_Test_Echo
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIPIPPRJIMP
+  - script: {{.cds.build.cdsctl}} group delete ITCLIPIPIMP_GRP --force
   

@@ -9,13 +9,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/cli/cds/action"
 	"github.com/ovh/cds/cli/cds/admin"
 	"github.com/ovh/cds/cli/cds/application"
 	"github.com/ovh/cds/cli/cds/artifact"
 	"github.com/ovh/cds/cli/cds/environment"
 	"github.com/ovh/cds/cli/cds/generate"
-	"github.com/ovh/cds/cli/cds/group"
 	"github.com/ovh/cds/cli/cds/internal"
 	"github.com/ovh/cds/cli/cds/login"
 	"github.com/ovh/cds/cli/cds/pipeline"
@@ -96,7 +94,6 @@ func main() {
 
 	rootCmd.AddCommand(login.CmdLogin)
 	rootCmd.AddCommand(login.CmdSignup)
-	rootCmd.AddCommand(action.Cmd)
 	rootCmd.AddCommand(application.Cmd())
 	rootCmd.AddCommand(artifact.Cmd)
 	rootCmd.AddCommand(environment.Cmd())
@@ -104,7 +101,6 @@ func main() {
 	rootCmd.AddCommand(pipeline.Cmd())
 	rootCmd.AddCommand(workflow.Cmd())
 	rootCmd.AddCommand(project.Cmd)
-	rootCmd.AddCommand(group.Cmd)
 	rootCmd.AddCommand(user.Cmd)
 	rootCmd.AddCommand(update.Cmd)
 	rootCmd.AddCommand(version.Cmd)

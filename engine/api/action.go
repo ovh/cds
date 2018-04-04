@@ -284,7 +284,6 @@ func (api *API) importActionHandler() Handler {
 			}
 			code = 200
 		} else {
-			a.Enabled = true
 			a.Type = sdk.DefaultAction
 			if err := action.InsertAction(tx, a, true); err != nil {
 				return err
