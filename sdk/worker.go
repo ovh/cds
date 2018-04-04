@@ -92,7 +92,7 @@ type Model struct {
 	Communication                string              `json:"communication"  db:"communication" cli:"communication"`
 	Disabled                     bool                `json:"disabled"  db:"disabled" cli:"disabled"`
 	Restricted                   bool                `json:"restricted"  db:"restricted" cli:"restricted"`
-	RegisteredBinaryCapabilities []string            `json:"registered_binary_capabilitties"  db:"-" cli:"-"`
+	RegisteredBinaryCapabilities []string            `json:"registered_binary_capabilities"  db:"-" cli:"-"`
 	RegisteredOS                 string              `json:"registered_os"  db:"-" cli:"-"`
 	RegisteredArch               string              `json:"registered_arch"  db:"-" cli:"-"`
 	NeedRegistration             bool                `json:"need_registration"  db:"need_registration" cli:"-"`
@@ -120,5 +120,5 @@ type ModelVirtualMachine struct {
 type ModelDocker struct {
 	Image  string `json:"os"`
 	Memory int    `json:"memory"`
-	Cmd    string
+	Cmd    string `json:"cmd"`
 }
