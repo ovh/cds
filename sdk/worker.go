@@ -83,34 +83,42 @@ type SpawnErrorForm struct {
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 //easyjson:json
 type Model struct {
-	ID               int64              `json:"id" db:"id" cli:"-"`
-	Name             string             `json:"name"  db:"name" cli:"name"`
-	Description      string             `json:"description"  db:"description" cli:"description"`
-	Type             string             `json:"type"  db:"type" cli:"type"`
-	Image            string             `json:"image" db:"image" cli:"-"`
-	Capabilities     []Requirement      `json:"capabilities" db:"-" cli:"-"`
-	Communication    string             `json:"communication"  db:"communication" cli:"communication"`
-	Template         *map[string]string `json:"template"  db:"template" cli:"-"`
-	RunScript        string             `json:"run_script"  db:"run_script" cli:"-"`
-	Disabled         bool               `json:"disabled"  db:"disabled" cli:"disabled"`
-	Restricted       bool               `json:"restricted"  db:"restricted" cli:"restricted"`
-	NeedRegistration bool               `json:"need_registration"  db:"need_registration" cli:"-"`
-	LastRegistration time.Time          `json:"last_registration"  db:"last_registration" cli:"-"`
-	UserLastModified time.Time          `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
-	CreatedBy        User               `json:"created_by" db:"-" cli:"-"`
-	Provision        int64              `json:"provision" db:"provision" cli:"provision"`
-	GroupID          int64              `json:"group_id" db:"group_id" cli:"-"`
-	Group            Group              `json:"group" db:"-" cli:"-"`
-	NbSpawnErr       int64              `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
-	LastSpawnErr     string             `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
-	DateLastSpawnErr *time.Time         `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
-	IsDeprecated     bool               `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
-	IsOfficial       bool               `json:"is_official" db:"-" cli:"official"`
+	ID                           int64               `json:"id" db:"id" cli:"-"`
+	Name                         string              `json:"name"  db:"name" cli:"name"`
+	Description                  string              `json:"description"  db:"description" cli:"description"`
+	Type                         string              `json:"type"  db:"type" cli:"type"`
+	ModelVirtualMachine          ModelVirtualMachine `json:"model_virtual_machine" db:"-" cli:"-"`
+	ModelDocker                  ModelDocker         `json:"model_docker" db:"-" cli:"-"`
+	Communication                string              `json:"communication"  db:"communication" cli:"communication"`
+	Disabled                     bool                `json:"disabled"  db:"disabled" cli:"disabled"`
+	Restricted                   bool                `json:"restricted"  db:"restricted" cli:"restricted"`
+	RegisteredBinaryCapabilities []string            `json:"registered_binary_capabilities"  db:"-" cli:"-"`
+	RegisteredOS                 string              `json:"registered_os"  db:"-" cli:"-"`
+	RegisteredArch               string              `json:"registered_arch"  db:"-" cli:"-"`
+	NeedRegistration             bool                `json:"need_registration"  db:"need_registration" cli:"-"`
+	LastRegistration             time.Time           `json:"last_registration"  db:"last_registration" cli:"-"`
+	UserLastModified             time.Time           `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
+	CreatedBy                    User                `json:"created_by" db:"-" cli:"-"`
+	Provision                    int64               `json:"provision" db:"provision" cli:"provision"`
+	GroupID                      int64               `json:"group_id" db:"group_id" cli:"-"`
+	Group                        Group               `json:"group" db:"-" cli:"-"`
+	NbSpawnErr                   int64               `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
+	LastSpawnErr                 string              `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
+	DateLastSpawnErr             *time.Time          `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
+	IsDeprecated                 bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
+	IsOfficial                   bool                `json:"is_official" db:"-" cli:"official"`
 }
 
-// OpenstackModelData type details the "Image" field of Openstack type model
-type OpenstackModelData struct {
+// ModelVirtualMachine for openstack or vsphere
+type ModelVirtualMachine struct {
 	Image    string `json:"os"`
 	Flavor   string `json:"flavor,omitempty"`
 	UserData string `json:"user_data"`
+}
+
+// ModelDocker for swarm, marathon and kubernetes
+type ModelDocker struct {
+	Image  string `json:"os"`
+	Memory int    `json:"memory"`
+	Cmd    string `json:"cmd"`
 }
