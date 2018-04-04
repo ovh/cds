@@ -72,16 +72,39 @@ func actionShowRun(v cli.Values) (interface{}, error) {
 var actionDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS action",
+	Long: `Useful to delete a CDS action
+
+	cdsctl action delete myAction
+
+	# this will not fail if action does not exist
+	cdsctl action delete myActionNotExist --force
+`,
 	Args: []cli.Arg{
 		{Name: "action-name"},
 	},
-	Long: `Useful to delete a CDS action
-
-cdsctl action delete myAction`,
+	Flags: []cli.Flag{
+		{
+			Name:  "force",
+			Usage: "if true, do not fail if action does not exist",
+			IsValid: func(s string) bool {
+				if s != "true" && s != "false" {
+					return false
+				}
+				return true
+			},
+			Default: "false",
+			Kind:    reflect.Bool,
+		},
+	},
 }
 
 func actionDeleteRun(v cli.Values) error {
-	return client.ActionDelete(v["action-name"])
+	err := client.ActionDelete(v["action-name"])
+	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoAction) {
+		fmt.Println(err)
+		return nil
+	}
+	return err
 }
 
 var actionDocCmd = cli.Command{

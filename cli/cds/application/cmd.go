@@ -13,12 +13,10 @@ func Cmd() *cobra.Command {
 		Aliases: []string{"app"},
 	}
 
-	cmd.AddCommand(applicationAddCmd())
 	cmd.AddCommand(applicationDeleteCmd())
 	cmd.AddCommand(applicationRenameCmd())
 	cmd.AddCommand(applicationListCmd())
 	cmd.AddCommand(applicationShowCmd())
-	cmd.AddCommand(applicationVariableCmd)
 	cmd.AddCommand(applicationGroupCmd)
 	cmd.AddCommand(applicationPipelineCmd)
 	cmd.AddCommand(applicationRepositoriesManagerCmd)

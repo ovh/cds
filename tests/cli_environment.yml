@@ -2,15 +2,15 @@ name: Environment Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITCLIENVPRJ
-  - script: {{.cds.build.cds}} group remove ITCLIENV_GRP --force
-  - script: {{.cds.build.cds}} group remove ITCLIENV_GRP_EDIT_TEST --force
-  - script: {{.cds.build.cds}} project add ITCLIENVPRJ "Test Project" ITCLIENV_GRP
-  - script: {{.cds.build.cds}} group add ITCLIENV_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIENVPRJ
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP_EDIT_TEST --force
+  - script: {{.cds.build.cdsctl}} project add ITCLIENVPRJ "Test Project" ITCLIENV_GRP
+  - script: {{.cds.build.cdsctl}} group add ITCLIENV_GRP_EDIT_TEST
 
 - name: environment add
   steps:
-  - script: {{.cds.build.cds}} environment add ITCLIENVPRJ PROD
+  - script: {{.cds.build.cdsctl}} environment add ITCLIENVPRJ PROD
 
 - name: environment list
   steps:
@@ -30,19 +30,19 @@ testcases:
 
 - name: environment add
   steps:
-  - script: {{.cds.build.cds}} environment add ITCLIENVPRJ PROD
+  - script: {{.cds.build.cdsctl}} environment add ITCLIENVPRJ PROD
 
 - name: environment variable add
   steps:
-  - script: {{.cds.build.cds}} environment variable add ITCLIENVPRJ PROD var1 value1 string
+  - script: {{.cds.build.cdsctl}} environment variable add ITCLIENVPRJ PROD var1 string value1
 
 - name: environment variable show
   steps:
-  - script: {{.cds.build.cds}} environment variable show ITCLIENVPRJ PROD
+  - script: {{.cds.build.cdsctl}} environment variable list ITCLIENVPRJ PROD
 
 - name: environment variable remove
   steps:
-  - script: {{.cds.build.cds}} environment variable remove ITCLIENVPRJ PROD var1
+  - script: {{.cds.build.cdsctl}} environment variable delete ITCLIENVPRJ PROD var1
 
 - name: environment group add
   steps:
@@ -54,6 +54,6 @@ testcases:
 
 - name: clean
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITCLIENVPRJ
-  - script: {{.cds.build.cds}} group remove ITCLIENV_GRP
-  - script: {{.cds.build.cds}} group remove ITCLIENV_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIENVPRJ
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIENV_GRP_EDIT_TEST --force

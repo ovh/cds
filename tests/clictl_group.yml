@@ -1,0 +1,47 @@
+name: Group Command TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST_2 --force
+
+- name: group add
+  steps:
+  - script: {{.cds.build.cdsctl}} group add ITCLIGRP_TEST
+
+- name: group show
+  steps:
+  - script: {{.cds.build.cdsctl}} group show ITCLIGRP_TEST
+
+- name: group list
+  steps:
+  - script: {{.cds.build.cdsctl}} group list
+
+- name: group rename
+  steps:
+  - script: {{.cds.build.cdsctl}} group rename ITCLIGRP_TEST ITCLIGRP_TEST_2
+
+- name: group add user
+  steps:
+  - script: {{.cds.build.cdsctl}} group user add ITCLIGRP_TEST_2 cds.integration.tests.ro
+
+- name: group set admin
+  steps:
+  - script: {{.cds.build.cdsctl}} group setAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
+
+- name: group remove admin
+  steps:
+  - script: {{.cds.build.cdsctl}} group removeAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
+
+- name: group remove user
+  steps:
+  - script: {{.cds.build.cdsctl}} group deleteuser ITCLIGRP_TEST_2 cds.integration.tests.ro
+
+- name: group show
+  steps:
+  - script: {{.cds.build.cdsctl}} group show ITCLIGRP_TEST_2
+
+- name: clean
+  steps:
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIGRP_TEST_2 --force

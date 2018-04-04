@@ -1,0 +1,11 @@
+version: v1.0
+name: CDS_TestIT_Disabled
+enabled: false
+requirements:
+- binary: bash
+steps:
+- script:
+  - '#!/bin/bash'
+  - set -e
+  - ""
+

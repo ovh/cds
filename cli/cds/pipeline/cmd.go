@@ -17,20 +17,18 @@ func Cmd() *cobra.Command {
 		Aliases: []string{"p", "pip"},
 	}
 
-	cmd.AddCommand(pipelineJobCmd())
 	cmd.AddCommand(pipelineAddCmd())
 	cmd.AddCommand(pipelineDeleteCmd())
 	cmd.AddCommand(pipelineGroupCmd)
 	cmd.AddCommand(pipelineHistoryCmd())
-	cmd.AddCommand(pipelineListCmd())
 	cmd.AddCommand(pipelineRunCmd())
 	cmd.AddCommand(pipelineRestartCmd())
 	cmd.AddCommand(pipelineShowBuildCmd())
 	cmd.AddCommand(pipelineCommitsCmd())
-	cmd.AddCommand(pipelineShowCmd())
 	cmd.AddCommand(pipelineStageCmd)
 	cmd.AddCommand(pipelineHookCmd)
 	cmd.AddCommand(pipelineParameterCmd)
+	cmd.AddCommand(pipelineJobCmd())
 	cmd.AddCommand(pipelineJoinedCmd())
 	cmd.AddCommand(pipelineBuildCmd())
 	cmd.AddCommand(exportCmd())

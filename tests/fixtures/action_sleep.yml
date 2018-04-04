@@ -1,0 +1,10 @@
+version: v1.0
+name: IT_sleep
+parameters:
+  name:
+    type: string
+requirements:
+- binary: sleep
+steps:
+- script:
+  - sleep 1

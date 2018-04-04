@@ -1,0 +1,43 @@
+name: Action Command TestSuite with cdsctl
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/action_enabled.yml ]'
+    assertions:
+      - result.code ShouldEqual 0
+  - script: '[ -f ./tests/fixtures/action_disabled.yml ]'
+    assertions:
+      - result.code ShouldEqual 0
+- name: test unknowned ation
+  steps:
+  - script: {{.cds.build.cdsctl}} action delete --force foo
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring "action does not exist"
+  - script: {{.cds.build.cdsctl}} action delete foo
+    assertions:
+      - result.code ShouldEqual 50
+      - result.systemout ShouldContainSubstring "action does not exist"
+- name: prepare test
+  steps:
+  - script: {{.cds.build.cdsctl}} action delete --force CDS_TestIT_Enabled
+  - script: {{.cds.build.cdsctl}} action delete --force CDS_TestIT_Disabled
+- name: action import
+  steps:
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_enabled.yml
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring successfully
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_disabled.yml
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring successfully
+- name: action export
+  steps:
+  - script: {{.cds.build.cdsctl}} action export CDS_TestIT_Disabled > ./tests/fixtures/clictl_action_CDS_TestIT_Disabled.exported
+  - script: {{.cds.build.cdsctl}} action export CDS_TestIT_Enabled > ./tests/fixtures/clictl_action_CDS_TestIT_Enabled.exported
+  - script: diff ./tests/fixtures/clictl_action_CDS_TestIT_Disabled.exported ./tests/fixtures/action_disabled.yml
+  - script: diff ./tests/fixtures/clictl_action_CDS_TestIT_Enabled.exported ./tests/fixtures/action_enabled.yml
+- name: action list
+  steps:
+  - script: {{.cds.build.cdsctl}} action list
