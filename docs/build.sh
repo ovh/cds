@@ -8,7 +8,7 @@ function generateUserActionsDocumentation {
   echo "work on ${action}"
 
   filename=$(basename "$action")
-  actionN`ame=${filename/.yml/}
+  actionName=${filename/.yml/}
 
   mkdir -p content/workflows/pipelines/actions/user
   ACTION_FILE="content/workflows/pipelines/actions/user/${actionName}.md"
