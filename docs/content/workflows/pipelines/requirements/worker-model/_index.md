@@ -17,7 +17,7 @@ There are 3 types of worker models:
 
  * Docker images, see [how to create a worker model docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}})
  * Openstack images, see [how to create a worker model openstack]({{< relref "workflows/pipelines/requirements/worker-model/openstack.md" >}})
- * VSphere images, see [how to create a worker model VSphere]({{< relref "workflows/pipelines/requirements/worker-model/vshpere.md" >}})
+ * VSphere images, see [how to create a worker model VSphere]({{< relref "workflows/pipelines/requirements/worker-model/vsphere.md" >}})
 
 ### Behavior
 
