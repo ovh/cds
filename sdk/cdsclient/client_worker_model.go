@@ -79,8 +79,8 @@ func (c *client) WorkerModelAdd(name string, modelType string, image string, gro
 func (c *client) WorkerModel(name string) (sdk.Model, error) {
 	uri := fmt.Sprintf("/worker/model?name=" + name)
 	var model sdk.Model
-	_, errGet := c.GetJSON(uri, &model)
-	return model, errGet
+	_, err := c.GetJSON(uri, &model)
+	return model, err
 }
 
 func (c *client) WorkerModelDelete(name string) error {
