@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -157,19 +158,15 @@ func (api *API) getUsersHandler() Handler {
 	}
 }
 
-type favoriteParams struct {
-	Type         string `json:"type"`
-	ProjectKey   string `json:"project_key"`
-	WorkflowName string `json:"workflow_name"`
-}
-
 // postUserFavoriteHandler post favorite user for workflow or project
 func (api *API) postUserFavoriteHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		params := favoriteParams{}
+		params := sdk.FavoriteParams{}
 		if err := UnmarshalBody(r, &params); err != nil {
 			return err
 		}
+
+		fmt.Println("params", params)
 
 		switch params.Type {
 		case "workflow":
@@ -178,6 +175,7 @@ func (api *API) postUserFavoriteHandler() Handler {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}
 
+			fmt.Println("todelete", wf.Favorite)
 			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, getUser(ctx), !wf.Favorite); err != nil {
 				return sdk.WrapError(err, "postUserFavoriteHandler> Cannot change workflow %s/%s favorite", params.ProjectKey, params.WorkflowName)
 			}

@@ -32,7 +32,7 @@ type Workflow struct {
 	DerivedFromWorkflowID   int64                  `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
 	DerivedFromWorkflowName string                 `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
 	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
-	Favorite                bool                   `json:"favorite" db:"-" cli:"-"`
+	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
 }
 
 // WorkflowNotification represents notifications on a workflow

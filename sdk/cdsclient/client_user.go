@@ -126,3 +126,12 @@ func (c *client) FindToken(tokenValue string) (sdk.Token, error) {
 	}
 	return token, nil
 }
+
+// UpdateFavorite Update favorites (add or delete)
+func (c *client) UpdateFavorite(params sdk.FavoriteParams) error {
+	if _, err := c.PostJSON("/user/favorite", params, nil); err != nil {
+		return err
+	}
+
+	return nil
+}

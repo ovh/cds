@@ -55,3 +55,31 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring success
       - result.systemout ShouldContainSubstring ITCLIAPPPRJ
+
+- name: project favorite add
+  steps:
+  - script: {{.cds.build.cdsctl}} project favorite ITCLIAPPPRJ
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring updated
+
+- name: project favorite check
+  steps:
+  - script: {{.cds.build.cdsctl}} project show ITCLIAPPPRJ
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring true
+
+- name: project favorite delete
+  steps:
+  - script: {{.cds.build.cdsctl}} project favorite ITCLIAPPPRJ
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring updated
+
+- name: project favorite check
+  steps:
+  - script: {{.cds.build.cdsctl}} project show ITCLIAPPPRJ
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring false

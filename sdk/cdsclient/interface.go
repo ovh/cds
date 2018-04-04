@@ -209,6 +209,7 @@ type UserClient interface {
 	UserSignup(username, fullname, email, callback string) error
 	ListAllTokens() ([]sdk.Token, error)
 	FindToken(token string) (sdk.Token, error)
+	UpdateFavorite(params sdk.FavoriteParams) error
 }
 
 // WorkerClient exposes workers functions
