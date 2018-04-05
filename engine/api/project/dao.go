@@ -294,6 +294,7 @@ var LoadOptions = struct {
 	WithClearKeys                  LoadOptionFunc
 	WithPlatforms                  LoadOptionFunc
 	WithClearPlatforms             LoadOptionFunc
+	WithFavorites                  LoadOptionFunc
 	WithFeatures                   LoadOptionFunc
 }{
 	Default:                        &loadDefault,
@@ -316,6 +317,7 @@ var LoadOptions = struct {
 	WithClearKeys:                  &loadClearKeys,
 	WithPlatforms:                  &loadPlatforms,
 	WithClearPlatforms:             &loadClearPlatforms,
+	WithFavorites:                  &loadFavorites,
 	WithFeatures:                   &loadFeatures,
 }
 
@@ -419,4 +421,17 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, u *sdk.User, o
 	}
 
 	return &proj, nil
+}
+
+// UpdateFavorite add or delete project from user favorites
+func UpdateFavorite(db gorp.SqlExecutor, projectID int64, u *sdk.User, add bool) error {
+	var query string
+	if add {
+		query = "INSERT INTO project_favorite (user_id, project_id) VALUES ($1, $2)"
+	} else {
+		query = "DELETE FROM project_favorite WHERE user_id = $1 AND project_id = $2"
+	}
+
+	_, err := db.Exec(query, u.ID, projectID)
+	return sdk.WrapError(err, "UpdateFavorite>")
 }

@@ -42,24 +42,22 @@ func Test_getNavbarHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
-	data := sdk.NavbarData{}
+	data := []sdk.NavbarProjectData{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &data))
 
 	var projFound, app1Found, app2Found bool
-	for _, p := range data.Projects {
+	for _, p := range data {
 		if p.Key == proj.Key {
 			projFound = true
 
-			for _, a := range p.ApplicationNames {
-				if a == app1.Name {
-					app1Found = true
-					continue
-				}
-				if a == app2.Name {
-					app2Found = true
-				}
+			if p.ApplicationName == app1.Name {
+				app1Found = true
+				continue
 			}
-			break
+
+			if p.ApplicationName == app2.Name {
+				app2Found = true
+			}
 		}
 	}
 

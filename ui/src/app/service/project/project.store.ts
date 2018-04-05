@@ -6,6 +6,7 @@ import {Project, LoadOpts} from '../../model/project.model';
 import {ProjectService} from './project.service';
 import {EnvironmentService} from '../environment/environment.service';
 import {VariableService} from '../variable/variable.service';
+import {NavbarService} from '../navbar/navbar.service';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
@@ -26,7 +27,8 @@ export class ProjectStore {
     constructor(
         private _projectService: ProjectService,
         private _environmentService: EnvironmentService,
-        private _variableService: VariableService
+        private _variableService: VariableService,
+        private _navbarService: NavbarService
       ) {
 
     }
@@ -298,6 +300,25 @@ export class ProjectStore {
                 this._projectCache.next(cache.set(res.key, pToUpdate));
             }
             return res;
+        });
+    }
+
+    /**
+     * Update a project favorite
+     * @param projectKey Project key to Update
+     * @returns {Project}
+     */
+    updateFavorite(projectKey: string): Observable<Project> {
+        return this._projectService.updateFavorite(projectKey).map(() => {
+            // update project cache
+            let cache = this._projectCache.getValue();
+            let project = cache.get(projectKey);
+            if (project) {
+                project.favorite = !project.favorite;
+                this._projectCache.next(cache.set(projectKey, project));
+            }
+            this._navbarService.getData();
+            return project;
         });
     }
 

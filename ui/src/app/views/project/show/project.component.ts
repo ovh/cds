@@ -110,6 +110,11 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         });
     }
 
+    updateFav() {
+      this._projectStore.updateFavorite(this.project.key)
+        .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
+    }
+
     showTab(tab: string): void {
         this._router.navigateByUrl('/project/' + this.project.key + '?tab=' + tab);
     }

@@ -14,7 +14,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {RouterService} from '../../service/router/router.service';
 import {NavbarRecentData} from '../../model/navbar.model';
 import {filter} from 'rxjs/operators';
-import {NavbarData, NavbarSearchItem, NavbarProjectData} from 'app/model/navbar.model';
+import {NavbarSearchItem, NavbarProjectData} from 'app/model/navbar.model';
 
 @Component({
     selector: 'app-navbar',
@@ -28,8 +28,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     public ready = false;
 
     // List of projects in the nav bar
-    navProjects: NavbarData;
-    listProjects: Array<NavbarProjectData> = [];
+    navProjects: Array<NavbarProjectData> = [];
+    listFavs: Array<NavbarProjectData> = [];
     navRecentApp: List<Application>;
     navRecentWorkflows: List<NavbarRecentData>;
     searchItems: Array<NavbarSearchItem> = [];
@@ -37,11 +37,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     items: Array<NavbarSearchItem> = [];
     loading = true;
 
-    listApplications: List<Application>;
     listWorkflows: List<NavbarRecentData>;
 
     currentCountry: string;
-    langSubscrition: Subscription;
+    langSubscription: Subscription;
+    navbarSubscription: Subscription;
 
     currentRoute: {};
 
@@ -61,7 +61,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             this.currentUser = u;
         });
 
-        this.langSubscrition = this._language.get().subscribe(l => {
+        this.langSubscription = this._language.get().subscribe(l => {
             this.currentCountry = l;
         });
 
@@ -94,7 +94,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         this._appStore.getRecentApplications().subscribe(apps => {
             if (apps) {
                 this.navRecentApp = apps;
-                this.listApplications = apps;
                 this.recentItems = this.recentItems
                     .filter((i) => i.type !== 'application')
                     .concat(
@@ -102,7 +101,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                             type: 'application',
                             value: app.project_key + '/' + app.name,
                             title: app.name,
-                            projectKey: app.project_key
+                            projectKey: app.project_key,
+                            favorite: false
                         }))
                     );
                 this.items = this.recentItems;
@@ -115,17 +115,14 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             if (workflows) {
                 this.navRecentWorkflows = workflows;
                 this.listWorkflows = workflows;
-                this.recentItems = new Array<NavbarSearchItem>();
-                workflows.toArray().forEach(w => {
-                    if (w.name) {
-                        this.recentItems.push({
-                            type: 'workflow',
-                            value: w.project_key + '/' + w.name,
-                            title: w.name,
-                            projectKey: w.project_key
-                        });
-                    }
-                });
+                this.recentItems = workflows.toArray().map((wf) => ({
+                    type: 'workflow',
+                    value: wf.project_key + '/' + wf.name,
+                    title: wf.name,
+                    projectKey: wf.project_key
+                })).concat(
+                    this.recentItems.filter((i) => i.type !== 'workflow')
+                );
                 this.items = this.recentItems;
                 this._cd.detectChanges();
             }
@@ -146,23 +143,44 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      * Listen change on project list.
      */
     getData(): void {
-        this._navbarService.getData().subscribe(data => {
-            if (data.projects && data.projects.length > 0) {
+        this.navbarSubscription = this._navbarService.getData().subscribe(data => {
+            if (Array.isArray(data) && data.length > 0) {
                 this.navProjects = data;
-                this.listProjects = data.projects.slice(0, 7);
                 this.searchItems = new Array<NavbarSearchItem>();
-
-                this.navProjects.projects.forEach(p => {
-                    this.searchItems.push({value: p.key, title: p.name, type: 'project', projectKey: p.key});
-                    if (p.application_names && p.application_names.length > 0) {
-                        p.application_names.forEach(a => {
-                            this.searchItems.push({value: p.key + '/' + a, title: a, type: 'application', projectKey: p.key});
-                        });
+                let favProj = [];
+                this.listFavs = data.filter((p) => {
+                  if (p.favorite && p.type !== 'workflow') {
+                    if (p.type === 'project' && favProj.indexOf(p.key) === -1) {
+                      favProj.push(p.key);
+                      return true;
                     }
-                    if (p.workflow_names && p.workflow_names.length > 0) {
-                        p.workflow_names.forEach(w => {
-                            this.searchItems.push({value: p.key + '/' + w, title: w, type: 'workflow', projectKey: p.key});
+                    return false
+                  }
+                  return p.favorite;
+                }).slice(0, 7);
+
+                this.navProjects.forEach(p => {
+                    switch (p.type) {
+                      case 'workflow':
+                        this.searchItems.push({
+                          value: p.key + '/' + p.workflow_name,
+                          title: p.workflow_name,
+                          type: 'workflow',
+                          projectKey: p.key,
+                          favorite: p.favorite
                         });
+                        break;
+                      case 'application':
+                        this.searchItems.push({
+                          value: p.key + '/' + p.application_name,
+                          title: p.application_name,
+                          type: 'application',
+                          projectKey: p.key,
+                          favorite: false
+                        });
+                        break;
+                      default:
+                        this.searchItems.push({value: p.key, title: p.name, type: 'project', projectKey: p.key, favorite: p.favorite});
                     }
                 });
             }
@@ -170,33 +188,20 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         });
     }
 
-    navigateToResult(result: string) {
-        let splittedSelection = result.split('/', 2);
-        let project = this.navProjects.projects.find(p => p.key === splittedSelection[0]);
-
-        if (splittedSelection.length === 1) {
-            this.navigateToProject(project.key);
-        } else if (splittedSelection.length === 2) {
-            if (Array.isArray(project.workflow_names)) {
-                let workflowFound = project.workflow_names.find(w => w === splittedSelection[1]);
-                if (workflowFound) {
-                    this.items = this.recentItems;
-                    return this.navigateToWorkflow(project.key, workflowFound);
-                }
-            }
-
-            if (Array.isArray(project.application_names)) {
-                let appFound = project.application_names.find(a => a === splittedSelection[1]);
-                if (appFound) {
-                    this.items = this.recentItems;
-                    return this.navigateToApplication(project.key, appFound);
-                }
-            }
-        }
-    }
-
-    selectAllProjects(): void {
-        this.listApplications = this.navRecentApp;
+    navigateToResult(result: NavbarSearchItem) {
+      if (!result) {
+        return;
+      }
+      switch (result.type) {
+        case 'workflow':
+          this.navigateToWorkflow(result.projectKey, result.value.split('/', 2)[1]);
+          break;
+        case 'application':
+          this.navigateToApplication(result.projectKey, result.value.split('/', 2)[1]);
+          break;
+        default:
+          this.navigateToProject(result.projectKey);
+      }
     }
 
     searchItem(list: Array<NavbarSearchItem>, query: string): boolean|Array<NavbarSearchItem> {
@@ -216,21 +221,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      * @param key Project unique key get by the event
      */
     navigateToProject(key): void {
-        if (key === '#NOPROJECT#') {
-            this.selectAllProjects();
-            return;
-        }
-
-        const selectedProject = this.navProjects.projects.filter(p => p.key === key)[0];
-        if (Array.isArray(selectedProject.application_names)) {
-            const apps = selectedProject.application_names.map(a => {
-                const app = new Application();
-                app.name = a;
-                app.project_key = selectedProject.key;
-                return app;
-            });
-            this.listApplications = List(apps);
-        }
         this._router.navigate(['/project/' + key]);
     }
 

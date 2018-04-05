@@ -29,6 +29,7 @@ var (
 			cli.NewCommand(workflowImportCmd, workflowImportRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowPullCmd, workflowPullRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
+			cli.NewCommand(workflowFavoriteCmd, workflowFavoriteRun, nil, withAllCommandModifiers()...),
 			workflowArtifact,
 			workflowAdvanced,
 		})

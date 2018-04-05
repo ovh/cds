@@ -26,6 +26,7 @@ export class Project {
     vcs_servers: Array<RepositoriesManager>;
     keys: Array<Key>;
     platforms: Array<ProjectPlatform>;
+    favorite: boolean;
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
 }

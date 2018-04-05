@@ -223,6 +223,10 @@
   "common_end": "End",
   "common_error": "Error",
   "common_loading_projects": "Loading projects...",
+  "common_favorites_updated": "Bookmarks updated with success",
+  "common_favorites_delete": "Delete from bookmarks",
+  "common_no_favorites": "You didn't add projects or workflows in your bookmarks yet.",
+  "common_favorites_all": "All bookmarks",
 
   "keys_added": "Key added",
   "keys_add_title": "Add a key",
@@ -255,6 +259,13 @@
   "environment_variable_list_title": "Variables list",
 
   "filter": "Filter",
+
+  "favorite_title": "Bookmarks management",
+  "favorite_add": "Add a bookmark",
+  "favorite_add_btn": "Add to my bookmarks",
+  "favorite_select_type": "Select a favorite type",
+  "favorite_project_select": "Select a project",
+  "favorite_workflow_select": "Select a workflow",
 
   "group_added": "Group added",
   "group_deleted": "Group deleted",
@@ -320,6 +331,7 @@
   "navbar_profile": "Profile",
   "navbar_projects_placeholder": "All Projects",
   "navbar_projects": "Projects",
+  "navbar_favorites": "Bookmarks",
   "navbar_users": "Users",
   "navbar_search": "Search...",
   "navbar_settings": "Settings",

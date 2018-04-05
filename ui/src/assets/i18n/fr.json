@@ -223,6 +223,10 @@
   "common_end": "Fin",
   "common_error": "Erreur",
   "common_loading_projects": "Chargement des projets...",
+  "common_favorites_updated": "Favoris mis à jour avec succès",
+  "common_favorites_delete": "Supprimer des favoris",
+  "common_no_favorites": "Vous n'avez pas encore ajouté de projets ou de workflows dans vos favoris.",
+  "common_favorites_all": "Tous les favoris",
 
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",
@@ -255,6 +259,13 @@
   "environment_variable_list_title": "Liste des variables",
 
   "filter": "Filtrer",
+
+  "favorite_title": "Gestion des favoris",
+  "favorite_add": "Ajouter un favori",
+  "favorite_add_btn": "Ajouter à mes favoris",
+  "favorite_select_type": "Sélectionnez un type de favoris",
+  "favorite_project_select": "Sélectionnez un projet",
+  "favorite_workflow_select": "Sélectionnez un workflow",
 
   "group_added": "Groupe ajouté",
   "group_deleted": "Groupe supprimé",
@@ -320,6 +331,7 @@
   "navbar_profile": "Votre Compte",
   "navbar_projects_placeholder": "Tous les projets",
   "navbar_projects": "Projets",
+  "navbar_favorites": "Favoris",
   "navbar_users": "Utilisateurs",
   "navbar_search": "Rechercher...",
   "navbar_settings": "Paramètres",

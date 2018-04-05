@@ -126,3 +126,28 @@ func (c *client) FindToken(tokenValue string) (sdk.Token, error) {
 	}
 	return token, nil
 }
+
+// UpdateFavorite Update favorites (add or delete) return updated workflow or project
+func (c *client) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) {
+	switch params.Type {
+	case "workflow":
+		var wf sdk.Workflow
+		if _, err := c.PostJSON("/user/favorite", params, &wf); err != nil {
+			return wf, err
+		}
+		return wf, nil
+	case "project":
+		var proj sdk.Project
+		if _, err := c.PostJSON("/user/favorite", params, &proj); err != nil {
+			return proj, err
+		}
+		return proj, nil
+	}
+
+	var res interface{}
+	if _, err := c.PostJSON("/user/favorite", params, &res); err != nil {
+		return res, err
+	}
+
+	return res, nil
+}

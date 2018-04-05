@@ -25,6 +25,7 @@ func project() *cobra.Command {
 		cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectCreateCmd, projectCreateRun, nil),
 		cli.NewDeleteCommand(projectDeleteCmd, projectDeleteRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectFavoriteCmd, projectFavoriteRun, nil, withAllCommandModifiers()...),
 		projectKey,
 		projectGroup,
 		projectVariable,

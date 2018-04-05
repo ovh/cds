@@ -1,0 +1,40 @@
+import {Component} from '@angular/core';
+import {NavbarService} from '../../service/navbar/navbar.service';
+import {NavbarProjectData} from 'app/model/navbar.model';
+import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
+
+@Component({
+    selector: 'app-favorite',
+    templateUrl: './favorite.component.html',
+    styleUrls: ['./favorite.component.scss']
+})
+@AutoUnsubscribe()
+export class FavoriteComponent {
+
+    favorites: Array<NavbarProjectData> = [];
+    projects: Array<NavbarProjectData> = [];
+    workflows: Array<NavbarProjectData> = [];
+    loading = true;
+
+    _navbarSub: Subscription;
+
+    constructor(
+      private _navbarService: NavbarService
+    ) {
+      this._navbarSub = this._navbarService.getData(true)
+        .subscribe((data) => {
+          this.loading = false;
+          if (Array.isArray(data)) {
+            this.favorites = data.filter((fav) => fav.favorite);
+            this.projects = data.filter((elt) => {
+              return elt.type === 'project' && !this.favorites.find((fav) => fav.type === 'project' && fav.key === elt.key);
+            });
+            this.workflows = data.filter((elt) => {
+              return elt.type === 'workflow' &&
+                !this.favorites.find((fav) => fav.type === 'workflow' && fav.workflow_name === elt.workflow_name);
+            });
+          }
+        });
+    }
+}
