@@ -31,7 +31,7 @@ testcases:
     - result.systemoutjson.payload ShouldBeEmpty
     - result.systemoutjson.num ShouldEqual 1
     - result.systemoutjson.status ShouldEqual 'Never Built'
-    - result.systemoutjson.tags ShouldEqual triggered_by:aa
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
   - script:  "{{.cds.build.cdsctl}} workflow run ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW -d '{\"git.branch\": \"master\"}'"
     assertions:
     - result.code ShouldEqual 0
