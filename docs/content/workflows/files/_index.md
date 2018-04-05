@@ -4,7 +4,7 @@ weight = 3
 
 +++
 
-Using `CDS Workflow Configuration Files`, checked into source controle, provides several benefits:
+Using `CDS Workflow Configuration Files`, checked into source control, provides several benefits:
 * Code reviews on the workflow configuration
 * Ability to update workflow configuration from particular branch
 * Gain efficienty while editing the workflow configuration

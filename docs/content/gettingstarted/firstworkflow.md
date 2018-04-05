@@ -89,7 +89,7 @@ This will ask you to choose:
 
  * CDS generated 3 files for you :
  
-   One for your application
+   One for the application
    
    ```
    version: v1.0

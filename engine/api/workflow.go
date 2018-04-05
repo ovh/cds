@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -9,7 +10,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"bytes"
 	"github.com/fsamin/go-dump"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"

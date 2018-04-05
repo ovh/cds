@@ -27,5 +27,3 @@ hooks:
 ```
 
 Here there are two major things to understand: `workflow` and `hooks`. A workflow is a kind of graph starting from a root pipeline, and other pipelines with dependencies. In this example, the `deploy` pipeline will be triggered after the `build` pipeline.
-
-TODO

@@ -82,7 +82,7 @@ jobs:
 
 ## Stages
 
-This file describes three jobs (`Build UI`, `Test UI` and `Package UI`) in two stages `Compile` and `Package`. The two first jobs will be run in parallel in the first Stage. When the first Stage will be successful, the second stage containing the last job will be run.
+This file describes three jobs (`Build UI`, `Test UI` and `Package UI`) in two stages `Compile` and `Package`. The two first jobs will be run in parallel in the first stage. When the first Stage will be successful, the second stage containing the last job will be run.
 
 A pipeline will always begin with
 ```yaml
