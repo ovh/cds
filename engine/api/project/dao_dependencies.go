@@ -209,4 +209,14 @@ var (
 		proj.Permission = permission.ProjectPermission(proj.Key, u)
 		return nil
 	}
+
+	loadFavorites = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND user_id = $2", proj.ID, u.ID)
+		if err != nil {
+			return sdk.WrapError(err, "project.loadFavorites>")
+		}
+		proj.Favorite = count > 0
+
+		return nil
+	}
 )

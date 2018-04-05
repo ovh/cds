@@ -4,6 +4,7 @@ import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
 import {Observable} from 'rxjs/Observable';
 import {WorkflowService} from './workflow.service';
+import {NavbarService} from '../navbar/navbar.service';
 import {GroupPermission} from '../../model/group.model';
 import {NavbarRecentData} from '../../model/navbar.model';
 import 'rxjs/add/observable/of';
@@ -21,7 +22,7 @@ export class WorkflowStore {
     private _recentWorkflows: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
 
 
-    constructor(private _workflowService: WorkflowService) {
+    constructor(private _workflowService: WorkflowService, private _navbarService: NavbarService) {
         this.loadRecentWorkflows();
     }
 
@@ -119,6 +120,26 @@ export class WorkflowStore {
             let store = this._workflows.getValue();
             this._workflows.next(store.set(workflowKey, w));
             return w;
+        });
+    }
+
+    /**
+     * Update a favorite workflow
+     * @param key Project unique key
+     * @param workflow workflow to update
+     */
+    updateFavorite(key: string, workflowName: string): Observable<Workflow> {
+        return this._workflowService.updateFavorite(key, workflowName).map(() => {
+            let workflowKey = key + '-' + workflowName;
+            let store = this._workflows.getValue();
+            let wf = store.get(workflowKey);
+
+            if (wf) {
+              wf.favorite = !wf.favorite;
+              this._workflows.next(store.set(workflowKey, wf));
+            }
+            this._navbarService.getData();
+            return wf;
         });
     }
 

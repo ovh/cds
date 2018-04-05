@@ -27,6 +27,7 @@ export class Workflow {
     purge_tags: Array<string>;
     notifications: Array<WorkflowNotification>;
     from_repository: string;
+    favorite: boolean;
 
     // UI params
     externalChange: boolean;

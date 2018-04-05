@@ -81,6 +81,7 @@ import {KeysListComponent} from './keys/list/keys.list.component';
 import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
 import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.component';
 import {ClipboardModule} from 'ngx-clipboard';
+import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -151,7 +152,8 @@ import {ClipboardModule} from 'ngx-clipboard';
         UsageComponent,
         DiffComponent,
         SpanColoredComponent,
-        VCSStrategyComponent
+        VCSStrategyComponent,
+        FavoriteCardsComponent
     ],
     entryComponents: [SpanColoredComponent],
     providers: [
@@ -234,7 +236,8 @@ import {ClipboardModule} from 'ngx-clipboard';
         UsageComponent,
         DiffComponent,
         SpanColoredComponent,
-        VCSStrategyComponent
+        VCSStrategyComponent,
+        FavoriteCardsComponent
     ]
 })
 export class SharedModule {

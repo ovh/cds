@@ -42,7 +42,7 @@ Other commands are available depending on your position. Example, run interactiv
 [![asciicast](https://asciinema.org/a/fTFpJ5uqClJ0Oq2EsiejGSeBk.png)](https://asciinema.org/a/fTFpJ5uqClJ0Oq2EsiejGSeBk)
 
 [![asciicast](https://asciinema.org/a/H67HlKNS2r0daQaEcuNfZhZZd.png)](https://asciinema.org/a/H67HlKNS2r0daQaEcuNfZhZZd)
-	
+
 
 `,
 }
@@ -240,17 +240,18 @@ func findComplete() func(string) []string {
 		if err != nil {
 			return []string{fmt.Sprintf("Error while getting data: %s\n", err)}
 		}
-		if len(nav.Projects) == 0 {
+		if len(nav) == 0 {
 			return []string{fmt.Sprintf("no project found")}
 		}
-		out := []string{}
-		for _, p := range nav.Projects {
-			out = append(out, "/project/"+p.Key)
-			for _, app := range p.ApplicationNames {
-				out = append(out, "/project/"+p.Key+"/application/"+app)
-			}
-			for _, wf := range p.WorkflowNames {
-				out = append(out, "/project/"+p.Key+"/workflow/"+wf)
+		out := make([]string, len(nav))
+		for i, p := range nav {
+			switch p.Type {
+			case "project":
+				out[i] = "/project/" + p.Key
+			case "application":
+				out[i] = "/project/" + p.Key + "/application/" + p.ApplicationName
+			case "workflow":
+				out[i] = "/project/" + p.Key + "/workflow/" + p.WorkflowName
 			}
 		}
 		return out
@@ -262,27 +263,28 @@ func (current *shellCurrent) findCmd(search string) {
 	if err != nil {
 		fmt.Printf("Error while getting data: %s\n", err)
 	}
-	if len(nav.Projects) == 0 {
+	if len(nav) == 0 {
 		fmt.Println("no project found")
 	}
 	r, _ := regexp.Compile("(?i).*(" + search + ").*")
 
-	for _, prj := range nav.Projects {
-		s := r.FindStringSubmatch(prj.Name)
-		s2 := r.FindStringSubmatch(prj.Key)
-		if len(s) == 2 || len(s2) == 2 {
-			fmt.Println("/project/" + prj.Key)
-		}
-		for _, app := range prj.ApplicationNames {
-			s := r.FindStringSubmatch(app)
-			if len(s) == 2 {
-				fmt.Println("/project/" + prj.Key + "/application/" + app)
+	for _, prj := range nav {
+		switch prj.Type {
+		case "project":
+			s := r.FindStringSubmatch(prj.Name)
+			s2 := r.FindStringSubmatch(prj.Key)
+			if len(s) == 2 || len(s2) == 2 {
+				fmt.Println("/project/" + prj.Key)
 			}
-		}
-		for _, wf := range prj.WorkflowNames {
-			s := r.FindStringSubmatch(wf)
+		case "application":
+			s := r.FindStringSubmatch(prj.ApplicationName)
 			if len(s) == 2 {
-				fmt.Println("/project/" + prj.Key + "/workflow/" + wf)
+				fmt.Println("/project/" + prj.Key + "/application/" + prj.ApplicationName)
+			}
+		case "workflow":
+			s := r.FindStringSubmatch(prj.WorkflowName)
+			if len(s) == 2 {
+				fmt.Println("/project/" + prj.Key + "/workflow/" + prj.WorkflowName)
 			}
 		}
 	}

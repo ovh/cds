@@ -84,6 +84,11 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		return sdk.NewError(sdk.ErrWrongRequest, mError)
 	}
 
+	// Default value of history length is 20
+	if w.HistoryLength == 0 {
+		w.HistoryLength = 20
+	}
+
 	doUpdate, errE := Exists(db, proj.Key, w.Name)
 	if errE != nil {
 		return sdk.WrapError(errE, "Import> Cannot check if workflow exist")

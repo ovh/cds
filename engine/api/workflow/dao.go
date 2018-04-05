@@ -28,10 +28,11 @@ import (
 
 // LoadOptions custom option for loading workflow
 type LoadOptions struct {
-	DeepPipeline bool
-	WithoutNode  bool
-	Base64Keys   bool
-	OnlyRootNode bool
+	DeepPipeline  bool
+	WithoutNode   bool
+	Base64Keys    bool
+	OnlyRootNode  bool
+	WithFavorites bool
 }
 
 // Exists checks if a workflow exists
@@ -333,6 +334,14 @@ func load(db gorp.SqlExecutor, store cache.Store, opts LoadOptions, u *sdk.User,
 		res.Joins = joins
 	}
 
+	if opts.WithFavorites {
+		fav, errF := loadFavorite(db, &res, u)
+		if errF != nil {
+			return nil, sdk.WrapError(errF, "Load> unable to load favorite")
+		}
+		res.Favorite = fav
+	}
+
 	notifs, errN := loadNotifications(db, &res)
 	if errN != nil {
 		return nil, sdk.WrapError(errN, "Load> Unable to load workflow notification")
@@ -360,6 +369,14 @@ func loadWorkflowRoot(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u
 		return sdk.WrapError(err, "Load> Unable to load workflow root %d", w.RootID)
 	}
 	return nil
+}
+
+func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
+	count, err := db.SelectInt("SELECT COUNT(1) FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2", u.ID, w.ID)
+	if err != nil {
+		return false, sdk.WrapError(err, "workflow.loadFavorite>")
+	}
+	return count > 0, nil
 }
 
 // Insert inserts a new workflow
@@ -920,4 +937,17 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 	}
 
 	return allMsg, wf, nil
+}
+
+// UpdateFavorite add or delete workflow from user favorites
+func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u *sdk.User, add bool) error {
+	var query string
+	if add {
+		query = "INSERT INTO workflow_favorite (user_id, workflow_id) VALUES ($1, $2)"
+	} else {
+		query = "DELETE FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2"
+	}
+
+	_, err := db.Exec(query, u.ID, workflowID)
+	return sdk.WrapError(err, "UpdateFavorite>")
 }

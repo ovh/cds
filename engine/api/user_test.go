@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -454,4 +455,102 @@ func Test_getUserTokenListHandlerOK(t *testing.T) {
 	}
 
 	assert.Equal(t, true, found, "Token created is not in the list")
+}
+
+// Test_postUserFavoriteHandler
+func Test_postUserFavoriteHandler(t *testing.T) {
+	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	db := api.mustDB()
+	u1, pass1 := assets.InsertAdminUser(api.mustDB())
+	assert.NotZero(t, u1)
+	assert.NotZero(t, pass1)
+
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u1)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, nil))
+
+	proj, _ = project.LoadByID(db, api.Cache, proj.ID, u1, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	wf := sdk.Workflow{
+		Name:       "wf_test1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+		},
+	}
+
+	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u1))
+
+	uri := api.Router.GetRoute("POST", api.postUserFavoriteHandler, nil)
+	test.NotEmpty(t, uri)
+
+	params := sdk.FavoriteParams{
+		Type:         "workflow",
+		ProjectKey:   proj.Key,
+		WorkflowName: wf.Name,
+	}
+	req := assets.NewAuthentifiedRequest(t, u1, pass1, "POST", uri, params)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	t.Logf("Body: %s", w.Body.String())
+
+	res := sdk.Workflow{}
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+
+	test.Equal(t, res.Favorite, true)
+
+	uri2 := api.Router.GetRoute("POST", api.postUserFavoriteHandler, nil)
+	test.NotEmpty(t, uri2)
+
+	req2 := assets.NewAuthentifiedRequest(t, u1, pass1, "POST", uri2, params)
+
+	//Do the request
+	w2 := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w2, req2)
+	assert.Equal(t, 200, w2.Code)
+
+	t.Logf("Body: %s", w2.Body.String())
+
+	res2 := sdk.Workflow{}
+	if err := json.Unmarshal(w2.Body.Bytes(), &res2); err != nil {
+		t.Fatal(err)
+	}
+	test.Equal(t, res2.Favorite, false)
+
+	uri3 := api.Router.GetRoute("POST", api.postUserFavoriteHandler, nil)
+	test.NotEmpty(t, uri3)
+
+	paramsProj := sdk.FavoriteParams{
+		Type:       "project",
+		ProjectKey: proj.Key,
+	}
+	req3 := assets.NewAuthentifiedRequest(t, u1, pass1, "POST", uri3, paramsProj)
+
+	//Do the request
+	w3 := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w3, req3)
+	assert.Equal(t, 200, w3.Code)
+
+	t.Logf("Body: %s", w3.Body.String())
+
+	res3 := sdk.Project{}
+	if err := json.Unmarshal(w3.Body.Bytes(), &res3); err != nil {
+		t.Fatal(err)
+	}
+	test.Equal(t, res3.Favorite, true)
 }

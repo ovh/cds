@@ -15,7 +15,14 @@ type User struct {
 	Auth        Auth            `json:"-" yaml:"-" cli:"-"`
 	Groups      []Group         `json:"groups,omitempty" yaml:"-" cli:"-"`
 	Origin      string          `json:"origin" yaml:"origin,omitempty"`
+	Favorites   []Favorite      `json:"favorites" yaml:"favorites"`
 	Permissions UserPermissions `json:"permissions,omitempty" yaml:"-" cli:"-"`
+}
+
+// Favorite represent the favorites workflow or project of the user
+type Favorite struct {
+	ProjectIDs  []int64 `json:"project_ids" yaml:"project_ids"`
+	WorkflowIDs []int64 `json:"workflow_ids" yaml:"workflow_ids"`
 }
 
 // UserPermissions is the set of permissions for a user

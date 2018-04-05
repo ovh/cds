@@ -27,6 +27,7 @@ export class Project {
     keys: Array<Key>;
     platforms: Array<ProjectPlatform>;
     features: {};
+    favorite: boolean;
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
 }

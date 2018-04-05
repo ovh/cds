@@ -1,0 +1,85 @@
+<div class="ui centered cards">
+  <div class="card" *ngIf="workflows || projects">
+    <div class="content">
+      <div class="header">
+        {{'favorite_add' | translate}}
+      </div>
+      <div class="description">
+        <sui-select class="selection"
+                    placeholder="{{'favorite_select_type' | translate}}"
+                    [(ngModel)]="newFav.type">
+            <sui-select-option value="project"></sui-select-option>
+            <sui-select-option value="workflow"></sui-select-option>
+        </sui-select>
+        <ng-container *ngIf="newFav.type === 'workflow'">
+          <sui-select class="selection mt5"
+                      placeholder="{{'favorite_workflow_select' | translate}}"
+                      labelField="name"
+                      [options]="workflows"
+                      [isSearchable]="true"
+                      [(ngModel)]="newFav"
+                      #selectWf>
+              <sui-select-option *ngFor="let option of selectWf.filteredOptions" [value]="option"></sui-select-option>
+          </sui-select>
+        </ng-container>
+        <ng-container *ngIf="newFav.type === 'project'">
+          <sui-select class="selection mt5"
+                      placeholder="{{'favorite_project_select' | translate}}"
+                      labelField="name"
+                      [options]="projects"
+                      [isSearchable]="true"
+                      [(ngModel)]="newFav"
+                      #selectProj>
+              <sui-select-option *ngFor="let option of selectProj.filteredOptions" [value]="option"></sui-select-option>
+          </sui-select>
+        </ng-container>
+      </div>
+    </div>
+    <div class="ui bottom green attached button" (click)="updateFav(newFav)">
+      <i class="plus icon"></i>
+      {{'favorite_add_btn' | translate}}
+    </div>
+  </div>
+  <ng-container *ngFor="let favorite of favorites">
+    <div class="card">
+      <div class="content">
+        <ng-container [ngSwitch]="favorite.type">
+          <ng-container *ngSwitchCase="'workflow'">
+            <div class="right floated">
+              <i class="share alternate icon"></i>
+            </div>
+            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key, 'workflow', favorite.workflow_name]">
+              {{favorite.workflow_name}}
+            </a>
+            <div class="description">
+              {{'navbar_workflow_in' | translate}} {{favorite.key}}
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchCase="'application'">
+            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key, 'application', favorite.application_name]">
+              {{favorite.application_name}}}
+            </a>
+            <div class="description">
+              {{'navbar_application_in' | translate}} {{favorite.key}}
+            </div>
+          </ng-container>
+          <ng-container *ngSwitchDefault>
+            <div class="right floated">
+              <i class="browser icon"></i>
+            </div>
+            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key]">
+              {{favorite.name}}
+            </a>
+            <div class="description">
+              {{'common_project' | translate}}
+            </div>
+          </ng-container>
+        </ng-container>
+      </div>
+      <div class="ui bottom attached button" (click)="updateFav(favorite)">
+        <i class="ban icon"></i>
+        {{'common_favorites_delete' | translate}}
+      </div>
+    </div>
+  </ng-container>
+</div>

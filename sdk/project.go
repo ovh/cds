@@ -30,6 +30,7 @@ type Project struct {
 	VCSServers        []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
 	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
 	Features          map[string]bool    `json:"features" yaml:"features" db:"-" cli:"-"`
+	Favorite          bool               `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 }
 
 // SSHKeys returns the slice of ssh key for an application

@@ -1,11 +1,11 @@
-<div id="CDSHome">
-    <h1 class="ui center aligned header">{{ 'home_title' | translate }} <a href="https://ovh.github.io/cds" target="_blank"><i class="fa fa-book ml5"></i></a></h1>
+<div id="CDSFavorite">
+    <h1 class="ui center aligned header">{{ 'favorite_title' | translate }}</h1>
     <div class="ui row" *ngIf="!loading">
       <div class="ui grid">
         <div class="two wide column">
         </div>
         <div class="twelve wide column">
-            <app-favorite-cards [favorites]="favorites"></app-favorite-cards>
+          <app-favorite-cards [favorites]="favorites" [projects]="projects" [workflows]="workflows"></app-favorite-cards>
         </div>
       </div>
     </div>
@@ -15,5 +15,4 @@
     </div>
 
     <div class="ui active text loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
-
 </div>

@@ -351,6 +351,7 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
+	r.Handle("/user/favorite", r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))

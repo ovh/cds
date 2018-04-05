@@ -210,6 +210,7 @@ type UserClient interface {
 	UserSignup(username, fullname, email, callback string) error
 	ListAllTokens() ([]sdk.Token, error)
 	FindToken(token string) (sdk.Token, error)
+	UpdateFavorite(params sdk.FavoriteParams) (interface{}, error)
 }
 
 // WorkerClient exposes workers functions
@@ -280,7 +281,7 @@ type Interface interface {
 	PipelineClient
 	ProjectClient
 	QueueClient
-	Navbar() (*sdk.NavbarData, error)
+	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
 	ServiceRegister(sdk.Service) (string, error)

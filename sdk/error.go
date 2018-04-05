@@ -140,6 +140,7 @@ var (
 	ErrInvalidKeyName                         = Error{ID: 125, Status: http.StatusBadRequest}
 	ErrRepoOperationTimeout                   = Error{ID: 126, Status: http.StatusRequestTimeout}
 	ErrInvalidGitBranch                       = Error{ID: 127, Status: http.StatusBadRequest}
+	ErrInvalidFavoriteType                    = Error{ID: 128, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -268,6 +269,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidKeyName.ID:                         "Invalid key name. Application key must have prefix 'app-'; environment key must have prefix 'env-'",
 	ErrRepoOperationTimeout.ID:                   "Analyzing repository took too much time",
 	ErrInvalidGitBranch.ID:                       "Invalid git.branch value, you cannot have an empty git.branch value in your default payload",
+	ErrInvalidFavoriteType.ID:                    "Invalid favorite type: must be 'project' or 'workflow'",
 }
 
 var errorsFrench = map[int]string{
@@ -396,6 +398,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidKeyName.ID:                         "Nom de clé invalide. Les clés d'application doivent être préfixées par 'app-', les clés d'environnement doivent être préfixées par 'env-'",
 	ErrRepoOperationTimeout.ID:                   "L'analyse du dépôt a pris trop de temps",
 	ErrInvalidGitBranch.ID:                       "Valeur git.branch invalide, vous ne pouvez pas avoir de valeur git.branch avec une string vide dans votre payload par défaut",
+	ErrInvalidFavoriteType.ID:                    "Type de favori invalide: doit être 'projet' ou 'workflow'",
 }
 
 var errorsLanguages = []map[int]string{
