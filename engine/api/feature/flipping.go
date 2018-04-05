@@ -16,7 +16,7 @@ const (
 	cacheFeatureKey = "feature:"
 )
 
-var c *client.Client
+var izanami *client.Client
 
 // CheckContext represents the context send to izanami to check if the feature is enabled
 type CheckContext struct {
@@ -37,7 +37,7 @@ func List() []string {
 // Init initialize izanami client
 func Init(apiURL, clientID, clientSecret string) error {
 	var errC error
-	c, errC = client.New(apiURL, clientID, clientSecret)
+	izanami, errC = client.New(apiURL, clientID, clientSecret)
 	return errC
 }
 
@@ -50,12 +50,13 @@ func GetFromCache(store cache.Store, projectKey string) map[string]bool {
 
 // IsEnabled check if feature is enabled for the given project
 func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
+	projFeats := ProjectFeatures{Key: projectKey, Features: make(map[string]bool)}
 	// No feature flipping
-	if c == nil {
+	if izanami == nil {
+		projFeats.Features[featureID] = true
+		cache.Set(cacheFeatureKey+projectKey, projFeats)
 		return true
 	}
-
-	projFeats := ProjectFeatures{}
 
 	// Get from cache
 	if !cache.Get(cacheFeatureKey+projectKey, &projFeats) {
@@ -65,7 +66,7 @@ func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
 	}
 
 	// Get from izanami
-	resp, errCheck := c.Feature().CheckWithContext(featureID, CheckContext{projectKey})
+	resp, errCheck := izanami.Feature().CheckWithContext(featureID, CheckContext{projectKey})
 	if errCheck != nil {
 		if !strings.Contains(errCheck.Error(), "404") {
 			log.Warning("Feature.IsEnabled > Cannot check feature %s: %s", featureID, errCheck)
