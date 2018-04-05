@@ -126,6 +126,18 @@ If you're using a self-signed certificate on CDS API, you probably want to use `
 
 func mainRun(vals cli.Values) error {
 	fmt.Println("Welcome to CDS")
+
+	urlUI, err := client.ConfigUser()
+	if err != nil {
+		return nil
+	}
+
+	var uiURL string
+	if b, ok := urlUI[sdk.ConfigURLUIKey]; ok {
+		uiURL = b
+		fmt.Printf("UI: %s\n", uiURL)
+	}
+
 	navbarInfos, err := client.Navbar()
 	if err != nil {
 		return nil
@@ -146,12 +158,12 @@ func mainRun(vals cli.Values) error {
 
 	fmt.Println("\n -=-=-=-=- Projects bookmarked -=-=-=-=-")
 	for _, prj := range projFavs {
-		fmt.Printf("- %s with key %s\n", prj.Name, prj.Key)
+		fmt.Printf("- %s with key %s  %s\n", prj.Name, prj.Key, uiURL+"/project/"+prj.Key)
 	}
 
 	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
 	for _, wf := range wfFavs {
-		fmt.Printf("- %s inside project %s\n", wf.Name, wf.Key)
+		fmt.Printf("- %s inside project %s  %s\n", wf.Name, wf.Key, uiURL+"/project/"+wf.Key+"/workflow/"+wf.Name)
 	}
 
 	return nil
