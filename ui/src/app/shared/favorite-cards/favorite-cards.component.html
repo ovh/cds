@@ -14,7 +14,7 @@
         <ng-container *ngIf="newFav.type === 'workflow'">
           <sui-select class="selection mt5"
                       placeholder="{{'favorite_workflow_select' | translate}}"
-                      labelField="name"
+                      labelField="workflow_name"
                       [options]="workflows"
                       [isSearchable]="true"
                       [(ngModel)]="newFav"
