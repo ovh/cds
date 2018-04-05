@@ -1,0 +1,13 @@
+version: v1.0
+name: IT_echo_upload
+parameters:
+  name:
+    type: string
+requirements:
+- binary: echo
+steps:
+- script:
+  - echo "{{.name}}" > logs.txt
+- artifactUpload:
+    path: logs.txt
+    tag: '{{.cds.version}}'

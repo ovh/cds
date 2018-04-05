@@ -17,6 +17,7 @@ var (
 		[]*cobra.Command{
 			cli.NewCommand(projectVariableCreateCmd, projectCreateVariableRun, nil, withAllCommandModifiers()...),
 			cli.NewListCommand(projectVariableListCmd, projectListVariableRun, nil, withAllCommandModifiers()...),
+			cli.NewGetCommand(projectVariableShowCmd, projectVariableShowRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(projectVariableDeleteCmd, projectDeleteVariableRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(projectVariableUpdateCmd, projectUpdateVariableRun, nil, withAllCommandModifiers()...),
 		})
@@ -50,9 +51,6 @@ var projectVariableListCmd = cli.Command{
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
-	Args: []cli.Arg{
-		{Name: "env-name"},
-	},
 }
 
 func projectListVariableRun(v cli.Values) (cli.ListResult, error) {
@@ -70,13 +68,27 @@ var projectVariableDeleteCmd = cli.Command{
 		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
-		{Name: "env-name"},
 		{Name: "variable-name"},
 	},
 }
 
 func projectDeleteVariableRun(v cli.Values) error {
 	return client.ProjectVariableDelete(v[_ProjectKey], v["variable-name"])
+}
+
+var projectVariableShowCmd = cli.Command{
+	Name:  "show",
+	Short: "Show a CDS project variable",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "variable-name"},
+	},
+}
+
+func projectVariableShowRun(v cli.Values) (interface{}, error) {
+	return client.ProjectVariableGet(v[_ProjectKey], v["variable-name"])
 }
 
 var projectVariableUpdateCmd = cli.Command{
@@ -99,7 +111,7 @@ func projectUpdateVariableRun(v cli.Values) error {
 		return err
 	}
 	variable.Name = v["variable-name"]
-	variable.Value = v["variable-value"]
 	variable.Type = v["variable-type"]
+	variable.Value = v["variable-value"]
 	return client.ProjectVariableUpdate(v[_ProjectKey], variable)
 }

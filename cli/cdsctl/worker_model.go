@@ -189,7 +189,7 @@ var workerModelDeleteCmd = cli.Command{
 
 func workerModelDeleteRun(v cli.Values) error {
 	if err := client.WorkerModelDelete(v.GetString("name")); err != nil {
-		if err.Error() == "worker model not found" && v.GetBool("force") {
+		if sdk.ErrorIs(err, sdk.ErrNoWorkerModel) && v.GetBool("force") {
 			return nil
 		}
 		return err

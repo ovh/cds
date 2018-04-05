@@ -102,7 +102,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/variable", r.GET(api.getVariablesInProjectHandler))
 	r.Handle("/project/{permProjectKey}/encrypt", r.POST(api.postEncryptVariableHandler))
 	r.Handle("/project/{key}/variable/audit", r.GET(api.getVariablesAuditInProjectnHandler))
-	r.Handle("/project/{permProjectKey}/variable/{name}", r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
+	r.Handle("/project/{permProjectKey}/variable/{name}", r.GET(api.getVariableInProjectHandler), r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", r.GET(api.getVariableAuditInProjectHandler))
 	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler), r.POST(api.addApplicationHandler))
 	r.Handle("/project/{permProjectKey}/platforms", r.GET(api.getProjectPlatformsHandler), r.POST(api.postProjectPlatformHandler))

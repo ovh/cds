@@ -2,21 +2,18 @@ name: Artifact TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCARTIFACT
-  - script: {{.cds.build.cds}} project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
-  - script: {{.cds.build.cds}} application add ITSCARTIFACT TestApp
-  - script: {{.cds.build.cds}} environment add ITSCARTIFACT TestEnv
-  - script: {{.cds.build.cds}} action remove --force IT_SC_cdsartifacttest
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCARTIFACT
+  - script: {{.cds.build.cdsctl}} project add ITSCARTIFACT ITSCARTIFACT ITSCARTIFACT
+  - script: {{.cds.build.cdsctl}} application add ITSCARTIFACT TestApp
+  - script: {{.cds.build.cdsctl}} environment add ITSCARTIFACT TestEnv
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo_upload.yml
 
 - name: test artifact
   steps:
   - script: {{.cds.build.cds}} pipeline add ITSCARTIFACT ArtifactPip --type deployment
-  - script: {{.cds.build.cds}} app pipeline add ITSCARTIFACT TestApp ArtifactPip
-  - script: {{.cds.build.cds}} action add IT_SC_cdsartifacttest
-  - script: {{.cds.build.cds}} action add step IT_SC_cdsartifacttest Script -p script="echo foo > logs.txt"
-  - script: {{.cds.build.cds}} action add step IT_SC_cdsartifacttest "Artifact Upload" -p path=./logs.txt -p tag="{{.cds.version}}"
+  - script: {{.cds.build.cds}} application pipeline add ITSCARTIFACT TestApp ArtifactPip
   - script: {{.cds.build.cds}} pipeline job add ITSCARTIFACT ArtifactPip myJob1
-  - script: {{.cds.build.cds}} pipeline job append ITSCARTIFACT ArtifactPip myJob1 IT_SC_cdsartifacttest
+  - script: {{.cds.build.cds}} pipeline job append ITSCARTIFACT ArtifactPip myJob1 IT_echo_upload -p name="tosearch"
   - script: {{.cds.build.cds}} pipeline run ITSCARTIFACT TestApp ArtifactPip TestEnv
 
 - name: listing artifact
@@ -25,10 +22,9 @@ testcases:
 
 - name: downloading artifact
   steps:
-  - script: {{.cds.build.cds}} artifact dl ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv && cat logs.txt | grep foo && rm logs.txt
+  - script: {{.cds.build.cds}} artifact dl ITSCARTIFACT TestApp ArtifactPip 1 --env TestEnv && cat logs.txt | grep tosearch && rm logs.txt
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCARTIFACT
-  - script: {{.cds.build.cds}} action remove IT_SC_cdsartifacttest
-  - script: {{.cds.build.cds}} group remove ITSCARTIFACT
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCARTIFACT
+  - script: {{.cds.build.cdsctl}} group delete ITSCARTIFACT --force

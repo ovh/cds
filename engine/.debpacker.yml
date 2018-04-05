@@ -21,7 +21,7 @@ systemd-configuration:
     - "start"
     - "${CDS_SERVICE}"
     - "--config"
-    - "/etc/cds-engine/config.toml"
+    - "/etc/cds-engine/cds-engine.toml"
   stop-command: /bin/kill $MAINPID
   restart: always
   wanted-by: multi-user.target

@@ -2,20 +2,18 @@ name: Git Hook TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCGITHOOK
-  - script: {{.cds.build.cds}} group remove ITSCGITHOOK --force
-  - script: {{.cds.build.cds}} action remove ITSCGITHOOK_ACTION_Test_Echo --force
-  - script: {{.cds.build.cds}} project add ITSCGITHOOK ITSCGITHOOK ITSCGITHOOK
-  - script: {{.cds.build.cds}} application add ITSCGITHOOK TestApp
-  - script: {{.cds.build.cds}} action add ITSCGITHOOK_ACTION_Test_Echo --requirement="echo" -p name
-  - script: {{.cds.build.cds}} action add step ITSCGITHOOK_ACTION_Test_Echo Script -p script="echo {{.cds.version}}. Coucou {{.name}}"
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCGITHOOK
+  - script: {{.cds.build.cdsctl}} group delete ITSCGITHOOK --force
+  - script: {{.cds.build.cdsctl}} project add ITSCGITHOOK ITSCGITHOOK ITSCGITHOOK
+  - script: {{.cds.build.cdsctl}} application add ITSCGITHOOK TestApp
+  - script: {{.cds.build.cdsctl}} action import ./tests/fixtures/action_echo.yml
 
 - name: git hooks
   steps:
   - script: {{.cds.build.cds}} pipeline add ITSCGITHOOK MultiPass
   - script: {{.cds.build.cds}} application pipeline add ITSCGITHOOK TestApp MultiPass
   - script: {{.cds.build.cds}} pipeline job add ITSCGITHOOK MultiPass myJob1 --stage=1
-  - script: {{.cds.build.cds}} pipeline job append ITSCGITHOOK MultiPass myJob1 ITSCGITHOOK_ACTION_Test_Echo -p name="Stage 1"
+  - script: {{.cds.build.cds}} pipeline job append ITSCGITHOOK MultiPass myJob1 IT_echo -p name="Stage 1"
   - script: {{.cds.build.cds}} pipeline hook add ITSCGITHOOK TestApp MultiPass foo.bar.net/test/multipass
   - script: {{.cds.build.cds}} pipeline hook list ITSCGITHOOK TestApp MultiPass
   - script: {{.cds.build.cds}} pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only
@@ -34,6 +32,5 @@ testcases:
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCGITHOOK
-  - script: {{.cds.build.cds}} action remove ITSCGITHOOK_ACTION_Test_Echo
-  - script: {{.cds.build.cds}} group remove ITSCGITHOOK
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCGITHOOK
+  - script: {{.cds.build.cdsctl}} group delete ITSCGITHOOK --force

@@ -13,17 +13,12 @@ func (c *client) GroupCreate(group *sdk.Group) error {
 			return fmt.Errorf("HTTP Code %d", code)
 		}
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (c *client) GroupDelete(name string) error {
-	if _, err := c.DeleteJSON("/group/"+name, nil, nil); err != nil {
-		return err
-	}
-	return nil
+	_, err := c.DeleteJSON("/group/"+name, nil, nil)
+	return err
 }
 
 func (c *client) GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error) {
@@ -40,4 +35,20 @@ func (c *client) GroupList() ([]sdk.Group, error) {
 		return nil, err
 	}
 	return groups, nil
+}
+
+func (c *client) GroupRename(oldGroupname, newGroupname string) error {
+	group := &sdk.Group{}
+	if _, err := c.GetJSON("/group/"+oldGroupname, group); err != nil {
+		return err
+	}
+
+	group.Name = newGroupname
+	code, err := c.PutJSON("/group/"+oldGroupname, group, nil)
+	if code != 204 {
+		if err == nil {
+			return fmt.Errorf("HTTP Code %d", code)
+		}
+	}
+	return err
 }

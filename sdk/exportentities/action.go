@@ -14,6 +14,7 @@ type Action struct {
 	Version      string                    `json:"version,omitempty" yaml:"version,omitempty"`
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
 	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
+	Enabled      *bool                     `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Requirements []Requirement             `json:"requirements,omitempty" yaml:"requirements,omitempty"`
 	Steps        []Step                    `json:"steps,omitempty" yaml:"steps,omitempty"`
@@ -38,6 +39,12 @@ func NewAction(act sdk.Action) (a Action) {
 	}
 	a.Steps = newSteps(act)
 	a.Requirements = newRequirements(act.Requirements)
+	// enabled is the default value
+	// set enable attribute only if it's disabled
+	// no need to export it if action is enabled
+	if !act.Enabled {
+		a.Enabled = &act.Enabled
+	}
 	return a
 }
 
@@ -473,5 +480,12 @@ func (act *Action) Action() (*sdk.Action, error) {
 	}
 
 	a.Actions = children
+
+	// if no flag enabled: the default value is true
+	if act.Enabled == nil {
+		a.Enabled = true
+	} else {
+		a.Enabled = *act.Enabled
+	}
 	return a, nil
 }

@@ -113,24 +113,6 @@ func NewApplication(name string) *Application {
 	return a
 }
 
-// AddApplication create an application in the given project
-func AddApplication(key, appName string) error {
-
-	a := NewApplication(appName)
-	data, err := json.Marshal(a)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("/project/%s/applications", key)
-	data, _, err = Request("POST", url, data)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
 // ListApplications returns all available application for the given project
 func ListApplications(key string) ([]Application, error) {
 	url := fmt.Sprintf("/project/%s/applications", key)
@@ -261,27 +243,6 @@ func ShowApplicationVariable(projectKey, appName string) ([]Variable, error) {
 		return nil, err
 	}
 	return variables, nil
-}
-
-// AddApplicationVariable  add a variable in an application
-func AddApplicationVariable(projectKey, appName, varName, varValue string, varType string) error {
-	newVar := Variable{
-		Name:  varName,
-		Value: varValue,
-		Type:  varType,
-	}
-
-	data, err := json.Marshal(newVar)
-	if err != nil {
-		return err
-	}
-
-	path := fmt.Sprintf("/project/%s/application/%s/variable/%s", projectKey, appName, varName)
-	data, _, err = Request("POST", path, data)
-	if err != nil {
-		return err
-	}
-	return DecodeError(data)
 }
 
 // GetVariableInApplication Get a variable in the given application

@@ -1,0 +1,5 @@
+version: v1.0
+name: IT_worker_export
+steps:
+- script:
+  - worker export foo bar

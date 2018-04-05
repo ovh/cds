@@ -1,0 +1,11 @@
+version: v1.0
+name: IT_failure
+parameters:
+  name:
+    type: string
+requirements:
+- binary: echo
+steps:
+- script:
+  - echo "this step is failed"
+  - exit 1

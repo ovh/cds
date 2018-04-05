@@ -2,10 +2,10 @@ name: Builtin Action TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCBUILTIN
-  - script: {{.cds.build.cds}} group remove ITSCBUILTIN --force
-  - script: {{.cds.build.cds}} project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
-  - script: {{.cds.build.cds}} application add ITSCBUILTIN TestApp
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCBUILTIN
+  - script: {{.cds.build.cdsctl}} group delete ITSCBUILTIN --force
+  - script: {{.cds.build.cdsctl}} project add ITSCBUILTIN ITSCBUILTIN ITSCBUILTIN
+  - script: {{.cds.build.cdsctl}} application add ITSCBUILTIN TestApp
 
 - name: builtin action
   steps:
@@ -22,4 +22,4 @@ testcases:
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITSCBUILTIN
+  - script: {{.cds.build.cdsctl}} project delete --force ITSCBUILTIN

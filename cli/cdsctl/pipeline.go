@@ -24,7 +24,6 @@ var (
 	pipeline = cli.NewCommand(pipelineCmd, nil,
 		[]*cobra.Command{
 			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(pipelineCreateCmd, pipelineCreateRun, nil, withAllCommandModifiers()...),
 			cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
@@ -46,37 +45,6 @@ func pipelineListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(pipelines), nil
-}
-
-var pipelineCreateCmd = cli.Command{
-	Name:  "create",
-	Short: "Create a CDS pipeline",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-	},
-	Args: []cli.Arg{
-		{Name: "pipeline-name"},
-	},
-	Flags: []cli.Flag{
-		{
-			Name:  "type",
-			Usage: `Pipeline type {build,deployment,testing} (default "build")`,
-			IsValid: func(s string) bool {
-				if s != "" && s != "build" && s != "deployment" && s != "testing" {
-					return false
-				}
-				return true
-			},
-			Default: "build",
-			Kind:    reflect.String,
-		},
-	},
-	Aliases: []string{"add"},
-}
-
-func pipelineCreateRun(v cli.Values) error {
-	pip := &sdk.Pipeline{Name: v["pipeline-name"], Type: v.GetString("type")}
-	return client.PipelineCreate(v[_ProjectKey], pip)
 }
 
 var pipelineExportCmd = cli.Command{

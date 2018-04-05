@@ -7,14 +7,10 @@ import (
 )
 
 func init() {
-	Cmd.AddCommand(cmdProjectAdd())
 	Cmd.AddCommand(cmdProjectRename())
 	Cmd.AddCommand(cmdProjectInfo())
 	Cmd.AddCommand(cmdMetadata())
-	Cmd.AddCommand(cmdProjectRemove())
-	Cmd.AddCommand(cmdProjectList)
 	Cmd.AddCommand(group.CmdGroup)
-	Cmd.AddCommand(CmdVariable)
 	Cmd.AddCommand(repositoriesmanager.Cmd)
 }
 
