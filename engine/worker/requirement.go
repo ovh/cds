@@ -133,6 +133,10 @@ func checkBinaryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
+	// if there is a model req and no model on worker -> return false
+	if w.model.ID == 0 {
+		return false, nil
+	}
 	t := strings.Split(r.Value, " ")
 	wm, err := w.client.WorkerModel(t[0])
 	return wm.ID == w.model.ID, err
