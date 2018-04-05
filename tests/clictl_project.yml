@@ -61,7 +61,7 @@ testcases:
   - script: {{.cds.build.cdsctl}} project favorite ITCLIAPPPRJ
     assertions:
       - result.code ShouldEqual 0
-      - result.systemout ShouldContainSubstring updated
+      - result.systemout ShouldContainSubstring added
 
 - name: project favorite check
   steps:
@@ -75,7 +75,7 @@ testcases:
   - script: {{.cds.build.cdsctl}} project favorite ITCLIAPPPRJ
     assertions:
       - result.code ShouldEqual 0
-      - result.systemout ShouldContainSubstring updated
+      - result.systemout ShouldContainSubstring deleted
 
 - name: project favorite check
   steps:

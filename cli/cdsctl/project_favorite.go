@@ -21,10 +21,20 @@ func projectFavoriteRun(c cli.Values) error {
 		ProjectKey: c[_ProjectKey],
 	}
 
-	if err := client.UpdateFavorite(params); err != nil {
+	res, err := client.UpdateFavorite(params)
+	if err != nil {
 		return err
 	}
-	fmt.Println("Bookmarks updated")
+
+	if proj, ok := res.(sdk.Project); ok {
+		if proj.Favorite {
+			fmt.Printf("Bookmarks added for project %s\n", proj.Name)
+		} else {
+			fmt.Printf("Bookmarks deleted for project %s\n", proj.Name)
+		}
+	} else {
+		fmt.Println("Bookmarks updated")
+	}
 
 	return nil
 }

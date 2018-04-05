@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var (
@@ -21,6 +22,7 @@ var (
 			cli.NewGetCommand(userShowCmd, userShowRun, nil),
 			cli.NewCommand(userResetCmd, userResetRun, nil),
 			cli.NewCommand(userConfirmCmd, userConfirmRun, nil),
+			cli.NewCommand(userFavoriteCmd, userFavoriteRun, nil),
 		})
 )
 
@@ -123,5 +125,42 @@ func userConfirmRun(v cli.Values) error {
 
 	fmt.Println("All is fine. Here is your new password:")
 	fmt.Println(password)
+	return nil
+}
+
+var userFavoriteCmd = cli.Command{
+	Name:  "favorite",
+	Short: "Display all the user favorites",
+}
+
+func userFavoriteRun(v cli.Values) error {
+	navbarInfos, err := client.Navbar()
+	if err != nil {
+		return err
+	}
+
+	projFavs := []sdk.NavbarProjectData{}
+	wfFavs := []sdk.NavbarProjectData{}
+	for _, elt := range navbarInfos {
+		if elt.Favorite {
+			switch elt.Type {
+			case "workflow":
+				wfFavs = append(wfFavs, elt)
+			case "project":
+				projFavs = append(projFavs, elt)
+			}
+		}
+	}
+
+	fmt.Println(" -=-=-=-=- Projects bookmarked -=-=-=-=-")
+	for _, prj := range projFavs {
+		fmt.Printf("- %s with key %s\n", prj.Name, prj.Key)
+	}
+
+	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
+	for _, wf := range wfFavs {
+		fmt.Printf("- %s inside project %s\n", wf.Name, wf.Key)
+	}
+
 	return nil
 }

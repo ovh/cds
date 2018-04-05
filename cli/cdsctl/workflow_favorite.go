@@ -23,10 +23,20 @@ func workflowFavoriteRun(c cli.Values) error {
 		WorkflowName: c[_WorkflowName],
 	}
 
-	if err := client.UpdateFavorite(params); err != nil {
+	res, err := client.UpdateFavorite(params)
+	if err != nil {
 		return err
 	}
-	fmt.Println("Bookmarks updated")
+
+	if wf, ok := res.(sdk.Workflow); ok {
+		if wf.Favorite {
+			fmt.Printf("Bookmarks added for workflow %s\n", wf.Name)
+		} else {
+			fmt.Printf("Bookmarks deleted for workflow %s\n", wf.Name)
+		}
+	} else {
+		fmt.Println("Bookmarks updated")
+	}
 
 	return nil
 }
