@@ -87,7 +87,7 @@
     "karma-jasmine-html-reporter": "^0.2.2",
     "karma-junit-reporter": "^1.1.0",
     "lint-staged": "^4.2.3",
-    "node-sass": "4.5.3",
+    "node-sass": "4.8.3",
     "ts-node": "~4.1.0",
     "tslint": "~5.9.1",
     "typescript": "2.5.3",
