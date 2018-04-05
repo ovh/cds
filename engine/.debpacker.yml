@@ -13,8 +13,8 @@ mkdirs:
   - "/keys"
   - "/artifacts"
 version: "{{.cds.semver}}"
-description: "Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform"
-maintainer: "OVH <github@ovh.com>"
+description: "Enterprise-Grade Continuous Delivery and DevOps Automation Open Source Platform"
+maintainer: "OVH <github@ovh.net>"
 systemd-configuration:
   after: network.target
   args: 
