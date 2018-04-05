@@ -26,9 +26,9 @@ chown -R {{.SystemdServiceConfig.User}}:{{.SystemdServiceConfig.User}} /var/lib/
 chmod 770 /var/lib/{{.PackageName}}
 chmod +x {{.SystemdServiceConfig.ExecStart}}
 
-echo "Starting service"
-systemctl start {{.PackageName}}
+echo "Service installed"
 systemctl status {{.PackageName}}
+echo "run systemctl start {{.PackageName}} to start"
 `
 
 	systemdServiceTmpl = `[Unit]
