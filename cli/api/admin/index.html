@@ -1084,6 +1084,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/project/favorite/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/favorite/">
+          <span>favorite</span>
+        </a>
+    </li>
     <li data-nav-id="/cli/cdsctl/project/group/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/project/group/">
         <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -1214,6 +1219,11 @@
           <span>confirm</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/user/favorite/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/user/favorite/">
+          <span>favorite</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/user/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/user/list/">
           <span>list</span>
@@ -1339,6 +1349,11 @@
       <li data-nav-id="/cli/cdsctl/workflow/export/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/export/">
           <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/favorite/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/favorite/">
+          <span>favorite</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/workflow/history/" class="dd-item">
@@ -1724,14 +1739,14 @@
 <li><a href="#getcpuprofile-responds-with-the-pprof-formatted-cpu-profile">getCPUProfile responds with the pprof-formatted cpu profile.</a></li>
 <li><a href="#gettrace-responds-with-the-execution-trace-in-binary-form">getTrace responds with the execution trace in binary form.</a></li>
 <li><a href="#delete-admin-maintenance">DELETE <code>/admin/maintenance</code></a></li>
-<li><a href="#get-admin-maintenance">GET <code>/admin/maintenance</code></a></li>
 <li><a href="#post-admin-maintenance">POST <code>/admin/maintenance</code></a></li>
+<li><a href="#get-admin-maintenance">GET <code>/admin/maintenance</code></a></li>
 <li><a href="#get-admin-services">GET <code>/admin/services</code></a></li>
 <li><a href="#get-admin-services-service">GET <code>/admin/services/&lt;service&gt;</code></a></li>
 <li><a href="#delete-admin-services-service-call">DELETE <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#get-admin-services-service-call">GET <code>/admin/services/&lt;service&gt;/call</code></a></li>
-<li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></a></li>
+<li><a href="#put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></a></li>
 <li><a href="#delete-admin-warning">DELETE <code>/admin/warning</code></a></li>
 </ul></li>
 </ul></li>
@@ -1896,34 +1911,6 @@
 </tbody>
 </table>
 
-<h3 id="get-admin-maintenance">GET <code>/admin/maintenance</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/maintenance</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminMaintenanceHandler%22">getAdminMaintenanceHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-admin-maintenance">POST <code>/admin/maintenance</code></h3>
 
 <table>
@@ -1948,6 +1935,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminMaintenanceHandler%22">postAdminMaintenanceHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-admin-maintenance">GET <code>/admin/maintenance</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/maintenance</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminMaintenanceHandler%22">getAdminMaintenanceHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2064,34 +2079,6 @@
 </tbody>
 </table>
 
-<h3 id="put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/&lt;service&gt;/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-admin-services-service-call">POST <code>/admin/services/&lt;service&gt;/call</code></h3>
 
 <table>
@@ -2116,6 +2103,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminServiceCallHandler%22">postAdminServiceCallHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-admin-services-service-call">PUT <code>/admin/services/&lt;service&gt;/call</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/services/&lt;service&gt;/call</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>

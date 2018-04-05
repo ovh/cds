@@ -626,6 +626,18 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/project/favorite/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/user/favorite/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/favorite/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/token/find/</loc>
   </url>
   
