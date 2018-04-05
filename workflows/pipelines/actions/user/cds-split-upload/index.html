@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>create :: CDS - Continuous Delivery Service</title>
+    <title>cds-split-upload :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/pipeline/create/">
+  <body class="" data-url="/workflows/pipelines/actions/user/cds-split-upload/">
     <nav id="sidebar" class="">
 
 
@@ -131,9 +131,10 @@
     </li>
           
           
-    <li data-nav-id="/workflows/" class="dd-item">
+    <li data-nav-id="/workflows/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/">
-        <span>Building CDS Workflows</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Building CDS Workflows</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/design/" class="dd-item">
@@ -217,9 +218,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/">
-        <span>Building Pipelines</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Building Pipelines</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/variables/" class="dd-item">
@@ -227,9 +229,10 @@
           <span>Variables</span>
         </a>
     </li>
-    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/actions/">
-        <span>Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Actions</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/pipelines/actions/builtin/" class="dd-item">
@@ -264,9 +267,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/actions/user/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/actions/user/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/">
-        <span>User Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>User Actions</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/actions/user/cds-docker-package/" class="dd-item">
@@ -297,6 +301,16 @@
       <li data-nav-id="/workflows/pipelines/actions/user/cds-python-pylint/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-python-pylint/">
           <span>cds-python-pylint</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-split-download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-split-download/">
+          <span>cds-split-download</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-split-upload/" class="dd-item active">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-split-upload/">
+          <span>cds-split-upload</span>
         </a>
     </li>
         </ul>
@@ -477,10 +491,9 @@
     </li>
           
           
-    <li data-nav-id="/cli/" class="dd-item parent">
+    <li data-nav-id="/cli/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/">
-        <span>Command Line - REST API - SDK</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Command Line - REST API - SDK</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/api/" class="dd-item">
@@ -649,10 +662,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/">
-        <span>cdsctl</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
@@ -812,6 +824,11 @@
           <span>list</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/application/variable/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/show/">
+          <span>show</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/application/variable/update/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/update/">
           <span>update</span>
@@ -910,6 +927,11 @@
           <span>list</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/environment/variable/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/show/">
+          <span>show</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/environment/variable/update/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/update/">
           <span>update</span>
@@ -937,6 +959,11 @@
       <li data-nav-id="/cli/cdsctl/group/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/list/">
           <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/rename/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/rename/">
+          <span>rename</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/group/show/" class="dd-item">
@@ -1005,17 +1032,11 @@
           <span>monitoring</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/pipeline/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/pipeline/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/">
-        <span>pipeline</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>pipeline</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/pipeline/create/" class="dd-item active">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/create/">
-          <span>create</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/cdsctl/pipeline/delete/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/">
           <span>delete</span>
@@ -1127,6 +1148,11 @@
       <li data-nav-id="/cli/cdsctl/project/variable/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/list/">
           <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/variable/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/show/">
+          <span>show</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/project/variable/update/" class="dd-item">
@@ -1653,7 +1679,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/pipeline/create.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/pipelines/actions/user/cds-split-upload.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1679,7 +1705,12 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/pipeline/'>pipeline</a> > create
+
+
+
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/actions/'>Actions</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/actions/user/'>User Actions</a> > cds-split-upload
+
+ 
 
  
 
@@ -1698,13 +1729,8 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-pipeline-create">cdsctl pipeline create</a>
-<ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
-</ul></li>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#requirements">Requirements</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -1717,7 +1743,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>create</h1>
+                <h1>cds-split-upload</h1>
                 <p></p>
             </div>
           
@@ -1727,36 +1753,26 @@
 
 
 
-<h2 id="cdsctl-pipeline-create">cdsctl pipeline create</h2>
+<p>Split and Upload Artifact with size greater than 500 MB.</p>
 
-<p>Create a CDS pipeline</p>
-
-<h3 id="synopsis">Synopsis</h3>
-
-<p>Create a CDS pipeline</p>
-
-<pre><code>cdsctl pipeline create [ PROJECT-KEY ] PIPELINE-NAME [flags]
-</code></pre>
-
-<h3 id="options">Options</h3>
-
-<pre><code>  -h, --help          help for create
-      --type string   Pipeline type {build,deployment,testing} (default &quot;build&quot;) (default &quot;build&quot;)
-</code></pre>
-
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
-
-<pre><code>  -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
-</code></pre>
-
-<h3 id="see-also">SEE ALSO</h3>
+<h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/">cdsctl pipeline</a>   - Manage CDS pipeline</li>
+<li><strong>numericSuffixes</strong>: Use numeric suffixes instead of alphabetic. Default suffix is set to be Numeric. (Optional)</li>
+<li><strong>prefixHandle</strong>: Prefix to be added to destination files after split. (Mandatory)</li>
+<li><strong>sourceFile</strong>: Artifact File to be split and uploaded. (Mandatory).</li>
+<li><strong>splitSize</strong>: Size of each split files. Default size is 200MB. (Optional)</li>
+<li><strong>tag</strong>: Tag to identify uploaded artifacts. Default tag value is CDS run version number. (Optional)</li>
 </ul>
+
+<h2 id="requirements">Requirements</h2>
+
+<ul>
+<li><strong>bash</strong>: type: binary Value: bash</li>
+<li><strong>split</strong>: type: binary Value: split</li>
+</ul>
+
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/actions/cds-split-upload.yml">Github</a></p>
 
 
 <footer class=" footline" >
@@ -1776,8 +1792,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/pipeline/" title="pipeline"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/" title="delete" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-split-download/" title="cds-split-download"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/" title="Plugins Actions" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

@@ -299,6 +299,16 @@
           <span>cds-python-pylint</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-split-download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-split-download/">
+          <span>cds-split-download</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-split-upload/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-split-upload/">
+          <span>cds-split-upload</span>
+        </a>
+    </li>
         </ul>
     </li>
     <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item">
@@ -812,6 +822,11 @@
           <span>list</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/application/variable/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/show/">
+          <span>show</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/application/variable/update/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/application/variable/update/">
           <span>update</span>
@@ -910,6 +925,11 @@
           <span>list</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/environment/variable/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/show/">
+          <span>show</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/environment/variable/update/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/environment/variable/update/">
           <span>update</span>
@@ -937,6 +957,11 @@
       <li data-nav-id="/cli/cdsctl/group/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/group/list/">
           <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/group/rename/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/group/rename/">
+          <span>rename</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/group/show/" class="dd-item">
@@ -1010,11 +1035,6 @@
         <span>pipeline</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/pipeline/create/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/create/">
-          <span>create</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/cdsctl/pipeline/delete/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/">
           <span>delete</span>
@@ -1126,6 +1146,11 @@
       <li data-nav-id="/cli/cdsctl/project/variable/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/list/">
           <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/variable/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/variable/show/">
+          <span>show</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/project/variable/update/" class="dd-item">
@@ -1696,16 +1721,16 @@
 <ul>
 <li><a href="#post-group">POST <code>/group</code></a></li>
 <li><a href="#get-group">GET <code>/group</code></a></li>
-<li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#put-group-group-name">PUT <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</a></li>
 <li><a href="#get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></a></li>
 <li><a href="#delete-group-group-name-token-tokenid">DELETE <code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></a></li>
 <li><a href="#post-group-group-name-user">POST <code>/group/&lt;group-name&gt;/user</code></a></li>
 <li><a href="#delete-group-group-name-user-user-name">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></a></li>
-<li><a href="#post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
 <li><a href="#delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
+<li><a href="#post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
 <li><a href="#get-group-public">GET <code>/group/public</code></a></li>
 </ul></li>
 </ul></li>
@@ -1786,34 +1811,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22">deleteGroupHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></h3>
 
 <table>
@@ -1866,6 +1863,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupHandler%22">updateGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22">deleteGroupHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2010,34 +2035,6 @@
 </tbody>
 </table>
 
-<h3 id="post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+setUserGroupAdminHandler%22">setUserGroupAdminHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h3>
 
 <table>
@@ -2062,6 +2059,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserGroupAdminHandler%22">removeUserGroupAdminHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+setUserGroupAdminHandler%22">setUserGroupAdminHandler</a></td>
 </tr>
 </tbody>
 </table>
