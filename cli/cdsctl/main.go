@@ -158,12 +158,12 @@ func mainRun(vals cli.Values) error {
 
 	fmt.Println("\n -=-=-=-=- Projects bookmarked -=-=-=-=-")
 	for _, prj := range projFavs {
-		fmt.Printf("- %s with key %s  %s\n", prj.Name, prj.Key, uiURL+"/project/"+prj.Key)
+		fmt.Printf("- %s %s\n", prj.Name, uiURL+"/project/"+prj.Key)
 	}
 
 	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
 	for _, wf := range wfFavs {
-		fmt.Printf("- %s inside project %s  %s\n", wf.Name, wf.Key, uiURL+"/project/"+wf.Key+"/workflow/"+wf.Name)
+		fmt.Printf("- %s %s\n", wf.Name, uiURL+"/project/"+wf.Key+"/workflow/"+wf.Name)
 	}
 
 	return nil
