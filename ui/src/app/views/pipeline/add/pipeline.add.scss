@@ -4,11 +4,15 @@
   display: flex;
   flex-direction: column;
   align-content: stretch;
+  margin-top: 20px;
   height: 100%;
-  padding-top: 20px;
 
   h2 {
     text-align: center;
   }
   border-color: #202f3c;
+}
+.scrollable {
+  height: 100%;
+  overflow-y: auto;
 }
