@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/howeyc/gopass"
 
@@ -93,7 +94,13 @@ func doLogin(url, username, password string, env bool) error {
 	client = cdsclient.New(conf)
 	ok, token, err := client.UserLogin(username, password)
 	if err != nil {
-		return err
+		if conf.Verbose {
+			fmt.Fprintf(os.Stderr, "error:%s\n", err)
+		}
+		if strings.HasSuffix(url, "/") {
+			fmt.Fprintf(os.Stderr, "Invalid URL. Remove trailing '/'\n")
+		}
+		return fmt.Errorf("Please check CDS API URL")
 	}
 	if !ok {
 		return fmt.Errorf("login failed")
