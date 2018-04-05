@@ -87,6 +87,9 @@ export class WorkflowNodeRunComponent implements OnDestroy {
         if (this.nodeRunWorker) {
             this.nodeRunWorker.stop();
         }
+        if (this.runSubscription) {
+            this.runSubscription.unsubscribe();
+        }
         // Start web worker
         this.nodeRunWorker = new CDSWorker('./assets/worker/web/noderun.js');
         this.nodeRunWorker.start({
