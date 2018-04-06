@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -160,6 +161,8 @@ func (api *API) postWorkflowHandler() Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
+		event.PublishWorkflowAdd(key, *wf1, getUser(ctx))
+
 		return WriteJSON(w, wf1, http.StatusCreated)
 	}
 }
@@ -248,6 +251,8 @@ func (api *API) putWorkflowHandler() Handler {
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
+		event.PublishWorkflowUpdate(key, *wf1, *oldW, getUser(ctx))
+
 		return WriteJSON(w, wf1, http.StatusOK)
 	}
 }
@@ -334,6 +339,9 @@ func (api *API) deleteWorkflowHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
+
+		event.PublishWorkflowDelete(key, *oldW, getUser(ctx))
+
 		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
