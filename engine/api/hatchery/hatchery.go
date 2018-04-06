@@ -38,7 +38,7 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	}
 
 	// allow hatchery to not declare any model
-	if h.Model.Name == "" && h.Model.Image == "" {
+	if h.Model.Name == "" && (h.Model.ModelDocker.Image == "" || h.Model.ModelVirtualMachine.Image == "") {
 		return tx.Commit()
 	}
 

@@ -166,13 +166,19 @@ func (api *API) updateWorkerModelHandler() Handler {
 		}
 
 		//If the model image has not been set, keep the old image
-		if model.Image == "" {
-			model.Image = old.Image
+		if model.ModelDocker.Image == "" && model.ModelVirtualMachine.Image == "" {
+			switch model.Type {
+			case sdk.Docker:
+				model.ModelDocker.Image = old.ModelDocker.Image
+			default:
+				model.ModelVirtualMachine.Image = old.ModelVirtualMachine.Image
+			}
+
 		}
 
-		//If the model Capabilities has not been set, keep the old Capabilities
-		if len(model.Capabilities) == 0 {
-			model.Capabilities = old.Capabilities
+		//If the model RegisteredCapabilities has not been set, keep the old RegisteredCapabilities
+		if len(model.RegisteredCapabilities) == 0 {
+			model.RegisteredCapabilities = old.RegisteredCapabilities
 		}
 
 		//If the model GroupID has not been set, keep the old GroupID

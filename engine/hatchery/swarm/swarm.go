@@ -76,6 +76,10 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	//Memory for the worker
 	memory := int64(h.Config.DefaultMemory)
 
+	if spawnArgs.Model.ModelDocker.Memory != 0 {
+		memory = spawnArgs.Model.ModelDocker.Memory
+	}
+
 	var network, networkAlias string
 	services := []string{}
 
@@ -155,7 +159,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
+	// cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
 
 	//CDS env needed by the worker binary
 	env := []string{
@@ -209,10 +213,10 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 	args := containerArgs{
 		name:         name,
-		image:        spawnArgs.Model.Image,
+		image:        spawnArgs.Model.ModelDocker.Image,
 		network:      network,
 		networkAlias: networkAlias,
-		cmd:          cmd,
+		cmd:          []string{spawnArgs.Model.ModelDocker.Cmd},
 		env:          env,
 		labels:       labels,
 		memory:       memory,
@@ -222,7 +226,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 	//start the worker
 	if err := h.createAndStartContainer(args, spawnArgs); err != nil {
-		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.Image, err)
+		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.ModelDocker.Image, err)
 	}
 
 	return name, nil
@@ -297,7 +301,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	var images []types.ImageSummary
 	// if we don't need to force pull links, we check if model is "latest"
 	// if model is not "latest" tag too, ListImages to get images locally
-	if listImagesToDoForLinkedImages || !strings.HasSuffix(model.Image, ":latest") {
+	if listImagesToDoForLinkedImages || !strings.HasSuffix(model.ModelDocker.Image, ":latest") {
 		var errl error
 		images, errl = h.dockerClient.ImageList(context.Background(), types.ImageListOptions{
 			All: true,
@@ -310,11 +314,11 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	var imageFound bool
 
 	// model is not latest, check if image exists locally
-	if !strings.HasSuffix(model.Image, ":latest") {
+	if !strings.HasSuffix(model.ModelDocker.Image, ":latest") {
 	checkImage:
 		for _, img := range images {
 			for _, t := range img.RepoTags {
-				if model.Image == t {
+				if model.ModelDocker.Image == t {
 					imageFound = true
 					break checkImage
 				}
@@ -323,7 +327,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	}
 
 	if !imageFound {
-		if err := h.pullImage(model.Image, timeoutPullImage); err != nil {
+		if err := h.pullImage(model.ModelDocker.Image, timeoutPullImage); err != nil {
 			//the error is already logged
 			return false
 		}
@@ -409,7 +413,7 @@ func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
 	list := []string{}
 	for _, c := range workers {
 		log.Debug("Container : %s %s [%s]", c.ID, c.Image, c.Status)
-		if c.Image == model.Image {
+		if c.Image == model.ModelDocker.Image {
 			list = append(list, c.ID)
 		}
 	}

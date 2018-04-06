@@ -52,8 +52,10 @@ func Test_workerCheckingHandler(t *testing.T) {
 			Name:    "Test1",
 			GroupID: g.ID,
 			Type:    sdk.Docker,
-			Image:   "buildpack-deps:jessie",
-			Capabilities: sdk.RequirementList{
+			ModelDocker: sdk.ModelDocker{
+				Image: "buildpack-deps:jessie",
+			},
+			RegisteredCapabilities: sdk.RequirementList{
 				{
 					Name:  "capa1",
 					Type:  sdk.BinaryRequirement,
@@ -145,8 +147,10 @@ func Test_workerWaitingHandler(t *testing.T) {
 			Name:    "Test1",
 			GroupID: g.ID,
 			Type:    sdk.Docker,
-			Image:   "buildpack-deps:jessie",
-			Capabilities: sdk.RequirementList{
+			ModelDocker: sdk.ModelDocker{
+				Image: "buildpack-deps:jessie",
+			},
+			RegisteredCapabilities: sdk.RequirementList{
 				{
 					Name:  "capa1",
 					Type:  sdk.BinaryRequirement,

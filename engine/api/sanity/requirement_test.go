@@ -234,7 +234,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				},
 				wms: []sdk.Model{
 					{
-						Capabilities: sdk.RequirementList{
+						RegisteredCapabilities: sdk.RequirementList{
 							{
 								Value: "binary-1",
 							},
@@ -283,7 +283,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				},
 				wms: []sdk.Model{
 					{
-						Capabilities: sdk.RequirementList{
+						RegisteredCapabilities: sdk.RequirementList{
 							{
 								Value: "binary-1",
 							},
@@ -326,7 +326,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				wms: []sdk.Model{
 					sdk.Model{
 						Type: sdk.Openstack,
-						Capabilities: sdk.RequirementList{
+						RegisteredCapabilities: sdk.RequirementList{
 							{
 								Value: "binary-1",
 							},
@@ -381,7 +381,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				wms: []sdk.Model{
 					sdk.Model{
 						Type: sdk.Docker,
-						Capabilities: sdk.RequirementList{
+						RegisteredCapabilities: sdk.RequirementList{
 							{
 								Value: "binary-1",
 							},
@@ -449,7 +449,7 @@ func Test_checkIncompatibleBinaryWithModelRequirement(t *testing.T) {
 				wms: []sdk.Model{
 					sdk.Model{
 						Name: "model",
-						Capabilities: sdk.RequirementList{
+						RegisteredCapabilities: sdk.RequirementList{
 							{
 								Type:  sdk.BinaryRequirement,
 								Value: "binary-1",
@@ -490,7 +490,7 @@ func Test_checkIncompatibleBinaryWithModelRequirement(t *testing.T) {
 				wms: []sdk.Model{
 					sdk.Model{
 						Name: "model",
-						Capabilities: sdk.RequirementList{
+						RegisteredCapabilities: sdk.RequirementList{
 							{
 								Type:  sdk.BinaryRequirement,
 								Value: "binary-1",

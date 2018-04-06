@@ -141,7 +141,7 @@ func checkNoWorkerModelMatchRequirement(proj string, pip string, a *sdk.Action, 
 			}
 
 			found := false
-			for _, wr := range wm.Capabilities {
+			for _, wr := range wm.RegisteredCapabilities {
 				if wr.Value == ar.Value {
 					found = true
 					break
@@ -200,7 +200,7 @@ func checkIncompatibleBinaryWithModelRequirement(proj string, pip string, a *sdk
 		}
 
 		found := false
-		for _, c := range m.Capabilities {
+		for _, c := range m.RegisteredCapabilities {
 			if c.Type != sdk.BinaryRequirement {
 				continue
 			}

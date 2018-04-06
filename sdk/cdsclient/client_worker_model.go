@@ -54,14 +54,20 @@ func (c *client) WorkerModelSpawnError(id int64, info string) error {
 }
 
 // WorkerModelAdd create a new worker model available
-func (c *client) WorkerModelAdd(name string, modelType string, image string, groupID int64) (sdk.Model, error) {
+func (c *client) WorkerModelAdd(name string, modelType string, dockerModel sdk.ModelDocker, vmModel sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error) {
 	uri := fmt.Sprintf("/worker/model")
 	model := sdk.Model{
 		Name:          name,
 		Type:          modelType,
-		Image:         image,
 		GroupID:       groupID,
 		Communication: "http",
+	}
+
+	switch modelType {
+	case sdk.Docker:
+		model.ModelDocker = dockerModel
+	default:
+		model.ModelVirtualMachine = vmModel
 	}
 
 	modelCreated := sdk.Model{}

@@ -731,7 +731,7 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk5(in *jlexer.Lexer, out *ModelDocke
 		case "image":
 			out.Image = string(in.String())
 		case "memory":
-			out.Memory = int(in.Int())
+			out.Memory = int64(in.Int64())
 		case "cmd":
 			out.Cmd = string(in.String())
 		default:
@@ -766,7 +766,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk5(out *jwriter.Writer, in ModelDock
 		} else {
 			out.RawString(prefix)
 		}
-		out.Int(int(in.Memory))
+		out.Int64(int64(in.Memory))
 	}
 	{
 		const prefix string = ",\"cmd\":"
@@ -845,25 +845,27 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk6(in *jlexer.Lexer, out *Model) {
 			out.Disabled = bool(in.Bool())
 		case "restricted":
 			out.Restricted = bool(in.Bool())
-		case "registered_binary_capabilities":
+		case "registered_capabilities":
 			if in.IsNull() {
 				in.Skip()
-				out.RegisteredBinaryCapabilities = nil
+				out.RegisteredCapabilities = nil
 			} else {
 				in.Delim('[')
-				if out.RegisteredBinaryCapabilities == nil {
+				if out.RegisteredCapabilities == nil {
 					if !in.IsDelim(']') {
-						out.RegisteredBinaryCapabilities = make([]string, 0, 4)
+						out.RegisteredCapabilities = make([]Requirement, 0, 1)
 					} else {
-						out.RegisteredBinaryCapabilities = []string{}
+						out.RegisteredCapabilities = []Requirement{}
 					}
 				} else {
-					out.RegisteredBinaryCapabilities = (out.RegisteredBinaryCapabilities)[:0]
+					out.RegisteredCapabilities = (out.RegisteredCapabilities)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v4 string
-					v4 = string(in.String())
-					out.RegisteredBinaryCapabilities = append(out.RegisteredBinaryCapabilities, v4)
+					var v4 Requirement
+					if data := in.Raw(); in.Ok() {
+						in.AddError((v4).UnmarshalJSON(data))
+					}
+					out.RegisteredCapabilities = append(out.RegisteredCapabilities, v4)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1015,22 +1017,22 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in Model) {
 		out.Bool(bool(in.Restricted))
 	}
 	{
-		const prefix string = ",\"registered_binary_capabilities\":"
+		const prefix string = ",\"registered_capabilities\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		if in.RegisteredBinaryCapabilities == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		if in.RegisteredCapabilities == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v5, v6 := range in.RegisteredBinaryCapabilities {
+			for v5, v6 := range in.RegisteredCapabilities {
 				if v5 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v6))
+				out.Raw((v6).MarshalJSON())
 			}
 			out.RawByte(']')
 		}

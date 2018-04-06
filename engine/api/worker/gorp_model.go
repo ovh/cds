@@ -28,7 +28,7 @@ func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	for _, a := range m.Capabilities {
+	for _, a := range m.RegisteredCapabilities {
 		query := `insert into worker_capability (worker_model_id, type, name, argument) values ($1, $2, $3, $4)`
 		if _, err := s.Exec(query, m.ID, a.Type, a.Name, a.Value); err != nil {
 			return err
@@ -70,9 +70,9 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	m.Capabilities = make(sdk.RequirementList, len(capabilities))
+	m.RegisteredCapabilities = make(sdk.RequirementList, len(capabilities))
 	for i, c := range capabilities {
-		m.Capabilities[i] = sdk.Requirement{
+		m.RegisteredCapabilities[i] = sdk.Requirement{
 			Name:  c.Name,
 			Type:  c.Type,
 			Value: c.Value,
