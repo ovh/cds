@@ -1,5 +1,5 @@
 <div class="ui centered cards">
-  <div class="card" *ngIf="workflows || projects">
+  <div class="card" *ngIf="(workflows && workflows.length) || (projects && projects.length)">
     <div class="content">
       <div class="header">
         {{'favorite_add' | translate}}
