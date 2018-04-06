@@ -84,7 +84,14 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 
 	var updateVar = func(v *sdk.Variable) {
 		log.Debug("ImportInto> Updating var %s", v.Name)
-		if err := UpdateVariable(db, into.ID, v, u); err != nil {
+
+		varBefore, errV := GetVariableByID(db, env.ID, v.ID, WithClearPassword())
+		if errV != nil {
+			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeUpdated, v.Name, into.Name, errV)
+			return
+		}
+
+		if err := UpdateVariable(db, into.ID, v, varBefore, u); err != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeUpdated, v.Name, into.Name, err)
 			return
 		}
