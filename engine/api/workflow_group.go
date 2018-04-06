@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -27,16 +28,17 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
 		}
 
-		var groupID int64
 		var groupIndex int
+		var oldGp sdk.GroupPermission
 		for i := range wf.Groups {
 			if wf.Groups[i].Group.Name == groupName {
-				groupID = wf.Groups[i].Group.ID
+				oldGp = wf.Groups[i]
 				groupIndex = i
+				break
 			}
 		}
 
-		if groupID == 0 {
+		if oldGp.Permission == 0 {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteWorkflowGroupHandler")
 		}
 
@@ -46,7 +48,7 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.DeleteGroup(tx, wf, groupID, groupIndex); err != nil {
+		if err := workflow.DeleteGroup(tx, wf, oldGp.Group.ID, groupIndex); err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot add group")
 		}
 
@@ -57,6 +59,8 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot commit transaction")
 		}
+
+		event.PublishWorkflowPermissionDelete(key, *wf, oldGp, getUser(ctx))
 
 		return WriteJSON(w, wf, http.StatusOK)
 	}
@@ -87,14 +91,15 @@ func (api *API) putWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowGroupHandler")
 		}
 
-		found := false
+		var oldGp sdk.GroupPermission
 		for _, gpr := range wf.Groups {
 			if gpr.Group.Name == gp.Group.Name {
-				found = true
+				oldGp = gpr
+				break
 			}
 		}
 
-		if !found {
+		if oldGp.Permission == 0 {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "putWorkflowGroupHandler")
 		}
 
@@ -115,6 +120,8 @@ func (api *API) putWorkflowGroupHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler> Cannot commit transaction")
 		}
+
+		event.PublishWorkflowPermissionUpdate(key, *wf, gp, oldGp, getUser(ctx))
 
 		return WriteJSON(w, wf, http.StatusOK)
 	}
@@ -171,6 +178,8 @@ func (api *API) postWorkflowGroupHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler> Cannot commit transaction")
 		}
+
+		event.PublishWorkflowPermissionAdd(key, *wf, gp, getUser(ctx))
 
 		return WriteJSON(w, wf, http.StatusOK)
 	}
