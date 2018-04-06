@@ -478,6 +478,14 @@ func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 	return true
 }
 
+// IsLinkedToRepo returns boolean to know if the node is linked to an application which is also linked to a repository
+func (n *WorkflowNode) IsLinkedToRepo() bool {
+	if n == nil {
+		return false
+	}
+	return n.Context != nil && n.Context.Application != nil && n.Context.Application.RepositoryFullname != ""
+}
+
 //GetNodeByRef returns the node given its ref
 func (n *WorkflowNode) GetNodeByRef(ref string) *WorkflowNode {
 	if n == nil {
