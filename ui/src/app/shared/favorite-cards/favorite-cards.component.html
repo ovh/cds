@@ -11,32 +11,45 @@
             <sui-select-option value="project"></sui-select-option>
             <sui-select-option value="workflow"></sui-select-option>
         </sui-select>
-        <ng-container *ngIf="newFav.type === 'workflow'">
-          <sui-select class="selection mt5"
-                      placeholder="{{'favorite_workflow_select' | translate}}"
-                      labelField="name"
-                      [options]="workflows"
-                      [isSearchable]="true"
-                      [(ngModel)]="newFav"
-                      #selectWf>
-              <sui-select-option *ngFor="let option of selectWf.filteredOptions" [value]="option"></sui-select-option>
-          </sui-select>
-        </ng-container>
         <ng-container *ngIf="newFav.type === 'project'">
           <sui-select class="selection mt5"
                       placeholder="{{'favorite_project_select' | translate}}"
                       labelField="name"
-                      [options]="projects"
+                      [options]="filteredProjects"
                       [isSearchable]="true"
                       [(ngModel)]="newFav"
                       #selectProj>
               <sui-select-option *ngFor="let option of selectProj.filteredOptions" [value]="option"></sui-select-option>
           </sui-select>
         </ng-container>
+        <ng-container *ngIf="newFav.type === 'workflow'">
+          <sui-select class="selection mt5"
+                      placeholder="{{'favorite_project_select' | translate}}"
+                      labelField="name"
+                      valueField="key"
+                      [options]="projects"
+                      [isSearchable]="true"
+                      [(ngModel)]="projectKeySelected"
+                      #selectProj>
+              <sui-select-option *ngFor="let option of selectProj.filteredOptions" [value]="option"></sui-select-option>
+          </sui-select>
+        </ng-container>
+        <ng-container *ngIf="newFav.type === 'workflow' && projectKeySelected">
+          <sui-select class="selection mt5"
+                      placeholder="{{'favorite_workflow_select' | translate}}"
+                      labelField="workflow_name"
+                      [options]="filteredWf"
+                      [isSearchable]="true"
+                      [(ngModel)]="newFav"
+                      #selectWf>
+              <sui-select-option *ngFor="let option of selectWf.filteredOptions" [value]="option"></sui-select-option>
+          </sui-select>
+        </ng-container>
       </div>
     </div>
-    <div class="ui bottom green attached button" (click)="updateFav(newFav)">
-      <i class="plus icon"></i>
+    <div class="ui bottom green attached button" [class.disabled]="loading[newFav.key + newFav.workflow_name]" (click)="updateFav(newFav)">
+      <i class="plus icon" *ngIf="!loading[newFav.key + newFav.workflow_name]"></i>
+      <div class="ui active small inline loader" *ngIf="loading[newFav.key + newFav.workflow_name]"></div>
       {{'favorite_add_btn' | translate}}
     </div>
   </div>
@@ -52,7 +65,7 @@
               {{favorite.workflow_name}}
             </a>
             <div class="description">
-              {{'navbar_workflow_in' | translate}} {{favorite.key}}
+              {{'navbar_workflow_in' | translate}} <a class="projectLink" href="" [routerLink]="['/project', favorite.key]">{{favorite.key}}</a>
             </div>
           </ng-container>
           <ng-container *ngSwitchCase="'application'">
@@ -60,7 +73,7 @@
               {{favorite.application_name}}}
             </a>
             <div class="description">
-              {{'navbar_application_in' | translate}} {{favorite.key}}
+              {{'navbar_application_in' | translate}} <a class="projectLink" href="" [routerLink]="['/project', favorite.key]">{{favorite.key}}</a>
             </div>
           </ng-container>
           <ng-container *ngSwitchDefault>
@@ -76,8 +89,9 @@
           </ng-container>
         </ng-container>
       </div>
-      <div class="ui bottom attached button" (click)="updateFav(favorite)">
-        <i class="ban icon"></i>
+      <div class="ui bottom attached button" (click)="updateFav(favorite)" [class.disabled]="loading[favorite.key + favorite.workflow_name]">
+        <i class="ban icon" *ngIf="!loading[favorite.key + favorite.workflow_name]"></i>
+        <div class="ui active small inline loader" *ngIf="loading[favorite.key + favorite.workflow_name]"></div>
         {{'common_favorites_delete' | translate}}
       </div>
     </div>
