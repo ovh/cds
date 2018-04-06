@@ -27,9 +27,7 @@ export class FavoriteComponent {
           this.loading = false;
           if (Array.isArray(data)) {
             this.favorites = data.filter((fav) => fav.favorite);
-            this.projects = data.filter((elt) => {
-              return elt.type === 'project' && !this.favorites.find((fav) => fav.type === 'project' && fav.key === elt.key);
-            });
+            this.projects = data.filter((elt) => elt.type === 'project');
             this.workflows = data.filter((elt) => {
               return elt.type === 'workflow' &&
                 !this.favorites.find((fav) => fav.type === 'workflow' && fav.workflow_name === elt.workflow_name);

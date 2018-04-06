@@ -11,6 +11,7 @@ import {RouterService} from '../../service/router/router.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
 import {ToastService} from '../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
+import {finalize} from 'rxjs/operators';
 import {cloneDeep} from 'lodash';
 
 @Component({
@@ -24,6 +25,7 @@ export class WorkflowComponent implements OnInit {
     project: Project;
     workflow: Workflow;
     loading = true;
+    loadingFav = false;
     number: number;
     workflowSubscription: Subscription;
     sideBarSubscription: Subscription;
@@ -206,8 +208,13 @@ export class WorkflowComponent implements OnInit {
     }
 
     updateFav() {
-      this._workflowStore.updateFavorite(this.project.key, this.workflow.name)
-        .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
+        if (this.loading) {
+            return;
+        }
+        this.loadingFav = true;
+        this._workflowStore.updateFavorite(this.project.key, this.workflow.name)
+            .pipe(finalize(() => this.loadingFav = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
     }
 
     toggleSidebar(): void {

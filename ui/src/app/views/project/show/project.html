@@ -5,7 +5,8 @@
         <app-breadcrumb [project]="project"  [workflow]="workflowName" [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun"
         [wPipeline]="workflowPipeline"></app-breadcrumb>
         <div class="right floated" [title]="'favorite_add_btn' | translate">
-          <i class="pointing star icon" [class.favorite]="project.favorite" [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
+          <div class="ui active small inline loader" *ngIf="loadingFav"></div>
+          <i class="pointing star icon" *ngIf="!loadingFav" [class.favorite]="project.favorite" [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
         </div>
     </div>
 
