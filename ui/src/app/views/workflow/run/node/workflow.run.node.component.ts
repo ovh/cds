@@ -73,31 +73,6 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                     });
 
                 this.startWorker(number, nodeRunId);
-                this.runSubscription = this.nodeRunWorker.response().subscribe(wrString => {
-                    if (!wrString) {
-                        return;
-                    }
-                    let historyChecked = false;
-                    this.zone.run(() => {
-                        this.nodeRun = <WorkflowNodeRun>JSON.parse(wrString);
-                        if (!historyChecked) {
-                            historyChecked = true;
-                            this._workflowRunService.nodeRunHistory(
-                                this.project.key, this.workflowName,
-                                number, this.nodeRun.workflow_node_id)
-                            .pipe(first())
-                            .subscribe(nrs => this.nodeRunsHistory = nrs);
-                        }
-
-                        if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
-                            this.nodeRunWorker.stop();
-                            this.nodeRunWorker = undefined;
-                            this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
-                        }
-
-                        this._workflowCoreService.setCurrentNodeRun(this.nodeRun);
-                    });
-                });
             }
         });
     }
@@ -109,20 +84,50 @@ export class WorkflowNodeRunComponent implements OnDestroy {
     }
 
     startWorker(number: number, nodeRunId: number) {
-      if (this.nodeRunWorker) {
-        this.nodeRunWorker.stop();
-      }
-      // Start web worker
-      this.nodeRunWorker = new CDSWorker('./assets/worker/web/noderun.js');
-      this.nodeRunWorker.start({
-          'user': this._authStore.getUser(),
-          'session': this._authStore.getSessionToken(),
-          'api': environment.apiURL,
-          key: this.project.key,
-          workflowName: this.workflowName,
-          number: number,
-          nodeRunId: nodeRunId
-      });
+        if (this.nodeRunWorker) {
+            this.nodeRunWorker.stop();
+        }
+        if (this.runSubscription) {
+            this.runSubscription.unsubscribe();
+        }
+        // Start web worker
+        this.nodeRunWorker = new CDSWorker('./assets/worker/web/noderun.js');
+        this.nodeRunWorker.start({
+            'user': this._authStore.getUser(),
+            'session': this._authStore.getSessionToken(),
+            'api': environment.apiURL,
+            key: this.project.key,
+            workflowName: this.workflowName,
+            number: number,
+            nodeRunId: nodeRunId
+        });
+
+        this.runSubscription = this.nodeRunWorker.response().subscribe(wrString => {
+            if (!wrString) {
+                return;
+            }
+            let historyChecked = false;
+            this.zone.run(() => {
+                this.nodeRun = <WorkflowNodeRun>JSON.parse(wrString);
+                if (!historyChecked) {
+                    historyChecked = true;
+                    this._workflowRunService.nodeRunHistory(
+                        this.project.key, this.workflowName,
+                        number, this.nodeRun.workflow_node_id)
+                        .pipe(first())
+                        .subscribe(nrs => this.nodeRunsHistory = nrs);
+                }
+
+                if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
+                    this.nodeRunWorker.stop();
+                    this.nodeRunWorker = undefined;
+                    this.runSubscription.unsubscribe();
+                    this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
+                }
+
+                this._workflowCoreService.setCurrentNodeRun(this.nodeRun);
+            });
+        });
     }
 
     showTab(tab: string): void {

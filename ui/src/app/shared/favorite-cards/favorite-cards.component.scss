@@ -1,3 +1,10 @@
 .mt5 {
   margin-top: 5px;
 }
+
+.projectLink {
+  color: rgba(0, 0, 0, 0.68);
+  &:hover {
+    text-decoration: underline;
+  }
+}

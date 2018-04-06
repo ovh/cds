@@ -34,6 +34,10 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             if (!this._workflow || (this._workflow && data.name !== this._workflow.name)) {
                 haveToStar = true;
             }
+
+            if (this._workflow && this._workflow.id !== data.id) {
+                this.ready = false;
+            }
             this._workflow = data;
             this.initSelectableTags();
             if (haveToStar) {

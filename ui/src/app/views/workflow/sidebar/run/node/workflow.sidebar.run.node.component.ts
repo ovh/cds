@@ -91,7 +91,9 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
             } else {
                 this.currentWorkflowNodeRun = null;
             }
+
             this.loading = false;
+
             this.displayEditOption = Workflow.getNodeByID(this.nodeId, this.workflow) != null;
             this.canBeRun = this.getCanBeRun();
           }
@@ -102,11 +104,14 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
             if (!nodeRun) {
               return;
             }
-            this.currentWorkflowNodeRun = nodeRun;
+            this.loading = false;
             this.duration = this.getDuration();
             this.canBeRun = this.getCanBeRun();
-            if (this.loading) {
-                this.loading = false;
+            this.currentWorkflowNodeRun = nodeRun;
+
+            // If not the same run => display loading
+            if (this.currentWorkflowNodeRun.num !== this.number) {
+                this.loading = true;
             }
           });
     }
@@ -141,8 +146,12 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
         if (this.workflow.permission < PermissionValue.READ_EXECUTE || appForbid || envForbid) {
           return false;
         }
-        if (this.currentWorkflowNodeRun) {
-            return this.currentWorkflowNodeRun.can_be_run;
+        if (this.currentWorkflowNodeRun && this.currentWorkflowRun) {
+            let nodesRun = this.currentWorkflowRun.nodes[this.currentWorkflowNodeRun.workflow_node_id];
+            let nodeRun = nodesRun.find( n => {
+               return n.id === this.currentWorkflowNodeRun.id;
+            });
+            return nodeRun.can_be_run;
         }
 
         let workflowRunIsNotActive = this.currentWorkflowRun && !PipelineStatus.isActive(this.currentWorkflowRun.status);
