@@ -213,6 +213,9 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 
 		if defaultTags, ok := wf.Metadata["default_tags"]; wf.Root.IsLinkedToRepo() && (!ok || defaultTags == "") {
+			if wf.Metadata == nil {
+				wf.Metadata = sdk.Metadata{}
+			}
 			wf.Metadata["default_tags"] = "git.branch,git.author"
 			if err := workflow.UpdateMetadata(tx, wf.ID, wf.Metadata); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> cannot update metadata")
