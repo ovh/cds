@@ -258,6 +258,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 		for _, groupPerm := range env.EnvironmentGroups {
 			if groupPerm.Group.ID == g.ID {
 				gp = groupPerm
+				break
 			}
 		}
 
