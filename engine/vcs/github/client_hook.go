@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
@@ -20,6 +22,7 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 			ContentType: "json",
 		},
 	}
+	log.Debug("github.CreateHook > %+v", r)
 	b, err := json.Marshal(r)
 	if err != nil {
 		return sdk.WrapError(err, "github.CreateHook > Cannot marshal body %+v", r)
@@ -34,6 +37,9 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 		return sdk.WrapError(err, "github.CreateHook> ReadAll")
 	}
 	if res.StatusCode != 201 {
+		if strings.Contains(string(body), "Hook already exists on this repository") {
+			return nil
+		}
 		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - Body: %s. ", res.StatusCode, body)
 		return sdk.WrapError(err, "github.CreateHook. Data : %s", b)
 	}

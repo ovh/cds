@@ -83,6 +83,7 @@
   "application_poller_form_title": "Ajouter un poller : ",
   "application_poller_list_title": "Liste des pollers : ",
   "application_rename_title": "Renommer l'application",
+  "application_repo_choose": "Choisir un dépôt",
   "application_repo_attach_ok": "Le dépôt est désormais lié à l'application",
   "application_repo_detach_ok": "Le dépôt n'est désormais  plus lié à l'application",
   "application_repoman_cant": "Vous devez d'abord connecter un gestionnaire de dépôt à votre projet : ",

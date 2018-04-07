@@ -48,7 +48,6 @@
                                                                 type="button"
                                                                 [class.active]="creationMode === 'repository'"
                                                                 [class.blue]="creationMode === 'repository'"
-                                                                [class.disabled]="!project.application_names || !project.application_names.length"
                                                                 (click)="creationMode = 'repository'">{{'common_create_repo' | translate}}
                                                         </button>
 
