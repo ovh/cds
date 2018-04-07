@@ -1,5 +1,5 @@
 +++
-title = "First Workflow from repository"
+title = "Init a CDS Workflow from a repository"
 weight = 1
 +++
 

@@ -486,6 +486,7 @@
   "project_workflow_migration_title": "Avancement de la migration vers les workflows",
   "project_name": "Nom du projet",
   "project_name_error": "Le nom du projet est obligatoire",
+  "project_no": "Il n'y a aucun projet",
   "project_no_application": "Le projet ne contient aucune application",
   "project_no_pipeline": "Le projet ne contient aucun pipeline",
   "project_no_workflow": "Le projet ne contient aucun workflow",
