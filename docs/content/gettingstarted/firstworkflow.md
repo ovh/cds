@@ -1,40 +1,47 @@
 +++
 title = "First Workflow from repository"
 weight = 1
-aliases = [
-    "/gettingstarted"
-]
 +++
+
+{{% notice note %}}
+
+In this tutorial, you will create a CDS Workflow from an existing git repository.
+
+* This will creates you some files inside your local git repository.
+* Then you'll can push them to get a CDS workflow lives with his configuration 'as code'.
+{{% /notice %}}
 
 ## Prerequisites
 
  * Have an account on your CDS instance
- * Have a CDS project and a repository manager has been set up on your CDS Instance!  **[Repository manager]({{< relref "../hosting/repositories-manager" >}})**
- * Have cdsctl command line [Download](https://github.com/ovh/cds/releases)
+ * Have a CDS project and a [Repository manager]({{< relref "/hosting/repositories-manager/_index.md" >}}) has been set up on your CDS Instance
+ * Have cdsctl command line, you can download it from [here]({{< relref "/hosting/download.md" >}})
  
 ## To get started with CDS
 
  * In a terminal, go into your git repository and login with cdsctl
  
-```
-    cd <path-to-repo>
-    cdsctl login -H <cds-api-url> -u <username> -p <password>
+```bash
+$ cd <path-to-repo>
+$ cdsctl login -H <cds-api-url>
+# you will be ask for your username and password
 ```
 
  * Create your first workflow
  
-```
-    cdsctl workflow init
+```bash
+$ cdsctl workflow init
 ```
 
 This will ask you to choose:
+
  * The CDS project
  * The repository manager where your application code is hosted
- * Select 'n' for the question: 'Do you want to reuse an existing pipeline ?'
+ * Select 'n' for the question: 'Do you want to reuse an existing pipeline?'
  * Type your pipeline name
  
- ```
- >cdsctl workflow init
+ ```bash
+ $ cdsctl workflow init
  Choose the CDS project
  	FIRSTPROJECT - MyFirstProject [1]
  Your choice [1-1]: 1
@@ -83,8 +90,7 @@ This will ask you to choose:
  -----END PGP PUBLIC KEY BLOCK-----
  
  ssh
- ssh-rsa AAAAB3NzaC1yc2EAA30AADAQABAA06ACAQDyUXiY45Z9Bai7nsj8Tk2olZIwaDhYlBjw60TOlNLWVSvzNS5K+Rps8AA1985A7pcS1tbWtfC2xNMjRN7NznVatioHXgozLTQ/EhKOuEevOp4mCCuebUc62m/14pGKsCN/ikHb6Ca/rf0+NOKt+UUYAOvyVt7FM3NydyT8VrPZWonxULzOIDcPpyZPfbnpuooCZjK2IuaU1pzPxDgszks77bkPePKujhp17Ckfzi+Ke3SgHGr9399UgY8dD6wqvRd+xNQA+EUQNa9SGg5MJ4LgTlqiE+0s/qg7pVUtCLqTo6fSUK0oumkpClmsdwmgnBtfG+5Belli3sMJUHOdw9fQpKUYITQ6jFAaciVzXpdt9j0ImQytz8nP5cd4lpPuv5fHNbx39G7KqdraVsqe3I9Y8RSf2kCVvRON9TthRleYHoxukztsSuxcxeZ0GtaIbIauYymrAvRrAV1harOwSrFThY6sTWyofpZnKesG6S7omIGn5ZjZDtT2p5tiGnZh3gZlS2sHLALyoShUjHxgcOd2h4CMuC1JN63t94rXWfbTYH+eraAhufmnayLC8p4UM/lc0syQBy1aKywR+acScICww20xEt8SG3D5rAlJD5d2EPhJaEzGS0NC6apiaQ2CNlvaceWFoEDbkXj0TL4M0iX42va5Ry1jvo8IPwJ9MoAXrVlowyw==
-  app-ssh-github@cds
+ ssh-rsa AAAAB3NzaC1yc2EAA30AADAQABAA06ACAQDyUXiY45Z9Bai7nsj8Tk2olZIwaDhYlBjw60TOlNLWVSvzNS5K+Rps8AA1985A7pcS1tbWtfC2xNMjRN7NznVatioHXgozLTQ/EhKOuEevOp4mCCuebUc62m/14pGKsCN/ikHb6Ca/rf0+NOKt+UUYAOvyVt7FM3NydyT8VrPZWonxULzOIDcPpyZPfbnpuooCZjK2IuaU1pzPxDgszks77bkPePKujhp17Ckfzi+Ke3SgHGr9399UgY8dD6wqvRd+xNQA+EUQNa9SGg5MJ4LgTlqiE+0s/qg7pVUtCLqTo6fSUK0oumkpClmsdwmgnBtfG+5Belli3sMJUHOdw9fQpKUYITQ6jFAaciVzXpdt9j0ImQytz8nP5cd4lpPuv5fHNbx39G7KqdraVsqe3I9Y8RSf2kCVvRON9TthRleYHoxukztsSuxcxeZ0GtaIbIauYymrAvRrAV1harOwSrFThY6sTWyofpZnKesG6S7omIGn5ZjZDtT2p5tiGnZh3gZlS2sHLALyoShUjHxgcOd2h4CMuC1JN63t94rXWfbTYH+eraAhufmnayLC8p4UM/lc0syQBy1aKywR+acScICww20xEt8SG3D5rAlJD5d2EPhJaEzGS0NC6apiaQ2CNlvaceWFoEDbkXj0TL4M0iX42va5Ry1jvo8IPwJ9MoAXrVlowyw== app-ssh-github@cds
 ```
 
  * CDS generated 3 files for you :
@@ -144,7 +150,7 @@ This will ask you to choose:
  
  * CDS triggered your workflow from your git push. You can track execution
  ```
->cdsctl workflow status --track
+$ cdsctl workflow status --track
 cdsdemo [b226e84 | steven.guiheux] #1.0 ➤ ✓ MyPipeline     
  ```
 
@@ -156,7 +162,7 @@ cdsdemo [b226e84 | steven.guiheux] #1.0 ➤ ✓ MyPipeline
 
  * Edit the pipeline file to add 
  
-```
+```yml
 version: v1.0
 name: MyPipeline
 jobs:
@@ -171,8 +177,8 @@ jobs:
 
 ```
 
-```
->cdsctl workflow status --track
+```bash
+$ cdsctl workflow status --track
 cdsdemo [d98bd14 | steven.guiheux] #2.0 ➤ ✓ MyPipeline
 ```
 

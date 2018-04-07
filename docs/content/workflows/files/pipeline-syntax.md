@@ -130,4 +130,4 @@ If the action has more that one parameter:
       mySecondParameter: value
 ```
 
-Read more about available [actions]({{< relref "/workflows/pipelines/actions/" >}})
+Read more about available [actions]({{< relref "/workflows/pipelines/actions/_index.md" >}})

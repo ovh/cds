@@ -4,7 +4,7 @@ weight = 3
 
 +++
 
-In CDS, there are 3 types of permissions:
+There are 3 types of permissions:
 
 + Read
 + Read / Execute
@@ -18,7 +18,7 @@ These permissions can be attached to different objects:
 + On pipeline
 + On workflow
 
-In CDS, permissions cannot be attached directly to users. Permissions need to be attached to groups of users. Users inherit their permissions from the groups they are belonging to.
+Permissions cannot be attached directly to users, they need to be attached to groups of users. Users inherit their permissions from the groups they are belonging to.
 
 Example usage: Enforce a strict separation of duties by allowing a group of people to view/inspect a workflow, a second group will be able to push it to a `staging` environment and a third group will be allowed to push it to a `production` environment. You can have a fourth group responsible of editing the workflow if needed.
 

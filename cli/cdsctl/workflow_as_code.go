@@ -22,7 +22,11 @@ var workflowInitCmd = cli.Command{
 	Name:  "init",
 	Short: "Init a workflow",
 	Long: `[WARNING] THIS IS AN EXPERIMENTAL FEATURE
-Initialize a workflow from your current repository, this will create yml files and push them to CDS.`,
+Initialize a workflow from your current repository, this will create yml files and push them to CDS.
+
+Documentation: https://ovh.github.com/cds/gettingstarted/firstworkflow/
+
+`,
 	OptionalArgs: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -111,7 +115,6 @@ func workflowInitRunFromRemote(c cli.Values) error {
 	}
 
 	return nil
-
 }
 
 func workflowInitRun(c cli.Values) error {
@@ -139,7 +142,8 @@ func workflowInitRun(c cli.Values) error {
 		return fmt.Errorf("unable to retrieve repository name")
 	}
 
-	name := strings.SplitN(repoName, "/", 2)[1]
+	fullnames := strings.SplitN(repoName, "/", 2)
+	name := fullnames[1]
 
 	fetchURL, _ := gitRepo.FetchURL()
 	if fetchURL == "" {
@@ -177,98 +181,99 @@ func workflowInitRun(c cli.Values) error {
 	if !shouldCreateWorkflowFiles {
 		fmt.Println("Loading yaml files...")
 		//TODO
-		return fmt.Errorf("Not yet implemented")
+		return fmt.Errorf("Not yet implemented: you have already .cds/ files, please use web UI to use them for now")
+	}
 
-	} else {
-		// Check if the project is linked to a repository
-		proj, err := client.ProjectGet(pkey)
-		if err != nil {
-			return fmt.Errorf("unable to get project: %v", err)
+	// Check if the project is linked to a repository
+	proj, err := client.ProjectGet(pkey)
+	if err != nil {
+		return fmt.Errorf("unable to get project: %v", err)
+	}
+
+	if len(proj.VCSServers) == 0 {
+		//TODO ask to link the project
+		return fmt.Errorf("your CDS project must be linked to a repositories manager to perform this operation")
+	}
+
+	// Ask the user to choose the repository
+	repoManagerNames := make([]string, len(proj.VCSServers))
+	for i, s := range proj.VCSServers {
+		repoManagerNames[i] = s.Name
+	}
+	repoManagerName = cli.MultiChoice("Choose the repository manager", repoManagerNames...)
+
+	// Get repositories from the repository manager
+	repos, err := client.RepositoriesList(pkey, repoManagerName)
+	if err != nil {
+		return fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
+	}
+
+	// Check it the project with it's delegated oauth knows the current repo
+	// Search the repo
+	var repoFound bool
+	fullname := strings.ToLower(fmt.Sprintf("%s/%s", fullnames[0], fullnames[1]))
+	for _, r := range repos {
+		// r.Fullname = CDS/demo
+		if strings.ToLower(r.Fullname) == fullname {
+			repoFound = true
 		}
+	}
+	if !repoFound {
+		return fmt.Errorf("unable to find repository %s from %s: please check your credentials", fullname, repoManagerName)
+	}
 
-		if len(proj.VCSServers) == 0 {
-			//TODO ask to link the project
-			return fmt.Errorf("your CDS project must be linked to a repositories manager to perform this operation")
-		}
+	// Try to find application or create a new one from the repo
+	apps, err := client.ApplicationList(pkey)
+	if err != nil {
+		return fmt.Errorf("unable to list applications: %v", err)
+	}
 
-		// Ask the user to choose the repository
-		repoManagerNames := make([]string, len(proj.VCSServers))
-		for i, s := range proj.VCSServers {
-			repoManagerNames[i] = s.Name
-		}
-		repoManagerName = cli.MultiChoice("Choose the repository manager", repoManagerNames...)
-
-		// Get repositories from the repository manager
-		repos, err := client.RepositoriesList(pkey, repoManagerName)
-		if err != nil {
-			return fmt.Errorf("unable to list repositories from %s: %v", repoManagerName, err)
-		}
-
-		// Check it the project with it's delegated oauth knows the current repo
-		// Search the repo
-		var repoFound bool
-		for _, r := range repos {
-			if r.Fullname == repoName {
-				repoFound = true
+	for i, a := range apps {
+		if a.RepositoryFullname == repoName {
+			fmt.Printf("application %s/%s (%s) found in CDS\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name), cli.Magenta(a.RepositoryFullname))
+			existingApp = &apps[i]
+			break
+		} else if a.Name == name {
+			fmt.Printf("application %s/%s found in CDS. ", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
+			fmt.Printf(cli.Red("But it's not linked to repository")+"\"%s\". ", cli.Red(repoName))
+			if !cli.AskForConfirmation(cli.Red("Do you want to overwrite it?")) {
+				return fmt.Errorf("operation aborted")
 			}
-		}
-		if !repoFound {
-			return fmt.Errorf("unable to find repository %s from %s: please check your credentials", name, repoManagerName)
-		}
-
-		// Try to find application or create a new one from the repo
-		apps, err := client.ApplicationList(pkey)
-		if err != nil {
-			return fmt.Errorf("unable to list applications: %v", err)
-		}
-
-		for i, a := range apps {
-			if a.RepositoryFullname == repoName {
-				fmt.Printf("application %s/%s (%s) found in CDS\n", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name), cli.Magenta(a.RepositoryFullname))
-				existingApp = &apps[i]
-				break
-			} else if a.Name == name {
-				fmt.Printf("application %s/%s found in CDS. ", cli.Magenta(a.ProjectKey), cli.Magenta(a.Name))
-				fmt.Printf(cli.Red("But it's not linked to repository")+"\"%s\". ", cli.Red(repoName))
-				if !cli.AskForConfirmation(cli.Red("Do you want to overwrite it?")) {
-					return fmt.Errorf("operation aborted")
-				}
-				shouldCreateApplication = true
-				break
-			}
-		}
-
-		if existingApp == nil {
 			shouldCreateApplication = true
+			break
 		}
+	}
 
-		// Try to find pipeline or create a new pipeline
-		pips, err := client.PipelineList(pkey)
-		if err != nil {
-			return fmt.Errorf("unable to list pipelines: %v", err)
+	if existingApp == nil {
+		shouldCreateApplication = true
+	}
+
+	// Try to find pipeline or create a new pipeline
+	pips, err := client.PipelineList(pkey)
+	if err != nil {
+		return fmt.Errorf("unable to list pipelines: %v", err)
+	}
+	if len(pips) == 0 {
+		shouldCreatePipeline = true
+	} else if !cli.AskForConfirmation("Do you want to reuse an existing pipeline?") {
+		shouldCreatePipeline = true
+	} else {
+		pipelineNames := make([]string, len(pips))
+		for i, p := range pips {
+			pipelineNames[i] = p.Name
 		}
-		if len(pips) == 0 {
-			shouldCreatePipeline = true
-		} else if !cli.AskForConfirmation("Do you want to reuse an existing pipeline ?") {
-			shouldCreatePipeline = true
-		} else {
-			pipelineNames := make([]string, len(pips))
-			for i, p := range pips {
-				pipelineNames[i] = p.Name
-			}
-			pipName := cli.MultiChoice("Choose your pipeline", pipelineNames...)
-			for i, p := range pips {
-				if pipName == p.Name {
-					existingPip = &pips[i]
-					break
-				}
+		pipName := cli.MultiChoice("Choose your pipeline", pipelineNames...)
+		for i, p := range pips {
+			if pipName == p.Name {
+				existingPip = &pips[i]
+				break
 			}
 		}
 	}
 
 	var pipName string
 	if shouldCreatePipeline {
-		fmt.Print("Enter your pipeline name : ")
+		fmt.Print("Enter your pipeline name: ")
 		pipName = cli.ReadLine()
 	}
 
@@ -396,15 +401,15 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	if err := workflowTarReaderToFiles(dotCDS, tr, true, true); err != nil {
-		return err
+		return fmt.Errorf("error on workflowTarReaderToFiles:%s", err)
 	}
 
 	//Configure local git
 	if err := gitRepo.LocalConfigSet("cds", "workflow", name); err != nil {
-		return err
+		return fmt.Errorf("error on LocalConfigSet:%s", err)
 	}
 	if err := gitRepo.LocalConfigSet("cds", "application", appName); err != nil {
-		return err
+		return fmt.Errorf("error on LocalConfigSet:%s", err)
 	}
 
 	fmt.Printf("Now you can run: ")
