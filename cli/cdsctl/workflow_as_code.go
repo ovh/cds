@@ -274,6 +274,11 @@ func workflowInitRun(c cli.Values) error {
 	if shouldCreatePipeline {
 		fmt.Print("Enter your pipeline name: ")
 		pipName = cli.ReadLine()
+
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(pipName) {
+			return fmt.Errorf("Pipeline name '%s' do not respect pattern %s", pipName, sdk.NamePattern)
+		}
 	}
 
 	if existingPip != nil {
