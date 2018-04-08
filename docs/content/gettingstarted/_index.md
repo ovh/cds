@@ -8,12 +8,13 @@ weight = 2
 {{%items inline%}}
 
 * 'Workflow As Code' Init a CDS Workflow from a repository
-    * 
+    * **Manage your workflow with your code**
     * [Create workflow from an existing repository with command line cdsctl]({{< relref "init_workflow_with_cdsctl.md" >}})
     * [Import a workflow from an existing repository with Web UI]({{< relref "import_workflow_with_webui.md" >}})
 
 * Step by Step, create a workflow with Web UI
-    * [Java Application]({{< relref "step_by_step_java.md" >}})
+    * 
+    * [Standard Application - Build & Deploy]({{< relref "step_by_step_build_deploy.md" >}})
 
 {{%/items%}}
 
