@@ -24,7 +24,7 @@ var workflowInitCmd = cli.Command{
 	Long: `[WARNING] THIS IS AN EXPERIMENTAL FEATURE
 Initialize a workflow from your current repository, this will create yml files and push them to CDS.
 
-Documentation: https://ovh.github.com/cds/gettingstarted/firstworkflow/
+Documentation: https://ovh.github.io/cds/gettingstarted/firstworkflow/
 
 `,
 	OptionalArgs: []cli.Arg{
@@ -401,15 +401,15 @@ func workflowInitRun(c cli.Values) error {
 	}
 
 	if err := workflowTarReaderToFiles(dotCDS, tr, true, true); err != nil {
-		return fmt.Errorf("error on workflowTarReaderToFiles:%s", err)
+		return err
 	}
 
 	//Configure local git
 	if err := gitRepo.LocalConfigSet("cds", "workflow", name); err != nil {
-		return fmt.Errorf("error on LocalConfigSet:%s", err)
+		return err
 	}
 	if err := gitRepo.LocalConfigSet("cds", "application", appName); err != nil {
-		return fmt.Errorf("error on LocalConfigSet:%s", err)
+		return err
 	}
 
 	fmt.Printf("Now you can run: ")
