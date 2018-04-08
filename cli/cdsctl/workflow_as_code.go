@@ -211,15 +211,14 @@ func workflowInitRun(c cli.Values) error {
 	// Check it the project with it's delegated oauth knows the current repo
 	// Search the repo
 	var repoFound bool
-	fullname := strings.ToLower(fmt.Sprintf("%s/%s", fullnames[0], fullnames[1]))
 	for _, r := range repos {
 		// r.Fullname = CDS/demo
-		if strings.ToLower(r.Fullname) == fullname {
+		if strings.ToLower(r.Fullname) == repoName {
 			repoFound = true
 		}
 	}
 	if !repoFound {
-		return fmt.Errorf("unable to find repository %s from %s: please check your credentials", fullname, repoManagerName)
+		return fmt.Errorf("unable to find repository %s from %s: please check your credentials", repoName, repoManagerName)
 	}
 
 	// Try to find application or create a new one from the repo
