@@ -333,7 +333,7 @@ func workflowInitRun(c cli.Values) error {
 			},
 		}
 
-		if !strings.HasPrefix(fetchURL, "https") {
+		if connectionType == "ssh" {
 			app.Keys["app-ssh-"+repoManagerName] = exportentities.KeyValue{
 				Type: sdk.KeyTypeSSH,
 			}
