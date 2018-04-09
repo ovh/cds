@@ -42,47 +42,6 @@ func GetAudit(db gorp.SqlExecutor, auditID int64) ([]sdk.Variable, error) {
 	return vars, err
 }
 
-//Deprecated
-// GetEnvironmentAudit Get environment audit for the given project
-func GetEnvironmentAudit(db gorp.SqlExecutor, key, envName string) ([]sdk.VariableAudit, error) {
-	audits := []sdk.VariableAudit{}
-	query := `
-		SELECT environment_variable_audit_old.id, environment_variable_audit_old.versionned, environment_variable_audit_old.data, environment_variable_audit_old.author
-		FROM environment_variable_audit_old
-		JOIN environment ON environment.id = environment_variable_audit_old.environment_id
-		JOIN project ON project.id = environment.project_id
-		WHERE project.projectkey = $1 AND environment.name = $2
-		ORDER BY environment_variable_audit_old.versionned DESC
-	`
-	rows, err := db.Query(query, key, envName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var audit sdk.VariableAudit
-		var data string
-		err := rows.Scan(&audit.ID, &audit.Versionned, &data, &audit.Author)
-		if err != nil {
-			return nil, err
-		}
-		var vars []sdk.Variable
-		err = json.Unmarshal([]byte(data), &vars)
-		if err != nil {
-			return nil, err
-		}
-		for i := range vars {
-			v := &vars[i]
-			if sdk.NeedPlaceholder(v.Type) {
-				v.Value = sdk.PasswordPlaceholder
-			}
-		}
-		audit.Variables = vars
-		audits = append(audits, audit)
-	}
-	return audits, nil
-}
-
 // GetAllVariableNameByProject Get all variable from all environment
 func GetAllVariableNameByProject(db gorp.SqlExecutor, key string) ([]string, error) {
 	nameArray := []string{}
@@ -319,12 +278,8 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 }
 
 // UpdateVariable Update a variable in the given environment
-func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u *sdk.User) error {
+func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, varBefore sdk.Variable, u *sdk.User) error {
 	varValue := variable.Value
-	varBefore, errV := GetVariableByID(db, envID, variable.ID, WithClearPassword())
-	if errV != nil {
-		return sdk.WrapError(errV, "UpdateVariable> Cannot load variable %d", variable.ID)
-	}
 
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {

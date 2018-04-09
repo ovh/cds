@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -132,160 +132,6 @@ func loadEnvironmentUsage(db gorp.SqlExecutor, projectKey, envName string) (sdk.
 	return usage, nil
 }
 
-// Deprecated
-func (api *API) updateEnvironmentsHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
-		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
-		if err != nil {
-			return sdk.WrapError(err, "updateEnvironmentsHandler: Cannot load %s", key)
-		}
-
-		var envs []sdk.Environment
-		if err := UnmarshalBody(r, &envs); err != nil {
-			return err
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot start transaction")
-		}
-		defer tx.Rollback()
-		for i := range envs {
-			env := &envs[i]
-			env.ProjectID = proj.ID
-
-			if env.ID != 0 {
-				err = environment.UpdateEnvironment(tx, env)
-				if err != nil {
-					return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot update environment")
-				}
-			} else {
-				err = environment.InsertEnvironment(tx, env)
-				if err != nil {
-					return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot insert environment")
-				}
-				env.Permission = permission.PermissionReadWriteExecute
-			}
-
-			if len(env.EnvironmentGroups) == 0 {
-				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateEnvironmentsHandler> Cannot have an environment (%s) without group", env.Name)
-			}
-			found := false
-			for _, eg := range env.EnvironmentGroups {
-				if eg.Permission == permission.PermissionReadWriteExecute {
-					found = true
-				}
-			}
-			if !found {
-				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateEnvironmentsHandler> Cannot have an environment (%s) without group with write permission", env.Name)
-			}
-
-			if err := group.DeleteAllGroupFromEnvironment(tx, env.ID); err != nil {
-				return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot delete groups from environment %s for update", env.Name)
-			}
-			for groupIndex := range env.EnvironmentGroups {
-				groupEnv := &env.EnvironmentGroups[groupIndex]
-				g, err := group.LoadGroup(tx, groupEnv.Group.Name)
-				if err != nil {
-					log.Warning("updateEnvironmentsHandler> Cannot load group %s: %s\n", groupEnv.Group.Name, err)
-				}
-
-				err = group.InsertGroupInEnvironment(tx, env.ID, g.ID, groupEnv.Permission)
-				if err != nil {
-					return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot insert group %s on environments %s", groupEnv.Group.Name, env.Name)
-				}
-
-				// Update group ID
-				groupEnv.Group.ID = g.ID
-			}
-
-			preload, err := environment.GetAllVariable(tx, key, env.Name, environment.WithClearPassword())
-			if err != nil {
-				return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot preload variable value")
-			}
-
-			err = environment.DeleteAllVariable(tx, env.ID)
-			if err != nil {
-				return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot delete variables on environments for update")
-			}
-
-			for varIndex := range env.Variable {
-				varEnv := &env.Variable[varIndex]
-				switch varEnv.Type {
-				case sdk.SecretVariable:
-					found := false
-					if sdk.NeedPlaceholder(varEnv.Type) && varEnv.Value == sdk.PasswordPlaceholder {
-						for _, p := range preload {
-							if p.ID == varEnv.ID {
-								found = true
-								varEnv.Value = p.Value
-								break
-							}
-						}
-						if !found {
-							log.Warning("UpdateEnvironments> Previous value of %s/%s.%s not found, set to empty\n", key, env.Name, varEnv.Name)
-							varEnv.Value = ""
-						}
-					}
-					if varEnv.Value == "" {
-						errMsg := fmt.Sprintf("Variable %s on environment %s on project %s cannot be empty", varEnv.Name, env.Name, key)
-						log.Warning("updateEnvironmentsHandler> %s (%s)\n", errMsg, getUser(ctx).Username)
-						return sdk.NewError(sdk.ErrInvalidSecretValue, fmt.Errorf("%s", errMsg))
-					}
-					err = environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx))
-					if err != nil {
-						return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot insert variables on environments")
-					}
-
-					// put placeholder because env.Variable will be in the handler response
-					varEnv.Value = sdk.PasswordPlaceholder
-					break
-				case sdk.KeyVariable:
-					if varEnv.Value == "" {
-						err := environment.AddKeyPairToEnvironment(tx, env.ID, varEnv.Name, getUser(ctx))
-						if err != nil {
-							return sdk.WrapError(err, "updateEnvironmentsHandler> cannot generate keypair")
-						}
-					} else if varEnv.Value == sdk.PasswordPlaceholder {
-						for _, p := range preload {
-							if p.ID == varEnv.ID {
-								varEnv.Value = p.Value
-							}
-						}
-						err = environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx))
-						if err != nil {
-							return sdk.WrapError(err, "updateEnvironments> Cannot insert variable %s", varEnv.Name)
-						}
-					}
-					// put placeholder because env.Variable will be in the handler response
-					varEnv.Value = sdk.PasswordPlaceholder
-					break
-				default:
-					err = environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx))
-					if err != nil {
-						return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot insert variables on environments")
-					}
-				}
-			}
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot update last modified date")
-		}
-		proj.Environments = envs
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot commit transaction")
-		}
-
-		return WriteJSON(w, proj, http.StatusOK)
-	}
-}
-
 func (api *API) addEnvironmentHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
@@ -336,6 +182,8 @@ func (api *API) addEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
 
+		event.PublishEnvironmentAdd(key, env, getUser(ctx))
+
 		return WriteJSON(w, proj, http.StatusOK)
 	}
 }
@@ -378,6 +226,8 @@ func (api *API) deleteEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteEnvironmentHandler> Cannot commit transaction")
 		}
 
+		event.PublishEnvironmentDelete(p.Key, *env, getUser(ctx))
+
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
@@ -399,7 +249,7 @@ func (api *API) updateEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnv, "updateEnvironmentHandler> Cannot load environment %s", environmentName)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -409,6 +259,7 @@ func (api *API) updateEnvironmentHandler() Handler {
 			return err
 		}
 
+		oldEnv := env
 		env.Name = envPost.Name
 
 		tx, errBegin := api.mustDB().Begin()
@@ -419,40 +270,6 @@ func (api *API) updateEnvironmentHandler() Handler {
 
 		if err := environment.UpdateEnvironment(tx, env); err != nil {
 			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update environment %s", environmentName)
-		}
-
-		if len(envPost.Variable) > 0 {
-			preload, err := environment.GetAllVariable(tx, projectKey, env.Name, environment.WithClearPassword())
-			if err != nil {
-				return sdk.WrapError(err, "updateEnvironmentHandler> Cannot preload variable value")
-			}
-
-			err = environment.DeleteAllVariable(tx, env.ID)
-			if err != nil {
-				return sdk.WrapError(err, "updateEnvironmentHandler> Cannot delete variables on environments for update")
-			}
-
-			for varIndex := range envPost.Variable {
-				varEnv := &envPost.Variable[varIndex]
-				found := false
-				if sdk.NeedPlaceholder(varEnv.Type) && varEnv.Value == sdk.PasswordPlaceholder {
-					for _, p := range preload {
-						if p.Name == varEnv.Name {
-							found = true
-							varEnv.Value = p.Value
-							break
-						}
-					}
-					if !found {
-						log.Warning("updateEnvironmentHandler> Previous value of %s/%s.%s not found, set to empty\n", projectKey, env.Name, varEnv.Name)
-						varEnv.Value = ""
-					}
-				}
-				err = environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx))
-				if err != nil {
-					return sdk.WrapError(err, "updateEnvironmentHandler> Cannot insert variables on environments")
-				}
-			}
 		}
 
 		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
@@ -466,6 +283,8 @@ func (api *API) updateEnvironmentHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot commit transaction")
 		}
+
+		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getUser(ctx))
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
@@ -557,6 +376,8 @@ func (api *API) cloneEnvironmentHandler() Handler {
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}
+
+		event.PublishEnvironmentAdd(p.Key, envPost, getUser(ctx))
 
 		return WriteJSON(w, p, http.StatusOK)
 	}

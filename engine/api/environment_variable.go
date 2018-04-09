@@ -3,100 +3,14 @@ package api
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
-
-// Deprecated
-func (api *API) getEnvironmentsAuditHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
-
-		audits, errAudit := environment.GetEnvironmentAudit(api.mustDB(), key, envName)
-		if errAudit != nil {
-			return sdk.WrapError(errAudit, "getEnvironmentsAuditHandler: Cannot get environment audit for project %s", key)
-		}
-		return WriteJSON(w, audits, http.StatusOK)
-	}
-}
-
-// Deprecated
-func (api *API) restoreEnvironmentAuditHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
-		auditIDString := vars["auditID"]
-
-		auditID, errAudit := strconv.ParseInt(auditIDString, 10, 64)
-		if errAudit != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "restoreEnvironmentAuditHandler: Cannot parse auditID %s", auditIDString)
-		}
-
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
-		if errProj != nil {
-			return sdk.WrapError(errProj, "restoreEnvironmentAuditHandler: Cannot load project %s", key)
-		}
-
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
-		if errEnv != nil {
-			return sdk.WrapError(errEnv, "restoreEnvironmentAuditHandler: Cannot load environment %s", envName)
-		}
-
-		auditVars, errGetAudit := environment.GetAudit(api.mustDB(), auditID)
-		if errGetAudit != nil {
-			return sdk.WrapError(errGetAudit, "restoreEnvironmentAuditHandler: Cannot get environment audit for project %s", key)
-		}
-
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "restoreEnvironmentAuditHandler: Cannot start transaction ")
-		}
-		defer tx.Rollback()
-
-		if err := environment.DeleteAllVariable(tx, env.ID); err != nil {
-			return sdk.WrapError(err, "restoreEnvironmentAuditHandler> Cannot delete variables on environments for update")
-		}
-
-		for varIndex := range auditVars {
-			varEnv := &auditVars[varIndex]
-			if sdk.NeedPlaceholder(varEnv.Type) {
-				value, errDecrypt := secret.Decrypt([]byte(varEnv.Value))
-				if errDecrypt != nil {
-					return sdk.WrapError(errDecrypt, "restoreEnvironmentAuditHandler> Cannot decrypt variable %s on environment %s", varEnv.Name, envName)
-				}
-				varEnv.Value = string(value)
-			}
-			if err := environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "restoreEnvironmentAuditHandler> Cannot insert variables on environments")
-			}
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "restoreEnvironmentAuditHandler> Cannot update last modified date")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "restoreEnvironmentAuditHandler: Cannot commit transaction")
-		}
-
-		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
-		if errEnvs != nil {
-			return sdk.WrapError(errEnvs, "restoreEnvironmentAuditHandler: Cannot load environments")
-		}
-
-		return WriteJSON(w, p, http.StatusOK)
-	}
-}
 
 func (api *API) getVariableAuditInEnvironmentHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -206,6 +120,8 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
 		}
 
+		event.PublishEnvironmentVariableDelete(key, *env, *varToDelete, getUser(ctx))
+
 		return WriteJSON(w, p, http.StatusOK)
 	}
 }
@@ -238,7 +154,12 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, getUser(ctx)); err != nil {
+		varBefore, errV := environment.GetVariableByID(api.mustDB(), env.ID, newVar.ID, environment.WithClearPassword())
+		if errV != nil {
+			return sdk.WrapError(errV, "updateVariableInEnvironmentHandler> Cannot load variable %d", newVar.ID)
+		}
+
+		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
 		}
 
@@ -259,6 +180,8 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
 		}
+
+		event.PublishEnvironmentVariableUpdate(key, *env, newVar, varBefore, getUser(ctx))
 
 		return WriteJSON(w, p, http.StatusOK)
 	}
@@ -323,6 +246,8 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
 		}
+
+		event.PublishEnvironmentVariableAdd(key, *env, newVar, getUser(ctx))
 
 		return WriteJSON(w, p, http.StatusOK)
 	}
