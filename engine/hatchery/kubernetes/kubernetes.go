@@ -222,7 +222,7 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 			Containers: []apiv1.Container{
 				{
 					Name:  name,
-					Image: spawnArgs.Model.Image,
+					Image: spawnArgs.Model.ModelDocker.Image,
 					Env:   envs,
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{

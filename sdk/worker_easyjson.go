@@ -637,8 +637,12 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk4(in *jlexer.Lexer, out *ModelVirtu
 			out.Image = string(in.String())
 		case "flavor":
 			out.Flavor = string(in.String())
-		case "user_data":
-			out.UserData = string(in.String())
+		case "pre_cmd":
+			out.PreCmd = string(in.String())
+		case "cmd":
+			out.Cmd = string(in.String())
+		case "post_cmd":
+			out.PostCmd = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -653,7 +657,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk4(out *jwriter.Writer, in ModelVirt
 	out.RawByte('{')
 	first := true
 	_ = first
-	{
+	if in.Image != "" {
 		const prefix string = ",\"image\":"
 		if first {
 			first = false
@@ -673,15 +677,35 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk4(out *jwriter.Writer, in ModelVirt
 		}
 		out.String(string(in.Flavor))
 	}
-	{
-		const prefix string = ",\"user_data\":"
+	if in.PreCmd != "" {
+		const prefix string = ",\"pre_cmd\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
 		} else {
 			out.RawString(prefix)
 		}
-		out.String(string(in.UserData))
+		out.String(string(in.PreCmd))
+	}
+	if in.Cmd != "" {
+		const prefix string = ",\"cmd\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Cmd))
+	}
+	if in.PostCmd != "" {
+		const prefix string = ",\"post_cmd\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.PostCmd))
 	}
 	out.RawByte('}')
 }
@@ -748,7 +772,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk5(out *jwriter.Writer, in ModelDock
 	out.RawByte('{')
 	first := true
 	_ = first
-	{
+	if in.Image != "" {
 		const prefix string = ",\"image\":"
 		if first {
 			first = false
@@ -758,7 +782,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk5(out *jwriter.Writer, in ModelDock
 		}
 		out.String(string(in.Image))
 	}
-	{
+	if in.Memory != 0 {
 		const prefix string = ",\"memory\":"
 		if first {
 			first = false
@@ -768,7 +792,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk5(out *jwriter.Writer, in ModelDock
 		}
 		out.Int64(int64(in.Memory))
 	}
-	{
+	if in.Cmd != "" {
 		const prefix string = ",\"cmd\":"
 		if first {
 			first = false
@@ -966,7 +990,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in Model) {
 		}
 		out.String(string(in.Type))
 	}
-	{
+	if true {
 		const prefix string = ",\"model_virtual_machine\":"
 		if first {
 			first = false
@@ -976,7 +1000,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in Model) {
 		}
 		out.Raw((in.ModelVirtualMachine).MarshalJSON())
 	}
-	{
+	if true {
 		const prefix string = ",\"model_docker\":"
 		if first {
 			first = false

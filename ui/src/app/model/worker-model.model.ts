@@ -7,8 +7,9 @@ export class WorkerModel {
     name: string;
     description: string;
     type: string;
-    image: string;
-    capabilities: Array<Requirement>;
+    model_docker: ModelDocker;
+    model_virtual_machine: ModelVirtualMachine;
+    registered_capabilities: Array<Requirement>;
     created_by: User;
     owner_id: number;
     group_id: number;
@@ -16,4 +17,18 @@ export class WorkerModel {
     group: Group;
     is_official: boolean;
     is_deprecated: boolean;
+}
+
+export class ModelDocker {
+  image: string;
+  cmd: string;
+  memory: number;
+}
+
+export class ModelVirtualMachine {
+  image: string;
+  flavor: string;
+  pre_cmd: string;
+  cmd: string;
+  post_cmd: string;
 }

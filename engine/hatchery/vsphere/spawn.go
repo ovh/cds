@@ -89,13 +89,8 @@ func (h *HatcheryVSphere) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string
 func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine, error) {
 	log.Info("Create vm model %s", model.Name)
 	ctx := context.Background()
-	imgCfg := imageConfiguration{}
 
-	if err := json.Unmarshal([]byte(model.Image), &imgCfg); err != nil {
-		return nil, sdk.WrapError(err, "createVMModel> Cannot unmarshal image")
-	}
-
-	vm, errV := h.finder.VirtualMachine(ctx, imgCfg.OS)
+	vm, errV := h.finder.VirtualMachine(ctx, model.ModelVirtualMachine.Image)
 	if errV != nil {
 		return vm, sdk.WrapError(errV, "createVMModel> Cannot find virtual machine")
 	}
@@ -129,7 +124,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
 	}
 
-	if _, errS := h.launchClientOp(vm, imgCfg.UserData+"; shutdown -h now", nil); errS != nil {
+	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PreCmd+"; "+model.ModelVirtualMachine.Cmd+"; "+model.ModelVirtualMachine.PostCmd, nil); errS != nil {
 		log.Warning("createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {

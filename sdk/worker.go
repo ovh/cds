@@ -87,8 +87,8 @@ type Model struct {
 	Name                   string              `json:"name"  db:"name" cli:"name"`
 	Description            string              `json:"description"  db:"description" cli:"description"`
 	Type                   string              `json:"type"  db:"type" cli:"type"`
-	ModelVirtualMachine    ModelVirtualMachine `json:"model_virtual_machine" db:"-" cli:"-"`
-	ModelDocker            ModelDocker         `json:"model_docker" db:"-" cli:"-"`
+	ModelVirtualMachine    ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"-" cli:"-"`
+	ModelDocker            ModelDocker         `json:"model_docker,omitempty" db:"-" cli:"-"`
 	Communication          string              `json:"communication"  db:"communication" cli:"communication"`
 	Disabled               bool                `json:"disabled"  db:"disabled" cli:"disabled"`
 	Restricted             bool                `json:"restricted"  db:"restricted" cli:"restricted"`
@@ -111,14 +111,42 @@ type Model struct {
 
 // ModelVirtualMachine for openstack or vsphere
 type ModelVirtualMachine struct {
-	Image    string `json:"image"`
-	Flavor   string `json:"flavor,omitempty"`
-	UserData string `json:"user_data"`
+	Image   string `json:"image,omitempty"`
+	Flavor  string `json:"flavor,omitempty"`
+	PreCmd  string `json:"pre_cmd,omitempty"`
+	Cmd     string `json:"cmd,omitempty"`
+	PostCmd string `json:"post_cmd,omitempty"`
 }
 
 // ModelDocker for swarm, marathon and kubernetes
 type ModelDocker struct {
-	Image  string `json:"image"`
-	Memory int64  `json:"memory"`
-	Cmd    string `json:"cmd"`
+	Image  string `json:"image,omitempty"`
+	Memory int64  `json:"memory,omitempty"`
+	Cmd    string `json:"cmd,omitempty"`
+}
+
+// WorkerArgs is all the args needed to run a worker
+type WorkerArgs struct {
+	API                string `json:"api"`
+	Token              string `json:"token"`
+	Name               string `json:"name"`
+	BaseDir            string `json:"base_dir"`
+	HTTPInsecure       bool   `json:"http_insecure"`
+	Key                string `json:"key"`
+	Model              int64  `json:"model"`
+	Hatchery           int64  `json:"hatchery"`
+	HatcheryName       string `json:"hatchery_name"`
+	PipelineBuildJobID int64  `json:"pipeline_build_job_id"`
+	WorkflowJobID      int64  `json:"workflow_job_id"`
+	TTL                int    `json:"ttl"`
+	Register           string `json:"register"`
+	FromWorkerImage    bool   `json:"from_worker_image"`
+	//Graylog params
+	GraylogHost       string `json:"graylog_host"`
+	GraylogPort       int    `json:"graylog_port"`
+	GraylogExtraKey   string `json:"graylog_extra_key"`
+	GraylogExtraValue string `json:"graylog_extra_value"`
+	//GRPC Params
+	GrpcAPI      string `json:"grpc_api"`
+	GrpcInsecure bool   `json:"grpc_insecure"`
 }

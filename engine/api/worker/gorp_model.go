@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"database/sql"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
@@ -23,8 +24,24 @@ func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	query := "update worker_model set created_by = $2 where id = $1"
-	if _, err := s.Exec(query, m.ID, btes); err != nil {
+	var modelBtes []byte
+	switch m.Type {
+	case sdk.Docker:
+		var err error
+		modelBtes, err = json.Marshal(m.ModelDocker)
+		if err != nil {
+			return err
+		}
+	default:
+		var err error
+		modelBtes, err = json.Marshal(m.ModelVirtualMachine)
+		if err != nil {
+			return err
+		}
+	}
+
+	query := "update worker_model set created_by = $2, model = $3 where id = $1"
+	if _, err := s.Exec(query, m.ID, btes, modelBtes); err != nil {
 		return err
 	}
 
@@ -81,17 +98,26 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 
 	//Load created_by
 	m.CreatedBy = sdk.User{}
-	str, errSelect := s.SelectNullStr("select created_by from worker_model where id = $1", &m.ID)
-	if errSelect != nil {
-		return errSelect
-	}
-	if !str.Valid || str.String == "" {
-		return nil
-	}
-
-	if err := json.Unmarshal([]byte(str.String), &m.CreatedBy); err != nil {
+	var createdBy, model sql.NullString
+	if err := s.QueryRow("select created_by, model from worker_model where id = $1", m.ID).Scan(&createdBy, &model); err != nil {
 		return err
 	}
+
+	switch m.Type {
+	case sdk.Docker:
+		if err := gorpmapping.JSONNullString(model, &m.ModelDocker); err != nil {
+			return sdk.WrapError(err, "PostSelect> cannot unmarshall for docker model")
+		}
+	default:
+		if err := gorpmapping.JSONNullString(model, &m.ModelVirtualMachine); err != nil {
+			return sdk.WrapError(err, "PostSelect> cannot unmarshall for vm model")
+		}
+	}
+
+	if err := gorpmapping.JSONNullString(createdBy, &m.CreatedBy); err != nil {
+		return err
+	}
+
 	m.CreatedBy.Groups = nil
 	m.CreatedBy.Permissions = sdk.UserPermissions{}
 	m.CreatedBy.Auth = sdk.Auth{}

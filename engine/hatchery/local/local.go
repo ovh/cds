@@ -1,8 +1,10 @@
 package local
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"os"
 	"os/exec"
 	"strings"
@@ -145,54 +147,70 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s (%s) - %s", wName, spawnArgs.Model.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) - %s", wName, spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.LogInfo)
 	}
 
-	var args []string
-	args = append(args, fmt.Sprintf("--api=%s", h.Client().APIURL()))
-	args = append(args, fmt.Sprintf("--token=%s", h.Config.API.Token))
-	args = append(args, fmt.Sprintf("--basedir=%s", h.Config.Basedir))
-	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
-	args = append(args, fmt.Sprintf("--name=%s", wName))
-	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
-	args = append(args, fmt.Sprintf("--hatchery-name=%s", h.hatch.Name))
-	args = append(args, fmt.Sprintf("--insecure=%t", h.Config.API.HTTP.Insecure))
-
-	if h.Config.Provision.WorkerLogsOptions.Graylog.Host != "" {
-		args = append(args, fmt.Sprintf("--graylog-host=%s", h.Config.Provision.WorkerLogsOptions.Graylog.Host))
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Token:             h.Config.API.Token,
+		BaseDir:           h.Config.Basedir,
+		HTTPInsecure:      h.Config.API.HTTP.Insecure,
+		Name:              wName,
+		Key:               h.Configuration().API.Token,
+		Model:             h.Hatchery().Model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
-	if h.Config.Provision.WorkerLogsOptions.Graylog.Port != 0 {
-		args = append(args, fmt.Sprintf("--graylog-port=%d", h.Config.Provision.WorkerLogsOptions.Graylog.Port))
-	}
-	if h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey))
-	}
-	if h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue))
-	}
-	if h.Config.API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		args = append(args, fmt.Sprintf("--grpc-api=%s", h.Config.API.GRPC.URL))
-		args = append(args, fmt.Sprintf("--grpc-insecure=%t", h.Config.API.GRPC.Insecure))
-	}
-
-	args = append(args, "--single-use")
-	args = append(args, "--force-exit")
 
 	if spawnArgs.JobID > 0 {
 		if spawnArgs.IsWorkflowJob {
-			args = append(args, fmt.Sprintf("--booked-workflow-job-id=%d", spawnArgs.JobID))
+			udataParam.WorkflowJobID = spawnArgs.JobID
 		} else {
-			args = append(args, fmt.Sprintf("--booked-pb-job-id=%d", spawnArgs.JobID))
+			udataParam.PipelineBuildJobID = spawnArgs.JobID
 		}
 	}
 
 	if spawnArgs.RegisterOnly {
-		args = append(args, "register")
+		udataParam.Register = "register"
 	}
 
-	cmd := exec.Command("worker", args...)
+	if spawnArgs.IsWorkflowJob {
+		udataParam.WorkflowJobID = spawnArgs.JobID
+	} else {
+		udataParam.PipelineBuildJobID = spawnArgs.JobID
+	}
+
+	if spawnArgs.Model.ModelVirtualMachine.Cmd == "" {
+		return "", fmt.Errorf("hatchery local> Cannot launch main worker command because it's empty")
+	}
+
+	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelVirtualMachine.Cmd)
+	if errt != nil {
+		return "", errt
+	}
+	var buffer bytes.Buffer
+	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
+		return "", errTmpl
+	}
+
+	cmdSplitted := strings.Split(buffer.String(), " -")
+	args := cmdSplitted[1:]
+	if spawnArgs.RegisterOnly {
+		args = cmdSplitted[1 : len(cmdSplitted)-1]
+	}
+	for i := range args {
+		cmdSplitted[i+1] = "-" + strings.Trim(cmdSplitted[i+1], " ")
+	}
+	log.Debug("Command exec: %v", cmdSplitted)
+	cmd := exec.Command(cmdSplitted[0], cmdSplitted[1:]...)
 
 	// Clearenv
 	cmd.Env = []string{}
@@ -206,14 +224,15 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	if err = cmd.Start(); err != nil {
 		return "", err
 	}
+
 	h.Lock()
 	h.workers[wName] = workerCmd{cmd: cmd, created: time.Now()}
 	h.Unlock()
-
 	// Wait in a goroutine so that when process exits, Wait() update cmd.ProcessState
 	go func() {
 		cmd.Wait()
 	}()
+
 	return wName, nil
 }
 
@@ -288,10 +307,12 @@ func (h *HatcheryLocal) Init() error {
 	h.hatch = &sdk.Hatchery{
 		Name: genname,
 		Model: sdk.Model{
-			Name:         genname,
-			Image:        genname,
-			Capabilities: capa,
-			Provision:    int64(h.Config.NbProvision),
+			Name: genname,
+			ModelVirtualMachine: sdk.ModelVirtualMachine{
+				Image: genname,
+			},
+			RegisteredCapabilities: capa,
+			Provision:              int64(h.Config.NbProvision),
 		},
 		Version: sdk.VERSION,
 	}

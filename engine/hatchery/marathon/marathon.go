@@ -188,9 +188,9 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 // requirements services are not supported
 func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.LogInfo)
 	}
 
 	var logJob string
@@ -209,7 +209,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	if spawnArgs.RegisterOnly {
 		workerName = "register-" + workerName
 	}
-	forcePull := strings.HasSuffix(spawnArgs.Model.Image, ":latest")
+	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
 
 	env := map[string]string{
 		"CDS_API":           h.Client().APIURL(),
@@ -270,7 +270,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 		Container: &marathon.Container{
 			Docker: &marathon.Docker{
 				ForcePullImage: &forcePull,
-				Image:          spawnArgs.Model.Image,
+				Image:          spawnArgs.Model.ModelDocker.Image,
 				Network:        "BRIDGE",
 			},
 			Type: "DOCKER",
