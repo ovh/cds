@@ -22,12 +22,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type izanamiMock struct{}
-
-func (*izanamiMock) Feature() *izanami.FeatureClient {
-	return nil
-}
-
 func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
@@ -912,7 +906,8 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
-	feature.SetClient(&izanamiMock{})
+	c, _ := izanami.New("", "clientID", "secret")
+	feature.SetClient(c)
 
 	api.Cache.Set("feature:"+proj.Key, feature.ProjectFeatures{
 		Key: proj.Key,

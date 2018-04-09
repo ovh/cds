@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
+	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/feature"
@@ -138,7 +139,8 @@ func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
 		},
 	}))
 
-	feature.SetClient(&izanamiMock{})
+	c, _ := izanami.New("", "clientID", "secret")
+	feature.SetClient(c)
 
 	api.Cache.Set("feature:"+p.Key, feature.ProjectFeatures{
 		Key: p.Key,
@@ -328,7 +330,8 @@ func Test_postPerformImportAsCodeDisabledFeatureHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
-	feature.SetClient(&izanamiMock{})
+	c, _ := izanami.New("", "clientID", "secret")
+	feature.SetClient(c)
 
 	api.Cache.Set("feature:"+pkey, feature.ProjectFeatures{
 		Key: pkey,
