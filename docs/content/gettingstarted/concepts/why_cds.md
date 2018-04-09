@@ -107,7 +107,7 @@ Hatcheries support this role and are dedicated to the technologies used. To date
 - A **Local hatchery**: allows to launch Workers on a host.
 - A **Kubernetes hatchery**: allows to launch Workers CDS in Kubernetes Pods.
  
-{{< figure src="/images/concepts_why_cds_hacheries.png" title="a CDS Hatchery" >}}
+{{< figure src="/images/concepts_why_cds_hacheries.png" title="CDS Hatcheries" >}}
 
 ## 3 - High Availability
 
