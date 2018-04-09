@@ -403,7 +403,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 	w.RootID = w.Root.ID
 
-	if w.Root.Context != nil && w.Root.Context.Application != nil && w.Root.Context.Application.RepositoryFullname != "" {
+	if w.Root.IsLinkedToRepo() {
 		if w.Metadata == nil {
 			w.Metadata = sdk.Metadata{}
 		}
