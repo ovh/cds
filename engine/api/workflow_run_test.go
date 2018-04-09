@@ -709,6 +709,9 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
+	// allow all features
+	feature.SetClient(nil)
+
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,

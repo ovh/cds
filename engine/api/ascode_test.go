@@ -242,6 +242,8 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	repositoryService.Delete(mockService)
 	test.NoError(t, repositoryService.Insert(mockService))
 
+	feature.SetClient(nil)
+
 	UUID := sdk.UUID()
 
 	//This is a mock for the repositories service

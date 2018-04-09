@@ -41,16 +41,20 @@ func List() []string {
 
 // Init initialize izanami client
 func Init(apiURL, clientID, clientSecret string) error {
-	izc, err := client.New(apiURL, clientID, clientSecret)
-	SetClient(izc)
-	return err
+	// initialize only once izanami.
+	// it's useful to do it here and not in SetClient func, which
+	// should be use by unitTest
+	if izanami == nil {
+		izc, err := client.New(apiURL, clientID, clientSecret)
+		SetClient(izc)
+		return err
+	}
+	return nil
 }
 
 // SetClient set a client driver for izanami
 func SetClient(client IzanamiClient) {
-	if izanami == nil {
-		izanami = client
-	}
+	izanami = client
 }
 
 // GetFromCache get feature tree for the given project from cache
