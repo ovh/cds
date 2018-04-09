@@ -1,6 +1,6 @@
 +++
 title = "Why CDS?"
-weight = 3
+weight = 1
 
 +++
 
@@ -117,7 +117,7 @@ CDS is a very active OpenSource project, we deploy new versions of CDS in produc
 without impacting the work of the users. It is not conceivable to ask our developers to stop
 their work so that we can update CDS. This implies some basic principles:
 
-- There is no instance "master": we can update any instance CDS at any time
+- There is no instance "master": we can update any instance CDS at any time.
 - No data is stored on the FileSystem of the CDS API. User data is stored in a PostgreSQL database.
 - To limit frequent SQL queries on the database, some data is stored in a Redis.
 
