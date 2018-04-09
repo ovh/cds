@@ -1,3 +1,7 @@
+#
+# PLEASE READ https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/
+#
+
 version: '3'
 
 services:
