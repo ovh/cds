@@ -414,7 +414,8 @@ func getDefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u
 			}
 		}
 
-		if wf.Root.Context.HasDefaultPayload() {
+		defaultPayload = wf.Root.Context.DefaultPayload
+		if !wf.Root.Context.HasDefaultPayload() {
 			defaultPayload = sdk.WorkflowNodeContextDefaultPayloadVCS{
 				GitBranch:     defaultBranch,
 				GitRepository: wf.Root.Context.Application.RepositoryFullname,
