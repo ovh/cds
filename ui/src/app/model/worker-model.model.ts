@@ -17,6 +17,11 @@ export class WorkerModel {
     group: Group;
     is_official: boolean;
     is_deprecated: boolean;
+
+    constructor() {
+      this.model_docker = new ModelDocker();
+      this.model_virtual_machine = new ModelVirtualMachine();
+    }
 }
 
 export class ModelDocker {

@@ -81,6 +81,10 @@
                 <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_virtual_machine.image" [disabled]="loading">
               </div>
               <div class="field">
+                <label>Flavor</label>
+                <input class="ui input" type="text" name="flavor" [(ngModel)]="workerModel.model_virtual_machine.flavor" [disabled]="loading">
+              </div>
+              <div class="field">
                 <label>Pre worker command</label>
                 <textarea class="ui input" name="pre_cmd" [(ngModel)]="workerModel.model_virtual_machine.pre_cmd" [disabled]="loading"></textarea>
               </div>
