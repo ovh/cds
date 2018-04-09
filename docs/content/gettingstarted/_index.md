@@ -24,6 +24,7 @@ weight = 2
 
 * Understand the concepts
     * **Before design your workflows**
+    * [Why CDS?]({{< relref "gettingstarted/concepts/why_cds.md" >}})
     * [What's a workflow, a pipeline, a job, an action...]({{< relref "gettingstarted/concepts/_index.md" >}})
 
 * Understand the Scopes
