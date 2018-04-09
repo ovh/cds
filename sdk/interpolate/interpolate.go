@@ -52,6 +52,9 @@ func Do(input string, vars map[string]string) (string, error) {
 		kAsVar := "{{." + k
 		kbAsVar := "{{." + kb
 		input = strings.Replace(input, kAsVar, kbAsVar, -1)
+		kAsVar = "{{. " + k
+		kbAsVar = "{{. " + kb
+		input = strings.Replace(input, kAsVar, kbAsVar, -1)
 	}
 
 	var helper string
