@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/venom"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -255,9 +254,6 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	// count job in queue
 	testCountGetWorkflowJob(t, api, router, &ctx)
 
-	// allow all features
-	feature.SetClient(nil)
-
 	// Get workflow run number
 
 	//Prepare request
@@ -305,9 +301,6 @@ func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
 
-	// allow all features
-	feature.SetClient(nil)
-
 	uri := router.GetRoute("POST", api.postWorkflowJobRequirementsErrorHandler, nil)
 	test.NotEmpty(t, uri)
 
@@ -332,9 +325,6 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
-
-	// allow all features
-	feature.SetClient(nil)
 
 	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
@@ -377,9 +367,6 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 	testGetWorkflowJobAsHatchery(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	// allow all features
-	feature.SetClient(nil)
-
 	//Prepare request
 	vars := map[string]string{
 		"key":              ctx.project.Key,
@@ -406,9 +393,6 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
-
-	// allow all features
-	feature.SetClient(nil)
 
 	//Prepare request
 	vars := map[string]string{
@@ -476,9 +460,6 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
-
-	// allow all features
-	feature.SetClient(nil)
 
 	//Prepare request
 	vars := map[string]string{
@@ -593,9 +574,6 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	// allow all features
-	feature.SetClient(nil)
-
 	//Prepare request
 	vars := map[string]string{
 		"key":              ctx.project.Key,
@@ -646,9 +624,6 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
-
-	// allow all features
-	feature.SetClient(nil)
 
 	// Init store
 	cfg := objectstore.Config{

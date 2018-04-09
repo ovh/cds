@@ -68,7 +68,7 @@ func GetFromCache(store cache.Store, projectKey string) map[string]bool {
 func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
 	projFeats := ProjectFeatures{Key: projectKey, Features: make(map[string]bool)}
 	// No feature flipping
-	if izanami == nil {
+	if izanami == nil || izanami.Feature() == nil {
 		projFeats.Features[featureID] = true
 		cache.Set(cacheFeatureKey+projectKey, projFeats)
 		return true
