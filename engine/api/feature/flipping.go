@@ -16,7 +16,12 @@ const (
 	cacheFeatureKey = "feature:"
 )
 
-var izanami *client.Client
+// IzanamiClient is a client for izanami
+type IzanamiClient interface {
+	Feature() *client.FeatureClient
+}
+
+var izanami IzanamiClient
 
 // CheckContext represents the context send to izanami to check if the feature is enabled
 type CheckContext struct {
@@ -36,9 +41,16 @@ func List() []string {
 
 // Init initialize izanami client
 func Init(apiURL, clientID, clientSecret string) error {
-	var errC error
-	izanami, errC = client.New(apiURL, clientID, clientSecret)
-	return errC
+	izc, err := client.New(apiURL, clientID, clientSecret)
+	SetClient(izc)
+	return err
+}
+
+// SetClient set a client driver for izanami
+func SetClient(client IzanamiClient) {
+	if izanami == nil {
+		izanami = client
+	}
 }
 
 // GetFromCache get feature tree for the given project from cache
@@ -59,7 +71,7 @@ func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
 	}
 
 	// Get from cache
-	if !cache.Get(cacheFeatureKey+projectKey, &projFeats) {
+	if cache.Get(cacheFeatureKey+projectKey, &projFeats) {
 		if v, ok := projFeats.Features[featureID]; ok {
 			return v
 		}

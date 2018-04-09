@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -20,6 +21,12 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
+
+type izanamiMock struct{}
+
+func (*izanamiMock) Feature() *izanami.FeatureClient {
+	return nil
+}
 
 func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
@@ -904,6 +911,8 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	feature.SetClient(&izanamiMock{})
 
 	api.Cache.Set("feature:"+proj.Key, feature.ProjectFeatures{
 		Key: proj.Key,

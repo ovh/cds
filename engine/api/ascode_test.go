@@ -138,6 +138,8 @@ func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
 		},
 	}))
 
+	feature.SetClient(&izanamiMock{})
+
 	api.Cache.Set("feature:"+p.Key, feature.ProjectFeatures{
 		Key: p.Key,
 		Features: map[string]bool{
@@ -325,6 +327,8 @@ func Test_postPerformImportAsCodeDisabledFeatureHandler(t *testing.T) {
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+
+	feature.SetClient(&izanamiMock{})
 
 	api.Cache.Set("feature:"+pkey, feature.ProjectFeatures{
 		Key: pkey,
