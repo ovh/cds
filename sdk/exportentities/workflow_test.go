@@ -1,6 +1,7 @@
 package exportentities
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/fsamin/go-dump"
@@ -218,9 +219,10 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				PipelineName: "pipeline",
 				PipelineHooks: []HookEntry{
 					{
-						Model: "scheduler",
+						Model: "Scheduler",
 						Config: map[string]string{
 							"crontab": "* * * * *",
+							"payload": "{}",
 						},
 					},
 				},
@@ -237,12 +239,23 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					Hooks: []sdk.WorkflowNodeHook{
 						{
 							WorkflowHookModel: sdk.WorkflowHookModel{
-								Name: "scheduler",
+								Name:          "Scheduler",
+								Type:          sdk.WorkflowHookModelBuiltin,
+								Identifier:    sdk.SchedulerModel.Identifier,
+								Author:        "CDS",
+								Icon:          "fa-clock-o",
+								DefaultConfig: sdk.SchedulerModel.DefaultConfig,
 							},
 							Config: sdk.WorkflowNodeHookConfig{
 								"crontab": sdk.WorkflowNodeHookConfigValue{
 									Value:        "* * * * *",
 									Configurable: true,
+									Type:         sdk.HookConfigTypeString,
+								},
+								"payload": sdk.WorkflowNodeHookConfigValue{
+									Value:        "{}",
+									Configurable: true,
+									Type:         sdk.HookConfigTypeString,
 								},
 							},
 						},
@@ -422,9 +435,10 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				Hooks: map[string][]HookEntry{
 					"A": []HookEntry{
 						{
-							Model: "scheduler",
+							Model: "Scheduler",
 							Config: map[string]string{
 								"crontab": "* * * * *",
+								"payload": "{}",
 							},
 						},
 					},
@@ -464,12 +478,23 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					Hooks: []sdk.WorkflowNodeHook{
 						{
 							WorkflowHookModel: sdk.WorkflowHookModel{
-								Name: "scheduler",
+								Name:          sdk.SchedulerModelName,
+								Type:          sdk.WorkflowHookModelBuiltin,
+								Identifier:    sdk.SchedulerModel.Identifier,
+								Author:        "CDS",
+								Icon:          "fa-clock-o",
+								DefaultConfig: sdk.SchedulerModel.DefaultConfig,
 							},
 							Config: sdk.WorkflowNodeHookConfig{
 								"crontab": sdk.WorkflowNodeHookConfigValue{
 									Value:        "* * * * *",
 									Configurable: true,
+									Type:         sdk.HookConfigTypeString,
+								},
+								"payload": sdk.WorkflowNodeHookConfigValue{
+									Value:        "{}",
+									Configurable: true,
+									Type:         sdk.HookConfigTypeString,
 								},
 							},
 						},
@@ -556,8 +581,13 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			actualValues, _ := dump.ToStringMap(got)
 			for expectedKey, expectedValue := range expextedValues {
 				actualValue, ok := actualValues[expectedKey]
-				assert.True(t, ok, "%s not found", expectedKey)
-				assert.Equal(t, expectedValue, actualValue, "value %s doesn't match. Got %s but want %s", expectedKey, actualValue, expectedValue)
+				if strings.Contains(expectedKey, ".Ref") {
+					assert.NotEmpty(t, actualValue, "value %s is empty but shoud not be empty", expectedKey)
+				} else {
+					assert.True(t, ok, "%s not found", expectedKey)
+					assert.Equal(t, expectedValue, actualValue, "value %s doesn't match. Got %s but want %s", expectedKey, actualValue, expectedValue)
+				}
+
 			}
 
 			for actualKey := range actualValues {

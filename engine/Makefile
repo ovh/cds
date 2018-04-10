@@ -97,7 +97,7 @@ endif
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
 test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
-	@for TST in `find . -name "tests.log"`; do \
+	@for TST in `find .. -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
 			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s\[build failed\]' $$TST | wc -l`; \
 			if [ $$FAILED -gt 0 ]; then \
