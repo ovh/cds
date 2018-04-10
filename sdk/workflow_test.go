@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"fmt"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +47,7 @@ func TestWorkflowNode_AncestorsWithTriggers(t *testing.T) {
 	ids = node4.Ancestors(&w, false)
 	t.Logf("Not deep node4.Ancestors: %v\n", ids)
 	assert.Equal(t, 1, len(ids))
-	assert.Equal(t, 3, ids[0])
+	assert.Equal(t, int64(3), ids[0])
 }
 
 func TestWorkflowNode_AncestorsDirectAfterJoin(t *testing.T) {
