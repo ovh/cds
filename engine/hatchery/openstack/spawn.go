@@ -113,8 +113,11 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 	// `
 	// 	}
 
+	if spawnArgs.RegisterOnly {
+		spawnArgs.Model.ModelVirtualMachine.Cmd = strings.Replace(spawnArgs.Model.ModelVirtualMachine.Cmd, "worker ", "worker register ", 1)
+	}
 	// udata = udataBegin + string(udataModel) + buffer.String()
-	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "; " + spawnArgs.Model.ModelVirtualMachine.Cmd + "; " + spawnArgs.Model.ModelVirtualMachine.PostCmd
+	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "; \n" + spawnArgs.Model.ModelVirtualMachine.Cmd + "; \n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
 
 	tmpl, errt := template.New("udata").Parse(udata)
 	if errt != nil {
@@ -137,10 +140,6 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if spawnArgs.RegisterOnly {
-		udataParam.Register = "register"
-	}
-
 	if spawnArgs.IsWorkflowJob {
 		udataParam.WorkflowJobID = spawnArgs.JobID
 	} else {
@@ -152,8 +151,9 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 		return "", err
 	}
 
+	fmt.Println(buffer.String())
 	// Encode again
-	udata64 := base64.StdEncoding.EncodeToString([]byte(udata))
+	udata64 := base64.StdEncoding.EncodeToString(buffer.Bytes())
 
 	// Create openstack vm
 	meta := map[string]string{

@@ -26,6 +26,17 @@ func (api *API) addWorkerModelHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid type (empty)")
 		}
 
+		switch model.Type {
+		case sdk.Docker:
+			if model.ModelDocker.Image == "" || model.ModelDocker.Cmd == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
+			}
+		default:
+			if model.ModelVirtualMachine.Image == "" || model.ModelVirtualMachine.Cmd == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
+			}
+		}
+
 		if len(model.Name) == 0 {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> model name is empty")
 		}

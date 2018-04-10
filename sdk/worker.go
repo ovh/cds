@@ -139,7 +139,6 @@ type WorkerArgs struct {
 	PipelineBuildJobID int64  `json:"pipeline_build_job_id"`
 	WorkflowJobID      int64  `json:"workflow_job_id"`
 	TTL                int    `json:"ttl"`
-	Register           string `json:"register"`
 	FromWorkerImage    bool   `json:"from_worker_image"`
 	//Graylog params
 	GraylogHost       string `json:"graylog_host"`

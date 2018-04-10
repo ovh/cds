@@ -178,10 +178,6 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		}
 	}
 
-	if spawnArgs.RegisterOnly {
-		udataParam.Register = "register"
-	}
-
 	if spawnArgs.IsWorkflowJob {
 		udataParam.WorkflowJobID = spawnArgs.JobID
 	} else {
@@ -202,13 +198,13 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	cmdSplitted := strings.Split(buffer.String(), " -")
-	args := cmdSplitted[1:]
 	if spawnArgs.RegisterOnly {
-		args = cmdSplitted[1 : len(cmdSplitted)-1]
+		cmdSplitted[0] += " register"
 	}
-	for i := range args {
+	for i := range cmdSplitted[1:] {
 		cmdSplitted[i+1] = "-" + strings.Trim(cmdSplitted[i+1], " ")
 	}
+
 	log.Debug("Command exec: %v", cmdSplitted)
 	cmd := exec.Command(cmdSplitted[0], cmdSplitted[1:]...)
 
