@@ -1,13 +1,9 @@
 package main
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"reflect"
-	"regexp"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -84,6 +80,8 @@ func workerModelAddRun(c cli.Values) error {
 
 	var t string
 	var image string
+	var modelDocker sdk.ModelDocker
+	var modelVm sdk.ModelVirtualMachine
 	switch modelType {
 	case string(sdk.Docker):
 		t = sdk.Docker
@@ -91,10 +89,11 @@ func workerModelAddRun(c cli.Values) error {
 		if image == "" {
 			sdk.Exit("Error: Docker image not provided (--image)\n")
 		}
+		modelDocker.Image = image
 		break
 	case string(sdk.Openstack):
 		t = sdk.Openstack
-		d := sdk.OpenstackModelData{
+		d := sdk.ModelVirtualMachine{
 			Image:  c.GetString("image"),
 			Flavor: c.GetString("flavor"),
 		}
@@ -111,19 +110,20 @@ func workerModelAddRun(c cli.Values) error {
 		if err != nil {
 			return fmt.Errorf("Error: Cannot read Openstack UserData file (%s)", err)
 		}
-		d.UserData = base64.StdEncoding.EncodeToString([]byte(file))
-		data, err := json.Marshal(d)
-		if err != nil {
-			return fmt.Errorf("Error: Cannot marshal model info (%s)", err)
-		}
-		image = string(data)
+		// d.Cmd = string(file)
+		// data, err := json.Marshal(d)
+		// if err != nil {
+		// 	return fmt.Errorf("Error: Cannot marshal model info (%s)", err)
+		// }
+		// image = string(data)
+		modelVm.Image = c.GetString("image")
+		modelVm.Flavor = c.GetString("flavor")
+		modelVm.Cmd = string(file)
 		break
 	case string(sdk.VSphere):
 		t = sdk.VSphere
-		d := sdk.OpenstackModelData{
-			Image: c.GetString("image"),
-		}
-		if d.Image == "" {
+		modelVm.Image = c.GetString("image")
+		if modelVm.Image == "" {
 			return fmt.Errorf("Error: VSphere image not provided (--image)")
 		}
 
@@ -135,15 +135,17 @@ func workerModelAddRun(c cli.Values) error {
 			return fmt.Errorf("Error: Cannot read Openstack UserData file (%s)", err)
 		}
 
-		rx := regexp.MustCompile(`(?m)(#.*)$`)
-		file = rx.ReplaceAll(file, []byte(""))
-		d.UserData = strings.Replace(string(file), "\n", " ; ", -1)
+		modelVm.Cmd = string(file)
 
-		data, err := sdk.JSONWithoutHTMLEncode(d)
-		if err != nil {
-			return fmt.Errorf("Error: Cannot marshal model info (%s)", err)
-		}
-		image = string(data)
+		// rx := regexp.MustCompile(`(?m)(#.*)$`)
+		// file = rx.ReplaceAll(file, []byte(""))
+		// d.Cmd = strings.Replace(string(file), "\n", " ; ", -1)
+		//
+		// data, err := sdk.JSONWithoutHTMLEncode(d)
+		// if err != nil {
+		// 	return fmt.Errorf("Error: Cannot marshal model info (%s)", err)
+		// }
+		// image = string(data)
 		break
 	default:
 		return fmt.Errorf("Unknown worker type: %s", modelType)
@@ -154,7 +156,7 @@ func workerModelAddRun(c cli.Values) error {
 		return fmt.Errorf("Error : Unable to get group %s : %s", groupName, err)
 	}
 
-	if _, err := client.WorkerModelAdd(name, t, image, g.ID); err != nil {
+	if _, err := client.WorkerModelAdd(name, t, modelDocker, modelVm, g.ID); err != nil {
 		return fmt.Errorf("Error: cannot add worker model (%s)", err)
 	}
 
