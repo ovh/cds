@@ -1,10 +1,11 @@
 package feature
 
 import (
+	"strings"
+
 	"github.com/ovhlabs/izanami-go-client"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -15,11 +16,17 @@ const (
 	cacheFeatureKey = "feature:"
 )
 
-var c *client.Client
+var izanami *client.Client
 
 // CheckContext represents the context send to izanami to check if the feature is enabled
 type CheckContext struct {
 	Key string `json:"key"`
+}
+
+// ProjectFeatures represents a project and the feature states
+type ProjectFeatures struct {
+	Key      string          `json:"key"`
+	Features map[string]bool `json:"features"`
 }
 
 // List all features
@@ -29,39 +36,48 @@ func List() []string {
 
 // Init initialize izanami client
 func Init(apiURL, clientID, clientSecret string) error {
-	var errC error
-	c, errC = client.New(apiURL, clientID, clientSecret)
-	return errC
+	izc, err := client.New(apiURL, clientID, clientSecret)
+	SetClient(izc)
+	return err
+}
+
+// SetClient set a client driver for izanami
+func SetClient(c *client.Client) {
+	izanami = c
 }
 
 // GetFromCache get feature tree for the given project from cache
-func GetFromCache(store cache.Store, projectKey string) sdk.ProjectFeatures {
-	projFeats := sdk.ProjectFeatures{}
+func GetFromCache(store cache.Store, projectKey string) map[string]bool {
+	projFeats := ProjectFeatures{}
 	store.Get(cacheFeatureKey+projectKey, &projFeats)
-	return projFeats
+	return projFeats.Features
 }
 
 // IsEnabled check if feature is enabled for the given project
 func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
+	projFeats := ProjectFeatures{Key: projectKey, Features: make(map[string]bool)}
 	// No feature flipping
-	if c == nil {
+	if izanami == nil || izanami.Feature() == nil {
+		projFeats.Features[featureID] = true
+		cache.Set(cacheFeatureKey+projectKey, projFeats)
 		return true
 	}
 
-	var projFeats sdk.ProjectFeatures
-
 	// Get from cache
-	if !cache.Get(cacheFeatureKey+projectKey, &projFeats) {
+	if cache.Get(cacheFeatureKey+projectKey, &projFeats) {
 		if v, ok := projFeats.Features[featureID]; ok {
 			return v
 		}
 	}
 
 	// Get from izanami
-	resp, errCheck := c.Feature().CheckWithContext(featureID, CheckContext{projectKey})
+	resp, errCheck := izanami.Feature().CheckWithContext(featureID, CheckContext{projectKey})
 	if errCheck != nil {
-		log.Warning("Feature.IsEnabled > Cannot check feature %s: %s", featureID, errCheck)
-		return false
+		if !strings.Contains(errCheck.Error(), "404") {
+			log.Warning("Feature.IsEnabled > Cannot check feature %s: %s", featureID, errCheck)
+			return false
+		}
+		resp.Active = true
 	}
 	projFeats.Key = projectKey
 	if projFeats.Features == nil {
@@ -70,7 +86,7 @@ func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
 	projFeats.Features[featureID] = resp.Active
 
 	// Push in cache
-	cache.Set(projectKey, projFeats)
+	cache.Set(cacheFeatureKey+projectKey, projFeats)
 
 	return resp.Active
 }

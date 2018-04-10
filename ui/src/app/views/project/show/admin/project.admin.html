@@ -32,7 +32,7 @@
     </app-zone>
     <app-zone header="{{ 'project_repoman_title' | translate }}">
         <app-zone-content class="bottom">
-            <app-project-repomanager-form [project]="project"></app-project-repomanager-form>
+            <app-repomanager-form [project]="project"></app-repomanager-form>
             <app-project-repomanager-list *ngIf="project.vcs_servers && project.vcs_servers.length > 0"
                                           [project]="project" [reposmanagers]="project.vcs_servers"></app-project-repomanager-list>
         </app-zone-content>

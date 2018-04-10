@@ -97,7 +97,7 @@ func (api *API) importPipelineHandler() Handler {
 
 		defer tx.Rollback()
 
-		allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, forceUpdate, getUser(ctx))
+		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, forceUpdate, getUser(ctx))
 		msgListString := translate(r, allMsg)
 
 		if globalError != nil {

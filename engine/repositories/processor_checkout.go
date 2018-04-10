@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"fmt"
-
 	repo "github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/sdk"
@@ -12,7 +10,7 @@ import (
 func (s *Service) processCheckout(op *sdk.Operation) error {
 	r := s.Repo(*op)
 	if err := s.checkOrCreateFS(r); err != nil {
-		log.Error("Repositories> processCheckout> Error %v", err)
+		log.Error("Repositories> processCheckout> checkOrCreateFS> [%s] Error %v", op.UUID, err)
 		return err
 	}
 
@@ -28,24 +26,24 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 	if err != nil {
 		log.Debug("Repositories> processCheckout> cloning %s", r.URL)
 		if _, err = repo.Clone(r.Basedir, r.URL, opts...); err != nil {
-			log.Error("Repositories> processCheckout> error %v", err)
+			log.Error("Repositories> processCheckout> Clone> [%s] error %v", op.UUID, err)
 			return err
 		}
 	}
 
 	n, err := gitRepo.Name()
 	if err != nil {
-		log.Error("Repositories> processCheckout> Error: %v", err)
+		log.Error("Repositories> processCheckout> gitRepo.Name> [%s] Error: %v", op.UUID, err)
 		return err
 	}
 	f, err := gitRepo.FetchURL()
 	if err != nil {
-		log.Error("Repositories> processCheckout> Error: %v", err)
+		log.Error("Repositories> processCheckout> gitRepo.FetchURL> [%s] Error: %v", op.UUID, err)
 		return err
 	}
 	d, err := gitRepo.DefaultBranch()
 	if err != nil {
-		log.Error("Repositories> processCheckout> Error: %v", err)
+		log.Error("Repositories> processCheckout> DefaultBranch> [%s] Error: %v", op.UUID, err)
 		return err
 	}
 
@@ -58,27 +56,18 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 	//Check branch
 	currentBranch, err := gitRepo.CurrentBranch()
 	if err != nil {
-		log.Error("Repositories> processCheckout> error %v", err)
+		log.Error("Repositories> processCheckout> CurrentBranch> [%s] error %v", op.UUID, err)
 		return err
 	}
 
 	if op.Setup.Checkout.Branch == "" {
-		op.Setup.Checkout.Branch, err = gitRepo.DefaultBranch()
-		if err != nil {
-			log.Error("Repositories> processCheckout> error %v", err)
-			return err
-		}
-		if op.Setup.Checkout.Branch == "" {
-			err = fmt.Errorf("unable go get default branch")
-			log.Error("Repositories> processCheckout> error %v", err)
-			return err
-		}
+		op.Setup.Checkout.Branch = d
 	}
 
 	if currentBranch != op.Setup.Checkout.Branch {
 		log.Debug("Repositories> processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, r.URL)
 		if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
-			log.Error("Repositories> processCheckout> error %v", err)
+			log.Error("Repositories> processCheckout> FetchRemoteBranch> [%s] error %v", op.UUID, err)
 			return err
 		}
 	}
@@ -87,13 +76,13 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 	if op.Setup.Checkout.Commit == "" {
 		log.Debug("Repositories> processCheckout> pulling branch %s", op.Setup.Checkout.Branch)
 		if err := gitRepo.Pull("origin", op.Setup.Checkout.Branch); err != nil {
-			log.Error("Repositories> processCheckout> error %v", err)
+			log.Error("Repositories> processCheckout> Pull without commit> [%s] error %v", op.UUID, err)
 			return err
 		}
 	} else {
 		currentCommit, err := gitRepo.LatestCommit()
 		if err != nil {
-			log.Error("Repositories> processCheckout> error %v", err)
+			log.Error("Repositories> processCheckout> LatestCommit> [%s] error %v", op.UUID, err)
 			return err
 		}
 		if currentCommit.LongHash != op.Setup.Checkout.Commit {
@@ -101,13 +90,13 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 			//Pull and reset HARD the commit
 			log.Debug("Repositories> processCheckout> pulling branch %s", op.Setup.Checkout.Branch)
 			if err := gitRepo.Pull("origin", op.Setup.Checkout.Branch); err != nil {
-				log.Error("Repositories> processCheckout> error %v", err)
+				log.Error("Repositories> processCheckout> Pull with commit > [%s] error %v", op.UUID, err)
 				return err
 			}
 
 			log.Debug("Repositories> processCheckout> reseting commit %s", op.Setup.Checkout.Commit)
 			if err := gitRepo.ResetHard(op.Setup.Checkout.Commit); err != nil {
-				log.Error("Repositories> processCheckout> error %v", err)
+				log.Error("Repositories> processCheckout> ResetHard> [%s] error %v", op.UUID, err)
 				return err
 			}
 		}

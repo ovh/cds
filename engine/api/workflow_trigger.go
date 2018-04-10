@@ -82,7 +82,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			}
 		}
 
-		if refNode.Context != nil && refNode.Context.Application != nil && refNode.Context.Application.RepositoryFullname != "" {
+		if refNode.IsLinkedToRepo() {
 			if sdk.ParameterFind(&params, "git.repository") == nil {
 				data.ConditionNames = append(data.ConditionNames, "git.repository")
 				data.ConditionNames = append(data.ConditionNames, "git.branch")

@@ -88,11 +88,23 @@ func NewStepRelease(v map[string]string) Action {
 }
 
 // NewStepArtifactUpload returns an action (basically used as a step of a job) of artifact upload type
-func NewStepArtifactUpload(v map[string]string) Action {
+func NewStepArtifactUpload(i interface{}) Action {
 	newAction := Action{
 		Name:       ArtifactUpload,
 		Type:       BuiltinAction,
-		Parameters: ParametersFromMap(v),
+		Parameters: []Parameter{},
+	}
+
+	switch v := i.(type) {
+	case string:
+		p := Parameter{
+			Name:  "path",
+			Type:  StringParameter,
+			Value: v,
+		}
+		newAction.Parameters = append(newAction.Parameters, p)
+	case map[string]string:
+		newAction.Parameters = ParametersFromMap(v)
 	}
 	return newAction
 }

@@ -83,6 +83,7 @@
   "application_poller_form_title": "Ajouter un poller : ",
   "application_poller_list_title": "Liste des pollers : ",
   "application_rename_title": "Renommer l'application",
+  "application_repo_choose": "Choisir un dépôt",
   "application_repo_attach_ok": "Le dépôt est désormais lié à l'application",
   "application_repo_detach_ok": "Le dépôt n'est désormais  plus lié à l'application",
   "application_repoman_cant": "Vous devez d'abord connecter un gestionnaire de dépôt à votre projet : ",
@@ -118,9 +119,12 @@
   "btn_close": "Fermer",
   "btn_continue": "Continuer",
   "btn_create": "Créer",
+  "btn_create_workflow": "Création du workflow",
   "btn_finish": "Terminer",
   "btn_detach": "Détacher le pipeline",
   "btn_delete": "Supprimer",
+  "btn_goto_workflow": "Voir le workflow",
+  "btn_inspect_repo": "Inspecter le dépôt",
   "btn_link": "Connecter",
   "btn_or": "ou",
   "btn_resync_repo": "Resynchroniser",
@@ -216,6 +220,7 @@
   "common_copy_clipboard": "Copier dans le presse papier",
   "common_select": "Sélectionner",
   "common_create": "Créer",
+  "common_create_repo" : "Depuis un dépôt",
   "common_import": "Importer",
   "common_show_all": "Voir tout",
   "common_hide_all": "Cacher tout",
@@ -289,6 +294,10 @@
   "group_user_is_admin": "Cet utilisateur est administrateur du groupe",
   "group_btn_set_admin": "administrateur",
   "group_btn_unset_admin": "administrateur",
+
+  "key_copy_public": "Copier la clé publique",
+  "key_or_create":  "(Créer)",
+  "key_warning_add_repo_title": "N'oubliez pas d'ajouter votre clé SSH sur votre dépôt",
 
   "token_description": "Description",
   "token_value": "Token",
@@ -477,6 +486,7 @@
   "project_workflow_migration_title": "Avancement de la migration vers les workflows",
   "project_name": "Nom du projet",
   "project_name_error": "Le nom du projet est obligatoire",
+  "project_no": "Il n'y a aucun projet",
   "project_no_application": "Le projet ne contient aucune application",
   "project_no_pipeline": "Le projet ne contient aucun pipeline",
   "project_no_workflow": "Le projet ne contient aucun workflow",
@@ -827,5 +837,12 @@
   "workflow_notification_email_user": "Emails",
   "workflow_notification_list": "Liste des notifications",
   "workflow_notification_form": "Ajouter une notification",
-  "workflow_notification_copy": "Copié"
+  "workflow_notification_copy": "Copié",
+
+  "workflow_wizard_select_repo_man": "Sélectionner un gestionnaire de dépôt",
+  "workflow_wizard_select_repo": "Sélectionner un dépot",
+  "workflow_wiazrd_select_repo_loading": "Chargement des dépots...",
+  "workflow_wizard_repo_analyse" : "Analyse du dépôt...",
+  "workflow_wizard_select_repo_man_add" : "Ou ajouter un gestionnaire de dépôt",
+  "wizard_repo_files" : "Fichiers trouvés : "
 }

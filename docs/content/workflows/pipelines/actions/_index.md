@@ -5,7 +5,7 @@ weight = 2
 +++
 
 
-Within a [Job]({{< relref "introduction/concepts/job.md" >}}), each [step]({{< relref "introduction/concepts/job.md" >}}) is based on an action.
+Within a [Job]({{< relref "gettingstarted/concepts/job.md" >}}), each [step]({{< relref "gettingstarted/concepts/job.md" >}}) is based on an action.
 
 There are three types of actions:
 
