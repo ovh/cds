@@ -3,7 +3,7 @@ title = "Getting Started"
 weight = 2
 +++
 
-## Practise
+## Practice
 
 {{%items inline%}}
 
