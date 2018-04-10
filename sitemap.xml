@@ -7,10 +7,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/concepts/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/workflows/design/</loc>
   </url>
   
@@ -31,19 +27,15 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/concepts/pipeline/</loc>
+    <loc>https://ovh.github.io/cds/gettingstarted/init_workflow_with_cdsctl/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/scopes/project/</loc>
+    <loc>https://ovh.github.io/cds/gettingstarted/scopes/project/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/design/hooks/scheduler/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/introduction/scopes/</loc>
   </url>
   
   <url>
@@ -71,7 +63,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/concepts/why_cds/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/files/workflow-syntax/</loc>
   </url>
   
   <url>
@@ -79,7 +79,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/scopes/application/</loc>
+    <loc>https://ovh.github.io/cds/gettingstarted/scopes/application/</loc>
   </url>
   
   <url>
@@ -88,6 +88,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/</loc>
   </url>
   
   <url>
@@ -103,11 +107,15 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/</loc>
+    <loc>https://ovh.github.io/cds/gettingstarted/import_workflow_with_webui/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/design/payload/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/files/pipeline-syntax/</loc>
   </url>
   
   <url>
@@ -127,10 +135,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/concepts/stage/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/worker/update/</loc>
   </url>
   
@@ -143,6 +147,18 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/concepts/workflow/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/files/application-syntax/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/step_by_step_build_deploy/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/</loc>
   </url>
   
@@ -151,7 +167,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/scopes/environment/</loc>
+    <loc>https://ovh.github.io/cds/gettingstarted/scopes/environment/</loc>
   </url>
   
   <url>
@@ -167,10 +183,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/concepts/job/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/</loc>
   </url>
   
@@ -183,11 +195,27 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/scopes/permissions/</loc>
+    <loc>https://ovh.github.io/cds/gettingstarted/scopes/permissions/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/concepts/pipeline/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/design/pipeline-context/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/files/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/worker/workspace/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/files/environment-syntax/</loc>
   </url>
   
   <url>
@@ -203,7 +231,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/concepts/step/</loc>
+    <loc>https://ovh.github.io/cds/gettingstarted/concepts/stage/</loc>
   </url>
   
   <url>
@@ -227,6 +255,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/concepts/job/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/design/run-conditions/</loc>
   </url>
   
@@ -244,6 +276,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/design/join/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/concepts/step/</loc>
   </url>
   
   <url>
@@ -287,6 +323,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/concepts/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/scopes/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-download/</loc>
   </url>
   
@@ -313,11 +357,19 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gittag/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/junit/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/cli/api/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/release/</loc>
   </url>
   
   <url>
