@@ -56,8 +56,7 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 				continue
 			}
 
-			haveRepoLinked := wf.Root != nil && wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != ""
-			if !haveRepoLinked {
+			if !wf.Root.IsLinkedToRepo() {
 				tx.Rollback()
 				continue
 			}

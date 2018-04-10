@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -212,8 +211,11 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errHr, "putWorkflowHandler> HookRegistration")
 		}
 
-		if wf.Root.Context.DefaultPayload != nil || (wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "") {
-			wf.Metadata = getUpdatedMetadata(wf.Metadata)
+		if defaultTags, ok := wf.Metadata["default_tags"]; wf.Root.IsLinkedToRepo() && (!ok || defaultTags == "") {
+			if wf.Metadata == nil {
+				wf.Metadata = sdk.Metadata{}
+			}
+			wf.Metadata["default_tags"] = "git.branch,git.author"
 			if err := workflow.UpdateMetadata(tx, wf.ID, wf.Metadata); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> cannot update metadata")
 			}
@@ -263,40 +265,6 @@ func isDefaultPayloadEmpty(wf sdk.Workflow) bool {
 		log.Warning("isDefaultPayloadEmpty>error while dump wf.Root.Context.DefaultPayload")
 	}
 	return len(m) == 0 // if empty, return true
-}
-
-func getUpdatedMetadata(metadata sdk.Metadata) sdk.Metadata {
-	defaultTags, ok := metadata["default_tags"]
-	if ok {
-		var gitAuthor, gitBranch bool
-		tagsList := strings.Split(defaultTags, ",")
-
-		for _, tag := range tagsList {
-			switch tag {
-			case "git.branch":
-				gitBranch = true
-			case "git.author":
-				gitAuthor = true
-			}
-		}
-
-		if !gitAuthor {
-			defaultTags = "git.author," + defaultTags
-		}
-
-		if !gitBranch {
-			defaultTags = "git.branch," + defaultTags
-		}
-	} else {
-		defaultTags = "git.branch,git.author"
-	}
-
-	if metadata == nil {
-		metadata = sdk.Metadata{}
-	}
-	metadata["default_tags"] = defaultTags
-
-	return metadata
 }
 
 // putWorkflowHandler deletes a workflow
