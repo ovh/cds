@@ -443,7 +443,7 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 				var hType string
 				switch h.Model {
 				case sdk.KafkaHookModelName:
-					if k == sdk.HookConfigTypePlatform {
+					if k == sdk.KafkaHookModelPlatform {
 						hType = sdk.HookConfigTypePlatform
 					} else {
 						hType = sdk.HookConfigTypeString
