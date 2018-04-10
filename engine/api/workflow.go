@@ -212,8 +212,12 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errHr, "putWorkflowHandler> HookRegistration")
 		}
 
-		if wf.Root.Context.DefaultPayload != nil || (wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "") {
+		if defaultTags, ok := wf.Metadata["default_tags"]; wf.Root.IsLinkedToRepo() && (!ok || defaultTags == "") {
 			wf.Metadata = getUpdatedMetadata(wf.Metadata)
+			if wf.Metadata == nil {
+				wf.Metadata = sdk.Metadata{}
+			}
+			wf.Metadata["default_tags"] = "git.branch,git.author"
 			if err := workflow.UpdateMetadata(tx, wf.ID, wf.Metadata); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> cannot update metadata")
 			}

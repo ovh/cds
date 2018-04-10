@@ -99,7 +99,7 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		}
 
 		node := wr.Workflow.GetNode(nodeID)
-		if node != nil && node.Context != nil && node.Context.Application != nil && node.Context.Application.VCSServer != "" && node.Context.Application.RepositoryFullname != "" {
+		if node.IsLinkedToRepo() {
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
 			if vcsServer == nil {
 				return nil

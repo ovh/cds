@@ -56,7 +56,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 		// Post processing  on repositoryWebHook
 		hasRepoManager := false
 		repoWebHookEnable, repoPollerEnable := false, false
-		if node.Context.Application != nil && node.Context.Application.RepositoryFullname != "" {
+		if node.IsLinkedToRepo() {
 			hasRepoManager = true
 		}
 		var webHookInfo repositoriesmanager.WebhooksInfos

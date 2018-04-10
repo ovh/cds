@@ -458,6 +458,14 @@ type WorkflowNode struct {
 	Triggers         []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
 }
 
+// IsLinkedToRepo returns boolean to know if the node is linked to an application which is also linked to a repository
+func (n *WorkflowNode) IsLinkedToRepo() bool {
+	if n == nil {
+		return false
+	}
+	return n.Context != nil && n.Context.Application != nil && n.Context.Application.RepositoryFullname != ""
+}
+
 // EqualsTo returns true if a node has the same pipeline and context than another
 func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 	if n.PipelineID != n1.PipelineID {
