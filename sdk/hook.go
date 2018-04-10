@@ -93,6 +93,7 @@ var (
 			"payload": {
 				Value:        "{}",
 				Configurable: true,
+				Type:         HookConfigTypeString,
 			},
 		},
 	}
