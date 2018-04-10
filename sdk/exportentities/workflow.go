@@ -440,9 +440,22 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 		for _, h := range hooks {
 			cfg := make(sdk.WorkflowNodeHookConfig, len(h.Config))
 			for k, v := range h.Config {
+				var hType string
+				switch h.Model {
+				case sdk.KafkaHookModelName:
+					if k == sdk.KafkaHookModelPlatform {
+						hType = sdk.HookConfigTypePlatform
+					} else {
+						hType = sdk.HookConfigTypeString
+					}
+				default:
+					hType = sdk.HookConfigTypeString
+				}
+
 				cfg[k] = sdk.WorkflowNodeHookConfigValue{
 					Value:        v,
 					Configurable: true,
+					Type:         hType,
 				}
 			}
 			n.Hooks = append(n.Hooks, sdk.WorkflowNodeHook{

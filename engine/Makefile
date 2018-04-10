@@ -97,7 +97,7 @@ endif
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
 test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
-	@for TST in `find . -name "tests.log"`; do \
+	@for TST in `find .. -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
 			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s\[build failed\]' $$TST | wc -l`; \
 			if [ $$FAILED -gt 0 ]; then \
@@ -116,14 +116,14 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 			echo "Ignoring empty file \t\t$$TST"; \
 		fi; \
 	done; \
-	for XML in `find . -name "tests.log.xml"`; do \
+	for XML in `find .. -name "tests.log.xml"`; do \
 		if [ "$$XML" =  "./tests.log.xml" ]; then \
 		 	mv $$XML $(TARGET_DIR)/`basename `pwd``.xml; \
 		else \
 			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
-	for XML in `find . -name "*.xml"`; do \
+	for XML in `find .. -name "*.xml"`; do \
 		if [ -s $$XML ]; then \
 			echo "`xmllint --xpath "/testsuite/@name" $$XML | sed 's/name=//' | sed 's/"//g'`" \
 			"`xmllint --xpath "/testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
@@ -136,7 +136,7 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	if [ -e $(TARGET_DIR)/report ]; then \
 		cat $(TARGET_DIR)/report; \
 	fi; \
-	for XML in `find . -name "*.xml"`; do \
+	for XML in `find .. -name "*.xml"`; do \
 		if [ -s $$XML ]; then \
 			if [ "`xmllint --xpath "/testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
 				echo "Tests failed";  \
