@@ -27,6 +27,7 @@ type annotation struct {
 	Created                 time.Time `json:"created"`
 }
 
+//TODO: DELTE THIS !!!!!!!!!!!
 type imageConfiguration struct {
 	OS       string `json:"os"`
 	UserData string `json:"user_data"` //Commands to execute when create vm model
@@ -124,7 +125,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
 	}
 
-	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PreCmd+"; "+model.ModelVirtualMachine.Cmd+"; "+model.ModelVirtualMachine.PostCmd, nil); errS != nil {
+	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PreCmd+"; \n"+model.ModelVirtualMachine.Cmd+"; \n"+model.ModelVirtualMachine.PostCmd, nil); errS != nil {
 		log.Warning("createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
