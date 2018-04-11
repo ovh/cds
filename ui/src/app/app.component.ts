@@ -10,10 +10,10 @@ import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
 import {ToastService} from './shared/toast/ToastService';
 import {AppService} from './app.service';
-import {LastUpdateService} from './service/sse/lastupdate.sservice';
-import {LastModification} from './model/lastupdate.model';
 import localeFR from '@angular/common/locales/fr';
 import localeEN from '@angular/common/locales/en';
+import {environment} from '../environments/environment';
+import {Event} from './model/event.model';
 
 @Component({
     selector: 'app-root',
@@ -25,16 +25,16 @@ export class AppComponent  implements OnInit {
 
     open: boolean;
     isConnected = false;
-    warningWorker: CDSWorker;
     versionWorker: CDSWorker;
+    sseWorker: CDSWorker;
     zone: NgZone;
 
     currentVersion = 0;
     showUIUpdatedBanner = false;
 
-    warningWorkerSubscription: Subscription;
     languageSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
+    sseWorkerSubscription: Subscription;
 
     displayResolver = false;
     toasterConfig: any;
@@ -42,7 +42,7 @@ export class AppComponent  implements OnInit {
     constructor(_translate: TranslateService, private _language: LanguageStore,
                 private _authStore: AuthentificationStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService,
-                private _last: LastUpdateService, private _toastService: ToastService) {
+                private _toastService: ToastService) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.toasterConfig = this._toastService.getConfig();
         _translate.addLangs(['en', 'fr']);
@@ -66,10 +66,10 @@ export class AppComponent  implements OnInit {
         this._authStore.getUserlst().subscribe(user => {
             if (!user) {
                 this.isConnected = false;
-                this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
+                this.stopWorker(this.sseWorker, this.sseWorkerSubscription);
             } else {
                 this.isConnected = true;
-                this.startLastUpdateSSE();
+                this.startSSE();
             }
             this.startVersionWorker();
         });
@@ -93,13 +93,28 @@ export class AppComponent  implements OnInit {
         }
     }
 
-    startLastUpdateSSE(): void {
-        this._last.getLastUpdate().subscribe(msg => {
-            if (msg === 'ACK') {
-                return;
+    startSSE(): void {
+        let authHeader = {};
+        // ADD user AUTH
+        let sessionToken = this._authStore.getSessionToken();
+        if (sessionToken) {
+            authHeader[this._authStore.localStorageSessionKey] = sessionToken;
+        } else {
+            authHeader['Authorization'] = 'Basic ' + this._authStore.getUser().token;
+        }
+        this.sseWorker = new CDSWorker('/assets/worker/webWorker.js');
+        this.sseWorker.start({
+            head: authHeader,
+            sseURL: environment.apiURL + '/events'
+        });
+        this.sseWorker.response().subscribe(e => {
+            if (e === 'ACK' || e == null) {
+                return
             }
-            let lastUpdateEvent: LastModification = JSON.parse(msg);
-            this._appService.updateCache(lastUpdateEvent);
+            this.zone.run(() => {
+                let event: Event = JSON.parse(e);
+                this._appService.manageEvent(event);
+            });
         });
     }
 

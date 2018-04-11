@@ -1,7 +1,6 @@
 import {NgModule, ModuleWithProviders, SkipSelf, Optional} from '@angular/core';
 import {ProjectService} from './project/project.service';
 import {ProjectStore} from './project/project.store';
-import {Http} from '@angular/http';
 import {AuthentificationStore} from './auth/authentification.store';
 import {UserService} from './user/user.service';
 import {CanActivateAuthRoute} from './auth/authenRouteActivate';
@@ -39,7 +38,6 @@ import {WorkflowStore} from './workflow/workflow.store';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
 import {WorkflowCoreService} from './workflow/workflow.core.service';
 import {RouterService} from './router/router.service';
-import {LastUpdateService} from './sse/lastupdate.sservice';
 import {HTTP_INTERCEPTORS} from '@angular/common/http';
 import {AuthentificationInterceptor} from './auth.interceptor.service';
 import {LogoutInterceptor} from './logout.interceptor.service';
@@ -81,7 +79,6 @@ export class ServicesModule {
                 ImportAsCodeService,
                 KeyService,
                 LanguageStore,
-                LastUpdateService,
                 NavbarService,
                 NotificationService,
                 ParameterService,
@@ -145,7 +142,6 @@ export {
     ImportAsCodeService,
     KeyService,
     LanguageStore,
-    LastUpdateService,
     ParameterService,
     MonitoringService,
     PipelineResolver,
@@ -165,6 +161,5 @@ export {
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,
-    WorkflowCoreService,
-    Http
+    WorkflowCoreService
 }
