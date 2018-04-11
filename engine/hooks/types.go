@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"time"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -15,12 +17,13 @@ const (
 
 // Service is the stuct representing a hooks µService
 type Service struct {
-	Cfg    Configuration
-	Router *api.Router
-	Cache  cache.Store
-	cds    cdsclient.Interface
-	Dao    dao
-	hash   string
+	Cfg         Configuration
+	Router      *api.Router
+	Cache       cache.Store
+	cds         cdsclient.Interface
+	Dao         dao
+	hash        string
+	StartupTime time.Time
 }
 
 // Configuration is the hooks configuration structure

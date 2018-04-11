@@ -60,6 +60,7 @@ func (s *Service) Serve(c context.Context) error {
 	defer cancel()
 
 	log.Info("Hooks> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
+	s.StartupTime = time.Now()
 
 	//Instanciate a cds client
 	s.cds = cdsclient.NewService(s.Cfg.API.HTTP.URL, 120*time.Second)

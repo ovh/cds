@@ -21,6 +21,7 @@ import (
 
 //Github http var
 var (
+	RateLimitLimit     int
 	RateLimitRemaining = 5000
 	RateLimitReset     int
 
@@ -201,6 +202,7 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
 
 	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
+		RateLimitLimit, _ = strconv.Atoi(rateLimitLimit)
 		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
 		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
 	}
