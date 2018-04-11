@@ -176,15 +176,6 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	}
 	defer res.Body.Close()
 
-	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
-	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
-	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
-
-	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
-		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
-		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
-	}
-
 	switch res.StatusCode {
 	case http.StatusNotModified:
 		return res.StatusCode, nil, res.Header, nil
@@ -204,6 +195,15 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	}
 
 	c.setETag(path, res.Header)
+
+	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
+	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
+	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
+
+	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
+		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
+		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
+	}
 
 	return res.StatusCode, resBody, res.Header, nil
 }
