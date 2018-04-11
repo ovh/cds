@@ -156,7 +156,7 @@ cdsdemo [b226e84 | steven.guiheux] #1.0 ➤ ✓ MyPipeline
 
  * On CDS UI
  
-![Run1](/images/getting.started.run1.png)
+![Run1](/images/getting.started.run1.png?height=400px&classes=shadow)
 
 ## Update pipeline to execute a mvn package
 
@@ -184,4 +184,4 @@ cdsdemo [d98bd14 | steven.guiheux] #2.0 ➤ ✓ MyPipeline
 
  * On CDS UI
  
-![Run2](/images/getting.started.run2.png)
+![Run2](/images/getting.started.run2.png?height=400px&classes=shadow)

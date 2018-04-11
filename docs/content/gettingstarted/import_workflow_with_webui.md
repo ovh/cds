@@ -66,22 +66,22 @@ pipeline_hooks:
 ## Create workflow from UI
 
 * Attach a repository manager on your CDS Project - Advanced tab
-![Attach repo manager](/images/getting_started_create_wf_ascode_ui_0_repo.png?height=400px)
+![Attach repo manager](/images/getting_started_create_wf_ascode_ui_0_repo.png?height=400px&classes=shadow)
 
 * Go on Workflows tab, then click on 'Create Workflow'
-![Workflow tab](/images/getting_started_create_wf_ascode_ui_1_wf_tab.png?height=400px)
+![Workflow tab](/images/getting_started_create_wf_ascode_ui_1_wf_tab.png?height=400px&classes=shadow)
 
 * Click on 'From repository', then choose a repository manager
-![Choose a repo manager - create workflow](/images/getting_started_create_wf_ascode_ui_2_from_repo.png?height=400px)
+![Choose a repo manager - create workflow](/images/getting_started_create_wf_ascode_ui_2_from_repo.png?height=400px&classes=shadow)
 
 * Choose a git repository describe how to clone it, then click on 'Inspect repository'
-![Choose repo](/images/getting_started_create_wf_ascode_ui_3_choose_repo.png?height=400px)
+![Choose repo](/images/getting_started_create_wf_ascode_ui_3_choose_repo.png?height=400px&classes=shadow)
 
 * Files found are display, then click on 'Create workflow' button
-![Create workflow](/images/getting_started_create_wf_ascode_ui_4_create_wf.png?height=400px)
+![Create workflow](/images/getting_started_create_wf_ascode_ui_4_create_wf.png?height=400px&classes=shadow)
 
 * A resume page is displayed, click on 'See workflow'
-![Resume page](/images/getting_started_create_wf_ascode_ui_5_resume.png?height=400px)
+![Resume page](/images/getting_started_create_wf_ascode_ui_5_resume.png?height=400px&classes=shadow)
 
 * View workflow
-![See Workflow](/images/getting_started_create_wf_ascode_ui_6_see_workflow.png?height=400px)
+![See Workflow](/images/getting_started_create_wf_ascode_ui_6_see_workflow.png?height=400px&classes=shadow)
