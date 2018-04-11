@@ -72,11 +72,6 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 	// {{.Graylog}}
 	// {{.Grpc}}
 	// ./worker`
-
-	if spawnArgs.RegisterOnly {
-		spawnArgs.Model.ModelVirtualMachine.Cmd += " register"
-		// udataEnd += " register"
-	}
 	// udataEnd += " ; sudo shutdown -h now;"
 
 	var withExistingImage bool
