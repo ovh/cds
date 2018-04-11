@@ -45,23 +45,28 @@ CDS ensures its users, who are essentially developers or sysadmin, a great freed
 Without asking for CDS administrators, any user is able to create new projects, 
 applications, pipelines, workflows ... to manage ACLs on all elements.
 
-{{< figure src="/images/concepts_why_cds_languages.png" title="Some Languages used at OVH - non-exhaustive list" >}}
+![Languages](/images/concepts_why_cds_languages.png?height=300px&classes=shadow "Some Languages used at OVH - non-exhaustive list")
 
-{{< figure src="/images/concepts_why_cds_platforms.png" title="Some Platforms used at OVH - non-exhaustive list" >}}
+![Platforms](/images/concepts_why_cds_platforms.png?height=300px&classes=shadow "Some Platforms used at OVH - non-exhaustive list")
 
-A CDS Job is executed by a CDS Worker. A worker CDS is a simple binary, you do not need libraries
+A CDS Job is executed by a CDS Worker. 
+
+A worker CDS is a simple binary, you do not need libraries
 or particular JVMs on your machine to run it. CDS workers are compatible with Linux, Darwin, OSX,
-FreeBSD as well as Windows, in architectures 386, amd64 or arm. The only prerequisite for a CDS Worker to work
+FreeBSD as well as Windows, in architectures 386, amd64 or arm. 
+
+The only prerequisite for a CDS Worker to work
 is that it can access the CDS API. Any CDS user can therefore launch a CDS Worker where he wishes for him
 to execute the jobs he wants - and this - without intervention from the CDS administrators. The user
 can thus use its own resources if he wishes.
 
-{{< figure src="/images/concepts_why_cds_workers.png" title="a CDS Worker" >}}
+![a CDS Worker](/images/concepts_why_cds_workers.png?height=150px&classes=shadow "a CDS Worker")
 
 
 Python 2.7, Python 3.4, Golang 1.9.3 ... Python 2.7, but with this or that library. CDS workers are binaries
-executed in a docker image, a virtual machine. Its Build environments are called "Worker Model". If a
-user wants to Rust, Scala on a specific version, it is autonomous to create his own
+executed in a docker image, a virtual machine. Its Build environments are called "Worker Model". 
+
+If a user wants to Rust, Scala on a specific version, it is autonomous to create his own
 Worker Model and launch it on shared infrastructure. Workers CDS are isolated from each other,
 isolation is essentially done by Docker or virtualization, see Scalability below.
 
@@ -86,7 +91,7 @@ on FileSystem and can be deployed n times to support the load.
 
 « 100,000 jobs are launched every week »
 
-{{< figure src="/images/concepts_why_cds_hachery.png" title="a CDS Hatchery" >}}
+![A CDS Hatchery](/images/concepts_why_cds_hachery.png?height=150px&classes=shadow "a CDS Hatchery")
 
 « Can build and deploy 150 microservices in 8 min »
 
@@ -102,7 +107,7 @@ Hatcheries support this role and are dedicated to the technologies used. To date
 - A **Local hatchery**: allows to launch Workers on a host.
 - A **Kubernetes hatchery**: allows to launch Workers CDS in Kubernetes Pods.
  
-{{< figure src="/images/concepts_why_cds_hacheries.png" title="CDS Hatcheries" >}}
+![Attach repo manager](/images/concepts_why_cds_hacheries.png?height=250px&classes=shadow "CDS Hatcheries")
 
 ### 3 - High Availability
 
