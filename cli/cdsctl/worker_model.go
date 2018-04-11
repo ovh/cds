@@ -90,6 +90,8 @@ func workerModelAddRun(c cli.Values) error {
 			sdk.Exit("Error: Docker image not provided (--image)\n")
 		}
 		modelDocker.Image = image
+		//TODO TO DELETE ! BAD
+		modelDocker.Cmd = "worker"
 		break
 	case string(sdk.Openstack):
 		t = sdk.Openstack
