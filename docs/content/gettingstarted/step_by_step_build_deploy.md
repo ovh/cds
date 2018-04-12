@@ -30,7 +30,7 @@ Let's create a project. On the top navbar, click on 'Create a project'.
 
 {{%expand "view screenshots..." %}}
 
-![1_create_prj](/images/getting_started_standard_wf_1_create_prj.png)
+![1_create_prj](/images/getting_started_standard_wf_1_create_prj.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -47,17 +47,17 @@ Be sure to have a [Repository manager]({{< relref "/hosting/repositories-manager
 {{%expand "view screenshots..." %}}
 
 Select 'Advanced' section
-![2_admin_prj](/images/getting_started_standard_wf_2_admin_prj.png)
+![2_admin_prj](/images/getting_started_standard_wf_2_admin_prj.png?height=400px&classes=shadow)
 
 In the section 'Link to a repository manager', select 'github', then click on 'Connect'
-![3_admin_prj_add_repo](/images/getting_started_standard_wf_3_admin_prj_add_repo.png)
+![3_admin_prj_add_repo](/images/getting_started_standard_wf_3_admin_prj_add_repo.png?height=400px&classes=shadow)
 
 A popup is displayed, Click on 'Click here' to finalize the link with github. By doing that, you allow CDS to create hook on github.
-![4_admin_prj_add_repo_popup](/images/getting_started_standard_wf_4_admin_prj_add_repo_popup.png)
+![4_admin_prj_add_repo_popup](/images/getting_started_standard_wf_4_admin_prj_add_repo_popup.png?height=400px&classes=shadow)
 
 Here, Github is well linked on your CDS project.
 
-![5_admin_repo_linked](/images/getting_started_standard_wf_5_admin_repo_linked.png)
+![5_admin_repo_linked](/images/getting_started_standard_wf_5_admin_repo_linked.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -75,16 +75,16 @@ A CDS Application is useful to have a link to a Git Repository.
 {{%expand "view screenshots..." %}}
 
 Go on Project -> Applications tab, click on 'Create a new application'
-![6_app_tab](/images/getting_started_standard_wf_6_app_tab.png)
+![6_app_tab](/images/getting_started_standard_wf_6_app_tab.png?height=400px&classes=shadow)
 
 Enter application name, here 'my-java-app'
-![7_create_app](/images/getting_started_standard_wf_7_create_app.png)
+![7_create_app](/images/getting_started_standard_wf_7_create_app.png?height=400px&classes=shadow)
 
 Go on Advanced tab, select a Repository
-![8_admin_app](/images/getting_started_standard_wf_8_admin_app.png)
+![8_admin_app](/images/getting_started_standard_wf_8_admin_app.png?height=400px&classes=shadow)
 
 Expand configuration, select 'https'. If your repository is public, you can keep empty fields, then click on 'Save'
-![9_app_link_repo](/images/getting_started_standard_wf_9_app_link_repo.png)
+![9_app_link_repo](/images/getting_started_standard_wf_9_app_link_repo.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -99,10 +99,10 @@ We will use it further in a [Job]({{< relref "gettingstarted/concepts/job.md" >}
 {{%expand "view screenshots..." %}}
 
 Select the variables tab, name 'my-variable', type 'string', value 'my-value'
-![10_app_create_var](/images/getting_started_standard_wf_10_app_create_var.png)
+![10_app_create_var](/images/getting_started_standard_wf_10_app_create_var.png?height=400px&classes=shadow)
 
 Then click on 'Save'
-![11_app_var_created](/images/getting_started_standard_wf_11_app_var_created.png)
+![11_app_var_created](/images/getting_started_standard_wf_11_app_var_created.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -119,22 +119,22 @@ Here we go, you will create your first workflow.
 {{%expand "view screenshots..." %}}
 
 Go to Project -> Worflows tab
-![12_wf_tab](/images/getting_started_standard_wf_12_wf_tab.png)
+![12_wf_tab](/images/getting_started_standard_wf_12_wf_tab.png?height=400px&classes=shadow)
 
 Enter the Workflow name, then click on Next
-![13_create_wf](/images/getting_started_standard_wf_13_create_wf.png)
+![13_create_wf](/images/getting_started_standard_wf_13_create_wf.png?height=400px&classes=shadow)
 
 You have now to choose the first pipeline. As you don't have a pipeline yet, you will create a new one, named 'build-pipeline'. Click on Next
-![14_create_wf](/images/getting_started_standard_wf_14_create_wf.png)
+![14_create_wf](/images/getting_started_standard_wf_14_create_wf.png?height=400px&classes=shadow)
 
 Now, you have to select an application. Choose your application 'my-java-app', then click on Next
-![15_create_wf](/images/getting_started_standard_wf_15_create_wf.png)
+![15_create_wf](/images/getting_started_standard_wf_15_create_wf.png?height=400px&classes=shadow)
 
 We don't need an environment for the build pipeline, Click on 'Finish'
-![16_create_wf](/images/getting_started_standard_wf_16_create_wf.png)
+![16_create_wf](/images/getting_started_standard_wf_16_create_wf.png?height=400px&classes=shadow)
 
 The workflow is now created
-![17_wf_created](/images/getting_started_standard_wf_17_wf_created.png)
+![17_wf_created](/images/getting_started_standard_wf_17_wf_created.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -155,26 +155,26 @@ on Requirements link then add binaries prerequisites.
 {{%expand "view screenshots..." %}}
 
 In your workflow, select the pipeline 'build-pipeline', then click on 'Edit the pipeline'. Click on 'Add job'.
-![18_edit_build_pipeline](/images/getting_started_standard_wf_18_edit_build_pipeline.png)
+![18_edit_build_pipeline](/images/getting_started_standard_wf_18_edit_build_pipeline.png?height=400px&classes=shadow)
 
 Add the first step 'CheckoutApplication'
-![19_edit_build_pipeline](/images/getting_started_standard_wf_19_edit_build_pipeline.png)
+![19_edit_build_pipeline](/images/getting_started_standard_wf_19_edit_build_pipeline.png?height=400px&classes=shadow)
 
 Add the first step 'CheckoutApplication'
-![20_edit_build_pipeline](/images/getting_started_standard_wf_20_edit_build_pipeline.png)
+![20_edit_build_pipeline](/images/getting_started_standard_wf_20_edit_build_pipeline.png?height=400px&classes=shadow)
 
 Add a second step 'Script'. The content of the script is `mvn package``
-![21_edit_build_pipeline](/images/getting_started_standard_wf_21_edit_build_pipeline.png)
+![21_edit_build_pipeline](/images/getting_started_standard_wf_21_edit_build_pipeline.png?height=400px&classes=shadow)
 
 The third step is 'Artifact Upload', to upload your builded binary
-![22_edit_build_pipeline](/images/getting_started_standard_wf_22_edit_build_pipeline.png)
+![22_edit_build_pipeline](/images/getting_started_standard_wf_22_edit_build_pipeline.png?height=400px&classes=shadow)
 
 And the last step is 'JUnit'. This step is 'always executed' and let you to see test results on UI.
-![23_edit_build_pipeline](/images/getting_started_standard_wf_23_edit_build_pipeline.png)
+![23_edit_build_pipeline](/images/getting_started_standard_wf_23_edit_build_pipeline.png?height=400px&classes=shadow)
 
 Last thing about the 'build-pipeline': as you use mvn, you probably want to add `mvn` and `java`. Click
 on Requirements link then add binaries prerequisites.
-![24_edit_build_pipeline_add_requirements](/images/getting_started_standard_wf_24_edit_build_pipeline_add_requirements.png)
+![24_edit_build_pipeline_add_requirements](/images/getting_started_standard_wf_24_edit_build_pipeline_add_requirements.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -201,13 +201,13 @@ reacheabled from Github. So, we have to add a Git Repository Poller
 {{%expand "view screenshots..." %}}
 
 Select the pipeline root, then click on 'Add a hook'
-![25_select_root](/images/getting_started_standard_wf_25_select_root.png)
+![25_select_root](/images/getting_started_standard_wf_25_select_root.png?height=400px&classes=shadow)
 
 Choose a Git Repository Poller
-![26_add_repo_poller](/images/getting_started_standard_wf_26_add_repo_poller.png)
+![26_add_repo_poller](/images/getting_started_standard_wf_26_add_repo_poller.png?height=400px&classes=shadow)
 
 The poller is added and linked to your first pipeline
-![27_hook_poller_added](/images/getting_started_standard_wf_27_hook_poller_added.png)
+![27_hook_poller_added](/images/getting_started_standard_wf_27_hook_poller_added.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -224,19 +224,19 @@ It's time to launch your Workflow, click on the green button 'Run workflow'.
 {{%expand "view screenshots..." %}}
 
 On the popup, you can choose the git branch, then click on green button 'OK'
-![28_run_wf](/images/getting_started_standard_wf_28_run_wf.png)
+![28_run_wf](/images/getting_started_standard_wf_28_run_wf.png?height=400px&classes=shadow)
 
 The first pipeline is building (you can double-click on it, it's a shortcut), you can see logs. 
-![29_wf_running](/images/getting_started_standard_wf_29_wf_running.png)
+![29_wf_running](/images/getting_started_standard_wf_29_wf_running.png?height=400px&classes=shadow)
 
 The pipeline is done, it's a success.
-![30_wf_success](/images/getting_started_standard_wf_30_wf_success.png)
+![30_wf_success](/images/getting_started_standard_wf_30_wf_success.png?height=400px&classes=shadow)
 
 Click on 'Test' tab, you can see Unit Tests.
-![31_view_tests](/images/getting_started_standard_wf_31_view_tests.png)
+![31_view_tests](/images/getting_started_standard_wf_31_view_tests.png?height=400px&classes=shadow)
 
 Click on 'Artifact', you see the builded artifact.
-![32_view_artifacts](/images/getting_started_standard_wf_32_view_artifacts.png)
+![32_view_artifacts](/images/getting_started_standard_wf_32_view_artifacts.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -253,19 +253,19 @@ Ok, we have an artifact to deploy. Let's create a deploy pipeline and trigger it
 {{%expand "view screenshots..." %}}
 
 Select the build pipeline
-![33_select_root](/images/getting_started_standard_wf_33_select_root.png)
+![33_select_root](/images/getting_started_standard_wf_33_select_root.png?height=400px&classes=shadow)
 
 Create a 'deploy-pipeline', then click on 'Next'
-![34_add_pipeline](/images/getting_started_standard_wf_34_add_pipeline.png)
+![34_add_pipeline](/images/getting_started_standard_wf_34_add_pipeline.png?height=400px&classes=shadow)
 
 Select the application 'my-java-app', then click on 'Next'
-![35_add_pipeline](/images/getting_started_standard_wf_35_add_pipeline.png)
+![35_add_pipeline](/images/getting_started_standard_wf_35_add_pipeline.png?height=400px&classes=shadow)
 
 Create a new environment named 'staging', then click on 'Finish'
-![36_add_pipeline](/images/getting_started_standard_wf_36_add_pipeline.png)
+![36_add_pipeline](/images/getting_started_standard_wf_36_add_pipeline.png?height=400px&classes=shadow)
 
 The workflow contains now two pipelines
-![37_pipeline_added](/images/getting_started_standard_wf_37_pipeline_added.png)
+![37_pipeline_added](/images/getting_started_standard_wf_37_pipeline_added.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -282,19 +282,19 @@ Same as previous, we will add a pipeline to deploy in production.
 {{%expand "view screenshots..." %}}
 
 Select the 'deploy-pipeline'
-![38_pipeline_added](/images/getting_started_standard_wf_38_pipeline_added.png)
+![38_pipeline_added](/images/getting_started_standard_wf_38_pipeline_added.png?height=400px&classes=shadow)
 
 Select the 'deploy-pipeline', then click on 'Next'
-![39_add_pipeline_prod](/images/getting_started_standard_wf_39_add_pipeline_prod.png)
+![39_add_pipeline_prod](/images/getting_started_standard_wf_39_add_pipeline_prod.png?height=400px&classes=shadow)
 
 Select the application 'my-java-app', then click on 'Next'
-![40_add_pipeline_prod](/images/getting_started_standard_wf_40_add_pipeline_prod.png)
+![40_add_pipeline_prod](/images/getting_started_standard_wf_40_add_pipeline_prod.png?height=400px&classes=shadow)
 
 Create a new environment named 'production', then click on 'Finish'
-![41_add_pipeline_prod](/images/getting_started_standard_wf_41_add_pipeline_prod.png)
+![41_add_pipeline_prod](/images/getting_started_standard_wf_41_add_pipeline_prod.png?height=400px&classes=shadow)
 
 The workflow contains now three pipelines
-![42_add_pipeline_prod](/images/getting_started_standard_wf_42_add_pipeline_prod.png)
+![42_add_pipeline_prod](/images/getting_started_standard_wf_42_add_pipeline_prod.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -312,13 +312,13 @@ Let's create a Run Condition on `git.branch`, to trigger automatically a deploym
 {{%expand "view screenshots..." %}}
 
 Select the 'deploy-pipeline', then click on 'Edit run Conditions'
-![43_select_staging](/images/getting_started_standard_wf_43_select_staging.png)
+![43_select_staging](/images/getting_started_standard_wf_43_select_staging.png?height=400px&classes=shadow)
 
 Add a run condition 'git.branch', with value 'master', click on 'Plus' button
-![44_edit_run_conditions](/images/getting_started_standard_wf_44_edit_run_conditions.png)
+![44_edit_run_conditions](/images/getting_started_standard_wf_44_edit_run_conditions.png?height=400px&classes=shadow)
 
 Click on 'Save'
-![45_edit_run_conditions](/images/getting_started_standard_wf_45_edit_run_conditions.png)
+![45_edit_run_conditions](/images/getting_started_standard_wf_45_edit_run_conditions.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -333,10 +333,10 @@ Same as 'deploy-pipeline' on staging, we will add condition on the pipeline whic
 
 
 Select the 'deploy-pipeline_2', then click on 'Edit run Conditions'
-![52_select_prod](/images/getting_started_standard_wf_52_select_prod.png)
+![52_select_prod](/images/getting_started_standard_wf_52_select_prod.png?height=400px&classes=shadow)
 
 Add a run condition 'cds.manual', with value 'true', click on 'Plus' button
-![53_run_conditions_prod](/images/getting_started_standard_wf_53_run_conditions_prod.png)
+![53_run_conditions_prod](/images/getting_started_standard_wf_53_run_conditions_prod.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -354,10 +354,10 @@ Let's rename the pipelines on your workflow.
 {{%expand "view screenshots..." %}}
 
 Select the 'deploy-pipeline', then on the top left, click on on the edit button. Rename to 'auto-deploy-pipeline'
-![54_edit_node_name](/images/getting_started_standard_wf_54_edit_node_name.png)
+![54_edit_node_name](/images/getting_started_standard_wf_54_edit_node_name.png?height=400px&classes=shadow)
 
 Do the same for the second 'deploy-pipeline', rename it to 'manual-deploy-pipeline'
-![55_names_edited](/images/getting_started_standard_wf_55_names_edited.png)
+![55_names_edited](/images/getting_started_standard_wf_55_names_edited.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -373,13 +373,13 @@ We will use [CDS Variable]({{< relref "workflows/pipelines/variables.md" >}}) fr
 {{%expand "view screenshots..." %}}
 
 Select the 'auto-deploy-pipeline', then click on 'Edit the pipeline' on the sidebar
-![47_edit_pipeline_deploy](/images/getting_started_standard_wf_47_edit_pipeline_deploy.png)
+![47_edit_pipeline_deploy](/images/getting_started_standard_wf_47_edit_pipeline_deploy.png?height=400px&classes=shadow)
 
 Add a step 'Artifact Download' and a step 'script'.
-![50_edit_pipeline_deploy](/images/getting_started_standard_wf_50_edit_pipeline_deploy.png)
+![50_edit_pipeline_deploy](/images/getting_started_standard_wf_50_edit_pipeline_deploy.png?height=400px&classes=shadow)
 
 The script contains `echo "deploying {{.cds.application}} with variable {{.cds.app.my-variable}} on environment {{.cds.environment}}"`
-![51_edit_pipeline_deploy](/images/getting_started_standard_wf_51_edit_pipeline_deploy.png)
+![51_edit_pipeline_deploy](/images/getting_started_standard_wf_51_edit_pipeline_deploy.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -395,13 +395,13 @@ Let's Run the workflow.
 {{%expand "view screenshots..." %}}
 
 The pipeline 'auto-deploy-pipeline' is automatically launched.
-![57_run](/images/getting_started_standard_wf_57_run.png)
+![57_run](/images/getting_started_standard_wf_57_run.png?height=400px&classes=shadow)
 
 The script step on this pipeline contains `deploying my-java-app with variable my-value on environment staging`
-![58_view_run_staging](/images/getting_started_standard_wf_58_view_run_staging.png)
+![58_view_run_staging](/images/getting_started_standard_wf_58_view_run_staging.png?height=400px&classes=shadow)
 
 The pipeline deploy in production is not launched, as expected.
-![59_view_run](/images/getting_started_standard_wf_59_view_run.png)
+![59_view_run](/images/getting_started_standard_wf_59_view_run.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
@@ -416,12 +416,12 @@ click on Run to launch a deployment in production.
 {{%expand "view screenshots..." %}}
 
 Select the 'manual-deploy-pipeline', then click on the 'Play' button on the top left
-![60_manual_run](/images/getting_started_standard_wf_60_manual_run.png)
+![60_manual_run](/images/getting_started_standard_wf_60_manual_run.png?height=400px&classes=shadow)
 
-![62_run_prod](/images/getting_started_standard_wf_62_run_prod.png)
+![62_run_prod](/images/getting_started_standard_wf_62_run_prod.png?height=400px&classes=shadow)
 
 The script step displays `deploying my-java-app with variable my-value on environment production`
-![63_view_run_prod](/images/getting_started_standard_wf_63_view_run_prod.png)
+![63_view_run_prod](/images/getting_started_standard_wf_63_view_run_prod.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
