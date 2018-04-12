@@ -7,12 +7,11 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-// Common is the stuct representing a vcs µService
+// Common is the struct representing a CDS µService
 type Common struct {
-	Client      cdsclient.Interface
-	Hash        string
-	StartupTime time.Time
-
+	Client               cdsclient.Interface
+	Hash                 string
+	StartupTime          time.Time
 	API                  string
 	Name                 string
 	HTTPURL              string

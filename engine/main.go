@@ -428,10 +428,10 @@ func serve(c context.Context, s service.Service, serviceName string) error {
 
 	//First register(heartbeat)
 	if _, err := s.DoHeartbeat(); err != nil {
-		log.Error("VCS> Unable to register: %v", err)
+		log.Error("%s> Unable to register: %v", serviceName, err)
 		return err
 	}
-	log.Info("VCS> Service registered")
+	log.Info("%s> Service registered", serviceName)
 
 	//Start the heartbeat goroutine
 	go func() {
