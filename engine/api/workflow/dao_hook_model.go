@@ -10,17 +10,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Here are the default hooks
-var (
-	builtinModels = []*sdk.WorkflowHookModel{
-		&sdk.WebHookModel,
-		&sdk.RepositoryWebHookModel,
-		&sdk.GitPollerModel,
-		&sdk.SchedulerModel,
-		&sdk.KafkaHookModel,
-	}
-)
-
 //PostInsert is a db hook
 func (r *NodeHookModel) PostInsert(db gorp.SqlExecutor) error {
 	return r.PostUpdate(db)
@@ -68,7 +57,7 @@ func CreateBuiltinWorkflowHookModels(db *gorp.DbMap) error {
 		return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels> Unable to lock table")
 	}
 
-	for _, h := range builtinModels {
+	for _, h := range sdk.BuiltinPlatformModels {
 		ok, err := checkBuiltinWorkflowHookModelExist(tx, h)
 		if err != nil {
 			return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels")

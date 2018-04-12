@@ -1,9 +1,22 @@
 package sdk
 
-import "runtime"
+import (
+	"runtime"
+)
 
 const (
 	KafkaPlatformModel = "Kafka"
+)
+
+// Here are the default hooks
+var (
+	BuiltinPlatformModels = []*WorkflowHookModel{
+		&WebHookModel,
+		&RepositoryWebHookModel,
+		&GitPollerModel,
+		&SchedulerModel,
+		&KafkaHookModel,
+	}
 )
 
 var (
@@ -95,6 +108,16 @@ type PlatformModel struct {
 	Deployment          bool                 `json:"deployment" db:"deployment" yaml:"deployment"`
 	Compute             bool                 `json:"compute" db:"compute" yaml:"compute"`
 	PlatformModelPlugin *PlatformModelPlugin `json:"platform_model_plugin,omitempty" db:"-" yaml:"-"`
+}
+
+//IsBuiltin checks is the model is builtin or not
+func (p PlatformModel) IsBuiltin() bool {
+	for _, m := range BuiltinPlatformModels {
+		if p.Name == m.Name {
+			return true
+		}
+	}
+	return false
 }
 
 // ProjectPlatform is an instanciation of a platform model

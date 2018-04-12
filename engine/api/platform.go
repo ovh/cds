@@ -81,6 +81,10 @@ func (api *API) putPlatformModelHandler() Handler {
 			return sdk.WrapError(err, "putPlatformModelHandler> Unable to load model")
 		}
 
+		if old.IsBuiltin() {
+			return sdk.WrapError(sdk.ErrForbidden, "putPlatformModelHandler> Update builtin model is forbidden")
+		}
+
 		if m.Name != old.Name {
 			return sdk.ErrWrongRequest
 		}

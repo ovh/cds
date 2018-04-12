@@ -26,7 +26,6 @@ func Test_getPlatformModelsHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
-
 }
 
 func Test_postPlatformModelHandler(t *testing.T) {
