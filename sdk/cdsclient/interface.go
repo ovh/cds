@@ -266,6 +266,14 @@ type MonitoringClient interface {
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
 }
 
+// PlatformClient exposes platform functions
+type PlatformClient interface {
+	PlatformModelList() ([]sdk.PlatformModel, error)
+	PlatformModelGet(name string) (sdk.PlatformModel, error)
+	PlatformModelAdd(m *sdk.PlatformModel) error
+	PlatformModelUpdate(m *sdk.PlatformModel) error
+}
+
 // Interface is the main interface for cdsclient package
 type Interface interface {
 	ActionClient
@@ -279,6 +287,7 @@ type Interface interface {
 	GroupClient
 	HatcheryClient
 	PipelineClient
+	PlatformClient
 	ProjectClient
 	QueueClient
 	Navbar() ([]sdk.NavbarProjectData, error)

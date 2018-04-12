@@ -74,7 +74,7 @@ func (api *API) InitRouter() {
 
 	// Platform
 	r.Handle("/platform/models", r.GET(api.getPlatformModelsHandler), r.POST(api.postPlatformModelHandler, NeedAdmin(true)))
-	r.Handle("/platform/models/{name}", r.PUT(api.putPlatformModelHandler), r.DELETE(api.deletePlatformModelHandler, NeedAdmin(true)))
+	r.Handle("/platform/models/{name}", r.GET(api.getPlatformModelHandler), r.PUT(api.putPlatformModelHandler, NeedAdmin(true)), r.DELETE(api.deletePlatformModelHandler, NeedAdmin(true)))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))

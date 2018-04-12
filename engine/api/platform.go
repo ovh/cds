@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getPlatformModelsHandler() Handler {
@@ -16,6 +15,18 @@ func (api *API) getPlatformModelsHandler() Handler {
 		p, err := platform.LoadModels(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getPlatformModels> Cannot get platform models")
+		}
+		return WriteJSON(w, p, http.StatusOK)
+	}
+}
+
+func (api *API) getPlatformModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+		p, err := platform.LoadModelByName(api.mustDB(), name)
+		if err != nil {
+			return sdk.WrapError(err, "getPlatformModelHandler> Cannot get platform model")
 		}
 		return WriteJSON(w, p, http.StatusOK)
 	}
@@ -57,8 +68,6 @@ func (api *API) putPlatformModelHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-
-		log.Debug("loading model %s", name)
 
 		if name == "" {
 			return sdk.ErrNotFound

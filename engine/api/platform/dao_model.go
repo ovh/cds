@@ -100,12 +100,14 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 	}{}
 
 	query := "SELECT default_config, platform_model_plugin FROM platform_model where id = $1"
-	if _, err := db.Select(&res, query, pm.ID); err != nil {
+	if err := db.SelectOne(&res, query, pm.ID); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Cannot get default_config, platform_model_plugin")
 	}
+
 	if err := gorpmapping.JSONNullString(res.DefaultConfig, &pm.DefaultConfig); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load default_config")
 	}
+
 	if err := gorpmapping.JSONNullString(res.PlatformModelPlugin, &pm.PlatformModelPlugin); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load platform_model_plugin")
 	}
