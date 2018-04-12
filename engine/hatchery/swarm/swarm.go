@@ -158,45 +158,45 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		memory = hatchery.MemoryRegisterContainer
 	}
 
-	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	// cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
-
-	//CDS env needed by the worker binary
-	env := []string{
-		"CDS_API" + "=" + h.Configuration().API.HTTP.URL,
-		"CDS_NAME" + "=" + name,
-		"CDS_TOKEN" + "=" + h.Configuration().API.Token,
-		"CDS_MODEL" + "=" + strconv.FormatInt(spawnArgs.Model.ID, 10),
-		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
-		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
-		"CDS_TTL" + "=" + strconv.Itoa(h.Config.WorkerTTL),
-		"CDS_SINGLE_USE=1",
-	}
-
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
-		env = append(env, "CDS_GRAYLOG_HOST"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.Host)
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
-		env = append(env, fmt.Sprintf("CDS_GRAYLOG_PORT=%d", h.Configuration().Provision.WorkerLogsOptions.Graylog.Port))
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey)
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
-	}
-	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
-		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
-	}
-
-	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", spawnArgs.JobID))
-		} else {
-			env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", spawnArgs.JobID))
-		}
-	}
+	// //cmd is the command to start the worker (we need curl to download current version of the worker binary)
+	// // cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
+	//
+	// //CDS env needed by the worker binary
+	// env := []string{
+	// 	"CDS_API" + "=" + h.Configuration().API.HTTP.URL,
+	// 	"CDS_NAME" + "=" + name,
+	// 	"CDS_TOKEN" + "=" + h.Configuration().API.Token,
+	// 	"CDS_MODEL" + "=" + strconv.FormatInt(spawnArgs.Model.ID, 10),
+	// 	"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
+	// 	"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
+	// 	"CDS_TTL" + "=" + strconv.Itoa(h.Config.WorkerTTL),
+	// 	"CDS_SINGLE_USE=1",
+	// }
+	//
+	// if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
+	// 	env = append(env, "CDS_GRAYLOG_HOST"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.Host)
+	// }
+	// if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
+	// 	env = append(env, fmt.Sprintf("CDS_GRAYLOG_PORT=%d", h.Configuration().Provision.WorkerLogsOptions.Graylog.Port))
+	// }
+	// if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+	// 	env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey)
+	// }
+	// if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
+	// 	env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
+	// }
+	// if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
+	// 	env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
+	// 	env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
+	// }
+	//
+	// if spawnArgs.JobID > 0 {
+	// 	if spawnArgs.IsWorkflowJob {
+	// 		env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", spawnArgs.JobID))
+	// 	} else {
+	// 		env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", spawnArgs.JobID))
+	// 	}
+	// }
 
 	//labels are used to make container cleanup easier
 	labels := map[string]string{
@@ -217,7 +217,6 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		network:      network,
 		networkAlias: networkAlias,
 		cmd:          []string{spawnArgs.Model.ModelDocker.Cmd + registerCmd},
-		env:          env,
 		labels:       labels,
 		memory:       memory,
 		dockerOpts:   *dockerOpts,

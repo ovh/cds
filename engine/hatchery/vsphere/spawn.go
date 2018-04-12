@@ -179,35 +179,17 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jo
 	}
 
 	env := []string{
-		"CDS_SINGLE_USE=1",
-		"CDS_FORCE_EXIT=1",
 		"CDS_FROM_WORKER_IMAGE=true",
-		"CDS_API=" + h.Configuration().API.HTTP.URL,
-		"CDS_TOKEN=" + h.Configuration().API.Token,
-		"CDS_NAME=" + name,
-		"CDS_MODEL=" + fmt.Sprintf("%d", model.ID),
-		"CDS_HATCHERY=" + fmt.Sprintf("%d", h.Hatchery().ID),
-		"CDS_HATCHERY_NAME=" + h.Hatchery().Name,
-		"CDS_TTL=" + fmt.Sprintf("%d", h.workerTTL),
-	}
-
-	if isWorkflowJob {
-		env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", jobID))
-	} else {
-		env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", jobID))
 	}
 
 	env = append(env, h.getGraylogGrpcEnv(model)...)
 
-	script := fmt.Sprintf(
-		`cd $HOME; rm -f worker; curl "%s/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1; chmod +x worker; PATH=$PATH ./worker`,
-		h.Configuration().API.HTTP.URL,
-	)
+	script := model.ModelVirtualMachine.PreCmd + "; \n" + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
 		script += " register"
 	}
-	script += " ; shutdown -h now;"
+	script += (";\n" + model.ModelVirtualMachine.PostCmd)
 
 	if _, errS := h.launchClientOp(vm, script, env); errS != nil {
 		log.Warning("launchScript> cannot start program %s", errS)

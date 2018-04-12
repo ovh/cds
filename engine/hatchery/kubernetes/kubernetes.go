@@ -221,9 +221,10 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 			TerminationGracePeriodSeconds: &gracePeriodSecs,
 			Containers: []apiv1.Container{
 				{
-					Name:  name,
-					Image: spawnArgs.Model.ModelDocker.Image,
-					Env:   envs,
+					Name:    name,
+					Image:   spawnArgs.Model.ModelDocker.Image,
+					Env:     envs,
+					Command: []string{spawnArgs.Model.ModelDocker.Cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
 							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
