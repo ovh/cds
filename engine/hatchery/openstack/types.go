@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/service"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -51,6 +52,7 @@ type HatcheryConfiguration struct {
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
 // by startup up virtual machines on /cloud
 type HatcheryOpenstack struct {
+	service.Common
 	Config          HatcheryConfiguration
 	hatch           *sdk.Hatchery
 	flavors         []flavors.Flavor

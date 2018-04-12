@@ -3,23 +3,20 @@ package repositories
 // Service is the stuct representing a vcs µService
 import (
 	"path/filepath"
-	"time"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/service"
 )
 
 // Service is the repostories service
 type Service struct {
-	Cfg         Configuration
-	Router      *api.Router
-	Cache       cache.Store
-	cds         cdsclient.Interface
-	hash        string
-	dao         dao
-	StartupTime time.Time
+	service.Common
+	Cfg    Configuration
+	Router *api.Router
+	Cache  cache.Store
+	dao    dao
 }
 
 // Configuration is the vcs configuration structure

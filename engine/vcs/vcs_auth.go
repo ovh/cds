@@ -53,7 +53,7 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 		ctx = context.WithValue(ctx, contextKeyAccessTokenSecret, string(accessTokenSecret))
 	}
 
-	if s.hash != string(hash) {
+	if s.Hash != string(hash) {
 		return ctx, sdk.ErrUnauthorized
 	}
 

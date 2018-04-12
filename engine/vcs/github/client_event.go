@@ -178,7 +178,7 @@ func (g *githubClient) CreateEvents(fullname string, iEvents []interface{}) ([]s
 		branch, err := g.Branch(fullname, b)
 		if err != nil || branch == nil {
 			errtxt := fmt.Sprintf("githubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
-			if err != nil && strings.Contains(errtxt, "Branch not found") {
+			if err != nil && !strings.Contains(errtxt, "Branch not found") {
 				log.Warning(errtxt)
 			} else {
 				log.Debug(errtxt)

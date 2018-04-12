@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -53,12 +52,6 @@ type Configuration struct {
 type ServiceServeOptions struct {
 	SetHeaderFunc func() map[string]string
 	Middlewares   []api.Middleware
-}
-
-type Service interface {
-	ApplyConfiguration(cfg interface{}) error
-	Serve(ctx context.Context) error
-	CheckConfiguration(cfg interface{}) error
 }
 
 func AsEnvVariables(o interface{}, prefix string, skipCommented bool) map[string]string {

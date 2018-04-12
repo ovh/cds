@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/service"
 
 	"k8s.io/client-go/kubernetes"
 )
@@ -40,6 +41,7 @@ type HatcheryConfiguration struct {
 
 // HatcheryKubernetes implements HatcheryMode interface for local usage
 type HatcheryKubernetes struct {
+	service.Common
 	Config HatcheryConfiguration
 	sync.Mutex
 	hatch     *sdk.Hatchery

@@ -2,23 +2,20 @@ package vcs
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/service"
 )
 
 // Service is the stuct representing a vcs µService
 type Service struct {
-	Cfg         Configuration
-	Router      *api.Router
-	Cache       cache.Store
-	cds         cdsclient.Interface
-	hash        string
-	StartupTime time.Time
+	service.Common
+	Cfg    Configuration
+	Router *api.Router
+	Cache  cache.Store
 }
 
 // Configuration is the vcs configuration structure

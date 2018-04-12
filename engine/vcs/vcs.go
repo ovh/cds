@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/vcs/bitbucket"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/engine/vcs/gitlab"
@@ -37,6 +38,15 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
+
+	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
+	s.API = s.Cfg.API.HTTP.URL
+	s.Name = s.Cfg.Name
+	s.HTTPURL = s.Cfg.URL
+	s.Token = s.Cfg.API.Token
+	s.Type = services.TypeVCS
+	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+
 	return nil
 }
 
@@ -73,29 +83,8 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 
 // Serve will start the http api server
 func (s *Service) Serve(c context.Context) error {
-	ctx, cancel := context.WithCancel(c)
-	defer cancel()
-
 	log.Info("VCS> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 	s.StartupTime = time.Now()
-
-	//Instanciate a cds client
-	s.cds = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
-
-	//First register(heartbeat)
-	if err := s.doHeartbeat(); err != nil {
-		log.Error("VCS> Unable to register: %v", err)
-		return err
-	}
-	log.Info("VCS> Service registered")
-
-	//Start the heartbeat gorourine
-	go func() {
-		if err := s.heartbeat(ctx); err != nil {
-			log.Error("%v", err)
-			cancel()
-		}
-	}()
 
 	//Init the cache
 	var errCache error
@@ -105,7 +94,7 @@ func (s *Service) Serve(c context.Context) error {
 	}
 
 	//Init the http server
-	s.initRouter(ctx)
+	s.initRouter(c)
 	server := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
 		Handler:        s.Router.Mux,
@@ -114,20 +103,20 @@ func (s *Service) Serve(c context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	//Gracefully shutdown the http server
-	go func() {
-		select {
-		case <-ctx.Done():
-			log.Info("VCS> Shutdown HTTP Server")
-			server.Shutdown(ctx)
-		}
-	}()
-
 	//Start the http server
 	log.Info("VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Error("VCS> Listen and serve failed: %s", err)
 	}
 
-	return ctx.Err()
+	//Gracefully shutdown the http server
+	go func() {
+		select {
+		case <-c.Done():
+			log.Info("VCS> Shutdown HTTP Server")
+			server.Shutdown(c)
+		}
+	}()
+
+	return c.Err()
 }

@@ -47,6 +47,14 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
+	// s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
+	// s.API = s.Cfg.API.HTTP.URL
+	// s.Name = s.Cfg.Name
+	// s.HTTPURL = s.Cfg.URL
+	// s.Token = s.Cfg.API.Token
+	// s.Type = services.TypeHatchery
+	// s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+
 	return nil
 }
 

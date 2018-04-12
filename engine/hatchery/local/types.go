@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/service"
 )
 
 // HatcheryConfiguration is the configuration for local hatchery
@@ -19,6 +20,7 @@ type HatcheryConfiguration struct {
 
 // HatcheryLocal implements HatcheryMode interface for local usage
 type HatcheryLocal struct {
+	service.Common
 	Config HatcheryConfiguration
 	sync.Mutex
 	hatch   *sdk.Hatchery

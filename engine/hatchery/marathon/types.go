@@ -6,6 +6,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/service"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -39,6 +40,7 @@ type HatcheryConfiguration struct {
 
 // HatcheryMarathon implements HatcheryMode interface for mesos mode
 type HatcheryMarathon struct {
+	service.Common
 	Config HatcheryConfiguration
 	hatch  *sdk.Hatchery
 

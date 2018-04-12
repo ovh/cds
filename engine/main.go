@@ -31,6 +31,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/service"
 )
 
 var (
@@ -329,7 +330,7 @@ See $ engine config command for more details.
 
 		type serviceConf struct {
 			arg     string
-			service Service
+			service service.Service
 			cfg     interface{}
 		}
 		services := []serviceConf{}
@@ -404,11 +405,45 @@ See $ engine config command for more details.
 	},
 }
 
-func start(c context.Context, s Service, cfg interface{}, serviceName string) {
+func start(c context.Context, s service.Service, cfg interface{}, serviceName string) {
 	if err := s.ApplyConfiguration(cfg); err != nil {
 		sdk.Exit("Unable to init service %s: %v", serviceName, err)
 	}
-	if err := s.Serve(c); err != nil {
+
+	if err := serve(c, s, serviceName); err != nil {
 		sdk.Exit("Service has been stopped: %s %v", serviceName, err)
 	}
+}
+
+func serve(c context.Context, s service.Service, serviceName string) error {
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
+
+	// no heartbeat for api for now
+	if serviceName == "api" {
+		if err := s.Serve(c); err != nil {
+			return err
+		}
+	}
+
+	//First register(heartbeat)
+	if _, err := s.DoHeartbeat(); err != nil {
+		log.Error("VCS> Unable to register: %v", err)
+		return err
+	}
+	log.Info("VCS> Service registered")
+
+	//Start the heartbeat goroutine
+	go func() {
+		if err := s.Heartbeat(ctx); err != nil {
+			log.Error("%v", err)
+			cancel()
+		}
+	}()
+
+	if err := s.Serve(c); err != nil {
+		return err
+	}
+
+	return ctx.Err()
 }

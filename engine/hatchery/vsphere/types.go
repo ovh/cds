@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/service"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -47,6 +48,7 @@ type HatcheryConfiguration struct {
 
 // HatcheryVSphere spawns vm
 type HatcheryVSphere struct {
+	service.Common
 	Config     HatcheryConfiguration
 	hatch      *sdk.Hatchery
 	images     []string

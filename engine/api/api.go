@@ -37,6 +37,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/service"
 )
 
 // Configuration is the configuraton structure for CDS API
@@ -159,8 +160,17 @@ func New() *API {
 	return &API{}
 }
 
+// Service returns an instance of sdk.Service for the API
+func (*API) Service() sdk.Service {
+	return sdk.Service{
+		LastHeartbeat: time.Time{},
+		Type:          services.TypeAPI,
+	}
+}
+
 // API is a struct containing the configuration, the router, the database connection factory and so on
 type API struct {
+	service.Common
 	Router              *Router
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
