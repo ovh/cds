@@ -38,6 +38,7 @@ export class WorkflowRun {
 
     // Useful for UI
     duration: string;
+    force_update: boolean;
 }
 
 export class WorkflowRunTags {
