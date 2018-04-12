@@ -77,6 +77,21 @@ func UpdateModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 	return nil
 }
 
+// DeleteModel deletes a platform model in database
+func DeleteModel(db gorp.SqlExecutor, id int64) error {
+	m, err := LoadModel(db, id)
+	if err != nil {
+		return sdk.WrapError(err, "DeleteModel")
+	}
+
+	dbm := platformModel(m)
+	if _, err := db.Delete(&dbm); err != nil {
+		return sdk.WrapError(err, "DeleteModel> unable to delete model %s", m.Name)
+	}
+
+	return nil
+}
+
 // PostGet is a db hook
 func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {

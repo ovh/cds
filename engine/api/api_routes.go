@@ -73,7 +73,8 @@ func (api *API) InitRouter() {
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
 
 	// Platform
-	r.Handle("/platform/models", r.GET(api.getPlatformModels))
+	r.Handle("/platform/models", r.GET(api.getPlatformModelsHandler), r.POST(api.postPlatformModelHandler, NeedAdmin(true)))
+	r.Handle("/platform/models/{name}", r.PUT(api.putPlatformModelHandler), r.DELETE(api.deletePlatformModelHandler, NeedAdmin(true)))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))

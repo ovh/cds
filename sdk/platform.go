@@ -41,8 +41,8 @@ const (
 
 // PlatformConfigValue represent a configuration value for a platform
 type PlatformConfigValue struct {
-	Value string `json:"value"`
-	Type  string `json:"type"`
+	Value string `json:"value" yaml:"value"`
+	Type  string `json:"type" yaml:"type"`
 }
 
 type PlatformModelPluginBinary struct {
@@ -82,19 +82,19 @@ func (p *PlatformModelPlugin) AddBinary(os, arch string, b PlatformModelPluginBi
 
 // PlatformModel represent a platform model with its default configuration
 type PlatformModel struct {
-	ID                  int64                `json:"id" db:"id"`
-	Name                string               `json:"name" db:"name"`
-	Author              string               `json:"author" db:"author"`
-	Identifier          string               `json:"identifier" db:"identifier"`
-	Icon                string               `json:"icon" db:"icon"`
-	DefaultConfig       PlatformConfig       `json:"default_config" db:"-"`
-	Disabled            bool                 `json:"disabled" db:"disabled"`
-	Hook                bool                 `json:"hook" db:"hook"`
-	FileStorage         bool                 `json:"file_storage" db:"file_storage"`
-	BlockStorage        bool                 `json:"block_storage" db:"block_storage"`
-	Deployment          bool                 `json:"deployment" db:"deployment"`
-	Compute             bool                 `json:"compute" db:"compute"`
-	PlatformModelPlugin *PlatformModelPlugin `json:"platform_model_plugin" db:"-"`
+	ID                  int64                `json:"id" db:"id" yaml:"-"`
+	Name                string               `json:"name" db:"name" yaml:"name"`
+	Author              string               `json:"author" db:"author" yaml:"author"`
+	Identifier          string               `json:"identifier" db:"identifier" yaml:"identifier,omitempty"`
+	Icon                string               `json:"icon" db:"icon" yaml:"icon"`
+	DefaultConfig       PlatformConfig       `json:"default_config" db:"-" yaml:"default_config"`
+	Disabled            bool                 `json:"disabled" db:"disabled" yaml:"disabled"`
+	Hook                bool                 `json:"hook" db:"hook" yaml:"hook"`
+	FileStorage         bool                 `json:"file_storage" db:"file_storage" yaml:"file_storage"`
+	BlockStorage        bool                 `json:"block_storage" db:"block_storage" yaml:"block_storage"`
+	Deployment          bool                 `json:"deployment" db:"deployment" yaml:"deployment"`
+	Compute             bool                 `json:"compute" db:"compute" yaml:"compute"`
+	PlatformModelPlugin *PlatformModelPlugin `json:"platform_model_plugin,omitempty" db:"-" yaml:"-"`
 }
 
 // ProjectPlatform is an instanciation of a platform model

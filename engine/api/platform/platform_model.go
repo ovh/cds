@@ -1,8 +1,6 @@
 package platform
 
 import (
-	"fmt"
-
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -52,22 +50,4 @@ func CreateBuiltinModels(db *gorp.DbMap) error {
 		}
 	}
 	return tx.Commit()
-}
-
-func CreateModelFromPlugin(db gorp.SqlExecutor, p *sdk.PlatformModelPlugin) error {
-	ok, err := ModelExists(db, p.Name)
-	if err != nil {
-		return sdk.WrapError(err, "CreateModelFromPlugin> unable to check model exist")
-	}
-
-	if ok {
-		return sdk.ErrConflict
-	}
-
-	b := p.Binary()
-	if b == nil {
-		return fmt.Errorf("unsupported binary")
-	}
-
-	return nil
 }
