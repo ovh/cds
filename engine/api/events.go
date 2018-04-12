@@ -315,3 +315,60 @@ func (api *API) eventSubscribeHandler() Handler {
 		return nil
 	}
 }
+
+func (api *API) eventUnsubscribeHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var payload sdk.EventSubscription
+		if err := UnmarshalBody(r, &payload); err != nil {
+			return sdk.WrapError(err, "eventSubscribeHandler> Unable to get body")
+		}
+
+		api.eventsBroker.mutex.Lock()
+		api.eventsBroker.mutex.Unlock()
+		data := api.eventsBroker.clients[payload.UUID]
+
+		if payload.WorkflowName != "" {
+			if payload.WorkflowRuns {
+				// Subscribe to all workflow run
+				if runs, ok := data.Events[sdk.EventSubsWorkflowRuns]; ok {
+					found := false
+					index := 0
+					for i, es := range runs {
+						if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName {
+							found = true
+							index = i
+							break
+						}
+					}
+					if found {
+						runs = append(runs[:index], runs[index+1:]...)
+						data.Events[sdk.EventSubsWorkflowRuns] = runs
+					}
+				}
+
+			}
+
+			if payload.WorkflowNum > 0 {
+				// Subscribe to the given workflow run
+				if runs, ok := data.Events[sdk.EventSubWorkflowRun]; ok {
+					found := false
+					index := 0
+					for i, es := range runs {
+						if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName &&
+							es.WorkflowNum == payload.WorkflowNum {
+							found = true
+							index = i
+							break
+						}
+					}
+					if found {
+						runs = append(runs[:index], runs[index+1:]...)
+						data.Events[sdk.EventSubWorkflowRun] = runs
+					}
+				}
+			}
+		}
+		api.eventsBroker.clients[payload.UUID] = data
+		return nil
+	}
+}
