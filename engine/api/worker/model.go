@@ -20,6 +20,7 @@ const columns = `
 	worker_model.id,
 	worker_model.type,
 	worker_model.name,
+	worker_model.image,
 	worker_model.description,
 	worker_model.group_id,
 	worker_model.last_registration,
