@@ -138,7 +138,7 @@ func (c *githubClient) post(path string, bodyType string, body io.Reader, skipDe
 }
 
 func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
-	if RateLimitRemaining < 100 {
+	if isRateLimitReached() {
 		return 0, nil, nil, ErrorRateLimit
 	}
 
@@ -209,7 +209,7 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 }
 
 func (c *githubClient) delete(path string) error {
-	if RateLimitRemaining < 100 {
+	if isRateLimitReached() {
 		return ErrorRateLimit
 	}
 
