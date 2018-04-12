@@ -3,7 +3,7 @@ package hooks
 import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/service"
+	"github.com/ovh/cds/engine/service"
 )
 
 // Task execution status

@@ -27,11 +27,11 @@ import (
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
 	"github.com/ovh/cds/engine/repositories"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/service"
 )
 
 var (
@@ -420,7 +420,7 @@ func serve(c context.Context, s service.Service, serviceName string) error {
 	defer cancel()
 
 	// no heartbeat for api for now
-	if serviceName == "api" {
+	if serviceName == "api" || strings.HasPrefix(serviceName, "hatchery") {
 		if err := s.Serve(c); err != nil {
 			return err
 		}

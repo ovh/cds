@@ -5,10 +5,10 @@ import (
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/service"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
