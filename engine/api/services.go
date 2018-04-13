@@ -37,7 +37,7 @@ func (api *API) postServiceRegisterHandler() Handler {
 		}
 
 		//Try to find the service, and keep; else generate a new one
-		oldSrv, errOldSrv := repo.Find(srv.Name)
+		oldSrv, errOldSrv := repo.FindByName(srv.Name)
 		if oldSrv != nil {
 			srv.Hash = oldSrv.Hash
 		} else if errOldSrv == sdk.ErrNotFound {

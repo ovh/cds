@@ -3,6 +3,9 @@ package swarm
 import (
 	"fmt"
 	"os"
+	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -26,6 +29,13 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
 	return nil
+}
+
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
+	t := time.Now()
+	m := sdk.MonitoringStatus{Now: t}
+	return m
 }
 
 // CheckConfiguration checks the validity of the configuration object

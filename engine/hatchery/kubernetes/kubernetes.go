@@ -72,6 +72,13 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (h *HatcheryKubernetes) Status() sdk.MonitoringStatus {
+	t := time.Now()
+	m := sdk.MonitoringStatus{Now: t}
+	return m
+}
+
 // getStartingConfig implements ConfigAccess
 func (h *HatcheryKubernetes) getStartingConfig() (*clientcmdapi.Config, error) {
 	defaultClientConfigRules := clientcmd.NewDefaultClientConfigLoadingRules()

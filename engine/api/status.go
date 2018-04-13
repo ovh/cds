@@ -31,33 +31,38 @@ func VersionHandler() Handler {
 	}
 }
 
+// Status returns status, implements interface service.Service
+func (api *API) Status() sdk.MonitoringStatus {
+	t := time.Now()
+	m := sdk.MonitoringStatus{Now: t}
+
+	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK}))
+	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(api.StartupTime)), Status: sdk.MonitoringStatusOK}))
+	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK}))
+	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK}))
+	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK}))
+	m.Lines = append(m.Lines, getStatusLine(api.Router.StatusPanic()))
+	m.Lines = append(m.Lines, getStatusLine(scheduler.Status()))
+	m.Lines = append(m.Lines, getStatusLine(event.Status()))
+	m.Lines = append(m.Lines, getStatusLine(repositoriesmanager.EventsStatus(api.Cache)))
+	m.Lines = append(m.Lines, getStatusLine(api.Cache.Status()))
+	m.Lines = append(m.Lines, getStatusLine(sessionstore.Status))
+	m.Lines = append(m.Lines, getStatusLine(objectstore.Status()))
+	m.Lines = append(m.Lines, getStatusLine(mail.Status()))
+	m.Lines = append(m.Lines, getStatusLine(api.DBConnectionFactory.Status()))
+	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "LastUpdate Connected", Value: fmt.Sprintf("%d", len(api.lastUpdateBroker.clients)), Status: sdk.MonitoringStatusOK}))
+	m.Lines = append(m.Lines, getStatusLine(worker.Status(api.mustDB())))
+
+	return m
+}
+
 func (api *API) statusHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		t := time.Now()
-		output := sdk.MonitoringStatus{Now: t}
-
-		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK}))
-		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(api.StartupTime)), Status: sdk.MonitoringStatusOK}))
-		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK}))
-		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK}))
-		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK}))
-		output.Lines = append(output.Lines, getStatusLine(api.Router.StatusPanic()))
-		output.Lines = append(output.Lines, getStatusLine(scheduler.Status()))
-		output.Lines = append(output.Lines, getStatusLine(event.Status()))
-		output.Lines = append(output.Lines, getStatusLine(repositoriesmanager.EventsStatus(api.Cache)))
-		output.Lines = append(output.Lines, getStatusLine(api.Cache.Status()))
-		output.Lines = append(output.Lines, getStatusLine(sessionstore.Status))
-		output.Lines = append(output.Lines, getStatusLine(objectstore.Status()))
-		output.Lines = append(output.Lines, getStatusLine(mail.Status()))
-		output.Lines = append(output.Lines, getStatusLine(api.DBConnectionFactory.Status()))
-		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "LastUpdate Connected", Value: fmt.Sprintf("%d", len(api.lastUpdateBroker.clients)), Status: sdk.MonitoringStatusOK}))
-		output.Lines = append(output.Lines, getStatusLine(worker.Status(api.mustDB())))
-
 		var status = http.StatusOK
 		if api.Router.panicked {
 			status = http.StatusServiceUnavailable
 		}
-		return WriteJSON(w, output, status)
+		return WriteJSON(w, api.Status(), status)
 	}
 }
 

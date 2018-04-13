@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"reflect"
 
 	"github.com/spf13/cobra"
 
@@ -24,10 +25,28 @@ var (
 var adminHooksTaskListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS Hooks Tasks",
+	Flags: []cli.Flag{
+		{
+			Kind:      reflect.String,
+			Name:      "name",
+			ShortHand: "t",
+			Usage:     "get task from a hook service with this name. Optional if you have only one hooks service",
+			Default:   "",
+		},
+	},
 }
 
 func adminHooksTaskListRun(v cli.Values) (cli.ListResult, error) {
-	btes, err := client.ServiceCallGET("hooks", "/task")
+
+	if v.GetString("name") == "" {
+		srvs, err := client.Services()
+		if err != nil {
+			return nil, err
+		}
+		return cli.AsListResult(srvs), nil
+	}
+
+	btes, err := client.ServiceCallGET("hooks", "", "/task")
 	if err != nil {
 		return nil, err
 	}

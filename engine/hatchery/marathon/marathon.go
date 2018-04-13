@@ -50,6 +50,13 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (h *HatcheryMarathon) Status() sdk.MonitoringStatus {
+	t := time.Now()
+	m := sdk.MonitoringStatus{Now: t}
+	return m
+}
+
 // CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)

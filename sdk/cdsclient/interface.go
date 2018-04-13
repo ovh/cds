@@ -18,11 +18,12 @@ type Filter struct {
 // AdminService expose all function to CDS services
 type AdminService interface {
 	Services() ([]sdk.Service, error)
-	ServicesByType(s string) ([]sdk.Service, error)
-	ServiceCallGET(s string, url string) ([]byte, error)
-	ServiceCallPOST(s string, url string, body []byte) ([]byte, error)
-	ServiceCallPUT(s string, url string, body []byte) ([]byte, error)
-	ServiceCallDELETE(s string, url string) error
+	ServicesByName(name string) (*sdk.Service, error)
+	ServicesByType(stype string) ([]sdk.Service, error)
+	ServiceCallGET(stype string, name string, url string) ([]byte, error)
+	ServiceCallPOST(stype string, name string, url string, body []byte) ([]byte, error)
+	ServiceCallPUT(stype string, name string, url string, body []byte) ([]byte, error)
+	ServiceCallDELETE(stype string, name string, url string) error
 }
 
 // ExportImportInterface exposes pipeline and application export and import function

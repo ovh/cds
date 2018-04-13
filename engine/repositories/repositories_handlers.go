@@ -50,16 +50,20 @@ func (s *Service) getOperationsHandler() api.Handler {
 	}
 }
 
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (s *Service) Status() sdk.MonitoringStatus {
+	t := time.Now()
+	m := sdk.MonitoringStatus{Now: t}
+
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(s.StartupTime)), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK})
+	return m
+}
+
 func (s *Service) getStatusHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		t := time.Now()
-		output := sdk.MonitoringStatus{Now: t}
-
-		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK})
-		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(s.StartupTime)), Status: sdk.MonitoringStatusOK})
-		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK})
-
 		var status = http.StatusOK
-		return api.WriteJSON(w, output, status)
+		return api.WriteJSON(w, s.Status(), status)
 	}
 }
