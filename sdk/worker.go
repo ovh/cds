@@ -87,7 +87,7 @@ type Model struct {
 	Name                   string              `json:"name"  db:"name" cli:"name"`
 	Description            string              `json:"description"  db:"description" cli:"description"`
 	Type                   string              `json:"type"  db:"type" cli:"type"`
-	Image                  string              `json:"image"  db:"image" cli:"type"` // TODO: DELETE after migration done
+	Image                  string              `json:"image" db:"image" cli:"image"` // TODO: DELETE after migration done
 	ModelVirtualMachine    ModelVirtualMachine `json:"model_virtual_machine,omitempty" db:"-" cli:"-"`
 	ModelDocker            ModelDocker         `json:"model_docker,omitempty" db:"-" cli:"-"`
 	Communication          string              `json:"communication"  db:"communication" cli:"communication"`

@@ -77,7 +77,7 @@ export CDS_TTL={{.TTL}}
 export CDS_INSECURE={{.HTTPInsecure}}
 
 `
-			userdata, errD := base64.StdEncoding.DecodeString(osdata.Image)
+			userdata, errD := base64.StdEncoding.DecodeString(osdata.UserData)
 			if errD != nil {
 				log.Warning("HatcheryCmdMigration> cannot decode base64 image field for %s : %v", wm.Name, errD)
 				continue
