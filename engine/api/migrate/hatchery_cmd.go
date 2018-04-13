@@ -35,10 +35,24 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 		return
 	}
 
-	for _, wm := range wms {
+	for _, wmTmp := range wms {
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			log.Warning("HatcheryCmdMigration> cannot create a transaction : %v", errTx)
+			continue
+		}
+
+		wm, errL := worker.LoadAndLockWorkerModelByID(tx, wmTmp.ID)
+		if errL != nil {
+			log.Warning("HatcheryCmdMigration> cannot load and lock a worker model : %v", errL)
+			tx.Rollback()
+			continue
+		}
+
 		switch wm.Type {
 		case sdk.Docker:
 			if wm.ModelDocker.Image != "" && wm.ModelDocker.Cmd != "" {
+				tx.Rollback()
 				continue
 			}
 			wm.ModelDocker = sdk.ModelDocker{
@@ -48,15 +62,18 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 		case sdk.Openstack:
 			var osdata deprecatedOpenstackModelData
 			if wm.ModelVirtualMachine.Image != "" && wm.ModelVirtualMachine.Cmd != "" {
+				tx.Rollback()
 				continue
 			}
 			if wm.Image == "" {
 				log.Warning("HatcheryCmdMigration> worker model image field is empty for %s", wm.Name)
+				tx.Rollback()
 				continue
 			}
 
 			if err := json.Unmarshal([]byte(wm.Image), &osdata); err != nil {
 				log.Warning("HatcheryCmdMigration> cannot unmarshal image field is empty for %s : %v", wm.Name, err)
+				tx.Rollback()
 				continue
 			}
 
@@ -80,6 +97,7 @@ export CDS_INSECURE={{.HTTPInsecure}}
 			userdata, errD := base64.StdEncoding.DecodeString(osdata.UserData)
 			if errD != nil {
 				log.Warning("HatcheryCmdMigration> cannot decode base64 image field for %s : %v", wm.Name, errD)
+				tx.Rollback()
 				continue
 			}
 			preCmd += string(userdata)
@@ -99,15 +117,18 @@ export CDS_INSECURE={{.HTTPInsecure}}
 		case sdk.VSphere:
 			var vspheredata deprecatedVSphereModelData
 			if wm.ModelVirtualMachine.Image != "" && wm.ModelVirtualMachine.Cmd != "" {
+				tx.Rollback()
 				continue
 			}
 			if wm.Image == "" {
 				log.Warning("HatcheryCmdMigration> worker model image field is empty for %s", wm.Name)
+				tx.Rollback()
 				continue
 			}
 
 			if err := json.Unmarshal([]byte(wm.Image), &vspheredata); err != nil {
 				log.Warning("HatcheryCmdMigration> cannot unmarshal image field is empty for %s : %v", wm.Name, err)
+				tx.Rollback()
 				continue
 			}
 
@@ -136,8 +157,9 @@ chmod +x worker
 				Cmd:     "PATH=$PATH ./worker",
 				PostCmd: "shutdown -h now",
 			}
-		case sdk.Host:
+		case sdk.HostProcess:
 			if wm.ModelVirtualMachine.Image != "" && wm.ModelVirtualMachine.Cmd != "" {
+				tx.Rollback()
 				continue
 			}
 			wm.ModelVirtualMachine = sdk.ModelVirtualMachine{
@@ -146,10 +168,16 @@ chmod +x worker
 			}
 		}
 
-		if err := worker.UpdateWorkerModel(db, wm); err != nil {
+		if err := worker.UpdateWorkerModel(tx, *wm); err != nil {
 			log.Warning("HatcheryCmdMigration> cannot update worker model %s : %v", wm.Name, err)
+			tx.Rollback()
+			continue
 		}
 
+		if err := tx.Commit(); err != nil {
+			log.Warning("HatcheryCmdMigration> cannot commit tx for worker model %s : %v", wm.Name, err)
+			tx.Rollback()
+		}
 	}
 
 	log.Info("HatcheryCmdMigration> Done")

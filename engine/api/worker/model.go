@@ -112,6 +112,12 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 	return loadWorkerModel(db, query, ID)
 }
 
+// LoadAndLockWorkerModelByID retrieves a specific worker model in database
+func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1 FOR UPDATE NOWAIT`, columns)
+	return loadWorkerModel(db, query, ID)
+}
+
 // LoadWorkerModelsByUser returns worker models list according to user's groups
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
