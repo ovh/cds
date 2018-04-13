@@ -143,6 +143,9 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/audit", r.GET(api.getVariablesAuditInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
+	// Application deployment
+	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config/{platform}", r.POST(api.postApplicationDeploymentStrategyConfigHandler), r.GET(api.getApplicationDeploymentStrategyConfigHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config", r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
 
 	// Application workflow migration
 	r.Handle("/project/{key}/application/{permApplicationName}/workflow/migrate", r.POST(api.migrationApplicationWorkflowHandler))

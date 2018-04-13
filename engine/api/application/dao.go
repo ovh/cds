@@ -29,6 +29,8 @@ var LoadOptions = struct {
 	WithNotifs                     LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithClearKeys                  LoadOptionFunc
+	WithDeploymentStrategies       LoadOptionFunc
+	WithClearDeploymentStrategies  LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,
 	WithVariables:                  &loadVariables,
@@ -40,6 +42,8 @@ var LoadOptions = struct {
 	WithNotifs:                     &loadNotifs,
 	WithKeys:                       &loadKeys,
 	WithClearKeys:                  &loadClearKeys,
+	WithDeploymentStrategies:       &loadDeploymentStrategies,
+	WithClearDeploymentStrategies:  &loadDeploymentStrategiesWithClearPassword,
 }
 
 // LoadOldApplicationWorkflowToClean load application to clean

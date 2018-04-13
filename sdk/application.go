@@ -12,30 +12,30 @@ type Repository struct {
 
 // Application represent an application in a project
 type Application struct {
-	ID                   int64                         `json:"id" db:"id"`
-	Name                 string                        `json:"name" db:"name" cli:"name,key"`
-	Description          string                        `json:"description"  db:"description"`
-	ProjectID            int64                         `json:"-" db:"project_id"`
-	ProjectKey           string                        `json:"project_key" db:"-" cli:"project_key"`
-	ApplicationGroups    []GroupPermission             `json:"groups,omitempty" db:"-"`
-	Variable             []Variable                    `json:"variables,omitempty" db:"-"`
-	Pipelines            []ApplicationPipeline         `json:"pipelines,omitempty" db:"-"`
-	PipelinesBuild       []PipelineBuild               `json:"pipelines_build,omitempty" db:"-"`
-	Permission           int                           `json:"permission" db:"-"`
-	Notifications        []UserNotification            `json:"notifications,omitempty" db:"-"`
-	LastModified         time.Time                     `json:"last_modified" db:"last_modified"`
-	VCSServer            string                        `json:"vcs_server,omitempty" db:"vcs_server"`
-	RepositoryFullname   string                        `json:"repository_fullname,omitempty" db:"repo_fullname" cli:"repository_fullname"`
-	RepositoryPollers    []RepositoryPoller            `json:"pollers,omitempty" db:"-"`
-	RepositoryStrategy   RepositoryStrategy            `json:"vcs_strategy,omitempty" db:"-"`
-	Hooks                []Hook                        `json:"hooks,omitempty" db:"-"`
-	Workflows            []CDPipeline                  `json:"workflows,omitempty" db:"-"`
-	Schedulers           []PipelineScheduler           `json:"schedulers,omitempty" db:"-"`
-	Metadata             Metadata                      `json:"metadata" yaml:"metadata" db:"-"`
-	WorkflowMigration    string                        `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
-	Keys                 []ApplicationKey              `json:"keys" yaml:"keys" db:"-"`
-	Usage                *Usage                        `json:"usage,omitempty" db:"-" cli:"-"`
-	DeploymentStrategies map[string]DeploymentStrategy `json:"deployment_strategies,omitempty" db:"-" cli:"-"`
+	ID                   int64                     `json:"id" db:"id"`
+	Name                 string                    `json:"name" db:"name" cli:"name,key"`
+	Description          string                    `json:"description"  db:"description"`
+	ProjectID            int64                     `json:"-" db:"project_id"`
+	ProjectKey           string                    `json:"project_key" db:"-" cli:"project_key"`
+	ApplicationGroups    []GroupPermission         `json:"groups,omitempty" db:"-"`
+	Variable             []Variable                `json:"variables,omitempty" db:"-"`
+	Pipelines            []ApplicationPipeline     `json:"pipelines,omitempty" db:"-"`
+	PipelinesBuild       []PipelineBuild           `json:"pipelines_build,omitempty" db:"-"`
+	Permission           int                       `json:"permission" db:"-"`
+	Notifications        []UserNotification        `json:"notifications,omitempty" db:"-"`
+	LastModified         time.Time                 `json:"last_modified" db:"last_modified"`
+	VCSServer            string                    `json:"vcs_server,omitempty" db:"vcs_server"`
+	RepositoryFullname   string                    `json:"repository_fullname,omitempty" db:"repo_fullname" cli:"repository_fullname"`
+	RepositoryPollers    []RepositoryPoller        `json:"pollers,omitempty" db:"-"`
+	RepositoryStrategy   RepositoryStrategy        `json:"vcs_strategy,omitempty" db:"-"`
+	Hooks                []Hook                    `json:"hooks,omitempty" db:"-"`
+	Workflows            []CDPipeline              `json:"workflows,omitempty" db:"-"`
+	Schedulers           []PipelineScheduler       `json:"schedulers,omitempty" db:"-"`
+	Metadata             Metadata                  `json:"metadata" yaml:"metadata" db:"-"`
+	WorkflowMigration    string                    `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
+	Keys                 []ApplicationKey          `json:"keys" yaml:"keys" db:"-"`
+	Usage                *Usage                    `json:"usage,omitempty" db:"-" cli:"-"`
+	DeploymentStrategies map[string]PlatformConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`
 }
 
 // SSHKeys returns the slice of ssh key for an application
@@ -69,11 +69,6 @@ type RepositoryStrategy struct {
 	Branch         string `json:"branch"`
 	DefaultBranch  string `json:"default_branch"`
 	PGPKey         string `json:"pgp_key"`
-}
-
-// DeploymentStrategy represents the configuration to deploy an application on a deployment platform
-type DeploymentStrategy struct {
-	Parameters []Parameter `json:"parameters"`
 }
 
 // ApplicationVariableAudit represents an audit on an application variable
