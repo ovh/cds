@@ -5,4 +5,6 @@ const (
 	TypeHooks        = "hooks"
 	TypeRepositories = "repositories"
 	TypeVCS          = "vcs"
+	TypeAPI          = "api"
+	TypeHatchery     = "hatchery"
 )

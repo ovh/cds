@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -586,7 +587,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures)
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
 		}
@@ -597,6 +598,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		}
 
 		var lastRun *sdk.WorkflowRun
+		var asCodeInfosMsg []sdk.Message
 		if opts.Number != nil {
 			var errlr error
 			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, false)
@@ -609,14 +611,47 @@ func (api *API) postWorkflowRunHandler() Handler {
 		if lastRun != nil {
 			wf = &lastRun.Workflow
 		} else {
-			var errl error
+			// Test workflow as code or not
 			options := workflow.LoadOptions{
-				DeepPipeline: true,
-				Base64Keys:   true,
+				OnlyRootNode: true,
+				DeepPipeline: false,
 			}
-			wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
-			if errl != nil {
-				return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
+			var errW error
+			wf, errW = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+			if errW != nil {
+				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
+			}
+
+			enabled, has := p.Features[feature.FeatWorkflowAsCode]
+			if wf.FromRepository != "" {
+				if has && !enabled {
+					return sdk.WrapError(sdk.ErrForbidden, "postWorkflowRunHandler> %s not allowed for project %s", feature.FeatWorkflowAsCode, p.Key)
+				}
+				proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+					project.LoadOptions.WithGroups,
+					project.LoadOptions.WithApplications,
+					project.LoadOptions.WithEnvironments,
+					project.LoadOptions.WithPipelines)
+
+				if errp != nil {
+					return sdk.WrapError(errp, "postWorkflowRunHandler> Cannot load project %s", key)
+				}
+				// Get workflow from repository
+				var errCreate error
+				asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, getUser(ctx), project.DecryptWithBuiltinKey)
+				if errCreate != nil {
+					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository")
+				}
+			} else {
+				var errl error
+				options := workflow.LoadOptions{
+					DeepPipeline: true,
+					Base64Keys:   true,
+				}
+				wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+				if errl != nil {
+					return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow %s/%s", key, name)
+				}
 			}
 		}
 
@@ -632,7 +667,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 			}()
 
-			startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx))
+			startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx), asCodeInfosMsg)
 		}()
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
@@ -671,7 +706,7 @@ type workerOpts struct {
 	chanEvent      chan<- interface{}
 }
 
-func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) {
+func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) {
 	const nbWorker int = 5
 	defer close(chEvent)
 	defer close(chError)
@@ -686,10 +721,10 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	//Run from hook
 	if opts.Hook != nil {
 		var errfh error
-		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent)
+		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent, asCodeInfos)
 		if errfh != nil {
 			errorOccured = true
-			chError <- sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
+			chError <- sdk.WrapError(errfh, "startWorkflowRun> Unable to run workflow from hook")
 		}
 	} else {
 		//Default manual run
@@ -768,7 +803,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 
 		if lastRun == nil {
 			var errmr error
-			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent)
+			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent, asCodeInfos)
 			if errmr != nil {
 				errorOccured = true
 				chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")

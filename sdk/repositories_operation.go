@@ -1,20 +1,27 @@
 package sdk
 
-import "encoding/base64"
+import (
+	"encoding/base64"
+	"time"
+)
 
 // Operation is the main business object use in repositories service
 type Operation struct {
-	UUID               string             `json:"uuid"`
-	VCSServer          string             `json:"vcs_server,omitempty"`
-	URL                string             `json:"url"`
-	RepositoryStrategy RepositoryStrategy `json:"strategy,omitempty"`
-	Setup              struct {
-		Checkout OperationCheckout `json:"checkout,omitempty"`
-	} `json:"setup,omitempty"`
-	LoadFiles      OperationLoadFiles       `json:"load_files,omitempty"`
-	Status         OperationStatus          `json:"status,omitempty"`
-	Error          string                   `json:"error,omitempty"`
-	RepositoryInfo *OperationRepositoryInfo `json:"repository_info,omitempty"`
+	UUID               string                   `json:"uuid"`
+	VCSServer          string                   `json:"vcs_server,omitempty"`
+	RepoFullName       string                   `json:"repo_fullname,omitempty"`
+	URL                string                   `json:"url"`
+	RepositoryStrategy RepositoryStrategy       `json:"strategy,omitempty"`
+	Setup              OperationSetup           `json:"setup,omitempty"`
+	LoadFiles          OperationLoadFiles       `json:"load_files,omitempty"`
+	Status             OperationStatus          `json:"status"`
+	Error              string                   `json:"error,omitempty"`
+	RepositoryInfo     *OperationRepositoryInfo `json:"repository_info,omitempty"`
+	Date               *time.Time               `json:"date,omitempty"`
+}
+
+type OperationSetup struct {
+	Checkout OperationCheckout `json:"checkout,omitempty"`
 }
 
 type OperationRepositoryInfo struct {

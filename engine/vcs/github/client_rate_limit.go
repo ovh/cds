@@ -2,10 +2,19 @@ package github
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+func isRateLimitReached() bool {
+	if RateLimitReset > 0 && RateLimitReset < int(time.Now().Unix()) {
+		log.Debug("RateLimitReset reached, it's ok to call github")
+		return false
+	}
+	return RateLimitRemaining < 100
+}
 
 // RateLimit Get your current rate limit status
 // https://developer.github.com/v3/rate_limit/#get-your-current-rate-limit-status

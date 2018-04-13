@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -36,6 +37,8 @@ type Store interface {
 	SetRemove(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int
 	SetScan(key string, members ...interface{}) error
+	Lock(key string, expiration time.Duration) bool
+	Unlock(key string)
 }
 
 //New init a cache

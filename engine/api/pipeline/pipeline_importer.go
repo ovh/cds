@@ -296,7 +296,7 @@ func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *s
 			jobAction.Enabled = true
 			jobAction.Action.Enabled = true
 			if errs := CheckJob(db, jobAction); errs != nil {
-				log.Debug("CheckJob > %s", errs)
+				log.Warning("pipeline.importNew.CheckJob > %s", errs)
 				return errs
 			}
 

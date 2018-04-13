@@ -28,7 +28,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
 
     project: Project;
     runWorkflowWorker: CDSWorker;
-    runSubsription: Subscription;
+    runSubscription: Subscription;
     workflowRun: WorkflowRun;
     tmpWorkflowRun: WorkflowRun;
     zone: NgZone;
@@ -36,7 +36,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     version: string;
     direction: string;
     currentNumber: number;
-    currentSubNumber: number;
+    currentSubNumber: string;
 
     nodeToRun: WorkflowNode;
 
@@ -60,6 +60,9 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
             this.workflowName = params['workflowName'];
         });
         this._activatedRoute.queryParams.subscribe(p => {
+            if (this.currentSubNumber == null) {
+                this.currentSubNumber = p['subnum'];
+            }
             if (this.workflowRun && p['subnum'] && this.currentSubNumber !== p['subnum']) {
                 this.currentSubNumber = p['subnum'];
                 this.startWorker(this.workflowRun.num);
@@ -74,8 +77,9 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
         });
 
         this.workflowCoreSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe((wr) => {
-            if (this.workflowRun && wr && wr.id !== this.workflowRun.id) {
-                if (wr.num !== this.currentNumber) {
+            if (this.workflowRun && wr && (wr.id !== this.workflowRun.id || wr.force_update)) {
+                if (wr.num !== this.currentNumber || wr.force_update) {
+                    wr.force_update = false;
                     this.currentNumber = wr.num;
                     this.workflowRun = wr;
                     this.startWorker(wr.num);
@@ -88,8 +92,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
         this.loadingRun = true;
         // Start web worker
         if (this.runWorkflowWorker) {
-            this.runWorkflowWorker.stop();
-            this.runWorkflowWorker = null;
+            this.stopWorker();
         }
         this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
         this.runWorkflowWorker.start({
@@ -100,7 +103,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
             workflowName: this.workflowName,
             number: num
         });
-        this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
+        this.runSubscription = this.runWorkflowWorker.response().subscribe(wrString => {
             if (wrString) {
                 this.zone.run(() => {
                     this.loadingRun = false;
@@ -108,8 +111,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                     this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
                     if (this.workflowRun.status === PipelineStatus.STOPPED ||
                         this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
-                        this.runWorkflowWorker.stop();
-                        this.runSubsription.unsubscribe();
+                        this.stopWorker();
                         if (this.tmpWorkflowRun != null && this.tmpWorkflowRun.id === this.workflowRun.id &&
                             this.tmpWorkflowRun.status !== PipelineStatus.STOPPED && this.tmpWorkflowRun.status !== PipelineStatus.FAIL &&
                             this.tmpWorkflowRun.status !== PipelineStatus.SUCCESS) {
@@ -151,6 +153,18 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                 this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
             }
             setTimeout(() => this.runWithParamComponent.show());
+        }
+    }
+
+    stopWorker() {
+        if (this.runWorkflowWorker) {
+            this.runWorkflowWorker.stop();
+            this.runWorkflowWorker = null;
+        }
+
+        if (this.runSubscription) {
+            this.runSubscription.unsubscribe();
+            this.runSubscription = null;
         }
     }
 

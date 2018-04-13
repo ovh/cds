@@ -5,6 +5,7 @@ import (
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -47,6 +48,7 @@ type HatcheryConfiguration struct {
 
 // HatcheryVSphere spawns vm
 type HatcheryVSphere struct {
+	service.Common
 	Config     HatcheryConfiguration
 	hatch      *sdk.Hatchery
 	images     []string

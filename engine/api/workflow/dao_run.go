@@ -131,12 +131,21 @@ func InsertWorkflowRunTags(db gorp.SqlExecutor, runID int64, runTags []sdk.Workf
 	for i := range runTags {
 		runTags[i].WorkflowRunID = runID
 		t := RunTag(runTags[i])
+		// we truncate tag.Value to 250 chars, with '...' after.
+		// this will avoid to have an error from db.
+		if len(t.Value) >= 256 {
+			t.Value = fmt.Sprintf("%s...", t.Value[:250])
+		}
+		// and we take only 250 first chars for tag name
+		if len(t.Tag) >= 256 {
+			t.Tag = t.Tag[:250]
+		}
 		tags = append(tags, &t)
 	}
 
 	if len(tags) > 0 {
 		if err := db.Insert(tags...); err != nil {
-			return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
+			return sdk.WrapError(err, "Run.insertTags> Unable to store tags")
 		}
 	}
 	return nil

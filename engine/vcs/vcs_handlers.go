@@ -744,3 +744,19 @@ func (s *Service) getListForks() api.Handler {
 		return api.WriteJSON(w, forks, http.StatusOK)
 	}
 }
+
+func (s *Service) statusHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		t := time.Now()
+		output := sdk.MonitoringStatus{Now: t}
+
+		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK})
+		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(s.StartupTime)), Status: sdk.MonitoringStatusOK})
+		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK})
+
+		output.Lines = append(github.GetStatus())
+
+		var status = http.StatusOK
+		return api.WriteJSON(w, output, status)
+	}
+}

@@ -67,6 +67,9 @@ img {
 .dib {
     display: inline-block
 }
+.di {
+    display: inline;
+}
 
 @media screen and (min-width: 60em) {
     .dib-l {
@@ -177,8 +180,18 @@ img {
     max-width: 96rem
 }
 
+.w1 {
+    width: 32rem;
+}
+.w2 {
+    width: 16rem;
+}
+
 .w4 {
     width: 8rem
+}
+.w8 {
+    width: 4rem;
 }
 
 .w-90 {

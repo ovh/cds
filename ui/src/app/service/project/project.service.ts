@@ -39,7 +39,7 @@ export class ProjectService {
                 new LoadOpts('withPermission', 'permission')
             ];
         }
-
+        opts.push(new LoadOpts('withFeatures', 'features'));
         opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
 
         return this._http.get<Project>('/project/' + key, {params: params});

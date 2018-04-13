@@ -10,7 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -34,6 +34,15 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
+
+	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
+	s.API = s.Cfg.API.HTTP.URL
+	s.Name = s.Cfg.Name
+	s.HTTPURL = s.Cfg.URL
+	s.Token = s.Cfg.API.Token
+	s.Type = services.TypeHooks
+	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+
 	return nil
 }
 
@@ -59,18 +68,6 @@ func (s *Service) Serve(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
-	log.Info("Hooks> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
-
-	//Instanciate a cds client
-	s.cds = cdsclient.NewService(s.Cfg.API.HTTP.URL, 120*time.Second)
-
-	//First register(heartbeat)
-	if err := s.doHeartbeat(); err != nil {
-		log.Error("Hooks> Unable to register: %v", err)
-		return err
-	}
-	log.Info("Hooks> Service registered")
-
 	//Init the cache
 	var errCache error
 	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
@@ -80,14 +77,6 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Init the DAO
 	s.Dao = dao{s.Cache}
-
-	//Start the heartbeat goroutine
-	go func() {
-		if err := s.heartbeat(ctx); err != nil {
-			log.Error("%v", err)
-			cancel()
-		}
-	}()
 
 	if !s.Cfg.Disable {
 		//Start all the tasks

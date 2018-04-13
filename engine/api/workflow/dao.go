@@ -1,20 +1,28 @@
 package workflow
 
 import (
+	"archive/tar"
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"gopkg.in/yaml.v2"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -22,8 +30,9 @@ import (
 type LoadOptions struct {
 	DeepPipeline  bool
 	WithoutNode   bool
-	WithFavorites bool
 	Base64Keys    bool
+	OnlyRootNode  bool
+	WithFavorites bool
 }
 
 // Exists checks if a workflow exists
@@ -381,7 +390,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 
 	w.LastModified = time.Now()
-	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id, history_length) VALUES ($1, $2, $3, $4) RETURNING id", w.Name, w.Description, w.ProjectID, w.HistoryLength).Scan(&w.ID); err != nil {
+	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id, history_length, from_repository) VALUES ($1, $2, $3, $4, $5) RETURNING id", w.Name, w.Description, w.ProjectID, w.HistoryLength, w.FromRepository).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
@@ -403,7 +412,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 	w.RootID = w.Root.ID
 
-	if w.Root.Context != nil && w.Root.Context.Application != nil && w.Root.Context.Application.RepositoryFullname != "" {
+	if w.Root.IsLinkedToRepo() {
 		if w.Metadata == nil {
 			w.Metadata = sdk.Metadata{}
 		}
@@ -712,6 +721,222 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 		}
 	}
 	return nil
+}
+
+// Push push a workflow from cds files
+func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
+	apps := make(map[string]exportentities.Application)
+	pips := make(map[string]exportentities.PipelineV1)
+	envs := make(map[string]exportentities.Environment)
+	var wrkflw exportentities.Workflow
+
+	mError := new(sdk.MultiError)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
+			return nil, nil, sdk.WrapError(err, "Push>")
+		}
+
+		log.Debug("Push> Reading %s", hdr.Name)
+
+		buff := new(bytes.Buffer)
+		if _, err := io.Copy(buff, tr); err != nil {
+			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
+			return nil, nil, sdk.WrapError(err, "Push>")
+		}
+
+		b := buff.Bytes()
+		switch {
+		case strings.Contains(hdr.Name, ".app."):
+			var app exportentities.Application
+			if err := yaml.Unmarshal(b, &app); err != nil {
+				log.Error("Push> Unable to unmarshal application %s: %v", hdr.Name, err)
+				mError.Append(fmt.Errorf("Unable to unmarshal application %s: %v", hdr.Name, err))
+				continue
+			}
+			apps[hdr.Name] = app
+		case strings.Contains(hdr.Name, ".pip."):
+			var pip exportentities.PipelineV1
+			if err := yaml.Unmarshal(b, &pip); err != nil {
+				log.Error("Push> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
+				mError.Append(fmt.Errorf("Unable to unmarshal pipeline %s: %v", hdr.Name, err))
+				continue
+			}
+			pips[hdr.Name] = pip
+		case strings.Contains(hdr.Name, ".env."):
+			var env exportentities.Environment
+			if err := yaml.Unmarshal(b, &env); err != nil {
+				log.Error("Push> Unable to unmarshal environment %s: %v", hdr.Name, err)
+				mError.Append(fmt.Errorf("Unable to unmarshal environment %s: %v", hdr.Name, err))
+				continue
+			}
+			envs[hdr.Name] = env
+		default:
+			if err := yaml.Unmarshal(b, &wrkflw); err != nil {
+				log.Error("Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
+				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
+				continue
+			}
+		}
+	}
+
+	// We only use the multiError the une unmarshalling steps.
+	// When a DB transaction has been started, just return at the first error
+	// because transaction may have to be aborted
+	if !mError.IsEmpty() {
+		return nil, nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, nil, sdk.WrapError(err, "Push> Unable to start tx")
+	}
+	defer tx.Rollback()
+
+	allMsg := []sdk.Message{}
+	for filename, app := range apps {
+		log.Debug("Push> Parsing %s", filename)
+		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, true, decryptFunc, u)
+		if err != nil {
+			err = sdk.SetError(err, "unable to import application %s", app.Name)
+			return nil, nil, sdk.WrapError(err, "Push> ", err)
+		}
+		allMsg = append(allMsg, msgList...)
+
+		// Update application data on project
+		found := false
+		for i, a := range proj.Applications {
+			if a.Name == appDB.Name {
+				proj.Applications[i] = *appDB
+				found = true
+				break
+			}
+		}
+		if !found {
+			proj.Applications = append(proj.Applications, *appDB)
+		}
+
+		log.Debug("Push> -- %s OK", filename)
+	}
+
+	for filename, env := range envs {
+		log.Debug("Push> Parsing %s", filename)
+		envDB, msgList, err := environment.ParseAndImport(tx, store, proj, &env, true, decryptFunc, u)
+		if err != nil {
+			err = sdk.SetError(err, "unable to import environment %s", env.Name)
+			return nil, nil, sdk.WrapError(err, "Push> ", err)
+		}
+		allMsg = append(allMsg, msgList...)
+
+		// Update environment data on project
+		found := false
+		for i, e := range proj.Environments {
+			if e.Name == envDB.Name {
+				proj.Environments[i] = *envDB
+				found = true
+				break
+			}
+		}
+		if !found {
+			proj.Environments = append(proj.Environments, *envDB)
+		}
+
+		log.Debug("Push> -- %s OK", filename)
+	}
+
+	for filename, pip := range pips {
+		log.Debug("Push> Parsing %s", filename)
+		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, true, u)
+		if err != nil {
+			err = sdk.SetError(err, "unable to import pipeline %s", pip.Name)
+			return nil, nil, sdk.WrapError(err, "Push> ", err)
+		}
+		allMsg = append(allMsg, msgList...)
+
+		// Update pipeline data on project
+		found := false
+		for i, pi := range proj.Pipelines {
+			if pi.Name == pipDB.Name {
+				proj.Pipelines[i] = *pipDB
+				found = true
+				break
+			}
+		}
+		if !found {
+			proj.Pipelines = append(proj.Pipelines, *pipDB)
+		}
+
+		log.Debug("Push> -- %s OK", filename)
+	}
+
+	var dryRun bool
+	if opts != nil {
+		dryRun = opts.DryRun
+	}
+	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, dryRun)
+	if err != nil {
+		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
+		return nil, nil, sdk.WrapError(err, "Push> ", err)
+	}
+
+	// TODO workflow as code, manage derivation workflow
+	if opts != nil {
+		wf.FromRepository = opts.FromRepository
+		if !opts.IsDefaultBranch {
+			wf.DerivationBranch = opts.Branch
+		}
+
+		if wf.FromRepository != "" {
+			if len(wf.Root.Hooks) == 0 {
+				wf.Root.Hooks = append(wf.Root.Hooks, sdk.WorkflowNodeHook{
+					WorkflowHookModel: sdk.RepositoryWebHookModel,
+					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
+					UUID:              opts.HookUUID,
+				})
+			}
+
+			if wf.Root.Context.Application != nil && (wf.Root.Context.Application.RepositoryFullname == "" || wf.Root.Context.Application.VCSServer == "") {
+				wf.Root.Context.Application.VCSServer = opts.VCSServer
+				wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
+				wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
+
+				if err := application.Update(tx, store, wf.Root.Context.Application, u); err != nil {
+					return nil, nil, sdk.WrapError(err, "Push> Unable to update application vcs datas")
+				}
+			}
+		}
+
+		if err := Update(tx, store, wf, wf, proj, u); err != nil {
+			return nil, nil, sdk.WrapError(err, "Push> Unable to update workflow", err)
+		}
+
+		if !opts.DryRun {
+			if errHr := HookRegistration(tx, store, nil, *wf, proj); errHr != nil {
+				return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
+			}
+		}
+
+	}
+
+	allMsg = append(allMsg, msgList...)
+
+	isDefaultBranch := false
+	if opts != nil {
+		isDefaultBranch = opts.IsDefaultBranch
+	}
+	if dryRun && !isDefaultBranch {
+		_ = tx.Rollback()
+	} else {
+		if err := tx.Commit(); err != nil {
+			return nil, nil, sdk.WrapError(err, "Push> Cannot commit transaction")
+		}
+	}
+
+	return allMsg, wf, nil
 }
 
 // UpdateFavorite add or delete workflow from user favorites

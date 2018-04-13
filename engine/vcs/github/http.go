@@ -21,6 +21,7 @@ import (
 
 //Github http var
 var (
+	RateLimitLimit     int
 	RateLimitRemaining = 5000
 	RateLimitReset     int
 
@@ -138,7 +139,7 @@ func (c *githubClient) post(path string, bodyType string, body io.Reader, skipDe
 }
 
 func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
-	if RateLimitRemaining < 100 {
+	if isRateLimitReached() {
 		return 0, nil, nil, ErrorRateLimit
 	}
 
@@ -176,15 +177,6 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 	}
 	defer res.Body.Close()
 
-	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
-	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
-	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
-
-	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
-		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
-		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
-	}
-
 	switch res.StatusCode {
 	case http.StatusNotModified:
 		return res.StatusCode, nil, res.Header, nil
@@ -205,11 +197,21 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 
 	c.setETag(path, res.Header)
 
+	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
+	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
+	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
+
+	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
+		RateLimitLimit, _ = strconv.Atoi(rateLimitLimit)
+		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
+		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
+	}
+
 	return res.StatusCode, resBody, res.Header, nil
 }
 
 func (c *githubClient) delete(path string) error {
-	if RateLimitRemaining < 100 {
+	if isRateLimitReached() {
 		return ErrorRateLimit
 	}
 

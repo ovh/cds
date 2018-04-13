@@ -114,7 +114,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 				"git.branch": "master",
 				"git.author": "test",
 			},
-		}, nil)
+		}, nil, nil)
 		test.NoError(t, errWr)
 	}
 
@@ -189,7 +189,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 				"git.branch": branches[i],
 				"git.author": "test",
 			},
-		}, nil)
+		}, nil, nil)
 		test.NoError(t, errWr)
 	}
 

@@ -114,6 +114,11 @@ export class ProjectStore {
                                if (!res.platforms) {
                                    proj.platforms = [];
                                }
+                               break;
+                           case 'keys':
+                               if (!res.keys) {
+                                   proj.keys = [];
+                               }
                        }
                     });
                 }

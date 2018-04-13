@@ -33,7 +33,8 @@ export class ProjectForWorkflowResolver implements Resolve<Project> {
             new LoadOpts('withPipelineNames', 'pipeline_names'),
             new LoadOpts('withApplicationNames', 'application_names'),
             new LoadOpts('withEnvironments', 'environments'),
-            new LoadOpts('withPlatforms', 'platforms')
+            new LoadOpts('withPlatforms', 'platforms'),
+            new LoadOpts('withKeys', 'keys')
         ];
 
         return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());

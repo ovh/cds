@@ -61,6 +61,14 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		}
 	}
 
+	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
+	// h.API = h.Config.API.HTTP.URL
+	// h.Name = h.Config.Name
+	// h.HTTPURL = h.Config.URL
+	// h.Token = h.Config.API.Token
+	// h.Type = services.TypeHatchery
+	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+
 	return nil
 }
 

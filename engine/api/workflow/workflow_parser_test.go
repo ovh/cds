@@ -74,7 +74,7 @@ func TestParseAndImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := workflow.ParseAndImport(db, cache, proj, tt.input, true, u)
+			_, _, err := workflow.ParseAndImport(db, cache, proj, tt.input, true, u, false)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseAndImport() error = %v, wantErr %v", err, tt.wantErr)
 				return

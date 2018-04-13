@@ -268,6 +268,33 @@ func TestDo(t *testing.T) {
 			},
 			want: `{"HOST": "customermyprefix.lb"}`,
 		},
+		{
+			name: "git.branch in payload should not be interpolated",
+			args: args{
+				input: `
+name: "w{{.cds.pip.docker.image}}-generated"
+version: v1.0
+workflow:
+  build-go:
+    pipeline: build-go-generated
+    payload:
+      git.author: ""
+      git.branch: master`,
+				vars: map[string]string{
+					"git.branch": "master",
+					"git.author": "",
+				},
+			},
+			want: `
+name: "w{{.cds.pip.docker.image}}-generated"
+version: v1.0
+workflow:
+  build-go:
+    pipeline: build-go-generated
+    payload:
+      git.author: ""
+      git.branch: master`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

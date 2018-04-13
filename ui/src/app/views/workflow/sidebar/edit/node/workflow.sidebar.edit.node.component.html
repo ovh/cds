@@ -36,22 +36,22 @@
       <a class="item noborder" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">
         {{ 'pipeline_label_edit' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="openAddHookModal()" *ngIf="workflow && workflow.root.id === node.id">
+      <a class="item noborder" (click)="openAddHookModal()" *ngIf="workflow && workflow.root.id === node.id &&  !(workflow.from_repository && workflow.from_repository.length > 0)">
         {{ 'workflow_node_hook_add' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="openAddParentModal()" *ngIf="workflow && workflow.root.id === node.id">
+      <a class="item noborder" (click)="openAddParentModal()" *ngIf="workflow && workflow.root.id === node.id &&  !(workflow.from_repository && workflow.from_repository.length > 0)">
         {{ 'workflow_node_parent' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="openTriggerModal()">
+      <a class="item noborder" (click)="openTriggerModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
         {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="createJoin()">
+      <a class="item noborder" (click)="createJoin()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
         {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="linkJoin()">
+      <a class="item noborder" (click)="linkJoin()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
         {{ 'workflow_node_join_link' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="openDeleteNodeModal()">
+      <a class="item noborder" (click)="openDeleteNodeModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
         {{ 'workflow_node_delete_btn' | translate }} <i class="angle right icon"></i>
       </a>
     </div>

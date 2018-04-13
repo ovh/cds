@@ -35,6 +35,7 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -128,11 +129,11 @@ type Configuration struct {
 			Password string `toml:"password"`
 		} `toml:"kafka"`
 	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################"`
-	FeaturesFlipping struct {
+	Features struct {
 		Izanami struct {
-			ApiURL       string `toml:"api_url"`
-			ClientID     string `toml:"client_id"`
-			ClientSecret string `toml:"client_secret"`
+			ApiURL       string `toml:"apiurl"`
+			ClientID     string `toml:"clientid"`
+			ClientSecret string `toml:"clientsecret"`
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami"`
 		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################"`
@@ -159,8 +160,17 @@ func New() *API {
 	return &API{}
 }
 
+// Service returns an instance of sdk.Service for the API
+func (*API) Service() sdk.Service {
+	return sdk.Service{
+		LastHeartbeat: time.Time{},
+		Type:          services.TypeAPI,
+	}
+}
+
 // API is a struct containing the configuration, the router, the database connection factory and so on
 type API struct {
+	service.Common
 	Router              *Router
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
@@ -361,10 +371,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.TLS,
 		a.Config.SMTP.Disable)
 
-	// Initialize feature package
-	log.Info("Initializing feature flipping with izanami %s", a.Config.FeaturesFlipping.Izanami.ApiURL)
-	if a.Config.FeaturesFlipping.Izanami.ApiURL != "" {
-		if err := feature.Init(a.Config.FeaturesFlipping.Izanami.ApiURL, a.Config.FeaturesFlipping.Izanami.ClientID, a.Config.FeaturesFlipping.Izanami.ClientSecret); err != nil {
+	// Initialize feature packages
+	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.ApiURL)
+	if a.Config.Features.Izanami.ApiURL != "" {
+		if err := feature.Init(a.Config.Features.Izanami.ApiURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
 			return fmt.Errorf("Feature flipping not enabled with izanami: %s", err)
 		}
 	}
