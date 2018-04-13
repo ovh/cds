@@ -31,7 +31,7 @@
                   <a class="ui" [routerLink]="[v.name]">
                     <div class="ui">
                         {{v.name}}
-                        <span *ngIf="v.disabled"> {{ 'worker_model_disabled' | translate }}</span>
+                        <span *ngIf="v.disabled" [smDirTooltip]="'worker_model_disabled' | translate" smDirPosition="top center"> {{ 'worker_model_disabled' | translate }}</span>
                         <span *ngIf="v.nb_spawn_err > 0" [smDirTooltip]="'worker_model_spawn_error_tooltip' | translate" smDirPosition="top center">  <i class="exclamation triangle icon large red" title="{{ 'worker_model_warning' | translate }}"></i> </span>
                         <span *ngIf="v.is_official" [smDirTooltip]="'worker_model_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
                         <span *ngIf="v.is_deprecated" [smDirTooltip]="'worker_model_deprecated_tooltip' | translate" smDirPosition="top center"> <i class="exclamation circle icon large orange"></i> </span>

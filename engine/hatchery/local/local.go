@@ -206,15 +206,19 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	cmdSplitted := strings.Split(buffer.String(), " -")
-	if spawnArgs.RegisterOnly {
-		cmdSplitted[0] += " register"
-	}
 	for i := range cmdSplitted[1:] {
 		cmdSplitted[i+1] = "-" + strings.Trim(cmdSplitted[i+1], " ")
 	}
 
+	binCmd := cmdSplitted[0]
 	log.Debug("Command exec: %v", cmdSplitted)
-	cmd := exec.Command(cmdSplitted[0], cmdSplitted[1:]...)
+	var cmd *exec.Cmd
+	if spawnArgs.RegisterOnly {
+		cmdSplitted[0] = "register"
+		cmd = exec.Command(binCmd, cmdSplitted...)
+	} else {
+		cmd = exec.Command(binCmd, cmdSplitted[1:]...)
+	}
 
 	// Clearenv
 	cmd.Env = []string{}

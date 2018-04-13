@@ -146,7 +146,6 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 		return "", err
 	}
 
-	fmt.Println(buffer.String())
 	// Encode again
 	udata64 := base64.StdEncoding.EncodeToString(buffer.Bytes())
 

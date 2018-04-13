@@ -98,9 +98,18 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 
 	//Load created_by
 	m.CreatedBy = sdk.User{}
-	var createdBy, model sql.NullString
-	if err := s.QueryRow("select created_by, model from worker_model where id = $1", m.ID).Scan(&createdBy, &model); err != nil {
+	var createdBy, model, registeredOS, registeredArch sql.NullString
+	err := s.QueryRow("select created_by, model, registered_os, registered_arch from worker_model where id = $1", m.ID).Scan(&createdBy, &model, &registeredOS, &registeredArch)
+	if err != nil {
 		return err
+	}
+
+	if registeredOS.Valid {
+		m.RegisteredOS = registeredOS.String
+	}
+
+	if registeredArch.Valid {
+		m.RegisteredArch = registeredArch.String
 	}
 
 	switch m.Type {

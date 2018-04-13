@@ -284,6 +284,22 @@ func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
 	return nil
 }
 
+// updateOSAndArch updates os and arch for a worker model
+func updateOSAndArch(db gorp.SqlExecutor, modelID int64, OS, arch string) error {
+	query := `UPDATE worker_model SET registered_os=$1, registered_arch = $2 WHERE id = $3`
+	res, err := db.Exec(query, OS, arch, modelID)
+	if err != nil {
+		return sdk.WrapError(err, "updateOSAndArch>")
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return sdk.WrapError(err, "updateOSAndArch>")
+	}
+	log.Debug("updateOSAndArch> %d worker model updated", rows)
+	return nil
+}
+
 func keyBookWorkerModel(id int64) string {
 	return cache.Key("book", "workermodel", strconv.FormatInt(id, 10))
 }
