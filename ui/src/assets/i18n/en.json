@@ -713,6 +713,8 @@
   "worker_model_template": "Template",
   "worker_model_title": "Worker Models",
   "worker_model_warning": "This worker model is in error. Please check it",
+  "worker_model_os": "Operating system",
+  "worker_model_arch": "Architecture",
 
   "workflow_app_info_new_wf": "This project is allowed to use the new CDS Workflows.",
   "workflow_app_info_new_wf_have_pipeline": "This application have an old Workflow, you can migrate it to a new CDS Worklow, see advanced section.",

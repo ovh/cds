@@ -222,8 +222,10 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 	params := &sdk.WorkerRegistrationForm{
 		Name:  sdk.RandomString(10),
 		Token: ctx.workerToken,
+		OS:    "linux",
+		Arch:  "amd64",
 	}
-	ctx.worker, err = worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities)
+	ctx.worker, err = worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities, params.OS, params.Arch)
 	test.NoError(t, err)
 }
 

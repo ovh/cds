@@ -7,6 +7,8 @@ export class WorkerModel {
     name: string;
     description: string;
     type: string;
+    registered_os: string;
+    registered_arch: string;
     model_docker: ModelDocker;
     model_virtual_machine: ModelVirtualMachine;
     registered_capabilities: Array<Requirement>;

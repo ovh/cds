@@ -6,7 +6,7 @@
     <form class="ui form">
       <div class="ui grid">
         <div class="ten wide column">
-            <div class="three fields">
+            <div class="four fields">
               <div class="field">
                   <label>{{'worker_model_name' | translate}}</label>
                   <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name" [disabled]="loading">
@@ -41,6 +41,16 @@
               <label>{{'common_description' | translate}}</label>
               <textarea name="description" [(ngModel)]="workerModel.description"
                         rows="{{getDescriptionHeight()}}"></textarea>
+            </div>
+            <div class="two fields">
+              <div class="field">
+                  <label>{{'worker_model_os' | translate}}</label>
+                  <input class="ui input" type="text" name="os" [(ngModel)]="workerModel.registered_os" [disabled]="true">
+              </div>
+              <div class="field">
+                  <label>{{'worker_model_arch' | translate}}</label>
+                  <input class="ui input" type="text" name="arch" [(ngModel)]="workerModel.registered_arch" [disabled]="true">
+              </div>
             </div>
             <div class="field" *ngIf="workerModel.id">
               <label>{{'worker_model_status' | translate}}</label>
