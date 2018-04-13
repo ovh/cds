@@ -38,13 +38,18 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 	for _, wm := range wms {
 		switch wm.Type {
 		case sdk.Docker:
+			if wm.ModelDocker.Image != "" && wm.ModelDocker.Cmd != "" {
+				continue
+			}
 			wm.ModelDocker = sdk.ModelDocker{
 				Image: wm.Image,
 				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
 			}
 		case sdk.Openstack:
 			var osdata deprecatedOpenstackModelData
-
+			if wm.ModelVirtualMachine.Image != "" && wm.ModelVirtualMachine.Cmd != "" {
+				continue
+			}
 			if wm.Image == "" {
 				log.Warning("HatcheryCmdMigration> worker model image field is empty for %s", wm.Name)
 				continue
@@ -93,7 +98,9 @@ export CDS_INSECURE={{.HTTPInsecure}}
 
 		case sdk.VSphere:
 			var vspheredata deprecatedVSphereModelData
-
+			if wm.ModelVirtualMachine.Image != "" && wm.ModelVirtualMachine.Cmd != "" {
+				continue
+			}
 			if wm.Image == "" {
 				log.Warning("HatcheryCmdMigration> worker model image field is empty for %s", wm.Name)
 				continue
@@ -130,6 +137,9 @@ chmod +x worker
 				PostCmd: "shutdown -h now",
 			}
 		case sdk.Host:
+			if wm.ModelVirtualMachine.Image != "" && wm.ModelVirtualMachine.Cmd != "" {
+				continue
+			}
 			wm.ModelVirtualMachine = sdk.ModelVirtualMachine{
 				Image: wm.Name,
 				Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
