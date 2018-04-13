@@ -1,0 +1,10 @@
+name: myITModelOS
+type: docker
+description: "my worker model"
+group: shared.infra
+image: foo/model/go:latest
+image: vps-ssd-1
+precmd:
+- 'echo ''installation in progress...'' '
+- 'echo ''curl my worker'' '
+cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit"

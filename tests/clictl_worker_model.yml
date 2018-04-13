@@ -6,7 +6,7 @@ testcases:
 
 - name: worker model add
   steps:
-  - script: {{.cds.build.cdsctl}} worker model add myITModel docker shared.infra --image=foo/model/go:latest 
+  - script: {{.cds.build.cdsctl}} worker model add ./tests/fixtures/my_worker_model.yml
 
 - name: worker model show
   steps:
@@ -19,3 +19,23 @@ testcases:
 - name: cleanup
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModel --force
+
+- name: prepare test openstack model
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model delete myITModelOS --force
+
+- name: worker model add openstack model
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model add ./tests/fixtures/my_worker_model_openstack.yml
+
+- name: worker model show
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model show myITModelOS
+
+- name: worker model list
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model list
+
+- name: cleanup
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model delete myITModelOS --force

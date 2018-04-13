@@ -1,14 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"reflect"
 
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var (
@@ -41,128 +43,142 @@ func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 
 var workerModelAddCmd = cli.Command{
 	Name:  "add",
-	Short: "cdsctl worker model add [name] [docker|openstack|vsphere] --group [group]",
+	Short: "cdsctl worker model add my_worker_model_file.yml",
 	Long: `
 Available model type :
 - Docker images ("docker")
 - Openstack image ("openstack")
 - VSphere image ("vsphere")
+
+For admin:
++ For each type of model you have to indicate the main worker command to run your workflow (example: worker)
++ For Openstack and VSphere model you can indicate a precmd and postcmd that will execute before and after the main worker command
 	`,
 	Args: []cli.Arg{
-		{Name: "name"},
-		{Name: "type"},
-		{Name: "group"},
-	},
-	Flags: []cli.Flag{
-		{
-			Name:  "image",
-			Kind:  reflect.String,
-			Usage: "Image value",
-		},
-		{
-			Name:  "flavor",
-			Kind:  reflect.String,
-			Usage: "Flavor value (only for openstack)",
-		},
-		{
-			Name:  "userdata",
-			Kind:  reflect.String,
-			Usage: "Path to UserData file (only for vsphere or openstack)",
-		},
+		{Name: "filepath"},
 	},
 }
 
+type workerModelFile struct {
+	Name          string `json:"name" yaml:"name"`
+	Group         string `json:"group" yaml:"group"`
+	Communication string `json:"communication,omitempty" yaml:"communication,omitempty"`
+	Provision     int    `json:"provision,omitempty" yaml:"provision,omitempty"`
+	Image         string `json:"image" yaml:"image"`
+	Description   string `json:"description" yaml:"description"`
+	Type          string `json:"type" yaml:"type"`
+	Flavor        string `json:"flavor,omitempty" yaml:"flavor,omitempty"`
+	PreCmd        string `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
+	Cmd           string `json:"cmd,omitempty" yaml:"cmd,omitempty"`
+	PostCmd       string `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
+	Restricted    bool   `json:"restricted" yaml:"restricted"`
+}
+
 func workerModelAddRun(c cli.Values) error {
-	name := c.GetString("name")
-	modelType := c.GetString("type")
-	groupName := c.GetString("group")
-	userdata := c.GetString("userdata")
+	filepath := c.GetString("filepath")
+
+	if filepath == "" {
+		return fmt.Errorf("filepath for worker model is mandatory")
+	}
+
+	reader, format, err := exportentities.OpenFile(filepath)
+	if err != nil {
+		return fmt.Errorf("Error: Cannot read file %s (%v)", filepath, err)
+	}
+	defer reader.Close()
+
+	buf := new(bytes.Buffer)
+	if _, errR := buf.ReadFrom(reader); errR != nil {
+		return fmt.Errorf("Error: cannot read file content %s : %v", filepath, errR)
+	}
+
+	var modelInfos workerModelFile
+	switch format {
+	case exportentities.FormatJSON:
+		if err := json.Unmarshal(buf.Bytes(), &modelInfos); err != nil {
+			return fmt.Errorf("Error: cannot unmarshal json file %s : %v", filepath, err)
+		}
+	case exportentities.FormatYAML:
+		if err := yaml.Unmarshal(buf.Bytes(), &modelInfos); err != nil {
+			return fmt.Errorf("Error: cannot unmarshal yaml file %s : %v", filepath, err)
+		}
+	default:
+		return fmt.Errorf("Invalid file format")
+	}
 
 	var t string
-	var image string
 	var modelDocker sdk.ModelDocker
 	var modelVm sdk.ModelVirtualMachine
-	switch modelType {
-	case string(sdk.Docker):
+	switch modelInfos.Type {
+	case sdk.Docker:
 		t = sdk.Docker
-		image = c.GetString("image")
-		if image == "" {
-			sdk.Exit("Error: Docker image not provided (--image)\n")
+		if modelInfos.Image == "" {
+			sdk.Exit("Error: Docker image not provided\n")
 		}
-		modelDocker.Image = image
-		//TODO TO DELETE ! BAD
-		modelDocker.Cmd = "worker"
+		modelDocker.Image = modelInfos.Image
+		modelDocker.Cmd = modelInfos.Cmd
 		break
-	case string(sdk.Openstack):
+	case sdk.Openstack:
 		t = sdk.Openstack
 		d := sdk.ModelVirtualMachine{
-			Image:  c.GetString("image"),
-			Flavor: c.GetString("flavor"),
+			Image:   modelInfos.Image,
+			Flavor:  modelInfos.Flavor,
+			Cmd:     modelInfos.Cmd,
+			PostCmd: modelInfos.PostCmd,
+			PreCmd:  modelInfos.PreCmd,
 		}
 		if d.Image == "" {
-			return fmt.Errorf("Error: Openstack image not provided (--image)")
+			return fmt.Errorf("Error: Openstack image not provided")
 		}
 		if d.Flavor == "" {
-			return fmt.Errorf("Error: Openstack flavor not provided (--flavor)")
+			return fmt.Errorf("Error: Openstack flavor not provided")
 		}
-		if userdata == "" {
-			return fmt.Errorf("Error: Openstack UserData file not provided (--userdata)")
+		if d.Cmd == "" {
+			return fmt.Errorf("Error: Openstack command not provided")
 		}
-		file, err := ioutil.ReadFile(userdata)
-		if err != nil {
-			return fmt.Errorf("Error: Cannot read Openstack UserData file (%s)", err)
-		}
-		// d.Cmd = string(file)
-		// data, err := json.Marshal(d)
-		// if err != nil {
-		// 	return fmt.Errorf("Error: Cannot marshal model info (%s)", err)
-		// }
-		// image = string(data)
-		modelVm.Image = c.GetString("image")
-		modelVm.Flavor = c.GetString("flavor")
-		modelVm.Cmd = string(file)
+		modelVm = d
 		break
-	case string(sdk.VSphere):
+	case sdk.VSphere:
 		t = sdk.VSphere
-		modelVm.Image = c.GetString("image")
-		if modelVm.Image == "" {
-			return fmt.Errorf("Error: VSphere image not provided (--image)")
+		d := sdk.ModelVirtualMachine{
+			Image:   modelInfos.Image,
+			Flavor:  modelInfos.Flavor,
+			Cmd:     modelInfos.Cmd,
+			PostCmd: modelInfos.PostCmd,
+			PreCmd:  modelInfos.PreCmd,
+		}
+		if d.Image == "" {
+			return fmt.Errorf("Error: VSphere image not provided")
 		}
 
-		if userdata == "" {
-			return fmt.Errorf("Error: VSphere UserData file not provided (--userdata)")
-		}
-		file, err := ioutil.ReadFile(userdata)
-		if err != nil {
-			return fmt.Errorf("Error: Cannot read Openstack UserData file (%s)", err)
+		if d.Cmd == "" {
+			return fmt.Errorf("Error: VSphere main worker command empty")
 		}
 
-		modelVm.Cmd = string(file)
-
-		// rx := regexp.MustCompile(`(?m)(#.*)$`)
-		// file = rx.ReplaceAll(file, []byte(""))
-		// d.Cmd = strings.Replace(string(file), "\n", " ; ", -1)
-		//
-		// data, err := sdk.JSONWithoutHTMLEncode(d)
-		// if err != nil {
-		// 	return fmt.Errorf("Error: Cannot marshal model info (%s)", err)
-		// }
-		// image = string(data)
+		modelVm = d
 		break
 	default:
-		return fmt.Errorf("Unknown worker type: %s", modelType)
+		return fmt.Errorf("Unknown worker type: %s", modelInfos.Type)
 	}
 
-	g, err := client.GroupGet(groupName)
+	if modelInfos.Name == "" {
+		return fmt.Errorf("Error: worker model name is not provided")
+	}
+
+	if modelInfos.Group == "" {
+		return fmt.Errorf("Error: group is not provided")
+	}
+
+	g, err := client.GroupGet(modelInfos.Group)
 	if err != nil {
-		return fmt.Errorf("Error : Unable to get group %s : %s", groupName, err)
+		return fmt.Errorf("Error : Unable to get group %s : %s", modelInfos.Group, err)
 	}
 
-	if _, err := client.WorkerModelAdd(name, t, modelDocker, modelVm, g.ID); err != nil {
-		return fmt.Errorf("Error: cannot add worker model (%s)", err)
+	if _, err := client.WorkerModelAdd(modelInfos.Name, t, modelDocker, modelVm, g.ID); err != nil {
+		return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, err)
 	}
 
-	fmt.Printf("Worker model %s added with success", name)
+	fmt.Printf("Worker model %s added with success", modelInfos.Name)
 	return nil
 }
 

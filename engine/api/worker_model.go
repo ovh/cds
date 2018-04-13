@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/action"
-
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -26,14 +25,35 @@ func (api *API) addWorkerModelHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid type (empty)")
 		}
 
+		user := getUser(ctx)
 		switch model.Type {
 		case sdk.Docker:
-			if model.ModelDocker.Image == "" || model.ModelDocker.Cmd == "" {
+			if model.ModelDocker.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
 			}
+			if model.ModelDocker.Cmd == "" {
+				//TODO add default cmd list for each type of arch and type of worker model (vsphere, docker, openstack)
+			} else if !user.Admin {
+				return sdk.ErrForbidden
+			}
 		default:
-			if model.ModelVirtualMachine.Image == "" || model.ModelVirtualMachine.Cmd == "" {
+			if model.ModelVirtualMachine.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
+			}
+			if model.ModelVirtualMachine.PreCmd == "" {
+				//TODO add default cmd list for each type of arch and type of worker model (vsphere, docker, openstack)
+			} else if !user.Admin {
+				return sdk.ErrForbidden
+			}
+			if model.ModelVirtualMachine.Cmd == "" {
+				//TODO add default cmd
+			} else if !user.Admin {
+				return sdk.ErrForbidden
+			}
+			if model.ModelVirtualMachine.PostCmd == "" {
+				//TODO add default cmd
+			} else if !user.Admin {
+				return sdk.ErrForbidden
 			}
 		}
 
@@ -56,10 +76,10 @@ func (api *API) addWorkerModelHandler() Handler {
 
 		//User must be admin of the group set in the model
 		var ok bool
-		for _, g := range getUser(ctx).Groups {
+		for _, g := range user.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
-					if a.ID == getUser(ctx).ID {
+					if a.ID == user.ID {
 						ok = true
 					}
 				}
@@ -67,23 +87,23 @@ func (api *API) addWorkerModelHandler() Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !getUser(ctx).Admin && !ok {
+		if !user.Admin && !ok {
 			return sdk.ErrForbidden
 		}
 
 		// provision is allowed only for CDS Admin
 		// or by user with a restricted model
-		if !getUser(ctx).Admin && !model.Restricted {
+		if !user.Admin && !model.Restricted {
 			model.Provision = 0
 		}
 
 		model.CreatedBy = sdk.User{
-			Email:    getUser(ctx).Email,
-			Username: getUser(ctx).Username,
-			Admin:    getUser(ctx).Admin,
-			Fullname: getUser(ctx).Fullname,
-			ID:       getUser(ctx).ID,
-			Origin:   getUser(ctx).Origin,
+			Email:    user.Email,
+			Username: user.Username,
+			Admin:    user.Admin,
+			Fullname: user.Fullname,
+			ID:       user.ID,
+			Origin:   user.Origin,
 		}
 
 		// Insert model in db

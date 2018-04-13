@@ -74,6 +74,17 @@
                 <label>{{'worker_model_image' | translate}}</label>
                 <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_docker.image" [disabled]="loading">
               </div>
+              <div class="field">
+                <label>Exemples de script de configuration</label>
+                <sm-select class="fluid search"
+                    name="type"
+                    *ngIf="workerModelCommunications"
+                    [disabled]="loading"
+                    [(model)]="workerModel.communication"
+                    [options]="{'fullTextSearch': true}">
+                    <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
+                </sm-select>
+              </div>
             </ng-container>
             <ng-container *ngIf="workerModel.type !== 'docker'">
               <div class="field">
@@ -85,16 +96,27 @@
                 <input class="ui input" type="text" name="flavor" [(ngModel)]="workerModel.model_virtual_machine.flavor" [disabled]="loading">
               </div>
               <div class="field">
+                <label>Exemples de script de configuration</label>
+                <sm-select class="fluid search"
+                    name="type"
+                    *ngIf="workerModelCommunications"
+                    [disabled]="loading"
+                    [(model)]="workerModel.communication"
+                    [options]="{'fullTextSearch': true}">
+                    <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
+                </sm-select>
+              </div>
+              <div class="field">
                 <label>Pre worker command</label>
-                <textarea class="ui input" name="pre_cmd" [(ngModel)]="workerModel.model_virtual_machine.pre_cmd" [disabled]="loading"></textarea>
+                <textarea class="ui input" name="pre_cmd" [(ngModel)]="workerModel.model_virtual_machine.pre_cmd" [disabled]="loading || !currentUser.admin"></textarea>
               </div>
               <div class="field">
                 <label>Worker command</label>
-                <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_virtual_machine.cmd" [disabled]="loading">
+                <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_virtual_machine.cmd" [disabled]="loading || !currentUser.admin">
               </div>
               <div class="field">
                 <label>Post worker command</label>
-                <textarea class="ui input" name="post_cmd" [(ngModel)]="workerModel.model_virtual_machine.post_cmd" [disabled]="loading"></textarea>
+                <textarea class="ui input" name="post_cmd" [(ngModel)]="workerModel.model_virtual_machine.post_cmd" [disabled]="loading || !currentUser.admin"></textarea>
               </div>
             </ng-container>
 
