@@ -6,10 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -96,7 +98,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 
 	wr, errMR := workflow.ManualRun(db, db, api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	}, nil)
+	}, nil, nil)
 	if errMR != nil {
 		test.NoError(t, errMR)
 	}
@@ -206,7 +208,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
-		}, nil)
+		}, nil, nil)
 		test.NoError(t, err)
 	}
 
@@ -351,7 +353,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	}, nil)
+	}, nil, nil)
 	test.NoError(t, err)
 
 	//Prepare request
@@ -456,7 +458,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 				"git.branch": "master",
 				"git.hash":   fmt.Sprintf("%d", i),
 			},
-		}, nil)
+		}, nil, nil)
 		test.NoError(t, err)
 	}
 
@@ -572,7 +574,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
-		}, nil)
+		}, nil, nil)
 		test.NoError(t, err)
 	}
 
@@ -672,7 +674,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	}, nil)
+	}, nil, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, true)
@@ -898,6 +900,66 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, int64(1), wr.Number)
 }
 
+func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	c, _ := izanami.New("", "clientID", "secret")
+	feature.SetClient(c)
+
+	api.Cache.Set("feature:"+proj.Key, feature.ProjectFeatures{
+		Key: proj.Key,
+		Features: map[string]bool{
+			feature.FeatWorkflowAsCode: false,
+		},
+	})
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+		},
+		FromRepository: "ovh/cds",
+	}
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, err)
+	t.Logf(">>>>>>>>%s", w1.FromRepository)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &sdk.WorkflowRunPostHandlerOption{}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 403, rec.Code)
+}
+
 func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -1044,7 +1106,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	}, nil)
+	}, nil, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, true)

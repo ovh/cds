@@ -15,6 +15,7 @@ export class KeysFormComponent implements OnInit {
 
     @Input() loading = false;
     @Input() prefix: string;
+    @Input() defaultType = 'ssh';
     @Output() keyEvent = new EventEmitter<KeyEvent>();
 
     constructor() {
@@ -22,7 +23,7 @@ export class KeysFormComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.newKey.type = this.keyTypes[0];
+        this.newKey.type = this.defaultType;
     }
 
     addKey(): void {

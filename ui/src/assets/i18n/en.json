@@ -83,6 +83,7 @@
   "application_poller_form_title": "Add a poller: ",
   "application_poller_list_title": "List of application pollers : ",
   "application_rename_title": "Rename the application",
+  "application_repo_choose": "Choose a repository",
   "application_repo_attach_ok": "The repository is linked to the application",
   "application_repo_detach_ok": "The repository is detached from the application",
   "application_repoman_cant": "First, you must connect a repository manager to your project: ",
@@ -118,9 +119,12 @@
   "btn_continue": "Continue",
   "btn_close": "Close",
   "btn_create": "Create",
+  "btn_create_workflow": "Create workflow",
   "btn_finish": "Finish",
   "btn_delete": "Delete",
   "btn_detach": "Unlink pipeline",
+  "btn_goto_workflow": "See workflow",
+  "btn_inspect_repo": "Inspect repository",
   "btn_link": "Connect",
   "btn_or": "or",
   "btn_logs": "Display logs",
@@ -216,6 +220,7 @@
   "common_copy_clipboard": "Copy to clipboad",
   "common_select": "Select",
   "common_create": "Create",
+  "common_create_repo" : "From repository",
   "common_import": "Import",
   "common_show_all": "Show all",
   "common_hide_all": "Hide all",
@@ -289,6 +294,10 @@
   "group_user_is_admin": "User is administrator on group",
   "group_btn_set_admin": "Admin",
   "group_btn_unset_admin": "Admin",
+
+  "key_copy_public": "Copy public key",
+  "key_or_create":  "(Create)",
+  "key_warning_add_repo_title": "Don't forget to add your ssh key on your repository",
 
   "token_description": "Description",
   "token_value": "Token",
@@ -477,6 +486,7 @@
   "project_workflow_migration_title": "Workflow migration progress",
   "project_name": "Project name",
   "project_name_error": "project name is mandatory",
+  "project_no": "There is no project",
   "project_no_application": "There is no application in this project",
   "project_no_pipeline": "There is no pipeline in this project",
   "project_no_workflow": "There is no workflow in this project",
@@ -827,5 +837,12 @@
   "workflow_notification_email_user": "Mails",
   "workflow_notification_list": "Notifications list",
   "workflow_notification_form": "Add a notification",
-  "workflow_notification_copy": "Copy"
+  "workflow_notification_copy": "Copy",
+
+  "workflow_wizard_select_repo_man": "Select a repository manager",
+  "workflow_wizard_select_repo": "Select a repository",
+  "workflow_wizard_select_repo_loading": "Loading repositories...",
+  "workflow_wizard_repo_analyse" : "Analyzing repository...",
+  "workflow_wizard_select_repo_man_add" : "Or add a repository manager",
+  "wizard_repo_files" : "Files found: "
 }

@@ -17,7 +17,7 @@
                         </div>
                     </div>
                     <div class="nine wide right aligned field">
-                        <button class="ui green button" name="btnrename" [class.loading]="loading" [disabled]="workflowUpdateFrom.invalid">{{ 'btn_rename' | translate }}</button>
+                        <button class="ui green button" name="btnrename" [class.loading]="loading" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0) || workflowUpdateFrom.invalid">{{ 'btn_rename' | translate }}</button>
                     </div>
                 </div>
             </form>
@@ -40,7 +40,7 @@
                         </sui-multi-select>
                     </div>
                     <div class="two wide right aligned field">
-                        <button id="tagButton" class="ui selection green button" name="btnsavetag" (click)="updateWorkflow()" [class.loading]="loading">{{ 'btn_save' | translate }}</button>
+                        <button id="tagButton" class="ui selection green button" name="btnsavetag" (click)="updateWorkflow()" [class.loading]="loading" [disabled]="loading  || (workflow.from_repository && workflow.from_repository.length > 0)">{{ 'btn_save' | translate }}</button>
                     </div>
                 </div>
             </div>
@@ -71,7 +71,7 @@
                         </sui-select>
                     </div>
                     <div class="two wide right aligned field">
-                        <button class="ui green button" name="btnhistorylength" [class.loading]="loading" (click)="updateWorkflow()">
+                        <button class="ui green button" name="btnhistorylength" [class.loading]="loading" [disabled]="loading  || (workflow.from_repository && workflow.from_repository.length > 0)" (click)="updateWorkflow()">
                             {{ 'btn_save' | translate }}
                         </button>
                     </div>
@@ -93,7 +93,7 @@
                                #formWorkflowRunNumUpdateNumber="ngModel">
                     </div>
                     <div class="nine wide right aligned field">
-                        <button class="ui green button" name="btnrename" [class.loading]="loading">{{ 'btn_save' | translate }}</button>
+                        <button class="ui green button" name="btnrename" [class.loading]="loading" [disabled]="loading  || (workflow.from_repository && workflow.from_repository.length > 0)">{{ 'btn_save' | translate }}</button>
                     </div>
                 </div>
             </form>

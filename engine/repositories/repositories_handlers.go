@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -23,6 +24,8 @@ func (s *Service) postOperationHandler() api.Handler {
 			return err
 		}
 		op.UUID = uuid
+		now := time.Now()
+		op.Date = &now
 		op.Status = sdk.OperationStatusPending
 		if err := s.dao.saveOperation(op); err != nil {
 			return err

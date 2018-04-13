@@ -103,11 +103,6 @@ var (
 												Type:  sdk.StringParameter,
 												Value: "path1",
 											},
-											{
-												Name:  "tag",
-												Type:  sdk.StringParameter,
-												Value: "tag1",
-											},
 										},
 									},
 								},
@@ -536,6 +531,10 @@ steps:
     privateKey: '{{.cds.app.key}}'
     url: '{{.git.http_url}}'
     user: ""
+- artifactUpload:
+    path: arti.tar.gz
+    tag: '{{.cds.version}}'
+- artifactUpload: arti.tar.gz
 `
 
 	payload := &Pipeline{}
@@ -544,9 +543,13 @@ steps:
 	p, err := payload.Pipeline()
 	test.NoError(t, err)
 
-	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 1)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions, 3)
 	assert.Equal(t, sdk.GitCloneAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
+	assert.Equal(t, sdk.ArtifactUpload, p.Stages[0].Jobs[0].Action.Actions[1].Name)
+	assert.Equal(t, sdk.ArtifactUpload, p.Stages[0].Jobs[0].Action.Actions[2].Name)
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 7)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[1].Parameters, 2)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[2].Parameters, 1)
 }
 
 func Test_ImportPipelineWithCheckout(t *testing.T) {

@@ -22,13 +22,15 @@ type Service struct {
 
 // Configuration is the vcs configuration structure
 type Configuration struct {
-	Name    string `toml:"name" comment:"Name of this CDS Repositories Service"`
-	Basedir string `toml:"basedir" comment:"Root directory where the service will store all checked-out repositories"`
-	HTTP    struct {
+	Name                   string `toml:"name" comment:"Name of this CDS Repositories Service"`
+	Basedir                string `toml:"basedir" comment:"Root directory where the service will store all checked-out repositories"`
+	OperationRetention     int    `toml:"operation_retention" comment:"Operation retention in redis store (in days)" default:"5"`
+	RepositoriesRentention int    `toml:"repositories_retention" comment:"Re retention on the filesystem (in days)" default:"10"`
+	HTTP                   struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
-		Port int    `toml:"port" default:"8086" toml:"name"`
+		Port int    `toml:"port" default:"8085" toml:"name"`
 	} `toml:"http" comment:"######################\n CDS Repositories HTTP Configuration \n######################"`
-	URL string `default:"http://localhost:8084"`
+	URL string `default:"http://localhost:8085"`
 	API struct {
 		HTTP struct {
 			URL      string `toml:"url" default:"http://localhost:8081"`

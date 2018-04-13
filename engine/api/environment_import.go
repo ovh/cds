@@ -68,7 +68,7 @@ func (api *API) postEnvironmentImportHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		msgList, globalError := environment.ParseAndImport(tx, api.Cache, proj, eenv, force, project.DecryptWithBuiltinKey, getUser(ctx))
+		_, msgList, globalError := environment.ParseAndImport(tx, api.Cache, proj, eenv, force, project.DecryptWithBuiltinKey, getUser(ctx))
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {

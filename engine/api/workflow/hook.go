@@ -53,9 +53,10 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		// Update scheduler payload
 		for i := range hookToUpdate {
 			h := hookToUpdate[i]
+
 			if h.WorkflowHookModel.Name == sdk.SchedulerModelName {
 				// Add git.branch in scheduler payload
-				if wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "" && h.Config["payload"].Value != "" {
+				if wf.Root.IsLinkedToRepo() && h.Config["payload"].Value != "" {
 					payload := map[string]string{}
 					if err := json.Unmarshal([]byte(h.Config["payload"].Value), &payload); err != nil {
 						return sdk.WrapError(err, "HookRegistration> Unable to unmarshall payload")

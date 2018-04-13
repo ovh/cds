@@ -81,6 +81,7 @@ var (
 // Messages contains all sdk Messages
 var Messages = map[string]*Message{
 	MsgAppCreated.ID:                          MsgAppCreated,
+	MsgAppUpdated.ID:                          MsgAppUpdated,
 	MsgPipelineCreated.ID:                     MsgPipelineCreated,
 	MsgPipelineCreationAborted.ID:             MsgPipelineCreationAborted,
 	MsgPipelineExists.ID:                      MsgPipelineExists,
@@ -90,6 +91,7 @@ var Messages = map[string]*Message{
 	MsgAppGroupSetPermission.ID:               MsgAppGroupSetPermission,
 	MsgAppVariablesCreated.ID:                 MsgAppVariablesCreated,
 	MsgHookCreated.ID:                         MsgHookCreated,
+	MsgAppKeyCreated.ID:                       MsgAppKeyCreated,
 	MsgEnvironmentExists.ID:                   MsgEnvironmentExists,
 	MsgEnvironmentCreated.ID:                  MsgEnvironmentCreated,
 	MsgEnvironmentVariableUpdated.ID:          MsgEnvironmentVariableUpdated,
@@ -102,6 +104,7 @@ var Messages = map[string]*Message{
 	MsgEnvironmentGroupCannotBeCreated.ID:     MsgEnvironmentGroupCannotBeCreated,
 	MsgEnvironmentGroupDeleted.ID:             MsgEnvironmentGroupDeleted,
 	MsgEnvironmentGroupCannotBeDeleted.ID:     MsgEnvironmentGroupCannotBeDeleted,
+	MsgEnvironmentKeyCreated.ID:               MsgEnvironmentKeyCreated,
 	MsgJobNotValidActionNotFound.ID:           MsgJobNotValidActionNotFound,
 	MsgJobNotValidInvalidActionParameter.ID:   MsgJobNotValidInvalidActionParameter,
 	MsgPipelineGroupUpdated.ID:                MsgPipelineGroupUpdated,
@@ -148,6 +151,7 @@ func NewMessage(m *Message, args ...interface{}) Message {
 	return Message{
 		Format: m.Format,
 		Args:   args,
+		ID:     m.ID,
 	}
 }
 

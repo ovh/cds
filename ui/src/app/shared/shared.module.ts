@@ -79,10 +79,12 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
 import {KeysFormComponent} from './keys/form/keys.form.component';
 import {KeysListComponent} from './keys/list/keys.list.component';
 import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
+import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.component';
+import {ClipboardModule} from 'ngx-clipboard';
 import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component';
 
 @NgModule({
-    imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
+    imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
         CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, SuiModule ],
     declarations: [
         ActionComponent,
@@ -114,6 +116,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         PrerequisitesFormComponent,
         RequirementsListComponent,
         RequirementsFormComponent,
+        RepoManagerFormComponent,
         StatusIconComponent,
         TruncatePipe,
         VariableComponent,
@@ -168,6 +171,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         CodemirrorModule,
         CommitListComponent,
         CommonModule,
+        ClipboardModule,
         CutPipe,
         DeleteButtonComponent,
         UploadButtonComponent,
@@ -198,6 +202,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         PrerequisitesFormComponent,
         PipelineLaunchModalComponent,
         ReactiveFormsModule,
+        RepoManagerFormComponent,
         StatusIconComponent,
         SuiModule,
         TranslateModule,

@@ -1,3 +1,9 @@
+@import '../../../common';
 .ssh {
   width: 100%;
+}
+.keyLink {
+  padding-left:  10px;
+  color: $cds_color_teal;
+  cursor: pointer;
 }

@@ -21,12 +21,8 @@ jobs:
     - make build
     - cd dist
     - tar czf cds-engine-linux-amd64.tar.gz cds-engine-linux-amd64
-  - artifactUpload:
-      path: /go/src/github.com/ovh/cds/engine/dist/sql.tar.gz
-      tag: '{{.cds.version}}'
-  - artifactUpload:
-      path: /go/src/github.com/ovh/cds/engine/dist/cds-engine-linux-amd64.tar.gz
-      tag: '{{.cds.version}}'
+  - artifactUpload: /go/src/github.com/ovh/cds/engine/dist/sql.tar.gz
+  - artifactUpload: /go/src/github.com/ovh/cds/engine/dist/cds-engine-linux-amd64.tar.gz
   requirements:
   - binary: git
   - model: Go-official-1.9.1

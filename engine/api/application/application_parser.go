@@ -14,25 +14,25 @@ import (
 )
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, force bool, decryptFunc keys.DecryptFunc, u *sdk.User) ([]sdk.Message, error) {
+func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, force bool, decryptFunc keys.DecryptFunc, u *sdk.User) (*sdk.Application, []sdk.Message, error) {
 	log.Info("ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, force)
 	log.Debug("ParseAndImport>> App: %+v", eapp)
 
 	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eapp.Name) {
-		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "ParseAndImport>> Application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
+		return nil, nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "ParseAndImport>> Application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
 	}
 
 	//Check if app exist
 	oldApp, errl := LoadByName(db, cache, proj.Key, eapp.Name, nil, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithKeys)
 	if errl != nil && sdk.ErrorIs(errl, sdk.ErrApplicationNotFound) {
-		return nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load application")
+		return nil, nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load application")
 	}
 
 	//If the application exist and we don't want to force, raise an error
 	if oldApp != nil && !force {
-		return nil, sdk.ErrApplicationExist
+		return nil, nil, sdk.ErrApplicationExist
 	}
 
 	//Craft the application
@@ -63,7 +63,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		case sdk.SecretVariable:
 			secret, err := decryptFunc(db, proj.ID, v.Value)
 			if err != nil {
-				return nil, sdk.WrapError(err, "ParseAndImport>> Unable to decrypt secret variable")
+				return app, nil, sdk.WrapError(err, "ParseAndImport>> Unable to decrypt secret variable")
 			}
 			v.Value = secret
 		}
@@ -75,7 +75,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	//Compute keys
 	for kname, kval := range eapp.Keys {
 		if !strings.HasPrefix(kname, "app-") {
-			return nil, sdk.WrapError(sdk.ErrInvalidKeyName, "ParseAndImport>> Unable to parse key %s", kname)
+			return app, nil, sdk.WrapError(sdk.ErrInvalidKeyName, "ParseAndImport>> Unable to parse key %s", kname)
 		}
 
 		var oldKey *sdk.ApplicationKey
@@ -100,7 +100,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
-			return nil, sdk.WrapError(err, "ParseAndImport>> Unable to parse key")
+			return app, nil, sdk.WrapError(err, "ParseAndImport>> Unable to parse key")
 		}
 
 		k := sdk.ApplicationKey{
@@ -130,11 +130,11 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	if eapp.VCSPassword != "" {
 		clearPWD, err := decryptFunc(db, proj.ID, eapp.VCSPassword)
 		if err != nil {
-			return nil, sdk.WrapError(err, "ParseAndImport> Unable to decrypt vcs password")
+			return app, nil, sdk.WrapError(err, "ParseAndImport> Unable to decrypt vcs password")
 		}
 		app.RepositoryStrategy.Password = clearPWD
 		if errE := EncryptVCSStrategyPassword(app); errE != nil {
-			return nil, sdk.WrapError(errE, "ParseAndImport> Cannot encrypt vcs password")
+			return app, nil, sdk.WrapError(errE, "ParseAndImport> Cannot encrypt vcs password")
 		}
 	}
 
@@ -153,5 +153,5 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	close(msgChan)
 	done.Wait()
 
-	return msgList, globalError
+	return app, msgList, globalError
 }

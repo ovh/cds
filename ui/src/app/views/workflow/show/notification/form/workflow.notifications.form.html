@@ -94,9 +94,9 @@
             <textarea type="text" class="ui input" [(ngModel)]="notification.settings.template.body" name="body"></textarea>
         </div>
         <ng-container *ngIf="canDelete">
-            <app-delete-button [loading]="loading" (event)="deleteNotification()"></app-delete-button>
+            <app-delete-button [loading]="loading" [disabled]="workflow.from_repository && workflow.from_repository.length > 0" (event)="deleteNotification()"></app-delete-button>
         </ng-container>
-        <div class="ui right floated green button" name="save" [class.loading]="loading" [disabled]="loading" (click)="createNotification()">
+        <div class="ui right floated green button" name="save" [class.loading]="loading" [class.disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)" (click)="createNotification()">
             <span *ngIf="canDelete">{{'btn_save' | translate}}</span>
             <span *ngIf="!canDelete">{{'btn_add' | translate}}</span>
         </div>

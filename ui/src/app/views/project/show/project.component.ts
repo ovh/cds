@@ -8,6 +8,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../model/permission.model';
 import {User} from '../../../model/user.model';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-show',
@@ -29,6 +30,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
     workflowNum: string;
     workflowNodeRun: string;
     workflowPipeline: string;
+    loadingFav = false;
 
     constructor(private _projectStore: ProjectStore, private _route: ActivatedRoute, private _router: Router,
                 private _toast: ToastService, public _translate: TranslateService,
@@ -111,7 +113,9 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
     }
 
     updateFav() {
+      this.loadingFav = true;
       this._projectStore.updateFavorite(this.project.key)
+        .pipe(finalize(() => this.loadingFav = false))
         .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
     }
 

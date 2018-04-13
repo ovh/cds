@@ -10,6 +10,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -45,13 +46,19 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 			return sdk.WrapError(errE, "updateGroupRoleOnEnvironmentHandler> Cannot load environment %s", envName)
 		}
 
-		if groupEnvironment.Permission != permission.PermissionReadWriteExecute {
-			permissions, errR := group.LoadAllEnvironmentGroupByRole(api.mustDB(), env.ID, permission.PermissionReadWriteExecute)
-			if errR != nil {
-				return sdk.WrapError(errR, "updateGroupRoleOnEnvironmentHandler> Cannot load group %s for environment %s", groupName, envName)
+		var writeGroupID int64
+		var gpOld sdk.GroupPermission
+		for _, gp := range env.EnvironmentGroups {
+			if gp.Permission == permission.PermissionReadWriteExecute && gp.Group.ID != g.ID {
+				writeGroupID = gp.Group.ID
 			}
+			if gp.Group.ID == g.ID {
+				gpOld = gp
+			}
+		}
 
-			if len(permissions) == 1 && permissions[0].Group.ID == g.ID {
+		if groupEnvironment.Permission != permission.PermissionReadWriteExecute {
+			if writeGroupID == 0 {
 				log.Warning("updateGroupRoleOnEnvironmentHandler: Cannot remove write permission on group %s for environment %s :%s", groupName, envName)
 				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleOnEnvironmentHandler> Cannot remove write permission on group %s for environment %s", groupName, envName)
 			}
@@ -90,6 +97,9 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 		}
 		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
 		envUpdated.ProjectKey = key
+
+		groupEnvironment.Group = *g
+		event.PublishEnvironmentPermissionUpdate(key, *envUpdated, groupEnvironment, gpOld, getUser(ctx))
 
 		return WriteJSON(w, envUpdated, http.StatusOK)
 	}
@@ -214,6 +224,9 @@ func (api *API) addGroupInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot add group %s in environment %s", g.Name, env.Name)
 		}
 
+		groupPermission.Group = *g
+		event.PublishEnvironmentPermissionAdd(key, *env, groupPermission, getUser(ctx))
+
 		return nil
 	}
 }
@@ -241,6 +254,14 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 			return sdk.WrapError(errG, "deleteGroupFromEnvironmentHandler: Cannot load group")
 		}
 
+		var gp sdk.GroupPermission
+		for _, groupPerm := range env.EnvironmentGroups {
+			if groupPerm.Group.ID == g.ID {
+				gp = groupPerm
+				break
+			}
+		}
+
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteGroupFromEnvironmentHandler: Cannot start transaction")
@@ -262,6 +283,8 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "deleteGroupFromEnvironmentHandler: Cannot commit transaction")
 		}
+
+		event.PublishEnvironmentPermissionDelete(key, *env, gp, getUser(ctx))
 
 		return nil
 	}

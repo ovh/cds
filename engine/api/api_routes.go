@@ -239,7 +239,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger/{id}", r.GET(api.getTriggerHandler), r.DELETE(api.deleteTriggerHandler), r.PUT(api.updateTriggerHandler))
 
 	// Environment
-	r.Handle("/project/{permProjectKey}/environment", r.GET(api.getEnvironmentsHandler), r.POST(api.addEnvironmentHandler), r.PUT(api.updateEnvironmentsHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/environment", r.GET(api.getEnvironmentsHandler), r.POST(api.addEnvironmentHandler))
 	r.Handle("/project/{permProjectKey}/environment/import", r.POST(api.importNewEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/import/{permEnvironmentName}", r.POST(api.importIntoEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}", r.GET(api.getEnvironmentHandler), r.PUT(api.updateEnvironmentHandler), r.DELETE(api.deleteEnvironmentHandler))
@@ -247,10 +247,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/keys", r.GET(api.getKeysInEnvironmentHandler), r.POST(api.addKeyInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/keys/{name}", r.DELETE(api.deleteKeyInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/clone/{cloneName}", r.POST(api.cloneEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/audit", r.GET(api.getEnvironmentsAuditHandler, DEPRECATED))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/audit/{auditID}", r.PUT(api.restoreEnvironmentAuditHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/group", r.POST(api.addGroupInEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/groups", r.POST(api.addGroupsInEnvironmentHandler))
+	r.Handle("/project/{key}/environment/{permEnvironmentName}/groups", r.POST(api.addGroupsInEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/import", r.POST(api.importGroupsInEnvironmentHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/{group}", r.PUT(api.updateGroupRoleOnEnvironmentHandler), r.DELETE(api.deleteGroupFromEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable", r.GET(api.getVariablesInEnvironmentHandler))
@@ -389,7 +387,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
 
 	// Feature
-	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.FeaturesFlipping.Izanami.Token), Auth(false)))
+	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))
 
 	// Engine µServices
 	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false)))

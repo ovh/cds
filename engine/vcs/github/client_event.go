@@ -15,7 +15,10 @@ import (
 )
 
 // ErrNoNewEvents for no new events
-var ErrNoNewEvents = fmt.Errorf("No new events")
+var (
+	ErrNoNewEvents = fmt.Errorf("No new events")
+	ErrNoHook      = fmt.Errorf("No Hook")
+)
 
 //GetEvents calls Github et returns GithubEvents as []interface{}
 func (g *githubClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
@@ -174,7 +177,12 @@ func (g *githubClient) CreateEvents(fullname string, iEvents []interface{}) ([]s
 		b := e.Payload.Ref
 		branch, err := g.Branch(fullname, b)
 		if err != nil || branch == nil {
-			log.Warning("githubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			errtxt := fmt.Sprintf("githubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
+			if err != nil && strings.Contains(errtxt, "Branch not found") {
+				log.Warning(errtxt)
+			} else {
+				log.Debug(errtxt)
+			}
 			continue
 		}
 		event := sdk.VCSCreateEvent{

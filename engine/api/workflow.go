@@ -5,15 +5,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/fsamin/go-dump"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -118,7 +118,7 @@ func (api *API) postWorkflowHandler() Handler {
 		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
 			if wf.Root.Context.DefaultPayload, err = getDefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
-				return sdk.WrapError(err, "putWorkflowHandler> Cannot set default payload")
+				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
 			}
 		}
 
@@ -126,9 +126,8 @@ func (api *API) postWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
 
-		// HookRegistration must be after workflow insert
 		if errHr := workflow.HookRegistration(tx, api.Cache, nil, wf, p); errHr != nil {
-			return sdk.WrapError(errHr, "postWorkflowHandler")
+			return sdk.WrapError(errHr, "postWorkflowHandler>Hook registration failed")
 		}
 
 		// Add group
@@ -159,6 +158,8 @@ func (api *API) postWorkflowHandler() Handler {
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
+
+		event.PublishWorkflowAdd(key, *wf1, getUser(ctx))
 
 		return WriteJSON(w, wf1, http.StatusCreated)
 	}
@@ -200,7 +201,7 @@ func (api *API) putWorkflowHandler() Handler {
 		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
 			if wf.Root.Context.DefaultPayload, err = getDefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
-				return sdk.WrapError(err, "putWorkflowHandler> Cannot set default payload")
+				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
 			}
 		}
 
@@ -213,8 +214,11 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errHr, "putWorkflowHandler> HookRegistration")
 		}
 
-		if wf.Root.Context.DefaultPayload != nil || (wf.Root.Context != nil && wf.Root.Context.Application != nil && wf.Root.Context.Application.RepositoryFullname != "") {
-			wf.Metadata = getUpdatedMetadata(wf.Metadata)
+		if defaultTags, ok := wf.Metadata["default_tags"]; wf.Root.IsLinkedToRepo() && (!ok || defaultTags == "") {
+			if wf.Metadata == nil {
+				wf.Metadata = sdk.Metadata{}
+			}
+			wf.Metadata["default_tags"] = "git.branch,git.author"
 			if err := workflow.UpdateMetadata(tx, wf.ID, wf.Metadata); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> cannot update metadata")
 			}
@@ -248,6 +252,8 @@ func (api *API) putWorkflowHandler() Handler {
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
+		event.PublishWorkflowUpdate(key, *wf1, *oldW, getUser(ctx))
+
 		return WriteJSON(w, wf1, http.StatusOK)
 	}
 }
@@ -264,40 +270,6 @@ func isDefaultPayloadEmpty(wf sdk.Workflow) bool {
 		log.Warning("isDefaultPayloadEmpty>error while dump wf.Root.Context.DefaultPayload")
 	}
 	return len(m) == 0 // if empty, return true
-}
-
-func getUpdatedMetadata(metadata sdk.Metadata) sdk.Metadata {
-	defaultTags, ok := metadata["default_tags"]
-	if ok {
-		var gitAuthor, gitBranch bool
-		tagsList := strings.Split(defaultTags, ",")
-
-		for _, tag := range tagsList {
-			switch tag {
-			case "git.branch":
-				gitBranch = true
-			case "git.author":
-				gitAuthor = true
-			}
-		}
-
-		if !gitAuthor {
-			defaultTags = "git.author," + defaultTags
-		}
-
-		if !gitBranch {
-			defaultTags = "git.branch," + defaultTags
-		}
-	} else {
-		defaultTags = "git.branch,git.author"
-	}
-
-	if metadata == nil {
-		metadata = sdk.Metadata{}
-	}
-	metadata["default_tags"] = defaultTags
-
-	return metadata
 }
 
 // putWorkflowHandler deletes a workflow
@@ -334,6 +306,9 @@ func (api *API) deleteWorkflowHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
+
+		event.PublishWorkflowDelete(key, *oldW, getUser(ctx))
+
 		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
@@ -406,7 +381,8 @@ func getDefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u
 			}
 		}
 
-		if wf.Root.Context.HasDefaultPayload() {
+		defaultPayload = wf.Root.Context.DefaultPayload
+		if !wf.Root.Context.HasDefaultPayload() {
 			defaultPayload = sdk.WorkflowNodeContextDefaultPayloadVCS{
 				GitBranch:     defaultBranch,
 				GitRepository: wf.Root.Context.Application.RepositoryFullname,

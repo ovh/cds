@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
@@ -53,8 +54,10 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
 		defer tx.Rollback()
+		var envKey sdk.EnvironmentKey
 		for _, k := range env.Keys {
 			if k.Name == keyName {
+				envKey = k
 				if err := environment.DeleteEnvironmentKey(tx, env.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot delete key %s", k.Name)
 				}
@@ -67,6 +70,8 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot commit transaction")
 		}
+
+		event.PublishEnvironmentKeyDelete(key, *env, envKey, getUser(ctx))
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -135,6 +140,8 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot commit transaction")
 		}
+
+		event.PublishEnvironmentKeyAdd(key, *env, newKey, getUser(ctx))
 
 		return WriteJSON(w, newKey, http.StatusOK)
 	}

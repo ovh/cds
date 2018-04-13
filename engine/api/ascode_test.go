@@ -11,11 +11,15 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
+	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/feature"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 )
 
 type mockHTTPClient struct {
@@ -45,12 +49,24 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(db)
 
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
 	repositoryService := services.NewRepository(func() *gorp.DbMap {
 		return db
 	}, api.Cache)
 	mockService := &sdk.Service{Name: "Test_postImportAsCodeHandler", Type: services.TypeRepositories}
 	repositoryService.Delete(mockService)
 	test.NoError(t, repositoryService.Insert(mockService))
+
+	mockVCSservice := &sdk.Service{Name: "Test_VCSService", Type: services.TypeVCS}
+	test.NoError(t, repositoryService.Insert(mockVCSservice))
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -60,28 +76,43 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 			enc := json.NewEncoder(body)
 			w.Body = ioutil.NopCloser(body)
 
-			ope := new(sdk.Operation)
-			btes, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				return writeError(w, err)
-			}
-			defer r.Body.Close()
-			if err := json.Unmarshal(btes, ope); err != nil {
-				return writeError(w, err)
-			}
-			ope.UUID = sdk.UUID()
-			if err := enc.Encode(ope); err != nil {
-				return writeError(w, err)
+			switch r.URL.String() {
+			case "/vcs/github/repos/myrepo/branches":
+				bs := []sdk.VCSBranch{}
+				b := sdk.VCSBranch{
+					DisplayID: "master",
+				}
+				bs = append(bs, b)
+				if err := enc.Encode(bs); err != nil {
+					return writeError(w, err)
+				}
+			default:
+				ope := new(sdk.Operation)
+				btes, err := ioutil.ReadAll(r.Body)
+				if err != nil {
+					return writeError(w, err)
+				}
+				defer r.Body.Close()
+				if err := json.Unmarshal(btes, ope); err != nil {
+					return writeError(w, err)
+				}
+				ope.UUID = sdk.UUID()
+				if err := enc.Encode(ope); err != nil {
+					return writeError(w, err)
+				}
+
+				w.StatusCode = http.StatusCreated
 			}
 
-			w.StatusCode = http.StatusCreated
 			return w, nil
 		},
 	)
 
-	ope := `{"url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
+	ope := `{"repo_fullname":"myrepo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
 
-	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, nil)
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": p.Key,
+	})
 	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
 	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
@@ -93,6 +124,43 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	myOpe := new(sdk.Operation)
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), myOpe))
 	assert.NotEmpty(t, myOpe.UUID)
+}
+
+func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
+		Name: "github",
+		Data: map[string]string{
+			"token":  "foo",
+			"secret": "bar",
+		},
+	}))
+
+	c, _ := izanami.New("", "clientID", "secret")
+	feature.SetClient(c)
+
+	api.Cache.Set("feature:"+p.Key, feature.ProjectFeatures{
+		Key: p.Key,
+		Features: map[string]bool{
+			feature.FeatWorkflowAsCode: false,
+		},
+	})
+
+	ope := `{"repo_fullname":"myrepo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
+
+	uri := api.Router.GetRoute("POST", api.postImportAsCodeHandler, map[string]string{
+		"permProjectKey": p.Key,
+	})
+	req, err := http.NewRequest("POST", uri, strings.NewReader(ope))
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 403, w.Code)
 }
 
 func Test_getImportAsCodeHandler(t *testing.T) {
@@ -120,7 +188,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 			ope.URL = "https://github.com/fsamin/go-repo.git"
 			ope.UUID = UUID
 			ope.Status = sdk.OperationStatusDone
-			ope.LoadFiles.Pattern = workflowAsCodePattern
+			ope.LoadFiles.Pattern = workflow.WorkflowAsCodePattern
 			ope.LoadFiles.Results = map[string][]byte{
 				"w-go-repo.yml": []byte(`name: w-go-repo
 					version: v1.0
@@ -158,6 +226,9 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(db)
+
+	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
@@ -165,7 +236,11 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	repositoryService := services.NewRepository(func() *gorp.DbMap {
 		return db
 	}, api.Cache)
-	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler", Type: services.TypeRepositories}
+	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_Repo", Type: services.TypeRepositories}
+	repositoryService.Delete(mockService)
+	test.NoError(t, repositoryService.Insert(mockService))
+
+	mockService = &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_VCS", Type: services.TypeHooks}
 	repositoryService.Delete(mockService)
 	test.NoError(t, repositoryService.Insert(mockService))
 
@@ -174,37 +249,59 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {
-			body := new(bytes.Buffer)
-			w := new(http.Response)
-			enc := json.NewEncoder(body)
-			w.Body = ioutil.NopCloser(body)
+			t.Logf("RequestURI: %s", r.URL.Path)
+			switch r.URL.Path {
+			case "/task/bulk":
+				hooks := map[string]sdk.WorkflowNodeHook{}
+				if err := UnmarshalBody(r, &hooks); err != nil {
+					return nil, sdk.WrapError(err, "Hooks> postTaskBulkHandler")
+				}
 
-			ope := new(sdk.Operation)
-			ope.URL = "https://github.com/fsamin/go-repo.git"
-			ope.UUID = UUID
-			ope.RepositoryInfo = &sdk.OperationRepositoryInfo{
-				Name:          "go-repo",
-				FetchURL:      ope.URL,
-				DefaultBranch: "master",
-			}
-			ope.Status = sdk.OperationStatusDone
-			ope.LoadFiles.Pattern = workflowAsCodePattern
-			ope.LoadFiles.Results = map[string][]byte{
-				"w-go-repo.yml": []byte(`name: w-go-repo
+				body := new(bytes.Buffer)
+				w := new(http.Response)
+				enc := json.NewEncoder(body)
+				w.Body = ioutil.NopCloser(body)
+				if err := enc.Encode(hooks); err != nil {
+					return writeError(w, err)
+				}
+
+				w.StatusCode = http.StatusOK
+				return w, nil
+			default:
+				body := new(bytes.Buffer)
+				w := new(http.Response)
+				enc := json.NewEncoder(body)
+				w.Body = ioutil.NopCloser(body)
+
+				ope := new(sdk.Operation)
+				ope.URL = "https://github.com/fsamin/go-repo.git"
+				ope.UUID = UUID
+				ope.VCSServer = "github"
+				ope.RepoFullName = "fsamin/go-repo"
+				ope.RepositoryInfo = &sdk.OperationRepositoryInfo{
+					Name:          "go-repo",
+					FetchURL:      ope.URL,
+					DefaultBranch: "master",
+				}
+				ope.Status = sdk.OperationStatusDone
+				ope.LoadFiles.Pattern = workflow.WorkflowAsCodePattern
+				ope.LoadFiles.Results = map[string][]byte{
+					"w-go-repo.yml": []byte(`name: w-go-repo
 version: v1.0
 pipeline: build
 application: go-repo`),
-				"go-repo.app.yml": []byte(`name: go-repo
+					"go-repo.app.yml": []byte(`name: go-repo
 version: v1.0`),
-				"go-repo.pip.yml": []byte(`name: build
+					"go-repo.pip.yml": []byte(`name: build
 version: v1.0`),
-			}
-			if err := enc.Encode(ope); err != nil {
-				return writeError(w, err)
-			}
+				}
+				if err := enc.Encode(ope); err != nil {
+					return writeError(w, err)
+				}
 
-			w.StatusCode = http.StatusOK
-			return w, nil
+				w.StatusCode = http.StatusOK
+				return w, nil
+			}
 		},
 	)
 
@@ -221,4 +318,38 @@ version: v1.0`),
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 	t.Logf(w.Body.String())
+}
+
+func Test_postPerformImportAsCodeDisabledFeatureHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+
+	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
+	//Insert Project
+	pkey := sdk.RandomString(10)
+	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+
+	c, _ := izanami.New("", "clientID", "secret")
+	feature.SetClient(c)
+
+	api.Cache.Set("feature:"+pkey, feature.ProjectFeatures{
+		Key: pkey,
+		Features: map[string]bool{
+			feature.FeatWorkflowAsCode: false,
+		},
+	})
+
+	uri := api.Router.GetRoute("POST", api.postPerformImportAsCodeHandler, map[string]string{
+		"permProjectKey": pkey,
+		"uuid":           "123456",
+	})
+	req, err := http.NewRequest("POST", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 403, w.Code)
 }

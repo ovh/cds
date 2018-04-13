@@ -261,6 +261,7 @@ export class WorkflowNodeRunParamComponent {
             this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 {queryParams: {subnum: wr.last_subnumber}});
+            wr.force_update = true;
             this._workflowCoreService.setCurrentWorkflowRun(wr);
         });
     }

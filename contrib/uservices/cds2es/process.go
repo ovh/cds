@@ -48,14 +48,19 @@ func sendToES(config Configuration, c <-chan sdk.Event) {
 			continue
 		}
 		dataES := map[string]interface{}{
-			"Username":  event.Username,
-			"Email":     event.UserMail,
-			"CDSName":   event.CDSName,
-			"EventType": event.EventType,
-			"Hostname":  event.Hostname,
-			"Attempts":  event.Attempts,
-			"Timestamp": event.Timestamp,
-			"Event":     string(jsonPayload),
+			"Username":        event.Username,
+			"Email":           event.UserMail,
+			"CDSName":         event.CDSName,
+			"EventType":       event.EventType,
+			"Hostname":        event.Hostname,
+			"Attempts":        event.Attempts,
+			"Timestamp":       event.Timestamp,
+			"Event":           string(jsonPayload),
+			"ProjectKey":      event.ProjectKey,
+			"ApplicationName": event.ApplicationName,
+			"PipelineName":    event.PipelineName,
+			"EnvironmentName": event.EnvironmentName,
+			"WorkflowName":    event.WorkflowName,
 		}
 		_, err := esConn.IndexWithParameters(esIndex, event.EventType, getMD5Hash(string(jsonPayload)), "", 0, "", "", event.Timestamp.Format(time.RFC3339), 0, "", "", false, nil, dataES)
 		time.Sleep(time.Duration(viper.GetInt("pause_es")) * time.Millisecond)

@@ -72,7 +72,7 @@
                                                             </div>
 
                                                         </div>
-                                                        <div class="right aligned five wide column" title="{{'btn_run_custom_worklow' | translate}}">
+                                                        <div class="right aligned five wide column" title="{{'btn_run_workflow' | translate}}">
                                                             <div class="ui green buttons">
                                                                 <div class="ui button"
                                                                     [class.disabled]="detailedWorkflow.permission < permissionEnum.READ_EXECUTE"
@@ -107,8 +107,8 @@
                     <div *ngSwitchCase="'permissions'" class="padded">
                         <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
                         <app-permission-list [permissions]="detailedWorkflow.groups" (event)="groupManagement($event)"
-                                             [edit]="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
-                        <ng-container *ngIf="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+                                             [edit]="(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)?false:detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+                        <ng-container *ngIf="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE && !(detailedWorkflow.from_repository && detailedWorkflow.from_repository.length > 0)">
                             <h3>{{ 'workflow_permission_form_title' | translate }}</h3>
                             <app-permission-form (createGroupPermissionEvent)="groupManagement($event)"
                                                  [loading]="permFormLoading"></app-permission-form>

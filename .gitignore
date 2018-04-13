@@ -31,6 +31,7 @@ ui/semantic
 ui/e2e/*.png
 ui/documentation
 ui/dist
+ui/package-lock.json
 
 # doc
 docs/content/cli/cdsctl/

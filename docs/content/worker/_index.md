@@ -9,7 +9,7 @@ A pipeline is structured in sequential stages containing one or multiple concurr
 
 ## What is a worker
 
-Basically, a worker is a binary. This binary can be launched inside a Docker Container, or on a Host (as an Openstack VM). A worker executes a [CDS Job]({{< relref "/introduction/concepts/job.md" >}}).
+Basically, a worker is a binary. This binary can be launched inside a Docker Container, or on a Host (as an Openstack VM). A worker executes a [CDS Job]({{< relref "/gettingstarted/concepts/job.md" >}}).
 
 If you want to auto-scale workers, have a look at the [CDS Hatchery]({{< relref "/hatchery/_index.md" >}})
 

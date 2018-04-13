@@ -276,7 +276,9 @@ h6 {
     padding: .5rem;
     margin: .25rem;
     min-width: 260px;
+    width: 45%;
     min-height: 160px;
+    line-height: 2.1;
     position: relative;
     vertical-align: top;
 }
@@ -382,6 +384,10 @@ div.notices.warning span:first-child:after {
 
 div.notices.note span:first-child:after {
     content: 'Note';
+}
+
+div.notices.note span:first-child:after {
+    content: 'Resume';
 }
 
 div.notices.tip span:first-child:after {

@@ -76,7 +76,7 @@ func workflowTarReaderToFiles(dir string, tr *tar.Reader, force, quiet bool) err
 			break
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("Error while reading the tar archive err:%v", err)
 		}
 
 		fname := filepath.Join(dir, hdr.Name)
@@ -93,13 +93,13 @@ func workflowTarReaderToFiles(dir string, tr *tar.Reader, force, quiet bool) err
 		}
 		fi, err := os.Create(fname)
 		if err != nil {
-			return err
+			return fmt.Errorf("Error while creating file %s err:%v", fname, err)
 		}
 		if _, err := io.Copy(fi, tr); err != nil {
-			return err
+			return fmt.Errorf("Error while writing file %s err:%v", fname, err)
 		}
 		if err := fi.Close(); err != nil {
-			return err
+			return fmt.Errorf("Error while closing file %s err:%v", fname, err)
 		}
 		if !quiet {
 			fmt.Println(fname)
