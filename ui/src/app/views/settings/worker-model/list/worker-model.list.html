@@ -40,8 +40,7 @@
               </td>
               <td>{{v.description}}</td>
               <td>{{v.type}}</td>
-              <td *ngIf="v.type === 'docker'">{{v.model_docker.image.substr(0, 60)}}</td>
-              <td *ngIf="v.type !== 'docker'">{{v.model_virtual_machine.image.substr(0, 60)}}</td>
+              <td>{{getImageName(v)}}</td>
               <td>{{v.group.name}}</td>
           </tr>
           </tbody>

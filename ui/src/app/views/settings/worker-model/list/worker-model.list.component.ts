@@ -27,4 +27,21 @@ export class WorkerModelListComponent extends Table {
         }
         return this.workerModels.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
     }
+
+    getImageName(w: WorkerModel): string {
+        if (w.type === 'docker') {
+            if (w.model_docker != null && w.model_docker.image) {
+                return w.model_docker.image.substr(0, 60)
+            } else {
+                console.log('error model docker : ', w);
+            }
+        } else {
+            if (w.model_virtual_machine != null && w.model_virtual_machine.image) {
+                return w.model_virtual_machine.image.substr(0, 60)
+            } else {
+                console.log('error model virtual : ', w);
+            }
+        }
+        return '';
+    }
 }
