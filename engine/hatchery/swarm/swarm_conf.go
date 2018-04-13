@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -20,7 +21,19 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
+
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
+	)
+
 	// h.API = h.Config.API.HTTP.URL
 	// h.Name = h.Config.Name
 	// h.HTTPURL = h.Config.URL

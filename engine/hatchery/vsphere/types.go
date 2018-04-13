@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -56,7 +55,6 @@ type HatcheryVSphere struct {
 	finder     *find.Finder
 	network    object.NetworkReference
 	vclient    *govmomi.Client
-	client     cdsclient.Interface
 
 	// User provided parameters
 	endpoint           string

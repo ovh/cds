@@ -39,7 +39,19 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
+
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
+	)
+
 	// h.API = h.Config.API.HTTP.URL
 	// h.Name = h.Config.Name
 	// h.HTTPURL = h.Config.URL
@@ -149,9 +161,9 @@ func (h *HatcheryMarathon) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcheryMarathon) Client() cdsclient.Interface {
-	return h.client
+//CDSClient returns cdsclient instance
+func (h *HatcheryMarathon) CDSClient() cdsclient.Interface {
+	return h.Client
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -227,7 +239,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	forcePull := strings.HasSuffix(spawnArgs.Model.Image, ":latest")
 
 	env := map[string]string{
-		"CDS_API":           h.Client().APIURL(),
+		"CDS_API":           h.CDSClient().APIURL(),
 		"CDS_TOKEN":         h.Configuration().API.Token,
 		"CDS_NAME":          workerName,
 		"CDS_MODEL":         fmt.Sprintf("%d", spawnArgs.Model.ID),
@@ -424,18 +436,6 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -465,7 +465,7 @@ func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
 }
 
 func (h *HatcheryMarathon) killDisabledWorkers() error {
-	workers, err := h.Client().WorkerList()
+	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}
@@ -497,7 +497,7 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 
 func (h *HatcheryMarathon) killAwolWorkers() error {
 	log.Debug("killAwolWorkers>")
-	workers, err := h.Client().WorkerList()
+	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}

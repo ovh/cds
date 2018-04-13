@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -25,7 +24,6 @@ type HatcheryLocal struct {
 	sync.Mutex
 	hatch   *sdk.Hatchery
 	workers map[string]workerCmd
-	client  cdsclient.Interface
 	os      string
 	arch    string
 }

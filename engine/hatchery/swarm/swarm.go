@@ -29,18 +29,6 @@ func (h *HatcherySwarm) Serve(ctx context.Context) error {
 
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -155,7 +143,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
+	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.CDSClient().APIURL(), registerCmd)}
 
 	//CDS env needed by the worker binary
 	env := []string{
@@ -423,9 +411,9 @@ func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcherySwarm) Client() cdsclient.Interface {
-	return h.client
+//CDSClient returns cdsclient instance
+func (h *HatcherySwarm) CDSClient() cdsclient.Interface {
+	return h.Client
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -449,7 +437,7 @@ func (h *HatcherySwarm) killAwolWorkerRoutine() {
 }
 
 func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
-	apiworkers, err := h.Client().WorkerList()
+	apiworkers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return nil, sdk.WrapError(err, "listAwolWorkers> Cannot get workers")
 	}

@@ -5,7 +5,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -45,7 +44,6 @@ type HatcheryMarathon struct {
 	hatch  *sdk.Hatchery
 
 	marathonClient marathon.Marathon
-	client         cdsclient.Interface
 
 	marathonLabels map[string]string
 }

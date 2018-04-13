@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -33,13 +34,42 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
-	// h.API = h.Config.API.HTTP.URL
-	// h.Name = h.Config.Name
-	// h.HTTPURL = h.Config.URL
-	// h.Token = h.Config.API.Token
-	// h.Type = services.TypeHatchery
-	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	genname := h.Configuration().Name
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		genname,
+	)
+
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	//h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+
+	req, err := h.CDSClient().Requirements()
+	if err != nil {
+		return fmt.Errorf("Cannot fetch requirements: %s", err)
+	}
+
+	capa, err := checkCapabilities(req)
+	if err != nil {
+		return fmt.Errorf("Cannot check local capabilities: %s", err)
+	}
+
+	h.hatch = &sdk.Hatchery{
+		Name: genname,
+		Model: sdk.Model{
+			Name:         genname,
+			Image:        genname,
+			Capabilities: capa,
+			Provision:    int64(h.Config.NbProvision),
+		},
+		Version: sdk.VERSION,
+	}
 
 	return nil
 }
@@ -100,9 +130,9 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcheryLocal) Client() cdsclient.Interface {
-	return h.client
+//CDSClient returns cdsclient instance
+func (h *HatcheryLocal) CDSClient() cdsclient.Interface {
+	return h.Client
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -166,7 +196,7 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	var args []string
-	args = append(args, fmt.Sprintf("--api=%s", h.Client().APIURL()))
+	args = append(args, fmt.Sprintf("--api=%s", h.CDSClient().APIURL()))
 	args = append(args, fmt.Sprintf("--token=%s", h.Config.API.Token))
 	args = append(args, fmt.Sprintf("--basedir=%s", h.Config.Basedir))
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
@@ -281,36 +311,6 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]workerCmd)
 
-	genname := h.Configuration().Name
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		genname,
-	)
-
-	req, err := h.Client().Requirements()
-	if err != nil {
-		return fmt.Errorf("Cannot fetch requirements: %s", err)
-	}
-
-	capa, err := checkCapabilities(req)
-	if err != nil {
-		return fmt.Errorf("Cannot check local capabilities: %s", err)
-	}
-
-	h.hatch = &sdk.Hatchery{
-		Name: genname,
-		Model: sdk.Model{
-			Name:         genname,
-			Image:        genname,
-			Capabilities: capa,
-			Provision:    int64(h.Config.NbProvision),
-		},
-		Version: sdk.VERSION,
-	}
-
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -352,7 +352,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 	h.Lock()
 	defer h.Unlock()
 
-	apiworkers, err := h.Client().WorkerList()
+	apiworkers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}

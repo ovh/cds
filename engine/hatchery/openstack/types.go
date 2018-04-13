@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -59,7 +58,6 @@ type HatcheryOpenstack struct {
 	networks        []tenantnetworks.Network
 	images          []images.Image
 	openstackClient *gophercloud.ServiceClient
-	client          cdsclient.Interface
 
 	networkID string // computed from networkString
 }

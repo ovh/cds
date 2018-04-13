@@ -8,8 +8,6 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -18,18 +16,6 @@ import (
 // then list available models
 // then list available images
 func (h *HatcheryOpenstack) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}

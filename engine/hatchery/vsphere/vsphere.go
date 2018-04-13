@@ -32,7 +32,19 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
+
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
+	)
+
 	// h.API = h.Config.API.HTTP.URL
 	// h.Name = h.Config.Name
 	// h.HTTPURL = h.Config.URL
@@ -104,9 +116,9 @@ func (h *HatcheryVSphere) CanSpawn(model *sdk.Model, jobID int64, requirements [
 	return true
 }
 
-//Client returns cdsclient instance
-func (h *HatcheryVSphere) Client() cdsclient.Interface {
-	return h.client
+//CDSClient returns cdsclient instance
+func (h *HatcheryVSphere) CDSClient() cdsclient.Interface {
+	return h.Client
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -219,7 +231,7 @@ func (h *HatcheryVSphere) updateServerList() {
 
 // killDisabledWorkers kill workers which are disabled
 func (h *HatcheryVSphere) killDisabledWorkers() {
-	workers, err := h.Client().WorkerList()
+	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
 		return

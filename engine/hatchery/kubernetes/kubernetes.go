@@ -61,7 +61,19 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		}
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
+
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
+	)
+
 	// h.API = h.Config.API.HTTP.URL
 	// h.Name = h.Config.Name
 	// h.HTTPURL = h.Config.URL
@@ -150,9 +162,9 @@ func (h *HatcheryKubernetes) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcheryKubernetes) Client() cdsclient.Interface {
-	return h.client
+//CDSClient returns cdsclient instance
+func (h *HatcheryKubernetes) CDSClient() cdsclient.Interface {
+	return h.Client
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -291,18 +303,6 @@ func (h *HatcheryKubernetes) WorkersStartedByModel(model *sdk.Model) int {
 
 // Init register local hatchery with its worker model
 func (h *HatcheryKubernetes) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
