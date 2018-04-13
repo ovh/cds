@@ -42,7 +42,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 			projectKey = v.Value
 		}
 	}
-	pf, err := s.cds.ProjectPlatform(projectKey, kafkaPlatform, true)
+	pf, err := s.Client.ProjectPlatform(projectKey, kafkaPlatform, true)
 	if err != nil {
 		s.stopTask(t)
 		return sdk.WrapError(err, "startTask> Cannot get kafka configuration for %s/%s", projectKey, kafkaPlatform)

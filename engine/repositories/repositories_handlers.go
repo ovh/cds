@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -51,6 +52,14 @@ func (s *Service) getOperationsHandler() api.Handler {
 
 func (s *Service) getStatusHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
+		t := time.Now()
+		output := sdk.MonitoringStatus{Now: t}
+
+		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK})
+		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(s.StartupTime)), Status: sdk.MonitoringStatusOK})
+		output.Lines = append(output.Lines, sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK})
+
+		var status = http.StatusOK
+		return api.WriteJSON(w, output, status)
 	}
 }

@@ -6,17 +6,16 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 // Service is the repostories service
 type Service struct {
+	service.Common
 	Cfg    Configuration
 	Router *api.Router
 	Cache  cache.Store
-	cds    cdsclient.Interface
-	hash   string
 	dao    dao
 }
 
