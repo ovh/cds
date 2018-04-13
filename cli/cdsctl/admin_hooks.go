@@ -18,7 +18,6 @@ var (
 	adminHooks = cli.NewCommand(adminHooksCmd, nil,
 		[]*cobra.Command{
 			cli.NewListCommand(adminHooksTaskListCmd, adminHooksTaskListRun, nil),
-			cli.NewListCommand(adminHooksStatusCmd, adminHooksStatusRun, nil),
 		})
 )
 
@@ -37,21 +36,4 @@ func adminHooksTaskListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(ts), nil
-}
-
-var adminHooksStatusCmd = cli.Command{
-	Name:  "status",
-	Short: "Show CDS VCS Status",
-}
-
-func adminHooksStatusRun(v cli.Values) (cli.ListResult, error) {
-	btes, err := client.ServiceCallGET("hooks", "/mon/status")
-	if err != nil {
-		return nil, err
-	}
-	ts := sdk.MonitoringStatus{}
-	if err := json.Unmarshal(btes, &ts); err != nil {
-		return nil, err
-	}
-	return cli.AsListResult(ts.Lines), nil
 }

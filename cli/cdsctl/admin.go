@@ -19,8 +19,6 @@ func admin() *cobra.Command {
 			[]*cobra.Command{
 				adminServices,
 				adminHooks,
-				adminRepositories,
-				adminVCS,
 				usr,
 				group,
 				worker,
@@ -31,7 +29,5 @@ func admin() *cobra.Command {
 		[]*cobra.Command{
 			adminServices,
 			adminHooks,
-			adminRepositories,
-			adminVCS,
 		})
 }
