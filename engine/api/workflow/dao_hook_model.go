@@ -57,7 +57,7 @@ func CreateBuiltinWorkflowHookModels(db *gorp.DbMap) error {
 		return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels> Unable to lock table")
 	}
 
-	for _, h := range sdk.BuiltinPlatformModels {
+	for _, h := range sdk.BuiltinHookModels {
 		ok, err := checkBuiltinWorkflowHookModelExist(tx, h)
 		if err != nil {
 			return sdk.WrapError(err, "CreateBuiltinWorkflowHookModels")

@@ -30,7 +30,7 @@ func (c *client) PlatformModelAdd(m *sdk.PlatformModel) error {
 }
 
 func (c *client) PlatformModelUpdate(m *sdk.PlatformModel) error {
-	if _, err := c.PostJSON("/platform/models/"+m.Name, m, m); err != nil {
+	if _, err := c.PutJSON("/platform/models/"+m.Name, m, m); err != nil {
 		return err
 	}
 	return nil

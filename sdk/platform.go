@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"fmt"
 	"runtime"
 )
 
@@ -10,16 +11,17 @@ const (
 
 // Here are the default hooks
 var (
-	BuiltinPlatformModels = []*WorkflowHookModel{
+	BuiltinHookModels = []*WorkflowHookModel{
 		&WebHookModel,
 		&RepositoryWebHookModel,
 		&GitPollerModel,
 		&SchedulerModel,
 		&KafkaHookModel,
 	}
-)
 
-var (
+	BuiltinPlatformModels = []*PlatformModel{
+		&KafkaPlatform,
+	}
 	// KafkaPlatform represent a kafka platform
 	KafkaPlatform = PlatformModel{
 		Name:       KafkaPlatformModel,
@@ -113,6 +115,7 @@ type PlatformModel struct {
 //IsBuiltin checks is the model is builtin or not
 func (p PlatformModel) IsBuiltin() bool {
 	for _, m := range BuiltinPlatformModels {
+		fmt.Printf("checking %s with %s\n", p.Name, m.Name)
 		if p.Name == m.Name {
 			return true
 		}

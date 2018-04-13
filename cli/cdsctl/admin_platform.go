@@ -107,8 +107,9 @@ func adminPlatformModelImportRun(v cli.Values) error {
 		return fmt.Errorf("unable to load file: %v", err)
 	}
 
+	//Try to load the model to know if we have to add it or update it
 	model, _ := client.PlatformModelGet(m.Name)
-	if model.ID == 0 {
+	if model.ID == 0 { // If the model has not been found
 		if err := client.PlatformModelAdd(m); err != nil {
 			return err
 		}
