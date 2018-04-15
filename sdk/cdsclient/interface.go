@@ -20,10 +20,10 @@ type AdminService interface {
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
 	ServicesByType(stype string) ([]sdk.Service, error)
-	ServiceCallGET(stype string, name string, url string) ([]byte, error)
-	ServiceCallPOST(stype string, name string, url string, body []byte) ([]byte, error)
-	ServiceCallPUT(stype string, name string, url string, body []byte) ([]byte, error)
-	ServiceCallDELETE(stype string, name string, url string) error
+	ServiceCallGET(stype string, url string) ([]byte, error)
+	ServiceCallPOST(stype string, url string, body []byte) ([]byte, error)
+	ServiceCallPUT(stype string, url string, body []byte) ([]byte, error)
+	ServiceCallDELETE(stype string, url string) error
 }
 
 // ExportImportInterface exposes pipeline and application export and import function
