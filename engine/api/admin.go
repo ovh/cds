@@ -43,19 +43,6 @@ func (api *API) deleteAdminMaintenanceHandler() Handler {
 	}
 }
 
-func (api *API) getAdminServiceHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		name := vars["name"]
-		q := services.Querier(api.mustDB(), api.Cache)
-		srv, err := q.FindByName(name)
-		if err != nil {
-			return sdk.WrapError(err, "getAdminServiceHandler")
-		}
-		return WriteJSON(w, srv, http.StatusOK)
-	}
-}
-
 func (api *API) getAdminServicesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		q := services.Querier(api.mustDB(), api.Cache)
@@ -71,6 +58,19 @@ func (api *API) getAdminServicesHandler() Handler {
 			return sdk.WrapError(err, "getAdminServicesHandler")
 		}
 		return WriteJSON(w, srvs, http.StatusOK)
+	}
+}
+
+func (api *API) getAdminServiceHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+		q := services.Querier(api.mustDB(), api.Cache)
+		srv, err := q.FindByName(name)
+		if err != nil {
+			return sdk.WrapError(err, "getAdminServiceHandler")
+		}
+		return WriteJSON(w, srv, http.StatusOK)
 	}
 }
 
