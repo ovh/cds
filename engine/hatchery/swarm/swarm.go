@@ -8,10 +8,11 @@ import (
 
 	types "github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
+	"github.com/gorilla/mux"
 	context "golang.org/x/net/context"
 
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
@@ -19,12 +20,11 @@ import (
 
 // New instanciates a new Hatchery Swarm
 func New() *HatcherySwarm {
-	return new(HatcherySwarm)
-}
-
-// Serve start the HatcherySwarm server
-func (h *HatcherySwarm) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
+	s := new(HatcherySwarm)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 //Init connect the hatchery to the docker api
@@ -411,9 +411,9 @@ func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//CDSClient returns cdsclient instance
-func (h *HatcherySwarm) CDSClient() cdsclient.Interface {
-	return h.Client
+// Serve start the hatchery server
+func (h *HatcherySwarm) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration

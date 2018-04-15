@@ -7,8 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/vmware/govmomi/vim25/types"
 
+	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -17,7 +20,11 @@ import (
 
 // New instanciates a new Hatchery vsphere
 func New() *HatcheryVSphere {
-	return new(HatcheryVSphere)
+	s := new(HatcheryVSphere)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -45,20 +52,20 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		h.hatch.Name,
 	)
 
-	// h.API = h.Config.API.HTTP.URL
-	// h.Name = h.Config.Name
-	// h.HTTPURL = h.Config.URL
-	// h.Token = h.Config.API.Token
-	// h.Type = services.TypeHatchery
-	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
 	return nil
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryVSphere) Status() sdk.MonitoringStatus {
-	t := time.Now()
-	m := sdk.MonitoringStatus{Now: t}
+	m := h.CommonMonitoring()
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -100,11 +107,6 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// Serve start the HatcheryVSphere server
-func (h *HatcheryVSphere) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
-}
-
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryVSphere) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
@@ -116,9 +118,9 @@ func (h *HatcheryVSphere) CanSpawn(model *sdk.Model, jobID int64, requirements [
 	return true
 }
 
-//CDSClient returns cdsclient instance
-func (h *HatcheryVSphere) CDSClient() cdsclient.Interface {
-	return h.Client
+// Serve start the hatchery server
+func (h *HatcheryVSphere) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration

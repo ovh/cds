@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
@@ -19,7 +21,11 @@ import (
 
 // New instanciates a new hatchery local
 func New() *HatcheryLocal {
-	return new(HatcheryLocal)
+	s := new(HatcheryLocal)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -45,7 +51,7 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
-	//h.HTTPURL = h.Config.URL
+	h.HTTPURL = h.Config.URL
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
@@ -76,8 +82,8 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryLocal) Status() sdk.MonitoringStatus {
-	t := time.Now()
-	m := sdk.MonitoringStatus{Now: t}
+	m := h.CommonMonitoring()
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -112,11 +118,6 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// Serve start the HatcheryLocal server
-func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
-}
-
 // ID must returns hatchery id
 func (h *HatcheryLocal) ID() int64 {
 	if h.hatch == nil {
@@ -130,9 +131,9 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//CDSClient returns cdsclient instance
-func (h *HatcheryLocal) CDSClient() cdsclient.Interface {
-	return h.Client
+// Serve start the hatchery server
+func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration

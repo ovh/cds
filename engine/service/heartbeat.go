@@ -9,6 +9,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// CommonMonitoring returns common part of MonitoringStatus
+func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
+	t := time.Now()
+	m := sdk.MonitoringStatus{Now: t}
+
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(c.StartupTime)), Status: sdk.MonitoringStatusOK})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK})
+
+	return m
+}
+
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
 func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error {
 	ticker := time.NewTicker(30 * time.Second)
@@ -36,6 +48,11 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 
 // DoHeartbeat registers the service for heartbeat
 func (c *Common) DoHeartbeat(status func() sdk.MonitoringStatus) (int, error) {
+	// no heartbeat for api
+	if c.Type == "api" {
+		return 0, nil
+	}
+
 	srv := sdk.Service{
 		Name:             c.Name,
 		HTTPURL:          c.HTTPURL,

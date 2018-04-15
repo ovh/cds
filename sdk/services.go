@@ -12,5 +12,5 @@ type Service struct {
 	LastHeartbeat    time.Time        `json:"last_heartbeat" db:"last_heartbeat" cli:"heartbeat"`
 	Hash             string           `json:"hash" db:"hash"`
 	Token            string           `json:"token" db:"-"`
-	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-"`
+	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-" cli:"-"`
 }

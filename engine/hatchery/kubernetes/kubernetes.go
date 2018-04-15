@@ -8,23 +8,30 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
-
-	"github.com/ovh/cds/sdk/namesgenerator"
+	"github.com/gorilla/mux"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new hatchery local
 func New() *HatcheryKubernetes {
-	return new(HatcheryKubernetes)
+	s := new(HatcheryKubernetes)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -74,20 +81,20 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		h.hatch.Name,
 	)
 
-	// h.API = h.Config.API.HTTP.URL
-	// h.Name = h.Config.Name
-	// h.HTTPURL = h.Config.URL
-	// h.Token = h.Config.API.Token
-	// h.Type = services.TypeHatchery
-	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
 	return nil
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryKubernetes) Status() sdk.MonitoringStatus {
-	t := time.Now()
-	m := sdk.MonitoringStatus{Now: t}
+	m := h.CommonMonitoring()
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -144,11 +151,6 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// Serve start the HatcheryKubernetes server
-func (h *HatcheryKubernetes) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
-}
-
 // ID must returns hatchery id
 func (h *HatcheryKubernetes) ID() int64 {
 	if h.hatch == nil {
@@ -162,9 +164,9 @@ func (h *HatcheryKubernetes) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//CDSClient returns cdsclient instance
-func (h *HatcheryKubernetes) CDSClient() cdsclient.Interface {
-	return h.Client
+// Serve start the hatchery server
+func (h *HatcheryKubernetes) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration

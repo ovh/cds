@@ -747,12 +747,7 @@ func (s *Service) getListForks() api.Handler {
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (s *Service) Status() sdk.MonitoringStatus {
-	t := time.Now()
-	m := sdk.MonitoringStatus{Now: t}
-
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK})
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(s.StartupTime)), Status: sdk.MonitoringStatusOK})
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK})
+	m := s.CommonMonitoring()
 	m.Lines = append(m.Lines, github.GetStatus()...)
 	return m
 }

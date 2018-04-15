@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
-	"time"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/mail"
@@ -33,14 +32,10 @@ func VersionHandler() Handler {
 
 // Status returns status, implements interface service.Service
 func (api *API) Status() sdk.MonitoringStatus {
-	t := time.Now()
-	m := sdk.MonitoringStatus{Now: t}
+	m := api.CommonMonitoring()
 
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Version", Value: sdk.VERSION, Status: sdk.MonitoringStatusOK}))
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Uptime", Value: fmt.Sprintf("%s", time.Since(api.StartupTime)), Status: sdk.MonitoringStatusOK}))
 	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK}))
 	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK}))
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Time", Value: fmt.Sprintf("%dh%dm%ds", t.Hour(), t.Minute(), t.Second()), Status: sdk.MonitoringStatusOK}))
 	m.Lines = append(m.Lines, getStatusLine(api.Router.StatusPanic()))
 	m.Lines = append(m.Lines, getStatusLine(scheduler.Status()))
 	m.Lines = append(m.Lines, getStatusLine(event.Status()))

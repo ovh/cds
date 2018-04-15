@@ -419,13 +419,6 @@ func serve(c context.Context, s service.Service, serviceName string) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
-	// no heartbeat for api for now
-	if serviceName == "api" || strings.HasPrefix(serviceName, "hatchery") {
-		if err := s.Serve(c); err != nil {
-			return err
-		}
-	}
-
 	//First register(heartbeat)
 	if _, err := s.DoHeartbeat(s.Status); err != nil {
 		log.Error("%s> Unable to register: %v", serviceName, err)

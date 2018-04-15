@@ -14,8 +14,11 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
+	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk/namesgenerator"
 
+	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -24,7 +27,11 @@ import (
 
 // New instanciates a new Hatchery Marathon
 func New() *HatcheryMarathon {
-	return new(HatcheryMarathon)
+	s := new(HatcheryMarathon)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -52,20 +59,20 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 		h.hatch.Name,
 	)
 
-	// h.API = h.Config.API.HTTP.URL
-	// h.Name = h.Config.Name
-	// h.HTTPURL = h.Config.URL
-	// h.Token = h.Config.API.Token
-	// h.Type = services.TypeHatchery
-	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
 	return nil
 }
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcheryMarathon) Status() sdk.MonitoringStatus {
-	t := time.Now()
-	m := sdk.MonitoringStatus{Now: t}
+	m := h.CommonMonitoring()
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	return m
 }
 
@@ -143,11 +150,6 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// Serve start the HatcheryMarathon server
-func (h *HatcheryMarathon) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
-}
-
 // ID must returns hatchery id
 func (h *HatcheryMarathon) ID() int64 {
 	if h.hatch == nil {
@@ -161,9 +163,9 @@ func (h *HatcheryMarathon) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//CDSClient returns cdsclient instance
-func (h *HatcheryMarathon) CDSClient() cdsclient.Interface {
-	return h.Client
+// Serve start the hatchery server
+func (h *HatcheryMarathon) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration

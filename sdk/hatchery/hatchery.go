@@ -18,7 +18,12 @@ import (
 // CommonConfiguration is the base configuration for all hatcheries
 type CommonConfiguration struct {
 	Name string `toml:"name" default:"" comment:"Name of Hatchery"`
-	API  struct {
+	HTTP struct {
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
+		Port int    `toml:"port" default:"8086"`
+	} `toml:"http" comment:"######################\n CDS Hatchery HTTP Configuration \n######################"`
+	URL string `toml:"url" default:"http://localhost:8086" comment:"URL of this Hatchery"`
+	API struct {
 		HTTP struct {
 			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`

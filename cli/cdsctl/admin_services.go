@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/spf13/cobra"
@@ -38,19 +37,7 @@ var adminServiceListCmd = cli.Command{
 }
 
 func adminServiceListRun(v cli.Values) (cli.ListResult, error) {
-	name := v.GetString("name")
-	if name == "" {
-		srvs, err := client.ServicesByType(v.GetString("type"))
-		if err != nil {
-			return nil, err
-		}
-		if len(srvs) != 1 {
-			return nil, fmt.Errorf("Please use --name argument")
-		}
-		name = srvs[0].Name
-	}
-
-	srvs, err := client.ServicesByName(name)
+	srvs, err := client.ServicesByType(v.GetString("type"))
 	if err != nil {
 		return nil, err
 	}

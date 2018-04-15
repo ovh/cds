@@ -191,6 +191,8 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
+	a.Type = services.TypeAPI
+
 	return nil
 }
 
@@ -538,6 +540,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	go migrate.DefaultPayloadMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	go migrate.DefaultTagsMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
