@@ -3,6 +3,7 @@ package project
 import (
 	"database/sql"
 	"encoding/base64"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"

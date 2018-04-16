@@ -47,7 +47,12 @@ func (api *API) getWorkflowHandler() Handler {
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
 
-		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowHandler> unable to load projet")
+		}
+
+		w1, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}
@@ -98,7 +103,7 @@ func (api *API) postWorkflowHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
@@ -151,7 +156,7 @@ func (api *API) postWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx), workflow.LoadOptions{})
+		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, p, wf.ID, getUser(ctx), workflow.LoadOptions{})
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
@@ -172,12 +177,12 @@ func (api *API) putWorkflowHandler() Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
+		oldW, errW := workflow.Load(api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
 		}
@@ -238,7 +243,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx), workflow.LoadOptions{})
+		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, p, wf.ID, getUser(ctx), workflow.LoadOptions{})
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
@@ -279,12 +284,12 @@ func (api *API) deleteWorkflowHandler() Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
+		oldW, errW := workflow.Load(api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}
@@ -320,7 +325,12 @@ func (api *API) getWorkflowHookHandler() Handler {
 		name := vars["permWorkflowName"]
 		uuid := vars["uuid"]
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if errP != nil {
+			return sdk.WrapError(errP, "Cannot load Project %s", key)
+		}
+
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookHandler> Cannot load Workflow %s/%s", key, name)
 		}

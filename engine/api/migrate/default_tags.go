@@ -55,7 +55,7 @@ func DefaultTagsMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.U
 			}
 
 			if metadata == nil || metadata[defaultTagsKey] == "" {
-				nodeCtx, errLn := workflow.LoadNodeContext(db, store, proj.Key, wf.RootID, u, workflow.LoadOptions{})
+				nodeCtx, errLn := workflow.LoadNodeContext(db, store, &proj, wf.RootID, u, workflow.LoadOptions{})
 				if errLn != nil {
 					log.Warning("DefaultTagsMigration> Cannot load root node context for workflow %s/%s node id %d : %s", proj.Key, wf.Name, wf.RootID, errLn)
 					tx.Rollback()

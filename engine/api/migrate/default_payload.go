@@ -17,7 +17,7 @@ import (
 func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
 	db := DBFunc()
 
-	projs, errP := project.LoadAll(db, store, u)
+	projs, errP := project.LoadAll(db, store, u, project.LoadOptions.WithPlatforms)
 	if errP != nil {
 		log.Warning("DefaultPayloadMigration> Cannot load all project: %s", errP)
 		return
@@ -37,7 +37,7 @@ func DefaultPayloadMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sd
 				continue
 			}
 
-			wf, errWl := workflow.Load(tx, store, proj.Key, wfName, u, workflow.LoadOptions{})
+			wf, errWl := workflow.Load(tx, store, &proj, wfName, u, workflow.LoadOptions{})
 			if errWl != nil {
 				log.Warning("DefaultPayloadMigration> Cannot load workflow %s : %s", wfName, errWl)
 				tx.Rollback()

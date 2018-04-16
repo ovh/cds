@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	"fmt"
 	"runtime"
 )
 
@@ -115,7 +114,6 @@ type PlatformModel struct {
 //IsBuiltin checks is the model is builtin or not
 func (p PlatformModel) IsBuiltin() bool {
 	for _, m := range BuiltinPlatformModels {
-		fmt.Printf("checking %s with %s\n", p.Name, m.Name)
 		if p.Name == m.Name {
 			return true
 		}
