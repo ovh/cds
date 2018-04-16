@@ -87,6 +87,9 @@ func (api *API) serviceAPIHeartbeat(c context.Context) {
 		return
 	}
 
+	// first call
+	api.serviceAPIHeartbeatUpdate(c, repo, hash)
+
 	for {
 		select {
 		case <-c.Done():
@@ -95,46 +98,50 @@ func (api *API) serviceAPIHeartbeat(c context.Context) {
 				return
 			}
 		case <-tick:
-			if err := repo.Begin(); err != nil {
-				log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
-				return
-			}
-
-			srv := &sdk.Service{
-				Name:             event.GetCDSName(),
-				MonitoringStatus: api.Status(),
-				Hash:             string(hash),
-				LastHeartbeat:    time.Now(),
-			}
-
-			//Try to find the service, and keep; else generate a new one
-			oldSrv, errOldSrv := repo.FindByName(srv.Name)
-			if errOldSrv != nil && errOldSrv != sdk.ErrNotFound {
-				log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
-				repo.Rollback()
-				continue
-			}
-
-			if oldSrv != nil {
-				if err := repo.Update(srv); err != nil {
-					log.Error("serviceAPIHeartbeat> Unable to update service %s: %v", srv.Name, err)
-					repo.Rollback()
-					continue
-				}
-			} else {
-				if err := repo.Insert(srv); err != nil {
-					log.Error("serviceAPIHeartbeat> Unable to insert service %s: %v", srv.Name, err)
-					repo.Rollback()
-					continue
-				}
-			}
-
-			if err := repo.Commit(); err != nil {
-				log.Error("serviceAPIHeartbeat> error on repo.Commit: %v", err)
-				repo.Rollback()
-				continue
-			}
-
+			api.serviceAPIHeartbeatUpdate(c, repo, hash)
 		}
+	}
+}
+
+func (api *API) serviceAPIHeartbeatUpdate(c context.Context, repo *services.Repository, hash sessionstore.SessionKey) {
+	if err := repo.Begin(); err != nil {
+		log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
+		return
+	}
+
+	srv := &sdk.Service{
+		Name:             event.GetCDSName(),
+		MonitoringStatus: api.Status(),
+		Hash:             string(hash),
+		LastHeartbeat:    time.Now(),
+		Type:             services.TypeAPI,
+	}
+
+	//Try to find the service, and keep; else generate a new one
+	oldSrv, errOldSrv := repo.FindByName(srv.Name)
+	if errOldSrv != nil && errOldSrv != sdk.ErrNotFound {
+		log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
+		repo.Rollback()
+		return
+	}
+
+	if oldSrv != nil {
+		if err := repo.Update(srv); err != nil {
+			log.Error("serviceAPIHeartbeat> Unable to update service %s: %v", srv.Name, err)
+			repo.Rollback()
+			return
+		}
+	} else {
+		if err := repo.Insert(srv); err != nil {
+			log.Error("serviceAPIHeartbeat> Unable to insert service %s: %v", srv.Name, err)
+			repo.Rollback()
+			return
+		}
+	}
+
+	if err := repo.Commit(); err != nil {
+		log.Error("serviceAPIHeartbeat> error on repo.Commit: %v", err)
+		repo.Rollback()
+		return
 	}
 }
