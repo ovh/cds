@@ -12,6 +12,16 @@ export class WorkflowRunService {
     }
 
     /**
+     * List workflow runs for the given workflow
+     */
+    runs(key: string, workflowName: string, limit: string): Observable<Array<WorkflowRun>> {
+        let url = '/project/' + key + '/workflows/' + workflowName + '/runs';
+        let params = new HttpParams();
+        params = params.append('limit', limit);
+        return this._http.get<Array<WorkflowRun>>(url, {params: params});
+    }
+
+    /**
      * Call API to create a run workflow
      * @param key Project unique key
      * @param workflow Workflow to create

@@ -1,18 +1,21 @@
 import {Component, ViewChild, OnInit} from '@angular/core';
 import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
-import {ActivatedRoute, ResolveEnd, Router} from '@angular/router';
+import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {Project} from '../../model/project.model';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin} from '../../model/workflow.model';
+import {Workflow} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {ProjectStore} from '../../service/project/project.store';
-import {RouterService} from '../../service/router/router.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
 import {ToastService} from '../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {finalize} from 'rxjs/operators';
-import {cloneDeep} from 'lodash';
+import {finalize, first} from 'rxjs/operators';
+import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../service/workflow/workflow.sidebar.store';
+import {WorkflowRunService} from '../../service/workflow/run/workflow.run.service';
+import {WorkflowEventStore} from '../../service/workflow/workflow.event.store';
+import {EventStore} from '../../service/event/event.store';
+import {EventSubscription} from '../../model/event.model';
 
 @Component({
     selector: 'app-workflow',
@@ -24,23 +27,18 @@ export class WorkflowComponent implements OnInit {
 
     project: Project;
     workflow: Workflow;
+    workflowSubscription: Subscription;
+    projectSubscription: Subscription;
+
     loading = true;
     loadingFav = false;
-    number: number;
-    workflowSubscription: Subscription;
-    sideBarSubscription: Subscription;
+
+    // Sidebar data
+    sideBarModeSubscription: Subscription;
+    sidebarMode = WorkflowSidebarMode.RUNS;
+    sidebarModes = WorkflowSidebarMode;
+
     asCodeEditorSubscription: Subscription;
-    projectSubscription: Subscription;
-    sidebarOpen: boolean;
-    currentNodeName: string;
-    selectedNodeId: number;
-    selectedNode: WorkflowNode;
-    selectedJoinId: number;
-    selectedJoin: WorkflowNodeJoin;
-    selectedHook: WorkflowNodeHook;
-    selectedHookId: number;
-    selectedNodeRunId: number;
-    selectedNodeRunNum: number;
     asCodeEditorOpen: boolean;
 
     @ViewChild('invertedSidebar')
@@ -48,12 +46,15 @@ export class WorkflowComponent implements OnInit {
 
     constructor(private _activatedRoute: ActivatedRoute,
                 private _workflowStore: WorkflowStore,
+                private _workflowRunService: WorkflowRunService,
+                private _workflowEventStore: WorkflowEventStore,
                 private _router: Router,
-                private _routerService: RouterService,
                 private _projectStore: ProjectStore,
+                public _sidebarStore: WorkflowSidebarStore,
                 private _workflowCore: WorkflowCoreService,
                 private _toast: ToastService,
-                private _translate: TranslateService) {
+                private _translate: TranslateService,
+                private _eventStore: EventStore) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -65,19 +66,14 @@ export class WorkflowComponent implements OnInit {
               }
           });
 
-        this.sideBarSubscription = this._workflowCore.getSidebarStatus().subscribe(b => {
-            this.sidebarOpen = b;
-        });
+        this.initSidebar();
 
+        // Workflow subscription
         this._activatedRoute.params.subscribe(p => {
             let workflowName = p['workflowName'];
             let key = p['key'];
-            let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
-            if (snapshotparams) {
-                this.number = snapshotparams['number'] ? parseInt(snapshotparams['number'], 10) : null;
-            }
 
-            if (this.project.key && workflowName) {
+            if (key && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
                 }
@@ -87,15 +83,11 @@ export class WorkflowComponent implements OnInit {
                         if (ws) {
                             let updatedWorkflow = ws.get(key + '-' + workflowName);
                             if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                                this.workflow = updatedWorkflow;
-                            }
 
-                            if (this.selectedNodeId) {
-                                this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
-                            } else if (this.selectedJoinId) {
-                                this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
-                            } else if (this.selectedHookId) {
-                                this.selectedHook = Workflow.getHookByID(this.selectedHookId, this.workflow);
+                                if (!this.workflow || (this.workflow && updatedWorkflow.id !== this.workflow.id)) {
+                                    this.initRuns(key, workflowName);
+                                }
+                                this.workflow = updatedWorkflow;
                             }
                         }
                         this.loading = false;
@@ -106,38 +98,34 @@ export class WorkflowComponent implements OnInit {
             }
         });
 
-        let qp = this._routerService.getRouteSnapshotQueryParams({}, this._activatedRoute.snapshot);
-        if (qp) {
-            this.currentNodeName = qp['name'];
-        }
-
-        this.listenQueryParams();
-
-        this._router.events.subscribe(p => {
-            if (p instanceof ResolveEnd) {
-                let params = this._routerService.getRouteSnapshotParams({}, p.state.root);
-                let queryParams = this._routerService.getRouteSnapshotQueryParams({}, p.state.root);
-                this.currentNodeName = queryParams['name'];
-                this.number = params['number'] ? parseInt(params['number'], 10) : null;
-                if (queryParams['selectedNodeId']) {
-                    this.selectedNodeId = Number.isNaN(queryParams['selectedNodeId']) ? null : parseInt(queryParams['selectedNodeId'], 10);
-                }
-                if (queryParams['selectedJoinId']) {
-                    this.selectedJoinId = Number.isNaN(queryParams['selectedJoinId']) ? null : parseInt(queryParams['selectedJoinId'], 10);
-                }
-                if (queryParams['selectedHookId']) {
-                    this.selectedHookId = Number.isNaN(queryParams['selectedHookId']) ? null : parseInt(queryParams['selectedHookId'], 10);
-                }
-
-                if (this.selectedNodeId && !this.loading) {
-                    this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
-                } else if (this.selectedJoinId && !this.loading) {
-                    this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
-                } else if (this.selectedHookId && !this.loading) {
-                    this.selectedHook = Workflow.getHookByID(this.selectedHookId, this.workflow);
+        // unselect all when returning on workflow main page
+        this._router.events.subscribe(e => {
+            if (e instanceof NavigationStart && this.workflow) {
+                if (e.url.indexOf('/project/' + this.project.key + '/workflow/') === 0 && e.url.indexOf('/run/') === -1) {
+                    this._workflowEventStore.unselectAll();
                 }
             }
         });
+    }
+
+    initRuns(key: string, workflowName: string): void {
+        this._workflowRunService.runs(key, workflowName, '50').subscribe(wrs => {
+            this._workflowEventStore.pushWorkflowRuns(wrs);
+
+            let f = new EventSubscription();
+            f.key = key;
+            f.workflow_name = workflowName;
+            f.runs = true;
+            this._eventStore.changeFilter(f).pipe(first()).subscribe(() => {});
+        });
+    }
+
+    initSidebar(): void {
+        // Mode of sidebar
+        this.sideBarModeSubscription = this._sidebarStore.sidebarMode().subscribe(m => {
+            console.log(m);
+            this.sidebarMode = m;
+        })
     }
 
     ngOnInit() {
@@ -150,63 +138,6 @@ export class WorkflowComponent implements OnInit {
           });
     }
 
-    listenQueryParams() {
-      this._activatedRoute.queryParams.subscribe((queryp) => {
-          if (queryp['selectedNodeId']) {
-              this.selectedJoinId = null;
-              this.selectedJoin = null;
-              this.selectedHookId = null;
-              this.selectedHook = null;
-              this.selectedNodeId = Number.isNaN(queryp['selectedNodeId']) ? null : parseInt(queryp['selectedNodeId'], 10);
-          } else {
-              this.selectedNodeId = null;
-              this.selectedNode = null;
-          }
-
-          if (queryp['selectedJoinId']) {
-              this.selectedNodeId = null;
-              this.selectedNode = null;
-              this.selectedHookId = null;
-              this.selectedHook = null;
-              this.selectedJoinId = Number.isNaN(queryp['selectedJoinId']) ? null : parseInt(queryp['selectedJoinId'], 10);
-          } else {
-              this.selectedJoinId = null;
-              this.selectedJoin = null;
-          }
-
-          if (queryp['selectedHookId']) {
-              this.selectedNodeId = null;
-              this.selectedNode = null;
-              this.selectedJoinId = null;
-              this.selectedJoin = null;
-              this.selectedHookId = Number.isNaN(queryp['selectedHookId']) ? null : parseInt(queryp['selectedHookId'], 10);
-          } else {
-              this.selectedHookId = null;
-              this.selectedHook = null;
-          }
-
-          if (queryp['selectedNodeRunId'] || queryp['selectedNodeRunNum']) {
-              this.selectedJoinId = null;
-              this.selectedJoin = null;
-              this.selectedHookId = null;
-              this.selectedHook = null;
-              this.selectedNodeRunId = Number.isNaN(queryp['selectedNodeRunId']) ? null : parseInt(queryp['selectedNodeRunId'], 10);
-              this.selectedNodeRunNum = Number.isNaN(queryp['selectedNodeRunNum']) ? null : parseInt(queryp['selectedNodeRunNum'], 10);
-          } else {
-              this.selectedNodeRunId = null;
-              this.selectedNodeRunNum = null;
-          }
-
-          if (this.selectedNodeId && !this.loading && this.workflow) {
-              this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
-          } else if (this.selectedJoinId && !this.loading && this.workflow) {
-              this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
-          } else if (this.selectedHookId && !this.loading && this.workflow) {
-              this.selectedHook = Workflow.getHookByID(this.selectedHookId, this.workflow);
-          }
-      });
-    }
-
     updateFav() {
         if (this.loading) {
             return;
@@ -217,45 +148,7 @@ export class WorkflowComponent implements OnInit {
             .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
     }
 
-    toggleSidebar(): void {
-        this._workflowCore.moveSideBar(!this.sidebarOpen);
-    }
-
-    closeEditSidebar(): void {
-        let qps = cloneDeep(this._activatedRoute.snapshot.queryParams);
-        let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
-        qps['selectedNodeId'] = null;
-        qps['selectedJoinId'] = null;
-        qps['selectedHookId'] = null;
-        qps['selectedNodeRunNum'] = null;
-        qps['selectedNodeRunId'] = null;
-        this.selectedNode = null;
-        this.selectedNodeId = null;
-        this.selectedJoin = null;
-        this.selectedJoinId = null;
-        this.selectedHook = null;
-        this.selectedHookId = null;
-        this.selectedNodeRunNum = null;
-        this.selectedNodeRunId = null;
-
-        this._workflowCore.linkJoinEvent(null);
-
-        if (snapshotparams['number']) {
-          this._router.navigate([
-            '/project',
-            this.project.key,
-            'workflow',
-            this.workflow.name,
-            'run',
-            snapshotparams['number']
-          ], {queryParams: qps});
-        } else {
-          this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: qps});
-        }
-    }
-
-    displayToggleButton(): boolean {
-        return this.selectedNode == null && this.selectedJoin == null && this.selectedHook == null &&
-            this.selectedNodeRunId == null && this.selectedNodeRunNum == null;
+    changeToRunsMode(): void {
+        this._workflowEventStore.unselectAll();
     }
 }

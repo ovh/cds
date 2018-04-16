@@ -12,4 +12,13 @@ export class Event {
     pipeline_name: string;
     environment_name: string;
     workflow_name: string;
+    workflow_run_num: number;
+}
+
+export class EventSubscription {
+    uuid: string;
+    key: string;
+    workflow_name: string;
+    runs: boolean;
+    num: number;
 }

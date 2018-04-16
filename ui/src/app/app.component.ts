@@ -14,6 +14,7 @@ import localeFR from '@angular/common/locales/fr';
 import localeEN from '@angular/common/locales/en';
 import {environment} from '../environments/environment';
 import {Event} from './model/event.model';
+import {EventStore} from './service/event/event.store';
 
 @Component({
     selector: 'app-root',
@@ -42,7 +43,7 @@ export class AppComponent  implements OnInit {
     constructor(_translate: TranslateService, private _language: LanguageStore,
                 private _authStore: AuthentificationStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService,
-                private _toastService: ToastService) {
+                private _toastService: ToastService, private _eventStore: EventStore) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.toasterConfig = this._toastService.getConfig();
         _translate.addLangs(['en', 'fr']);
@@ -108,7 +109,12 @@ export class AppComponent  implements OnInit {
             sseURL: environment.apiURL + '/events'
         });
         this.sseWorker.response().subscribe(e => {
-            if (e === 'ACK' || e == null) {
+            if (e == null) {
+                return;
+            }
+            if (e.indexOf('ACK: ') === 0) {
+                let uuid = e.substr(5).trim();
+                this._eventStore.setUUID(uuid);
                 return
             }
             this.zone.run(() => {

@@ -42,9 +42,7 @@ export class WorkflowSidebarRunHookComponent {
     hookDetails: WorkflowHookTask;
     _hook: WorkflowNodeHook;
 
-    constructor(private _hookService: HookService) {
-
-    }
+    constructor(private _hookService: HookService) {}
 
     loadHookDetails() {
         let hookId = this.hook.id;

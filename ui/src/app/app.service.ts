@@ -11,14 +11,16 @@ import {WorkflowStore} from './service/workflow/workflow.store';
 import {RouterService} from './service/router/router.service';
 import {first} from 'rxjs/operators';
 import {Event} from './model/event.model';
+import {EventStore} from './service/event/event.store';
+import {WorkflowEventStore} from './service/workflow/workflow.event.store';
 
 @Injectable()
 export class AppService {
 
     constructor(private _projStore: ProjectStore, private _routeActivated: ActivatedRoute,
                 private _appStore: ApplicationStore, private _notif: NotificationService, private _authStore: AuthentificationStore,
-                private _translate: TranslateService, private _pipStore: PipelineStore,
-                private _wfStore: WorkflowStore, private _routerService: RouterService) {
+                private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
+                private _wfStore: WorkflowStore, private _routerService: RouterService, private _eventStore: EventStore) {
     }
 
     manageEvent(event: Event): void {
@@ -35,12 +37,12 @@ export class AppService {
         }
         if (event.type_event.indexOf('sdk.EventApplication') === 0) {
             this.updateApplicationCache(event);
-        }
-        if (event.type_event.indexOf('sdk.EventPpeline') === 0) {
+        } else if (event.type_event.indexOf('sdk.EventPpeline') === 0) {
             this.updatePipelineCache(event);
-        }
-        if (event.type_event.indexOf('sdk.EventWorkflow') === 0) {
+        } else if (event.type_event.indexOf('sdk.EventWorkflow') === 0) {
             this.updateWorkflowCache(event);
+        } else if (event.type_event.indexOf('sdk.EventRunWorkflow') === 0) {
+            this.updateWorkflowRunCache(event);
         }
     }
 
@@ -199,5 +201,18 @@ export class AppService {
 
             this._wfStore.resync(event.project_key, event.workflow_name);
         });
+    }
+
+    updateWorkflowRunCache(event: Event): void {
+        switch (event.type_event) {
+            case 'sdk.EventRunWorkflow':
+                let wr = WorkflowRun.fromEventRunWorkflow(event);
+                this._workflowEventStore.addWorkflowRun(wr);
+                break;
+            case 'sdk.EventRunWorkflowNode':
+                console.log('EventRunWorkflowNode');
+                break;
+        }
+        this._eventStore._eventFilter.getValue();
     }
 }

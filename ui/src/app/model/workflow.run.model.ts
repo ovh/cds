@@ -7,6 +7,7 @@ import {Commit} from './repositories.model';
 import {Job} from './job.model';
 import {Hatchery} from './hatchery.model';
 import {User} from './user.model';
+import {Event} from './event.model';
 
 
 export class RunNumber {
@@ -38,6 +39,20 @@ export class WorkflowRun {
 
     // Useful for UI
     duration: string;
+
+    static fromEventRunWorkflow(event: Event): WorkflowRun {
+        let wr = new WorkflowRun();
+        wr.id = event.payload['ID'];
+        wr.status = event.payload['Status'];
+        wr.num = event.workflow_run_num;
+        wr.start = new Date(event.payload['Start'] * 1000).toString();
+        wr.last_execution = new Date(event.payload['LastExecution'] * 1000).toString();
+        wr.last_modified = new Date(event.payload['LastModified'] * 1000).toString();
+        wr.tags = event.payload['Tags'].map(t => {
+            return { tag: t.Tag, value: t.Value }
+        });
+        return wr;
+    }
 }
 
 export class WorkflowRunTags {

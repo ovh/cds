@@ -50,6 +50,9 @@ import {DownloadService} from './download/download.service';
 import {KeyService} from './keys/keys.service';
 import {PlatformService} from './platform/platform.service';
 import {ImportAsCodeService} from './import-as-code/import.service';
+import {WorkflowEventStore} from './workflow/workflow.event.store';
+import {WorkflowSidebarStore} from './workflow/workflow.sidebar.store';
+import {EventStore} from './event/event.store';
 
 @NgModule({})
 export class ServicesModule {
@@ -74,6 +77,7 @@ export class ServicesModule {
                 CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 EnvironmentService,
+                EventStore,
                 GroupService,
                 HookService,
                 ImportAsCodeService,
@@ -101,6 +105,8 @@ export class ServicesModule {
                 UserService,
                 VariableService,
                 WorkerModelService,
+                WorkflowEventStore,
+                WorkflowSidebarStore,
                 WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
                     provide: HTTP_INTERCEPTORS,
@@ -137,6 +143,7 @@ export {
     CanActivateAuthAdminRoute,
     DownloadService,
     EnvironmentAuditService,
+    EventStore,
     GroupService,
     HookService,
     ImportAsCodeService,
@@ -161,5 +168,7 @@ export {
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,
-    WorkflowCoreService
+    WorkflowCoreService,
+    WorkflowSidebarStore,
+    WorkflowEventStore
 }

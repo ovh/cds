@@ -1,9 +1,8 @@
 import {AfterViewInit, Component, ElementRef, Input, Output, EventEmitter, NgZone, ViewChild, OnInit} from '@angular/core';
-import {Router, ActivatedRoute} from '@angular/router';
+import {Router} from '@angular/router';
 import {Workflow, WorkflowNodeJoin} from '../../../model/workflow.model';
 import {WorkflowRun, WorkflowRunRequest, WorkflowNodeRunManual} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
-import {cloneDeep} from 'lodash';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
 import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
@@ -12,6 +11,7 @@ import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {Subscription} from 'rxjs/Subscription';
 import {finalize} from 'rxjs/operators';
+import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 
 @Component({
     selector: 'app-workflow-join',
@@ -27,6 +27,8 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     @Input() readonly = false;
     @Output() selectEvent = new EventEmitter<WorkflowNodeJoin>();
 
+    isSelected = false;
+    subSelect: Subscription;
     disabled = false;
     loading = false;
 
@@ -42,10 +44,10 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
 
     workflowCoreSub: Subscription;
     currentWorkflowRun: WorkflowRun;
-    selectedJoinId: number;
 
     constructor(private elementRef: ElementRef, private _workflowRunService: WorkflowRunService,
-        private _workflowCoreService: WorkflowCoreService, private _router: Router, private _route: ActivatedRoute) {
+        private _workflowCoreService: WorkflowCoreService, private _router: Router,
+        private _workflowEventStore: WorkflowEventStore) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.options = {
             'fullTextSearch': true,
@@ -56,12 +58,12 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
             }
         };
 
-        this._route.queryParams.subscribe((qp) => {
-            if (qp['selectedJoinId']) {
-                this.selectedJoinId = parseInt(qp['selectedJoinId'], 10);
-            } else {
-                this.selectedJoinId = null;
+        this.subSelect = this._workflowEventStore.selectedJoin().subscribe(j => {
+            if (j && this.join) {
+                this.isSelected = this.join.id === j.id;
+                return;
             }
+            this.isSelected = false;
         });
     }
 
@@ -81,15 +83,8 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     }
 
     selectJoin(): void {
-        let qps = cloneDeep(this._route.snapshot.queryParams);
-        qps['selectedNodeId'] = null;
-        this._router.navigate([
-            '/project', this.project.key,
-            'workflow', this.workflow.name
-        ], { queryParams: Object.assign({}, qps, {selectedJoinId: this.join.id })});
+        this._workflowEventStore.setSelectedJoin(this.join);
     }
-
-
 
     canBeLaunched() {
         if (!this.currentWorkflowRun || !this.currentWorkflowRun.nodes) {

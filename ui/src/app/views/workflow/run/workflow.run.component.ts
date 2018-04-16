@@ -1,20 +1,21 @@
-import {WorkflowNode} from '../../../model/workflow.model';
-import {Component, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
+
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {Project} from '../../../model/project.model';
-import {CDSWorker} from '../../../shared/worker/worker';
 import {WorkflowRun} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
-import {environment} from '../../../../environments/environment';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {cloneDeep} from 'lodash';
 import {TranslateService} from '@ngx-translate/core';
+import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {WorkflowNode} from '../../../model/workflow.model';
+import {EventStore} from '../../../service/event/event.store';
+import {EventSubscription} from '../../../model/event.model';
 
 @Component({
     selector: 'app-workflow-run',
@@ -22,104 +23,82 @@ import {TranslateService} from '@ngx-translate/core';
     styleUrls: ['./workflow.run.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowRunComponent implements OnDestroy, OnInit {
+export class WorkflowRunComponent implements OnInit {
     @ViewChild('workflowNodeRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
     project: Project;
-    runWorkflowWorker: CDSWorker;
-    runSubsription: Subscription;
+
+
     workflowRun: WorkflowRun;
-    tmpWorkflowRun: WorkflowRun;
-    zone: NgZone;
+    subRun: Subscription;
+
     workflowName: string;
     version: string;
     direction: string;
-    currentNumber: number;
-    currentSubNumber: number;
-
-    nodeToRun: WorkflowNode;
 
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
-    workflowCoreSub: Subscription;
     loadingRun = false;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-                private _workflowStore: WorkflowStore,
-                private _workflowCoreService: WorkflowCoreService, private _notification: NotificationService,
-                private _translate: TranslateService) {
-        this.zone = new NgZone({enableLongStackTrace: false});
+    // copy of root node to send it into run modal
+    nodeToRun: WorkflowNode;
 
-        // Update data if route change
+    constructor(private _activatedRoute: ActivatedRoute, private _eventStore: EventStore,
+                private _workflowStore: WorkflowStore, private _notification: NotificationService,
+                private _translate: TranslateService, private _workflowEventStore: WorkflowEventStore,
+                private _workflowRunService: WorkflowRunService) {
+        // Get project
         this._activatedRoute.data.subscribe(datas => {
-            this.project = datas['project'];
+            if (!this.project || (<Project>datas['project']).key !== this.project.key) {
+                this.project = datas['project'];
+                this.workflowRun = null;
+                this.workflowName = '';
+            }
         });
 
+        // Get workflow
         this._activatedRoute.parent.params.subscribe(params => {
             this.workflowName = params['workflowName'];
         });
-        this._activatedRoute.queryParams.subscribe(p => {
-            if (this.workflowRun && p['subnum'] && this.currentSubNumber !== p['subnum']) {
-                this.currentSubNumber = p['subnum'];
-                this.startWorker(this.workflowRun.num);
-            }
-        });
-        this._activatedRoute.params.subscribe(params => {
-            let number = params['number'];
-            if (this.project.key && this.workflowName && number && number !== this.currentNumber) {
-                this.currentNumber = number;
-                this.startWorker(number);
+
+        // Get workflow run
+        this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
+            this.workflowRun = wr;
+            if (this.workflowRun.status === PipelineStatus.STOPPED ||
+                this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
+                this.handleNotification();
             }
         });
 
-        this.workflowCoreSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe((wr) => {
-            if (this.workflowRun && wr && wr.id !== this.workflowRun.id) {
-                if (wr.num !== this.currentNumber) {
-                    this.currentNumber = wr.num;
-                    this.workflowRun = wr;
-                    this.startWorker(wr.num);
+        // Subscribe to route event
+        this._activatedRoute.params.subscribe(ps => {
+            // if there is no current workflow run
+            if (!this.workflowRun) {
+                this.initWorkflowRun(ps['number']);
+            } else {
+                if (this.workflowRun.workflow.name !== this.workflowName || this.workflowRun.num !== ps['number']) {
+                    this.initWorkflowRun(ps['number']);
                 }
             }
         });
     }
 
-    startWorker(num: number): void {
+    initWorkflowRun(num): void {
         this.loadingRun = true;
-        // Start web worker
-        if (this.runWorkflowWorker) {
-            this.runWorkflowWorker.stop();
-            this.runWorkflowWorker = null;
-        }
-        this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
-        this.runWorkflowWorker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL,
-            key: this.project.key,
-            workflowName: this.workflowName,
-            number: num
-        });
-        this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
-            if (wrString) {
-                this.zone.run(() => {
-                    this.loadingRun = false;
-                    this.workflowRun = <WorkflowRun>JSON.parse(wrString);
-                    this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
-                    if (this.workflowRun.status === PipelineStatus.STOPPED ||
-                        this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
-                        this.runWorkflowWorker.stop();
-                        this.runSubsription.unsubscribe();
-                        if (this.tmpWorkflowRun != null && this.tmpWorkflowRun.id === this.workflowRun.id &&
-                            this.tmpWorkflowRun.status !== PipelineStatus.STOPPED && this.tmpWorkflowRun.status !== PipelineStatus.FAIL &&
-                            this.tmpWorkflowRun.status !== PipelineStatus.SUCCESS) {
-                            this.handleNotification();
-                        }
-                    }
+        this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, num).subscribe(wr => {
+            this.workflowRun = wr;
 
-                    this.tmpWorkflowRun = this.workflowRun;
-                });
-            }
+            this._workflowEventStore.setSelectedRun(this.workflowRun);
+            this.loadingRun = false;
+
+            // subscribe to run event
+            let s = new EventSubscription();
+            s.key = this.project.key;
+            s.workflow_name = this.workflowName;
+            s.runs = true;
+            s.num = wr.num;
+            this._eventStore.changeFilter(s).subscribe(() => {});
         });
     }
 
@@ -151,13 +130,6 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                 this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
             }
             setTimeout(() => this.runWithParamComponent.show());
-        }
-    }
-
-    ngOnDestroy(): void {
-        if (this.runWorkflowWorker) {
-            this.runWorkflowWorker.stop();
-            this.runWorkflowWorker = null;
         }
     }
 
