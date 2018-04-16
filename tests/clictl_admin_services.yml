@@ -7,6 +7,8 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring api
       - result.systemout ShouldContainSubstring hatchery
+    retry: 10
+    delay: 10  
   - script: {{.cds.build.cdsctl}} admin services status
     assertions:
       - result.code ShouldEqual 0
