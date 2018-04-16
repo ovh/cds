@@ -14,6 +14,9 @@ import (
 // WorkerModel is a gorp wrapper around sdk.Model
 type WorkerModel sdk.Model
 
+// WorkerModelPattern is a gorp wrapper around sdk.ModelPattern
+type WorkerModelPattern sdk.ModelPattern
+
 //PostInsert is a DB Hook on WorkerModel
 func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
 	m.CreatedBy.Groups = nil
@@ -138,6 +141,41 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	return nil
 }
 
+//PostSelect load capabilitites and createdBy user
+func (wmp *WorkerModelPattern) PostSelect(s gorp.SqlExecutor) error {
+	modelStr, err := s.SelectNullStr("SELECT model FROM worker_model_pattern WHERE id = $1", wmp.ID)
+	if err != nil {
+		return sdk.WrapError(err, "PostSelect> Cannot load model for pattern %d", wmp.ID)
+	}
+
+	if err := gorpmapping.JSONNullString(modelStr, &wmp.Model); err != nil {
+		return sdk.WrapError(err, "PostSelect> Cannot unmarshal json from model pattern")
+	}
+
+	return nil
+}
+
+//PostInsert is a DB Hook on WorkerModelPattern
+func (wmp *WorkerModelPattern) PostInsert(s gorp.SqlExecutor) error {
+	modelBtes, err := json.Marshal(wmp.Model)
+	if err != nil {
+		return sdk.WrapError(err, "PostInsert> Cannot marshal model")
+	}
+
+	query := "update worker_model_pattern set model = $1 where id = $2"
+	if _, err := s.Exec(query, modelBtes, wmp.ID); err != nil {
+		return sdk.WrapError(err, "PostInsert> Cannot update model")
+	}
+
+	return nil
+}
+
+//PostUpdate is a DB Hook on WorkerModelPattern
+func (wmp *WorkerModelPattern) PostUpdate(s gorp.SqlExecutor) error {
+	return wmp.PostInsert(s)
+}
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(WorkerModel{}, "worker_model", true, "id"))
+	gorpmapping.Register(gorpmapping.New(WorkerModelPattern{}, "worker_model_pattern", true, "id"))
 }

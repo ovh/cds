@@ -91,14 +91,21 @@
             <div class="three fields">
               <div class="seven wide field">
                   <label>{{'worker_model_type' | translate}}</label>
-                  <sm-select class="fluid search"
-                      name="type"
-                      *ngIf="workerModelTypes"
-                      [disabled]="loading"
-                      [(model)]="workerModel.type"
-                      [options]="{'fullTextSearch': true}">
-                      <option *ngFor="let type of workerModelTypes" [value]="type">{{type}}</option>
-                  </sm-select>
+                  <ng-container *ngIf="workerModelTypes">
+                    <sui-select class="selection"
+                                name ="type"
+                                placeholder="{{'common_select' | translate}}"
+                                [isDisabled]="loading"
+                                [options]="workerModelTypes"
+                                isSearchable="true"
+                                [(ngModel)]="workerModel.type"
+                                (ngModelChange)="filterPatterns($event)"
+                                #selectType>
+                        <sui-select-option *ngFor="let option of selectType.filteredOptions"
+                                           [value]="option">
+                        </sui-select-option>
+                    </sui-select>
+                  </ng-container>
               </div>
               <div class="five wide field">
                 <label>{{'worker_model_communication' | translate}}</label>
@@ -123,32 +130,46 @@
                 <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_docker.image" [disabled]="loading">
               </div>
               <div class="field">
-                <label>Exemples de script de configuration</label>
-                <sm-select class="fluid search"
-                    name="type"
-                    *ngIf="workerModelCommunications"
-                    [disabled]="loading"
-                    [(model)]="workerModel.communication"
-                    [options]="{'fullTextSearch': true}">
-                    <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
-                </sm-select>
+                <label>{{'worker_model_pattern_title' | translate}}</label>
+                <sui-select class="selection"
+                            name="pattern"
+                            placeholder="{{'common_select' | translate}}"
+                            labelField="name"
+                            [options]="workerModelPatternsFiltered"
+                            isSearchable="true"
+                            [(ngModel)]="patternSelected"
+                            (ngModelChange)="preFillModel($event)"
+                            #selectPattern>
+                    <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
+                                       [value]="option">
+                    </sui-select-option>
+                </sui-select>
+              </div>
+              <div class="field">
+                <label>Worker command</label>
+                <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd" [disabled]="loading || !currentUser.admin">
               </div>
             </ng-container>
-            <ng-container *ngIf="workerModel.type !== 'docker'">
+            <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
               <div class="field">
                 <label>{{'worker_model_image' | translate}}</label>
                 <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_virtual_machine.image" [disabled]="loading">
               </div>
               <div class="field">
-                <label>Exemples de script de configuration</label>
-                <sm-select class="fluid search"
-                    name="type"
-                    *ngIf="workerModelCommunications"
-                    [disabled]="loading"
-                    [(model)]="workerModel.communication"
-                    [options]="{'fullTextSearch': true}">
-                    <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
-                </sm-select>
+                <label>{{'worker_model_pattern_title' | translate}}</label>
+                <sui-select class="selection"
+                            name="pattern"
+                            placeholder="{{'common_select' | translate}}"
+                            labelField="name"
+                            [options]="workerModelPatternsFiltered"
+                            isSearchable="true"
+                            [(ngModel)]="patternSelected"
+                            (ngModelChange)="preFillModel($event)"
+                            #selectPattern>
+                    <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
+                                       [value]="option">
+                    </sui-select-option>
+                </sui-select>
               </div>
               <div class="field">
                 <label>Pre worker command</label>

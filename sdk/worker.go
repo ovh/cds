@@ -108,6 +108,7 @@ type Model struct {
 	DateLastSpawnErr       *time.Time          `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
 	IsDeprecated           bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
 	IsOfficial             bool                `json:"is_official" db:"-" cli:"official"`
+	PatternName            string              `json:"pattern_name,omitempty" db:"-" cli:"-"`
 }
 
 // ModelVirtualMachine for openstack or vsphere
@@ -124,6 +125,18 @@ type ModelDocker struct {
 	Image  string `json:"image,omitempty"`
 	Memory int64  `json:"memory,omitempty"`
 	Cmd    string `json:"cmd,omitempty"`
+}
+
+// ModelPattern represent patterns for users and admin when creating a worker model
+type ModelPattern struct {
+	ID    int64  `json:"id" db:"id"`
+	Name  string `json:"name" db:"name"`
+	Type  string `json:"type" db:"type"`
+	Model struct {
+		PreCmd  string `json:"pre_cmd,omitempty"`
+		Cmd     string `json:"cmd,omitempty"`
+		PostCmd string `json:"post_cmd,omitempty"`
+	} `json:"model" db:"-"`
 }
 
 // WorkerArgs is all the args needed to run a worker

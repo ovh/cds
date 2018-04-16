@@ -39,3 +39,14 @@ export class ModelVirtualMachine {
   cmd: string;
   post_cmd: string;
 }
+
+export class ModelPattern {
+  id: number;
+  name: string;
+  type: string;
+  model: {
+    pre_cmd?: string;
+    cmd: string;
+    post_cmd?: string;
+  };
+}

@@ -25,35 +25,38 @@ func (api *API) addWorkerModelHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid type (empty)")
 		}
 
+		var modelPattern *sdk.ModelPattern
+		if model.PatternName != "" {
+			var errP error
+			modelPattern, errP = worker.LoadWorkerModelPatternByName(api.mustDB(), model.Type, model.PatternName)
+			if errP != nil {
+				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Cannot load worker model pattern %s : %v", model.PatternName, errP)
+			}
+		}
+
 		user := getUser(ctx)
 		switch model.Type {
 		case sdk.Docker:
 			if model.ModelDocker.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
 			}
-			if model.ModelDocker.Cmd == "" {
-				//TODO add default cmd list for each type of arch and type of worker model (vsphere, docker, openstack)
-			} else if !user.Admin {
-				return sdk.ErrForbidden
+			if !user.Admin {
+				if modelPattern == nil {
+					return sdk.ErrForbidden
+				}
+				model.ModelDocker.Cmd = modelPattern.Model.Cmd
 			}
 		default:
 			if model.ModelVirtualMachine.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
 			}
-			if model.ModelVirtualMachine.PreCmd == "" {
-				//TODO add default cmd list for each type of arch and type of worker model (vsphere, docker, openstack)
-			} else if !user.Admin {
-				return sdk.ErrForbidden
-			}
-			if model.ModelVirtualMachine.Cmd == "" {
-				//TODO add default cmd
-			} else if !user.Admin {
-				return sdk.ErrForbidden
-			}
-			if model.ModelVirtualMachine.PostCmd == "" {
-				//TODO add default cmd
-			} else if !user.Admin {
-				return sdk.ErrForbidden
+			if !user.Admin {
+				if modelPattern == nil {
+					return sdk.ErrForbidden
+				}
+				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
+				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
+				model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
 			}
 		}
 
@@ -388,6 +391,25 @@ func (api *API) getWorkerModelsHandler() Handler {
 		}
 
 		return WriteJSON(w, models, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkerModelPatternsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if getUser(ctx) == nil || getUser(ctx).ID == 0 {
+			var username string
+			if getUser(ctx) != nil {
+				username = getUser(ctx).Username
+			}
+			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
+		}
+
+		modelPatterns, err := worker.LoadWorkerModelPatterns(api.mustDB())
+		if err != nil {
+			return sdk.WrapError(err, "getWorkerModelPatternsHandler> cannot load worker model patterns")
+		}
+
+		return WriteJSON(w, modelPatterns, http.StatusOK)
 	}
 }
 

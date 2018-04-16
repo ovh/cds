@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-const columns = `
+const modelColumns = `
 	worker_model.id,
 	worker_model.type,
 	worker_model.name,
@@ -71,7 +71,7 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, columns)
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, modelColumns)
 	if _, err := db.Select(&wms, query); err != nil {
 		return nil, sdk.WrapError(err, "LoadAllWorkerModels> ")
 	}
@@ -102,19 +102,19 @@ func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*s
 
 // LoadWorkerModelByName retrieves a specific worker model in database
 func LoadWorkerModelByName(db gorp.SqlExecutor, name string) (*sdk.Model, error) {
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, columns)
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, modelColumns)
 	return loadWorkerModel(db, query, name)
 }
 
 // LoadWorkerModelByID retrieves a specific worker model in database
 func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, columns)
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, modelColumns)
 	return loadWorkerModel(db, query, ID)
 }
 
 // LoadAndLockWorkerModelByID retrieves a specific worker model in database
 func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1 FOR UPDATE NOWAIT`, columns)
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1 FOR UPDATE NOWAIT`, modelColumns)
 	return loadWorkerModel(db, query, ID)
 }
 
@@ -122,7 +122,7 @@ func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, erro
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
 	if user.Admin {
-		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, columns)
+		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, modelColumns)
 		if _, err := db.Select(&wms, query); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for admin")
 		}
@@ -134,7 +134,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, e
 					union
 					select %s from worker_model
 					JOIN "group" on worker_model.group_id = "group".id
-					where group_id = $2`, columns, columns)
+					where group_id = $2`, modelColumns, modelColumns)
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
 		}

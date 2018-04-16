@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
-import {WorkerModel} from '../../model/worker-model.model';
+import {WorkerModel, ModelPattern} from '../../model/worker-model.model';
 import {HttpClient} from '@angular/common/http';
 
 /**
@@ -52,6 +52,14 @@ export class WorkerModelService {
      */
     getWorkerModels(): Observable<Array<WorkerModel>> {
         return this._http.get<Array<WorkerModel>>('/worker/model');
+    }
+
+    /**
+     * Get the list of available worker model patterns
+     * @returns {Observable<ModelPattern[]>}
+     */
+    getWorkerModelPatterns(): Observable<Array<ModelPattern>> {
+        return this._http.get<Array<ModelPattern>>('/worker/model/pattern');
     }
 
     /**
