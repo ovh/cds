@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"strings"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
@@ -51,19 +53,66 @@ func (api *API) Status() sdk.MonitoringStatus {
 	return m
 }
 
+func getStatusLine(s sdk.MonitoringStatusLine) sdk.MonitoringStatusLine {
+	log.Debug("Status> %s", s.String())
+	return s
+}
+
 func (api *API) statusHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
 		if api.Router.panicked {
 			status = http.StatusServiceUnavailable
 		}
-		return WriteJSON(w, api.Status(), status)
+
+		q := services.Querier(api.mustDB(), api.Cache)
+		srvs, err := q.All()
+		if err != nil {
+			return sdk.WrapError(err, "statusHandler> error on q.All()")
+		}
+
+		mStatus := api.computeGlobalStatus(srvs)
+		return WriteJSON(w, mStatus, status)
 	}
 }
 
-func getStatusLine(s sdk.MonitoringStatusLine) sdk.MonitoringStatusLine {
-	log.Debug("Status> %s", s.String())
-	return s
+func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
+	mStatus := sdk.MonitoringStatus{}
+
+	var version string
+	versionOk := true
+	linesGlobal := []sdk.MonitoringStatusLine{}
+	for _, s := range srvs {
+		for i := range s.MonitoringStatus.Lines {
+			l := s.MonitoringStatus.Lines[i]
+			mStatus.Lines = append(mStatus.Lines, l)
+
+			// services should have same version
+			if strings.Contains(l.Component, "Version") {
+				if version == "" {
+					version = l.Value
+				} else if version != l.Value {
+					versionOk = false
+					linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
+						Status:    sdk.MonitoringStatusWarn,
+						Component: "Global/Version Diff",
+						Value:     fmt.Sprintf("%s vs %s", version, l.Value),
+					})
+				}
+			}
+		}
+	}
+
+	if versionOk {
+		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
+			Status:    sdk.MonitoringStatusOK,
+			Component: "Global/Version",
+			Value:     version,
+		})
+	}
+
+	mStatus.Lines = append(linesGlobal, mStatus.Lines...)
+	return mStatus
 }
 
 func (api *API) smtpPingHandler() Handler {

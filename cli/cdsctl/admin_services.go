@@ -74,6 +74,12 @@ func adminServiceStatusRun(v cli.Values) (cli.ListResult, error) {
 		for _, l := range srv.MonitoringStatus.Lines {
 			lines = append(lines, l)
 		}
+	} else if v.GetString("type") == "" {
+		s, err := client.MonStatus()
+		if err != nil {
+			return nil, err
+		}
+		return cli.AsListResult(s.Lines), nil
 	} else {
 		srvs, err := client.ServicesByType(v.GetString("type"))
 		if err != nil {
