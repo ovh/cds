@@ -14,5 +14,7 @@ In order to trigger this one you just have to make a HTTP call on the given url 
 Example of curl:
 
 ```bash
-curl -H "Content-Type: application/json" -X POST -d '{"git.branch":"development"}'  https://your-hook-service/webhook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+curl -H "Content-Type: application/json" -X POST -d '{"git.branch":"development"}'  https://cds.localhost.local/hook/webhook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
+
+In this example, https://cds.localhost.local/hook/ is your CDS Hooks µService.
