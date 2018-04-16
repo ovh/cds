@@ -15,7 +15,6 @@ import (
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
 	"github.com/gorilla/mux"
-	"github.com/ovh/cds/sdk/namesgenerator"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/services"
@@ -23,6 +22,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new Hatchery Marathon

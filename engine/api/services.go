@@ -110,7 +110,8 @@ func (api *API) serviceAPIHeartbeat(c context.Context) {
 			//Try to find the service, and keep; else generate a new one
 			oldSrv, errOldSrv := repo.FindByName(srv.Name)
 			if errOldSrv != nil && errOldSrv != sdk.ErrNotFound {
-				log.Error("serviceAPIHeartbeat:%v", errOldSrv)
+				log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
+				repo.Rollback()
 				continue
 			}
 
