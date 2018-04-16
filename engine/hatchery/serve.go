@@ -57,14 +57,14 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	//Start the http server
-	log.Info("%s> Starting HTTP Server on port %d", c.Name, h.Configuration().HTTP.Port)
-	if err := server.ListenAndServe(); err != nil {
-		log.Error("%s> Listen and serve failed: %s", c.Name, err)
-	}
-
-	//Gracefully shutdown the http server
 	go func() {
+		//Start the http server
+		log.Info("%s> Starting HTTP Server on port %d", c.Name, h.Configuration().HTTP.Port)
+		if err := server.ListenAndServe(); err != nil {
+			log.Error("%s> Listen and serve failed: %s", c.Name, err)
+		}
+
+		//Gracefully shutdown the http server
 		select {
 		case <-ctx.Done():
 			log.Info("%s> Shutdown HTTP Server", c.Name)
