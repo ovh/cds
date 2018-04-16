@@ -9,7 +9,7 @@ import (
 
 // WebHook Represent a webhook in bitbucket model
 type WebHook struct {
-	ID            int               `json:"id, omitempty"`
+	ID            int               `json:"id,omitempty"`
 	Active        bool              `json:"active"`
 	Configuration map[string]string `json:"configuration"`
 	Events        []string          `json:"events"`

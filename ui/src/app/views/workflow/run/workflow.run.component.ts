@@ -28,8 +28,6 @@ export class WorkflowRunComponent implements OnInit {
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
     project: Project;
-
-
     workflowRun: WorkflowRun;
     subRun: Subscription;
 

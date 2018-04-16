@@ -24,7 +24,8 @@ function loadWorkflow (user, session, api) {
         }
         if (xhr.status === 200 && xhr.responseText !== null) {
             var wr = JSON.parse(xhr.responseText);
-            if (previousLastModified && wr.last_modified === previousLastModified && previousId === wr.id) {
+            if (previousLastModified && wr.last_modified === previousLastModified && previousId === wr.id &&
+                wr.status !== 'Building' && wr.status !== 'Waiting') {
                 return;
             }
             previousLastModified = wr.last_modified;

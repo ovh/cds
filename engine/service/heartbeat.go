@@ -1,16 +1,15 @@
-package vcs
+package service
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) heartbeat(ctx context.Context) error {
+func (c *Common) Heartbeat(ctx context.Context) error {
 	ticker := time.NewTicker(30 * time.Second)
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithCancel(ctx)
@@ -22,10 +21,10 @@ func (s *Service) heartbeat(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			if err := s.doHeartbeat(); err != nil {
+			if maxHeartbeatFailures, err := c.DoHeartbeat(); err != nil {
 				log.Error("VCS> heartbeat> Heartbeat failed")
 				heartbeatFailures++
-				if heartbeatFailures > s.Cfg.API.MaxHeartbeatFailures {
+				if heartbeatFailures > maxHeartbeatFailures {
 					return fmt.Errorf("Heartbeat failed excedeed")
 				}
 			}
@@ -34,19 +33,20 @@ func (s *Service) heartbeat(ctx context.Context) error {
 	}
 }
 
-func (s *Service) doHeartbeat() error {
+// DoHeartbeat registers the service for heartbeat
+func (c *Common) DoHeartbeat() (int, error) {
 	srv := sdk.Service{
-		Name:          s.Cfg.Name,
-		HTTPURL:       s.Cfg.URL,
+		Name:          c.Name,
+		HTTPURL:       c.HTTPURL,
 		LastHeartbeat: time.Time{},
-		Token:         s.Cfg.API.Token,
-		Type:          services.TypeVCS,
+		Token:         c.Token,
+		Type:          c.Type,
 	}
-	log.Debug("VCS> doHeartbeat: %+v", srv)
-	hash, err := s.cds.ServiceRegister(srv)
+	log.Debug("%s> doHeartbeat: %+v", c.Name, srv)
+	hash, err := c.Client.ServiceRegister(srv)
 	if err != nil {
-		return sdk.WrapError(err, "doHeartbeat")
+		return 0, sdk.WrapError(err, "doHeartbeat")
 	}
-	s.hash = hash
-	return nil
+	c.Hash = hash
+	return c.MaxHeartbeatFailures, nil
 }

@@ -82,7 +82,7 @@ func newRequest(t *testing.T, s *Service, method, uri string, i interface{}) *ht
 		t.FailNow()
 	}
 
-	assets.AuthentifyRequestFromService(t, req, s.hash)
+	assets.AuthentifyRequestFromService(t, req, s.Hash)
 
 	return req
 }

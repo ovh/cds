@@ -103,11 +103,6 @@ var (
 												Type:  sdk.StringParameter,
 												Value: "path1",
 											},
-											{
-												Name:  "tag",
-												Type:  sdk.StringParameter,
-												Value: "tag1",
-											},
 										},
 									},
 								},

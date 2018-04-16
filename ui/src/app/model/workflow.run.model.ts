@@ -39,6 +39,7 @@ export class WorkflowRun {
 
     // Useful for UI
     duration: string;
+    force_update: boolean;
 
     static fromEventRunWorkflow(event: Event): WorkflowRun {
         let wr = new WorkflowRun();

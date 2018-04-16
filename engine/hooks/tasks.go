@@ -62,7 +62,7 @@ func (s *Service) synchronizeTasks() error {
 	log.Info("Hooks> Synchronizing tasks from CDS API (%s)", s.Cfg.API.HTTP.URL)
 
 	//Get all hooks from CDS, and synchronize the tasks in cache
-	hooks, err := s.cds.WorkflowAllHooksList()
+	hooks, err := s.Client.WorkflowAllHooksList()
 	if err != nil {
 		return sdk.WrapError(err, "synchronizeTasks> Unable to get hooks")
 	}
@@ -314,7 +314,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	confWorkflow := t.Config[sdk.HookConfigWorkflow]
 	var globalErr error
 	for _, hEvent := range hs {
-		run, err := s.cds.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, hEvent)
+		run, err := s.Client.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, hEvent)
 		if err != nil {
 			globalErr = err
 			log.Error("Hooks> Unable to run workflow %s", err)
@@ -351,7 +351,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 	if errP != nil {
 		return nil, sdk.WrapError(errP, "Hooks> doPollerTaskExecution> Cannot convert workflow id %s", taskExec.Config[sdk.HookConfigWorkflowID].Value)
 	}
-	events, interval, err := s.cds.PollVCSEvents(taskExec.UUID, workflowID, taskExec.Config["vcsServer"].Value, maxTs)
+	events, interval, err := s.Client.PollVCSEvents(taskExec.UUID, workflowID, taskExec.Config["vcsServer"].Value, maxTs)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Hooks> doPollerTaskExecution> Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config[sdk.HookConfigWorkflow].Value, taskExec.Config["vcsServer"].Value)
 	}

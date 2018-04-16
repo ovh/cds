@@ -101,7 +101,7 @@
                                                             translate }}
                                                         </button>
                                                         <button class="ui right floated green button" type="button"
-                                                                (click)="importWorkflow()" *ngIf="asCode"
+                                                                (click)="importWorkflow()" *ngIf="creationMode === 'text'"
                                                                 [disabled]="!wfToImport" [class.loading]="loading">{{ 'btn_create' |
                                                             translate }}
                                                         </button>
