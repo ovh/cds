@@ -202,6 +202,7 @@ func (r *Repository) PostGet(s *service) error {
 	}
 	for i := range m.Lines {
 		m.Lines[i].Component = fmt.Sprintf("%s/%s", s.Name, m.Lines[i].Component)
+		m.Lines[i].Type = s.Type
 	}
 	s.MonitoringStatus = m
 	return nil
