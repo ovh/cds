@@ -145,7 +145,7 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("X-Accel-Buffering", "no")
 
-		fmt.Fprint(w, "data: ACK: %s \n\n", uuid)
+		fmt.Fprintf(w, "data: ACK: %s \n\n", uuid)
 		f.Flush()
 
 		tick := time.NewTicker(time.Second)
@@ -180,10 +180,9 @@ func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscrib
 	if strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
 		key := event.ProjectKey
 		name := event.WorkflowName
-
 		// check if user has subscribed to runs list
 		s, ok := subscriber.Events[sdk.EventSubsWorkflowRuns]
-		if ok && event.EventType == "sdk.PublishWorkflowRun" {
+		if ok && event.EventType == "sdk.EventRunWorkflow" {
 			sent := false
 			for _, e := range s {
 				if e.ProjectKey == key && e.WorkflowName == name {
@@ -200,7 +199,7 @@ func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscrib
 		// check if user has subscribed to this specific run
 		num := event.WorkflowRunNum
 		s, ok = subscriber.Events[sdk.EventSubWorkflowRun]
-		if ok {
+		if ok && (event.EventType == "sdk.EventRunWorkflowNode" || event.EventType == "sdk.EventRunWorkflowNodeJob") {
 			for _, e := range s {
 				if e.ProjectKey == key && e.WorkflowName == name && e.WorkflowNum == num {
 					subscriber.Queue <- eventS
@@ -270,25 +269,33 @@ func (api *API) eventSubscribeHandler() Handler {
 		api.eventsBroker.mutex.Lock()
 		api.eventsBroker.mutex.Unlock()
 		data := api.eventsBroker.clients[payload.UUID]
+		if data.Events == nil {
+			data.Events = make(map[string][]sdk.EventSubscription)
+		}
 
 		if payload.WorkflowName != "" {
 			if payload.WorkflowRuns {
 				// Subscribe to all workflow run
 				runs, ok := data.Events[sdk.EventSubsWorkflowRuns]
-				if !ok {
+				if !ok && !payload.Overwrite {
 					runs = make([]sdk.EventSubscription, 0)
 				}
-				found := false
-				for _, es := range runs {
-					if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName {
-						found = true
-						break
+				if payload.Overwrite {
+					runs = make([]sdk.EventSubscription, 1)
+					runs[0] = payload
+				} else {
+					found := false
+					for _, es := range runs {
+						if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName {
+							found = true
+							break
+						}
+					}
+					if !found {
+						runs = append(runs, payload)
 					}
 				}
-				if !found {
-					runs = append(runs, payload)
-					data.Events[sdk.EventSubsWorkflowRuns] = runs
-				}
+				data.Events[sdk.EventSubsWorkflowRuns] = runs
 			}
 
 			if payload.WorkflowNum > 0 {
@@ -297,20 +304,27 @@ func (api *API) eventSubscribeHandler() Handler {
 				if !ok {
 					runs = make([]sdk.EventSubscription, 0)
 				}
-				found := false
-				for _, es := range runs {
-					if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName &&
-						es.WorkflowNum == payload.WorkflowNum {
-						found = true
-						break
+				if payload.Overwrite {
+					runs = make([]sdk.EventSubscription, 1)
+					runs[0] = payload
+					runs = append(runs, payload)
+				} else {
+					found := false
+					for _, es := range runs {
+						if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName &&
+							es.WorkflowNum == payload.WorkflowNum {
+							found = true
+							break
+						}
+					}
+					if !found {
+						runs = append(runs, payload)
 					}
 				}
-				if !found {
-					runs = append(runs, payload)
-					data.Events[sdk.EventSubWorkflowRun] = runs
-				}
+				data.Events[sdk.EventSubWorkflowRun] = runs
 			}
 		}
+
 		api.eventsBroker.clients[payload.UUID] = data
 		return nil
 	}

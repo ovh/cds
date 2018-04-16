@@ -98,7 +98,7 @@ export class WorkflowRunComponent implements OnInit {
             s.workflow_name = this.workflowName;
             s.runs = true;
             s.num = wr.num;
-            this._eventStore.changeFilter(s).subscribe(() => {});
+            this._eventStore.changeFilter(s);
         });
     }
 

@@ -36,13 +36,14 @@ func PublishRunWorkflow(payload interface{}, key, workflowName, appName, pipName
 // PublishWorkflowRun publish event on a workflow run
 func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 	e := sdk.EventRunWorkflow{
-		ID:           wr.ID,
-		Number:       wr.Number,
-		Status:       wr.Status,
-		Start:        wr.Start.Unix(),
-		ProjectKey:   projectKey,
-		WorkflowName: wr.Workflow.Name,
-		Workflow:     wr.Workflow,
+		ID:            wr.ID,
+		Number:        wr.Number,
+		Status:        wr.Status,
+		Start:         wr.Start.Unix(),
+		Workflow:      wr.Workflow,
+		LastExecution: wr.LastExecution.Unix(),
+		LastModified:  wr.LastModified.Unix(),
+		Tags:          wr.Tags,
 	}
 	PublishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, nil)
 }

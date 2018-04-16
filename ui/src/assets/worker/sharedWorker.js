@@ -10,7 +10,7 @@ var headAuthValue;
 var urlSubscribe;
 var urlUnsubscribe;
 onmessage = function (e) {
-    if (!sse && e.data.head && e.data.sseURL) {
+    if (!sse && e.data.sseURL) {
         headAuthKey = e.data.headAuthKey;
         headAuthValue = e.data.headAuthValue;
         urlSubscribe = e.data.urlSubscribe;

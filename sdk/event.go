@@ -37,6 +37,7 @@ type EventSubscription struct {
 	WorkflowName string `json:"workflow_name"`
 	WorkflowRuns bool   `json:"runs"`
 	WorkflowNum  int64  `json:"num"`
+	Overwrite    bool   `json:"overwrite"`
 }
 
 // EventEngine contains event data for engine
@@ -77,13 +78,14 @@ type EventRunWorkflowNode struct {
 
 // EventWorkflowRun contains event data for a workflow run
 type EventRunWorkflow struct {
-	ID           int64    `json:"id"`
-	Number       int64    `json:"num"`
-	ProjectKey   string   `json:"project_key,omitempty"`
-	WorkflowName string   `json:"workflow_name,omitempty"`
-	Status       string   `json:"status"`
-	Workflow     Workflow `json:"workflow"`
-	Start        int64    `json:"start"`
+	ID            int64            `json:"id"`
+	Number        int64            `json:"num"`
+	Status        string           `json:"status"`
+	Workflow      Workflow         `json:"workflow"`
+	Start         int64            `json:"start"`
+	LastExecution int64            `json:"last_execution"`
+	LastModified  int64            `json:"last_modified"`
+	Tags          []WorkflowRunTag `json:"tags"`
 }
 
 // EventPipelineBuild contains event data for a pipeline build

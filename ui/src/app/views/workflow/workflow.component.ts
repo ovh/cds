@@ -10,7 +10,7 @@ import {ProjectStore} from '../../service/project/project.store';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
 import {ToastService} from '../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
+import {finalize} from 'rxjs/operators';
 import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../service/workflow/workflow.sidebar.store';
 import {WorkflowRunService} from '../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../service/workflow/workflow.event.store';
@@ -116,14 +116,13 @@ export class WorkflowComponent implements OnInit {
             f.key = key;
             f.workflow_name = workflowName;
             f.runs = true;
-            this._eventStore.changeFilter(f).pipe(first()).subscribe(() => {});
+            this._eventStore.changeFilter(f);
         });
     }
 
     initSidebar(): void {
         // Mode of sidebar
         this.sideBarModeSubscription = this._sidebarStore.sidebarMode().subscribe(m => {
-            console.log(m);
             this.sidebarMode = m;
         })
     }

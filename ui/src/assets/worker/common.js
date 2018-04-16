@@ -54,7 +54,9 @@ function fibonacci (retry) {
 }
 
 function connectSSE(url, headAuthKey, headAuthValue) {
-    return new EventSourcePolyfill(url, {headers: { headAuthKey: headAuthValue}});
+    var headers = {};
+    headers[headAuthKey] = headAuthValue;
+    return new EventSourcePolyfill(url, {headers: headers});
 }
 
 function unsubscribeEvent(url, headAuthKey, headAuthValue, filter) {
@@ -72,7 +74,7 @@ function subscribeEvent(url, headAuthKey, headAuthValue, filter) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', url, false, null, null);
     xhr.setRequestHeader(headAuthKey, headAuthValue);
-    xhr.send(filter);
+    xhr.send(JSON.stringify(filter));
     if (xhr.status === 401 || xhr.status === 403 || xhr.status === 404) {
         close();
     }

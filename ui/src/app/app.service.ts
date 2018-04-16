@@ -13,6 +13,7 @@ import {first} from 'rxjs/operators';
 import {Event} from './model/event.model';
 import {EventStore} from './service/event/event.store';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
+import {WorkflowRun} from './model/workflow.run.model';
 
 @Injectable()
 export class AppService {

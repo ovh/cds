@@ -95,31 +95,35 @@ export class AppComponent  implements OnInit {
     }
 
     startSSE(): void {
-        let authHeader = {};
+        let authKey: string;
+        let authValue: string;
         // ADD user AUTH
         let sessionToken = this._authStore.getSessionToken();
         if (sessionToken) {
-            authHeader[this._authStore.localStorageSessionKey] = sessionToken;
+            authKey = this._authStore.localStorageSessionKey
+            authValue = sessionToken;
         } else {
-            authHeader['Authorization'] = 'Basic ' + this._authStore.getUser().token;
+            authKey = 'Authorization';
+            authValue = 'Basic ' + this._authStore.getUser().token;
         }
         this.sseWorker = new CDSWorker('/assets/worker/webWorker.js');
         this.sseWorker.start({
-            head: authHeader,
+            headAuthKey: authKey,
+            headAuthValue: authValue,
+            urlSubscribe: environment.apiURL + '/events/subscribe',
+            urlUnsubscribe: environment.apiURL + 'events/unsubscribe',
             sseURL: environment.apiURL + '/events'
         });
         this.sseWorker.response().subscribe(e => {
             if (e == null) {
                 return;
             }
-            if (e.indexOf('ACK: ') === 0) {
-                let uuid = e.substr(5).trim();
-                this._eventStore.setUUID(uuid);
-                return
-            }
             this.zone.run(() => {
-                let event: Event = JSON.parse(e);
-                this._appService.manageEvent(event);
+                if (e['uuid']) {
+                    this._eventStore.init(this.sseWorker, e['uuid']);
+                } else {
+                    this._appService.manageEvent(<Event>e);
+                }
             });
         });
     }
