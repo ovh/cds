@@ -495,7 +495,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	storeOptions := sessionstore.Options{
-		TTL:   a.Config.Cache.TTL * 60, // Second to minutes
+		TTL:   a.Config.HTTP.SessionTTL * 60, // Second to minutes
 		Cache: a.Cache,
 	}
 
