@@ -12,7 +12,7 @@ SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_applic
 SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_platform', 'application_deployment_strategy', 'project_platform', 'project_platform_id', 'id');
 
 ALTER TABLE workflow_node_context ADD COLUMN project_platform_id BIGINT;
-SELECT create_foreign_key('FK_WORKFLOW_NODE_PROJECT_PLATFORM', 'workflow_node', 'project_platform', 'project_platform_id', 'id');
+SELECT create_foreign_key('FK_WORKFLOW_NODE_PROJECT_PLATFORM', 'workflow_node_context', 'project_platform', 'project_platform_id', 'id');
 
 -- +migrate Down
 ALTER TABLE worker_model DROP COLUMN platform_model_plugin;
