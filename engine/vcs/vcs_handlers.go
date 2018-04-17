@@ -744,3 +744,17 @@ func (s *Service) getListForks() api.Handler {
 		return api.WriteJSON(w, forks, http.StatusOK)
 	}
 }
+
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (s *Service) Status() sdk.MonitoringStatus {
+	m := s.CommonMonitoring()
+	m.Lines = append(m.Lines, github.GetStatus()...)
+	return m
+}
+
+func (s *Service) statusHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var status = http.StatusOK
+		return api.WriteJSON(w, s.Status(), status)
+	}
+}

@@ -17,6 +17,11 @@ func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 		return "", err
 	}
 	c.isService = true
-	c.config.Hash = s.Hash
+
+	// TODO remove that when hatchery will be real CDS Services
+	if s.Type != "hatchery" {
+		c.config.Hash = s.Hash
+	}
+
 	return s.Hash, nil
 }

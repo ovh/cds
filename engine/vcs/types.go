@@ -5,18 +5,17 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // Service is the stuct representing a vcs µService
 type Service struct {
+	service.Common
 	Cfg    Configuration
 	Router *api.Router
 	Cache  cache.Store
-	cds    cdsclient.Interface
-	hash   string
 }
 
 // Configuration is the vcs configuration structure
@@ -24,7 +23,7 @@ type Configuration struct {
 	Name string `toml:"name" comment:"Name of this CDS VCS Service"`
 	HTTP struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
-		Port int    `toml:"port" default:"8084" toml:"name"`
+		Port int    `toml:"port" default:"8084"`
 	} `toml:"http" comment:"######################\n CDS VCS HTTP Configuration \n######################"`
 	URL string `default:"http://localhost:8084"`
 	UI  struct {

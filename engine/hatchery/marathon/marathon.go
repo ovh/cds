@@ -14,17 +14,24 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
-	"github.com/ovh/cds/sdk/namesgenerator"
+	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new Hatchery Marathon
 func New() *HatcheryMarathon {
-	return new(HatcheryMarathon)
+	s := new(HatcheryMarathon)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -39,7 +46,34 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
+
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
+	)
+
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+
 	return nil
+}
+
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (h *HatcheryMarathon) Status() sdk.MonitoringStatus {
+	m := h.CommonMonitoring()
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	return m
 }
 
 // CheckConfiguration checks the validity of the configuration object
@@ -116,11 +150,6 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// Serve start the HatcheryMarathon server
-func (h *HatcheryMarathon) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
-}
-
 // ID must returns hatchery id
 func (h *HatcheryMarathon) ID() int64 {
 	if h.hatch == nil {
@@ -134,9 +163,9 @@ func (h *HatcheryMarathon) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcheryMarathon) Client() cdsclient.Interface {
-	return h.client
+// Serve start the hatchery server
+func (h *HatcheryMarathon) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -212,7 +241,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	forcePull := strings.HasSuffix(spawnArgs.Model.Image, ":latest")
 
 	env := map[string]string{
-		"CDS_API":           h.Client().APIURL(),
+		"CDS_API":           h.CDSClient().APIURL(),
 		"CDS_TOKEN":         h.Configuration().API.Token,
 		"CDS_NAME":          workerName,
 		"CDS_MODEL":         fmt.Sprintf("%d", spawnArgs.Model.ID),
@@ -409,18 +438,6 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -450,7 +467,7 @@ func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
 }
 
 func (h *HatcheryMarathon) killDisabledWorkers() error {
-	workers, err := h.Client().WorkerList()
+	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}
@@ -482,7 +499,7 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 
 func (h *HatcheryMarathon) killAwolWorkers() error {
 	log.Debug("killAwolWorkers>")
-	workers, err := h.Client().WorkerList()
+	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}

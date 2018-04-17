@@ -20,7 +20,7 @@ func (s *Service) authMiddleware(ctx context.Context, w http.ResponseWriter, req
 		return ctx, fmt.Errorf("bad header syntax: %s", err)
 	}
 
-	if s.hash == string(hash) {
+	if s.Hash == string(hash) {
 		return ctx, nil
 	}
 

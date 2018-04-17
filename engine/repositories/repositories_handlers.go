@@ -49,8 +49,15 @@ func (s *Service) getOperationsHandler() api.Handler {
 	}
 }
 
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (s *Service) Status() sdk.MonitoringStatus {
+	m := s.CommonMonitoring()
+	return m
+}
+
 func (s *Service) getStatusHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
+		var status = http.StatusOK
+		return api.WriteJSON(w, s.Status(), status)
 	}
 }

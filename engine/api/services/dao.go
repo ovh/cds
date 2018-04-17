@@ -2,7 +2,9 @@ package services
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -70,8 +72,8 @@ func (r *Repository) Rollback() error {
 	return err
 }
 
-// Find a service by its name
-func (r *Repository) Find(name string) (*sdk.Service, error) {
+// FindByName a service by its name
+func (r *Repository) FindByName(name string) (*sdk.Service, error) {
 	query := "SELECT name, type, http_url, last_heartbeat, hash FROM services WHERE name = $1"
 	return r.findOne(query, name)
 }
@@ -101,7 +103,7 @@ func (r *Repository) FindByType(t string) ([]sdk.Service, error) {
 // All returns all registered services
 func (r *Repository) All() ([]sdk.Service, error) {
 	query := `
-	SELECT name, type, http_url, last_heartbeat, hash 
+	SELECT name, type, http_url, last_heartbeat, hash
 	FROM services`
 	services, err := r.findAll(query)
 	if err != nil {
@@ -121,6 +123,9 @@ func (r *Repository) findOne(query string, args ...interface{}) (*sdk.Service, e
 		}
 		return nil, sdk.WrapError(err, "findOne> service not found")
 	}
+	if err := r.PostGet(&sdb); err != nil {
+		return nil, sdk.WrapError(err, "findOne> postGet")
+	}
 	s := sdk.Service(sdb)
 	if s.Name == "" {
 		return nil, sdk.ErrNotFound
@@ -138,6 +143,9 @@ func (r *Repository) findAll(query string, args ...interface{}) ([]sdk.Service, 
 	}
 	ss := make([]sdk.Service, len(sdbs))
 	for i := 0; i < len(sdbs); i++ {
+		if err := r.PostGet(&sdbs[i]); err != nil {
+			return nil, sdk.WrapError(err, "findAll> postGet")
+		}
 		ss[i] = sdk.Service(sdbs[i])
 	}
 	return ss, nil
@@ -148,6 +156,9 @@ func (r *Repository) Insert(s *sdk.Service) error {
 	sdb := service(*s)
 	if err := r.Tx().Insert(&sdb); err != nil {
 		return sdk.WrapError(err, "Insert> unable to insert service %s", s.Name)
+	}
+	if err := r.PostUpdate(&sdb); err != nil {
+		return sdk.WrapError(err, "Insert> error on PostUpdate")
 	}
 	*s = sdk.Service(sdb)
 	return nil
@@ -161,6 +172,9 @@ func (r *Repository) Update(s *sdk.Service) error {
 	} else if n == 0 {
 		return sdk.WrapError(sdk.ErrNotFound, "Update> unable to update service %s", s.Name)
 	}
+	if err := r.PostUpdate(&sdb); err != nil {
+		return sdk.WrapError(err, "Update> error on PostUpdate")
+	}
 	*s = sdk.Service(sdb)
 	return nil
 }
@@ -170,6 +184,43 @@ func (r *Repository) Delete(s *sdk.Service) error {
 	sdb := service(*s)
 	if _, err := r.Tx().Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "Delete> unable to delete service %s", s.Name)
+	}
+	return nil
+}
+
+// PostGet is a dbHook on Select to get json column
+func (r *Repository) PostGet(s *service) error {
+	query := "SELECT monitoring_status FROM services WHERE name = $1"
+	var content []byte
+	if err := r.Tx().QueryRow(query, s.Name).Scan(&content); err != nil {
+		return sdk.WrapError(err, "PostGet> error on queryRow")
+	}
+
+	if len(content) > 0 {
+		m := sdk.MonitoringStatus{}
+		if err := json.Unmarshal(content, &m); err != nil {
+			return sdk.WrapError(err, "PostGet> error on unmarshal job")
+		}
+		for i := range m.Lines {
+			m.Lines[i].Component = fmt.Sprintf("%s/%s", s.Name, m.Lines[i].Component)
+			m.Lines[i].Type = s.Type
+		}
+		s.MonitoringStatus = m
+	}
+
+	return nil
+}
+
+// PostUpdate is a DB Hook on PostUpdate to store monitoring_status JSON in DB
+func (r *Repository) PostUpdate(s *service) error {
+	content, err := json.Marshal(s.MonitoringStatus)
+	if err != nil {
+		return err
+	}
+
+	query := "update services set monitoring_status = $1 where name = $2"
+	if _, err := r.Tx().Exec(query, content, s.Name); err != nil {
+		return sdk.WrapError(err, "PostUpdate> err on update sql")
 	}
 	return nil
 }

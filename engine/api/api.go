@@ -35,6 +35,7 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -159,8 +160,17 @@ func New() *API {
 	return &API{}
 }
 
+// Service returns an instance of sdk.Service for the API
+func (*API) Service() sdk.Service {
+	return sdk.Service{
+		LastHeartbeat: time.Time{},
+		Type:          services.TypeAPI,
+	}
+}
+
 // API is a struct containing the configuration, the router, the database connection factory and so on
 type API struct {
+	service.Common
 	Router              *Router
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
@@ -180,6 +190,8 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
+
+	a.Type = services.TypeAPI
 
 	return nil
 }
@@ -485,7 +497,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	storeOptions := sessionstore.Options{
-		TTL:   a.Config.Cache.TTL * 60, // Second to minutes
+		TTL:   a.Config.HTTP.SessionTTL * 60, // Second to minutes
 		Cache: a.Cache,
 	}
 
@@ -528,6 +540,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	go migrate.DefaultPayloadMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	go migrate.DefaultTagsMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {

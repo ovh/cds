@@ -10,7 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -34,6 +34,15 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid Repositories configuration")
 	}
+
+	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
+	s.API = s.Cfg.API.HTTP.URL
+	s.Name = s.Cfg.Name
+	s.HTTPURL = s.Cfg.URL
+	s.Token = s.Cfg.API.Token
+	s.Type = services.TypeRepositories
+	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+
 	return nil
 }
 
@@ -58,26 +67,6 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 func (s *Service) Serve(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
-
-	log.Info("Repositories> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
-
-	//Instanciate a cds client
-	s.cds = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
-
-	//First register(heartbeat)
-	if err := s.doHeartbeat(); err != nil {
-		log.Error("Repositories> Unable to register: %v", err)
-		return err
-	}
-	log.Info("Repositories> Service registered")
-
-	//Start the heartbeat gorourine
-	go func() {
-		if err := s.heartbeat(ctx); err != nil {
-			log.Error("%v", err)
-			cancel()
-		}
-	}()
 
 	//Init the cache
 	var errCache error

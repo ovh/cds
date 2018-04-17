@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
+	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -19,11 +19,11 @@ type HatcheryConfiguration struct {
 
 // HatcheryLocal implements HatcheryMode interface for local usage
 type HatcheryLocal struct {
+	hatcheryCommon.Common
 	Config HatcheryConfiguration
 	sync.Mutex
 	hatch   *sdk.Hatchery
 	workers map[string]workerCmd
-	client  cdsclient.Interface
 	os      string
 	arch    string
 }
