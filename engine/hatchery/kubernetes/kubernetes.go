@@ -1,8 +1,10 @@
 package kubernetes
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"os"
 	"strconv"
 	"strings"
@@ -234,6 +236,52 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		}
 	}
 
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Token:             h.Config.API.Token,
+		HTTPInsecure:      h.Config.API.HTTP.Insecure,
+		Name:              name,
+		Key:               h.Configuration().API.Token,
+		Model:             h.Hatchery().Model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
+	}
+
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			udataParam.WorkflowJobID = spawnArgs.JobID
+		} else {
+			udataParam.PipelineBuildJobID = spawnArgs.JobID
+		}
+	}
+
+	if spawnArgs.IsWorkflowJob {
+		udataParam.WorkflowJobID = spawnArgs.JobID
+	} else {
+		udataParam.PipelineBuildJobID = spawnArgs.JobID
+	}
+
+	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
+	if errt != nil {
+		return "", errt
+	}
+	var buffer bytes.Buffer
+	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
+		return "", errTmpl
+	}
+
+	cmd := buffer.String()
+	if spawnArgs.RegisterOnly {
+		cmd += " register"
+		memory = hatchery.MemoryRegisterContainer
+	}
+
 	var gracePeriodSecs int64
 	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -253,7 +301,7 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 					Name:    name,
 					Image:   spawnArgs.Model.ModelDocker.Image,
 					Env:     envs,
-					Command: []string{spawnArgs.Model.ModelDocker.Cmd},
+					Command: []string{cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
 							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),
