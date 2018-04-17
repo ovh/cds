@@ -206,7 +206,6 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	// Estimate needed memory, we will set 110% of required memory
 	memory := int64(h.Config.DefaultMemory)
 
-	// cmd := "rm -f worker && curl ${CDS_API}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker"
 	cmd := spawnArgs.Model.ModelDocker.Cmd
 	if spawnArgs.RegisterOnly {
 		cmd += " register"
@@ -220,45 +219,9 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	}
 	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
 
-	env := map[string]string{
-		"CDS_API":           h.Client().APIURL(),
-		"CDS_TOKEN":         h.Configuration().API.Token,
-		"CDS_NAME":          workerName,
-		"CDS_MODEL":         fmt.Sprintf("%d", spawnArgs.Model.ID),
-		"CDS_HATCHERY":      fmt.Sprintf("%d", h.hatch.ID),
-		"CDS_HATCHERY_NAME": fmt.Sprintf("%s", h.hatch.Name),
-		"CDS_SINGLE_USE":    "1",
-		"CDS_TTL":           fmt.Sprintf("%d", h.Config.WorkerTTL),
-	}
-
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
-		env["CDS_GRAYLOG_HOST"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.Host
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
-		env["CDS_GRAYLOG_PORT"] = strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port)
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
-		env["CDS_GRAYLOG_EXTRA_KEY"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
-		env["CDS_GRAYLOG_EXTRA_VALUE"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue
-	}
-	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		env["CDS_GRPC_API"] = h.Configuration().API.GRPC.URL
-		env["CDS_GRPC_INSECURE"] = strconv.FormatBool(h.Configuration().API.GRPC.Insecure)
-	}
-
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
 	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
-			env["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		} else {
-			logJob = fmt.Sprintf("for pipeline build job %d,", spawnArgs.JobID)
-			env["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		}
-
 		for _, r := range spawnArgs.Requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
@@ -285,7 +248,6 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 			Type: "DOCKER",
 		},
 		CPUs:      0.5,
-		Env:       &env,
 		Instances: &instance,
 		Mem:       &mem,
 		Labels:    &h.marathonLabels,

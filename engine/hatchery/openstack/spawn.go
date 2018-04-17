@@ -52,28 +52,6 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 		return "", errf
 	}
 
-	// 	udataEnd := `
-	// cd $HOME
-	// # Download and start worker with curl
-	// rm -f worker
-	// curl  "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
-	// chmod +x worker
-	// export CDS_SINGLE_USE=1
-	// export CDS_FORCE_EXIT=1
-	// export CDS_API={{.API}}
-	// export CDS_TOKEN={{.Key}}
-	// export CDS_NAME={{.Name}}
-	// export CDS_MODEL={{.Model}}
-	// export CDS_HATCHERY={{.Hatchery}}
-	// export CDS_HATCHERY_NAME={{.HatcheryName}}
-	// export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
-	// export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
-	// export CDS_TTL={{.TTL}}
-	// {{.Graylog}}
-	// {{.Grpc}}
-	// ./worker`
-	// udataEnd += " ; sudo shutdown -h now;"
-
 	var withExistingImage bool
 	if !spawnArgs.Model.NeedRegistration && !spawnArgs.RegisterOnly {
 		start := time.Now()
@@ -93,20 +71,6 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 			}
 		}
 	}
-
-	// 	if withExistingImage {
-	// 		log.Debug("spawnWorker> using userdata from existing image")
-	// 		udataBegin = `#!/bin/bash
-	// set +e
-	// export CDS_FROM_WORKER_IMAGE="true";
-	// `
-	// 	} else {
-	// 		log.Debug("spawnWorker> using userdata from worker model")
-	// 		udataBegin = `#!/bin/bash
-	// set +e
-	// export CDS_FROM_WORKER_IMAGE="false";
-	// `
-	// 	}
 
 	if spawnArgs.RegisterOnly {
 		spawnArgs.Model.ModelVirtualMachine.Cmd = strings.Replace(spawnArgs.Model.ModelVirtualMachine.Cmd, "worker ", "worker register ", 1)
