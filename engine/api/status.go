@@ -160,7 +160,7 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
 			Status:    api.computeGlobalStatusByNumbers(r),
 			Component: fmt.Sprintf("Global/%s", stype),
-			Value:     fmt.Sprintf("%d inst.", r.nbSrv),
+			Value:     fmt.Sprintf("%d", r.nbSrv),
 		})
 	}
 
