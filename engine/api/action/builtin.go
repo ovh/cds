@@ -113,6 +113,16 @@ Checkout a repository into a new directory.`
 		return err
 	}
 
+	// ----------------------------------- Deploy Application    -----------------------
+	deployApplication := sdk.NewAction(sdk.DeployApplicationAction)
+	deployApplication.Type = sdk.BuiltinAction
+	deployApplication.Description = `CDS Builtin Action.
+Deploy an application of a platform.`
+
+	if err := checkBuiltinAction(db, deployApplication); err != nil {
+		return err
+	}
+
 	// ----------------------------------- Git tag    -----------------------
 	gittag := sdk.NewAction(sdk.GitTagAction)
 	gittag.Type = sdk.BuiltinAction
