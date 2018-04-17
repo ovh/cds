@@ -86,6 +86,9 @@ func Create(h Interface) error {
 		log.Error("error on h.CDSClient().WorkerModelsEnabled() (init call): %v", errwm)
 	}
 
+	// hatchery is now fully Initialized
+	h.SetInitialized()
+
 	for {
 		select {
 		case <-ctx.Done():
