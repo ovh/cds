@@ -196,15 +196,18 @@ func (r *Repository) PostGet(s *service) error {
 		return sdk.WrapError(err, "PostGet> error on queryRow")
 	}
 
-	m := sdk.MonitoringStatus{}
-	if err := json.Unmarshal(content, &m); err != nil {
-		return sdk.WrapError(err, "PostGet> error on unmarshal job")
+	if len(content) > 0 {
+		m := sdk.MonitoringStatus{}
+		if err := json.Unmarshal(content, &m); err != nil {
+			return sdk.WrapError(err, "PostGet> error on unmarshal job")
+		}
+		for i := range m.Lines {
+			m.Lines[i].Component = fmt.Sprintf("%s/%s", s.Name, m.Lines[i].Component)
+			m.Lines[i].Type = s.Type
+		}
+		s.MonitoringStatus = m
 	}
-	for i := range m.Lines {
-		m.Lines[i].Component = fmt.Sprintf("%s/%s", s.Name, m.Lines[i].Component)
-		m.Lines[i].Type = s.Type
-	}
-	s.MonitoringStatus = m
+
 	return nil
 }
 
