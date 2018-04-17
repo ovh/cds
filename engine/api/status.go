@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"sort"
 	"strings"
 
 	"github.com/ovh/cds/engine/api/event"
@@ -76,22 +77,48 @@ func (api *API) statusHandler() Handler {
 	}
 }
 
+type computeGlobalNumbers struct {
+	nbSrv    int
+	nbOK     int
+	nbAlerts int
+	nbWarn   int
+}
+
 func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 	mStatus := sdk.MonitoringStatus{}
 
 	var version string
 	versionOk := true
 	linesGlobal := []sdk.MonitoringStatusLine{}
+
+	resume := map[string]computeGlobalNumbers{
+		services.TypeAPI:          computeGlobalNumbers{},
+		services.TypeRepositories: computeGlobalNumbers{},
+		services.TypeVCS:          computeGlobalNumbers{},
+		services.TypeHooks:        computeGlobalNumbers{},
+		services.TypeHatchery:     computeGlobalNumbers{},
+	}
+	var nbg computeGlobalNumbers
 	for _, s := range srvs {
+		var nbOK, nbWarn, nbAlert int
 		for i := range s.MonitoringStatus.Lines {
 			l := s.MonitoringStatus.Lines[i]
 			mStatus.Lines = append(mStatus.Lines, l)
+
+			switch l.Status {
+			case sdk.MonitoringStatusOK:
+				nbOK++
+			case sdk.MonitoringStatusWarn:
+				nbWarn++
+			default:
+				nbAlert++
+			}
 
 			// services should have same version
 			if strings.Contains(l.Component, "Version") {
 				if version == "" {
 					version = l.Value
-				} else if version != l.Value {
+				} else if version != l.Value && versionOk {
 					versionOk = false
 					linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
 						Status:    sdk.MonitoringStatusWarn,
@@ -101,6 +128,18 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 				}
 			}
 		}
+
+		t := resume[s.Type]
+		t.nbOK += nbOK
+		t.nbWarn += nbWarn
+		t.nbAlerts += nbAlert
+		t.nbSrv++
+		resume[s.Type] = t
+
+		nbg.nbOK += nbOK
+		nbg.nbWarn += nbWarn
+		nbg.nbAlerts += nbAlert
+		nbg.nbSrv++
 	}
 
 	if versionOk {
@@ -111,8 +150,36 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 		})
 	}
 
+	linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
+		Status:    api.computeGlobalStatusByNumbers(nbg),
+		Component: "Global/Status",
+		Value:     fmt.Sprintf("%d services", len(srvs)),
+	})
+
+	for stype, r := range resume {
+		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
+			Status:    api.computeGlobalStatusByNumbers(r),
+			Component: fmt.Sprintf("Global/%s", stype),
+			Value:     fmt.Sprintf("%d inst.", r.nbSrv),
+		})
+	}
+
+	sort.Slice(linesGlobal, func(i, j int) bool {
+		return linesGlobal[i].Component < linesGlobal[j].Component
+	})
+
 	mStatus.Lines = append(linesGlobal, mStatus.Lines...)
 	return mStatus
+}
+
+func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
+	r := sdk.MonitoringStatusOK
+	if s.nbAlerts > 0 {
+		r = sdk.MonitoringStatusAlert
+	} else if s.nbWarn > 0 {
+		r = sdk.MonitoringStatusWarn
+	}
+	return r
 }
 
 func (api *API) smtpPingHandler() Handler {
