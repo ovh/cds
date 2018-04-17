@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>new :: CDS - Continuous Delivery Service</title>
+    <title>status :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/engine/config/new/">
+  <body class="" data-url="/cli/cdsctl/admin/services/status/">
     <nav id="sidebar" class="">
 
 
@@ -726,9 +726,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/">
-        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>cdsctl</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
@@ -768,9 +769,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/">
-        <span>admin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>admin</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/admin/hooks/" class="dd-item">
@@ -785,9 +787,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/admin/services/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/admin/services/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/">
-        <span>services</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>services</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/admin/services/list/" class="dd-item">
@@ -795,7 +798,7 @@
           <span>list</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/admin/services/status/" class="dd-item">
+      <li data-nav-id="/cli/cdsctl/admin/services/status/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/status/">
           <span>status</span>
         </a>
@@ -1481,16 +1484,14 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/engine/" class="dd-item parent">
+    <li data-nav-id="/cli/engine/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/engine/">
-        <span>engine</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>engine</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/cli/engine/config/" class="dd-item parent">
+    <li data-nav-id="/cli/engine/config/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/engine/config/">
-        <span>config</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>config</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/engine/config/check/" class="dd-item">
@@ -1498,7 +1499,7 @@
           <span>check</span>
         </a>
     </li>
-      <li data-nav-id="/cli/engine/config/new/" class="dd-item active">
+      <li data-nav-id="/cli/engine/config/new/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/engine/config/new/">
           <span>new</span>
         </a>
@@ -1765,7 +1766,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/engine/config/new.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/admin/services/status.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1791,7 +1792,12 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/engine/'>engine</a> > <a href='https://ovh.github.io/cds/cli/engine/config/'>config</a> > new
+
+
+
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/admin/'>admin</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/admin/services/'>services</a> > status
+
+ 
 
  
 
@@ -1810,10 +1816,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#engine-config-new">engine config new</a>
+<li><a href="#cdsctl-admin-services-status">cdsctl admin services status</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#options">Options</a></li>
+<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
 <li><a href="#see-also">SEE ALSO</a></li>
 </ul></li>
 </ul></li>
@@ -1828,7 +1835,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>new</h1>
+                <h1>status</h1>
                 <p></p>
             </div>
           
@@ -1838,27 +1845,40 @@
 
 
 
-<h2 id="engine-config-new">engine config new</h2>
+<h2 id="cdsctl-admin-services-status">cdsctl admin services status</h2>
 
-<p>CDS configuration file assistant</p>
+<p>Status CDS services</p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Comming soon&hellip;</p>
+<p>Status CDS services</p>
 
-<pre><code>engine config new [flags]
+<pre><code>cdsctl admin services status [flags]
 </code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>      --env    Print configuration as environment variable
-  -h, --help   help for new
+<pre><code>      --fields string   Only display specified object fields. 'empty' will display all fields, 'all' will display all object fields, 'field1,field2' to select multiple fields
+      --filter string   Filter output based on conditions provided
+      --format string   Output format: table|json|yaml (default &quot;table&quot;)
+  -h, --help            help for status
+      --name string     Filter service by name
+  -q, --quiet           Only display object's key
+  -t, --type string     Filter service by type: api, hatchery, hook, repository, vcs
+</code></pre>
+
+<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
+
+<pre><code>  -f, --file string   set configuration file
+  -k, --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
+  -w, --no-warnings   do not display warnings
+  -v, --verbose       verbose output
 </code></pre>
 
 <h3 id="see-also">SEE ALSO</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/engine/config/">engine config</a>   - Manage CDS Configuration</li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/">cdsctl admin services</a>   - Manage CDS services</li>
 </ul>
 
 
@@ -1879,8 +1899,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/engine/config/check/" title="check"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/engine/database/" title="database" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/admin/services/list/" title="list"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/application/" title="application" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
