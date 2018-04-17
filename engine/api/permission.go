@@ -61,6 +61,14 @@ func (api *API) deletePermissionMiddleware(ctx context.Context, w http.ResponseW
 func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	headers := req.Header
 
+	// Check Provider
+	if rc.Options["needProvider"] == "true" {
+		providerName := req.Header.Get("X-Provider-Name")
+		providerToken := req.Header.Get("X-Provider-Token")
+		_ = providerName
+		_ = providerToken
+	}
+
 	// Check Token
 	if h, ok := rc.Options["token"]; ok {
 		headerSplitted := strings.Split(h, ":")

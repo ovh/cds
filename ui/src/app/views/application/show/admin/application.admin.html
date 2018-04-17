@@ -46,6 +46,13 @@
             <app-application-repo [project]="project" [application]="application"></app-application-repo>
         </app-zone-content>
     </app-zone>
+    <ng-container *ngIf="project.platforms && project.platforms.length > 0">
+        <app-zone header="{{ 'application_deployment_title' | translate }}">
+            <app-zone-content class="bottom">
+                <app-application-deployment [project]="project" [application]="application"></app-application-deployment>
+            </app-zone-content>
+        </app-zone>
+    </ng-container>
     <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">
         <app-zone-content class="bottom">
             <div class="ui grid">

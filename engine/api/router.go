@@ -396,6 +396,14 @@ func NeedAdmin(admin bool) HandlerConfigParam {
 	return f
 }
 
+// NeedProvider set the route for external providers
+func NeedProvider(need bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["needProvider"] = fmt.Sprintf("%v", need)
+	}
+	return f
+}
+
 // NeedToken set the route for requests that have the given header
 func NeedToken(k, v string) HandlerConfigParam {
 	f := func(rc *HandlerConfig) {

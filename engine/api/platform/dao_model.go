@@ -95,13 +95,14 @@ func DeleteModel(db gorp.SqlExecutor, id int64) error {
 // PostGet is a db hook
 func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
-		DefaultConfig       sql.NullString `db:"default_config"`
-		PlatformModelPlugin sql.NullString `db:"platform_mode_plugin"`
+		DefaultConfig           sql.NullString `db:"default_config"`
+		PlatformModelPlugin     sql.NullString `db:"platform_mode_plugin"`
+		DeploymentDefaultConfig sql.NullString `db:"deployment_default_config"`
 	}{}
 
-	query := "SELECT default_config, platform_model_plugin FROM platform_model where id = $1"
+	query := "SELECT default_config, platform_model_plugin, deployment_default_config FROM platform_model where id = $1"
 	if err := db.SelectOne(&res, query, pm.ID); err != nil {
-		return sdk.WrapError(err, "PlatformModel.PostGet> Cannot get default_config, platform_model_plugin")
+		return sdk.WrapError(err, "PlatformModel.PostGet> Cannot get default_config, platform_model_plugin, deployment_default_config")
 	}
 
 	if err := gorpmapping.JSONNullString(res.DefaultConfig, &pm.DefaultConfig); err != nil {
@@ -110,6 +111,10 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 
 	if err := gorpmapping.JSONNullString(res.PlatformModelPlugin, &pm.PlatformModelPlugin); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load platform_model_plugin")
+	}
+
+	if err := gorpmapping.JSONNullString(res.DeploymentDefaultConfig, &pm.DeploymentDefaultConfig); err != nil {
+		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load deployment_default_config")
 	}
 
 	return nil
@@ -128,7 +133,8 @@ func (pm *platformModel) PostUpdate(db gorp.SqlExecutor) error {
 
 	defaultConfig, err := gorpmapping.JSONToNullString(pm.DefaultConfig)
 	platformModelPlugin, err := gorpmapping.JSONToNullString(pm.PlatformModelPlugin)
+	deploymentDefaultConfig, err := gorpmapping.JSONToNullString(pm.DeploymentDefaultConfig)
 
-	_, err = db.Exec("update platform_model set default_config = $2, platform_model_plugin = $3 where id = $1", pm.ID, defaultConfig, platformModelPlugin)
+	_, err = db.Exec("update platform_model set default_config = $2, platform_model_plugin = $3, deployment_default_config = $4 where id = $1", pm.ID, defaultConfig, platformModelPlugin, deploymentDefaultConfig)
 	return sdk.WrapError(err, "PostUpdate> Unable to update platform_model")
 }

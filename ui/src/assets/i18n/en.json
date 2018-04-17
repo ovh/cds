@@ -90,6 +90,7 @@
   "application_repoman_cant_link": "here",
   "application_repo_title": "Link application to a repository: ",
   "application_repo_strat_title" : "Configuration",
+  "application_deployment_title" : "Link application to a deployment platform: ",
   "application_new_title" : "New application",
   "application_update_name_error": "Application name is mandatory and must respect the alphanumeric pattern + the following characters: .-_ ([a-zA-Z0-9._-]*)",
   "application_update_ok": "Application has been updated",
@@ -513,6 +514,7 @@
   "platform_configuration": "Platform configuration",
 
   "provider_hook": "hook",
+  "provider_deployment": "deployment",
 
   "repo_name": "Repository",
   "repoman_delete_msg_ok": "Repository mananger is detached from the project",

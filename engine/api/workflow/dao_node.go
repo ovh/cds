@@ -366,7 +366,7 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, 
 func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User, ctx *sdk.WorkflowNodeContext, opts LoadOptions) error {
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
-		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex from workflow_node_context where id = $1", ctx.ID); err != nil {
+		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex, project_platform_id from workflow_node_context where id = $1", ctx.ID); err != nil {
 		return err
 	}
 	if sqlContext.AppID.Valid {
@@ -394,7 +394,7 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
-		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables)
+		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "postLoadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}

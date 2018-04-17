@@ -157,6 +157,16 @@ func ParametersFromPipelineParameters(pipParams []Parameter) map[string]string {
 	return ParametersToMap(res)
 }
 
+// ParametersFromPlatform returns a map of variables from a ProjectPlatform
+func ParametersFromPlatform(ppf PlatformConfig) map[string]string {
+	vars := []Variable{}
+	for k, c := range ppf {
+		vars = append(vars, Variable{Name: k, Type: c.Type, Value: c.Value})
+	}
+	params := variablesToParameters("cds.platform", vars)
+	return ParametersToMap(params)
+}
+
 func variablesToParameters(prefix string, variables []Variable) []Parameter {
 	res := []Parameter{}
 	for _, t := range variables {

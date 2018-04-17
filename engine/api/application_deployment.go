@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getApplicationDeploymentStrategiesConfigHandler() Handler {
@@ -37,6 +38,8 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 		if err := UnmarshalBody(r, &pfConfig); err != nil {
 			return err
 		}
+
+		log.Debug("postApplicationDeploymentStrategyConfigHandler> git this: %+v", pfConfig)
 
 		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
@@ -70,16 +73,49 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to load application")
 		}
 
-		if err := application.SetDeploymentStrategies(tx, proj.ID, app.ID, pf.Model.ID, pfConfig); err != nil {
+		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfConfig); err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
+		}
+
+		app, err = application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
+		if err != nil {
+			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to load application")
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to commit tx")
 		}
 
-		w.WriteHeader(http.StatusOK)
-		return nil
+		return WriteJSON(w, app, http.StatusOK)
+	}
+}
+
+func (api *API) deleteApplicationDeploymentStrategyConfigHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		appName := vars["permApplicationName"]
+		pfName := vars["platform"]
+
+		tx, errtx := api.mustDB().Begin()
+		if errtx != nil {
+			return errtx
+		}
+		defer tx.Rollback()
+
+		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
+		if err != nil {
+			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load application")
+		}
+
+		delete(app.DeploymentStrategies, pfName)
+		panic("not yet implemented")
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to commit tx")
+		}
+
+		return WriteJSON(w, app, http.StatusOK)
 	}
 }
 

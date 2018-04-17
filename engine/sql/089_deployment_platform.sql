@@ -1,5 +1,6 @@
 -- +migrate Up
 ALTER TABLE platform_model ADD COLUMN platform_model_plugin JSONB;
+ALTER TABLE platform_model ADD COLUMN deployment_default_config JSONB;
 
 CREATE TABLE application_deployment_strategy (
   application_id BIGINT,

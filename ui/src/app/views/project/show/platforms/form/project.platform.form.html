@@ -4,6 +4,7 @@
             <div><i class="option.icon icon" *ngIf="option.icon"></i>{{ option.name }}</div>
             <ul>
                 <li *ngIf="option.hook"><div class="ui green label">{{'provider_hook' | translate}}</div></li>
+                <li *ngIf="option.deployment"><div class="ui purple label">{{'provider_deployment' | translate}}</div></li>
             </ul>
         </ng-template>
         <div class="fields">

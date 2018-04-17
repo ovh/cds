@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getPlatformModelsHandler() Handler {
@@ -77,6 +78,8 @@ func (api *API) putPlatformModelHandler() Handler {
 		if err := UnmarshalBody(r, m); err != nil {
 			return sdk.WrapError(err, "putPlatformModelHandler")
 		}
+
+		log.Debug("putPlatformModelHandler> %+v", m)
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {

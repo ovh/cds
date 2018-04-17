@@ -96,19 +96,20 @@ func (p *PlatformModelPlugin) AddBinary(os, arch string, b PlatformModelPluginBi
 
 // PlatformModel represent a platform model with its default configuration
 type PlatformModel struct {
-	ID                  int64                `json:"id" db:"id" yaml:"-" cli:"-"`
-	Name                string               `json:"name" db:"name" yaml:"name" cli:"name,key"`
-	Author              string               `json:"author" db:"author" yaml:"author" cli:"author"`
-	Identifier          string               `json:"identifier" db:"identifier" yaml:"identifier,omitempty"`
-	Icon                string               `json:"icon" db:"icon" yaml:"icon"`
-	DefaultConfig       PlatformConfig       `json:"default_config" db:"-" yaml:"default_config"`
-	Disabled            bool                 `json:"disabled" db:"disabled" yaml:"disabled"`
-	Hook                bool                 `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`
-	FileStorage         bool                 `json:"file_storage" db:"file_storage" yaml:"file_storage" cli:"file_storage supported"`
-	BlockStorage        bool                 `json:"block_storage" db:"block_storage" yaml:"block_storage" cli:"block_storage supported"`
-	Deployment          bool                 `json:"deployment" db:"deployment" yaml:"deployment" cli:"deployment_supported"`
-	Compute             bool                 `json:"compute" db:"compute" yaml:"compute" cli:"compute_supported"`
-	PlatformModelPlugin *PlatformModelPlugin `json:"platform_model_plugin,omitempty" db:"-" yaml:"-"`
+	ID                      int64                `json:"id" db:"id" yaml:"-" cli:"-"`
+	Name                    string               `json:"name" db:"name" yaml:"name" cli:"name,key"`
+	Author                  string               `json:"author" db:"author" yaml:"author" cli:"author"`
+	Identifier              string               `json:"identifier" db:"identifier" yaml:"identifier,omitempty"`
+	Icon                    string               `json:"icon" db:"icon" yaml:"icon"`
+	DefaultConfig           PlatformConfig       `json:"default_config" db:"-" yaml:"default_config"`
+	Disabled                bool                 `json:"disabled" db:"disabled" yaml:"disabled"`
+	Hook                    bool                 `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`
+	FileStorage             bool                 `json:"file_storage" db:"file_storage" yaml:"file_storage" cli:"file_storage supported"`
+	BlockStorage            bool                 `json:"block_storage" db:"block_storage" yaml:"block_storage" cli:"block_storage supported"`
+	Deployment              bool                 `json:"deployment" db:"deployment" yaml:"deployment" cli:"deployment_supported"`
+	DeploymentDefaultConfig PlatformConfig       `json:"deployment_default_config" db:"-" yaml:"deployment_default_config"`
+	Compute                 bool                 `json:"compute" db:"compute" yaml:"compute" cli:"compute_supported"`
+	PlatformModelPlugin     *PlatformModelPlugin `json:"platform_model_plugin,omitempty" db:"-" yaml:"-"`
 }
 
 //IsBuiltin checks is the model is builtin or not
