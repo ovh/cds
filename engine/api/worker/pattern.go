@@ -23,6 +23,15 @@ func InsertWorkerModelPattern(db gorp.SqlExecutor, modelPattern *sdk.ModelPatter
 	return nil
 }
 
+// UpdateWorkerModelPattern insert a new worker model in database
+func UpdateWorkerModelPattern(db gorp.SqlExecutor, modelPattern *sdk.ModelPattern) error {
+	dbmodelPattern := WorkerModelPattern(*modelPattern)
+	if _, err := db.Update(&dbmodelPattern); err != nil {
+		return err
+	}
+	return nil
+}
+
 // LoadWorkerModelPatterns retrieves model patterns from database
 func LoadWorkerModelPatterns(db gorp.SqlExecutor) ([]sdk.ModelPattern, error) {
 	var wmPatterns []WorkerModelPattern
@@ -44,8 +53,8 @@ func LoadWorkerModelPatterns(db gorp.SqlExecutor) ([]sdk.ModelPattern, error) {
 // LoadWorkerModelPatternByName retrieves model patterns from database given its name and type
 func LoadWorkerModelPatternByName(db gorp.SqlExecutor, patternType, name string) (*sdk.ModelPattern, error) {
 	var wmp WorkerModelPattern
-	query := fmt.Sprintf(`SELECT %s FROM worker_model_pattern WHERE name = $1`, patternColumns)
-	if _, err := db.Select(&wmp, query, name); err != nil {
+	query := fmt.Sprintf(`SELECT %s FROM worker_model_pattern WHERE name = $1 AND type = $2`, patternColumns)
+	if err := db.SelectOne(&wmp, query, name, patternType); err != nil {
 		return nil, sdk.WrapError(err, "LoadWorkerModelPatternByName> ")
 	}
 

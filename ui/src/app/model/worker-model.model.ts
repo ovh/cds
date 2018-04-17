@@ -19,6 +19,7 @@ export class WorkerModel {
     group: Group;
     is_official: boolean;
     is_deprecated: boolean;
+    pattern_name: string;
 
     constructor() {
       this.model_docker = new ModelDocker();
@@ -49,4 +50,10 @@ export class ModelPattern {
     cmd: string;
     post_cmd?: string;
   };
+
+  constructor() {
+    this.model = {
+      cmd: ''
+    };
+  }
 }

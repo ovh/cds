@@ -1,0 +1,83 @@
+<h2>{{'worker_model_pattern_add' | translate}}</h2>
+
+<div *ngIf="!loading;then showPatterns;else loadPatterns"></div>
+<ng-template #showPatterns>
+  <div id="WorkerModelAdd">
+    <form class="ui form">
+      <div class="ui grid">
+        <div class="ten wide column">
+            <div class="two fields">
+              <div class="field">
+                  <label>{{'worker_model_name' | translate}}</label>
+                  <input class="ui input" type="text" name="name" [(ngModel)]="pattern.name" [disabled]="loading">
+              </div>
+              <div class="field">
+                  <label>{{'worker_model_type' | translate}}</label>
+                  <ng-container *ngIf="workerModelTypes">
+                    <sui-select class="selection"
+                                name ="type"
+                                placeholder="{{'common_select' | translate}}"
+                                [isDisabled]="loading"
+                                [options]="workerModelTypes"
+                                isSearchable="true"
+                                [(ngModel)]="pattern.type"
+                                #selectType>
+                        <sui-select-option *ngFor="let option of selectType.filteredOptions"
+                                           [value]="option">
+                        </sui-select-option>
+                    </sui-select>
+                  </ng-container>
+              </div>
+            </div>
+            <div class="field" *ngIf="pattern.type && pattern.type !== 'docker'">
+              <label>{{'worker_model_pre_cmd' | translate}}</label>
+              <textarea
+                class="ui input"
+                name="pre_cmd"
+                [(ngModel)]="pattern.model.pre_cmd"
+                [disabled]="loading || !currentUser.admin">
+              </textarea>
+            </div>
+            <div class="field">
+              <label>{{'worker_model_cmd' | translate}}</label>
+              <input class="ui input"
+                type="text" name="cmd" [(ngModel)]="pattern.model.cmd"
+                [disabled]="loading || !currentUser.admin">
+            </div>
+            <div class="field" *ngIf="pattern.type && pattern.type !== 'docker'">
+              <label>{{'worker_model_post_cmd' | translate}}</label>
+              <textarea class="ui input" name="post_cmd" [(ngModel)]="pattern.model.post_cmd" [disabled]="loading || !currentUser.admin"></textarea>
+            </div>
+
+            <div class="field">
+                <button class="ui green right floated button"
+                  [class.loading]="addLoading"
+                  [class.disabled]="!pattern.type || !pattern.name || !pattern.model.cmd"
+                  (click)="clickSaveButton()">
+                  <i class="save icon"></i>{{ 'btn_add' | translate }}
+                </button>
+            </div>
+        </div>
+        <div class="six wide column">
+          <div class="ui tall stacked segment">
+            <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
+            <p>{{'worker_model_help_line_1' | translate}}</p>
+            <p>{{'worker_model_help_line_2' | translate}}</p>
+
+            <i class="fa fa-question-circle"></i> {{'worker_model_help_howtos' | translate}}
+            <div class="ui list">
+              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">{{'worker_model_help_howto_link_1' | translate}}</a>
+              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/">{{'worker_model_help_howto_link_2' | translate}}</a>
+              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">{{'worker_model_help_howto_link_3' | translate}}</a>
+              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">{{'worker_model_help_howto_link_4' | translate}}</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</ng-template>
+<ng-template #loadPatterns>
+    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+</ng-template>

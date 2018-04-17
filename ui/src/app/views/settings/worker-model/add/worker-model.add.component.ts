@@ -79,6 +79,10 @@ export class WorkerModelAddComponent implements OnInit {
         }
       });
 
+      if (this.patternSelected) {
+          this.workerModel.pattern_name = this.patternSelected.name;
+      }
+
       this.loading = true;
       this._workerModelService.createWorkerModel(this.workerModel).subscribe( wm => {
           this.loading = false;

@@ -2,8 +2,11 @@ package api
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -40,7 +43,7 @@ func (api *API) addWorkerModelHandler() Handler {
 			if model.ModelDocker.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
 			}
-			if !user.Admin {
+			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrForbidden
 				}
@@ -50,7 +53,7 @@ func (api *API) addWorkerModelHandler() Handler {
 			if model.ModelVirtualMachine.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
 			}
-			if !user.Admin {
+			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrForbidden
 				}
@@ -207,7 +210,6 @@ func (api *API) updateWorkerModelHandler() Handler {
 			default:
 				model.ModelVirtualMachine.Image = old.ModelVirtualMachine.Image
 			}
-
 		}
 
 		//If the model RegisteredCapabilities has not been set, keep the old RegisteredCapabilities
@@ -228,6 +230,48 @@ func (api *API) updateWorkerModelHandler() Handler {
 		//If the model Type has not been set, keep the old Type
 		if model.Type == "" {
 			model.Type = old.Type
+		}
+
+		var modelPattern *sdk.ModelPattern
+		if model.PatternName != "" {
+			fmt.Println("laaaaa-----", model.PatternName)
+			var errP error
+			modelPattern, errP = worker.LoadWorkerModelPatternByName(api.mustDB(), model.Type, model.PatternName)
+			if errP != nil {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Cannot load worker model pattern %s : %v", model.PatternName, errP)
+			}
+
+			fmt.Println("model", modelPattern, errP)
+		}
+
+		user := getUser(ctx)
+		switch model.Type {
+		case sdk.Docker:
+			if model.ModelDocker.Image == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid image")
+			}
+			fmt.Println("iciiiiii")
+			fmt.Println(user.Admin)
+			fmt.Println(model.Restricted)
+			fmt.Println(modelPattern)
+			if !user.Admin && !model.Restricted {
+				if modelPattern == nil {
+					return sdk.ErrForbidden
+				}
+				model.ModelDocker.Cmd = modelPattern.Model.Cmd
+			}
+		default:
+			if model.ModelVirtualMachine.Image == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid image")
+			}
+			if !user.Admin && !model.Restricted {
+				if modelPattern == nil {
+					return sdk.ErrForbidden
+				}
+				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
+				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
+				model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
+			}
 		}
 
 		//If the model modelID has not been set, keep the old modelID
@@ -391,6 +435,122 @@ func (api *API) getWorkerModelsHandler() Handler {
 		}
 
 		return WriteJSON(w, models, http.StatusOK)
+	}
+}
+
+func (api *API) putWorkerModelPatternHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if getUser(ctx) == nil || !getUser(ctx).Admin {
+			return sdk.ErrForbidden
+		}
+		vars := mux.Vars(r)
+		patternName := vars["name"]
+		patternType := vars["type"]
+
+		// Unmarshal body
+		var modelPattern sdk.ModelPattern
+		if err := UnmarshalBody(r, &modelPattern); err != nil {
+			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot unmarshal body")
+		}
+
+		if !sdk.NamePatternRegex.MatchString(modelPattern.Name) {
+			return sdk.ErrInvalidName
+		}
+
+		if modelPattern.Model.Cmd == "" {
+			return sdk.ErrInvalidPatternModel
+		}
+
+		var typeFound bool
+		for _, availableType := range sdk.AvailableWorkerModelType {
+			if availableType == modelPattern.Type {
+				typeFound = true
+				break
+			}
+		}
+
+		if !typeFound {
+			return sdk.ErrInvalidPatternModel
+		}
+
+		oldWmp, errOld := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		if errOld != nil {
+			if errOld == sql.ErrNoRows {
+				return sdk.WrapError(sdk.ErrNotFound, "putWorkerModelPatternHandler> cannot load worker model pattern (%s/%s) : %v", patternType, patternName, errOld)
+			}
+			return sdk.WrapError(errOld, "putWorkerModelPatternHandler> cannot load worker model pattern")
+		}
+		modelPattern.ID = oldWmp.ID
+
+		// Insert model pattern in db
+		if err := worker.UpdateWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
+			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot update worker model pattern")
+		}
+
+		return WriteJSON(w, modelPattern, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkerModelPatternHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if getUser(ctx) == nil || getUser(ctx).ID == 0 {
+			var username string
+			if getUser(ctx) != nil {
+				username = getUser(ctx).Username
+			}
+			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
+		}
+		vars := mux.Vars(r)
+		patternName := vars["name"]
+		patternType := vars["type"]
+
+		modelPattern, err := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkerModelPatternsHandler> cannot load worker model patterns")
+		}
+
+		return WriteJSON(w, modelPattern, http.StatusOK)
+	}
+}
+
+func (api *API) postAddWorkerModelPatternHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if getUser(ctx) == nil || !getUser(ctx).Admin {
+			return sdk.ErrForbidden
+		}
+
+		// Unmarshal body
+		var modelPattern sdk.ModelPattern
+		if err := UnmarshalBody(r, &modelPattern); err != nil {
+			return sdk.WrapError(err, "postAddWorkerModelPatternHandler> cannot unmarshal body")
+		}
+
+		if !sdk.NamePatternRegex.MatchString(modelPattern.Name) {
+			return sdk.ErrInvalidName
+		}
+
+		if modelPattern.Model.Cmd == "" {
+			return sdk.ErrInvalidPatternModel
+		}
+
+		var typeFound bool
+		for _, availableType := range sdk.AvailableWorkerModelType {
+			if availableType == modelPattern.Type {
+				typeFound = true
+				break
+			}
+		}
+
+		if !typeFound {
+			return sdk.ErrInvalidPatternModel
+		}
+
+		// Insert model pattern in db
+		if err := worker.InsertWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
+			return sdk.WrapError(err, "postAddWorkerModelPatternHandler> cannot add worker model pattern")
+		}
+
+		return WriteJSON(w, modelPattern, http.StatusOK)
 	}
 }
 

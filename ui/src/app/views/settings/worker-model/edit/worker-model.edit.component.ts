@@ -125,23 +125,32 @@ export class WorkerModelEditComponent implements OnInit {
         }
       });
 
+      if (this.patternSelected) {
+          this.workerModel.pattern_name = this.patternSelected.name;
+      }
+
       this.loading = true;
       if (this.workerModel.id > 0) {
-        this._workerModelService.updateWorkerModel(this.workerModel).subscribe( wm => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('worker_model_saved'));
-            this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
-        }, () => {
-            this.loading = false;
-        });
+        this._workerModelService.updateWorkerModel(this.workerModel)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this.patternSelected = null
+            }))
+            .subscribe( wm => {
+                this._toast.success('', this._translate.instant('worker_model_saved'));
+                this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
+            });
       } else {
-        this._workerModelService.createWorkerModel(this.workerModel).subscribe( wm => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('worker_model_saved'));
-            this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
-        }, () => {
-            this.loading = false;
-        });
+        this._workerModelService.createWorkerModel(this.workerModel)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this.patternSelected = null
+            }))
+            .subscribe( wm => {
+                this.loading = false;
+                this._toast.success('', this._translate.instant('worker_model_saved'));
+                this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
+            });
       }
     }
 

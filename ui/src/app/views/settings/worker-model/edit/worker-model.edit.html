@@ -146,8 +146,8 @@
                 </sui-select>
               </div>
               <div class="field">
-                <label>Worker command</label>
-                <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd" [disabled]="loading || !currentUser.admin">
+                <label>{{'worker_model_cmd' | translate}}</label>
+                <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
             </ng-container>
             <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
@@ -172,16 +172,30 @@
                 </sui-select>
               </div>
               <div class="field">
-                <label>Pre worker command</label>
-                <textarea class="ui input" name="pre_cmd" [(ngModel)]="workerModel.model_virtual_machine.pre_cmd" [disabled]="loading || !currentUser.admin"></textarea>
+                <label>{{'worker_model_pre_cmd' | translate}}</label>
+                <textarea
+                  class="ui input"
+                  name="pre_cmd"
+                  [(ngModel)]="workerModel.model_virtual_machine.pre_cmd"
+                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </textarea>
               </div>
               <div class="field">
-                <label>Worker command</label>
-                <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_virtual_machine.cmd" [disabled]="loading || !currentUser.admin">
+                <label>{{'worker_model_cmd' | translate}}</label>
+                <input
+                  class="ui input"
+                    type="text"
+                    name="cmd"
+                    [(ngModel)]="workerModel.model_virtual_machine.cmd"
+                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
               <div class="field">
-                <label>Post worker command</label>
-                <textarea class="ui input" name="post_cmd" [(ngModel)]="workerModel.model_virtual_machine.post_cmd" [disabled]="loading || !currentUser.admin"></textarea>
+                <label>{{'worker_model_post_cmd' | translate}}</label>
+                <textarea class="ui input"
+                  name="post_cmd"
+                  [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
+                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </textarea>
               </div>
             </ng-container>
 

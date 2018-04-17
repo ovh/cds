@@ -55,11 +55,35 @@ export class WorkerModelService {
     }
 
     /**
+     * Create a worker model pattern
+     * @returns {Observable<ModelPattern>}
+     */
+    createWorkerModelPattern(workerModelPattern: ModelPattern): Observable<ModelPattern> {
+        return this._http.post<ModelPattern>('/worker/model/pattern', workerModelPattern);
+    }
+
+    /**
+     * update a worker model pattern
+     * @returns {Observable<ModelPattern>}
+     */
+    updateWorkerModelPattern(type: string, name: string, workerModelPattern: ModelPattern): Observable<ModelPattern> {
+        return this._http.put<ModelPattern>(`/worker/model/pattern/${type}/${name}`, workerModelPattern);
+    }
+
+    /**
      * Get the list of available worker model patterns
      * @returns {Observable<ModelPattern[]>}
      */
     getWorkerModelPatterns(): Observable<Array<ModelPattern>> {
         return this._http.get<Array<ModelPattern>>('/worker/model/pattern');
+    }
+
+    /**
+     * Get worker model pattern
+     * @returns {Observable<ModelPattern>}
+     */
+    getWorkerModelPattern(type: string, name: string): Observable<ModelPattern> {
+        return this._http.get<ModelPattern>(`/worker/model/pattern/${type}/${name}`);
     }
 
     /**
