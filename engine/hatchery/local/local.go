@@ -10,7 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -20,7 +23,11 @@ import (
 
 // New instanciates a new hatchery local
 func New() *HatcheryLocal {
-	return new(HatcheryLocal)
+	s := new(HatcheryLocal)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -35,15 +42,51 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
-	// h.API = h.Config.API.HTTP.URL
-	// h.Name = h.Config.Name
-	// h.HTTPURL = h.Config.URL
-	// h.Token = h.Config.API.Token
-	// h.Type = services.TypeHatchery
-	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	genname := h.Configuration().Name
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		genname,
+	)
+
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+
+	req, err := h.CDSClient().Requirements()
+	if err != nil {
+		return fmt.Errorf("Cannot fetch requirements: %s", err)
+	}
+
+	capa, err := checkCapabilities(req)
+	if err != nil {
+		return fmt.Errorf("Cannot check local capabilities: %s", err)
+	}
+
+	h.hatch = &sdk.Hatchery{
+		Name: genname,
+		Model: sdk.Model{
+			Name:         genname,
+			Image:        genname,
+			Capabilities: capa,
+			Provision:    int64(h.Config.NbProvision),
+		},
+		Version: sdk.VERSION,
+	}
 
 	return nil
+}
+
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (h *HatcheryLocal) Status() sdk.MonitoringStatus {
+	m := h.CommonMonitoring()
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	return m
 }
 
 // CheckConfiguration checks the validity of the configuration object
@@ -77,11 +120,6 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// Serve start the HatcheryLocal server
-func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
-}
-
 // ID must returns hatchery id
 func (h *HatcheryLocal) ID() int64 {
 	if h.hatch == nil {
@@ -95,9 +133,9 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcheryLocal) Client() cdsclient.Interface {
-	return h.client
+// Serve start the hatchery server
+func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -293,6 +331,7 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]workerCmd)
 
+<<<<<<< HEAD
 	genname := h.Configuration().Name
 	h.client = cdsclient.NewHatchery(
 		h.Configuration().API.HTTP.URL,
@@ -325,6 +364,8 @@ func (h *HatcheryLocal) Init() error {
 		Version: sdk.VERSION,
 	}
 
+=======
+>>>>>>> 94703c24932b6cb32624b3444f07dfd2378ee576
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -366,7 +407,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 	h.Lock()
 	defer h.Unlock()
 
-	apiworkers, err := h.Client().WorkerList()
+	apiworkers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}

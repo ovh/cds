@@ -191,6 +191,8 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
+	a.Type = services.TypeAPI
+
 	return nil
 }
 
@@ -536,9 +538,8 @@ func (a *API) Serve(ctx context.Context) error {
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
-	go migrate.DefaultPayloadMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
-	go migrate.DefaultTagsMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	go migrate.HatcheryCmdMigration(a.Cache, a.DBConnectionFactory.GetDBMap)
+	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {

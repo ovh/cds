@@ -3,9 +3,9 @@ package marathon
 import (
 	"github.com/gambol99/go-marathon"
 
-	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/api"
+	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -40,12 +40,10 @@ type HatcheryConfiguration struct {
 
 // HatcheryMarathon implements HatcheryMode interface for mesos mode
 type HatcheryMarathon struct {
-	service.Common
-	Config HatcheryConfiguration
-	hatch  *sdk.Hatchery
-
+	hatcheryCommon.Common
+	Config         HatcheryConfiguration
+	Router         *api.Router
+	hatch          *sdk.Hatchery
 	marathonClient marathon.Marathon
-	client         cdsclient.Interface
-
 	marathonLabels map[string]string
 }

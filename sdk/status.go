@@ -24,6 +24,7 @@ type MonitoringStatusLine struct {
 	Status    string `json:"status" cli:"status"`
 	Component string `json:"component" cli:"component"`
 	Value     string `json:"value" cli:"value"`
+	Type      string `json:"type" cli:"type"`
 }
 
 func (m MonitoringStatusLine) String() string {

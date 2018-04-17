@@ -1,17 +1,20 @@
 package swarm
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"strconv"
 	"strings"
 	"time"
 
 	types "github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
+	"github.com/gorilla/mux"
 	context "golang.org/x/net/context"
 
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
@@ -19,28 +22,15 @@ import (
 
 // New instanciates a new Hatchery Swarm
 func New() *HatcherySwarm {
-	return new(HatcherySwarm)
-}
-
-// Serve start the HatcherySwarm server
-func (h *HatcherySwarm) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
+	s := new(HatcherySwarm)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -171,12 +161,52 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		return name, errDockerOpts
 	}
 
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Token:             h.Config.API.Token,
+		HTTPInsecure:      h.Config.API.HTTP.Insecure,
+		Name:              name,
+		Key:               h.Configuration().API.Token,
+		Model:             h.Hatchery().Model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
+	}
+
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			udataParam.WorkflowJobID = spawnArgs.JobID
+		} else {
+			udataParam.PipelineBuildJobID = spawnArgs.JobID
+		}
+	}
+
+	if spawnArgs.IsWorkflowJob {
+		udataParam.WorkflowJobID = spawnArgs.JobID
+	} else {
+		udataParam.PipelineBuildJobID = spawnArgs.JobID
+	}
+
+	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelVirtualMachine.Cmd)
+	if errt != nil {
+		return "", errt
+	}
+	var buffer bytes.Buffer
+	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
+		return "", errTmpl
+	}
+
 	args := containerArgs{
 		name:         name,
 		image:        spawnArgs.Model.ModelDocker.Image,
 		network:      network,
 		networkAlias: networkAlias,
-		cmd:          []string{spawnArgs.Model.ModelDocker.Cmd + registerCmd},
+		cmd:          []string{buffer.String() + registerCmd},
 		labels:       labels,
 		memory:       memory,
 		dockerOpts:   *dockerOpts,
@@ -386,9 +416,9 @@ func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcherySwarm) Client() cdsclient.Interface {
-	return h.client
+// Serve start the hatchery server
+func (h *HatcherySwarm) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -412,7 +442,7 @@ func (h *HatcherySwarm) killAwolWorkerRoutine() {
 }
 
 func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
-	apiworkers, err := h.Client().WorkerList()
+	apiworkers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return nil, sdk.WrapError(err, "listAwolWorkers> Cannot get workers")
 	}

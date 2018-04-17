@@ -5,7 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/engine/api"
+	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -41,8 +42,9 @@ type HatcheryConfiguration struct {
 
 // HatcheryKubernetes implements HatcheryMode interface for local usage
 type HatcheryKubernetes struct {
-	service.Common
+	hatcheryCommon.Common
 	Config HatcheryConfiguration
+	Router *api.Router
 	sync.Mutex
 	hatch     *sdk.Hatchery
 	workers   map[string]workerCmd

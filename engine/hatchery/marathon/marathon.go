@@ -1,9 +1,11 @@
 package marathon
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
+	"html/template"
 	"math"
 	"net/http"
 	"net/url"
@@ -14,17 +16,24 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
-	"github.com/ovh/cds/sdk/namesgenerator"
+	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // New instanciates a new Hatchery Marathon
 func New() *HatcheryMarathon {
-	return new(HatcheryMarathon)
+	s := new(HatcheryMarathon)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -39,15 +48,34 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
-	// h.API = h.Config.API.HTTP.URL
-	// h.Name = h.Config.Name
-	// h.HTTPURL = h.Config.URL
-	// h.Token = h.Config.API.Token
-	// h.Type = services.TypeHatchery
-	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
+
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
+	)
+
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
 	return nil
+}
+
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (h *HatcheryMarathon) Status() sdk.MonitoringStatus {
+	m := h.CommonMonitoring()
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	return m
 }
 
 // CheckConfiguration checks the validity of the configuration object
@@ -124,11 +152,6 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// Serve start the HatcheryMarathon server
-func (h *HatcheryMarathon) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
-}
-
 // ID must returns hatchery id
 func (h *HatcheryMarathon) ID() int64 {
 	if h.hatch == nil {
@@ -142,9 +165,9 @@ func (h *HatcheryMarathon) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcheryMarathon) Client() cdsclient.Interface {
-	return h.client
+// Serve start the hatchery server
+func (h *HatcheryMarathon) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -206,18 +229,58 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	// Estimate needed memory, we will set 110% of required memory
 	memory := int64(h.Config.DefaultMemory)
 
-	cmd := spawnArgs.Model.ModelDocker.Cmd
-	if spawnArgs.RegisterOnly {
-		cmd += " register"
-		memory = hatchery.MemoryRegisterContainer
-	}
-
 	instance := 1
 	workerName := fmt.Sprintf("%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	if spawnArgs.RegisterOnly {
 		workerName = "register-" + workerName
 	}
 	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
+
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Token:             h.Config.API.Token,
+		HTTPInsecure:      h.Config.API.HTTP.Insecure,
+		Name:              workerName,
+		Key:               h.Configuration().API.Token,
+		Model:             h.Hatchery().Model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
+	}
+
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			udataParam.WorkflowJobID = spawnArgs.JobID
+		} else {
+			udataParam.PipelineBuildJobID = spawnArgs.JobID
+		}
+	}
+
+	if spawnArgs.IsWorkflowJob {
+		udataParam.WorkflowJobID = spawnArgs.JobID
+	} else {
+		udataParam.PipelineBuildJobID = spawnArgs.JobID
+	}
+
+	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelVirtualMachine.Cmd)
+	if errt != nil {
+		return "", errt
+	}
+	var buffer bytes.Buffer
+	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
+		return "", errTmpl
+	}
+
+	cmd := buffer.String()
+	if spawnArgs.RegisterOnly {
+		cmd += " register"
+		memory = hatchery.MemoryRegisterContainer
+	}
 
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
@@ -380,18 +443,6 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -421,7 +472,7 @@ func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
 }
 
 func (h *HatcheryMarathon) killDisabledWorkers() error {
-	workers, err := h.Client().WorkerList()
+	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}
@@ -453,7 +504,7 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 
 func (h *HatcheryMarathon) killAwolWorkers() error {
 	log.Debug("killAwolWorkers>")
-	workers, err := h.Client().WorkerList()
+	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}

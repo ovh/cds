@@ -18,7 +18,12 @@ import (
 // CommonConfiguration is the base configuration for all hatcheries
 type CommonConfiguration struct {
 	Name string `toml:"name" default:"" comment:"Name of Hatchery"`
-	API  struct {
+	HTTP struct {
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
+		Port int    `toml:"port" default:"8086"`
+	} `toml:"http" comment:"######################\n CDS Hatchery HTTP Configuration \n######################"`
+	URL string `toml:"url" default:"http://localhost:8086" comment:"URL of this Hatchery"`
+	API struct {
 		HTTP struct {
 			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
@@ -83,7 +88,7 @@ type Interface interface {
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() int
 	Hatchery() *sdk.Hatchery
-	Client() cdsclient.Interface
+	CDSClient() cdsclient.Interface
 	Configuration() CommonConfiguration
 	ModelType() string
 	NeedRegistration(model *sdk.Model) bool
@@ -175,7 +180,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 
 	for _, model := range models {
 		if canRunJob(h, timestamp, execGroups, jobID, requirements, &model, hostname) {
-			if err := h.Client().QueueJobBook(isWorkflowJob, jobID); err != nil {
+			if err := h.CDSClient().QueueJobBook(isWorkflowJob, jobID); err != nil {
 				// perhaps already booked by another hatchery
 				log.Debug("routine> %d - cannot book job %d %s: %s", timestamp, jobID, model.Name, err)
 				break // go to next job
@@ -196,10 +201,10 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 					RemoteTime: time.Now(),
 					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
 				})
-				if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
+				if err := h.CDSClient().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
 					log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", timestamp, jobID, err)
 				}
-				if err := h.Client().WorkerModelSpawnError(model.ID, fmt.Sprintf("routine> cannot spawn worker %s for job %d: %s", model.Name, jobID, errSpawn)); err != nil {
+				if err := h.CDSClient().WorkerModelSpawnError(model.ID, fmt.Sprintf("routine> cannot spawn worker %s for job %d: %s", model.Name, jobID, errSpawn)); err != nil {
 					log.Error("routine> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model.Name, errSpawn)
 				}
 				continue // try another model
@@ -216,7 +221,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 				},
 			})
 
-			if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
+			if err := h.CDSClient().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
 				log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", timestamp, jobID, err)
 			}
 			return true, nil // ok for this job
@@ -246,7 +251,7 @@ func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
 				go func(m sdk.Model) {
 					if name, errSpawn := h.SpawnWorker(SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
-						if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("routine> cannot spawn worker %s for provisioning: %s", m.Name, errSpawn)); err != nil {
+						if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("routine> cannot spawn worker %s for provisioning: %s", m.Name, errSpawn)); err != nil {
 							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
 						}
 					}
