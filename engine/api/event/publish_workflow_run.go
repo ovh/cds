@@ -67,6 +67,13 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.
 		SourceNodeRuns: nr.SourceNodeRuns,
 		Hash:           nr.VCSHash,
 		BranchName:     nr.VCSBranch,
+		NodeID:         nr.WorkflowNodeID,
+		RunID:          nr.WorkflowRunID,
+		StagesSummary:  make([]sdk.StageSummary, len(nr.Stages)),
+	}
+
+	for i := range nr.Stages {
+		e.StagesSummary[i] = nr.Stages[i].ToSummary()
 	}
 
 	var pipName string

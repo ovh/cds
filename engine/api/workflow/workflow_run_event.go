@@ -147,6 +147,13 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					SourceNodeRuns: nodeRun.SourceNodeRuns,
 					Hash:           nodeRun.VCSHash,
 					BranchName:     nodeRun.VCSBranch,
+					NodeID:         nodeRun.WorkflowNodeID,
+					RunID:          nodeRun.WorkflowRunID,
+					StagesSummary:  make([]sdk.StageSummary, len(nodeRun.Stages)),
+				}
+
+				for i := range nodeRun.Stages {
+					eventWNR.StagesSummary[i] = nodeRun.Stages[i].ToSummary()
 				}
 
 				var pipName, appName, envName string

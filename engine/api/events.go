@@ -102,7 +102,6 @@ func (b *eventsBroker) Start(c context.Context) {
 			for _, i := range b.clients {
 				manageEvent(receivedEvent, string(bEvent), i)
 			}
-
 			b.mutex.Unlock()
 		}
 	}
@@ -110,6 +109,8 @@ func (b *eventsBroker) Start(c context.Context) {
 
 func (b *eventsBroker) ServeHTTP() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		uuid := FormString(r, "uuid")
+
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
@@ -117,9 +118,12 @@ func (b *eventsBroker) ServeHTTP() Handler {
 			return nil
 		}
 
-		uuid, errS := sessionstore.NewSessionKey()
-		if errS != nil {
-			return sdk.WrapError(errS, "eventsBroker.Serve> Cannot generate UUID")
+		if uuid == "" {
+			uuidSK, errS := sessionstore.NewSessionKey()
+			if errS != nil {
+				return sdk.WrapError(errS, "eventsBroker.Serve> Cannot generate UUID")
+			}
+			uuid = string(uuidSK)
 		}
 
 		user := getUser(ctx)
@@ -136,7 +140,7 @@ func (b *eventsBroker) ServeHTTP() Handler {
 
 		// Add this client to the map of those that should receive updates
 		b.mutex.Lock()
-		b.clients[string(uuid)] = messageChan
+		b.clients[uuid] = messageChan
 		b.mutex.Unlock()
 
 		// Set the headers related to event streaming.
@@ -267,7 +271,7 @@ func (api *API) eventSubscribeHandler() Handler {
 		}
 
 		api.eventsBroker.mutex.Lock()
-		api.eventsBroker.mutex.Unlock()
+		defer api.eventsBroker.mutex.Unlock()
 		data := api.eventsBroker.clients[payload.UUID]
 		if data.Events == nil {
 			data.Events = make(map[string][]sdk.EventSubscription)
@@ -338,7 +342,7 @@ func (api *API) eventUnsubscribeHandler() Handler {
 		}
 
 		api.eventsBroker.mutex.Lock()
-		api.eventsBroker.mutex.Unlock()
+		defer api.eventsBroker.mutex.Unlock()
 		data := api.eventsBroker.clients[payload.UUID]
 
 		if payload.WorkflowName != "" {

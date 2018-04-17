@@ -55,6 +55,18 @@ export class WorkflowRunService {
     }
 
     /**
+     * Get workflow node run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {number} number Run number
+     * @param nodeRunID Node run Identifier
+     * @returns {Observable<WorkflowNodeRun>}
+     */
+    getWorkflowNodeRun(key: string, workflowName: string, number: number, nodeRunID): Observable<WorkflowNodeRun> {
+        return this._http.get<WorkflowNodeRun>('/project/' + key + '/workflows/' + workflowName + '/runs/' + number + '/node/' + nodeRunID);
+    }
+
+    /**
      * Stop a workflow run
      * @param {string} key Project unique key
      * @param {string} workflowName Workflow name

@@ -82,8 +82,21 @@ export class WorkflowNodeRun {
     artifacts: Array<WorkflowNodeRunArtifact>;
     tests: Tests;
     commits: Array<Commit>;
-    triggers_run: Map<string, TriggerRun>
-    can_be_run: boolean
+    triggers_run: Map<string, TriggerRun>;
+    can_be_run: boolean;
+
+    static fromEventRunWorkflowNode(e: Event): WorkflowNodeRun {
+        let wnr = new WorkflowNodeRun();
+        wnr.id = e.payload['ID'];
+        wnr.subnumber = e.payload['SubNumber'];
+        wnr.num = e.payload['Number'];
+        wnr.status = e.payload['Status'];
+        wnr.start = new Date(e.payload['Start'] * 1000).toString();
+        wnr.manual = e.payload['Manual'];
+        wnr.workflow_node_id = e.payload['NodeID'];
+        wnr.workflow_run_id = e.payload['RunID'];
+        return wnr;
+    }
 }
 
 export class TriggerRun {

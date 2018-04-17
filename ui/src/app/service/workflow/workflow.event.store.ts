@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {WorkflowRun} from '../../model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
 import {Map} from 'immutable';
 import {Observable} from 'rxjs/Observable';
 import {WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin} from '../../model/workflow.model';
@@ -11,6 +11,8 @@ export class WorkflowEventStore {
 
     private _currentWorkflowRuns: BehaviorSubject<Map<number, WorkflowRun>> = new BehaviorSubject(Map<number, WorkflowRun>());
     private _currentWorkflowRun: BehaviorSubject<WorkflowRun> = new BehaviorSubject(null);
+    private _currentWorkflowNodeRun: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
+    private _nodeRunEvents: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
 
     private _selectedNode: BehaviorSubject<WorkflowNode> = new BehaviorSubject<WorkflowNode>(null);
     private _selectedJoin: BehaviorSubject<WorkflowNodeJoin> = new BehaviorSubject<WorkflowNodeJoin>(null);
@@ -23,8 +25,7 @@ export class WorkflowEventStore {
     addWorkflowRun(wr: WorkflowRun): void {
         let store = this._currentWorkflowRuns.getValue();
         let w = store.get(wr.id);
-        if (!w || (w && (new Date(wr.last_modified) > (new Date(w.last_modified)))) ) {
-            console.log('update', wr);
+        if (!w || (w && (new Date(wr.last_modified).getTime() > (new Date(w.last_modified)).getTime())) ) {
             this._currentWorkflowRuns.next(store.set(wr.id, wr));
         }
     }
@@ -103,5 +104,27 @@ export class WorkflowEventStore {
 
     selectedRun(): Observable<WorkflowRun> {
         return new Observable<WorkflowRun>(fn => this._currentWorkflowRun.subscribe(fn));
+    }
+
+    setSelectedNodeRun(wnr: WorkflowNodeRun) {
+        let current = this._currentWorkflowNodeRun.getValue();
+        if (current && current.id === wnr.id) {
+             // update value
+            current.status = wnr.status;
+        }
+        current = wnr;
+        this._currentWorkflowNodeRun.next(current);
+    }
+
+    selectedNodeRun(): Observable<WorkflowNodeRun> {
+        return new Observable<WorkflowNodeRun>(fn => this._currentWorkflowNodeRun.subscribe(fn));
+    }
+
+    broadcastNodeRunEvents(wnr: WorkflowNodeRun) {
+        this._nodeRunEvents.next(wnr);
+    }
+
+    nodeRunEvents(): Observable<WorkflowNodeRun> {
+        return new Observable<WorkflowNodeRun>(fn => this._nodeRunEvents.subscribe(fn));
     }
 }

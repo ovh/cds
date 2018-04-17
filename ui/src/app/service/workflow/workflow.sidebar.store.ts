@@ -4,7 +4,7 @@ import {Observable} from 'rxjs/Observable';
 
 export class WorkflowSidebarMode {
     static RUNS = 'sidebar:runs';
-    static RUN = 'sidebar:run';
+    static RUN_NODE = 'sidebar:run:node';
     static EDIT_NODE = 'sidebar:edit:node';
     static EDIT_HOOK = 'sidebar:edit:hook';
     static EDIT_JOIN = 'sidebar:edit:join';

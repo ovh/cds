@@ -22,6 +22,17 @@ type Action struct {
 	LastModified   int64         `json:"last_modified" cli:"modified"`
 }
 
+// ActionSummary is the light representation of an action for CDS event
+type ActionSummary struct {
+	Name string `json:"name"`
+}
+
+func (a Action) ToSummary() ActionSummary {
+	return ActionSummary{
+		Name: a.Name,
+	}
+}
+
 // ActionAudit Audit on action
 type ActionAudit struct {
 	ActionID   int64     `json:"action_id"`

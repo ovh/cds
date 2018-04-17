@@ -51,6 +51,9 @@ func (api *API) statusHandler() Handler {
 		output.Lines = append(output.Lines, getStatusLine(mail.Status()))
 		output.Lines = append(output.Lines, getStatusLine(api.DBConnectionFactory.Status()))
 		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "LastUpdate Connected", Value: fmt.Sprintf("%d", len(api.lastUpdateBroker.clients)), Status: sdk.MonitoringStatusOK}))
+		api.eventsBroker.mutex.Lock()
+		output.Lines = append(output.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "SSE client Connected", Value: fmt.Sprintf("%d", len(api.eventsBroker.clients)), Status: sdk.MonitoringStatusOK}))
+		api.eventsBroker.mutex.Unlock()
 		output.Lines = append(output.Lines, getStatusLine(worker.Status(api.mustDB())))
 
 		var status = http.StatusOK

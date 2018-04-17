@@ -1,11 +1,12 @@
-<div class="sidebar-node-run" *ngIf="!loading">
+
+<div class="sidebar-node-run" *ngIf="currentWorkflowNodeRun && !loading">
     <h3 class="ui header ml5">
         <i class="cubes icon"></i>
         <div class="content">
             <span>{{node.name}}</span>
             <a class="inline pointing ml5"
               *ngIf="displayEditOption"
-              [routerLink]="['/project', project.key, 'workflow', workflow.name]" [queryParams]="{selectedNodeId: node.id}">
+              [routerLink]="['/project', project.key, 'workflow', currentWorkflowRun.workflow.name]" [queryParams]="{selectedNodeId: node.id}">
               <i class="pencil icon float"></i>
             </a>
             <div class="sub header">
@@ -40,7 +41,7 @@
         <div class="ui list ml5 listmrt">
             <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
                 <div class="content pointing"
-                  [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
+                  [routerLink]="['/project', project.key, 'workflow', currentWorkflowRun.workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
                   [queryParams]="{name: node.name, tab: 'test'}">
                     <div>
                         <i class="bug icon"></i> {{currentWorkflowNodeRun.tests.total}}
@@ -54,7 +55,7 @@
             </div>
             <div class="item padding" *ngIf="currentWorkflowNodeRun.artifacts">
                 <div class="content pointing"
-                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
+                [routerLink]="['/project', project.key, 'workflow', currentWorkflowRun.workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
                 [queryParams]="{name: node.name, tab: 'artifact'}"
                 [title]="'common_artifacts' | translate">
                     <div>
@@ -90,7 +91,7 @@
         </div>
     </ng-container>
 </div>
-<div class="ui text active loader" *ngIf="loading && open">{{ 'common_loading' | translate }}</div>
+<div class="ui text active loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
 <ng-container *ngIf="project && node">
     <app-workflow-node-run-param
         [workflow]="workflow"

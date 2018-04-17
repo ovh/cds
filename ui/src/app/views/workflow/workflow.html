@@ -21,17 +21,11 @@
               [workflow]="workflow">
             </app-workflow-sidebar-edit>
         </ng-container>
-        <!--ng-container *ngIf="project != null && workflow != null && selectedNodeId != null && selectedNodeRunId != null && selectedNodeRunNum != null && selectedHookId == null && number != null">
+        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_NODE">
             <app-workflow-sidebar-run-node
-                [project]="project"
-                [workflow]="workflow"
-                [runId]="selectedNodeRunId"
-                [runNumber]="selectedNodeRunNum"
-                [number]="number"
-                [nodeId]="selectedNodeId"
-                [open]="sidebarOpen">
+                [project]="project">
             </app-workflow-sidebar-run-node>
-        </ng-container-->
+        </ng-container>
         <!--ng-container *ngIf="project != null && workflow != null && selectedNodeId == null && selectedNodeRunId == null && selectedNodeRunNum == null && selectedHookId != null && number != null">
           <app-workflow-sidebar-run-hook--
             [project]="project"

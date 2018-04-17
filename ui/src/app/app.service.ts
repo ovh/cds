@@ -13,7 +13,7 @@ import {first} from 'rxjs/operators';
 import {Event} from './model/event.model';
 import {EventStore} from './service/event/event.store';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
-import {WorkflowRun} from './model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
 
 @Injectable()
 export class AppService {
@@ -211,7 +211,8 @@ export class AppService {
                 this._workflowEventStore.addWorkflowRun(wr);
                 break;
             case 'sdk.EventRunWorkflowNode':
-                console.log('EventRunWorkflowNode');
+                let wnr = WorkflowNodeRun.fromEventRunWorkflowNode(event);
+                this._workflowEventStore.broadcastNodeRunEvents(wnr);
                 break;
         }
         this._eventStore._eventFilter.getValue();

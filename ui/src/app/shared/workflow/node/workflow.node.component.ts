@@ -17,6 +17,7 @@ import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
+import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../../service/workflow/workflow.sidebar.store';
 
 @Component({
     selector: 'app-workflow-node',
@@ -38,6 +39,7 @@ export class WorkflowNodeComponent implements OnInit {
 
     zone: NgZone;
     currentNodeRun: WorkflowNodeRun;
+    subNodeRun: Subscription;
     pipelineStatus = PipelineStatus;
 
 
@@ -50,7 +52,8 @@ export class WorkflowNodeComponent implements OnInit {
     subSelect: Subscription;
 
 
-    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore) {
+    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore,
+                private _sidebarStore: WorkflowSidebarStore) {
     }
 
     ngOnInit(): void {
@@ -63,6 +66,14 @@ export class WorkflowNodeComponent implements OnInit {
         });
 
         this.zone = new NgZone({enableLongStackTrace: false});
+
+        this.subNodeRun = this._workflowEventStore.nodeRunEvents().subscribe(wnr => {
+            if (wnr) {
+                if (this.workflowRun && wnr.workflow_node_id === this.node.id && this.workflowRun.num === wnr.num) {
+                    this.currentNodeRun = wnr;
+                }
+            }
+        });
 
         this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
             this.warnings = 0;
@@ -119,7 +130,8 @@ export class WorkflowNodeComponent implements OnInit {
         }
 
         if (this._workflowEventStore.isRunSelected()) {
-            // TODO
+            this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun);
+            this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_NODE);
         } else {
             this._workflowEventStore.setSelectedNode(this.node);
         }

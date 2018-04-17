@@ -1,7 +1,6 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {Router, ActivatedRoute} from '@angular/router';
+import {Router} from '@angular/router';
 import {Project} from '../../../../../model/project.model';
-import {PermissionValue} from '../../../../../model/permission.model';
 import {
     Workflow,
     WorkflowNode
@@ -11,11 +10,11 @@ import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
-import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
 import {Subscription} from 'rxjs/Subscription';
 import {first} from 'rxjs/operators';
 import 'rxjs/add/observable/zip';
+import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 
 @Component({
     selector: 'app-workflow-sidebar-run-node',
@@ -27,22 +26,20 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
 
     // Project that contains the workflow
     @Input() project: Project;
-    @Input() workflow: Workflow;
-    @Input() number: number;
-    @Input() open: boolean;
+
+    currentWorkflowRunSub: Subscription;
+    currentWorkflowRun: WorkflowRun;
+
+    currentNodeRunSub: Subscription;
+    currentWorkflowNodeRun: WorkflowNodeRun;
+
+    node: WorkflowNode;
 
     // Modal
     @ViewChild('workflowRunNode')
     workflowRunNode: WorkflowNodeRunParamComponent;
-    node: WorkflowNode;
-    nodeId: number;
-    runId: number;
-    runNumber: number;
-    currentWorkflowRunSub: Subscription;
-    currentNodeRunSub: Subscription;
     loading = true;
-    currentWorkflowRun: WorkflowRun;
-    currentWorkflowNodeRun: WorkflowNodeRun;
+
     displayEditOption = false;
     displaySummary = true;
     duration: string;
@@ -50,21 +47,58 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     pipelineStatusEnum = PipelineStatus;
 
     constructor(private _wrService: WorkflowRunService, private _router: Router,
-      private _workflowCoreService: WorkflowCoreService, private _activatedRoute: ActivatedRoute,
-      private _durationService: DurationService) {
+               private _durationService: DurationService,
+                private _workflowEventStore: WorkflowEventStore) {
+        this.currentWorkflowRunSub = this._workflowEventStore.selectedRun().subscribe(wr => {
+            if (!wr) {
+                return;
+            }
+            this.currentWorkflowRun = wr;
+            this.loading = false;
+
+            // If not the same run => display loading
+            if (this.currentWorkflowRun && this.currentWorkflowRun && this.currentWorkflowNodeRun.num !== this.currentWorkflowRun.num) {
+                this.loading = true;
+            } else {
+                this.refreshData();
+            }
+        });
+
+        this.currentNodeRunSub = this._workflowEventStore.selectedNodeRun()
+            .subscribe((nodeRun) => {
+                if (!nodeRun) {
+                    return;
+                }
+                this.loading = false;
+                this.duration = this.getDuration();
+                this.canBeRun = this.getCanBeRun();
+                this.currentWorkflowNodeRun = nodeRun;
+
+                // If not the same run => display loading
+                if (this.currentWorkflowRun && this.currentWorkflowRun && this.currentWorkflowNodeRun.num !== this.currentWorkflowRun.num) {
+                    this.loading = true;
+                } else {
+                    this.refreshData();
+                }
+            });
+
+
 
     }
 
+    refreshData(): void {
+        this.node = Workflow.getNodeByID(this.currentWorkflowNodeRun.workflow_node_id, this.currentWorkflowRun.workflow);
+        this.displayEditOption = this.node != null;
+        this.canBeRun = this.getCanBeRun();
+    }
+
     ngOnInit() {
+
+/*
         this._activatedRoute.queryParams.subscribe((queryparams) => {
-          this.runId = Number.isNaN(queryparams['selectedNodeRunId']) ? null : parseInt(queryparams['selectedNodeRunId'], 10);
-          this.runNumber = Number.isNaN(queryparams['selectedNodeRunNum']) ? null : parseInt(queryparams['selectedNodeRunNum'], 10);
-          this.nodeId = Number.isNaN(queryparams['selectedNodeId']) ? null : parseInt(queryparams['selectedNodeId'], 10);
+
           this.displaySummary = this.runId !== -1;
 
-          if (!this.currentWorkflowRun) {
-            return;
-          }
 
           this.node = Workflow.getNodeByID(this.nodeId, this.currentWorkflowRun.workflow);
           let wr = this.currentWorkflowRun;
@@ -78,51 +112,18 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
 
           this.displayEditOption = Workflow.getNodeByID(this.nodeId, this.workflow) != null;
         });
+*/
 
-        this.currentWorkflowRunSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe((wr) => {
-            if (!wr) {
-                return;
-            }
-            this.currentWorkflowRun = wr;
-            this.node = Workflow.getNodeByID(this.nodeId, this.currentWorkflowRun.workflow);
-            if (this.node && wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
-                this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
-                this.duration = this.getDuration();
-            } else {
-                this.currentWorkflowNodeRun = null;
-            }
 
-            this.loading = false;
-
-            this.displayEditOption = Workflow.getNodeByID(this.nodeId, this.workflow) != null;
-            this.canBeRun = this.getCanBeRun();
-          }
-        );
-
-        this.currentNodeRunSub = this._workflowCoreService.getCurrentNodeRun()
-          .subscribe((nodeRun) => {
-            if (!nodeRun) {
-              return;
-            }
-            this.loading = false;
-            this.duration = this.getDuration();
-            this.canBeRun = this.getCanBeRun();
-            this.currentWorkflowNodeRun = nodeRun;
-
-            // If not the same run => display loading
-            if (this.currentWorkflowNodeRun.num !== this.number) {
-                this.loading = true;
-            }
-          });
     }
 
     displayLogs() {
         let pip = this.node.pipeline.name;
         this._router.navigate([
             '/project', this.project.key,
-            'workflow', this.workflow.name,
-            'run', this.runNumber,
-            'node', this.runId], {queryParams: {name: pip}});
+            'workflow', this.currentWorkflowRun.workflow.name,
+            'run', this.currentWorkflowRun.num,
+            'node', this.currentWorkflowNodeRun.id], {queryParams: {name: pip}});
     }
 
     getDuration() {
@@ -138,6 +139,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     }
 
     getCanBeRun(): boolean {
+        /**
         let appForbid = this.node && this.node.context.application && this.node.context.application.permission &&
             this.node.context.application.permission < PermissionValue.READ_EXECUTE;
         let envForbid = this.node && this.node.context.environment && this.node.context.environment.permission
@@ -186,22 +188,20 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
         if (nbNodeFound !== parentNodes.length) { // It means that a parent node isn't already executed
             return false;
         }
-
+        */
         return true;
     }
 
     stopNodeRun(): void {
         this.loading = true;
-        this._wrService.stopNodeRun(this.project.key, this.workflow.name, this.runNumber, this.runId)
+        this._wrService.stopNodeRun(this.project.key, this.currentWorkflowRun.workflow.name,
+            this.currentWorkflowRun.num, this.currentWorkflowNodeRun.id)
             .pipe(first())
             .subscribe(() => {
-                this.currentWorkflowNodeRun.status = PipelineStatus.STOPPED;
-                this.currentWorkflowRun.status = PipelineStatus.STOPPED;
-                this._workflowCoreService.setCurrentWorkflowRun(this.currentWorkflowRun);
                 this._router.navigate([
                     '/project', this.project.key,
-                    'workflow', this.workflow.name,
-                    'run', this.runNumber]);
+                    'workflow', this.currentWorkflowRun.workflow.name,
+                    'run', this.currentWorkflowRun.num]);
             });
     }
 
