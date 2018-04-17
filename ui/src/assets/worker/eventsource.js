@@ -146,7 +146,7 @@ var EventSourcePolyfill = (function (global) {
     }
 
     function EventSourcePolyfill (url, options) {
-        url = url.toString();
+        var url = url.toString();
 
         var withCredentials = isCORSSupported && options != undefined && Boolean(options.withCredentials);
         var initialRetry = getDuration(1000, 0);
@@ -437,7 +437,7 @@ var EventSourcePolyfill = (function (global) {
             }, 0);
         }
 
-        onTimeout = function () {
+        onTimeout = () => {
             timeout = 0;
             if (currentState !== WAITING) {
                 onEvent("");
@@ -496,12 +496,11 @@ var EventSourcePolyfill = (function (global) {
             value = "";
             field = "";
             state = FIELD_START;
-
-            var s = url.slice(0, 5);
+            var s = this.url.slice(0, 5);
             if (s !== "data:" && s !== "blob:") {
-                s = url + ((url.indexOf("?", 0) === -1 ? "?" : "&") + "lastEventId=" + encodeURIComponent(lastEventId) + "&r=" + (Math.random() + 1).toString().slice(2));
+                s = this.url + ((this.url.indexOf("?", 0) === -1 ? "?" : "&") + "lastEventId=" + encodeURIComponent(lastEventId) + "&r=" + (Math.random() + 1).toString().slice(2));
             } else {
-                s = url;
+                s = this.url;
             }
             xhr.timeout = 0;
             xhr.open("GET", s, true);
@@ -543,7 +542,6 @@ var EventSourcePolyfill = (function (global) {
         this.onopen = undefined;
         this.onmessage = undefined;
         this.onerror = undefined;
-
         onTimeout();
     }
 
