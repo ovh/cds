@@ -71,10 +71,13 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	h.hatch = &sdk.Hatchery{
 		Name: genname,
 		Model: sdk.Model{
-			Name:         genname,
-			Image:        genname,
-			Capabilities: capa,
-			Provision:    int64(h.Config.NbProvision),
+			Name: genname,
+			Type: sdk.HostProcess,
+			ModelVirtualMachine: sdk.ModelVirtualMachine{
+				Image: genname,
+			},
+			RegisteredCapabilities: capa,
+			Provision:              int64(h.Config.NbProvision),
 		},
 		Version: sdk.VERSION,
 	}
@@ -331,41 +334,6 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]workerCmd)
 
-<<<<<<< HEAD
-	genname := h.Configuration().Name
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		genname,
-	)
-
-	req, err := h.Client().Requirements()
-	if err != nil {
-		return fmt.Errorf("Cannot fetch requirements: %s", err)
-	}
-
-	capa, err := checkCapabilities(req)
-	if err != nil {
-		return fmt.Errorf("Cannot check local capabilities: %s", err)
-	}
-
-	h.hatch = &sdk.Hatchery{
-		Name: genname,
-		Model: sdk.Model{
-			Name: genname,
-			ModelVirtualMachine: sdk.ModelVirtualMachine{
-				Image: genname,
-			},
-			RegisteredCapabilities: capa,
-			Provision:              int64(h.Config.NbProvision),
-		},
-		Version: sdk.VERSION,
-	}
-
-=======
->>>>>>> 94703c24932b6cb32624b3444f07dfd2378ee576
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
