@@ -602,9 +602,10 @@ func Test_updateWorkerModel(t *testing.T) {
 	}
 
 	model := sdk.Model{
-		Name:    "Test1",
-		GroupID: g.ID,
-		Type:    sdk.Docker,
+		Name:       "Test1",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
+		Restricted: true,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
@@ -635,7 +636,12 @@ func Test_updateWorkerModel(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &model)
 
 	model2 := sdk.Model{
-		Name: "Test1bis",
+		Name:       "Test1bis",
+		Restricted: true,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Cmd:   "worker",
+		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
@@ -688,9 +694,10 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	model := sdk.Model{
-		Name:    "Test1",
-		GroupID: g.ID,
-		Type:    sdk.Docker,
+		Name:       "Test1",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
+		Restricted: true,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
