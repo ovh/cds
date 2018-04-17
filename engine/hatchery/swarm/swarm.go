@@ -8,10 +8,11 @@ import (
 
 	types "github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
+	"github.com/gorilla/mux"
 	context "golang.org/x/net/context"
 
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
@@ -19,28 +20,15 @@ import (
 
 // New instanciates a new Hatchery Swarm
 func New() *HatcherySwarm {
-	return new(HatcherySwarm)
-}
-
-// Serve start the HatcherySwarm server
-func (h *HatcherySwarm) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
+	s := new(HatcherySwarm)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -155,7 +143,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
+	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.CDSClient().APIURL(), registerCmd)}
 
 	//CDS env needed by the worker binary
 	env := []string{
@@ -423,9 +411,9 @@ func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
-//Client returns cdsclient instance
-func (h *HatcherySwarm) Client() cdsclient.Interface {
-	return h.client
+// Serve start the hatchery server
+func (h *HatcherySwarm) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -449,7 +437,7 @@ func (h *HatcherySwarm) killAwolWorkerRoutine() {
 }
 
 func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
-	apiworkers, err := h.Client().WorkerList()
+	apiworkers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return nil, sdk.WrapError(err, "listAwolWorkers> Cannot get workers")
 	}

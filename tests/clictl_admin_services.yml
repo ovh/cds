@@ -1,0 +1,20 @@
+name: Action Command TestSuite with cdsctl
+testcases:
+- name: cdsctl admin services list
+  steps:
+  - script: {{.cds.build.cdsctl}} admin services list
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring api
+      - result.systemout ShouldContainSubstring hatchery
+    retry: 10
+    delay: 10  
+  - script: {{.cds.build.cdsctl}} admin services status
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring Global/Version
+  - script: {{.cds.build.cdsctl}} admin services status --type api
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldNotContainSubstring hatchery
+      - result.systemout ShouldContainSubstring api

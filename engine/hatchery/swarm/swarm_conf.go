@@ -1,8 +1,16 @@
 package swarm
 
 import (
+	"context"
 	"fmt"
 	"os"
+
+	types "github.com/docker/docker/api/types"
+
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -17,15 +25,44 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
-	// h.API = h.Config.API.HTTP.URL
-	// h.Name = h.Config.Name
-	// h.HTTPURL = h.Config.URL
-	// h.Token = h.Config.API.Token
-	// h.Type = services.TypeHatchery
-	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
+
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
+	)
+
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
 	return nil
+}
+
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
+	m := h.CommonMonitoring()
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+
+	status := sdk.MonitoringStatusOK
+	images, err := h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+	if err != nil {
+		log.Warning("%d> Status> Unable to list images: %s", h.Name, err)
+		status = sdk.MonitoringStatusAlert
+	}
+
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images", Value: fmt.Sprintf("%d", len(images)), Status: status})
+
+	return m
 }
 
 // CheckConfiguration checks the validity of the configuration object

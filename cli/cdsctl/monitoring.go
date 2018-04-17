@@ -336,7 +336,7 @@ func (ui *Termui) updateStatus() string {
 	for _, l := range statusEngine.Lines {
 		if l.Status != sdk.MonitoringStatusOK {
 			items = append(items, fmt.Sprintf("[%s](bg-red)", l.String()))
-		} else {
+		} else if strings.Contains(l.Status, "Version") {
 			items = append(items, fmt.Sprintf("[%s](%s)", l.String(), selected))
 		}
 	}
