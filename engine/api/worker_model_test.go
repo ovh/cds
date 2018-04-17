@@ -32,6 +32,12 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 		}
 	}
 
+	modelPatterns, err := worker.LoadWorkerModelPatterns(api.mustDB())
+	test.NoError(t, err)
+
+	for _, wmp := range modelPatterns {
+		test.NoError(t, worker.DeleteWorkerModelPattern(api.mustDB(), wmp.ID))
+	}
 }
 
 func Test_addWorkerModelAsAdmin(t *testing.T) {
@@ -66,7 +72,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
-			Cmd:   "worker",
+			Cmd:   "worker --api={{.API}}",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -89,7 +95,10 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	t.Logf("Body: %s", w.Body.String())
+	var newModel sdk.Model
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
+
+	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
 }
 
 func Test_addWorkerModelWithWrongRequest(t *testing.T) {
@@ -318,9 +327,124 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code, "Status code should equal 200")
+	assert.Equal(t, 403, w.Code, "Status code should equal 403 because the worker model haven't pattern and is not restricted")
 
 	t.Logf("Body: %s", w.Body.String())
+}
+
+func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
+	Test_DeleteAllWorkerModel(t)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	//Create group
+	g := &sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+
+	//Create user
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+
+	model := sdk.Model{
+		Name:       "Test1",
+		GroupID:    g.ID,
+		Type:       sdk.Docker,
+		Restricted: true,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Cmd:   "worker --api={{.API}}",
+		},
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa1",
+				Type:  sdk.BinaryRequirement,
+				Value: "1",
+			},
+		},
+	}
+
+	//Prepare request
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code, "Status code should equal 200")
+
+	var newModel sdk.Model
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
+
+	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
+}
+
+func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
+	Test_DeleteAllWorkerModel(t)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	//Create group
+	g := &sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+
+	//Create user
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	assert.NotZero(t, u)
+	assert.NotZero(t, pass)
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+
+	pattern := sdk.ModelPattern{
+		Name: "test",
+		Type: sdk.Openstack,
+		Model: sdk.ModelCmds{
+			PreCmd: "apt-get install curl -y",
+			Cmd:    "./worker",
+		},
+	}
+
+	test.NoError(t, worker.InsertWorkerModelPattern(api.mustDB(), &pattern))
+
+	model := sdk.Model{
+		Name:        "Test1",
+		GroupID:     g.ID,
+		Type:        sdk.Openstack,
+		PatternName: "test",
+		ModelVirtualMachine: sdk.ModelVirtualMachine{
+			Image:  "Debian 7",
+			Flavor: "vps-ssd-1",
+			Cmd:    "worker --api={{.API}}",
+		},
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa1",
+				Type:  sdk.BinaryRequirement,
+				Value: "1",
+			},
+		},
+	}
+
+	//Prepare request
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code, "Status code should equal 200")
+
+	var newModel sdk.Model
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
+
+	test.Equal(t, "./worker", newModel.ModelVirtualMachine.Cmd, "Main worker command is not good")
+	test.Equal(t, "apt-get install curl -y", newModel.ModelVirtualMachine.PreCmd, "Pre worker command is not good")
 }
 
 // Test_addWorkerModelAsAGroupAdminWithProvision test the provioning
@@ -368,6 +492,16 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 
 	// update restricted flag -> provioning will be reset
 
+	pattern := sdk.ModelPattern{
+		Name: "test",
+		Type: sdk.Docker,
+		Model: sdk.ModelCmds{
+			Cmd: "./worker",
+		},
+	}
+
+	test.NoError(t, worker.InsertWorkerModelPattern(api.mustDB(), &pattern))
+
 	vars := map[string]string{
 		"permModelID": fmt.Sprintf("%d", wm.ID),
 	}
@@ -376,6 +510,7 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 
 	// API will set provisioning to 0 for a non-restricted model
 	wm.Restricted = false
+	wm.PatternName = "test"
 	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, wm)
 
 	//Do the request
@@ -386,6 +521,7 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	var wmUpdated sdk.Model
 	json.Unmarshal(w.Body.Bytes(), &wmUpdated)
 	assert.Equal(t, 0, int(wmUpdated.Provision))
+	assert.Equal(t, "./worker", wmUpdated.ModelDocker.Cmd)
 }
 
 func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {

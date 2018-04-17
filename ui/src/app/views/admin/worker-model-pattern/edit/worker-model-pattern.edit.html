@@ -43,6 +43,7 @@
             </div>
 
             <div class="field">
+              <app-delete-button [loading]="editLoading" (event)="delete()"></app-delete-button>
                 <button class="ui green right floated button"
                   [class.loading]="editLoading"
                   [class.disabled]="!pattern.type || !pattern.name || !pattern.model.cmd"

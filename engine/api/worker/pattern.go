@@ -32,6 +32,19 @@ func UpdateWorkerModelPattern(db gorp.SqlExecutor, modelPattern *sdk.ModelPatter
 	return nil
 }
 
+// DeleteWorkerModelPatter removes from database worker model pattern
+func DeleteWorkerModelPattern(db gorp.SqlExecutor, ID int64) error {
+	wmp := WorkerModelPattern(sdk.ModelPattern{ID: ID})
+	count, err := db.Delete(&wmp)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return sdk.ErrNotFound
+	}
+	return nil
+}
+
 // LoadWorkerModelPatterns retrieves model patterns from database
 func LoadWorkerModelPatterns(db gorp.SqlExecutor) ([]sdk.ModelPattern, error) {
 	var wmPatterns []WorkerModelPattern

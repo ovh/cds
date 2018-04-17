@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -234,14 +233,11 @@ func (api *API) updateWorkerModelHandler() Handler {
 
 		var modelPattern *sdk.ModelPattern
 		if model.PatternName != "" {
-			fmt.Println("laaaaa-----", model.PatternName)
 			var errP error
 			modelPattern, errP = worker.LoadWorkerModelPatternByName(api.mustDB(), model.Type, model.PatternName)
 			if errP != nil {
 				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Cannot load worker model pattern %s : %v", model.PatternName, errP)
 			}
-
-			fmt.Println("model", modelPattern, errP)
 		}
 
 		user := getUser(ctx)
@@ -250,10 +246,6 @@ func (api *API) updateWorkerModelHandler() Handler {
 			if model.ModelDocker.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid image")
 			}
-			fmt.Println("iciiiiii")
-			fmt.Println(user.Admin)
-			fmt.Println(model.Restricted)
-			fmt.Println(modelPattern)
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrForbidden
@@ -440,9 +432,6 @@ func (api *API) getWorkerModelsHandler() Handler {
 
 func (api *API) putWorkerModelPatternHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if getUser(ctx) == nil || !getUser(ctx).Admin {
-			return sdk.ErrForbidden
-		}
 		vars := mux.Vars(r)
 		patternName := vars["name"]
 		patternType := vars["type"]
@@ -491,6 +480,28 @@ func (api *API) putWorkerModelPatternHandler() Handler {
 	}
 }
 
+func (api *API) deleteWorkerModelPatternHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		patternName := vars["name"]
+		patternType := vars["type"]
+
+		wmp, err := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return sdk.WrapError(sdk.ErrNotFound, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s)", patternType, patternName)
+			}
+			return sdk.WrapError(err, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)
+		}
+
+		if err := worker.DeleteWorkerModelPattern(api.mustDB(), wmp.ID); err != nil {
+			return sdk.WrapError(err, "deleteWorkerModelPatternHandler> Cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
+		}
+
+		return WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkerModelPatternHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if getUser(ctx) == nil || getUser(ctx).ID == 0 {
@@ -515,10 +526,6 @@ func (api *API) getWorkerModelPatternHandler() Handler {
 
 func (api *API) postAddWorkerModelPatternHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if getUser(ctx) == nil || !getUser(ctx).Admin {
-			return sdk.ErrForbidden
-		}
-
 		// Unmarshal body
 		var modelPattern sdk.ModelPattern
 		if err := UnmarshalBody(r, &modelPattern); err != nil {

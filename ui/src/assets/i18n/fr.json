@@ -712,6 +712,7 @@
   "worker_model_template": "Template",
   "worker_model_saved": "Modèle sauvegardé",
   "worker_model_pattern_saved": "Pattern sauvegardé",
+  "worker_model_pattern_deleted": "Pattern supprimé",
   "worker_model_title": "Modèles de worker",
   "worker_model_warning": "Merci de vérifier ce modèle, il y a des erreurs dessus",
   "worker_model_os": "Système d'exploitation",

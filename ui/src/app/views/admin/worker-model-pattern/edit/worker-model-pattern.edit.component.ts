@@ -39,7 +39,7 @@ export class WorkerModelPatternEditComponent implements OnInit {
         this.loading = true;
         this._workerModelService.getWorkerModelPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
             .pipe(finalize(() => this.loading = false))
-            .subscribe((pattern) => this.pattern = pattern);
+            .subscribe((pattern) => this.pattern = pattern, () => this._router.navigate(['admin', 'worker-model-pattern']));
     }
 
     clickSaveButton(): void {
@@ -60,5 +60,20 @@ export class WorkerModelPatternEditComponent implements OnInit {
               this._toast.success('', this._translate.instant('worker_model_pattern_saved'));
               this._router.navigate(['admin', 'worker-model-pattern', pattern.type, pattern.name]);
           });
+    }
+
+    delete() {
+        if (this.editLoading) {
+            return;
+        }
+
+        this.editLoading = true;
+        this._workerModelService
+            .deleteWorkerModelPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
+            .pipe(finalize(() => this.editLoading = false))
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('worker_model_pattern_deleted'));
+                this._router.navigate(['admin', 'worker-model-pattern']);
+            });
     }
 }

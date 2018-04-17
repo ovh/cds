@@ -129,14 +129,16 @@ type ModelDocker struct {
 
 // ModelPattern represent patterns for users and admin when creating a worker model
 type ModelPattern struct {
-	ID    int64  `json:"id" db:"id"`
-	Name  string `json:"name" db:"name"`
-	Type  string `json:"type" db:"type"`
-	Model struct {
-		PreCmd  string `json:"pre_cmd,omitempty"`
-		Cmd     string `json:"cmd,omitempty"`
-		PostCmd string `json:"post_cmd,omitempty"`
-	} `json:"model" db:"-"`
+	ID    int64     `json:"id" db:"id"`
+	Name  string    `json:"name" db:"name"`
+	Type  string    `json:"type" db:"type"`
+	Model ModelCmds `json:"model" db:"-"`
+}
+
+type ModelCmds struct {
+	PreCmd  string `json:"pre_cmd,omitempty"`
+	Cmd     string `json:"cmd,omitempty"`
+	PostCmd string `json:"post_cmd,omitempty"`
 }
 
 // WorkerArgs is all the args needed to run a worker

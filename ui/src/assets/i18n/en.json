@@ -710,6 +710,7 @@
   "worker_model_run_script": "Run Script",
   "worker_model_saved": "Worker model saved",
   "worker_model_pattern_saved": "Pattern saved",
+  "worker_model_pattern_deleted": "Pattern deleted",
   "worker_model_status": "Status",
   "worker_model_template": "Template",
   "worker_model_title": "Worker Models",

@@ -71,6 +71,14 @@ export class WorkerModelService {
     }
 
     /**
+     * delete a worker model pattern
+     * @returns {Observable<null>}
+     */
+    deleteWorkerModelPattern(type: string, name: string): Observable<null> {
+        return this._http.delete<null>(`/worker/model/pattern/${type}/${name}`);
+    }
+
+    /**
      * Get the list of available worker model patterns
      * @returns {Observable<ModelPattern[]>}
      */
