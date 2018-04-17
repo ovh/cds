@@ -168,7 +168,7 @@ chmod +x worker
 			}
 		}
 
-		if err := worker.UpdateWorkerModel(tx, *wm); err != nil {
+		if err := worker.UpdateWorkerModelWithoutRegistration(tx, *wm); err != nil {
 			log.Warning("HatcheryCmdMigration> cannot update worker model %s : %v", wm.Name, err)
 			tx.Rollback()
 			continue

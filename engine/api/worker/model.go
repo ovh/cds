@@ -68,6 +68,19 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 	return nil
 }
 
+// UpdateWorkerModelWithoutRegistration update a worker model. If worker model have SpawnErr -> clear them
+func UpdateWorkerModelWithoutRegistration(db gorp.SqlExecutor, model sdk.Model) error {
+	model.UserLastModified = time.Now()
+	model.NeedRegistration = false
+	model.NbSpawnErr = 0
+	model.LastSpawnErr = ""
+	dbmodel := WorkerModel(model)
+	if _, err := db.Update(&dbmodel); err != nil {
+		return err
+	}
+	return nil
+}
+
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
