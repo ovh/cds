@@ -4,10 +4,11 @@ import {Stage} from './stage.model';
 import {Parameter} from './parameter.model';
 import {SpawnInfo, Tests} from './pipeline.model';
 import {Commit} from './repositories.model';
-import {Job} from './job.model';
+import {Job, StepStatus} from './job.model';
 import {Hatchery} from './hatchery.model';
 import {User} from './user.model';
 import {Event} from './event.model';
+import {Action} from './action.model';
 
 
 export class RunNumber {
@@ -95,6 +96,65 @@ export class WorkflowNodeRun {
         wnr.manual = e.payload['Manual'];
         wnr.workflow_node_id = e.payload['NodeID'];
         wnr.workflow_run_id = e.payload['RunID'];
+        wnr.stages = new Array<Stage>();
+        e.payload['StagesSummary'].forEach(s => {
+            let stage = new Stage();
+            stage.id = s['ID'];
+            stage.build_order = s['BuildOrder'];
+            stage.enabled = s['Enabled'];
+            stage.name = s['Name'];
+            stage.status = s['Status'];
+            stage.run_jobs = new Array<WorkflowNodeJobRun>();
+            if (s['RunJobsSummary']) {
+                s['RunJobsSummary'].forEach(rjs => {
+                    let wnjr = new WorkflowNodeJobRun();
+                    if (rjs['Done'] > 0) {
+                        wnjr.done = new Date(rjs['Done'] * 1000).toString();
+                    }
+                    wnjr.id = rjs['ID'];
+                    if (rjs['Queued'] > 0) {
+                        wnjr.queued = new Date(rjs['Queued'] * 1000).toString();
+                    }
+                    if (rjs['Start'] > 0) {
+                        wnjr.start = new Date(rjs['Start'] * 1000).toString();
+                    }
+                    wnjr.status = rjs['Status'];
+                    wnjr.workflow_node_run_id = rjs['WorkflowNodeRunID'];
+                    wnjr.job = new Job();
+
+                    wnjr.job.step_status = new Array<StepStatus>();
+                    if (rjs['StepStatusSummary']) {
+                        rjs['StepStatusSummary'].forEach(sss => {
+                           let ss = new StepStatus();
+                           if (sss['Done'] > 0) {
+                               wnjr.done = new Date(sss['Done'] * 1000).toString();
+                           }
+                            if (sss['Start'] > 0) {
+                                wnjr.start = new Date(sss['Start'] * 1000).toString();
+                            }
+                           ss.status = sss['Status'];
+                           ss.step_order = sss['StepOrder'];
+                            wnjr.job.step_status.push(ss);
+                        });
+                    }
+
+                    wnjr.job.action = new Action();
+                    let eventJob = rjs['Job']
+                    wnjr.job.action.name = eventJob['JobName'];
+                    wnjr.job.action.actions = new Array<Action>();
+                    if (eventJob['Steps']) {
+                        eventJob['Steps'].forEach(step => {
+                           let jobStep = new Action();
+                           jobStep.name = step['Name'];
+                            wnjr.job.action.actions.push(jobStep);
+                        });
+                    }
+
+                    stage.run_jobs.push(wnjr);
+                });
+            }
+            wnr.stages.push(stage);
+        });
         return wnr;
     }
 }

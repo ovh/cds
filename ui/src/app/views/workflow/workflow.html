@@ -23,7 +23,7 @@
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_NODE">
             <app-workflow-sidebar-run-node
-                [project]="project">
+                [project]="project" [workflow]="workflow">
             </app-workflow-sidebar-run-node>
         </ng-container>
         <!--ng-container *ngIf="project != null && workflow != null && selectedNodeId == null && selectedNodeRunId == null && selectedNodeRunNum == null && selectedHookId != null && number != null">

@@ -41,6 +41,9 @@ export class WorkflowComponent implements OnInit {
     asCodeEditorSubscription: Subscription;
     asCodeEditorOpen: boolean;
 
+    // Selected node
+    selectedNodeID: number;
+
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
 
@@ -88,6 +91,9 @@ export class WorkflowComponent implements OnInit {
                                     this.initRuns(key, workflowName);
                                 }
                                 this.workflow = updatedWorkflow;
+                                if (this.selectedNodeID) {
+                                    this._workflowEventStore.setSelectedNode(Workflow.getNodeByID(this.selectedNodeID, this.workflow));
+                                }
                             }
                         }
                         this.loading = false;
@@ -95,6 +101,15 @@ export class WorkflowComponent implements OnInit {
                         this.loading = false;
                         this._router.navigate(['/project', key]);
                     });
+            }
+        });
+
+        this._activatedRoute.queryParams.subscribe(qps => {
+            if (qps['node_id']) {
+                this.selectedNodeID = Number(qps['node_id']);
+                if (this.workflow) {
+                    this._workflowEventStore.setSelectedNode(Workflow.getNodeByID(this.selectedNodeID, this.workflow));
+                }
             }
         });
 

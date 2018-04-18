@@ -48,28 +48,28 @@ type ExecutedJob struct {
 
 // ExecutedJobSummary is a light representation of ExecutedJob for CDS event
 type ExecutedJobSummary struct {
-	StepStatus []StepStatusSummary `json:"step_status"`
-	Reason     string              `json:"reason"`
-	WorkerName string              `json:"worker_name""`
-	WorkerID   string              `json:"worker_id"`
-	JobName    string              `json:"job_name"`
-	Steps      []ActionSummary     `json:"steps"`
+	StepStatusSummary []StepStatusSummary `json:"step_status"`
+	Reason            string              `json:"reason"`
+	WorkerName        string              `json:"worker_name""`
+	WorkerID          string              `json:"worker_id"`
+	JobName           string              `json:"job_name"`
+	Steps             []ActionSummary     `json:"steps"`
 }
 
 // ToSummary transforms an ExecutedJob to an ExecutedJobSummary
 func (j ExecutedJob) ToSummary() ExecutedJobSummary {
 	sum := ExecutedJobSummary{
-		StepStatus: make([]StepStatusSummary, len(j.StepStatus)),
-		JobName:    j.Action.Name,
-		Reason:     j.Reason,
-		WorkerName: j.WorkerName,
-		Steps:      make([]ActionSummary, len(j.Action.Actions)),
+		StepStatusSummary: make([]StepStatusSummary, len(j.StepStatus)),
+		JobName:           j.Action.Name,
+		Reason:            j.Reason,
+		WorkerName:        j.WorkerName,
+		Steps:             make([]ActionSummary, len(j.Action.Actions)),
 	}
 	for i := range j.Action.Actions {
 		sum.Steps[i] = j.Action.Actions[i].ToSummary()
 	}
 	for i := range j.StepStatus {
-		sum.StepStatus[i] = j.StepStatus[i].ToSummary()
+		sum.StepStatusSummary[i] = j.StepStatus[i].ToSummary()
 	}
 	return sum
 }

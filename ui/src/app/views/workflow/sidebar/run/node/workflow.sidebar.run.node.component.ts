@@ -26,6 +26,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
 
     // Project that contains the workflow
     @Input() project: Project;
+    @Input() workflow: Workflow;
 
     currentWorkflowRunSub: Subscription;
     currentWorkflowRun: WorkflowRun;
