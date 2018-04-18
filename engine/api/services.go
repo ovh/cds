@@ -28,8 +28,9 @@ func (api *API) postServiceRegisterHandler() Handler {
 		}
 
 		//Service must be with a sharedinfra group token
-		if t.GroupID != group.SharedInfraGroup.ID {
-			return sdk.WrapError(sdk.ErrUnauthorized, "postServiceRegisterHandler> Cannot register service")
+		// except for hatchery: users can start hatchery with their group
+		if t.GroupID != group.SharedInfraGroup.ID && srv.Type != services.TypeHatchery {
+			return sdk.WrapError(sdk.ErrUnauthorized, "postServiceRegisterHandler> Cannot register service for group %d with service %s", t.GroupID, srv.Type)
 		}
 
 		//Insert or update the service
