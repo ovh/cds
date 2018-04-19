@@ -1,10 +1,12 @@
 package workflow
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -57,19 +59,40 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 			if h.WorkflowHookModel.Name == sdk.SchedulerModelName {
 				// Add git.branch in scheduler payload
 				if wf.Root.IsLinkedToRepo() && h.Config["payload"].Value != "" {
-					payload := map[string]string{}
-					if err := json.Unmarshal([]byte(h.Config["payload"].Value), &payload); err != nil {
-						return sdk.WrapError(err, "HookRegistration> Unable to unmarshall payload")
+					var bodyJSON interface{}
+					//Try to parse the body as an array
+					bodyJSONArray := []interface{}{}
+					if err := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONArray); err != nil {
+						//Try to parse the body as a map
+						bodyJSONMap := map[string]interface{}{}
+						if err2 := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONMap); err2 == nil {
+							bodyJSON = bodyJSONMap
+						}
+					} else {
+						bodyJSON = bodyJSONArray
 					}
 
-					if payload["git.branch"] == "" {
+					//Go Dump
+					e := dump.NewDefaultEncoder(new(bytes.Buffer))
+					e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+					e.ExtraFields.DetailedMap = false
+					e.ExtraFields.DetailedStruct = false
+					e.ExtraFields.DeepJSON = true
+					e.ExtraFields.Len = false
+					e.ExtraFields.Type = false
+					payloadValues, errDump := e.ToStringMap(bodyJSON)
+					if errDump != nil {
+						return sdk.WrapError(errDump, "HookRegistration> Cannot dump payload %+v", h.Config["payload"].Value)
+					}
+
+					if payloadValues["git.branch"] == "" {
 						defaultPayloadMap, errP := wf.Root.Context.DefaultPayloadToMap()
 						if errP != nil {
 							return sdk.WrapError(errP, "HookRegistration> Cannot read node default payload")
 						}
-						payload["git.branch"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"]
+						payloadValues["git.branch"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"]
 
-						payloadStr, errM := json.Marshal(&payload)
+						payloadStr, errM := json.MarshalIndent(&payloadValues, "", "  ")
 						if errM != nil {
 							return sdk.WrapError(errM, "HookRegistration> Cannot marshal hook config payload : %s", errM)
 						}
@@ -78,7 +101,6 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 						h.Config["payload"] = pl
 						hookToUpdate[i] = h
 					}
-
 				}
 			}
 		}
