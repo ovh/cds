@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, Input, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {Project} from '../../../../../model/project.model';
 import {
@@ -22,7 +22,7 @@ import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event
     styleUrls: ['./workflow.sidebar.run.node.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunNodeComponent implements OnInit {
+export class WorkflowSidebarRunNodeComponent {
 
     // Project that contains the workflow
     @Input() project: Project;
@@ -91,31 +91,6 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
         this.node = Workflow.getNodeByID(this.currentWorkflowNodeRun.workflow_node_id, this.currentWorkflowRun.workflow);
         this.displayEditOption = this.node != null;
         this.canBeRun = this.getCanBeRun();
-    }
-
-    ngOnInit() {
-
-/*
-        this._activatedRoute.queryParams.subscribe((queryparams) => {
-
-          this.displaySummary = this.runId !== -1;
-
-
-          this.node = Workflow.getNodeByID(this.nodeId, this.currentWorkflowRun.workflow);
-          let wr = this.currentWorkflowRun;
-          if (this.node && wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
-              this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
-              this.duration = this.getDuration();
-          } else {
-              this.currentWorkflowNodeRun = null;
-          }
-          this.canBeRun = this.getCanBeRun();
-
-          this.displayEditOption = Workflow.getNodeByID(this.nodeId, this.workflow) != null;
-        });
-*/
-
-
     }
 
     displayLogs() {

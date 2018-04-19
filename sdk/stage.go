@@ -29,6 +29,7 @@ type StageSummary struct {
 	BuildOrder     int                         `json:"build_order"`
 	Enabled        bool                        `json:"enabled"`
 	Status         Status                      `json:"status"`
+	Jobs           []Job                       `json:"jobs"`
 	RunJobsSummary []WorkflowNodeJobRunSummary `json:"run_jobs_summary"`
 }
 
@@ -41,11 +42,11 @@ func (s Stage) ToSummary() StageSummary {
 		Enabled:        s.Enabled,
 		Status:         s.Status,
 		RunJobsSummary: make([]WorkflowNodeJobRunSummary, len(s.RunJobs)),
+		Jobs:           s.Jobs,
 	}
 	for i := range s.RunJobs {
 		sum.RunJobsSummary[i] = s.RunJobs[i].ToSummary()
 	}
-
 	return sum
 }
 

@@ -53,6 +53,8 @@ type ExecutedJobSummary struct {
 	WorkerName        string              `json:"worker_name""`
 	WorkerID          string              `json:"worker_id"`
 	JobName           string              `json:"job_name"`
+	PipelineActionID  int64               `json:"pipeline_action_id"`
+	PipelineStageID   int64               `json:"pipeline_stage_id"`
 	Steps             []ActionSummary     `json:"steps"`
 }
 
@@ -64,6 +66,8 @@ func (j ExecutedJob) ToSummary() ExecutedJobSummary {
 		Reason:            j.Reason,
 		WorkerName:        j.WorkerName,
 		Steps:             make([]ActionSummary, len(j.Action.Actions)),
+		PipelineActionID:  j.PipelineActionID,
+		PipelineStageID:   j.PipelineStageID,
 	}
 	for i := range j.Action.Actions {
 		sum.Steps[i] = j.Action.Actions[i].ToSummary()

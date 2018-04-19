@@ -100,7 +100,10 @@ func (b *eventsBroker) Start(c context.Context) {
 
 			b.mutex.Lock()
 			for _, i := range b.clients {
-				manageEvent(receivedEvent, string(bEvent), i)
+				if i.Queue != nil {
+					manageEvent(receivedEvent, string(bEvent), i)
+				}
+
 			}
 			b.mutex.Unlock()
 		}
@@ -152,6 +155,15 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		fmt.Fprintf(w, "data: ACK: %s \n\n", uuid)
 		f.Flush()
 
+		go func() {
+			for msg := range messageChan.Queue {
+				w.Write([]byte("data: "))
+				w.Write([]byte(msg))
+				w.Write([]byte("\n\n"))
+				f.Flush()
+			}
+		}()
+
 		tick := time.NewTicker(time.Second)
 		defer tick.Stop()
 	leave:
@@ -159,23 +171,21 @@ func (b *eventsBroker) ServeHTTP() Handler {
 			select {
 			case <-ctx.Done():
 				b.mutex.Lock()
+				close(messageChan.Queue)
 				delete(b.clients, messageChan.UIID)
 				b.mutex.Unlock()
 				break leave
 			case <-w.(http.CloseNotifier).CloseNotify():
 				b.mutex.Lock()
+				close(messageChan.Queue)
 				delete(b.clients, messageChan.UIID)
 				b.mutex.Unlock()
 				break leave
-			case msg := <-messageChan.Queue:
-				w.Write([]byte("data: "))
-				w.Write([]byte(msg))
-				w.Write([]byte("\n\n"))
-				f.Flush()
 			case <-tick.C:
 				f.Flush()
 			}
 		}
+
 		return nil
 	}
 }

@@ -17,7 +17,7 @@ import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
-import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../../service/workflow/workflow.sidebar.store';
+import {Router} from '@angular/router';
 
 @Component({
     selector: 'app-workflow-node',
@@ -52,8 +52,7 @@ export class WorkflowNodeComponent implements OnInit {
     subSelect: Subscription;
 
 
-    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore,
-                private _sidebarStore: WorkflowSidebarStore) {
+    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore, private _router: Router) {
     }
 
     ngOnInit(): void {
@@ -131,31 +130,26 @@ export class WorkflowNodeComponent implements OnInit {
 
         if (this._workflowEventStore.isRunSelected()) {
             this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun);
-            this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_NODE);
         } else {
             this._workflowEventStore.setSelectedNode(this.node);
         }
     }
 
     goToLogs() {
-        /*
-        let pip = this.node.pipeline.name;
-        if (this.currentNodeRun) {
+        if (this._workflowEventStore.isRunSelected()) {
+            this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun);
             this._router.navigate([
                 '/project', this.project.key,
                 'workflow', this.workflow.name,
                 'run', this.currentNodeRun.num,
-                'node', this.currentNodeRun.id], {queryParams: {
-                    name: pip,
-                    selectedNodeRunId: this.currentNodeRun ? this.currentNodeRun.id : -1,
-                    selectedNodeRunNum: this.currentNodeRun ? this.currentNodeRun.num : 0,
-                    selectedNodeId: this.currentNodeRun ? this.currentNodeRun.workflow_node_id : this.node.id}});
+                'node', this.currentNodeRun.id
+            ]);
         } else {
-          this._router.navigate([
-              '/project', this.project.key,
-              'pipeline', pip
-          ], {queryParams: {workflow: this.workflow.name}});
+            this._workflowEventStore.setSelectedNode(this.node);
+            this._router.navigate([
+                '/project', this.project.key,
+                'pipeline', this.node.pipeline.name
+            ], {queryParams: {workflow: this.workflow.name}});
         }
-        */
     }
 }

@@ -49,10 +49,12 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
-func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, previousWR sdk.WorkflowNodeRun, projectKey string) {
+func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, previousWR *sdk.WorkflowNodeRun, projectKey string) {
 	// get and send all user notifications
-	for _, event := range notification.GetUserWorkflowEvents(db, wr, previousWR, nr) {
-		Publish(event, nil)
+	if previousWR != nil {
+		for _, event := range notification.GetUserWorkflowEvents(db, wr, *previousWR, nr) {
+			Publish(event, nil)
+		}
 	}
 
 	e := sdk.EventRunWorkflowNode{
@@ -95,7 +97,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.
 		}
 	}
 
-	if nr.Status != sdk.StatusBuilding.String() && nr.Status != sdk.StatusWaiting.String() {
+	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
 	PublishRunWorkflow(e, projectKey, wr.Workflow.Name, appName, pipName, envName, wr.Number, nil)

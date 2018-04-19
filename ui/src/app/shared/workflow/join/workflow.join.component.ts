@@ -8,7 +8,6 @@ import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.compone
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {Subscription} from 'rxjs/Subscription';
 import {finalize} from 'rxjs/operators';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
@@ -24,9 +23,9 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() join: WorkflowNodeJoin;
-    @Input() readonly = false;
     @Output() selectEvent = new EventEmitter<WorkflowNodeJoin>();
 
+    readonly = false;
     isSelected = false;
     subSelect: Subscription;
     disabled = false;
@@ -46,7 +45,7 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     currentWorkflowRun: WorkflowRun;
 
     constructor(private elementRef: ElementRef, private _workflowRunService: WorkflowRunService,
-        private _workflowCoreService: WorkflowCoreService, private _router: Router,
+        private _router: Router,
         private _workflowEventStore: WorkflowEventStore) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.options = {
@@ -65,6 +64,11 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
             }
             this.isSelected = false;
         });
+
+        this.workflowCoreSub = this._workflowEventStore.selectedRun().subscribe(wr => {
+            this.currentWorkflowRun = wr;
+            this.readonly = this.currentWorkflowRun != null;
+        });
     }
 
     ngAfterViewInit() {
@@ -73,9 +77,6 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     }
 
     ngOnInit() {
-        this.workflowCoreSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe(wr => {
-            this.currentWorkflowRun = wr;
-        });
     }
 
     selectJoinToLink(): void {
@@ -115,7 +116,6 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
         this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request)
             .pipe(finalize(() => this.loading = false))
             .subscribe((wr) => {
-                this._workflowCoreService.setCurrentWorkflowRun(wr);
                 this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 {queryParams: { subnum: wr.last_subnumber }});
             });

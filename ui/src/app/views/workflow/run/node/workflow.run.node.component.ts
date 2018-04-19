@@ -27,13 +27,13 @@ export class WorkflowNodeRunComponent {
     // Context info
     project: Project;
     workflowName: string;
+
     duration: string;
 
     workflowRun: WorkflowRun;
 
     // History
     nodeRunsHistory = new Array<WorkflowNodeRun>();
-
     selectedTab: string;
 
     constructor(private _activatedRoute: ActivatedRoute,
@@ -83,7 +83,7 @@ export class WorkflowNodeRunComponent {
             this._eventStore.changeFilter(s);
 
             let historyChecked = false;
-            this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
+            this.subNodeRun = this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
                 .pipe(first()).subscribe(nodeRun => {
                 this.nodeRun = nodeRun;
                 if (!historyChecked) {
@@ -95,17 +95,18 @@ export class WorkflowNodeRunComponent {
                         .subscribe(nrs => this.nodeRunsHistory = nrs);
                 }
 
-                if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
-                    this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
-                }
                 this._workflowEventStore.setSelectedNodeRun(this.nodeRun);
                 this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
                     this.nodeRun = wnr;
+
+                    if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
+                        this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
+                    }
                 });
                 let f = new EventSubscription();
                 f.key = this.project.key;
                 f.workflow_name = this.workflowName;
-                f.num = number;
+                f.num = this.workflowRun.num;
                 f.runs = true;
                 this._eventStore.changeFilter(f);
             });

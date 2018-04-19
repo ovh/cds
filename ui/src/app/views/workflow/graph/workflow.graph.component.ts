@@ -269,10 +269,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             componentRef.instance.project = this.project;
             componentRef.instance.disabled = this.linkWithJoin;
 
-            if (this.workflowRun) {
-                componentRef.instance.readonly = true;
-            }
-
             componentRef.instance.selectEvent.subscribe(j => {
                 if (this.linkWithJoin && this.nodeToLink) {
                     this.addSrcToJoinEvent.emit({source: this.nodeToLink, target: j});
@@ -345,10 +341,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 componentRef.instance.workflow = this.workflow;
                 componentRef.instance.project = this.project;
                 componentRef.instance.node = node;
-
-                if (this.workflowRun) {
-                    componentRef.instance.readonly = true;
-                }
                 this.hooksComponent.set(hookId, componentRef);
             }
 

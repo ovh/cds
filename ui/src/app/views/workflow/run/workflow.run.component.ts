@@ -13,7 +13,7 @@ import {cloneDeep} from 'lodash';
 import {TranslateService} from '@ngx-translate/core';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
-import {WorkflowNode} from '../../../model/workflow.model';
+import {Workflow, WorkflowNode} from '../../../model/workflow.model';
 import {EventStore} from '../../../service/event/event.store';
 import {EventSubscription} from '../../../model/event.model';
 
@@ -30,6 +30,9 @@ export class WorkflowRunComponent implements OnInit {
     project: Project;
     workflowRun: WorkflowRun;
     subRun: Subscription;
+
+    workflow: Workflow;
+    subWorkflow: Subscription;
 
     workflowName: string;
     version: string;
@@ -60,9 +63,14 @@ export class WorkflowRunComponent implements OnInit {
             this.workflowName = params['workflowName'];
         });
 
+
+        this.subWorkflow = this._workflowStore.getWorkflows(this.project.key, this.workflowName).subscribe(ws => {
+            this.workflow = ws.get(this.project.key + '-' + this.workflowName);
+        });
+
+
         // Get workflow run
         this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
-            console.log(wr.status);
             this.workflowRun = wr;
             if (this.workflowRun.status === PipelineStatus.STOPPED ||
                 this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {

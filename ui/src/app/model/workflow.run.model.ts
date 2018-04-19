@@ -93,6 +93,7 @@ export class WorkflowNodeRun {
         wnr.num = e.payload['Number'];
         wnr.status = e.payload['Status'];
         wnr.start = new Date(e.payload['Start'] * 1000).toString();
+        wnr.done = new Date(e.payload['Done'] * 1000).toString();
         wnr.manual = e.payload['Manual'];
         wnr.workflow_node_id = e.payload['NodeID'];
         wnr.workflow_run_id = e.payload['RunID'];
@@ -121,7 +122,6 @@ export class WorkflowNodeRun {
                     wnjr.status = rjs['Status'];
                     wnjr.workflow_node_run_id = rjs['WorkflowNodeRunID'];
                     wnjr.job = new Job();
-
                     wnjr.job.step_status = new Array<StepStatus>();
                     if (rjs['StepStatusSummary']) {
                         rjs['StepStatusSummary'].forEach(sss => {
@@ -139,7 +139,9 @@ export class WorkflowNodeRun {
                     }
 
                     wnjr.job.action = new Action();
-                    let eventJob = rjs['Job']
+                    let eventJob = rjs['Job'];
+                    wnjr.job.pipeline_stage_id = eventJob['PipelineStageID'];
+                    wnjr.job.pipeline_action_id = eventJob['PipelineActionID'];
                     wnjr.job.action.name = eventJob['JobName'];
                     wnjr.job.action.actions = new Array<Action>();
                     if (eventJob['Steps']) {
@@ -151,6 +153,35 @@ export class WorkflowNodeRun {
                     }
 
                     stage.run_jobs.push(wnjr);
+                });
+            }
+
+            stage.jobs = new Array<Job>();
+            if (s['Jobs']) {
+                s['Jobs'].forEach(j => {
+                   let job = new Job();
+                   job.enabled = j['Enabled'];
+                   job.pipeline_action_id = j['PipelineActionID'];
+                   job.pipeline_stage_id = j['PipelineStageID'];
+                   job.last_modified = (new Date(j['LastModified'] * 1000)).toString();
+                   job.action = new Action();
+                   let eventAction = j['Action'];
+                   job.action.enabled = eventAction['Enabled'];
+                   job.action.name = eventAction['Name'];
+                   job.action.description = eventAction['Description'];
+                   job.action.actions = new Array<Action>();
+                   if (eventAction['Actions']) {
+                       eventAction['Actions'].forEach(actionStep => {
+                          let jobStep = new Action();
+                          jobStep.name = actionStep['Name'];
+                          jobStep.enabled = actionStep['Enabled'];
+                          jobStep.id = actionStep['ID'];
+
+                           job.action.actions.push(jobStep);
+                       });
+                   }
+
+                   stage.jobs.push(job);
                 });
             }
             wnr.stages.push(stage);

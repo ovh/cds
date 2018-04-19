@@ -1,5 +1,5 @@
 <div class="CDSbreadcrumb">
-    <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name" [run]="number" [nodeName]="currentNodeName"></app-worflow-breadcrumb>
+    <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name"></app-worflow-breadcrumb>
     <div class="right floated" [title]="'favorite_add_btn' | translate">
         <div class="ui active small inline loader" *ngIf="loadingFav"></div>
         <i class="pointing star icon" *ngIf="!loadingFav" [class.pointing]="!loading" [ngClass]="{'animated infinite pulse' : loadingFav}" [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>

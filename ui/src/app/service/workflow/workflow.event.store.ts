@@ -5,6 +5,7 @@ import {Map} from 'immutable';
 import {Observable} from 'rxjs/Observable';
 import {WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin} from '../../model/workflow.model';
 import {WorkflowSidebarMode, WorkflowSidebarStore} from './workflow.sidebar.store';
+import {WorkflowService} from './workflow.service';
 
 @Injectable()
 export class WorkflowEventStore {
@@ -19,14 +20,27 @@ export class WorkflowEventStore {
     private _selectedHook: BehaviorSubject<WorkflowNodeHook> = new BehaviorSubject<WorkflowNodeHook>(null);
 
 
-    constructor(private _sidebarStore: WorkflowSidebarStore) {
+    constructor(private _sidebarStore: WorkflowSidebarStore, private _workflowService: WorkflowService) {
     }
 
-    addWorkflowRun(wr: WorkflowRun): void {
+    broadcastWorkflowRun(key: string, name: string, wr: WorkflowRun): void {
         let store = this._currentWorkflowRuns.getValue();
         let w = store.get(wr.id);
+        // Update workflow runs list
         if (!w || (w && (new Date(wr.last_modified).getTime() > (new Date(w.last_modified)).getTime())) ) {
             this._currentWorkflowRuns.next(store.set(wr.id, wr));
+        }
+
+        let sRun = this._currentWorkflowRun.getValue();
+        if (sRun && sRun.id === wr.id && new Date(wr.last_modified).getTime() > new Date(sRun.last_modified).getTime()) {
+            if (!wr.workflow) {
+                this._workflowService.getWorkflow(key, name).subscribe(work => {
+                    wr.workflow = work;
+                    this._currentWorkflowRun.next(wr);
+                });
+            } else {
+                this._currentWorkflowRun.next(wr);
+            }
         }
     }
 
@@ -108,9 +122,12 @@ export class WorkflowEventStore {
 
     setSelectedNodeRun(wnr: WorkflowNodeRun) {
         let current = this._currentWorkflowNodeRun.getValue();
-        if (current && current.id === wnr.id) {
-             // update value
-            current.status = wnr.status;
+        if (wnr) {
+            this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_NODE);
+            if (current && current.id === wnr.id) {
+                // update value
+                current.status = wnr.status;
+            }
         }
         current = wnr;
         this._currentWorkflowNodeRun.next(current);
@@ -122,6 +139,11 @@ export class WorkflowEventStore {
 
     broadcastNodeRunEvents(wnr: WorkflowNodeRun) {
         this._nodeRunEvents.next(wnr);
+
+        let sNR = this._currentWorkflowNodeRun.getValue();
+        if (sNR && sNR.id === wnr.id) {
+            this._currentWorkflowNodeRun.next(wnr);
+        }
     }
 
     nodeRunEvents(): Observable<WorkflowNodeRun> {

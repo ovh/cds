@@ -208,7 +208,7 @@ export class AppService {
         switch (event.type_event) {
             case 'sdk.EventRunWorkflow':
                 let wr = WorkflowRun.fromEventRunWorkflow(event);
-                this._workflowEventStore.addWorkflowRun(wr);
+                this._workflowEventStore.broadcastWorkflowRun(event.project_key, event.workflow_name, wr);
                 break;
             case 'sdk.EventRunWorkflowNode':
                 let wnr = WorkflowNodeRun.fromEventRunWorkflowNode(event);
