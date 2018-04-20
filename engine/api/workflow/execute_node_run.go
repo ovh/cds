@@ -70,7 +70,7 @@ func syncTakeJobInNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.Wo
 	return nil
 }
 
-func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) (errExecute error) {
+func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, n *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) (errExecute error) {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
@@ -208,7 +208,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		}
 
 		if n.Status != sdk.StatusStopped.String() {
-			if _, err := processWorkflowRun(dbCopy, db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
+			if _, err := processWorkflowRun(dbCopy, db, store, proj, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 			}
 		}
@@ -266,7 +266,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 
 			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
 			//TODO: how to manage the chanEvent ? Need to discuss about it
-			if err := execute(dbCopy, db, store, p, waitingRun, nil); err != nil {
+			if err := execute(dbCopy, db, store, proj, waitingRun, nil); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
 			}
 		}
@@ -613,7 +613,7 @@ func stopWorkflowNodeJobRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project
 			return
 		}
 
-		if err := AddSpawnInfosNodeJobRun(tx, store, proj, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
+		if err := AddSpawnInfosNodeJobRun(tx, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
 			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot save spawn info job %d", njr.ID)
 			tx.Rollback()
 			wg.Done()
