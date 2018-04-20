@@ -374,8 +374,9 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		if err != nil {
 			return err
 		}
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
+
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
+		go workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
 
 		return nil
 	}
