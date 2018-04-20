@@ -352,7 +352,18 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 
 		proj, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
+			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
+				_, errLn := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+				if sdk.ErrorIs(errLn, sdk.ErrWorkflowNodeRunJobNotFound) {
+					// job result already send as job is no more in database
+					// this log is here to stats it and we returns nil for unlock the worker
+					// and avoid a "worker timeout"
+					log.Warning("postWorkflowJobResultHandler> NodeJobRun not found: %d err:%v", id, errLn)
+					return nil
+				}
+				return sdk.WrapError(errLn, "postWorkflowJobResultHandler> Cannot load NodeJobRun %d", id)
+			}
+			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project from job %d", id)
 		}
 
 		chanEvent := make(chan interface{}, 1)

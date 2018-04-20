@@ -19,7 +19,7 @@ import (
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
+func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
 	defer func(j *sdk.WorkflowNodeJobRun, chanE chan<- interface{}) {
@@ -94,7 +94,7 @@ func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 		return syncTakeJobInNodeRun(db, nodeRun, job, stageIndex, chanEvent)
 	}
-	return execute(dbCopy, db, store, p, node, chanEvent)
+	return execute(dbCopy, db, store, proj, node, chanEvent)
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
