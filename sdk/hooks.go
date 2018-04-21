@@ -11,18 +11,18 @@ type Task struct {
 
 // TaskExecution represents an execution instance of a task. It the task is a webhook; this represents the call of the webhook
 type TaskExecution struct {
-	UUID                string                  `json:"uuid"`
-	Type                string                  `json:"type"`
-	Timestamp           int64                   `json:"timestamp"`
-	NbErrors            int64                   `json:"nb_errors"`
-	LastError           string                  `json:"last_error,omitempty"`
-	ProcessingTimestamp int64                   `json:"processing_timestamp"`
-	WorkflowRun         int64                   `json:"workflow_run"`
-	Config              WorkflowNodeHookConfig  `json:"config"`
-	WebHook             *WebHookExecution       `json:"webhook,omitempty"`
-	Kafka               *KafkaTaskExecution     `json:"kafka,omitempty"`
-	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty"`
-	Status              string                  `json:"status"`
+	UUID                string                  `json:"uuid" cli:"uuid"`
+	Type                string                  `json:"type" cli:"type"`
+	Timestamp           int64                   `json:"timestamp" cli:"timestamp"`
+	NbErrors            int64                   `json:"nb_errors" cli:"nb_errors"`
+	LastError           string                  `json:"last_error,omitempty" cli:"last_error"`
+	ProcessingTimestamp int64                   `json:"processing_timestamp" cli:"processing_timestamp"`
+	WorkflowRun         int64                   `json:"workflow_run" cli:"workflow_run"`
+	Config              WorkflowNodeHookConfig  `json:"config" cli:"-"`
+	WebHook             *WebHookExecution       `json:"webhook,omitempty" cli:"-"`
+	Kafka               *KafkaTaskExecution     `json:"kafka,omitempty" cli:"-"`
+	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty" cli:"-"`
+	Status              string                  `json:"status" cli:"status"`
 }
 
 // WebHookExecution contains specific data for a webhook execution
@@ -32,7 +32,7 @@ type WebHookExecution struct {
 	RequestHeader map[string][]string `json:"request_header"`
 }
 
-// KafkaTestExecution contains specific data for a kafka hook
+// KafkaTaskExecution contains specific data for a kafka hook
 type KafkaTaskExecution struct {
 	Message []byte
 }
