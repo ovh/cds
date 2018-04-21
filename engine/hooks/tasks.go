@@ -321,7 +321,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		} else {
 			//Save the run number
 			e.WorkflowRun = run.Number
-			log.Debug("Hooks> workflow %v/%v#%d has been triggered", confProj, confWorkflow, run.Number)
+			log.Debug("Hooks> workflow %s/%s#%d has been triggered", confProj.Value, confWorkflow.Value, run.Number)
 		}
 	}
 

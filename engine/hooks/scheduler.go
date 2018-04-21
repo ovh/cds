@@ -81,20 +81,20 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					// old hooks
 					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-2*time.Minute).UnixNano() {
 						if e.UUID == "" {
-							log.Warning("Very old hook without UUID %d/%d type:%s status:%s timestamp:%d err:%v", e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
+							log.Warning("Hooks> Very old hook without UUID %d/%d type:%s status:%s timestamp:%d err:%v", e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 							continue
 						}
-						log.Warning("Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
+						log.Warning("Hooks> Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
 						// avoid re-enqueue if the lastError is about a git branch not found
 						// the branch was deleted from git repository, it will never work
 						if strings.Contains(e.LastError, "branchName parameter must be provided") {
-							log.Warning("Do not re-enqueue this taskExecution with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+							log.Warning("Hooks> Do not re-enqueue this taskExecution with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 							continue
 						}
-						log.Warning("Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+						log.Warning("Hooks> Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}
