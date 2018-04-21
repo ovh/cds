@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -259,6 +260,18 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (s *Service) Status() sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
+
+	if s.Dao.store != nil {
+		// hook queue in status
+		status := sdk.MonitoringStatusOK
+		size := s.Dao.QueueLen()
+		if size >= 100 {
+			status = sdk.MonitoringStatusAlert
+		} else if size >= 10 {
+			status = sdk.MonitoringStatusWarn
+		}
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Queue", Value: fmt.Sprintf("%d", size), Status: status})
+	}
 
 	return m
 }
