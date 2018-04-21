@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -72,10 +73,20 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					}
 					// old hooks
 					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-2*time.Minute).UnixNano() {
-						log.Warning("Enqueing very old hooks %s %d/%d type:%s status:%s err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.LastError)
+						if e.UUID == "" {
+							log.Warning("Very old hook without UUID %d/%d type:%s status:%s timestamp:%d err:%v", e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
+							continue
+						}
+						log.Warning("Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
+						// avoid re-enqueue if the lastError is about a git branch not found
+						// the branch was deleted from git repository, it will never work
+						if strings.Contains(e.LastError, "branchName parameter must be provided") {
+							log.Warning("Do not re-enqueue this taskExecution with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+							continue
+						}
 						log.Warning("Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
@@ -186,6 +197,7 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			t.NbErrors++
 			log.Info("Hooks> Deleting task execution %s", t.UUID)
 			s.Dao.DeleteTaskExecution(&t)
+			continue
 
 		} else if task.Stopped {
 			t.LastError = "Executions skipped: Task has been stopped"
@@ -195,10 +207,17 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			restartTask = true
 			saveTaskExecution = true
 			if err := s.doTask(c, task, &t); err != nil {
-				log.Error("Hooks> dequeueTaskExecutions %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
-				t.LastError = err.Error()
-				t.NbErrors++
-				saveTaskExecution = true
+				if strings.Contains(err.Error(), "Unsupported task type") {
+					// delete this task execution, as it will never work
+					log.Info("Hooks> Deleting task execution %s as err:%v", t.UUID, err)
+					s.Dao.DeleteTaskExecution(&t)
+					continue
+				} else {
+					log.Error("Hooks> dequeueTaskExecutions %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
+					t.LastError = err.Error()
+					t.NbErrors++
+					saveTaskExecution = true
+				}
 			}
 		}
 
