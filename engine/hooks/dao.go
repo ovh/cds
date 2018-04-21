@@ -67,6 +67,10 @@ func (d *dao) EnqueueTaskExecution(r *sdk.TaskExecution) {
 	d.store.Enqueue(schedulerQueueKey, k)
 }
 
+func (d *dao) QueueLen() int {
+	return d.store.QueueLen(schedulerQueueKey)
+}
+
 func (d *dao) FindAllTaskExecutions(t *sdk.Task) ([]sdk.TaskExecution, error) {
 	nbExecutions := d.store.SetCard(cache.Key(executionRootKey, t.Type, t.UUID))
 	execs := make([]*sdk.TaskExecution, nbExecutions, nbExecutions)

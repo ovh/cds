@@ -56,6 +56,12 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 		case <-c.Done():
 			return c.Err()
 		case <-tick.C:
+			size := s.Dao.QueueLen()
+			log.Debug("Hooks> retryTaskExecutionsRoutine> begin - queue size: %d - ticker:%d", size, s.Cfg.RetryDelay)
+			if size > 20 {
+				log.Warning("Hooks> too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
+				continue
+			}
 			tasks, err := s.Dao.FindAllTasks()
 			if err != nil {
 				log.Error("Hooks> retryTaskExecutionsRoutine > Unable to find all tasks: %v", err)
@@ -71,6 +77,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					if e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled {
 						continue
 					}
+
 					// old hooks
 					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-2*time.Minute).UnixNano() {
 						if e.UUID == "" {
@@ -93,6 +100,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					}
 				}
 			}
+			log.Debug("Hooks> retryTaskExecutionsRoutine> end")
 		}
 	}
 }
@@ -176,6 +184,8 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		// Dequeuing context
 		var taskKey string
 		s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey)
+		size := s.Dao.QueueLen()
+		log.Debug("Hooks> dequeueTaskExecutions - current queue size: %d", size)
 
 		// Load the task execution
 		var t = sdk.TaskExecution{}
