@@ -90,7 +90,7 @@ export class BroadcastEditComponent implements OnInit {
       }
     }
 
-    getMessageHeight(): number {
-        return this.sharedService.getTextAreaheight(this.broadcast.message);
+    getContentHeight(): number {
+        return this.sharedService.getTextAreaheight(this.broadcast.content);
     }
 }

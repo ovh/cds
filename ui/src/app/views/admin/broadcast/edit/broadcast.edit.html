@@ -40,9 +40,9 @@
               </div>
             </div>
             <div class="field">
-              <label>{{'broadcast_message' | translate}}</label>
-              <textarea name="message" [(ngModel)]="broadcast.message"
-                        rows="{{getMessageHeight()}}"></textarea>
+              <label>{{'broadcast_content' | translate}}</label>
+              <textarea name="content" [(ngModel)]="broadcast.content"
+                        rows="{{getContentHeight()}}"></textarea>
             </div>
             <div *ngIf="canEdit" class="field">
                 <app-delete-button *ngIf="broadcast.id" class="left floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>

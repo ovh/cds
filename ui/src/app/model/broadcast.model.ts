@@ -1,7 +1,7 @@
 export class Broadcast {
     id: number;
     title: string;
-    message: string;
+    content: string;
     level: string;
     created: string;
     updated: string;

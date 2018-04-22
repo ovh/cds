@@ -275,7 +275,7 @@
   "broadcast_edit_title": "Éditer l'information",
   "broadcast_id": "N°",
   "broadcast_title": "Titre",
-  "broadcast_message": "Message",
+  "broadcast_content": "Message",
   "broadcast_archived": "Archivée",
   "broadcast_archived_help": "Cocher pour archiver cette information",
   "broadcast_help_line_1": "",

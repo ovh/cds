@@ -150,6 +150,8 @@ type HatcheryClient interface {
 // BroadcastClient expose all function for CDS Broadcasts
 type BroadcastClient interface {
 	Broadcasts() ([]sdk.Broadcast, error)
+	BroadcastGet(id string) (*sdk.Broadcast, error)
+	BroadcastDelete(id string) error
 	BroadcastsByLevel(s string) ([]sdk.Broadcast, error)
 }
 

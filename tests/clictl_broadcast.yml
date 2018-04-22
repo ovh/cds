@@ -1,0 +1,6 @@
+name: Broadcast Command TestSuite
+testcases:
+- name: broadcast
+  steps:
+  - script: {{.cds.build.cdsctl}} admin broadcasts list
+

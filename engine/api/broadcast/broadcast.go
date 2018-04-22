@@ -31,16 +31,16 @@ func UpdateBroadcast(db gorp.SqlExecutor, bc sdk.Broadcast) error {
 
 // LoadBroadcastByID loads broadcast by id
 func LoadBroadcastByID(db gorp.SqlExecutor, id int64) (*sdk.Broadcast, error) {
-	dbInfo := Broadcast{}
+	dbBroadcast := Broadcast{}
 	query := `select * from broadcast where id=$1`
 	args := []interface{}{id}
-	if err := db.SelectOne(&dbInfo, query, args...); err != nil {
+	if err := db.SelectOne(&dbBroadcast, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WrapError(sdk.ErrInfoNotFound, "LoadBroadcastByID>")
+			return nil, sdk.WrapError(sdk.ErrBroadcastNotFound, "LoadBroadcastByID>")
 		}
 		return nil, sdk.WrapError(err, "LoadBroadcastByID>")
 	}
-	broadcast := sdk.Broadcast(dbInfo)
+	broadcast := sdk.Broadcast(dbBroadcast)
 	return &broadcast, nil
 }
 
@@ -48,7 +48,7 @@ func LoadBroadcastByID(db gorp.SqlExecutor, id int64) (*sdk.Broadcast, error) {
 func LoadBroadcasts(db gorp.SqlExecutor) ([]sdk.Broadcast, error) {
 	res := []Broadcast{}
 	if _, err := db.Select(&res, `select * from broadcast`); err != nil {
-		return nil, sdk.WrapError(err, "LoadAllInfos> ")
+		return nil, sdk.WrapError(err, "LoadAllBroadcasts> ")
 	}
 
 	infos := make([]sdk.Broadcast, len(res))
@@ -68,7 +68,7 @@ func DeleteBroadcast(db gorp.SqlExecutor, ID int64) error {
 		return err
 	}
 	if count == 0 {
-		return sdk.ErrNoInfo
+		return sdk.ErrNoBroadcast
 	}
 	return nil
 }

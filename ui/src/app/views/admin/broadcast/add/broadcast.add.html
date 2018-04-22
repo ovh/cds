@@ -41,8 +41,8 @@
               </div>
             </div>
             <div class="field">
-              <label>{{'broadcast_message' | translate}}</label>
-              <textarea name="message" [(ngModel)]="broadcast.message" rows="3"></textarea>
+              <label>{{'broadcast_content' | translate}}</label>
+              <textarea name="content" [(ngModel)]="broadcast.content" rows="3"></textarea>
             </div>
             <div class="field">
                 <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">

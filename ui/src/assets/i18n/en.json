@@ -275,7 +275,7 @@
   "broadcast_edit_title": "Edit an broadcast",
   "broadcast_id": "Num.",
   "broadcast_title": "Title",
-  "broadcast_message": "Message",
+  "broadcast_content": "Content",
   "broadcast_archived": "Archived",
   "broadcast_archived_help": "Check to archive this broadcast",
   "broadcast_help_line_1": "",
