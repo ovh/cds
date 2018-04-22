@@ -169,7 +169,25 @@ func (s *Service) startTasks(ctx context.Context) error {
 	for i := range tasks {
 		t := &tasks[i]
 		if err := s.startTask(c, t); err != nil {
-			log.Error("Hooks> runLongRunningTasks> Unable to start tasks: %v", err)
+			log.Error("Hooks> runLongRunningTasks> Unable to start task: %v", err)
+			continue
+		}
+	}
+	return nil
+}
+
+func (s *Service) stopTasks() error {
+	//Load all the tasks
+	tasks, err := s.Dao.FindAllTasks()
+	if err != nil {
+		return sdk.WrapError(err, "Hook> stopTasks> Unable to find all tasks")
+	}
+
+	//Start the tasks
+	for i := range tasks {
+		t := &tasks[i]
+		if err := s.stopTask(t); err != nil {
+			log.Error("Hooks> stopTasks> Unable to stop task: %v", err)
 			continue
 		}
 	}

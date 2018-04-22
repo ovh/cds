@@ -67,6 +67,24 @@ func (s *Service) webhookHandler() api.Handler {
 	}
 }
 
+func (s *Service) startTasksHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if err := s.startTasks(ctx); err != nil {
+			return sdk.WrapError(err, "Hooks> startTasksHandler")
+		}
+		return nil
+	}
+}
+
+func (s *Service) stopTasksHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if err := s.stopTasks(); err != nil {
+			return sdk.WrapError(err, "Hooks> stopTasksHandler")
+		}
+		return nil
+	}
+}
+
 func (s *Service) postTaskHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
@@ -225,13 +243,23 @@ func (s *Service) deleteAllTaskExecutionsHandler() api.Handler {
 			return api.WriteJSON(w, t, http.StatusOK)
 		}
 
+		//Stop the task
+		if err := s.stopTask(t); err != nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hook> deleteAllTaskExecutionsHandler> stop task")
+		}
+
 		//Load the executions
 		execs, err := s.Dao.FindAllTaskExecutions(t)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
+			return sdk.WrapError(err, "Hook> deleteAllTaskExecutionsHandler> Unable to find task executions for %s", uuid)
 		}
 		for i := range execs {
 			s.Dao.DeleteTaskExecution(&execs[i])
+		}
+
+		//Start the task
+		if err := s.startTask(ctx, t); err != nil {
+			return sdk.WrapError(err, "Hooks> deleteAllTaskExecutionsHandler> Unable start task %+v", t)
 		}
 
 		return api.WriteJSON(w, t, http.StatusOK)
@@ -318,6 +346,11 @@ func (s *Service) Status() sdk.MonitoringStatus {
 			log.Error("Status> Unable to find all tasks: %v", err)
 		}
 		for _, t := range tasks {
+
+			if t.Stopped {
+				m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Task Stopped", Value: t.UUID, Status: sdk.MonitoringStatusWarn})
+			}
+
 			execs, err := s.Dao.FindAllTaskExecutions(&t)
 			if err != nil {
 				log.Error("Status> Unable to find all task executions (%s): %v", t.UUID, err)

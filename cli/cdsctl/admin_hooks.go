@@ -22,6 +22,8 @@ var (
 			cli.NewListCommand(adminHooksTaskListCmd, adminHooksTaskListRun, nil),
 			cli.NewListCommand(adminHooksTaskExecutionListCmd, adminHooksTaskExecutionListRun, nil),
 			cli.NewCommand(adminHooksTaskExecutionDeleteAllCmd, adminHooksTaskExecutionDeleteAllRun, nil),
+			cli.NewCommand(adminHooksTaskExecutionStartAllCmd, adminHooksTaskExecutionStartAllRun, nil),
+			cli.NewCommand(adminHooksTaskExecutionStopAllCmd, adminHooksTaskExecutionStopAllRun, nil),
 		})
 )
 
@@ -133,4 +135,26 @@ func adminHooksTaskExecutionDeleteAllRun(v cli.Values) error {
 		return fmt.Errorf("please use uuid argument")
 	}
 	return client.ServiceCallDELETE("hooks", fmt.Sprintf("/task/%s/execution", uuid))
+}
+
+var adminHooksTaskExecutionStopAllCmd = cli.Command{
+	Name:    "stopall",
+	Short:   "Stop all tasks",
+	Example: "cdsctl admin hooks stopall",
+}
+
+func adminHooksTaskExecutionStopAllRun(v cli.Values) error {
+	_, err := client.ServiceCallGET("hooks", "/task/bulk/stop")
+	return err
+}
+
+var adminHooksTaskExecutionStartAllCmd = cli.Command{
+	Name:    "startall",
+	Short:   "Start all tasks",
+	Example: "cdsctl admin hooks startall",
+}
+
+func adminHooksTaskExecutionStartAllRun(v cli.Values) error {
+	_, err := client.ServiceCallGET("hooks", "/task/bulk/start")
+	return err
 }

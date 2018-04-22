@@ -18,6 +18,8 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/webhook/{uuid}", r.POST(s.webhookHandler, api.Auth(false)), r.GET(s.webhookHandler, api.Auth(false)), r.DELETE(s.webhookHandler, api.Auth(false)), r.PUT(s.webhookHandler, api.Auth(false)))
 	r.Handle("/task", r.POST(s.postTaskHandler), r.GET(s.getTasksHandler))
+	r.Handle("/task/bulk/start", r.GET(s.startTasksHandler))
+	r.Handle("/task/bulk/stop", r.GET(s.stopTasksHandler))
 	r.Handle("/task/bulk", r.POST(s.postTaskBulkHandler), r.DELETE(s.deleteTaskBulkHandler))
 	r.Handle("/task/{uuid}", r.GET(s.getTaskHandler), r.PUT(s.putTaskHandler), r.DELETE(s.deleteTaskHandler))
 	r.Handle("/task/{uuid}/execution", r.GET(s.getTaskExecutionsHandler), r.DELETE(s.deleteAllTaskExecutionsHandler))
