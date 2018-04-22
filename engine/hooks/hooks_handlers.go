@@ -213,6 +213,31 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 	}
 }
 
+func (s *Service) deleteAllTaskExecutionsHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return api.WriteJSON(w, t, http.StatusOK)
+		}
+
+		//Load the executions
+		execs, err := s.Dao.FindAllTaskExecutions(t)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
+		}
+		for i := range execs {
+			s.Dao.DeleteTaskExecution(&execs[i])
+		}
+
+		return api.WriteJSON(w, t, http.StatusOK)
+	}
+}
+
 func (s *Service) deleteTaskBulkHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		hooks := map[string]sdk.WorkflowNodeHook{}

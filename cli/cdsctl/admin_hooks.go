@@ -21,6 +21,7 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(adminHooksTaskListCmd, adminHooksTaskListRun, nil),
 			cli.NewListCommand(adminHooksTaskExecutionListCmd, adminHooksTaskExecutionListRun, nil),
+			cli.NewCommand(adminHooksTaskExecutionDeleteAllCmd, adminHooksTaskExecutionDeleteAllRun, nil),
 		})
 )
 
@@ -115,4 +116,21 @@ func adminHooksTaskExecutionListRun(v cli.Values) (cli.ListResult, error) {
 	}
 
 	return cli.AsListResult(te), nil
+}
+
+var adminHooksTaskExecutionDeleteAllCmd = cli.Command{
+	Name:    "purge",
+	Short:   "Delete all executions for a task",
+	Example: "cdsctl admin hooks purge 5178ce1f-2f76-45c5-a203-58c10c3e2c73",
+	Args: []cli.Arg{
+		{Name: "uuid"},
+	},
+}
+
+func adminHooksTaskExecutionDeleteAllRun(v cli.Values) error {
+	uuid := v.GetString("uuid")
+	if uuid == "" {
+		return fmt.Errorf("please use uuid argument")
+	}
+	return client.ServiceCallDELETE("hooks", fmt.Sprintf("/task/%s/execution", uuid))
 }
