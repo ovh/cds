@@ -22,25 +22,25 @@ func (s *Service) webhookHandler() api.Handler {
 		uuid := vars["uuid"]
 
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Hook> webhookHandler> invalid uuid or name")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> webhookHandler> invalid uuid or name")
 		}
 
 		//Load the task
 		webHook := s.Dao.FindTask(uuid)
 		if webHook == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> webhookHandler> unknown uuid")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> webhookHandler> unknown uuid")
 		}
 
 		//Check method
 		confValue := webHook.Config[sdk.WebHookModelConfigMethod]
 		if r.Method != confValue.Value {
-			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Hook> webhookHandler> Unsupported method %s : %v", r.Method, webHook.Config)
+			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Hooks> webhookHandler> Unsupported method %s : %v", r.Method, webHook.Config)
 		}
 
 		//Read the body
 		req, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			return sdk.WrapError(err, "Hook> webhookHandler> unable to read request")
+			return sdk.WrapError(err, "Hooks> webhookHandler> unable to read request")
 		}
 
 		//Prepare a web hook execution
@@ -80,6 +80,52 @@ func (s *Service) stopTasksHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := s.stopTasks(); err != nil {
 			return sdk.WrapError(err, "Hooks> stopTasksHandler")
+		}
+		return nil
+	}
+}
+
+func (s *Service) startTaskHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		if uuid == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> startTaskHandler> invalid uuid")
+		}
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> startTaskHandler> unknown uuid")
+		}
+
+		//Start the task
+		if err := s.startTask(ctx, t); err != nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> startTaskHandler> start task")
+		}
+		return nil
+	}
+}
+
+func (s *Service) stopTaskHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		if uuid == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> stopTaskHandler> invalid uuid")
+		}
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> stopTaskHandler> unknown uuid")
+		}
+
+		//Stop the task
+		if err := s.stopTask(t); err != nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> stopTaskHandler> stop task")
 		}
 		return nil
 	}
@@ -131,18 +177,18 @@ func (s *Service) putTaskHandler() api.Handler {
 		vars := mux.Vars(r)
 		uuid := vars["uuid"]
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Hook> putTaskHandler> invalid uuid")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> putTaskHandler> invalid uuid")
 		}
 
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> unknown uuid")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> unknown uuid")
 		}
 
 		//Stop the task
 		if err := s.stopTask(t); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
 		//Save it
@@ -194,7 +240,7 @@ func (s *Service) deleteTaskHandler() api.Handler {
 
 		//Stop the task
 		if err := s.stopTask(t); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
 		//Delete the task
@@ -245,13 +291,13 @@ func (s *Service) deleteAllTaskExecutionsHandler() api.Handler {
 
 		//Stop the task
 		if err := s.stopTask(t); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> deleteAllTaskExecutionsHandler> stop task")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> deleteAllTaskExecutionsHandler> stop task")
 		}
 
 		//Load the executions
 		execs, err := s.Dao.FindAllTaskExecutions(t)
 		if err != nil {
-			return sdk.WrapError(err, "Hook> deleteAllTaskExecutionsHandler> Unable to find task executions for %s", uuid)
+			return sdk.WrapError(err, "Hooks> deleteAllTaskExecutionsHandler> Unable to find task executions for %s", uuid)
 		}
 		for i := range execs {
 			s.Dao.DeleteTaskExecution(&execs[i])
@@ -282,7 +328,7 @@ func (s *Service) deleteTaskBulkHandler() api.Handler {
 
 			//Stop the task
 			if err := s.stopTask(t); err != nil {
-				return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task %s", err)
+				return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task %s", err)
 			}
 			//Delete the task
 			s.Dao.DeleteTask(t)

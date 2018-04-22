@@ -21,6 +21,8 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(adminHooksTaskListCmd, adminHooksTaskListRun, nil),
 			cli.NewListCommand(adminHooksTaskExecutionListCmd, adminHooksTaskExecutionListRun, nil),
+			cli.NewCommand(adminHooksTaskExecutionStartCmd, adminHooksTaskExecutionStartRun, nil),
+			cli.NewCommand(adminHooksTaskExecutionStopCmd, adminHooksTaskExecutionStopRun, nil),
 			cli.NewCommand(adminHooksTaskExecutionDeleteAllCmd, adminHooksTaskExecutionDeleteAllRun, nil),
 			cli.NewCommand(adminHooksTaskExecutionStartAllCmd, adminHooksTaskExecutionStartAllRun, nil),
 			cli.NewCommand(adminHooksTaskExecutionStopAllCmd, adminHooksTaskExecutionStopAllRun, nil),
@@ -135,6 +137,42 @@ func adminHooksTaskExecutionDeleteAllRun(v cli.Values) error {
 		return fmt.Errorf("please use uuid argument")
 	}
 	return client.ServiceCallDELETE("hooks", fmt.Sprintf("/task/%s/execution", uuid))
+}
+
+var adminHooksTaskExecutionStartCmd = cli.Command{
+	Name:    "start",
+	Short:   "Start a task",
+	Example: "cdsctl admin hooks start 5178ce1f-2f76-45c5-a203-58c10c3e2c73",
+	Args: []cli.Arg{
+		{Name: "uuid"},
+	},
+}
+
+func adminHooksTaskExecutionStartRun(v cli.Values) error {
+	uuid := v.GetString("uuid")
+	if uuid == "" {
+		return fmt.Errorf("please use uuid argument")
+	}
+	_, err := client.ServiceCallGET("hooks", fmt.Sprintf("/task/%s/start", uuid))
+	return err
+}
+
+var adminHooksTaskExecutionStopCmd = cli.Command{
+	Name:    "stop",
+	Short:   "Stop a task",
+	Example: "cdsctl admin hooks stop 5178ce1f-2f76-45c5-a203-58c10c3e2c73",
+	Args: []cli.Arg{
+		{Name: "uuid"},
+	},
+}
+
+func adminHooksTaskExecutionStopRun(v cli.Values) error {
+	uuid := v.GetString("uuid")
+	if uuid == "" {
+		return fmt.Errorf("please use uuid argument")
+	}
+	_, err := client.ServiceCallGET("hooks", fmt.Sprintf("/task/%s/stop", uuid))
+	return err
 }
 
 var adminHooksTaskExecutionStopAllCmd = cli.Command{

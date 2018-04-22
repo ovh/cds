@@ -22,5 +22,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/task/bulk/stop", r.GET(s.stopTasksHandler))
 	r.Handle("/task/bulk", r.POST(s.postTaskBulkHandler), r.DELETE(s.deleteTaskBulkHandler))
 	r.Handle("/task/{uuid}", r.GET(s.getTaskHandler), r.PUT(s.putTaskHandler), r.DELETE(s.deleteTaskHandler))
+	r.Handle("/task/{uuid}/start", r.GET(s.startTaskHandler))
+	r.Handle("/task/{uuid}/stop", r.GET(s.stopTaskHandler))
 	r.Handle("/task/{uuid}/execution", r.GET(s.getTaskExecutionsHandler), r.DELETE(s.deleteAllTaskExecutionsHandler))
 }
