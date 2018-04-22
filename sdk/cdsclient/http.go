@@ -108,14 +108,11 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 
 	res, header, code, err := c.Request(method, path, body, mods...)
 	if err != nil {
-		fmt.Printf("##### out AA : %+v code:%v", err, code)
 		return nil, nil, code, err
 	}
 
 	if out != nil {
-		fmt.Printf("##### ou : %+v", out)
 		if err := json.Unmarshal(res, out); err != nil {
-			fmt.Printf("##### out err : %+v", err)
 			return res, nil, code, err
 		}
 	}
