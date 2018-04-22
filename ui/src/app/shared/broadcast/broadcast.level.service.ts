@@ -1,16 +1,16 @@
 import {Injectable} from '@angular/core';
 
 @Injectable()
-export class InfoLevelService {
-    private infos = [
+export class BroadcastLevelService {
+    private broadcasts = [
         { 'name': 'info', 'value': 'info' },
         { 'name': 'warning', 'value': 'warning' }
     ];
 
     /**
-     * Get infos levels list
+     * Get broadcasts levels list
      */
-    getInfoLevels() {
-        return this.infos;
+    getBroadcastLevels() {
+        return this.broadcasts;
     }
 }

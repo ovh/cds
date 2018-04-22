@@ -147,10 +147,10 @@ type HatcheryClient interface {
 	HatcheryCount(wfNodeRunID int64) (int64, error)
 }
 
-// InfoClient expose all function to CDS infos
-type InfoClient interface {
-	Infos() ([]sdk.Info, error)
-	InfosByLevel(s string) ([]sdk.Info, error)
+// BroadcastClient expose all function for CDS Broadcasts
+type BroadcastClient interface {
+	Broadcasts() ([]sdk.Broadcast, error)
+	BroadcastsByLevel(s string) ([]sdk.Broadcast, error)
 }
 
 // PipelineClient exposes pipelines related functions
@@ -285,7 +285,7 @@ type Interface interface {
 	ExportImportInterface
 	GroupClient
 	HatcheryClient
-	InfoClient
+	BroadcastClient
 	PipelineClient
 	ProjectClient
 	QueueClient

@@ -1,4 +1,4 @@
-export class Info {
+export class Broadcast {
     id: number;
     title: string;
     message: string;

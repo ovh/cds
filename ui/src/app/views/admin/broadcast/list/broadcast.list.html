@@ -1,8 +1,8 @@
 
-<h2>{{ 'info_list_title' | translate }}</h2>
+<h2>{{ 'broadcast_list_title' | translate }}</h2>
 
-<div *ngIf="infos;then showInfos;else loadInfos"></div>
-<ng-template #showInfos>
+<div *ngIf="broadcasts;then showBroadcasts;else loadBroadcasts"></div>
+<ng-template #showBroadcasts>
   <div class="model">
       <div class="ui form">
           <div class="fields">
@@ -18,10 +18,10 @@
       <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
           <thead>
           <tr>
-              <th class="one wide">{{ 'info_id' | translate }}</th>
-              <th class="three wide">{{ 'info_created' | translate }}</th>
-              <th class="four wide">{{ 'info_title' | translate }}</th>
-              <th class="four wide">{{ 'info_level' | translate }}</th>
+              <th class="one wide">{{ 'broadcast_id' | translate }}</th>
+              <th class="three wide">{{ 'broadcast_created' | translate }}</th>
+              <th class="four wide">{{ 'broadcast_title' | translate }}</th>
+              <th class="four wide">{{ 'broadcast_level' | translate }}</th>
           </tr>
           </thead>
           <tbody>
@@ -39,7 +39,7 @@
               <td>
                   <a class="ui" [routerLink]="[v.id]">
                     <div class="ui">{{v.title}}
-                        <span *ngIf="v.archived" [smDirTooltip]="'info_archived' | translate" smDirPosition="top center"> <i class="archive icon large"></i> </span>
+                        <span *ngIf="v.archived" [smDirTooltip]="'broadcast_archived' | translate" smDirPosition="top center"> <i class="archive icon large"></i> </span>
                     </div>
                   </a>
               </td>
@@ -66,11 +66,11 @@
           </tr>
           </tfoot>
       </table>
-      <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
-          {{ 'info_none' | translate }}
+      <div class="ui broadcast message" *ngIf="getDataForCurrentPage().length === 0">
+          {{ 'broadcast_none' | translate }}
       </div>
   </div>
 </ng-template>
-<ng-template #loadInfos>
-    <div class="ui text active loader">{{ 'info_load_infos' | translate }}</div>
+<ng-template #loadBroadcasts>
+    <div class="ui text active loader">{{ 'broadcast_load_broadcasts' | translate }}</div>
 </ng-template>

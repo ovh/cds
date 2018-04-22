@@ -1,5 +1,5 @@
 -- +migrate Up
-CREATE TABLE info (
+CREATE TABLE broadcast (
   id BIGSERIAL PRIMARY KEY,
   title TEXT NOT NULL default '',
   message TEXT NOT NULL default '',
@@ -10,4 +10,4 @@ CREATE TABLE info (
 );
 
 -- +migrate Down
-DROP TABLE info;
+DROP TABLE broadcast;

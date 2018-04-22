@@ -77,9 +77,9 @@ func (api *API) InitRouter() {
 	// Platform
 	r.Handle("/platform/models", r.GET(api.getPlatformModels))
 
-	// Info
-	r.Handle("/info", r.POST(api.addInfoHandler, NeedAdmin(true)), r.GET(api.getInfosHandler))
-	r.Handle("/info/{id}", r.GET(api.getInfoHandler), r.PUT(api.updateInfoHandler, NeedAdmin(true)), r.DELETE(api.deleteInfoHandler, NeedAdmin(true)))
+	// Broadcast
+	r.Handle("/broadcast", r.POST(api.addBroadcastHandler, NeedAdmin(true)), r.GET(api.getBroadcastsHandler))
+	r.Handle("/broadcast/{id}", r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, NeedAdmin(true)), r.DELETE(api.deleteBroadcastHandler, NeedAdmin(true)))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))

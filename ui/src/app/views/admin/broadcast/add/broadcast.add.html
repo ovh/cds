@@ -1,0 +1,67 @@
+<h2>
+    <a href="#" [routerLink]="['/admin', 'broadcast']">
+        {{ 'broadcast_list_title' | translate }}
+    </a> 
+    <i class="chevron right icon"></i> 
+    {{ 'broadcast_new_title' | translate }}
+</h2>
+
+<div *ngIf="broadcast;then showBroadcast;else loadBroadcast"></div>
+<ng-template #showBroadcast>
+  <div id="BroadcastAdd">
+    <form class="ui form">
+      <div class="ui grid">
+        <div class="ten wide column">
+            <div class="two fields">
+              <div class="field">
+                  <label>{{'broadcast_title' | translate}}</label>
+                  <input class="ui input" type="text" name="title" [(ngModel)]="broadcast.title" [disabled]="loading">
+              </div>
+              <div class="field">
+                <label>{{'broadcast_archived' | translate}}</label>
+                <div class="ui checkbox">
+                    <input type="checkbox" id="archived" name="archived" [(ngModel)]="broadcast.archived" [disabled]="loading">
+                    <label for="archived">{{'broadcast_archived_help' | translate}}</label>
+                </div>
+              </div>
+            </div>
+            <div class="two fields">
+              <div class="field">
+                <label>{{ 'broadcast_level' | translate }}</label>
+                <sui-select class="selection"
+                            *ngIf="broadcastLevelsList.length > 0"
+                            name="level"
+                            [(ngModel)]="broadcast.level"
+                            [options]="broadcastLevelsList"
+                            [isSearchable]="true">
+                    <sui-select-option *ngFor="let l of broadcastLevelsList"
+                                       [value]="l.value">
+                    </sui-select-option>
+                </sui-select>
+              </div>
+            </div>
+            <div class="field">
+              <label>{{'broadcast_message' | translate}}</label>
+              <textarea name="message" [(ngModel)]="broadcast.message" rows="3"></textarea>
+            </div>
+            <div class="field">
+                <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
+                  <i class="save icon"></i>{{ 'btn_add' | translate }}
+                </button>
+            </div>
+        </div>
+        <div class="six wide column">
+          <div class="ui tall stacked segment">
+            <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
+            <p>{{'broadcast_help_line_1' | translate}}</p>
+            <p>{{'broadcast_help_line_2' | translate}}</p>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</ng-template>
+<ng-template #loadBroadcast>
+    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+</ng-template>

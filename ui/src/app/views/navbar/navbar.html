@@ -102,7 +102,7 @@
             <a sm-item href="https://ovh.github.io/cds/" target="_blank">{{ 'navbar_documentation' | translate }}</a>
         </sm-dropdown>
         <sm-dropdown icon="student" *ngIf="currentUser && currentUser.admin">
-            <a sm-item href="#" [routerLink]="['admin', 'info']">{{ 'navbar_admin_info' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['admin', 'broadcast']">{{ 'navbar_admin_broadcast' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'migration']">{{ 'navbar_admin_migration' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'status']">{{ 'navbar_admin_status' | translate }}</a>
         </sm-dropdown>
