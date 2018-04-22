@@ -21,8 +21,40 @@ var (
 			cli.NewListCommand(adminBroadcastListCmd, adminBroadcastListRun, nil),
 			cli.NewGetCommand(adminBroadcastShowCmd, adminBroadcastShowRun, nil),
 			cli.NewCommand(adminBroadcastDeleteCmd, adminBroadcastDeleteRun, nil),
+			cli.NewCommand(adminBroadcastCreateCmd, adminBroadcastCreateRun, nil),
 		})
 )
+
+var adminBroadcastCreateCmd = cli.Command{
+	Name:  "create",
+	Short: "Create a CDS broadcast",
+	Args: []cli.Arg{
+		{Name: "level"},
+		{Name: "title"},
+		{Name: "content"},
+	},
+	Example: `level info:
+	
+	cdsctl admin broadcasts create info "the title" "the content"
+
+level warning:	
+
+	cdsctl admin broadcasts create warning "the title" "the content"
+	`,
+	Aliases: []string{"add"},
+}
+
+func adminBroadcastCreateRun(v cli.Values) error {
+	if v["level"] != "info" && v["level"] != "warning" {
+		return fmt.Errorf("level have to be 'info' or 'warning'")
+	}
+	bc := &sdk.Broadcast{
+		Level:   v["level"],
+		Title:   v["title"],
+		Content: v["content"],
+	}
+	return client.BroadcastCreate(bc)
+}
 
 var adminBroadcastShowCmd = cli.Command{
 	Name:  "show",

@@ -27,7 +27,7 @@ func (api *API) addBroadcastHandler() Handler {
 			return sdk.WrapError(err, "addBroadcast> cannot add broadcast")
 		}
 
-		return WriteJSON(w, bc, http.StatusOK)
+		return WriteJSON(w, bc, http.StatusCreated)
 	}
 }
 
