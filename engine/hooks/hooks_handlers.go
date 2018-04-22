@@ -95,8 +95,8 @@ func (s *Service) getTasksHandler() api.Handler {
 			}
 
 			var nbTodo int
-			for i, e := range execs {
-				if i >= s.Cfg.ExecutionHistory && e.ProcessingTimestamp != 0 {
+			for _, e := range execs {
+				if e.ProcessingTimestamp != 0 {
 					nbTodo++
 				}
 			}
@@ -300,8 +300,8 @@ func (s *Service) Status() sdk.MonitoringStatus {
 			}
 
 			var nbTodo, nbTotal int
-			for i, e := range execs {
-				if i >= s.Cfg.ExecutionHistory && e.ProcessingTimestamp != 0 {
+			for _, e := range execs {
+				if e.ProcessingTimestamp != 0 {
 					nbTodo++
 				}
 			}
@@ -317,13 +317,13 @@ func (s *Service) Status() sdk.MonitoringStatus {
 				m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Todo " + t.UUID, Value: fmt.Sprintf("%d", nbTodo), Status: status})
 			}
 
-			if nbTotal >= 50 {
+			if nbTotal >= s.Cfg.ExecutionHistory*5 {
 				status = sdk.MonitoringStatusAlert
-			} else if nbTotal >= 30 {
+			} else if nbTotal >= s.Cfg.ExecutionHistory*2 {
 				status = sdk.MonitoringStatusWarn
 			}
 
-			if nbTotal >= 30 {
+			if nbTotal >= s.Cfg.ExecutionHistory*2 {
 				m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Total " + t.UUID, Value: fmt.Sprintf("%d", nbTotal), Status: status})
 			}
 		}
