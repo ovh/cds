@@ -672,7 +672,7 @@ type vcsInfos struct {
 	httpurl    string
 }
 
-func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
+func getVCSInfos(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.repository = gitValues[tagGitRepository]
 	vcsInfos.branch = gitValues[tagGitBranch]
@@ -686,7 +686,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 		return vcsInfos, nil
 	}
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
 	if vcsServer == nil {
 		return vcsInfos, nil
 	}
@@ -751,7 +751,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk
 	}
 
 	if branch == nil {
-		log.Error("computeVCSInfos> unable to get branch %s", vcsInfos.branch)
+		log.Error("computeVCSInfos> unable to get branch %s - repository:%s - project:%s - app:%s", vcsInfos.branch, vcsInfos.repository, proj.Key, node.Context.Application.Name)
 		vcsInfos.branch = ""
 	}
 
