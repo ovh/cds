@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -86,7 +87,22 @@ func (s *Service) getTasksHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Hooks> getTasksHandler")
 		}
-		log.Debug("all tasks> %v", tasks)
+		for i := range tasks {
+			execs, err := s.Dao.FindAllTaskExecutions(&tasks[i])
+			if err != nil {
+				log.Error("getTasksHandler> Unable to find all task executions (%s): %v", tasks[i].UUID, err)
+				continue
+			}
+
+			var nbTodo int
+			for i, e := range execs {
+				if i >= s.Cfg.ExecutionHistory && e.ProcessingTimestamp != 0 {
+					nbTodo++
+				}
+			}
+			tasks[i].NbExecutionsTotal = len(execs)
+			tasks[i].NbExecutionsTodo = nbTodo
+		}
 		return api.WriteJSON(w, tasks, http.StatusOK)
 	}
 }
@@ -271,6 +287,46 @@ func (s *Service) Status() sdk.MonitoringStatus {
 			status = sdk.MonitoringStatusWarn
 		}
 		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Queue", Value: fmt.Sprintf("%d", size), Status: status})
+
+		tasks, err := s.Dao.FindAllTasks()
+		if err != nil {
+			log.Error("Status> Unable to find all tasks: %v", err)
+		}
+		for _, t := range tasks {
+			execs, err := s.Dao.FindAllTaskExecutions(&t)
+			if err != nil {
+				log.Error("Status> Unable to find all task executions (%s): %v", t.UUID, err)
+				continue
+			}
+
+			var nbTodo, nbTotal int
+			for i, e := range execs {
+				if i >= s.Cfg.ExecutionHistory && e.ProcessingTimestamp != 0 {
+					nbTodo++
+				}
+			}
+			nbTotal = len(execs)
+
+			if nbTodo >= 20 {
+				status = sdk.MonitoringStatusAlert
+			} else if nbTodo > 10 {
+				status = sdk.MonitoringStatusWarn
+			}
+
+			if nbTodo > 10 {
+				m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Todo " + t.UUID, Value: fmt.Sprintf("%d", nbTodo), Status: status})
+			}
+
+			if nbTotal >= 50 {
+				status = sdk.MonitoringStatusAlert
+			} else if nbTotal >= 30 {
+				status = sdk.MonitoringStatusWarn
+			}
+
+			if nbTotal >= 30 {
+				m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Total " + t.UUID, Value: fmt.Sprintf("%d", nbTotal), Status: status})
+			}
+		}
 	}
 
 	return m

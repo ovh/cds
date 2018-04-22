@@ -40,27 +40,31 @@ func adminHooksTaskListRun(v cli.Values) (cli.ListResult, error) {
 	}
 
 	type TaskDisplay struct {
-		UUID         string `cli:"UUID,key"`
-		Type         string `cli:"Type"`
-		Stopped      bool   `cli:"Stopped"`
-		Project      string `cli:"Project"`
-		Workflow     string `cli:"Workflow"`
-		VCSServer    string `cli:"VCSServer"`
-		RepoFullname string `cli:"RepoFullname"`
-		Cron         string `cli:"Cron"`
+		UUID              string `cli:"UUID,key"`
+		Type              string `cli:"Type"`
+		Stopped           bool   `cli:"Stopped"`
+		Project           string `cli:"Project"`
+		Workflow          string `cli:"Workflow"`
+		VCSServer         string `cli:"VCSServer"`
+		RepoFullname      string `cli:"RepoFullname"`
+		Cron              string `cli:"Cron"`
+		NbExecutionsTotal int    `cli:"Execs_Total"`
+		NbExecutionsTodo  int    `cli:"Execs_Todo"`
 	}
 
 	tss := []TaskDisplay{}
 	for _, p := range ts {
 		tss = append(tss, TaskDisplay{
-			UUID:         p.UUID,
-			Type:         p.Type,
-			Stopped:      p.Stopped,
-			Project:      p.Config["project"].Value,
-			Workflow:     p.Config["workflow"].Value,
-			VCSServer:    p.Config["vcsServer"].Value,
-			RepoFullname: p.Config["repoFullName"].Value,
-			Cron:         p.Config["cron"].Value,
+			UUID:              p.UUID,
+			Type:              p.Type,
+			Stopped:           p.Stopped,
+			Project:           p.Config["project"].Value,
+			Workflow:          p.Config["workflow"].Value,
+			VCSServer:         p.Config["vcsServer"].Value,
+			RepoFullname:      p.Config["repoFullName"].Value,
+			Cron:              p.Config["cron"].Value,
+			NbExecutionsTotal: p.NbExecutionsTotal,
+			NbExecutionsTodo:  p.NbExecutionsTodo,
 		})
 	}
 

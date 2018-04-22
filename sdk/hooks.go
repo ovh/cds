@@ -2,11 +2,13 @@ package sdk
 
 // Task is a generic hook tasks such as webhook, scheduler,... which will be started and wait for execution
 type Task struct {
-	UUID       string                 `json:"uuid" cli:"UUID,key"`
-	Type       string                 `json:"type" cli:"Type"`
-	Config     WorkflowNodeHookConfig `json:"config" cli:"Config"`
-	Stopped    bool                   `json:"stopped" cli:"Stopped"`
-	Executions []TaskExecution        `json:"executions"`
+	UUID              string                 `json:"uuid" cli:"UUID,key"`
+	Type              string                 `json:"type" cli:"Type"`
+	Config            WorkflowNodeHookConfig `json:"config" cli:"Config"`
+	Stopped           bool                   `json:"stopped" cli:"Stopped"`
+	Executions        []TaskExecution        `json:"executions"`
+	NbExecutionsTotal int                    `json:"nb_executions_total" cli:"nb_executions_total"`
+	NbExecutionsTodo  int                    `json:"nb_executions_todo" cli:"nb_executions_todo"`
 }
 
 // TaskExecution represents an execution instance of a task. It the task is a webhook; this represents the call of the webhook
