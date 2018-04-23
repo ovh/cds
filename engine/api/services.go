@@ -22,7 +22,7 @@ func (api *API) postServiceRegisterHandler() Handler {
 		}
 
 		// Load token
-		t, errL := token.LoadToken(api.mustDB(), srv.Token)
+		t, errL := token.LoadToken(api.mustDB(ctx), srv.Token)
 		if errL != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "postServiceRegisterHandler> Cannot register service: %v", errL)
 		}

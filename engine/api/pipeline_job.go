@@ -31,12 +31,12 @@ func (api *API) addJobToStageHandler() Handler {
 			return err
 		}
 
-		pip, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
+		pip, errl := pipeline.LoadPipeline(api.mustDB(ctx), projectKey, pipelineName, true)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pip); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(ctx), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler>Cannot load stages")
 		}
 
@@ -53,7 +53,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "addJobToStageHandler>Stage not found")
 		}
 
-		tx, errb := api.mustDB().Begin()
+		tx, errb := api.mustDB(ctx).Begin()
 		if errb != nil {
 			return errb
 		}
@@ -92,7 +92,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return err
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pip); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(ctx), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
 		}
 
@@ -127,12 +127,12 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "updateJobHandler>Pipeline action does not match")
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
+		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(ctx), key, pipName, true)
 		if errl != nil {
 			return sdk.WrapError(errl, "updateJobHandler>Cannot load pipeline %s", pipName)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(ctx), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateJobHandler>Cannot load stages")
 		}
 
@@ -153,7 +153,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "updateJobHandler>Job not found")
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot start transaction")
 		}
@@ -189,7 +189,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(ctx), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot load stages")
 		}
 
@@ -209,12 +209,12 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "deleteJobHandler>ID is not a int: %s", errp)
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
+		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(ctx), key, pipName, true)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(ctx), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler>Cannot load stages")
 		}
 
@@ -236,7 +236,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "deleteJobHandler>Job not found")
 		}
 
-		tx, errb := api.mustDB().Begin()
+		tx, errb := api.mustDB(ctx).Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteJobHandler> Cannot begin transaction")
 		}
@@ -263,7 +263,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(ctx), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")
 		}
 

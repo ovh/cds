@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,7 @@ func Test_getAllKeysProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -34,7 +35,7 @@ func Test_getAllKeysProjectHandler(t *testing.T) {
 		},
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, project.InsertKey(api.mustDB(), k))
+	test.NoError(t, project.InsertKey(api.mustDB(context.Background()), k))
 
 	app := sdk.Application{
 		ProjectID:  proj.ID,
@@ -166,7 +167,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -186,7 +187,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	}
 	k.Key = kPGP
 
-	if err := project.InsertKey(api.mustDB(), k); err != nil {
+	if err := project.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -214,7 +215,7 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -230,7 +231,7 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	if err := project.InsertKey(api.mustDB(), k); err != nil {
+	if err := project.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -258,7 +259,7 @@ func Test_addKeyInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

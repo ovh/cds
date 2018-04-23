@@ -26,7 +26,7 @@ func (api *API) postWorkflowPreviewHandler() Handler {
 		key := vars["permProjectKey"]
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -79,7 +79,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -115,7 +115,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
-		tx, errtx := api.mustDB().Begin()
+		tx, errtx := api.mustDB(ctx).Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "postWorkflowImportHandler> Unable to start tx")
 		}
@@ -174,7 +174,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 		}
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -183,13 +183,13 @@ func (api *API) postWorkflowPushHandler() Handler {
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
 		}
 
-		allMsg, wrkflw, err := workflow.Push(api.mustDB(), api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(api.mustDB(ctx), api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Cannot push workflow")
 		}
 		msgListString := translate(r, allMsg)
 
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
+		if err := project.UpdateLastModified(api.mustDB(ctx), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to update project")
 		}
 

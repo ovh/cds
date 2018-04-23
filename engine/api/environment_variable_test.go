@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -20,7 +21,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -31,7 +32,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Prod",
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -69,7 +70,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, len(projectResult.Environments), 1)
 	assert.Equal(t, len(projectResult.Environments[0].Variable), 1)
 
-	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
+	envDb, err := environment.LoadEnvironmentByName(api.mustDB(context.Background()), proj.Key, "Prod")
 	if err != nil {
 		t.Fail()
 		return
@@ -82,7 +83,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -93,7 +94,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Prod",
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -104,7 +105,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(api.mustDB(context.Background()), env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -139,7 +140,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, len(projectResult.Environments), 1)
 	assert.Equal(t, len(projectResult.Environments[0].Variable), 1)
 
-	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
+	envDb, err := environment.LoadEnvironmentByName(api.mustDB(context.Background()), proj.Key, "Prod")
 	if err != nil {
 		t.Fail()
 		return
@@ -152,7 +153,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -163,7 +164,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Prod",
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -174,7 +175,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(api.mustDB(context.Background()), env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -203,7 +204,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, len(projectResult.Environments), 1)
 	assert.Equal(t, len(projectResult.Environments[0].Variable), 0)
 
-	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
+	envDb, err := environment.LoadEnvironmentByName(api.mustDB(context.Background()), proj.Key, "Prod")
 	if err != nil {
 		t.Fail()
 		return
@@ -215,7 +216,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -226,7 +227,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Prod",
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -237,7 +238,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(api.mustDB(context.Background()), env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -270,7 +271,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -281,7 +282,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 		Name:      "Production",
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), e); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), e); err != nil {
 		t.Fatal(err)
 	}
 
@@ -291,7 +292,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := environment.InsertVariable(api.mustDB(), e.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(api.mustDB(context.Background()), e.ID, &v, u); err != nil {
 		t.Fatal(err)
 	}
 

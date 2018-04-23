@@ -12,7 +12,7 @@ import (
 )
 
 //ModelCapabilititiesCacheLoader set all model Capabilities in the cache
-func ModelCapabilititiesCacheLoader(c context.Context, delay time.Duration, DBFunc func() *gorp.DbMap, store cache.Store) {
+func ModelCapabilititiesCacheLoader(c context.Context, delay time.Duration, DBFunc func(context.Context) *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(delay).C
 	for {
 		select {
@@ -22,7 +22,7 @@ func ModelCapabilititiesCacheLoader(c context.Context, delay time.Duration, DBFu
 				return
 			}
 		case <-tick:
-			dbmap := DBFunc()
+			dbmap := DBFunc(c)
 			if dbmap != nil {
 				var mayIWork string
 				loaderKey := cache.Key("worker", "modelcapabilitites", "loading")

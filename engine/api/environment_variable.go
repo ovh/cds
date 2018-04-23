@@ -20,17 +20,17 @@ func (api *API) getVariableAuditInEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "getVariableAuditInEnvironmentHandler> Cannot load environment %s on project %s", envName, key)
 		}
 
-		variable, errV := environment.GetVariable(api.mustDB(), key, envName, varName)
+		variable, errV := environment.GetVariable(api.mustDB(ctx), key, envName, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInEnvironmentHandler> Cannot load variable %s", varName)
 		}
 
-		audits, errA := environment.LoadVariableAudits(api.mustDB(), env.ID, variable.ID)
+		audits, errA := environment.LoadVariableAudits(api.mustDB(ctx), env.ID, variable.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInEnvironmentHandler> Cannot load audit for variable %s", varName)
 		}
@@ -45,7 +45,7 @@ func (api *API) getVariableInEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		name := vars["name"]
 
-		v, errVar := environment.GetVariable(api.mustDB(), key, envName, name)
+		v, errVar := environment.GetVariable(api.mustDB(ctx), key, envName, name)
 		if errVar != nil {
 			return sdk.WrapError(errVar, "getVariableInEnvironmentHandler: Cannot get variable %s for environment %s", name, envName)
 		}
@@ -60,7 +60,7 @@ func (api *API) getVariablesInEnvironmentHandler() Handler {
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 
-		variables, errVar := environment.GetAllVariable(api.mustDB(), key, envName)
+		variables, errVar := environment.GetAllVariable(api.mustDB(ctx), key, envName)
 		if errVar != nil {
 			return sdk.WrapError(errVar, "getVariablesInEnvironmentHandler: Cannot get variables for environment %s", envName)
 		}
@@ -76,17 +76,17 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteVariableFromEnvironmentHandler: Cannot load project %s", key)
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "deleteVariableFromEnvironmentHandler: Cannot load environment %s", envName)
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteVariableFromEnvironmentHandler: Cannot start transaction")
 		}
@@ -115,7 +115,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(ctx), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
 		}
@@ -133,7 +133,7 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateVariableInEnvironment: Cannot load %s", key)
 		}
@@ -143,23 +143,23 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "updateVariableInEnvironmentHandler: cannot load environment %s", envName)
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateVariableInEnvironmentHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		varBefore, errV := environment.GetVariableByID(api.mustDB(), env.ID, newVar.ID, environment.WithClearPassword())
+		varBefore, errV := environment.GetVariableByID(api.mustDB(ctx), env.ID, newVar.ID, environment.WithClearPassword())
 		if errV != nil {
 			return sdk.WrapError(errV, "updateVariableInEnvironmentHandler> Cannot load variable %d", newVar.ID)
 		}
 
-		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, getUser(ctx)); err != nil {
+		if err := environment.UpdateVariable(api.mustDB(ctx), env.ID, &newVar, varBefore, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
 		}
 
@@ -176,7 +176,7 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(ctx), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
 		}
@@ -194,7 +194,7 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addVariableInEnvironmentHandler: Cannot load project %s", key)
 		}
@@ -208,12 +208,12 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "addVariableInEnvironmentHandler: Cannot load environment %s", envName)
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "addVariableInEnvironmentHandler: cannot begin tx")
 		}
@@ -242,7 +242,7 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(ctx), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
 		}

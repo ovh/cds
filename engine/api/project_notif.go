@@ -16,11 +16,11 @@ func (api *API) getProjectNotificationsHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		if _, err := project.Load(api.mustDB(), api.Cache, key, nil); err != nil {
+		if _, err := project.Load(api.mustDB(ctx), api.Cache, key, nil); err != nil {
 			return err
 		}
 
-		notifs, err := notification.LoadAllUserNotificationSettingsByProject(api.mustDB(), key, getUser(ctx))
+		notifs, err := notification.LoadAllUserNotificationSettingsByProject(api.mustDB(ctx), key, getUser(ctx))
 		if err != nil {
 			return err
 		}

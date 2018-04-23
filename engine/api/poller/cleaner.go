@@ -11,7 +11,7 @@ import (
 )
 
 //Cleaner is the cleaner main goroutine
-func Cleaner(c context.Context, DBFunc func() *gorp.DbMap, nbToKeep int) {
+func Cleaner(c context.Context, DBFunc func(context.Context) *gorp.DbMap, nbToKeep int) {
 	tick := time.NewTicker(30 * time.Minute).C
 	for {
 		select {
@@ -21,7 +21,7 @@ func Cleaner(c context.Context, DBFunc func() *gorp.DbMap, nbToKeep int) {
 				return
 			}
 		case <-tick:
-			if _, err := CleanerRun(DBFunc(), nbToKeep); err != nil {
+			if _, err := CleanerRun(DBFunc(c), nbToKeep); err != nil {
 				log.Warning("poller.Cleaner> Error : %s", err)
 				continue
 			}

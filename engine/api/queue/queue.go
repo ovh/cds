@@ -24,7 +24,7 @@ import (
 )
 
 // Pipelines is a goroutine responsible for pushing actions of a building pipeline in queue, in the wanted order
-func Pipelines(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) {
+func Pipelines(c context.Context, store cache.Store, DBFunc func(context.Context) *gorp.DbMap) {
 	tick := time.NewTicker(2 * time.Second).C
 	for {
 		select {
@@ -34,7 +34,7 @@ func Pipelines(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) 
 				return
 			}
 		case <-tick:
-			db := DBFunc()
+			db := DBFunc(c)
 			if db != nil {
 				ids, err := pipeline.LoadBuildingPipelinesIDs(db)
 				if err != nil {
@@ -50,7 +50,7 @@ func Pipelines(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) 
 	}
 }
 
-func runPipeline(DBFunc func() *gorp.DbMap, store cache.Store, pbID int64) {
+func runPipeline(DBFunc func(context.Context) *gorp.DbMap, store cache.Store, pbID int64) {
 	//Check if CDS is in maintenance mode
 	var m bool
 	store.Get("maintenance", &m)
@@ -58,7 +58,7 @@ func runPipeline(DBFunc func() *gorp.DbMap, store cache.Store, pbID int64) {
 		log.Info("⚠ CDS maintenance in ON")
 	}
 
-	db := DBFunc()
+	db := DBFunc(context.Background())
 	tx, errb := db.Begin()
 	if errb != nil {
 		log.Warning("queue.RunActions> cannot start tx for pb %d: %s", pbID, errb)
@@ -277,7 +277,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, store cache.Store, stage *sdk.Sta
 	return stageEnd, nil
 }
 
-func pipelineBuildEnd(DBFunc func() *gorp.DbMap, store cache.Store, tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
+func pipelineBuildEnd(DBFunc func(context.Context) *gorp.DbMap, store cache.Store, tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 	// run trigger
 	triggers, err := trigger.LoadAutomaticTriggersAsSource(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if err != nil {

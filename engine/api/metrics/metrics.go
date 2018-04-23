@@ -16,7 +16,7 @@ var (
 )
 
 // Initialize initializes metrics
-func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
+func Initialize(c context.Context, DBFunc func(context.Context) *gorp.DbMap, instance string) {
 	labels := prometheus.Labels{"instance": instance}
 
 	nbUsers := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_users", Help: "metrics nb_users", ConstLabels: labels})
@@ -52,7 +52,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 
 	tick := time.NewTicker(30 * time.Second).C
 
-	go func(c context.Context, DBFunc func() *gorp.DbMap) {
+	go func(c context.Context, DBFunc func(context.Context) *gorp.DbMap) {
 		for {
 			select {
 			case <-c.Done():
@@ -61,20 +61,20 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 					return
 				}
 			case <-tick:
-				count(DBFunc(), "SELECT COUNT(1) FROM \"user\"", nbUsers)
-				count(DBFunc(), "SELECT COUNT(1) FROM application", nbApplications)
-				count(DBFunc(), "SELECT COUNT(1) FROM project", nbProjects)
-				count(DBFunc(), "SELECT COUNT(1) FROM \"group\"", nbGroups)
-				count(DBFunc(), "SELECT COUNT(1) FROM pipeline", nbPipelines)
-				count(DBFunc(), "SELECT COUNT(1) FROM workflow", nbWorkflows)
-				count(DBFunc(), "SELECT COUNT(1) FROM artifact", nbArtifacts)
-				count(DBFunc(), "SELECT COUNT(1) FROM worker_model", nbWorkerModels)
-				count(DBFunc(), "SELECT MAX(id) FROM workflow_run", nbWorkflowRuns)
-				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run", nbWorkflowNodeRuns)
-				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run_job", nbWorkflowNodeRunJobs)
-				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build", nbOldPipelineBuilds)
-				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build_job", nbOldPipelineBuildJobs)
-				count(DBFunc(), "SELECT COUNT(1) FROM worker where status like 'Building' ", nbMaxWorkersBuilding)
+				count(DBFunc(c), "SELECT COUNT(1) FROM \"user\"", nbUsers)
+				count(DBFunc(c), "SELECT COUNT(1) FROM application", nbApplications)
+				count(DBFunc(c), "SELECT COUNT(1) FROM project", nbProjects)
+				count(DBFunc(c), "SELECT COUNT(1) FROM \"group\"", nbGroups)
+				count(DBFunc(c), "SELECT COUNT(1) FROM pipeline", nbPipelines)
+				count(DBFunc(c), "SELECT COUNT(1) FROM workflow", nbWorkflows)
+				count(DBFunc(c), "SELECT COUNT(1) FROM artifact", nbArtifacts)
+				count(DBFunc(c), "SELECT COUNT(1) FROM worker_model", nbWorkerModels)
+				count(DBFunc(c), "SELECT MAX(id) FROM workflow_run", nbWorkflowRuns)
+				count(DBFunc(c), "SELECT MAX(id) FROM workflow_node_run", nbWorkflowNodeRuns)
+				count(DBFunc(c), "SELECT MAX(id) FROM workflow_node_run_job", nbWorkflowNodeRunJobs)
+				count(DBFunc(c), "SELECT MAX(id) FROM pipeline_build", nbOldPipelineBuilds)
+				count(DBFunc(c), "SELECT MAX(id) FROM pipeline_build_job", nbOldPipelineBuildJobs)
+				count(DBFunc(c), "SELECT COUNT(1) FROM worker where status like 'Building' ", nbMaxWorkersBuilding)
 			}
 		}
 	}(c, DBFunc)

@@ -21,7 +21,7 @@ import (
 // @title List all public actions
 func (api *API) getActionsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		acts, err := action.LoadActions(api.mustDB())
+		acts, err := action.LoadActions(api.mustDB(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "GetActions: Cannot load action from db")
 		}
@@ -34,7 +34,7 @@ func (api *API) getPipelinesUsingActionHandler() Handler {
 		// Get action name in URL
 		vars := mux.Vars(r)
 		name := vars["actionName"]
-		response, err := action.GetPipelineUsingAction(api.mustDB(), name)
+		response, err := action.GetPipelineUsingAction(api.mustDB(ctx), name)
 		if err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ func (api *API) getPipelinesUsingActionHandler() Handler {
 
 func (api *API) getActionsRequirements() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		req, err := action.LoadAllBinaryRequirements(api.mustDB())
+		req, err := action.LoadAllBinaryRequirements(api.mustDB(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getActionsRequirements> Cannot load action requirements")
 		}
@@ -59,7 +59,7 @@ func (api *API) deleteActionHandler() Handler {
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
 
-		a, errLoad := action.LoadPublicAction(api.mustDB(), name)
+		a, errLoad := action.LoadPublicAction(api.mustDB(ctx), name)
 		if errLoad != nil {
 			if errLoad != sdk.ErrNoAction {
 				log.Warning("deleteAction> Cannot load action %s: %T %s", name, errLoad, errLoad)
@@ -67,7 +67,7 @@ func (api *API) deleteActionHandler() Handler {
 			return errLoad
 		}
 
-		used, errUsed := action.Used(api.mustDB(), a.ID)
+		used, errUsed := action.Used(api.mustDB(ctx), a.ID)
 		if errUsed != nil {
 			return errUsed
 		}
@@ -75,7 +75,7 @@ func (api *API) deleteActionHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "deleteAction> Cannot delete action %s: used in pipelines", name)
 		}
 
-		tx, errbegin := api.mustDB().Begin()
+		tx, errbegin := api.mustDB(ctx).Begin()
 		if errbegin != nil {
 			return sdk.WrapError(errbegin, "deleteAction> Cannot start transaction")
 		}
@@ -106,12 +106,12 @@ func (api *API) updateActionHandler() Handler {
 		}
 
 		// Check that action  already exists
-		actionDB, err := action.LoadPublicAction(api.mustDB(), name)
+		actionDB, err := action.LoadPublicAction(api.mustDB(ctx), name)
 		if err != nil {
 			return sdk.WrapError(err, "updateAction> Cannot check if action %s exist", a.Name)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateAction> Cannot begin tx")
 		}
@@ -139,7 +139,7 @@ func (api *API) addActionHandler() Handler {
 		}
 
 		// Check that action does not already exists
-		conflict, errConflict := action.Exists(api.mustDB(), a.Name)
+		conflict, errConflict := action.Exists(api.mustDB(ctx), a.Name)
 		if errConflict != nil {
 			return errConflict
 		}
@@ -148,7 +148,7 @@ func (api *API) addActionHandler() Handler {
 			return sdk.WrapError(sdk.ErrConflict, "addAction> Action %s already exists", a.Name)
 		}
 
-		tx, errDB := api.mustDB().Begin()
+		tx, errDB := api.mustDB(ctx).Begin()
 		if errDB != nil {
 			return errDB
 		}
@@ -177,7 +177,7 @@ func (api *API) getActionAuditHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getActionAuditHandler> ActionID must be a number, got %s: %s", actionIDString, err)
 		}
 		// Load action
-		a, err := action.LoadAuditAction(api.mustDB(), actionID, true)
+		a, err := action.LoadAuditAction(api.mustDB(ctx), actionID, true)
 		if err != nil {
 			return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %s", actionID)
 		}
@@ -190,7 +190,7 @@ func (api *API) getActionHandler() Handler {
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
 
-		a, err := action.LoadPublicAction(api.mustDB(), name)
+		a, err := action.LoadPublicAction(api.mustDB(ctx), name)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getActionHandler> Cannot load action: %s", err)
 		}
@@ -211,7 +211,7 @@ func (api *API) getActionExportHandler() Handler {
 			return sdk.WrapError(err, "getActionExportHandler> Format invalid")
 		}
 
-		if _, err := action.Export(api.mustDB(), name, f, getUser(ctx), w); err != nil {
+		if _, err := action.Export(api.mustDB(ctx), name, f, getUser(ctx), w); err != nil {
 			return sdk.WrapError(err, "getActionExportHandler>")
 		}
 		w.Header().Add("Content-Type", exportentities.GetContentType(f))
@@ -259,7 +259,7 @@ func (api *API) importActionHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		tx, errbegin := api.mustDB().Begin()
+		tx, errbegin := api.mustDB(ctx).Begin()
 		if errbegin != nil {
 			return errbegin
 		}

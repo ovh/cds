@@ -14,7 +14,7 @@ const (
 	delay      = 1
 )
 
-func auditCleanerRoutine(c context.Context, DBFunc func() *gorp.DbMap) {
+func auditCleanerRoutine(c context.Context, DBFunc func(context.Context) *gorp.DbMap) {
 	tick := time.NewTicker(delay * time.Minute).C
 
 	for {
@@ -25,9 +25,9 @@ func auditCleanerRoutine(c context.Context, DBFunc func() *gorp.DbMap) {
 			}
 			return
 		case <-tick:
-			db := DBFunc()
+			db := DBFunc(c)
 			if db != nil {
-				err := actionAuditCleaner(DBFunc())
+				err := actionAuditCleaner(DBFunc(c))
 				if err != nil {
 					log.Warning("AuditCleanerRoutine> Action clean failed: %s", err)
 				}

@@ -19,12 +19,12 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments)
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments)
 		if errP != nil {
 			return sdk.WrapError(errP, "migrationApplicationWorkflowHandler")
 		}
 
-		cdTree, errT := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
+		cdTree, errT := workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
 		if errT != nil {
 			return sdk.WrapError(errT, "migrationApplicationWorkflowCleanHandler")
 		}
@@ -34,14 +34,14 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 			getApplicationFromCDPipeline(tree, &appIDs)
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "migrationApplicationWorkflowHandler > Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		for appID := range appIDs {
-			appToClean, errA := application.LoadByID(api.mustDB(), api.Cache, appID, getUser(ctx), application.LoadOptions.WithPipelines)
+			appToClean, errA := application.LoadByID(api.mustDB(ctx), api.Cache, appID, getUser(ctx), application.LoadOptions.WithPipelines)
 			if errA != nil {
 				return sdk.WrapError(errA, "migrationApplicationWorkflowHandler> Cannot load app")
 			}
@@ -84,21 +84,21 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 
 		force := r.FormValue("force") == "true"
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errP != nil {
 			return sdk.WrapError(errP, "migrationApplicationWorkflowHandler")
 		}
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, projectKey, applicationName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "migrationApplicationWorkflowHandler")
 		}
 
-		cdTree, errW := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
+		cdTree, errW := workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "migrationApplicationWorkflowHandler> Cannot load cd tree")
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "migrationApplicationWorkflowHandler > Cannot start transaction")
 		}

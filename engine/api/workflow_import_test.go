@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -83,10 +84,10 @@ workflow:
 
 func Test_getWorkflowPushHandler(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
+	proj := assets.InsertTestProject(t, api.mustDB(context.Background()), api.Cache, key, key, u)
+	group.InsertUserInGroup(api.mustDB(context.Background()), proj.ProjectGroups[0].Group.ID, u.ID, true)
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
@@ -96,12 +97,12 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -111,7 +112,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -120,7 +121,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -130,7 +131,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.StringVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, v1, u))
+	test.NoError(t, application.InsertVariable(api.mustDB(context.Background()), api.Cache, app, v1, u))
 
 	v2 := sdk.Variable{
 		Name:  "var2",
@@ -138,7 +139,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Type:  sdk.SecretVariable,
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, v2, u))
+	test.NoError(t, application.InsertVariable(api.mustDB(context.Background()), api.Cache, app, v2, u))
 
 	//Insert ssh and gpg keys
 	k := &sdk.ApplicationKey{
@@ -155,7 +156,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k))
+	test.NoError(t, application.InsertKey(api.mustDB(context.Background()), k))
 
 	k2 := &sdk.ApplicationKey{
 		Key: sdk.Key{
@@ -170,7 +171,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k2))
+	test.NoError(t, application.InsertKey(api.mustDB(context.Background()), k2))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -191,10 +192,10 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	proj, _ = project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{DeepPipeline: true})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, err)
 
 	//Prepare request

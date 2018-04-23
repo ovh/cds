@@ -23,7 +23,7 @@ func EventsStatus(store cache.Store) sdk.MonitoringStatusLine {
 }
 
 //ReceiveEvents has to be launched as a goroutine.
-func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+func ReceiveEvents(c context.Context, DBFunc func(context.Context) *gorp.DbMap, store cache.Store) {
 	for {
 		e := sdk.Event{}
 		store.DequeueWithContext(c, "events_repositoriesmanager", &e)
@@ -32,7 +32,7 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Sto
 			return
 		}
 
-		db := DBFunc()
+		db := DBFunc(c)
 		if db != nil {
 			if err := processEvent(db, e, store); err != nil {
 				log.Error("ReceiveEvents> err while processing error=%s : %v", err, e)

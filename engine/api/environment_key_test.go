@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -19,7 +20,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -30,7 +31,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,7 +52,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
 
-	if err := environment.InsertKey(api.mustDB(), k); err != nil {
+	if err := environment.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -81,7 +82,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -92,7 +93,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -106,7 +107,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		EnvironmentID: env.ID,
 	}
 
-	if err := environment.InsertKey(api.mustDB(), k); err != nil {
+	if err := environment.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -136,7 +137,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -147,7 +148,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), env); err != nil {
 		t.Fatal(err)
 	}
 

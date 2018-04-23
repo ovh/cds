@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
@@ -17,7 +18,7 @@ import (
 func Test_getNavbarHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	app1 := sdk.Application{

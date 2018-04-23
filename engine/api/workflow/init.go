@@ -12,7 +12,7 @@ import (
 )
 
 //Initialize starts goroutines for workflows
-func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) {
+func Initialize(c context.Context, store cache.Store, DBFunc func(context.Context) *gorp.DbMap) {
 	rand.Seed(time.Now().Unix())
 	tickPurge := time.NewTicker(30 * time.Minute)
 
@@ -27,7 +27,7 @@ func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap)
 			}
 		case <-tickPurge.C:
 			log.Debug("PurgeRun> Deleting all workflow run marked to delete...")
-			if err := deleteWorkflowRunsHistory(DBFunc()); err != nil {
+			if err := deleteWorkflowRunsHistory(DBFunc(c)); err != nil {
 				log.Warning("scheduler.Purge> Error : %s", err)
 			}
 		}

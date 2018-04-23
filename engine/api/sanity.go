@@ -15,9 +15,9 @@ func (api *API) getUserWarningsHandler() Handler {
 		var warnings []sdk.Warning
 		var err error
 		if getUser(ctx).Admin {
-			warnings, err = sanity.LoadAllWarnings(api.mustDB(), al)
+			warnings, err = sanity.LoadAllWarnings(api.mustDB(ctx), al)
 		} else {
-			warnings, err = sanity.LoadUserWarnings(api.mustDB(), al, getUser(ctx).ID)
+			warnings, err = sanity.LoadUserWarnings(api.mustDB(ctx), al, getUser(ctx).ID)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "getUserWarnings> Cannot load user %d warnings", getUser(ctx).ID)

@@ -35,7 +35,7 @@ func (h *grpcHandlers) AddBuildLog(stream grpc.BuildLog_AddBuildLogServer) error
 		}
 		log.Debug("grpc.AddBuildLog> Got %+v", in)
 
-		db := h.dbConnectionFactory.GetDBMap()
+		db := h.dbConnectionFactory.GetDBMap(context.Background())
 		if err := pipeline.AddBuildLog(db, in); err != nil {
 			return sdk.WrapError(err, "grpc.AddBuildLog> Unable to insert log ")
 		}
@@ -56,7 +56,7 @@ func (h *grpcHandlers) SendLog(stream grpc.WorkflowQueue_SendLogServer) error {
 		}
 		log.Debug("grpc.SendLog> Got %+v", in)
 
-		db := h.dbConnectionFactory.GetDBMap()
+		db := h.dbConnectionFactory.GetDBMap(context.Background())
 		if err := workflow.AddLog(db, nil, in); err != nil {
 			return sdk.WrapError(err, "grpc.SendLog> Unable to insert log ")
 		}
@@ -83,7 +83,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 		Username: workerName,
 	}
 
-	db := h.dbConnectionFactory.GetDBMap()
+	db := h.dbConnectionFactory.GetDBMap(c)
 
 	p, errP := project.LoadProjectByNodeRunID(db, h.store, res.BuildID, workerUser, project.LoadOptions.WithVariables)
 	if errP != nil {

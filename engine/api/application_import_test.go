@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http/httptest"
 	"strings"
@@ -122,11 +123,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
+	if err := application.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(context.Background()), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -231,11 +232,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
+	if err := application.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(context.Background()), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",
@@ -394,11 +395,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
 	k.KeyID = kpgp.KeyID
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
+	if err := application.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
-	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
+	test.NoError(t, application.InsertVariable(api.mustDB(context.Background()), api.Cache, app, sdk.Variable{
 		Name:  "myPassword",
 		Type:  sdk.SecretVariable,
 		Value: "MySecretValue",

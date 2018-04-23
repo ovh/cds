@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +21,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -34,7 +35,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -46,7 +47,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip2, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -55,7 +56,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -80,7 +81,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	appDB, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
+	appDB, err := application.LoadByName(api.mustDB(context.Background()), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
 	test.NoError(t, err)
 
 	assert.Equal(t, len(appDB.Pipelines), 2)

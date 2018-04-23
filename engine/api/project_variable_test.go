@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +19,7 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -30,7 +31,7 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := project.InsertVariable(api.mustDB(), proj, &v, u); err != nil {
+	if err := project.InsertVariable(api.mustDB(context.Background()), proj, &v, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,7 +61,7 @@ func Test_postEncryptVariableHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -82,7 +83,7 @@ func TestExecuterRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	exs, err := ExecuterRun(func() *gorp.DbMap { return db }, cache)
+	exs, err := ExecuterRun(func(context.Context) *gorp.DbMap { return db }, cache)
 	if err != nil {
 		t.Fatal(err)
 	}

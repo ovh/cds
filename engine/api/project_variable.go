@@ -16,7 +16,7 @@ func (api *API) postEncryptVariableHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errp := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errp != nil {
 			return sdk.WrapError(errp, "postEncryptVariableHandler> unable to load project")
 		}
@@ -26,7 +26,7 @@ func (api *API) postEncryptVariableHandler() Handler {
 			return sdk.WrapError(err, "postEncryptVariableHandler> unable to read body")
 		}
 
-		encryptedValue, erre := project.EncryptWithBuiltinKey(api.mustDB(), p.ID, variable.Name, variable.Value)
+		encryptedValue, erre := project.EncryptWithBuiltinKey(api.mustDB(ctx), p.ID, variable.Name, variable.Value)
 		if erre != nil {
 			return sdk.WrapError(erre, "postEncryptVariableHandler> unable to encrypte content %s", variable.Name)
 		}
@@ -41,7 +41,7 @@ func (api *API) getVariablesAuditInProjectnHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 
-		audits, err := project.GetVariableAudit(api.mustDB(), key)
+		audits, err := project.GetVariableAudit(api.mustDB(ctx), key)
 		if err != nil {
 			return sdk.WrapError(err, "getVariablesAuditInProjectnHandler: Cannot get variable audit for project %s", key)
 
@@ -56,7 +56,7 @@ func (api *API) getVariablesInProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		p, err := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
 		}
@@ -72,18 +72,18 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		varToDelete, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
+		varToDelete, errV := project.GetVariableInProject(api.mustDB(ctx), p.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "deleteVariableFromProject> Cannot load variable %s", varName)
 		}
@@ -122,13 +122,13 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: Cannot load %s", key)
 
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: cannot start transaction")
 
@@ -171,12 +171,12 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "AddVariableInProject: Cannot load %s", key)
 		}
 
-		varInProject, err := project.CheckVariableInProject(api.mustDB(), p.ID, varName)
+		varInProject, err := project.CheckVariableInProject(api.mustDB(ctx), p.ID, varName)
 		if err != nil {
 			return sdk.WrapError(err, "AddVariableInProject: Cannot check if variable %s is already in the project %s", varName, p.Name)
 		}
@@ -185,7 +185,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 			return sdk.ErrVariableExists
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "addVariableInProjectHandler: cannot begin tx")
 		}
@@ -215,7 +215,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 		// Send Add variable event
 		event.PublishAddProjectVariable(p, newVar, getUser(ctx))
 
-		p.Variable, err = project.GetAllVariableInProject(api.mustDB(), p.ID)
+		p.Variable, err = project.GetAllVariableInProject(api.mustDB(ctx), p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "AddVariableInProject: Cannot get variables")
 
@@ -232,12 +232,12 @@ func (api *API) getVariableInProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		p, err := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if err != nil {
 			return sdk.WrapError(err, "getVariableInProjectHandler: Cannot load %s", key)
 		}
 
-		variable, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
+		variable, errV := project.GetVariableInProject(api.mustDB(ctx), p.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
 		}
@@ -253,17 +253,17 @@ func (api *API) getVariableAuditInProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getVariableAuditInProjectHandler> Cannot load project %s", key)
 		}
 
-		variable, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
+		variable, errV := project.GetVariableInProject(api.mustDB(ctx), p.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
 		}
 
-		audits, errA := project.LoadVariableAudits(api.mustDB(), p.ID, variable.ID)
+		audits, errA := project.LoadVariableAudits(api.mustDB(ctx), p.ID, variable.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInProjectHandler> Cannot load audit for variable %s", varName)
 		}

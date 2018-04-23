@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
@@ -20,14 +21,14 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Loading all models
-	models, err := worker.LoadWorkerModels(api.mustDB())
+	models, err := worker.LoadWorkerModels(api.mustDB(context.Background()))
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+		if err := worker.DeleteWorkerModel(api.mustDB(context.Background()), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -38,24 +39,24 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Loading all models
-	models, errlw := worker.LoadWorkerModels(api.mustDB())
+	models, errlw := worker.LoadWorkerModels(api.mustDB(context.Background()))
 	if errlw != nil {
 		t.Fatalf("Error getting models : %s", errlw)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+		if err := worker.DeleteWorkerModel(api.mustDB(context.Background()), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(context.Background()), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -94,11 +95,11 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(context.Background()), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -204,7 +205,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(context.Background()), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -247,10 +248,10 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(context.Background()), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(context.Background()), g.ID, u.ID))
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -291,10 +292,10 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	g := &sdk.Group{Name: sdk.RandomString(10)}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(context.Background()), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
-	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(context.Background()), g.ID, u.ID))
 
 	model := sdk.Model{
 		Name:       "Test-with-provision",
@@ -357,16 +358,16 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	if err := group.InsertGroup(api.mustDB(), g1); err != nil {
+	if err := group.InsertGroup(api.mustDB(context.Background()), g1); err != nil {
 		t.Fatal(err)
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(context.Background()), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(context.Background()), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -409,11 +410,11 @@ func Test_updateWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(context.Background()), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(context.Background()), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -492,11 +493,11 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(context.Background()), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(context.Background()), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -554,11 +555,11 @@ func Test_getWorkerModel(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(context.Background()), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -612,11 +613,11 @@ func Test_getWorkerModels(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(context.Background()), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}

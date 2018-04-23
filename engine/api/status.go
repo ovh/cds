@@ -49,7 +49,7 @@ func (api *API) Status() sdk.MonitoringStatus {
 	m.Lines = append(m.Lines, getStatusLine(mail.Status()))
 	m.Lines = append(m.Lines, getStatusLine(api.DBConnectionFactory.Status()))
 	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "LastUpdate Connected", Value: fmt.Sprintf("%d", len(api.lastUpdateBroker.clients)), Status: sdk.MonitoringStatusOK}))
-	m.Lines = append(m.Lines, getStatusLine(worker.Status(api.mustDB())))
+	m.Lines = append(m.Lines, getStatusLine(worker.Status(api.mustDB(context.Background()))))
 
 	return m
 }
@@ -66,7 +66,7 @@ func (api *API) statusHandler() Handler {
 			status = http.StatusServiceUnavailable
 		}
 
-		q := services.Querier(api.mustDB(), api.Cache)
+		q := services.Querier(api.mustDB(ctx), api.Cache)
 		srvs, err := q.All()
 		if err != nil {
 			return sdk.WrapError(err, "statusHandler> error on q.All()")

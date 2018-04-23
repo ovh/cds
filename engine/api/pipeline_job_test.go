@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +22,7 @@ func TestAddJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -35,7 +36,7 @@ func TestAddJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -44,7 +45,7 @@ func TestAddJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage))
 	assert.NotZero(t, stage.ID)
 
 	// 5. Prepare the request
@@ -87,7 +88,7 @@ func TestUpdateJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -101,7 +102,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -110,7 +111,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage))
 
 	//5. Prepare the request
 	job := &sdk.Job{
@@ -121,7 +122,7 @@ func TestUpdateJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(api.mustDB(context.Background()), job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -168,7 +169,7 @@ func TestDeleteJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -182,7 +183,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -191,7 +192,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage))
 
 	//5. Prepare the request
 	job := &sdk.Job{
@@ -202,7 +203,7 @@ func TestDeleteJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(api.mustDB(context.Background()), job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 

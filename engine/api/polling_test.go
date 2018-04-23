@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -56,7 +57,7 @@ func TestAddPollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := testfindLinkedProject(t, db, api.Cache)
@@ -70,22 +71,22 @@ func TestAddPollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(context.Background()), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -125,7 +126,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Crerouter.ate admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := testfindLinkedProject(t, db, api.Cache)
@@ -139,22 +140,22 @@ func TestUpdatePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(context.Background()), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -216,7 +217,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := testfindLinkedProject(t, db, api.Cache)
@@ -230,22 +231,22 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(context.Background()), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -309,7 +310,7 @@ func TestGetPollersHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := testfindLinkedProject(t, db, api.Cache)
@@ -323,22 +324,22 @@ func TestGetPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(context.Background()), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -398,7 +399,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := testfindLinkedProject(t, db, api.Cache)
@@ -412,22 +413,22 @@ func TestDeletePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(context.Background()), app, proj.Key)
 
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{

@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -14,8 +15,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func KeyMigration(store cache.Store, DBFunc func() *gorp.DbMap, u *sdk.User) {
-	db := DBFunc()
+func KeyMigration(store cache.Store, DBFunc func(context.Context) *gorp.DbMap, u *sdk.User) {
+	db := DBFunc(context.Background())
 
 	// Project migration
 	ids, errQ := loadProjectIDs(db)

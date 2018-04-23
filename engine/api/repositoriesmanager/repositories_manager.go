@@ -1,6 +1,7 @@
 package repositoriesmanager
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -19,7 +20,7 @@ import (
 
 //LoadAll Load all RepositoriesManager from the database
 func LoadAll(db *gorp.DbMap, store cache.Store) ([]string, error) {
-	serviceDAO := services.NewRepository(func() *gorp.DbMap { return db }, store)
+	serviceDAO := services.NewRepository(func(context.Context) *gorp.DbMap { return db }, store)
 	srvs, err := serviceDAO.FindByType(services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WrapError(err, "repositoriesmanager.LoadAll> Unable to load services")
@@ -39,7 +40,7 @@ func LoadAll(db *gorp.DbMap, store cache.Store) ([]string, error) {
 type vcsConsumer struct {
 	name   string
 	proj   *sdk.Project
-	dbFunc func() *gorp.DbMap
+	dbFunc func(context.Context) *gorp.DbMap
 	cache  cache.Store
 }
 
@@ -62,12 +63,12 @@ func GetProjectVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
 }
 
 // NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs uservices calls
-func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
+func NewVCSServerConsumer(dbFunc func(context.Context) *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
 	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
 }
 
 func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
-	srvDAO := services.Querier(c.dbFunc(), c.cache)
+	srvDAO := services.Querier(c.dbFunc(context.Background()), c.cache)
 	srv, err := srvDAO.FindByType(services.TypeVCS)
 	if err != nil {
 		return "", "", err
@@ -84,7 +85,7 @@ func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
 }
 
 func (c *vcsConsumer) AuthorizeToken(token string, secret string) (string, string, error) {
-	srvDAO := services.Querier(c.dbFunc(), c.cache)
+	srvDAO := services.Querier(c.dbFunc(context.Background()), c.cache)
 	srv, err := srvDAO.FindByType(services.TypeVCS)
 	if err != nil {
 		return "", "", err
@@ -110,7 +111,7 @@ func (c *vcsConsumer) GetAuthorizedClient(token string, secret string) (sdk.VCSA
 		return nil, sdk.ErrNoReposManagerClientAuth
 	}
 
-	servicesDao := services.Querier(c.dbFunc(), c.cache)
+	servicesDao := services.Querier(c.dbFunc(context.Background()), c.cache)
 	srvs, err := servicesDao.FindByType(services.TypeVCS)
 	if err != nil {
 		return nil, err

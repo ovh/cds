@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -13,8 +14,8 @@ import (
 )
 
 //InitiliazeDB inits the database
-func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
-	dbGorp := DBFunc()
+func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func(context.Context) *gorp.DbMap) error {
+	dbGorp := DBFunc(context.Background())
 
 	if err := group.CreateDefaultGroup(dbGorp, sdk.SharedInfraGroupName); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group", sdk.SharedInfraGroupName)

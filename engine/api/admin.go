@@ -14,7 +14,7 @@ import (
 
 func (api *API) adminTruncateWarningsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
+		if _, err := api.mustDB(ctx).Exec("delete from warning"); err != nil {
 			return sdk.WrapError(err, "adminTruncateWarningsHandler> Unable to truncate warning ")
 		}
 		return nil
@@ -45,7 +45,7 @@ func (api *API) deleteAdminMaintenanceHandler() Handler {
 
 func (api *API) getAdminServicesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		q := services.Querier(api.mustDB(), api.Cache)
+		q := services.Querier(api.mustDB(ctx), api.Cache)
 		srvs := []sdk.Service{}
 		var err error
 		if r.FormValue("type") != "" {
@@ -65,7 +65,7 @@ func (api *API) getAdminServiceHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		q := services.Querier(api.mustDB(), api.Cache)
+		q := services.Querier(api.mustDB(ctx), api.Cache)
 		srv, err := q.FindByName(name)
 		if err != nil {
 			return sdk.WrapError(err, "getAdminServiceHandler")
@@ -92,7 +92,7 @@ func (api *API) putAdminServiceCallHandler() Handler {
 
 func selectDeleteAdminServiceCallHandler(api *API, method string) Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		q := services.Querier(api.mustDB(), api.Cache)
+		q := services.Querier(api.mustDB(ctx), api.Cache)
 		srvs, err := q.FindByType(r.FormValue("type"))
 		if err != nil {
 			return sdk.WrapError(err, "selectDeleteAdminServiceCallHandler")
@@ -117,7 +117,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) Handler {
 
 func putPostAdminServiceCallHandler(api *API, method string) Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		q := services.Querier(api.mustDB(), api.Cache)
+		q := services.Querier(api.mustDB(ctx), api.Cache)
 		srvs, err := q.FindByType(r.FormValue("type"))
 		if err != nil {
 			return sdk.WrapError(err, "putPostAdminServiceCallHandler")

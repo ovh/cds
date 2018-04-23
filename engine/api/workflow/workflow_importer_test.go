@@ -2,6 +2,7 @@ package workflow_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -33,7 +34,7 @@ func TestImport(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
+	repositoryService := services.NewRepository(func(context.Context) *gorp.DbMap {
 		return db
 	}, cache)
 	mockService := &sdk.Service{Name: "service_test", Type: "hooks"}

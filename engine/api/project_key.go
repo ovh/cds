@@ -27,34 +27,34 @@ func (api *API) getAllKeysProjectHandler() Handler {
 			EnvironmentKeys []sdk.EnvironmentKey `json:"environment_key"`
 		}{}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load project")
 		}
-		projectKeys, errK := project.LoadAllKeysByID(api.mustDB(), p.ID)
+		projectKeys, errK := project.LoadAllKeysByID(api.mustDB(ctx), p.ID)
 		if errK != nil {
 			return sdk.WrapError(errK, "getAllKeysProjectHandler> Cannot load project keys")
 		}
 		allkeys.ProjectKeys = projectKeys
 
 		if appName == "" {
-			appKeys, errA := application.LoadAllApplicationKeysByProject(api.mustDB(), p.ID)
+			appKeys, errA := application.LoadAllApplicationKeysByProject(api.mustDB(ctx), p.ID)
 			if errA != nil {
 				return sdk.WrapError(errA, "getAllKeysProjectHandler> Cannot load application keys")
 			}
 			allkeys.ApplicationKeys = appKeys
 		} else {
-			app, errA := application.LoadByName(api.mustDB(), api.Cache, p.Key, appName, getUser(ctx))
+			app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, p.Key, appName, getUser(ctx))
 			if errA != nil {
 				return sdk.WrapError(errA, "getAllKeysProjectHandler> Cannot load application")
 			}
-			if errK := application.LoadAllKeys(api.mustDB(), app); errK != nil {
+			if errK := application.LoadAllKeys(api.mustDB(ctx), app); errK != nil {
 				return sdk.WrapError(errK, "getAllKeysProjectHandler> Cannot load application keys")
 			}
 			allkeys.ApplicationKeys = app.Keys
 		}
 
-		envKeys, errP := environment.LoadAllEnvironmentKeysByProject(api.mustDB(), p.ID)
+		envKeys, errP := environment.LoadAllEnvironmentKeysByProject(api.mustDB(ctx), p.ID)
 		if errP != nil {
 			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load environemnt keys")
 		}
@@ -69,12 +69,12 @@ func (api *API) getKeysInProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project")
 		}
 
-		if errK := project.LoadAllKeys(api.mustDB(), p); errK != nil {
+		if errK := project.LoadAllKeys(api.mustDB(ctx), p); errK != nil {
 			return sdk.WrapError(errK, "getKeysInProjectHandler> Cannot load project keys")
 		}
 
@@ -88,12 +88,12 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		keyName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithKeys)
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteKeyInProjectHandler> Cannot start transaction")
 		}
@@ -138,7 +138,7 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInProjectHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
 		}
@@ -161,7 +161,7 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInProjectHandler> Cannot start transaction")
 		}

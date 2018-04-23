@@ -19,7 +19,7 @@ func (api *API) getProjectPlatformHandler() Handler {
 
 		clearPassword := FormBool(r, "clearPassword")
 
-		platform, err := project.LoadPlatformsByName(api.mustDB(), projectKey, platformName, clearPassword)
+		platform, err := project.LoadPlatformsByName(api.mustDB(ctx), projectKey, platformName, clearPassword)
 		if err != nil {
 			return sdk.WrapError(err, "getProjectPlatformHandler> Cannot load platform %s/%s", projectKey, platformName)
 		}
@@ -38,12 +38,12 @@ func (api *API) putProjectPlatformHandler() Handler {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot read body")
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		p, err := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot load project")
 		}
 
-		ppDB, errP := project.LoadPlatformsByName(api.mustDB(), projectKey, platformName, true)
+		ppDB, errP := project.LoadPlatformsByName(api.mustDB(ctx), projectKey, platformName, true)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectPlatformHandler> Cannot load project platform")
 		}
@@ -63,7 +63,7 @@ func (api *API) putProjectPlatformHandler() Handler {
 			}
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "putProjectPlatformHandler> Cannot strat transaction")
 		}
@@ -94,12 +94,12 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 		projectKey := vars["permProjectKey"]
 		platformName := vars["platformName"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
+		p, err := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot load project")
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteProjectPlatformHandler> Cannot start transaction")
 		}
@@ -133,7 +133,7 @@ func (api *API) getProjectPlatformsHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "getProjectPlatformsHandler> Cannot load project")
 		}
@@ -146,7 +146,7 @@ func (api *API) postProjectPlatformHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
+		p, err := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot load project")
 		}
@@ -166,7 +166,7 @@ func (api *API) postProjectPlatformHandler() Handler {
 			}
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "postProjectPlatformHandler> Cannot start transaction")
 		}

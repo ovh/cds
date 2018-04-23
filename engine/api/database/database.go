@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"sync"
@@ -52,8 +53,8 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 }
 
 // GetDBMap returns a gorp.DbMap pointer
-func (f *DBConnectionFactory) GetDBMap() *gorp.DbMap {
-	return DBMap(f.DB())
+func (f *DBConnectionFactory) GetDBMap(ctx context.Context) *gorp.DbMap {
+	return DBMap(f.DB()).WithContext(ctx).(*gorp.DbMap)
 }
 
 //Set is for tetsing purpose, we need to set manually the connection

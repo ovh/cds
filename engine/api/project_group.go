@@ -27,7 +27,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		groupName := vars["group"]
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot start transaction")
 		}
@@ -88,7 +88,7 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 			return sdk.ErrGroupNotFound
 		}
 
-		tx, errb := api.mustDB().Begin()
+		tx, errb := api.mustDB(ctx).Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "updateGroupRoleHandler: Cannot start transaction")
 		}
@@ -163,17 +163,17 @@ func (api *API) addGroupInProjectHandler() Handler {
 			return sdk.WrapError(err, "addGroupInProject> unable to unmarshal")
 		}
 
-		p, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errl := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "AddGroupInProject: Cannot load %s", key)
 		}
 
-		g, errlg := group.LoadGroup(api.mustDB(), groupProject.Group.Name)
+		g, errlg := group.LoadGroup(api.mustDB(ctx), groupProject.Group.Name)
 		if errlg != nil {
 			return sdk.WrapError(errlg, "AddGroupInProject: Cannot find %s", groupProject.Group.Name)
 		}
 
-		groupInProject, errc := group.CheckGroupInProject(api.mustDB(), p.ID, g.ID)
+		groupInProject, errc := group.CheckGroupInProject(api.mustDB(ctx), p.ID, g.ID)
 		if errc != nil {
 			return sdk.WrapError(errc, "AddGroupInProject: Cannot check if group %s is already in the project %s", g.Name, p.Name)
 		}
@@ -185,7 +185,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "AddGroupInProject: only read permission is allowed to default group")
 		}
 
-		tx, errb := api.mustDB().Begin()
+		tx, errb := api.mustDB(ctx).Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "AddGroupInProject: Cannot open transaction")
 		}
@@ -271,7 +271,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 
 		event.PublishAddProjectPermission(p, groupProject, getUser(ctx))
 
-		if err := group.LoadGroupByProject(api.mustDB(), p); err != nil {
+		if err := group.LoadGroupByProject(api.mustDB(ctx), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot load groups on project %s", p.Key)
 		}
 
@@ -287,7 +287,7 @@ func (api *API) importGroupsInProjectHandler() Handler {
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "importGroupsInProjectHandler> Cannot load %s", key)
 		}
@@ -316,7 +316,7 @@ func (api *API) importGroupsInProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProjectHandler> Cannot parsing")
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "importGroupsInProjectHandler> Cannot start transaction")
 		}

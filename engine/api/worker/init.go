@@ -9,7 +9,7 @@ import (
 )
 
 //Initialize init the package
-func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
+func Initialize(c context.Context, DBFunc func(context.Context) *gorp.DbMap, store cache.Store) error {
 	go CheckHeartbeat(c, DBFunc)
 	go ModelCapabilititiesCacheLoader(c, 10*time.Second, DBFunc, store)
 	return nil

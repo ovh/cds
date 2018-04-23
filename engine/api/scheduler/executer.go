@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -16,8 +17,8 @@ import (
 )
 
 //ExecuterRun is the core function of Executer goroutine
-func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSchedulerExecution, error) {
-	db := DBFunc()
+func ExecuterRun(DBFunc func(context.Context) *gorp.DbMap, store cache.Store) ([]sdk.PipelineSchedulerExecution, error) {
+	db := DBFunc(context.Background())
 	if db == nil {
 		return nil, sdk.WrapError(sdk.ErrServiceUnavailable, "ExecuterRun> Unable to load pending execution")
 	}
@@ -93,7 +94,7 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 	return exs, nil
 }
 
-func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) (*sdk.PipelineBuild, error) {
+func executerProcess(DBFunc func(context.Context) *gorp.DbMap, store cache.Store, db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) (*sdk.PipelineBuild, error) {
 	//Load the scheduler
 	s, err := Load(db, e.PipelineSchedulerID)
 	if err != nil {

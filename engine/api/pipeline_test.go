@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -35,17 +36,17 @@ func Test_runPipelineHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	//6. Prepare the run request
@@ -96,7 +97,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -110,17 +111,17 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	//6. Prepare the run request
@@ -166,7 +167,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	assert.Equal(t, "NoEnv", pb.Environment.Name)
 
 	//9. Update build status to Success
-	err = pipeline.UpdatePipelineBuildStatusAndStage(api.mustDB(), &pb, sdk.StatusSuccess)
+	err = pipeline.UpdatePipelineBuildStatusAndStage(api.mustDB(context.Background()), &pb, sdk.StatusSuccess)
 	test.NoError(t, err)
 
 	//10. Create another Pipeline
@@ -176,18 +177,18 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u)
+	err = pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip2, u)
 	test.NoError(t, err)
 
 	//11. Insert another Application
 	app2 := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	err = application.Insert(api.mustDB(), api.Cache, proj, app2, nil)
+	err = application.Insert(api.mustDB(context.Background()), api.Cache, proj, app2, nil)
 	test.NoError(t, err)
 
 	//12. Attach pipeline to application
-	_, err = application.AttachPipeline(api.mustDB(), app2.ID, pip2.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app2.ID, pip2.ID)
 	test.NoError(t, err)
 
 	//13. Prepare the pipelne trigger
@@ -203,7 +204,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	}
 
 	//14. Insert the pipeline trigger
-	tx, _ := api.mustDB().Begin()
+	tx, _ := api.mustDB(context.Background()).Begin()
 	defer tx.Rollback()
 	err = trigger.InsertTrigger(tx, &tigrou)
 	test.NoError(t, err)

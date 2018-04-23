@@ -45,7 +45,7 @@ type LDAPClient struct {
 	conn   *ldap.Conn
 	conf   LDAPConfig
 	local  *LocalClient
-	dbFunc func() *gorp.DbMap
+	dbFunc func(context.Context) *gorp.DbMap
 }
 
 //Entry represents a LDAP entity
@@ -146,7 +146,7 @@ func (c *LDAPClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req *
 	//Check if its coming from CLI
 	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 		var ok bool
-		ctx, ok = getUserPersistentSession(ctx, c.dbFunc(), c.Store(), req.Header)
+		ctx, ok = getUserPersistentSession(ctx, c.dbFunc(context.Background()), c.Store(), req.Header)
 		if ok {
 			return ctx, nil
 		}
@@ -166,7 +166,7 @@ func (c *LDAPClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, err
 	}
 	//Find the suer
-	u, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username)
+	u, err := c.searchAndInsertOrUpdateUser(c.dbFunc(context.Background()), username)
 	if err != nil {
 		return ctx, err
 	}
@@ -336,7 +336,7 @@ func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 	log.Debug("LDAP> Bind successful %s", username)
 
 	//Search user, refresh data and update database
-	if _, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username); err != nil {
+	if _, err := c.searchAndInsertOrUpdateUser(c.dbFunc(context.Background()), username); err != nil {
 		return false, err
 	}
 

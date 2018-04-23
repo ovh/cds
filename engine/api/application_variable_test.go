@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +19,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -27,7 +28,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -37,7 +38,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := application.InsertVariable(api.mustDB(), api.Cache, app, v, u); err != nil {
+	if err := application.InsertVariable(api.mustDB(context.Background()), api.Cache, app, v, u); err != nil {
 		t.Fatal(err)
 	}
 

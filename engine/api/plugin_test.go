@@ -151,8 +151,8 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(api.mustDB())
-	if err := actionplugin.Delete(api.mustDB(), "plugin-download", u.ID); err != nil {
+	u, _ := assets.InsertAdminUser(api.mustDB(context.Background()))
+	if err := actionplugin.Delete(api.mustDB(context.Background()), "plugin-download", u.ID); err != nil {
 		t.Log(err)
 	}
 
@@ -223,8 +223,8 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(api.mustDB())
-	actionplugin.Delete(api.mustDB(), "plugin-download", u.ID)
+	u, _ := assets.InsertAdminUser(api.mustDB(context.Background()))
+	actionplugin.Delete(api.mustDB(context.Background()), "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy1", dummyBinaryFile)
 	if delete != nil {
@@ -266,8 +266,8 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(api.mustDB())
-	actionplugin.Delete(api.mustDB(), "plugin-download", u.ID)
+	u, _ := assets.InsertAdminUser(api.mustDB(context.Background()))
+	actionplugin.Delete(api.mustDB(context.Background()), "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {
@@ -317,8 +317,8 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(api.mustDB())
-	actionplugin.Delete(api.mustDB(), "plugin-download", u.ID)
+	u, _ := assets.InsertAdminUser(api.mustDB(context.Background()))
+	actionplugin.Delete(api.mustDB(context.Background()), "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {
@@ -381,8 +381,8 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(api.mustDB())
-	actionplugin.Delete(api.mustDB(), "plugin-download", u.ID)
+	u, _ := assets.InsertAdminUser(api.mustDB(context.Background()))
+	actionplugin.Delete(api.mustDB(context.Background()), "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {

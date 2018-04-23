@@ -18,7 +18,7 @@ import (
 )
 
 //Executer is the goroutine which run the pipelines
-func Executer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+func Executer(c context.Context, DBFunc func(context.Context) *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(5 * time.Second).C
 	for {
 		select {
@@ -28,7 +28,7 @@ func Executer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 				return
 			}
 		case <-tick:
-			exs, err := ExecuterRun(DBFunc(), store)
+			exs, err := ExecuterRun(DBFunc(c), store)
 			if err != nil {
 				log.Warning("poller.Executer> Error : %s", err)
 				continue

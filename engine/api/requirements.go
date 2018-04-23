@@ -24,14 +24,14 @@ func (api *API) getRequirementTypeValuesHandler() Handler {
 
 		switch reqType {
 		case sdk.BinaryRequirement:
-			req, err := action.LoadAllBinaryRequirements(api.mustDB())
+			req, err := action.LoadAllBinaryRequirements(api.mustDB(ctx))
 			if err != nil {
 				return sdk.WrapError(err, "getRequirementTypeValuesHandler> Cannot load binary requirements")
 			}
 			return WriteJSON(w, req.Values(), http.StatusOK)
 
 		case sdk.ModelRequirement:
-			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), getUser(ctx))
+			models, err := worker.LoadWorkerModelsByUser(api.mustDB(ctx), getUser(ctx))
 			if err != nil {
 				return sdk.WrapError(err, "getRequirementTypeValuesHandler> Cannot load worker models")
 			}

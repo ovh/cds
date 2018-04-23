@@ -38,7 +38,7 @@ type Driver interface {
 }
 
 //GetDriver is a factory
-func GetDriver(c context.Context, mode string, options interface{}, storeOptions sessionstore.Options, DBFunc func() *gorp.DbMap) (Driver, error) {
+func GetDriver(c context.Context, mode string, options interface{}, storeOptions sessionstore.Options, DBFunc func(context.Context) *gorp.DbMap) (Driver, error) {
 	log.Info("Auth> Intializing driver (%s)", mode)
 	store, err := sessionstore.Get(c, storeOptions.Cache, storeOptions.TTL)
 	if err != nil {
@@ -118,7 +118,7 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 	// Else load it from DB
 	if !store.Get(key, srv) {
 		var err error
-		repo := services.NewRepository(func() *gorp.DbMap { return db }, store)
+		repo := services.NewRepository(func(context.Context) *gorp.DbMap { return db }, store)
 		srv, err = repo.FindByHash(hash)
 		if err != nil {
 			return nil, fmt.Errorf("cannot load service: %s", err)

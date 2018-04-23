@@ -14,7 +14,7 @@ import (
 
 func (api *API) getWorkflowHooksHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		hooks, err := workflow.LoadAllHooks(api.mustDB())
+		hooks, err := workflow.LoadAllHooks(api.mustDB(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHooksHandler")
 		}
@@ -33,12 +33,12 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			return sdk.WrapError(errN, "getWorkflowHookModelsHandler")
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, workflowName, getUser(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(api.mustDB(ctx), api.Cache, key, workflowName, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
 		}
@@ -48,7 +48,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowHookModelsHandler")
 		}
 
-		m, err := workflow.LoadHookModels(api.mustDB())
+		m, err := workflow.LoadHookModels(api.mustDB(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelsHandler")
 		}
@@ -64,7 +64,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
 			if vcsServer != nil {
-				client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+				client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(ctx), api.Cache, vcsServer)
 				if errclient != nil {
 					return sdk.WrapError(errclient, "getWorkflowHookModelsHandler> Cannot get vcs client")
 				}
@@ -120,7 +120,7 @@ func (api *API) getWorkflowHookModelHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["model"]
-		m, err := workflow.LoadHookModelByName(api.mustDB(), name)
+		m, err := workflow.LoadHookModelByName(api.mustDB(ctx), name)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelHandler")
 		}
@@ -135,7 +135,7 @@ func (api *API) postWorkflowHookModelHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler")
 		}
 
-		tx, errtx := api.mustDB().Begin()
+		tx, errtx := api.mustDB(ctx).Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "postWorkflowHookModelHandler> Unable to start transaction")
 		}
@@ -160,7 +160,7 @@ func (api *API) putWorkflowHookModelHandler() Handler {
 			return err
 		}
 
-		tx, errtx := api.mustDB().Begin()
+		tx, errtx := api.mustDB(ctx).Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to start transaction")
 		}

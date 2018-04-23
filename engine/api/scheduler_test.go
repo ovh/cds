@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +25,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -38,7 +39,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -47,12 +48,12 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -75,11 +76,11 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 			},
 		},
 	}
-	if err := scheduler.Insert(api.mustDB(), s); err != nil {
+	if err := scheduler.Insert(api.mustDB(context.Background()), s); err != nil {
 		t.Fatal(err)
 	}
 
-	scheduler.Run(api.mustDB())
+	scheduler.Run(api.mustDB(context.Background()))
 	scheduler.ExecuterRun(api.mustDB, api.Cache)
 
 	vars := map[string]string{
@@ -107,7 +108,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -118,7 +119,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -130,7 +131,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -139,11 +140,11 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -171,7 +172,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &app))
 
-	scheduler.Run(api.mustDB())
+	scheduler.Run(api.mustDB(context.Background()))
 	scheduler.ExecuterRun(api.mustDB, api.Cache)
 
 	uri = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
@@ -194,7 +195,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -208,7 +209,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -217,11 +218,11 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -273,7 +274,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	assert.Equal(t, len(app.Workflows[0].Schedulers), 1)
 	// scheduler is here: &app.Workflows[0].Schedulers[0]
 
-	scheduler.Run(api.mustDB())
+	scheduler.Run(api.mustDB(context.Background()))
 	scheduler.ExecuterRun(api.mustDB, api.Cache)
 
 	uri = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
@@ -296,7 +297,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -310,7 +311,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -319,11 +320,11 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
