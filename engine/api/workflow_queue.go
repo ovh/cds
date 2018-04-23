@@ -105,7 +105,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
+		//FIXMEworkflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		return WriteJSON(w, pbji, http.StatusOK)
@@ -375,7 +375,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return err
 		}
 
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
+		//FIXME workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
 		return nil
