@@ -86,7 +86,7 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 	}
 }
 
-func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun) error {
+func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
 	log.Debug("resyncCommitStatus> %s %d.%d", wr.Workflow.Name, wr.Number, wr.LastSubNumber)
 	for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
 		sort.Slice(nodeRuns, func(i, j int) bool {
@@ -100,7 +100,7 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 		node := wr.Workflow.GetNode(nodeID)
 		if node.IsLinkedToRepo() {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
+			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
 			if vcsServer == nil {
 				return nil
 			}
@@ -118,7 +118,7 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 			var statusFound *sdk.VCSCommitStatus
 			expected := sdk.VCSCommitStatusDescription(sdk.EventWorkflowNodeRun{
-				ProjectKey:   p.Key,
+				ProjectKey:   proj.Key,
 				WorkflowName: wr.Workflow.Name,
 				NodeName:     node.Name,
 			})
@@ -132,7 +132,7 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					Status:         nodeRun.Status,
 					Start:          nodeRun.Start.Unix(),
 					Done:           nodeRun.Done.Unix(),
-					ProjectKey:     p.Key,
+					ProjectKey:     proj.Key,
 					Manual:         nodeRun.Manual,
 					HookEvent:      nodeRun.HookEvent,
 					Payload:        nodeRun.Payload,

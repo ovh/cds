@@ -29,6 +29,7 @@ type Store interface {
 	Dequeue(queueName string, value interface{})
 	DequeueWithContext(c context.Context, queueName string, value interface{})
 	QueueLen(queueName string) int
+	RemoveFromQueue(queueName string, memberKey string)
 	Publish(queueName string, value interface{})
 	Subscribe(queueName string) PubSub
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
