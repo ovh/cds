@@ -650,6 +650,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/executions/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/worker/exit/</loc>
   </url>
   
@@ -986,6 +990,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/purge/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/push/</loc>
   </url>
   
@@ -1090,7 +1098,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/start/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/engine/start/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/startall/</loc>
   </url>
   
   <url>
@@ -1110,7 +1126,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/stop/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/stop/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/stopall/</loc>
   </url>
   
   <url>
