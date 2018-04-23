@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +21,7 @@ import (
 
 func Test_postWorkflowGroupHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -31,7 +32,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -42,10 +43,10 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
 
 	//Prepare request
 	vars := map[string]string{
@@ -77,7 +78,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 
 func Test_putWorkflowGroupHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -88,7 +89,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -99,18 +100,18 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
 
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	_, _, errG := group.AddGroup(api.mustDB(), &gr)
+	_, _, errG := group.AddGroup(api.mustDB(context.Background()), &gr)
 	test.NoError(t, errG)
 
-	workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{
+	workflow.AddGroup(api.mustDB(context.Background()), &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   gr.ID,
@@ -150,7 +151,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 
 func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -161,7 +162,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -172,18 +173,18 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
 
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	_, _, errG := group.AddGroup(api.mustDB(), &gr)
+	_, _, errG := group.AddGroup(api.mustDB(context.Background()), &gr)
 	test.NoError(t, errG)
 
-	workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{
+	workflow.AddGroup(api.mustDB(context.Background()), &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   gr.ID,

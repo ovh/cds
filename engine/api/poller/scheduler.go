@@ -16,7 +16,7 @@ var (
 )
 
 //Scheduler is the goroutine which compute date of next execution for pipeline scheduler
-func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
+func Scheduler(c context.Context, DBFunc func(context.Context) *gorp.DbMap) {
 	tick := time.NewTicker(10 * time.Second).C
 	for {
 		select {
@@ -26,7 +26,7 @@ func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
 				return
 			}
 		case <-tick:
-			_, status, err := SchedulerRun(DBFunc())
+			_, status, err := SchedulerRun(DBFunc(c))
 			if err != nil {
 				log.Error("poller.Scheduler> %s: %s", status, err)
 			}

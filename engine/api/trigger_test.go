@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -36,7 +37,7 @@ func TestAddTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip1, u))
 
 	//4. Create Pipeline 2
 	pipelineKey2 := sdk.RandomString(10)
@@ -46,7 +47,7 @@ func TestAddTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u)
+	err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip2, u)
 	test.NoError(t, err)
 
 	//5. Create Application
@@ -54,15 +55,15 @@ func TestAddTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip1.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip1.ID)
 	test.NoError(t, err)
 
 	//7. Attach pipeline 2
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip2.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip2.ID)
 	test.NoError(t, err)
 
 	// 8. Prepare the request
@@ -97,7 +98,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	// 10
-	ts, err := trigger.LoadTriggerByApp(api.mustDB(), app.ID)
+	ts, err := trigger.LoadTriggerByApp(api.mustDB(context.Background()), app.ID)
 	test.NoError(t, err)
 	assert.Equal(t, len(ts), 1)
 }
@@ -106,7 +107,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -120,7 +121,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip1, u)
+	err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip1, u)
 	test.NoError(t, err)
 
 	//4. Create Pipeline 2
@@ -131,7 +132,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u)
+	err = pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip2, u)
 	test.NoError(t, err)
 
 	//5. Create Application
@@ -139,15 +140,15 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip1.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip1.ID)
 	test.NoError(t, err)
 
 	//7. Attach pipeline 2
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip2.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip2.ID)
 	test.NoError(t, err)
 
 	// 8. InsertTrigger
@@ -161,7 +162,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		Manual:          false,
 	}
 
-	err = trigger.InsertTrigger(api.mustDB(), triggerData)
+	err = trigger.InsertTrigger(api.mustDB(context.Background()), triggerData)
 	test.NoError(t, err)
 
 	triggerData.Manual = true
@@ -188,7 +189,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	// 10
-	ts, err := trigger.LoadTriggerByApp(api.mustDB(), app.ID)
+	ts, err := trigger.LoadTriggerByApp(api.mustDB(context.Background()), app.ID)
 	test.NoError(t, err)
 	assert.Equal(t, len(ts), 1)
 	assert.Equal(t, ts[0].Manual, true)
@@ -198,7 +199,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -212,7 +213,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip1, u)
+	err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip1, u)
 	test.NoError(t, err)
 
 	//4. Create Pipeline 2
@@ -223,7 +224,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u)
+	err = pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip2, u)
 	test.NoError(t, err)
 
 	//5. Create Application
@@ -231,15 +232,15 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip1.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip1.ID)
 	test.NoError(t, err)
 
 	//7. Attach pipeline 2
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip2.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip2.ID)
 	test.NoError(t, err)
 
 	// 8. InsertTrigger
@@ -253,7 +254,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		Manual:          false,
 	}
 
-	err = trigger.InsertTrigger(api.mustDB(), triggerData)
+	err = trigger.InsertTrigger(api.mustDB(context.Background()), triggerData)
 	test.NoError(t, err)
 
 	vars := map[string]string{
@@ -277,7 +278,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	// 10
-	ts, err := trigger.LoadTriggerByApp(api.mustDB(), app.ID)
+	ts, err := trigger.LoadTriggerByApp(api.mustDB(context.Background()), app.ID)
 	test.NoError(t, err)
 	assert.Equal(t, len(ts), 0)
 }

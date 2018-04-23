@@ -16,7 +16,7 @@ import (
 //LocalClient is a auth driver which store all in database
 type LocalClient struct {
 	store  sessionstore.Store
-	dbFunc func() *gorp.DbMap
+	dbFunc func(context.Context) *gorp.DbMap
 }
 
 //Open nothing
@@ -36,7 +36,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 	//Check persistent session
 	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
 		var ok bool
-		ctx, ok = getUserPersistentSession(ctx, c.dbFunc(), c.Store(), req.Header)
+		ctx, ok = getUserPersistentSession(ctx, c.dbFunc(ctx), c.Store(), req.Header)
 		if ok {
 			return ctx, nil
 		}
@@ -61,7 +61,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 	if err != nil {
 		return ctx, err
 	}
-	u, err := user.LoadUserAndAuth(c.dbFunc(), username)
+	u, err := user.LoadUserAndAuth(c.dbFunc(ctx), username)
 	if err != nil {
 		return ctx, fmt.Errorf("authorization failed for %s: %s", username, err)
 	}
@@ -78,7 +78,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 //Authentify check username and password
 func (c *LocalClient) Authentify(username, password string) (bool, error) {
 	// Load user
-	u, err := user.LoadUserAndAuth(c.dbFunc(), username)
+	u, err := user.LoadUserAndAuth(c.dbFunc(context.Background()), username)
 	if err != nil {
 		log.Warning("Auth> Authorization failed")
 		return false, err

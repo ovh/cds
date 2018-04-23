@@ -36,7 +36,7 @@ func (api *API) getProjectsHandler() Handler {
 		}
 
 		if filterByRepo == "" {
-			projects, err := project.LoadAll(api.mustDB(), api.Cache, getUser(ctx), opts...)
+			projects, err := project.LoadAll(api.mustDB(ctx), api.Cache, getUser(ctx), opts...)
 			if err != nil {
 				return sdk.WrapError(err, "getProjectsHandler")
 			}
@@ -77,7 +77,7 @@ func (api *API) getProjectsHandler() Handler {
 		}
 		opts = append(opts, &filterByRepoFunc)
 
-		projects, err := project.LoadAllByRepo(api.mustDB(), api.Cache, getUser(ctx), filterByRepo, opts...)
+		projects, err := project.LoadAllByRepo(api.mustDB(ctx), api.Cache, getUser(ctx), filterByRepo, opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
 		}
@@ -106,14 +106,14 @@ func (api *API) updateProjectHandler() Handler {
 		}
 
 		// Check is project exist
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 		}
 		// Update in DB is made given the primary key
 		proj.ID = p.ID
 		proj.VCSServers = p.VCSServers
-		if errUp := project.Update(api.mustDB(), api.Cache, proj, getUser(ctx)); errUp != nil {
+		if errUp := project.Update(api.mustDB(ctx), api.Cache, proj, getUser(ctx)); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 		event.PublishUpdateProject(proj, p, getUser(ctx))
@@ -188,7 +188,7 @@ func (api *API) getProjectHandler() Handler {
 			opts = append(opts, project.LoadOptions.WithFeatures)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), opts...)
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), opts...)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
@@ -216,7 +216,7 @@ func (api *API) addProjectHandler() Handler {
 		}
 
 		// Check that project does not already exists
-		exist, errExist := project.Exist(api.mustDB(), p.Key)
+		exist, errExist := project.Exist(api.mustDB(ctx), p.Key)
 		if errExist != nil {
 			return sdk.WrapError(errExist, "addProjectHandler>  Cannot check if project %s exist", p.Key)
 		}
@@ -238,7 +238,7 @@ func (api *API) addProjectHandler() Handler {
 		}
 		if !groupAttached {
 			// check if new auto group does not already exists
-			if _, errl := group.LoadGroup(api.mustDB(), p.Name); errl != nil {
+			if _, errl := group.LoadGroup(api.mustDB(ctx), p.Name); errl != nil {
 				if errl == sdk.ErrGroupNotFound {
 					// group name does not exists, add it on project
 					permG := sdk.GroupPermission{
@@ -255,7 +255,7 @@ func (api *API) addProjectHandler() Handler {
 		}
 
 		//Create a project within a transaction
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		defer tx.Rollback()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "addProjectHandler> Cannot start tx")
@@ -336,7 +336,7 @@ func (api *API) deleteProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 		if errProj != nil {
 			if errProj != sdk.ErrNoProject {
 				return sdk.WrapError(errProj, "deleteProject> load project '%s' from db", key)
@@ -352,7 +352,7 @@ func (api *API) deleteProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrProjectHasApplication, "deleteProject> Project '%s' still used by %d applications", key, len(p.Applications))
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteProject> Cannot start transaction")
 		}

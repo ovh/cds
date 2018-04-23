@@ -29,7 +29,7 @@ func (api *API) addTriggerHandler() Handler {
 
 		// load source ids
 		if t.SrcApplication.ID == 0 {
-			a, errSrcApp := application.LoadByName(api.mustDB(), api.Cache, key, t.SrcApplication.Name, getUser(ctx))
+			a, errSrcApp := application.LoadByName(api.mustDB(ctx), api.Cache, key, t.SrcApplication.Name, getUser(ctx))
 			if errSrcApp != nil {
 				return sdk.WrapError(errSrcApp, "addTriggersHandler> cannot load src application")
 			}
@@ -40,7 +40,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		if t.SrcPipeline.ID == 0 {
-			p, errSrcPip := pipeline.LoadPipeline(api.mustDB(), key, t.SrcPipeline.Name, false)
+			p, errSrcPip := pipeline.LoadPipeline(api.mustDB(ctx), key, t.SrcPipeline.Name, false)
 			if errSrcPip != nil {
 				return sdk.WrapError(errSrcPip, "addTriggersHandler> cannot load src pipeline")
 			}
@@ -52,7 +52,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		if t.SrcEnvironment.ID == 0 && t.SrcEnvironment.Name != "" && t.SrcEnvironment.Name != sdk.DefaultEnv.Name {
-			e, errSrcEnv := environment.LoadEnvironmentByName(api.mustDB(), key, t.SrcEnvironment.Name)
+			e, errSrcEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), key, t.SrcEnvironment.Name)
 			if errSrcEnv != nil {
 				return sdk.WrapError(errSrcEnv, "addTriggersHandler> cannot load src environment")
 			}
@@ -67,7 +67,7 @@ func (api *API) addTriggerHandler() Handler {
 
 		// load destination ids
 		if t.DestApplication.ID == 0 {
-			a, errDestApp := application.LoadByName(api.mustDB(), api.Cache, key, t.DestApplication.Name, getUser(ctx))
+			a, errDestApp := application.LoadByName(api.mustDB(ctx), api.Cache, key, t.DestApplication.Name, getUser(ctx))
 			if errDestApp != nil {
 				return sdk.WrapError(errDestApp, "addTriggersHandler> cannot load dst application")
 			}
@@ -78,7 +78,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		if t.DestPipeline.ID == 0 {
-			p, errDestPip := pipeline.LoadPipeline(api.mustDB(), key, t.DestPipeline.Name, false)
+			p, errDestPip := pipeline.LoadPipeline(api.mustDB(ctx), key, t.DestPipeline.Name, false)
 			if errDestPip != nil {
 				return sdk.WrapError(errDestPip, "addTriggersHandler> cannot load dst pipeline")
 			}
@@ -90,7 +90,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		if t.DestEnvironment.ID == 0 && t.DestEnvironment.Name != "" && t.DestEnvironment.Name != sdk.DefaultEnv.Name {
-			e, errDestEnv := environment.LoadEnvironmentByName(api.mustDB(), key, t.DestEnvironment.Name)
+			e, errDestEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), key, t.DestEnvironment.Name)
 			if errDestEnv != nil {
 				return sdk.WrapError(errDestEnv, "addTriggersHandler> cannot load dst environment")
 			}
@@ -104,7 +104,7 @@ func (api *API) addTriggerHandler() Handler {
 
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return errBegin
 
@@ -126,7 +126,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, t.SrcApplication.Name, getUser(ctx), "", "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, key, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			return sdk.WrapError(errWorkflow, "addTriggerHandler> cannot load updated workflow")
 		}
@@ -145,7 +145,7 @@ func (api *API) getTriggerHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getTriggerHandler> TriggerId %s should be an int", striggerID)
 		}
 
-		t, errTrig := trigger.LoadTrigger(api.mustDB(), triggerID)
+		t, errTrig := trigger.LoadTrigger(api.mustDB(ctx), triggerID)
 		if errTrig != nil {
 			return sdk.WrapError(errTrig, "getTriggerHandler> Cannot load trigger %d", triggerID)
 		}
@@ -167,19 +167,19 @@ func (api *API) getTriggersHandler() Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(api.mustDB(), api.Cache, key, app, getUser(ctx))
+		a, errApp := application.LoadByName(api.mustDB(ctx), api.Cache, key, app, getUser(ctx))
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getTriggersHandler> cannot load application")
 		}
 
-		p, errPip := pipeline.LoadPipeline(api.mustDB(), key, pip, false)
+		p, errPip := pipeline.LoadPipeline(api.mustDB(ctx), key, pip, false)
 		if errPip != nil {
 			return sdk.WrapError(errPip, "getTriggersHandler> cannot load pipeline")
 		}
 
 		var envID int64
 		if env != "" && env != sdk.DefaultEnv.Name {
-			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, env)
+			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), key, env)
 			if errEnv != nil {
 				return sdk.WrapError(errEnv, "getTriggersHandler> cannot load environment")
 			}
@@ -191,7 +191,7 @@ func (api *API) getTriggersHandler() Handler {
 			}
 		}
 
-		triggers, errTri := trigger.LoadTriggers(api.mustDB(), a.ID, p.ID, envID)
+		triggers, errTri := trigger.LoadTriggers(api.mustDB(ctx), a.ID, p.ID, envID)
 		if errTri != nil {
 			return sdk.WrapError(errTri, "getTriggersHandler> cannot load triggers")
 		}
@@ -211,12 +211,12 @@ func (api *API) deleteTriggerHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "deleteTriggerHandler> invalid id (%s)", errParse)
 		}
 
-		t, errTrigger := trigger.LoadTrigger(api.mustDB(), triggerID)
+		t, errTrigger := trigger.LoadTrigger(api.mustDB(ctx), triggerID)
 		if errTrigger != nil {
 			return sdk.WrapError(errTrigger, "deleteTriggerHandler> Cannot load trigger")
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteTriggerHandler> Cannot start transaction")
 		}
@@ -237,7 +237,7 @@ func (api *API) deleteTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			return sdk.WrapError(errWorkflow, "deleteTriggerHandler> cannot load updated workflow")
 		}
@@ -269,7 +269,7 @@ func (api *API) updateTriggerHandler() Handler {
 
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateTriggerHandler> cannot start transaction")
 
@@ -290,7 +290,7 @@ func (api *API) updateTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			return sdk.WrapError(errWorkflow, "updateTriggerHandler> cannot load updated workflow")
 		}
@@ -311,19 +311,19 @@ func (api *API) getTriggersAsSourceHandler() Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(api.mustDB(), api.Cache, key, app, getUser(ctx))
+		a, errApp := application.LoadByName(api.mustDB(ctx), api.Cache, key, app, getUser(ctx))
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getTriggersAsSourceHandler> cannot load application")
 		}
 
-		p, errPip := pipeline.LoadPipeline(api.mustDB(), key, pip, false)
+		p, errPip := pipeline.LoadPipeline(api.mustDB(ctx), key, pip, false)
 		if errPip != nil {
 			return sdk.WrapError(errPip, "getTriggersAsSourceHandler> cannot load pipeline")
 		}
 
 		var envID int64
 		if env != "" && env != sdk.DefaultEnv.Name {
-			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, env)
+			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), key, env)
 			if errEnv != nil {
 				return sdk.WrapError(errEnv, "getTriggersAsSourceHandler> cannot load environment")
 			}
@@ -334,7 +334,7 @@ func (api *API) getTriggersAsSourceHandler() Handler {
 			}
 		}
 
-		triggers, errTri := trigger.LoadTriggersAsSource(api.mustDB(), a.ID, p.ID, envID)
+		triggers, errTri := trigger.LoadTriggersAsSource(api.mustDB(ctx), a.ID, p.ID, envID)
 		if errTri != nil {
 			return sdk.WrapError(errTri, "getTriggersAsSourceHandler> cannot load triggers")
 		}

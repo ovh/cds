@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -16,13 +17,13 @@ import (
 // Repository is the data persistence layer
 type Repository struct {
 	querier   gorp.SqlExecutor
-	db        func() *gorp.DbMap
+	db        func(context.Context) *gorp.DbMap
 	store     cache.Store
 	currentTX *gorp.Transaction
 }
 
 // NewRepository returns a fresh repository
-func NewRepository(dbFunc func() *gorp.DbMap, store cache.Store) *Repository {
+func NewRepository(dbFunc func(context.Context) *gorp.DbMap, store cache.Store) *Repository {
 	return &Repository{db: dbFunc, store: store}
 }
 
@@ -37,7 +38,7 @@ func (r *Repository) Tx() gorp.SqlExecutor {
 		return r.currentTX
 	}
 	if r.db != nil {
-		return r.db()
+		return r.db(nil)
 	}
 	return r.querier
 }
@@ -48,7 +49,7 @@ func (r *Repository) Begin() error {
 		return errors.New("Unable to start a new transaction on this repository")
 	}
 	var err error
-	r.currentTX, err = r.db().Begin()
+	r.currentTX, err = r.db(nil).Begin()
 	return err
 }
 

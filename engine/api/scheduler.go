@@ -27,14 +27,14 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 
 		///Load application
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db", appName, key)
 
 		}
 
 		//Load pipeline
-		pip, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		pip, errP := pipeline.LoadPipeline(api.mustDB(ctx), key, pipelineName, false)
 		if errP != nil {
 			return sdk.WrapError(errP, "getSchedulerApplicationPipelineHandler> Cannot load pipeline %s", pipelineName)
 
@@ -49,7 +49,7 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 		var env *sdk.Environment
 		if envName != "" {
 			var err error
-			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+			env, err = environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 			if err != nil {
 				return err
 
@@ -60,14 +60,14 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 		var schedulers []sdk.PipelineScheduler
 		if env == nil {
 			var err error
-			schedulers, err = scheduler.GetByApplicationPipeline(api.mustDB(), app, pip)
+			schedulers, err = scheduler.GetByApplicationPipeline(api.mustDB(ctx), app, pip)
 			if err != nil {
 				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers")
 
 			}
 		} else {
 			var err error
-			schedulers, err = scheduler.GetByApplicationPipelineEnv(api.mustDB(), app, pip, env)
+			schedulers, err = scheduler.GetByApplicationPipelineEnv(api.mustDB(ctx), app, pip, env)
 			if err != nil {
 				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
 
@@ -86,14 +86,14 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 
 		///Load application
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db", appName, key)
 
 		}
 
 		//Load pipeline
-		pip, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		pip, errP := pipeline.LoadPipeline(api.mustDB(ctx), key, pipelineName, false)
 		if errP != nil {
 			return sdk.WrapError(errP, "addSchedulerApplicationPipelineHandler> Cannot load pipeline %s", pipelineName)
 
@@ -108,7 +108,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		var env *sdk.Environment
 		if envName != "" {
 			var err error
-			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+			env, err = environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 			if err != nil {
 				return err
 
@@ -126,14 +126,14 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		if env == nil {
 			var err error
 			env = &sdk.DefaultEnv
-			schedulers, err = scheduler.GetByApplicationPipeline(api.mustDB(), app, pip)
+			schedulers, err = scheduler.GetByApplicationPipeline(api.mustDB(ctx), app, pip)
 			if err != nil {
 				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
 
 			}
 		} else {
 			var err error
-			schedulers, err = scheduler.GetByApplicationPipelineEnv(api.mustDB(), app, pip, env)
+			schedulers, err = scheduler.GetByApplicationPipelineEnv(api.mustDB(ctx), app, pip, env)
 			if err != nil {
 				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
 
@@ -189,7 +189,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		s.PipelineID = pip.ID
 		s.EnvironmentID = env.ID
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "addSchedulerApplicationPipelineHandler> Cannot open transaction")
 		}
@@ -209,7 +209,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addSchedulerApplicationPipelineHandler> cannot reload workflow")
 		}
@@ -241,7 +241,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 		var env *sdk.Environment
 		if envName != "" && envName != sdk.DefaultEnv.Name {
 			var err error
-			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+			env, err = environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 			if err != nil {
 				return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> ")
 			}
@@ -252,13 +252,13 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		// Load application
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "updateSchedulerApplicationPipelineHandler> Cannot load application %s", appName)
 		}
 
 		//Load the scheduler
-		sOld, err := scheduler.Load(api.mustDB(), s.ID)
+		sOld, err := scheduler.Load(api.mustDB(ctx), s.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> ")
 
@@ -273,7 +273,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 			sOld.EnvironmentID = env.ID
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateSchedulerApplicationPipelineHandler> Cannot start transaction")
 		}
@@ -303,7 +303,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updateSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}
@@ -325,18 +325,18 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 			return sdk.ErrInvalidID
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "deleteSchedulerApplicationPipelineHandler> Cannot load application %s", appName)
 		}
 
 		//Load the scheduler
-		sOld, err := scheduler.Load(api.mustDB(), id)
+		sOld, err := scheduler.Load(api.mustDB(ctx), id)
 		if err != nil {
 			return err
 		}
 
-		tx, errB := api.mustDB().Begin()
+		tx, errB := api.mustDB(ctx).Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "deleteSchedulerApplicationPipelineHandler> Cannot open transaction")
 		}
@@ -356,7 +356,7 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deleteSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}

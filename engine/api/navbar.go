@@ -10,7 +10,7 @@ import (
 
 func (api *API) getNavbarHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, getUser(ctx))
+		data, err := navbar.LoadNavbarData(api.mustDB(ctx), api.Cache, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getNavbarHandler")
 		}

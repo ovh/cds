@@ -25,7 +25,7 @@ func (api *API) postApplicationImportHandler() Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errp := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errp != nil {
 			return sdk.WrapError(errp, "postApplicationImportHandler>> Unable load project")
 		}
@@ -56,7 +56,7 @@ func (api *API) postApplicationImportHandler() Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errapp)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "postApplicationImportHandler> Unable to start tx")
 		}
@@ -81,7 +81,7 @@ func (api *API) postApplicationImportHandler() Handler {
 			return sdk.WrapError(err, "postApplicationImportHandler> Cannot commit transaction")
 		}
 
-		newApp, errN := application.LoadByName(api.mustDB(), api.Cache, proj.Key, eapp.Name, getUser(ctx), application.LoadOptions.WithVariables, application.LoadOptions.WithGroups, application.LoadOptions.WithKeys)
+		newApp, errN := application.LoadByName(api.mustDB(ctx), api.Cache, proj.Key, eapp.Name, getUser(ctx), application.LoadOptions.WithVariables, application.LoadOptions.WithGroups, application.LoadOptions.WithKeys)
 		if errN == nil {
 			event.PublishAddApplication(proj.Key, *newApp, getUser(ctx))
 		}

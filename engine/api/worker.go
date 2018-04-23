@@ -25,14 +25,14 @@ func (api *API) registerWorkerHandler() Handler {
 		var h *sdk.Hatchery
 		if params.HatcheryName != "" {
 			var errH error
-			h, errH = hatchery.LoadHatcheryByName(api.mustDB(), params.HatcheryName)
+			h, errH = hatchery.LoadHatcheryByName(api.mustDB(ctx), params.HatcheryName)
 			if errH != nil {
 				return sdk.WrapError(errH, "registerWorkerHandler> Unable to load hatchery %s", params.HatcheryName)
 			}
 		}
 
 		// Try to register worker
-		worker, err := worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, h, params.BinaryCapabilities)
+		worker, err := worker.RegisterWorker(api.mustDB(ctx), params.Name, params.Token, params.ModelID, h, params.BinaryCapabilities)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "registerWorkerHandler> [%s] Registering failed", params.Name)
@@ -53,7 +53,7 @@ func (api *API) getWorkersHandler() Handler {
 			return sdk.WrapError(err, "getWorkerModels> cannot parse form")
 		}
 
-		workers, errl := worker.LoadWorkers(api.mustDB())
+		workers, errl := worker.LoadWorkers(api.mustDB(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
 		}
@@ -68,7 +68,7 @@ func (api *API) disableWorkerHandler() Handler {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "disabledWorkerHandler> Cannot start tx")
 		}
@@ -107,7 +107,7 @@ func (api *API) disableWorkerHandler() Handler {
 
 func (api *API) refreshWorkerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
+		if err := worker.RefreshWorker(api.mustDB(ctx), getWorker(ctx)); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", getWorker(ctx).ID)
 		}
 		return nil
@@ -116,7 +116,7 @@ func (api *API) refreshWorkerHandler() Handler {
 
 func (api *API) unregisterWorkerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := worker.DeleteWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
+		if err := worker.DeleteWorker(api.mustDB(ctx), getWorker(ctx).ID); err != nil {
 			return sdk.WrapError(err, "unregisterWorkerHandler> cannot delete worker %s", getWorker(ctx).ID)
 		}
 		return nil
@@ -126,7 +126,7 @@ func (api *API) unregisterWorkerHandler() Handler {
 func (api *API) workerCheckingHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerC := getWorker(ctx)
-		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)
+		wk, errW := worker.LoadWorker(api.mustDB(ctx), workerC.ID)
 		if errW != nil {
 			return sdk.WrapError(errW, "workerCheckingHandler> Unable to load worker %s", workerC.ID)
 		}
@@ -136,7 +136,7 @@ func (api *API) workerCheckingHandler() Handler {
 			return nil
 		}
 
-		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusChecking); err != nil {
+		if err := worker.SetStatus(api.mustDB(ctx), wk.ID, sdk.StatusChecking); err != nil {
 			return sdk.WrapError(err, "workerCheckingHandler> cannot update worker %s", workerC.ID)
 		}
 		key := cache.Key("worker", wk.ID)
@@ -150,7 +150,7 @@ func (api *API) workerCheckingHandler() Handler {
 func (api *API) workerWaitingHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerC := getWorker(ctx)
-		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)
+		wk, errW := worker.LoadWorker(api.mustDB(ctx), workerC.ID)
 		if errW != nil {
 			return sdk.WrapError(errW, "workerWaitingHandler> Unable to load worker %s", workerC.ID)
 		}
@@ -164,7 +164,7 @@ func (api *API) workerWaitingHandler() Handler {
 			return nil
 		}
 
-		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusWaiting); err != nil {
+		if err := worker.SetStatus(api.mustDB(ctx), wk.ID, sdk.StatusWaiting); err != nil {
 			return sdk.WrapError(err, "workerWaitingHandler> cannot update worker %s", workerC.ID)
 		}
 		key := cache.Key("worker", wk.ID)

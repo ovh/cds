@@ -43,10 +43,10 @@ type testRunWorkflowCtx struct {
 }
 
 func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) testRunWorkflowCtx {
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
+	group.InsertUserInGroup(api.mustDB(context.Background()), proj.ProjectGroups[0].Group.ID, u.ID, true)
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
@@ -56,13 +56,13 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
-	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionReadExecute))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
+	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(context.Background()), pip.ID, proj.ProjectGroups[0].Group.ID, permission.PermissionReadExecute))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -72,7 +72,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -86,12 +86,12 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	test.NoError(t, workflow.AddGroup(api.mustDB(), &w, proj.ProjectGroups[0]))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.AddGroup(api.mustDB(context.Background()), &w, proj.ProjectGroups[0]))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -217,13 +217,13 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 	ctx.workerToken, err = token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent, "", ""))
+	test.NoError(t, token.InsertToken(api.mustDB(context.Background()), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent, "", ""))
 	//Register the worker
 	params := &sdk.WorkerRegistrationForm{
 		Name:  sdk.RandomString(10),
 		Token: ctx.workerToken,
 	}
-	ctx.worker, err = worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities)
+	ctx.worker, err = worker.RegisterWorker(api.mustDB(context.Background()), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities)
 	test.NoError(t, err)
 }
 
@@ -232,7 +232,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 	tk, err := token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
+	test.NoError(t, token.InsertToken(api.mustDB(context.Background()), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
 
 	ctx.hatchery = &sdk.Hatchery{
 		UID:      tk,
@@ -241,7 +241,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 		GroupID:  ctx.user.Groups[0].ID,
 	}
 
-	err = hatchery.InsertHatchery(api.mustDB(), ctx.hatchery)
+	err = hatchery.InsertHatchery(api.mustDB(context.Background()), ctx.hatchery)
 	test.NoError(t, err)
 }
 
@@ -356,7 +356,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	run, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
+	run, err := workflow.LoadNodeJobRun(api.mustDB(context.Background()), api.Cache, ctx.job.ID)
 	test.NoError(t, err)
 	assert.Equal(t, "Building", run.Status)
 
@@ -558,9 +558,9 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
 
-	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(context.Background()), api.Cache, ctx.job.ID)
 	test.NoError(t, errJ)
-	nodeRun, errN := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID, true)
+	nodeRun, errN := workflow.LoadNodeRunByID(api.mustDB(context.Background()), wNodeJobRun.WorkflowNodeRunID, true)
 	test.NoError(t, errN)
 
 	assert.NotNil(t, nodeRun.Tests)
@@ -690,10 +690,10 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(context.Background()), api.Cache, ctx.job.ID)
 	test.NoError(t, errJ)
 
-	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID, true)
+	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(api.mustDB(context.Background()), wNodeJobRun.WorkflowNodeRunID, true)
 	test.NoError(t, errN2)
 
 	assert.NotNil(t, updatedNodeRun.Artifacts)

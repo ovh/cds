@@ -39,7 +39,7 @@ func (api *API) addWorkerModelHandler() Handler {
 		}
 
 		// check if worker model already exists
-		if _, err := worker.LoadWorkerModelByName(api.mustDB(), model.Name); err == nil {
+		if _, err := worker.LoadWorkerModelByName(api.mustDB(ctx), model.Name); err == nil {
 			return sdk.WrapError(sdk.ErrModelNameExist, "addWorkerModel> worker model already exists")
 		}
 
@@ -76,7 +76,7 @@ func (api *API) addWorkerModelHandler() Handler {
 		}
 
 		// Insert model in db
-		if err := worker.InsertWorkerModel(api.mustDB(), &model); err != nil {
+		if err := worker.InsertWorkerModel(api.mustDB(ctx), &model); err != nil {
 			return sdk.WrapError(err, "addWorkerModel> cannot add worker model")
 		}
 
@@ -109,13 +109,13 @@ func (api *API) spawnErrorWorkerModelHandler() Handler {
 			return sdk.WrapError(errr, "spawnErrorWorkerModelHandler> Invalid permModelID")
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "spawnErrorWorkerModelHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		model, errLoad := worker.LoadWorkerModelByID(api.mustDB(), workerModelID)
+		model, errLoad := worker.LoadWorkerModelByID(api.mustDB(ctx), workerModelID)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "spawnErrorWorkerModelHandler> cannot load worker model by id")
 		}
@@ -139,7 +139,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 			return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
 		}
 
-		old, errLoad := worker.LoadWorkerModelByID(api.mustDB(), workerModelID)
+		old, errLoad := worker.LoadWorkerModelByID(api.mustDB(ctx), workerModelID)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "updateWorkerModel> cannot load worker model by id")
 		}
@@ -160,7 +160,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 		if model.Name != old.Name {
 			renamed = true
 			// check if worker model already exists
-			if _, err := worker.LoadWorkerModelByName(api.mustDB(), model.Name); err == nil {
+			if _, err := worker.LoadWorkerModelByName(api.mustDB(ctx), model.Name); err == nil {
 				return sdk.WrapError(sdk.ErrModelNameExist, "updateWorkerModel> worker model already exists")
 			}
 		}
@@ -222,7 +222,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "updateWorkerModel> wrong ID")
 		}
 
-		tx, errtx := api.mustDB().Begin()
+		tx, errtx := api.mustDB(ctx).Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "updateWorkerModel> unable to start transaction")
 		}
@@ -285,7 +285,7 @@ func (api *API) deleteWorkerModelHandler() Handler {
 			return sdk.WrapError(errr, "deleteWorkerModel> Invalid permModelID")
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkerModel> Cannot start transaction")
 		}
@@ -302,8 +302,8 @@ func (api *API) deleteWorkerModelHandler() Handler {
 	}
 }
 
-func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name string) error {
-	m, err := worker.LoadWorkerModelByName(api.mustDB(), name)
+func (api *API) getWorkerModel(ctx context.Context, w http.ResponseWriter, r *http.Request, name string) error {
+	m, err := worker.LoadWorkerModelByName(api.mustDB(ctx), name)
 	if err != nil {
 		return sdk.WrapError(err, "getWorkerModel> cannot load worker model")
 	}
@@ -315,7 +315,7 @@ func (api *API) getWorkerModelsEnabledHandler() Handler {
 		if getHatchery(ctx) == nil || getHatchery(ctx).GroupID == 0 {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModelsEnabled> this route can be called only by hatchery")
 		}
-		models, errgroup := worker.LoadWorkerModelsUsableOnGroup(api.mustDB(), getHatchery(ctx).GroupID, group.SharedInfraGroup.ID)
+		models, errgroup := worker.LoadWorkerModelsUsableOnGroup(api.mustDB(ctx), getHatchery(ctx).GroupID, group.SharedInfraGroup.ID)
 		if errgroup != nil {
 			return sdk.WrapError(errgroup, "getWorkerModelsEnabled> cannot load worker models for hatchery %d with group %d", getHatchery(ctx).ID, getHatchery(ctx).GroupID)
 		}
@@ -331,13 +331,13 @@ func (api *API) getWorkerModelsHandler() Handler {
 
 		name := r.FormValue("name")
 		if name != "" {
-			return api.getWorkerModel(w, r, name)
+			return api.getWorkerModel(ctx, w, r, name)
 		}
 
 		models := []sdk.Model{}
 		if getUser(ctx) != nil && getUser(ctx).ID > 0 {
 			var errbyuser error
-			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), getUser(ctx))
+			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(ctx), getUser(ctx))
 			if errbyuser != nil {
 				return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
 			}

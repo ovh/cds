@@ -23,12 +23,12 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			return errID
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errproj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
+		wf, errw := workflow.Load(api.mustDB(ctx), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 		}
@@ -40,7 +40,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
-		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name, false)
+		wr, errr := workflow.LoadLastRun(api.mustDB(ctx), key, name, false)
 		if errr != nil {
 			if errr != sdk.ErrWorkflowNotFound {
 				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
@@ -66,7 +66,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 		if len(params) == 0 {
 			var errp error
 			ancestorIds := refNode.Ancestors(wf, true)
-			params, errp = workflow.NodeBuildParametersFromWorkflow(api.mustDB(), api.Cache, proj, wf, refNode, ancestorIds)
+			params, errp = workflow.NodeBuildParametersFromWorkflow(api.mustDB(ctx), api.Cache, proj, wf, refNode, ancestorIds)
 			if errp != nil {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow")
 			}

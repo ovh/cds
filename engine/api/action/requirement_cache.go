@@ -12,7 +12,7 @@ import (
 )
 
 //RequirementsCacheLoader set all action requirement in the cache
-func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func() *gorp.DbMap, store cache.Store) {
+func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func(context.Context) *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(delay).C
 
 	for {
@@ -23,7 +23,7 @@ func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func
 				return
 			}
 		case <-tick:
-			db := DBFunc()
+			db := DBFunc(c)
 			if db != nil {
 				var mayIWork string
 				loaderKey := cache.Key("action", "requirements", "loading")

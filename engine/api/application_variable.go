@@ -18,7 +18,7 @@ func (api *API) getVariablesAuditInApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		audits, err := application.GetVariableAudit(api.mustDB(), key, appName)
+		audits, err := application.GetVariableAudit(api.mustDB(ctx), key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "getVariablesAuditInApplicationHandler> Cannot get variable audit for application %s", appName)
 
@@ -35,17 +35,17 @@ func (api *API) getVariableAuditInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
 		}
 
-		variable, errV := application.LoadVariable(api.mustDB(), app.ID, varName)
+		variable, errV := application.LoadVariable(api.mustDB(ctx), app.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInApplicationHandler> Cannot load variable %s", varName)
 		}
 
-		audits, errA := application.LoadVariableAudits(api.mustDB(), app.ID, variable.ID)
+		audits, errA := application.LoadVariableAudits(api.mustDB(ctx), app.ID, variable.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
 		}
@@ -60,12 +60,12 @@ func (api *API) getVariableInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getVariableInApplicationHandler> Cannot load application %s", appName)
 		}
 
-		variable, err := application.LoadVariable(api.mustDB(), app.ID, varName)
+		variable, err := application.LoadVariable(api.mustDB(ctx), app.ID, varName)
 		if err != nil {
 			return sdk.WrapError(err, "getVariableInApplicationHandler> Cannot get variable %s for application %s", varName, appName)
 		}
@@ -80,7 +80,7 @@ func (api *API) getVariablesInApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		variables, err := application.GetAllVariable(api.mustDB(), key, appName)
+		variables, err := application.GetAllVariable(api.mustDB(ctx), key, appName)
 		if err != nil {
 			return sdk.WrapError(err, "getVariablesInApplicationHandler> Cannot get variables for application %s", appName)
 		}
@@ -96,19 +96,19 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableInApplicationHandler> Cannot load application: %s", appName)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		// Clear password for audit
-		varToDelete, errV := application.LoadVariable(api.mustDB(), app.ID, varName, application.WithClearPassword())
+		varToDelete, errV := application.LoadVariable(api.mustDB(ctx), app.ID, varName, application.WithClearPassword())
 		if errV != nil {
 			return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
 		}
@@ -122,7 +122,7 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot commit transaction")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.mustDB(ctx), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler> Cannot load variables")
 		}
@@ -148,17 +148,17 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot load application: %s", appName)
 		}
 
-		variableBefore, err := application.LoadVariableByID(api.mustDB(), app.ID, newVar.ID, application.WithClearPassword())
+		variableBefore, err := application.LoadVariableByID(api.mustDB(ctx), app.ID, newVar.ID, application.WithClearPassword())
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> cannot load variable %d", variableBefore.ID)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot create transaction")
 		}
@@ -172,7 +172,7 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot commit transaction")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.mustDB(ctx), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot load variables")
 		}
@@ -199,12 +199,12 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(ctx), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot load application %s ", appName)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot start transaction")
 		}
@@ -226,7 +226,7 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot commit transaction")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.mustDB(ctx), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot get variables")
 		}

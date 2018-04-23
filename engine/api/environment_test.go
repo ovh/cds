@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -20,7 +21,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -54,7 +55,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 	json.Unmarshal(res, &projectResult)
 	assert.Equal(t, len(projectResult.Environments), 1)
 
-	env, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Production")
+	env, err := environment.LoadEnvironmentByName(api.mustDB(context.Background()), proj.Key, "Production")
 	if err != nil {
 		t.Fail()
 		return
@@ -66,7 +67,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -77,7 +78,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Preproduction",
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -111,7 +112,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 	json.Unmarshal(res, &projectResult)
 	assert.Equal(t, len(projectResult.Environments), 1)
 
-	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Production")
+	envDb, err := environment.LoadEnvironmentByName(api.mustDB(context.Background()), proj.Key, "Production")
 	if err != nil {
 		t.Fail()
 		return
@@ -123,7 +124,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -134,7 +135,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Preproduction",
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -161,7 +162,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 	json.Unmarshal(res, &projectResult)
 	assert.Equal(t, len(projectResult.Environments), 0)
 
-	_, err = environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Preproduction")
+	_, err = environment.LoadEnvironmentByName(api.mustDB(context.Background()), proj.Key, "Preproduction")
 	if err == sdk.ErrNoEnvironment {
 		return
 	}
@@ -172,7 +173,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -183,7 +184,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Preproduction",
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -213,7 +214,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -224,7 +225,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Preproduction",
 	}
-	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(context.Background()), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -255,7 +256,7 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -266,14 +267,14 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Preproduction",
 	}
-	test.NoError(t, environment.InsertEnvironment(api.mustDB(), &env))
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(context.Background()), &env))
 
 	v := &sdk.Variable{
 		Name:  "var1",
 		Type:  sdk.StringVariable,
 		Value: "val1",
 	}
-	test.NoError(t, environment.InsertVariable(api.mustDB(), env.ID, v, u))
+	test.NoError(t, environment.InsertVariable(api.mustDB(context.Background()), env.ID, v, u))
 
 	vars := map[string]string{
 		"key": proj.Key,

@@ -36,7 +36,7 @@ type eventsBroker struct {
 	clients  map[string]eventsBrokerSubscribe
 	messages chan sdk.Event
 	mutex    *sync.Mutex
-	dbFunc   func() *gorp.DbMap
+	dbFunc   func(context.Context) *gorp.DbMap
 	cache    cache.Store
 }
 
@@ -66,7 +66,7 @@ func (b *eventsBroker) UpdateUserPermissions(username string) {
 		return
 	}
 	// load permission without being in the mutex lock
-	if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+	if err := loadUserPermissions(b.dbFunc(context.Background()), b.cache, user); err != nil {
 		log.Error("eventsBroker.UpdateUserPermissions> Cannot load user permission:%s", err)
 	}
 
@@ -131,7 +131,7 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		}
 
 		user := getUser(ctx)
-		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+		if err := loadUserPermissions(b.dbFunc(context.Background()), b.cache, user); err != nil {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}
 

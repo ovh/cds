@@ -36,17 +36,17 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return errU
 		}
 
-		proj, errprod := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errprod := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errprod != nil {
 			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}
 
-		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(), key, name, number, nodeRunID, true)
+		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(ctx), key, name, number, nodeRunID, true)
 		if errWNR != nil {
 			return sdk.WrapError(errWNR, "releaseApplicationWorkflowHandler")
 		}
 
-		workflowRun, errWR := workflow.LoadRunByIDAndProjectKey(api.mustDB(), key, wNodeRun.WorkflowRunID, true)
+		workflowRun, errWR := workflow.LoadRunByIDAndProjectKey(api.mustDB(ctx), key, wNodeRun.WorkflowRunID, true)
 		if errWR != nil {
 			return sdk.WrapError(errWR, "releaseApplicationWorkflowHandler")
 		}
@@ -80,7 +80,7 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(ctx), api.Cache, rm)
 		if err != nil {
 			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.VCSServer)
 		}

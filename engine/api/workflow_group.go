@@ -23,7 +23,7 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+		wf, err := workflow.Load(api.mustDB(ctx), api.Cache, key, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
 		}
@@ -42,7 +42,7 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteWorkflowGroupHandler")
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteWorkflowGroupHandler> Cannot start transaction")
 		}
@@ -86,7 +86,7 @@ func (api *API) putWorkflowGroupHandler() Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+		wf, err := workflow.Load(api.mustDB(ctx), api.Cache, key, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler")
 		}
@@ -103,7 +103,7 @@ func (api *API) putWorkflowGroupHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "putWorkflowGroupHandler")
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "putWorkflowGroupHandler> Cannot start transaction")
 		}
@@ -142,7 +142,7 @@ func (api *API) postWorkflowGroupHandler() Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+		wf, err := workflow.Load(api.mustDB(ctx), api.Cache, key, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}
@@ -154,14 +154,14 @@ func (api *API) postWorkflowGroupHandler() Handler {
 		}
 
 		if gp.Group.ID == 0 {
-			g, errG := group.LoadGroup(api.mustDB(), gp.Group.Name)
+			g, errG := group.LoadGroup(api.mustDB(ctx), gp.Group.Name)
 			if errG != nil {
 				return sdk.WrapError(errG, "postWorkflowGroupHandler")
 			}
 			gp.Group = *g
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "postWorkflowGroupHandler> Cannot start transaction")
 		}

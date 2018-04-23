@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -37,7 +38,7 @@ func init() {
 	log.Initialize(&log.Conf{Level: "debug"})
 }
 
-type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
+type Bootstrapf func(sdk.DefaultValues, func(context.Context) *gorp.DbMap) error
 
 var DBConnectionFactory *database.DBConnectionFactory
 
@@ -87,7 +88,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	}
 	event.Cache = store
 
-	return DBConnectionFactory.GetDBMap(), store
+	return DBConnectionFactory.GetDBMap(context.Background()), store
 }
 
 // LoadTestingConf loads test configuraiton tests.cfg.json

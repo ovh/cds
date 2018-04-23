@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
@@ -89,7 +90,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
@@ -133,7 +134,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 
 func Test_getWorkflowRunsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -144,19 +145,19 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -168,18 +169,18 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -198,15 +199,15 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(context.Background()), api.mustDB(context.Background()), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		}, nil, nil)
 		test.NoError(t, err)
@@ -279,7 +280,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 
 func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -290,19 +291,19 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -314,18 +315,18 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -344,14 +345,14 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(api.mustDB(context.Background()), api.mustDB(context.Background()), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil, nil)
 	test.NoError(t, err)
@@ -379,7 +380,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 
 func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -390,19 +391,19 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -414,18 +415,18 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -444,15 +445,15 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(context.Background()), api.mustDB(context.Background()), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
@@ -499,7 +500,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 
 func Test_getWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -510,19 +511,19 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -534,18 +535,18 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -564,15 +565,15 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(context.Background()), api.mustDB(context.Background()), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		}, nil, nil)
 		test.NoError(t, err)
@@ -600,7 +601,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 
 func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -611,19 +612,19 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -635,18 +636,18 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -665,19 +666,19 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(api.mustDB(context.Background()), api.mustDB(context.Background()), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil, nil)
 	test.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, true)
+	lastrun, err := workflow.LoadLastRun(api.mustDB(context.Background()), proj.Key, w1.Name, true)
 	test.NoError(t, err)
 
 	//Prepare request
@@ -752,7 +753,7 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
@@ -807,7 +808,7 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 
 func Test_postWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -818,19 +819,19 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -842,18 +843,18 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -872,11 +873,11 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -902,7 +903,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 
 func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -923,7 +924,7 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -935,11 +936,11 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 		FromRepository: "ovh/cds",
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 	t.Logf(">>>>>>>>%s", w1.FromRepository)
 
@@ -962,7 +963,7 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 
 func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -970,7 +971,7 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 	test.NoError(t, group.InsertGroup(db, gr))
-	test.NoError(t, group.InsertGroupInProject(api.mustDB(), proj.ID, gr.ID, 7))
+	test.NoError(t, group.InsertGroupInProject(api.mustDB(context.Background()), proj.ID, gr.ID, 7))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -979,19 +980,19 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	env := &sdk.Environment{
 		Name:       sdk.RandomString(10),
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, environment.InsertEnvironment(api.mustDB(), env))
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(context.Background()), env))
 
 	group.InsertGroupInEnvironment(db, env.ID, proj.ProjectGroups[0].Group.ID, 4)
 	group.InsertGroupInEnvironment(db, env.ID, gr.ID, 4)
 
-	proj2, errp := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+	proj2, errp := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
 	test.NoError(t, errp)
 
 	w := sdk.Workflow{
@@ -1006,10 +1007,10 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
 
 	u.Admin = false
-	test.NoError(t, user.UpdateUser(api.mustDB(), *u))
+	test.NoError(t, user.UpdateUser(api.mustDB(context.Background()), *u))
 
 	//Prepare request
 	vars := map[string]string{
@@ -1030,7 +1031,7 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 
 func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
@@ -1041,19 +1042,19 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -1065,18 +1066,18 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -1095,21 +1096,21 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(api.mustDB(context.Background()), api.mustDB(context.Background()), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil, nil)
 	test.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, true)
+	lastrun, err := workflow.LoadLastRun(api.mustDB(context.Background()), proj.Key, w1.Name, true)
 	test.NoError(t, err)
 
 	// Update step status
@@ -1126,11 +1127,11 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	}
 
 	// Update node job run
-	errUJ := workflow.UpdateNodeRun(api.mustDB(), &lastrun.WorkflowNodeRuns[w1.RootID][0])
+	errUJ := workflow.UpdateNodeRun(api.mustDB(context.Background()), &lastrun.WorkflowNodeRuns[w1.RootID][0])
 	test.NoError(t, errUJ)
 
 	// Add log
-	errAL := workflow.AddLog(api.mustDB(), jobRun, log)
+	errAL := workflow.AddLog(api.mustDB(context.Background()), jobRun, log)
 	test.NoError(t, errAL)
 
 	//Prepare request

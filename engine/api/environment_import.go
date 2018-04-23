@@ -31,7 +31,7 @@ func (api *API) postEnvironmentImportHandler() Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errp := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errp != nil {
 			return sdk.WrapError(errp, "postEnvironmentImportHandler>> Unable load project")
 		}
@@ -62,7 +62,7 @@ func (api *API) postEnvironmentImportHandler() Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errenv)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "postEnvironmentImportHandler> Unable to start tx")
 		}
@@ -98,7 +98,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		key := vars["permProjectKey"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "importNewEnvironmentHandler> Cannot load %s", key)
 		}
@@ -131,7 +131,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		env := payload.Environment()
 		for i := range env.EnvironmentGroups {
 			eg := &env.EnvironmentGroups[i]
-			g, err := group.LoadGroup(api.mustDB(), eg.Group.Name)
+			g, err := group.LoadGroup(api.mustDB(ctx), eg.Group.Name)
 			if err != nil {
 				return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import")
 			}
@@ -153,14 +153,14 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			}
 		}()
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "importNewEnvironmentHandler: Cannot start transaction")
 		}
 
 		defer tx.Rollback()
 
-		if err := environment.Import(api.mustDB(), proj, env, msgChan, getUser(ctx)); err != nil {
+		if err := environment.Import(api.mustDB(ctx), proj, env, msgChan, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import")
 		}
 
@@ -185,12 +185,12 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "importIntoEnvironmentHandler> Cannot load %s", key)
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "importIntoEnvironmentHandler: Cannot start transaction")
 		}
@@ -260,7 +260,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
 		}
 
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
+		if err := project.UpdateLastModified(api.mustDB(ctx), api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot update project last modified date")
 		}
 

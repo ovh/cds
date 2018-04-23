@@ -28,7 +28,7 @@ func (api *API) getPipelineExportHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getPipelineExportHandler> Format invalid")
 		}
-		if _, err := pipeline.Export(api.mustDB(), api.Cache, key, name, f, withPermissions, getUser(ctx), w); err != nil {
+		if _, err := pipeline.Export(api.mustDB(ctx), api.Cache, key, name, f, withPermissions, getUser(ctx), w); err != nil {
 			return sdk.WrapError(err, "getPipelineExportHandler")
 		}
 

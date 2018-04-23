@@ -346,8 +346,9 @@ func getService(c context.Context) *sdk.Service {
 	return u
 }
 
-func (a *API) mustDB() *gorp.DbMap {
-	db := a.DBConnectionFactory.GetDBMap()
+func (a *API) mustDB(ctx context.Context) *gorp.DbMap {
+	db := a.DBConnectionFactory.GetDBMap(ctx)
+	db = db.WithContext(ctx).(*gorp.DbMap)
 	if db == nil {
 		panic(fmt.Errorf("Database unavailable"))
 	}
@@ -442,11 +443,11 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup databases: %v", err)
 	}
 
-	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap(context.Background())); err != nil {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
-	if err := platform.CreateModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := platform.CreateModels(a.DBConnectionFactory.GetDBMap(context.Background())); err != nil {
 		return fmt.Errorf("cannot setup platforms: %v", err)
 	}
 

@@ -19,7 +19,7 @@ type awolPipelineBuildJob struct {
 // AWOLPipelineKiller will search in database for actions :
 // - Having building status
 // - Without any logs output in the last 15 minutes
-func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+func AWOLPipelineKiller(c context.Context, DBFunc func(context.Context) *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(1 * time.Minute).C
 	for {
 		select {
@@ -29,7 +29,7 @@ func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap, store cach
 			}
 			return
 		case <-tick:
-			db := DBFunc()
+			db := DBFunc(c)
 			if db != nil {
 				pbJobDatas, err := loadAWOLPipelineBuildJob(db)
 				if err != nil {

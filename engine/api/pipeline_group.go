@@ -34,17 +34,17 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			return sdk.ErrGroupNotFound
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "updateGroupRoleOnPipelineHandler> unable to load project")
 		}
 
-		p, errLoadP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, errLoadP := pipeline.LoadPipeline(api.mustDB(ctx), key, pipelineName, false)
 		if errLoadP != nil {
 			return sdk.WrapError(errLoadP, "updateGroupRoleOnPipelineHandler: Cannot load %s", key)
 		}
 
-		g, errLoadG := group.LoadGroup(api.mustDB(), groupPipeline.Group.Name)
+		g, errLoadG := group.LoadGroup(api.mustDB(ctx), groupPipeline.Group.Name)
 		if errLoadG != nil {
 			return sdk.WrapError(errLoadG, "updateGroupRoleOnPipelineHandler: Cannot find %s", groupPipeline.Group.Name)
 		}
@@ -53,7 +53,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "updateGroupRoleOnPipelineHandler: only read permission is allowed to default group")
 		}
 
-		groupInPipeline, errCheck := group.CheckGroupInPipeline(api.mustDB(), p.ID, g.ID)
+		groupInPipeline, errCheck := group.CheckGroupInPipeline(api.mustDB(ctx), p.ID, g.ID)
 		if errCheck != nil {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleOnPipelineHandler: Cannot check if group %s is already in the pipeline %s: %s", g.Name, p.Name, errCheck)
 		}
@@ -62,7 +62,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 		}
 
 		if groupPipeline.Permission != permission.PermissionReadWriteExecute {
-			permissions, err := group.LoadAllPipelineGroupByRole(api.mustDB(), p.ID, permission.PermissionReadWriteExecute)
+			permissions, err := group.LoadAllPipelineGroupByRole(api.mustDB(ctx), p.ID, permission.PermissionReadWriteExecute)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s: %s", p.Name, err)
 			}
@@ -71,7 +71,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			}
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot start transaction")
 		}
@@ -89,7 +89,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot start transaction")
 		}
 
-		if err := pipeline.LoadGroupByPipeline(api.mustDB(), p); err != nil {
+		if err := pipeline.LoadGroupByPipeline(api.mustDB(ctx), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s", p.Name)
 		}
 		return WriteJSON(w, p, http.StatusOK)
@@ -103,7 +103,7 @@ func (api *API) updateGroupsOnPipelineHandler() Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "updateGroupsOnPipelineHandler> unable to load project")
 		}
@@ -128,12 +128,12 @@ func (api *API) updateGroupsOnPipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsOnPipelineHandler: Need one group with write permission.")
 		}
 
-		p, errLoad := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, errLoad := pipeline.LoadPipeline(api.mustDB(ctx), key, pipelineName, false)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "updateGroupsOnPipelineHandler: Cannot load %s", key)
 		}
 
-		tx, errb := api.mustDB().Begin()
+		tx, errb := api.mustDB(ctx).Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "updateGroupsOnPipelineHandler: Cannot start transaction")
 		}
@@ -172,7 +172,7 @@ func (api *API) addGroupInPipelineHandler() Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addGroupInPipelineHandler> unable to load project")
 		}
@@ -182,12 +182,12 @@ func (api *API) addGroupInPipelineHandler() Handler {
 			return err
 		}
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(ctx), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot load %s", key)
 		}
 
-		g, err := group.LoadGroup(api.mustDB(), groupPermission.Group.Name)
+		g, err := group.LoadGroup(api.mustDB(ctx), groupPermission.Group.Name)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot find %s", groupPermission.Group.Name)
 		}
@@ -196,7 +196,7 @@ func (api *API) addGroupInPipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "addGroupInPipeline: only read permission is allowed to default group")
 		}
 
-		groupInPipeline, err := group.CheckGroupInPipeline(api.mustDB(), p.ID, g.ID)
+		groupInPipeline, err := group.CheckGroupInPipeline(api.mustDB(ctx), p.ID, g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot check if group %s is already in the pipeline %s", g.Name, p.Name)
 
@@ -205,7 +205,7 @@ func (api *API) addGroupInPipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupExists, "addGroupInPipeline: The group is already attached to the pipeline %s: %s", g.Name, p.Name, err)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot start transaction")
 		}
@@ -223,7 +223,7 @@ func (api *API) addGroupInPipelineHandler() Handler {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadGroupByPipeline(api.mustDB(), p); err != nil {
+		if err := pipeline.LoadGroupByPipeline(api.mustDB(ctx), p); err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot load group")
 		}
 		return WriteJSON(w, p, http.StatusOK)
@@ -239,7 +239,7 @@ func (api *API) importGroupsInPipelineHandler() Handler {
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "importGroupsInPipelineHandler> Cannot start transaction")
 		}
@@ -356,17 +356,17 @@ func (api *API) deleteGroupFromPipelineHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 		groupName := vars["group"]
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(ctx), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot load %s", key)
 		}
 
-		g, err := group.LoadGroup(api.mustDB(), groupName)
+		g, err := group.LoadGroup(api.mustDB(ctx), groupName)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot find %s", groupName)
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot start transaction")
 		}
@@ -376,7 +376,7 @@ func (api *API) deleteGroupFromPipelineHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot delete group %s from project %s", g.Name, p.Name)
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteGroupFromPipelineHandler> unable to load project")
 		}
@@ -389,7 +389,7 @@ func (api *API) deleteGroupFromPipelineHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadGroupByPipeline(api.mustDB(), p); err != nil {
+		if err := pipeline.LoadGroupByPipeline(api.mustDB(ctx), p); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot load groups")
 		}
 

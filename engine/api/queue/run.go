@@ -1,6 +1,8 @@
 package queue
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -13,7 +15,7 @@ import (
 )
 
 // RunPipeline  the given pipeline with the given parameters
-func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecutor, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
+func RunPipeline(DBFunc func(context.Context) *gorp.DbMap, store cache.Store, db gorp.SqlExecutor, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
 	// Load pipeline + Args + stage + action
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
@@ -64,7 +66,7 @@ func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecut
 	}
 
 	go func() {
-		db := DBFunc()
+		db := DBFunc(context.Background())
 		if _, err := pipeline.UpdatePipelineBuildCommits(db, store, projectData, p, app, env, pb); err != nil {
 			log.Warning("queue.Run> Unable to update pipeline build commits : %s", err)
 		}

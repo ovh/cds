@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -21,7 +22,7 @@ func Test_getPublicGroupsHandler(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(context.Background()), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 

@@ -18,7 +18,7 @@ import (
 
 func (api *API) getMonDBStatusMigrateHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		records, err := migrate.GetMigrationRecords(api.mustDB().Db, "postgres")
+		records, err := migrate.GetMigrationRecords(api.mustDB(ctx).Db, "postgres")
 		if err != nil {
 			return sdk.WrapError(err, "DBStatusHandler> Cannot GetMigrationRecords")
 		}
@@ -52,7 +52,7 @@ func (api *API) getMonDBTimesDBHandler() Handler {
 
 func (api *API) getMonDBTimesDBProjectLoadHandler(ctx context.Context) string {
 	s1 := time.Now()
-	if _, err := project.LoadAll(api.mustDB(), api.Cache, getUser(ctx)); err != nil {
+	if _, err := project.LoadAll(api.mustDB(ctx), api.Cache, getUser(ctx)); err != nil {
 		return fmt.Sprintf("ERR getMonDBTimesDBProjectLoadHandler:%s", err)
 	}
 	return elapsed("getMonDBTimesDBProjectLoadHandler", s1)
@@ -60,7 +60,7 @@ func (api *API) getMonDBTimesDBProjectLoadHandler(ctx context.Context) string {
 
 func (api *API) getMonDBTimesDBProjectLoadWithAppsHandler(ctx context.Context) string {
 	s1 := time.Now()
-	if _, err := project.LoadAll(api.mustDB(), api.Cache, getUser(ctx), project.LoadOptions.WithApplications); err != nil {
+	if _, err := project.LoadAll(api.mustDB(ctx), api.Cache, getUser(ctx), project.LoadOptions.WithApplications); err != nil {
 		return fmt.Sprintf("ERR getMonDBTimesDBProjectLoadWithAppsHandler:%s", err)
 	}
 	return elapsed("getMonDBTimesDBProjectLoadWithAppsHandler", s1)
@@ -70,7 +70,7 @@ func (api *API) getMonDBTimesDBProjectCountHandler(ctx context.Context) string {
 	s1 := time.Now()
 	query := `SELECT COUNT(id) FROM "project"`
 	var n int64
-	if err := api.mustDB().QueryRow(query).Scan(&n); err != nil {
+	if err := api.mustDB(ctx).QueryRow(query).Scan(&n); err != nil {
 		return fmt.Sprintf("ERR getMonDBTimesDBProjectCountHandler:%s", err)
 	}
 	return elapsed("getMonDBTimesDBProjectCountHandler", s1)
@@ -80,7 +80,7 @@ func (api *API) getMonDBTimesDBProjectLoadAllRawHandler(ctx context.Context) str
 	s1 := time.Now()
 	query := `SELECT name FROM "project"`
 
-	rows, errq := api.mustDB().Query(query)
+	rows, errq := api.mustDB(ctx).Query(query)
 	if errq != nil {
 		return fmt.Sprintf("ERR getMonDBTimesDBProjectLoadAllRawHandler:%s", errq)
 	}
@@ -105,7 +105,7 @@ func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context, r *http.Reques
 		permissions = permission.PermissionRead
 	}
 
-	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, nil, nil); err != nil {
+	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(ctx), api.Cache, permissions, groupsID, nil, nil); err != nil {
 		return fmt.Sprintf("getMonDBTimesDBQueueWorkflow> Unable to load queue:: %s", err)
 	}
 	return elapsed("getMonDBTimesDBQueueWorkflow", s1)

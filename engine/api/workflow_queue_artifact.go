@@ -59,12 +59,12 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", "Content-Disposition")
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(ctx), api.Cache, id)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, true)
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(ctx), nodeJobRun.WorkflowNodeRunID, true)
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
@@ -114,7 +114,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 		}
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
-		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
+		if err := workflow.InsertArtifact(api.mustDB(ctx), &art); err != nil {
 			_ = objectstore.DeleteArtifact(&art)
 			return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot update workflow node run")
 		}
@@ -152,12 +152,12 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLHandler")
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(ctx), api.Cache, id)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, true)
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(ctx), nodeJobRun.WorkflowNodeRunID, true)
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
@@ -203,13 +203,13 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler> Submitted artifact doesn't match, key:%s art:%v cachedArt:%v", cacheKey, art, cachedArt)
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), art.WorkflowNodeRunID, true)
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(ctx), art.WorkflowNodeRunID, true)
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
-		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
+		if err := workflow.InsertArtifact(api.mustDB(ctx), &art); err != nil {
 			_ = objectstore.DeleteArtifact(&art)
 			return sdk.WrapError(err, "postWorkflowJobArtifactWithTempURLCallbackHandler> Cannot update workflow node run")
 		}

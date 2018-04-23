@@ -41,7 +41,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithFeatures)
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.WithFeatures)
 		if errP != nil {
 			sdk.WrapError(errP, "postImportAsCodeHandler> Cannot load project")
 		}
@@ -51,7 +51,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 		}
 
 		vcsServer := repositoriesmanager.GetProjectVCSServer(p, ope.VCSServer)
-		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(ctx), api.Cache, vcsServer)
 		if erra != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postImportAsCodeHandler> Cannot get client for %s %s : %s", key, ope.VCSServer, erra)
 		}
@@ -67,7 +67,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 			}
 		}
 
-		if err := workflow.PostRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+		if err := workflow.PostRepositoryOperation(api.mustDB(ctx), api.Cache, ope); err != nil {
 			return sdk.WrapError(err, "postImportAsCodeHandler> Cannot create repository operation")
 		}
 
@@ -87,7 +87,7 @@ func (api *API) getImportAsCodeHandler() Handler {
 
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
-		if err := workflow.GetRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+		if err := workflow.GetRepositoryOperation(api.mustDB(ctx), api.Cache, ope); err != nil {
 			return sdk.WrapError(err, "getImportAsCodeHandler> Cannot get repository operation status")
 		}
 		return WriteJSON(w, ope, http.StatusOK)
@@ -106,7 +106,7 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		uuid := vars["uuid"]
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -123,7 +123,7 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
 
-		if err := workflow.GetRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+		if err := workflow.GetRepositoryOperation(api.mustDB(ctx), api.Cache, ope); err != nil {
 			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to get repository operation")
 		}
 
@@ -145,13 +145,13 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
 
-		allMsg, wrkflw, err := workflow.Push(api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(api.mustDB(ctx), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "postPerformImportAsCodeHandler.workflowPush> Unable to push workflow")
 		}
 		msgListString := translate(r, allMsg)
 
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
+		if err := project.UpdateLastModified(api.mustDB(ctx), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
 			return sdk.WrapError(err, "workflowPush> Unable to update project")
 		}
 

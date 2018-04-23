@@ -30,7 +30,7 @@ func (api *API) postWorkflowJobRequirementsErrorHandler() Handler {
 
 		if getWorker(ctx).ID != "" {
 			// Load calling worker
-			caller, err := worker.LoadWorker(api.mustDB(), getWorker(ctx).ID)
+			caller, err := worker.LoadWorker(api.mustDB(ctx), getWorker(ctx).ID)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrWrongRequest, "requirementsErrorHandler> cannot load calling worker: %s", err)
 			}
@@ -53,7 +53,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
+		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(ctx), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project nodeJobRunID:%d", id)
 		}
@@ -61,14 +61,14 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		//Load worker model
 		workerModel := getWorker(ctx).Name
 		if getWorker(ctx).ModelID != 0 {
-			wm, errModel := worker.LoadWorkerModelByID(api.mustDB(), getWorker(ctx).ModelID)
+			wm, errModel := worker.LoadWorkerModelByID(api.mustDB(ctx), getWorker(ctx).ModelID)
 			if errModel != nil {
 				return sdk.ErrNoWorkerModel
 			}
 			workerModel = wm.Name
 		}
 
-		pbj, errl := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		pbj, errl := workflow.LoadNodeJobRun(api.mustDB(ctx), api.Cache, id)
 		if errl != nil {
 			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> Cannot load job nodeJobRunID:%d", id)
 		}
@@ -99,14 +99,14 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		chanError := make(chan error, 1)
 
 		pbji := &worker.WorkflowNodeJobRunInfo{}
-		go takeJob(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
+		go takeJob(ctx, chanEvent, chanError, api.mustDB(ctx), api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
 		//FIXMEworkflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
+		go workflow.SendEvent(api.mustDB(context.Background()), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		return WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -236,12 +236,12 @@ func (api *API) postIncWorkflowJobAttemptHandler() Handler {
 		if h == nil {
 			return WriteJSON(w, nil, http.StatusUnauthorized)
 		}
-		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(), id, h.ID)
+		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(ctx), id, h.ID)
 		if err != nil {
 			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> job already booked")
 		}
 
-		hCount, err := hatchery.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
+		hCount, err := hatchery.LoadHatcheriesCountByNodeJobRunID(api.mustDB(ctx), id)
 		if err != nil {
 			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> cannot get hatcheries count")
 		}
@@ -257,7 +257,7 @@ func (api *API) postIncWorkflowJobAttemptHandler() Handler {
 				},
 			}
 
-			tx, errBegin := api.mustDB().Begin()
+			tx, errBegin := api.mustDB(ctx).Begin()
 			if errBegin != nil {
 				return sdk.WrapError(errBegin, "postIncWorkflowJobAttemptHandler> Cannot start transaction")
 			}
@@ -300,7 +300,7 @@ func (api *API) getWorkflowJobHandler() Handler {
 		if errc != nil {
 			return sdk.WrapError(errc, "getWorkflowJobHandler> invalid id")
 		}
-		j, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		j, err := workflow.LoadNodeJobRun(api.mustDB(ctx), api.Cache, id)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobHandler> job not found")
 		}
@@ -319,7 +319,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
 		}
@@ -350,10 +350,10 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 
-		proj, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errP := project.LoadProjectByNodeJobRunID(api.mustDB(ctx), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
 			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
-				_, errLn := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+				_, errLn := workflow.LoadNodeJobRun(api.mustDB(ctx), api.Cache, id)
 				if sdk.ErrorIs(errLn, sdk.ErrWorkflowNodeRunJobNotFound) {
 					// job result already send as job is no more in database
 					// this log is here to stats it and we returns nil for unlock the worker
@@ -368,7 +368,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, proj, getWorker(ctx), &res)
+		go postJobResult(chanEvent, chanError, api.mustDB(ctx), api.Cache, proj, getWorker(ctx), &res)
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
@@ -376,7 +376,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		}
 
 		//FIXME workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
+		go workflow.SendEvent(api.mustDB(context.Background()), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
 		return nil
 	}
@@ -443,7 +443,7 @@ func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 		}
 
-		pbJob, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		pbJob, errJob := workflow.LoadNodeJobRun(api.mustDB(ctx), api.Cache, id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
 		}
@@ -453,7 +453,7 @@ func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
 			return sdk.WrapError(err, "postWorkflowJobLogsHandler> Unable to parse body")
 		}
 
-		if err := workflow.AddLog(api.mustDB(), pbJob, &logs); err != nil {
+		if err := workflow.AddLog(api.mustDB(ctx), pbJob, &logs); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobLogsHandler")
 		}
 
@@ -468,7 +468,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 		}
 
-		nodeJobRun, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeJobRun, errJob := workflow.LoadNodeJobRun(api.mustDB(ctx), api.Cache, id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
 		}
@@ -495,7 +495,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			nodeJobRun.Job.StepStatus = append(nodeJobRun.Job.StepStatus, step)
 		}
 
-		tx, errB := api.mustDB().Begin()
+		tx, errB := api.mustDB(ctx).Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "postWorkflowJobStepStatusHandler> Cannot start transaction")
 		}
@@ -537,7 +537,7 @@ func (api *API) countWorkflowJobQueueHandler() Handler {
 		for _, g := range getUser(ctx).Groups {
 			groupsID = append(groupsID, g.ID)
 		}
-		count, err := workflow.CountNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since, &until)
+		count, err := workflow.CountNodeJobRunQueue(api.mustDB(ctx), api.Cache, groupsID, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
@@ -559,7 +559,7 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 			permissions = permission.PermissionRead
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, &since, &until)
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(ctx), api.Cache, permissions, groupsID, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
@@ -598,12 +598,12 @@ func (api *API) postWorkflowJobTestsResultsHandler() Handler {
 			return sdk.WrapError(errI, "postWorkflowJobTestsResultsHandler> Invalid node job run ID")
 		}
 
-		nodeRunJob, errJobRun := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeRunJob, errJobRun := workflow.LoadNodeJobRun(api.mustDB(ctx), api.Cache, id)
 		if errJobRun != nil {
 			return sdk.WrapError(errJobRun, "postWorkflowJobTestsResultsHandler> Cannot load node run job")
 		}
 
-		tx, errB := api.mustDB().Begin()
+		tx, errB := api.mustDB(ctx).Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "postWorkflowJobTestsResultsHandler> Cannot start transaction")
 		}
@@ -665,7 +665,7 @@ func (api *API) postWorkflowJobTagsHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to unmarshal body")
 		}
 
-		tx, errb := api.mustDB().Begin()
+		tx, errb := api.mustDB(ctx).Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "postWorkflowJobTagsHandler> Unable to start transaction")
 		}
@@ -705,7 +705,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler")
 		}
 
-		tx, errb := api.mustDB().Begin()
+		tx, errb := api.mustDB(ctx).Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "postWorkflowJobVariableHandler> Unable to start tx")
 		}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -20,33 +21,33 @@ func Test_workerCheckingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, err := worker.LoadWorkers(api.mustDB())
+	workers, err := worker.LoadWorkers(api.mustDB(context.Background()))
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := hatchery.LoadHatcheries(api.mustDB())
+	hs, err := hatchery.LoadHatcheries(api.mustDB(context.Background()))
 	if err != nil {
 		t.Fatalf("Unable to load hatcheries : %s", err)
 	}
 	//2. Delete all workers and hatcheries
 	for _, w := range workers {
-		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
+		if err := worker.DeleteWorker(api.mustDB(context.Background()), w.ID); err != nil {
 			t.Fatal(err)
 		}
 	}
 	for _, h := range hs {
-		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
+		err := hatchery.DeleteHatchery(api.mustDB(context.Background()), h.ID, 0)
 		if err != nil {
 			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
 	//3. Create model
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(context.Background()), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
+	model, _ := worker.LoadWorkerModelByName(api.mustDB(context.Background()), "Test1")
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -62,7 +63,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(api.mustDB(), model); err != nil {
+		if err := worker.InsertWorkerModel(api.mustDB(context.Background()), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -73,15 +74,15 @@ func Test_workerCheckingHandler(t *testing.T) {
 		GroupID: g.ID,
 		UID:     "UUID",
 	}
-	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
+	if err := hatchery.InsertHatchery(api.mustDB(context.Background()), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, "", ""); err != nil {
+	if err := token.InsertToken(api.mustDB(context.Background()), g.ID, "test-key", sdk.Persistent, "", ""); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
-	workr, err := worker.RegisterWorker(api.mustDB(), "test-worker", "test-key", model.ID, &h, nil)
+	workr, err := worker.RegisterWorker(api.mustDB(context.Background()), "test-worker", "test-key", model.ID, &h, nil)
 	if err != nil {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
@@ -99,7 +100,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 
 	assert.Equal(t, 204, w.Code)
 
-	workers, err = worker.LoadWorkers(api.mustDB())
+	workers, err = worker.LoadWorkers(api.mustDB(context.Background()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,33 +114,33 @@ func Test_workerWaitingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, errlw := worker.LoadWorkers(api.mustDB())
+	workers, errlw := worker.LoadWorkers(api.mustDB(context.Background()))
 	if errlw != nil {
 		t.Fatal(errlw)
 	}
-	hs, errlh := hatchery.LoadHatcheries(api.mustDB())
+	hs, errlh := hatchery.LoadHatcheries(api.mustDB(context.Background()))
 	if errlh != nil {
 		t.Fatalf("Unable to load hatcheries : %s", errlh)
 	}
 	//2. Delete all workers and hatcheries
 	for _, w := range workers {
-		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
+		if err := worker.DeleteWorker(api.mustDB(context.Background()), w.ID); err != nil {
 			t.Fatal(err)
 		}
 	}
 	for _, h := range hs {
-		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
+		err := hatchery.DeleteHatchery(api.mustDB(context.Background()), h.ID, 0)
 		if err != nil {
 			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
 	//3. Create model
-	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(context.Background()), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
+	model, _ := worker.LoadWorkerModelByName(api.mustDB(context.Background()), "Test1")
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -155,7 +156,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(api.mustDB(), model); err != nil {
+		if err := worker.InsertWorkerModel(api.mustDB(context.Background()), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -166,20 +167,20 @@ func Test_workerWaitingHandler(t *testing.T) {
 		GroupID: g.ID,
 		UID:     "UUID",
 	}
-	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
+	if err := hatchery.InsertHatchery(api.mustDB(context.Background()), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, "", ""); err != nil {
+	if err := token.InsertToken(api.mustDB(context.Background()), g.ID, "test-key", sdk.Persistent, "", ""); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
-	workr, err := worker.RegisterWorker(api.mustDB(), "test-worker", "test-key", model.ID, &h, nil)
+	workr, err := worker.RegisterWorker(api.mustDB(context.Background()), "test-worker", "test-key", model.ID, &h, nil)
 	if err != nil {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	worker.SetStatus(api.mustDB(), workr.ID, sdk.StatusBuilding)
+	worker.SetStatus(api.mustDB(context.Background()), workr.ID, sdk.StatusBuilding)
 
 	//Prepare request
 	uri := router.GetRoute("POST", api.workerWaitingHandler, nil)
@@ -193,7 +194,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	assert.Equal(t, 204, w.Code)
 
-	workers, err = worker.LoadWorkers(api.mustDB())
+	workers, err = worker.LoadWorkers(api.mustDB(context.Background()))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +22,7 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -29,15 +30,15 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 
 	//3. Create environment
 	envProd := &sdk.Environment{Name: sdk.RandomString(10), ProjectID: proj.ID}
-	test.NoError(t, environment.InsertEnvironment(api.mustDB(), envProd))
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(context.Background()), envProd))
 
 	//4. Create Group
 	grp1 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG := group.AddGroup(api.mustDB(), grp1)
+	_, _, errG := group.AddGroup(api.mustDB(context.Background()), grp1)
 	test.NoError(t, errG)
 
 	grp2 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG2 := group.AddGroup(api.mustDB(), grp2)
+	_, _, errG2 := group.AddGroup(api.mustDB(context.Background()), grp2)
 	test.NoError(t, errG2)
 
 	//5. Prepare request
@@ -98,7 +99,7 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -106,20 +107,20 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 
 	//3. Create environment
 	envProd := &sdk.Environment{Name: sdk.RandomString(10), ProjectID: proj.ID}
-	test.NoError(t, environment.InsertEnvironment(api.mustDB(), envProd))
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(context.Background()), envProd))
 
 	//4. Create Group
 	grp1 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG := group.AddGroup(api.mustDB(), grp1)
+	_, _, errG := group.AddGroup(api.mustDB(context.Background()), grp1)
 	test.NoError(t, errG)
 
 	grp2 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG2 := group.AddGroup(api.mustDB(), grp2)
+	_, _, errG2 := group.AddGroup(api.mustDB(context.Background()), grp2)
 	test.NoError(t, errG2)
 
 	//5. Add group on environment
-	test.NoError(t, group.InsertGroupInEnvironment(api.mustDB(), envProd.ID, grp1.ID, 7))
-	test.NoError(t, group.InsertGroupInEnvironment(api.mustDB(), envProd.ID, grp2.ID, 7))
+	test.NoError(t, group.InsertGroupInEnvironment(api.mustDB(context.Background()), envProd.ID, grp1.ID, 7))
+	test.NoError(t, group.InsertGroupInEnvironment(api.mustDB(context.Background()), envProd.ID, grp2.ID, 7))
 
 	//6. Prepare request
 	gp := sdk.GroupPermission{

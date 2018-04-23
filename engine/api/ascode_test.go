@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -58,7 +59,7 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 		},
 	}))
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
+	repositoryService := services.NewRepository(func(context.Context) *gorp.DbMap {
 		return db
 	}, api.Cache)
 	mockService := &sdk.Service{Name: "Test_postImportAsCodeHandler", Type: services.TypeRepositories}
@@ -167,7 +168,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(db)
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
+	repositoryService := services.NewRepository(func(context.Context) *gorp.DbMap {
 		return db
 	}, api.Cache)
 	mockService := &sdk.Service{Name: "Test_getImportAsCodeHandler", Type: services.TypeRepositories}
@@ -233,7 +234,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
+	repositoryService := services.NewRepository(func(context.Context) *gorp.DbMap {
 		return db
 	}, api.Cache)
 	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_Repo", Type: services.TypeRepositories}

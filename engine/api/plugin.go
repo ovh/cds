@@ -84,7 +84,7 @@ func (api *API) addPluginHandler() Handler {
 		defer file.Close()
 
 		// Check that action does not already exists
-		conflict, err := action.Exists(api.mustDB(), ap.Name)
+		conflict, err := action.Exists(api.mustDB(ctx), ap.Name)
 		if err != nil {
 			return sdk.WrapError(err, "addPluginHandler>%T", err)
 		}
@@ -99,7 +99,7 @@ func (api *API) addPluginHandler() Handler {
 		}
 		ap.ObjectPath = objectPath
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "addPluginHandler> Cannot start transaction")
 		}
@@ -132,7 +132,7 @@ func (api *API) updatePluginHandler() Handler {
 		}
 
 		// Check that action does not already exists
-		exists, errExists := action.Exists(api.mustDB(), ap.Name)
+		exists, errExists := action.Exists(api.mustDB(ctx), ap.Name)
 		if errExists != nil {
 			return sdk.WrapError(errExists, "updatePluginHandler> unable to check if action %s exists", ap.Name)
 		}
@@ -187,7 +187,7 @@ func (api *API) updatePluginHandler() Handler {
 		}
 		ap.ObjectPath = objectPath
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updatePluginHandler> Cannot start transaction")
 		}
@@ -227,7 +227,7 @@ func (api *API) deletePluginHandler() Handler {
 		}
 
 		//Delete in database
-		if err := actionplugin.Delete(api.mustDB(), name, getUser(ctx).ID); err != nil {
+		if err := actionplugin.Delete(api.mustDB(ctx), name, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in database", name)
 		}
 

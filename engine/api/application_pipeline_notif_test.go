@@ -30,18 +30,18 @@ import (
 func deleteAll(t *testing.T, api *API, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, errl := project.Load(api.mustDB(), api.Cache, key, &sdk.User{Admin: true})
+	proj, errl := project.Load(api.mustDB(context.Background()), api.Cache, key, &sdk.User{Admin: true})
 	if errl != nil {
 		return errl
 	}
 
-	apps, errloadall := application.LoadAll(api.mustDB(), api.Cache, key, &sdk.User{Admin: true})
+	apps, errloadall := application.LoadAll(api.mustDB(context.Background()), api.Cache, key, &sdk.User{Admin: true})
 	if errloadall != nil {
 		t.Logf("Cannot list app: %s", errloadall)
 		return errloadall
 	}
 	for _, app := range apps {
-		tx, _ := api.mustDB().Begin()
+		tx, _ := api.mustDB(context.Background()).Begin()
 		if err := application.DeleteApplication(tx, app.ID); err != nil {
 			t.Logf("DeleteApplication: %s", err)
 			return err
@@ -50,30 +50,30 @@ func deleteAll(t *testing.T, api *API, key string) error {
 	}
 
 	// Delete all pipelines
-	pips, errload := pipeline.LoadPipelines(api.mustDB(), proj.ID, false, &sdk.User{Admin: true})
+	pips, errload := pipeline.LoadPipelines(api.mustDB(context.Background()), proj.ID, false, &sdk.User{Admin: true})
 	if errload != nil {
 		t.Logf("ListPipelines: %s", errload)
 		return errload
 	}
 	for _, pip := range pips {
-		if err := pipeline.DeletePipeline(api.mustDB(), pip.ID, 1); err != nil {
+		if err := pipeline.DeletePipeline(api.mustDB(context.Background()), pip.ID, 1); err != nil {
 			t.Logf("DeletePipeline: %s", err)
 			return err
 		}
 	}
 
-	if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
+	if err := group.LoadGroupByProject(api.mustDB(context.Background()), proj); err != nil {
 		return err
 	}
 
 	for _, g := range proj.ProjectGroups {
-		if err := group.DeleteGroupAndDependencies(api.mustDB(), &g.Group); err != nil {
+		if err := group.DeleteGroupAndDependencies(api.mustDB(context.Background()), &g.Group); err != nil {
 			return err
 		}
 	}
 
 	// Delete project
-	if err := project.Delete(api.mustDB(), api.Cache, key); err != nil {
+	if err := project.Delete(api.mustDB(context.Background()), api.Cache, key); err != nil {
 		t.Logf("RemoveProject: %s", err)
 		return err
 	}
@@ -84,7 +84,7 @@ func deleteAll(t *testing.T, api *API, key string) error {
 func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *API, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment, *sdk.User)) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	u, p := assets.InsertAdminUser(api.mustDB())
+	u, p := assets.InsertAdminUser(api.mustDB(context.Background()))
 	u.Auth.HashedPassword = p
 
 	_ = deleteAll(t, api, "TEST_APP_PIPELINE_NOTIF")
@@ -100,7 +100,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *A
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u)
+	err := pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -108,29 +108,29 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *A
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(api.mustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	env := &sdk.DefaultEnv
 
 	t.Logf("Attach Pipeline %s on Application %s", pip.Name, app.Name)
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	f(t, api, proj, pip, app, env, u)
 
 	t.Logf("Detach Pipeline %s on Application %s", pip.Name, app.Name)
-	tx, err := api.mustDB().Begin()
+	tx, err := api.mustDB(context.Background()).Begin()
 	test.NoError(t, err)
 	err = application.RemovePipeline(tx, proj.Key, app.Name, pip.Name)
 	test.NoError(t, err)
 	err = tx.Commit()
 	test.NoError(t, err)
 
-	err = application.DeleteAllApplicationPipeline(api.mustDB(), app.ID)
+	err = application.DeleteAllApplicationPipeline(api.mustDB(context.Background()), app.ID)
 	test.NoError(t, err)
 
-	err = environment.DeleteAllEnvironment(api.mustDB(), proj.ID)
+	err = environment.DeleteAllEnvironment(api.mustDB(context.Background()), proj.ID)
 	test.NoError(t, err)
 
 	//Delete application
@@ -144,7 +144,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *A
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(api.mustDB(context.Background()), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -181,7 +181,7 @@ func testCheckUserNotificationSettings(t *testing.T, n1, n2 map[sdk.UserNotifica
 func Test_LoadEmptyApplicationPipelineNotif(t *testing.T) {
 	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, api *API, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
 		t.Logf("Load Application Pipeline Notif %s %s", app.Name, env.Name)
-		notif, err := notification.LoadUserNotificationSettings(api.mustDB(), app.ID, pip.ID, env.ID)
+		notif, err := notification.LoadUserNotificationSettings(api.mustDB(context.Background()), app.ID, pip.ID, env.ID)
 		test.NoError(t, err)
 		assert.Nil(t, notif)
 	})
@@ -219,11 +219,11 @@ func Test_InsertAndLoadApplicationPipelineNotif(t *testing.T) {
 			Environment: *env,
 		}
 
-		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(), app.ID, pip.ID, env.ID, &notif)
+		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(context.Background()), app.ID, pip.ID, env.ID, &notif)
 		test.NoError(t, err)
 
 		t.Logf("Load Application Pipeline Notif %s %s", app.Name, env.Name)
-		notif1, err := notification.LoadUserNotificationSettings(api.mustDB(), app.ID, pip.ID, env.ID)
+		notif1, err := notification.LoadUserNotificationSettings(api.mustDB(context.Background()), app.ID, pip.ID, env.ID)
 		test.NoError(t, err)
 		assert.NotNil(t, notif1)
 
@@ -285,7 +285,7 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotifi
 			},
 		}
 
-		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(), app.ID, pip.ID, env.ID, &notif)
+		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(context.Background()), app.ID, pip.ID, env.ID, &notif)
 		test.NoError(t, err)
 
 		url := fmt.Sprintf("/test2/project/%s/application/%s/pipeline/%s/notification", proj.Key, app.Name, pip.Name)
@@ -364,7 +364,7 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 			},
 		}
 
-		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(), app.ID, pip.ID, env.ID, &notif)
+		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(context.Background()), app.ID, pip.ID, env.ID, &notif)
 		test.NoError(t, err)
 
 		notif = sdk.UserNotification{
@@ -538,10 +538,10 @@ func Test_SendPipeline(t *testing.T) {
 				},
 			},
 		}
-		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(), app.ID, pip.ID, env.ID, &notif)
+		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(context.Background()), app.ID, pip.ID, env.ID, &notif)
 		test.NoError(t, err)
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(context.Background()).Begin()
 		test.NoError(t, err)
 
 		params := []sdk.Parameter{}
@@ -553,7 +553,7 @@ func Test_SendPipeline(t *testing.T) {
 		err = tx.Commit()
 		test.NoError(t, err)
 
-		err = pipeline.DeletePipelineBuildByID(api.mustDB(), pb.ID)
+		err = pipeline.DeletePipelineBuildByID(api.mustDB(context.Background()), pb.ID)
 		test.NoError(t, err)
 
 	})
@@ -563,7 +563,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -573,7 +573,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 
 	app := &sdk.Application{Name: sdk.RandomString(10)}
 
-	err := application.Insert(api.mustDB(), api.Cache, p, app, u)
+	err := application.Insert(api.mustDB(context.Background()), api.Cache, p, app, u)
 	test.NoError(t, err)
 
 	pip := &sdk.Pipeline{
@@ -581,13 +581,13 @@ func Test_addNotificationsHandler(t *testing.T) {
 		Type:      "build",
 		ProjectID: p.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, p, pip, u)
+	err = pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, p, pip, u)
 	test.NoError(t, err)
 
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	appPips, err := application.GetAllPipelinesByID(api.mustDB(), app.ID)
+	appPips, err := application.GetAllPipelinesByID(api.mustDB(context.Background()), app.ID)
 	test.NoError(t, err)
 
 	notifsToAdd := []sdk.UserNotification{}
@@ -629,7 +629,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	notifications, errN := notification.LoadAllUserNotificationSettings(api.mustDB(), app.ID)
+	notifications, errN := notification.LoadAllUserNotificationSettings(api.mustDB(context.Background()), app.ID)
 	test.NoError(t, errN)
 
 	assert.Equal(t, len(notifications), 1)

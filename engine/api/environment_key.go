@@ -19,12 +19,12 @@ func (api *API) getKeysInEnvironmentHandler() Handler {
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 
-		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "getKeysInEnvironmentHandler> Cannot load environment")
 		}
 
-		if errK := environment.LoadAllKeys(api.mustDB(), env); errK != nil {
+		if errK := environment.LoadAllKeys(api.mustDB(ctx), env); errK != nil {
 			return sdk.WrapError(errK, "getKeysInEnvironmentHandler> Cannot load environment keys")
 		}
 
@@ -39,17 +39,17 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		keyName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInEnvironmentHandler> Cannot load project")
 		}
 
-		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "deleteKeyInEnvironmentHandler> Cannot load environment")
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
@@ -94,12 +94,12 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInEnvironmentHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "addKeyInEnvironmentHandler> Cannot load project")
 		}
 
-		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.mustDB(ctx), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "addKeyInEnvironmentHandler> Cannot load environment")
 		}
@@ -123,7 +123,7 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInEnvironmentHandler> unknown key of type: %s", newKey.Type)
 		}
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := api.mustDB(ctx).Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInEnvironmentHandler> Cannot start transaction")
 		}

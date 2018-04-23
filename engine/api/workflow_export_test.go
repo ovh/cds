@@ -3,6 +3,7 @@ package api
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 	"net/http/httptest"
@@ -21,10 +22,10 @@ import (
 
 func Test_getWorkflowExportHandler(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
+	proj := assets.InsertTestProject(t, api.mustDB(context.Background()), api.Cache, key, key, u)
+	group.InsertUserInGroup(api.mustDB(context.Background()), proj.ProjectGroups[0].Group.ID, u.ID, true)
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
@@ -34,12 +35,12 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -49,7 +50,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -70,10 +71,10 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -108,17 +109,17 @@ workflow:
 
 func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
+	proj := assets.InsertTestProject(t, api.mustDB(context.Background()), api.Cache, key, key, u)
+	group.InsertUserInGroup(api.mustDB(context.Background()), proj.ProjectGroups[0].Group.ID, u.ID, true)
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	group2 := &sdk.Group{
 		Name: "Test_getWorkflowExportHandlerWithPermissions-Group2",
 	}
-	group.InsertGroup(api.mustDB(), group2)
-	group2, _ = group.LoadGroup(api.mustDB(), "Test_getWorkflowExportHandlerWithPermissions-Group2")
+	group.InsertGroup(api.mustDB(context.Background()), group2)
+	group2, _ = group.LoadGroup(api.mustDB(context.Background()), "Test_getWorkflowExportHandlerWithPermissions-Group2")
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -127,12 +128,12 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -142,7 +143,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -163,16 +164,16 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj, u))
 
-	workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{
+	workflow.AddGroup(api.mustDB(context.Background()), &w, sdk.GroupPermission{
 		Group:      *group2,
 		Permission: 7,
 	})
 
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -209,10 +210,10 @@ permissions:
 
 func Test_getWorkflowPullHandler(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
+	proj := assets.InsertTestProject(t, api.mustDB(context.Background()), api.Cache, key, key, u)
+	group.InsertUserInGroup(api.mustDB(context.Background()), proj.ProjectGroups[0].Group.ID, u.ID, true)
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
@@ -222,12 +223,12 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.mustDB(), s)
+	pipeline.InsertStage(api.mustDB(context.Background()), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -237,7 +238,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 			},
 		},
 	}
-	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(context.Background()), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -258,10 +259,10 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		},
 	}
 
-	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj, _ = project.Load(api.mustDB(context.Background()), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, workflow.Insert(api.mustDB(context.Background()), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(context.Background()), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request

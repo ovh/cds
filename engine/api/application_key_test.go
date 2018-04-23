@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +21,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -30,7 +31,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -49,7 +50,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 
 	k.Key = pgpK
 
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
+	if err := application.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -78,7 +79,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -88,7 +89,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -102,7 +103,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	if err := application.InsertKey(api.mustDB(), k); err != nil {
+	if err := application.InsertKey(api.mustDB(context.Background()), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,7 +133,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -142,7 +143,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(context.Background()), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

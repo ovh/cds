@@ -102,7 +102,7 @@ func (api *API) receiveHookHandler() Handler {
 		}
 
 		go func() {
-			db := api.DBConnectionFactory.GetDBMap()
+			db := api.DBConnectionFactory.GetDBMap(ctx)
 			if db == nil {
 				err := fmt.Errorf("database not available")
 				hook.Recovery(api.Cache, rh, err)
@@ -133,17 +133,17 @@ func (api *API) addHookHandler() Handler {
 		h.Enabled = true
 
 		// Insert hook in database
-		if err := hook.InsertHook(api.mustDB(), &h); err != nil {
+		if err := hook.InsertHook(api.mustDB(ctx), &h); err != nil {
 			return sdk.WrapError(err, "addHook: cannot insert hook in db")
 
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if errA != nil {
 			return sdk.WrapError(errA, "addHook: Cannot load application")
 		}
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, projectKey, appName, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errA, "addHook: Cannot load workflow")
 		}
@@ -163,7 +163,7 @@ func (api *API) updateHookHandler() Handler {
 			return sdk.WrapError(err, "updateHookHandler")
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		app, errA := application.LoadByName(api.mustDB(ctx), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if errA != nil {
 			return sdk.WrapError(errA, "updateHookHandler> Cannot load application")
 		}
@@ -181,12 +181,12 @@ func (api *API) updateHookHandler() Handler {
 		}
 
 		// Update hook in database
-		if err := hook.UpdateHook(api.mustDB(), h); err != nil {
+		if err := hook.UpdateHook(api.mustDB(ctx), h); err != nil {
 			return sdk.WrapError(err, "updateHookHandler: cannot update hook")
 		}
 
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(ctx), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
 		}
@@ -201,7 +201,7 @@ func (api *API) getApplicationHooksHandler() Handler {
 		projectName := vars["key"]
 		appName := vars["permApplicationName"]
 
-		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		a, err := application.LoadByName(api.mustDB(ctx), api.Cache, projectName, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application %s/%s", projectName, appName)
 		}
@@ -217,7 +217,7 @@ func (api *API) getHooksHandler() Handler {
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		p, err := pipeline.LoadPipeline(api.mustDB(), projectName, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(ctx), projectName, pipelineName, false)
 		if err != nil {
 			if err != sdk.ErrPipelineNotFound {
 				log.Warning("getHooks> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
@@ -225,12 +225,12 @@ func (api *API) getHooksHandler() Handler {
 			return err
 		}
 
-		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(ctx), api.Cache, projectName, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getHooks> cannot load application %s/%s", projectName, appName)
 		}
 
-		hooks, err := hook.LoadPipelineHooks(api.mustDB(), p.ID, a.ID)
+		hooks, err := hook.LoadPipelineHooks(api.mustDB(ctx), p.ID, a.ID)
 		if err != nil {
 			return sdk.WrapError(err, "getHooks> cannot load hooks")
 		}
@@ -250,13 +250,13 @@ func (api *API) deleteHookHandler() Handler {
 
 		}
 
-		_, err = hook.LoadHook(api.mustDB(), id)
+		_, err = hook.LoadHook(api.mustDB(ctx), id)
 		if err != nil {
 			return sdk.WrapError(err, "deleteHook> cannot load hook")
 
 		}
 
-		err = hook.DeleteHook(api.mustDB(), id)
+		err = hook.DeleteHook(api.mustDB(ctx), id)
 		if err != nil {
 			return sdk.WrapError(err, "deleteHook> cannot delete hook")
 
@@ -266,7 +266,7 @@ func (api *API) deleteHookHandler() Handler {
 }
 
 //hookRecoverer is the go-routine which catches on-error hook
-func hookRecoverer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+func hookRecoverer(c context.Context, DBFunc func(context.Context) *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(10 * time.Second).C
 	for {
 		select {
@@ -292,8 +292,8 @@ func hookRecoverer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Sto
 }
 
 //processHook is the core function for hook processing
-func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHook) error {
-	db := DBFunc()
+func processHook(DBFunc func(context.Context) *gorp.DbMap, store cache.Store, h hook.ReceivedHook) error {
+	db := DBFunc(context.Background())
 	if db == nil {
 		return fmt.Errorf("database not available")
 	}
@@ -371,12 +371,12 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 		}
 
 		go func(h *sdk.Hook) {
-			app, errapp := application.LoadByID(DBFunc(), store, h.ApplicationID, nil)
+			app, errapp := application.LoadByID(DBFunc(context.Background()), store, h.ApplicationID, nil)
 			if errapp != nil {
 				log.Warning("processHook> Unable to load application %s", errapp)
 			}
 
-			if _, err := pipeline.UpdatePipelineBuildCommits(DBFunc(), store, projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
+			if _, err := pipeline.UpdatePipelineBuildCommits(DBFunc(context.Background()), store, projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
 				log.Warning("processHook> Unable to update pipeline build commits: %s", err)
 			}
 		}(&hooks[i])
@@ -406,7 +406,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			}
 		}
 
-		h, errL := workflow.LoadHookByUUID(api.mustDB(), uuid)
+		h, errL := workflow.LoadHookByUUID(api.mustDB(ctx), uuid)
 		if errL != nil {
 			return sdk.WrapError(errL, "getHookPollingVCSEvents> cannot load hook")
 		}
@@ -414,14 +414,14 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			return sdk.ErrNotFound
 		}
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, h.Config[sdk.HookConfigProject].Value, nil)
+		proj, errProj := project.Load(api.mustDB(ctx), api.Cache, h.Config[sdk.HookConfigProject].Value, nil)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getHookPollingVCSEvents> cannot load project")
 		}
 
 		//get the client for the repositories manager
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerParam)
-		client, errR := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		client, errR := repositoriesmanager.AuthorizedClient(api.mustDB(ctx), api.Cache, vcsServer)
 		if errR != nil {
 			return sdk.WrapError(errR, "getHookPollingVCSEvents> Unable to get client for %s %s", proj.Key, vcsServerParam)
 		}
@@ -450,7 +450,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 
 		repoEvents := sdk.RepositoryEvents{}
 		for _, pushEvent := range pushEvents {
-			exist, errB := workflow.RunExist(api.mustDB(), h.Config[sdk.HookConfigProject].Value, workflowID, pushEvent.Commit.Hash)
+			exist, errB := workflow.RunExist(api.mustDB(ctx), h.Config[sdk.HookConfigProject].Value, workflowID, pushEvent.Commit.Hash)
 			if errB != nil {
 				return sdk.WrapError(errB, "getHookPollingVCSEvents> Cannot check existing builds for push events")
 			}
@@ -460,7 +460,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 		}
 
 		for _, pullRequestEvent := range pullRequestEvents {
-			exist, errB := workflow.RunExist(api.mustDB(), h.Config[sdk.HookConfigProject].Value, workflowID, pullRequestEvent.Head.Commit.Hash)
+			exist, errB := workflow.RunExist(api.mustDB(ctx), h.Config[sdk.HookConfigProject].Value, workflowID, pullRequestEvent.Head.Commit.Hash)
 			if errB != nil {
 				return sdk.WrapError(errB, "getHookPollingVCSEvents> Cannot check existing builds for pull request events")
 			}

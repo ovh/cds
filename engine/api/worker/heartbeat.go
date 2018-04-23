@@ -12,7 +12,7 @@ import (
 var WorkerHeartbeatTimeout = 600.0
 
 // CheckHeartbeat runs in a goroutine and check last beat from all workers
-func CheckHeartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
+func CheckHeartbeat(c context.Context, DBFunc func(context.Context) *gorp.DbMap) {
 	tick := time.NewTicker(10 * time.Second).C
 
 	for {
@@ -23,7 +23,7 @@ func CheckHeartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
 			}
 			return
 		case <-tick:
-			if db := DBFunc(); db != nil {
+			if db := DBFunc(c); db != nil {
 				w, err := LoadDeadWorkers(db, WorkerHeartbeatTimeout)
 				if err != nil {
 					log.Warning("WorkerHeartbeat> Cannot load dead workers: %s", err)

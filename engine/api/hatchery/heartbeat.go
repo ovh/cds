@@ -14,7 +14,7 @@ var HatcheryHeartbeatTimeout = 30.0
 
 // Heartbeat runs in a goroutine and check last beat from all hatcheries
 // on a 10s basis
-func Heartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
+func Heartbeat(c context.Context, DBFunc func(context.Context) *gorp.DbMap) {
 	tick := time.NewTicker(5 * time.Second).C
 
 	for {
@@ -25,7 +25,7 @@ func Heartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
 				return
 			}
 		case <-tick:
-			db := DBFunc()
+			db := DBFunc(c)
 			if db != nil {
 				w, err := LoadDeadHatcheries(db, HatcheryHeartbeatTimeout)
 				if err != nil {

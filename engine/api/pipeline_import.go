@@ -24,12 +24,12 @@ func (api *API) importPipelineHandler() Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		proj, errp := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errp != nil {
 			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project %s", key)
 		}
 
-		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
+		if err := group.LoadGroupByProject(api.mustDB(ctx), proj); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Unable to load project permissions %s", key)
 		}
 
@@ -90,7 +90,7 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Cannot parsing: %s", errorParse)
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "importPipelineHandler: Cannot start transaction")
 		}

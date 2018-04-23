@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -41,11 +42,11 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	pip.Stages = append(pip.Stages, *stage)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage))
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(api.mustDB(context.Background()), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -58,7 +59,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(api.mustDB(context.Background()), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -82,7 +83,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -95,7 +96,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	pip.Stages = append(pip.Stages, *stage)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage))
 
 	//Insert Action
 	t.Logf("Insert Action script on Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
@@ -107,14 +108,14 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 		},
 		Enabled: true,
 	}
-	errJob := pipeline.InsertJob(api.mustDB(), job, stage.ID, pip)
+	errJob := pipeline.InsertJob(api.mustDB(context.Background()), job, stage.ID, pip)
 	test.NoError(t, errJob)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(api.mustDB(context.Background()), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -129,7 +130,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(api.mustDB(context.Background()), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -153,7 +154,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//Insert Stage
 	stage0 := &sdk.Stage{
@@ -166,7 +167,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	pip.Stages = append(pip.Stages, *stage0)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage0.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage0))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage0))
 
 	//Insert Stage
 	stage1 := &sdk.Stage{
@@ -179,7 +180,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	pip.Stages = append(pip.Stages, *stage1)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage1.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage1))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage1))
 
 	//Insert Action
 	t.Logf("Insert Action script on Stage %s for Pipeline %s of Project %s", stage1.Name, pip.Name, proj.Name)
@@ -190,7 +191,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		},
 		Enabled: true,
 	}
-	errJob := pipeline.InsertJob(api.mustDB(), job, stage1.ID, pip)
+	errJob := pipeline.InsertJob(api.mustDB(context.Background()), job, stage1.ID, pip)
 	test.NoError(t, errJob)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
@@ -202,14 +203,14 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 		},
 		Enabled: true,
 	}
-	errJob2 := pipeline.InsertJob(api.mustDB(), job2, stage1.ID, pip)
+	errJob2 := pipeline.InsertJob(api.mustDB(context.Background()), job2, stage1.ID, pip)
 	test.NoError(t, errJob2)
 	assert.NotZero(t, job2.PipelineActionID)
 	assert.NotZero(t, job2.Action.ID)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(api.mustDB(context.Background()), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -235,7 +236,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(api.mustDB(context.Background()), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -259,7 +260,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -272,10 +273,10 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	pip.Stages = append(pip.Stages, *stage)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage))
 
 	//Insert Action
-	script, err := action.LoadPublicAction(api.mustDB(), "Script")
+	script, err := action.LoadPublicAction(api.mustDB(context.Background()), "Script")
 	test.NoError(t, err)
 	t.Logf("Insert Action %s(%d) on Stage %s(%d) for Pipeline %s(%d) of Project %s", script.Name, script.ID, stage.Name, stage.ID, pip.Name, pip.ID, proj.Name)
 	job := &sdk.Job{
@@ -285,7 +286,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 		},
 		Enabled: true,
 	}
-	errJob := pipeline.InsertJob(api.mustDB(), job, stage.ID, pip)
+	errJob := pipeline.InsertJob(api.mustDB(context.Background()), job, stage.ID, pip)
 	test.NoError(t, errJob)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
@@ -310,7 +311,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	pip.Stages = append(pip.Stages, *stage1)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage1.Name, pip.Name, proj.Name)
-	err = pipeline.InsertStage(api.mustDB(), stage1)
+	err = pipeline.InsertStage(api.mustDB(context.Background()), stage1)
 	test.NoError(t, err)
 	assert.NotZero(t, stage1.ID)
 
@@ -322,14 +323,14 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 		},
 		Enabled: true,
 	}
-	errJob2 := pipeline.InsertJob(api.mustDB(), job1, stage1.ID, pip)
+	errJob2 := pipeline.InsertJob(api.mustDB(context.Background()), job1, stage1.ID, pip)
 	test.NoError(t, errJob2)
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(api.mustDB(context.Background()), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -372,7 +373,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(api.mustDB(context.Background()), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -396,7 +397,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -414,14 +415,14 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	pip.Stages = append(pip.Stages, *stage)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage))
 
 	t.Logf("Delete Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.DeleteStageByID(api.mustDB(), stage, 1))
+	test.NoError(t, pipeline.DeleteStageByID(api.mustDB(context.Background()), stage, 1))
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(api.mustDB(context.Background()), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -430,7 +431,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(api.mustDB(context.Background()), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project
@@ -454,7 +455,7 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, proj, pip, nil))
 
 	//Insert Stage
 	stage := &sdk.Stage{
@@ -472,7 +473,7 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	pip.Stages = append(pip.Stages, *stage)
 
 	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(context.Background()), stage))
 
 	stage.Prerequisites = []sdk.Prerequisite{
 		sdk.Prerequisite{
@@ -486,11 +487,11 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	}
 
 	t.Logf("Update Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
-	test.NoError(t, pipeline.UpdateStage(api.mustDB(), stage))
+	test.NoError(t, pipeline.UpdateStage(api.mustDB(context.Background()), stage))
 
 	//Loading Pipeline
 	t.Logf("Reload Pipeline %s for Project %s", pip.Name, proj.Name)
-	loadedPip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pip.Name, true)
+	loadedPip, err := pipeline.LoadPipeline(api.mustDB(context.Background()), proj.Key, pip.Name, true)
 	test.NoError(t, err)
 
 	//Check all the things
@@ -515,7 +516,7 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 
 	//Delete pipeline
 	t.Logf("Delete Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.DeletePipeline(api.mustDB(), pip.ID, 1)
+	err = pipeline.DeletePipeline(api.mustDB(context.Background()), pip.ID, 1)
 	test.NoError(t, err)
 
 	//Delete Project

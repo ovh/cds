@@ -24,7 +24,7 @@ import (
 )
 
 // CleanOldWorkflow is the entry point to clean workflows
-func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap, apiURL string) {
+func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func(context.Context) *gorp.DbMap, apiURL string) {
 	u := &sdk.User{
 		Admin:    true,
 		Username: "CDS-DeleteApp",
@@ -38,20 +38,20 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 				return
 			}
 		case <-tick:
-			apps, err := application.LoadOldApplicationWorkflowToClean(DBFunc())
+			apps, err := application.LoadOldApplicationWorkflowToClean(DBFunc(c))
 			if err != nil {
 				continue
 			}
 
 			log.Debug("Applications to clean: %d", len(apps))
 			for _, app := range apps {
-				a, errA := application.LoadByID(DBFunc(), store, app.ID, u, application.LoadOptions.WithHooks, application.LoadOptions.WithPipelines)
+				a, errA := application.LoadByID(DBFunc(c), store, app.ID, u, application.LoadOptions.WithHooks, application.LoadOptions.WithPipelines)
 				if errA != nil {
 					log.Error("CleanOldWorkflow> Cannot load application %d: %s", app.ID, errA)
 					continue
 				}
 
-				p, errP := project.LoadByID(DBFunc(), store, a.ProjectID, u, project.LoadOptions.WithEnvironments)
+				p, errP := project.LoadByID(DBFunc(c), store, a.ProjectID, u, project.LoadOptions.WithEnvironments)
 				if errP != nil {
 					log.Error("CleanOldWorkflow> Cannot load project %d: %s", p.ID, errP)
 					continue
@@ -61,13 +61,13 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 
 				wg := sync.WaitGroup{}
 				wg.Add(1)
-				go cleanApplicationHook(DBFunc(), store, &wg, *p, *a, apiURL)
+				go cleanApplicationHook(DBFunc(c), store, &wg, *p, *a, apiURL)
 				wg.Add(1)
-				go cleanApplication(DBFunc(), &wg, chanErr, *a)
+				go cleanApplication(DBFunc(c), &wg, chanErr, *a)
 				wg.Add(1)
-				go cleanApplicationArtifact(DBFunc(), &wg, chanErr, *a)
+				go cleanApplicationArtifact(DBFunc(c), &wg, chanErr, *a)
 				wg.Add(1)
-				go cleanApplicationPipelineBuild(DBFunc(), &wg, chanErr, *a)
+				go cleanApplicationPipelineBuild(DBFunc(c), &wg, chanErr, *a)
 
 				hasErrorChan := make(chan bool)
 				go func(chanErr <-chan error, hasE chan<- bool) {
@@ -94,7 +94,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 					log.Debug("CanClean pipeline %+v", has)
 					if !has {
 						log.Debug("CleanOldWorkflow> Start removing pipelines")
-						tx, errT := DBFunc().Begin()
+						tx, errT := DBFunc(c).Begin()
 						if errT != nil {
 							log.Warning("CleanOldWorkflow> Cannot start transaction to clean application %s %d: %s", a.Name, a.ID, errT)
 							continue

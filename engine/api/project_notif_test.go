@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -21,33 +22,33 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
 	// Create project
 	p := assets.InsertTestProject(t, db, api.Cache, strings.ToUpper(sdk.RandomString(4)), sdk.RandomString(10), u)
-	test.NoError(t, group.InsertUserInGroup(api.mustDB(), p.ProjectGroups[0].Group.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(context.Background()), p.ProjectGroups[0].Group.ID, u.ID, true))
 
 	app := &sdk.Application{Name: sdk.RandomString(10)}
-	err := application.Insert(api.mustDB(), api.Cache, p, app, u)
+	err := application.Insert(api.mustDB(context.Background()), api.Cache, p, app, u)
 	test.NoError(t, err)
-	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app.ID, p.ProjectGroups[0].Group.ID, 7))
+	test.NoError(t, group.InsertGroupInApplication(api.mustDB(context.Background()), app.ID, p.ProjectGroups[0].Group.ID, 7))
 
 	pip := &sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		Type:      "build",
 		ProjectID: p.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, p, pip, nil)
+	err = pipeline.InsertPipeline(api.mustDB(context.Background()), api.Cache, p, pip, nil)
 	test.NoError(t, err)
-	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, p.ProjectGroups[0].Group.ID, 7))
+	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(context.Background()), pip.ID, p.ProjectGroups[0].Group.ID, 7))
 
-	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
+	_, err = application.AttachPipeline(api.mustDB(context.Background()), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	appPips, err := application.GetAllPipelinesByID(api.mustDB(), app.ID)
+	appPips, err := application.GetAllPipelinesByID(api.mustDB(context.Background()), app.ID)
 	test.NoError(t, err)
 
 	notifsToAdd := []sdk.UserNotification{}

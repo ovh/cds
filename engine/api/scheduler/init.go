@@ -12,7 +12,7 @@ import (
 )
 
 //Initialize starts the 3 goroutines for pipeline schedulers
-func Initialize(c context.Context, store cache.Store, nbExecToKeep int, DBFunc func() *gorp.DbMap) {
+func Initialize(c context.Context, store cache.Store, nbExecToKeep int, DBFunc func(context.Context) *gorp.DbMap) {
 	rand.Seed(time.Now().Unix())
 	tickCleaner := time.NewTicker(10 * time.Minute)
 	tickScheduler := time.NewTicker(10 * time.Second)
@@ -28,7 +28,7 @@ func Initialize(c context.Context, store cache.Store, nbExecToKeep int, DBFunc f
 				return
 			}
 		case <-tickCleaner.C:
-			if _, err := CleanerRun(DBFunc(), nbExecToKeep); err != nil {
+			if _, err := CleanerRun(DBFunc(c), nbExecToKeep); err != nil {
 				log.Warning("scheduler.Cleaner> Error : %s", err)
 			}
 		case <-tickExecuter.C:
@@ -37,7 +37,7 @@ func Initialize(c context.Context, store cache.Store, nbExecToKeep int, DBFunc f
 				log.Error("scheduler.Executer> %s", err)
 			}
 		case <-tickScheduler.C:
-			_, status, err := Run(DBFunc())
+			_, status, err := Run(DBFunc(c))
 			if err != nil {
 				log.Error("%s: %s", status, err)
 			}

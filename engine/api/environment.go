@@ -25,7 +25,7 @@ func (api *API) getEnvironmentsHandler() Handler {
 		projectKey := vars["permProjectKey"]
 		withUsage := FormBool(r, "withUsage")
 
-		tx, errTx := api.mustDB().Begin()
+		tx, errTx := api.mustDB(ctx).Begin()
 		if errTx != nil {
 			return sdk.WrapError(errTx, "getEnvironmentsHandler> Cannot start transaction from db")
 		}
@@ -62,26 +62,26 @@ func (api *API) getEnvironmentHandler() Handler {
 		environmentName := vars["permEnvironmentName"]
 		withUsage := FormBool(r, "withUsage")
 
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
+		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), projectKey, environmentName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "getEnvironmentHandler> Cannot load environment %s for project %s from db", environmentName, projectKey)
 		}
 		env.Usage = &sdk.Usage{}
 
 		if withUsage {
-			wf, errW := workflow.LoadByEnvName(api.mustDB(), projectKey, environmentName)
+			wf, errW := workflow.LoadByEnvName(api.mustDB(ctx), projectKey, environmentName)
 			if errW != nil {
 				return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environment %s in project %s", environmentName, projectKey)
 			}
 			env.Usage.Workflows = wf
 
-			apps, errApps := application.LoadByEnvName(api.mustDB(), projectKey, environmentName)
+			apps, errApps := application.LoadByEnvName(api.mustDB(ctx), projectKey, environmentName)
 			if errApps != nil {
 				return sdk.WrapError(errApps, "getEnvironmentHandler> Cannot load applications linked to environment %s in project %s", environmentName, projectKey)
 			}
 			env.Usage.Applications = apps
 
-			pips, errPips := pipeline.LoadByEnvName(api.mustDB(), projectKey, environmentName)
+			pips, errPips := pipeline.LoadByEnvName(api.mustDB(ctx), projectKey, environmentName)
 			if errPips != nil {
 				return sdk.WrapError(errApps, "getEnvironmentHandler> Cannot load pipelines linked to environment %s in project %s", environmentName, projectKey)
 			}
@@ -99,7 +99,7 @@ func (api *API) getEnvironmentUsageHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
-		usage, err := loadEnvironmentUsage(api.mustDB(), projectKey, environmentName)
+		usage, err := loadEnvironmentUsage(api.mustDB(ctx), projectKey, environmentName)
 		if err != nil {
 			return sdk.WrapError(err, "getEnvironmentHandler> Cannot load usage for environment %s in project %s", environmentName, projectKey)
 		}
@@ -138,7 +138,7 @@ func (api *API) addEnvironmentHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		proj, errProj := project.Load(api.mustDB(ctx), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addEnvironmentHandler> Cannot load %s", key)
 		}
@@ -149,7 +149,7 @@ func (api *API) addEnvironmentHandler() Handler {
 		}
 		env.ProjectID = proj.ID
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "addEnvironmentHandler> Cannot start transaction")
 		}
@@ -177,7 +177,7 @@ func (api *API) addEnvironmentHandler() Handler {
 		}
 
 		var errEnvs error
-		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), proj.Key, true, getUser(ctx))
+		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(ctx), proj.Key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
@@ -195,12 +195,12 @@ func (api *API) deleteEnvironmentHandler() Handler {
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteEnvironmentHandler> Cannot load project %s", projectKey)
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
+		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), projectKey, environmentName)
 		if errEnv != nil {
 			if errEnv != sdk.ErrNoEnvironment {
 				log.Warning("deleteEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
@@ -208,7 +208,7 @@ func (api *API) deleteEnvironmentHandler() Handler {
 			return errEnv
 		}
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteEnvironmentHandler> Cannot begin transaction")
 		}
@@ -229,7 +229,7 @@ func (api *API) deleteEnvironmentHandler() Handler {
 		event.PublishEnvironmentDelete(p.Key, *env, getUser(ctx))
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(ctx), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteEnvironmentHandler> Cannot load environments")
 		}
@@ -244,12 +244,12 @@ func (api *API) updateEnvironmentHandler() Handler {
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
 
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
+		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), projectKey, environmentName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "updateEnvironmentHandler> Cannot load environment %s", environmentName)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -262,7 +262,7 @@ func (api *API) updateEnvironmentHandler() Handler {
 		oldEnv := env
 		env.Name = envPost.Name
 
-		tx, errBegin := api.mustDB().Begin()
+		tx, errBegin := api.mustDB(ctx).Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateEnvironmentHandler> Cannot start transaction")
 		}
@@ -287,7 +287,7 @@ func (api *API) updateEnvironmentHandler() Handler {
 		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getUser(ctx))
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(ctx), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateEnvironmentHandler> Cannot load environments")
 		}
@@ -303,18 +303,18 @@ func (api *API) cloneEnvironmentHandler() Handler {
 		environmentName := vars["permEnvironmentName"]
 		cloneName := vars["cloneName"]
 
-		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
+		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(ctx), projectKey, environmentName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "cloneEnvironmentHandler> Cannot load environment %s: %s", environmentName, errEnv)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		p, errProj := project.Load(api.mustDB(ctx), api.Cache, projectKey, getUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "cloneEnvironmentHandler> Cannot load project %s: %s", projectKey, errProj)
 		}
 
 		//Load all environments to check if there is another environment with the same name
-		envs, err := environment.LoadEnvironments(api.mustDB(), projectKey, false, getUser(ctx))
+		envs, err := environment.LoadEnvironments(api.mustDB(ctx), projectKey, false, getUser(ctx))
 		if err != nil {
 			return err
 		}
@@ -335,7 +335,7 @@ func (api *API) cloneEnvironmentHandler() Handler {
 			Permission:        env.Permission,
 		}
 
-		tx, err := api.mustDB().Begin()
+		tx, err := api.mustDB(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to start a transaction")
 		}
@@ -372,7 +372,7 @@ func (api *API) cloneEnvironmentHandler() Handler {
 
 		//return the project with all environments
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(ctx), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}

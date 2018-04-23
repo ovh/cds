@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
@@ -55,7 +56,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 	k.Public = kk.Public
 	k.Private = kk.Private
 	k.KeyID = kk.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k))
+	test.NoError(t, application.InsertKey(api.mustDB(context.Background()), k))
 
 	k2 := &sdk.ApplicationKey{
 		Key: sdk.Key{
@@ -70,7 +71,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 	k2.Public = kssh.Public
 	k2.Private = kssh.Private
 	k2.KeyID = kssh.KeyID
-	test.NoError(t, application.InsertKey(api.mustDB(), k2))
+	test.NoError(t, application.InsertKey(api.mustDB(context.Background()), k2))
 
 	//Prepare request
 	vars := map[string]string{

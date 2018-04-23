@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -19,11 +20,11 @@ import (
 const DEPRECATEDGitClone = "DEPRECATED_GitClone"
 
 // MigrateActionDEPRECATEDGitClone is temporary code
-func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Store) error {
+func MigrateActionDEPRECATEDGitClone(DBFunc func(context.Context) *gorp.DbMap, store cache.Store) error {
 	log.Info("MigrateActionDEPRECATEDGitClone> Begin")
 	defer log.Info("MigrateActionDEPRECATEDGitClone> End")
 
-	pipelines, err := action.GetPipelineUsingAction(DBFunc(), DEPRECATEDGitClone)
+	pipelines, err := action.GetPipelineUsingAction(DBFunc(context.Background()), DEPRECATEDGitClone)
 
 	if err != nil {
 		return err
@@ -32,7 +33,7 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 	for _, p := range pipelines {
 		log.Info("MigrateActionDEPRECATEDGitClone> Migrate %s/%s", p.ProjKey, p.PipName)
 
-		tx, err := DBFunc().Begin()
+		tx, err := DBFunc(context.Background()).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "MigrateActionDEPRECATEDGitClone> Cannot start transaction")
 		}

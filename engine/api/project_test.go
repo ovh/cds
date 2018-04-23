@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -28,7 +29,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value1",
 		Type:  "PASSWORD",
 	}
-	err := project.InsertVariable(api.mustDB(), project1, var1, &sdk.User{Username: "foo"})
+	err := project.InsertVariable(api.mustDB(context.Background()), project1, var1, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
@@ -36,17 +37,17 @@ func TestVariableInProject(t *testing.T) {
 	// 3. Test Update variable
 	var2 := var1
 	var2.Value = "value1Updated"
-	err = project.UpdateVariable(api.mustDB(), project1, var2, var1, &sdk.User{Username: "foo"})
+	err = project.UpdateVariable(api.mustDB(context.Background()), project1, var2, var1, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot update var1 in project1: %s", err)
 	}
 
 	// 4. Delete variable
-	err = project.DeleteVariable(api.mustDB(), project1, var1, &sdk.User{Username: "foo"})
+	err = project.DeleteVariable(api.mustDB(context.Background()), project1, var1, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot delete var1 from project: %s", err)
 	}
-	varTest, err := project.GetVariableInProject(api.mustDB(), project1.ID, var1.Name)
+	varTest, err := project.GetVariableInProject(api.mustDB(context.Background()), project1.ID, var1.Name)
 	if varTest.Value != "" {
 		t.Fatalf("var1 should be deleted: %s", err)
 	}
@@ -57,7 +58,7 @@ func TestVariableInProject(t *testing.T) {
 		Value: "value2",
 		Type:  "STRING",
 	}
-	err = project.InsertVariable(api.mustDB(), project1, var3, &sdk.User{Username: "foo"})
+	err = project.InsertVariable(api.mustDB(context.Background()), project1, var3, &sdk.User{Username: "foo"})
 	if err != nil {
 		t.Fatalf("cannot insert var1 in project1: %s", err)
 	}
@@ -72,7 +73,7 @@ func Test_getProjectsHandler(t *testing.T) {
 		Name:               "app",
 		RepositoryFullname: repofullname,
 	}
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB(context.Background()))
 	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
 
 	vars := map[string]string{}
