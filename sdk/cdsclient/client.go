@@ -57,7 +57,7 @@ func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	cli.config = conf
 
 	if c == nil {
-		cli.HTTPClient = &http.Client{Timeout: time.Second * 120}
+		cli.HTTPClient = &http.Client{Timeout: time.Second * 360}
 	} else {
 		cli.HTTPClient = c
 	}
