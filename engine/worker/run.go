@@ -310,8 +310,8 @@ func (w *currentWorker) updateStepStatus(buildID int64, stepOrder int, status st
 			log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d OK", status, buildID, stepOrder)
 			return nil
 		}
-		log.Warning("updateStepStatus> Cannot send step %d result: HTTP %d err: %s - try: %d - new try in 5s", stepOrder, code, lasterr, try)
-		time.Sleep(5 * time.Second)
+		log.Warning("updateStepStatus> Cannot send step %d result: HTTP %d err: %s - try: %d - new try in 15s", stepOrder, code, lasterr, try)
+		time.Sleep(15 * time.Second)
 	}
 	return fmt.Errorf("updateStepStatus> Could not send built result 10 times on step %d, giving up. job: %d", stepOrder, buildID)
 }
