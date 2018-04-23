@@ -1,14 +1,17 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {Broadcast} from '../../../../model/broadcast.model';
-import {BroadcastService} from '../../../../service/broadcast/broadcast.service';
+import {AuthentificationStore} from 'app/service/auth/authentification.store';
+import {Broadcast} from 'app/model/broadcast.model';
+import {BroadcastService} from 'app/service/broadcast/broadcast.service';
 import {BroadcastLevelService} from '../../../../shared/broadcast/broadcast.level.service';
 import {SharedService} from '../../../../shared/shared.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
+import {NavbarService} from 'app/service/navbar/navbar.service';
 import {TranslateService} from '@ngx-translate/core';
-import {User} from '../../../../model/user.model';
+import {User} from 'app/model/user.model';
+import {NavbarProjectData} from 'app/model/navbar.model';
 import {finalize} from 'rxjs/operators';
+import {Subscription} from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-broadcast-edit',
@@ -23,17 +26,29 @@ export class BroadcastEditComponent implements OnInit {
     canEdit = false;
     private broadcastLevelsList;
     levels = Array<string>();
+    projects: Array<NavbarProjectData> = [];
+    _navbarSub: Subscription;
 
-
-    constructor(private sharedService: SharedService,
-                private _broadcastService: BroadcastService,
-                private _toast: ToastService, private _translate: TranslateService,
-                private _route: ActivatedRoute, private _router: Router,
-                private _authentificationStore: AuthentificationStore, _broadcastLevelService: BroadcastLevelService) {
+    constructor(
+        private sharedService: SharedService,
+        private _navbarService: NavbarService,
+        private _broadcastService: BroadcastService,
+        private _toast: ToastService, private _translate: TranslateService,
+        private _route: ActivatedRoute, private _router: Router,
+        private _authentificationStore: AuthentificationStore, _broadcastLevelService: BroadcastLevelService
+    ) {
         this.currentUser = this._authentificationStore.getUser();
         this.broadcastLevelsList = _broadcastLevelService.getBroadcastLevels()
         this.broadcastLevelsList.forEach(element => {
             this.levels.push(element.value);
+        });
+        this._navbarSub = this._navbarService.getData(true)
+        .subscribe((data) => {
+            this.loading = false;
+            if (Array.isArray(data)) {
+                this.projects = data.filter((elt) => elt.type === 'project');
+                this.currentUser = this._authentificationStore.getUser();
+            }
         });
     }
 

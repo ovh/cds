@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"reflect"
 
 	"github.com/spf13/cobra"
@@ -30,7 +32,6 @@ var adminBroadcastCreateCmd = cli.Command{
 	Short: "Create a CDS broadcast",
 	Args: []cli.Arg{
 		{Name: "title"},
-		{Name: "content"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -39,11 +40,17 @@ var adminBroadcastCreateCmd = cli.Command{
 			ShortHand: "l",
 			Usage:     "Level of broadcast: info or warning",
 			Default:   "info",
+			IsValid: func(s string) bool {
+				if s != "info" && s != "warning" {
+					return false
+				}
+				return true
+			},
 		},
 	},
 	Example: `level info:
 	
-	cdsctl admin broadcasts create "the title" "the content"
+	cdsctl admin broadcasts create "the title" < content.md
 
 level warning:	
 
@@ -53,13 +60,15 @@ level warning:
 }
 
 func adminBroadcastCreateRun(v cli.Values) error {
-	if v["level"] != "info" && v["level"] != "warning" {
-		return fmt.Errorf("level have to be 'info' or 'warning'")
+	content, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		return err
 	}
+
 	bc := &sdk.Broadcast{
-		Level:   v["level"],
+		Level:   v.GetString("level"),
 		Title:   v["title"],
-		Content: v["content"],
+		Content: string(content),
 	}
 	return client.BroadcastCreate(bc)
 }
@@ -114,15 +123,6 @@ func adminBroadcastDeleteRun(v cli.Values) error {
 var adminBroadcastListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS broadcasts",
-	Flags: []cli.Flag{
-		{
-			Kind:      reflect.String,
-			Name:      "level",
-			ShortHand: "t",
-			Usage:     "Filter broadcast by level",
-			Default:   "",
-		},
-	},
 }
 
 func adminBroadcastListRun(v cli.Values) (cli.ListResult, error) {

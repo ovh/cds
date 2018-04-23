@@ -33,14 +33,20 @@ func UpdateBroadcast(db gorp.SqlExecutor, bc *sdk.Broadcast) error {
 func LoadBroadcastByID(db gorp.SqlExecutor, id int64) (*sdk.Broadcast, error) {
 	dbBroadcast := broadcast{}
 	query := `select * from broadcast where id=$1`
-	args := []interface{}{id}
-	if err := db.SelectOne(&dbBroadcast, query, args...); err != nil {
+	if err := db.SelectOne(&dbBroadcast, query, id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.WrapError(sdk.ErrBroadcastNotFound, "LoadBroadcastByID>")
 		}
 		return nil, sdk.WrapError(err, "LoadBroadcastByID>")
 	}
 	broadcast := sdk.Broadcast(dbBroadcast)
+	if broadcast.ProjectID != nil && *broadcast.ProjectID > 0 {
+		pkey, errP := db.SelectStr("select projectkey from project where id = $1", broadcast.ProjectID)
+		if errP != nil {
+			return nil, sdk.WrapError(errP, "LoadBroadcastByID>")
+		}
+		broadcast.ProjectKey = pkey
+	}
 	return &broadcast, nil
 }
 
@@ -55,6 +61,14 @@ func LoadBroadcasts(db gorp.SqlExecutor) ([]sdk.Broadcast, error) {
 	for i := range res {
 		p := res[i]
 		broadcasts[i] = sdk.Broadcast(p)
+
+		if broadcasts[i].ProjectID != nil && *broadcasts[i].ProjectID > 0 {
+			pkey, errP := db.SelectStr("select projectkey from project where id = $1", broadcasts[i].ProjectID)
+			if errP != nil {
+				return nil, sdk.WrapError(errP, "LoadBroadcasts>")
+			}
+			broadcasts[i].ProjectKey = pkey
+		}
 	}
 
 	return broadcasts, nil

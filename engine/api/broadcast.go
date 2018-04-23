@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/broadcast"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -22,6 +23,14 @@ func (api *API) addBroadcastHandler() Handler {
 		now := time.Now()
 		bc.Created = now
 		bc.Updated = now
+
+		if bc.ProjectKey != "" {
+			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, getUser(ctx))
+			if errProj != nil {
+				return sdk.WrapError(sdk.ErrNoProject, "addBroadcast> Cannot load %s", bc.ProjectKey)
+			}
+			bc.ProjectID = &proj.ID
+		}
 
 		if err := broadcast.InsertBroadcast(api.mustDB(), &bc); err != nil {
 			return sdk.WrapError(err, "addBroadcast> cannot add broadcast")
@@ -46,6 +55,14 @@ func (api *API) updateBroadcastHandler() Handler {
 		var bc sdk.Broadcast
 		if err := UnmarshalBody(r, &bc); err != nil {
 			return sdk.WrapError(err, "updateBroadcast> cannot unmarshal body")
+		}
+
+		if bc.ProjectKey != "" {
+			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, getUser(ctx))
+			if errProj != nil {
+				return sdk.WrapError(sdk.ErrNoProject, "updateBroadcast> Cannot load %s", bc.ProjectKey)
+			}
+			bc.ProjectID = &proj.ID
 		}
 
 		tx, errtx := api.mustDB().Begin()

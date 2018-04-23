@@ -28,16 +28,30 @@
               <div class="field">
                 <label>{{ 'broadcast_level' | translate }}</label>
                 <sui-select class="selection"
-                            *ngIf="broadcastLevelsList.length > 0"
+                            *ngIf="broadcastLevelsList"
                             name="level"
                             [(ngModel)]="broadcast.level"
                             [options]="levels"
                             [isSearchable]="true">
-                    <sui-select-option *ngFor="let l of broadcastLevelsList"
-                                      [value]="l.value">
+                    <sui-select-option *ngFor="let l of broadcastLevelsList" [value]="l.value">
                     </sui-select-option>
                 </sui-select>
               </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                  <label>{{ 'project' | translate }}</label>
+                  <sui-select class="selection mt5"
+                        placeholder="{{'broadcast_project_select' | translate}}"
+                        name="project"
+                        labelField="name"
+                        valueField="key"
+                        [options]="projects"
+                        [isSearchable]="true"
+                        [(ngModel)]="broadcast.project_key" #selectProj>
+                      <sui-select-option *ngFor="let option of selectProj.filteredOptions" [value]="option"></sui-select-option>
+                  </sui-select>
+                </div>
             </div>
             <div class="field">
               <label>{{'broadcast_content' | translate}}</label>

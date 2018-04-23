@@ -6,4 +6,5 @@ export class Broadcast {
     created: string;
     updated: string;
     archived: boolean;
+    project_key: string;
 }

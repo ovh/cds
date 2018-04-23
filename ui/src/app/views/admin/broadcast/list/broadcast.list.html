@@ -21,7 +21,8 @@
               <th class="one wide">{{ 'broadcast_id' | translate }}</th>
               <th class="three wide">{{ 'broadcast_created' | translate }}</th>
               <th class="four wide">{{ 'broadcast_title' | translate }}</th>
-              <th class="four wide">{{ 'broadcast_level' | translate }}</th>
+              <th class="two wide">{{ 'broadcast_level' | translate }}</th>
+              <th class="two wide">{{ 'broadcast_project' | translate }}</th>
           </tr>
           </thead>
           <tbody>
@@ -46,6 +47,11 @@
               <td>
                   <a class="ui" [routerLink]="[v.id]">
                     <div class="ui">{{v.level}}</div>
+                  </a>
+              </td>
+              <td>
+                  <a class="ui" [routerLink]="[v.id]">
+                    <div class="ui">{{v.project_key}}</div>
                   </a>
               </td>
           </tr>
