@@ -22,7 +22,7 @@ You can generate it with:
 
 - [cdsctl login]({{< relref "/cli/cdsctl/login.md" >}})
 - Code it with the [Go SDK]({{< relref "/cli/sdk/_index.md" >}})
-- Call CDS API: POST `/login` with body `{"username":"your-username","password":"your-password"}`
+- Call CDS API: POST `/login` with body `{"username":"your-username","password":"your-password"}` and header `-H "X-Requested-With: X-CDS-SDK"`
 
 ## CDS HTTP Routes
 
