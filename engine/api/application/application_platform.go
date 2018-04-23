@@ -46,7 +46,7 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 				} else {
 					s, err := base64.StdEncoding.DecodeString(v.Value)
 					if err != nil {
-						return nil, err
+						return nil, sdk.WrapError(err, "application.LoadDeploymentStrategies> unable to decode encrypted value")
 					}
 
 					decryptedValue, err := secret.Decrypt(s)

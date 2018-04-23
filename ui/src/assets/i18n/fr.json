@@ -514,7 +514,7 @@
   "platform_configuration": "Configuration de la plateforme",
 
   "provider_hook": "hook",
-  "provider_deployment": "deploiement",
+  "provider_deployment": "déploiement",
 
   "repo_name": "Nom du dépôt",
   "repoman_delete_msg_ok": "Le gestionnaire de dépôt n'est plus lié au projet",
