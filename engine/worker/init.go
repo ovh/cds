@@ -203,7 +203,7 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 	w.bookedWJobID = FlagInt64(cmd, flagBookedWorkflowJobID)
 
 	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name, &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 120,
 		Transport: &httpcontrol.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: FlagBool(cmd, flagInsecure)},
 		},
