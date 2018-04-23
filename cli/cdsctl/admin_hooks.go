@@ -86,11 +86,7 @@ var adminHooksTaskExecutionListCmd = cli.Command{
 }
 
 func adminHooksTaskExecutionListRun(v cli.Values) (cli.ListResult, error) {
-	uuid := v.GetString("uuid")
-	if uuid == "" {
-		return nil, fmt.Errorf("please use uuid argument")
-	}
-	btes, err := client.ServiceCallGET("hooks", fmt.Sprintf("/task/%s/execution", uuid))
+	btes, err := client.ServiceCallGET("hooks", fmt.Sprintf("/task/%s/execution", v.GetString("uuid")))
 	if err != nil {
 		return nil, err
 	}
@@ -132,11 +128,7 @@ var adminHooksTaskExecutionDeleteAllCmd = cli.Command{
 }
 
 func adminHooksTaskExecutionDeleteAllRun(v cli.Values) error {
-	uuid := v.GetString("uuid")
-	if uuid == "" {
-		return fmt.Errorf("please use uuid argument")
-	}
-	return client.ServiceCallDELETE("hooks", fmt.Sprintf("/task/%s/execution", uuid))
+	return client.ServiceCallDELETE("hooks", fmt.Sprintf("/task/%s/execution", v.GetString("uuid")))
 }
 
 var adminHooksTaskExecutionStartCmd = cli.Command{
@@ -149,11 +141,7 @@ var adminHooksTaskExecutionStartCmd = cli.Command{
 }
 
 func adminHooksTaskExecutionStartRun(v cli.Values) error {
-	uuid := v.GetString("uuid")
-	if uuid == "" {
-		return fmt.Errorf("please use uuid argument")
-	}
-	_, err := client.ServiceCallGET("hooks", fmt.Sprintf("/task/%s/start", uuid))
+	_, err := client.ServiceCallGET("hooks", fmt.Sprintf("/task/%s/start", v.GetString("uuid")))
 	return err
 }
 
@@ -167,11 +155,7 @@ var adminHooksTaskExecutionStopCmd = cli.Command{
 }
 
 func adminHooksTaskExecutionStopRun(v cli.Values) error {
-	uuid := v.GetString("uuid")
-	if uuid == "" {
-		return fmt.Errorf("please use uuid argument")
-	}
-	_, err := client.ServiceCallGET("hooks", fmt.Sprintf("/task/%s/stop", uuid))
+	_, err := client.ServiceCallGET("hooks", fmt.Sprintf("/task/%s/stop", v.GetString("uuid")))
 	return err
 }
 

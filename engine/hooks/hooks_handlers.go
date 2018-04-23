@@ -376,60 +376,62 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 func (s *Service) Status() sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
 
-	if s.Dao.store != nil {
-		// hook queue in status
-		status := sdk.MonitoringStatusOK
-		size := s.Dao.QueueLen()
-		if size >= 100 {
+	if s.Dao.store == nil {
+		return m
+	}
+
+	// hook queue in status
+	status := sdk.MonitoringStatusOK
+	size := s.Dao.QueueLen()
+	if size >= 100 {
+		status = sdk.MonitoringStatusAlert
+	} else if size >= 10 {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Queue", Value: fmt.Sprintf("%d", size), Status: status})
+
+	tasks, err := s.Dao.FindAllTasks()
+	if err != nil {
+		log.Error("Status> Unable to find all tasks: %v", err)
+	}
+
+	for _, t := range tasks {
+		if t.Stopped {
+			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Task Stopped", Value: t.UUID, Status: sdk.MonitoringStatusWarn})
+		}
+
+		execs, err := s.Dao.FindAllTaskExecutions(&t)
+		if err != nil {
+			log.Error("Status> Unable to find all task executions (%s): %v", t.UUID, err)
+			continue
+		}
+
+		var nbTodo, nbTotal int
+		for _, e := range execs {
+			if e.ProcessingTimestamp != 0 {
+				nbTodo++
+			}
+		}
+		nbTotal = len(execs)
+
+		if nbTodo >= 20 {
 			status = sdk.MonitoringStatusAlert
-		} else if size >= 10 {
+		} else if nbTodo > 10 {
 			status = sdk.MonitoringStatusWarn
 		}
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Queue", Value: fmt.Sprintf("%d", size), Status: status})
 
-		tasks, err := s.Dao.FindAllTasks()
-		if err != nil {
-			log.Error("Status> Unable to find all tasks: %v", err)
+		if nbTodo > 10 {
+			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Todo " + t.UUID, Value: fmt.Sprintf("%d", nbTodo), Status: status})
 		}
-		for _, t := range tasks {
 
-			if t.Stopped {
-				m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Task Stopped", Value: t.UUID, Status: sdk.MonitoringStatusWarn})
-			}
+		if nbTotal >= s.Cfg.ExecutionHistory*5 {
+			status = sdk.MonitoringStatusAlert
+		} else if nbTotal >= s.Cfg.ExecutionHistory*2 {
+			status = sdk.MonitoringStatusWarn
+		}
 
-			execs, err := s.Dao.FindAllTaskExecutions(&t)
-			if err != nil {
-				log.Error("Status> Unable to find all task executions (%s): %v", t.UUID, err)
-				continue
-			}
-
-			var nbTodo, nbTotal int
-			for _, e := range execs {
-				if e.ProcessingTimestamp != 0 {
-					nbTodo++
-				}
-			}
-			nbTotal = len(execs)
-
-			if nbTodo >= 20 {
-				status = sdk.MonitoringStatusAlert
-			} else if nbTodo > 10 {
-				status = sdk.MonitoringStatusWarn
-			}
-
-			if nbTodo > 10 {
-				m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Todo " + t.UUID, Value: fmt.Sprintf("%d", nbTodo), Status: status})
-			}
-
-			if nbTotal >= s.Cfg.ExecutionHistory*5 {
-				status = sdk.MonitoringStatusAlert
-			} else if nbTotal >= s.Cfg.ExecutionHistory*2 {
-				status = sdk.MonitoringStatusWarn
-			}
-
-			if nbTotal >= s.Cfg.ExecutionHistory*2 {
-				m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Total " + t.UUID, Value: fmt.Sprintf("%d", nbTotal), Status: status})
-			}
+		if nbTotal >= s.Cfg.ExecutionHistory*2 {
+			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Total " + t.UUID, Value: fmt.Sprintf("%d", nbTotal), Status: status})
 		}
 	}
 
