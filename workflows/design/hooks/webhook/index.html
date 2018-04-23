@@ -1830,6 +1830,13 @@
 
 <p><img src="https://ovh.github.io/cds/images/workflows.design.hooks.webhook.gif" alt="Webhook" /></p>
 
+<p>Example of curl:</p>
+
+<pre><code class="language-bash">curl -H &quot;Content-Type: application/json&quot; -X POST -d '{&quot;git.branch&quot;:&quot;development&quot;}'  https://cds.localhost.local/hook/webhook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+</code></pre>
+
+<p>In this example, <a href="https://cds.localhost.local/hook/">https://cds.localhost.local/hook/</a> is your CDS Hooks µService.</p>
+
 
 <footer class=" footline" >
 	
