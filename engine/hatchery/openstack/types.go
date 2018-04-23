@@ -8,7 +8,6 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 
-	"github.com/ovh/cds/engine/api"
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -54,7 +53,6 @@ type HatcheryConfiguration struct {
 type HatcheryOpenstack struct {
 	hatcheryCommon.Common
 	Config          HatcheryConfiguration
-	Router          *api.Router
 	hatch           *sdk.Hatchery
 	flavors         []flavors.Flavor
 	networks        []tenantnetworks.Network

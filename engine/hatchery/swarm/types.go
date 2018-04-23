@@ -3,7 +3,6 @@ package swarm
 import (
 	docker "github.com/docker/docker/client"
 
-	"github.com/ovh/cds/engine/api"
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -30,7 +29,6 @@ type HatcheryConfiguration struct {
 type HatcherySwarm struct {
 	hatcheryCommon.Common
 	Config       HatcheryConfiguration
-	Router       *api.Router
 	hatch        *sdk.Hatchery
 	dockerClient *docker.Client
 }
