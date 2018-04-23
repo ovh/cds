@@ -36,11 +36,3 @@ func (c *client) Broadcasts() ([]sdk.Broadcast, error) {
 	}
 	return bcs, nil
 }
-
-func (c *client) BroadcastsByLevel(level string) ([]sdk.Broadcast, error) {
-	bcs := []sdk.Broadcast{}
-	if _, err := c.GetJSON("/broadcast/"+level, &bcs); err != nil {
-		return nil, err
-	}
-	return bcs, nil
-}

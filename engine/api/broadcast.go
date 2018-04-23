@@ -55,8 +55,12 @@ func (api *API) updateBroadcastHandler() Handler {
 
 		defer tx.Rollback()
 
+		if bc.ID <= 0 || broadcastID != bc.ID {
+			return sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %s is not valid. id in path:%d", bc.ID, broadcastID)
+		}
+
 		// update broadcast in db
-		if err := broadcast.UpdateBroadcast(tx, bc); err != nil {
+		if err := broadcast.UpdateBroadcast(tx, &bc); err != nil {
 			return sdk.WrapError(err, "updateBroadcast> cannot update broadcast")
 		}
 
@@ -110,10 +114,6 @@ func (api *API) getBroadcastHandler() Handler {
 
 func (api *API) getBroadcastsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getBroadcasts> cannot parse form")
-		}
-
 		broadcasts, err := broadcast.LoadBroadcasts(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getBroadcasts> cannot load broadcasts")

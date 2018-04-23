@@ -29,17 +29,25 @@ var adminBroadcastCreateCmd = cli.Command{
 	Name:  "create",
 	Short: "Create a CDS broadcast",
 	Args: []cli.Arg{
-		{Name: "level"},
 		{Name: "title"},
 		{Name: "content"},
 	},
+	Flags: []cli.Flag{
+		{
+			Kind:      reflect.String,
+			Name:      "level",
+			ShortHand: "l",
+			Usage:     "Level of broadcast: info or warning",
+			Default:   "info",
+		},
+	},
 	Example: `level info:
 	
-	cdsctl admin broadcasts create info "the title" "the content"
+	cdsctl admin broadcasts create "the title" "the content"
 
 level warning:	
 
-	cdsctl admin broadcasts create warning "the title" "the content"
+	cdsctl admin broadcasts create --level warning "the title" "the content"
 	`,
 	Aliases: []string{"add"},
 }
@@ -118,15 +126,7 @@ var adminBroadcastListCmd = cli.Command{
 }
 
 func adminBroadcastListRun(v cli.Values) (cli.ListResult, error) {
-	if v.GetString("level") == "" {
-		srvs, err := client.Broadcasts()
-		if err != nil {
-			return nil, err
-		}
-		return cli.AsListResult(srvs), nil
-	}
-
-	srvs, err := client.BroadcastsByLevel(v.GetString("level"))
+	srvs, err := client.Broadcasts()
 	if err != nil {
 		return nil, err
 	}

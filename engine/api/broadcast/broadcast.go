@@ -11,7 +11,7 @@ import (
 
 // InsertBroadcast insert a new worker broadcast in database
 func InsertBroadcast(db gorp.SqlExecutor, bc *sdk.Broadcast) error {
-	dbmsg := Broadcast(*bc)
+	dbmsg := broadcast(*bc)
 	if err := db.Insert(&dbmsg); err != nil {
 		return err
 	}
@@ -20,9 +20,9 @@ func InsertBroadcast(db gorp.SqlExecutor, bc *sdk.Broadcast) error {
 }
 
 // UpdateBroadcast update a broadcast
-func UpdateBroadcast(db gorp.SqlExecutor, bc sdk.Broadcast) error {
+func UpdateBroadcast(db gorp.SqlExecutor, bc *sdk.Broadcast) error {
 	bc.Updated = time.Now()
-	dbmsg := Broadcast(bc)
+	dbmsg := broadcast(*bc)
 	if _, err := db.Update(&dbmsg); err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func UpdateBroadcast(db gorp.SqlExecutor, bc sdk.Broadcast) error {
 
 // LoadBroadcastByID loads broadcast by id
 func LoadBroadcastByID(db gorp.SqlExecutor, id int64) (*sdk.Broadcast, error) {
-	dbBroadcast := Broadcast{}
+	dbBroadcast := broadcast{}
 	query := `select * from broadcast where id=$1`
 	args := []interface{}{id}
 	if err := db.SelectOne(&dbBroadcast, query, args...); err != nil {
@@ -44,25 +44,25 @@ func LoadBroadcastByID(db gorp.SqlExecutor, id int64) (*sdk.Broadcast, error) {
 	return &broadcast, nil
 }
 
-// LoadBroadcasts retrieves infos from database
+// LoadBroadcasts retrieves broadcasts from database
 func LoadBroadcasts(db gorp.SqlExecutor) ([]sdk.Broadcast, error) {
-	res := []Broadcast{}
+	res := []broadcast{}
 	if _, err := db.Select(&res, `select * from broadcast`); err != nil {
 		return nil, sdk.WrapError(err, "LoadAllBroadcasts> ")
 	}
 
-	infos := make([]sdk.Broadcast, len(res))
+	broadcasts := make([]sdk.Broadcast, len(res))
 	for i := range res {
 		p := res[i]
-		infos[i] = sdk.Broadcast(p)
+		broadcasts[i] = sdk.Broadcast(p)
 	}
 
-	return infos, nil
+	return broadcasts, nil
 }
 
 // DeleteBroadcast removes broadcast from database
 func DeleteBroadcast(db gorp.SqlExecutor, ID int64) error {
-	m := Broadcast(sdk.Broadcast{ID: ID})
+	m := broadcast(sdk.Broadcast{ID: ID})
 	count, err := db.Delete(&m)
 	if err != nil {
 		return err

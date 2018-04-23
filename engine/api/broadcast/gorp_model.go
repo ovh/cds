@@ -6,8 +6,8 @@ import (
 )
 
 // Broadcast is a gorp wrapper around sdk.Broadcast
-type Broadcast sdk.Broadcast
+type broadcast sdk.Broadcast
 
 func init() {
-	gorpmapping.Register(gorpmapping.New(Broadcast{}, "broadcast", true, "id"))
+	gorpmapping.Register(gorpmapping.New(broadcast{}, "broadcast", true, "id"))
 }

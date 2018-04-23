@@ -153,7 +153,6 @@ type BroadcastClient interface {
 	BroadcastCreate(broadcast *sdk.Broadcast) error
 	BroadcastGet(id string) (*sdk.Broadcast, error)
 	BroadcastDelete(id string) error
-	BroadcastsByLevel(s string) ([]sdk.Broadcast, error)
 }
 
 // PipelineClient exposes pipelines related functions
