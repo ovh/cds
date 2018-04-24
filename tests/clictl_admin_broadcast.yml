@@ -2,8 +2,11 @@ name: Broadcast Command TestSuite
 testcases:
 - name: broadcast
   steps:
+  - script: '[ -f ./tests/fixtures/broadcast.md ]'
+    assertions:
+      - result.code ShouldEqual 0  
   - script: {{.cds.build.cdsctl}} admin broadcasts list
-  - script: {{.cds.build.cdsctl}} admin broadcasts create "the title" "the content"
+  - script: {{.cds.build.cdsctl}} admin broadcasts create "the title" < ./tests/fixtures/broadcast.md
   - script: {{.cds.build.cdsctl}} admin broadcasts list | grep "the content" | grep "the title"
   - script: {{.cds.build.cdsctl}} admin broadcasts show `{{.cds.build.cdsctl}} admin broadcasts list | grep "the content" | grep "the title" | cut -d "|" -f5|head -n 1`
   - script: {{.cds.build.cdsctl}} admin broadcasts delete `{{.cds.build.cdsctl}} admin broadcasts list | grep "the content" | grep "the title" | cut -d "|" -f5|head -n 1`
