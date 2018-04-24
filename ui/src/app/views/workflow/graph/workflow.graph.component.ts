@@ -283,7 +283,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
             componentRef.instance.project = this.project;
             componentRef.instance.disabled = this.linkWithJoin;
 
-            if (this.webworker) {
+            if (this.webworker || this._workflowRun) {
                 componentRef.instance.readonly = true;
             }
 
