@@ -27,12 +27,6 @@ type annotation struct {
 	Created                 time.Time `json:"created"`
 }
 
-//TODO: DELTE THIS !!!!!!!!!!!
-type imageConfiguration struct {
-	OS       string `json:"os"`
-	UserData string `json:"user_data"` //Commands to execute when create vm model
-}
-
 // SpawnWorker creates a new vm instance
 func (h *HatcheryVSphere) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	var vm *object.VirtualMachine

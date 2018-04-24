@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -36,13 +37,13 @@ func (api *API) addWorkerModelHandler() Handler {
 			}
 		}
 
-		user := getUser(ctx)
+		currentUser := getUser(ctx)
 		switch model.Type {
 		case sdk.Docker:
 			if model.ModelDocker.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
 			}
-			if !user.Admin && !model.Restricted {
+			if !currentUser.Admin && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrForbidden
 				}
@@ -52,7 +53,7 @@ func (api *API) addWorkerModelHandler() Handler {
 			if model.ModelVirtualMachine.Image == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
 			}
-			if !user.Admin && !model.Restricted {
+			if !currentUser.Admin && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrForbidden
 				}
@@ -81,10 +82,10 @@ func (api *API) addWorkerModelHandler() Handler {
 
 		//User must be admin of the group set in the model
 		var ok bool
-		for _, g := range user.Groups {
+		for _, g := range currentUser.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
-					if a.ID == user.ID {
+					if a.ID == currentUser.ID {
 						ok = true
 					}
 				}
@@ -92,23 +93,23 @@ func (api *API) addWorkerModelHandler() Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !user.Admin && !ok {
+		if !currentUser.Admin && !ok {
 			return sdk.ErrForbidden
 		}
 
 		// provision is allowed only for CDS Admin
-		// or by user with a restricted model
-		if !user.Admin && !model.Restricted {
+		// or by currentUser with a restricted model
+		if !currentUser.Admin && !model.Restricted {
 			model.Provision = 0
 		}
 
 		model.CreatedBy = sdk.User{
-			Email:    user.Email,
-			Username: user.Username,
-			Admin:    user.Admin,
-			Fullname: user.Fullname,
-			ID:       user.ID,
-			Origin:   user.Origin,
+			Email:    currentUser.Email,
+			Username: currentUser.Username,
+			Admin:    currentUser.Admin,
+			Fullname: currentUser.Fullname,
+			ID:       currentUser.ID,
+			Origin:   currentUser.Origin,
 		}
 
 		// Insert model in db

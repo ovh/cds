@@ -4,9 +4,9 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModel --force
 
-- name: worker model add
+- name: worker model import
   steps:
-  - script: {{.cds.build.cdsctl}} worker model add ./tests/fixtures/my_worker_model.yml
+  - script: {{.cds.build.cdsctl}} worker model import ./tests/fixtures/my_worker_model.yml
 
 - name: worker model show
   steps:
@@ -24,9 +24,9 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModelOS --force
 
-- name: worker model add openstack model
+- name: worker model import openstack model
   steps:
-  - script: {{.cds.build.cdsctl}} worker model add ./tests/fixtures/my_worker_model_openstack.yml
+  - script: {{.cds.build.cdsctl}} worker model import ./tests/fixtures/my_worker_model_openstack.yml
 
 - name: worker model show
   steps:

@@ -141,8 +141,8 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	return nil
 }
 
-//PostSelect load capabilitites and createdBy user
-func (wmp *WorkerModelPattern) PostSelect(s gorp.SqlExecutor) error {
+//PostGet load capabilitites and createdBy user
+func (wmp *WorkerModelPattern) PostGet(s gorp.SqlExecutor) error {
 	modelStr, err := s.SelectNullStr("SELECT model FROM worker_model_pattern WHERE id = $1", wmp.ID)
 	if err != nil {
 		return sdk.WrapError(err, "PostSelect> Cannot load model for pattern %d", wmp.ID)

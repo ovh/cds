@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/namesgenerator"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // SpawnWorker creates a new cloud instances
