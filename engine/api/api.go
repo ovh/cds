@@ -354,6 +354,15 @@ func (a *API) mustDB() *gorp.DbMap {
 	return db
 }
 
+func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
+	db := a.DBConnectionFactory.GetDBMap()
+	db = db.WithContext(ctx).(*gorp.DbMap)
+	if db == nil {
+		panic(fmt.Errorf("Database unavailable"))
+	}
+	return db
+}
+
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
 	log.Info("Starting CDS API Server %s", sdk.VERSION)

@@ -349,11 +349,12 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		if err := UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
+		dbWithCtx := api.mustDBWithCtx(ctx)
 
-		proj, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errP := project.LoadProjectByNodeJobRunID(dbWithCtx, api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
 			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
-				_, errLn := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+				_, errLn := workflow.LoadNodeJobRun(dbWithCtx, api.Cache, id)
 				if sdk.ErrorIs(errLn, sdk.ErrWorkflowNodeRunJobNotFound) {
 					// job result already send as job is no more in database
 					// this log is here to stats it and we returns nil for unlock the worker
@@ -368,14 +369,14 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, proj, getWorker(ctx), &res)
+		go postJobResult(chanEvent, chanError, dbWithCtx, api.Cache, proj, getWorker(ctx), &res)
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
 			return err
 		}
 
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(dbWithCtx, api.Cache, proj, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
 		return nil
@@ -467,8 +468,9 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 		}
+		dbWithCtx := api.mustDBWithCtx(ctx)
 
-		nodeJobRun, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeJobRun, errJob := workflow.LoadNodeJobRun(dbWithCtx, api.Cache, id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
 		}
@@ -495,7 +497,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			nodeJobRun.Job.StepStatus = append(nodeJobRun.Job.StepStatus, step)
 		}
 
-		tx, errB := api.mustDB().Begin()
+		tx, errB := dbWithCtx.Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "postWorkflowJobStepStatusHandler> Cannot start transaction")
 		}
