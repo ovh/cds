@@ -10,7 +10,7 @@ CREATE TABLE broadcast (
   project_id BIGINT NULL
 );
 
-SELECT create_foreign_key_idx_cascade('FK_BROADCAST_PROJECT', 'broadcast', 'project', 'project_id', 'id');
+SELECT create_foreign_key('FK_BROADCAST_PROJECT', 'broadcast', 'project', 'project_id', 'id');
 
 -- +migrate Down
 DROP TABLE broadcast;
