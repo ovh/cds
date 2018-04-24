@@ -169,7 +169,25 @@ func (s *Service) startTasks(ctx context.Context) error {
 	for i := range tasks {
 		t := &tasks[i]
 		if err := s.startTask(c, t); err != nil {
-			log.Error("Hooks> runLongRunningTasks> Unable to start tasks: %v", err)
+			log.Error("Hooks> runLongRunningTasks> Unable to start task: %v", err)
+			continue
+		}
+	}
+	return nil
+}
+
+func (s *Service) stopTasks() error {
+	//Load all the tasks
+	tasks, err := s.Dao.FindAllTasks()
+	if err != nil {
+		return sdk.WrapError(err, "Hook> stopTasks> Unable to find all tasks")
+	}
+
+	//Start the tasks
+	for i := range tasks {
+		t := &tasks[i]
+		if err := s.stopTask(t); err != nil {
+			log.Error("Hooks> stopTasks> Unable to stop task: %v", err)
 			continue
 		}
 	}
@@ -205,7 +223,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 
 	//The last execution has not been executed, let it go
 	if len(execs) > 0 && execs[len(execs)-1].ProcessingTimestamp == 0 {
-		log.Debug("Hooks> Scheduled tasks %s ready. Next execution scheduled on %v", t.UUID, time.Unix(0, execs[len(execs)-1].Timestamp))
+		log.Debug("Hooks> Scheduled tasks %s:%d ready. Next execution scheduled on %v", t.UUID, execs[len(execs)-1].Timestamp, time.Unix(0, execs[len(execs)-1].Timestamp))
 		return nil
 	}
 
@@ -257,7 +275,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	s.Dao.SaveTaskExecution(exec)
 	//We don't push in queue, we will the scheduler to run it
 
-	log.Debug("Hooks> Scheduled tasks %v ready. Next execution scheduled on %v", t.UUID, time.Unix(0, exec.Timestamp))
+	log.Debug("Hooks> Scheduled tasks %v:%d ready. Next execution scheduled on %v, len:%d", t.UUID, exec.Timestamp, time.Unix(0, exec.Timestamp), len(execs))
 
 	return nil
 }
@@ -321,7 +339,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		} else {
 			//Save the run number
 			e.WorkflowRun = run.Number
-			log.Debug("Hooks> workflow %s/%s#%d has been triggered", t.Config[sdk.HookConfigProject], t.Config[sdk.HookConfigWorkflow], run.Number)
+			log.Debug("Hooks> workflow %s/%s#%d has been triggered", confProj.Value, confWorkflow.Value, run.Number)
 		}
 	}
 
@@ -333,7 +351,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 }
 
 func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecution) ([]sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing polling task %s", taskExec.UUID)
+	log.Debug("Hooks> Processing polling task %s:%d", taskExec.UUID, taskExec.Timestamp)
 
 	tExecs, errF := s.Dao.FindAllTaskExecutions(task)
 	if errF != nil {

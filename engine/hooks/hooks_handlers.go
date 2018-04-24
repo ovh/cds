@@ -2,12 +2,14 @@ package hooks
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"sort"
 	"time"
 
 	"github.com/gorilla/mux"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -20,25 +22,25 @@ func (s *Service) webhookHandler() api.Handler {
 		uuid := vars["uuid"]
 
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Hook> webhookHandler> invalid uuid or name")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> webhookHandler> invalid uuid or name")
 		}
 
 		//Load the task
 		webHook := s.Dao.FindTask(uuid)
 		if webHook == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> webhookHandler> unknown uuid")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> webhookHandler> unknown uuid")
 		}
 
 		//Check method
 		confValue := webHook.Config[sdk.WebHookModelConfigMethod]
 		if r.Method != confValue.Value {
-			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Hook> webhookHandler> Unsupported method %s : %v", r.Method, webHook.Config)
+			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Hooks> webhookHandler> Unsupported method %s : %v", r.Method, webHook.Config)
 		}
 
 		//Read the body
 		req, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			return sdk.WrapError(err, "Hook> webhookHandler> unable to read request")
+			return sdk.WrapError(err, "Hooks> webhookHandler> unable to read request")
 		}
 
 		//Prepare a web hook execution
@@ -65,6 +67,70 @@ func (s *Service) webhookHandler() api.Handler {
 	}
 }
 
+func (s *Service) startTasksHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if err := s.startTasks(ctx); err != nil {
+			return sdk.WrapError(err, "Hooks> startTasksHandler")
+		}
+		return nil
+	}
+}
+
+func (s *Service) stopTasksHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if err := s.stopTasks(); err != nil {
+			return sdk.WrapError(err, "Hooks> stopTasksHandler")
+		}
+		return nil
+	}
+}
+
+func (s *Service) startTaskHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		if uuid == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> startTaskHandler> invalid uuid")
+		}
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> startTaskHandler> unknown uuid")
+		}
+
+		//Start the task
+		if err := s.startTask(ctx, t); err != nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> startTaskHandler> start task")
+		}
+		return nil
+	}
+}
+
+func (s *Service) stopTaskHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		if uuid == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> stopTaskHandler> invalid uuid")
+		}
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> stopTaskHandler> unknown uuid")
+		}
+
+		//Stop the task
+		if err := s.stopTask(t); err != nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> stopTaskHandler> stop task")
+		}
+		return nil
+	}
+}
+
 func (s *Service) postTaskHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
@@ -85,7 +151,22 @@ func (s *Service) getTasksHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Hooks> getTasksHandler")
 		}
-		log.Debug("all tasks> %v", tasks)
+		for i := range tasks {
+			execs, err := s.Dao.FindAllTaskExecutions(&tasks[i])
+			if err != nil {
+				log.Error("getTasksHandler> Unable to find all task executions (%s): %v", tasks[i].UUID, err)
+				continue
+			}
+
+			var nbTodo int
+			for _, e := range execs {
+				if e.ProcessingTimestamp != 0 {
+					nbTodo++
+				}
+			}
+			tasks[i].NbExecutionsTotal = len(execs)
+			tasks[i].NbExecutionsTodo = nbTodo
+		}
 		return api.WriteJSON(w, tasks, http.StatusOK)
 	}
 }
@@ -96,18 +177,18 @@ func (s *Service) putTaskHandler() api.Handler {
 		vars := mux.Vars(r)
 		uuid := vars["uuid"]
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Hook> putTaskHandler> invalid uuid")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> putTaskHandler> invalid uuid")
 		}
 
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> unknown uuid")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> unknown uuid")
 		}
 
 		//Stop the task
 		if err := s.stopTask(t); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
 		//Save it
@@ -159,7 +240,7 @@ func (s *Service) deleteTaskHandler() api.Handler {
 
 		//Stop the task
 		if err := s.stopTask(t); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task")
 		}
 
 		//Delete the task
@@ -196,6 +277,41 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 	}
 }
 
+func (s *Service) deleteAllTaskExecutionsHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return api.WriteJSON(w, t, http.StatusOK)
+		}
+
+		//Stop the task
+		if err := s.stopTask(t); err != nil {
+			return sdk.WrapError(sdk.ErrNotFound, "Hooks> deleteAllTaskExecutionsHandler> stop task")
+		}
+
+		//Load the executions
+		execs, err := s.Dao.FindAllTaskExecutions(t)
+		if err != nil {
+			return sdk.WrapError(err, "Hooks> deleteAllTaskExecutionsHandler> Unable to find task executions for %s", uuid)
+		}
+		for i := range execs {
+			s.Dao.DeleteTaskExecution(&execs[i])
+		}
+
+		//Start the task
+		if err := s.startTask(ctx, t); err != nil {
+			return sdk.WrapError(err, "Hooks> deleteAllTaskExecutionsHandler> Unable start task %+v", t)
+		}
+
+		return api.WriteJSON(w, t, http.StatusOK)
+	}
+}
+
 func (s *Service) deleteTaskBulkHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		hooks := map[string]sdk.WorkflowNodeHook{}
@@ -212,7 +328,7 @@ func (s *Service) deleteTaskBulkHandler() api.Handler {
 
 			//Stop the task
 			if err := s.stopTask(t); err != nil {
-				return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task %s", err)
+				return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task %s", err)
 			}
 			//Delete the task
 			s.Dao.DeleteTask(t)
@@ -259,6 +375,65 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (s *Service) Status() sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
+
+	if s.Dao.store == nil {
+		return m
+	}
+
+	// hook queue in status
+	status := sdk.MonitoringStatusOK
+	size := s.Dao.QueueLen()
+	if size >= 100 {
+		status = sdk.MonitoringStatusAlert
+	} else if size >= 10 {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Queue", Value: fmt.Sprintf("%d", size), Status: status})
+
+	tasks, err := s.Dao.FindAllTasks()
+	if err != nil {
+		log.Error("Status> Unable to find all tasks: %v", err)
+	}
+
+	for _, t := range tasks {
+		if t.Stopped {
+			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Task Stopped", Value: t.UUID, Status: sdk.MonitoringStatusWarn})
+		}
+
+		execs, err := s.Dao.FindAllTaskExecutions(&t)
+		if err != nil {
+			log.Error("Status> Unable to find all task executions (%s): %v", t.UUID, err)
+			continue
+		}
+
+		var nbTodo, nbTotal int
+		for _, e := range execs {
+			if e.ProcessingTimestamp != 0 {
+				nbTodo++
+			}
+		}
+		nbTotal = len(execs)
+
+		if nbTodo >= 20 {
+			status = sdk.MonitoringStatusAlert
+		} else if nbTodo > 10 {
+			status = sdk.MonitoringStatusWarn
+		}
+
+		if nbTodo > 10 {
+			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Todo " + t.UUID, Value: fmt.Sprintf("%d", nbTodo), Status: status})
+		}
+
+		if nbTotal >= s.Cfg.ExecutionHistory*5 {
+			status = sdk.MonitoringStatusAlert
+		} else if nbTotal >= s.Cfg.ExecutionHistory*2 {
+			status = sdk.MonitoringStatusWarn
+		}
+
+		if nbTotal >= s.Cfg.ExecutionHistory*2 {
+			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Total " + t.UUID, Value: fmt.Sprintf("%d", nbTotal), Status: status})
+		}
+	}
 
 	return m
 }

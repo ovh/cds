@@ -37,7 +37,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("--api not provided, aborting update.")
 			}
 			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", &http.Client{
-				Timeout: time.Second * 10,
+				Timeout: time.Second * 360,
 				Transport: &httpcontrol.Transport{
 					TLSClientConfig: &tls.Config{InsecureSkipVerify: FlagBool(cmd, flagInsecure)},
 				},

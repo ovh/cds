@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -55,6 +56,12 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 		case <-c.Done():
 			return c.Err()
 		case <-tick.C:
+			size := s.Dao.QueueLen()
+			log.Debug("Hooks> retryTaskExecutionsRoutine> begin - queue size: %d - ticker:%d", size, s.Cfg.RetryDelay)
+			if size > 20 {
+				log.Warning("Hooks> too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
+				continue
+			}
 			tasks, err := s.Dao.FindAllTasks()
 			if err != nil {
 				log.Error("Hooks> retryTaskExecutionsRoutine > Unable to find all tasks: %v", err)
@@ -70,18 +77,30 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					if e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled {
 						continue
 					}
+
 					// old hooks
 					if e.ProcessingTimestamp == 0 && e.Timestamp < time.Now().Add(-2*time.Minute).UnixNano() {
-						log.Warning("Enqueing very old hooks %s %d/%d type:%s status:%s err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.LastError)
+						if e.UUID == "" {
+							log.Warning("Hooks> retryTaskExecutionsRoutine > Very old hook without UUID %d/%d type:%s status:%s timestamp:%d err:%v", e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
+							continue
+						}
+						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 					}
 					if e.NbErrors < s.Cfg.RetryError && e.LastError != "" {
-						log.Warning("Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+						// avoid re-enqueue if the lastError is about a git branch not found
+						// the branch was deleted from git repository, it will never work
+						if strings.Contains(e.LastError, "branchName parameter must be provided") {
+							log.Warning("Hooks> retryTaskExecutionsRoutine > Do not re-enqueue this taskExecution with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+							continue
+						}
+						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}
 				}
 			}
+			log.Debug("Hooks> retryTaskExecutionsRoutine> end")
 		}
 	}
 }
@@ -106,14 +125,22 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(c context.Context) error
 					log.Error("Hooks> enqueueScheduledTaskExecutionsRoutine > Unable to find all task executions (%s): %v", t.UUID, err)
 					continue
 				}
+				alreadyEnqueued := false
 				for _, e := range execs {
 					if e.Status == TaskExecutionScheduled && e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
 						// update status before enqueue
 						// this will avoid to re-enqueue the same scheduled task execution if the dequeue take more than 30s (ticker of this goroutine)
-						e.Status = ""
-						s.Dao.SaveTaskExecution(&e)
-						log.Info("Enqueing scheduler or repoPoller task %s type:%s", e.UUID, e.Type)
-						s.Dao.EnqueueTaskExecution(&e)
+						if alreadyEnqueued {
+							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > task execution already enqueued for this task %s of type %s- delete it", e.UUID, e.Type)
+							s.Dao.DeleteTaskExecution(&e)
+						} else {
+							e.Status = ""
+							s.Dao.SaveTaskExecution(&e)
+							log.Info("Hooks> enqueueScheduledTaskExecutionsRoutine > Enqueing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
+							s.Dao.EnqueueTaskExecution(&e)
+							alreadyEnqueued = true
+						}
+
 					}
 				}
 			}
@@ -162,9 +189,13 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			return c.Err()
 		}
 
+		size := s.Dao.QueueLen()
+		log.Debug("Hooks> dequeueTaskExecutions> current queue size: %d", size)
+
 		// Dequeuing context
 		var taskKey string
 		s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey)
+		log.Debug("Hooks> dequeueTaskExecutions> work on taskKey: %s", taskKey)
 
 		// Load the task execution
 		var t = sdk.TaskExecution{}
@@ -181,11 +212,16 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 
 		task := s.Dao.FindTask(t.UUID)
 		if task == nil {
-			log.Error("Hooks> dequeueTaskExecutions failed: Task %s not found", t.UUID)
+			log.Error("Hooks> dequeueTaskExecutions failed: Task %s not found - deleting this task execution", t.UUID)
 			t.LastError = "Internal Error: Task not found"
 			t.NbErrors++
-			log.Info("Hooks> Deleting task execution %s", t.UUID)
 			s.Dao.DeleteTaskExecution(&t)
+			continue
+
+		} else if t.NbErrors >= s.Cfg.RetryError {
+			log.Info("Hooks> dequeueTaskExecutions> Deleting task execution %s cause: to many errors:%d lastError:%s", t.UUID, t.NbErrors, t.LastError)
+			s.Dao.DeleteTaskExecution(&t)
+			continue
 
 		} else if task.Stopped {
 			t.LastError = "Executions skipped: Task has been stopped"
@@ -194,11 +230,19 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		} else {
 			restartTask = true
 			saveTaskExecution = true
+			log.Debug("Hooks> dequeueTaskExecutions> call doTask on taskKey: %s", taskKey)
 			if err := s.doTask(c, task, &t); err != nil {
-				log.Error("Hooks> dequeueTaskExecutions %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
-				t.LastError = err.Error()
-				t.NbErrors++
-				saveTaskExecution = true
+				if strings.Contains(err.Error(), "Unsupported task type") {
+					// delete this task execution, as it will never work
+					log.Info("Hooks> dequeueTaskExecutions> Deleting task execution %s as err:%v", t.UUID, err)
+					s.Dao.DeleteTaskExecution(&t)
+					continue
+				} else {
+					log.Error("Hooks> dequeueTaskExecutions> %s failed err[%d]: %v", t.UUID, t.NbErrors, err)
+					t.LastError = err.Error()
+					t.NbErrors++
+					saveTaskExecution = true
+				}
 			}
 		}
 

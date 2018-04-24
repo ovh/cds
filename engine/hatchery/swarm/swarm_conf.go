@@ -51,16 +51,19 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 
-	status := sdk.MonitoringStatusOK
-	images, err := h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
-	if err != nil {
-		log.Warning("%d> Status> Unable to list images: %s", h.Name, err)
-		status = sdk.MonitoringStatusAlert
+	if h.IsInitialized() {
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+
+		status := sdk.MonitoringStatusOK
+		images, err := h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+		if err != nil {
+			log.Warning("%d> Status> Unable to list images: %s", h.Name, err)
+			status = sdk.MonitoringStatusAlert
+		}
+
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images", Value: fmt.Sprintf("%d", len(images)), Status: status})
 	}
-
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images", Value: fmt.Sprintf("%d", len(images)), Status: status})
 
 	return m
 }

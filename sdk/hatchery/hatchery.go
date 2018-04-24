@@ -94,6 +94,8 @@ type Interface interface {
 	NeedRegistration(model *sdk.Model) bool
 	ID() int64
 	Serve(ctx context.Context) error
+	IsInitialized() bool
+	SetInitialized()
 }
 
 var (

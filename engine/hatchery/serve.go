@@ -17,7 +17,8 @@ import (
 
 type Common struct {
 	service.Common
-	Router *api.Router
+	Router      *api.Router
+	initialized bool
 }
 
 func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *api.HandlerConfig) (context.Context, error) {
@@ -40,6 +41,16 @@ func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req 
 //CDSClient returns cdsclient instance
 func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
+}
+
+// IsInitialized returns true if hatchery is fully initialized
+func (c *Common) IsInitialized() bool {
+	return c.initialized
+}
+
+// SetInitialized set initialized = true for this hatchery
+func (c *Common) SetInitialized() {
+	c.initialized = true
 }
 
 // CommonServe start the HatcheryLocal server

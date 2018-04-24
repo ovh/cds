@@ -105,7 +105,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
+		//FIXMEworkflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		return WriteJSON(w, pbji, http.StatusOK)
@@ -257,18 +257,13 @@ func (api *API) postIncWorkflowJobAttemptHandler() Handler {
 				},
 			}
 
-			p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
-			if errP != nil {
-				return sdk.WrapError(errP, "postIncWorkflowJobAttemptHandler> Cannot load project")
-			}
-
 			tx, errBegin := api.mustDB().Begin()
 			if errBegin != nil {
 				return sdk.WrapError(errBegin, "postIncWorkflowJobAttemptHandler> Cannot start transaction")
 			}
 			defer tx.Rollback()
 
-			if err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, infos); err != nil {
+			if err := workflow.AddSpawnInfosNodeJobRun(tx, id, infos); err != nil {
 				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot save spawn info on node job run %d", id)
 			}
 
@@ -324,18 +319,13 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
-		if errP != nil {
-			return sdk.WrapError(errP, "postSpawnInfosWorkflowJobHandler> Cannot load project")
-		}
-
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, s); err != nil {
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d", id)
 		}
 
@@ -354,33 +344,45 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
-		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
-		}
-
 		// Unmarshal into results
 		var res sdk.Result
 		if err := UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 
+		proj, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
+				_, errLn := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+				if sdk.ErrorIs(errLn, sdk.ErrWorkflowNodeRunJobNotFound) {
+					// job result already send as job is no more in database
+					// this log is here to stats it and we returns nil for unlock the worker
+					// and avoid a "worker timeout"
+					log.Warning("postWorkflowJobResultHandler> NodeJobRun not found: %d err:%v", id, errLn)
+					return nil
+				}
+				return sdk.WrapError(errLn, "postWorkflowJobResultHandler> Cannot load NodeJobRun %d", id)
+			}
+			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project from job %d", id)
+		}
+
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx), &res)
+		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, proj, getWorker(ctx), &res)
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
 			return err
 		}
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
+
+		//FIXME workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
 		return nil
 	}
 }
 
-func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.Worker, res *sdk.Result) {
+func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wr *sdk.Worker, res *sdk.Result) {
 	defer close(chEvent)
 	defer close(chError)
 
@@ -410,13 +412,13 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}},
 	}}
 
-	if err := workflow.AddSpawnInfosNodeJobRun(tx, store, p, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
+	if err := workflow.AddSpawnInfosNodeJobRun(tx, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
 		chError <- sdk.WrapError(err, "postJobResult> Cannot save spawn info job %d", job.ID)
 	}
 
 	// Update action status
 	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
-	if err := workflow.UpdateNodeJobRunStatus(db, tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
+	if err := workflow.UpdateNodeJobRunStatus(db, tx, store, proj, job, sdk.Status(res.Status), chEvent); err != nil {
 		chError <- sdk.WrapError(err, "postJobResult> Cannot update NodeJobRun %d status", job.ID)
 		return
 	}
@@ -493,18 +495,13 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			nodeJobRun.Job.StepStatus = append(nodeJobRun.Job.StepStatus, step)
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
-		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowJobStepStatusHandler> Cannot load project")
-		}
-
 		tx, errB := api.mustDB().Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "postWorkflowJobStepStatusHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, nodeJobRun); err != nil {
+		if err := workflow.UpdateNodeJobRun(tx, api.Cache, nodeJobRun); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run. JobID on handler: %d", id)
 		}
 
@@ -708,11 +705,6 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
-		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowJobVariableHandler> Cannot load project")
-		}
-
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "postWorkflowJobVariableHandler> Unable to start tx")
@@ -737,7 +729,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
 		}
 
-		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, job); err != nil {
+		if err := workflow.UpdateNodeJobRun(tx, api.Cache, job); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run %d", id)
 		}
 

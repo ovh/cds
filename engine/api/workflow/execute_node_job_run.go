@@ -19,7 +19,7 @@ import (
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
+func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
 	defer func(j *sdk.WorkflowNodeJobRun, chanE chan<- interface{}) {
@@ -82,7 +82,7 @@ func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 	}
 
-	if err := UpdateNodeJobRun(db, store, p, job); err != nil {
+	if err := UpdateNodeJobRun(db, store, job); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
@@ -94,11 +94,11 @@ func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 		return syncTakeJobInNodeRun(db, nodeRun, job, stageIndex, chanEvent)
 	}
-	return execute(dbCopy, db, store, p, node, chanEvent)
+	return execute(dbCopy, db, store, proj, node, chanEvent)
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
-func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, infos []sdk.SpawnInfo) error {
+func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, jobID int64, infos []sdk.SpawnInfo) error {
 	wnjri := &sdk.WorkflowNodeJobRunInfo{
 		WorkflowNodeJobRunID: jobID,
 		SpawnInfos:           PrepareSpawnInfos(infos),
@@ -152,7 +152,7 @@ func TakeNodeJobRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, 
 	job.Job.WorkerID = workerID
 	job.Start = time.Now()
 
-	if err := AddSpawnInfosNodeJobRun(db, store, p, jobID, PrepareSpawnInfos(infos)); err != nil {
+	if err := AddSpawnInfosNodeJobRun(db, jobID, PrepareSpawnInfos(infos)); err != nil {
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
 	}
 
