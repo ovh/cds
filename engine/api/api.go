@@ -73,7 +73,7 @@ type Configuration struct {
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
+			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`
 			Password string `toml:"password"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
 	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\nIf your CDS is made of a unique instance, a local cache if enough, but rememeber that all cached data will be lost on startup."`
