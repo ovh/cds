@@ -10,7 +10,6 @@ import (
 
 //Repos returns the list of accessible repositories
 func (c *gitlabClient) Repos() ([]sdk.VCSRepo, error) {
-
 	var repos []sdk.VCSRepo
 
 	pp := 1000
@@ -68,11 +67,10 @@ func (c *gitlabClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 	if err != nil {
 		return repo, err
 	}
-
 	repo.ID = fmt.Sprintf("%d", p.ID)
 	repo.Name = p.NameWithNamespace
 	repo.Slug = p.Name
-	repo.Fullname = p.Path
+	repo.Fullname = p.PathWithNamespace
 	repo.URL = p.WebURL
 	repo.HTTPCloneURL = p.HTTPURLToRepo
 	repo.SSHCloneURL = p.SSHURLToRepo
