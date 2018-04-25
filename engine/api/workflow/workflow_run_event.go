@@ -16,7 +16,7 @@ import (
 )
 
 // GetWorkflowRunEventData read channel to get elements to push
-func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun, error) {
+func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun, error) {
 	wrs := []sdk.WorkflowRun{}
 	wnrs := []sdk.WorkflowNodeRun{}
 	wnjrs := []sdk.WorkflowNodeJobRun{}

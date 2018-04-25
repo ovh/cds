@@ -101,7 +101,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		pbji := &worker.WorkflowNodeJobRunInfo{}
 		go takeJob(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
@@ -371,7 +371,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		chanError := make(chan error, 1)
 		go postJobResult(chanEvent, chanError, dbWithCtx, api.Cache, proj, getWorker(ctx), &res)
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, proj.Key)
 		if err != nil {
 			return err
 		}
@@ -441,12 +441,12 @@ func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
-			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
+			return sdk.WrapError(errr, "postWorkflowJobLogsHandler> Invalid id")
 		}
 
 		pbJob, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
 		if errJob != nil {
-			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
+			return sdk.WrapError(errJob, "postWorkflowJobLogsHandler> Cannot get job run %d", id)
 		}
 
 		var logs sdk.Log

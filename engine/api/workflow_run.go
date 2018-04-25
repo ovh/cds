@@ -318,7 +318,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 
 		go stopWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, proj, run, getUser(ctx))
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, proj.Key)
 		if err != nil {
 			return err
 		}
@@ -511,7 +511,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 
 		go stopWorkflowNodeRun(chanEvent, chanError, api.mustDB(), api.Cache, p, nodeRun, name, getUser(ctx))
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
 		if err != nil {
 			return err
 		}
@@ -670,7 +670,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx), asCodeInfosMsg)
 		}()
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
 		if err != nil {
 			return err
 		}
