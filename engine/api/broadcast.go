@@ -32,7 +32,7 @@ func (api *API) addBroadcastHandler() Handler {
 			bc.ProjectID = &proj.ID
 		}
 
-		if err := broadcast.InsertBroadcast(api.mustDB(), &bc); err != nil {
+		if err := broadcast.Insert(api.mustDB(), &bc); err != nil {
 			return sdk.WrapError(err, "addBroadcast> cannot add broadcast")
 		}
 
@@ -47,7 +47,7 @@ func (api *API) updateBroadcastHandler() Handler {
 			return sdk.WrapError(errr, "updateBroadcast> Invalid id")
 		}
 
-		if _, err := broadcast.LoadBroadcastByID(api.mustDB(), broadcastID); err != nil {
+		if _, err := broadcast.LoadByID(api.mustDB(), broadcastID); err != nil {
 			return sdk.WrapError(err, "updateBroadcast> cannot load broadcast by id")
 		}
 
@@ -77,7 +77,7 @@ func (api *API) updateBroadcastHandler() Handler {
 		}
 
 		// update broadcast in db
-		if err := broadcast.UpdateBroadcast(tx, &bc); err != nil {
+		if err := broadcast.Update(tx, &bc); err != nil {
 			return sdk.WrapError(err, "updateBroadcast> cannot update broadcast")
 		}
 
@@ -101,7 +101,7 @@ func (api *API) deleteBroadcastHandler() Handler {
 			return sdk.WrapError(err, "deleteBroadcast> Cannot start transaction")
 		}
 
-		if err := broadcast.DeleteBroadcast(tx, broadcastID); err != nil {
+		if err := broadcast.Delete(tx, broadcastID); err != nil {
 			return sdk.WrapError(err, "deleteBroadcast: cannot delete broadcast")
 		}
 
@@ -120,7 +120,7 @@ func (api *API) getBroadcastHandler() Handler {
 			return sdk.WrapError(errr, "getBroadcast> Invalid id")
 		}
 
-		broadcast, err := broadcast.LoadBroadcastByID(api.mustDB(), id)
+		broadcast, err := broadcast.LoadByID(api.mustDB(), id)
 		if err != nil {
 			return sdk.WrapError(err, "getBroadcast> cannot load broadcasts")
 		}
@@ -131,7 +131,7 @@ func (api *API) getBroadcastHandler() Handler {
 
 func (api *API) getBroadcastsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		broadcasts, err := broadcast.LoadBroadcasts(api.mustDB())
+		broadcasts, err := broadcast.LoadAll(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getBroadcasts> cannot load broadcasts")
 		}
