@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) postApplicationImportHandler() Handler {
@@ -68,7 +69,8 @@ func (api *API) postApplicationImportHandler() Handler {
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
 			if ok {
-				return WriteJSON(w, msgListString, myError.Status)
+				log.Warning("postApplicationImportHandler> Unable to import application %s : %s", eapp.Name, myError.String())
+				return WriteJSON(w, myError.String(), myError.Status)
 			}
 			return sdk.WrapError(globalError, "postApplicationImportHandler> Unable import application %s", eapp.Name)
 		}
