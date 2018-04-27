@@ -167,7 +167,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 			}
 
 			if haveToUpdate {
-				if err := UpdateNodeRun(db, nodeRun); err != nil {
+				if err := updateNodeRunStatusAndTriggersRun(db, nodeRun); err != nil {
 					return false, sdk.WrapError(err, "process> Cannot update node run")
 				}
 			}

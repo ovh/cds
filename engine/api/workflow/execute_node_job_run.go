@@ -94,6 +94,7 @@ func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 		return syncTakeJobInNodeRun(db, nodeRun, job, stageIndex, chanEvent)
 	}
+
 	return execute(dbCopy, db, store, proj, node, chanEvent)
 }
 
