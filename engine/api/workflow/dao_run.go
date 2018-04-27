@@ -30,8 +30,9 @@ workflow_run.to_delete
 
 // LoadRunOptions are options for loading a run (node or workflow)
 type LoadRunOptions struct {
-	WithArtifacts bool
-	WithTests     bool
+	WithArtifacts  bool
+	WithTests      bool
+	WithLightTests bool
 }
 
 // insertWorkflowRun inserts in table "workflow_run""
@@ -577,6 +578,8 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 	var testsField string
 	if loadOpts.WithTests {
 		testsField = nodeRunTestsField
+	} else if loadOpts.WithLightTests {
+		testsField = withLightNodeRunTestsField
 	}
 
 	wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)

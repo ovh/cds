@@ -42,14 +42,16 @@ workflow_node_run.workflow_node_name
 `
 
 const nodeRunTestsField string = ", workflow_node_run.tests"
-const withoutNodeRunTestsField string = ", json_build_object('ko', workflow_node_run.tests->>'ko', 'ok', workflow_node_run.tests->>'ok', 'skipped', workflow_node_run.tests->>'skipped', 'total', workflow_node_run.tests->>'total') AS tests"
+const withLightNodeRunTestsField string = ", json_build_object('ko', workflow_node_run.tests->>'ko', 'ok', workflow_node_run.tests->>'ok', 'skipped', workflow_node_run.tests->>'skipped', 'total', workflow_node_run.tests->>'total') AS tests"
 
 //LoadNodeRun load a specific node run on a workflow
 func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
-	testsField := withoutNodeRunTestsField
+	var testsField string
 	if loadOpts.WithTests {
 		testsField = nodeRunTestsField
+	} else if loadOpts.WithLightTests {
+		testsField = withLightNodeRunTestsField
 	}
 
 	query := fmt.Sprintf(`select %s %s
@@ -102,9 +104,11 @@ func LoadAndLockNodeRunByID(db gorp.SqlExecutor, id int64, wait bool) (*sdk.Work
 //LoadNodeRunByID load a specific node run on a workflow
 func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
-	testsField := withoutNodeRunTestsField
+	var testsField string
 	if loadOpts.WithTests {
 		testsField = nodeRunTestsField
+	} else if loadOpts.WithLightTests {
+		testsField = withLightNodeRunTestsField
 	}
 
 	query := fmt.Sprintf(`select %s %s

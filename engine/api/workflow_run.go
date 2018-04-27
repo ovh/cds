@@ -284,7 +284,7 @@ func (api *API) getWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
+		run, err := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true, WithLightTests: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load workflow %s run number %d", name, number)
 		}
