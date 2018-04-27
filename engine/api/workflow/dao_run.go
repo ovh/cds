@@ -15,6 +15,25 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const wfRunfields string = `
+workflow_run.id,
+workflow_run.num,
+workflow_run.project_id,
+workflow_run.workflow_id,
+workflow_run.start,
+workflow_run.last_modified,
+workflow_run.status,
+workflow_run.last_sub_num,
+workflow_run.last_execution,
+workflow_run.to_delete
+`
+
+// LoadRunOptions are options for loading a run (node or workflow)
+type LoadRunOptions struct {
+	WithArtifacts bool
+	WithTests     bool
+}
+
 // insertWorkflowRun inserts in table "workflow_run""
 func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	runDB := Run(*wr)
@@ -166,55 +185,55 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 }
 
 // LoadLastRun returns the last run for a workflow
-func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, withArtifacts bool) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.*
+func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
 	from workflow_run
 	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
 	where project.projectkey = $1
 	and workflow.name = $2
-	order by workflow_run.num desc limit 1`
-	return loadRun(db, withArtifacts, query, projectkey, workflowname)
+	order by workflow_run.num desc limit 1`, wfRunfields)
+	return loadRun(db, loadOpts, query, projectkey, workflowname)
 }
 
 // LoadRun returns a specific run
-func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64, withArtifacts bool) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.*
+func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
 	from workflow_run
 	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
 	where project.projectkey = $1
 	and workflow.name = $2
-	and workflow_run.num = $3`
-	return loadRun(db, withArtifacts, query, projectkey, workflowname, number)
+	and workflow_run.num = $3`, wfRunfields)
+	return loadRun(db, loadOpts, query, projectkey, workflowname, number)
 }
 
 // LoadRunByIDAndProjectKey returns a specific run
-func LoadRunByIDAndProjectKey(db gorp.SqlExecutor, projectkey string, id int64, withArtifacts bool) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.*
+func LoadRunByIDAndProjectKey(db gorp.SqlExecutor, projectkey string, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
 	from workflow_run
 	join project on workflow_run.project_id = project.id
 	where project.projectkey = $1
-	and workflow_run.id = $2`
-	return loadRun(db, withArtifacts, query, projectkey, id)
+	and workflow_run.id = $2`, wfRunfields)
+	return loadRun(db, loadOpts, query, projectkey, id)
 }
 
 // LoadRunByID loads run by ID
-func LoadRunByID(db gorp.SqlExecutor, id int64, withArtifacts bool) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.*
+func LoadRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
 	from workflow_run
-	where workflow_run.id = $1`
-	return loadRun(db, withArtifacts, query, id)
+	where workflow_run.id = $1`, wfRunfields)
+	return loadRun(db, loadOpts, query, id)
 }
 
 // LoadAndLockRunByJobID loads a run by a job id
-func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, withArtifacts bool) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.*
+func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
 	from workflow_run
 	join workflow_node_run on workflow_run.id = workflow_node_run.workflow_run_id
 	join workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
-	where workflow_node_run_job.id = $1 for update`
-	return loadRun(db, withArtifacts, query, id)
+	where workflow_node_run_job.id = $1 for update`, wfRunfields)
+	return loadRun(db, loadOpts, query, id)
 }
 
 //LoadRuns loads all runs
@@ -246,29 +265,29 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 	}
 
 	args = []interface{}{projectkey, limit, offset}
-	query := `select workflow_run.*
+	query := fmt.Sprintf(`select %s
 	from workflow_run
 	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
 	where project.projectkey = $1
 	order by workflow_run.start desc
-	limit $2 offset $3`
+	limit $2 offset $3`, wfRunfields)
 
 	if workflowname != "" {
 		args = []interface{}{projectkey, workflowname, limit, offset}
-		query = `select workflow_run.*
+		query = fmt.Sprintf(`select %s
 			from workflow_run
 			join project on workflow_run.project_id = project.id
 			join workflow on workflow_run.workflow_id = workflow.id
 			where project.projectkey = $1
 			and workflow.name = $2
 			order by workflow_run.start desc
-			limit $3 offset $4`
+			limit $3 offset $4`, wfRunfields)
 	}
 
 	if len(tagFilter) > 0 {
 		// Posgres operator: '<@' means 'is contained by' eg. 'ARRAY[2,7] <@ ARRAY[1,7,4,2,6]' ==> returns true
-		query = `select workflow_run.*
+		query = fmt.Sprintf(`select %s
 		from workflow_run
 		join project on workflow_run.project_id = project.id
 		join workflow on workflow_run.workflow_id = workflow.id
@@ -285,7 +304,7 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 		and workflow.name = $2
 		and string_to_array($5, ',') <@ string_to_array(tags.tags, ',')
 		order by workflow_run.start desc
-		limit $3 offset $4`
+		limit $3 offset $4`, wfRunfields)
 
 		var tags []string
 		for k, v := range tagFilter {
@@ -327,7 +346,7 @@ func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 	return nil
 }
 
-func loadRun(db gorp.SqlExecutor, withArtifacts bool, query string, args ...interface{}) (*sdk.WorkflowRun, error) {
+func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ...interface{}) (*sdk.WorkflowRun, error) {
 	runDB := &Run{}
 	if err := db.SelectOne(runDB, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -337,7 +356,7 @@ func loadRun(db gorp.SqlExecutor, withArtifacts bool, query string, args ...inte
 	}
 	wr := sdk.WorkflowRun(*runDB)
 
-	if err := syncNodeRuns(db, &wr, withArtifacts); err != nil {
+	if err := syncNodeRuns(db, &wr, loadOpts); err != nil {
 		return nil, sdk.WrapError(err, "loadRun> Unable to load workflow node run")
 	}
 
@@ -554,9 +573,14 @@ func deleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
 }
 
 // syncNodeRuns load the workflow node runs for a workflow run
-func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, withArtifacts bool) error {
+func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOptions) error {
+	var testsField string
+	if loadOpts.WithTests {
+		testsField = nodeRunTestsField
+	}
+
 	wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
-	q := "select workflow_node_run.* from workflow_node_run where workflow_run_id = $1 ORDER BY workflow_node_run.sub_num DESC"
+	q := fmt.Sprintf("select %s %s from workflow_node_run where workflow_run_id = $1 ORDER BY workflow_node_run.sub_num DESC", nodeRunFields, testsField)
 	dbNodeRuns := []NodeRun{}
 	if _, err := db.Select(&dbNodeRuns, q, wr.ID); err != nil {
 		if err != sql.ErrNoRows {
@@ -571,7 +595,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, withArtifacts bool) 
 		}
 		wnr.CanBeRun = CanBeRun(wr, wnr)
 
-		if withArtifacts {
+		if loadOpts.WithArtifacts {
 			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
 			if errA != nil {
 				return sdk.WrapError(errA, "syncNodeRuns>Error loading artifacts for run %d", wnr.ID)

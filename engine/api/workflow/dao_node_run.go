@@ -16,11 +16,42 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-//LoadNodeRun load a specific node run on a workflow
-func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, id int64, withArtifacts bool) (*sdk.WorkflowNodeRun, error) {
-	var rr = NodeRun{}
+const nodeRunFields string = `
+workflow_node_run.workflow_run_id,
+workflow_node_run.id,
+workflow_node_run.workflow_node_id,
+workflow_node_run.num,
+workflow_node_run.sub_num,
+workflow_node_run.status,
+workflow_node_run.start,
+workflow_node_run.last_modified,
+workflow_node_run.done,
+workflow_node_run.hook_event,
+workflow_node_run.manual,
+workflow_node_run.source_node_runs,
+workflow_node_run.payload,
+workflow_node_run.pipeline_parameters,
+workflow_node_run.build_parameters,
+workflow_node_run.commits,
+workflow_node_run.stages,
+workflow_node_run.triggers_run,
+workflow_node_run.vcs_repository,
+workflow_node_run.vcs_hash,
+workflow_node_run.vcs_branch,
+workflow_node_run.workflow_node_name
+`
 
-	query := `select workflow_node_run.*
+const nodeRunTestsField string = ", workflow_node_run.tests"
+
+//LoadNodeRun load a specific node run on a workflow
+func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+	var rr = NodeRun{}
+	var testsField string
+	if loadOpts.WithTests {
+		testsField = nodeRunTestsField
+	}
+
+	query := fmt.Sprintf(`select %s %s
 	from workflow_node_run
 	join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
 	join project on project.id = workflow_run.project_id
@@ -28,7 +59,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	where project.projectkey = $1
 	and workflow.name = $2
 	and workflow_run.num = $3
-	and workflow_node_run.id = $4`
+	and workflow_node_run.id = $4`, nodeRunFields, testsField)
 
 	if err := db.SelectOne(&rr, query, projectkey, workflowname, number, id); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadNodeRun> Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
@@ -39,7 +70,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		return nil, sdk.WrapError(err, "LoadNodeRun>")
 	}
 
-	if withArtifacts {
+	if loadOpts.WithArtifacts {
 		arts, errA := loadArtifactByNodeRunID(db, r.ID)
 		if errA != nil {
 			return nil, sdk.WrapError(errA, "LoadNodeRun>Error loading artifacts for run %d", r.ID)
@@ -54,9 +85,10 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 //LoadAndLockNodeRunByID load and lock a specific node run on a workflow
 func LoadAndLockNodeRunByID(db gorp.SqlExecutor, id int64, wait bool) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
-	query := `select workflow_node_run.*
+
+	query := fmt.Sprintf(`select %s %s
 	from workflow_node_run
-	where workflow_node_run.id = $1 for update`
+	where workflow_node_run.id = $1 for update`, nodeRunFields, nodeRunTestsField)
 	if !wait {
 		query += " nowait"
 	}
@@ -67,11 +99,16 @@ func LoadAndLockNodeRunByID(db gorp.SqlExecutor, id int64, wait bool) (*sdk.Work
 }
 
 //LoadNodeRunByID load a specific node run on a workflow
-func LoadNodeRunByID(db gorp.SqlExecutor, id int64, withArtifacts bool) (*sdk.WorkflowNodeRun, error) {
+func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	var rr = NodeRun{}
-	query := `select workflow_node_run.*
+	var testsField string
+	if loadOpts.WithTests {
+		testsField = nodeRunTestsField
+	}
+
+	query := fmt.Sprintf(`select %s %s
 	from workflow_node_run
-	where workflow_node_run.id = $1`
+	where workflow_node_run.id = $1`, nodeRunFields, testsField)
 	if err := db.SelectOne(&rr, query, id); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadNodeRunByID> Unable to load workflow_node_run node=%d", id)
 	}
@@ -81,7 +118,7 @@ func LoadNodeRunByID(db gorp.SqlExecutor, id int64, withArtifacts bool) (*sdk.Wo
 		return nil, sdk.WrapError(err, "LoadNodeRun>")
 	}
 
-	if withArtifacts {
+	if loadOpts.WithArtifacts {
 		arts, errA := loadArtifactByNodeRunID(db, r.ID)
 		if errA != nil {
 			return nil, sdk.WrapError(errA, "LoadNodeRun>Error loading artifacts for run %d", r.ID)
@@ -422,13 +459,13 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 // PreviousNodeRun find previous node run
 func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.WorkflowNode, workflowID int64) (sdk.WorkflowNodeRun, error) {
-	query := `
-					SELECT workflow_node_run.* FROM workflow_node_run
+	query := fmt.Sprintf(`
+					SELECT %s FROM workflow_node_run
 					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
 					WHERE vcs_branch = $3 AND workflow_node_run.num <= $4 AND workflow_node_run.workflow_node_id = $5 AND workflow_node_run.id != $6
 					ORDER BY workflow_node_run.num, workflow_node_run.sub_num DESC
 					LIMIT 1
-				`
+				`, nodeRunFields)
 	var nodeRun sdk.WorkflowNodeRun
 	var rr = NodeRun{}
 	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
@@ -450,7 +487,7 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 	var previous sdk.BuildNumberAndHash
 	var prevHash, prevBranch, prevRepository sql.NullString
 	var previousBuildNumber sql.NullInt64
-	lastRun, errL := LoadLastRun(db, projectKey, wf.Name, false)
+	lastRun, errL := LoadLastRun(db, projectKey, wf.Name, LoadRunOptions{})
 	if errL == sql.ErrNoRows || lastRun == nil {
 		return previous, nil
 	}
