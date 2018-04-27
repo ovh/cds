@@ -349,7 +349,8 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		if err := UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
-		dbWithCtx := api.mustDBWithCtx(ctx)
+		customCtx, _ := context.WithTimeout(context.Background(), 90*time.Second)
+		dbWithCtx := api.mustDBWithCtx(customCtx)
 
 		proj, errP := project.LoadProjectByNodeJobRunID(dbWithCtx, api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
@@ -375,9 +376,10 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		if err != nil {
 			return err
 		}
+		db := api.mustDB()
 
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
+		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
+		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
 		return nil
 	}
