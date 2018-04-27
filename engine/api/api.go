@@ -360,6 +360,7 @@ func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
 	if db == nil {
 		panic(fmt.Errorf("Database unavailable"))
 	}
+
 	return db
 }
 
