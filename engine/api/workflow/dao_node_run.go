@@ -42,7 +42,7 @@ workflow_node_run.workflow_node_name
 `
 
 const nodeRunTestsField string = ", workflow_node_run.tests"
-const withLightNodeRunTestsField string = ", json_build_object('ko', workflow_node_run.tests->>'ko', 'ok', workflow_node_run.tests->>'ok', 'skipped', workflow_node_run.tests->>'skipped', 'total', workflow_node_run.tests->>'total') AS tests"
+const withLightNodeRunTestsField string = ", json_build_object('ko', workflow_node_run.tests->'ko', 'ok', workflow_node_run.tests->'ok', 'skipped', workflow_node_run.tests->'skipped', 'total', workflow_node_run.tests->'total') AS tests"
 
 //LoadNodeRun load a specific node run on a workflow
 func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
