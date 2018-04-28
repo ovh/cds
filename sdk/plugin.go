@@ -101,3 +101,32 @@ func DeletePlugin(name string) error {
 
 	return nil
 }
+
+const (
+	GRPCPluginDeploymentPlatform = "deployment_platform"
+	GRPCPluginAction             = "action"
+)
+
+type GRPCPlugin struct {
+	ID          int64              `json:"id" cli:"id" db:"id"`
+	Name        string             `json:"name" cli:"name" db:"name"`
+	Type        string             `json:"type" cli:"type" db:"type"`
+	Author      string             `json:"author" cli:"author" db:"author"`
+	Description string             `json:"description" cli:"description" db:"description"`
+	Binaries    []GRPCPluginBinary `json:"binaries" cli:"_" db:"-"`
+}
+
+type GRPCPluginBinary struct {
+	OS               string          `json:"os,omitempty" cli:"os"`
+	Arch             string          `json:"arch,omitempty" cli:"arch"`
+	Name             string          `json:"name,omitempty" cli:"name"`
+	ObjectPath       string          `json:"object_path,omitempty" cli:"object_path"`
+	Size             int64           `json:"size,omitempty" cli:"size"`
+	Perm             uint32          `json:"perm,omitempty"`
+	MD5sum           string          `json:"md5sum,omitempty" cli:"md5sum"`
+	TempURL          string          `json:"temp_url,omitempty"`
+	TempURLSecretKey string          `json:"-"`
+	Cmd              string          `json:"cmd" cli:"cmd"`
+	Args             []string        `json:"args" cli:"args"`
+	Requirements     RequirementList `json:"requirements"`
+}
