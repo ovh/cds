@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/xanzy/go-gitlab"
 
@@ -135,9 +136,12 @@ var instancesAuthorizedClient = map[string]*gitlabClient{}
 //GetAuthorized returns an authorized client
 func (g *gitlabConsumer) GetAuthorizedClient(accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
 	c, ok := instancesAuthorizedClient[accessToken]
+	httpClient := &http.Client{
+		Timeout: 60 * time.Second,
+	}
 	if !ok {
 		c = &gitlabClient{
-			client:              gitlab.NewOAuthClient(nil, accessToken),
+			client:              gitlab.NewOAuthClient(httpClient, accessToken),
 			uiURL:               g.uiURL,
 			disableStatus:       g.disableStatus,
 			disableStatusDetail: g.disableStatusDetail,

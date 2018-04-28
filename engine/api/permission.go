@@ -224,7 +224,7 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 
 	id, err := strconv.ParseInt(idS, 10, 64)
 	if err != nil {
-		log.Error("checkWorkerPermission> Unable to parse permID=%s", idS)
+		log.Error("checkWorkerPermission> Unable to parse permID:%s err:%v", idS, err)
 		return false
 	}
 
@@ -237,7 +237,7 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 
 		node, err := workflow.LoadNodeJobRun(db, api.Cache, id)
 		if err != nil {
-			log.Error("checkWorkerPermission> Unable to load job %d", id)
+			log.Error("checkWorkerPermission> Unable to load job %d err:%v", id, err)
 			return false
 		}
 		ok = node.Job.WorkerName == getWorker(ctx).Name && node.Job.WorkerID == getWorker(ctx).ID

@@ -491,7 +491,14 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		return nil
 	}
 
-	if len(wf.PurgeTags) == 0 {
+	filteredPurgeTags := []string{}
+	for _, t := range wf.PurgeTags {
+		if t != "" {
+			filteredPurgeTags = append(filteredPurgeTags, t)
+		}
+	}
+
+	if len(filteredPurgeTags) == 0 {
 		qDelete := `
 			UPDATE workflow_run SET to_delete = true
 			WHERE workflow_run.id IN (
@@ -515,7 +522,7 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		GROUP BY tag, value HAVING COUNT(id) > $3
 	`
 
-	if _, errS := db.Select(&ids, queryGetIds, wf.ID, strings.Join(wf.PurgeTags, ","), wf.HistoryLength); errS != nil {
+	if _, errS := db.Select(&ids, queryGetIds, wf.ID, strings.Join(filteredPurgeTags, ","), wf.HistoryLength); errS != nil {
 		log.Warning("PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
 		return errS
 	}

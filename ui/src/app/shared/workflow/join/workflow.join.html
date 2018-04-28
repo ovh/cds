@@ -5,6 +5,9 @@
         [class.disabled]="loading" class="playIconPosition" (click)="!loading && playJoin()">
         <i class="play icon"></i>
     </div>
+    <div class="loadIconPosition" [hidden]="!loadingRun">
+      <div class="ui active inline loader"></div>
+    </div>
     <div [hidden]="!disabled" class="iconPosition" (click)="selectJoinToLink()">
         <i class="selected radio icon"></i>
     </div>

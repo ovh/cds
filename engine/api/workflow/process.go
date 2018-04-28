@@ -661,7 +661,7 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 	} else {
 		luacheck, err := luascript.NewCheck()
 		if err != nil {
-			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
+			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
 			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
 				Args: []interface{}{err.Error()},

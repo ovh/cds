@@ -100,7 +100,7 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 		go func(nr sdk.WorkflowNodeRun) {
 			wr, errL := LoadRunByID(db, nr.WorkflowRunID, false)
 			if errL != nil {
-				log.Error("ResyncNodeRuns> Unable to load workflowRun by id %d", nr.WorkflowRunID)
+				log.Error("ResyncNodeRuns> Unable to load workflowRun by id %d : %v", nr.WorkflowRunID, errL)
 				return
 			}
 

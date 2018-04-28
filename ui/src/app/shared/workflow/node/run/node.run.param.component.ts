@@ -43,8 +43,8 @@ export class WorkflowNodeRunParamComponent {
 
     @Input('nodeToRun')
     set nodeToRun(data: WorkflowNode) {
+        this._nodeToRun = cloneDeep(data);
         if (data) {
-            this._nodeToRun = cloneDeep(data);
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
