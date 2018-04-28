@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -316,7 +317,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
 
-		go stopWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, proj, run, getUser(ctx))
+		go stopWorkflowRun(ctx, chanEvent, chanError, api.mustDB(), api.Cache, proj, run, getUser(ctx))
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, proj.Key)
 		if err != nil {
@@ -328,7 +329,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 	}
 }
 
-func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, run *sdk.WorkflowRun, u *sdk.User) {
+func stopWorkflowRun(ctx context.Context, chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, run *sdk.WorkflowRun, u *sdk.User) {
 	defer close(chEvent)
 	defer close(chError)
 
@@ -356,7 +357,7 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 				continue
 			}
 
-			if errS := workflow.StopWorkflowNodeRun(db, store, p, wnr, stopInfos, chEvent); errS != nil {
+			if errS := workflow.StopWorkflowNodeRun(ctx, db, store, p, wnr, stopInfos, chEvent); errS != nil {
 				chError <- sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
 				tx.Rollback()
 			}
@@ -366,7 +367,7 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 
 	run.LastExecution = time.Now()
 	run.Status = sdk.StatusStopped.String()
-	if errU := workflow.UpdateWorkflowRun(tx, run); errU != nil {
+	if errU := workflow.UpdateWorkflowRun(ctx, tx, run); errU != nil {
 		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run %d", run.ID)
 		return
 	}
@@ -509,7 +510,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
 
-		go stopWorkflowNodeRun(chanEvent, chanError, api.mustDB(), api.Cache, p, nodeRun, name, getUser(ctx))
+		go stopWorkflowNodeRun(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, nodeRun, name, getUser(ctx))
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
 		if err != nil {
@@ -521,7 +522,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 	}
 }
 
-func stopWorkflowNodeRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) {
+func stopWorkflowNodeRun(ctx context.Context, chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) {
 	defer close(chEvent)
 	defer close(chError)
 
@@ -537,7 +538,7 @@ func stopWorkflowNodeRun(chEvent chan<- interface{}, chError chan<- error, db *g
 		RemoteTime: time.Now(),
 		Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}},
 	}
-	if errS := workflow.StopWorkflowNodeRun(db, store, p, *nodeRun, stopInfos, chEvent); errS != nil {
+	if errS := workflow.StopWorkflowNodeRun(ctx, db, store, p, *nodeRun, stopInfos, chEvent); errS != nil {
 		chError <- sdk.WrapError(errS, "stopWorkflowNodeRunHandler> Unable to stop workflow node run")
 		return
 	}
@@ -667,7 +668,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 			}()
 
-			startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx), asCodeInfosMsg)
+			startWorkflowRun(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx), asCodeInfosMsg)
 		}()
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
@@ -706,7 +707,7 @@ type workerOpts struct {
 	chanEvent      chan<- interface{}
 }
 
-func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) {
+func startWorkflowRun(ctx context.Context, chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) {
 	const nbWorker int = 5
 	defer close(chEvent)
 	defer close(chError)
@@ -721,7 +722,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	//Run from hook
 	if opts.Hook != nil {
 		var errfh error
-		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent, asCodeInfos)
+		_, errfh = workflow.RunFromHook(ctx, db, tx, store, p, wf, opts.Hook, chEvent, asCodeInfos)
 		if errfh != nil {
 			errorOccured = true
 			chError <- sdk.WrapError(errfh, "startWorkflowRun> Unable to run workflow from hook")
@@ -777,7 +778,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 					WorkflowNodeHookUUID: opts.Hook.WorkflowNodeHookUUID,
 				}
 			}
-			go runFromNode(db, store, optsCopy, p, wf, lastRun, u, workerOptions)
+			go runFromNode(ctx, db, store, optsCopy, p, wf, lastRun, u, workerOptions)
 		}
 		for _, fromNode := range fromNodes {
 			workerOptions.chanNodesToRun <- *fromNode
@@ -803,7 +804,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 
 		if lastRun == nil {
 			var errmr error
-			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent, asCodeInfos)
+			_, errmr = workflow.ManualRun(ctx, db, tx, store, p, wf, opts.Manual, chEvent, asCodeInfos)
 			if errmr != nil {
 				errorOccured = true
 				chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
@@ -819,7 +820,11 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	}
 }
 
-func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHandlerOption, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, u *sdk.User, workerOptions *workerOpts) {
+func runFromNode(ctx context.Context, db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHandlerOption, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, u *sdk.User, workerOptions *workerOpts) {
+	var end func()
+	ctx, end = tracing.Span(ctx, "runFromNode")
+	defer end()
+
 	for fromNode := range workerOptions.chanNodesToRun {
 		tx, errb := db.Begin()
 		if errb != nil {
@@ -851,7 +856,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 
 		//Manual run
 		if lastRun != nil {
-			_, errmr := workflow.ManualRunFromNode(db, tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, workerOptions.chanEvent)
+			_, errmr := workflow.ManualRunFromNode(ctx, db, tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, workerOptions.chanEvent)
 			if errmr != nil {
 				workerOptions.chanError <- sdk.WrapError(errmr, "runFromNode> Unable to run workflow from node")
 				tx.Rollback()

@@ -33,6 +33,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -468,6 +469,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.TTL)
 	if errCache != nil {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
+	}
+
+	if err := tracing.Init(); err != nil {
+		return fmt.Errorf("Unable to start tracing exporter: %v", err)
 	}
 
 	log.Info("Initializing HTTP router")

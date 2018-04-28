@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -60,7 +62,11 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo str
 }
 
 // LoadAll returns all projects
-func LoadAll(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+	var end func()
+	ctx, end = tracing.Span(ctx, "project.LoadAll")
+	defer end()
+
 	var query string
 	var args []interface{}
 	// Admin can gets all project
@@ -322,7 +328,7 @@ var LoadOptions = struct {
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id
-func LoadProjectByNodeJobRunID(db gorp.SqlExecutor, store cache.Store, nodeJobRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+func LoadProjectByNodeJobRunID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, nodeJobRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `
 		SELECT project.* FROM project
 		JOIN workflow_run ON workflow_run.project_id = project.id
@@ -330,28 +336,28 @@ func LoadProjectByNodeJobRunID(db gorp.SqlExecutor, store cache.Store, nodeJobRu
 		JOIN workflow_node_run_job ON workflow_node_run_job.workflow_node_run_id = workflow_node_run.id
 		WHERE workflow_node_run_job.id = $1
 	`
-	return load(db, store, u, opts, query, nodeJobRunID)
+	return load(ctx, db, store, u, opts, query, nodeJobRunID)
 }
 
 // LoadProjectByNodeRunID return a project from node run id
-func LoadProjectByNodeRunID(db gorp.SqlExecutor, store cache.Store, nodeRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+func LoadProjectByNodeRunID(ctx context.Context, db gorp.SqlExecutor, store cache.Store, nodeRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `
 		SELECT project.* FROM project
 		JOIN workflow_run ON workflow_run.project_id = project.id
 		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
 		WHERE workflow_node_run.id = $1
 	`
-	return load(db, store, u, opts, query, nodeRunID)
+	return load(ctx, db, store, u, opts, query, nodeRunID)
 }
 
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(db, store, u, opts, "select project.* from project where id = $1", id)
+	return load(nil, db, store, u, opts, "select project.* from project where id = $1", id)
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func Load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(db, store, u, opts, "select project.* from project where projectkey = $1", key)
+	return load(nil, db, store, u, opts, "select project.* from project where projectkey = $1", key)
 }
 
 // LoadByPipelineID loads an project from pipeline iD
@@ -360,7 +366,7 @@ func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pipel
 	          FROM project
 	          JOIN pipeline ON pipeline.project_id = projecT.id
 	          WHERE pipeline.id = $1 `
-	return load(db, store, u, opts, query, pipelineID)
+	return load(nil, db, store, u, opts, query, pipelineID)
 }
 
 func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
@@ -388,7 +394,11 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 	return projs, nil
 }
 
-func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
+func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
+	var end func()
+	ctx, end = tracing.Span(ctx, "project.load")
+	defer end()
+
 	dbProj := &dbProject{}
 	for _, o := range opts {
 		if o == LoadOptions.WithLock {

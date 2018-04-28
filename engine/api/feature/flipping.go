@@ -13,6 +13,9 @@ const (
 	// FeatWorkflowAsCode is workflow as code feature id
 	FeatWorkflowAsCode = "cds:wasc"
 
+	// FeatEnableTracing is the opencensus tracing feature id
+	FeatEnableTracing = "cds:tracing"
+
 	cacheFeatureKey = "feature:"
 )
 

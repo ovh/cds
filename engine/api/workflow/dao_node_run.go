@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -52,7 +54,11 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 }
 
 //LoadAndLockNodeRunByID load and lock a specific node run on a workflow
-func LoadAndLockNodeRunByID(db gorp.SqlExecutor, id int64, wait bool) (*sdk.WorkflowNodeRun, error) {
+func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, wait bool) (*sdk.WorkflowNodeRun, error) {
+	var end func()
+	ctx, end = tracing.Span(ctx, "workflow.LoadAndLockNodeRunByID")
+	defer end()
+
 	var rr = NodeRun{}
 	query := `select workflow_node_run.*
 	from workflow_node_run

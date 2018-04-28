@@ -9,7 +9,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"runtime"
+	"strings"
 	"time"
 
 	muxcontext "github.com/gorilla/context"
@@ -17,6 +19,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -453,6 +456,13 @@ func Auth(v bool) HandlerConfigParam {
 	return f
 }
 
+func EnableTracing() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["trace_enable"] = "true"
+	}
+	return f
+}
+
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	defer func() {
@@ -472,4 +482,24 @@ func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
 		statusPanic = sdk.MonitoringStatusWarn
 	}
 	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
+}
+
+func (api *API) tracingMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+	name := runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
+	name = strings.Replace(name, ".func1", "", 1)
+	name = strings.Replace(name, "github.com/ovh/cds/engine/api.(*API).", "", 1)
+
+	opts := tracing.Options{
+		Name:     name,
+		Enable:   rc.Options["trace_enable"] == "true",
+		User:     getUser(ctx),
+		Worker:   getWorker(ctx),
+		Hatchery: getHatchery(ctx),
+	}
+
+	return tracing.Start(ctx, w, req, opts, api.mustDB(), api.Cache)
+}
+
+func (api *API) tracingPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+	return tracing.End(ctx, w, req)
 }

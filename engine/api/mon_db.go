@@ -52,7 +52,7 @@ func (api *API) getMonDBTimesDBHandler() Handler {
 
 func (api *API) getMonDBTimesDBProjectLoadHandler(ctx context.Context) string {
 	s1 := time.Now()
-	if _, err := project.LoadAll(api.mustDB(), api.Cache, getUser(ctx)); err != nil {
+	if _, err := project.LoadAll(ctx, api.mustDB(), api.Cache, getUser(ctx)); err != nil {
 		return fmt.Sprintf("ERR getMonDBTimesDBProjectLoadHandler:%s", err)
 	}
 	return elapsed("getMonDBTimesDBProjectLoadHandler", s1)
@@ -60,7 +60,7 @@ func (api *API) getMonDBTimesDBProjectLoadHandler(ctx context.Context) string {
 
 func (api *API) getMonDBTimesDBProjectLoadWithAppsHandler(ctx context.Context) string {
 	s1 := time.Now()
-	if _, err := project.LoadAll(api.mustDB(), api.Cache, getUser(ctx), project.LoadOptions.WithApplications); err != nil {
+	if _, err := project.LoadAll(ctx, api.mustDB(), api.Cache, getUser(ctx), project.LoadOptions.WithApplications); err != nil {
 		return fmt.Sprintf("ERR getMonDBTimesDBProjectLoadWithAppsHandler:%s", err)
 	}
 	return elapsed("getMonDBTimesDBProjectLoadWithAppsHandler", s1)

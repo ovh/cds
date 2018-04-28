@@ -1,11 +1,13 @@
 package workflow
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -23,7 +25,11 @@ const (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, chanEvent chan<- interface{}, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, error) {
+func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, chanEvent chan<- interface{}, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, error) {
+	var end func()
+	ctx, end = tracing.Span(ctx, "workflow.RunFromHook")
+	defer end()
+
 	hooks := w.GetHooks()
 	h, ok := hooks[e.WorkflowNodeHookUUID]
 	if !ok {
@@ -70,14 +76,14 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 		}
 
 		//Process it
-		hasRun, errWR := processWorkflowRun(dbCopy, db, store, p, wr, e, nil, nil, chanEvent)
+		hasRun, errWR := processWorkflowRun(ctx, dbCopy, db, store, p, wr, e, nil, nil, chanEvent)
 		if errWR != nil {
 			return nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
 		if !hasRun {
 			wr.Status = sdk.StatusNeverBuilt.String()
 			wr.LastExecution = time.Now()
-			return wr, UpdateWorkflowRun(db, wr)
+			return wr, UpdateWorkflowRun(ctx, db, wr)
 		}
 	} else {
 
@@ -97,7 +103,7 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 		}
 
 		//Process the workflow run from the node ID
-		if _, err := processWorkflowRun(dbCopy, db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID, chanEvent); err != nil {
+		if _, err := processWorkflowRun(ctx, dbCopy, db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID, chanEvent); err != nil {
 			return nil, sdk.WrapError(err, "RunFromHook> Unable to process workflow run")
 		}
 	}
@@ -111,14 +117,14 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 }
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
-func ManualRunFromNode(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64, chanEvent chan<- interface{}) (*sdk.WorkflowRun, error) {
+func ManualRunFromNode(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64, chanEvent chan<- interface{}) (*sdk.WorkflowRun, error) {
 	lastWorkflowRun, errLoadRun := LoadRun(db, w.ProjectKey, w.Name, number, false)
 	if errLoadRun != nil {
 		return nil, sdk.WrapError(errLoadRun, "ManualRunFromNode> Unable to load last run")
 	}
 	lastWorkflowRun.Tag(tagTriggeredBy, e.User.Username)
 
-	condOk, err := processWorkflowRun(dbCopy, db, store, p, lastWorkflowRun, nil, e, &nodeID, chanEvent)
+	condOk, err := processWorkflowRun(ctx, dbCopy, db, store, p, lastWorkflowRun, nil, e, &nodeID, chanEvent)
 	if err != nil {
 		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
 	}
@@ -137,7 +143,7 @@ func ManualRunFromNode(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Stor
 }
 
 //ManualRun is the entry point to trigger a workflow manually
-func ManualRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}, asCodeInfos []sdk.Message) (*sdk.WorkflowRun, error) {
+func ManualRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}, asCodeInfos []sdk.Message) (*sdk.WorkflowRun, error) {
 	number, err := nextRunNumber(db, w)
 	if err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to get next number")
@@ -162,13 +168,13 @@ func ManualRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sd
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	hasRun, errWR := processWorkflowRun(dbCopy, db, store, p, wr, nil, e, nil, chanEvent)
+	hasRun, errWR := processWorkflowRun(ctx, dbCopy, db, store, p, wr, nil, e, nil, chanEvent)
 	if errWR != nil {
 		return wr, sdk.WrapError(errWR, "ManualRun")
 	}
 	if !hasRun {
 		wr.Status = sdk.StatusNeverBuilt.String()
-		return wr, UpdateWorkflowRun(db, wr)
+		return wr, UpdateWorkflowRun(ctx, db, wr)
 	}
 	return wr, nil
 }
