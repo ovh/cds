@@ -286,6 +286,7 @@ type Interface interface {
 	EnvironmentClient
 	ExportImportInterface
 	GroupClient
+	GRPCPluginsClient
 	HatcheryClient
 	PipelineClient
 	PlatformClient
@@ -318,4 +319,13 @@ type Raw interface {
 	GetJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
 	DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
 	Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
+}
+
+// GRPCPluginsClient exposes plugins API
+type GRPCPluginsClient interface {
+	PluginsList() ([]sdk.GRPCPlugin, error)
+	PluginsGet(string) (*sdk.GRPCPlugin, error)
+	PluginAdd(*sdk.GRPCPlugin) error
+	PluginUpdate(*sdk.GRPCPlugin) error
+	PluginDelete(string) error
 }

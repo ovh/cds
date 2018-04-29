@@ -40,6 +40,10 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin", r.POST(api.postPGRPCluginHandler, NeedAdmin(true)), r.GET(api.getAllGRPCluginHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}", r.GET(api.getGRPCluginHandler, NeedAdmin(true)), r.PUT(api.putGRPCluginHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}/binary", r.POST(api.postGRPCluginBinaryHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}", r.GET(api.getGRPCluginBinaryHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginBinaryHandler, NeedAdmin(true)))
 
 	// Admin service
 	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))

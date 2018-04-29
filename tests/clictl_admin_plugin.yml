@@ -1,0 +1,7 @@
+name: Plugins Command TestSuite with cdsctl
+testcases:
+- name: cdsctl admin plugins list
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins list
+    assertions:
+      - result.code ShouldEqual 0

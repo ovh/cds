@@ -116,6 +116,15 @@ type GRPCPlugin struct {
 	Binaries    []GRPCPluginBinary `json:"binaries" cli:"_" db:"-"`
 }
 
+func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
+	for _, b := range p.Binaries {
+		if b.OS == os && b.Arch == arch {
+			return &b
+		}
+	}
+	return nil
+}
+
 type GRPCPluginBinary struct {
 	OS               string          `json:"os,omitempty" cli:"os"`
 	Arch             string          `json:"arch,omitempty" cli:"arch"`
@@ -129,4 +138,13 @@ type GRPCPluginBinary struct {
 	Cmd              string          `json:"cmd" cli:"cmd"`
 	Args             []string        `json:"args" cli:"args"`
 	Requirements     RequirementList `json:"requirements"`
+	FileContent      []byte          `json:"file_content"` //only used for upload
+}
+
+func (b GRPCPluginBinary) GetName() string {
+	return b.Name
+}
+
+func (b GRPCPluginBinary) GetPath() string {
+	return b.Name + "-" + b.OS + "-" + b.Arch
 }

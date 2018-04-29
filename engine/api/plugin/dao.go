@@ -3,6 +3,8 @@ package plugin
 import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -43,6 +45,12 @@ func (p *grpcPlugin) PostUpdate(db gorp.SqlExecutor) error {
 }
 
 func Delete(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
+	for _, b := range p.Binaries {
+		if err := objectstore.Delete(b); err != nil {
+			log.Error("plugin.Delete> unable to delete binary %v", b.ObjectPath)
+		}
+	}
+
 	m := grpcPlugin(*p)
 	if _, err := db.Delete(&m); err != nil {
 		return sdk.WrapError(err, "plugin.Delete")
@@ -78,7 +86,7 @@ func LoadAll(db gorp.SqlExecutor) ([]sdk.GRPCPlugin, error) {
 }
 
 func (p *grpcPlugin) PostGet(db gorp.SqlExecutor) error {
-	s, err := db.SelectNullStr("SELECT bianries FROM grpc_plugin WHERE ID = $1", p.ID)
+	s, err := db.SelectNullStr("SELECT binaries FROM grpc_plugin WHERE ID = $1", p.ID)
 	if err != nil {
 		return sdk.WrapError(err, "plugin.PostGet> unable to get binaries for ID=%d", p.ID)
 	}

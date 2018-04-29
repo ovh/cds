@@ -1,125 +1,41 @@
 package plugin
 
 import (
-	"reflect"
 	"testing"
 
-	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestInsert(t *testing.T) {
-	type args struct {
-		db gorp.SqlExecutor
-		p  *sdk.GRPCPlugin
+func TestInsertUpdateLoadDelete(t *testing.T) {
+	p := sdk.GRPCPlugin{
+		Author:      "me",
+		Description: "desc",
+		Name:        "test_plugin",
+		Type:        sdk.GRPCPluginDeploymentPlatform,
+		Binaries: []sdk.GRPCPluginBinary{
+			{
+				OS:   "linux",
+				Arch: "adm64",
+				Name: "blabla",
+			},
+		},
 	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := Insert(tt.args.db, tt.args.p); (err != nil) != tt.wantErr {
-				t.Errorf("Insert() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
 
-func TestUpdate(t *testing.T) {
-	type args struct {
-		db gorp.SqlExecutor
-		p  *sdk.GRPCPlugin
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := Update(tt.args.db, tt.args.p); (err != nil) != tt.wantErr {
-				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+	db, _ := test.SetupPG(t)
+	test.NoError(t, Insert(db, &p))
+	assert.NotEqual(t, 0, p.ID)
 
-func TestDelete(t *testing.T) {
-	type args struct {
-		db gorp.SqlExecutor
-		p  *sdk.GRPCPlugin
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := Delete(tt.args.db, tt.args.p); (err != nil) != tt.wantErr {
-				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+	test.NoError(t, Update(db, &p))
 
-func TestLoadByName(t *testing.T) {
-	type args struct {
-		db   gorp.SqlExecutor
-		name string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *sdk.GRPCPlugin
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := LoadByName(tt.args.db, tt.args.name)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LoadByName() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("LoadByName() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+	_, err := LoadByName(db, "test_plugin")
+	test.NoError(t, err)
 
-func TestLoadAll(t *testing.T) {
-	type args struct {
-		db gorp.SqlExecutor
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    []sdk.GRPCPlugin
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := LoadAll(tt.args.db)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LoadAll() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("LoadAll() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	all, err := LoadAll(db)
+	test.NoError(t, err)
+	assert.Len(t, all, 1)
+
+	test.NoError(t, Delete(db, &p))
+
 }
