@@ -62,7 +62,7 @@ func adminPluginsImportFunc(v cli.Values) error {
 	}
 
 	existing, err := client.PluginsGet(m.Name)
-	if err != nil {
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return fmt.Errorf("unable to get plugin: %v", err)
 	}
 

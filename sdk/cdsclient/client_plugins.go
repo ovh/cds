@@ -25,7 +25,7 @@ func (c client) PluginAdd(p *sdk.GRPCPlugin) error {
 }
 
 func (c client) PluginUpdate(p *sdk.GRPCPlugin) error {
-	_, err := c.PutJSON("/admin/plugin", p, p)
+	_, err := c.PutJSON("/admin/plugin/"+p.Name, p, p)
 	return err
 }
 

@@ -1,12 +1,14 @@
 package plugin
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/sdk/log"
-
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
@@ -61,6 +63,9 @@ func Delete(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 func LoadByName(db gorp.SqlExecutor, name string) (*sdk.GRPCPlugin, error) {
 	m := grpcPlugin{}
 	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin WHERE NAME = $1", name); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNotFound
+		}
 		return nil, sdk.WrapError(err, "plugin.LoadByName")
 	}
 	p := sdk.GRPCPlugin(m)
