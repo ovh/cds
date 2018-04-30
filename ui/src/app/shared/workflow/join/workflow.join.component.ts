@@ -29,6 +29,7 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
 
     disabled = false;
     loading = false;
+    loadingRun = false;
 
     @ViewChild('workflowDeleteJoin')
     workflowDeleteJoin: WorkflowDeleteJoinComponent;
@@ -112,13 +113,17 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
             return;
         }
         this.loading = true;
+        this.loadingRun = true;
 
         request.manual = new WorkflowNodeRunManual();
         request.from_nodes = this.join.triggers.map((trig) => trig.workflow_dest_node_id);
         request.number = this.currentWorkflowRun.num;
 
         this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this.loadingRun = false;
+            }))
             .subscribe((wr) => {
                 this._workflowCoreService.setCurrentWorkflowRun(wr);
                 this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],

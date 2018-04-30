@@ -160,7 +160,7 @@ func (s *Service) getTasksHandler() api.Handler {
 
 			var nbTodo int
 			for _, e := range execs {
-				if e.ProcessingTimestamp != 0 {
+				if e.ProcessingTimestamp == 0 {
 					nbTodo++
 				}
 			}
@@ -408,7 +408,7 @@ func (s *Service) Status() sdk.MonitoringStatus {
 
 		var nbTodo, nbTotal int
 		for _, e := range execs {
-			if e.ProcessingTimestamp != 0 {
+			if e.ProcessingTimestamp == 0 {
 				nbTodo++
 			}
 		}

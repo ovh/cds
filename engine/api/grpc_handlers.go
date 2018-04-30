@@ -99,11 +99,11 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	}
 	go postJobResult(chanEvent, chanError, db, h.store, p, wr, res)
 
-	workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+	workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
 	if err != nil {
 		return new(empty.Empty), err
 	}
-	//FIXME workflow.ResyncNodeRunsWithCommits(db, h.store, p, workflowNodeRuns)
+	workflow.ResyncNodeRunsWithCommits(db, h.store, p, workflowNodeRuns)
 	go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 	return new(empty.Empty), nil

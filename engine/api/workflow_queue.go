@@ -101,11 +101,11 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		pbji := &worker.WorkflowNodeJobRunInfo{}
 		go takeJob(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
-		//FIXMEworkflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		return WriteJSON(w, pbji, http.StatusOK)
@@ -155,7 +155,7 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	}
 
 	//Load the node run
-	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, false)
+	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	if errn != nil {
 		chError <- sdk.WrapError(errn, "takeJob> Cannot get node run")
 		return
@@ -172,7 +172,7 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	}
 
 	//Load workflow run
-	workflowRun, err := workflow.LoadRunByID(tx, noderun.WorkflowRunID, false)
+	workflowRun, err := workflow.LoadRunByID(tx, noderun.WorkflowRunID, workflow.LoadRunOptions{})
 	if err != nil {
 		chError <- sdk.WrapError(err, "takeJob> Unable to load workflow run")
 		return
@@ -349,11 +349,13 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		if err := UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
+		customCtx, _ := context.WithTimeout(context.Background(), 90*time.Second)
+		dbWithCtx := api.mustDBWithCtx(customCtx)
 
-		proj, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errP := project.LoadProjectByNodeJobRunID(dbWithCtx, api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
 			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
-				_, errLn := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+				_, errLn := workflow.LoadNodeJobRun(dbWithCtx, api.Cache, id)
 				if sdk.ErrorIs(errLn, sdk.ErrWorkflowNodeRunJobNotFound) {
 					// job result already send as job is no more in database
 					// this log is here to stats it and we returns nil for unlock the worker
@@ -368,15 +370,16 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, proj, getWorker(ctx), &res)
+		go postJobResult(chanEvent, chanError, dbWithCtx, api.Cache, proj, getWorker(ctx), &res)
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, proj.Key)
 		if err != nil {
 			return err
 		}
+		db := api.mustDB()
 
-		//FIXME workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, workflowNodeRuns)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
+		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
+		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
 		return nil
 	}
@@ -440,12 +443,12 @@ func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
-			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
+			return sdk.WrapError(errr, "postWorkflowJobLogsHandler> Invalid id")
 		}
 
 		pbJob, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
 		if errJob != nil {
-			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
+			return sdk.WrapError(errJob, "postWorkflowJobLogsHandler> Cannot get job run %d", id)
 		}
 
 		var logs sdk.Log
@@ -467,8 +470,9 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 		}
+		dbWithCtx := api.mustDBWithCtx(ctx)
 
-		nodeJobRun, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeJobRun, errJob := workflow.LoadNodeJobRun(dbWithCtx, api.Cache, id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
 		}
@@ -495,7 +499,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			nodeJobRun.Job.StepStatus = append(nodeJobRun.Job.StepStatus, step)
 		}
 
-		tx, errB := api.mustDB().Begin()
+		tx, errB := dbWithCtx.Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "postWorkflowJobStepStatusHandler> Cannot start transaction")
 		}
@@ -671,7 +675,7 @@ func (api *API) postWorkflowJobTagsHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		workflowRun, errl := workflow.LoadAndLockRunByJobID(tx, id, false)
+		workflowRun, errl := workflow.LoadAndLockRunByJobID(tx, id, workflow.LoadRunOptions{})
 		if errl != nil {
 			return sdk.WrapError(errl, "postWorkflowJobTagsHandler> Unable to load node run id %d", id)
 		}
@@ -733,7 +737,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run %d", id)
 		}
 
-		node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, false)
+		node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 		if errn != nil {
 			return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node %d", job.WorkflowNodeRunID)
 		}
