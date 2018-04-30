@@ -3,5 +3,23 @@ testcases:
 - name: cdsctl admin plugins list
   steps:
   - script: {{.cds.build.cdsctl}} admin plugins list
-    assertions:
-      - result.code ShouldEqual 0
+
+- name: cdsctl admin plugins import
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins import ./tests/fixtures/plugins/test-plugin.yml
+
+- name: cdsctl admin plugins binary-add
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins binary-add test-plugin ./tests/fixtures/plugins/test-plugin-binary.yml ./tests/fixtures/plugins/hello.py 
+
+- name: cdsctl admin plugins list
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins list
+
+- name: cdsctl admin plugins export
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins export test-plugin
+
+- name: cdsctl admin plugins delete
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins delete --force test-plugin
