@@ -303,7 +303,8 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 					Name:    name,
 					Image:   spawnArgs.Model.ModelDocker.Image,
 					Env:     envs,
-					Command: []string{cmd},
+					Command: strings.Fields(spawnArgs.Model.ModelDocker.Shell),
+					Args:    []string{cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
 							apiv1.ResourceMemory: resource.MustParse(fmt.Sprintf("%d", memory)),

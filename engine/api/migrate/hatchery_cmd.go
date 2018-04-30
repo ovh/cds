@@ -57,6 +57,7 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 			}
 			wm.ModelDocker = sdk.ModelDocker{
 				Image: wm.Image,
+				Shell: "sh -c",
 				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
 			}
 		case sdk.Openstack:
@@ -92,7 +93,6 @@ export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
 export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
 export CDS_TTL={{.TTL}}
 export CDS_INSECURE={{.HTTPInsecure}}
-
 `
 			userdata, errD := base64.StdEncoding.DecodeString(osdata.UserData)
 			if errD != nil {

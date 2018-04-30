@@ -722,6 +722,7 @@
   "worker_model_pre_cmd": "Commande avant exécution du worker",
   "worker_model_cmd": "Commande principale du worker",
   "worker_model_post_cmd": "Commande après exécution du worker",
+  "worker_model_shell_cmd": "Commande principale du shell",
 
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
   "workflow_app_info_new_wf_have_pipeline": "Cette application a un ancien workflow, vous pouvez le migrer automatiquement dans l'onglet Administration de l'application.",

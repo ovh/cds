@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const patternColumns = `
@@ -77,4 +78,94 @@ func LoadWorkerModelPatternByName(db gorp.SqlExecutor, patternType, name string)
 	workerModelPattern := sdk.ModelPattern(wmp)
 
 	return &workerModelPattern, nil
+}
+
+type patternCase struct {
+	patternType  string
+	patternModel sdk.ModelPattern
+}
+
+func insertFirstPatterns(db gorp.SqlExecutor) {
+	preCmdOs := `#!/bin/bash
+set +e
+export CDS_FROM_WORKER_IMAGE={{.FromWorkerImage}}
+export CDS_SINGLE_USE=1
+export CDS_FORCE_EXIT=1
+export CDS_API={{.API}}
+export CDS_TOKEN={{.Key}}
+export CDS_NAME={{.Name}}
+export CDS_MODEL={{.Model}}
+export CDS_HATCHERY={{.Hatchery}}
+export CDS_HATCHERY_NAME={{.HatcheryName}}
+export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
+export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
+export CDS_TTL={{.TTL}}
+export CDS_INSECURE={{.HTTPInsecure}}
+
+curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
+chmod +x worker
+`
+	patternCases := [...]patternCase{
+		{
+			patternType: sdk.Docker,
+			patternModel: sdk.ModelPattern{
+				Type: sdk.Docker,
+				Name: "basic_linux",
+				Model: sdk.ModelCmds{
+					Shell: "sh -c",
+					Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
+				},
+			},
+		},
+		{
+			patternType: sdk.Openstack,
+			patternModel: sdk.ModelPattern{
+				Type: sdk.Openstack,
+				Name: "basic_linux",
+				Model: sdk.ModelCmds{
+					PreCmd:  preCmdOs,
+					Cmd:     "./worker",
+					PostCmd: "sudo shutdown -h now",
+				},
+			},
+		},
+		{
+			patternType: sdk.VSphere,
+			patternModel: sdk.ModelPattern{
+				Type: sdk.VSphere,
+				Name: "basic_linux",
+				Model: sdk.ModelCmds{
+					PreCmd:  preCmdOs,
+					Cmd:     "PATH=$PATH ./worker",
+					PostCmd: "sudo shutdown -h now",
+				},
+			},
+		},
+		{
+			patternType: sdk.HostProcess,
+			patternModel: sdk.ModelPattern{
+				Type: sdk.HostProcess,
+				Name: "basic_linux",
+				Model: sdk.ModelCmds{
+					Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
+				},
+			},
+		},
+	}
+
+	for _, pattern := range patternCases {
+		numPattern, err := db.SelectInt("SELECT COUNT(1) FROM worker_model_pattern WHERE type = $1", pattern.patternType)
+		if err != nil {
+			log.Warning("insertFirstPatterns> cannot load worker_model_pattern for type %s", pattern.patternType, err)
+			continue
+		}
+
+		if numPattern > 0 {
+			continue
+		}
+
+		if err := InsertWorkerModelPattern(db, &pattern.patternModel); err != nil {
+			log.Warning("insertFirstPatterns> cannot insert basic model %s : %v", pattern.patternType, err)
+		}
+	}
 }

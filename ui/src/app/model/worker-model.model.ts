@@ -29,6 +29,7 @@ export class WorkerModel {
 
 export class ModelDocker {
   image: string;
+  shell: string;
   cmd: string;
   memory: number;
 }
@@ -46,6 +47,7 @@ export class ModelPattern {
   name: string;
   type: string;
   model: {
+    shell?: string;
     pre_cmd?: string;
     cmd: string;
     post_cmd?: string;

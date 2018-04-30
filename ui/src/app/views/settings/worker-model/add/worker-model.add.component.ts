@@ -105,6 +105,7 @@ export class WorkerModelAddComponent implements OnInit {
         switch (this.workerModel.type) {
             case 'docker':
                 this.workerModel.model_docker.cmd = pattern.model.cmd;
+                this.workerModel.model_docker.shell = pattern.model.shell;
                 break
             default:
                 this.workerModel.model_virtual_machine.pre_cmd = pattern.model.pre_cmd;

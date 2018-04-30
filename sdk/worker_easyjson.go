@@ -1152,6 +1152,8 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk7(in *jlexer.Lexer, out *ModelDocke
 			out.Image = string(in.String())
 		case "memory":
 			out.Memory = int64(in.Int64())
+		case "shell":
+			out.Shell = string(in.String())
 		case "cmd":
 			out.Cmd = string(in.String())
 		default:
@@ -1187,6 +1189,16 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk7(out *jwriter.Writer, in ModelDock
 			out.RawString(prefix)
 		}
 		out.Int64(int64(in.Memory))
+	}
+	if in.Shell != "" {
+		const prefix string = ",\"shell\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Shell))
 	}
 	if in.Cmd != "" {
 		const prefix string = ",\"cmd\":"
@@ -1243,6 +1255,8 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk8(in *jlexer.Lexer, out *ModelCmds)
 			continue
 		}
 		switch key {
+		case "shell":
+			out.Shell = string(in.String())
 		case "pre_cmd":
 			out.PreCmd = string(in.String())
 		case "cmd":
@@ -1263,6 +1277,16 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk8(out *jwriter.Writer, in ModelCmds
 	out.RawByte('{')
 	first := true
 	_ = first
+	if in.Shell != "" {
+		const prefix string = ",\"shell\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Shell))
+	}
 	if in.PreCmd != "" {
 		const prefix string = ",\"pre_cmd\":"
 		if first {

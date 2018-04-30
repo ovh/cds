@@ -41,13 +41,17 @@ func (api *API) addWorkerModelHandler() Handler {
 		switch model.Type {
 		case sdk.Docker:
 			if model.ModelDocker.Image == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
+				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker image")
 			}
 			if !currentUser.Admin && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrForbidden
 				}
 				model.ModelDocker.Cmd = modelPattern.Model.Cmd
+				model.ModelDocker.Shell = modelPattern.Model.Shell
+			}
+			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
 			}
 		default:
 			if model.ModelVirtualMachine.Image == "" {
@@ -245,13 +249,17 @@ func (api *API) updateWorkerModelHandler() Handler {
 		switch model.Type {
 		case sdk.Docker:
 			if model.ModelDocker.Image == "" {
-				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid image")
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker image")
 			}
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
 					return sdk.ErrForbidden
 				}
 				model.ModelDocker.Cmd = modelPattern.Model.Cmd
+				model.ModelDocker.Shell = modelPattern.Model.Shell
+			}
+			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
 			}
 		default:
 			if model.ModelVirtualMachine.Image == "" {
@@ -451,6 +459,10 @@ func (api *API) putWorkerModelPatternHandler() Handler {
 			return sdk.ErrInvalidPatternModel
 		}
 
+		if modelPattern.Type == sdk.Docker && modelPattern.Model.Shell == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "putWorkerModelPatternHandler> Cannot update a worker model pattern for %s without shell command", sdk.Docker)
+		}
+
 		var typeFound bool
 		for _, availableType := range sdk.AvailableWorkerModelType {
 			if availableType == modelPattern.Type {
@@ -539,6 +551,10 @@ func (api *API) postAddWorkerModelPatternHandler() Handler {
 
 		if modelPattern.Model.Cmd == "" {
 			return sdk.ErrInvalidPatternModel
+		}
+
+		if modelPattern.Type == sdk.Docker && modelPattern.Model.Shell == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postAddWorkerModelPatternHandler> Cannot add a worker model pattern for %s without shell command", sdk.Docker)
 		}
 
 		var typeFound bool

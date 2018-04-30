@@ -124,6 +124,7 @@ type ModelVirtualMachine struct {
 type ModelDocker struct {
 	Image  string `json:"image,omitempty"`
 	Memory int64  `json:"memory,omitempty"`
+	Shell  string `json:"shell,omitempty"`
 	Cmd    string `json:"cmd,omitempty"`
 }
 
@@ -136,6 +137,7 @@ type ModelPattern struct {
 }
 
 type ModelCmds struct {
+	Shell   string `json:"shell,omitempty"`
 	PreCmd  string `json:"pre_cmd,omitempty"`
 	Cmd     string `json:"cmd,omitempty"`
 	PostCmd string `json:"post_cmd,omitempty"`

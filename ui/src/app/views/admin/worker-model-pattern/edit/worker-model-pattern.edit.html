@@ -29,6 +29,10 @@
                   </ng-container>
               </div>
             </div>
+            <div class="field" *ngIf="pattern.type && pattern.type === 'docker'">
+              <label>{{'worker_model_shell_cmd' | translate}}</label>
+              <input class="ui input" type="text" name="shell" [(ngModel)]="pattern.model.shell">
+            </div>
             <div class="field" *ngIf="pattern.type && pattern.type !== 'docker'">
               <label>{{'worker_model_pre_cmd' | translate}}</label>
               <textarea class="ui input" name="pre_cmd" [(ngModel)]="pattern.model.pre_cmd" [disabled]="loading || !currentUser.admin"></textarea>

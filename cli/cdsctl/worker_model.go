@@ -72,6 +72,7 @@ type workerModelFile struct {
 	Description   string `json:"description" yaml:"description"`
 	Type          string `json:"type" yaml:"type"`
 	Flavor        string `json:"flavor,omitempty" yaml:"flavor,omitempty"`
+	Shell         string `json:"shell,omitempty" yaml:"shell,omitempty"`
 	PreCmd        string `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
 	Cmd           string `json:"cmd,omitempty" yaml:"cmd,omitempty"`
 	PostCmd       string `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
@@ -120,8 +121,15 @@ func workerModelImportRun(c cli.Values) error {
 			if modelInfos.Image == "" {
 				sdk.Exit("Error: Docker image not provided\n")
 			}
+			modelDocker.Shell = modelInfos.Shell
 			modelDocker.Image = modelInfos.Image
 			modelDocker.Cmd = modelInfos.Cmd
+			if modelDocker.Shell == "" {
+				sdk.Exit("Error: main shell command not provided\n")
+			}
+			if modelDocker.Cmd == "" {
+				sdk.Exit("Error: main worker command not provided\n")
+			}
 			break
 		case sdk.Openstack:
 			t = sdk.Openstack

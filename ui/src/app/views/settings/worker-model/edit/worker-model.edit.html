@@ -146,6 +146,10 @@
                 </sui-select>
               </div>
               <div class="field">
+                <label>{{'worker_model_shell_cmd' | translate}}</label>
+                <input class="ui input" type="text" name="shell" [(ngModel)]="workerModel.model_docker.shell" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+              </div>
+              <div class="field">
                 <label>{{'worker_model_cmd' | translate}}</label>
                 <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
