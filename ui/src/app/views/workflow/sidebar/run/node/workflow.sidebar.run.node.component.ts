@@ -125,7 +125,7 @@ export class WorkflowSidebarRunNodeComponent {
         }
 
         // If we are in a run, check if current node can be run ( compuite by cds api)
-        if (this.currentWorkflowNodeRun && this.currentWorkflowRun) {
+        if (this.currentWorkflowNodeRun && this.currentWorkflowRun && this.currentWorkflowRun.nodes) {
             let nodesRun = this.currentWorkflowRun.nodes[this.currentWorkflowNodeRun.workflow_node_id];
             let nodeRun = nodesRun.find( n => {
                 return n.id === this.currentWorkflowNodeRun.id;

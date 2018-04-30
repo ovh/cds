@@ -92,7 +92,8 @@ export class WorkflowComponent implements OnInit {
                                 }
                                 this.workflow = updatedWorkflow;
                                 if (this.selectedNodeID) {
-                                    this._workflowEventStore.setSelectedNode(Workflow.getNodeByID(this.selectedNodeID, this.workflow), true);
+                                    this._workflowEventStore.setSelectedNode(
+                                        Workflow.getNodeByID(this.selectedNodeID, this.workflow), true);
                                 }
                             }
                         }

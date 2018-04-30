@@ -5,7 +5,7 @@ import {Map} from 'immutable';
 import {Observable} from 'rxjs/Observable';
 import {WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin} from '../../model/workflow.model';
 import {WorkflowSidebarMode, WorkflowSidebarStore} from './workflow.sidebar.store';
-import {WorkflowService} from './workflow.service';
+import {WorkflowRunService} from './run/workflow.run.service';
 
 @Injectable()
 export class WorkflowEventStore {
@@ -20,7 +20,7 @@ export class WorkflowEventStore {
     private _selectedHook: BehaviorSubject<WorkflowNodeHook> = new BehaviorSubject<WorkflowNodeHook>(null);
 
 
-    constructor(private _sidebarStore: WorkflowSidebarStore, private _workflowService: WorkflowService) {
+    constructor(private _sidebarStore: WorkflowSidebarStore, private _workflowRunService: WorkflowRunService) {
     }
 
     broadcastWorkflowRun(key: string, name: string, wr: WorkflowRun): void {
@@ -34,8 +34,8 @@ export class WorkflowEventStore {
         let sRun = this._currentWorkflowRun.getValue();
         if (sRun && sRun.id === wr.id && new Date(wr.last_modified).getTime() > new Date(sRun.last_modified).getTime()) {
             if (!wr.workflow) {
-                this._workflowService.getWorkflow(key, name).subscribe(work => {
-                    wr.workflow = work;
+                this._workflowRunService.getWorkflowRun(key, name, wr.num).subscribe(wrUpdated => {
+                    wr = wrUpdated;
                     this._currentWorkflowRun.next(wr);
                 });
             } else {
