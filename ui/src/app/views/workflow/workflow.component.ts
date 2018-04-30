@@ -92,7 +92,7 @@ export class WorkflowComponent implements OnInit {
                                 }
                                 this.workflow = updatedWorkflow;
                                 if (this.selectedNodeID) {
-                                    this._workflowEventStore.setSelectedNode(Workflow.getNodeByID(this.selectedNodeID, this.workflow));
+                                    this._workflowEventStore.setSelectedNode(Workflow.getNodeByID(this.selectedNodeID, this.workflow), true);
                                 }
                             }
                         }
@@ -108,7 +108,7 @@ export class WorkflowComponent implements OnInit {
             if (qps['node_id']) {
                 this.selectedNodeID = Number(qps['node_id']);
                 if (this.workflow) {
-                    this._workflowEventStore.setSelectedNode(Workflow.getNodeByID(this.selectedNodeID, this.workflow));
+                    this._workflowEventStore.setSelectedNode(Workflow.getNodeByID(this.selectedNodeID, this.workflow), true);
                 }
             }
         });
@@ -163,7 +163,7 @@ export class WorkflowComponent implements OnInit {
     }
 
     changeToRunsMode(): void {
-        this._workflowEventStore.setSelectedNode(null);
+        this._workflowEventStore.setSelectedNode(null, false);
         this._workflowEventStore.setSelectedNodeRun(null);
         this._workflowEventStore.setSelectedHook(null);
         this._workflowEventStore.setSelectedJoin(null);

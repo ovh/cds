@@ -128,15 +128,17 @@ export class WorkflowNodeComponent implements OnInit {
           return;
         }
 
-        if (this._workflowEventStore.isRunSelected()) {
-            this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun);
+        if (this.workflowRun) {
+            this._workflowEventStore.setSelectedNode(this.node, false);
+            this._workflowEventStore.setSelectedRun(this.workflowRun);
+            this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, true);
         } else {
-            this._workflowEventStore.setSelectedNode(this.node);
+            this._workflowEventStore.setSelectedNode(this.node, true);
         }
     }
 
     goToLogs() {
-        if (this._workflowEventStore.isRunSelected()) {
+        if (this._workflowEventStore.isRunSelected() && this.currentNodeRun) {
             this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun);
             this._router.navigate([
                 '/project', this.project.key,
@@ -145,7 +147,7 @@ export class WorkflowNodeComponent implements OnInit {
                 'node', this.currentNodeRun.id
             ]);
         } else {
-            this._workflowEventStore.setSelectedNode(this.node);
+            this._workflowEventStore.setSelectedNode(this.node, true);
             this._router.navigate([
                 '/project', this.project.key,
                 'pipeline', this.node.pipeline.name

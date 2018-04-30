@@ -15,6 +15,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {first} from 'rxjs/operators';
 import 'rxjs/add/observable/zip';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
+import {PermissionValue} from '../../../../../model/permission.model';
 
 @Component({
     selector: 'app-workflow-sidebar-run-node',
@@ -35,6 +36,7 @@ export class WorkflowSidebarRunNodeComponent {
     currentWorkflowNodeRun: WorkflowNodeRun;
 
     node: WorkflowNode;
+    subNode: Subscription;
 
     // Modal
     @ViewChild('workflowRunNode')
@@ -50,12 +52,16 @@ export class WorkflowSidebarRunNodeComponent {
     constructor(private _wrService: WorkflowRunService, private _router: Router,
                private _durationService: DurationService,
                 private _workflowEventStore: WorkflowEventStore) {
+        this.subNode = this._workflowEventStore.selectedNode().subscribe(n => {
+            this.node = n;
+            this.refreshData();
+        });
         this.currentWorkflowRunSub = this._workflowEventStore.selectedRun().subscribe(wr => {
+            this.currentWorkflowRun = wr;
             if (!wr) {
-                this.currentWorkflowNodeRun = null;
                 return;
             }
-            this.currentWorkflowRun = wr;
+
             this.loading = false;
 
             // If not the same run => display loading
@@ -68,14 +74,12 @@ export class WorkflowSidebarRunNodeComponent {
 
         this.currentNodeRunSub = this._workflowEventStore.selectedNodeRun()
             .subscribe((nodeRun) => {
+                this.currentWorkflowNodeRun = nodeRun;
                 if (!nodeRun) {
                     return;
                 }
                 this.loading = false;
                 this.duration = this.getDuration();
-                this.canBeRun = this.getCanBeRun();
-                this.currentWorkflowNodeRun = nodeRun;
-
                 // If not the same run => display loading
                 if (this.currentWorkflowRun && this.currentWorkflowRun && this.currentWorkflowNodeRun.num !== this.currentWorkflowRun.num) {
                     this.loading = true;
@@ -86,7 +90,6 @@ export class WorkflowSidebarRunNodeComponent {
     }
 
     refreshData(): void {
-        this.node = Workflow.getNodeByID(this.currentWorkflowNodeRun.workflow_node_id, this.currentWorkflowRun.workflow);
         this.displayEditOption = this.node != null;
         this.canBeRun = this.getCanBeRun();
     }
@@ -113,19 +116,19 @@ export class WorkflowSidebarRunNodeComponent {
     }
 
     getCanBeRun(): boolean {
-        /**
-        let appForbid = this.node && this.node.context.application && this.node.context.application.permission &&
-            this.node.context.application.permission < PermissionValue.READ_EXECUTE;
+        // Get Env permission
         let envForbid = this.node && this.node.context.environment && this.node.context.environment.permission
             && this.node.context.environment.permission < PermissionValue.READ_EXECUTE;
 
-        if (this.workflow.permission < PermissionValue.READ_EXECUTE || appForbid || envForbid) {
-          return false;
+        if (this.workflow && this.workflow.permission < PermissionValue.READ_EXECUTE || envForbid) {
+            return false;
         }
+
+        // If we are in a run, check if current node can be run ( compuite by cds api)
         if (this.currentWorkflowNodeRun && this.currentWorkflowRun) {
             let nodesRun = this.currentWorkflowRun.nodes[this.currentWorkflowNodeRun.workflow_node_id];
             let nodeRun = nodesRun.find( n => {
-               return n.id === this.currentWorkflowNodeRun.id;
+                return n.id === this.currentWorkflowNodeRun.id;
             });
             return nodeRun.can_be_run;
         }
@@ -135,34 +138,36 @@ export class WorkflowSidebarRunNodeComponent {
             return true;
         }
 
-        if (workflowRunIsNotActive && !this.currentWorkflowNodeRun && this.nodeId === this.workflow.root_id) {
-            return true;
-        }
+        if (this.node && this.workflow) {
+            if (workflowRunIsNotActive && !this.currentWorkflowNodeRun && this.node.id === this.workflow.root_id) {
+                return true;
+            }
 
-        let nbNodeFound = 0;
-        let parentNodes = Workflow.getParentNodeIds(this.workflow, this.nodeId);
-        for (let parentNodeId of parentNodes) {
-            for (let nodeRunId in this.currentWorkflowRun.nodes) {
-                if (!this.currentWorkflowRun.nodes[nodeRunId]) {
-                    continue;
-                }
-                let nodeRuns = this.currentWorkflowRun.nodes[nodeRunId];
-                if (nodeRuns[0].workflow_node_id === parentNodeId) { // if node id is still the same
-                    if (PipelineStatus.isActive(nodeRuns[0].status)) {
-                        return false;
+            if (this.currentWorkflowRun) {
+                let nbNodeFound = 0;
+                let parentNodes = Workflow.getParentNodeIds(this.workflow, this.node.id);
+                for (let parentNodeId of parentNodes) {
+                    for (let nodeRunId in this.currentWorkflowRun.nodes) {
+                        if (!this.currentWorkflowRun.nodes[nodeRunId]) {
+                            continue;
+                        }
+                        let nodeRuns = this.currentWorkflowRun.nodes[nodeRunId];
+                        if (nodeRuns[0].workflow_node_id === parentNodeId) { // if node id is still the same
+                            if (PipelineStatus.isActive(nodeRuns[0].status)) {
+                                return false;
+                            }
+                            nbNodeFound++;
+                        } else if (!Workflow.getNodeByID(nodeRuns[0].workflow_node_id, this.workflow)) {
+                            // workflow updated so prefer return true
+                            return true;
+                        }
                     }
-                    nbNodeFound++;
-                } else if (!Workflow.getNodeByID(nodeRuns[0].workflow_node_id, this.workflow)) {
-                    // workflow updated so prefer return true
-                    return true;
+                }
+                if (nbNodeFound !== parentNodes.length) { // It means that a parent node isn't already executed
+                    return false;
                 }
             }
         }
-
-        if (nbNodeFound !== parentNodes.length) { // It means that a parent node isn't already executed
-            return false;
-        }
-        */
         return true;
     }
 

@@ -62,8 +62,8 @@ export class WorkflowEventStore {
         return this._currentWorkflowRun.getValue() != null;
     }
 
-    setSelectedNode(n: WorkflowNode) {
-        if (n) {
+    setSelectedNode(n: WorkflowNode, changeSideBar: boolean) {
+        if (n && changeSideBar) {
             this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_NODE);
         }
         this._selectedNode.next(n);
@@ -120,11 +120,11 @@ export class WorkflowEventStore {
         return new Observable<WorkflowRun>(fn => this._currentWorkflowRun.subscribe(fn));
     }
 
-    setSelectedNodeRun(wnr: WorkflowNodeRun) {
+    setSelectedNodeRun(wnr: WorkflowNodeRun, forceChange?: boolean) {
         let current = this._currentWorkflowNodeRun.getValue();
-        if (wnr) {
+        if (wnr || forceChange) {
             this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_NODE);
-            if (current && current.id === wnr.id) {
+            if (wnr && current && current.id === wnr.id) {
                 // update value
                 current.status = wnr.status;
             }

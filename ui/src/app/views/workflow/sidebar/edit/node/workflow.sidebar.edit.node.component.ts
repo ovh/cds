@@ -260,7 +260,6 @@ export class WorkflowSidebarEditNodeComponent {
     updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
-            this._workflowEventStore.setSelectedNode(null);
             this.loading = false;
             this._toast.success('', this._translate.instant('workflow_updated'));
             this._workflowEventStore.unselectAll();

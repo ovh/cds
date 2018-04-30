@@ -1,5 +1,4 @@
-
-<div class="sidebar-node-run" *ngIf="currentWorkflowNodeRun && node && !loading">
+<div class="sidebar-node-run" *ngIf="node && !loading">
     <h3 class="ui header ml5">
         <i class="cubes icon"></i>
         <div class="content">
@@ -32,12 +31,12 @@
             *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
             <i class="stop icon"></i>
         </button>
-        <button class="ui icon blue button" [class.disabled]="!displaySummary" [title]="'btn_logs' | translate" (click)="displayLogs()">
+        <button class="ui icon blue button" [class.disabled]="!displaySummary || !currentWorkflowNodeRun" [title]="'btn_logs' | translate" (click)="displayLogs()">
             <i class="file text icon"></i>
         </button>
       </div>
     </div>
-    <ng-container *ngIf="displaySummary">
+    <ng-container *ngIf="displaySummary && currentWorkflowNodeRun">
         <div class="ui list ml5 listmrt">
             <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
                 <div class="content pointing"
