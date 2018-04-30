@@ -64,7 +64,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, true)
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
@@ -157,7 +157,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() Handler {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, true)
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
@@ -203,7 +203,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler> Submitted artifact doesn't match, key:%s art:%v cachedArt:%v", cacheKey, art, cachedArt)
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), art.WorkflowNodeRunID, true)
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), art.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
