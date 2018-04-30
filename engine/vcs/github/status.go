@@ -20,7 +20,8 @@ func GetStatus() []sdk.MonitoringStatusLine {
 	}
 	a := sdk.MonitoringStatusLine{Component: "Github-RateLimitRemaining", Value: fmt.Sprintf("%d", RateLimitRemaining), Status: statusRemaining}
 
-	var statusReset, resetTime string
+	statusReset := sdk.MonitoringStatusOK
+	var resetTime string
 	if RateLimitReset <= 0 {
 		statusReset = sdk.MonitoringStatusAlert
 	} else {
@@ -29,7 +30,7 @@ func GetStatus() []sdk.MonitoringStatusLine {
 	}
 	b := sdk.MonitoringStatusLine{Component: "Github-RateLimitReset", Value: resetTime, Status: statusReset}
 
-	var statusRateLimit string
+	statusRateLimit := sdk.MonitoringStatusOK
 	if RateLimitLimit < 5000 {
 		statusRateLimit = sdk.MonitoringStatusAlert
 	}

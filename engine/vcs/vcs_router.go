@@ -40,5 +40,4 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/forks", r.GET(s.getListForks))
 
 	r.Handle("/vcs/{name}/status", r.POST(s.postStatusHandler))
-
 }

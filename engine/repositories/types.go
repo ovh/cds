@@ -27,7 +27,7 @@ type Configuration struct {
 	RepositoriesRentention int    `toml:"repositories_retention" comment:"Re retention on the filesystem (in days)" default:"10"`
 	HTTP                   struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
-		Port int    `toml:"port" default:"8085" toml:"name"`
+		Port int    `toml:"port" default:"8085"`
 	} `toml:"http" comment:"######################\n CDS Repositories HTTP Configuration \n######################"`
 	URL string `default:"http://localhost:8085"`
 	API struct {
@@ -42,7 +42,7 @@ type Configuration struct {
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
+			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`
 			Password string `toml:"password"`
 		} `toml:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Repositories Cache Settings \n######################"`

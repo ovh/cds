@@ -24,12 +24,35 @@ func publishEvent(e sdk.Event) {
 // Publish sends a event to a queue
 //func Publish(event sdk.Event, eventType string) {
 func Publish(payload interface{}, u *sdk.User) {
+	p := structs.Map(payload)
+	var projectKey, applicationName, pipelineName, environmentName, workflowName string
+	if v, ok := p["ProjectKey"]; ok {
+		projectKey = v.(string)
+	}
+	if v, ok := p["ApplicationName"]; ok {
+		applicationName = v.(string)
+	}
+	if v, ok := p["PipelineName"]; ok {
+		pipelineName = v.(string)
+	}
+	if v, ok := p["EnvironmentName"]; ok {
+		environmentName = v.(string)
+	}
+	if v, ok := p["WorkflowName"]; ok {
+		workflowName = v.(string)
+	}
+
 	event := sdk.Event{
-		Timestamp: time.Now(),
-		Hostname:  hostname,
-		CDSName:   cdsname,
-		EventType: fmt.Sprintf("%T", payload),
-		Payload:   structs.Map(payload),
+		Timestamp:       time.Now(),
+		Hostname:        hostname,
+		CDSName:         cdsname,
+		EventType:       fmt.Sprintf("%T", payload),
+		Payload:         p,
+		ProjectKey:      projectKey,
+		ApplicationName: applicationName,
+		PipelineName:    pipelineName,
+		EnvironmentName: environmentName,
+		WorkflowName:    workflowName,
 	}
 	if u != nil {
 		event.Username = u.Username

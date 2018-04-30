@@ -16,7 +16,7 @@ import (
 
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
-func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64, chanEvent chan<- interface{}) (bool, error) {
+func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64, chanEvent chan<- interface{}) (bool, error) {
 	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess, nodesRunSkipped, nodesRunDisabled int
 	t0 := time.Now()
 	log.Debug("processWorkflowRun> Begin [#%d]%s", w.Number, w.Workflow.Name)
@@ -31,7 +31,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 	w.Status = string(sdk.StatusBuilding)
 	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
-	log.Debug("processWorkflowRun> %s/%s %d.%d", p.Name, w.Workflow.Name, w.Number, maxsn)
+	log.Debug("processWorkflowRun> %s/%s %d.%d", proj.Name, w.Workflow.Name, w.Number, maxsn)
 	w.LastSubNumber = maxsn
 
 	//Checks startingFromNode
@@ -59,7 +59,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 				return false, sdk.ErrWorkflowNodeParentNotRun
 			}
 		}
-		conditionOK, errP := processWorkflowNodeRun(dbCopy, db, store, p, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual, chanEvent)
+		conditionOK, errP := processWorkflowNodeRun(dbCopy, db, store, proj, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual, chanEvent)
 		if errP != nil {
 			return false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -80,7 +80,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 			},
 		})
 
-		conditionOK, errP := processWorkflowNodeRun(dbCopy, db, store, p, w, w.Workflow.Root, 0, nil, hookEvent, manual, chanEvent)
+		conditionOK, errP := processWorkflowNodeRun(dbCopy, db, store, proj, w, w.Workflow.Root, 0, nil, hookEvent, manual, chanEvent)
 		if errP != nil {
 			return false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -126,7 +126,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 					if !abortTrigger {
 						//Keep the subnumber of the previous node in the graph
-						conditionOk, errPwnr := processWorkflowNodeRun(dbCopy, db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, chanEvent)
+						conditionOk, errPwnr := processWorkflowNodeRun(dbCopy, db, store, proj, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, chanEvent)
 						if errPwnr != nil {
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, errPwnr)
 							AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
@@ -167,7 +167,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 			}
 
 			if haveToUpdate {
-				if err := UpdateNodeRun(db, nodeRun); err != nil {
+				if err := updateNodeRunStatusAndTriggersRun(db, nodeRun); err != nil {
 					return false, sdk.WrapError(err, "process> Cannot update node run")
 				}
 			}
@@ -247,7 +247,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 				if !abortTrigger {
 					//Keep the subnumber of the previous node in the graph
-					conditionOK, err := processWorkflowNodeRun(dbCopy, db, store, p, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil, chanEvent)
+					conditionOK, err := processWorkflowNodeRun(dbCopy, db, store, proj, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil, chanEvent)
 					if err != nil {
 						AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 							ID:   sdk.MsgWorkflowError.ID,
@@ -289,7 +289,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 	// the map of workflow node runs of the wornflow run to get the right statuses
 	// After resync, recompute all status counter compute the workflow status
 	// All of this is useful to get the right workflow status is the last node status is skipped
-	if err := syncNodeRuns(db, w, false); err != nil {
+	if err := syncNodeRuns(db, w, LoadRunOptions{}); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun> Unable to sync workflow node runs")
 	}
 	// Reinit the counters
@@ -310,7 +310,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 	if sdk.StatusIsTerminated(w.Status) {
 		w.LastExecution = time.Now()
 		defer func() {
-			if err := resyncCommitStatus(dbCopy, store, p, w); err != nil {
+			if err := resyncCommitStatus(dbCopy, store, proj, w); err != nil {
 				log.Error("processWorkflowRun> %v", err)
 			}
 		}()
@@ -661,7 +661,7 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 	} else {
 		luacheck, err := luascript.NewCheck()
 		if err != nil {
-			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
+			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
 			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
 				Args: []interface{}{err.Error()},

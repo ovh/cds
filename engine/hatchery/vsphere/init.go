@@ -9,24 +9,11 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // Init create new client for vsphere
 func (h *HatcheryVSphere) Init() error {
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}

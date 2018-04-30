@@ -48,7 +48,6 @@ type Termui struct {
 	// monitoring
 	queue                   *cli.ScrollableList
 	statusHatcheriesWorkers *cli.ScrollableList
-	statusWorkerModels      *cli.ScrollableList
 	status                  *cli.ScrollableList
 	currentURL              string
 }
@@ -57,7 +56,6 @@ type Termui struct {
 const (
 	QueueSelected             = "queue"
 	BuildingSelected          = "building"
-	WorkerModelsSelected      = "workerModels"
 	HatcheriesWorkersSelected = "hatcheriesWorkers"
 	StatusSelected            = "status"
 )
@@ -176,19 +174,12 @@ func (ui *Termui) showMonitoring() {
 
 	ui.selected = QueueSelected
 
-	ui.statusWorkerModels = cli.NewScrollableList()
-	ui.statusWorkerModels.BorderLabel = " Worker Models "
-	ui.statusWorkerModels.Height = heightBottom
-	ui.statusWorkerModels.Items = []string{"[loading...](fg-cyan,bg-default)"}
-	ui.statusWorkerModels.BorderBottom = false
-	ui.statusWorkerModels.BorderLeft = false
-
 	ui.statusHatcheriesWorkers = cli.NewScrollableList()
 	ui.statusHatcheriesWorkers.BorderLabel = " Hatcheries "
 	ui.statusHatcheriesWorkers.Height = heightBottom
 	ui.statusHatcheriesWorkers.Items = []string{"[loading...](fg-cyan,bg-default)"}
 	ui.statusHatcheriesWorkers.BorderBottom = false
-	ui.statusHatcheriesWorkers.BorderLeft = false
+	ui.statusHatcheriesWorkers.BorderLeft = true
 	ui.statusHatcheriesWorkers.BorderRight = false
 
 	ui.status = cli.NewScrollableList()
@@ -196,7 +187,7 @@ func (ui *Termui) showMonitoring() {
 	ui.status.Height = heightBottom
 	ui.status.Items = []string{"[loading...](fg-cyan,bg-default)"}
 	ui.status.BorderBottom = false
-	ui.status.BorderLeft = true
+	ui.status.BorderLeft = false
 	ui.status.BorderRight = false
 
 	termui.Body.AddRows(
@@ -216,9 +207,8 @@ func (ui *Termui) showMonitoring() {
 	)
 	termui.Body.AddRows(
 		termui.NewRow(
-			termui.NewCol(4, 0, ui.statusWorkerModels),
+			termui.NewCol(7, 0, ui.status),
 			termui.NewCol(5, 0, ui.statusHatcheriesWorkers),
-			termui.NewCol(3, 0, ui.status),
 		),
 	)
 
@@ -254,8 +244,6 @@ func (ui *Termui) monitoringCursorDown() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.CursorDown()
-	case WorkerModelsSelected:
-		ui.statusWorkerModels.CursorDown()
 	case HatcheriesWorkersSelected:
 		ui.statusHatcheriesWorkers.CursorDown()
 	case StatusSelected:
@@ -267,8 +255,6 @@ func (ui *Termui) monitoringCursorUp() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.CursorUp()
-	case WorkerModelsSelected:
-		ui.statusWorkerModels.CursorUp()
 	case HatcheriesWorkersSelected:
 		ui.statusHatcheriesWorkers.CursorUp()
 	case StatusSelected:
@@ -282,9 +268,6 @@ func (ui *Termui) monitoringSelectNext() {
 	case QueueSelected:
 		ui.selected = BuildingSelected
 		ui.queue.Cursor = 0
-	case WorkerModelsSelected:
-		ui.selected = HatcheriesWorkersSelected
-		ui.statusWorkerModels.Cursor = 0
 	case HatcheriesWorkersSelected:
 		ui.selected = StatusSelected
 		ui.statusHatcheriesWorkers.Cursor = 0
@@ -297,22 +280,18 @@ func (ui *Termui) monitoringSelectNext() {
 
 func (ui *Termui) monitoringColorSelected() {
 	ui.queue.BorderFg = termui.ColorDefault
-	ui.statusWorkerModels.BorderFg = termui.ColorDefault
 	ui.statusHatcheriesWorkers.BorderFg = termui.ColorDefault
 	ui.status.BorderFg = termui.ColorDefault
 
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.BorderFg = termui.ColorRed
-	case WorkerModelsSelected:
-		ui.statusWorkerModels.BorderFg = termui.ColorRed
 	case HatcheriesWorkersSelected:
 		ui.statusHatcheriesWorkers.BorderFg = termui.ColorRed
 	case StatusSelected:
 		ui.status.BorderFg = termui.ColorRed
 	}
 	termui.Render(ui.queue,
-		ui.statusWorkerModels,
 		ui.statusHatcheriesWorkers,
 		ui.status)
 }
@@ -327,17 +306,12 @@ func (ui *Termui) updateStatus() string {
 	elapsed := time.Since(start)
 	msg := fmt.Sprintf("[status %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
-	selected := "fg-white,bg-default"
-	if ui.selected == StatusSelected {
-		selected = "fg-white"
-	}
-
 	items := []string{}
 	for _, l := range statusEngine.Lines {
 		if l.Status != sdk.MonitoringStatusOK {
-			items = append(items, fmt.Sprintf("[%s](bg-red)", l.String()))
-		} else {
-			items = append(items, fmt.Sprintf("[%s](%s)", l.String(), selected))
+			items = append(items, fmt.Sprintf("[%s](fg-white,bg-red)", l.String()))
+		} else if strings.Contains(l.Component, "Global") {
+			items = append(items, fmt.Sprintf("[%s](fg-white,bg-default)", l.String()))
 		}
 	}
 	ui.status.Items = items
@@ -480,7 +454,7 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 		wModels[workerModels[w].ID] = workerModels[w]
 	}
 
-	statusTitle, items, idsModels := []string{}, []string{}, []string{}
+	statusTitle := []string{}
 	models := make(map[string]map[string]int64)
 	status := make(map[string]int)
 
@@ -488,7 +462,6 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 		idModel := fmt.Sprintf("%s", wModels[w.ModelID].Type+" "+wModels[w.ModelID].Name)
 		if _, ok := models[idModel]; !ok {
 			models[idModel] = make(map[string]int64)
-			idsModels = append(idsModels, idModel)
 		}
 		models[idModel][w.Status.String()] = models[idModel][w.Status.String()] + 1
 
@@ -498,33 +471,13 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
-	selected := ",bg-default"
-	if ui.selected == WorkerModelsSelected {
-		selected = ""
-	}
-
-	sort.Strings(idsModels)
-	for _, id := range idsModels {
-		v := models[id]
-		var t string
-		for _, status := range statusTitle {
-			if v[status] > 0 {
-				icon, color := statusShort(status)
-				t += fmt.Sprintf("[%d %s ](%s%s)", v[status], icon, color, selected)
-			}
-		}
-		t += fmt.Sprintf("[ %s](fg-white%s)", pad(id, 28), selected)
-		items = append(items, t)
-	}
-	ui.statusWorkerModels.Items = items
-
 	sort.Strings(statusTitle)
 	title := " Models "
 	for _, s := range statusTitle {
 		icon, color := statusShort(s)
 		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
 	}
-	ui.statusWorkerModels.BorderLabel = title
+	ui.workers.Text += " " + title
 
 	return msg, wModels
 }

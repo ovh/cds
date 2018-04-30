@@ -40,13 +40,13 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 		if errprod != nil {
 			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}
-
-		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(), key, name, number, nodeRunID, true)
+		loadOpts := workflow.LoadRunOptions{WithArtifacts: true}
+		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(), key, name, number, nodeRunID, loadOpts)
 		if errWNR != nil {
 			return sdk.WrapError(errWNR, "releaseApplicationWorkflowHandler")
 		}
 
-		workflowRun, errWR := workflow.LoadRunByIDAndProjectKey(api.mustDB(), key, wNodeRun.WorkflowRunID, true)
+		workflowRun, errWR := workflow.LoadRunByIDAndProjectKey(api.mustDB(), key, wNodeRun.WorkflowRunID, loadOpts)
 		if errWR != nil {
 			return sdk.WrapError(errWR, "releaseApplicationWorkflowHandler")
 		}

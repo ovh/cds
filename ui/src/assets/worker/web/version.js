@@ -5,7 +5,7 @@ onmessage = function () {
 };
 
 function loadVersion () {
-    loop(10, function () {
+    loop(60, function () {
         var xhr = httpCall('assets/version.json?ts=' + (new Date()).getTime(), '../../../');
         if (xhr.status >= 400) {
             return true;

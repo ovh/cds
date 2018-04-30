@@ -3,9 +3,8 @@ package swarm
 import (
 	docker "github.com/docker/docker/client"
 
-	"github.com/ovh/cds/engine/service"
+	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -28,9 +27,8 @@ type HatcheryConfiguration struct {
 
 // HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
 type HatcherySwarm struct {
-	service.Common
+	hatcheryCommon.Common
 	Config       HatcheryConfiguration
 	hatch        *sdk.Hatchery
 	dockerClient *docker.Client
-	client       cdsclient.Interface
 }

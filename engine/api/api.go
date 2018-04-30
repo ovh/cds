@@ -73,7 +73,7 @@ type Configuration struct {
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
+			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`
 			Password string `toml:"password"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
 	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\nIf your CDS is made of a unique instance, a local cache if enough, but rememeber that all cached data will be lost on startup."`
@@ -191,6 +191,8 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
+
+	a.Type = services.TypeAPI
 
 	return nil
 }
@@ -350,6 +352,16 @@ func (a *API) mustDB() *gorp.DbMap {
 	if db == nil {
 		panic(fmt.Errorf("Database unavailable"))
 	}
+	return db
+}
+
+func (a *API) mustDBWithCtx(ctx context.Context) *gorp.DbMap {
+	db := a.DBConnectionFactory.GetDBMap()
+	db = db.WithContext(ctx).(*gorp.DbMap)
+	if db == nil {
+		panic(fmt.Errorf("Database unavailable"))
+	}
+
 	return db
 }
 
@@ -537,8 +549,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
-	go migrate.DefaultPayloadMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
-	go migrate.DefaultTagsMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {

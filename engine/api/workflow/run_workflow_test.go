@@ -105,12 +105,12 @@ func TestManualRun1(t *testing.T) {
 	test.NoError(t, err)
 
 	//LoadLastRun
-	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
 	test.NoError(t, err)
 	assert.Equal(t, int64(2), lastrun.Number)
 
 	//TestLoadNodeRun
-	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, err)
 	//don't want to compare queueSeconds attributes
 	nodeRun.Stages[0].RunJobs[0].QueuedSeconds = 0
@@ -137,7 +137,7 @@ func TestManualRun1(t *testing.T) {
 	assert.Len(t, runs, 2)
 
 	//TestLoadRunByID
-	_, err = workflow.LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID, false)
+	_, err = workflow.LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID, workflow.LoadRunOptions{})
 	test.NoError(t, err)
 }
 
@@ -351,7 +351,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//AddSpawnInfosNodeJobRun
-		err := workflow.AddSpawnInfosNodeJobRun(db, cache, proj, j.ID, []sdk.SpawnInfo{
+		err := workflow.AddSpawnInfosNodeJobRun(db, j.ID, []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -378,13 +378,13 @@ func TestManualRun3(t *testing.T) {
 		}, nil)
 
 		//Load workflow node run
-		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID, false)
+		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID, workflow.LoadRunOptions{})
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		//Load workflow run
-		workflowRun, err := workflow.LoadRunByID(db, nodeRun.WorkflowRunID, false)
+		workflowRun, err := workflow.LoadRunByID(db, nodeRun.WorkflowRunID, workflow.LoadRunOptions{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -516,11 +516,11 @@ func TestNoStage(t *testing.T) {
 	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
 	test.NoError(t, err)
 
 	//TestLoadNodeRun
-	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, err)
 
 	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
@@ -573,11 +573,11 @@ func TestNoJob(t *testing.T) {
 	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
 	test.NoError(t, err)
 
 	//TestLoadNodeRun
-	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, err)
 
 	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)

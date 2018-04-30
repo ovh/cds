@@ -8,9 +8,8 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 
-	"github.com/ovh/cds/engine/service"
+	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -52,14 +51,13 @@ type HatcheryConfiguration struct {
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
 // by startup up virtual machines on /cloud
 type HatcheryOpenstack struct {
-	service.Common
+	hatcheryCommon.Common
 	Config          HatcheryConfiguration
 	hatch           *sdk.Hatchery
 	flavors         []flavors.Flavor
 	networks        []tenantnetworks.Network
 	images          []images.Image
 	openstackClient *gophercloud.ServiceClient
-	client          cdsclient.Interface
 
 	networkID string // computed from networkString
 }

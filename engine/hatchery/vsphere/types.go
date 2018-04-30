@@ -5,9 +5,8 @@ import (
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 
-	"github.com/ovh/cds/engine/service"
+	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
@@ -48,7 +47,7 @@ type HatcheryConfiguration struct {
 
 // HatcheryVSphere spawns vm
 type HatcheryVSphere struct {
-	service.Common
+	hatcheryCommon.Common
 	Config     HatcheryConfiguration
 	hatch      *sdk.Hatchery
 	images     []string
@@ -56,7 +55,6 @@ type HatcheryVSphere struct {
 	finder     *find.Finder
 	network    object.NetworkReference
 	vclient    *govmomi.Client
-	client     cdsclient.Interface
 
 	// User provided parameters
 	endpoint           string

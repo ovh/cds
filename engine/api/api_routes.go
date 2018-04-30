@@ -52,9 +52,11 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)))
+
+	// Admin service
+	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
 	r.Handle("/admin/services", r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
-	r.Handle("/admin/services/{service}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
-	r.Handle("/admin/services/{service}/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
+	r.Handle("/admin/services/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
 
 	// Action plugin
 	r.Handle("/plugin", r.POST(api.addPluginHandler, NeedAdmin(true)), r.PUT(api.updatePluginHandler, NeedAdmin(true)))

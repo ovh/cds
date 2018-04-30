@@ -7,8 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/vmware/govmomi/vim25/types"
 
+	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -17,7 +20,11 @@ import (
 
 // New instanciates a new Hatchery vsphere
 func New() *HatcheryVSphere {
-	return new(HatcheryVSphere)
+	s := new(HatcheryVSphere)
+	s.Router = &api.Router{
+		Mux: mux.NewRouter(),
+	}
+	return s
 }
 
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
@@ -32,15 +39,37 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	// h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second)
-	// h.API = h.Config.API.HTTP.URL
-	// h.Name = h.Config.Name
-	// h.HTTPURL = h.Config.URL
-	// h.Token = h.Config.API.Token
-	// h.Type = services.TypeHatchery
-	// h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.hatch = &sdk.Hatchery{
+		Name:    h.Configuration().Name,
+		Version: sdk.VERSION,
+	}
+
+	h.Client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
+	)
+
+	h.API = h.Config.API.HTTP.URL
+	h.Name = h.Config.Name
+	h.HTTPURL = h.Config.URL
+	h.Token = h.Config.API.Token
+	h.Type = services.TypeHatchery
+	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
 	return nil
+}
+
+// Status returns sdk.MonitoringStatus, implements interface service.Service
+func (h *HatcheryVSphere) Status() sdk.MonitoringStatus {
+	m := h.CommonMonitoring()
+
+	if h.IsInitialized() {
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+	}
+	return m
 }
 
 // CheckConfiguration checks the validity of the configuration object
@@ -81,11 +110,6 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// Serve start the HatcheryVSphere server
-func (h *HatcheryVSphere) Serve(ctx context.Context) error {
-	return hatchery.Create(h)
-}
-
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryVSphere) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
@@ -97,9 +121,9 @@ func (h *HatcheryVSphere) CanSpawn(model *sdk.Model, jobID int64, requirements [
 	return true
 }
 
-//Client returns cdsclient instance
-func (h *HatcheryVSphere) Client() cdsclient.Interface {
-	return h.client
+// Serve start the hatchery server
+func (h *HatcheryVSphere) Serve(ctx context.Context) error {
+	return h.CommonServe(ctx, h)
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -212,7 +236,7 @@ func (h *HatcheryVSphere) updateServerList() {
 
 // killDisabledWorkers kill workers which are disabled
 func (h *HatcheryVSphere) killDisabledWorkers() {
-	workers, err := h.Client().WorkerList()
+	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
 		return

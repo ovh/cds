@@ -107,8 +107,8 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 			log.Info("takeWorkflowJob> Send build result OK")
 			return false, nil
 		}
-		log.Warning("takeWorkflowJob> Cannot send build result: HTTP %d - try: %d - new try in 5s", lasterr, try)
-		time.Sleep(5 * time.Second)
+		log.Warning("takeWorkflowJob> Cannot send build result: HTTP %v - try: %d - new try in 15s", lasterr, try)
+		time.Sleep(15 * time.Second)
 	}
 	log.Error("takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", job.ID)
 	return false, lasterr

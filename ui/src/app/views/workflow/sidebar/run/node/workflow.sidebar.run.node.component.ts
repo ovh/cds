@@ -52,6 +52,7 @@ export class WorkflowSidebarRunNodeComponent {
                 private _workflowEventStore: WorkflowEventStore) {
         this.currentWorkflowRunSub = this._workflowEventStore.selectedRun().subscribe(wr => {
             if (!wr) {
+                this.currentWorkflowNodeRun = null;
                 return;
             }
             this.currentWorkflowRun = wr;
@@ -82,9 +83,6 @@ export class WorkflowSidebarRunNodeComponent {
                     this.refreshData();
                 }
             });
-
-
-
     }
 
     refreshData(): void {

@@ -245,7 +245,9 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 	}
 	if elem != "" {
 		b := []byte(elem)
-		json.Unmarshal(b, value)
+		if err := json.Unmarshal(b, value); err != nil {
+			log.Error("redis.DequeueWithContext> error on unmarshal value on queue:%s err:%v", queueName, err)
+		}
 	}
 }
 
@@ -315,6 +317,11 @@ func (s *RedisStore) Status() sdk.MonitoringStatusLine {
 		return sdk.MonitoringStatusLine{Component: "Cache", Value: "Ping OK", Status: sdk.MonitoringStatusOK}
 	}
 	return sdk.MonitoringStatusLine{Component: "Cache", Value: "No Ping", Status: sdk.MonitoringStatusAlert}
+}
+
+// RemoveFromQueue removes a member from a list
+func (s *RedisStore) RemoveFromQueue(rootKey string, memberKey string) {
+	s.Client.LRem(rootKey, 0, memberKey)
 }
 
 // SetAdd add a member (identified by a key) in the cached set

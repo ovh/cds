@@ -56,7 +56,7 @@ func Create(h Interface) error {
 	var nRoutines, workersStarted, nRegister int64
 
 	go func(ctx context.Context) {
-		if err := h.Client().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued); err != nil {
+		if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued); err != nil {
 			log.Error("Queues polling stopped: %v", err)
 			cancel()
 		}
@@ -81,10 +81,13 @@ func Create(h Interface) error {
 
 	// Call WorkerModel Enabled first
 	var errwm error
-	models, errwm = h.Client().WorkerModelsEnabled()
+	models, errwm = h.CDSClient().WorkerModelsEnabled()
 	if errwm != nil {
-		log.Error("error on h.Client().WorkerModelsEnabled() (init call): %v", errwm)
+		log.Error("error on h.CDSClient().WorkerModelsEnabled() (init call): %v", errwm)
 	}
+
+	// hatchery is now fully Initialized
+	h.SetInitialized()
 
 	for {
 		select {
@@ -98,9 +101,9 @@ func Create(h Interface) error {
 			log.Debug("workers already started:%d", workersStarted)
 		case <-tickerGetModels.C:
 			var errwm error
-			models, errwm = h.Client().WorkerModelsEnabled()
+			models, errwm = h.CDSClient().WorkerModelsEnabled()
 			if errwm != nil {
-				log.Error("error on h.Client().WorkerModelsEnabled(): %v", errwm)
+				log.Error("error on h.CDSClient().WorkerModelsEnabled(): %v", errwm)
 			}
 		case j := <-pbjobs:
 			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
@@ -137,9 +140,9 @@ func Create(h Interface) error {
 					}
 
 					if !found {
-						if hCount, err := h.Client().HatcheryCount(job.WorkflowNodeRunID); err == nil {
+						if hCount, err := h.CDSClient().HatcheryCount(job.WorkflowNodeRunID); err == nil {
 							if int64(len(job.SpawnAttempts)) < hCount {
-								if _, errQ := h.Client().QueueJobIncAttempts(job.ID); errQ != nil {
+								if _, errQ := h.CDSClient().QueueJobIncAttempts(job.ID); errQ != nil {
 									log.Warning("Hatchery> Create> cannot inc spawn attempts %s", errQ)
 								}
 							}
@@ -166,7 +169,7 @@ func Create(h Interface) error {
 
 // Register calls CDS API to register current hatchery
 func Register(h Interface) error {
-	newHatchery, uptodate, err := h.Client().HatcheryRegister(*h.Hatchery())
+	newHatchery, uptodate, err := h.CDSClient().HatcheryRegister(*h.Hatchery())
 	if err != nil {
 		return sdk.WrapError(err, "register> Got HTTP exiting")
 	}
@@ -203,7 +206,7 @@ func hearbeat(m Interface, token string, maxFailures int) {
 			log.Info("hearbeat> %s Registered back: ID %d with model ID %d", m.Hatchery().Name, m.Hatchery().ID, m.Hatchery().Model.ID)
 		}
 
-		if err := m.Client().HatcheryRefresh(m.Hatchery().ID); err != nil {
+		if err := m.CDSClient().HatcheryRefresh(m.Hatchery().ID); err != nil {
 			log.Info("heartbeat> %s cannot refresh beat: %s", m.Hatchery().Name, err)
 			m.Hatchery().ID = 0
 			checkFailures(maxFailures, failures)
@@ -251,7 +254,7 @@ func workerRegister(h Interface, models []sdk.Model, nRegister *int64) error {
 		}
 
 		if h.NeedRegistration(&models[k]) {
-			if err := h.Client().WorkerModelBook(models[k].ID); err != nil {
+			if err := h.CDSClient().WorkerModelBook(models[k].ID); err != nil {
 				log.Debug("workerRegister> WorkerModelBook on model %s err: %s", models[k].Name, err)
 			} else {
 				log.Info("workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
@@ -260,7 +263,7 @@ func workerRegister(h Interface, models []sdk.Model, nRegister *int64) error {
 				go func(m sdk.Model) {
 					if _, errSpawn := h.SpawnWorker(SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 						log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, errSpawn)
-						if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
+						if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
 							log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 						}
 					}

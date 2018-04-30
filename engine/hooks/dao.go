@@ -64,7 +64,13 @@ func (d *dao) DeleteTaskExecution(r *sdk.TaskExecution) {
 
 func (d *dao) EnqueueTaskExecution(r *sdk.TaskExecution) {
 	k := cache.Key(executionRootKey, r.Type, r.UUID, fmt.Sprintf("%d", r.Timestamp))
+	// before enqueue, be sure that it's not in queue
+	d.store.RemoveFromQueue(schedulerQueueKey, k)
 	d.store.Enqueue(schedulerQueueKey, k)
+}
+
+func (d *dao) QueueLen() int {
+	return d.store.QueueLen(schedulerQueueKey)
 }
 
 func (d *dao) FindAllTaskExecutions(t *sdk.Task) ([]sdk.TaskExecution, error) {

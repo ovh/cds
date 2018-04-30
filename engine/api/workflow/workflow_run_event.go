@@ -16,7 +16,7 @@ import (
 )
 
 // GetWorkflowRunEventData read channel to get elements to push
-func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun, error) {
+func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun, error) {
 	wrs := []sdk.WorkflowRun{}
 	wnrs := []sdk.WorkflowNodeRun{}
 	wnjrs := []sdk.WorkflowNodeJobRun{}
@@ -26,7 +26,7 @@ func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]
 		select {
 		case e, has := <-cError:
 			if e != nil {
-				err = sdk.WrapError(e, "GetWorkflowRunEventData> Error received")
+				err = sdk.WrapError(e, "GetWorkflowRunEventData> Error received on project %s", projectKey)
 			}
 
 			if !has {
@@ -56,7 +56,9 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 		event.PublishWorkflowRun(wr, key)
 	}
 	for _, wnr := range wnrs {
-		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, false)
+		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
+			WithLightTests: true,
+		})
 		if errWR != nil {
 			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
 			continue
@@ -82,13 +84,17 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 		event.PublishWorkflowNodeRun(db, wnr, *wr, &previousNodeRun, key)
 	}
 	for _, wnjr := range wnjrs {
-		wnr, errWNR := LoadNodeRunByID(db, wnjr.WorkflowNodeRunID, false)
+		wnr, errWNR := LoadNodeRunByID(db, wnjr.WorkflowNodeRunID, LoadRunOptions{
+			WithLightTests: true,
+		})
 		if errWNR != nil {
 			log.Warning("SendEvent.workflow.wnjrs > Unable to find workflow node run %d: %s", wnjr.WorkflowNodeRunID, errWNR)
 			continue
 		}
 
-		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, false)
+		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
+			WithLightTests: true,
+		})
 		if errWR != nil {
 			log.Warning("SendEvent.workflow.wnjrs> Unable to load workflow run %d: %s", wnr.WorkflowRunID, errWR)
 			continue
@@ -98,7 +104,7 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 	}
 }
 
-func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wr *sdk.WorkflowRun) error {
+func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
 	log.Debug("resyncCommitStatus> %s %d.%d", wr.Workflow.Name, wr.Number, wr.LastSubNumber)
 	for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
 		sort.Slice(nodeRuns, func(i, j int) bool {
@@ -112,7 +118,7 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 		node := wr.Workflow.GetNode(nodeID)
 		if node.IsLinkedToRepo() {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
+			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
 			if vcsServer == nil {
 				return nil
 			}
@@ -129,7 +135,7 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			}
 
 			var statusFound *sdk.VCSCommitStatus
-			expected := sdk.VCSCommitStatusDescription(p.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
+			expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
 				NodeName: node.Name,
 			})
 
@@ -178,7 +184,7 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					EventType:       fmt.Sprintf("%T", eventWNR),
 					Payload:         structs.Map(eventWNR),
 					Timestamp:       time.Now(),
-					ProjectKey:      p.Key,
+					ProjectKey:      proj.Key,
 					WorkflowName:    wr.Workflow.Name,
 					PipelineName:    pipName,
 					ApplicationName: appName,
