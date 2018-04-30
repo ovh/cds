@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
@@ -23,6 +25,7 @@ var (
 			cli.NewCommand(adminPluginsImportCmd, adminPluginsImportFunc, nil),
 			cli.NewCommand(adminPluginsExportCmd, adminPluginsExportFunc, nil),
 			cli.NewDeleteCommand(adminPluginsDeleteCmd, adminPluginsDeleteFunc, nil),
+			cli.NewCommand(adminPluginsAddBinaryCmd, adminPluginsAddBinaryFunc, nil),
 		},
 	)
 )
@@ -119,5 +122,67 @@ func adminPluginsDeleteFunc(v cli.Values) error {
 	if err := client.PluginDelete(v.GetString("name")); err != nil {
 		return fmt.Errorf("unable to delete plugin: %v", err)
 	}
+	return nil
+}
+
+var adminPluginsAddBinaryCmd = cli.Command{
+	Name:  "binary-add",
+	Short: "Add a binary",
+	Args: []cli.Arg{
+		{
+			Name: "name",
+		},
+		{
+			Name: "descriptor",
+		},
+		{
+			Name: "filename",
+		},
+	},
+}
+
+func adminPluginsAddBinaryFunc(v cli.Values) error {
+	p, err := client.PluginsGet(v.GetString("name"))
+	if err != nil {
+		return fmt.Errorf("unable to get plugin %s: %v", v.GetString("name"), err)
+	}
+
+	f, err := os.Open(v.GetString("filename"))
+	if err != nil {
+		return fmt.Errorf("unable to open file %s", v.GetString("filename"), err)
+	}
+
+	fi, err := os.Stat(f.Name())
+	if err != nil {
+		return fmt.Errorf("unable to open file %s", v.GetString("filename"), err)
+	}
+
+	b, err := ioutil.ReadFile(v.GetString("descriptor"))
+	if err != nil {
+		return fmt.Errorf("unable to read file %s: %v", v.GetString("file"), err)
+	}
+
+	var desc sdk.GRPCPluginBinary
+	if err := yaml.Unmarshal(b, &desc); err != nil {
+		return fmt.Errorf("unable to load file: %v", err)
+	}
+
+	desc.Name = filepath.Base(f.Name())
+	desc.Perm = uint32(fi.Mode().Perm())
+	desc.FileContent, err = ioutil.ReadFile(f.Name())
+	if err != nil {
+		return fmt.Errorf("unable to open file %s", v.GetString("filename"), err)
+	}
+
+	desc.Size = int64(len(desc.FileContent))
+	desc.MD5sum, err = sdk.FileMd5sum(f.Name())
+	if err != nil {
+		return fmt.Errorf("unable to compute md5sum for file %s", v.GetString("filename"), err)
+	}
+
+	if err := client.PluginAddBinary(p, &desc); err != nil {
+		return err
+	}
+
 	return nil
 }

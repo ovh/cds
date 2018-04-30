@@ -126,19 +126,19 @@ func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
 }
 
 type GRPCPluginBinary struct {
-	OS               string          `json:"os,omitempty" cli:"os"`
-	Arch             string          `json:"arch,omitempty" cli:"arch"`
-	Name             string          `json:"name,omitempty" cli:"name"`
-	ObjectPath       string          `json:"object_path,omitempty" cli:"object_path"`
-	Size             int64           `json:"size,omitempty" cli:"size"`
-	Perm             uint32          `json:"perm,omitempty"`
-	MD5sum           string          `json:"md5sum,omitempty" cli:"md5sum"`
-	TempURL          string          `json:"temp_url,omitempty"`
-	TempURLSecretKey string          `json:"-"`
-	Cmd              string          `json:"cmd" cli:"cmd"`
-	Args             []string        `json:"args" cli:"args"`
-	Requirements     RequirementList `json:"requirements"`
-	FileContent      []byte          `json:"file_content"` //only used for upload
+	OS               string          `json:"os,omitempty" yaml:"os"`
+	Arch             string          `json:"arch,omitempty" yaml:"arch"`
+	Name             string          `json:"name,omitempty" yaml:"-"`
+	ObjectPath       string          `json:"object_path,omitempty" yaml:"-"`
+	Size             int64           `json:"size,omitempty" yaml:"-"`
+	Perm             uint32          `json:"perm,omitempty" yaml:"-"`
+	MD5sum           string          `json:"md5sum,omitempty" yaml:"-"`
+	TempURL          string          `json:"temp_url,omitempty" yaml:"-"`
+	TempURLSecretKey string          `json:"-" yaml:"-"`
+	Cmd              string          `json:"cmd,omitempty" yaml:"cmd"`
+	Args             []string        `json:"args,omitempty" yaml:"args"`
+	Requirements     RequirementList `json:"requirements,omitempty" yaml:"requirements"`
+	FileContent      []byte          `json:"file_content,omitempty" yaml:"-"` //only used for upload
 }
 
 func (b GRPCPluginBinary) GetName() string {

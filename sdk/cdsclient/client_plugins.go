@@ -1,6 +1,10 @@
 package cdsclient
 
-import "github.com/ovh/cds/sdk"
+import (
+	"fmt"
+
+	"github.com/ovh/cds/sdk"
+)
 
 func (c client) PluginsList() ([]sdk.GRPCPlugin, error) {
 	res := []sdk.GRPCPlugin{}
@@ -32,5 +36,17 @@ func (c client) PluginUpdate(p *sdk.GRPCPlugin) error {
 func (c client) PluginDelete(name string) error {
 	path := "/admin/plugin/" + name
 	_, err := c.DeleteJSON(path, nil)
+	return err
+}
+
+func (c client) PluginAddBinary(p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary) error {
+	path := fmt.Sprintf("/admin/plugin/%s/binary", p.Name)
+	_, err := c.PostJSON(path, b, b)
+	return err
+}
+
+func (c client) PluginDeleteBinary(name, os, arch string) error {
+	path := fmt.Sprintf("/admin/plugin/%s/binary/%s/%s", name, os, arch)
+	_, err := c.DeleteJSON(path, nil, nil)
 	return err
 }

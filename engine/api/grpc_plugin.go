@@ -107,6 +107,10 @@ func (api *API) postGRPCluginBinaryHandler() Handler {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler")
 		}
 
+		if len(b.FileContent) == 0 || b.OS == "" || b.Arch == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postGRPCluginBinaryHandler")
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler> unable to start tx")
