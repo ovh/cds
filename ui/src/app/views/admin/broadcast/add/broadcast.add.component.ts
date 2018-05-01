@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthentificationStore} from 'app/service/auth/authentification.store';
 import {Broadcast} from 'app/model/broadcast.model';
@@ -17,7 +17,7 @@ import {Subscription} from 'rxjs/Subscription';
     templateUrl: './broadcast.add.html',
     styleUrls: ['./broadcast.add.scss']
 })
-export class BroadcastAddComponent implements OnInit {
+export class BroadcastAddComponent {
     loading = false;
     deleteLoading = false;
     broadcast: Broadcast;
@@ -34,18 +34,14 @@ export class BroadcastAddComponent implements OnInit {
         private _route: ActivatedRoute, private _router: Router,
         private _authentificationStore: AuthentificationStore, _broadcastLevelService: BroadcastLevelService
     ) {
-        this._navbarSub = this._navbarService.getData(true)
-        .subscribe((data) => {
-        this.loading = false;
-        if (Array.isArray(data)) {
-            this.projects = data.filter((elt) => elt.type === 'project');
-            this.currentUser = this._authentificationStore.getUser();
-            this.broadcastLevelsList = _broadcastLevelService.getBroadcastLevels();
-        }
+        this._navbarSub = this._navbarService.getData(true).subscribe((data) => {
+            this.loading = false;
+            if (Array.isArray(data)) {
+                this.projects = data.filter((elt) => elt.type === 'project');
+                this.currentUser = this._authentificationStore.getUser();
+                this.broadcastLevelsList = _broadcastLevelService.getBroadcastLevels();
+            }
         });
-    }
-
-    ngOnInit() {
         this._route.params.subscribe(params => {
             this.broadcast = new Broadcast();
         });
