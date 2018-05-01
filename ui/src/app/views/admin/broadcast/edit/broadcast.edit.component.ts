@@ -72,7 +72,7 @@ export class BroadcastEditComponent {
             .pipe(finalize(() => this.deleteLoading = false))
             .subscribe( wm => {
                 this._toast.success('', this._translate.instant('broadcast_deleted'));
-                this._router.navigate(['../'], { relativeTo: this._route });
+                this._router.navigate(['admin', 'broadcast']);
             });
     }
 
