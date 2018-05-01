@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"encoding/base64"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
-
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -28,7 +28,7 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 		return nil, sdk.WrapError(err, "application.LoadDeploymentStrategies> unable to load deployment strategies")
 	}
 
-	deps := map[string]sdk.PlatformConfig{}
+	deps := make(map[string]sdk.PlatformConfig, len(res))
 	for _, r := range res {
 		cfg := sdk.PlatformConfig{}
 		if err := gorpmapping.JSONNullString(r.Config, &cfg); err != nil {

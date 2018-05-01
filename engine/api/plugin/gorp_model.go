@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-
 	"github.com/ovh/cds/sdk"
 )
 

@@ -110,6 +110,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() Handler {
 
 		delete(app.DeploymentStrategies, pfName)
 		panic("not yet implemented")
+		//TODO: still have things to do
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to commit tx")
