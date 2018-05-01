@@ -72,6 +72,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
+			Shell: "sh -c",
 			Cmd:   "worker --api={{.API}}",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
@@ -498,7 +499,8 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 		Name: "test",
 		Type: sdk.Docker,
 		Model: sdk.ModelCmds{
-			Cmd: "./worker",
+			Cmd:   "./worker",
+			Shell: "sh -c",
 		},
 	}
 
@@ -644,6 +646,7 @@ func Test_updateWorkerModel(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
+			Shell: "sh -c",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -704,6 +707,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 		ModelDocker: sdk.ModelDocker{
 			Image: "buildpack-deps:jessie",
 			Cmd:   "worker",
+			Shell: "sh -c",
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{

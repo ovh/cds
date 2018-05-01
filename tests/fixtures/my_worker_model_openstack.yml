@@ -1,9 +1,9 @@
 name: myITModelOS
-type: docker
+type: openstack
 description: "my worker model"
 group: shared.infra
 image: foo/model/go:latest
-image: vps-ssd-1
+flavor: vps-ssd-1
 precmd:
 - 'echo ''installation in progress...'' '
 - 'echo ''curl my worker'' '
