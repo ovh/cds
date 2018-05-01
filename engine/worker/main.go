@@ -50,14 +50,14 @@ type currentWorker struct {
 		Status string `json:"status"`
 	}
 	client          cdsclient.Interface
-	mapPluginClient map[string]interface{}
+	mapPluginClient map[string]*pluginClientSocket
 }
 
 func main() {
 	sdk.SetAgent(sdk.WorkerAgent)
 
 	w := &currentWorker{
-		mapPluginClient: make(map[string]interface{}),
+		mapPluginClient: make(map[string]*pluginClientSocket),
 	}
 	cmd := cmdMain(w)
 	cmd.AddCommand(cmdExport)

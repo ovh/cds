@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"syscall"
@@ -64,6 +65,8 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 
 	go func() {
 		<-ctx.Done()
+		fmt.Printf("exiting plugin")
+		defer os.RemoveAll(c.Socket)
 		c.s.Stop()
 	}()
 

@@ -27,6 +27,7 @@ func (e *ExamplePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*platform
 }
 
 func (e *ExamplePlugin) Deploy(ctx context.Context, q *platformplugin.DeployQuery) (*platformplugin.DeployResult, error) {
+	fmt.Println("YOLO !!!!")
 	return &platformplugin.DeployResult{
 		Details: "none",
 		Status:  "success",

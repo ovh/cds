@@ -35,7 +35,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		pluginClient, has := w.mapPluginClient[pf.Model.PluginName]
+		pluginSocket, has := w.mapPluginClient[pf.Model.PluginName]
 		if !has {
 			res := sdk.Result{
 				Reason: "Unable to retrieve plugin client... Aborting",
@@ -45,6 +45,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		pluginClient := pluginSocket.Client
 		platformPluginClient, ok := pluginClient.(platformplugin.PlatformPluginClient)
 		if !ok {
 			res := sdk.Result{
@@ -54,6 +55,10 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			sendLog(res.Reason)
 			return res
 		}
+
+		logCtx, stopLogs := context.WithCancel(ctx)
+		go enablePluginLogger(logCtx, sendLog, pluginSocket)
+		defer stopLogs()
 
 		sendLog(fmt.Sprintf("# Plugin %s is ready", pf.Model.PluginName))
 

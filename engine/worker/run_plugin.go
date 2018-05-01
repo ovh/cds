@@ -19,15 +19,44 @@ type startGRPCPluginOptions struct {
 	env []string
 }
 
-func startGRPCPlugin(ctx context.Context, w *currentWorker, p sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (string, error) {
-	buffOut := new(bytes.Buffer)
-	buffErr := new(bytes.Buffer)
-	mOut := io.MultiWriter(opts.out, buffOut)
-	mErr := io.MultiWriter(opts.err, buffErr)
+type pluginClientSocket struct {
+	Socket  string
+	BuffOut bytes.Buffer
+	Client  interface{}
+}
+
+func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClientSocket) {
+	var accumulator string
+	for {
+		if ctx.Err() != nil {
+			break
+		}
+
+		b, _ := c.BuffOut.ReadByte()
+		switch string(b) {
+		case "":
+			continue
+		case "\n":
+			accumulator += string(b)
+			sendLog(accumulator)
+			accumulator = ""
+			continue
+		default:
+			accumulator += string(b)
+			continue
+		}
+	}
+}
+
+func startGRPCPlugin(ctx context.Context, w *currentWorker, p sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
+	c := pluginClientSocket{}
+
+	mOut := io.MultiWriter(opts.out, &c.BuffOut)
+	mErr := io.MultiWriter(opts.err, &c.BuffOut)
 
 	log.Info("Starting GRPC Plugin %s", p.Name)
 	if err := grpcplugin.StartPlugin(ctx, w.basedir, p.Cmd, p.Args, opts.env, mOut, mErr); err != nil {
-		return "", err
+		return nil, err
 	}
 	log.Info("GRPC Plugin started")
 
@@ -36,10 +65,10 @@ func startGRPCPlugin(ctx context.Context, w *currentWorker, p sdk.GRPCPluginBina
 
 	buff := new(strings.Builder)
 	for {
-		b, err := buffOut.ReadByte()
+		b, err := c.BuffOut.ReadByte()
 		if err != nil && len(buff.String()) > 0 {
 			log.Error("error on ReadByte: %v", err)
-			return "", fmt.Errorf("unable to get socket address from started binary")
+			return nil, fmt.Errorf("unable to get socket address from started binary")
 		}
 		if err := buff.WriteByte(b); err != nil {
 			log.Error("error on write byte: %v", err)
@@ -53,9 +82,11 @@ func startGRPCPlugin(ctx context.Context, w *currentWorker, p sdk.GRPCPluginBina
 	socket := strings.Replace(buff.String(), " is ready to accept new connection\n", "", 1)
 	log.Info("socket %s ready", socket)
 
-	return socket, nil
+	c.Socket = socket
+
+	return &c, nil
 }
 
-func registerPluginClient(w *currentWorker, pluginName string, c interface{}) {
+func registerPluginClient(w *currentWorker, pluginName string, c *pluginClientSocket) {
 	w.mapPluginClient[pluginName] = c
 }

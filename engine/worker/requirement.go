@@ -281,10 +281,12 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 		return false, err
 	}
 
-	c, err := platformplugin.Client(context.Background(), socket)
+	c, err := platformplugin.Client(context.Background(), socket.Socket)
 	if err != nil {
 		return false, fmt.Errorf("unable to call grpc plugin: %v", err)
 	}
+
+	socket.Client = c
 
 	m, err := c.Manifest(context.Background(), new(empty.Empty))
 	if err != nil {
@@ -293,7 +295,7 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 
 	log.Info("plugin successfully initialized: %#v", m)
 
-	registerPluginClient(w, binary.PluginName, c)
+	registerPluginClient(w, binary.PluginName, socket)
 
 	return true, nil
 }
