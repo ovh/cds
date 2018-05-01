@@ -8,7 +8,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/platform"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -74,7 +73,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 			},
 		},
 	}
-	test.NoError(t, project.InsertPlatform(db, &pp))
+	test.NoError(t, platform.InsertPlatform(db, &pp))
 
 	vars := map[string]string{
 		"key": proj.Key,
