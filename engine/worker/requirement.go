@@ -270,6 +270,13 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 		log.Debug("plugin binary is in cache")
 	}
 
+	if err := startGRPCPlugin(context.Background(), w, *binary, startGRPCPluginOptions{
+		out: os.Stdout,
+		err: os.Stderr,
+	}); err != nil {
+		return false, err
+	}
+
 	//Last but not least: start the plugin
 	return true, nil
 }

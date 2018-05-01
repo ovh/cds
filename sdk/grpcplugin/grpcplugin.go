@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 
@@ -64,6 +65,12 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 	go func() {
 		<-ctx.Done()
 		c.s.Stop()
+	}()
+
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		socket, _ := filepath.Abs(c.Socket)
+		fmt.Printf("%s is ready to accept new connection\n", socket)
 	}()
 
 	return c, s.Serve(l)
