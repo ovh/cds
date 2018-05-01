@@ -34,6 +34,10 @@ func (p *grpcPlugin) PostInsert(db gorp.SqlExecutor) error {
 }
 
 func (p *grpcPlugin) PostUpdate(db gorp.SqlExecutor) error {
+	for i := range p.Binaries {
+		p.Binaries[i].FileContent = nil
+		p.Binaries[i].PluginName = p.Name
+	}
 	s, err := gorpmapping.JSONToNullString(p.Binaries)
 	if err != nil {
 		return sdk.WrapError(err, "plugin.PostUpdate> unable to marshal data")

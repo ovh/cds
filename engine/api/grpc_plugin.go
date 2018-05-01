@@ -177,7 +177,7 @@ func (api *API) getGRPCluginBinaryHandler() Handler {
 		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")
-		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", p.Name))
+		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", b.Name))
 
 		if _, err := io.Copy(w, f); err != nil {
 			_ = f.Close()

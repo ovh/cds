@@ -139,6 +139,7 @@ type GRPCPluginBinary struct {
 	Args             []string        `json:"args,omitempty" yaml:"args"`
 	Requirements     RequirementList `json:"requirements,omitempty" yaml:"requirements"`
 	FileContent      []byte          `json:"file_content,omitempty" yaml:"-"` //only used for upload
+	PluginName       string          `json:"plugin_name,omitempty" yaml:"-"`
 }
 
 func (b GRPCPluginBinary) GetName() string {

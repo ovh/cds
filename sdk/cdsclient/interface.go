@@ -331,4 +331,5 @@ type GRPCPluginsClient interface {
 	PluginDelete(string) error
 	PluginAddBinary(*sdk.GRPCPlugin, *sdk.GRPCPluginBinary) error
 	PluginDeleteBinary(string, string, string) error
+	PluginGetBinary(string, string, string, io.Writer) error
 }

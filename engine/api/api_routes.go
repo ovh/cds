@@ -43,7 +43,7 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/plugin", r.POST(api.postPGRPCluginHandler, NeedAdmin(true)), r.GET(api.getAllGRPCluginHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}", r.GET(api.getGRPCluginHandler, NeedAdmin(true)), r.PUT(api.putGRPCluginHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary", r.POST(api.postGRPCluginBinaryHandler, NeedAdmin(true)))
-	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}", r.GET(api.getGRPCluginBinaryHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginBinaryHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}", r.GET(api.getGRPCluginBinaryHandler, Auth(false)), r.DELETE(api.deleteGRPCluginBinaryHandler, NeedAdmin(true)))
 
 	// Admin service
 	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
@@ -304,7 +304,7 @@ func (api *API) InitRouter() {
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler))
 	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler))
-	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker()))
+	//r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery()))
 	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery()))

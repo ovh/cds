@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -48,5 +49,20 @@ func (c client) PluginAddBinary(p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary) erro
 func (c client) PluginDeleteBinary(name, os, arch string) error {
 	path := fmt.Sprintf("/admin/plugin/%s/binary/%s/%s", name, os, arch)
 	_, err := c.DeleteJSON(path, nil, nil)
+	return err
+}
+
+func (c client) PluginGetBinary(name, os, arch string, w io.Writer) error {
+	path := fmt.Sprintf("/admin/plugin/%s/binary/%s/%s?accept-redirect=true", name, os, arch)
+	var reader io.ReadCloser
+	var err error
+
+	reader, _, _, err = c.Stream("GET", path, nil, true)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	_, err = io.Copy(w, reader)
 	return err
 }
