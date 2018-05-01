@@ -27,11 +27,17 @@ func (e *ExamplePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*platform
 }
 
 func (e *ExamplePlugin) Deploy(ctx context.Context, q *platformplugin.DeployQuery) (*platformplugin.DeployResult, error) {
-	return nil, nil
+	return &platformplugin.DeployResult{
+		Details: "none",
+		Status:  "success",
+	}, nil
 }
 
 func (e *ExamplePlugin) DeployStatus(ctx context.Context, q *platformplugin.DeployStatusQuery) (*platformplugin.DeployResult, error) {
-	return nil, nil
+	return &platformplugin.DeployResult{
+		Details: "none",
+		Status:  "success",
+	}, nil
 }
 
 func main() {
