@@ -36,17 +36,17 @@ func CreateBuiltinModels(db *gorp.DbMap) error {
 		if !ok {
 			log.Debug("CreateBuiltinModels> inserting platform config: %s", p.Name)
 			if err := InsertModel(tx, p); err != nil {
-				return sdk.WrapError(err, "CreateModels error on insert")
+				return sdk.WrapError(err, "CreateBuiltinModels> error on insert")
 			}
 		} else {
 			log.Debug("CreateBuiltinModels> updating platform config: %s", p.Name)
 			oldM, err := LoadModelByName(tx, p.Name)
 			if err != nil {
-				return sdk.WrapError(err, "CreateModels  error on load")
+				return sdk.WrapError(err, "CreateBuiltinModels>  error on load")
 			}
 			p.ID = oldM.ID
 			if err := UpdateModel(tx, p); err != nil {
-				return sdk.WrapError(err, "CreateModels  error on update")
+				return sdk.WrapError(err, "CreateBuiltinModels>  error on update")
 			}
 		}
 	}
