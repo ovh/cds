@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -53,6 +54,14 @@ func (api *API) postPlatformModelHandler() Handler {
 			return sdk.NewError(sdk.ErrConflict, fmt.Errorf("platform model %s already exist", m.Name))
 		}
 
+		if m.PluginName != "" {
+			p, err := plugin.LoadByName(tx, m.PluginName)
+			if err != nil {
+				return sdk.WrapError(err, "putPlatformModelHandler")
+			}
+			m.PluginID = &p.ID
+		}
+
 		if err := platform.InsertModel(tx, m); err != nil {
 			return sdk.WrapError(err, "postPlatformModelHandler> unable to insert model %s", m.Name)
 		}
@@ -85,7 +94,6 @@ func (api *API) putPlatformModelHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "putPlatformModelHandler> Unable to start tx")
 		}
-
 		defer tx.Rollback()
 
 		old, err := platform.LoadModelByName(tx, name)
@@ -102,7 +110,15 @@ func (api *API) putPlatformModelHandler() Handler {
 		}
 
 		m.ID = old.ID
-		m.PlatformModelPlugin = old.PlatformModelPlugin
+		m.PluginID = old.PluginID
+
+		if m.PluginName != "" {
+			p, err := plugin.LoadByName(tx, m.PluginName)
+			if err != nil {
+				return sdk.WrapError(err, "putPlatformModelHandler")
+			}
+			m.PluginID = &p.ID
+		}
 
 		if err := platform.UpdateModel(tx, m); err != nil {
 			return sdk.WrapError(err, "putPlatformModelHandler> ")
@@ -140,7 +156,6 @@ func (api *API) deletePlatformModelHandler() Handler {
 			return sdk.WrapError(err, "deletePlatformModelHandler> Unable to commit tx")
 		}
 
-		w.WriteHeader(http.StatusOK)
 		return nil
 	}
 }

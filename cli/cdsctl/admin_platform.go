@@ -23,6 +23,7 @@ var (
 			cli.NewGetCommand(adminPlatformModelShowCmd, adminPlatformModelShowRun, nil),
 			cli.NewCommand(adminPlatformModelExportCmd, adminPlatformModelExportRun, nil),
 			cli.NewCommand(adminPlatformModelImportCmd, adminPlatformModelImportRun, nil),
+			cli.NewDeleteCommand(adminPlatformModelDeleteCmd, adminPlatformModelDeleteRun, nil),
 		})
 )
 
@@ -117,4 +118,21 @@ func adminPlatformModelImportRun(v cli.Values) error {
 	}
 
 	return client.PlatformModelUpdate(m)
+}
+
+var adminPlatformModelDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete a CDS Platform model",
+	Args: []cli.Arg{
+		{
+			Name: "name",
+		},
+	},
+}
+
+func adminPlatformModelDeleteRun(v cli.Values) error {
+	if err := client.PlatformModelDelete(v.GetString("name")); err != nil {
+		return err
+	}
+	return nil
 }

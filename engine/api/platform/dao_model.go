@@ -7,6 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadModels load platform models
@@ -39,7 +40,10 @@ func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
 func LoadModelByName(db gorp.SqlExecutor, name string) (sdk.PlatformModel, error) {
 	var pm platformModel
 	if err := db.SelectOne(&pm, "SELECT * from platform_model where name = $1", name); err != nil {
-		return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> Cannot select platform model %s", name)
+		if err == sql.ErrNoRows {
+			return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> platform model %s not found", name)
+		}
+		return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> Cannot select platform model %s", name)
 	}
 	return sdk.PlatformModel(pm), nil
 }
@@ -96,11 +100,14 @@ func DeleteModel(db gorp.SqlExecutor, id int64) error {
 func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
 		DefaultConfig           sql.NullString `db:"default_config"`
-		PlatformModelPlugin     sql.NullString `db:"platform_mode_plugin"`
 		DeploymentDefaultConfig sql.NullString `db:"deployment_default_config"`
+		PluginName              sql.NullString `db:"plugin_name"`
 	}{}
 
-	query := "SELECT default_config, platform_model_plugin, deployment_default_config FROM platform_model where id = $1"
+	query := `SELECT default_config, grpc_plugin.name as "plugin_name", deployment_default_config 
+	FROM platform_model 
+	LEFT OUTER JOIN grpc_plugin ON grpc_plugin.id = platform_model.grpc_plugin_id
+	WHERE platform_model.id = $1`
 	if err := db.SelectOne(&res, query, pm.ID); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Cannot get default_config, platform_model_plugin, deployment_default_config")
 	}
@@ -109,12 +116,13 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load default_config")
 	}
 
-	if err := gorpmapping.JSONNullString(res.PlatformModelPlugin, &pm.PlatformModelPlugin); err != nil {
-		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load platform_model_plugin")
-	}
-
 	if err := gorpmapping.JSONNullString(res.DeploymentDefaultConfig, &pm.DeploymentDefaultConfig); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load deployment_default_config")
+	}
+
+	log.Debug("platformModel.PostGet > %+v res=%+d", pm, res)
+	if res.PluginName.Valid {
+		pm.PluginName = res.PluginName.String
 	}
 
 	return nil
@@ -132,9 +140,8 @@ func (pm *platformModel) PostUpdate(db gorp.SqlExecutor) error {
 	}
 
 	defaultConfig, err := gorpmapping.JSONToNullString(pm.DefaultConfig)
-	platformModelPlugin, err := gorpmapping.JSONToNullString(pm.PlatformModelPlugin)
 	deploymentDefaultConfig, err := gorpmapping.JSONToNullString(pm.DeploymentDefaultConfig)
 
-	_, err = db.Exec("update platform_model set default_config = $2, platform_model_plugin = $3, deployment_default_config = $4 where id = $1", pm.ID, defaultConfig, platformModelPlugin, deploymentDefaultConfig)
+	_, err = db.Exec("update platform_model set default_config = $2, deployment_default_config = $3 where id = $1", pm.ID, defaultConfig, deploymentDefaultConfig)
 	return sdk.WrapError(err, "PostUpdate> Unable to update platform_model")
 }

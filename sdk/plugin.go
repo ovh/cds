@@ -109,7 +109,7 @@ const (
 
 type GRPCPlugin struct {
 	ID          int64              `json:"id" cli:"id" db:"id"`
-	Name        string             `json:"name" cli:"name" db:"name"`
+	Name        string             `json:"name" cli:"name,key" db:"name"`
 	Type        string             `json:"type" cli:"type" db:"type"`
 	Author      string             `json:"author" cli:"author" db:"author"`
 	Description string             `json:"description" cli:"description" db:"description"`

@@ -273,6 +273,7 @@ type PlatformClient interface {
 	PlatformModelGet(name string) (sdk.PlatformModel, error)
 	PlatformModelAdd(m *sdk.PlatformModel) error
 	PlatformModelUpdate(m *sdk.PlatformModel) error
+	PlatformModelDelete(name string) error
 }
 
 // Interface is the main interface for cdsclient package

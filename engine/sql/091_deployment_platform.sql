@@ -1,5 +1,5 @@
 -- +migrate Up
-ALTER TABLE platform_model ADD COLUMN platform_model_plugin JSONB;
+ALTER TABLE platform_model ADD COLUMN grpc_plugin_id BIGINT;
 ALTER TABLE platform_model ADD COLUMN deployment_default_config JSONB;
 
 CREATE TABLE application_deployment_strategy (
@@ -25,6 +25,8 @@ CREATE TABLE grpc_plugin (
 );
 
 select create_unique_index('grpc_plugin', 'IDX_GRPC_PLUGIN_NAME', 'name');
+
+SELECT create_foreign_key('FK_PLATFORM_MODEL_GRPC_PLUGIN', 'platform_model', 'grpc_plugin', 'grpc_plugin_id', 'id');
 
 -- +migrate Down
 ALTER TABLE worker_model DROP COLUMN platform_model_plugin;

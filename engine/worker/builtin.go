@@ -23,6 +23,7 @@ func init() {
 	mapBuiltinActions[sdk.GitTagAction] = runGitTag
 	mapBuiltinActions[sdk.ReleaseAction] = runRelease
 	mapBuiltinActions[sdk.CheckoutApplicationAction] = runCheckoutApplication
+	mapBuiltinActions[sdk.DeployApplicationAction] = runDeployApplication
 }
 
 // BuiltInAction defines builtin action signature

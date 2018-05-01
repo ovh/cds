@@ -20,6 +20,18 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} admin plugins export test-plugin
 
+- name: cdsctl admin platform-model import
+  steps:
+  - script: {{.cds.build.cdsctl}} admin platform-model import ./tests/fixtures/platforms/marathon.yml
+
+- name: cdsctl admin platform-model export
+  steps:
+  - script: {{.cds.build.cdsctl}} admin platform-model export marathon
+
+- name: cdsctl admin platform-model delete
+  steps:
+  - script: {{.cds.build.cdsctl}} admin platform-model delete --force marathon
+
 - name: cdsctl admin plugins delete
   steps:
   - script: {{.cds.build.cdsctl}} admin plugins delete --force test-plugin

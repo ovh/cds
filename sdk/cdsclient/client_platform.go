@@ -35,3 +35,10 @@ func (c *client) PlatformModelUpdate(m *sdk.PlatformModel) error {
 	}
 	return nil
 }
+
+func (c *client) PlatformModelDelete(name string) error {
+	if _, err := c.DeleteJSON("/platform/models/"+name, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
