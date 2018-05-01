@@ -22,8 +22,8 @@ type Plugin interface {
 	Instance() *Common
 }
 
-func StartPlugin(ctx context.Context, workdir, cmd string, env []string, stdout, stderr io.Writer) error {
-	c := exec.CommandContext(ctx, cmd)
+func StartPlugin(ctx context.Context, workdir, cmd string, args []string, env []string, stdout, stderr io.Writer) error {
+	c := exec.CommandContext(ctx, cmd, args...)
 	c.Dir = workdir
 	c.Env = env
 	c.Stdout = stdout
@@ -68,7 +68,7 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 	}()
 
 	go func() {
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 		socket, _ := filepath.Abs(c.Socket)
 		fmt.Printf("%s is ready to accept new connection\n", socket)
 	}()

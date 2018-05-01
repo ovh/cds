@@ -12,9 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/shirou/gopsutil/mem"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
 )
@@ -270,13 +272,28 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 		log.Debug("plugin binary is in cache")
 	}
 
-	if err := startGRPCPlugin(context.Background(), w, *binary, startGRPCPluginOptions{
+	//Last but not least: start the plugin
+	socket, err := startGRPCPlugin(context.Background(), w, *binary, startGRPCPluginOptions{
 		out: os.Stdout,
 		err: os.Stderr,
-	}); err != nil {
+	})
+	if err != nil {
 		return false, err
 	}
 
-	//Last but not least: start the plugin
+	c, err := platformplugin.Client(context.Background(), socket)
+	if err != nil {
+		return false, fmt.Errorf("unable to call grpc plugin: %v", err)
+	}
+
+	m, err := c.Manifest(context.Background(), new(empty.Empty))
+	if err != nil {
+		return false, fmt.Errorf("unable to call grpc plugin manifest: %v", err)
+	}
+
+	log.Info("plugin successfully initialized: %#v", m)
+
+	registerPluginClient(w, binary.PluginName, c)
+
 	return true, nil
 }

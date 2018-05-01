@@ -1,4 +1,4 @@
-package project
+package platform
 
 import (
 	"database/sql"
@@ -7,14 +7,13 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
 
 // PostGet is a db hook
 func (pp *dbProjectPlatform) PostGet(db gorp.SqlExecutor) error {
-	model, err := platform.LoadModel(db, pp.PlatformModelID)
+	model, err := LoadModel(db, pp.PlatformModelID)
 	if err != nil {
 		return sdk.WrapError(err, "dbProjectPlatform.PostGet> Cannot load model")
 	}
@@ -72,8 +71,36 @@ func LoadPlatformsByName(db gorp.SqlExecutor, key string, name string, clearPwd 
 	return p, nil
 }
 
-// LoadPlatformsByID load project platforms by project id
-func LoadPlatformsByID(db gorp.SqlExecutor, id int64, clearPassword bool) ([]sdk.ProjectPlatform, error) {
+// LoadByID returns project platform, selecting by its id
+func LoadByID(db gorp.SqlExecutor, id int64, clearPassword bool) (*sdk.ProjectPlatform, error) {
+	var pp dbProjectPlatform
+	if err := db.SelectOne(&pp, "SELECT * from project_platform WHERE id = $1", id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	for k, v := range pp.Config {
+		if v.Type == sdk.PlatformConfigTypePassword {
+			if clearPassword {
+				secret, errD := decryptPlatformValue(v.Value)
+				if errD != nil {
+					return nil, sdk.WrapError(errD, "LoadPlatformByID> Cannot decrypt password")
+				}
+				v.Value = string(secret)
+				pp.Config[k] = v
+			} else {
+				v.Value = sdk.PasswordPlaceholder
+				pp.Config[k] = v
+			}
+		}
+	}
+	res := sdk.ProjectPlatform(pp)
+	return &res, nil
+}
+
+// LoadPlatformsByProjectID load project platforms by project id
+func LoadPlatformsByProjectID(db gorp.SqlExecutor, id int64, clearPassword bool) ([]sdk.ProjectPlatform, error) {
 	platforms := []sdk.ProjectPlatform{}
 
 	var res []dbProjectPlatform

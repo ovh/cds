@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -34,6 +35,14 @@ func (e *ExamplePlugin) DeployStatus(ctx context.Context, q *platformplugin.Depl
 }
 
 func main() {
+	if os.Args[1:][0] == "serve" {
+		e := ExamplePlugin{}
+		if err := platformplugin.Start(context.Background(), &e); err != nil {
+			panic(err)
+		}
+		return
+	}
+
 	//Server Part - BEGIN
 	var e *ExamplePlugin
 	go func() {
