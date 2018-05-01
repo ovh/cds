@@ -143,6 +143,12 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
+	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+}
+
+type ProviderConfiguration struct {
+	Name  string `toml:"name"`
+	Token string `toml:"token"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
