@@ -82,7 +82,7 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 	} else {
 
 		//Load the last workflow run
-		lastWorkflowRun, err := LoadLastRun(db, w.ProjectKey, w.Name, false)
+		lastWorkflowRun, err := LoadLastRun(db, w.ProjectKey, w.Name, LoadRunOptions{})
 		if err != nil {
 			return nil, sdk.WrapError(err, "RunFromHook> Unable to load last run")
 		}
@@ -102,7 +102,7 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 		}
 	}
 
-	run, err := LoadRun(db, w.ProjectKey, w.Name, number, false)
+	run, err := LoadRun(db, w.ProjectKey, w.Name, number, LoadRunOptions{})
 	if err != nil {
 		return nil, sdk.WrapError(err, "RunFromHook> Unable to reload workflow run")
 	}
@@ -112,7 +112,7 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
 func ManualRunFromNode(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64, chanEvent chan<- interface{}) (*sdk.WorkflowRun, error) {
-	lastWorkflowRun, errLoadRun := LoadRun(db, w.ProjectKey, w.Name, number, false)
+	lastWorkflowRun, errLoadRun := LoadRun(db, w.ProjectKey, w.Name, number, LoadRunOptions{})
 	if errLoadRun != nil {
 		return nil, sdk.WrapError(errLoadRun, "ManualRunFromNode> Unable to load last run")
 	}
@@ -128,7 +128,7 @@ func ManualRunFromNode(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Stor
 	}
 
 	var errLoadRunByID error
-	lastWorkflowRun, errLoadRunByID = LoadRunByIDAndProjectKey(db, w.ProjectKey, lastWorkflowRun.ID, false)
+	lastWorkflowRun, errLoadRunByID = LoadRunByIDAndProjectKey(db, w.ProjectKey, lastWorkflowRun.ID, LoadRunOptions{})
 	if errLoadRunByID != nil {
 		return nil, errLoadRunByID
 	}
