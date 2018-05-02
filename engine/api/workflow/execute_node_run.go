@@ -201,7 +201,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	//Delete jobs only when node is over
-	if sdk.StatusIsTerminated(n.Status) {
+	if sdk.StatusIsTerminated(n.Status) && len(n.Stages) > 0 {
 		// push node run event
 		if chanEvent != nil {
 			chanEvent <- *n
