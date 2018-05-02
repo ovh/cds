@@ -62,11 +62,19 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	headers := req.Header
 
 	// Check Provider
-	if rc.Options["needProvider"] == "true" {
+	if rc.Options["allowProvider"] == "true" {
 		providerName := req.Header.Get("X-Provider-Name")
 		providerToken := req.Header.Get("X-Provider-Token")
-		_ = providerName
-		_ = providerToken
+		var providerOK bool
+		for _, p := range api.Config.Providers {
+			if p.Name == providerName && p.Token == providerToken {
+				providerOK = true
+			}
+		}
+		if providerOK {
+			ctx = context.WithValue(ctx, auth.ContextUser, &sdk.User{Username: providerName, Admin: true})
+			ctx = context.WithValue(ctx, auth.ContextProvider, providerName)
+		}
 	}
 
 	// Check Token
@@ -79,7 +87,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	//Check Authentication
-	if rc.Options["auth"] == "true" {
+	if rc.Options["auth"] == "true" && getProvider(ctx) == nil {
 		switch headers.Get("User-Agent") {
 		case sdk.HatcheryAgent:
 			var err error
@@ -110,6 +118,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	//Get the permission for either the hatchery, the worker or the user
 	switch {
+	case getProvider(ctx) != nil:
 	case getHatchery(ctx) != nil:
 		g, perm, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, getHatchery(ctx).GroupID)
 		if err != nil {

@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadModels load platform models
@@ -120,7 +119,6 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load deployment_default_config")
 	}
 
-	log.Debug("platformModel.PostGet > %+v res=%+d", pm, res)
 	if res.PluginName.Valid {
 		pm.PluginName = res.PluginName.String
 	}

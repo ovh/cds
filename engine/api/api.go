@@ -301,6 +301,18 @@ func getUser(c context.Context) *sdk.User {
 	return u
 }
 
+func getProvider(c context.Context) *string {
+	i := c.Value(auth.ContextProvider)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(string)
+	if !ok {
+		return nil
+	}
+	return &u
+}
+
 func getAgent(r *http.Request) string {
 	return r.Header.Get("User-Agent")
 }

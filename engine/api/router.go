@@ -399,10 +399,10 @@ func NeedAdmin(admin bool) HandlerConfigParam {
 	return f
 }
 
-// NeedProvider set the route for external providers
-func NeedProvider(need bool) HandlerConfigParam {
+// AllowProvider set the route for external providers
+func AllowProvider(need bool) HandlerConfigParam {
 	f := func(rc *HandlerConfig) {
-		rc.Options["needProvider"] = fmt.Sprintf("%v", need)
+		rc.Options["allowProvider"] = fmt.Sprintf("%v", need)
 	}
 	return f
 }

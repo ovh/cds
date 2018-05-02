@@ -39,8 +39,6 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 			return err
 		}
 
-		log.Debug("postApplicationDeploymentStrategyConfigHandler> git this: %+v", pfConfig)
-
 		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
 			return errtx
@@ -84,6 +82,11 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to commit tx")
+		}
+
+		if getProvider(ctx) != nil {
+			p := getProvider(ctx)
+			log.Info("postApplicationDeploymentStrategyConfigHandler> application %s configuration successfully ypdated by provider %s", appName, *p)
 		}
 
 		return WriteJSON(w, app, http.StatusOK)
