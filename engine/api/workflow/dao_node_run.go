@@ -152,7 +152,7 @@ func insertWorkflowNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 
 func nodeRunExist(db gorp.SqlExecutor, nodeID, num int64, subnumber int) (bool, error) {
 	nb, err := db.SelectInt("SELECT COUNT(1) FROM workflow_node_run WHERE workflow_node_id = $1 AND num = $2 AND sub_num = $3", nodeID, num, subnumber)
-	return nb != 0, err
+	return nb > 0, err
 }
 
 func fromDBNodeRun(rr NodeRun) (*sdk.WorkflowNodeRun, error) {
