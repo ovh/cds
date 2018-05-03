@@ -88,7 +88,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 	var newStatus = n.Status
 
 	//If no stages ==> success
-	if len(n.Stages) == 0 || len(n.Stages[0].Jobs) == 0 {
+	if len(n.Stages) == 0 {
 		newStatus = sdk.StatusSuccess.String()
 		n.Done = time.Now()
 	}
@@ -107,7 +107,6 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 			}
 
 			if len(stage.Jobs) == 0 {
-				newStatus = sdk.StatusSuccess.String()
 				stage.Status = sdk.StatusSuccess
 			} else {
 				//Add job to Queue
@@ -188,6 +187,10 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
+
+	if sdk.StatusIsTerminated(n.Status) && n.Status != sdk.StatusNeverBuilt.String() {
+		n.Done = time.Now()
+	}
 
 	// Save the node run in database
 	if err := updateNodeRunStatusAndStage(db, n); err != nil {
