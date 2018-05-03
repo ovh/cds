@@ -90,6 +90,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 	//If no stages ==> success
 	if len(n.Stages) == 0 || len(n.Stages[0].Jobs) == 0 {
 		newStatus = sdk.StatusSuccess.String()
+		n.Done = time.Now()
 	}
 
 	stagesTerminated := 0

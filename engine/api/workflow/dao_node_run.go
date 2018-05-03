@@ -553,13 +553,6 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 	return previous, nil
 }
 
-func updateNodeRunDone(db gorp.SqlExecutor, id int64, done time.Time) error {
-	if _, err := db.Exec("UPDATE workflow_node_run SET done = $1 where id = $2", done, id); err != nil {
-		return sdk.WrapError(err, "updateNodeRunDone> Unable to update workflow_node_run id=%d", id)
-	}
-	return nil
-}
-
 func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit) error {
 	log.Debug("updateNodeRunCommits> Updating %d commits for workflow_node_run #%d", len(commits), id)
 	commitsBtes, errMarshal := json.Marshal(commits)
