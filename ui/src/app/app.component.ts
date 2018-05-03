@@ -106,7 +106,7 @@ export class AppComponent  implements OnInit {
             authKey = 'Authorization';
             authValue = 'Basic ' + this._authStore.getUser().token;
         }
-        this.sseWorker = new CDSWorker('/assets/worker/webWorker.js');
+        this.sseWorker = new CDSWorker('./assets/worker/webWorker.js');
         this.sseWorker.start({
             headAuthKey: authKey,
             headAuthValue: authValue,
