@@ -52,29 +52,6 @@ func (a *dbApplication) PostGet(db gorp.SqlExecutor) error {
 	return nil
 }
 
-// PostUpdate is a db hook
-func (a *dbApplication) PostUpdate(db gorp.SqlExecutor) error {
-	b, err := json.Marshal(a.Metadata)
-	if err != nil {
-		return err
-	}
-
-	v, err := json.Marshal(a.RepositoryStrategy)
-	if err != nil {
-		return err
-	}
-
-	if _, err := db.Exec("update application set metadata = $2, vcs_strategy = $3 where id = $1", a.ID, b, v); err != nil {
-		return err
-	}
-	return nil
-}
-
-// PostInsert is a db hook
-func (a *dbApplication) PostInsert(db gorp.SqlExecutor) error {
-	return a.PostUpdate(db)
-}
-
 // PostGet is a db hook
 func (ava *dbApplicationVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	var before, after sql.NullString

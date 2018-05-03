@@ -10,6 +10,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
@@ -289,7 +290,13 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		}
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
 	}
+
+	if err := gorpmapping.UpdateJSONFields(db, &dbApp); err != nil {
+		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
+	}
+
 	*app = sdk.Application(dbApp)
+
 	return UpdateLastModified(db, store, app, u)
 }
 
@@ -308,6 +315,9 @@ func Update(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk
 	}
 	if n == 0 {
 		return sdk.WrapError(sdk.ErrApplicationNotFound, "application.Update %s(%d)", app.Name, app.ID)
+	}
+	if err := gorpmapping.UpdateJSONFields(db, &dbApp); err != nil {
+		return sdk.WrapError(err, "application.Update %s(%d)", app.Name, app.ID)
 	}
 	return UpdateLastModified(db, store, app, u)
 }
