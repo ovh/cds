@@ -92,6 +92,8 @@ type Configuration struct {
 			Base     string `toml:"base" default:"dc=myorganization,dc=com"`
 			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com"`
 			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}"`
+			BindDN   string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated"`
+			BindPwd  string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated"`
 		} `toml:"ldap"`
 		Local struct {
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true"`
@@ -153,6 +155,8 @@ type DefaultValues struct {
 	LDAPBase  string
 	GivenName string
 	SN        string
+	BindDN    string
+	BindPwd   string
 }
 
 // New instanciates a new API object
@@ -501,6 +505,8 @@ func (a *API) Serve(ctx context.Context) error {
 			DN:           a.Config.Auth.LDAP.DN,
 			SSL:          a.Config.Auth.LDAP.SSL,
 			UserFullname: a.Config.Auth.LDAP.Fullname,
+			BindDN:       a.Config.Auth.LDAP.BindDN,
+			BindPwd:      a.Config.Auth.LDAP.BindPwd,
 		}
 	default:
 		authMode = "local"
