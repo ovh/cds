@@ -586,8 +586,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
+		u := getUser(ctx)
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures)
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
 		}
@@ -617,7 +618,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				DeepPipeline: false,
 			}
 			var errW error
-			wf, errW = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+			wf, errW = workflow.Load(api.mustDB(), api.Cache, key, name, u, options)
 			if errW != nil {
 				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
 			}
@@ -627,7 +628,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				if has && !enabled {
 					return sdk.WrapError(sdk.ErrForbidden, "postWorkflowRunHandler> %s not allowed for project %s", feature.FeatWorkflowAsCode, p.Key)
 				}
-				proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+				proj, errp := project.Load(api.mustDB(), api.Cache, key, u,
 					project.LoadOptions.WithGroups,
 					project.LoadOptions.WithApplications,
 					project.LoadOptions.WithEnvironments,
@@ -638,7 +639,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 				// Get workflow from repository
 				var errCreate error
-				asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, getUser(ctx), project.DecryptWithBuiltinKey)
+				asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, u, project.DecryptWithBuiltinKey)
 				if errCreate != nil {
 					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository")
 				}
@@ -648,7 +649,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 					DeepPipeline: true,
 					Base64Keys:   true,
 				}
-				wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+				wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, u, options)
 				if errl != nil {
 					return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow %s/%s", key, name)
 				}
@@ -667,7 +668,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 			}()
 
-			startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx), asCodeInfosMsg)
+			startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, u, asCodeInfosMsg)
 		}()
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
@@ -734,7 +735,10 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		opts.Manual.User = *u
 		//Copy the user but empty groups and permissions
 		opts.Manual.User.Groups = nil
-		opts.Manual.User.Permissions = sdk.UserPermissions{}
+		//Clean all permissions except for environments
+		opts.Manual.User.Permissions = sdk.UserPermissions{
+			EnvironmentsPerm: opts.Manual.User.Permissions.EnvironmentsPerm,
+		}
 
 		fromNodes := []*sdk.WorkflowNode{}
 		if len(opts.FromNodeIDs) > 0 {
