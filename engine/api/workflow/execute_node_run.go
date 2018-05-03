@@ -88,7 +88,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 	var newStatus = n.Status
 
 	//If no stages ==> success
-	if len(n.Stages) == 0 {
+	if len(n.Stages) == 0 || len(n.Stages[0].Jobs) == 0 {
 		newStatus = sdk.StatusSuccess.String()
 	}
 
@@ -199,10 +199,6 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 		return sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
 	}
 
-	if len(n.Stages) == 0 || len(n.Stages[0].Jobs) == 0 {
-		n.Done = time.Now()
-		return updateNodeRunDone(db, n.ID, n.Done)
-	}
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	//Delete jobs only when node is over
 	if sdk.StatusIsTerminated(n.Status) {
@@ -210,7 +206,6 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 		if chanEvent != nil {
 			chanEvent <- *n
 		}
-
 		if n.Status != sdk.StatusStopped.String() {
 			if _, err := processWorkflowRun(dbCopy, db, store, proj, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
