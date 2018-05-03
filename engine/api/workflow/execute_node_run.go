@@ -159,6 +159,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 				}
 
 				if sdk.StatusIsTerminated(stage.Status.String()) {
+					stagesTerminated++
 					n.Done = time.Now()
 				}
 
