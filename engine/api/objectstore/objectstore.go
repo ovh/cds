@@ -154,6 +154,7 @@ type ConfigOptionsOpenstack struct {
 	Tenant          string
 	Region          string
 	ContainerPrefix string
+	DisableTempURL  bool
 }
 
 // ConfigOptionsFilesystem is used by ConfigOptions
@@ -168,7 +169,7 @@ func New(c context.Context, cfg Config) (Driver, error) {
 		instance = sdk.ArtifactsStore{
 			Name:                  "Swift",
 			Private:               false,
-			TemporaryURLSupported: true,
+			TemporaryURLSupported: !cfg.Options.Openstack.DisableTempURL,
 		}
 		return NewSwiftStore(cfg.Options.Openstack.Address,
 			cfg.Options.Openstack.Username,

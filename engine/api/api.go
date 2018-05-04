@@ -118,6 +118,7 @@ type Configuration struct {
 			Tenant          string `toml:"tenant" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME"`
 			Region          string `toml:"region" comment:"Region, generally value of $OS_REGION_NAME"`
 			ContainerPrefix string `toml:"containerPrefix" comment:"Use if your want to prefix containers for CDS Artifacts"`
+			DisableTempURL  bool   `toml:"disableTempURL" default:"false" commented:"true" comment:"True if you want to disable Temporary URL in file upload"`
 		} `toml:"openstack"`
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported"`
 	Events struct {
@@ -416,6 +417,7 @@ func (a *API) Serve(ctx context.Context) error {
 				Tenant:          a.Config.Artifact.Openstack.Tenant,
 				Region:          a.Config.Artifact.Openstack.Region,
 				ContainerPrefix: a.Config.Artifact.Openstack.ContainerPrefix,
+				DisableTempURL:  a.Config.Artifact.Openstack.DisableTempURL,
 			},
 			Filesystem: objectstore.ConfigOptionsFilesystem{
 				Basedir: a.Config.Artifact.Local.BaseDirectory,

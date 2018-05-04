@@ -775,6 +775,12 @@
   revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/rakyll/goutil"
+  packages = ["pprofutil"]
+  revision = "349023fd974a46c449331f6c06109d726cb9abe2"
+
+[[projects]]
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
   revision = "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
@@ -1265,6 +1271,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8abefc2b942440b3090791112c10106e3a4bd6bc2bc8c753fa41ecd19fe10898"
+  inputs-digest = "6658f92856da196ffcef6fb8052e8e48fb920fb3b2f4f7442c45798550cf0d95"
   solver-name = "gps-cdcl"
   solver-version = 1

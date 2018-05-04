@@ -252,9 +252,20 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		Created: time.Now(),
 	}
 
+	var retryURL = 10
+	var globalURLErr error
 	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, tag)
-	if _, err := c.PostJSON(uri, &art, &art); err != nil {
-		return err
+	for i := 0; i < retryURL; i++ {
+		var code int
+		code, globalURLErr = c.PostJSON(uri, &art, &art)
+		if code < 300 {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	if globalURLErr != nil {
+		return globalURLErr
 	}
 
 	if c.config.Verbose {
@@ -290,6 +301,7 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 
 			break
 		}
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	if globalErr != nil {
