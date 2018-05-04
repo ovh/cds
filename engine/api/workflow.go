@@ -392,6 +392,8 @@ func getDefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u
 			defaultPayloadMap["git.repository"] = wf.Root.Context.Application.RepositoryFullname
 			defaultPayload = defaultPayloadMap
 		}
+	} else {
+		defaultPayload = wf.Root.Context.DefaultPayload
 	}
 
 	return defaultPayload, nil

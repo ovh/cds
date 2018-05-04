@@ -347,6 +347,11 @@ func (s *Service) postTaskBulkHandler() api.Handler {
 		}
 
 		for _, hook := range hooks {
+			if hook.UUID != "" {
+				if err := s.deleteTask(ctx, &hook); err != nil {
+					log.Warning("Hooks> postTaskBulkHandler cannot delete task %s : %v", hook.UUID, err)
+				}
+			}
 			if err := s.addTask(ctx, &hook); err != nil {
 				return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 			}
@@ -369,6 +374,19 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 	if err := s.startTask(ctx, t); err != nil {
 		return sdk.WrapError(err, "Hooks> addTask> Unable start task %+v", t)
 	}
+	return nil
+}
+
+func (s *Service) deleteTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
+	//Parse the hook as a task
+	t, err := s.hookToTask(h)
+	if err != nil {
+		return sdk.WrapError(err, "Hooks> deleteTask> Unable to parse hook")
+	}
+
+	//Save the task
+	s.Dao.DeleteTask(t)
+
 	return nil
 }
 

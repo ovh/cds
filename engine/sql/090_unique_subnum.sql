@@ -1,5 +1,4 @@
 -- +migrate Up
-select create_unique_index('workflow_node_run', 'IDX_WORKFLOW_NODE_RUN_SUBNUM', 'workflow_node_id,num,sub_num');
 
 DELETE FROM workflow_node_run WHERE id IN (SELECT id FROM (
 
@@ -22,6 +21,8 @@ SELECT MAX(id) from (
 ) maxid GROUP BY (maxid.workflow_node_id, maxid.num, maxid.sub_num)
 
 ) a );
+
+select create_unique_index('workflow_node_run', 'IDX_WORKFLOW_NODE_RUN_SUBNUM', 'workflow_node_id,num,sub_num');
 
 -- +migrate Down
 DROP INDEX IDX_WORKFLOW_NODE_RUN_SUBNUM;

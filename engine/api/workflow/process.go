@@ -114,12 +114,11 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 					// check if the destination node already exists on w.WorkflowNodeRuns with the same subnumber
 					var abortTrigger bool
-				previousRuns:
-					for _, previousRunArray := range w.WorkflowNodeRuns {
+					if previousRunArray, ok := w.WorkflowNodeRuns[t.WorkflowDestNode.ID]; ok {
 						for _, previousRun := range previousRunArray {
-							if previousRun.WorkflowNodeID == t.WorkflowDestNode.ID && previousRun.SubNumber == nodeRun.SubNumber {
+							if previousRun.SubNumber == nodeRun.SubNumber {
 								abortTrigger = true
-								break previousRuns
+								break
 							}
 						}
 					}
@@ -182,18 +181,16 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 		//we have to check noderun for every sources
 		for _, id := range j.SourceNodeIDs {
 			sources[id] = nil
-			for k, v := range w.WorkflowNodeRuns {
+			if v, okF := w.WorkflowNodeRuns[id]; okF {
 				for x := range v {
-					nodeRun := &w.WorkflowNodeRuns[k][x]
-					if nodeRun.WorkflowNodeID == id {
-						if sources[id] == nil {
-							sources[id] = nodeRun
-							continue
-						}
-						//We found the source in the list of the noderuns
-						if sources[id].SubNumber < nodeRun.SubNumber {
-							sources[id] = nodeRun
-						}
+					nodeRun := &w.WorkflowNodeRuns[id][x]
+					if sources[id] == nil {
+						sources[id] = nodeRun
+						continue
+					}
+					//We found the source in the list of the noderuns
+					if sources[id].SubNumber < nodeRun.SubNumber {
+						sources[id] = nodeRun
 					}
 				}
 			}
@@ -235,12 +232,11 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 				// check if the destination node already exists on w.WorkflowNodeRuns with the same subnumber
 				var abortTrigger bool
-			previousJoinRuns:
-				for _, previousRunArray := range w.WorkflowNodeRuns {
+				if previousRunArray, okF := w.WorkflowNodeRuns[t.WorkflowDestNode.ID]; okF {
 					for _, previousRun := range previousRunArray {
-						if previousRun.WorkflowNodeID == t.WorkflowDestNode.ID && previousRun.SubNumber == maxsn {
+						if previousRun.SubNumber == maxsn {
 							abortTrigger = true
-							break previousJoinRuns
+							break
 						}
 					}
 				}
@@ -324,12 +320,21 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 //processWorkflowNodeRun triggers execution of a node run
 func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}) (bool, error) {
-	//TODO: Check user permission
 	t0 := time.Now()
 	log.Debug("processWorkflowNodeRun> Begin [#%d.%d]%s.%d", w.Number, subnumber, w.Workflow.Name, n.ID)
 	defer func() {
 		log.Debug("processWorkflowNodeRun> End [#%d.%d]%s.%d  - %.3fs", w.Number, subnumber, w.Workflow.Name, n.ID, time.Since(t0).Seconds())
 	}()
+
+	exist, errN := nodeRunExist(db, n.ID, w.Number, subnumber)
+	if errN != nil {
+		return true, sdk.WrapError(errN, "processWorkflowNodeRun> unable to check if node run exist")
+	}
+	if exist {
+		return true, nil
+	}
+
+	//TODO: Check user for manual done but check permission also for automatic trigger and hooks (with system to authenticate a webhook)
 
 	//Recopy stages
 	stages := make([]sdk.Stage, len(n.Pipeline.Stages))
@@ -586,7 +591,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	}
 
 	if err := insertWorkflowNodeRun(db, run); err != nil {
-		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run")
+		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
 	}
 	if chanEvent != nil {
 		chanEvent <- *run
