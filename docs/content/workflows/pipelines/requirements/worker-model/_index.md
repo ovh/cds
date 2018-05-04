@@ -13,11 +13,12 @@ The goal of a worker model is to describe the capabilities of a given docker/iso
 
 ### Types
 
-There are 3 types of worker models:
+There are 4 types of worker models:
 
  * Docker images, see [how to create a worker model docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}})
  * Openstack images, see [how to create a worker model openstack]({{< relref "workflows/pipelines/requirements/worker-model/openstack.md" >}})
  * VSphere images, see [how to create a worker model VSphere]({{< relref "workflows/pipelines/requirements/worker-model/vsphere.md" >}})
+ * Host worker models, which is a worker launched on the same host than the hatchery, we don't recommend to use this in production.
 
 ### Behavior
 
@@ -35,7 +36,7 @@ A CDS administrator can add a worker model, attach it to 'shared.infra' group an
 
 A `shared.infra` hatchery can launch all worker models, except 'restricted' worker models.
 
-**Use case**: users can launch their own [hatchery]({{< relref "hatchery/_index.md" >}}). 
+**Use case**: users can launch their own [hatchery]({{< relref "hatchery/_index.md" >}}).
 To use their worker models only with their hatchery, they have to set worker model as 'restricted'.
 
 ### What's workers provisioning?

@@ -102,6 +102,32 @@ export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
 export CDS_TTL={{.TTL}}
 export CDS_INSECURE={{.HTTPInsecure}}
 
+# Basic build binaries
+cd $HOME
+apt-get -y --force-yes update >> /tmp/user_data 2>&1
+apt-get -y --force-yes install curl git >> /tmp/user_data 2>&1
+apt-get -y --force-yes install binutils >> /tmp/user_data 2>&1
+
+# Docker installation (FOR DEBIAN)
+if [[ "x{{.FromWorkerImage}}" = "xtrue" ]]; then
+  echo "$(date) - CDS_FROM_WORKER_IMAGE == true - no install docker required "
+else
+	# Install docker
+	apt-get install -y --force-yes apt-transport-https ca-certificates >> /tmp/user_data 2>&1
+	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+	mkdir -p /etc/apt/sources.list.d
+	sh -c "echo deb https://apt.dockerproject.org/repo debian-jessie main > /etc/apt/sources.list.d/docker.list"
+	apt-get -y --force-yes update >> /tmp/user_data 2>&1
+	apt-cache policy docker-engine >> /tmp/user_data 2>&1
+	apt-get install -y --force-yes docker-engine >> /tmp/user_data 2>&1
+	service docker start >> /tmp/user_data 2>&1
+
+	# Non-root access
+	groupadd docker >> /tmp/user_data 2>&1
+	gpasswd -a ${USER} docker >> /tmp/user_data 2>&1
+	service docker restart >> /tmp/user_data 2>&1
+fi;
+
 curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
 chmod +x worker
 `
@@ -110,7 +136,7 @@ chmod +x worker
 			patternType: sdk.Docker,
 			patternModel: sdk.ModelPattern{
 				Type: sdk.Docker,
-				Name: "basic_linux",
+				Name: "basic_unix",
 				Model: sdk.ModelCmds{
 					Shell: "sh -c",
 					Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
@@ -121,7 +147,7 @@ chmod +x worker
 			patternType: sdk.Openstack,
 			patternModel: sdk.ModelPattern{
 				Type: sdk.Openstack,
-				Name: "basic_linux",
+				Name: "basic_debian",
 				Model: sdk.ModelCmds{
 					PreCmd:  preCmdOs,
 					Cmd:     "./worker",
@@ -133,7 +159,7 @@ chmod +x worker
 			patternType: sdk.VSphere,
 			patternModel: sdk.ModelPattern{
 				Type: sdk.VSphere,
-				Name: "basic_linux",
+				Name: "basic_debian",
 				Model: sdk.ModelCmds{
 					PreCmd:  preCmdOs,
 					Cmd:     "PATH=$PATH ./worker",
@@ -145,7 +171,7 @@ chmod +x worker
 			patternType: sdk.HostProcess,
 			patternModel: sdk.ModelPattern{
 				Type: sdk.HostProcess,
-				Name: "basic_linux",
+				Name: "basic_unix",
 				Model: sdk.ModelCmds{
 					Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
 				},
