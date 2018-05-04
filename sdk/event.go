@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+const (
+	EventSubsWorkflowRuns = "event:workflow:runs"
+	EventSubWorkflowRun   = "event:workflow:run"
+)
+
 // Event represents a event from API
 // Event is "create", "update", "delete"
 // Status is  "Waiting" "Building" "Success" "Fail" "Unknown", optional
@@ -22,6 +27,17 @@ type Event struct {
 	PipelineName    string                 `json:"pipeline_name,omitempty"`
 	EnvironmentName string                 `json:"environment_name,omitempty"`
 	WorkflowName    string                 `json:"workflow_name,omitempty"`
+	WorkflowRunNum  int64                  `json:"workflow_run_num,omitempty"`
+}
+
+// EventSubscription data send to api to subscribe to an event
+type EventSubscription struct {
+	UUID         string `json:"uuid"`
+	ProjectKey   string `json:"key"`
+	WorkflowName string `json:"workflow_name"`
+	WorkflowRuns bool   `json:"runs"`
+	WorkflowNum  int64  `json:"num"`
+	Overwrite    bool   `json:"overwrite"`
 }
 
 // EventEngine contains event data for engine
@@ -30,7 +46,7 @@ type EventEngine struct {
 }
 
 // EventWorkflowNodeJobRun contains event data for a workflow node run job
-type EventWorkflowNodeJobRun struct {
+type EventRunWorkflowNodeJob struct {
 	ID                int64  `json:"id"`
 	WorkflowNodeRunID int64  `json:"workflow_node_run_id,omitempty"`
 	Status            string `json:"status"`
@@ -41,18 +57,15 @@ type EventWorkflowNodeJobRun struct {
 }
 
 // EventWorkflowNodeRun contains event data for a workflow node run
-type EventWorkflowNodeRun struct {
+type EventRunWorkflowNode struct {
 	ID                    int64                     `json:"id,omitempty"`
+	NodeID                int64                     `json:"node_id,omitempty"`
+	RunID                 int64                     `json:"run_id,omitempty"`
 	Number                int64                     `json:"num,omitempty"`
 	SubNumber             int64                     `json:"subnum,omitempty"`
 	Status                string                    `json:"status,omitempty"`
 	Start                 int64                     `json:"start,omitempty"`
 	Done                  int64                     `json:"done,omitempty"`
-	WorkflowName          string                    `json:"workflow_name,omitempty"`
-	PipelineName          string                    `json:"pipeline_name,omitempty"`
-	ProjectKey            string                    `json:"project_key,omitempty"`
-	ApplicationName       string                    `json:"application_name,omitempty"`
-	EnvironmentName       string                    `json:"environment_name,omitempty"`
 	Payload               interface{}               `json:"payload,omitempty"`
 	HookEvent             *WorkflowNodeRunHookEvent `json:"hook_event"`
 	Manual                *WorkflowNodeRunManual    `json:"manual"`
@@ -63,17 +76,19 @@ type EventWorkflowNodeRun struct {
 	Hash                  string                    `json:"hash"`
 	BranchName            string                    `json:"branch_name"`
 	NodeName              string                    `json:"node_name"`
+	StagesSummary         []StageSummary            `json:"stages_summary"`
 }
 
 // EventWorkflowRun contains event data for a workflow run
-type EventWorkflowRun struct {
-	ID           int64    `json:"id"`
-	Number       int64    `json:"num"`
-	ProjectKey   string   `json:"project_key,omitempty"`
-	WorkflowName string   `json:"workflow_name,omitempty"`
-	Status       string   `json:"status"`
-	Workflow     Workflow `json:"workflow"`
-	Start        int64    `json:"start"`
+type EventRunWorkflow struct {
+	ID            int64            `json:"id"`
+	Number        int64            `json:"num"`
+	Status        string           `json:"status"`
+	Workflow      Workflow         `json:"workflow"`
+	Start         int64            `json:"start"`
+	LastExecution int64            `json:"last_execution"`
+	LastModified  int64            `json:"last_modified"`
+	Tags          []WorkflowRunTag `json:"tags"`
 }
 
 // EventPipelineBuild contains event data for a pipeline build
