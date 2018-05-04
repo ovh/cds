@@ -1,11 +1,11 @@
-<div class="sidebar-node-run" *ngIf="!loading">
+<div class="sidebar-node-run" *ngIf="node && !loading">
     <h3 class="ui header ml5">
         <i class="cubes icon"></i>
         <div class="content">
             <span>{{node.name}}</span>
             <a class="inline pointing ml5"
               *ngIf="displayEditOption"
-              [routerLink]="['/project', project.key, 'workflow', workflow.name]" [queryParams]="{selectedNodeId: node.id}">
+              [routerLink]="['/project', project.key, 'workflow', workflow.name]" [queryParams]="{node_id: node.id}">
               <i class="pencil icon float"></i>
             </a>
             <div class="sub header">
@@ -31,12 +31,12 @@
             *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
             <i class="stop icon"></i>
         </button>
-        <button class="ui icon blue button" [class.disabled]="!displaySummary" [title]="'btn_logs' | translate" (click)="displayLogs()">
+        <button class="ui icon blue button" [class.disabled]="!displaySummary || !currentWorkflowNodeRun" [title]="'btn_logs' | translate" (click)="displayLogs()">
             <i class="file text icon"></i>
         </button>
       </div>
     </div>
-    <ng-container *ngIf="displaySummary">
+    <ng-container *ngIf="displaySummary && currentWorkflowNodeRun">
         <div class="ui list ml5 listmrt">
             <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
                 <div class="content pointing"
@@ -90,14 +90,14 @@
         </div>
     </ng-container>
 </div>
-<div class="ui text active loader" *ngIf="loading && open">{{ 'common_loading' | translate }}</div>
+<div class="ui text active loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
 <ng-container *ngIf="project && node">
     <app-workflow-node-run-param
-        [workflow]="workflow"
+        [workflow]="currentWorkflowRun.workflow"
         [project]="project"
         [nodeRun]="currentWorkflowNodeRun"
         [workflowRun]="currentWorkflowRun"
         [nodeToRun]="node"
-        [num]="number" #workflowRunNode>
+        [num]="currentWorkflowRun.num" #workflowRunNode>
     </app-workflow-node-run-param>
 </ng-container>

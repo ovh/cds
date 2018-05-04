@@ -12,6 +12,16 @@ export class WorkflowRunService {
     }
 
     /**
+     * List workflow runs for the given workflow
+     */
+    runs(key: string, workflowName: string, limit: string): Observable<Array<WorkflowRun>> {
+        let url = '/project/' + key + '/workflows/' + workflowName + '/runs';
+        let params = new HttpParams();
+        params = params.append('limit', limit);
+        return this._http.get<Array<WorkflowRun>>(url, {params: params});
+    }
+
+    /**
      * Call API to create a run workflow
      * @param key Project unique key
      * @param workflow Workflow to create
@@ -42,6 +52,19 @@ export class WorkflowRunService {
      */
     getWorkflowRun(key: string, workflowName: string, number: number): Observable<WorkflowRun> {
         return this._http.get<WorkflowRun>('/project/' + key + '/workflows/' + workflowName + '/runs/' + number);
+    }
+
+    /**
+     * Get workflow node run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {number} number Run number
+     * @param nodeRunID Node run Identifier
+     * @returns {Observable<WorkflowNodeRun>}
+     */
+    getWorkflowNodeRun(key: string, workflowName: string, number: number, nodeRunID): Observable<WorkflowNodeRun> {
+        return this._http.get<WorkflowNodeRun>('/project/' + key + '/workflows/' + workflowName +
+            '/runs/' + number + '/nodes/' + nodeRunID);
     }
 
     /**

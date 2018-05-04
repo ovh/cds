@@ -14,10 +14,4 @@
         <i class="tag icon"></i>
         <a class="section" [class.active]="workflowName && run" [routerLink]="['/project', project.key, 'workflow', workflowName, 'run', run]">{{run}}</a>
     </ng-container>
-    <ng-container *ngIf="project && workflowName && run && nodeName">
-        <i class="right chevron icon divider"></i>
-        <i class="share alternate icon"></i>
-        {{nodeName}}
-    </ng-container>
-
 </div>

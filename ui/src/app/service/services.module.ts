@@ -1,7 +1,6 @@
 import {NgModule, ModuleWithProviders, SkipSelf, Optional} from '@angular/core';
 import {ProjectService} from './project/project.service';
 import {ProjectStore} from './project/project.store';
-import {Http} from '@angular/http';
 import {AuthentificationStore} from './auth/authentification.store';
 import {UserService} from './user/user.service';
 import {CanActivateAuthRoute} from './auth/authenRouteActivate';
@@ -39,7 +38,6 @@ import {WorkflowStore} from './workflow/workflow.store';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
 import {WorkflowCoreService} from './workflow/workflow.core.service';
 import {RouterService} from './router/router.service';
-import {LastUpdateService} from './sse/lastupdate.sservice';
 import {HTTP_INTERCEPTORS} from '@angular/common/http';
 import {AuthentificationInterceptor} from './auth.interceptor.service';
 import {LogoutInterceptor} from './logout.interceptor.service';
@@ -52,6 +50,9 @@ import {DownloadService} from './download/download.service';
 import {KeyService} from './keys/keys.service';
 import {PlatformService} from './platform/platform.service';
 import {ImportAsCodeService} from './import-as-code/import.service';
+import {WorkflowEventStore} from './workflow/workflow.event.store';
+import {WorkflowSidebarStore} from './workflow/workflow.sidebar.store';
+import {EventStore} from './event/event.store';
 
 @NgModule({})
 export class ServicesModule {
@@ -76,12 +77,12 @@ export class ServicesModule {
                 CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 EnvironmentService,
+                EventStore,
                 GroupService,
                 HookService,
                 ImportAsCodeService,
                 KeyService,
                 LanguageStore,
-                LastUpdateService,
                 NavbarService,
                 NotificationService,
                 ParameterService,
@@ -104,6 +105,8 @@ export class ServicesModule {
                 UserService,
                 VariableService,
                 WorkerModelService,
+                WorkflowEventStore,
+                WorkflowSidebarStore,
                 WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
                     provide: HTTP_INTERCEPTORS,
@@ -140,12 +143,12 @@ export {
     CanActivateAuthAdminRoute,
     DownloadService,
     EnvironmentAuditService,
+    EventStore,
     GroupService,
     HookService,
     ImportAsCodeService,
     KeyService,
     LanguageStore,
-    LastUpdateService,
     ParameterService,
     MonitoringService,
     PipelineResolver,
@@ -166,5 +169,6 @@ export {
     WorkflowStore,
     WorkflowRunService,
     WorkflowCoreService,
-    Http
+    WorkflowSidebarStore,
+    WorkflowEventStore
 }

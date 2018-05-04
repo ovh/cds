@@ -5,7 +5,7 @@ export class Job {
     pipeline_action_id: number;
     action: Action;
     enabled: boolean;
-    last_modified: boolean;
+    last_modified: string;
     step_status: Array<StepStatus>;
     warnings: Array<ActionWarning>;
 

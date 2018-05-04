@@ -7,14 +7,14 @@ export class CDSWorker {
 
     webWorkerScript: string;
 
-    private _response: BehaviorSubject<string> = new BehaviorSubject(null);
+    private _response: BehaviorSubject<any> = new BehaviorSubject(null);
 
     constructor(webWorkerScript: string) {
         this.webWorkerScript = webWorkerScript;
     }
 
-    response(): Observable<string> {
-        return new Observable<string>(fn => this._response.subscribe(fn));
+    response(): Observable<any> {
+        return new Observable<any>(fn => this._response.subscribe(fn));
     }
 
     /**
@@ -38,6 +38,12 @@ export class CDSWorker {
             // If worker exist, delete it and start a new one
             this.stop();
             this.start(msgToSend);
+        }
+    }
+
+    sendMsg(msgToSend: any) {
+        if (this.webWorker) {
+            this.webWorker.postMessage(msgToSend);
         }
     }
 

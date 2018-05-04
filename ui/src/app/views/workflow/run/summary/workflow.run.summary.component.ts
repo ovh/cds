@@ -8,6 +8,9 @@ import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize} from 'rxjs/operators';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
+import {Subscription} from 'rxjs/Subscription';
+import {Workflow} from '../../../../model/workflow.model';
 
 declare var ansi_up: any;
 
@@ -27,7 +30,9 @@ export class WorkflowRunSummaryComponent implements OnInit {
         return this._direction;
     }
     @Input() project: Project;
-    @Input() workflowRun: WorkflowRun;
+    @Input() workflow: Workflow;
+    workflowRun: WorkflowRun;
+    subWR: Subscription;
     @Input() workflowName: string;
     @Output() directionChange = new EventEmitter();
     @Output() relaunch = new EventEmitter();
@@ -40,9 +45,11 @@ export class WorkflowRunSummaryComponent implements OnInit {
     pipelineStatusEnum = PipelineStatus;
     permissionEnum = PermissionValue;
 
-    constructor(private _workflowRunService: WorkflowRunService,
+    constructor(private _workflowRunService: WorkflowRunService, private _workflowEventStore: WorkflowEventStore,
         private _toast: ToastService, private _translate: TranslateService) {
-
+        this.subWR = this._workflowEventStore.selectedRun().subscribe(wr => {
+            this.workflowRun = wr;
+        });
     }
 
     ngOnInit() {
