@@ -1881,7 +1881,7 @@
 <li><a href="#synopsis">Synopsis</a></li>
 </ul></li>
 </ul></li>
-<li><a href="#worker-upload-tag-tag-path">worker upload &ndash;tag=<tag> <path></a>
+<li><a href="#worker-upload-path">worker upload <path></a>
 <ul>
 <li>
 <ul>
@@ -1912,7 +1912,7 @@
 
 <h2 id="worker-upload">worker upload</h2>
 
-<p>worker upload &ndash;tag=tagValue {{.cds.workspace}}/fileToUpload</p>
+<p>worker upload {{.cds.workspace}}/fileToUpload</p>
 
 <h3 id="synopsis">Synopsis</h3>
 
@@ -1921,11 +1921,11 @@
 <ul>
 <li>with a step using action Upload Artifacts</li>
 
-<li><p>with a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), using the worker command: <code>worker upload --tag=&lt;tag&gt; &lt;path&gt;</code></p>
+<li><p>with a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), using the worker command: <code>worker upload &lt;path&gt;</code></p>
 
-<h1 id="worker-upload-tag-tag-path">worker upload &ndash;tag=<tag> <path></h1>
+<h1 id="worker-upload-path">worker upload <path></h1>
 
-<p>worker upload &ndash;tag={{.cds.version}} {{.cds.workspace}}/files*.yml</p></li>
+<p>worker upload {{.cds.workspace}}/files*.yml</p></li>
 </ul>
 
 <pre><code>worker upload [flags]
@@ -1934,7 +1934,7 @@
 <h3 id="options">Options</h3>
 
 <pre><code>  -h, --help         help for upload
-      --tag string   Tag for artifact Upload. Tag is mandatory
+      --tag string   Tag for artifact Upload - unused with CDS Workflows
 </code></pre>
 
 <h3 id="see-also">SEE ALSO</h3>
