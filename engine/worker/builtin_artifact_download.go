@@ -119,12 +119,14 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			return *res
 		}
 
+		artifactsFiltered := sdk.ArtifactsGetUniqueNameAndLatest(artifacts)
+
 		regexp := regexp.MustCompile(pattern)
 		wg := new(sync.WaitGroup)
-		wg.Add(len(artifacts))
+		wg.Add(len(artifactsFiltered))
 
-		for i := range artifacts {
-			a := &artifacts[i]
+		for i := range artifactsFiltered {
+			a := &artifactsFiltered[i]
 
 			if pattern != "" && !regexp.MatchString(a.Name) {
 				sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
@@ -166,7 +168,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 					return
 				}
 			}(a)
-			if len(artifacts) > 1 {
+			if len(artifactsFiltered) > 1 {
 				time.Sleep(3 * time.Second)
 			}
 		}
