@@ -11,12 +11,14 @@ import {User} from 'app/model/user.model';
 import {NavbarProjectData} from 'app/model/navbar.model';
 import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-broadcast-add',
     templateUrl: './broadcast.add.html',
     styleUrls: ['./broadcast.add.scss']
 })
+@AutoUnsubscribe()
 export class BroadcastAddComponent {
     loading = false;
     deleteLoading = false;
@@ -25,7 +27,7 @@ export class BroadcastAddComponent {
     canAdd = false;
     private broadcastLevelsList;
     projects: Array<NavbarProjectData> = [];
-    _navbarSub: Subscription;
+    navbarSub: Subscription;
 
     constructor(
         private _navbarService: NavbarService,
@@ -34,7 +36,7 @@ export class BroadcastAddComponent {
         private _route: ActivatedRoute, private _router: Router,
         private _authentificationStore: AuthentificationStore, _broadcastLevelService: BroadcastLevelService
     ) {
-        this._navbarSub = this._navbarService.getData(true).subscribe((data) => {
+        this.navbarSub = this._navbarService.getData(true).subscribe((data) => {
             this.loading = false;
             if (Array.isArray(data)) {
                 this.projects = data.filter((elt) => elt.type === 'project');
