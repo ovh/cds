@@ -98,16 +98,6 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			path = "."
 		}
 
-		tag := sdk.ParameterFind(&a.Parameters, "tag")
-		if tag == nil {
-			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("tag variable is empty. aborting")
-			sendLog(res.Reason)
-			return res
-		}
-		tag.Value = strings.Replace(tag.Value, "/", "-", -1)
-		tag.Value = url.QueryEscape(tag.Value)
-
 		// Global all files matching filePath
 		filesPath, err := filepath.Glob(path)
 		if err != nil {
@@ -137,13 +127,18 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			}
 		}()
 
+		// the 'tag' of artifact is cds.run, example: 333.0
+		// this tag is used to download the "latest" artifact when we
+		// download all artifacts
+		tag := fmt.Sprintf("%s-%s", sdk.ParameterValue(*params, "cds.node"), sdk.ParameterValue(*params, "cds.run"))
+
 		wg.Add(len(filesPath))
 		for _, p := range filesPath {
 			filename := filepath.Base(p)
 			go func(path string) {
 				log.Debug("Uploading %s", path)
 				defer wg.Done()
-				throughTempURL, duration, err := w.client.QueueArtifactUpload(buildID, tag.Value, path)
+				throughTempURL, duration, err := w.client.QueueArtifactUpload(buildID, tag, path)
 				if err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 					wgErrors.Add(1)

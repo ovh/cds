@@ -906,39 +906,6 @@ func (api *API) downloadworkflowArtifactDirectHandler() Handler {
 	}
 }
 
-func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowName"]
-
-		number, errNu := requestVarInt(r, "number")
-		if errNu != nil {
-			return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
-		}
-
-		id, errI := requestVarInt(r, "nodeRunID")
-		if errI != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
-		}
-		nodeRun, errR := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithArtifacts: true})
-		if errR != nil {
-			return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
-		}
-
-		//Fetch artifacts
-		for i := range nodeRun.Artifacts {
-			a := &nodeRun.Artifacts[i]
-			url, _ := objectstore.FetchTempURL(a)
-			if url != "" {
-				a.TempURL = url
-			}
-		}
-
-		return WriteJSON(w, nodeRun.Artifacts, http.StatusOK)
-	}
-}
-
 func (api *API) getDownloadArtifactHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
