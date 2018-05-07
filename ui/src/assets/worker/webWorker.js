@@ -9,8 +9,7 @@ var headAuthKey;
 var headAuthValue;
 var currentFilter;
 onmessage = function (e) {
-    if (!(!sse && e.data.sseURL)) {
-    } else {
+    if (!sse && e.data.sseURL) {
         urlSubscribe = e.data.urlSubscribe;
         urlUnsubscribe = e.data.urlUnsubscribe;
         headAuthKey = e.data.headAuthKey;
@@ -19,7 +18,6 @@ onmessage = function (e) {
         sse.onmessage = function (evt) {
             if (evt.data.indexOf('ACK: ') === 0) {
                 uuid = evt.data.substr(5).trim();
-                //sse.url = e.data.sseURL + '?uuid=' + uuid;
                 postMessage({uuid: uuid});
                 if (currentFilter) {
                     currentFilter.uuid = uuid;
@@ -29,9 +27,6 @@ onmessage = function (e) {
             }
             postMessage(JSON.parse(evt.data));
         };
-        sse.onopen = () => {
-
-        }
     }
 
     if(e.data.add_filter) {
