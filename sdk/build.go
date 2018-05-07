@@ -50,7 +50,7 @@ type ExecutedJob struct {
 type ExecutedJobSummary struct {
 	StepStatusSummary []StepStatusSummary `json:"step_status"`
 	Reason            string              `json:"reason"`
-	WorkerName        string              `json:"worker_name""`
+	WorkerName        string              `json:"worker_name"`
 	WorkerID          string              `json:"worker_id"`
 	JobName           string              `json:"job_name"`
 	PipelineActionID  int64               `json:"pipeline_action_id"`

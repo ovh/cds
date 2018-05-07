@@ -24,7 +24,7 @@ type Stage struct {
 
 // StageSummary is a light representation of stage for CDS event
 type StageSummary struct {
-	ID             int64                       `json:"id" yaml:"pipeline_stage_id"`
+	ID             int64                       `json:"id"`
 	Name           string                      `json:"name"`
 	BuildOrder     int                         `json:"build_order"`
 	Enabled        bool                        `json:"enabled"`

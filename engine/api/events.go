@@ -321,7 +321,6 @@ func (api *API) eventSubscribeHandler() Handler {
 				if payload.Overwrite {
 					runs = make([]sdk.EventSubscription, 1)
 					runs[0] = payload
-					runs = append(runs, payload)
 				} else {
 					found := false
 					for _, es := range runs {
@@ -348,7 +347,7 @@ func (api *API) eventUnsubscribeHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var payload sdk.EventSubscription
 		if err := UnmarshalBody(r, &payload); err != nil {
-			return sdk.WrapError(err, "eventSubscribeHandler> Unable to get body")
+			return sdk.WrapError(err, "eventUnsubscribeHandler> Unable to get body")
 		}
 
 		api.eventsBroker.mutex.Lock()
