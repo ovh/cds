@@ -591,6 +591,11 @@
           <span>auth</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/broadcast/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/broadcast/">
+          <span>broadcast</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/build/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/build/">
           <span>build</span>
@@ -604,6 +609,11 @@
       <li data-nav-id="/cli/api/download/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/download/">
           <span>download</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/events/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/events/">
+          <span>events</span>
         </a>
     </li>
       <li data-nav-id="/cli/api/group/" class="dd-item">
@@ -779,6 +789,33 @@
         <span>admin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+    <li data-nav-id="/cli/cdsctl/admin/broadcasts/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/">
+        <span>broadcasts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/broadcasts/create/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/create/">
+          <span>create</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/broadcasts/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/broadcasts/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/broadcasts/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
     <li data-nav-id="/cli/cdsctl/admin/hooks/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/hooks/">
         <span>hooks</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -1845,8 +1882,8 @@
 <li><a href="#post-worker">POST <code>/worker</code></a></li>
 <li><a href="#post-worker-id-disable">POST <code>/worker/&lt;id&gt;/disable</code></a></li>
 <li><a href="#post-worker-checking">POST <code>/worker/checking</code></a></li>
-<li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
 <li><a href="#get-worker-model">GET <code>/worker/model</code></a></li>
+<li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
 <li><a href="#put-worker-model-permmodelid">PUT <code>/worker/model/&lt;permModelID&gt;</code></a></li>
 <li><a href="#delete-worker-model-permmodelid">DELETE <code>/worker/model/&lt;permModelID&gt;</code></a></li>
 <li><a href="#put-worker-model-book-permmodelid">PUT <code>/worker/model/book/&lt;permModelID&gt;</code></a></li>
@@ -1993,34 +2030,6 @@
 </tbody>
 </table>
 
-<h3 id="post-worker-model">POST <code>/worker/model</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22">addWorkerModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-worker-model">GET <code>/worker/model</code></h3>
 
 <table>
@@ -2045,6 +2054,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelsHandler%22">getWorkerModelsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-worker-model">POST <code>/worker/model</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/worker/model</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22">addWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>

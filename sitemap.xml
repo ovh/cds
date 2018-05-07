@@ -466,6 +466,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/broadcast/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/build/</loc>
   </url>
   
@@ -526,6 +534,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/create/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/create/</loc>
   </url>
   
@@ -555,6 +567,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/action/delete/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/delete/</loc>
   </url>
   
   <url>
@@ -651,6 +667,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/environment/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/events/</loc>
   </url>
   
   <url>
@@ -811,6 +831,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/action/list/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/list/</loc>
   </url>
   
   <url>
@@ -1055,6 +1079,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/action/show/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/show/</loc>
   </url>
   
   <url>
