@@ -177,6 +177,7 @@ type API struct {
 	DBConnectionFactory *database.DBConnectionFactory
 	StartupTime         time.Time
 	lastUpdateBroker    *lastUpdateBroker
+	eventsBroker        *eventsBroker
 	Cache               cache.Store
 }
 

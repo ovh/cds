@@ -185,6 +185,31 @@ type WorkflowNodeJobRun struct {
 	ExecGroups        []Group     `json:"exec_groups" db:"-"`
 }
 
+// WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
+type WorkflowNodeJobRunSummary struct {
+	ID                int64              `json:"id" db:"id"`
+	WorkflowNodeRunID int64              `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	Status            string             `json:"status"  db:"status"`
+	Queued            int64              `json:"queued,omitempty" db:"queued"`
+	Start             int64              `json:"start,omitempty" db:"start"`
+	Done              int64              `json:"done,omitempty" db:"done"`
+	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
+}
+
+// ExecutedJobSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
+func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
+	sum := WorkflowNodeJobRunSummary{
+		Done:              wnjr.Done.Unix(),
+		WorkflowNodeRunID: wnjr.WorkflowNodeRunID,
+		Status:            wnjr.Status,
+		ID:                wnjr.ID,
+		Queued:            wnjr.Queued.Unix(),
+		Start:             wnjr.Start.Unix(),
+		Job:               wnjr.Job.ToSummary(),
+	}
+	return sum
+}
+
 //WorkflowNodeJobRunInfo represents info on a job
 type WorkflowNodeJobRunInfo struct {
 	ID                   int64       `json:"id"`

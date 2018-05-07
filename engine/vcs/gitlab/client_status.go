@@ -58,7 +58,7 @@ func (c *gitlabClient) SetStatus(event sdk.Event) error {
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventPipelineBuild{}):
 		data, err = processPipelineBuildEvent(event, c.uiURL)
-	case fmt.Sprintf("%T", sdk.EventWorkflowNodeRun{}):
+	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processWorkflowNodeRunEvent(event, c.uiURL)
 	default:
 		log.Debug("gitlabClient.SetStatus> Unknown event %s", event)
@@ -127,19 +127,19 @@ func processBitbucketState(s gitlab.CommitStatus) string {
 
 func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, error) {
 	data := statusData{}
-	var eventNR sdk.EventWorkflowNodeRun
+	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "gitlabClient.processPipelineBuildEvent> cannot read payload")
 	}
 
 	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 		uiURL,
-		eventNR.ProjectKey,
-		eventNR.WorkflowName,
+		event.ProjectKey,
+		event.WorkflowName,
 		eventNR.Number,
 	)
 
-	data.desc = sdk.VCSCommitStatusDescription(eventNR)
+	data.desc = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
 	data.hash = eventNR.Hash
 	data.repoFullName = eventNR.RepositoryFullName
 	data.status = eventNR.Status

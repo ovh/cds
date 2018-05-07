@@ -75,10 +75,10 @@ func GetDefaultBranch(branches []VCSBranch) VCSBranch {
 }
 
 // VCSCommitStatusDescription return a node formated status description
-func VCSCommitStatusDescription(evt EventWorkflowNodeRun) string {
+func VCSCommitStatusDescription(projKey, workflowName string, evt EventRunWorkflowNode) string {
 	key := fmt.Sprintf("%s-%s-%s",
-		evt.ProjectKey,
-		evt.WorkflowName,
+		projKey,
+		workflowName,
 		evt.NodeName,
 	)
 	return fmt.Sprintf("CDS/%s", key)
