@@ -83,7 +83,6 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		pattern := sdk.ParameterValue(a.Parameters, "pattern")
 
 		destPath := sdk.ParameterValue(a.Parameters, "path")
-		tag := sdk.ParameterValue(a.Parameters, "tag")
 
 		if destPath == "" {
 			destPath = "."
@@ -130,12 +129,6 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 
 			if pattern != "" && !regexp.MatchString(a.Name) {
 				sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
-				wg.Done()
-				continue
-			}
-
-			if tag != "" && a.Tag != tag {
-				sendLog(fmt.Sprintf("%s does not match tag %s - skipped", a.Name, tag))
 				wg.Done()
 				continue
 			}
