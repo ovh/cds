@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
+	"path"
 
 	"github.com/mitchellh/mapstructure"
 	migrate "github.com/rubenv/sql-migrate"
@@ -42,7 +43,7 @@ type Result struct {
 }
 
 // Run implements the venom.Executor interface for Executor.
-func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 	// Transform step to Executor instance.
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -64,7 +65,7 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 	if len(e.Schemas) != 0 {
 		for _, s := range e.Schemas {
 			l.Debugf("loading schema from file %s\n", s)
-
+			s = path.Join(workdir, s)
 			sbytes, errs := ioutil.ReadFile(s)
 			if errs != nil {
 				return nil, errs
@@ -89,7 +90,7 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 	// Bu default the package refuse to load if the database
 	// does not contains test to avoid wiping a production db.
 	fixtures.SkipDatabaseNameCheck(true)
-	if err = loadFixtures(db, e.Files, e.Folder, databaseHelper(e.Database), l); err != nil {
+	if err = loadFixtures(db, e.Files, e.Folder, databaseHelper(e.Database), l, workdir); err != nil {
 		return nil, err
 	}
 	r := Result{Executor: e}
@@ -111,22 +112,24 @@ func (e Executor) GetDefaultAssertions() venom.StepAssertions {
 // loadFixtures loads the fixtures in the database.
 // It gives priority to the fixtures files found in folder,
 // and switch to the list of files if no folder was specified.
-func loadFixtures(db *sql.DB, files []string, folder string, helper fixtures.Helper, l venom.Logger) error {
+func loadFixtures(db *sql.DB, files []string, folder string, helper fixtures.Helper, l venom.Logger, workdir string) error {
 	if folder != "" {
-		l.Debugf("loading fixtures from folder %s\n", folder)
+		l.Debugf("loading fixtures from folder %s\n", path.Join(workdir, folder))
 
-		c, err := fixtures.NewFolder(db, helper, folder)
+		c, err := fixtures.NewFolder(db, helper, path.Join(workdir, folder))
 		if err != nil {
 			return fmt.Errorf("failed to create folder context: %v", err)
 		}
 		if err = c.Load(); err != nil {
-			return fmt.Errorf("failed to load fixtures from folder %s: %v", folder, err)
+			return fmt.Errorf("failed to load fixtures from folder %s: %v", path.Join(workdir, folder), err)
 		}
 		return nil
 	}
 	if len(files) != 0 {
 		l.Debugf("loading fixtures from files: %v\n", files)
-
+		for i := range files {
+			files[i] = path.Join(workdir, files[i])
+		}
 		c, err := fixtures.NewFiles(db, helper, files...)
 		if err != nil {
 			return fmt.Errorf("failed to create files context: %v", err)

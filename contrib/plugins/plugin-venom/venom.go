@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/venom/executors/imap"
 	"github.com/ovh/venom/executors/ovhapi"
 	"github.com/ovh/venom/executors/readfile"
+	"github.com/ovh/venom/executors/redis"
 	"github.com/ovh/venom/executors/smtp"
 	"github.com/ovh/venom/executors/ssh"
 	"github.com/ovh/venom/executors/web"
@@ -96,6 +97,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	v.RegisterExecutor(imap.Name, imap.New())
 	v.RegisterExecutor(ovhapi.Name, ovhapi.New())
 	v.RegisterExecutor(readfile.Name, readfile.New())
+	v.RegisterExecutor(redis.Name, redis.New())
 	v.RegisterExecutor(smtp.Name, smtp.New())
 	v.RegisterExecutor(ssh.Name, ssh.New())
 	v.RegisterExecutor(web.Name, web.New())

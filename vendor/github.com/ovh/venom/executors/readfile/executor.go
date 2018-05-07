@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -57,7 +58,7 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
@@ -70,7 +71,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	start := time.Now()
 
-	result, errr := e.readfile(e.Path)
+	result, errr := e.readfile(path.Join(workdir, e.Path))
 	if errr != nil {
 		result.Err = errr.Error()
 	}

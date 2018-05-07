@@ -8,10 +8,10 @@ import (
 	pb "gopkg.in/cheggaaa/pb.v1"
 )
 
-// Version of Venom
-// One Line for this, used by release.sh script
-// Keep "const Version on one line"
-const Version = "0.16.0"
+var (
+	//Version is set with -ldflags "-X github.com/ovh/venom/venom.Version=$(VERSION)"
+	Version = "snapshot"
+)
 
 func New() *Venom {
 	v := &Venom{
@@ -49,6 +49,7 @@ type Venom struct {
 	OutputDir            string
 	OutputResume         bool
 	OutputResumeFailures bool
+	StopOnFailure        bool
 }
 
 func (v *Venom) AddVariables(variables map[string]string) {
