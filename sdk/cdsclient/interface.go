@@ -147,6 +147,14 @@ type HatcheryClient interface {
 	HatcheryCount(wfNodeRunID int64) (int64, error)
 }
 
+// BroadcastClient expose all function for CDS Broadcasts
+type BroadcastClient interface {
+	Broadcasts() ([]sdk.Broadcast, error)
+	BroadcastCreate(broadcast *sdk.Broadcast) error
+	BroadcastGet(id string) (*sdk.Broadcast, error)
+	BroadcastDelete(id string) error
+}
+
 // PipelineClient exposes pipelines related functions
 type PipelineClient interface {
 	PipelineDelete(projectKey, name string) error
@@ -279,6 +287,7 @@ type Interface interface {
 	ExportImportInterface
 	GroupClient
 	HatcheryClient
+	BroadcastClient
 	PipelineClient
 	ProjectClient
 	QueueClient

@@ -89,6 +89,10 @@ func (api *API) InitRouter() {
 	// Platform
 	r.Handle("/platform/models", r.GET(api.getPlatformModels))
 
+	// Broadcast
+	r.Handle("/broadcast", r.POST(api.addBroadcastHandler, NeedAdmin(true)), r.GET(api.getBroadcastsHandler))
+	r.Handle("/broadcast/{id}", r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, NeedAdmin(true)), r.DELETE(api.deleteBroadcastHandler, NeedAdmin(true)))
+
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))
 	r.Handle("/mon/smtp/ping", r.GET(api.smtpPingHandler, Auth(true)))

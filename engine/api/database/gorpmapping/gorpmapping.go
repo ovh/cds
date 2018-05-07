@@ -14,8 +14,8 @@ type TableMapping struct {
 }
 
 // New initialize a TableMapping
-func New(t interface{}, n string, b bool, k ...string) TableMapping {
-	return TableMapping{t, n, b, k}
+func New(target interface{}, name string, autoIncrement bool, keys ...string) TableMapping {
+	return TableMapping{Target: target, Name: name, AutoIncrement: autoIncrement, Keys: keys}
 }
 
 // Mapping is the global var for all registered mapping
