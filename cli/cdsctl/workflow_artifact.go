@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var (
@@ -76,8 +77,10 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		return err
 	}
 
+	artifactsFiltered := sdk.ArtifactsGetUniqueNameAndLatest(artifacts)
+
 	var ok bool
-	for _, a := range artifacts {
+	for _, a := range artifactsFiltered {
 		if v["artefact-name"] != "" && v["artefact-name"] != a.Name {
 			continue
 		}

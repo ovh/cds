@@ -210,8 +210,7 @@ func CountUser(db gorp.SqlExecutor) (int64, error) {
 	query := `SELECT count(id) FROM "user" WHERE 1 = 1`
 
 	var countResult int64
-	err := db.QueryRow(query).Scan(&countResult)
-	if err != nil {
+	if err := db.QueryRow(query).Scan(&countResult); err != nil {
 		return 1, err
 	}
 	return countResult, nil
