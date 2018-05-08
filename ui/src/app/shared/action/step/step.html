@@ -82,6 +82,9 @@
                 <i class="info circle icon"></i>
               </span>
             </label>
+            <div *ngIf="(step.name == 'Artifact Upload' || step.name == 'Artifact Download') && p.name == 'tag'">
+                <i class="exclamation circle icon orange"></i> {{ 'action_artifact_tag_ignored' | translate }}
+            </div>
         </div>
         <div class="fourteen wide column">
             <app-parameter-value [edit]="edit" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"

@@ -34,6 +34,7 @@
   "action_optional_details": "If checked, even if this step fails, the stage execution will continue",
   "action_always_executed": "Always executed",
   "action_always_executed_details": "If checked, this step will be executed even if previous steps fail",
+  "action_artifact_tag_ignored": "tag is ignored on CDS Workflows",
 
   "admin_migration_not_started": "Not started",
   "admin_migration_started": "Started",
