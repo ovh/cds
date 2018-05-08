@@ -28,6 +28,7 @@ func (h *HatcheryOpenstack) Init() error {
 		AllowReauth:      true,
 		IdentityEndpoint: h.Config.Address,
 		TenantName:       h.Config.Tenant,
+		DomainName:       h.Config.Domain,
 	}
 
 	provider, errac := openstack.AuthenticatedClient(authOpts)
