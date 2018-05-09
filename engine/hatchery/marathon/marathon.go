@@ -243,7 +243,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 		Token:             h.Config.API.Token,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              workerName,
-		Model:             h.Hatchery().Model.ID,
+		Model:             spawnArgs.Model.ID,
 		Hatchery:          h.hatch.ID,
 		HatcheryName:      h.hatch.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,

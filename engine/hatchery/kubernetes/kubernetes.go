@@ -243,7 +243,7 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		Token:             h.Configuration().API.Token,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
-		Model:             h.Hatchery().Model.ID,
+		Model:             spawnArgs.Model.ID,
 		Hatchery:          h.hatch.ID,
 		HatcheryName:      h.hatch.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
