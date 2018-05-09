@@ -21,20 +21,20 @@ var cmdUploadTag string
 func cmdUpload(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "upload",
-		Short: "worker upload {{.cds.workspace}}/fileToUpload",
+		Short: "worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload",
 		Long: `
 Inside a job, there are two ways to upload an artifact:
 
 * with a step using action Upload Artifacts
 * with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command: ` + "`worker upload <path>`" + `
 
-	# worker upload <path>
-	worker upload {{.cds.workspace}}/files*.yml
+	# worker upload --tag=<tag> <path>
+	worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 
 		`,
 		Run: uploadCmd(w),
 	}
-	c.Flags().StringVar(&cmdUploadTag, "tag", "", "Tag for artifact Upload - unused with CDS Workflows")
+	c.Flags().StringVar(&cmdUploadTag, "tag", "", "Tag for artifact Upload - Tag is mandatory")
 	return c
 }
 
@@ -48,6 +48,10 @@ func uploadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		port, errPort := strconv.Atoi(portS)
 		if errPort != nil {
 			sdk.Exit("cannot parse '%s' as a port number", portS)
+		}
+
+		if cmdUploadTag == "" {
+			sdk.Exit("worker upload: invalid tag. %s\n", cmd.Short)
 		}
 
 		if len(args) == 0 {
