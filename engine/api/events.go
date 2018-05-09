@@ -224,38 +224,32 @@ func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscrib
 		return
 	}
 
-	// Update on Project, Workflow, Application, Pipeline, Environment
-	if subscriber.User.Admin {
-		subscriber.Queue <- eventS
-		return
-	}
-
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") {
-		if permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
