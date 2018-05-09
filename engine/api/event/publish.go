@@ -1,13 +1,13 @@
 package event
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/fatih/structs"
 	"github.com/go-gorp/gorp"
 
-	"encoding/json"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/sdk"
