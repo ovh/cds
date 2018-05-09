@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
+	"github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
