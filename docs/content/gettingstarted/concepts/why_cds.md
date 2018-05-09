@@ -45,7 +45,7 @@ To implement this strong *self-service culture* the team files an issue everytim
 
 CDS is built to scale. And this capability is challenged everyday in a large-scale production environment. This ability to scale has been made possible thanks to a simple design principle: **statelessness**
 
-CDS's API servers are completely stateless. They do not store anything on the fileSystem. Whith this "share-nothing" architecture, servers can be deployed as much times as reauired to support the load. Instances can be spawned and decommissioned dynamically to handle usage surges when required while keeping the cost at its lowest when the platform is underused. All you need to provide is a scalable and highly available database.
+CDS's API servers are completely stateless. They do not store anything on the fileSystem. With this "share-nothing" architecture, servers can be deployed as much times as reauired to support the load. Instances can be spawned and decommissioned dynamically to handle usage surges when required while keeping the cost at its lowest when the platform is underused. All you need to provide is a scalable and highly available database.
 
 
 ## 3 - High Availability
@@ -61,13 +61,13 @@ This fast delivery and reactivity couldn't have been possible without CDS's High
 
 CDS's built-in don't-repeat-yourself features help you minimize your effort when you need to build, test and deploy hundreds (thousands?) of projects with a similar workflow. This is especially useful when you are managing a micro-services-based infrastructure where containers are usually built and deployed the same way.
 
-An ingenious system of variables allows to customize the build runs depending on the apps to be built and on the deployment environments.
+A system of templating allows to customize the build runs depending on the apps to be built and on the deployment environments.
 
 This feature is essential as it allows to quickly deploy new applications, provided that a similar one already exists in CDS.
 
-## 5 - RESTful API
+## 5 - REST API
 
-CDS can be fully operated through its RESTful API. The API is used by the CDS's UI but also by the workers. All components speak the same language: REST.
+CDS can be fully operated through its REST API. The API is used by the CDS's UI but also by the workers. All components speak the same language: REST.
 
 Both the UI and the CLI use exclusively the REST API to operate. Therefore, if you can do it through the UI or the CLI, then you can do it through the REST API.
 
