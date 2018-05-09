@@ -81,6 +81,10 @@
               <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
                 <i class="info circle icon"></i>
               </span>
+              <span *ngIf="(step.name ==== 'Artifact Upload' || step.name === 'Artifact Download') && p.name === 'tag'" 
+              suiPopup [popupText]="'action_artifact_tag_ignored' | translate" popupPlacement="right center">
+                <i class="exclamation circle icon orange"></i>
+              </span>
             </label>
         </div>
         <div class="fourteen wide column">
