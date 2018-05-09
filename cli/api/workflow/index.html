@@ -1880,9 +1880,9 @@
 <ul>
 <li><a href="#get-workflow-artifact-hash">GET <code>/workflow/artifact/&lt;hash&gt;</code></a></li>
 <li><a href="#get-workflow-hook">GET <code>/workflow/hook</code></a></li>
+<li><a href="#put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
 <li><a href="#get-workflow-hook-model-model">GET <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
 <li><a href="#post-workflow-hook-model-model">POST <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
-<li><a href="#put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1962,6 +1962,34 @@
 </tbody>
 </table>
 
+<h3 id="put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/workflow/hook/model/&lt;model&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowHookModelHandler%22">putWorkflowHookModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="get-workflow-hook-model-model">GET <code>/workflow/hook/model/&lt;model&gt;</code></h3>
 
 <table>
@@ -2014,34 +2042,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowHookModelHandler%22">postWorkflowHookModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/workflow/hook/model/&lt;model&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowHookModelHandler%22">putWorkflowHookModelHandler</a></td>
 </tr>
 </tbody>
 </table>
