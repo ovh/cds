@@ -142,9 +142,8 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		}
 	}
 
-	var registerCmd string
 	if spawnArgs.RegisterOnly {
-		registerCmd = " register"
+		spawnArgs.Model.ModelDocker.Cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
 	}
 
@@ -199,13 +198,15 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
 		return "", errTmpl
 	}
+	cmds := strings.Fields(spawnArgs.Model.ModelDocker.Shell)
+	cmds = append(cmds, buffer.String())
 
 	args := containerArgs{
 		name:         name,
 		image:        spawnArgs.Model.ModelDocker.Image,
 		network:      network,
 		networkAlias: networkAlias,
-		cmd:          []string{buffer.String() + registerCmd},
+		cmd:          cmds,
 		labels:       labels,
 		memory:       memory,
 		dockerOpts:   *dockerOpts,
