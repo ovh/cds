@@ -1,9 +1,11 @@
 package vsphere
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"strings"
 	"time"
 
@@ -178,14 +180,46 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jo
 
 	env = append(env, h.getGraylogGrpcEnv(model)...)
 
-	script := model.ModelVirtualMachine.PreCmd + "; \n" + model.ModelVirtualMachine.Cmd
+	udata := model.ModelVirtualMachine.PreCmd + "; \n" + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
-		script += " register"
+		udata += " register"
 	}
-	script += (";\n" + model.ModelVirtualMachine.PostCmd)
+	udata += (";\n" + model.ModelVirtualMachine.PostCmd)
 
-	if _, errS := h.launchClientOp(vm, script, env); errS != nil {
+	tmpl, errt := template.New("udata").Parse(udata)
+	if errt != nil {
+		return errt
+	}
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Name:              name,
+		Token:             h.Configuration().API.Token,
+		Model:             model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		TTL:               h.Config.WorkerTTL,
+		FromWorkerImage:   true,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
+	}
+
+	if isWorkflowJob {
+		udataParam.WorkflowJobID = jobID
+	} else {
+		udataParam.PipelineBuildJobID = jobID
+	}
+
+	var buffer bytes.Buffer
+	if err := tmpl.Execute(&buffer, udataParam); err != nil {
+		return err
+	}
+
+	if _, errS := h.launchClientOp(vm, buffer.String(), env); errS != nil {
 		log.Warning("launchScript> cannot start program %s", errS)
 
 		// tag vm to delete

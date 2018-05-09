@@ -205,11 +205,10 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
-		Token:             h.Config.API.Token,
+		Token:             h.Configuration().API.Token,
 		BaseDir:           h.Config.Basedir,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              wName,
-		Key:               h.Configuration().API.Token,
 		Model:             h.Hatchery().Model.ID,
 		Hatchery:          h.hatch.ID,
 		HatcheryName:      h.hatch.Name,

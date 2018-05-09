@@ -25,13 +25,13 @@ We will create a model called testopenstack:
 
 You need to configure:
 
-  * The image is your image on which you want to spawn your openstack VM
-  * The flavor of your openstack VM
-  * If you aren't an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a [pattern that an administrator have already fill for you]({{< relref "workflows/TODO_PATTERNS" >}}).
+  * **The image** is your image on which you want to spawn your openstack VM
+  * **The flavor** of your openstack VM
+  * **Pattern** : if you aren't an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a [pattern that an administrator have already fill for you]({{< relref "workflows/pipelines/requirements/worker-model/patterns.md" >}}).
   * If you are an administrator :
-    * pre worker command: all scripts that need to be run before execute the worker binary (for example: set the right environment variables, install curl and other tools you need like docker, ...)
-    * main worker command: the command launched to run the worker with right flags thanks to the interpolate variables that CDS fill for you [(more informations click here)]({{< relref "workflows/TODO_VARIABLES" >}}).
-    * post worker command: the command launched after the execution of your worker. If you need to clean something and then shutdown the VM.
+    * **pre worker command** : all scripts that need to be run before execute the worker binary (for example: set the right environment variables, install curl and other tools you need like docker, ...)
+    * **main worker command** : the command launched to run the worker with right flags thanks to the interpolate variables that CDS fill for you [(more informations click here)]({{< relref "workflows/pipelines/requirements/worker-model/variables.md" >}}).
+    * **post worker command** : the command launched after the execution of your worker. If you need to clean something and then shutdown the VM.
 
 Via UI (inside settings section --> worker models):
 

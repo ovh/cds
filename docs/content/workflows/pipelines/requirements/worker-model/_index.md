@@ -30,7 +30,11 @@ All registered CDS [hatcheries]({{< relref "hatchery/_index.md" >}}) start/kill 
 
 A user can add a worker model by setting a owner group if user is administrator of group.
 
-A CDS administrator can add a worker model, attach it to 'shared.infra' group and set provision as he want.
+A CDS administrator can add a worker model, a [worker model pattern]({{< relref "workflows/pipelines/requirements/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he want.
+
+### What's a worker model pattern?
+
+A pattern of scripts configuration of CDS workers that CDS administrator create to let users use this pattern when they want to create a worker model. For more information [click here]({{< relref "workflows/pipelines/requirements/worker-model/patterns.md" >}}).
 
 ### What's a restricted worker model?
 

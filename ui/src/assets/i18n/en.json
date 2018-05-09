@@ -720,6 +720,8 @@
   "worker_model_pattern_title": "Patterns of configuration scripts",
   "worker_model_pattern_add": "Add a worker model pattern",
   "worker_model_pre_cmd": "Pre worker command",
+  "worker_model_cmd_docker": "Command",
+  "worker_model_shell_docker": "Shell command",
   "worker_model_cmd": "Main worker command",
   "worker_model_post_cmd": "Post worker command",
   "worker_model_shell_cmd": "Main shell command",

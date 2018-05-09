@@ -367,8 +367,6 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk2(in *jlexer.Lexer, out *WorkerArgs
 			out.BaseDir = string(in.String())
 		case "http_insecure":
 			out.HTTPInsecure = bool(in.Bool())
-		case "key":
-			out.Key = string(in.String())
 		case "model":
 			out.Model = int64(in.Int64())
 		case "hatchery":
@@ -458,16 +456,6 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk2(out *jwriter.Writer, in WorkerArg
 			out.RawString(prefix)
 		}
 		out.Bool(bool(in.HTTPInsecure))
-	}
-	{
-		const prefix string = ",\"key\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.Key))
 	}
 	{
 		const prefix string = ",\"model\":"

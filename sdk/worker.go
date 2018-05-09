@@ -150,7 +150,6 @@ type WorkerArgs struct {
 	Name               string `json:"name"`
 	BaseDir            string `json:"base_dir"`
 	HTTPInsecure       bool   `json:"http_insecure"`
-	Key                string `json:"key"`
 	Model              int64  `json:"model"`
 	Hatchery           int64  `json:"hatchery"`
 	HatcheryName       string `json:"hatchery_name"`

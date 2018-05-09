@@ -93,12 +93,12 @@ docker push registry.my.infra.net/my/beautiful/worker:latest
 
 * In the UI, click on the wheel on the hand right top corner and select *workers" (or go the the route *#/worker*)
 * At the bottom of the page, fill the form
-    * Name of your worker *My Beautiful*
-    * type *docker*
-    * image *registry.my.infra.net/my/beautiful/worker:latest*
-    * if you aren't an administrator select a pattern for your configuration script (CDS provide default pattern for linux environment called basic_unix)
-    * if you are an administrator in the main shell command you can indicate `sh -c` for an unix environment.
-    * main worker command: typically on a unix system `rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit` to see all the available variables to interpolate for your worker parameters [click here]({{< relref "workflows/TODO_VARIABLES >}})
+    * **Name** of your worker *My Beautiful*
+    * **type** *docker*
+    * **image** *registry.my.infra.net/my/beautiful/worker:latest*
+    * **pattern** : if you aren't an administrator select a pattern for your configuration script (CDS provide default pattern for linux environment called basic_unix)
+    * **shell command** : if you are an administrator in the main shell command you can indicate `sh -c` for an unix environment.
+    * **command** : is the main worker command, typically on a unix system `rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit` to see all the available variables to interpolate for your worker parameters [click here]({{< relref "workflows/pipelines/requirements/worker-model/variables.md >}})
 * Click on *Add* button and that's it
 
 Now you can specify this model in prerequisite on your job. Create a new prerequisite of type "model", then choose your worker model in list

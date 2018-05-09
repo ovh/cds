@@ -721,6 +721,8 @@
   "worker_model_pattern_add": "Ajouter un pattern de modèle de worker",
   "worker_model_pre_cmd": "Commande avant exécution du worker",
   "worker_model_cmd": "Commande principale du worker",
+  "worker_model_cmd_docker": "Commande",
+  "worker_model_shell_docker": "Commande shell",
   "worker_model_post_cmd": "Commande après exécution du worker",
   "worker_model_shell_cmd": "Commande principale du shell",
 

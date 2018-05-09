@@ -146,18 +146,27 @@
                 </sui-select>
               </div>
               <div class="field">
-                <label>{{'worker_model_shell_cmd' | translate}}</label>
-                <input class="ui input" type="text" name="shell" [(ngModel)]="workerModel.model_docker.shell" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                <label>{{'worker_model_shell_docker' | translate}}</label>
+                <input class="ui input" type="text" name="shell" placeholder="sh -c" [(ngModel)]="workerModel.model_docker.shell" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
               <div class="field">
-                <label>{{'worker_model_cmd' | translate}}</label>
-                <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                <label>{{'worker_model_cmd_docker' | translate}}</label>
+                <input
+                  class="ui input"
+                  type="text"
+                  name="cmd"
+                  [(ngModel)]="workerModel.model_docker.cmd"
+                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
             </ng-container>
             <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
               <div class="field">
                 <label>{{'worker_model_image' | translate}}</label>
                 <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_virtual_machine.image" [disabled]="loading">
+              </div>
+              <div class="field" *ngIf="workerModel.type === 'openstack'">
+                <label>Flavor</label>
+                <input class="ui input" type="text" name="flavor" [(ngModel)]="workerModel.model_virtual_machine.flavor" [disabled]="loading">
               </div>
               <div class="field">
                 <label>{{'worker_model_pattern_title' | translate}}</label>
