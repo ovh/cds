@@ -1,6 +1,10 @@
 :2015 {
     ext .html
 
+    gzip {
+        not /assets/worker/cdsapi/events
+    }
+
     errors {
         404 index.html
     }
