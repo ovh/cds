@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// LoadAllByRepo returns all projects whith an application linked to the repo
+// LoadAllByRepo returns all projects with an application linked to the repo
 func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo string, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	var query string
 	var args []interface{}

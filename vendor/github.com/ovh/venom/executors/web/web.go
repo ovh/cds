@@ -45,7 +45,7 @@ func (Executor) ZeroValueResult() venom.ExecutorResult {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 	var ctx *webctx.WebTestCaseContext
 	switch testCaseContext.(type) {
 	case *webctx.WebTestCaseContext:

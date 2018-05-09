@@ -142,6 +142,8 @@ var (
 	ErrInvalidGitBranch                       = Error{ID: 127, Status: http.StatusBadRequest}
 	ErrInvalidFavoriteType                    = Error{ID: 128, Status: http.StatusBadRequest}
 	ErrInvalidPatternModel                    = Error{ID: 129, Status: http.StatusBadRequest}
+	ErrNoBroadcast                            = Error{ID: 130, Status: http.StatusNotFound}
+	ErrBroadcastNotFound                      = Error{ID: 131, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -272,6 +274,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidGitBranch.ID:                       "Invalid git.branch value, you cannot have an empty git.branch value in your default payload",
 	ErrInvalidFavoriteType.ID:                    "Invalid favorite type: must be 'project' or 'workflow'",
 	ErrInvalidPatternModel.ID:                    "Invalid worker model pattern: name, type and main command are mandatory",
+	ErrNoBroadcast.ID:                            "Invalid broadcast",
+	ErrBroadcastNotFound.ID:                      "Broadcast not found",
 }
 
 var errorsFrench = map[int]string{
@@ -402,6 +406,8 @@ var errorsFrench = map[int]string{
 	ErrInvalidGitBranch.ID:                       "Valeur git.branch invalide, vous ne pouvez pas avoir de valeur git.branch avec une string vide dans votre payload par défaut",
 	ErrInvalidFavoriteType.ID:                    "Type de favori invalide: doit être 'projet' ou 'workflow'",
 	ErrInvalidPatternModel.ID:                    "Pattern de modèle de worker invalide: le nom, type et commande principale sont requis",
+	ErrNoBroadcast.ID:                            "Information invalide",
+	ErrBroadcastNotFound.ID:                      "Information non trouvée",
 }
 
 var errorsLanguages = []map[int]string{

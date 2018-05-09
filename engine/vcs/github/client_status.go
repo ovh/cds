@@ -39,7 +39,7 @@ func (g *githubClient) SetStatus(event sdk.Event) error {
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventPipelineBuild{}):
 		data, err = processEventPipelineBuild(event, g.uiURL, g.DisableStatusDetail)
-	case fmt.Sprintf("%T", sdk.EventWorkflowNodeRun{}):
+	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processEventWorkflowNodeRun(event, g.uiURL, g.DisableStatusDetail)
 	default:
 		log.Error("github.SetStatus> Unknown event %s", event)
@@ -147,7 +147,7 @@ func processGithubState(s Status) string {
 
 func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStatusDetail bool) (statusData, error) {
 	data := statusData{}
-	var eventNR sdk.EventWorkflowNodeRun
+	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "githubClient.processEventWorkflowNodeRun> Error durring consumption")
 	}
@@ -175,8 +175,8 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 
 	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 		githubURL,
-		eventNR.ProjectKey,
-		eventNR.WorkflowName,
+		event.ProjectKey,
+		event.WorkflowName,
 		eventNR.Number,
 	)
 
@@ -185,7 +185,7 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 		data.urlPipeline = ""
 	}
 
-	data.context = sdk.VCSCommitStatusDescription(eventNR)
+	data.context = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
 	data.desc = eventNR.NodeName + ": " + eventNR.Status
 	return data, nil
 }

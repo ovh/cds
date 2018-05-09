@@ -19,12 +19,13 @@ type SwiftStore struct {
 }
 
 // NewSwiftStore create a new ObjectStore with openstack driver and check configuration
-func NewSwiftStore(authURL, user, password, region, tenant, containerprefix string) (Driver, error) {
+func NewSwiftStore(authURL, user, password, region, tenant, domain, containerprefix string) (Driver, error) {
 	s := SwiftStore{
 		swift.Connection{
 			AuthUrl:  authURL,
 			Region:   region,
 			Tenant:   tenant,
+			Domain:   domain,
 			UserName: user,
 			ApiKey:   password,
 		}, containerprefix}

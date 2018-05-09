@@ -67,7 +67,7 @@ func stringifyExecutorResult(e ExecutorResult) map[string]string {
 
 func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, step TestStep, l Logger) (ExecutorResult, error) {
 	if e.timeout == 0 {
-		return e.executor.Run(tcc, l, step)
+		return e.executor.Run(tcc, l, step, ts.WorkDir)
 	}
 
 	ctxTimeout, cancel := context.WithTimeout(context.Background(), time.Duration(e.timeout)*time.Second)
@@ -76,7 +76,7 @@ func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, st
 	ch := make(chan ExecutorResult)
 	cherr := make(chan error)
 	go func(tcc TestCaseContext, e *ExecutorWrap, step TestStep, l Logger) {
-		result, err := e.executor.Run(tcc, l, step)
+		result, err := e.executor.Run(tcc, l, step, ts.WorkDir)
 		if err != nil {
 			cherr <- err
 		} else {

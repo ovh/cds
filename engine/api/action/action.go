@@ -56,8 +56,8 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 				return errl
 			}
 			a.Actions[i].ID = ch.ID
-			a.Actions[i].AlwaysExecuted = ch.AlwaysExecuted
-			a.Actions[i].Optional = ch.Optional
+			a.Actions[i].AlwaysExecuted = ch.AlwaysExecuted || a.Actions[i].AlwaysExecuted
+			a.Actions[i].Optional = ch.Optional || a.Actions[i].Optional
 			a.Actions[i].Enabled = ch.Enabled
 			log.Debug("InsertAction> Get existing child Action %s with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
 		} else {

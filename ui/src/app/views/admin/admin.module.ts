@@ -9,18 +9,22 @@ import {WorkerModelPatternComponent} from './worker-model-pattern/worker-model-p
 import {WorkerModelPatternAddComponent} from './worker-model-pattern/add/worker-model-pattern.add.component';
 import {WorkerModelPatternEditComponent} from './worker-model-pattern/edit/worker-model-pattern.edit.component';
 import {StatusComponent} from './status/status.component';
-import {AdminSidebarComponent} from './sidebar/admin.sidebar.component';
+import {BroadcastAddComponent} from './broadcast/add/broadcast.add.component';
+import {BroadcastEditComponent} from './broadcast/edit/broadcast.edit.component';
+import {BroadcastListComponent} from './broadcast/list/broadcast.list.component';
 
 @NgModule({
     declarations: [
         AdminComponent,
-        AdminSidebarComponent,
         MigrationOverviewComponent,
         MigrationProjectComponent,
         StatusComponent,
         WorkerModelPatternComponent,
         WorkerModelPatternAddComponent,
         WorkerModelPatternEditComponent,
+        BroadcastAddComponent,
+        BroadcastEditComponent,
+        BroadcastListComponent
     ],
     imports: [
       SharedModule,

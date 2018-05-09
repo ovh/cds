@@ -107,6 +107,18 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 
 		ts.Name += " [" + f + "]"
 
+		if ts.Version != "" && !strings.HasPrefix(ts.Version, "1") {
+			ts.WorkDir, err = filepath.Abs(filepath.Dir(f))
+			if err != nil {
+				return fmt.Errorf("Unable to get testsuite's working directory err:%s", err)
+			}
+		} else {
+			ts.WorkDir, err = os.Getwd()
+			if err != nil {
+				return fmt.Errorf("Unable to get current working directory err:%s", err)
+			}
+		}
+
 		nSteps := 0
 		for _, tc := range ts.TestCases {
 			nSteps += len(tc.TestSteps)

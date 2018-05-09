@@ -8,6 +8,10 @@ import {WorkerModelPatternAddComponent} from './worker-model-pattern/add/worker-
 import {WorkerModelPatternEditComponent} from './worker-model-pattern/edit/worker-model-pattern.edit.component';
 import {CanActivateAuthAdminRoute} from '../../service/auth/authenAdminRouteActivate';
 import {MigrationProjectComponent} from './migration/project/migration.project.component';
+import {BroadcastAddComponent} from './broadcast/add/broadcast.add.component';
+import {BroadcastEditComponent} from './broadcast/edit/broadcast.edit.component';
+import {BroadcastListComponent} from './broadcast/list/broadcast.list.component';
+
 const routes: Routes = [
     {
         path: '',
@@ -21,6 +25,9 @@ const routes: Routes = [
             { path: 'worker-model-pattern', component: WorkerModelPatternComponent },
             { path: 'worker-model-pattern/add', component: WorkerModelPatternAddComponent },
             { path: 'worker-model-pattern/:type/:name', component: WorkerModelPatternEditComponent },
+            { path: 'broadcast', component: BroadcastListComponent },
+            { path: 'broadcast/add', component: BroadcastAddComponent },
+            { path: 'broadcast/:id', component: BroadcastEditComponent }
         ]
     }
 ];

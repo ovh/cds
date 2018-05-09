@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -47,6 +49,7 @@ type Result struct {
 	Body        string      `json:"body,omitempty" yaml:"body,omitempty"`
 	BodyJSON    interface{} `json:"bodyjson,omitempty" yaml:"bodyjson,omitempty"`
 	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
+	Headers     Headers     `json:"headers" yaml:"headers"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
@@ -62,7 +65,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 	// Get context
 	ctx, ok := testCaseContext.(*defaultctx.DefaultTestCaseContext)
 	if !ok {
@@ -119,7 +122,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 
 	// get request body from file or from field
-	requestBody, err := e.getRequestBody()
+	requestBody, err := e.getRequestBody(workdir)
 	if err != nil {
 		return nil, err
 	}
@@ -135,17 +138,12 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		l.Warnf("fail to read headers from context : '%s'", err)
 	}
 	for key, value := range contextHeader {
-		req.Header.Add(key, value)
+		req.Header.Set(key, value)
 	}
 
 	if e.Headers != nil {
 		for key := range e.Headers {
-			req.Header.Add(key, e.Headers[key])
-		}
-	}
-	if e.Headers != nil {
-		for key := range e.Headers {
-			req.Header.Add(key, e.Headers[key])
+			req.Header.Set(key, e.Headers[key])
 		}
 	}
 
@@ -154,6 +152,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
+	}
+
+	r.Headers = Headers{}
+	for k, v := range resp.Header {
+		r.Headers[k] = strings.Join(v, ",")
 	}
 
 	res := new(interface{})
@@ -185,12 +188,12 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	return executors.Dump(r)
 }
 
-func (e Executor) getRequestBody() (res interface{}, err error) {
+func (e Executor) getRequestBody(workdir string) (res interface{}, err error) {
 	var bytes []byte
 	if e.Body != "" {
 		bytes = []byte(e.Body)
 	} else if e.BodyFile != "" {
-		path := string(e.BodyFile)
+		path := filepath.Join(workdir, string(e.BodyFile))
 		if _, err = os.Stat(path); !os.IsNotExist(err) {
 			bytes, err = ioutil.ReadFile(path)
 			if err != nil {
