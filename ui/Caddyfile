@@ -20,4 +20,10 @@
         header_upstream Authorization {>Authorization}
         header_upstream Session-Token {>Session-Token}
     }
+
+    proxy /assets/worker/web/cdsapi {$BACKEND_HOST} {
+        without /assets/worker/web/cdsapi
+        header_upstream Authorization {>Authorization}
+        header_upstream Session-Token {>Session-Token}
+    }
 }
