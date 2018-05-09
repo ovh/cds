@@ -108,12 +108,10 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 		log.Info("LDAP> Bind user %s", c.conf.BindDN)
 		if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
 			if shoudRetry(err) {
-				err = c.openLDAP(c.conf)
-				if err != nil {
+				if err := c.openLDAP(c.conf); err != nil {
 					return err
 				}
-				err = c.conn.Bind(c.conf.BindDN, c.conf.BindPwd)
-				if err != nil {
+				if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
 					return err
 				}
 			} else {
@@ -231,12 +229,10 @@ func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error
 		log.Debug("LDAP> Bind user %s", c.conf.BindDN)
 		if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
 			if shoudRetry(err) {
-				err = c.openLDAP(c.conf)
-				if err != nil {
+				if err := c.openLDAP(c.conf); err != nil {
 					return nil, err
 				}
-				err = c.conn.Bind(c.conf.BindDN, c.conf.BindPwd)
-				if err != nil {
+				if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
 					return nil, err
 				}
 			} else {
