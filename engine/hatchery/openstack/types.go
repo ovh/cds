@@ -18,7 +18,10 @@ type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
 
 	// Tenant openstack-tenant
-	Tenant string `mapstructure:"tenant" toml:"tenant" default:"" commented:"false" comment:"Openstack tenant (string)"`
+	Tenant string `mapstructure:"tenant" toml:"tenant" default:"" commented:"false" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only"`
+
+	// Domain openstack-domain
+	Domain string `mapstructure:"domain" toml:"domain" default:"" commented:"true" comment:"Openstack Domain, generally value of $OS_DOMAIN_NAME, v3 auth only"`
 
 	// User  openstack-user
 	User string `mapstructure:"user" toml:"user" default:"" commented:"false" comment:"Openstack User"`

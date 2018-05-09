@@ -152,6 +152,7 @@ type ConfigOptionsOpenstack struct {
 	Username        string
 	Password        string
 	Tenant          string
+	Domain          string
 	Region          string
 	ContainerPrefix string
 	DisableTempURL  bool
@@ -176,6 +177,7 @@ func New(c context.Context, cfg Config) (Driver, error) {
 			cfg.Options.Openstack.Password,
 			cfg.Options.Openstack.Region,
 			cfg.Options.Openstack.Tenant,
+			cfg.Options.Openstack.Domain,
 			cfg.Options.Openstack.ContainerPrefix)
 	case Filesystem:
 		instance = sdk.ArtifactsStore{
