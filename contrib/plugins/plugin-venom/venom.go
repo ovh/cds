@@ -79,7 +79,6 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	parallelS := a.Arguments().Get("parallel")
 	loglevel := a.Arguments().Get("loglevel")
 	vars := a.Arguments().Get("vars")
-	details := a.Arguments().Get("details")
 	varsFromFile := a.Arguments().Get("vars-from-file")
 
 	if path == "" {
@@ -180,9 +179,6 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	v.OutputDir = output
 	v.Parallel = parallel
 	v.OutputDetails = "low"
-	if details != "" {
-		v.OutputDetails = details
-	}
 
 	filepath := strings.Split(path, ",")
 	filepathExcluded := strings.Split(exclude, ",")
