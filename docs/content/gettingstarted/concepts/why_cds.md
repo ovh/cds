@@ -45,7 +45,7 @@ To implement this strong *self-service culture* the team files an issue everytim
 
 CDS is built to scale. And this capability is challenged everyday in a large-scale production environment. This ability to scale has been made possible thanks to a simple design principle: **statelessness**
 
-CDS's API servers are completely stateless. They do not store anything on the fileSystem. With this "share-nothing" architecture, servers can be deployed as much times as reauired to support the load. Instances can be spawned and decommissioned dynamically to handle usage surges when required while keeping the cost at its lowest when the platform is underused. All you need to provide is a scalable and highly available database.
+CDS's API servers are completely stateless. They do not store anything on the fileSystem. With this "share-nothing" architecture, servers can be deployed as much times as required to support the load. Instances can be spawned and decommissioned dynamically to handle usage surges when required while keeping the cost at its lowest when the platform is underused. All you need to provide is a scalable and highly available database.
 
 
 ## 3 - High Availability
