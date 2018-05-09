@@ -7,6 +7,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/gettingstarted/concepts/why_cds/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/design/</loc>
   </url>
   
@@ -64,10 +68,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/variables/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/gettingstarted/concepts/why_cds/</loc>
   </url>
   
   <url>

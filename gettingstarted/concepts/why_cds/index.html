@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Why CDS? :: CDS - Continuous Delivery Service</title>
+    <title>CDS - The origins :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -97,7 +97,7 @@
         <ul>
       <li data-nav-id="/gettingstarted/concepts/why_cds/" class="dd-item active">
         <a href="https://ovh.github.io/cds/gettingstarted/concepts/why_cds/">
-          <span>Why CDS?</span>
+          <span>CDS - The origins</span>
         </a>
     </li>
       <li data-nav-id="/gettingstarted/concepts/workflow/" class="dd-item">
@@ -1859,7 +1859,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/gettingstarted/'>Getting Started</a> > <a href='https://ovh.github.io/cds/gettingstarted/concepts/'>Concepts</a> > Why CDS?
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/gettingstarted/'>Getting Started</a> > <a href='https://ovh.github.io/cds/gettingstarted/concepts/'>Concepts</a> > CDS - The origins
 
  
 
@@ -1876,19 +1876,12 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cds-the-origins">CDS - The origins</a>
-<ul>
-<li><a href="#1-security-and-self-service">1 - Security and Self-Service</a></li>
-<li><a href="#2-auto-scale">2 - Auto-Scale</a>
-<ul>
-<li><a href="#2-a-an-api-scale">2.a – an API @ Scale</a></li>
-<li><a href="#2-b-workers-scale-hatcheries">2.b – Workers @ Scale – Hatcheries</a></li>
-</ul></li>
+<li><a href="#1-self-service">1 - Self-Service</a></li>
+<li><a href="#2-horizontal-scalability">2 - Horizontal Scalability</a></li>
 <li><a href="#3-high-availability">3 - High Availability</a></li>
-<li><a href="#4-self-hosting">4 - Self-Hosting</a></li>
-<li><a href="#5-reuse-pipelines">5 - Reuse Pipelines</a></li>
-<li><a href="#6-rest-api">6 - REST API</a></li>
-</ul></li>
+<li><a href="#4-pipeline-reutilisability">4 - Pipeline Reutilisability</a></li>
+<li><a href="#5-rest-api">5 - REST API</a></li>
+<li><a href="#6-customizable">6 - Customizable</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -1901,7 +1894,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Why CDS?</h1>
+                <h1>CDS - The origins</h1>
                 <p></p>
             </div>
           
@@ -1911,9 +1904,7 @@
 
 
 
-<h2 id="cds-the-origins">CDS - The origins</h2>
-
-<p>Here are some principles of Continuous Delivery that have inspired the Continuous Delivery team @OVH:</p>
+<p>To build CDS, the development team took their inspiration from the Continuous Delivery principles:</p>
 
 <ul>
 <li>The process for releasing/deploying software MUST be repeatable and reliable.</li>
@@ -1932,127 +1923,60 @@
 
 <p>ref. <a href="http://devopsnet.com/2011/08/04/continuous-delivery/">http://devopsnet.com/2011/08/04/continuous-delivery/</a></p>
 
-<p>Some of these points need to be managed by the Continuous Delivery tool.</p>
+<p>The team triggered the project after several dissatisfying attempts to integrate and use other open-source and commercial build tools at large scale.
+Even if most of the tested tools did not contradict the principles above, they were failing at the &ldquo;real world&rdquo; test. In fact, their limitations were quickly visible at scale. As the number of managed projects grew, these tools were showing signs of weakness of became hard or expensive to manage and maintain. Basic software updates of the tools themselves needed preparation and downtime. Basic configuration changes needed to be centralized on a single team thus creating an organizational bottleneck. etc.</p>
 
-<p>You will find below the six requirements of the OVH Continuous Delivery team on the choice of the continuous
-integration / delivery tool.
-As you have understood, no existing tool on the market met all needs and CDS was created.</p>
+<p>This is why, at the start of the project, the team knew exactly the requirements that would make CDS a suitable tool for their daily operation.
+These requirements later became the <strong><em>CDS Building Design Principles</em></strong> listed below.</p>
 
-<p>CDS is used in OVH Production since November 2015 and was opensourced since November 2016.</p>
+<h2 id="1-self-service">1 - Self-Service</h2>
 
-<h3 id="1-security-and-self-service">1 - Security and Self-Service</h3>
+<p>In massively distributed architectures, development teams work independently to improve and deploy applications and services.</p>
 
-<p>@OVH, there is not any week that passes without new applications
-are developed and deployed in production. The Continuous Delivery team must be able to answer 
-to all user needs, build environment, rights management, the list is long. 
-But in the end, who better than the user to know exactly what he wants to do? 
-Team CD does not impose programming languages, development environment or anything 
-which forces developers to follow a path that has been mapped out.</p>
+<p>Growth in the number of teams and projects create some interesting dynamics where a handful of projects are launched every week. Some of them die at the proof-of concept stage while some others do survive and bring value. Of course, such a turnover rate comes with an ever-growing whishlist of build, test and deployment environments.</p>
 
-<p>CDS ensures its users, who are essentially developers or sysadmin, a great freedom.
-Without asking for CDS administrators, any user is able to create new projects, 
-applications, pipelines, workflows &hellip; to manage ACLs on all elements.</p>
+<p>Centralizing the creation and the configuration of these deployments on a single team is considered harmful. At best, it would create an organizational bottleneck where the Continuous Delivery is overwhelmed with requests and delays their execution. At worst, this multi-layered/multi-team process would look too heavy from the outside and push the developers to censor themselves putting a soft break to the innovation dynamics.</p>
 
-<p><img src="https://ovh.github.io/cds/images/concepts_why_cds_languages.png?height=300px&amp;classes=shadow" alt="Languages" title="Some Languages used at OVH - non-exhaustive list" /></p>
+<p>CDS is built around a strong culture of self-service: Whenever it is possible, the control is delegated to the development teams and to the ops teams. Creation, configuration and deletion of CDS projects is completely decentralized. Moreover, project creators can re-delegate parts of their permissions to their teams through powerful built-in group ACLs.</p>
 
-<p><img src="https://ovh.github.io/cds/images/concepts_why_cds_platforms.png?height=300px&amp;classes=shadow" alt="Platforms" title="Some Platforms used at OVH - non-exhaustive list" /></p>
+<p>Users are also free to add their own workers to the system if the workers provided by the Continuous Delivery team do not suit their needs. This covers the specific cases where specific hardware or software is required to build or test a software. To do so, users just need to start the CDS worker binary from their own machines and give it the IP address and the credentials of the CDS API. A worker CDS is a simple binary, you do not need libraries or particular JVMs on your machine to run it. CDS workers are compatible with Linux, Darwin, OSX, FreeBSD as well as Windows, in architectures 386, amd64 or arm.</p>
 
-<p>A CDS Job is executed by a CDS Worker.</p>
+<p>To implement this strong <em>self-service culture</em> the team files an issue everytime a user needs the help of a CDS administrator to achieve a simple day-to-day task.</p>
 
-<p>A worker CDS is a simple binary, you do not need libraries
-or particular JVMs on your machine to run it. CDS workers are compatible with Linux, Darwin, OSX,
-FreeBSD as well as Windows, in architectures 386, amd64 or arm.</p>
+<h2 id="2-horizontal-scalability">2 - Horizontal Scalability</h2>
 
-<p>The only prerequisite for a CDS Worker to work
-is that it can access the CDS API. Any CDS user can therefore launch a CDS Worker where he wishes for him
-to execute the jobs he wants - and this - without intervention from the CDS administrators. The user
-can thus use its own resources if he wishes.</p>
+<p>CDS is built to scale. And this capability is challenged everyday in a large-scale production environment. This ability to scale has been made possible thanks to a simple design principle: <strong>statelessness</strong></p>
 
-<p><img src="https://ovh.github.io/cds/images/concepts_why_cds_workers.png?height=150px&amp;classes=shadow" alt="a CDS Worker" title="a CDS Worker" /></p>
+<p>CDS&rsquo;s API servers are completely stateless. They do not store anything on the fileSystem. With this &ldquo;share-nothing&rdquo; architecture, servers can be deployed as much times as required to support the load. Instances can be spawned and decommissioned dynamically to handle usage surges when required while keeping the cost at its lowest when the platform is underused. All you need to provide is a scalable and highly available database.</p>
 
-<p>Python 2.7, Python 3.4, Golang 1.9.3 &hellip; Python 2.7, but with this or that library. CDS workers are binaries
-executed in a docker image, a virtual machine. Its Build environments are called &ldquo;Worker Model&rdquo;.</p>
+<h2 id="3-high-availability">3 - High Availability</h2>
 
-<p>If a user wants to Rust, Scala on a specific version, it is autonomous to create his own
-Worker Model and launch it on shared infrastructure. Workers CDS are isolated from each other,
-isolation is essentially done by Docker or virtualization, see Scalability below.</p>
+<p>When working with a continuous delivery tool on a daily basis using an actively maintained tool like CDS, updates are frequent.
+For example, it is frequent that OVH&rsquo;s main CDS instance gets updated and redeployed several times a day.</p>
 
-<p>Security is therefore an essential element, it is not acceptable to be able to navigate on any system of
-file to retrieve files from other teams. By default, when a CDS Worker completes his job, all
-is deleted: the temporary files, the container or the virtual machine.</p>
+<p>This fast delivery and reactivity couldn&rsquo;t have been possible without CDS&rsquo;s High Availability architecture. The <strong>statelessnes</strong> property, described above, is again the preperty that allows to update API servers idependently without interrupting any of the running jobs.</p>
 
-<h3 id="2-auto-scale">2 - Auto-Scale</h3>
+<p>« The loss of a CDS API server is a non-event ».</p>
 
-<p>The tool must support the load, the number of users, the number of workflows, the Workflow executions.
-We can therefore find two essential elements:</p>
+<h2 id="4-pipeline-reutilisability">4 - Pipeline Reutilisability</h2>
 
-<ul>
-<li>an API @ Scale</li>
-<li>Workers @ Scale – Hatcheries</li>
-</ul>
+<p>CDS&rsquo;s built-in don&rsquo;t-repeat-yourself features help you minimize your effort when you need to build, test and deploy hundreds (thousands?) of projects with a similar workflow. This is especially useful when you are managing a micro-services-based infrastructure where containers are usually built and deployed the same way.</p>
 
-<h4 id="2-a-an-api-scale">2.a – an API @ Scale</h4>
+<p>A system of templating allows to customize the build runs depending on the apps to be built and on the deployment environments.</p>
 
-<p>In OVH production, only six instances of the CDS API are deployed. The CDS API is stateless, does not store anything
-on FileSystem and can be deployed n times to support the load.</p>
+<p>This feature is essential as it allows to quickly deploy new applications, provided that a similar one already exists in CDS.</p>
 
-<h4 id="2-b-workers-scale-hatcheries">2.b – Workers @ Scale – Hatcheries</h4>
+<h2 id="5-rest-api">5 - REST API</h2>
 
-<p>« 100,000 jobs are launched every week »</p>
+<p>CDS can be fully operated through its REST API. The API is used by the CDS&rsquo;s UI but also by the workers. All components speak the same language: REST.</p>
 
-<p><img src="https://ovh.github.io/cds/images/concepts_why_cds_hachery.png?height=150px&amp;classes=shadow" alt="A CDS Hatchery" title="a CDS Hatchery" /></p>
+<p>Both the UI and the CLI use exclusively the REST API to operate. Therefore, if you can do it through the UI or the CLI, then you can do it through the REST API.</p>
 
-<p>« Can build and deploy 150 microservices in 8 min »</p>
+<p>« Everything must be scriptable, automatable ».</p>
 
-<p>While respecting the principle that a worker is completely destroyed at the end of his work, achieving the goal of
-to deploy 150 microservices in 8 min implies the need for automation on the creation and removal of Workers.</p>
+<h2 id="6-customizable">6 - Customizable</h2>
 
-<p>Hatcheries support this role and are dedicated to the technologies used. To date, CDS has:</p>
-
-<ul>
-<li>A <strong>Docker Swarm hatchery</strong>: allows to start Workers CDS automatically on a cluster swarm (or a host where there is a docker).</li>
-<li>An <strong>Openstack hatchery</strong>: allows to start virtual machines. For example, these VMs are mainly used to make of the docker build in a completely isolated way.</li>
-<li>A <strong>VSphere hatchery</strong>: same as the hatchery openstack, this hatchery allows to start virtual machines using VSphere.</li>
-<li>A <strong>Mesos / Marathon hatchery</strong>: allows to start Docker containers with Marathon.</li>
-<li>A <strong>Local hatchery</strong>: allows to launch Workers on a host.</li>
-<li>A <strong>Kubernetes hatchery</strong>: allows to launch Workers CDS in Kubernetes Pods.</li>
-</ul>
-
-<p><img src="https://ovh.github.io/cds/images/concepts_why_cds_hacheries.png?height=250px&amp;classes=shadow" alt="Attach repo manager" title="CDS Hatcheries" /></p>
-
-<h3 id="3-high-availability">3 - High Availability</h3>
-
-<p>« The possible loss of a machine on which the CDS API is deployed is a non-event ».</p>
-
-<p>CDS is a very active OpenSource project, we deploy new versions of CDS in production several times a day
-without impacting the work of the users. It is not conceivable to ask our developers to stop
-their work so that we can update CDS. This implies some basic principles:</p>
-
-<ul>
-<li>There is no instance &ldquo;master&rdquo;: we can update any instance CDS at any time.</li>
-<li>No data is stored on the FileSystem of the CDS API. User data is stored in a PostgreSQL database.</li>
-<li>To limit frequent SQL queries on the database, some data is stored in a Redis.</li>
-</ul>
-
-<h3 id="4-self-hosting">4 - Self-Hosting</h3>
-
-<p>You can install CDS on your own infrastructure. You will need: a PostgreSQL database and a Redis.
-You only have to manage backups for the database.
-Consult the documentation <a href="https://ovh.github.io/cds/hosting/">https://ovh.github.io/cds/hosting/</a> for more information.</p>
-
-<h3 id="5-reuse-pipelines">5 - Reuse Pipelines</h3>
-
-<p>&ldquo;You have 150 applications built and deployed in the same way, you will have only two pipelines to maintain:
-the build pipeline and the deployment pipeline.&rdquo;</p>
-
-<p>This feature is essential, allowing teams to quickly deploy new applications. A system of variables related to applications,
-environments, the context of pipelines is available to users to allow to have a minimum of pipeline to maintain.</p>
-
-<h3 id="6-rest-api">6 - REST API</h3>
-
-<p>&ldquo;Everything must be scriptable, automatable&rdquo;</p>
-
-<p>An API, a &ldquo;Command Line&rdquo;, an SDK .. CDS gives the power to its users to create / manage / deploy quickly new workflows on CDS.</p>
+<p>CDS is shipped with a lot of built-in steps and hatcheries that should most users&rsquo; needs. But, power users will want to customize it to suit their own needs. This is why CDS has been designed to accept plug-ins for steps actions and the REST API-based hatchery operations allow and easy addition of customized hatcheries.</p>
 
 
 <footer class=" footline" >
