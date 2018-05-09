@@ -7,9 +7,11 @@ import (
 	"github.com/fatih/structs"
 	"github.com/go-gorp/gorp"
 
+	"encoding/json"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var Cache cache.Store
@@ -19,6 +21,12 @@ func publishEvent(e sdk.Event) {
 	Cache.Enqueue("events", e)
 	// send to cache for cds repositories manager
 	Cache.Enqueue("events_repositoriesmanager", e)
+
+	b, err := json.Marshal(e)
+	if err != nil {
+		log.Warning("publishEvent> Cannot marshal event %+v", e)
+	}
+	Cache.Publish("events_pubsub", string(b))
 }
 
 // Publish sends a event to a queue
