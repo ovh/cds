@@ -12,6 +12,7 @@ import {EventSubscription} from '../../../../model/event.model';
 import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 import {EventStore} from '../../../../service/event/event.store';
 import {Subscription} from 'rxjs/Subscription';
+import {Workflow} from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -98,7 +99,9 @@ export class WorkflowNodeRunComponent {
                 this._workflowEventStore.setSelectedNodeRun(this.nodeRun);
                 this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
                     this.nodeRun = wnr;
-
+                    this._workflowEventStore.setSelectedNode(
+                        Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow),
+                        false);
                     if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
                         this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
                     }
