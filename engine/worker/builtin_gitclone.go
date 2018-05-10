@@ -7,8 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/blang/semver"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
@@ -116,10 +114,10 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		if directory != nil {
 			dir = directory.Value
 		}
-
 		return gitClone(w, params, url.Value, dir, auth, clone, sendLog)
 	}
 }
+
 func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string, auth *git.AuthOpts, clone *git.CloneOpts, sendLog LoggerFunc) sdk.Result {
 	//Prepare all options - logs
 	stdErr := new(bytes.Buffer)
@@ -181,70 +179,6 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 		return res
 	}
 
-	v, errorMake := semver.Make("0.0.1")
-	if errorMake != nil {
-		res := sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Unable init semver: %s", errorMake),
-		}
-		sendLog(res.Reason)
-		return res
-	}
-
-	//Send the logs
-	if len(stdTagListOut.Bytes()) > 0 {
-		// search for version
-		lines := strings.Split(stdTagListOut.String(), "\n")
-		versions := semver.Versions{}
-		re := regexp.MustCompile("refs/tags/(.*)")
-		for _, l := range lines {
-			match := re.FindStringSubmatch(l)
-			if len(match) >= 1 {
-				tag := match[1]
-				if sv, err := semver.Parse(tag); err == nil {
-					versions = append(versions, sv)
-				}
-			}
-		}
-		semver.Sort(versions)
-		if len(versions) > 0 {
-			// and we increment the last version found
-			v = versions[len(versions)-1]
-			v.Patch++
-		}
-	}
-
-	pr, errPR := semver.NewPRVersion("snapshot")
-	if errPR != nil {
-		res := sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Unable create snapshot version: %s", errTag),
-		}
-		sendLog(res.Reason)
-		return res
-	}
-	v.Pre = append(v.Pre, pr)
-
-	cdsVersion := sdk.ParameterFind(params, "cds.version")
-	if cdsVersion != nil {
-		v.Build = append(v.Build, cdsVersion.Value, "cds")
-	}
-
-	semverVar := sdk.Variable{
-		Name:  "cds.semver",
-		Type:  sdk.StringVariable,
-		Value: v.String(),
-	}
-
-	if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
-		res := sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
-		}
-		sendLog(res.Reason)
-		return res
-	}
-
 	return sdk.Result{Status: sdk.StatusSuccess.String()}
 }
 
@@ -266,6 +200,23 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			return fmt.Errorf("Error on addVariableInPipelineBuild (describe): %s", err)
 		}
 		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
+
+		cdsVersion := sdk.ParameterFind(params, "cds.version")
+		if cdsVersion != nil {
+			semverVar := sdk.Variable{
+				Name:  "cds.semver",
+				Type:  sdk.StringVariable,
+				Value: fmt.Sprintf("%s+cds.%s", info.GitDescribe, cdsVersion.Value),
+			}
+
+			if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
+				}
+				sendLog(res.Reason)
+			}
+		}
 	}
 
 	if branch == "" || branch == "{{.git.branch}}" {

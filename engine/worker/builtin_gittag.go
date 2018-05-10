@@ -87,7 +87,6 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		}
 
 		if auth.SignKey.ID != "" {
-
 			tagOpts.SignKey = auth.SignKey.Private
 			tagOpts.SignID = auth.SignKey.ID
 
