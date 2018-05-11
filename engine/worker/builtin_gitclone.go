@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/blang/semver"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
@@ -188,6 +190,12 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 	message := sdk.ParameterValue(*params, "git.message")
 
 	info := git.ExtractInfo(dir)
+
+	cdsVersion := sdk.ParameterFind(params, "cds.version")
+	if cdsVersion == nil || cdsVersion.Value == "" {
+		return fmt.Errorf("cds.version is empty")
+	}
+
 	var cdsSemver string
 	if info.GitDescribe != "" {
 		gitDescribe := sdk.Variable{
@@ -201,13 +209,30 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 		}
 		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
 
-		cdsVersion := sdk.ParameterFind(params, "cds.version")
-		if cdsVersion != nil {
-			cdsSemver = fmt.Sprintf("%s+cds.%s", info.GitDescribe, cdsVersion.Value)
+		smver, errT := semver.Make(info.GitDescribe)
+		if errT != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("git describe %s is not semver compatible", info.GitDescribe),
+			}
+			sendLog(res.Reason)
+			return fmt.Errorf("git.describe invalid")
+		}
+
+		// Prerelease versions
+		if len(smver.Pre) == 2 {
+			cdsSemver = fmt.Sprintf("%d.%d.%d-%s+%s.cds.%s",
+				smver.Major,
+				smver.Minor,
+				smver.Patch,
+				smver.Pre[0],
+				smver.Pre[1],
+				cdsVersion.Value,
+			)
 		}
 	} else {
 		// default value if there is no tag on repository
-		cdsSemver = "0.0.1"
+		cdsSemver = fmt.Sprintf("0.0.1+cds.%s", cdsVersion.Value)
 	}
 
 	if cdsSemver != "" {
