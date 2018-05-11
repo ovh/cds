@@ -473,14 +473,14 @@ func Permission(key string, envName string, u *sdk.User) int {
 	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, envName)]
 }
 
-// CountInValueData represents the result of CountInValue function
-type CountInValueData struct {
+// CountInValueVarData represents the result of CountInVarValue function
+type CountInValueVarData struct {
 	Name  string
 	Count int64
 }
 
-// CountInValue counts how many time a pattern is in variable value for the given project
-func CountInValue(db gorp.SqlExecutor, key string, value string) ([]CountInValueData, error) {
+// CountInVarValue counts how many time a pattern is in variable value for the given project
+func CountInVarValue(db gorp.SqlExecutor, key string, value string) ([]CountInValueVarData, error) {
 	query := `
 		SELECT count(*), environment.name
 		FROM environment_variable
@@ -495,9 +495,9 @@ func CountInValue(db gorp.SqlExecutor, key string, value string) ([]CountInValue
 	}
 	defer rows.Close()
 
-	results := []CountInValueData{}
+	results := []CountInValueVarData{}
 	for rows.Next() {
-		var d CountInValueData
+		var d CountInValueVarData
 		if err := rows.Scan(&d.Count, &d.Name); err != nil {
 			return nil, err
 		}

@@ -161,3 +161,36 @@ func DeleteAllParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64) error
 	_, err := db.Exec(query, pipelineID)
 	return err
 }
+
+// CountInValueParamData represents the result of CountInParamValue function
+type CountInValueParamData struct {
+	Name  string
+	Count int64
+}
+
+// CountInParamValue counts how many time a pattern is in parameter value for the given project
+func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]CountInValueParamData, error) {
+	query := `
+		SELECT count(*), pipeline.name
+		FROM pipeline_parameter
+		JOIN pipeline ON pipeline.id = pipeline_parameter.pipeline_id
+		JOIN project ON project.id = pipeline.project_id
+		WHERE value like '%$2%' AND project.projectkey = $1
+		GROUP BY pipeline.name;
+	`
+	rows, err := db.Query(query, key, value)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := []CountInValueParamData{}
+	for rows.Next() {
+		var d CountInValueParamData
+		if err := rows.Scan(&d.Count, &d.Name); err != nil {
+			return nil, err
+		}
+		results = append(results, d)
+	}
+	return results, nil
+}

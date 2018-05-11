@@ -2,13 +2,13 @@ package warning
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/engine/api/environment"
 )
 
 func computeWithProjectEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
@@ -32,7 +32,7 @@ func computeWithProjectEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
 		if err := json.Unmarshal(payload, &event); err != nil {
 			log.Warning("computeWithProjectEvent> Unable to read EventProjectVariableAdd: %s", err)
 		}
-		manageAddVariableEvent(tx, event.Variable.Name)
+		manageAddVariableEvent(tx, e.ProjectKey, event.Variable.Name)
 	case "sdk.EventProjectVariableUpdate":
 		var event sdk.EventProjectVariableUpdate
 		if err := json.Unmarshal(payload, &event); err != nil {
@@ -83,17 +83,26 @@ func computeWithProjectEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
 	}
 }
 
-func manageAddVariableEvent(db gorp.SqlExecutor, varName string) {
+func manageAddVariableEvent(db gorp.SqlExecutor, key string, varName string) {
 	if err := removeWarning(db, MissingProjectVariable, varName); err != nil {
 		log.Warning("computeWithProjectEvent.EventProjectVariableAdd> Unable to remove warning: %v", err)
 	}
-	// Check if variable is used
 
-	// env variable value
-	environment.CountInValue()
-	// app variable value
-	// pip param value
-	// pip step
-	﻿
+	used := variableIsUsed(db, key, ".cds.proj."+varName)
+	if !used {
+		w := sdk.WarningV2{
+			Key:     key,
+			Element: varName,
+			Created: time.Now(),
+			Type:    UnusedProjectVariable,
+			MessageParams: map[string]string{
+				"VarName":    varName,
+				"ProjectKey": key,
+			},
+		}
+		if err := insert(db, w); err != nil {
+			log.Warning("manageAddVariableEvent> Unable to insert warning")
+		}
+	}
 
 }
