@@ -33,6 +33,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -183,6 +184,7 @@ type API struct {
 	StartupTime         time.Time
 	lastUpdateBroker    *lastUpdateBroker
 	eventsBroker        *eventsBroker
+	warnChan            chan sdk.Event
 	Cache               cache.Store
 }
 
@@ -559,6 +561,10 @@ func (a *API) Serve(ctx context.Context) error {
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+
+	a.warnChan = make(chan sdk.Event)
+	event.Subscribe(a.warnChan)
+	go warning.Compute(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.warnChan)
 	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
