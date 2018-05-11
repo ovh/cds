@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -38,10 +39,27 @@ type eventsBroker struct {
 //Init the eventsBroker
 func (b *eventsBroker) Init(c context.Context, store cache.Store) {
 	// Start cache Subscription
-	go cacheSubscribe(c, b.messages, store)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				buf := make([]byte, 1<<16)
+				runtime.Stack(buf, true)
+				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> %s", string(buf))
+			}
+		}()
+		cacheSubscribe(c, b.messages, store)
+	}()
 
-	// Start processing events
-	go b.Start(c)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				buf := make([]byte, 1<<16)
+				runtime.Stack(buf, true)
+				log.Error("[PANIC] eventsBroker.Init.Start> %s", string(buf))
+			}
+		}()
+		b.Start(c)
+	}()
 }
 
 func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
