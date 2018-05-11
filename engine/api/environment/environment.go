@@ -473,6 +473,39 @@ func Permission(key string, envName string, u *sdk.User) int {
 	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, envName)]
 }
 
+// CountInValueData represents the result of CountInValue function
+type CountInValueData struct {
+	Name  string
+	Count int64
+}
+
+// CountInValue counts how many time a pattern is in variable value for the given project
+func CountInValue(db gorp.SqlExecutor, key string, value string) ([]CountInValueData, error) {
+	query := `
+		SELECT count(*), environment.name
+		FROM environment_variable
+		JOIN environment ON environment.id = environment_variable.environment_id
+		JOIN project ON project.id = environment.project_id
+		WHERE value like '%$2%' AND project.projectkey = $1
+		GROUP BY environment.name;
+	`
+	rows, err := db.Query(query, key, value)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := []CountInValueData{}
+	for rows.Next() {
+		var d CountInValueData
+		if err := rows.Scan(&d.Count, &d.Name); err != nil {
+			return nil, err
+		}
+		results = append(results, d)
+	}
+	return results, nil
+}
+
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
 func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.User) error {
 	k, errGenerate := keys.GenerateSSHKey(keyname)

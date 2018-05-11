@@ -8,9 +8,17 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/environment"
 )
 
 func computeWithProjectEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
+	tx, errT := db.Begin()
+	if errT != nil {
+		log.Warning("computeWithProjectEvent> Unable to start transaction")
+		return
+	}
+	defer tx.Rollback()
+
 	payload, errP := json.Marshal(e.Payload)
 	if errP != nil {
 		log.Warning("computeWithProjectEvent> Unable to marshal event payload: %s", errP)
@@ -24,13 +32,7 @@ func computeWithProjectEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
 		if err := json.Unmarshal(payload, &event); err != nil {
 			log.Warning("computeWithProjectEvent> Unable to read EventProjectVariableAdd: %s", err)
 		}
-
-		if err := removeWarningIfExist(db, MissingProjectVariable, event.Variable.Name); err != nil {
-			log.Warning("computeWithProjectEvent.EventProjectVariableAdd> Unable to remove warning: %v", err)
-		}
-		// Check if variable is used
-		// Check if there is a warning on it
-
+		manageAddVariableEvent(tx, event.Variable.Name)
 	case "sdk.EventProjectVariableUpdate":
 		var event sdk.EventProjectVariableUpdate
 		if err := json.Unmarshal(payload, &event); err != nil {
@@ -40,10 +42,10 @@ func computeWithProjectEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
 			return
 		}
 
-		if err := removeWarningIfExist(db, UnusedProjectVariable, event.OldVariable.Name); err != nil {
+		if err := removeWarning(db, UnusedProjectVariable, event.OldVariable.Name); err != nil {
 			log.Warning("computeWithProjectEvent.EventProjectVariableAdd> Unable to remove warning: %v", err)
 		}
-		if err := removeWarningIfExist(db, MissingProjectVariable, event.NewVariable.Name); err != nil {
+		if err := removeWarning(db, MissingProjectVariable, event.NewVariable.Name); err != nil {
 			log.Warning("computeWithProjectEvent.EventProjectVariableAdd> Unable to remove warning: %v", err)
 		}
 		// If name changed, check if variable is used
@@ -55,7 +57,7 @@ func computeWithProjectEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
 			log.Warning("computeWithProjectEvent> Unable to read EventProjectVariableDelete: %s", err)
 		}
 
-		if err := removeWarningIfExist(db, UnusedProjectVariable, event.Variable.Name); err != nil {
+		if err := removeWarning(db, UnusedProjectVariable, event.Variable.Name); err != nil {
 			log.Warning("computeWithProjectEvent.EventProjectVariableAdd> Unable to remove warning: %v", err)
 		}
 		// Check if variable is used
@@ -79,4 +81,19 @@ func computeWithProjectEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
 		log.Debug("Event %s ignored", e.EventType)
 		return
 	}
+}
+
+func manageAddVariableEvent(db gorp.SqlExecutor, varName string) {
+	if err := removeWarning(db, MissingProjectVariable, varName); err != nil {
+		log.Warning("computeWithProjectEvent.EventProjectVariableAdd> Unable to remove warning: %v", err)
+	}
+	// Check if variable is used
+
+	// env variable value
+	environment.CountInValue()
+	// app variable value
+	// pip param value
+	// pip step
+	﻿
+
 }
