@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"errors"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -41,10 +42,22 @@ func (b *eventsBroker) Init(c context.Context, store cache.Store) {
 	// Start cache Subscription
 	go func() {
 		defer func() {
-			if r := recover(); r != nil {
-				buf := make([]byte, 1<<16)
-				runtime.Stack(buf, true)
-				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> %s", string(buf))
+			if re := recover(); re != nil {
+				var err error
+				switch t := re.(type) {
+				case string:
+					err = errors.New(t)
+				case error:
+					err = re.(error)
+				case sdk.Error:
+					err = re.(sdk.Error)
+				default:
+					err = sdk.ErrUnknownError
+				}
+				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> recover %s", err)
+				trace := make([]byte, 4096)
+				count := runtime.Stack(trace, true)
+				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> Stacktrace of %d bytes\n%s\n", count, trace)
 			}
 		}()
 		cacheSubscribe(c, b.messages, store)
@@ -52,10 +65,22 @@ func (b *eventsBroker) Init(c context.Context, store cache.Store) {
 
 	go func() {
 		defer func() {
-			if r := recover(); r != nil {
-				buf := make([]byte, 1<<16)
-				runtime.Stack(buf, true)
-				log.Error("[PANIC] eventsBroker.Init.Start> %s", string(buf))
+			if re := recover(); re != nil {
+				var err error
+				switch t := re.(type) {
+				case string:
+					err = errors.New(t)
+				case error:
+					err = re.(error)
+				case sdk.Error:
+					err = re.(sdk.Error)
+				default:
+					err = sdk.ErrUnknownError
+				}
+				log.Error("[PANIC] eventsBroker.Init.Start> recover %s", err)
+				trace := make([]byte, 4096)
+				count := runtime.Stack(trace, true)
+				log.Error("[PANIC] eventsBroker.Init.Start> Stacktrace of %d bytes\n%s\n", count, trace)
 			}
 		}()
 		b.Start(c)
