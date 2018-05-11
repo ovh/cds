@@ -99,9 +99,12 @@ export class WorkflowNodeRunComponent {
                 this._workflowEventStore.setSelectedNodeRun(this.nodeRun);
                 this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
                     this.nodeRun = wnr;
-                    this._workflowEventStore.setSelectedNode(
-                        Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow),
-                        false);
+                    if (this.nodeRun) {
+                        this._workflowEventStore.setSelectedNode(
+                            Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow),
+                            false);
+                    }
+
                     if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
                         this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
                     }
