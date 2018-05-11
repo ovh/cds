@@ -25,6 +25,7 @@ func publishEvent(e sdk.Event) {
 	b, err := json.Marshal(e)
 	if err != nil {
 		log.Warning("publishEvent> Cannot marshal event %+v", e)
+		return
 	}
 	Cache.Publish("events_pubsub", string(b))
 }
