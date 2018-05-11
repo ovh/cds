@@ -21,15 +21,12 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		path := sdk.ParameterFind(&a.Parameters, "path")
 
 		if tagName == nil || tagName.Value == "" {
-			tagName = sdk.ParameterFind(params, "cds.semver")
-			if tagName == nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: "Tag name is not set. Nothing to perform.",
-				}
-				sendLog(res.Reason)
-				return res
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: "Tag name is not set. Nothing to perform.",
 			}
+			sendLog(res.Reason)
+			return res
 		}
 
 		gitURL, auth, errR := extractVCSInformations(*params)
@@ -87,7 +84,6 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		}
 
 		if auth.SignKey.ID != "" {
-
 			tagOpts.SignKey = auth.SignKey.Private
 			tagOpts.SignID = auth.SignKey.ID
 
