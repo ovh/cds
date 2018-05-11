@@ -220,15 +220,20 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 		}
 
 		// Prerelease versions
-		if len(smver.Pre) == 2 {
-			cdsSemver = fmt.Sprintf("%d.%d.%d-%s+%s.cds.%s",
-				smver.Major,
-				smver.Minor,
-				smver.Patch,
-				smver.Pre[0],
-				smver.Pre[1],
-				cdsVersion.Value,
-			)
+		// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
+		if len(smver.Pre) == 1 {
+			tuple := strings.Split(smver.Pre[0].String(), "-")
+			// we split 4-g595de235a, g595de235a is the sha1
+			if len(tuple) == 2 {
+				cdsSemver = fmt.Sprintf("%d.%d.%d-%s+%s.cds.%s",
+					smver.Major,
+					smver.Minor,
+					smver.Patch,
+					tuple[0],
+					tuple[1],
+					cdsVersion.Value,
+				)
+			}
 		}
 	} else {
 		// default value if there is no tag on repository
