@@ -68,7 +68,7 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 			}
 
 			switch e.EventType {
-			case "sdk.EventPipelineBUILD", "sdk.EventJob":
+			case "sdk.EventPipelineBuild", "sdk.EventJob":
 				continue
 			}
 			cacheMsgChan <- e
