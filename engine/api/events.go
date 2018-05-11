@@ -46,7 +46,7 @@ func (b *eventsBroker) Init(c context.Context, store cache.Store) {
 
 func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
 	pubSub := store.Subscribe("events_pubsub")
-	tick := time.NewTicker(250 * time.Millisecond)
+	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
 	for {
 		select {
@@ -121,6 +121,11 @@ func (b *eventsBroker) Start(c context.Context) {
 		case receivedEvent := <-b.messages:
 			bEvent, err := json.Marshal(receivedEvent)
 			if err != nil {
+				continue
+			}
+
+			switch receivedEvent.EventType {
+			case "sdk.EventPipelineBUILD", "sdk.EventJob":
 				continue
 			}
 
