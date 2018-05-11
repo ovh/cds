@@ -132,7 +132,7 @@ export class WorkflowComponent implements OnInit {
             f.key = key;
             f.workflow_name = workflowName;
             f.runs = true;
-            this._eventStore.changeFilter(f);
+            this._eventStore.changeFilter(f, true);
         });
     }
 

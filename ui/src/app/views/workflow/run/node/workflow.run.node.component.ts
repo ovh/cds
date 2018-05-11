@@ -81,7 +81,7 @@ export class WorkflowNodeRunComponent {
             s.workflow_name = this.workflowName;
             s.runs = true;
             s.num = wr.num;
-            this._eventStore.changeFilter(s);
+            this._eventStore.changeFilter(s, true);
 
             let historyChecked = false;
             this.subNodeRun = this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
@@ -114,7 +114,7 @@ export class WorkflowNodeRunComponent {
                 f.workflow_name = this.workflowName;
                 f.num = this.workflowRun.num;
                 f.runs = true;
-                this._eventStore.changeFilter(f);
+                this._eventStore.changeFilter(f, true);
             });
         });
     }

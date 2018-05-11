@@ -20,13 +20,13 @@ export class EventStore {
             f.uuid = uuid;
         } else {
             f.uuid = uuid;
-            this.changeFilter(f);
+            this.changeFilter(f, false);
 
         }
         this._eventFilter.next(f);
     }
 
-    changeFilter(filter: EventSubscription) {
+    changeFilter(filter: EventSubscription, sendToWorker: boolean) {
         if (this.worker) {
             filter.uuid = this._eventFilter.getValue().uuid;
         }
@@ -42,7 +42,7 @@ export class EventStore {
             }
         }
         this._eventFilter.next(filter);
-        if (this.worker) {
+        if (this.worker && sendToWorker) {
             let msg = {
                 add_filter: filter
             };
