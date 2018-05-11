@@ -56,7 +56,7 @@ function fibonacci (retry) {
 function connectSSE(url, headAuthKey, headAuthValue) {
     var headers = {};
     headers[headAuthKey] = headAuthValue;
-    return new EventSourcePolyfill(url, {headers: headers, errorOnTimeout: false, checkActivity: false, connectionTimeout: 45000});
+    return new EventSourcePolyfill(url, {headers: headers, errorOnTimeout: false, checkActivity: false, connectionTimeout: 55000});
 }
 
 function unsubscribeEvent(url, headAuthKey, headAuthValue, filter) {
