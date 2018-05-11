@@ -188,7 +188,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 	message := sdk.ParameterValue(*params, "git.message")
 
 	info := git.ExtractInfo(dir)
-
+	var cdsSemver string
 	if info.GitDescribe != "" {
 		gitDescribe := sdk.Variable{
 			Name:  "git.describe",
@@ -203,19 +203,26 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 
 		cdsVersion := sdk.ParameterFind(params, "cds.version")
 		if cdsVersion != nil {
-			semverVar := sdk.Variable{
-				Name:  "cds.semver",
-				Type:  sdk.StringVariable,
-				Value: fmt.Sprintf("%s+cds.%s", info.GitDescribe, cdsVersion.Value),
-			}
+			cdsSemver = fmt.Sprintf("%s+cds.%s", info.GitDescribe, cdsVersion.Value)
+		}
+	} else {
+		// default value if there is no tag on repository
+		cdsSemver = "0.0.1"
+	}
 
-			if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
-				}
-				sendLog(res.Reason)
+	if cdsSemver != "" {
+		semverVar := sdk.Variable{
+			Name:  "cds.semver",
+			Type:  sdk.StringVariable,
+			Value: cdsSemver,
+		}
+
+		if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
 			}
+			sendLog(res.Reason)
 		}
 	}
 
