@@ -66,6 +66,11 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 				log.Warning("events.cacheSubscribe> Cannot unmarshal event %s: %s", msg, err)
 				continue
 			}
+
+			switch e.EventType {
+			case "sdk.EventPipelineBUILD", "sdk.EventJob":
+				continue
+			}
 			cacheMsgChan <- e
 		}
 	}
@@ -124,15 +129,13 @@ func (b *eventsBroker) Start(c context.Context) {
 				continue
 			}
 
-			switch receivedEvent.EventType {
-			case "sdk.EventPipelineBUILD", "sdk.EventJob":
-				continue
-			}
-
 			b.mutex.Lock()
+			log.Warning("eventsBroker.received (%d): %s", len(b.clients), receivedEvent.EventType)
 			for _, i := range b.clients {
 				if i.Queue != nil {
 					manageEvent(receivedEvent, string(bEvent), i)
+				} else {
+					log.Warning("Queue is nil %s", i.User.Username)
 				}
 
 			}
@@ -227,6 +230,7 @@ func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscrib
 		name := event.WorkflowName
 		// check if user has subscribed to runs list
 		s, ok := subscriber.Events[sdk.EventSubsWorkflowRuns]
+		log.Warning("events.runs %+v", s)
 		if ok && event.EventType == "sdk.EventRunWorkflow" {
 			sent := false
 			for _, e := range s {
@@ -240,10 +244,11 @@ func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscrib
 				return
 			}
 		}
-
+		log.Warning("events.run")
 		// check if user has subscribed to this specific run
 		num := event.WorkflowRunNum
 		s, ok = subscriber.Events[sdk.EventSubWorkflowRun]
+		log.Warning("events.run %+v", s)
 		if ok && (event.EventType == "sdk.EventRunWorkflowNode" || event.EventType == "sdk.EventRunWorkflowNodeJob") {
 			for _, e := range s {
 				if e.ProjectKey == key && e.WorkflowName == name && e.WorkflowNum == num {
