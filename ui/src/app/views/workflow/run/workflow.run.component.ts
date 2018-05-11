@@ -72,8 +72,8 @@ export class WorkflowRunComponent implements OnInit {
         // Get workflow run
         this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
             this.workflowRun = wr;
-            if (this.workflowRun.status === PipelineStatus.STOPPED ||
-                this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
+            if (this.workflowRun && (this.workflowRun.status === PipelineStatus.STOPPED ||
+                this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS)) {
                 this.handleNotification();
             }
         });

@@ -19,8 +19,9 @@ export class WorkflowBreadCrumbComponent {
 
     constructor(private _workflowEventStore: WorkflowEventStore) {
         this.runSub = this._workflowEventStore.selectedRun().subscribe(wr => {
-            console.log(wr);
-            this.run = wr.num;
+            if (wr) {
+                this.run = wr.num;
+            }
         });
 
     }
