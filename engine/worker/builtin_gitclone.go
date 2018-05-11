@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/blang/semver"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
@@ -189,6 +191,12 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 
 	info := git.ExtractInfo(dir)
 
+	cdsVersion := sdk.ParameterFind(params, "cds.version")
+	if cdsVersion == nil || cdsVersion.Value == "" {
+		return fmt.Errorf("cds.version is empty")
+	}
+
+	var cdsSemver string
 	if info.GitDescribe != "" {
 		gitDescribe := sdk.Variable{
 			Name:  "git.describe",
@@ -201,21 +209,50 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 		}
 		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
 
-		cdsVersion := sdk.ParameterFind(params, "cds.version")
-		if cdsVersion != nil {
-			semverVar := sdk.Variable{
-				Name:  "cds.semver",
-				Type:  sdk.StringVariable,
-				Value: fmt.Sprintf("%s+cds.%s", info.GitDescribe, cdsVersion.Value),
+		smver, errT := semver.Make(info.GitDescribe)
+		if errT != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("git describe %s is not semver compatible", info.GitDescribe),
 			}
+			sendLog(res.Reason)
+			return fmt.Errorf("git.describe invalid")
+		}
 
-			if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
-				}
-				sendLog(res.Reason)
+		// Prerelease versions
+		// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
+		if len(smver.Pre) == 1 {
+			tuple := strings.Split(smver.Pre[0].String(), "-")
+			// we split 4-g595de235a, g595de235a is the sha1
+			if len(tuple) == 2 {
+				cdsSemver = fmt.Sprintf("%d.%d.%d-%s+%s.cds.%s",
+					smver.Major,
+					smver.Minor,
+					smver.Patch,
+					tuple[0],
+					tuple[1],
+					cdsVersion.Value,
+				)
 			}
+		}
+	} else {
+		// default value if there is no tag on repository
+		cdsSemver = fmt.Sprintf("0.0.1+cds.%s", cdsVersion.Value)
+	}
+
+	if cdsSemver != "" {
+		semverVar := sdk.Variable{
+			Name:  "cds.semver",
+			Type:  sdk.StringVariable,
+			Value: cdsSemver,
+		}
+
+		if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
+			}
+			sendLog(res.Reason)
 		}
 	}
 
