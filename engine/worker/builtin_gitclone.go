@@ -235,6 +235,16 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 				)
 			}
 		}
+
+		if cdsSemver == "" {
+			// here, there is no prerelease version, it's a tag
+			cdsSemver = fmt.Sprintf("%d.%d.%d+cds.%s",
+				smver.Major,
+				smver.Minor,
+				smver.Patch,
+				cdsVersion.Value,
+			)
+		}
 	} else {
 		// default value if there is no tag on repository
 		cdsSemver = fmt.Sprintf("0.0.1+cds.%s", cdsVersion.Value)
