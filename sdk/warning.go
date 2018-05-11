@@ -3,7 +3,20 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
+
+type WarningV2 struct {
+	Key           string            `json:"key" db:"project_key"`
+	AppName       string            `json:"application_name" db:"application_name"`
+	PipName       string            `json:"pipeline_name" db:"pipeline_name"`
+	WorkflowName  string            `json:"workflow_name" db:"workflow_name"`
+	EnvName       string            `json:"environment_name" db:"environment_name"`
+	Type          string            `json:"type" db:"type"`
+	Element       string            `json:"element" db:"element"`
+	Created       time.Time         `json:"created" db:"created"`
+	MessageParams map[string]string `json:"message_params" db:"message_params"`
+}
 
 // Warning contains information about user action configuration
 type Warning struct {
