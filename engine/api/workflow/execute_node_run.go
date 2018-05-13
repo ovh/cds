@@ -66,7 +66,7 @@ func syncTakeJobInNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.Wo
 	}
 
 	// Save the node run in database
-	if err := UpdateNodeRun(db, n); err != nil {
+	if err := updateNodeRunStatusAndStage(db, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.syncTakeJobInNodeRun> Unable to execute node")
 	}
 	return nil
@@ -96,6 +96,7 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 	//If no stages ==> success
 	if len(n.Stages) == 0 {
 		newStatus = sdk.StatusSuccess.String()
+		n.Done = time.Now()
 	}
 
 	stagesTerminated := 0
@@ -112,7 +113,6 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 			}
 
 			if len(stage.Jobs) == 0 {
-				newStatus = sdk.StatusSuccess.String()
 				stage.Status = sdk.StatusSuccess
 			} else {
 				//Add job to Queue
@@ -168,6 +168,7 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 				}
 
 				if sdk.StatusIsTerminated(stage.Status.String()) {
+					stagesTerminated++
 					n.Done = time.Now()
 				}
 
@@ -197,13 +198,17 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
 
+	if sdk.StatusIsTerminated(n.Status) && n.Status != sdk.StatusNeverBuilt.String() {
+		n.Done = time.Now()
+	}
+
 	// Save the node run in database
-	if err := UpdateNodeRun(db, n); err != nil {
+	if err := updateNodeRunStatusAndStage(db, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.execute> Unable to execute node")
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := LoadRunByID(db, n.WorkflowRunID, false)
+	updatedWorkflowRun, err := LoadRunByID(db, n.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
 		return sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
 	}
@@ -215,7 +220,6 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 		if chanEvent != nil {
 			chanEvent <- *n
 		}
-
 		if n.Status != sdk.StatusStopped.String() {
 			if _, err := processWorkflowRun(ctx, dbCopy, db, store, proj, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
@@ -249,7 +253,7 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 			if waitingRunID == 0 {
 				return nil
 			}
-			waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, false)
+			waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
 			if errRun != nil && errRun != sql.ErrNoRows {
 				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errRun)
 				return nil
@@ -259,7 +263,7 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 				return nil
 			}
 
-			workflowRun, errWRun := LoadRunByID(db, waitingRun.WorkflowRunID, false)
+			workflowRun, errWRun := LoadRunByID(db, waitingRun.WorkflowRunID, LoadRunOptions{})
 			if errWRun != nil {
 				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
 				return nil
@@ -402,7 +406,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 }
 
 func getJobExecutablesGroups(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
-	wr, errWR := LoadRunByID(db, run.WorkflowRunID, false)
+	wr, errWR := LoadRunByID(db, run.WorkflowRunID, LoadRunOptions{})
 	if errWR != nil {
 		return nil, sdk.WrapError(errWR, "getJobExecutablesGroups> Cannot load workflow run %d", run.WorkflowRunID)
 	}

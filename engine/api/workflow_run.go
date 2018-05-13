@@ -237,7 +237,7 @@ func (api *API) getLatestWorkflowRunHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		run, err := workflow.LoadLastRun(api.mustDB(), key, name, true)
+		run, err := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{WithArtifacts: true})
 		if err != nil {
 			return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -255,7 +255,7 @@ func (api *API) resyncWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadRun(api.mustDB(), key, name, number, false)
+		run, err := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "resyncWorkflowRunHandler> Unable to load last workflow run [%s/%d]", name, number)
 		}
@@ -285,7 +285,7 @@ func (api *API) getWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadRun(api.mustDB(), key, name, number, true)
+		run, err := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true, WithLightTests: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load workflow %s run number %d", name, number)
 		}
@@ -304,7 +304,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 			return err
 		}
 
-		run, errL := workflow.LoadRun(api.mustDB(), key, name, number, false)
+		run, errL := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if errL != nil {
 			return sdk.WrapError(errL, "stopWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -393,7 +393,7 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 			return err
 		}
 
-		run, errR := workflow.LoadRun(api.mustDB(), key, name, number, false)
+		run, errR := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if errR != nil {
 			return sdk.WrapError(errR, "getWorkflowNodeRunHistoryHandler")
 		}
@@ -432,7 +432,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		var errCtx error
 		var nodeCtx *sdk.WorkflowNodeContext
 		var wNode *sdk.WorkflowNode
-		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, false)
+		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if errW == nil {
 			wNode = wfRun.Workflow.GetNodeByName(nodeName)
 		}
@@ -502,7 +502,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		}
 
 		// Load node run
-		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, false)
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
@@ -543,7 +543,7 @@ func stopWorkflowNodeRun(ctx context.Context, chEvent chan<- interface{}, chErro
 		return
 	}
 
-	wr, errLw := workflow.LoadRun(tx, p.Key, workflowName, nodeRun.Number, false)
+	wr, errLw := workflow.LoadRun(tx, p.Key, workflowName, nodeRun.Number, workflow.LoadRunOptions{})
 	if errLw != nil {
 		chError <- sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", workflowName)
 		return
@@ -572,7 +572,7 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, true)
+		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -587,8 +587,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
+		u := getUser(ctx)
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures)
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
 		}
@@ -602,7 +603,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		var asCodeInfosMsg []sdk.Message
 		if opts.Number != nil {
 			var errlr error
-			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, false)
+			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
 			}
@@ -618,7 +619,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				DeepPipeline: false,
 			}
 			var errW error
-			wf, errW = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+			wf, errW = workflow.Load(api.mustDB(), api.Cache, key, name, u, options)
 			if errW != nil {
 				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
 			}
@@ -628,7 +629,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				if has && !enabled {
 					return sdk.WrapError(sdk.ErrForbidden, "postWorkflowRunHandler> %s not allowed for project %s", feature.FeatWorkflowAsCode, p.Key)
 				}
-				proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+				proj, errp := project.Load(api.mustDB(), api.Cache, key, u,
 					project.LoadOptions.WithGroups,
 					project.LoadOptions.WithApplications,
 					project.LoadOptions.WithEnvironments,
@@ -639,7 +640,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 				// Get workflow from repository
 				var errCreate error
-				asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, getUser(ctx), project.DecryptWithBuiltinKey)
+				asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, u, project.DecryptWithBuiltinKey)
 				if errCreate != nil {
 					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository")
 				}
@@ -649,7 +650,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 					DeepPipeline: true,
 					Base64Keys:   true,
 				}
-				wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+				wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, u, options)
 				if errl != nil {
 					return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow %s/%s", key, name)
 				}
@@ -668,7 +669,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 			}()
 
-			startWorkflowRun(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx), asCodeInfosMsg)
+			startWorkflowRun(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, u, asCodeInfosMsg)
 		}()
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
@@ -735,7 +736,10 @@ func startWorkflowRun(ctx context.Context, chEvent chan<- interface{}, chError c
 		opts.Manual.User = *u
 		//Copy the user but empty groups and permissions
 		opts.Manual.User.Groups = nil
-		opts.Manual.User.Permissions = sdk.UserPermissions{}
+		//Clean all permissions except for environments
+		opts.Manual.User.Permissions = sdk.UserPermissions{
+			EnvironmentsPerm: opts.Manual.User.Permissions.EnvironmentsPerm,
+		}
 
 		fromNodes := []*sdk.WorkflowNode{}
 		if len(opts.FromNodeIDs) > 0 {
@@ -907,39 +911,6 @@ func (api *API) downloadworkflowArtifactDirectHandler() Handler {
 	}
 }
 
-func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permWorkflowName"]
-
-		number, errNu := requestVarInt(r, "number")
-		if errNu != nil {
-			return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
-		}
-
-		id, errI := requestVarInt(r, "nodeRunID")
-		if errI != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
-		}
-		nodeRun, errR := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, true)
-		if errR != nil {
-			return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
-		}
-
-		//Fetch artifacts
-		for i := range nodeRun.Artifacts {
-			a := &nodeRun.Artifacts[i]
-			url, _ := objectstore.FetchTempURL(a)
-			if url != "" {
-				a.TempURL = url
-			}
-		}
-
-		return WriteJSON(w, nodeRun.Artifacts, http.StatusOK)
-	}
-}
-
 func (api *API) getDownloadArtifactHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -996,7 +967,7 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 			return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
 		}
 
-		wr, errW := workflow.LoadRun(api.mustDB(), key, name, number, true)
+		wr, errW := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true})
 		if errW != nil {
 			return errW
 		}
@@ -1053,7 +1024,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 		}
 
 		// Check nodeRunID is link to workflow
-		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, false)
+		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, workflow.LoadRunOptions{})
 		if errNR != nil {
 			return sdk.WrapError(errNR, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
 		}

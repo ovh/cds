@@ -56,7 +56,9 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 		event.PublishWorkflowRun(wr, key)
 	}
 	for _, wnr := range wnrs {
-		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, false)
+		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
+			WithLightTests: true,
+		})
 		if errWR != nil {
 			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
 			continue
@@ -79,10 +81,26 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 			}
 		}
 
-		event.PublishWorkflowNodeRun(db, wnr, *wr, previousNodeRun, key)
+		event.PublishWorkflowNodeRun(db, wnr, *wr, &previousNodeRun, key)
 	}
 	for _, wnjr := range wnjrs {
-		event.PublishWorkflowNodeJobRun(wnjr)
+		wnr, errWNR := LoadNodeRunByID(db, wnjr.WorkflowNodeRunID, LoadRunOptions{
+			WithLightTests: true,
+		})
+		if errWNR != nil {
+			log.Warning("SendEvent.workflow.wnjrs > Unable to find workflow node run %d: %s", wnjr.WorkflowNodeRunID, errWNR)
+			continue
+		}
+
+		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
+			WithLightTests: true,
+		})
+		if errWR != nil {
+			log.Warning("SendEvent.workflow.wnjrs> Unable to load workflow run %d: %s", wnr.WorkflowRunID, errWR)
+			continue
+		}
+		event.PublishWorkflowNodeRun(db, *wnr, *wr, nil, key)
+		event.PublishWorkflowNodeJobRun(key, wnjr, *wnr, *wr)
 	}
 }
 
@@ -117,51 +135,60 @@ func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 			}
 
 			var statusFound *sdk.VCSCommitStatus
-			expected := sdk.VCSCommitStatusDescription(sdk.EventWorkflowNodeRun{
-				ProjectKey:   proj.Key,
-				WorkflowName: wr.Workflow.Name,
-				NodeName:     node.Name,
+			expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
+				NodeName: node.Name,
 			})
 
 			var sendEvent = func() error {
 				log.Debug("Resync status for node run %d", nodeRun.ID)
-				var eventWNR = sdk.EventWorkflowNodeRun{
+				var eventWNR = sdk.EventRunWorkflowNode{
 					ID:             nodeRun.ID,
 					Number:         nodeRun.Number,
 					SubNumber:      nodeRun.SubNumber,
 					Status:         nodeRun.Status,
 					Start:          nodeRun.Start.Unix(),
 					Done:           nodeRun.Done.Unix(),
-					ProjectKey:     proj.Key,
 					Manual:         nodeRun.Manual,
 					HookEvent:      nodeRun.HookEvent,
 					Payload:        nodeRun.Payload,
 					SourceNodeRuns: nodeRun.SourceNodeRuns,
-					WorkflowName:   wr.Workflow.Name,
 					Hash:           nodeRun.VCSHash,
 					BranchName:     nodeRun.VCSBranch,
+					NodeID:         nodeRun.WorkflowNodeID,
+					RunID:          nodeRun.WorkflowRunID,
+					StagesSummary:  make([]sdk.StageSummary, len(nodeRun.Stages)),
 				}
 
+				for i := range nodeRun.Stages {
+					eventWNR.StagesSummary[i] = nodeRun.Stages[i].ToSummary()
+				}
+
+				var pipName, appName, envName string
 				node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
 				if node != nil {
-					eventWNR.PipelineName = node.Pipeline.Name
+					pipName = node.Pipeline.Name
 					eventWNR.NodeName = node.Name
 				}
 				if node.Context != nil {
 					if node.Context.Application != nil {
-						eventWNR.ApplicationName = node.Context.Application.Name
+						appName = node.Context.Application.Name
 						eventWNR.RepositoryManagerName = node.Context.Application.VCSServer
 						eventWNR.RepositoryFullName = node.Context.Application.RepositoryFullname
 					}
 					if node.Context.Environment != nil {
-						eventWNR.EnvironmentName = node.Context.Environment.Name
+						envName = node.Context.Environment.Name
 					}
 				}
 
 				evt := sdk.Event{
-					EventType: fmt.Sprintf("%T", eventWNR),
-					Payload:   structs.Map(eventWNR),
-					Timestamp: time.Now(),
+					EventType:       fmt.Sprintf("%T", eventWNR),
+					Payload:         structs.Map(eventWNR),
+					Timestamp:       time.Now(),
+					ProjectKey:      proj.Key,
+					WorkflowName:    wr.Workflow.Name,
+					PipelineName:    pipName,
+					ApplicationName: appName,
+					EnvironmentName: envName,
 				}
 				if err := client.SetStatus(evt); err != nil {
 					repositoriesmanager.RetryEvent(&evt, err, store)

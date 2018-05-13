@@ -30,6 +30,8 @@ type LDAPConfig struct {
 	DN           string
 	SSL          bool
 	UserFullname string
+	BindDN       string
+	BindPwd      string
 }
 
 //LDAPDriver is the LDAP client interface
@@ -101,6 +103,23 @@ func (c *LDAPClient) openLDAP(options interface{}) error {
 			return sdk.ErrLDAPConn
 		}
 	}
+
+	if c.conf.BindDN != "" {
+		log.Info("LDAP> Bind user %s", c.conf.BindDN)
+		if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
+			if shoudRetry(err) {
+				if err := c.openLDAP(c.conf); err != nil {
+					return err
+				}
+				if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -205,6 +224,23 @@ func (c *LDAPClient) Bind(username, password string) error {
 //Search search
 func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error) {
 	attr := append(attributes, "dn")
+
+	if c.conf.BindDN != "" {
+		log.Debug("LDAP> Bind user %s", c.conf.BindDN)
+		if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
+			if shoudRetry(err) {
+				if err := c.openLDAP(c.conf); err != nil {
+					return nil, err
+				}
+				if err := c.conn.Bind(c.conf.BindDN, c.conf.BindPwd); err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, err
+			}
+		}
+	}
+
 	// Search for the given username
 	searchRequest := ldap.NewSearchRequest(
 		c.conf.Base,

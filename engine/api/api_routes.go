@@ -1,8 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"sync"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // InitRouter initializes the router and all the routes
@@ -19,6 +22,15 @@ func (api *API) InitRouter() {
 		dbFunc:   api.DBConnectionFactory.GetDBMap,
 	}
 	api.lastUpdateBroker.Init(api.Router.Background)
+
+	api.eventsBroker = &eventsBroker{
+		cache:    api.Cache,
+		clients:  make(map[string]eventsBrokerSubscribe),
+		dbFunc:   api.DBConnectionFactory.GetDBMap,
+		messages: make(chan sdk.Event),
+		mutex:    &sync.Mutex{},
+	}
+	api.eventsBroker.Init(context.Background(), api.Cache)
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
@@ -37,9 +49,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/warning", r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
 	r.Handle("/admin/maintenance", r.POST(api.postAdminMaintenanceHandler, NeedAdmin(true)), r.GET(api.getAdminMaintenanceHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminMaintenanceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug", r.GET(api.getProfileIndexHandler, Auth(false)))
-	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)))
-	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)))
-	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)))
+	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
+	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)), r.GET(api.getCPUProfileHandler, NeedAdmin(true)))
+	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)), r.GET(api.getProfileHandler, NeedAdmin(true)))
 
 	// Admin service
 	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
@@ -76,6 +88,10 @@ func (api *API) InitRouter() {
 
 	// Platform
 	r.Handle("/platform/models", r.GET(api.getPlatformModels))
+
+	// Broadcast
+	r.Handle("/broadcast", r.POST(api.addBroadcastHandler, NeedAdmin(true)), r.GET(api.getBroadcastsHandler))
+	r.Handle("/broadcast/{id}", r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, NeedAdmin(true)), r.DELETE(api.deleteBroadcastHandler, NeedAdmin(true)))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))
@@ -222,7 +238,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeID}/history", r.GET(api.getWorkflowNodeRunHistoryHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/{nodeName}/commits", r.GET(api.getWorkflowCommitsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/artifacts", r.GET(api.getWorkflowNodeRunArtifactsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
@@ -384,7 +399,10 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler, NeedService()))
 	r.Handle("/workflow/hook/model/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
-	// SSE
+	// SSE`
+	r.Handle("/events/unsubscribe", r.POST(api.eventUnsubscribeHandler))
+	r.Handle("/events/subscribe", r.POST(api.eventSubscribeHandler))
+	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
 
 	// Feature

@@ -65,6 +65,14 @@ func EnvironmentPermission(key string, name string, u *sdk.User) int {
 	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, name)]
 }
 
+// AccessToProject check if we can access to the given project
+func AccessToProject(key string, u *sdk.User, access int) bool {
+	if u.Admin {
+		return true
+	}
+	return u.Permissions.ProjectsPerm[key] >= access
+}
+
 // AccessToApplication check if we can modify the given application
 func AccessToApplication(key string, name string, u *sdk.User, access int) bool {
 	if u.Admin {
@@ -93,6 +101,24 @@ func AccessToPipeline(key string, env, pip string, u *sdk.User, access int) bool
 		return true
 	}
 
+	return false
+}
+
+// AccessToWorkflow check access to a workflow
+func AccessToWorkflow(key, name string, u *sdk.User, access int) bool {
+	if u.Admin {
+		return true
+	}
+
+	for _, g := range u.Groups {
+		if g.ID == SharedInfraGroupID {
+			return true
+		}
+	}
+
+	if u.Permissions.WorkflowsPerm[sdk.UserPermissionKey(key, name)] >= access {
+		return true
+	}
 	return false
 }
 

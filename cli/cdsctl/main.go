@@ -163,7 +163,7 @@ func mainRun(vals cli.Values) error {
 
 	fmt.Println("\n -=-=-=-=- Workflows bookmarked -=-=-=-=-")
 	for _, wf := range wfFavs {
-		fmt.Printf("- %s %s\n", wf.Name, uiURL+"/project/"+wf.Key+"/workflow/"+wf.Name)
+		fmt.Printf("- %s %s\n", wf.WorkflowName, uiURL+"/project/"+wf.Key+"/workflow/"+wf.WorkflowName)
 	}
 
 	return nil

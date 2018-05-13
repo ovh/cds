@@ -17,6 +17,7 @@ import (
 	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/rakyll/goutil/pprofutil"
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/tracing"
@@ -69,6 +70,7 @@ type RouterConfig struct {
 
 // HandlerConfig is the configuration for one handler
 type HandlerConfig struct {
+	Name         string
 	Method       string
 	Handler      Handler
 	IsDeprecated bool
@@ -247,7 +249,8 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 		}
 	}
 
-	r.Mux.HandleFunc(uri, r.compress(r.recoverWrap(f)))
+	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> http
+	r.Mux.Handle(uri, pprofutil.LabelHandlerFunc(r.compress(r.recoverWrap(f))))
 }
 
 type asynchronousRequest struct {

@@ -6,15 +6,19 @@ import {AdminComponent} from './admin.component';
 import {MigrationOverviewComponent} from './migration/migration.overview.component';
 import {MigrationProjectComponent} from './migration/project/migration.project.component';
 import {StatusComponent} from './status/status.component';
-import {AdminSidebarComponent} from './sidebar/admin.sidebar.component';
+import {BroadcastAddComponent} from './broadcast/add/broadcast.add.component';
+import {BroadcastEditComponent} from './broadcast/edit/broadcast.edit.component';
+import {BroadcastListComponent} from './broadcast/list/broadcast.list.component';
 
 @NgModule({
     declarations: [
         AdminComponent,
-        AdminSidebarComponent,
         MigrationOverviewComponent,
         MigrationProjectComponent,
         StatusComponent,
+        BroadcastAddComponent,
+        BroadcastEditComponent,
+        BroadcastListComponent
     ],
     imports: [
       SharedModule,

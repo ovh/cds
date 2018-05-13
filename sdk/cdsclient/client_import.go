@@ -63,11 +63,14 @@ func (c *client) ApplicationImport(projectKey string, content io.Reader, format 
 		return nil, err
 	}
 
+	messages := []string{}
 	if code > 400 {
-		return nil, fmt.Errorf("HTTP Code %d", code)
+		if err := json.Unmarshal(btes, &messages); err != nil {
+			return nil, sdk.WrapError(err, "HTTP Code %d", code)
+		}
+		return messages, fmt.Errorf("HTTP Code %d", code)
 	}
 
-	messages := []string{}
 	if err := json.Unmarshal(btes, &messages); err != nil {
 		return nil, err
 	}

@@ -51,11 +51,11 @@ func (Executor) ZeroValueResult() venom.ExecutorResult {
 
 // GetDefaultAssertions return default assertions for type exec
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
-	return &venom.StepAssertions{Assertions: []string{"result.err ShouldNotExist"}}
+	return &venom.StepAssertions{Assertions: []string{"result.err ShouldBeEmpty"}}
 }
 
 // Run execute TestStep of type exec
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
