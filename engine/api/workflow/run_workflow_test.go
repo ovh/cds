@@ -93,7 +93,7 @@ func TestManualRun1(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 		Payload: map[string]string{
 			"git.branch": "master",
@@ -101,7 +101,7 @@ func TestManualRun1(t *testing.T) {
 	}, nil, nil)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
+	_, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
 	//LoadLastRun
@@ -124,7 +124,7 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, 2, len(jobs))
 
 	//TestprocessWorkflowRun
-	wr2, err := workflow.ManualRunFromNode(db, db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
+	wr2, err := workflow.ManualRunFromNode(nil, db, db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
 	test.NoError(t, err)
 	assert.NotNil(t, wr2)
 
@@ -218,16 +218,16 @@ func TestManualRun2(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil, nil)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
+	_, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
-	_, err = workflow.ManualRunFromNode(db, db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
+	_, err = workflow.ManualRunFromNode(nil, db, db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
 	test.NoError(t, err)
 
 	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, nil, nil)
@@ -316,7 +316,7 @@ func TestManualRun3(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil, nil)
 	test.NoError(t, err)
@@ -367,7 +367,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TakeNodeJobRun
-		j, err = workflow.TakeNodeJobRun(db, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		j, err = workflow.TakeNodeJobRun(nil, db, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -410,7 +410,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TestUpdateNodeJobRunStatus
-		assert.NoError(t, workflow.UpdateNodeJobRunStatus(db, db, cache, proj, j, sdk.StatusSuccess, nil))
+		assert.NoError(t, workflow.UpdateNodeJobRunStatus(nil, db, db, cache, proj, j, sdk.StatusSuccess, nil))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
@@ -513,7 +513,7 @@ func TestNoStage(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
+	_, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
@@ -570,7 +570,7 @@ func TestNoJob(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
+	_, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})

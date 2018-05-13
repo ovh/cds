@@ -105,8 +105,6 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 				}
 				store.SetWithTTL(cacheKey, pkey, 60*15)
 			}
-		} else {
-			log.Debug("primary key not found for path: %s", req.URL.Path)
 		}
 	}
 
@@ -133,6 +131,26 @@ func End(ctx context.Context, w http.ResponseWriter, req *http.Request) (context
 	}
 	span.End()
 	return ctx, nil
+}
+
+// Current return the current span
+func Current(ctx context.Context, tags ...trace.Attribute) *trace.Span {
+	if ctx == nil {
+		return nil
+	}
+	span := trace.FromContext(ctx)
+	if span == nil {
+		return nil
+	}
+	if len(tags) > 0 {
+		span.AddAttributes(tags...)
+	}
+	return span
+}
+
+// Tag is helper function to instanciate trace.Attribute
+func Tag(key string, value interface{}) trace.Attribute {
+	return trace.StringAttribute(key, fmt.Sprintf("%v", value))
 }
 
 // Span start a new span from the parent context

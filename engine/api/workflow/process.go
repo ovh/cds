@@ -326,7 +326,13 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 
 //processWorkflowNodeRun triggers execution of a node run
 func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}) (bool, error) {
+	var end func()
+	ctx, end = tracing.Span(ctx, "workflow.processWorkflowNodeRun")
+	defer end()
+
+	_, next := tracing.Span(ctx, "workflow.nodeRunExist")
 	exist, errN := nodeRunExist(db, n.ID, w.Number, subnumber)
+	next()
 	if errN != nil {
 		return true, sdk.WrapError(errN, "processWorkflowNodeRun> unable to check if node run exist")
 	}
@@ -378,6 +384,7 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		}
 
 		//Merge the payloads from all the sources
+		_, next := tracing.Span(ctx, "workflow.processWorkflowNodeRun.mergePayload")
 		for _, r := range runs {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
@@ -397,6 +404,7 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		}
 		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
+		next()
 	}
 
 	run.HookEvent = h
@@ -465,7 +473,10 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	)
 
 	// Process parameters for the jobs
+	_, next = tracing.Span(ctx, "workflow.getNodeRunBuildParameters")
 	jobParams, errParam := getNodeRunBuildParameters(db, store, p, run)
+	next()
+
 	if errParam != nil {
 		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
@@ -478,7 +489,9 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 
 	// Inherit parameter from parent job
 	if len(sourceNodeRuns) > 0 {
+		_, next := tracing.Span(ctx, "workflow.getParentParameters")
 		parentsParams, errPP := getParentParameters(db, run, sourceNodeRuns, runPayload)
+		next()
 		if errPP != nil {
 			return false, sdk.WrapError(errPP, "processWorkflowNodeRun> getParentParameters failed")
 		}

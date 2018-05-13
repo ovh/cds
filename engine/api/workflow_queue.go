@@ -74,6 +74,11 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> Cannot load job nodeJobRunID:%d", id)
 		}
 
+		tracing.Current(ctx,
+			tracing.Tag("node_job_run", id),
+			tracing.Tag("workflow_node_run", pbj.WorkflowNodeRunID),
+			tracing.Tag("job", pbj.Job.Action.Name))
+
 		// a worker can have only one group
 		groups := getUser(ctx).Groups
 		if len(groups) != 1 {
@@ -128,7 +133,7 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	infos := []sdk.SpawnInfo{
 		{
 			RemoteTime: takeForm.Time,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{getWorker(ctx).Name}},
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{fmt.Sprintf("%d", id), getWorker(ctx).Name}},
 		},
 		{
 			RemoteTime: takeForm.Time,
@@ -407,6 +412,11 @@ func postJobResult(ctx context.Context, chEvent chan<- interface{}, chError chan
 		chError <- sdk.WrapError(errj, "postJobResult> Unable to load node run job %d", res.BuildID)
 		return
 	}
+
+	tracing.Current(ctx,
+		tracing.Tag("node_job_run", res.BuildID),
+		tracing.Tag("workflow_node_run", job.WorkflowNodeRunID),
+		tracing.Tag("job", job.Job.Action.Name))
 
 	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
 	if errt != nil {

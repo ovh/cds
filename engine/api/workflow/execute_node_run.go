@@ -235,6 +235,8 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 		//Do we release a mutex ?
 		//Try to find one node run of the same node from the same workflow at status Waiting
 		if node != nil && node.Context != nil && node.Context.Mutex {
+			_, next := tracing.Span(ctx, "workflow.releaseMutex")
+
 			mutexQuery := `select workflow_node_run.id
 			from workflow_node_run
 			join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
@@ -282,6 +284,8 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 			if err := execute(ctx, dbCopy, db, store, proj, waitingRun, nil); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
 			}
+
+			next()
 		}
 	}
 	return nil
