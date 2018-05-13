@@ -3,7 +3,7 @@
         <div class="row">
           <div class="ui sixteen column centered">
               <div class="ui buttons">
-                <div class="ui blue button" (click)="showAsCodeEditor()" [class.loading]="loading">
+                <div class="ui blue button" (click)="showAsCodeEditor()">
                     <i class="terminal icon"></i> {{'workflow_edit_as_code' | translate}}
                     <i class="orange warning sign icon ml5"
                         *ngIf="previewMode"
@@ -12,7 +12,7 @@
                         popupPlacement="top center">
                     </i>
                 </div>
-                <div *ngIf="previewMode" class="ui green button" (click)="savePreview()" [class.loading]="loading">
+                <div *ngIf="previewMode" class="ui green button" (click)="savePreview()">
                     <i class="save icon"></i> {{'btn_save' | translate}}
                 </div>
               </div>
