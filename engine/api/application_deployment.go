@@ -86,7 +86,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 
 		if getProvider(ctx) != nil {
 			p := getProvider(ctx)
-			log.Info("postApplicationDeploymentStrategyConfigHandler> application %s configuration successfully ypdated by provider %s", appName, *p)
+			log.Info("postApplicationDeploymentStrategyConfigHandler> application %s configuration successfully updated by provider %s", appName, *p)
 		}
 
 		return WriteJSON(w, app, http.StatusOK)

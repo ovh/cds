@@ -113,7 +113,7 @@ type GRPCPlugin struct {
 	Type        string             `json:"type" cli:"type" db:"type"`
 	Author      string             `json:"author" cli:"author" db:"author"`
 	Description string             `json:"description" cli:"description" db:"description"`
-	Binaries    []GRPCPluginBinary `json:"binaries" cli:"_" db:"-"`
+	Binaries    []GRPCPluginBinary `json:"binaries" cli:"-" db:"-"`
 }
 
 func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
