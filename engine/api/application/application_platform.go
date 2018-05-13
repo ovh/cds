@@ -69,6 +69,24 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 	return deps, nil
 }
 
+// DeleteDeploymentStrategy delete a line in table application_deployment_strategy
+func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) error {
+	query := `DELETE FROM application_deployment_strategy 
+	WHERE application_id = $1
+	AND project_platform_id IN (
+		SELECT 	project_platform.id 
+		FROM project_platform
+		WHERE project_platform.project_id = $2
+		AND project_platform.platform_model_id = $3
+	)`
+
+	if _, err := db.Exec(query, appID, projID, pfID); err != nil {
+		return sdk.WrapError(err, "DeleteDeploymentStrategy> unable to delete deployment strategy appID=%d pfID=%d projID=%d", appID, pfID, projID)
+	}
+
+	return nil
+}
+
 // SetDeploymentStrategy update the application_deployment_strategy table
 func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, cfg sdk.PlatformConfig) error {
 	//Parse the config and encrypt password values

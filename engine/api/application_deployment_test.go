@@ -143,6 +143,27 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	cfg2 := sdk.PlatformConfig{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &cfg2))
 	assert.Equal(t, "my-secret-token-2", cfg2["token"].Value)
+
+	// with clear paswword
+	uri = router.GetRoute("DELETE", api.deleteApplicationDeploymentStrategyConfigHandler, vars)
+	// Then we try to update
+	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategyConfigHandler, vars)
+	//Then we try to update
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 404, w.Code)
+}
+
+func Test_deleteApplicationDeploymentStrategyConfigHandler(t *testing.T) {
+	//see Test_postApplicationDeploymentStrategyConfigHandler
 }
 
 func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T) {

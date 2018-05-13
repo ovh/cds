@@ -106,14 +106,40 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		proj, err := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load project")
+		}
+
+		var pf *sdk.ProjectPlatform
+		for i := range proj.Platforms {
+			if proj.Platforms[i].Name == pfName {
+				pf = &proj.Platforms[i]
+				break
+			}
+		}
+
+		if pf == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "deleteApplicationDeploymentStrategyConfigHandler> platform not found on project")
+		}
+
+		if !pf.Model.Deployment {
+			return sdk.WrapError(sdk.ErrForbidden, "deleteApplicationDeploymentStrategyConfigHandler> platform doesn't support deployment")
+		}
+
 		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load application")
 		}
 
+		if _, has := app.DeploymentStrategies[pfName]; !has {
+			return sdk.WrapError(sdk.ErrNotFound, "deleteApplicationDeploymentStrategyConfigHandler> unable to find strategy")
+		}
+
 		delete(app.DeploymentStrategies, pfName)
-		panic("not yet implemented")
-		//TODO: still have things to do
+		if err := application.DeleteDeploymentStrategy(tx, proj.ID, app.ID, pf.PlatformModelID); err != nil {
+			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler")
+		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to commit tx")
