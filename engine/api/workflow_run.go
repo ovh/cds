@@ -629,7 +629,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				DeepPipeline: false,
 			}
 			var errW error
-			wf, errW = workflow.Load(api.mustDB(), api.Cache, key, name, u, options)
+			wf, errW = workflow.Load(api.mustDB(), api.Cache, p, name, u, options)
 			if errW != nil {
 				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
 			}
@@ -660,7 +660,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 					DeepPipeline: true,
 					Base64Keys:   true,
 				}
-				wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, u, options)
+				wf, errl = workflow.Load(api.mustDB(), api.Cache, p, name, u, options)
 				if errl != nil {
 					return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow %s/%s", key, name)
 				}
