@@ -79,8 +79,8 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, errC)
 		}
 
-	} else if event.EventType == fmt.Sprintf("%T", sdk.EventWorkflowNodeRun{}) {
-		var eventWNR sdk.EventWorkflowNodeRun
+	} else if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
+		var eventWNR sdk.EventRunWorkflowNode
 
 		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
 			log.Error("Error during consumption: %s", err)
@@ -89,14 +89,14 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 		if eventWNR.RepositoryManagerName == "" {
 			return nil
 		}
-		vcsServer, err := LoadForProject(db, eventWNR.ProjectKey, eventWNR.RepositoryManagerName)
+		vcsServer, err := LoadForProject(db, event.ProjectKey, eventWNR.RepositoryManagerName)
 		if err != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventWNR.ProjectKey, eventWNR.RepositoryManagerName, err)
+			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, err)
 		}
 
 		c, errC = AuthorizedClient(db, store, vcsServer)
 		if errC != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventWNR.ProjectKey, eventWNR.RepositoryManagerName, errC)
+			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, errC)
 		}
 	} else {
 		return nil

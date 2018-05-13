@@ -33,7 +33,7 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventPipelineBuild{}):
 		statusData, err = processPipelineBuildEvent(event, b.consumer.uiURL)
-	case fmt.Sprintf("%T", sdk.EventWorkflowNodeRun{}):
+	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		statusData, err = processWorkflowNodeRunEvent(event, b.consumer.uiURL)
 	default:
 		return nil
@@ -120,25 +120,25 @@ const (
 
 func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, error) {
 	data := statusData{}
-	var eventNR sdk.EventWorkflowNodeRun
+	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
 		return data, sdk.WrapError(err, "bitbucketClient.processWorkflowNodeRunEvent> Error during consumption")
 	}
 	data.key = fmt.Sprintf("%s-%s-%s",
-		eventNR.ProjectKey,
-		eventNR.WorkflowName,
+		event.ProjectKey,
+		event.WorkflowName,
 		eventNR.NodeName,
 	)
 	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 		uiURL,
-		eventNR.ProjectKey,
-		eventNR.WorkflowName,
+		event.ProjectKey,
+		event.WorkflowName,
 		eventNR.Number,
 	)
 	data.buildNumber = eventNR.Number
 	data.status = eventNR.Status
 	data.hash = eventNR.Hash
-	data.description = sdk.VCSCommitStatusDescription(eventNR)
+	data.description = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
 
 	return data, nil
 }

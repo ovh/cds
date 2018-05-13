@@ -172,6 +172,8 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 	wg := new(sync.WaitGroup)
 	wg.Add(len(artifacts))
 
+	sendLog("Downloading artifacts from into current directory")
+
 	var isInError bool
 	for i := range artifacts {
 		a := &artifacts[i]

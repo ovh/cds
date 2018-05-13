@@ -195,10 +195,10 @@
   version = "v1.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/fsamin/go-dump"
   packages = ["."]
-  revision = "734a5d211d37df9bdd6f6e4981258c0ed34d16ad"
+  revision = "7ae1b0fe42ebe02c8f87574289bad257adcc90c0"
+  version = "1.0.3"
 
 [[projects]]
   branch = "master"
@@ -224,6 +224,15 @@
   name = "github.com/gambol99/go-marathon"
   packages = ["."]
   revision = "ec4a50170df729be7380d2797177dea832f41013"
+
+[[projects]]
+  name = "github.com/garyburd/redigo"
+  packages = [
+    "internal",
+    "redis"
+  ]
+  revision = "a69d19351219b6dd56f274f96d85a7014a2ec34e"
+  version = "v1.6.0"
 
 [[projects]]
   name = "github.com/ghodss/yaml"
@@ -586,6 +595,12 @@
   version = "v0.0.1"
 
 [[projects]]
+  name = "github.com/mattn/go-shellwords"
+  packages = ["."]
+  revision = "02e3cf038dcea8290e44424da473dd12be796a8a"
+  version = "v1.0.3"
+
+[[projects]]
   name = "github.com/mattn/go-xmpp"
   packages = ["."]
   revision = "f4550b5399387339df5ce4c3f88c1ef85333bdd5"
@@ -665,6 +680,7 @@
   packages = [
     ".",
     "context/default",
+    "context/redis",
     "context/webctx",
     "executors",
     "executors/dbfixtures",
@@ -673,12 +689,13 @@
     "executors/imap",
     "executors/ovhapi",
     "executors/readfile",
+    "executors/redis",
     "executors/smtp",
     "executors/ssh",
     "executors/web"
   ]
-  revision = "0646fd4622983c00f65debeae319ee9d774b43d4"
-  version = "0.17.0"
+  revision = "8628bb641f222a54afd1e3f8b7aa23e36d0c445d"
+  version = "v0.18.0"
 
 [[projects]]
   branch = "master"
@@ -1274,6 +1291,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6658f92856da196ffcef6fb8052e8e48fb920fb3b2f4f7442c45798550cf0d95"
+  inputs-digest = "a42ac0515abf953024c27aedd873943499cae9706e5eefb07ea27fca8d0082a5"
   solver-name = "gps-cdcl"
   solver-version = 1

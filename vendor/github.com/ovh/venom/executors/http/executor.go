@@ -71,7 +71,7 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 }
 
 // Run execute TestStep
-func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
 	t0 := time.Now()
 	l.Debugf("http.Run> Begin")
 	defer func() {
@@ -89,7 +89,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	r := Result{Executor: e}
 
-	req, err := e.getRequest()
+	req, err := e.getRequest(workdir)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 }
 
 // getRequest returns the request correctly set for the current executor
-func (e Executor) getRequest() (*http.Request, error) {
+func (e Executor) getRequest(workdir string) (*http.Request, error) {
 	path := fmt.Sprintf("%s%s", e.URL, e.Path)
 	method := e.Method
 	if method == "" {
@@ -165,7 +165,7 @@ func (e Executor) getRequest() (*http.Request, error) {
 	if e.Body != "" {
 		body = bytes.NewBuffer([]byte(e.Body))
 	} else if e.BodyFile != "" {
-		path := string(e.BodyFile)
+		path := filepath.Join(workdir, string(e.BodyFile))
 		if _, err := os.Stat(path); !os.IsNotExist(err) {
 			temp, err := ioutil.ReadFile(path)
 			if err != nil {

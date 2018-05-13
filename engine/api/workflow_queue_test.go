@@ -704,9 +704,8 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 		"key":              ctx.project.Key,
 		"permWorkflowName": ctx.workflow.Name,
 		"number":           fmt.Sprintf("%d", updatedNodeRun.Number),
-		"nodeRunID":        fmt.Sprintf("%d", wNodeJobRun.WorkflowNodeRunID),
 	}
-	uri = router.GetRoute("GET", api.getWorkflowNodeRunArtifactsHandler, vars)
+	uri = router.GetRoute("GET", api.getWorkflowRunArtifactsHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
 	rec = httptest.NewRecorder()

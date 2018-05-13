@@ -127,11 +127,25 @@ Deploy an application of a platform.`
 	gittag := sdk.NewAction(sdk.GitTagAction)
 	gittag.Type = sdk.BuiltinAction
 	gittag.Description = `CDS Builtin Action.
-Tag the current branch and push it.`
+Tag the current branch and push it.
+Semver used if fully compatible with https://semver.org/
+`
 
 	gittag.Parameter(sdk.Parameter{
-		Name:        "tagName",
-		Description: "Set the name of the tag. Must match semver. If empty CDS will make a patch version",
+		Name:        "tagPrerelease",
+		Description: "Prerelase version of the tag. Example: alpha on a tag 1.0.0 will return 1.0.0-apha",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "tagLevel",
+		Description: "Set the level of the tag. Must be 'major' or 'minor' or 'patch'",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "tagMetadata",
+		Description: "Metadata of the tag. Example: cds.42 on a tag 1.0.0 will return 1.0.0+cds.42",
 		Value:       "",
 		Type:        sdk.StringParameter,
 	})

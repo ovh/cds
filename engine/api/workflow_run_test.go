@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -898,6 +899,119 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
+}
+
+func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip2, u))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	s.Jobs = append(s.Jobs, *j)
+	env := sdk.Environment{
+		Name:       "envtest",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+	}
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(), &env))
+	gr := sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+	_, _, errG := group.AddGroup(api.mustDB(), &gr)
+	test.NoError(t, errG)
+
+	uLambda, pass := assets.InsertLambdaUser(api.mustDB(), &gr)
+
+	grs := []sdk.GroupPermission{
+		{Group: gr, Permission: permission.PermissionRead},
+	}
+	test.NoError(t, group.InsertGroupsInEnvironment(db, grs, env.ID))
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Context: &sdk.WorkflowNodeContext{
+				EnvironmentID: env.ID,
+				Environment:   &env,
+			},
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithEnvironments)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &sdk.WorkflowRunPostHandlerOption{}
+	req := assets.NewAuthentifiedRequest(t, uLambda, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 403, rec.Code)
 }
 
 func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {

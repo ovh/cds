@@ -147,6 +147,14 @@ type HatcheryClient interface {
 	HatcheryCount(wfNodeRunID int64) (int64, error)
 }
 
+// BroadcastClient expose all function for CDS Broadcasts
+type BroadcastClient interface {
+	Broadcasts() ([]sdk.Broadcast, error)
+	BroadcastCreate(broadcast *sdk.Broadcast) error
+	BroadcastGet(id string) (*sdk.Broadcast, error)
+	BroadcastDelete(id string) error
+}
+
 // PipelineClient exposes pipelines related functions
 type PipelineClient interface {
 	PipelineDelete(projectKey, name string) error
@@ -250,7 +258,6 @@ type WorkflowClient interface {
 	WorkflowStop(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowNodeStop(projectKey string, workflowName string, number, fromNodeID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
-	WorkflowNodeRunArtifacts(projectKey string, name string, number int64, nodeRunID int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
 	WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
@@ -289,6 +296,7 @@ type Interface interface {
 	GroupClient
 	GRPCPluginsClient
 	HatcheryClient
+	BroadcastClient
 	PipelineClient
 	PlatformClient
 	ProjectClient

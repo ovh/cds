@@ -63,6 +63,11 @@ func (v *Venom) runTestCases(ts *TestSuite, l Logger) {
 		if len(tc.Skipped) > 0 {
 			ts.Skipped += len(tc.Skipped)
 		}
+
+		if v.StopOnFailure && (len(tc.Failures) > 0 || len(tc.Errors) > 0) {
+			// break TestSuite
+			return
+		}
 	}
 }
 

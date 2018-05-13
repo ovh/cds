@@ -42,8 +42,6 @@
 
   "admin_status_title": "CDS Engine - Statut",
 
-  "admin_sidebar_status": "Statut",
-
   "application_create": "Créer une application",
   "application_created": "Application créée",
   "application_deleted": "Application supprimée",
@@ -272,6 +270,26 @@
   "favorite_select_type": "Sélectionnez un type de favoris",
   "favorite_project_select": "Sélectionnez un projet",
   "favorite_workflow_select": "Sélectionnez un workflow",
+  
+  "broadcast_list_title": "Infos",
+  "broadcast_new_title": "Ajouter une information",
+  "broadcast_edit_title": "Éditer l'information",
+  "broadcast_id": "N°",
+  "broadcast_title": "Titre",
+  "broadcast_content": "Message",
+  "broadcast_archived": "Archivée",
+  "broadcast_archived_help": "Cocher pour archiver cette information",
+  "broadcast_help_line_1": "Une information est visible sur la page d'accueil de CDS.",
+  "broadcast_help_line_2": "Si un project est sélectionné, l'information est visible que par les utilisateurs concernés.",
+  "broadcast_created": "Créée le",
+  "broadcast_updated": "Modifiée le",
+  "broadcast_deleted": "Information supprimée",
+  "broadcast_saved": "Information sauvegardée",
+  "broadcast_level": "Type",
+  "broadcast_project": "Projet",
+  "broadcast_project_select": "Selectionnez un projet (optionnel)",
+  "broadcast_none": "Aucune information",
+  "broadcast_load_broadcasts": "Chargement des informations...",
 
   "group_added": "Groupe ajouté",
   "group_deleted": "Groupe supprimé",
@@ -332,6 +350,7 @@
 
   "navbar_actions": "Actions",
   "navbar_project_create": "Créer un projet",
+  "navbar_admin_broadcast": "Informations",
   "navbar_admin_migration": "Migration vers les workflows",
   "navbar_admin_status": "CDS Engine - Statut",
   "navbar_documentation": "Documentation",

@@ -187,6 +187,31 @@ type WorkflowNodeJobRun struct {
 	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries" db:"-"`
 }
 
+// WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
+type WorkflowNodeJobRunSummary struct {
+	ID                int64              `json:"id" db:"id"`
+	WorkflowNodeRunID int64              `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	Status            string             `json:"status"  db:"status"`
+	Queued            int64              `json:"queued,omitempty" db:"queued"`
+	Start             int64              `json:"start,omitempty" db:"start"`
+	Done              int64              `json:"done,omitempty" db:"done"`
+	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
+}
+
+// ExecutedJobSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
+func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
+	sum := WorkflowNodeJobRunSummary{
+		Done:              wnjr.Done.Unix(),
+		WorkflowNodeRunID: wnjr.WorkflowNodeRunID,
+		Status:            wnjr.Status,
+		ID:                wnjr.ID,
+		Queued:            wnjr.Queued.Unix(),
+		Start:             wnjr.Start.Unix(),
+		Job:               wnjr.Job.ToSummary(),
+	}
+	return sum
+}
+
 //WorkflowNodeJobRunInfo represents info on a job
 type WorkflowNodeJobRunInfo struct {
 	ID                   int64       `json:"id"`
@@ -202,7 +227,6 @@ func (njr *WorkflowNodeJobRun) Translate(lang string) {
 		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
 		njr.SpawnInfos[ki].UserMessage = m.String(lang)
 	}
-
 }
 
 //WorkflowNodeRunHookEvent is an instanc of event received on a hook

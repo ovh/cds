@@ -128,15 +128,6 @@ func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, 
 	return &buildState, nil
 }
 
-func (c *client) WorkflowNodeRunArtifacts(projectKey string, workflowName string, number int64, nodeRunID int64) ([]sdk.WorkflowNodeRunArtifact, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/artifacts", projectKey, workflowName, number, nodeRunID)
-	arts := []sdk.WorkflowNodeRunArtifact{}
-	if _, err := c.GetJSON(url, &arts); err != nil {
-		return nil, err
-	}
-	return arts, nil
-}
-
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
 	var url = fmt.Sprintf("/project/%s/workflows/%s/artifact/%d", projectKey, workflowName, a.ID)
 	var reader io.ReadCloser

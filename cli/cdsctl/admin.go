@@ -21,6 +21,7 @@ func admin() *cobra.Command {
 				adminHooks,
 				adminPlatformModels,
 				adminPlugins,
+				adminBroadcasts,
 				usr,
 				group,
 				worker,
@@ -33,5 +34,6 @@ func admin() *cobra.Command {
 			adminHooks,
 			adminPlatformModels,
 			adminPlugins,
+			adminBroadcasts,
 		})
 }

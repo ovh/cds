@@ -198,7 +198,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
 		}
 	} else {
-		return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
+		return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized (needAdmin)")
 	}
 
 	if rc.Options["needUsernameOrAdmin"] == "true" && getUser(ctx).Username != mux.Vars(req)["username"] {

@@ -42,8 +42,6 @@
 
   "admin_status_title": "Status of CDS Engine",
 
-  "admin_sidebar_status": "Status",
-
   "application_create": "Create a new application",
   "application_created": "Application created",
   "application_deleted": "Application deleted",
@@ -272,6 +270,26 @@
   "favorite_select_type": "Select a favorite type",
   "favorite_project_select": "Select a project",
   "favorite_workflow_select": "Select a workflow",
+  
+  "broadcast_list_title": "Broadcasts",
+  "broadcast_new_title": "Add a broadcast",
+  "broadcast_edit_title": "Edit an broadcast",
+  "broadcast_id": "Num.",
+  "broadcast_title": "Title",
+  "broadcast_content": "Content",
+  "broadcast_archived": "Archived",
+  "broadcast_archived_help": "Check to archive this broadcast",
+  "broadcast_help_line_1": "A Broadcast is displayed on the home page of CDS.",
+  "broadcast_help_line_2": "If a project is selected, the broadcast is available only to the users concerned.",
+  "broadcast_created": "Created",
+  "broadcast_updated": "Updated",
+  "broadcast_deleted": "Broadcast deleted",
+  "broadcast_saved": "Broadcast saved",
+  "broadcast_level": "Level",
+  "broadcast_project": "Project",
+  "broadcast_project_select": "Select a project (optional)",
+  "broadcast_none": "No Broadcast",
+  "broadcast_load_broadcasts": "Loading broadcasts...",
 
   "group_added": "Group added",
   "group_deleted": "Group deleted",
@@ -332,6 +350,7 @@
 
   "navbar_actions": "Actions",
   "navbar_project_create": "Create a project",
+  "navbar_admin_broadcast": "Broadcasts",
   "navbar_admin_migration": "Migrate to workflows",
   "navbar_admin_status": "CDS Engine Status",
   "navbar_documentation": "Documentation",

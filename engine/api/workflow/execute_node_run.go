@@ -91,6 +91,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 	//If no stages ==> success
 	if len(n.Stages) == 0 {
 		newStatus = sdk.StatusSuccess.String()
+		n.Done = time.Now()
 	}
 
 	stagesTerminated := 0
@@ -107,7 +108,6 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 			}
 
 			if len(stage.Jobs) == 0 {
-				newStatus = sdk.StatusSuccess.String()
 				stage.Status = sdk.StatusSuccess
 			} else {
 				//Add job to Queue
@@ -160,6 +160,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 				}
 
 				if sdk.StatusIsTerminated(stage.Status.String()) {
+					stagesTerminated++
 					n.Done = time.Now()
 				}
 
@@ -189,6 +190,10 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
 
+	if sdk.StatusIsTerminated(n.Status) && n.Status != sdk.StatusNeverBuilt.String() {
+		n.Done = time.Now()
+	}
+
 	// Save the node run in database
 	if err := updateNodeRunStatusAndStage(db, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.execute> Unable to execute node")
@@ -207,7 +212,6 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *s
 		if chanEvent != nil {
 			chanEvent <- *n
 		}
-
 		if n.Status != sdk.StatusStopped.String() {
 			if _, err := processWorkflowRun(dbCopy, db, store, proj, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
