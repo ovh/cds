@@ -55,6 +55,16 @@ func (a Project) PGPKeys() []ProjectKey {
 	return keys
 }
 
+// GetPlatform returns the ProjectPlatform given a name
+func (a Project) GetPlatform(pfName string) *ProjectPlatform {
+	for i := range a.Platforms {
+		if a.Platforms[i].Name == pfName {
+			return &a.Platforms[i]
+		}
+	}
+	return nil
+}
+
 // ProjectVCSServer represents associations between a project and a vcs server
 type ProjectVCSServer struct {
 	Name string            `json:"name" yaml:"name" db:"-" cli:"-"`

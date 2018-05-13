@@ -69,6 +69,12 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 	return deps, nil
 }
 
+// DeleteAllDeploymentStrategies delete all lines in table application_deployment_strategy for one application
+func DeleteAllDeploymentStrategies(db gorp.SqlExecutor, appID int64) error {
+	_, err := db.Exec("DELETE FROM application_deployment_strategy WHERE application_id = $1", appID)
+	return sdk.WrapError(err, "DeleteAllDeploymentStrategies")
+}
+
 // DeleteDeploymentStrategy delete a line in table application_deployment_strategy
 func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) error {
 	query := `DELETE FROM application_deployment_strategy 
