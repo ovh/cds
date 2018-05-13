@@ -56,7 +56,7 @@ type Configuration struct {
 
 // ServerConfiguration is the configuration for a VCS server
 type ServerConfiguration struct {
-	URL       string                        `toml:"url" comment:"URL of this VCS Server" json:"url"`
+	URL       string                        `toml:"url" commented:"true" comment:"URL of this VCS Server. Uncomment this line to enable it." json:"url"`
 	Github    *GithubServerConfiguration    `toml:"github" json:"github,omitempty"`
 	Gitlab    *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty"`
 	Bitbucket *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty"`
