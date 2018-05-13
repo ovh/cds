@@ -70,6 +70,10 @@ export class Pipeline {
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;
 
+    // UI Params
+    forceRefresh: boolean;
+    previewMode: boolean;
+
     // Return true if pattern is good
     public static checkName(name: string): boolean {
       if (!name) {

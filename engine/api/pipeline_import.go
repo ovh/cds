@@ -16,6 +16,80 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
+func (api *API) postPipelinePreviewHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		format := r.FormValue("format")
+
+		// Get body
+		data, errRead := ioutil.ReadAll(r.Body)
+		if errRead != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to read body")
+		}
+
+		// Compute format
+		f, errF := exportentities.GetFormat(format)
+		if errF != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to get format : %s", errF)
+		}
+
+		rawPayload := map[string]interface{}{}
+		var errorParse error
+		switch f {
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, &rawPayload)
+		case exportentities.FormatYAML:
+			errorParse = yaml.Unmarshal(data, &rawPayload)
+		}
+
+		if errorParse != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
+		}
+
+		//Parse the data once to retrieve the version
+		var pipelineV1Format bool
+		if v, ok := rawPayload["version"]; ok {
+			version, okStr := v.(string)
+			if !okStr {
+				return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Cannot parse pipeline version")
+			}
+			if version == exportentities.PipelineVersion1 {
+				pipelineV1Format = true
+			}
+		}
+
+		//Depending on the version, we will use different struct
+		type pipeliner interface {
+			Pipeline() (*sdk.Pipeline, error)
+		}
+
+		var payload pipeliner
+		// Parse the pipeline
+		if pipelineV1Format {
+			payload = &exportentities.PipelineV1{}
+		} else {
+			payload = &exportentities.Pipeline{}
+		}
+
+		switch f {
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, payload)
+		case exportentities.FormatYAML:
+			errorParse = yaml.Unmarshal(data, payload)
+		}
+
+		if errorParse != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Cannot parsing: %s", errorParse)
+		}
+
+		pip, errP := payload.Pipeline()
+		if errP != nil {
+			return sdk.WrapError(errP, "postPipelinePreviewHandler> Unable to parse pipeline")
+		}
+
+		return WriteJSON(w, pip, http.StatusOK)
+	}
+}
+
 func (api *API) importPipelineHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
