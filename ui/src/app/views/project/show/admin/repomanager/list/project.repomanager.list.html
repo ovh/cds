@@ -10,6 +10,7 @@
         <tr *ngFor="let r of getDataForCurrentPage()">
             <td>
                 {{r.name}}
+                <span *ngIf="r.username !== ''"> - {{ 'project_repoman_created_by' | translate }}{{r.username}}</span>
             </td>
             <td class="right aligned">
                 <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading"></app-delete-button>

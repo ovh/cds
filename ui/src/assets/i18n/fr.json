@@ -269,7 +269,7 @@
   "favorite_select_type": "Sélectionnez un type de favoris",
   "favorite_project_select": "Sélectionnez un projet",
   "favorite_workflow_select": "Sélectionnez un workflow",
-  
+
   "broadcast_list_title": "Infos",
   "broadcast_new_title": "Ajouter une information",
   "broadcast_edit_title": "Éditer l'information",
@@ -516,6 +516,7 @@
   "project_pipelines_list": "Liste des pipelines du projet : ",
   "project_rename_title": "Renommer le projet : ",
   "project_repoman_title": "Lier le projet à un gestionnaire dépôt : ",
+  "project_repoman_created_by": "Lien créé par ",
   "project_ssh_error": "La clé ssh du projet doit avoir un nom",
   "project_update_msg_ok": "Le projet a été mis à jour.",
   "project_update_name_error": "Le nom du projet est obligatoire et doit être au format alphanumérique ([a-zA-Z0-9]*)",
