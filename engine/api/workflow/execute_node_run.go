@@ -384,19 +384,19 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 func getPlatformPluginBinaries(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.GRPCPluginBinary, error) {
 	wr, errWR := LoadRunByID(db, run.WorkflowRunID, LoadRunOptions{})
 	if errWR != nil {
-		return nil, sdk.WrapError(errWR, "getJobExecutablesGroups> Cannot load workflow run %d", run.WorkflowRunID)
+		return nil, sdk.WrapError(errWR, "getPlatformPluginBinaries> Cannot load workflow run %d", run.WorkflowRunID)
 	}
 
 	node := wr.Workflow.GetNode(run.WorkflowNodeID)
 	if node == nil {
-		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getJobExecutablesGroups> Cannot find node")
+		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find node")
 	}
 
 	if node.Context != nil && node.Context.ProjectPlatform != nil {
 		if node.Context.ProjectPlatform.Model.PluginName != "" {
 			p, err := plugin.LoadByName(db, node.Context.ProjectPlatform.Model.PluginName)
 			if err != nil {
-				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getJobExecutablesGroups> Cannot find plugin %s", node.Context.ProjectPlatform.Model.PluginName)
+				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s", node.Context.ProjectPlatform.Model.PluginName)
 			}
 			return p.Binaries, nil
 		}

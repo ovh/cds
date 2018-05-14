@@ -69,6 +69,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		for _, p := range api.Config.Providers {
 			if p.Name == providerName && p.Token == providerToken {
 				providerOK = true
+				break
 			}
 		}
 		if providerOK {

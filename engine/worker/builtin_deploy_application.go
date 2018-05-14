@@ -13,8 +13,6 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		sendLog("# Starting application deployment...")
 
-		pkey := sdk.ParameterFind(params, "cds.project")
-
 		pfName := sdk.ParameterFind(params, "cds.platform")
 		if pfName == nil {
 			res := sdk.Result{
@@ -25,6 +23,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		pkey := sdk.ParameterFind(params, "cds.project")
 		pf, err := w.client.ProjectPlatform(pkey.Value, pfName.Value, true)
 		if err != nil {
 			res := sdk.Result{

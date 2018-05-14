@@ -236,20 +236,14 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 	}
 
 	//Then check plugin requirements
-	var requirementsOK = true
 	for _, r := range binary.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
 			log.Warning("checkQueue> error on checkRequirement %s", err)
 		}
 		if !ok {
-			requirementsOK = false
-			continue
+			return false, fmt.Errorf("plugin requirement %s does not match", r.Name)
 		}
-	}
-
-	if !requirementsOK {
-		return false, fmt.Errorf("plugin requirements does not match")
 	}
 
 	//Then try to download the plugin

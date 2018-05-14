@@ -86,11 +86,8 @@ func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) er
 		AND project_platform.platform_model_id = $3
 	)`
 
-	if _, err := db.Exec(query, appID, projID, pfID); err != nil {
-		return sdk.WrapError(err, "DeleteDeploymentStrategy> unable to delete deployment strategy appID=%d pfID=%d projID=%d", appID, pfID, projID)
-	}
-
-	return nil
+	_, err := db.Exec(query, appID, projID, pfID)
+	return sdk.WrapError(err, "DeleteDeploymentStrategy> unable to delete deployment strategy appID=%d pfID=%d projID=%d", appID, pfID, projID)
 }
 
 // SetDeploymentStrategy update the application_deployment_strategy table
