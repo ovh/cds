@@ -38,12 +38,20 @@ $ cdsctl admin plugins binary-add arsenal-deployment-plugin arsenal-deployment-p
 Arsenal platform must configured as following
 	name: Arsenal
 	default_config:
-	host:
-		type: string
+		host:
+			type: string
 	deployment: true
 	deployment_default_config:
-	deployment.token:
-		type: string
+		version:
+			type: string
+		deployment.token:
+			type: string
+		retry.max:
+			type: string
+			value: 10
+		retry.delay:
+			type: string
+			value 5
 	plugin: arsenal-deployment-plugin
 */
 
@@ -61,7 +69,7 @@ func (e *arsenalDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) 
 }
 
 const deployData = `{
-	"version": "{{.cds.version}}",
+	"version": "{{.cds.platform.version}}",
 	"metadata": {
 		"CDS_APPLICATION": "{{.cds.application}}",
 		"CDS_RUN": "{{.cds.run}}",
@@ -131,8 +139,9 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 	}
 	var followUpToken = bodyResult["followup_token"]
 
-	//Retry loop to follow the dpeloyment status
+	//Retry loop to follow the deployment status
 	var retry = 0
+	var success bool
 	for retry < maxRetry {
 		if retry > 0 {
 			fmt.Printf("Retrying in %s seconds...", delayRetryStr)
@@ -165,11 +174,16 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 		}
 
 		if bodyResult["done"] == "true" {
+			success = true
 			break
 		} else {
 			fmt.Println("Not done yet.")
 		}
 		retry++
+	}
+
+	if !success {
+		return fail("deployment failed")
 	}
 
 	return &platformplugin.DeployResult{
