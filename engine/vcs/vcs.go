@@ -68,8 +68,8 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
-	serverCfg := s.Cfg.Servers[name]
-	if serverCfg.URL == "" {
+	serverCfg, has := s.Cfg.Servers[name]
+	if !has {
 		return nil, sdk.ErrNotFound
 	}
 	if serverCfg.Github != nil {
