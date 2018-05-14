@@ -197,6 +197,7 @@ func (api *API) getApplicationHandler() Handler {
 		withSchedulers := FormBool(r, "withSchedulers")
 		withKeys := FormBool(r, "withKeys")
 		withUsage := FormBool(r, "withUsage")
+		withDeploymentStrategies := FormBool(r, "withDeploymentStrategies")
 		branchName := r.FormValue("branchName")
 		remote := r.FormValue("remote")
 		versionString := r.FormValue("version")
@@ -216,6 +217,9 @@ func (api *API) getApplicationHandler() Handler {
 		}
 		if withKeys {
 			loadOptions = append(loadOptions, application.LoadOptions.WithKeys)
+		}
+		if withDeploymentStrategies {
+			loadOptions = append(loadOptions, application.LoadOptions.WithDeploymentStrategies)
 		}
 
 		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), loadOptions...)

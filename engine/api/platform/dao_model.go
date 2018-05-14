@@ -2,19 +2,11 @@ package platform
 
 import (
 	"database/sql"
-	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-)
-
-var (
-	// Models list available platform models
-	Models = []sdk.PlatformModel{
-		sdk.KafkaPlatform,
-	}
 )
 
 // LoadModels load platform models
@@ -43,45 +35,22 @@ func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
 	return sdk.PlatformModel(pm), nil
 }
 
-// CreateModels creates platforms models
-func CreateModels(db *gorp.DbMap) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WrapError(err, "CreateModels> Unable to start transaction")
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.Exec("LOCK TABLE platform_model IN ACCESS EXCLUSIVE MODE"); err != nil {
-		return sdk.WrapError(err, "CreateModels> Unable to lock table")
-	}
-
-	for i := range Models {
-		p := &Models[i]
-		ok, err := ModelExists(tx, p)
-		if err != nil {
-			return sdk.WrapError(err, "CreateModels")
+// LoadModelByName Load a platform model by its name
+func LoadModelByName(db gorp.SqlExecutor, name string) (sdk.PlatformModel, error) {
+	var pm platformModel
+	if err := db.SelectOne(&pm, "SELECT * from platform_model where name = $1", name); err != nil {
+		if err == sql.ErrNoRows {
+			return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> platform model %s not found", name)
 		}
-
-		if !ok {
-			log.Debug("CreateModels> inserting platform config: %s", p.Name)
-			if err := InsertModel(tx, p); err != nil {
-				return sdk.WrapError(err, "CreateModels error on insert")
-			}
-		} else {
-			log.Debug("CreateModels> updating platform config: %s", p.Name)
-			// update default values
-			if err := UpdateModel(tx, p); err != nil {
-				return sdk.WrapError(err, "CreateModels  error on update")
-			}
-		}
+		return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> Cannot select platform model %s", name)
 	}
-	return tx.Commit()
+	return sdk.PlatformModel(pm), nil
 }
 
 // ModelExists tests if the given model exists
-func ModelExists(db gorp.SqlExecutor, p *sdk.PlatformModel) (bool, error) {
+func ModelExists(db gorp.SqlExecutor, name string) (bool, error) {
 	var count = 0
-	if err := db.QueryRow("select count(1), id from platform_model where name = $1 GROUP BY id", p.Name).Scan(&count, &p.ID); err != nil {
+	if err := db.QueryRow("select count(1) from platform_model where name = $1 GROUP BY id", name).Scan(&count); err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
@@ -111,20 +80,49 @@ func UpdateModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 	return nil
 }
 
+// DeleteModel deletes a platform model in database
+func DeleteModel(db gorp.SqlExecutor, id int64) error {
+	m, err := LoadModel(db, id)
+	if err != nil {
+		return sdk.WrapError(err, "DeleteModel")
+	}
+
+	dbm := platformModel(m)
+	if _, err := db.Delete(&dbm); err != nil {
+		return sdk.WrapError(err, "DeleteModel> unable to delete model %s", m.Name)
+	}
+
+	return nil
+}
+
 // PostGet is a db hook
 func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
-	query := "SELECT default_config FROM platform_model where id = $1"
-	s, err := db.SelectNullStr(query, pm.ID)
-	if err != nil {
-		return sdk.WrapError(err, "PlatformModel.PostGet> Cannot get default config")
+	var res = struct {
+		DefaultConfig           sql.NullString `db:"default_config"`
+		DeploymentDefaultConfig sql.NullString `db:"deployment_default_config"`
+		PluginName              sql.NullString `db:"plugin_name"`
+	}{}
+
+	query := `SELECT default_config, grpc_plugin.name as "plugin_name", deployment_default_config 
+	FROM platform_model 
+	LEFT OUTER JOIN grpc_plugin ON grpc_plugin.id = platform_model.grpc_plugin_id
+	WHERE platform_model.id = $1`
+	if err := db.SelectOne(&res, query, pm.ID); err != nil {
+		return sdk.WrapError(err, "PlatformModel.PostGet> Cannot get default_config, platform_model_plugin, deployment_default_config")
 	}
-	if s.Valid {
-		var defaultConfig sdk.PlatformConfig
-		if err := json.Unmarshal([]byte(s.String), &defaultConfig); err != nil {
-			return sdk.WrapError(err, "PlatformModel.PostGet> Cannot unmarshall default config")
-		}
-		pm.DefaultConfig = defaultConfig
+
+	if err := gorpmapping.JSONNullString(res.DefaultConfig, &pm.DefaultConfig); err != nil {
+		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load default_config")
 	}
+
+	if err := gorpmapping.JSONNullString(res.DeploymentDefaultConfig, &pm.DeploymentDefaultConfig); err != nil {
+		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load deployment_default_config")
+	}
+
+	if res.PluginName.Valid {
+		pm.PluginName = res.PluginName.String
+	}
+
 	return nil
 }
 
@@ -139,12 +137,9 @@ func (pm *platformModel) PostUpdate(db gorp.SqlExecutor) error {
 		pm.DefaultConfig = sdk.PlatformConfig{}
 	}
 
-	btes, errm := json.Marshal(pm.DefaultConfig)
-	if errm != nil {
-		return errm
-	}
-	if _, err := db.Exec("update platform_model set default_config = $2 where id = $1", pm.ID, btes); err != nil {
-		return err
-	}
-	return nil
+	defaultConfig, err := gorpmapping.JSONToNullString(pm.DefaultConfig)
+	deploymentDefaultConfig, err := gorpmapping.JSONToNullString(pm.DeploymentDefaultConfig)
+
+	_, err = db.Exec("update platform_model set default_config = $2, deployment_default_config = $3 where id = $1", pm.ID, defaultConfig, deploymentDefaultConfig)
+	return sdk.WrapError(err, "PostUpdate> Unable to update platform_model")
 }

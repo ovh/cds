@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+//DEPRECATED
 func (api *API) postWorkflowJobRequirementsErrorHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		body, err := ioutil.ReadAll(r.Body)

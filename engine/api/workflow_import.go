@@ -31,6 +31,7 @@ func (api *API) postWorkflowPreviewHandler() Handler {
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithPlatforms,
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "postWorkflowPreviewHandler>> Unable load project")

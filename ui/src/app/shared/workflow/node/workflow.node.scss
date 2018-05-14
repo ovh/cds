@@ -125,6 +125,16 @@ $boxWidth: 200px;
       .node.environment.all {
         width: 100%;
       }
+
+      .node.platform {
+        width: 50%;
+        text-align: right;
+        padding-right: 5px;
+        display: inline-block;
+      }
+      .node.platform.all {
+        width: 100%;
+      }
     }
     .node.context.success {
       border-color: $cds_color_green;

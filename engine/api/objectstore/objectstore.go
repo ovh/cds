@@ -31,36 +31,28 @@ func Storage() Driver {
 	return storage
 }
 
-//StoreArtifact an artifact with default objectstore driver
-func StoreArtifact(o Object, data io.ReadCloser) (string, error) {
+//Store an object with default objectstore driver
+func Store(o Object, data io.ReadCloser) (string, error) {
 	if storage != nil {
 		return storage.Store(o, data)
 	}
 	return "", fmt.Errorf("store not initialized")
 }
 
-//FetchArtifact an artifact with default objectstore driver
-func FetchArtifact(o Object) (io.ReadCloser, error) {
+//Fetch an object with default objectstore driver
+func Fetch(o Object) (io.ReadCloser, error) {
 	if storage != nil {
 		return storage.Fetch(o)
 	}
 	return nil, fmt.Errorf("store not initialized")
 }
 
-//DeleteArtifact an artifact with default objectstore driver
-func DeleteArtifact(o Object) error {
+//Delete an object with default objectstore driver
+func Delete(o Object) error {
 	if storage != nil {
 		return storage.Delete(o)
 	}
 	return fmt.Errorf("store not initialized")
-}
-
-//StorePlugin call Store on the common driver
-func StorePlugin(art sdk.ActionPlugin, data io.ReadCloser) (string, error) {
-	if storage != nil {
-		return storage.Store(&art, data)
-	}
-	return "", fmt.Errorf("store not initialized")
 }
 
 //FetchTempURL returns a temp URL
@@ -76,22 +68,6 @@ func FetchTempURL(o Object) (string, error) {
 
 	url, _, err := s.FetchURL(o)
 	return url, err
-}
-
-//FetchPlugin call Fetch on the common driver
-func FetchPlugin(art sdk.ActionPlugin) (io.ReadCloser, error) {
-	if storage != nil {
-		return storage.Fetch(&art)
-	}
-	return nil, fmt.Errorf("store not initialized")
-}
-
-//DeletePlugin call Delete on the common driver
-func DeletePlugin(art sdk.ActionPlugin) error {
-	if storage != nil {
-		return storage.Delete(&art)
-	}
-	return fmt.Errorf("store not initialized")
 }
 
 // Driver allows artifact to be stored and retrieve the same way to any backend
@@ -131,8 +107,6 @@ const (
 	Filesystem
 	Swift
 )
-
-//TODO Use github.com/graymeta/stow
 
 // Config represents all the configuration for all objecstore drivers
 type Config struct {

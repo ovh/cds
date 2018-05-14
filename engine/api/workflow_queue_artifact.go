@@ -115,7 +115,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			_ = objectstore.DeleteArtifact(&art)
+			_ = objectstore.Delete(&art)
 			return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot update workflow node run")
 		}
 		return nil
@@ -210,7 +210,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() Handler {
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			_ = objectstore.DeleteArtifact(&art)
+			_ = objectstore.Delete(&art)
 			return sdk.WrapError(err, "postWorkflowJobArtifactWithTempURLCallbackHandler> Cannot update workflow node run")
 		}
 

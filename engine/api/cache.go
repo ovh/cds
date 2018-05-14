@@ -34,7 +34,7 @@ func (api *API) postPushCacheHandler() Handler {
 			Tag:     tag,
 		}
 
-		_, errO := objectstore.StoreArtifact(&cacheObject, r.Body)
+		_, errO := objectstore.Store(&cacheObject, r.Body)
 		if errO != nil {
 			return sdk.WrapError(errO, "SaveFile>Cannot store cache")
 		}
@@ -72,7 +72,7 @@ func (api *API) getPullCacheHandler() Handler {
 			return nil
 		}
 
-		ioread, err := objectstore.FetchArtifact(&cacheObject)
+		ioread, err := objectstore.Fetch(&cacheObject)
 		if err != nil {
 			return sdk.WrapError(err, "getPullCacheHandler> Cannot fetch artifact cache.tar")
 		}

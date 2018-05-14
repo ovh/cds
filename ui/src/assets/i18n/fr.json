@@ -88,6 +88,7 @@
   "application_repoman_cant_link": "ici",
   "application_repo_title": "Lier l'application à un repository : ",
   "application_repo_strat_title" : "Configuration",
+  "application_deployment_title" : "Lier l'application à une plateforme de déploiement: ",
   "application_new_title" : "Nouvelle application",
   "application_update_name_error": "Le nom de l'application est obligatoire et doit être au format alphanumérique + .-_ ([a-zA-Z0-9._-]*)",
   "application_update_ok": "L'application a été mise à jour",
@@ -244,6 +245,8 @@
   "usage_workflow_list": "Workflows utilisés",
   "usage_pipeline_list": "Pipelines utilisés",
   "usage_environment_list": "Environnements utilisés",
+
+  "deployment_platform_name": "Plateformes de déploiement",
 
   "danger_zone": "Zone dangereuse",
 
@@ -533,6 +536,7 @@
   "platform_configuration": "Configuration de la plateforme",
 
   "provider_hook": "hook",
+  "provider_deployment": "déploiement",
 
   "repo_name": "Nom du dépôt",
   "repoman_delete_msg_ok": "Le gestionnaire de dépôt n'est plus lié au projet",

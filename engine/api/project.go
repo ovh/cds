@@ -32,7 +32,7 @@ func (api *API) getProjectsHandler() Handler {
 		}
 
 		if withWorkflows {
-			opts = append(opts, project.LoadOptions.WithWorkflows)
+			opts = append(opts, project.LoadOptions.WithPlatforms, project.LoadOptions.WithWorkflows)
 		}
 
 		if filterByRepo == "" {
@@ -55,7 +55,7 @@ func (api *API) getProjectsHandler() Handler {
 			ws := []sdk.Workflow{}
 			//Filter the workflow by applications
 			for i := range p.Workflows {
-				w, err := workflow.LoadByID(db, store, p.Workflows[i].ID, u, workflow.LoadOptions{})
+				w, err := workflow.LoadByID(db, store, p, p.Workflows[i].ID, u, workflow.LoadOptions{})
 				if err != nil {
 					return err
 				}

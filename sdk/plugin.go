@@ -101,3 +101,51 @@ func DeletePlugin(name string) error {
 
 	return nil
 }
+
+const (
+	GRPCPluginDeploymentPlatform = "deployment_platform"
+	GRPCPluginAction             = "action"
+)
+
+type GRPCPlugin struct {
+	ID          int64              `json:"id" cli:"id" db:"id"`
+	Name        string             `json:"name" cli:"name,key" db:"name"`
+	Type        string             `json:"type" cli:"type" db:"type"`
+	Author      string             `json:"author" cli:"author" db:"author"`
+	Description string             `json:"description" cli:"description" db:"description"`
+	Binaries    []GRPCPluginBinary `json:"binaries" cli:"-" db:"-"`
+}
+
+func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
+	for _, b := range p.Binaries {
+		if b.OS == os && b.Arch == arch {
+			return &b
+		}
+	}
+	return nil
+}
+
+type GRPCPluginBinary struct {
+	OS               string          `json:"os,omitempty" yaml:"os"`
+	Arch             string          `json:"arch,omitempty" yaml:"arch"`
+	Name             string          `json:"name,omitempty" yaml:"-"`
+	ObjectPath       string          `json:"object_path,omitempty" yaml:"-"`
+	Size             int64           `json:"size,omitempty" yaml:"-"`
+	Perm             uint32          `json:"perm,omitempty" yaml:"-"`
+	MD5sum           string          `json:"md5sum,omitempty" yaml:"-"`
+	TempURL          string          `json:"temp_url,omitempty" yaml:"-"`
+	TempURLSecretKey string          `json:"-" yaml:"-"`
+	Cmd              string          `json:"cmd,omitempty" yaml:"cmd"`
+	Args             []string        `json:"args,omitempty" yaml:"args"`
+	Requirements     RequirementList `json:"requirements,omitempty" yaml:"requirements"`
+	FileContent      []byte          `json:"file_content,omitempty" yaml:"-"` //only used for upload
+	PluginName       string          `json:"plugin_name,omitempty" yaml:"-"`
+}
+
+func (b GRPCPluginBinary) GetName() string {
+	return b.Name
+}
+
+func (b GRPCPluginBinary) GetPath() string {
+	return b.Name + "-" + b.OS + "-" + b.Arch
+}
