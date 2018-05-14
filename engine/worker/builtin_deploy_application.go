@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
-
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
 )
 
 func runDeployApplication(w *currentWorker) BuiltInAction {
