@@ -246,6 +246,8 @@
   "usage_pipeline_list": "Pipelines used",
   "usage_environment_list": "Environments used",
 
+  "deployment_platform_name": "Deployment platforms",
+
   "danger_zone": "Danger Zone",
 
   "downloads_title": "Download",

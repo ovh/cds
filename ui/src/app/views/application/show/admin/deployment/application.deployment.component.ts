@@ -45,7 +45,19 @@ export class ApplicationDeploymentComponent {
     }
 
     clickDeletePlatform(pfName: string) {
-
+        this.loadingBtn = true;
+        this._appStore.deleteDeploymentStrategy(
+            this._project.key,
+            this.application.name,
+            pfName).pipe(first())
+        .subscribe(
+            app => {
+                this.application = app;
+            }
+            ,
+            null,
+            () => this.loadingBtn = false
+        );
     }
 
     clickSavePlatform(pfName: string) {

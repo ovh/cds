@@ -448,6 +448,22 @@ export class ApplicationService {
         return this._http.post<Application>(url, pfConfig);
     }
 
+    /**
+     * Delete a deployment strategy
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pfName Platform name
+     */
+    deleteDeploymentStrategy(key: string, appName: string, pfName: string): Observable<Application> {
+        let url = '/project/' + key + '/application/' + appName + '/deployment/config/' + pfName;
+        return this._http.delete<Application>(url);
+    }
+
+     /**
+     * Get application deployment strategies
+     * @param key Project unique key
+     * @param appName Application name
+     */
     getDeploymentStrategies(key: string, appName: string): Observable<Map<string, any>> {
         let url = '/project/' + key + '/application/' + appName + '/deployment/config';
         return this._http.get<Map<string, any>>(url);

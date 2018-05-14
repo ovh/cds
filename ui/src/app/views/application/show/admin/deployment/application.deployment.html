@@ -1,6 +1,6 @@
 <div class="AppRepository ui form">
     <div class="fields">
-        <div class="three wide field">
+        <div class="four wide field">
             <label>{{'deployment_platform_name' | translate}}</label>
             <sui-select class="selection"
                         name="selectPlatform"
@@ -14,7 +14,7 @@
                 </sui-select-option>
             </sui-select>
         </div>
-        <div class="five wide field">
+        <div class="six wide field">
             <ng-container *ngIf="selectedPlatform?.model">
                 <label>{{ 'platform_configuration' | translate }}</label>
                 <div class="inline fields" *ngFor="let k of selectedPlatform.model.deployment_default_config | keys">
@@ -22,47 +22,54 @@
                     <div class="twelve wide field"> 
                         <input type="text" [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value" *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'string'">
                         <input type="password" [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value" *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'password'">
+                        <textarea class="ui textarea" rows="3"
+                            [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value" 
+                            *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'text'"></textarea>
                     </div>
                 </div>
             </ng-container>
         </div>
-        <div class="four wide right aligned field">
-            <button name="savebtn" class="ui green button" [class.loading]="loadingBtn" type="button" (click)="savePlatform()" >{{ 'btn_save' | translate }}</button>
+        <div class="six wide right aligned field">
+            <button name="savebtn" class="ui green button" [class.loading]="loadingBtn" type="button" (click)="savePlatform()" [disabled]="!selectedPlatform" >{{ 'btn_add' | translate }}</button>
             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="savePlatform()" #linkWarning></app-warning-modal>
         </div>
     </div>
-    <div [hidden]="!application.deployment_strategies">
-        <ng-container *ngIf="application.deployment_strategies">
-
-        <table class="ui fixed single line celled table">
-        <thead>
-        <tr>
-            <th class="four wide">{{ 'common_name' | translate }}</th>
-            <th class="nine wide">{{ 'platform_configuration' | translate }}</th>
-            <th class="three wide"></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let pf of getPlatformNames()">
-            <td>
-                {{pf}}
-            </td>
-            <td>
-                <div class="inline fields" *ngFor="let k of application.deployment_strategies[pf] | keys">
-                    <div class="four wide field"><label>{{k}}</label></div> 
-                    <div class="twelve wide field"> 
-                        <input type="text" [(ngModel)]="application.deployment_strategies[pf][k].value" *ngIf="application.deployment_strategies[pf][k].type === 'string'">
-                        <input type="password" [(ngModel)]="application.deployment_strategies[pf][k].value" *ngIf="application.deployment_strategies[pf][k].type === 'password'">
-                    </div>
-                </div>
-            </td> 
-            <td>
-                <button class="ui green button" [class.loading]="loadingBtn" type="button" (click)="clickSavePlatform(pf)" >{{ 'btn_save' | translate }}</button>
-                <app-delete-button (event)="clickDeletePlatform(pf)" [loading]="loadingBtn"></app-delete-button>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    </ng-container>
+    <div class="fields">
+        <div [hidden]="!application.deployment_strategies">
+            <ng-container *ngIf="application.deployment_strategies">
+                <table class="ui fixed single line celled table">
+                    <thead>
+                    <tr>
+                        <th class="four wide">{{ 'common_name' | translate }}</th>
+                        <th class="nine wide">{{ 'platform_configuration' | translate }}</th>
+                        <th class="three wide"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let pf of getPlatformNames()">
+                            <td>
+                                {{pf}}
+                            </td>
+                            <td>
+                                <div class="inline fields" *ngFor="let k of application.deployment_strategies[pf] | keys">
+                                    <div class="four wide field"><label>{{k}}</label></div> 
+                                    <div class="twelve wide field"> 
+                                        <input type="text" [(ngModel)]="application.deployment_strategies[pf][k].value" *ngIf="application.deployment_strategies[pf][k].type === 'string'">
+                                        <input type="password" [(ngModel)]="application.deployment_strategies[pf][k].value" *ngIf="application.deployment_strategies[pf][k].type === 'password'">
+                                        <textarea class="ui textarea" rows="3"
+                                            [(ngModel)]="application.deployment_strategies[pf][k].value" 
+                                            *ngIf="application.deployment_strategies[pf][k].type === 'text'"></textarea>
+                                    </div>
+                                </div>
+                            </td> 
+                            <td>
+                                <button class="ui green button" [class.loading]="loadingBtn" type="button" (click)="clickSavePlatform(pf)" >{{ 'btn_save' | translate }}</button>
+                                <app-delete-button (event)="clickDeletePlatform(pf)" [loading]="loadingBtn"></app-delete-button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </ng-container>
+        </div>
     </div>
 </div>

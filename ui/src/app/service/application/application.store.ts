@@ -699,7 +699,7 @@ export class ApplicationStore {
     }
 
     /**
-     * Delete a scheduler
+     * Delete a deployment strategy
      * @param key Project unique key
      * @param appName Application name
      * @param pfName Platform Name
@@ -708,7 +708,20 @@ export class ApplicationStore {
      */
     saveDeploymentStrategy(key: string, appName: string, pfName: string, pfConfig: any): Observable<Application> {
         return this._applicationService.saveDeploymentStrategy(key, appName, pfName, pfConfig).map(app => {
-            return this.refreshApplicationWorkflowCache(key, appName, app);
+            return this.refreshApplicationDeploymentCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Delete a deployment strategy
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pfName Platform Name
+     * @returns {Observable<Application>}
+     */
+    deleteDeploymentStrategy(key: string, appName: string, pfName: string): Observable<Application> {
+        return this._applicationService.deleteDeploymentStrategy(key, appName, pfName).map(app => {
+            return this.refreshApplicationDeploymentCache(key, appName, app);
         });
     }
 
@@ -720,5 +733,25 @@ export class ApplicationStore {
      */
     getDeploymentStrategies(key: string, appName: string): Observable<Map<string, any>> {
         return this._applicationService.getDeploymentStrategies(key, appName);
+    }
+
+    /**
+     * Refresh application cache
+     * @param key Project unique key
+     * @param appName Application Name
+     * @param application updated workflow application
+     * @returns {: Application}
+     */
+    refreshApplicationDeploymentCache(key: string, appName: string, application: Application): Application {
+        let cache = this._application.getValue();
+        let appKey = key + '-' + appName;
+        let appToUpdate = cache.get(appKey);
+        if (appToUpdate) {
+            appToUpdate.last_modified = application.last_modified;
+            appToUpdate.deployment_strategies = application.deployment_strategies;
+            this._application.next(cache.set(appKey, appToUpdate));
+            return appToUpdate;
+        }
+        return application;
     }
 }
