@@ -34,7 +34,6 @@
   "action_optional_details": "If checked, even if this step fails, the stage execution will continue",
   "action_always_executed": "Always executed",
   "action_always_executed_details": "If checked, this step will be executed even if previous steps fail",
-  "action_artifact_tag_ignored": "tag is ignored on CDS Workflows",
 
   "admin_migration_not_started": "Not started",
   "admin_migration_started": "Started",
@@ -270,7 +269,7 @@
   "favorite_select_type": "Select a favorite type",
   "favorite_project_select": "Select a project",
   "favorite_workflow_select": "Select a workflow",
-  
+
   "broadcast_list_title": "Broadcasts",
   "broadcast_new_title": "Add a broadcast",
   "broadcast_edit_title": "Edit an broadcast",
@@ -517,6 +516,7 @@
   "project_pipelines_list": "List of pipelines in the project: ",
   "project_rename_title": "Rename the project: ",
   "project_repoman_title": "Link to a repository manager: ",
+  "project_repoman_created_by": "Link created by ",
   "project_update_msg_ok": "The project has just been updated.",
   "project_ssh_error": "Project ssh key must have a name",
   "project_update_name_error": "Project name is mandatory and must respect the alphanumeric pattern ([a-zA-Z0-9]*)",

@@ -12,7 +12,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
@@ -37,12 +36,39 @@ type eventsBroker struct {
 }
 
 //Init the eventsBroker
-func (b *eventsBroker) Init(c context.Context) {
+func (b *eventsBroker) Init(c context.Context, store cache.Store) {
 	// Start cache Subscription
-	event.Subscribe(b.messages)
+	go cacheSubscribe(c, b.messages, store)
 
 	// Start processing events
 	go b.Start(c)
+}
+
+func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
+	pubSub := store.Subscribe("events_pubsub")
+	tick := time.NewTicker(250 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("events.cacheSubscribe> Exiting: %v", c.Err())
+				return
+			}
+		case <-tick.C:
+			msg, err := store.GetMessageFromSubscription(c, pubSub)
+			if err != nil {
+				log.Warning("events.cacheSubscribe> Cannot get message %s: %s", msg, err)
+				continue
+			}
+			var e sdk.Event
+			if err := json.Unmarshal([]byte(msg), &e); err != nil {
+				log.Warning("events.cacheSubscribe> Cannot unmarshal event %s: %s", msg, err)
+				continue
+			}
+			cacheMsgChan <- e
+		}
+	}
 }
 
 func (b *eventsBroker) UpdateUserPermissions(username string) {
@@ -224,38 +250,32 @@ func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscrib
 		return
 	}
 
-	// Update on Project, Workflow, Application, Pipeline, Environment
-	if subscriber.User.Admin {
-		subscriber.Queue <- eventS
-		return
-	}
-
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") {
-		if permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
+		if subscriber.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
 		}
 		return

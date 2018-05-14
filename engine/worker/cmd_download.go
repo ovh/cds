@@ -163,8 +163,6 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	artifactsFiltered := sdk.ArtifactsGetUniqueNameAndLatest(artifacts)
-
 	regexp, errp := regexp.Compile(reqArgs.Pattern)
 	if errp != nil {
 		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid pattern %s : %s", reqArgs.Pattern, errp))
@@ -172,13 +170,13 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	wg := new(sync.WaitGroup)
-	wg.Add(len(artifactsFiltered))
+	wg.Add(len(artifacts))
 
 	sendLog("Downloading artifacts from into current directory")
 
 	var isInError bool
-	for i := range artifactsFiltered {
-		a := &artifactsFiltered[i]
+	for i := range artifacts {
+		a := &artifacts[i]
 
 		if reqArgs.Pattern != "" && !regexp.MatchString(a.Name) {
 			sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, reqArgs.Pattern))
@@ -218,7 +216,7 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		if isInError {
 			break
 		}
-		if len(artifactsFiltered) > 1 {
+		if len(artifacts) > 1 {
 			time.Sleep(3 * time.Second)
 		}
 	}

@@ -83,6 +83,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		pattern := sdk.ParameterValue(a.Parameters, "pattern")
 
 		destPath := sdk.ParameterValue(a.Parameters, "path")
+		tag := sdk.ParameterValue(a.Parameters, "tag")
 
 		if destPath == "" {
 			destPath = "."
@@ -118,17 +119,21 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			return *res
 		}
 
-		artifactsFiltered := sdk.ArtifactsGetUniqueNameAndLatest(artifacts)
-
 		regexp := regexp.MustCompile(pattern)
 		wg := new(sync.WaitGroup)
-		wg.Add(len(artifactsFiltered))
+		wg.Add(len(artifacts))
 
-		for i := range artifactsFiltered {
-			a := &artifactsFiltered[i]
+		for i := range artifacts {
+			a := &artifacts[i]
 
 			if pattern != "" && !regexp.MatchString(a.Name) {
 				sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
+				wg.Done()
+				continue
+			}
+
+			if tag != "" && a.Tag != tag {
+				sendLog(fmt.Sprintf("%s does not match tag %s - skipped", a.Name, tag))
 				wg.Done()
 				continue
 			}
@@ -161,7 +166,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 					return
 				}
 			}(a)
-			if len(artifactsFiltered) > 1 {
+			if len(artifacts) > 1 {
 				time.Sleep(3 * time.Second)
 			}
 		}

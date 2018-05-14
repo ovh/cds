@@ -30,7 +30,7 @@ func (api *API) InitRouter() {
 		messages: make(chan sdk.Event),
 		mutex:    &sync.Mutex{},
 	}
-	api.eventsBroker.Init(context.Background())
+	api.eventsBroker.Init(context.Background(), api.Cache)
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))

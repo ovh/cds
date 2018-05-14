@@ -34,7 +34,6 @@
   "action_optional_details": "Cochée, cela signifie que même si cette étape tombe en erreur, le déroulement continue",
   "action_always_executed": "Toujours executée",
   "action_always_executed_details": "Cochée, cela signifie que cette étape sera toujours executée même si les étapes précédentes tombent en erreur",
-  "action_artifact_tag_ignored": "Le tag est ignoré par les 'CDS Workflows'",
 
   "admin_migration_not_started": "Non commencé",
   "admin_migration_started": "En cours",
@@ -270,7 +269,7 @@
   "favorite_select_type": "Sélectionnez un type de favoris",
   "favorite_project_select": "Sélectionnez un projet",
   "favorite_workflow_select": "Sélectionnez un workflow",
-  
+
   "broadcast_list_title": "Infos",
   "broadcast_new_title": "Ajouter une information",
   "broadcast_edit_title": "Éditer l'information",
@@ -517,6 +516,7 @@
   "project_pipelines_list": "Liste des pipelines du projet : ",
   "project_rename_title": "Renommer le projet : ",
   "project_repoman_title": "Lier le projet à un gestionnaire dépôt : ",
+  "project_repoman_created_by": "Lien créé par ",
   "project_ssh_error": "La clé ssh du projet doit avoir un nom",
   "project_update_msg_ok": "Le projet a été mis à jour.",
   "project_update_name_error": "Le nom du projet est obligatoire et doit être au format alphanumérique ([a-zA-Z0-9]*)",
