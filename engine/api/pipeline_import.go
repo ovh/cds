@@ -32,49 +32,13 @@ func (api *API) postPipelinePreviewHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to get format : %v", errF)
 		}
 
-		rawPayload := map[string]interface{}{}
+		var payload exportentities.PipelineV1
 		var errorParse error
 		switch f {
 		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, &rawPayload)
+			errorParse = json.Unmarshal(data, &payload)
 		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, &rawPayload)
-		}
-
-		if errorParse != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
-		}
-
-		//Parse the data once to retrieve the version
-		var pipelineV1Format bool
-		if v, ok := rawPayload["version"]; ok {
-			version, okStr := v.(string)
-			if !okStr {
-				return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Cannot parse pipeline version")
-			}
-			if version == exportentities.PipelineVersion1 {
-				pipelineV1Format = true
-			}
-		}
-
-		//Depending on the version, we will use different struct
-		type pipeliner interface {
-			Pipeline() (*sdk.Pipeline, error)
-		}
-
-		var payload pipeliner
-		// Parse the pipeline
-		if pipelineV1Format {
-			payload = &exportentities.PipelineV1{}
-		} else {
-			payload = &exportentities.Pipeline{}
-		}
-
-		switch f {
-		case exportentities.FormatJSON:
-			errorParse = json.Unmarshal(data, payload)
-		case exportentities.FormatYAML:
-			errorParse = yaml.Unmarshal(data, payload)
+			errorParse = yaml.Unmarshal(data, &payload)
 		}
 
 		if errorParse != nil {
