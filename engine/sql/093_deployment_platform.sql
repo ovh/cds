@@ -31,8 +31,9 @@ SELECT create_foreign_key('FK_PLATFORM_MODEL_GRPC_PLUGIN', 'platform_model', 'gr
 ALTER TABLE workflow_node_run_job ADD COLUMN platform_plugin_binaries JSONB;
 
 -- +migrate Down
-ALTER TABLE worker_model DROP COLUMN grpc_plugin_id;
-ALTER TABLE worker_model DROP COLUMN deployment_default_config;
+ALTER TABLE platform_model DROP COLUMN grpc_plugin_id;
+ALTER TABLE platform_model DROP COLUMN deployment_default_config;
 DROP TABLE application_deployment_strategy;
 ALTER TABLE workflow_node_context DROP COLUMN project_platform_id;
+ALTER TABLE workflow_node_run_job DROP COLUMN platform_plugin_binaries;
 DROP TABLE grpc_plugin;
