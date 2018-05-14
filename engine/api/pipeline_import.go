@@ -23,13 +23,13 @@ func (api *API) postPipelinePreviewHandler() Handler {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to read body")
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to read body : %v", errRead)
 		}
 
 		// Compute format
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to get format : %s", errF)
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to get format : %v", errF)
 		}
 
 		rawPayload := map[string]interface{}{}
@@ -78,7 +78,7 @@ func (api *API) postPipelinePreviewHandler() Handler {
 		}
 
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Cannot parsing: %s", errorParse)
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Cannot parsing: %v", errorParse)
 		}
 
 		pip, errP := payload.Pipeline()
