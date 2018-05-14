@@ -25,7 +25,11 @@ export class WorkerModelListComponent extends Table {
         if (!this.filter) {
             return this.workerModels;
         }
-        return this.workerModels.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
+        let lowerFilter = this.filter.toLowerCase();
+
+        return this.workerModels.filter((v) => {
+          return v.name.toLowerCase().indexOf(lowerFilter) !== -1 || v.type.toLowerCase() === lowerFilter;
+        });
     }
 
     getImageName(w: WorkerModel): string {

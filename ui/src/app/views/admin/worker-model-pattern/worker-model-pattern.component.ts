@@ -27,6 +27,10 @@ export class WorkerModelPatternComponent extends Table {
         if (!this.filter) {
             return this.workerModelPatterns;
         }
-        return this.workerModelPatterns.filter((wmp) => wmp.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
+        let lowerFilter = this.filter.toLowerCase();
+
+        return this.workerModelPatterns.filter((wmp) => {
+          return wmp.name.toLowerCase().indexOf(lowerFilter) !== -1 || wmp.type.toLowerCase() === lowerFilter;
+        });
     }
 }
