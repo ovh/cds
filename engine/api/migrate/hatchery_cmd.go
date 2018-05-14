@@ -23,7 +23,7 @@ type deprecatedVSphereModelData struct {
 	UserData string `json:"user_data"` //Commands to execute when create vm model
 }
 
-// HatcheryCmdMigration useful to set default tags to git.branch git.author
+// HatcheryCmdMigration useful to change worker model configuration
 func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 	db := DBFunc()
 
@@ -36,6 +36,9 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 	}
 
 	for _, wmTmp := range wms {
+		if wmTmp.ModelDocker.Cmd != "" || wmTmp.ModelVirtualMachine.Cmd != "" {
+			continue
+		}
 		tx, errTx := db.Begin()
 		if errTx != nil {
 			log.Warning("HatcheryCmdMigration> cannot create a transaction : %v", errTx)
