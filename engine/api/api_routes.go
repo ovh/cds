@@ -197,6 +197,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job", r.POST(api.addJobToStageHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job/{jobID}", r.PUT(api.updateJobHandler), r.DELETE(api.deleteJobHandler))
 
+	// Preview pipeline
+	r.Handle("/project/{permProjectKey}/preview/pipeline", r.POST(api.postPipelinePreviewHandler))
 	// Import pipeline
 	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
 	// Export pipeline

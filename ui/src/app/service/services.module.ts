@@ -22,6 +22,7 @@ import {MonitoringService} from './monitoring/monitoring.service';
 import {ActionService} from './action/action.service';
 import {ActionStore} from './action/action.store';
 import {PipelineResolver} from './pipeline/pipeline.resolver';
+import {PipelineCoreService} from './pipeline/pipeline.core.service';
 import {ApplicationResolver, ApplicationQueryParamResolver} from './application/application.resolver';
 import {
     ProjectResolver,
@@ -89,6 +90,7 @@ export class ServicesModule {
                 ParameterService,
                 MonitoringService,
                 PipelineResolver,
+                PipelineCoreService,
                 PipelineService,
                 PipelineAuditService,
                 PipelineStore,
@@ -152,6 +154,7 @@ export {
     ParameterService,
     MonitoringService,
     PipelineResolver,
+    PipelineCoreService,
     PipelineStore,
     PipelineAuditService,
     PlatformService,
