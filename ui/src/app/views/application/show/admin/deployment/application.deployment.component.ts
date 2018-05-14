@@ -6,7 +6,7 @@ import {Project} from '../../../../../model/project.model';
 // import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
-import {first} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-deployment',
@@ -49,14 +49,14 @@ export class ApplicationDeploymentComponent {
         this._appStore.deleteDeploymentStrategy(
             this._project.key,
             this.application.name,
-            pfName).pipe(first())
-        .subscribe(
+            pfName)
+        .pipe(
+            first(),
+            finalize(() => this.loadingBtn = false)
+        ).subscribe(
             app => {
                 this.application = app;
             }
-            ,
-            null,
-            () => this.loadingBtn = false
         );
     }
 
@@ -66,13 +66,14 @@ export class ApplicationDeploymentComponent {
             this._project.key,
             this.application.name,
             pfName,
-            this.application.deployment_strategies[pfName]).pipe(first())
-        .subscribe(
+            this.application.deployment_strategies[pfName])
+        .pipe(
+            first(),
+            finalize(() => this.loadingBtn = false)
+        ).subscribe(
             app => {
                 this.application = app;
-            },
-            null,
-            () => this.loadingBtn = false
+            }
         );
     }
 
@@ -83,14 +84,15 @@ export class ApplicationDeploymentComponent {
                 this._project.key,
                 this.application.name,
                 this.selectedPlatform.name,
-                this.selectedPlatform.model.deployment_default_config).pipe(first())
+                this.selectedPlatform.model.deployment_default_config)
+            .pipe(
+                first(),
+                finalize(() => this.loadingBtn = false))
             .subscribe(
                 app => {
                     this.application = app;
                     this.selectedPlatform = null;
-                },
-                null,
-                () => this.loadingBtn = false
+                }
             );
         }
     }
