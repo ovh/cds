@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -26,6 +27,19 @@ func (api *API) getProjectsHandler() Handler {
 		withWorkflows := FormBool(r, "workflow")
 		filterByRepo := r.FormValue("repo")
 		withPermissions := r.FormValue("permission")
+
+		var u = getUser(ctx)
+
+		//A provider can make a call for a specific user
+		if getProvider(ctx) != nil {
+			requestedUserName := r.Header.Get("X-Cds-Username")
+			var err error
+			//Load the specific user
+			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
+			if err != nil {
+				return sdk.WrapError(err, "getProjectsHandler> unable to load user '%s'", requestedUserName)
+			}
+		}
 
 		opts := []project.LoadOptionFunc{
 			project.LoadOptions.WithPermission,
@@ -39,7 +53,7 @@ func (api *API) getProjectsHandler() Handler {
 		}
 
 		if filterByRepo == "" {
-			projects, err := project.LoadAll(api.mustDB(), api.Cache, getUser(ctx), opts...)
+			projects, err := project.LoadAll(api.mustDB(), api.Cache, u, opts...)
 			if err != nil {
 				return sdk.WrapError(err, "getProjectsHandler")
 			}
@@ -91,7 +105,7 @@ func (api *API) getProjectsHandler() Handler {
 		}
 		opts = append(opts, &filterByRepoFunc)
 
-		projects, err := project.LoadAllByRepo(api.mustDB(), api.Cache, getUser(ctx), filterByRepo, opts...)
+		projects, err := project.LoadAllByRepo(api.mustDB(), api.Cache, u, filterByRepo, opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
 		}
