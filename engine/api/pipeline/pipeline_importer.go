@@ -158,6 +158,14 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, j.Action.Name, s.Name)
 				}
 			}
+
+			if oldStage.BuildOrder != s.BuildOrder {
+				s.ID = oldStage.ID
+				if err := updateStageOrder(db, s.ID, s.BuildOrder); err != nil {
+					return sdk.WrapError(err, "ImportUpdate> Unable to update stage %s", s.Name)
+				}
+			}
+
 			//Update stage
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageUpdated, s.Name)
