@@ -92,6 +92,8 @@ type Configuration struct {
 			Base     string `toml:"base" default:"dc=myorganization,dc=com"`
 			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com"`
 			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}"`
+			BindDN   string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated"`
+			BindPwd  string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated"`
 		} `toml:"ldap"`
 		Local struct {
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true"`
@@ -115,7 +117,8 @@ type Configuration struct {
 			URL             string `toml:"url" comment:"Authentication Endpoint, generally value of $OS_AUTH_URL"`
 			Username        string `toml:"username" comment:"Openstack Username, generally value of $OS_USERNAME"`
 			Password        string `toml:"password" comment:"Openstack Password, generally value of $OS_PASSWORD"`
-			Tenant          string `toml:"tenant" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME"`
+			Tenant          string `toml:"tenant" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only"`
+			Domain          string `toml:"domain" comment:"Openstack Domain, generally value of $OS_DOMAIN_NAME, v3 auth only"`
 			Region          string `toml:"region" comment:"Region, generally value of $OS_REGION_NAME"`
 			ContainerPrefix string `toml:"containerPrefix" comment:"Use if your want to prefix containers for CDS Artifacts"`
 			DisableTempURL  bool   `toml:"disableTempURL" default:"false" commented:"true" comment:"True if you want to disable Temporary URL in file upload"`
@@ -144,6 +147,12 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
+	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+}
+
+type ProviderConfiguration struct {
+	Name  string `toml:"name"`
+	Token string `toml:"token"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -154,6 +163,8 @@ type DefaultValues struct {
 	LDAPBase  string
 	GivenName string
 	SN        string
+	BindDN    string
+	BindPwd   string
 }
 
 // New instanciates a new API object
@@ -297,6 +308,18 @@ func getUser(c context.Context) *sdk.User {
 	return u
 }
 
+func getProvider(c context.Context) *string {
+	i := c.Value(auth.ContextProvider)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(string)
+	if !ok {
+		return nil
+	}
+	return &u
+}
+
 func getAgent(r *http.Request) string {
 	return r.Header.Get("User-Agent")
 }
@@ -415,6 +438,7 @@ func (a *API) Serve(ctx context.Context) error {
 				Username:        a.Config.Artifact.Openstack.Username,
 				Password:        a.Config.Artifact.Openstack.Password,
 				Tenant:          a.Config.Artifact.Openstack.Tenant,
+				Domain:          a.Config.Artifact.Openstack.Domain,
 				Region:          a.Config.Artifact.Openstack.Region,
 				ContainerPrefix: a.Config.Artifact.Openstack.ContainerPrefix,
 				DisableTempURL:  a.Config.Artifact.Openstack.DisableTempURL,
@@ -459,7 +483,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
-	if err := platform.CreateModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := platform.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		return fmt.Errorf("cannot setup platforms: %v", err)
 	}
 
@@ -504,6 +528,8 @@ func (a *API) Serve(ctx context.Context) error {
 			DN:           a.Config.Auth.LDAP.DN,
 			SSL:          a.Config.Auth.LDAP.SSL,
 			UserFullname: a.Config.Auth.LDAP.Fullname,
+			BindDN:       a.Config.Auth.LDAP.BindDN,
+			BindPwd:      a.Config.Auth.LDAP.BindPwd,
 		}
 	default:
 		authMode = "local"

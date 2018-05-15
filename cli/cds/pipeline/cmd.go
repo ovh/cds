@@ -21,8 +21,6 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(pipelineDeleteCmd())
 	cmd.AddCommand(pipelineGroupCmd)
 	cmd.AddCommand(pipelineHistoryCmd())
-	cmd.AddCommand(pipelineRunCmd())
-	cmd.AddCommand(pipelineRestartCmd())
 	cmd.AddCommand(pipelineShowBuildCmd())
 	cmd.AddCommand(pipelineCommitsCmd())
 	cmd.AddCommand(pipelineStageCmd)

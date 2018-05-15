@@ -26,7 +26,7 @@ func (api *API) postApplicationImportHandler() Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 		if errp != nil {
 			return sdk.WrapError(errp, "postApplicationImportHandler>> Unable load project")
 		}

@@ -54,11 +54,14 @@ export class PipelineService {
      * @param key Project unique key
      * @param workflow pipelineCode to import
      */
-    importPipeline(key: string, pipelineCode: string): Observable<Array<string>> {
+    importPipeline(key: string, pipelineCode: string, force?: boolean): Observable<Array<string>> {
         let headers = new HttpHeaders();
         headers = headers.append('Content-Type', 'application/x-yaml');
         let params = new HttpParams();
         params = params.append('format', 'yaml');
+        if (force) {
+            params = params.append('forceUpdate', 'true');
+        }
 
         return this._http.post<Array<string>>(`/project/${key}/import/pipeline`, pipelineCode, {headers, params});
     }
@@ -249,5 +252,31 @@ export class PipelineService {
      */
     moveStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
         return this._http.post<Pipeline>('/project/' + key + '/pipeline/' + pipName + '/stage/move', stage);
+    }
+
+    /**
+     * Get the given pipeline from API in export format
+     * @param key Project unique key
+     * @param pipName Pipeline Name
+     */
+    getPipelineExport(key: string, pipName: string): Observable<string> {
+        let params = new HttpParams();
+        params = params.append('format', 'yaml');
+
+        return this._http.get<string>('/project/' + key + '/export/pipeline/' + pipName, {params, responseType: <any>'text'});
+    }
+
+    /**
+     * Get the given pipeline from API in export format
+     * @param key Project unique key
+     * @param pipName Pipeline Name
+     */
+    previewPipelineImport(key: string, pipImportCode: string): Observable<Pipeline> {
+        let params = new HttpParams();
+        params = params.append('format', 'yaml');
+        let headers = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/x-yaml');
+
+        return this._http.post<Pipeline>('/project/' + key + '/preview/pipeline', pipImportCode, {headers, params});
     }
 }

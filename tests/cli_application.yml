@@ -32,31 +32,6 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} application variable delete ITCLIAPPPRJ TestApp var1
 
-- name: application group add
-  steps:
-  - script: {{.cds.build.cds}} application group add ITCLIAPPPRJ TestApp ITCLIAPP_GRP_EDIT_TEST 7
-
-- name: application group update
-  steps:
-  - script: {{.cds.build.cds}} application group update ITCLIAPPPRJ TestApp ITCLIAPP_GRP_EDIT_TEST 4
-
-- name: application group remove
-  steps:
-  - script: {{.cds.build.cds}} application group remove ITCLIAPPPRJ TestApp ITCLIAPP_GRP_EDIT_TEST
-
-- name: application pipeline add
-  steps:
-  - script: {{.cds.build.cds}} pipeline add ITCLIAPPPRJ Hello
-  - script: {{.cds.build.cds}} application pipeline add ITCLIAPPPRJ TestApp Hello
-
-- name: pipeline export
-  steps:
-  - script: {{.cds.build.cdsctl}} pipeline export ITCLIAPPPRJ Hello
-
-- name: application pipeline remove
-  steps:
-  - script: {{.cds.build.cds}} application pipeline remove ITCLIAPPPRJ TestApp Hello
-
 - name: clean
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITCLIAPPPRJ

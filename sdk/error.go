@@ -141,6 +141,7 @@ var (
 	ErrRepoOperationTimeout                   = Error{ID: 126, Status: http.StatusRequestTimeout}
 	ErrInvalidGitBranch                       = Error{ID: 127, Status: http.StatusBadRequest}
 	ErrInvalidFavoriteType                    = Error{ID: 128, Status: http.StatusBadRequest}
+	ErrUnsupportedOSArchPlugin                = Error{ID: 129, Status: http.StatusNotFound}
 	ErrNoBroadcast                            = Error{ID: 130, Status: http.StatusNotFound}
 	ErrBroadcastNotFound                      = Error{ID: 131, Status: http.StatusNotFound}
 )
@@ -272,6 +273,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrRepoOperationTimeout.ID:                   "Analyzing repository took too much time",
 	ErrInvalidGitBranch.ID:                       "Invalid git.branch value, you cannot have an empty git.branch value in your default payload",
 	ErrInvalidFavoriteType.ID:                    "Invalid favorite type: must be 'project' or 'workflow'",
+	ErrUnsupportedOSArchPlugin.ID:                "Unsupported os/architecture for this plugin",
 	ErrNoBroadcast.ID:                            "Invalid broadcast",
 	ErrBroadcastNotFound.ID:                      "Broadcast not found",
 }
@@ -403,6 +405,7 @@ var errorsFrench = map[int]string{
 	ErrRepoOperationTimeout.ID:                   "L'analyse du dépôt a pris trop de temps",
 	ErrInvalidGitBranch.ID:                       "Valeur git.branch invalide, vous ne pouvez pas avoir de valeur git.branch avec une string vide dans votre payload par défaut",
 	ErrInvalidFavoriteType.ID:                    "Type de favori invalide: doit être 'projet' ou 'workflow'",
+	ErrUnsupportedOSArchPlugin.ID:                "OS/Architecture non supporté pour ce plugin",
 	ErrNoBroadcast.ID:                            "Information invalide",
 	ErrBroadcastNotFound.ID:                      "Information non trouvée",
 }

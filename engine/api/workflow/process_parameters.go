@@ -90,6 +90,27 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 		}
 	}
 
+	// compute parameters variables
+	if n.Context != nil && n.Context.ProjectPlatform != nil {
+		vars["cds.platform"] = n.Context.ProjectPlatform.Name
+		tmp := sdk.ParametersFromPlatform(n.Context.ProjectPlatform.Config)
+		for k, v := range tmp {
+			vars[k] = v
+		}
+
+		// Process deployment strategy of the chosen platform
+		if n.Context.Application != nil {
+			for pfName, pfConfig := range n.Context.Application.DeploymentStrategies {
+				if pfName == n.Context.ProjectPlatform.Name {
+					tmp := sdk.ParametersFromPlatform(pfConfig)
+					for k, v := range tmp {
+						vars[k] = v
+					}
+				}
+			}
+		}
+	}
+
 	// compute pipeline parameters
 	tmpPip := sdk.ParametersFromPipelineParameters(pipelineParameters)
 	for k, v := range tmpPip {

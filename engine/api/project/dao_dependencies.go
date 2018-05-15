@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -100,7 +101,7 @@ var (
 	}
 
 	loadPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		pf, err := LoadPlatformsByID(db, proj.ID, false)
+		pf, err := platform.LoadPlatformsByProjectID(db, proj.ID, false)
 		if err != nil {
 			return sdk.WrapError(err, "loadPlatforms> Cannot load platforms")
 		}
@@ -113,7 +114,7 @@ var (
 	}
 
 	loadClearPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		pf, err := LoadPlatformsByID(db, proj.ID, true)
+		pf, err := platform.LoadPlatformsByProjectID(db, proj.ID, true)
 		if err != nil {
 			return sdk.WrapError(err, "loadClearPlatforms> Cannot load platforms")
 		}

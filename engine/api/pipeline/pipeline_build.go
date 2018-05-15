@@ -1613,7 +1613,7 @@ func RestartPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 			return errArts
 		}
 		for _, a := range arts {
-			if err := artifact.DeleteArtifact(db, a.ID); err != nil {
+			if err := artifact.Delete(db, a.ID); err != nil {
 				return err
 			}
 		}

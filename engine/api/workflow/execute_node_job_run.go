@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -312,6 +313,49 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 		ev = sdk.VariablesPrefix(ev, "cds.env.")
 	}
 	secrets = append(secrets, ev...)
+
+	//Projeft platform variable
+	pfv := []sdk.Variable{}
+	//Application deployment strategies variables
+	apv := []sdk.Variable{}
+
+	if n.Context.ProjectPlatform != nil {
+		pf, err := platform.LoadByID(db, n.Context.ProjectPlatformID, true)
+		if err != nil {
+			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load platform %d", n.Context.ProjectPlatformID)
+		}
+		for k, v := range pf.Config {
+			pfv = append(pfv, sdk.Variable{
+				Name:  k,
+				Type:  v.Type,
+				Value: v.Value,
+			})
+		}
+		pfv = sdk.VariablesPrefix(pfv, "cds.platform.")
+		pfv = sdk.VariablesFilter(pfv, sdk.SecretVariable)
+
+		if n.Context.Application != nil && n.Context.Application.DeploymentStrategies != nil {
+			strats, err := application.LoadDeploymentStrategies(db, n.Context.ApplicationID, true)
+			if err != nil {
+				return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load application deployment strategies %d", n.Context.ApplicationID)
+			}
+			strat, has := strats[n.Context.ProjectPlatform.Name]
+			if has {
+				for k, v := range strat {
+					apv = append(apv, sdk.Variable{
+						Name:  k,
+						Type:  v.Type,
+						Value: v.Value,
+					})
+				}
+			}
+			apv = sdk.VariablesPrefix(apv, "cds.platform.")
+			apv = sdk.VariablesFilter(apv, sdk.SecretVariable)
+		}
+
+	}
+	secrets = append(secrets, pfv...)
+	secrets = append(secrets, apv...)
 
 	//Decrypt secrets
 	for i := range secrets {

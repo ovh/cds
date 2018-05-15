@@ -131,6 +131,12 @@ func AuthentifyRequestFromService(t *testing.T, req *http.Request, hash string) 
 	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(hash)))
 }
 
+// AuthentifyRequestFromProvider have to be used only for tests
+func AuthentifyRequestFromProvider(t *testing.T, req *http.Request, name, token string) {
+	req.Header.Add("X-Provider-Name", name)
+	req.Header.Add("X-Provider-Token", token)
+}
+
 // NewAuthentifiedRequestFromWorker prepare a request
 func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri string, i interface{}) *http.Request {
 	var btes []byte
@@ -150,6 +156,29 @@ func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri s
 	}
 
 	AuthentifyRequestFromWorker(t, req, w)
+
+	return req
+}
+
+// NewAuthentifiedRequestFromProvider prepare a request
+func NewAuthentifiedRequestFromProvider(t *testing.T, name, token, method, uri string, i interface{}) *http.Request {
+	var btes []byte
+	var err error
+	if i != nil {
+		btes, err = json.Marshal(i)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}
+
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	AuthentifyRequestFromProvider(t, req, name, token)
 
 	return req
 }

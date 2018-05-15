@@ -101,8 +101,8 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("API Token URL is mandatory")
 	}
 
-	if hconfig.Tenant == "" {
-		return fmt.Errorf("Openstack-tenant is mandatory")
+	if hconfig.Tenant == "" && hconfig.Domain == "" {
+		return fmt.Errorf("One of Openstack-tenant (auth v2) or Openstack-domain (auth v3) is mandatory")
 	}
 
 	if hconfig.User == "" {

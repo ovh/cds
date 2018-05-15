@@ -23,7 +23,7 @@ func TestAddUpdateAndDeleteProjectPlatform(t *testing.T) {
 
 	models, _ := platform.LoadModels(db)
 	if len(models) == 0 {
-		assert.NoError(t, platform.CreateModels(db))
+		assert.NoError(t, platform.CreateBuiltinModels(db))
 		models, _ = platform.LoadModels(db)
 	}
 

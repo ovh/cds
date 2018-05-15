@@ -80,7 +80,7 @@ jobs:
 
     importPipeline() {
         this.loadingCreate = true;
-        this._pipStore.importPipeline(this.project.key, this.pipToImport)
+        this._pipStore.importPipeline(this.project.key, null, this.pipToImport)
             .pipe(finalize(() => this.loadingCreate = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('pipeline_added'));

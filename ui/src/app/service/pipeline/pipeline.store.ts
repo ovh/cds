@@ -11,6 +11,7 @@ import {Job} from '../../model/job.model';
 import {GroupPermission} from '../../model/group.model';
 import {Parameter} from '../../model/parameter.model';
 import 'rxjs/add/observable/of';
+import {mergeMap, map} from 'rxjs/operators';
 
 
 @Injectable()
@@ -101,8 +102,25 @@ export class PipelineStore {
      * @param key Project unique key
      * @param workflow pipelineCode to import
      */
-    importPipeline(key: string, pipelineCode: string): Observable<Array<string>> {
-        return this._pipelineService.importPipeline(key, pipelineCode);
+    importPipeline(key: string, pipName: string, pipelineCode: string, force?: boolean): Observable<Array<string>> {
+        return this._pipelineService.importPipeline(key, pipelineCode, force)
+        .pipe(
+            mergeMap(() => {
+              if (pipName) {
+                return this._pipelineService.getPipeline(key, pipName);
+              }
+              return Observable.of(null);
+            }),
+            map((pip) => {
+                if (pip) {
+                  pip.forceRefresh = true;
+                  let pipKey = key + '-' + pip.name;
+                  let store = this._pipeline.getValue();
+                  this._pipeline.next(store.set(pipKey, pip));
+                }
+                return pip;
+            })
+        );
     }
 
     /**

@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
+	"github.com/ovh/venom/context/redis"
 	"github.com/ovh/venom/context/webctx"
 	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
@@ -104,6 +105,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
 	v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
 	v.RegisterTestCaseContext(webctx.Name, webctx.New())
+	v.RegisterTestCaseContext(redisctx.Name, redisctx.New())
 
 	v.PrintFunc = func(format string, aa ...interface{}) (n int, err error) {
 		plugin.SendLog(a, format, aa)
@@ -148,7 +150,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 		varFileMap := make(map[string]string)
 		bytes, err := ioutil.ReadFile(varsFromFile)
 		if err != nil {
-			plugin.SendLog(a, "VENOM - Error while reading file: %s\n", err)
+			plugin.SendLog(a, "VENOM - Error while reading file: %v\n", err)
 			return plugin.Fail
 		}
 		switch filepath.Ext(varsFromFile) {
@@ -162,7 +164,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 		}
 
 		if err != nil {
-			plugin.SendLog(a, "VENOM - Error on unmarshal file: %s\n", err)
+			plugin.SendLog(a, "VENOM - Error on unmarshal file: %v\n", err)
 			return plugin.Fail
 		}
 
@@ -173,11 +175,11 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 
 	v.AddVariables(data)
 	v.LogLevel = loglevel
-	v.OutputDetails = "low"
 	v.LogOutput = w
 	v.OutputFormat = "xml"
 	v.OutputDir = output
 	v.Parallel = parallel
+	v.OutputDetails = "low"
 
 	filepath := strings.Split(path, ",")
 	filepathExcluded := strings.Split(exclude, ",")
@@ -192,14 +194,14 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 
 	tests, err := v.Process(filepath, filepathExcluded)
 	if err != nil {
-		plugin.SendLog(a, "VENOM - Fail on venom: %s\n", err)
+		plugin.SendLog(a, "VENOM - Fail on venom: %v\n", err)
 		return plugin.Fail
 	}
 
 	elapsed := time.Since(start)
 	plugin.SendLog(a, "VENOM - Output test results under: %s\n", output)
 	if err := v.OutputResult(*tests, elapsed); err != nil {
-		plugin.SendLog(a, "VENOM - Error while uploading test results: %s\n", err)
+		plugin.SendLog(a, "VENOM - Error while uploading test results: %v\n", err)
 		return plugin.Fail
 	}
 

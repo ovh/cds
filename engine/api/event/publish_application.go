@@ -30,7 +30,7 @@ func publishApplicationEvent(payload interface{}, key, appName string, u *sdk.Us
 // PublishAddApplication publishes an event for the creation of the given application
 func PublishAddApplication(projKey string, app sdk.Application, u *sdk.User) {
 	e := sdk.EventApplicationAdd{
-		app,
+		Application: app,
 	}
 	publishApplicationEvent(e, projKey, app.Name, u)
 }

@@ -39,8 +39,8 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 
 // Termui wrapper designed for dashboard creation
 type Termui struct {
-	header, times, workers *termui.Par
-	msg                    string
+	header, times *termui.Par
+	msg           string
 
 	current  string
 	selected string
@@ -97,7 +97,6 @@ func (ui *Termui) init() {
 
 	ui.initHeader()
 	ui.initTimes()
-	ui.initWorkers()
 	go ui.showMonitoring()
 }
 
@@ -138,16 +137,6 @@ func (ui *Termui) initTimes() {
 	p.BorderFg = termui.ColorCyan
 	p.Border = false
 	ui.times = p
-}
-
-func (ui *Termui) initWorkers() {
-	p := termui.NewPar("")
-	p.Height = 1
-	p.TextFgColor = termui.ColorWhite
-	p.BorderLabel = ""
-	p.BorderFg = termui.ColorCyan
-	p.Border = false
-	ui.workers = p
 }
 
 ////////////
@@ -196,9 +185,6 @@ func (ui *Termui) showMonitoring() {
 		),
 		termui.NewRow(
 			termui.NewCol(12, 0, ui.times),
-		),
-		termui.NewRow(
-			termui.NewCol(12, 0, ui.workers),
 		),
 	)
 
@@ -308,7 +294,9 @@ func (ui *Termui) updateStatus() string {
 
 	items := []string{}
 	for _, l := range statusEngine.Lines {
-		if l.Status != sdk.MonitoringStatusOK {
+		if l.Status == sdk.MonitoringStatusWarn {
+			items = append(items, fmt.Sprintf("[%s](fg-white,bg-yellow)", l.String()))
+		} else if l.Status != sdk.MonitoringStatusOK {
 			items = append(items, fmt.Sprintf("[%s](fg-white,bg-red)", l.String()))
 		} else if strings.Contains(l.Component, "Global") {
 			items = append(items, fmt.Sprintf("[%s](fg-white,bg-default)", l.String()))
@@ -357,8 +345,7 @@ func (ui *Termui) updateQueueWorkers() string {
 
 	ui.computeStatusHatcheriesWorkers(workers)
 
-	msga, wModels := ui.computeStatusWorkerModels(workers)
-	ui.computeStatusWorkersList(workers, wModels)
+	msga := ui.computeStatusWorkerModels(workers)
 	return msg + msga
 }
 
@@ -417,69 +404,14 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
 
-func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[int64]sdk.Model) {
-	statusTitle := []string{}
-	status := make(map[string]int)
-	for _, w := range workers {
-		if _, ok := status[w.Status.String()]; !ok {
-			statusTitle = append(statusTitle, w.Status.String())
-		}
-		status[w.Status.String()] = status[w.Status.String()] + 1
-	}
-	var s string
-	if len(workers) > 1 {
-		s = "s"
-	}
-	sort.Strings(statusTitle)
-	workersResume := fmt.Sprintf("[%d worker%s](fg-cyan,bg-default) ", len(workers), s)
-	for _, s := range statusTitle {
-		icon, color := statusShort(s)
-		workersResume += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
-	}
-	ui.workers.Text = workersResume
-}
-
-func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[int64]sdk.Model) {
+func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) string {
 	start := time.Now()
-	workerModels, errwm := client.WorkerModels()
-	if errwm != nil {
-		ui.msg = fmt.Sprintf("[%s](bg-red)", errwm.Error())
-		return "", nil
+	if _, err := client.WorkerModels(); err != nil {
+		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+		return ""
 	}
 	elapsed := time.Since(start)
-	msg := fmt.Sprintf(" | [wModels %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
-
-	wModels := make(map[int64]sdk.Model, len(workerModels))
-	for w := range workerModels {
-		wModels[workerModels[w].ID] = workerModels[w]
-	}
-
-	statusTitle := []string{}
-	models := make(map[string]map[string]int64)
-	status := make(map[string]int)
-
-	for _, w := range workers {
-		idModel := fmt.Sprintf("%s", wModels[w.ModelID].Type+" "+wModels[w.ModelID].Name)
-		if _, ok := models[idModel]; !ok {
-			models[idModel] = make(map[string]int64)
-		}
-		models[idModel][w.Status.String()] = models[idModel][w.Status.String()] + 1
-
-		if _, ok := status[w.Status.String()]; !ok {
-			statusTitle = append(statusTitle, w.Status.String())
-		}
-		status[w.Status.String()] = status[w.Status.String()] + 1
-	}
-
-	sort.Strings(statusTitle)
-	title := " Models "
-	for _, s := range statusTitle {
-		icon, color := statusShort(s)
-		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
-	}
-	ui.workers.Text += " " + title
-
-	return msg, wModels
+	return fmt.Sprintf(" | [wModels %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 }
 
 func (ui *Termui) updateQueue(baseURL string) string {
@@ -502,7 +434,6 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	msg += fmt.Sprintf(" | [queue pb %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
 	var maxQueued time.Duration
-	booked := make(map[string]int)
 
 	items := []string{
 		fmt.Sprintf("[  %s %s%s %s ➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("since", 9), pad("booked", 27), pad("run", 7), pad("project/workflow", 30), pad("node", 20), pad("triggered by", 17), "requirements"),
@@ -511,7 +442,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	var idx int
 	var item string
 	for _, job := range pbJobs {
-		item, maxQueued = ui.updateQueueJob(idx, booked, maxQueued, job.ID, false, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
+		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, false, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
 		items = append(items, item)
 		idx++
 	}
@@ -525,21 +456,18 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	msg = fmt.Sprintf("[count queue wf %s](fg-cyan,bg-default) | %s", sdk.Round(elapsed, time.Millisecond).String(), msg)
 
 	for _, job := range wJobs {
-		item, maxQueued = ui.updateQueueJob(idx, booked, maxQueued, job.ID, true, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
+		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, true, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
 		items = append(items, item)
 		idx++
 	}
 	ui.queue.Items = items
 
-	t := fmt.Sprintf("Queue - ALL:%d wf:%d - pb:%d - Max Waiting:%s ", nWJobs.Count+int64(len(pbJobs)), nWJobs.Count, len(pbJobs), sdk.Round(maxQueued, time.Second).String())
-	for name, total := range booked {
-		t += fmt.Sprintf("%s:%d ", name, total)
-	}
+	t := fmt.Sprintf("Queue:%d - Max Waiting:%s ", nWJobs.Count+int64(len(pbJobs)), sdk.Round(maxQueued, time.Second).String())
 	ui.queue.BorderLabel = t
 	return msg
 }
 
-func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, requirements []sdk.Requirement, queued time.Time, bookedBy sdk.Hatchery, baseURL string) (string, time.Duration) {
+func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, requirements []sdk.Requirement, queued time.Time, bookedBy sdk.Hatchery, baseURL string) (string, time.Duration) {
 	req := ""
 	for _, r := range requirements {
 		req += fmt.Sprintf("%s:%s ", r.Type, r.Value)
@@ -586,7 +514,6 @@ func (ui *Termui) updateQueueJob(idx int, booked map[string]int, maxQueued time.
 
 	if bookedBy.ID != 0 {
 		row[1] = pad(fmt.Sprintf(" %s.%d ", bookedBy.Name, bookedBy.ID), 27)
-		booked[fmt.Sprintf("%s.%d", bookedBy.Name, bookedBy.ID)] = booked[bookedBy.Name] + 1
 	} else {
 		row[1] = pad("", 27)
 	}

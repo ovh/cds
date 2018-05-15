@@ -146,7 +146,7 @@ func (api *API) downloadArtifactHandler() Handler {
 			return sdk.WrapError(err, "downloadArtifactHandler> Cannot load artifact")
 		}
 
-		f, err := objectstore.FetchArtifact(art)
+		f, err := objectstore.Fetch(art)
 		if err != nil {
 			return sdk.WrapError(err, "downloadArtifactHandler> Cannot fetch artifact")
 		}
@@ -285,7 +285,7 @@ func (api *API) downloadArtifactDirectHandler() Handler {
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
 		log.Debug("downloadArtifactDirectHandler: Serving %+v", art)
-		f, err := objectstore.FetchArtifact(art)
+		f, err := objectstore.Fetch(art)
 		if err != nil {
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot fetch artifact")
 		}

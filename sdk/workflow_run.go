@@ -3,7 +3,6 @@ package sdk
 import (
 	"fmt"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
 
@@ -167,61 +166,25 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 		w.MD5sum == c.MD5sum
 }
 
-func artifactsFilter(ss []string, test func(string) bool) (ret []string) {
-	for _, s := range ss {
-		if test(s) {
-			ret = append(ret, s)
-		}
-	}
-	return
-}
-
-// ArtifactsGetUniqueNameAndLatest returns a list of artifacts, with unique names.
-// if there is two same name (as same artifact uplaoded with two differents tags),
-// we keep only the latest artifact (based on id filter, keep the max id)
-func ArtifactsGetUniqueNameAndLatest(in []WorkflowNodeRunArtifact) []WorkflowNodeRunArtifact {
-	toKeep := make(map[string]WorkflowNodeRunArtifact, len(in))
-	out := []WorkflowNodeRunArtifact{}
-	for _, a := range in {
-		var found bool
-		for _, b := range out {
-			if b.Name == a.Name {
-				found = true
-				if a.ID > b.ID {
-					toKeep[a.Name] = a
-				}
-			}
-		}
-		if !found {
-			toKeep[a.Name] = a
-		}
-	}
-	for name, a := range toKeep {
-		if name != "" {
-			out = append(out, a)
-		}
-	}
-	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
-	return out
-}
-
 //WorkflowNodeJobRun represents an job to be run
+//easyjson:json
 type WorkflowNodeJobRun struct {
-	ID                int64       `json:"id" db:"id"`
-	WorkflowNodeRunID int64       `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
-	Job               ExecutedJob `json:"job" db:"-"`
-	Parameters        []Parameter `json:"parameters,omitempty" db:"-"`
-	Status            string      `json:"status" db:"status"`
-	Retry             int         `json:"retry" db:"retry"`
-	SpawnAttempts     []int64     `json:"spawn_attempts,omitempty"  db:"-"`
-	Queued            time.Time   `json:"queued,omitempty" db:"queued"`
-	QueuedSeconds     int64       `json:"queued_seconds,omitempty" db:"-"`
-	Start             time.Time   `json:"start,omitempty" db:"start"`
-	Done              time.Time   `json:"done,omitempty" db:"done"`
-	Model             string      `json:"model,omitempty" db:"model"`
-	BookedBy          Hatchery    `json:"bookedby" db:"-"`
-	SpawnInfos        []SpawnInfo `json:"spawninfos" db:"-"`
-	ExecGroups        []Group     `json:"exec_groups" db:"-"`
+	ID                     int64              `json:"id" db:"id"`
+	WorkflowNodeRunID      int64              `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
+	Job                    ExecutedJob        `json:"job" db:"-"`
+	Parameters             []Parameter        `json:"parameters,omitempty" db:"-"`
+	Status                 string             `json:"status"  db:"status"`
+	Retry                  int                `json:"retry"  db:"retry"`
+	SpawnAttempts          []int64            `json:"spawn_attempts,omitempty"  db:"-"`
+	Queued                 time.Time          `json:"queued,omitempty" db:"queued"`
+	QueuedSeconds          int64              `json:"queued_seconds,omitempty" db:"-"`
+	Start                  time.Time          `json:"start,omitempty" db:"start"`
+	Done                   time.Time          `json:"done,omitempty" db:"done"`
+	Model                  string             `json:"model,omitempty" db:"model"`
+	BookedBy               Hatchery           `json:"bookedby" db:"-"`
+	SpawnInfos             []SpawnInfo        `json:"spawninfos" db:"-"`
+	ExecGroups             []Group            `json:"exec_groups" db:"-"`
+	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries" db:"-"`
 }
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event

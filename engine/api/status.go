@@ -178,6 +178,8 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 		r = sdk.MonitoringStatusAlert
 	} else if s.nbWarn > 0 {
 		r = sdk.MonitoringStatusWarn
+	} else if s.nbSrv == 0 {
+		r = sdk.MonitoringStatusAlert
 	}
 	return r
 }

@@ -1,6 +1,7 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Params, Router} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {PipelineCoreService} from '../../../service/pipeline/pipeline.core.service';
 import {User} from '../../../model/user.model';
 import {Workflow} from '../../../model/workflow.model';
 import {Environment} from '../../../model/environment.model';
@@ -31,6 +32,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     project: Project;
     pipeline: Pipeline;
     pipelineSubscriber: Subscription;
+    asCodeEditorSubscription: Subscription;
 
     applications: Array<Application> = new Array<Application>();
     workflows: Array<Workflow> = new Array<Workflow>();
@@ -55,13 +57,15 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     parameterModalWarning: WarningModalComponent;
 
     keys: AllKeys;
+    asCodeEditorOpen: boolean;
 
     // Selected tab
     selectedTab = 'pipeline';
 
     constructor(private _routeActivated: ActivatedRoute, private _pipStore: PipelineStore,
         private _router: Router, private _toast: ToastService, public _translate: TranslateService,
-        private _authentificationStore: AuthentificationStore, private _keyService: KeyService) {
+        private _authentificationStore: AuthentificationStore, private _keyService: KeyService,
+        private _pipCoreService: PipelineCoreService) {
         this.currentUser = this._authentificationStore.getUser();
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
@@ -72,6 +76,22 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         this.envName = this.getQueryParam('envName');
         this.branch = this.getQueryParam('branch');
         this.remote = this.getQueryParam('remote');
+
+        this.asCodeEditorSubscription = this._pipCoreService.getAsCodeEditor()
+          .subscribe((state) => {
+              if (state != null) {
+                  this.asCodeEditorOpen = state.open;
+              }
+          });
+
+          this.asCodeEditorSubscription = this._pipCoreService.getAsCodeEditor()
+            .subscribe((state) => {
+                if (state != null && !state.save && !state.open) {
+                    let pipName = this.pipeline.name;
+                    this.pipeline = null;
+                    this.refreshDatas(this.project.key, pipName);
+                }
+            });
     }
 
     getQueryParam(name: string): string {
