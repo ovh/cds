@@ -79,8 +79,9 @@ func (b *eventsBroker) Init(c context.Context, store cache.Store) {
 				}
 				log.Error("[PANIC] eventsBroker.Init.Start> recover %s", err)
 				trace := make([]byte, 4096)
-				count := runtime.Stack(trace, true)
+				count := runtime.Stack(trace, false)
 				log.Error("[PANIC] eventsBroker.Init.Start> Stacktrace of %d bytes\n%s\n", count, trace)
+				fmt.Println(string(trace))
 			}
 		}()
 		b.Start(c)
