@@ -40,6 +40,7 @@ export class ProjectService {
             ];
         }
         opts.push(new LoadOpts('withFeatures', 'features'));
+        opts.push(new LoadOpts('withPlatforms', 'platforms'));
         opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
 
         return this._http.get<Project>('/project/' + key, {params: params});

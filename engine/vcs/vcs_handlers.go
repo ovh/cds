@@ -748,7 +748,11 @@ func (s *Service) getListForks() api.Handler {
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (s *Service) Status() sdk.MonitoringStatus {
 	m := s.CommonMonitoring()
-	m.Lines = append(m.Lines, github.GetStatus()...)
+
+	if s.Cfg.Servers["github"].URL != "" {
+		m.Lines = append(m.Lines, github.GetStatus()...)
+	}
+
 	return m
 }
 

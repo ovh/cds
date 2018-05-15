@@ -190,7 +190,7 @@ func cleanApplicationArtifact(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- e
 		return
 	}
 	for _, ar := range arts {
-		if err := artifact.DeleteArtifact(db, ar.ID); err != nil {
+		if err := artifact.Delete(db, ar.ID); err != nil {
 			err := fmt.Errorf("cleanApplicationArtifact> Cannot delete artifact %d : %s", app.ID, err)
 			log.Warning("%s", err)
 			chErr <- err

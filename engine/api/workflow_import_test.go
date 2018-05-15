@@ -65,7 +65,7 @@ workflow:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(db, api.Cache, proj.Key, "test_1", u, workflow.LoadOptions{})
+	w, err := workflow.Load(db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)
@@ -194,7 +194,7 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{DeepPipeline: true})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{DeepPipeline: true})
 	test.NoError(t, err)
 
 	//Prepare request

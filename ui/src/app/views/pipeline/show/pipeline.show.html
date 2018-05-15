@@ -74,6 +74,13 @@
             </div>
         </div>
     </div>
+    <section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && pipeline != null">
+        <app-pipeline-ascode-editor
+            [project]="project"
+            [pipeline]="pipeline"
+            [open]="asCodeEditorOpen">
+        </app-pipeline-ascode-editor>
+    </section>
 </ng-template>
 <ng-template #loadPipeline>
     <div class="ui text active loader">Loading pipeline...</div>

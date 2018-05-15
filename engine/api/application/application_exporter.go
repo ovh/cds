@@ -16,7 +16,7 @@ import (
 func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, f exportentities.Format, withPermissions bool, u *sdk.User, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Load app
 	app, errload := LoadByName(db, cache, key, appName, u,
-		LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearKeys,
+		LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearKeys, LoadOptions.WithClearDeploymentStrategies,
 	)
 	if errload != nil {
 		return 0, sdk.WrapError(errload, "application.Export> Cannot load application %s", appName)
@@ -80,6 +80,19 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 			return 0, sdk.WrapError(err, "application.Export> Unable to encrypt password")
 		}
 		app.RepositoryStrategy.Password = content
+	}
+
+	for pfName, pfConfig := range app.DeploymentStrategies {
+		for k, v := range pfConfig {
+			if v.Type == sdk.SecretVariable {
+				content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s:%s:%s", app.ID, pfName, k, "deployment:password"), v.Value)
+				if err != nil {
+					return 0, sdk.WrapError(err, "application.Export> Unable to encrypt password")
+				}
+				v.Value = content
+				app.DeploymentStrategies[pfName][k] = v
+			}
+		}
 	}
 
 	eapp, err := exportentities.NewApplication(app, withPermissions, keys)

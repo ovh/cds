@@ -222,8 +222,13 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					t = ", this was my booked job"
 				}
 
+				pluginsOK, errPlugins := checkPlugins(w, j)
+				if !pluginsOK {
+					log.Error("Plugins doesn't match: %v", errPlugins)
+				}
+
 				//Take the job
-				if requirementsOK {
+				if requirementsOK && pluginsOK {
 					log.Debug("checkQueue> Try take the job %d%s", j.ID, t)
 					if canWorkOnAnotherJob, err := w.takeWorkflowJob(ctx, j); err != nil {
 						log.Info("Unable to run this job  %d%s. Take info:%s, continue:%t", j.ID, t, err, canWorkOnAnotherJob)
@@ -310,6 +315,20 @@ func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) {
 		for _, r := range errRequirements {
 			details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
 		}
+		infos := []sdk.SpawnInfo{{
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
+		}}
+		if err := w.client.QueueJobSendSpawnInfo(true, wjob.ID, infos); err != nil {
+			log.Warning("Cannot record QueueJobSendSpawnInfo for job (err spawn): %d %s", wjob.ID, err)
+		}
+		return
+	}
+
+	pluginsOK, errPlugins := checkPlugins(w, *wjob)
+	if !pluginsOK {
+		var details = errPlugins.Error()
+
 		infos := []sdk.SpawnInfo{{
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},

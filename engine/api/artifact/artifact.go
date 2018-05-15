@@ -271,8 +271,8 @@ func LoadArtifact(db gorp.SqlExecutor, id int64) (*sdk.Artifact, error) {
 	return s, err
 }
 
-// DeleteArtifactsByApplicationID Delete all artifact related to given application
-func DeleteArtifactsByApplicationID(db gorp.SqlExecutor, id int64) error {
+// DeletesByApplicationID Delete all artifact related to given application
+func DeletesByApplicationID(db gorp.SqlExecutor, id int64) error {
 	query := `SELECT artifact.name, artifact.tag, pipeline.name, project.projectKey, application.name, environment.name FROM artifact
 						JOIN pipeline ON artifact.pipeline_id = pipeline.id
 						JOIN project ON pipeline.project_id = project.id
@@ -283,34 +283,34 @@ func DeleteArtifactsByApplicationID(db gorp.SqlExecutor, id int64) error {
 	arts := []sdk.Artifact{}
 	rows, errR := db.Query(query, id)
 	if errR != nil {
-		return sdk.WrapError(errR, "DeleteArtifactsByApplicationID> Cannot select artifact")
+		return sdk.WrapError(errR, "DeletesByApplicationID> Cannot select artifact")
 	}
 	for rows.Next() {
 		s := sdk.Artifact{}
 		if err := rows.Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment); err != nil {
 			rows.Close()
-			return sdk.WrapError(err, "DeleteArtifactsByApplicationID> Cannot select artifact")
+			return sdk.WrapError(err, "DeletesByApplicationID> Cannot select artifact")
 		}
 		arts = append(arts, s)
 	}
 	rows.Close()
 
 	for _, a := range arts {
-		if err := objectstore.DeleteArtifact(&a); err != nil && !strings.Contains(err.Error(), "404") {
-			return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in store")
+		if err := objectstore.Delete(&a); err != nil && !strings.Contains(err.Error(), "404") {
+			return sdk.WrapError(err, "Delete> Cannot delete artifact in store")
 		}
 		query = `DELETE FROM artifact WHERE id = $1`
 		if _, err := db.Exec(query, id); err != nil {
-			return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in DB")
+			return sdk.WrapError(err, "Delete> Cannot delete artifact in DB")
 		}
 	}
 	return nil
 }
 
-// DeleteArtifact lock the artifact in database,
+// Delete lock the artifact in database,
 // then remove the actual object using storage driver,
 // finally remove artifact from database if actual delete is performed
-func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
+func Delete(db gorp.SqlExecutor, id int64) error {
 	query := `SELECT artifact.name, artifact.tag, pipeline.name, project.projectKey, application.name, environment.name FROM artifact
 						JOIN pipeline ON artifact.pipeline_id = pipeline.id
 						JOIN project ON pipeline.project_id = project.id
@@ -320,16 +320,16 @@ func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
 
 	s := sdk.Artifact{}
 	if err := db.QueryRow(query, id).Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment); err != nil {
-		return sdk.WrapError(err, "DeleteArtifact> Cannot select artifact")
+		return sdk.WrapError(err, "Delete> Cannot select artifact")
 	}
 
-	if err := objectstore.DeleteArtifact(&s); err != nil && !strings.Contains(err.Error(), "404") {
-		return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in store")
+	if err := objectstore.Delete(&s); err != nil && !strings.Contains(err.Error(), "404") {
+		return sdk.WrapError(err, "Delete> Cannot delete artifact in store")
 	}
 
 	query = `DELETE FROM artifact WHERE id = $1`
 	if _, err := db.Exec(query, id); err != nil {
-		return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in DB")
+		return sdk.WrapError(err, "Delete> Cannot delete artifact in DB")
 	}
 
 	return nil
@@ -355,7 +355,7 @@ func InsertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, enviro
 
 // SaveWorkflowFile Insert file in db and write it in data directory
 func SaveWorkflowFile(art *sdk.WorkflowNodeRunArtifact, content io.ReadCloser) error {
-	objectPath, err := objectstore.StoreArtifact(art, content)
+	objectPath, err := objectstore.Store(art, content)
 	if err != nil {
 		return sdk.WrapError(err, "SaveWorkflowFile> Cannot store artifact")
 	}
@@ -372,7 +372,7 @@ func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artif
 	}
 	defer tx.Rollback()
 
-	objectPath, errO := objectstore.StoreArtifact(&art, content)
+	objectPath, errO := objectstore.Store(&art, content)
 	if errO != nil {
 		return sdk.WrapError(errO, "SaveFile>Cannot store artifact")
 	}

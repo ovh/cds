@@ -301,6 +301,14 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 	return nil
 }
 
+// updateStageOrder update only Stage order
+func updateStageOrder(db gorp.SqlExecutor, id int64, order int) error {
+	query := `UPDATE pipeline_stage SET build_order=$1 WHERE id=$2`
+	_, err := db.Exec(query, order, id)
+
+	return sdk.WrapError(err, "UpdateStageOrder>")
+}
+
 // UpdateStage update Stage and all its prequisites
 func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	query := `UPDATE pipeline_stage SET name=$1, build_order=$2, enabled=$3 WHERE id=$4`

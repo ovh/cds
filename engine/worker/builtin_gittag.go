@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"regexp"
 	"time"
 
 	"github.com/blang/semver"
@@ -16,14 +17,23 @@ import (
 
 func runGitTag(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		tagName := sdk.ParameterFind(&a.Parameters, "tagName")
+		tagPrerelease := sdk.ParameterFind(&a.Parameters, "tagPrerelease")
+		tagMetadata := sdk.ParameterFind(&a.Parameters, "tagMetadata")
+		tagLevel := sdk.ParameterFind(&a.Parameters, "tagLevel")
 		tagMessage := sdk.ParameterFind(&a.Parameters, "tagMessage")
 		path := sdk.ParameterFind(&a.Parameters, "path")
 
-		if tagName == nil || tagName.Value == "" {
+		tagLevelValid := true
+		if tagLevel == nil || tagLevel.Value == "" {
+			tagLevelValid = false
+		} else if tagLevel.Value != "major" && tagLevel.Value != "minor" && tagLevel.Value != "patch" {
+			tagLevelValid = false
+		}
+
+		if !tagLevelValid {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
-				Reason: "Tag name is not set. Nothing to perform.",
+				Reason: "Tag level is mandatory. It must be: 'major' or 'minor' or 'patch'",
 			}
 			sendLog(res.Reason)
 			return res
@@ -44,17 +54,65 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			msg = tagMessage.Value
 		}
 
-		v, errT := semver.Make(tagName.Value)
-		if errT != nil {
+		cdsSemver := sdk.ParameterFind(params, "cds.semver")
+		if cdsSemver == nil || cdsSemver.Value == "" {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
-				Reason: "Tag name is not semver compatible",
+				Reason: fmt.Sprintf("cds.semver is empty"),
 			}
 			sendLog(res.Reason)
 			return res
 		}
-		v.Build = nil
-		v.Pre = nil
+
+		smver, errT := semver.Make(cdsSemver.Value)
+		if errT != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("cds.version '%s' is not semver compatible", cdsSemver.Value),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+		smver.Build = nil
+		smver.Pre = nil
+
+		switch tagLevel.Value {
+		case "major":
+			smver.Major++
+		case "minor":
+			smver.Minor++
+		default:
+			smver.Patch++
+		}
+
+		r, _ := regexp.Compile("^([0-9A-Za-z\\-.]+)$")
+		// prerelease version notes: example: alpha, rc-1, ...
+		if tagPrerelease != nil && tagPrerelease.Value != "" {
+			if !r.MatchString(tagPrerelease.Value) {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("tagPrerelease '%s' must comprise only ASCII alphanumerics and hyphen [0-9A-Za-z-.].", tagPrerelease.Value),
+				}
+				sendLog(res.Reason)
+				return res
+			} else {
+				smver.Pre = []semver.PRVersion{{VersionStr: tagPrerelease.Value}}
+			}
+		}
+
+		// metadata: this content is after '+'
+		if tagMetadata != nil && tagMetadata.Value != "" {
+			if !r.MatchString(tagMetadata.Value) {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("tagMetadata '%s' must comprise only ASCII alphanumerics and hyphen [0-9A-Za-z-.].", tagMetadata.Value),
+				}
+				sendLog(res.Reason)
+				return res
+			} else {
+				smver.Build = []string{tagMetadata.Value}
+			}
+		}
 
 		var userTag string
 		userTrig := sdk.ParameterFind(params, "cds.triggered_by.username")
@@ -79,7 +137,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		//Prepare all options - tag options
 		var tagOpts = &git.TagOpts{
 			Message:  msg,
-			Name:     v.String(),
+			Name:     smver.String(),
 			Username: userTag,
 		}
 

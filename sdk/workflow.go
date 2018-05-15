@@ -764,6 +764,8 @@ type WorkflowNodeContext struct {
 	Application               *Application           `json:"application,omitempty" db:"-"`
 	Environment               *Environment           `json:"environment,omitempty" db:"-"`
 	EnvironmentID             int64                  `json:"environment_id" db:"environment_id"`
+	ProjectPlatform           *ProjectPlatform       `json:"project_platform" db:"-"`
+	ProjectPlatformID         int64                  `json:"project_platform_id" db:"project_platform_id"`
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters,omitempty" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`

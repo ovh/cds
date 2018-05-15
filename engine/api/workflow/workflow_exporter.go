@@ -17,8 +17,8 @@ import (
 )
 
 // Export a workflow
-func Export(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
-	wf, errload := Load(db, cache, key, name, u, LoadOptions{})
+func Export(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
+	wf, errload := Load(db, cache, proj, name, u, LoadOptions{})
 	if errload != nil {
 		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
 	}
@@ -42,11 +42,11 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, withPermissions bo
 }
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
-func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer) error {
+func Pull(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer) error {
 	options := LoadOptions{
 		DeepPipeline: true,
 	}
-	wf, errload := Load(db, cache, key, name, u, options)
+	wf, errload := Load(db, cache, proj, name, u, options)
 	if errload != nil {
 		return sdk.WrapError(errload, "workflow.Pull> Cannot load workflow %s", name)
 	}
@@ -58,7 +58,7 @@ func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exp
 	//Reload app to retrieve secrets
 	for i := range apps {
 		app := &apps[i]
-		vars, errv := application.GetAllVariable(db, key, app.Name, application.WithClearPassword())
+		vars, errv := application.GetAllVariable(db, proj.Key, app.Name, application.WithClearPassword())
 		if errv != nil {
 			return sdk.WrapError(errv, "workflow.Pull> Cannot load application variables %s", app.Name)
 		}
@@ -72,7 +72,7 @@ func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exp
 	//Reload env to retrieve secrets
 	for i := range envs {
 		env := &envs[i]
-		vars, errv := environment.GetAllVariable(db, key, env.Name, environment.WithClearPassword())
+		vars, errv := environment.GetAllVariable(db, proj.Key, env.Name, environment.WithClearPassword())
 		if errv != nil {
 			return sdk.WrapError(errv, "workflow.Pull> Cannot load environment variables %s", env.Name)
 		}

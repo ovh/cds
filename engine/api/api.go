@@ -148,6 +148,12 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
+	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+}
+
+type ProviderConfiguration struct {
+	Name  string `toml:"name"`
+	Token string `toml:"token"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -302,6 +308,18 @@ func getUser(c context.Context) *sdk.User {
 		return nil
 	}
 	return u
+}
+
+func getProvider(c context.Context) *string {
+	i := c.Value(auth.ContextProvider)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(string)
+	if !ok {
+		return nil
+	}
+	return &u
 }
 
 func getAgent(r *http.Request) string {
@@ -467,7 +485,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
-	if err := platform.CreateModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := platform.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		return fmt.Errorf("cannot setup platforms: %v", err)
 	}
 

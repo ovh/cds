@@ -5,6 +5,7 @@ export class PlatformModel {
     identifier: string;
     icon: string;
     default_config: {};
+    deployment_default_config: {};
     disabled: boolean;
     hook: boolean;
     file_storage: boolean;

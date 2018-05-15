@@ -90,11 +90,11 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(db, api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(db, api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	wr, errMR := workflow.ManualRun(db, db, api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
@@ -199,11 +199,11 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
@@ -345,11 +345,11 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
@@ -445,11 +445,11 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
@@ -565,11 +565,11 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
@@ -666,11 +666,11 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
@@ -753,11 +753,11 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(db, api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(db, api.Cache, proj2, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -873,11 +873,11 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -994,7 +994,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj2, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -1049,11 +1049,11 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 		FromRepository: "ovh/cds",
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 	t.Logf(">>>>>>>>%s", w1.FromRepository)
 
@@ -1209,11 +1209,11 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)

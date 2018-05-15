@@ -106,7 +106,7 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 		}
 
 		for _, a := range artifactToUpload {
-			f, err := objectstore.FetchArtifact(&a)
+			f, err := objectstore.Fetch(&a)
 			if err != nil {
 				return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot fetch artifact")
 			}

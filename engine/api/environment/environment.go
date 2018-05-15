@@ -352,7 +352,7 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 	}
 	rows.Close()
 	for _, id := range ids {
-		if err := artifact.DeleteArtifact(db, id); err != nil {
+		if err := artifact.Delete(db, id); err != nil {
 			return fmt.Errorf("DeleteEnvironment> Cannot delete artifact: %s", err)
 		}
 	}
