@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -14,11 +15,13 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
@@ -29,10 +32,34 @@ func (api *API) getApplicationsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
+		withPermissions := r.FormValue("permission")
 
-		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		var u = getUser(ctx)
+
+		//A provider can make a call for a specific user
+		if getProvider(ctx) != nil {
+			requestedUserName := r.Header.Get("X-Cds-Username")
+			var err error
+			//Load the specific user
+			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
+			if err != nil {
+				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s'", requestedUserName)
+			}
+		}
+
+		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, u)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationsHandler> Cannot load applications from db")
+		}
+
+		if strings.ToUpper(withPermissions) == "W" {
+			res := make([]sdk.Application, 0, len(applications))
+			for _, a := range applications {
+				if a.Permission >= permission.PermissionReadWriteExecute {
+					res = append(res, a)
+				}
+			}
+			applications = res
 		}
 
 		return WriteJSON(w, applications, http.StatusOK)
