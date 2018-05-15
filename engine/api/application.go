@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
@@ -40,7 +41,7 @@ func (api *API) getApplicationsHandler() Handler {
 		if strings.ToUpper(withPermissions) == "W" {
 			res := make([]sdk.Application, 0, len(applications))
 			for _, a := range applications {
-				if a.Permission >= 5 {
+				if a.Permission >= permission.PermissionReadWriteExecute {
 					res = append(res, a)
 				}
 			}

@@ -47,7 +47,7 @@ func (api *API) getProjectsHandler() Handler {
 			if strings.ToUpper(withPermissions) == "W" {
 				res := make([]sdk.Project, 0, len(projects))
 				for _, p := range projects {
-					if p.Permission >= 5 {
+					if p.Permission >= permission.PermissionReadWriteExecute {
 						res = append(res, p)
 					}
 				}
@@ -99,7 +99,7 @@ func (api *API) getProjectsHandler() Handler {
 		if strings.ToUpper(withPermissions) == "W" {
 			res := make([]sdk.Project, 0, len(projects))
 			for _, p := range projects {
-				if p.Permission >= 5 {
+				if p.Permission >= permission.PermissionReadWriteExecute {
 					res = append(res, p)
 				}
 			}
