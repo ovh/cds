@@ -66,9 +66,17 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "postApplicationDeploymentStrategyConfigHandler> platform doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithClearDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to load application")
+		}
+
+		// If the call is made by a provider, merge the config
+		if getProvider(ctx) != nil {
+			oldPfConfig, has := app.DeploymentStrategies[pfName]
+			if has {
+				pfConfig.MergeWith(oldPfConfig)
+			}
 		}
 
 		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfConfig); err != nil {
