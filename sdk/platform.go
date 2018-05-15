@@ -93,3 +93,10 @@ type ProjectPlatform struct {
 	Model           PlatformModel  `json:"model" db:"-"`
 	Config          PlatformConfig `json:"config" db:"-"`
 }
+
+// MergeWith merge two config
+func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
+	for k, v := range cfg {
+		(*config)[k] = v
+	}
+}
