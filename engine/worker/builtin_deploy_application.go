@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/ptypes/empty"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
 )
@@ -57,7 +59,17 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		go enablePluginLogger(logCtx, sendLog, pluginSocket)
 		defer stopLogs()
 
-		sendLog(fmt.Sprintf("# Plugin %s is ready", pf.Model.PluginName))
+		manifest, err := platformPluginClient.Manifest(ctx, &empty.Empty{})
+		if err != nil {
+			res := sdk.Result{
+				Reason: "Unable to retrieve plugin manifest... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(err.Error())
+			return res
+		}
+
+		sendLog(fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 
 		query := platformplugin.DeployQuery{
 			Options: sdk.ParametersToMap(*params),
