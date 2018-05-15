@@ -828,6 +828,7 @@
   "workflow_permission_form_title": "Add a permission on workflow",
   "workflow_root_context_application": "Application (optional)",
   "workflow_root_context_environment": "Environment (optional)",
+  "workflow_root_context_platform": "Platform (optional)",
   "workflow_root_context_mutex": "Limit one run at a time",
   "workflow_root_context_pipeline": "Pipeline",
   "workflow_run_loading": "Loading runs...",
