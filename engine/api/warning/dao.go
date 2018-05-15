@@ -19,10 +19,12 @@ func insert(db gorp.SqlExecutor, w sdk.WarningV2) error {
 	return db.Insert(&warn)
 }
 
+// PostInsert is a db hook
 func (w *warning) PostInsert(db gorp.SqlExecutor) error {
 	return w.PostUpdate(db)
 }
 
+// PostInsert is a db hook
 func (w *warning) PostUpdate(db gorp.SqlExecutor) error {
 	msgs, errM := gorpmapping.JSONToNullString(w.MessageParams)
 	if errM != nil {

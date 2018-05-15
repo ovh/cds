@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// WarningV2 Represents warning database structure
 type WarningV2 struct {
 	ID            int64             `json:"id" db:"id"`
 	Key           string            `json:"key" db:"project_key"`
