@@ -119,19 +119,23 @@ func manageDeleteVariableEvent(db gorp.SqlExecutor, key string, varName string) 
 		log.Warning("manageDeleteVariableEvent> Unable to remove warning: %v", err)
 	}
 	used := variableIsUsed(db, key, ".cds.proj."+varName)
-	if used {
-		w := sdk.WarningV2{
-			Key:     key,
-			Element: varName,
-			Created: time.Now(),
-			Type:    MissingProjectVariable,
-			MessageParams: map[string]string{
-				"VarName":    varName,
-				"ProjectKey": key,
-			},
-		}
-		if err := insert(db, w); err != nil {
-			return sdk.WrapError(err, "manageDeleteVariableEvent> Unable to insert warning")
-		}
+	if !used {
+		return nil
 	}
+
+	w := sdk.WarningV2{
+		Key:     key,
+		Element: varName,
+		Created: time.Now(),
+		Type:    MissingProjectVariable,
+		MessageParams: map[string]string{
+			"VarName":    varName,
+			"ProjectKey": key,
+		},
+	}
+	if err := insert(db, w); err != nil {
+		return sdk.WrapError(err, "manageDeleteVariableEvent> Unable to insert warning")
+	}
+
+	return nil
 }
