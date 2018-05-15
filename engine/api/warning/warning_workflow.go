@@ -7,6 +7,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func computeWithWorkflowEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
+func computeWithWorkflowEvent(db gorp.SqlExecutor, store cache.Store, e sdk.Event) {
 
 }

@@ -450,10 +450,10 @@ func CountInVarValue(db gorp.SqlExecutor, key string, value string) ([]CountInVa
 		FROM application_variable
 		JOIN application ON application.id = application_variable.application_id
 		JOIN project ON project.id = application.project_id
-		WHERE value like '%$2%' AND project.projectkey = $1
+		WHERE var_value like $2 AND project.projectkey = $1
 		GROUP BY application.name;
 	`
-	rows, err := db.Query(query, key, value)
+	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", value))
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@
 DROP TABLE warning;
 
 CREATE TABLE warning (
+  id BIGSERIAL PRIMARY KEY,
   project_key VARCHAR(50) NOT NULL,
   application_name VARCHAR(50) NOT NULL default '',
   pipeline_name VARCHAR(50) NOT NULL default '',
@@ -10,9 +11,10 @@ CREATE TABLE warning (
   type VARCHAR(100) NOT NULL,
   element VARCHAR(256) NOT NULL,
   created TIMESTAMP WITH TIME ZONE,
-  message_params JSONB,
-  PRIMARY KEY (type, element)
+  message_params JSONB
 );
+
+select create_unique_index('warning', 'IDX_WARNING', 'project_key, application_name, pipeline_name, environment_name, workflow_name, type, element');
 
 -- +migrate Down
 DROP TABLE warning;

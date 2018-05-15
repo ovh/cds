@@ -271,12 +271,11 @@ func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountI
 	)
 	SELECT pipName, stageName, actionName, id, child_id,
 		count(*) as nb
-	)
 	FROM parent
-	WHERE value LIKE '%$2%'
+	WHERE value LIKE $2
 	GROUP BY pipName, stageName, actionName, id, child_id;
 	`
-	rows, err := db.Query(query, key, element)
+	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", element))
 	if err != nil {
 		return nil, err
 	}

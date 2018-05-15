@@ -7,6 +7,7 @@ import (
 )
 
 type WarningV2 struct {
+	ID            int64             `json:"id" db:"id"`
 	Key           string            `json:"key" db:"project_key"`
 	AppName       string            `json:"application_name" db:"application_name"`
 	PipName       string            `json:"pipeline_name" db:"pipeline_name"`
@@ -15,7 +16,7 @@ type WarningV2 struct {
 	Type          string            `json:"type" db:"type"`
 	Element       string            `json:"element" db:"element"`
 	Created       time.Time         `json:"created" db:"created"`
-	MessageParams map[string]string `json:"message_params" db:"message_params"`
+	MessageParams map[string]string `json:"message_params" db:"-"`
 }
 
 // Warning contains information about user action configuration

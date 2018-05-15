@@ -9,6 +9,6 @@ type warning sdk.WarningV2
 
 func init() {
 	gorpmapping.Register(
-		gorpmapping.New(warning{}, "warning", false, "type", "element"),
+		gorpmapping.New(warning{}, "warning", true, "id"),
 	)
 }

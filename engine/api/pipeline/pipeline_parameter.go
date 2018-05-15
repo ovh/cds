@@ -175,10 +175,10 @@ func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]CountIn
 		FROM pipeline_parameter
 		JOIN pipeline ON pipeline.id = pipeline_parameter.pipeline_id
 		JOIN project ON project.id = pipeline.project_id
-		WHERE value like '%$2%' AND project.projectkey = $1
+		WHERE value like $2 AND project.projectkey = $1
 		GROUP BY pipeline.name;
 	`
-	rows, err := db.Query(query, key, value)
+	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", value))
 	if err != nil {
 		return nil, err
 	}

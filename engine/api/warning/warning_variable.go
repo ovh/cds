@@ -35,7 +35,7 @@ func variableIsUsed(db gorp.SqlExecutor, key string, varName string) bool {
 	// Check if used on pipeline parameters
 	resultsP, errP := pipeline.CountInParamValue(db, key, varName)
 	if errP != nil {
-		log.Warning("manageAddVariableEvent> Unable to search variable in applications: %s", errP)
+		log.Warning("manageAddVariableEvent> Unable to search variable in pipeline parameters: %s", errP)
 		return used
 	}
 	if len(resultsP) > 0 {
@@ -45,7 +45,7 @@ func variableIsUsed(db gorp.SqlExecutor, key string, varName string) bool {
 	// Check if used on pipeline jobs
 	resultsPip, errP2 := pipeline.CountInPipelines(db, key, varName)
 	if errP2 != nil {
-		log.Warning("manageAddVariableEvent> Unable to search variable in applications: %s", errP2)
+		log.Warning("manageAddVariableEvent> Unable to search variable in pipelines: %s", errP2)
 		return used
 	}
 	if len(resultsPip) > 0 {

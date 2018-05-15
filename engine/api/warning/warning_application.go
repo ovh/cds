@@ -7,6 +7,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func computeWithApplicationEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
+func computeWithApplicationEvent(db gorp.SqlExecutor, store cache.Store, e sdk.Event) {
 
 }

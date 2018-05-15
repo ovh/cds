@@ -7,6 +7,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func computeWithPipelineEvent(db *gorp.DbMap, store cache.Store, e sdk.Event) {
+func computeWithPipelineEvent(db gorp.SqlExecutor, store cache.Store, e sdk.Event) {
 
 }
