@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli/cds/admin"
-	"github.com/ovh/cds/cli/cds/application"
 	"github.com/ovh/cds/cli/cds/artifact"
 	"github.com/ovh/cds/cli/cds/environment"
 	"github.com/ovh/cds/cli/cds/generate"
@@ -94,7 +93,6 @@ func main() {
 
 	rootCmd.AddCommand(login.CmdLogin)
 	rootCmd.AddCommand(login.CmdSignup)
-	rootCmd.AddCommand(application.Cmd())
 	rootCmd.AddCommand(artifact.Cmd)
 	rootCmd.AddCommand(environment.Cmd())
 	rootCmd.AddCommand(statusCmd)

@@ -12,9 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/shirou/gopsutil/mem"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
 )
@@ -209,4 +211,85 @@ func checkOSArchRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	}
 
 	return osarch[0] == strings.ToLower(runtime.GOOS) && osarch[1] == strings.ToLower(runtime.GOARCH), nil
+}
+
+func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
+	var currentOS = strings.ToLower(runtime.GOOS)
+	var currentARCH = strings.ToLower(runtime.GOARCH)
+	var binary *sdk.GRPCPluginBinary
+
+	if len(j.PlatformPluginBinaries) == 0 {
+		return true, nil
+	}
+
+	log.Debug("Checking plugins...(%#v)", j.PlatformPluginBinaries)
+
+	//First check OS and Architecture
+	for _, b := range j.PlatformPluginBinaries {
+		if b.OS == currentOS && b.Arch == currentARCH {
+			binary = &b
+			break
+		}
+	}
+	if binary == nil {
+		return false, fmt.Errorf("%s %s not supported by this plugin", currentOS, currentARCH)
+	}
+
+	//Then check plugin requirements
+	for _, r := range binary.Requirements {
+		ok, err := checkRequirement(w, r)
+		if err != nil {
+			log.Warning("checkQueue> error on checkRequirement %s", err)
+		}
+		if !ok {
+			return false, fmt.Errorf("plugin requirement %s does not match", r.Name)
+		}
+	}
+
+	//Then try to download the plugin
+	pluginBinary := path.Join(w.basedir, binary.Name)
+	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
+		log.Debug("Downloading the plugin %s", binary.PluginName)
+		//If the file doesn't exist. Download it.
+		fi, err := os.OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		if err != nil {
+			return false, err
+		}
+
+		if err := w.client.PluginGetBinary(binary.PluginName, currentOS, currentARCH, fi); err != nil {
+			_ = fi.Close()
+			return false, err
+		}
+		//It's downloaded. Close the file
+		_ = fi.Close()
+	} else {
+		log.Debug("plugin binary is in cache")
+	}
+
+	//Last but not least: start the plugin
+	socket, err := startGRPCPlugin(context.Background(), w, *binary, startGRPCPluginOptions{
+		out: os.Stdout,
+		err: os.Stderr,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	c, err := platformplugin.Client(context.Background(), socket.Socket)
+	if err != nil {
+		return false, fmt.Errorf("unable to call grpc plugin: %v", err)
+	}
+
+	socket.Client = c
+
+	m, err := c.Manifest(context.Background(), new(empty.Empty))
+	if err != nil {
+		return false, fmt.Errorf("unable to call grpc plugin manifest: %v", err)
+	}
+
+	log.Info("plugin successfully initialized: %#v", m)
+
+	registerPluginClient(w, binary.PluginName, socket)
+
+	return true, nil
 }

@@ -112,7 +112,7 @@
         {{ 'step_nonfinal_no' | translate }}
     </div>
 
-    <div class="ui bottomBtnsWrapper segment" *ngIf="edit">
+    <div class="ui bottomBtnsWrapper segment" *ngIf="edit && !pipeline.previewMode">
         <div class="ui grid">
             <div class="sixteen wide column" *ngIf="publicActions.length > 0">
                 <app-action-step-form [publicActions]="publicActions" (create)="stepManagement($event)"></app-action-step-form>

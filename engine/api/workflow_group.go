@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -20,10 +21,15 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 		name := vars["permWorkflowName"]
 		groupName := vars["groupName"]
 
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "deleteWorkflowGroupHandler> unable to load projet")
+		}
+
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+		wf, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
 		}
@@ -83,10 +89,15 @@ func (api *API) putWorkflowGroupHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidName, "putWorkflowGroupHandler")
 		}
 
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "putWorkflowGroupHandler> unable to load projet")
+		}
+
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+		wf, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler")
 		}
@@ -139,10 +150,15 @@ func (api *API) postWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}
 
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "postWorkflowGroupHandler> unable to load projet")
+		}
+
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+		wf, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}

@@ -16,6 +16,44 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
+func (api *API) postPipelinePreviewHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		format := r.FormValue("format")
+
+		// Get body
+		data, errRead := ioutil.ReadAll(r.Body)
+		if errRead != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to read body : %v", errRead)
+		}
+
+		// Compute format
+		f, errF := exportentities.GetFormat(format)
+		if errF != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to get format : %v", errF)
+		}
+
+		var payload exportentities.PipelineV1
+		var errorParse error
+		switch f {
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, &payload)
+		case exportentities.FormatYAML:
+			errorParse = yaml.Unmarshal(data, &payload)
+		}
+
+		if errorParse != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Cannot parsing: %v", errorParse)
+		}
+
+		pip, errP := payload.Pipeline()
+		if errP != nil {
+			return sdk.WrapError(errP, "postPipelinePreviewHandler> Unable to parse pipeline")
+		}
+
+		return WriteJSON(w, pip, http.StatusOK)
+	}
+}
+
 func (api *API) importPipelineHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

@@ -274,6 +274,15 @@ type MonitoringClient interface {
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
 }
 
+// PlatformClient exposes platform functions
+type PlatformClient interface {
+	PlatformModelList() ([]sdk.PlatformModel, error)
+	PlatformModelGet(name string) (sdk.PlatformModel, error)
+	PlatformModelAdd(m *sdk.PlatformModel) error
+	PlatformModelUpdate(m *sdk.PlatformModel) error
+	PlatformModelDelete(name string) error
+}
+
 // Interface is the main interface for cdsclient package
 type Interface interface {
 	ActionClient
@@ -285,9 +294,11 @@ type Interface interface {
 	EnvironmentClient
 	ExportImportInterface
 	GroupClient
+	GRPCPluginsClient
 	HatcheryClient
 	BroadcastClient
 	PipelineClient
+	PlatformClient
 	ProjectClient
 	QueueClient
 	Navbar() ([]sdk.NavbarProjectData, error)
@@ -317,4 +328,16 @@ type Raw interface {
 	GetJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
 	DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
 	Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
+}
+
+// GRPCPluginsClient exposes plugins API
+type GRPCPluginsClient interface {
+	PluginsList() ([]sdk.GRPCPlugin, error)
+	PluginsGet(string) (*sdk.GRPCPlugin, error)
+	PluginAdd(*sdk.GRPCPlugin) error
+	PluginUpdate(*sdk.GRPCPlugin) error
+	PluginDelete(string) error
+	PluginAddBinary(*sdk.GRPCPlugin, *sdk.GRPCPluginBinary) error
+	PluginDeleteBinary(string, string, string) error
+	PluginGetBinary(string, string, string, io.Writer) error
 }

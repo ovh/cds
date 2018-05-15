@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+//DEPRECATED
 func (api *API) postWorkflowJobRequirementsErrorHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		body, err := ioutil.ReadAll(r.Body)
@@ -755,7 +756,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			sdk.AddParameter(&node.BuildParameters, v.Name, sdk.StringParameter, v.Value)
 		}
 
-		if err := workflow.UpdateNodeRun(tx, node); err != nil {
+		if err := workflow.UpdateNodeRunBuildParameters(tx, node.ID, node.BuildParameters); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run %d", node.ID)
 		}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
@@ -19,7 +20,7 @@ func (api *API) getProjectPlatformHandler() Handler {
 
 		clearPassword := FormBool(r, "clearPassword")
 
-		platform, err := project.LoadPlatformsByName(api.mustDB(), projectKey, platformName, clearPassword)
+		platform, err := platform.LoadPlatformsByName(api.mustDB(), projectKey, platformName, clearPassword)
 		if err != nil {
 			return sdk.WrapError(err, "getProjectPlatformHandler> Cannot load platform %s/%s", projectKey, platformName)
 		}
@@ -43,7 +44,7 @@ func (api *API) putProjectPlatformHandler() Handler {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot load project")
 		}
 
-		ppDB, errP := project.LoadPlatformsByName(api.mustDB(), projectKey, platformName, true)
+		ppDB, errP := platform.LoadPlatformsByName(api.mustDB(), projectKey, platformName, true)
 		if errP != nil {
 			return sdk.WrapError(errP, "putProjectPlatformHandler> Cannot load project platform")
 		}
@@ -69,7 +70,7 @@ func (api *API) putProjectPlatformHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := project.UpdatePlatform(tx, ppBody); err != nil {
+		if err := platform.UpdatePlatform(tx, ppBody); err != nil {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot update project platform")
 		}
 
@@ -108,7 +109,7 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 		for _, plat := range p.Platforms {
 			if plat.Name == platformName {
 				deletedPlatform = plat
-				if err := project.DeletePlatform(tx, plat); err != nil {
+				if err := platform.DeletePlatform(tx, plat); err != nil {
 					return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot delete project platform")
 				}
 				break
@@ -172,7 +173,7 @@ func (api *API) postProjectPlatformHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := project.InsertPlatform(tx, &pp); err != nil {
+		if err := platform.InsertPlatform(tx, &pp); err != nil {
 			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot insert project platform")
 		}
 

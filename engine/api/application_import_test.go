@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -585,6 +586,98 @@ name: myNewApp`
 
 	//Do the request
 	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+}
+
+func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	pf := sdk.PlatformModel{
+		Name:       "test-deploy-2",
+		Deployment: true,
+	}
+	test.NoError(t, platform.InsertModel(db, &pf))
+	defer platform.DeleteModel(db, pf.ID)
+
+	pp := sdk.ProjectPlatform{
+		Model:           pf,
+		Name:            pf.Name,
+		PlatformModelID: pf.ID,
+		ProjectID:       proj.ID,
+		Config: sdk.PlatformConfig{
+			"token": sdk.PlatformConfigValue{
+				Type:  sdk.PlatformConfigTypePassword,
+				Value: "my-secret-token",
+			},
+			"url": sdk.PlatformConfigValue{
+				Type:  sdk.PlatformConfigTypeString,
+				Value: "my-url",
+			},
+		},
+	}
+	test.NoError(t, platform.InsertPlatform(db, &pp))
+
+	app := sdk.Application{
+		Name: "myNewApp",
+	}
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+
+	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, sdk.PlatformConfig{
+		"token": sdk.PlatformConfigValue{
+			Type:  sdk.PlatformConfigTypePassword,
+			Value: "my-secret-token-2",
+		},
+		"url": sdk.PlatformConfigValue{
+			Type:  sdk.PlatformConfigTypeString,
+			Value: "my-url-2",
+		},
+	}))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?force=true", nil)
+
+	body := `version: v1.0
+name: myNewApp
+deployments:
+  test-deploy-2:
+    url: 
+      value: my-url-3`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+
+	//Now get it !
+
+	//Prepare request
+	vars = map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+	}
+	uri = api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 

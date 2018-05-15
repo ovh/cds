@@ -1,0 +1,27 @@
+.ui.form .fields {
+  margin-bottom: 0;
+  .field {
+    .ui.button {
+      margin-top: 1.7em;
+    }
+  }
+  
+  .table {
+    margin-top: 1.7em;
+  }
+}
+.strategy {
+  min-height: 20px;
+
+  .detail {
+    max-height: 0;
+    transition: all 0.15s ease-out;
+    opacity: 0;
+  }
+
+  .detail.active {
+    max-height: 500px;
+    transition: all 0.25s ease-in;
+    opacity: 1;
+  }
+}

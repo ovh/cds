@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.ovh.cds.sdk.grpcplugin.platformplugin";
+option java_outer_classname = "PlatformPluginProto";
+option go_package = "platformplugin";
+
+package platformplugin;
+
+import "google/protobuf/empty.proto";
+
+// To generate the go files run: 
+// protoc --go_out=plugins=grpc:. *.proto
+
+message PlatformPluginManifest {
+    string name = 1;
+    string version = 2;
+    string description = 3;
+    string author = 4;
+}
+
+message DeployQuery {
+    map<string, string> options = 1;
+}
+
+message DeployResult {
+    string status = 1;
+    string details = 2;
+}
+
+message DeployStatusQuery {
+    string ID = 1;
+}
+
+service PlatformPlugin {
+    rpc Manifest (google.protobuf.Empty) returns (PlatformPluginManifest) {}
+    rpc Deploy (DeployQuery) returns (DeployResult) {}
+    rpc DeployStatus (DeployStatusQuery) returns (DeployResult) {}
+}

@@ -370,8 +370,8 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 	return &wr, nil
 }
 
-//TODO: if no bugs are found, it could be used to refactor process.go
 // CanBeRun return boolean to know if a wokrflow node run can be run or not
+//TODO: if no bugs are found, it could be used to refactor process.go
 func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun) bool {
 	if !sdk.StatusIsTerminated(workflowNodeRun.Status) {
 		return false

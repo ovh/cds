@@ -61,6 +61,23 @@ func (api *API) deletePermissionMiddleware(ctx context.Context, w http.ResponseW
 func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	headers := req.Header
 
+	// Check Provider
+	if rc.Options["allowProvider"] == "true" {
+		providerName := req.Header.Get("X-Provider-Name")
+		providerToken := req.Header.Get("X-Provider-Token")
+		var providerOK bool
+		for _, p := range api.Config.Providers {
+			if p.Name == providerName && p.Token == providerToken {
+				providerOK = true
+				break
+			}
+		}
+		if providerOK {
+			ctx = context.WithValue(ctx, auth.ContextUser, &sdk.User{Username: providerName, Admin: true})
+			ctx = context.WithValue(ctx, auth.ContextProvider, providerName)
+		}
+	}
+
 	// Check Token
 	if h, ok := rc.Options["token"]; ok {
 		headerSplitted := strings.Split(h, ":")
@@ -71,7 +88,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	//Check Authentication
-	if rc.Options["auth"] == "true" {
+	if rc.Options["auth"] == "true" && getProvider(ctx) == nil {
 		switch headers.Get("User-Agent") {
 		case sdk.HatcheryAgent:
 			var err error
@@ -102,6 +119,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	//Get the permission for either the hatchery, the worker or the user
 	switch {
+	case getProvider(ctx) != nil:
 	case getHatchery(ctx) != nil:
 		g, perm, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, getHatchery(ctx).GroupID)
 		if err != nil {
