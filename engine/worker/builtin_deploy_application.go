@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
@@ -10,8 +11,6 @@ import (
 
 func runDeployApplication(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		sendLog("# Starting application deployment...")
-
 		pfName := sdk.ParameterFind(params, "cds.platform")
 		if pfName == nil {
 			res := sdk.Result{
@@ -74,13 +73,18 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		sendLog("# Deploy successfully called")
-
 		sendLog(fmt.Sprintf("# Details: %s", res.Details))
 		sendLog(fmt.Sprintf("# Status: %s", res.Status))
 
+		if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess.String()) {
+			return sdk.Result{
+				Status: sdk.StatusSuccess.String(),
+			}
+		}
+
 		return sdk.Result{
-			Status: sdk.StatusSuccess.String(),
+			Status: sdk.StatusFail.String(),
+			Reason: res.Details,
 		}
 	}
 }
