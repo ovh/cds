@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -90,4 +91,50 @@ func Test_getProjectsHandler(t *testing.T) {
 	projs := []sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projs))
 	assert.Len(t, projs, 1)
+}
+
+func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T) {
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
+
+	u, pass := assets.InsertLambdaUser(api.mustDB())
+
+	vars := map[string]string{}
+	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
+	uri += "?permission=W"
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	projs := []sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projs))
+	assert.Len(t, projs, 0, "too much project")
+}
+
+func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T) {
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertLambdaUser(api.mustDB())
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
+
+	vars := map[string]string{}
+	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
+	uri += "?permission=W"
+	req, err := http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	projs := []sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projs))
+	assert.Len(t, projs, 1, "should have one project")
 }

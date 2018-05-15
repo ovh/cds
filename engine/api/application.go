@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -29,10 +30,21 @@ func (api *API) getApplicationsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
+		withPermissions := r.FormValue("permission")
 
 		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationsHandler> Cannot load applications from db")
+		}
+
+		if strings.ToUpper(withPermissions) == "W" {
+			res := make([]sdk.Application, 0, len(applications))
+			for _, a := range applications {
+				if a.Permission >= 5 {
+					res = append(res, a)
+				}
+			}
+			applications = res
 		}
 
 		return WriteJSON(w, applications, http.StatusOK)

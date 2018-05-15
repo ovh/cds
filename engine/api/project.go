@@ -25,8 +25,11 @@ func (api *API) getProjectsHandler() Handler {
 		withApplications := FormBool(r, "application")
 		withWorkflows := FormBool(r, "workflow")
 		filterByRepo := r.FormValue("repo")
+		withPermissions := r.FormValue("permission")
 
-		opts := []project.LoadOptionFunc{}
+		opts := []project.LoadOptionFunc{
+			project.LoadOptions.WithPermission,
+		}
 		if withApplications {
 			opts = append(opts, project.LoadOptions.WithApplications)
 		}
@@ -40,6 +43,17 @@ func (api *API) getProjectsHandler() Handler {
 			if err != nil {
 				return sdk.WrapError(err, "getProjectsHandler")
 			}
+
+			if strings.ToUpper(withPermissions) == "W" {
+				res := make([]sdk.Project, 0, len(projects))
+				for _, p := range projects {
+					if p.Permission >= 5 {
+						res = append(res, p)
+					}
+				}
+				projects = res
+			}
+
 			return WriteJSON(w, projects, http.StatusOK)
 		}
 
@@ -81,6 +95,17 @@ func (api *API) getProjectsHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
 		}
+
+		if strings.ToUpper(withPermissions) == "W" {
+			res := make([]sdk.Project, 0, len(projects))
+			for _, p := range projects {
+				if p.Permission >= 5 {
+					res = append(res, p)
+				}
+			}
+			projects = res
+		}
+
 		return WriteJSON(w, projects, http.StatusOK)
 	}
 }
