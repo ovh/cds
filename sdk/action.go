@@ -83,6 +83,7 @@ const (
 	GitTagAction              = "GitTag"
 	ReleaseAction             = "Release"
 	CheckoutApplicationAction = "CheckoutApplication"
+	DeployApplicationAction   = "DeployApplication"
 )
 
 // NewAction instanciate a new Action

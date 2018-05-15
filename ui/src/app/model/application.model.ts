@@ -33,7 +33,7 @@ export class Application {
     usage: Usage;
     keys: Array<Key>;
     vcs_strategy: VCSStrategy;
-
+    deployment_strategies: Map<string, any>;
     project_key: string; // project unique key
 
     // true if someone has updated the application ( used for warnings )

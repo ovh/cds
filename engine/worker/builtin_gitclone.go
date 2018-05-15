@@ -211,29 +211,34 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 
 		smver, errT := semver.Make(info.GitDescribe)
 		if errT != nil {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("git describe %s is not semver compatible", info.GitDescribe),
+			sendLog(fmt.Sprintf("!! WARNING !! git describe %s is not semver compatible, we can't create cds.semver variable", info.GitDescribe))
+		} else {
+			// Prerelease versions
+			// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
+			if len(smver.Pre) == 1 {
+				tuple := strings.Split(smver.Pre[0].String(), "-")
+				// we split 4-g595de235a, g595de235a is the sha1
+				if len(tuple) == 2 {
+					cdsSemver = fmt.Sprintf("%d.%d.%d-%s+sha.%s.cds.%s",
+						smver.Major,
+						smver.Minor,
+						smver.Patch,
+						tuple[0],
+						tuple[1],
+						cdsVersion.Value,
+					)
+				}
 			}
-			sendLog(res.Reason)
-			return fmt.Errorf("git.describe invalid")
 		}
 
-		// Prerelease versions
-		// for 0.31.1-4-g595de235a, smver.Pre = 4-g595de235a
-		if len(smver.Pre) == 1 {
-			tuple := strings.Split(smver.Pre[0].String(), "-")
-			// we split 4-g595de235a, g595de235a is the sha1
-			if len(tuple) == 2 {
-				cdsSemver = fmt.Sprintf("%d.%d.%d-%s+%s.cds.%s",
-					smver.Major,
-					smver.Minor,
-					smver.Patch,
-					tuple[0],
-					tuple[1],
-					cdsVersion.Value,
-				)
-			}
+		if cdsSemver == "" {
+			// here, there is no prerelease version, it's a tag
+			cdsSemver = fmt.Sprintf("%d.%d.%d+cds.%s",
+				smver.Major,
+				smver.Minor,
+				smver.Patch,
+				cdsVersion.Value,
+			)
 		}
 	} else {
 		// default value if there is no tag on repository
@@ -254,6 +259,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			}
 			sendLog(res.Reason)
 		}
+		sendLog(fmt.Sprintf("cds.semver: %s", cdsSemver))
 	}
 
 	if branch == "" || branch == "{{.git.branch}}" {

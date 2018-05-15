@@ -1,0 +1,7 @@
+os: linux
+arch: amd64
+cmd: python
+args: 
+- hello.py
+requirements:
+- name: python

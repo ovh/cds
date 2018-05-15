@@ -138,6 +138,29 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		}
 	}
 
+	//deployment strategies
+	for pfName, pfConfig := range eapp.DeploymentStrategies {
+		for k, v := range pfConfig {
+			if v.Type == sdk.SecretVariable {
+				clearPWD, err := decryptFunc(db, proj.ID, v.Value)
+				if err != nil {
+					return app, nil, sdk.WrapError(err, "ParseAndImport> Unable to decrypt deployment strategy password")
+				}
+				v.Value = clearPWD
+			}
+			if app.DeploymentStrategies == nil {
+				app.DeploymentStrategies = make(map[string]sdk.PlatformConfig)
+			}
+			if app.DeploymentStrategies[pfName] == nil {
+				app.DeploymentStrategies[pfName] = make(map[string]sdk.PlatformConfigValue)
+			}
+			app.DeploymentStrategies[pfName][k] = sdk.PlatformConfigValue{
+				Type:  v.Type,
+				Value: v.Value,
+			}
+		}
+	}
+
 	done := new(sync.WaitGroup)
 	done.Add(1)
 	msgChan := make(chan sdk.Message)

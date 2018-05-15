@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Map, List} from 'immutable';
+import * as immutable from 'immutable';
 import {Observable} from 'rxjs/Observable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {Application} from '../../model/application.model';
@@ -23,10 +23,12 @@ export class ApplicationStore {
 
     static RECENT_APPLICATIONS_KEY = 'CDS-RECENT-APPLICATIONS';
 
-    // List of all applications.
-    private _application: BehaviorSubject<Map<string, Application>> = new BehaviorSubject(Map<string, Application>());
+    // immutable.List of all applications.
+    private _application: BehaviorSubject<immutable.Map<string, Application>> =
+        new BehaviorSubject(immutable.Map<string, Application>());
 
-    private _recentApplications: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
+    private _recentApplications: BehaviorSubject<immutable.List<NavbarRecentData>> =
+        new BehaviorSubject(immutable.List<NavbarRecentData>());
 
 
     constructor(private _applicationService: ApplicationService, private _projectStore: ProjectStore) {
@@ -36,15 +38,15 @@ export class ApplicationStore {
 
     loadRecentApplication(): void {
         let arrayApp = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATIONS_KEY));
-        this._recentApplications.next(List.of(...arrayApp));
+        this._recentApplications.next(immutable.List.of(...arrayApp));
     }
 
     /**
      * Get recent application.
-     * @returns {Observable<List<Application>>}
+     * @returns {Observable<immutable.List<Application>>}
      */
-    getRecentApplications(): Observable<List<Application>> {
-        return new Observable<List<Application>>(fn => this._recentApplications.subscribe(fn));
+    getRecentApplications(): Observable<immutable.List<Application>> {
+        return new Observable<immutable.List<Application>>(fn => this._recentApplications.subscribe(fn));
     }
 
     /**
@@ -90,7 +92,7 @@ export class ApplicationStore {
         currentRecentApps.splice(0, 0, navbarRecentData);
         currentRecentApps = currentRecentApps.splice(0, 15);
         localStorage.setItem(ApplicationStore.RECENT_APPLICATIONS_KEY, JSON.stringify(currentRecentApps));
-        this._recentApplications.next(List(currentRecentApps));
+        this._recentApplications.next(immutable.List(currentRecentApps));
     }
 
     externalModification(appKey: string) {
@@ -106,13 +108,15 @@ export class ApplicationStore {
      * Get an Application
      * @returns {Observable<Application>}
      */
-    getApplications(key: string, appName: string, filter?: {branch: string, remote: string}): Observable<Map<string, Application>> {
+    getApplications(key: string, appName: string, filter?: {branch: string, remote: string}):
+        Observable<immutable.Map<string, Application>> {
+
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
         if (appName && !store.get(appKey)) {
             this.resync(key, appName, filter);
         }
-        return new Observable<Map<string, Application>>(fn => this._application.subscribe(fn));
+        return new Observable<immutable.Map<string, Application>>(fn => this._application.subscribe(fn));
     }
 
     resync(key: string, appName: string, filter?: {branch: string, remote: string}) {
@@ -122,7 +126,7 @@ export class ApplicationStore {
             this._application.next(store.set(appKey, res));
         }, err => {
             this._application.error(err);
-            this._application = new BehaviorSubject(Map<string, Application>());
+            this._application = new BehaviorSubject(immutable.Map<string, Application>());
             this._application.next(store);
         });
     }
@@ -191,7 +195,7 @@ export class ApplicationStore {
                 .toArray()
                 .filter((app) => !(app.name === appName && app.project_key === key));
 
-            this._recentApplications.next(List(recentApp));
+            this._recentApplications.next(immutable.List(recentApp));
 
             return res;
         });
@@ -512,7 +516,7 @@ export class ApplicationStore {
      * Add a lit of notification on the application
      * @param key Project unique key
      * @param appName Application name
-     * @param notifications List of notifications to add
+     * @param notifications immutable.List of notifications to add
      * @returns {Uint8Array|Uint8ClampedArray|Application[]|Int8Array|Promise<any[]>|Int32Array|any}
      */
     addNotifications(key: string, appName: string, notifications: Array<Notification>): Observable<Application> {
@@ -692,5 +696,62 @@ export class ApplicationStore {
         return this._applicationService.deleteScheduler(key, appName, pipName, scheduler).map( app => {
             return this.refreshApplicationWorkflowCache(key, appName, app);
         });
+    }
+
+    /**
+     * Delete a deployment strategy
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pfName Platform Name
+     * @param pfConfig Platform config
+     * @returns {Observable<Application>}
+     */
+    saveDeploymentStrategy(key: string, appName: string, pfName: string, pfConfig: any): Observable<Application> {
+        return this._applicationService.saveDeploymentStrategy(key, appName, pfName, pfConfig).map(app => {
+            return this.refreshApplicationDeploymentCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Delete a deployment strategy
+     * @param key Project unique key
+     * @param appName Application name
+     * @param pfName Platform Name
+     * @returns {Observable<Application>}
+     */
+    deleteDeploymentStrategy(key: string, appName: string, pfName: string): Observable<Application> {
+        return this._applicationService.deleteDeploymentStrategy(key, appName, pfName).map(app => {
+            return this.refreshApplicationDeploymentCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Get deployment strategies map for an application
+     * @param key Project unique key
+     * @param appName Application name
+     * @returns {Observable<Map<string, any>>}
+     */
+    getDeploymentStrategies(key: string, appName: string): Observable<Map<string, any>> {
+        return this._applicationService.getDeploymentStrategies(key, appName);
+    }
+
+    /**
+     * Refresh application cache
+     * @param key Project unique key
+     * @param appName Application Name
+     * @param application updated workflow application
+     * @returns {: Application}
+     */
+    refreshApplicationDeploymentCache(key: string, appName: string, application: Application): Application {
+        let cache = this._application.getValue();
+        let appKey = key + '-' + appName;
+        let appToUpdate = cache.get(appKey);
+        if (appToUpdate) {
+            appToUpdate.last_modified = application.last_modified;
+            appToUpdate.deployment_strategies = application.deployment_strategies;
+            this._application.next(cache.set(appKey, appToUpdate));
+            return appToUpdate;
+        }
+        return application;
     }
 }

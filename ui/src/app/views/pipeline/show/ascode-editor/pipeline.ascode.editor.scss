@@ -1,0 +1,37 @@
+.codebar {
+  &.visible {
+    width: 50%;
+  }
+  margin-top: 100px !important;
+  background-color: white;
+  overflow-y: auto;
+
+  .transparent {
+    background-color: transparent;
+  }
+
+  .fullheight {
+    height: 87%;
+  }
+
+  .mt5 {
+    margin-top: 5px;
+  }
+
+
+  .bottomBtnsWrapper {
+    background-color: #f9f9f9;
+    position: fixed;
+    bottom: 100px;
+    z-index: 30;
+    right: 0;
+    width: 430px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+
+    .column {
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+  }
+}

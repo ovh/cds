@@ -93,7 +93,7 @@ func (api *API) addPluginHandler() Handler {
 		}
 
 		//Upload it to objectstore
-		objectPath, err := objectstore.StorePlugin(*ap, file)
+		objectPath, err := objectstore.Store(ap, file)
 		if err != nil {
 			return sdk.WrapError(err, "addPluginHandler> Error while uploading to object store %s", ap.Name)
 		}
@@ -108,7 +108,7 @@ func (api *API) addPluginHandler() Handler {
 		//Insert in database
 		a, err := actionplugin.Insert(tx, ap, params)
 		if err != nil {
-			objectstore.DeletePlugin(*ap)
+			objectstore.Delete(ap)
 			return sdk.WrapError(err, "addPluginHandler> Error while inserting action %s in database", ap.Name)
 		}
 
@@ -141,7 +141,7 @@ func (api *API) updatePluginHandler() Handler {
 		}
 
 		//Store previous file from objectstore
-		buf, errFetch := objectstore.FetchPlugin(*ap)
+		buf, errFetch := objectstore.Fetch(ap)
 		if errFetch != nil {
 			log.Warning("updatePluginHandler>Unable to fetch plugin: %s", errFetch)
 			// do no raise error... it just mean that we cannot fetch the old version of the plugin
@@ -175,13 +175,13 @@ func (api *API) updatePluginHandler() Handler {
 				os.RemoveAll(tmpFile)
 			}()
 			//Delete previous file from objectstore
-			if err := objectstore.DeletePlugin(*ap); err != nil {
+			if err := objectstore.Delete(ap); err != nil {
 				return sdk.WrapError(err, "updatePluginHandler>Error deleting file")
 			}
 		}
 
 		//Upload it to objectstore
-		objectPath, errStore := objectstore.StorePlugin(*ap, file)
+		objectPath, errStore := objectstore.Store(ap, file)
 		if errStore != nil {
 			return sdk.WrapError(errStore, "updatePluginHandler> Error while uploading to object store %s", ap.Name)
 		}
@@ -203,7 +203,7 @@ func (api *API) updatePluginHandler() Handler {
 				return sdk.WrapError(errO, "updatePluginHandler>Error opening file %s ", tmpFile)
 			}
 			//re-store the old plugin file
-			if _, errStore := objectstore.StorePlugin(*ap, oldFile); errStore != nil {
+			if _, errStore := objectstore.Store(ap, oldFile); errStore != nil {
 				return sdk.WrapError(errStore, "updatePluginHandler> Error while uploading to object store %s", ap.Name)
 			}
 
@@ -232,7 +232,7 @@ func (api *API) deletePluginHandler() Handler {
 		}
 
 		//Delete from objectstore
-		if err := objectstore.DeletePlugin(sdk.ActionPlugin{Name: name}); err != nil {
+		if err := objectstore.Delete(&sdk.ActionPlugin{Name: name}); err != nil {
 			return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in objectstore", name)
 		}
 		return nil
@@ -261,7 +261,7 @@ func (api *API) downloadPluginHandler() Handler {
 			}
 		}
 
-		f, err := objectstore.FetchPlugin(p)
+		f, err := objectstore.Fetch(&p)
 		if err != nil {
 			return sdk.WrapError(err, "downloadPluginHandler> Error while fetching plugin", name)
 		}

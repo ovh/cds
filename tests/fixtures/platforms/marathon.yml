@@ -1,0 +1,16 @@
+name: marathon
+default_config:
+  password:
+    type: password
+  url:
+    value: https://localhost:12345
+    type: string
+  user:
+    value: user
+    type: string
+deployment: true
+deployment_default_config:
+  marathon_config:
+    value: ""
+    type: string
+plugin: test-plugin

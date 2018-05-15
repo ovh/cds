@@ -2,7 +2,11 @@ package sdk
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/json"
+	"fmt"
+	"io"
+	"os"
 	"reflect"
 	"regexp"
 
@@ -47,4 +51,21 @@ func JSONWithoutHTMLEncode(t interface{}) ([]byte, error) {
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(t)
 	return buffer.Bytes(), err
+}
+
+// FileMd5sum returns the md5sum ofr a file
+func FileMd5sum(filePath string) (md5sum string, err error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	h := md5.New()
+	if _, err = io.Copy(h, file); err != nil {
+		return
+	}
+
+	md5sum = fmt.Sprintf("%x", h.Sum(nil))
+	return
 }

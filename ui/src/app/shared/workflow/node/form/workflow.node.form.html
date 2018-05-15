@@ -31,6 +31,22 @@
             </sm-select>
         </div>
         <div class="five wide field">
+            <label>{{ 'workflow_root_context_platform' | translate}}</label>
+            <sui-select class="selection"
+                        name="selectPlatform"
+                        [(ngModel)]="node.context.project_platform_id"
+                        [options]="platforms"
+                        labelField="name"
+                        valueField="id"
+                        [isSearchable]="true"
+                        #selectPlatform>
+                <sui-select-option *ngFor="let t of selectPlatform.filteredOptions"
+                                    [value]="t">
+                </sui-select-option>
+            </sui-select>
+        </div>
+        {{selectedPlatform | json}}
+        <div class="five wide field">
             <label>{{ 'workflow_root_context_environment' | translate}}</label>
             <sm-select
                 class="search"

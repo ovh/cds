@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -78,6 +79,9 @@ func (s SSHCmdPlugin) Run(a plugin.IJob) plugin.Result {
 		User:    user,
 		Auth:    auth,
 		Timeout: time.Duration(timeout) * time.Second,
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return nil
+		},
 	}
 
 	//For all hosts

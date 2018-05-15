@@ -5,6 +5,7 @@ import {ApplicationShowComponent} from './show/application.component';
 import {ApplicationAddComponent} from './add/application.add.component';
 import {ApplicationAdminComponent} from './show/admin/application.admin.component';
 import {ApplicationRepositoryComponent} from './show/admin/repository/application.repo.component';
+import {ApplicationDeploymentComponent} from './show/admin/deployment/application.deployment.component';
 import {ApplicationWorkflowComponent} from './show/workflow/application.workflow.component';
 import {ApplicationTreeWorkflowComponent} from './show/workflow/tree/application.tree.workflow.component';
 import {ApplicationWorkflowItemComponent} from './show/workflow/tree/item/application.workflow.item.component';
@@ -34,6 +35,7 @@ import {ApplicationKeysComponent} from './show/keys/appplication.keys.component'
         ApplicationPollerItemComponent,
         ApplicationPollerFormComponent,
         ApplicationRepositoryComponent,
+        ApplicationDeploymentComponent,
         ApplicationSchedulerItemComponent,
         ApplicationSchedulerFormComponent,
         ApplicationShowComponent,

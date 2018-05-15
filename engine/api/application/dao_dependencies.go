@@ -104,6 +104,7 @@ var (
 		return nil
 	}
 
+	//LoadPermission loads the permission on an application
 	LoadPermission = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		app.Permission = permission.ApplicationPermission(app.ProjectKey, app.Name, u)
 		return nil
@@ -123,6 +124,24 @@ var (
 		app.Notifications, err = notification.LoadAllUserNotificationSettings(db, app.ID)
 		if err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadNotifs> Unable to load notifications for application %d", app.ID)
+		}
+		return nil
+	}
+
+	loadDeploymentStrategies = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		var err error
+		app.DeploymentStrategies, err = LoadDeploymentStrategies(db, app.ID, false)
+		if err != nil && err != sql.ErrNoRows {
+			return sdk.WrapError(err, "application.loadDeploymentStrategies> Unable to load deployment strategies for application %d", app.ID)
+		}
+		return nil
+	}
+
+	loadDeploymentStrategiesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		var err error
+		app.DeploymentStrategies, err = LoadDeploymentStrategies(db, app.ID, true)
+		if err != nil && err != sql.ErrNoRows {
+			return sdk.WrapError(err, "application.loadDeploymentStrategiesWithClearPassword> Unable to load deployment strategies for application %d", app.ID)
 		}
 		return nil
 	}
