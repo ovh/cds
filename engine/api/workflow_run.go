@@ -643,7 +643,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 					project.LoadOptions.WithGroups,
 					project.LoadOptions.WithApplications,
 					project.LoadOptions.WithEnvironments,
-					project.LoadOptions.WithPipelines)
+					project.LoadOptions.WithPipelines,
+					project.LoadOptions.WithClearKeys,
+				)
 
 				if errp != nil {
 					return sdk.WrapError(errp, "postWorkflowRunHandler> Cannot load project %s", key)
