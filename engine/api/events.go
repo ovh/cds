@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -65,6 +66,7 @@ func (b *eventsBroker) Init(c context.Context, store cache.Store) {
 
 	go func() {
 		defer func() {
+			b.mutex.Unlock()
 			if re := recover(); re != nil {
 				var err error
 				switch t := re.(type) {
@@ -77,6 +79,7 @@ func (b *eventsBroker) Init(c context.Context, store cache.Store) {
 				default:
 					err = sdk.ErrUnknownError
 				}
+				log.Error("[PANIC] eventsBrokerStack> %s", debug.Stack())
 				log.Error("[PANIC] eventsBroker.Init.Start> recover %s", err)
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, false)
@@ -159,8 +162,10 @@ func (b *eventsBroker) Start(c context.Context) {
 		case <-c.Done():
 			// Close all channels
 			b.mutex.Lock()
-			for c := range b.clients {
-				delete(b.clients, c)
+			if b.clients != nil {
+				for c := range b.clients {
+					delete(b.clients, c)
+				}
 			}
 			b.mutex.Unlock()
 			if c.Err() != nil {
@@ -172,14 +177,13 @@ func (b *eventsBroker) Start(c context.Context) {
 			if err != nil {
 				continue
 			}
-
 			b.mutex.Lock()
-			log.Warning("eventsBroker.received (%d): %s", len(b.clients), receivedEvent.EventType)
+			log.Warning("eventsBroker. clients %v", b.clients)
 			for _, i := range b.clients {
 				if i.Queue != nil {
 					manageEvent(receivedEvent, string(bEvent), i)
 				} else {
-					log.Warning("Queue is nil %s", i.User.Username)
+					log.Warning("Queue is nil %s", i.User)
 				}
 
 			}
@@ -269,12 +273,14 @@ func (b *eventsBroker) ServeHTTP() Handler {
 }
 
 func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscribe) {
+	log.Warning("Subscriber: %+v", subscriber)
 	if strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
 		key := event.ProjectKey
 		name := event.WorkflowName
 		// check if user has subscribed to runs list
+		log.Warning("Events: %s", subscriber.Events)
+		log.Warning("Queue: %s", subscriber.Queue)
 		s, ok := subscriber.Events[sdk.EventSubsWorkflowRuns]
-		log.Warning("events.runs %+v", s)
 		if ok && event.EventType == "sdk.EventRunWorkflow" {
 			sent := false
 			for _, e := range s {
@@ -288,11 +294,9 @@ func manageEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscrib
 				return
 			}
 		}
-		log.Warning("events.run")
 		// check if user has subscribed to this specific run
 		num := event.WorkflowRunNum
 		s, ok = subscriber.Events[sdk.EventSubWorkflowRun]
-		log.Warning("events.run %+v", s)
 		if ok && (event.EventType == "sdk.EventRunWorkflowNode" || event.EventType == "sdk.EventRunWorkflowNodeJob") {
 			for _, e := range s {
 				if e.ProjectKey == key && e.WorkflowName == name && e.WorkflowNum == num {
