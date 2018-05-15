@@ -466,6 +466,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/binary-add/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/broadcast/</loc>
   </url>
   
@@ -571,6 +575,14 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/delete/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/delete/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/delete/</loc>
   </url>
   
   <url>
@@ -686,6 +698,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/export/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/export/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/export/</loc>
   </url>
   
@@ -782,6 +802,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/import/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/import/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/group/import/</loc>
   </url>
   
@@ -839,6 +867,14 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/list/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/list/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/list/</loc>
   </url>
   
   <url>
@@ -970,6 +1006,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/plugin/</loc>
   </url>
   
@@ -999,6 +1039,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-venom/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/</loc>
   </url>
   
   <url>
@@ -1083,6 +1127,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/show/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/show/</loc>
   </url>
   
   <url>
