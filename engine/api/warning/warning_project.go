@@ -1,10 +1,11 @@
 package warning
 
 import (
-	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -12,32 +13,26 @@ import (
 )
 
 func computeWithProjectEvent(db gorp.SqlExecutor, store cache.Store, e sdk.Event) error {
-
-	payload, errP := json.Marshal(e.Payload)
-	if errP != nil {
-		return sdk.WrapError(errP, "computeWithProjectEvent> Unable to marshal event payload")
-	}
-
 	switch e.EventType {
 
 	case "sdk.EventProjectVariableAdd":
-		var event sdk.EventProjectVariableAdd
-		if err := json.Unmarshal(payload, &event); err != nil {
-			return sdk.WrapError(err, "computeWithProjectEvent> Unable to read EventProjectVariableAdd")
+		var varEvent sdk.EventProjectVariableAdd
+		if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectVariableAdd")
 		}
-		return manageAddVariableEvent(db, e.ProjectKey, event.Variable.Name)
+		return manageAddVariableEvent(db, e.ProjectKey, fmt.Sprintf("cds.proj.%s", varEvent.Variable.Name))
 	case "sdk.EventProjectVariableUpdate":
-		var event sdk.EventProjectVariableUpdate
-		if err := json.Unmarshal(payload, &event); err != nil {
-			return sdk.WrapError(err, "computeWithProjectEvent> Unable to read EventProjectVariableUpdate")
+		var varEvent sdk.EventProjectVariableUpdate
+		if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectVariableUpdate")
 		}
-		return manageUpdateVariableEvent(db, e.ProjectKey, event.NewVariable, event.OldVariable)
+		return manageUpdateVariableEvent(db, e.ProjectKey, varEvent.NewVariable, varEvent.OldVariable)
 	case "sdk.EventProjectVariableDelete":
-		var event sdk.EventProjectVariableDelete
-		if err := json.Unmarshal(payload, &event); err != nil {
-			return sdk.WrapError(err, "computeWithProjectEvent> Unable to read EventProjectVariableDelete")
+		var varEvent sdk.EventProjectVariableDelete
+		if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectVariableDelete")
 		}
-		return manageDeleteVariableEvent(db, e.ProjectKey, event.Variable.Name)
+		return manageDeleteVariableEvent(db, e.ProjectKey, fmt.Sprintf("cds.proj.%s", varEvent.Variable.Name))
 	case "sdk.EventProjectPermissionDelete":
 		// Check if permission is used on workflow
 
@@ -64,7 +59,7 @@ func manageAddVariableEvent(db gorp.SqlExecutor, key string, varName string) err
 		return sdk.WrapError(err, "manageAddVariableEvent> Unable to remove warning")
 	}
 
-	used := variableIsUsed(db, key, ".cds.proj."+varName)
+	used := variableIsUsed(db, key, varName)
 	if !used {
 		w := sdk.WarningV2{
 			Key:     key,
@@ -88,22 +83,24 @@ func manageUpdateVariableEvent(db gorp.SqlExecutor, key string, newVar sdk.Varia
 		return nil
 	}
 
-	if err := removeWarning(db, UnusedProjectVariable, oldVar.Name); err != nil {
+	if err := removeWarning(db, UnusedProjectVariable, fmt.Sprintf("cds.proj.%s", oldVar.Name)); err != nil {
 		log.Warning("manageUpdateVariableEvent> Unable to remove oldvar warning: %v", err)
 	}
-	if err := removeWarning(db, MissingProjectVariable, newVar.Name); err != nil {
+
+	if err := removeWarning(db, MissingProjectVariable, fmt.Sprintf("cds.proj.%s", newVar.Name)); err != nil {
 		log.Warning("manageUpdateVariableEvent> Unable to remove newvar warning: %v", err)
 	}
 
-	used := variableIsUsed(db, key, ".cds.proj."+newVar.Name)
+	projVarName := fmt.Sprintf("cds.proj.%s", newVar.Name)
+	used := variableIsUsed(db, key, projVarName)
 	if !used {
 		w := sdk.WarningV2{
 			Key:     key,
-			Element: newVar.Name,
+			Element: projVarName,
 			Created: time.Now(),
 			Type:    UnusedProjectVariable,
 			MessageParams: map[string]string{
-				"VarName":    newVar.Name,
+				"VarName":    projVarName,
 				"ProjectKey": key,
 			},
 		}
@@ -118,7 +115,7 @@ func manageDeleteVariableEvent(db gorp.SqlExecutor, key string, varName string) 
 	if err := removeWarning(db, UnusedProjectVariable, varName); err != nil {
 		log.Warning("manageDeleteVariableEvent> Unable to remove warning: %v", err)
 	}
-	used := variableIsUsed(db, key, ".cds.proj."+varName)
+	used := variableIsUsed(db, key, varName)
 	if !used {
 		return nil
 	}
