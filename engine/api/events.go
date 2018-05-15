@@ -163,7 +163,8 @@ func (b *eventsBroker) Start(c context.Context) {
 			// Close all channels
 			b.mutex.Lock()
 			if b.clients != nil {
-				for c := range b.clients {
+				for c, v := range b.clients {
+					close(v.Queue)
 					delete(b.clients, c)
 				}
 			}
@@ -179,11 +180,11 @@ func (b *eventsBroker) Start(c context.Context) {
 			}
 			b.mutex.Lock()
 			log.Warning("eventsBroker. clients %v", b.clients)
-			for _, i := range b.clients {
+			for k, i := range b.clients {
 				if i.Queue != nil {
 					manageEvent(receivedEvent, string(bEvent), i)
 				} else {
-					log.Warning("Queue is nil %s", i.User)
+					log.Warning("Queue is nil %s / %+v", k, i)
 				}
 
 			}
@@ -194,8 +195,6 @@ func (b *eventsBroker) Start(c context.Context) {
 
 func (b *eventsBroker) ServeHTTP() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		uuid := FormString(r, "uuid")
-
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
@@ -203,21 +202,18 @@ func (b *eventsBroker) ServeHTTP() Handler {
 			return nil
 		}
 
-		if uuid == "" {
-			uuidSK, errS := sessionstore.NewSessionKey()
-			if errS != nil {
-				return sdk.WrapError(errS, "eventsBroker.Serve> Cannot generate UUID")
-			}
-			uuid = string(uuidSK)
+		uuidSK, errS := sessionstore.NewSessionKey()
+		if errS != nil {
+			return sdk.WrapError(errS, "eventsBroker.Serve> Cannot generate UUID")
 		}
-
+		uuid := string(uuidSK)
 		user := getUser(ctx)
 		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}
 
 		messageChan := eventsBrokerSubscribe{
-			UIID:   string(uuid),
+			UIID:   uuid,
 			User:   user,
 			Events: make(map[string][]sdk.EventSubscription),
 			Queue:  make(chan string, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
