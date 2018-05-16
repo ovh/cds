@@ -15,6 +15,7 @@ type client struct {
 	isWorker   bool
 	isHatchery bool
 	isService  bool
+	isProvider bool
 	HTTPClient HTTPClient
 	config     Config
 	name       string
@@ -100,6 +101,34 @@ func NewClientFromConfig(r io.Reader) (Interface, error) {
 // NewClientFromEnv returns a client from the environment variables
 func NewClientFromEnv() (Interface, error) {
 	return nil, nil
+}
+
+// NewProviderClient returns an implementation for ProviderClient interface
+func NewProviderClient(cfg ProviderConfig) ProviderClient {
+	conf := Config{
+		Host:  cfg.Host,
+		Retry: 2,
+		Token: cfg.Token,
+		User:  cfg.Name,
+	}
+
+	if cfg.RequestSecondsTimeout == 0 {
+		cfg.RequestSecondsTimeout = 60
+	}
+
+	cli := new(client)
+	cli.config = conf
+	cli.HTTPClient = &http.Client{
+		Transport: &httpcontrol.Transport{
+			RequestTimeout:  time.Duration(cfg.RequestSecondsTimeout) * time.Second,
+			MaxTries:        5,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.InsecureSkipVerifyTLS},
+		},
+	}
+	cli.isProvider = true
+	cli.name = cfg.Name
+	cli.init()
+	return cli
 }
 
 func (c *client) init() {
