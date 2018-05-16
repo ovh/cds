@@ -287,6 +287,10 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 	req.Header.Set("User-Agent", c.config.userAgent)
 	req.Header.Set("Connection", "close")
 	req.Header.Add(RequestedWithHeader, RequestedWithValue)
+	if c.isProvider {
+		req.Header.Add("X-Provider-Name", c.config.User)
+		req.Header.Add("X-Provider-Token", c.config.Token)
+	}
 
 	for i := range mods {
 		mods[i](req)
@@ -298,7 +302,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 			basedHash := base64.StdEncoding.EncodeToString([]byte(c.config.Hash))
 			req.Header.Set(AuthHeader, basedHash)
 		}
-		if c.config.User != "" && c.config.Token != "" {
+		if !c.isProvider && c.config.User != "" && c.config.Token != "" {
 			req.Header.Add(SessionTokenHeader, c.config.Token)
 			req.SetBasicAuth(c.config.User, c.config.Token)
 		}
