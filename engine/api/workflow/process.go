@@ -516,6 +516,12 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		gitValues = previousGitValues
 	}
 
+	var isMultiRepo bool
+	if (previousGitValues[tagGitURL] != "" && currentGitValues[tagGitURL] != "" && previousGitValues[tagGitURL] != currentGitValues[tagGitURL]) ||
+		(previousGitValues[tagGitHTTPURL] != "" && currentGitValues[tagGitHTTPURL] != "" && previousGitValues[tagGitHTTPURL] != currentGitValues[tagGitHTTPURL]) {
+		isMultiRepo = true
+	}
+
 	vcsInfos, errVcs := getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitValues[tagGitRepository])
 	if errVcs != nil {
 		if isRoot {
@@ -528,17 +534,9 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		return false, nil
 	}
 
-	run.VCSRepository = vcsInfos.repository
-	run.VCSBranch = vcsInfos.branch
-	run.VCSHash = vcsInfos.hash
-
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.url)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.httpurl)
+	if !isMultiRepo {
+		setValuesGitInBuildParameters(run, vcsInfos)
+	}
 
 	//Check
 	if h != nil {
@@ -567,15 +565,19 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 	}
 
-	//Tag VCS infos
-	w.Tag(tagGitRepository, run.VCSRepository)
-	w.Tag(tagGitBranch, run.VCSBranch)
-	if len(run.VCSHash) >= 7 {
-		w.Tag(tagGitHash, run.VCSHash[:7])
-	} else {
-		w.Tag(tagGitHash, run.VCSHash)
+	if isMultiRepo {
+		setValuesGitInBuildParameters(run, vcsInfos)
+
+		//Tag VCS infos
+		w.Tag(tagGitRepository, run.VCSRepository)
+		w.Tag(tagGitBranch, run.VCSBranch)
+		if len(run.VCSHash) >= 7 {
+			w.Tag(tagGitHash, run.VCSHash[:7])
+		} else {
+			w.Tag(tagGitHash, run.VCSHash)
+		}
+		w.Tag(tagGitAuthor, vcsInfos.author)
 	}
-	w.Tag(tagGitAuthor, vcsInfos.author)
 
 	// Add env tag
 	if n.Context != nil && n.Context.Environment != nil {
@@ -646,6 +648,20 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	}
 
 	return true, nil
+}
+
+func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
+	run.VCSRepository = vcsInfos.repository
+	run.VCSBranch = vcsInfos.branch
+	run.VCSHash = vcsInfos.hash
+
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.url)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.httpurl)
 }
 
 func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []sdk.Parameter) bool {
