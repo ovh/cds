@@ -129,9 +129,11 @@ func (p *Parameters) Add(name string, _type ParameterType, description string, v
 }
 
 func (p *Parameters) Names() []string {
-	keys := []string{}
+	keys := make([]string, len(p.Data))
+	i := 0
 	for k := range p.Data {
-		keys = append(keys, k)
+		keys[i] = k
+		i++
 	}
 	return keys
 }

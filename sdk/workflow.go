@@ -105,9 +105,9 @@ func ParseWorkflowUserNotificationSettings(t UserNotificationSettingsType, userN
 
 //JoinsID returns joins ID
 func (w *Workflow) JoinsID() []int64 {
-	res := []int64{}
-	for _, j := range w.Joins {
-		res = append(res, j.ID)
+	res := make([]int64, len(w.Joins))
+	for i, j := range w.Joins {
+		res[i] = j.ID
 	}
 	return res
 }
