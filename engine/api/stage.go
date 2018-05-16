@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
@@ -64,6 +65,8 @@ func (api *API) addStageHandler() Handler {
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "addStageHandler> Cannot load pipeline stages")
 		}
+
+		event.PublishPipelineStageAdd(projectKey, pipelineKey, *stageData, getUser(ctx))
 
 		return WriteJSON(w, pipelineData, http.StatusCreated)
 	}

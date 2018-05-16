@@ -2,17 +2,16 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -20,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/trigger"
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -280,114 +278,6 @@ func (api *API) runPipelineHandler() Handler {
 	}
 }
 
-// DEPRECATED
-func (api *API) updatePipelineActionHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		pipName := vars["permPipelineKey"]
-		pipelineActionIDString := vars["pipelineActionID"]
-
-		pipelineActionID, errp := strconv.ParseInt(pipelineActionIDString, 10, 64)
-		if errp != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "updatePipelineActionHandler>ID %s is not a int", pipelineActionID)
-		}
-
-		var job sdk.Job
-		if err := UnmarshalBody(r, &job); err != nil {
-			return err
-		}
-
-		if pipelineActionID != job.PipelineActionID {
-			return fmt.Errorf("updatePipelineActionHandler>Pipeline action does not match")
-		}
-
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), key, pipName, false)
-		if err != nil {
-			return sdk.WrapError(err, "updatePipelineActionHandler>Cannot load pipeline %s", pipName)
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "updatePipelineActionHandler> Cannot start transaction")
-		}
-		defer tx.Rollback()
-
-		err = pipeline.UpdatePipelineAction(tx, job)
-		if err != nil {
-			return sdk.WrapError(err, "updatePipelineActionHandler> Cannot update in database")
-		}
-
-		//Load the project
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "updatePipelineActionHandler> Unable to load project %s", key)
-		}
-
-		err = pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "updatePipelineActionHandler> Cannot update pipeline last_modified")
-		}
-
-		err = tx.Commit()
-		if err != nil {
-			return sdk.WrapError(err, "updatePipelineActionHandler> Cannot commit transaction")
-		}
-
-		return nil
-	}
-}
-
-func (api *API) deletePipelineActionHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
-		vars := mux.Vars(r)
-		key := vars["key"]
-		pipName := vars["permPipelineKey"]
-		pipelineActionIDString := vars["pipelineActionID"]
-
-		pipelineActionID, err := strconv.ParseInt(pipelineActionIDString, 10, 64)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "deletepipelineActionHandler>ID is not a int")
-		}
-
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), key, pipName, false)
-		if err != nil {
-			return sdk.WrapError(err, "deletepipelineActionHandler>Cannot load pipeline %s", pipName)
-		}
-
-		log.Info("deletePipelineActionHandler> Deleting action %d in %s/%s\n", pipelineActionID, vars["key"], vars["permPipelineKey"])
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot begin transaction")
-		}
-		defer tx.Rollback()
-
-		err = pipeline.DeletePipelineAction(tx, pipelineActionID)
-		if err != nil {
-			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot delete pipeline action")
-		}
-
-		//Load the project
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "updatePipelineActionHandler> Unable to load project %s", key)
-		}
-
-		err = pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot update pipeline last_modified")
-		}
-		err = tx.Commit()
-		if err != nil {
-			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot commit transaction")
-		}
-
-		return nil
-	}
-}
-
 func (api *API) updatePipelineHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
@@ -459,6 +349,9 @@ func (api *API) updatePipelineHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot commit transaction")
 		}
+
+		event.PublishPipelineUpdate(key, p.Name, oldName, getUser(ctx))
+
 		return WriteJSON(w, pipelineDB, http.StatusOK)
 	}
 }
@@ -554,6 +447,8 @@ func (api *API) addPipelineHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
+
+		event.PublishPipelineAdd(key, p, getUser(ctx))
 
 		p.Permission = permission.PermissionReadWriteExecute
 
@@ -800,220 +695,9 @@ func (api *API) deletePipelineHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deletePipeline> Cannot commit transaction")
 		}
+
+		event.PublishPipelineDelete(key, *p, getUser(ctx))
 		return nil
-	}
-}
-
-func (api *API) addJobToPipelineHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
-		stageIDString := vars["stageID"]
-
-		stageID, errInt := strconv.ParseInt(stageIDString, 10, 60)
-		if errInt != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "addJoinedActionToPipelineHandler> Stage ID must be an int", stageID)
-		}
-
-		var job sdk.Job
-		if err := UnmarshalBody(r, &job); err != nil {
-			return err
-		}
-
-		pip, errPip := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
-		if errPip != nil {
-			return sdk.WrapError(errPip, "addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s", pipelineName, projectKey)
-		}
-
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return errBegin
-		}
-		defer tx.Rollback()
-
-		reqs, errlb := action.LoadAllBinaryRequirements(tx)
-		if errlb != nil {
-			return sdk.WrapError(errlb, "updateJoinedAction> cannot load all binary requirements")
-		}
-
-		job.Enabled = true
-		job.Action.Enabled = true
-		if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
-			return sdk.WrapError(err, "addJoinedActionToPipelineHandler> Cannot insert job")
-		}
-
-		if err := worker.ComputeRegistrationNeeds(tx, reqs, job.Action.Requirements); err != nil {
-			return sdk.WrapError(err, "addActionToPipelineHandler> Cannot compute registration needs")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return err
-		}
-
-		return WriteJSON(w, job, http.StatusOK)
-	}
-}
-
-func (api *API) updateJoinedActionHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		actionIDString := vars["actionID"]
-		key := vars["key"]
-		pipName := vars["permPipelineKey"]
-
-		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
-		if errl != nil {
-			return sdk.WrapError(sdk.ErrNoProject, "updateJoinedAction> Cannot load project %s: %s", key, errl)
-		}
-
-		pip, errlp := pipeline.LoadPipeline(api.mustDB(), key, pipName, false)
-		if errlp != nil {
-			return sdk.WrapError(sdk.ErrPipelineNotFound, "updateJoinedAction> Cannot load pipeline %s for project %s: %s", pipName, key, errlp)
-		}
-
-		actionID, errp := strconv.ParseInt(actionIDString, 10, 60)
-		if errp != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "updateJoinedAction> Action ID %s must be an int", actionID)
-		}
-
-		var a sdk.Action
-		if err := UnmarshalBody(r, &a); err != nil {
-			return err
-		}
-		a.ID = actionID
-
-		clearJoinedAction, err := action.LoadActionByID(api.mustDB(), actionID)
-		if err != nil {
-			return sdk.WrapError(err, "updateJoinedAction> Cannot load action %d", actionID)
-		}
-
-		if clearJoinedAction.Type != sdk.JoinedAction {
-			return sdk.WrapError(sdk.ErrForbidden, "updateJoinedAction> Tried to update a %s action, aborting", clearJoinedAction.Type)
-		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "updateJoinedAction> Cannot begin tx")
-		}
-		defer tx.Rollback()
-
-		reqs, errlb := action.LoadAllBinaryRequirements(tx)
-		if errlb != nil {
-			return sdk.WrapError(errlb, "updateJoinedAction> cannot load all binary requirements")
-		}
-
-		log.Debug("updateJoinedAction> UpdateActionDB %d", a.ID)
-		if err := action.UpdateActionDB(tx, &a, getUser(ctx).ID); err != nil {
-			return sdk.WrapError(err, "updateJoinedAction> cannot update action")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pip, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateJoinedAction> cannot update pipeline last_modified date")
-		}
-
-		log.Debug("updateJoinedAction> CheckAction %d", a.ID)
-
-		if err := worker.ComputeRegistrationNeeds(tx, reqs, a.Requirements); err != nil {
-			return sdk.WrapError(err, "updateJoinedAction> Cannot compute registration needs")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateJoinedAction> Cannot commit transaction")
-		}
-
-		return WriteJSON(w, a, http.StatusOK)
-	}
-}
-
-func (api *API) deleteJoinedActionHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipName := vars["permPipelineKey"]
-		actionIDString := vars["actionID"]
-
-		actionID, errp := strconv.ParseInt(actionIDString, 10, 60)
-		if errp != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "deleteJoinedAction> Action ID %s must be an int", actionIDString)
-		}
-
-		pip, errload := pipeline.LoadPipeline(api.mustDB(), projectKey, pipName, false)
-		if errload != nil {
-			return sdk.WrapError(sdk.ErrPipelineNotFound, "deleteJoinedAction> Cannot load pipeline %s for project %s, err:%s", pipName, projectKey, errload)
-		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "deleteJoinedAction> Cannot start transaction")
-		}
-		defer tx.Rollback()
-
-		if err := action.DeleteAction(api.mustDB(), actionID, getUser(ctx).ID); err != nil {
-			return sdk.WrapError(err, "deleteJoinedAction> Cannot delete joined action")
-		}
-
-		//Load the project
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "deleteJoinedAction> Unable to load project %s", projectKey)
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pip, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deleteJoinedAction> cannot update pipeline last_modified date")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteJoinedAction> Cannot commit transaction")
-		}
-
-		return nil
-	}
-}
-
-func (api *API) getJoinedActionAuditHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
-		vars := mux.Vars(r)
-		actionIDString := vars["actionID"]
-
-		actionID, err := strconv.Atoi(actionIDString)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "getJoinedActionAudithandler> Action ID must be an int")
-
-		}
-
-		audit, err := action.LoadAuditAction(api.mustDB(), actionID, false)
-		if err != nil {
-			return sdk.WrapError(err, "getJoinedActionAudithandler> Cannot load audit for action %d", actionID)
-
-		}
-
-		return WriteJSON(w, audit, http.StatusOK)
-	}
-}
-
-func (api *API) getJoinedActionHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
-		vars := mux.Vars(r)
-		actionIDString := vars["actionID"]
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
-
-		actionID, err := strconv.ParseInt(actionIDString, 10, 60)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "getJoinedAction> Action ID must be an int")
-
-		}
-
-		a, err := action.LoadPipelineActionByID(api.mustDB(), projectKey, pipelineName, actionID)
-		if err != nil {
-			return sdk.WrapError(err, "getJoinedAction> Cannot load joined action")
-
-		}
-
-		return WriteJSON(w, a, http.StatusOK)
 	}
 }
 

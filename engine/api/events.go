@@ -301,11 +301,9 @@ func (b *eventsBroker) ServeHTTP() Handler {
 func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
-	for k, i := range b.clients {
+	for _, i := range b.clients {
 		if i.Queue != nil {
 			manageEvent(b.cache, receivedEvent, eventS, i)
-		} else {
-			log.Warning("Queue is nil %s / %+v", k, i)
 		}
 
 	}
