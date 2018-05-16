@@ -159,7 +159,7 @@ func DeleteParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64, paramNam
 func DeleteAllParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64) error {
 	query := `DELETE FROM pipeline_parameter WHERE pipeline_id=$1`
 	_, err := db.Exec(query, pipelineID)
-	return err
+	return sdk.WrapError(err, "DeleteAllParameterFromPipeline> Unable to delete all parameters")
 }
 
 // CountInValueParamData represents the result of CountInParamValue function
