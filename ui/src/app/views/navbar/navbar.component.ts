@@ -3,7 +3,9 @@ import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
 import {ApplicationStore} from '../../service/application/application.store';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
+import {BroadcastService} from '../../service/broadcast/broadcast.service';
 import {Application} from '../../model/application.model';
+import {Broadcast} from '../../model/broadcast.model';
 import {User} from '../../model/user.model';
 import {NavigationEnd, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
@@ -35,6 +37,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     searchItems: Array<NavbarSearchItem> = [];
     recentItems: Array<NavbarSearchItem> = [];
     items: Array<NavbarSearchItem> = [];
+    broadcasts: Array<Broadcast> = [];
+    broadcastsToDisplay: Array<Broadcast> = [];
     loading = true;
 
     listWorkflows: List<NavbarRecentData>;
@@ -42,10 +46,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     currentCountry: string;
     langSubscription: Subscription;
     navbarSubscription: Subscription;
+    userSubscription: Subscription;
+    broadcastSubscription: Subscription;
 
     currentRoute: {};
 
-    userSubscription: Subscription;
 
     public currentUser: User;
 
@@ -53,6 +58,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
                 private _workflowStore: WorkflowStore,
+                private _broadcastService: BroadcastService,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
                 private _translate: TranslateService,
                 private _authentificationStore: AuthentificationStore,
@@ -186,6 +192,13 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             }
             this.loading = false;
         });
+
+        this.broadcastSubscription = this._broadcastService.getBroadcastsListener()
+            .subscribe((broadcasts) => {
+                let broadcastsToRead = broadcasts.filter((br) => !br.read)
+                this.broadcastsToDisplay = broadcastsToRead.slice(0, 3);
+                this.broadcasts = broadcastsToRead;
+            });
     }
 
     navigateToResult(result: NavbarSearchItem) {
@@ -221,7 +234,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      * @param key Project unique key get by the event
      */
     navigateToProject(key): void {
-        this._router.navigate(['/project/' + key]);
+        this._router.navigate(['project/' + key]);
     }
 
     getWarningParams(): {} {
@@ -240,5 +253,15 @@ export class NavbarComponent implements OnInit, AfterViewInit {
      */
     navigateToWorkflow(key: string, workflowName: string): void {
         this._router.navigate(['project', key, 'workflow', workflowName]);
+    }
+
+    goToBroadcast(id: number): void {
+        this._router.navigate(['broadcast', id]);
+    }
+
+    markAsRead(event: Event, id: number) {
+        event.stopPropagation();
+        this._broadcastService.markAsRead(id)
+            .subscribe();
     }
 }

@@ -1,7 +1,7 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
     <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"/></a>
     <ng-container *ngIf="currentUser">
-        <a class="item link" href="#" [routerLink]="['/project', 'list', 'all']" *ngIf="currentUser">
+        <a class="item link" href="#" [routerLink]="['project', 'list', 'all']" *ngIf="currentUser">
             {{ 'navbar_projects' | translate }}
         </a>
         <div class="ui pointing dropdown link item" suiDropdown>
@@ -14,7 +14,7 @@
                 <ng-container *ngFor="let prj of listFavs">
                     <ng-container [ngSwitch]="prj.type">
                       <ng-container *ngSwitchCase="'workflow'">
-                        <a class="item" sm-item href="#" [routerLink]="['/project', prj.key, 'workflow', prj.workflow_name]">
+                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
                           <div class="details">
                             <div class="title bold">
                                 {{prj.workflow_name}}
@@ -26,7 +26,7 @@
                         </a>
                       </ng-container>
                       <ng-container *ngSwitchCase="'application'">
-                        <a class="item" sm-item href="#" [routerLink]="['/project', prj.key, 'application', prj.application_name]">
+                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key, 'application', prj.application_name]">
                           <div class="details">
                             <div class="title bold">
                                 {{prj.application_name}}}
@@ -38,7 +38,7 @@
                         </a>
                       </ng-container>
                       <ng-container *ngSwitchDefault>
-                        <a class="item" sm-item href="#" [routerLink]="['/project', prj.key]">
+                        <a class="item" sm-item href="#" [routerLink]="['project', prj.key]">
                           <div class="details">
                             <div class="title bold">
                                 {{prj.name}}
@@ -51,7 +51,7 @@
                       </ng-container>
                     </ng-container>
                 </ng-container>
-                <a class="item" sm-item href="#" [routerLink]="['/favorite']">
+                <a class="item" sm-item href="#" [routerLink]="['favorite']">
                   {{'common_favorites_all' | translate}}
                 </a>
             </div>
@@ -90,6 +90,34 @@
             (keydown)="searchEvent($event)"
             (resultSelected)="navigateToResult($event)">
         </sui-search>
+
+        <div class="ui dropdown button link item notification" suiDropdown>
+            <div class="text">
+                <i class="bell icon" [ngClass]="{'animated bounceIn': broadcasts && broadcasts.length > 0}"></i>
+                <div class="ui floating red circular label animated bounceIn" *ngIf="broadcasts && broadcasts.length > 0">{{broadcasts.length}}</div>
+            </div>
+            <div class="menu" suiDropdownMenu>
+                <a class="item" *ngFor="let broadcast of broadcastsToDisplay" (click)="goToBroadcast(broadcast.id)">
+                    <div class="notif">
+                      <i class="check icon" suiPopup [popupText]="'navbar_mark_read' | translate" [popupInverted]="true" popupPlacement="bottom center" (click)="markAsRead($event, broadcast.id)"></i>
+                      <div class="title bold" [class.blue]="broadcast.level === 'info'" [class.orange]="broadcast.level === 'warning'">
+                          {{broadcast.title}}
+                      </div>
+                      <div class="info mt">
+                          <span *ngIf="broadcast.project_key">
+                              {{'common_project' | translate}} {{broadcast.project_key}}
+                          </span>
+                          <span *ngIf="!broadcast.project_key">
+                              {{'navbar_general' | translate}}
+                          </span>
+                      </div>
+                    </div>
+                </a>
+                <a class="item" href="" [routerLink]="['/broadcast']">
+                    {{'navbar_see_all' | translate}}
+                </a>
+            </div>
+        </div>
 
         <sm-dropdown icon="settings" *ngIf="currentUser">
             <a sm-item href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>

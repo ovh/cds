@@ -1,0 +1,73 @@
+<div *ngIf="!loading; then broadcastsPart;else loadingPart"></div>
+<ng-template #broadcastsPart>
+    <div class="broadcastList">
+        <div class="scrollingContent">
+            <div class="paddingContent">
+                <div class="viewContent">
+                    <div class="ui grid">
+                        <div class="ui row">
+                            <div class="eight wide column">
+                                <h3>{{ 'broadcast_list_title' | translate }}</h3>
+                            </div>
+                            <div class="eight wide column" *ngIf="(recentBroadcasts && recentBroadcasts.length > 0) || (oldBroadcasts && oldBroadcasts.length > 0)">
+                                <div class="floated right">
+                                    <div class="ui icon input">
+                                        <input type="text" placeholder="{{'navbar_search' | translate}}" [(ngModel)]="filter">
+                                        <i class="search icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui row">
+                            <div class="sixteen wide column">
+                                <div class="ui fluid buttons">
+                                  <button class="ui button" [class.active]="recentView" (click)="switchToRecentView(true)">{{'broadcast_recent' | translate}}</button>
+                                  <button class="ui button" [class.active]="!recentView" (click)="switchToRecentView(false)">{{'broadcast_seen' | translate}}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <ng-container *ngIf="filteredBroadcasts && filteredBroadcasts.length > 0">
+                        <sui-accordion class="styled fluid mt5">
+                            <ng-container *ngFor="let broadcast of filteredBroadcasts; let i = index;">
+                                <sui-accordion-panel [isOpen]="i === 0">
+                                    <div title>
+                                        <i class="dropdown icon"></i>
+                                        {{broadcast.title}} <span *ngIf="broadcast.project_key">({{'common_project' | translate}} {{broadcast.project_key}})</span>
+                                        <ng-container *ngIf="recentView">
+                                            <button class="ui icon button transparent"
+                                                suiPopup
+                                                [popupText]="'navbar_mark_read' | translate"
+                                                [popupInverted]="true"
+                                                popupPlacement="bottom center"
+                                                (click)="markAsRead(broadcast.id)">
+                                              <i class="check icon"></i>
+                                            </button>
+                                        </ng-container>
+
+                                        <div class="ui label right floated" [class.orange]="broadcast.level === 'warning'" [class.blue]="broadcast.level === 'info'">
+                                            {{broadcast.created | date:'short'}}
+                                        </div>
+                                    </div>
+                                    <div content>
+                                        <p>{{broadcast.content}}</p>
+                                    </div>
+                                </sui-accordion-panel>
+                            </ng-container>
+                        </sui-accordion>
+                    </ng-container>
+                    <ng-container *ngIf="!filteredBroadcasts || filteredBroadcasts.length === 0">
+                        <div class="ui row mt5">
+                            <div class="centered sixteen wide column">
+                                {{'broadcast_none' | translate}}
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+<ng-template #loadingPart>
+    <div class="ui text active loader">{{'common_loading' | translate}}</div>
+</ng-template>
