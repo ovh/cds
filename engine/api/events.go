@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -11,8 +12,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"errors"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
@@ -302,7 +301,6 @@ func (b *eventsBroker) ServeHTTP() Handler {
 func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
-	log.Warning("eventsBroker. clients %v", b.clients)
 	for k, i := range b.clients {
 		if i.Queue != nil {
 			manageEvent(b.cache, receivedEvent, eventS, i)
