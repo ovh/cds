@@ -41,7 +41,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithFeatures)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithFeatures, project.LoadOptions.WithClearKeys)
 		if errP != nil {
 			sdk.WrapError(errP, "postImportAsCodeHandler> Cannot load project")
 		}
@@ -67,7 +67,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 			}
 		}
 
-		if err := workflow.PostRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+		if err := workflow.PostRepositoryOperation(api.mustDB(), api.Cache, *p, ope); err != nil {
 			return sdk.WrapError(err, "postImportAsCodeHandler> Cannot create repository operation")
 		}
 
