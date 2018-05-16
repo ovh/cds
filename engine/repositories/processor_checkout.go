@@ -24,7 +24,7 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 
 	gitRepo, err := repo.New(r.Basedir, opts...)
 	if err != nil {
-		log.Debug("Repositories> processCheckout> cloning %s", r.URL)
+		log.Debug("Repositories> processCheckout> cloning %s into %s", r.URL, r.Basedir)
 		if _, err = repo.Clone(r.Basedir, r.URL, opts...); err != nil {
 			log.Error("Repositories> processCheckout> Clone> [%s] error %v", op.UUID, err)
 			return err
