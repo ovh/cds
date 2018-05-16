@@ -28,34 +28,26 @@ func Compute(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap, ch
 				log.Warning("computeWithProjectEvent> Unable to start transaction")
 				return
 			}
-			if strings.HasPrefix(e.EventType, "sdk.EventProject") {
-				if err := computeWithProjectEvent(tx, store, e); err != nil {
+			switch {
+			case strings.HasPrefix(e.EventType, "sdk.EventProject"):
+				if err := computeWithProjectEvent(tx, e); err != nil {
 					log.Warning("warning.Compute: unable to compute project event: %v", err)
 					_ = tx.Rollback()
-					continue
+				} else {
+					commit(tx)
 				}
-				commit(tx)
-				continue
-			}
-			if strings.HasPrefix(e.EventType, "sdk.EventApplication") {
+			case strings.HasPrefix(e.EventType, "sdk.EventApplication"):
 				computeWithApplicationEvent(tx, store, e)
 				commit(tx)
-				continue
-			}
-			if strings.HasPrefix(e.EventType, "sdk.EventEnvironment") {
+			case strings.HasPrefix(e.EventType, "sdk.EventEnvironment"):
 				computeWithEnvironmentEvent(tx, store, e)
 				commit(tx)
-				continue
-			}
-			if strings.HasPrefix(e.EventType, "sdk.EventPipeline") {
+			case strings.HasPrefix(e.EventType, "sdk.EventPipeline"):
 				computeWithPipelineEvent(tx, store, e)
 				commit(tx)
-				continue
-			}
-			if strings.HasPrefix(e.EventType, "sdk.EventWorkflow") {
+			case strings.HasPrefix(e.EventType, "sdk.EventWorkflow"):
 				computeWithWorkflowEvent(tx, store, e)
 				commit(tx)
-				continue
 			}
 			_ = tx.Rollback()
 		}

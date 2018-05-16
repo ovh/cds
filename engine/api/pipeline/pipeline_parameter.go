@@ -180,7 +180,7 @@ func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]CountIn
 	`
 	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", value))
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "pipeline.CountInParamValue> Unable to count usage")
 	}
 	defer rows.Close()
 
@@ -188,7 +188,7 @@ func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]CountIn
 	for rows.Next() {
 		var d CountInValueParamData
 		if err := rows.Scan(&d.Count, &d.Name); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "pipeline.CountInParamValue> Unable to scan")
 		}
 		results = append(results, d)
 	}

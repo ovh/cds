@@ -277,7 +277,7 @@ func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountI
 	`
 	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", element))
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "pipeline.CountInPipelines> Unable to count usage")
 	}
 	defer rows.Close()
 
@@ -286,7 +286,7 @@ func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountI
 		var d CountInPipelineData
 		var id, childID int64
 		if err := rows.Scan(&d.PipName, &d.StageName, &d.ActionName, &id, &childID, &d.Count); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "pipeline.CountInPipelines> Unable to scan")
 		}
 		results = append(results, d)
 	}
