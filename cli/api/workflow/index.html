@@ -1689,6 +1689,73 @@
         <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/cli/worker/artifacts/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/artifacts/">
+          <span>artifacts</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/worker/cache/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/worker/cache/">
+        <span>cache</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/worker/cache/pull/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/cache/pull/">
+          <span>pull</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/cache/push/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/cache/push/">
+          <span>push</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/cli/worker/download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/download/">
+          <span>download</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/exit/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/exit/">
+          <span>exit</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/register/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/register/">
+          <span>register</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/tag/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/tag/">
+          <span>tag</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/tmpl/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/tmpl/">
+          <span>tmpl</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/update/">
+          <span>update</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/upload/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/upload/">
+          <span>upload</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/worker/version/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/version/">
+          <span>version</span>
+        </a>
+    </li>
         </ul>
     </li>
         </ul>
@@ -1878,8 +1945,8 @@
 <li><a href="#get-workflow-artifact-hash">GET <code>/workflow/artifact/&lt;hash&gt;</code></a></li>
 <li><a href="#get-workflow-hook">GET <code>/workflow/hook</code></a></li>
 <li><a href="#post-workflow-hook-model-model">POST <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
-<li><a href="#get-workflow-hook-model-model">GET <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
 <li><a href="#put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
+<li><a href="#get-workflow-hook-model-model">GET <code>/workflow/hook/model/&lt;model&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -1987,34 +2054,6 @@
 </tbody>
 </table>
 
-<h3 id="get-workflow-hook-model-model">GET <code>/workflow/hook/model/&lt;model&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/workflow/hook/model/&lt;model&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowHookModelHandler%22">getWorkflowHookModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-workflow-hook-model-model">PUT <code>/workflow/hook/model/&lt;model&gt;</code></h3>
 
 <table>
@@ -2039,6 +2078,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putWorkflowHookModelHandler%22">putWorkflowHookModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-workflow-hook-model-model">GET <code>/workflow/hook/model/&lt;model&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/workflow/hook/model/&lt;model&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowHookModelHandler%22">getWorkflowHookModelHandler</a></td>
 </tr>
 </tbody>
 </table>
