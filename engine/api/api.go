@@ -579,7 +579,6 @@ func (a *API) Serve(ctx context.Context) error {
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
-	go migrate.HatcheryCmdMigration(a.Cache, a.DBConnectionFactory.GetDBMap)
 
 	a.warnChan = make(chan sdk.Event)
 	event.Subscribe(a.warnChan)
@@ -587,6 +586,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
+	go migrate.HatcheryCmdMigration(a.Cache, a.DBConnectionFactory.GetDBMap)
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		go func() {
 			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
