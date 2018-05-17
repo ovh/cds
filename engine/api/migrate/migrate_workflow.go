@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	STATUS_INIT     = "NOT_BEGUN"
 	STATUS_START    = "STARTED"
 	STATUS_CLEANING = "CLEANING"
 	STATUS_DONE     = "DONE"

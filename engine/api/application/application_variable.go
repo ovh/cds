@@ -35,13 +35,6 @@ func WithClearPassword() FuncArg {
 	}
 }
 
-// WithEncryptPassword is a function argument to GetAllVariable to get secret encrypted
-func WithEncryptPassword() FuncArg {
-	return func(args *structarg) {
-		args.encryptsecret = true
-	}
-}
-
 // GetVariableAudit Get variable audit for the given application
 // Deprecated
 func GetVariableAudit(db gorp.SqlExecutor, key, appName string) ([]sdk.VariableAudit, error) {
