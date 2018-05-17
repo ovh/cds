@@ -11,8 +11,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+var baseUIURL string
+
 //Initialize starts goroutines for workflows
-func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) {
+func Initialize(c context.Context, store cache.Store, uiURL string, DBFunc func() *gorp.DbMap) {
+	baseUIURL = uiURL
 	rand.Seed(time.Now().Unix())
 	tickPurge := time.NewTicker(30 * time.Minute)
 
