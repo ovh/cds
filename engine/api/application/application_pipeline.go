@@ -193,17 +193,6 @@ func RemovePipeline(db gorp.SqlExecutor, key, appName, pipelineName string) erro
 		return fmt.Errorf("RemovePipeline> cannot delete app trigger> %s", err)
 	}
 
-	// Delete warnings
-	query = `DELETE FROM warning
-		WHERE
-		pip_id = (select pipeline.id from pipeline JOIN project ON project.id = pipeline.project_id WHERE pipeline.name = $1 AND projectkey = $3)
-		AND
-		app_id = (SELECT application.id FROM application JOIN project ON project.id = application.project_id WHERE application.name = $2 AND projectkey = $3)`
-	_, err = db.Exec(query, pipelineName, appName, key)
-	if err != nil {
-		return err
-	}
-
 	// Delete application_pipeline_notif
 	query = `
 		DELETE	FROM application_pipeline_notif
