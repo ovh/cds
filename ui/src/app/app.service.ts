@@ -38,7 +38,7 @@ export class AppService {
         }
         if (event.type_event.indexOf('sdk.EventApplication') === 0) {
             this.updateApplicationCache(event);
-        } else if (event.type_event.indexOf('sdk.EventPpeline') === 0) {
+        } else if (event.type_event.indexOf('sdk.EventPipeline') === 0) {
             this.updatePipelineCache(event);
         } else if (event.type_event.indexOf('sdk.EventWorkflow') === 0) {
             this.updateWorkflowCache(event);
