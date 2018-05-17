@@ -351,10 +351,6 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		jobParams = append(jobParams, prepareRequirementsToNodeJobRunParameters(jobRequirements)...)
 		next()
 
-		_, next = tracing.Span(ctx, "workflow.getJobExecutablesGroups")
-		groups, errGroups := getJobExecutablesGroups(db, run)
-		next()
-
 		if errGroups != nil {
 			return sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
 		}
