@@ -7,6 +7,7 @@ import {WorkflowHookModel} from './workflow.hook.model';
 import {GroupPermission} from './group.model';
 import {Usage} from './usage.model';
 import {notificationTypes, UserNotificationSettings} from 'app/model/notification.model';
+import { ProjectPlatform } from './platform.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -687,6 +688,8 @@ export class WorkflowNodeContext {
     application: Application;
     environment: Environment;
     environment_id: number;
+    project_platform: ProjectPlatform;
+    project_platform_id: number;
     default_payload: {};
     default_pipeline_parameters: Array<Parameter>;
     conditions: WorkflowNodeConditions;

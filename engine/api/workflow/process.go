@@ -375,8 +375,8 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 				for _, run := range v {
 					if id == run.ID {
 						runs = append(runs, run)
-						if run.Status == sdk.StatusFail.String() {
-							parentStatus = sdk.StatusFail.String()
+						if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
+							parentStatus = run.Status
 						}
 					}
 				}

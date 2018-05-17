@@ -68,7 +68,10 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
-	serverCfg := s.Cfg.Servers[name]
+	serverCfg, has := s.Cfg.Servers[name]
+	if !has {
+		return nil, sdk.ErrNotFound
+	}
 	if serverCfg.Github != nil {
 		return github.New(serverCfg.Github.ClientID, serverCfg.Github.ClientSecret, s.Cfg.API.HTTP.URL, s.Cfg.UI.HTTP.URL, s.Cache, serverCfg.Github.Status.Disable, !serverCfg.Github.Status.ShowDetail), nil
 	}
@@ -90,7 +93,7 @@ func (s *Service) Serve(c context.Context) error {
 	var errCache error
 	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
 	if errCache != nil {
-		return errCache
+		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
 	}
 
 	//Init the http server

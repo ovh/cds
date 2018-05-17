@@ -105,9 +105,9 @@ func ParseWorkflowUserNotificationSettings(t UserNotificationSettingsType, userN
 
 //JoinsID returns joins ID
 func (w *Workflow) JoinsID() []int64 {
-	res := []int64{}
-	for _, j := range w.Joins {
-		res = append(res, j.ID)
+	res := make([]int64, len(w.Joins))
+	for i, j := range w.Joins {
+		res[i] = j.ID
 	}
 	return res
 }
@@ -764,6 +764,8 @@ type WorkflowNodeContext struct {
 	Application               *Application           `json:"application,omitempty" db:"-"`
 	Environment               *Environment           `json:"environment,omitempty" db:"-"`
 	EnvironmentID             int64                  `json:"environment_id" db:"environment_id"`
+	ProjectPlatform           *ProjectPlatform       `json:"project_platform" db:"-"`
+	ProjectPlatformID         int64                  `json:"project_platform_id" db:"project_platform_id"`
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters,omitempty" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`

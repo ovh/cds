@@ -62,8 +62,13 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		n.Context.EnvironmentID = n.Context.Environment.ID
 	}
 
+	if n.Context.ProjectPlatformID == 0 && n.Context.ProjectPlatform != nil {
+		n.Context.ProjectPlatformID = n.Context.ProjectPlatform.ID
+	}
+
 	//Checks pipeline parameters
 	if len(n.Context.DefaultPipelineParameters) > 0 {
+		defaultPipParams := make([]sdk.Parameter, 0, len(n.Context.DefaultPipelineParameters))
 		for i := range n.Context.DefaultPipelineParameters {
 			var paramFound bool
 			param := &n.Context.DefaultPipelineParameters[i]
@@ -73,10 +78,11 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 					paramFound = true
 				}
 			}
-			if !paramFound {
-				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid parameter %s in pipeline %s", param.Name, n.Pipeline.Name))
+			if paramFound {
+				defaultPipParams = append(defaultPipParams, *param)
 			}
 		}
+		n.Context.DefaultPipelineParameters = defaultPipParams
 	}
 
 	if n.ID == 0 {
@@ -186,6 +192,7 @@ type sqlContext struct {
 	WorkflowNodeID            int64          `db:"workflow_node_id"`
 	AppID                     sql.NullInt64  `db:"application_id"`
 	EnvID                     sql.NullInt64  `db:"environment_id"`
+	ProjectPlatformID         sql.NullInt64  `db:"project_platform_id"`
 	DefaultPayload            sql.NullString `db:"default_payload"`
 	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
 	Conditions                sql.NullString `db:"conditions"`
@@ -207,6 +214,10 @@ func UpdateNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	// Set EnvironmentID in context
 	if c.EnvironmentID != 0 {
 		sqlContext.EnvID = sql.NullInt64{Int64: c.EnvironmentID, Valid: true}
+	}
+
+	if c.ProjectPlatformID != 0 {
+		sqlContext.ProjectPlatformID = sql.NullInt64{Int64: c.ProjectPlatformID, Valid: true}
 	}
 
 	// Set DefaultPayload in context
@@ -256,7 +267,7 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 }
 
 // loadNode loads a node in a workflow
-func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
+func loadNode(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
 	dbwn := Node{}
 	if err := db.SelectOne(&dbwn, "select * from workflow_node where workflow_id = $1 and id = $2", w.ID, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -271,7 +282,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 
 	if !opts.OnlyRootNode {
 		//Load triggers
-		triggers, errTrig := loadTriggers(db, store, w, &wn, u, opts)
+		triggers, errTrig := loadTriggers(db, store, proj, w, &wn, u, opts)
 		if errTrig != nil {
 			return nil, sdk.WrapError(errTrig, "LoadNode> Unable to load triggers of %d", id)
 		}
@@ -279,7 +290,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	}
 
 	//Load context
-	ctx, errCtx := LoadNodeContext(db, store, w.ProjectKey, wn.ID, u, opts)
+	ctx, errCtx := LoadNodeContext(db, store, proj, wn.ID, u, opts)
 	if errCtx != nil {
 		return nil, sdk.WrapError(errCtx, "LoadNode> Unable to load context of %d", id)
 	}
@@ -324,7 +335,7 @@ func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 	ctx := sdk.WorkflowNodeContext(dbnc)
 
-	if err := postLoadNodeContext(db, store, proj.Key, u, &ctx, opts); err != nil {
+	if err := postLoadNodeContext(db, store, proj, u, &ctx, opts); err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context dependencies")
 	}
 
@@ -339,7 +350,7 @@ func LockNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) error
 }
 
 // LoadNodeContext load the context for a given node id and user
-func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey string, nodeID int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
+func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeID int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	if err := db.SelectOne(&dbnc, "select id from workflow_node_context where workflow_node_id = $1", nodeID); err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load node context %d", nodeID)
@@ -347,17 +358,17 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey string, 
 	ctx := sdk.WorkflowNodeContext(dbnc)
 	ctx.WorkflowNodeID = nodeID
 
-	if err := postLoadNodeContext(db, store, projectKey, u, &ctx, opts); err != nil {
+	if err := postLoadNodeContext(db, store, proj, u, &ctx, opts); err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load node context dependencies")
 	}
 
 	return &ctx, nil
 }
 
-func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey string, u *sdk.User, ctx *sdk.WorkflowNodeContext, opts LoadOptions) error {
+func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User, ctx *sdk.WorkflowNodeContext, opts LoadOptions) error {
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
-		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex from workflow_node_context where id = $1", ctx.ID); err != nil {
+		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex, project_platform_id from workflow_node_context where id = $1", ctx.ID); err != nil {
 		return err
 	}
 	if sqlContext.AppID.Valid {
@@ -365,6 +376,9 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey stri
 	}
 	if sqlContext.EnvID.Valid {
 		ctx.EnvironmentID = sqlContext.EnvID.Int64
+	}
+	if sqlContext.ProjectPlatformID.Valid {
+		ctx.ProjectPlatformID = sqlContext.ProjectPlatformID.Int64
 	}
 	if sqlContext.Mutex.Valid {
 		ctx.Mutex = sqlContext.Mutex.Bool
@@ -382,7 +396,7 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey stri
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
-		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables)
+		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables, application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "postLoadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}
@@ -420,6 +434,19 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, projectKey stri
 		}
 
 		ctx.Environment.Permission = environment.Permission(env.ProjectKey, env.Name, u)
+	}
+
+	//Load the project platform in the context
+	if ctx.ProjectPlatformID != 0 {
+		for _, pf := range proj.Platforms {
+			if pf.ID == ctx.ProjectPlatformID {
+				ctx.ProjectPlatform = &pf
+				break
+			}
+		}
+		if ctx.ProjectPlatform == nil {
+			return sdk.WrapError(fmt.Errorf("unable to find project platform id = %d", ctx.ProjectPlatformID), "postLoadNodeContext")
+		}
 	}
 
 	if err := gorpmapping.JSONNullString(sqlContext.Conditions, &ctx.Conditions); err != nil {

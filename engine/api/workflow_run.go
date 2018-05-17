@@ -209,10 +209,15 @@ func (api *API) postWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowRunNumHandler> Cannot num must be > %d, got %d", num, m.Num)
 		}
 
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "postWorkflowRunNumHandler> unable to load projet")
+		}
+
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "postWorkflowRunNumHandler > Cannot load workflow")
 		}
@@ -255,6 +260,12 @@ func (api *API) resyncWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
+
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "resyncWorkflowRunHandler> unable to load projet")
+		}
+
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "resyncWorkflowRunHandler> Unable to load last workflow run [%s/%d]", name, number)
@@ -265,7 +276,7 @@ func (api *API) resyncWorkflowRunHandler() Handler {
 			return sdk.WrapError(errT, "resyncWorkflowRunHandler> Cannot start transaction")
 		}
 
-		if err := workflow.Resync(tx, api.Cache, run, getUser(ctx)); err != nil {
+		if err := workflow.Resync(tx, api.Cache, proj, run, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "resyncWorkflowRunHandler> Cannot resync pipelines")
 		}
 
@@ -419,12 +430,12 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 			return err
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project %s", key)
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow %s", name)
 		}
@@ -589,7 +600,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		name := vars["permWorkflowName"]
 		u := getUser(ctx)
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures, project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
 		}
@@ -619,7 +630,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				DeepPipeline: false,
 			}
 			var errW error
-			wf, errW = workflow.Load(api.mustDB(), api.Cache, key, name, u, options)
+			wf, errW = workflow.Load(api.mustDB(), api.Cache, p, name, u, options)
 			if errW != nil {
 				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
 			}
@@ -633,7 +644,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 					project.LoadOptions.WithGroups,
 					project.LoadOptions.WithApplications,
 					project.LoadOptions.WithEnvironments,
-					project.LoadOptions.WithPipelines)
+					project.LoadOptions.WithPipelines,
+					project.LoadOptions.WithClearKeys,
+				)
 
 				if errp != nil {
 					return sdk.WrapError(errp, "postWorkflowRunHandler> Cannot load project %s", key)
@@ -650,7 +663,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 					DeepPipeline: true,
 					Base64Keys:   true,
 				}
-				wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, u, options)
+				wf, errl = workflow.Load(api.mustDB(), api.Cache, p, name, u, options)
 				if errl != nil {
 					return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow %s/%s", key, name)
 				}
@@ -894,7 +907,7 @@ func (api *API) downloadworkflowArtifactDirectHandler() Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		f, err := objectstore.FetchArtifact(art)
+		f, err := objectstore.Fetch(art)
 		if err != nil {
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot fetch artifact")
 		}
@@ -922,10 +935,15 @@ func (api *API) getDownloadArtifactHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getDownloadArtifactHandler> Invalid node job run ID")
 		}
 
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "getDownloadArtifactHandler> unable to load projet")
+		}
+
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		work, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
+		work, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")
 		}
@@ -938,7 +956,7 @@ func (api *API) getDownloadArtifactHandler() Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		f, err := objectstore.FetchArtifact(art)
+		f, err := objectstore.Fetch(art)
 		if err != nil {
 			_ = f.Close()
 			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot fetch artifact")

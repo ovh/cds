@@ -88,6 +88,7 @@
   "application_repoman_cant_link": "here",
   "application_repo_title": "Link application to a repository: ",
   "application_repo_strat_title" : "Configuration",
+  "application_deployment_title" : "Link application to a deployment platform: ",
   "application_new_title" : "New application",
   "application_update_name_error": "Application name is mandatory and must respect the alphanumeric pattern + the following characters: .-_ ([a-zA-Z0-9._-]*)",
   "application_update_ok": "Application has been updated",
@@ -245,6 +246,8 @@
   "usage_pipeline_list": "Pipelines used",
   "usage_environment_list": "Environments used",
 
+  "deployment_platform_name": "Deployment platforms",
+
   "danger_zone": "Danger Zone",
 
   "downloads_title": "Download",
@@ -269,7 +272,7 @@
   "favorite_select_type": "Select a favorite type",
   "favorite_project_select": "Select a project",
   "favorite_workflow_select": "Select a workflow",
-  
+
   "broadcast_list_title": "Broadcasts",
   "broadcast_new_title": "Add a broadcast",
   "broadcast_edit_title": "Edit an broadcast",
@@ -516,6 +519,7 @@
   "project_pipelines_list": "List of pipelines in the project: ",
   "project_rename_title": "Rename the project: ",
   "project_repoman_title": "Link to a repository manager: ",
+  "project_repoman_created_by": "Link created by ",
   "project_update_msg_ok": "The project has just been updated.",
   "project_ssh_error": "Project ssh key must have a name",
   "project_update_name_error": "Project name is mandatory and must respect the alphanumeric pattern ([a-zA-Z0-9]*)",
@@ -532,6 +536,7 @@
   "platform_configuration": "Platform configuration",
 
   "provider_hook": "hook",
+  "provider_deployment": "deployment",
 
   "repo_name": "Repository",
   "repoman_delete_msg_ok": "Repository mananger is detached from the project",
@@ -823,6 +828,7 @@
   "workflow_permission_form_title": "Add a permission on workflow",
   "workflow_root_context_application": "Application (optional)",
   "workflow_root_context_environment": "Environment (optional)",
+  "workflow_root_context_platform": "Platform (optional)",
   "workflow_root_context_mutex": "Limit one run at a time",
   "workflow_root_context_pipeline": "Pipeline",
   "workflow_run_loading": "Loading runs...",

@@ -52,6 +52,10 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)), r.GET(api.getCPUProfileHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/{name}", r.POST(api.getProfileHandler, NeedAdmin(true)), r.GET(api.getProfileHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin", r.POST(api.postPGRPCluginHandler, NeedAdmin(true)), r.GET(api.getAllGRPCluginHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}", r.GET(api.getGRPCluginHandler, NeedAdmin(true)), r.PUT(api.putGRPCluginHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}/binary", r.POST(api.postGRPCluginBinaryHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}", r.GET(api.getGRPCluginBinaryHandler, Auth(false)), r.DELETE(api.deleteGRPCluginBinaryHandler, NeedAdmin(true)))
 
 	// Admin service
 	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
@@ -87,7 +91,8 @@ func (api *API) InitRouter() {
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
 
 	// Platform
-	r.Handle("/platform/models", r.GET(api.getPlatformModels))
+	r.Handle("/platform/models", r.GET(api.getPlatformModelsHandler), r.POST(api.postPlatformModelHandler, NeedAdmin(true)))
+	r.Handle("/platform/models/{name}", r.GET(api.getPlatformModelHandler), r.PUT(api.putPlatformModelHandler, NeedAdmin(true)), r.DELETE(api.deletePlatformModelHandler, NeedAdmin(true)))
 
 	// Broadcast
 	r.Handle("/broadcast", r.POST(api.addBroadcastHandler, NeedAdmin(true)), r.GET(api.getBroadcastsHandler))
@@ -112,7 +117,7 @@ func (api *API) InitRouter() {
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", r.POST(api.postPerformImportAsCodeHandler))
 
 	// Project
-	r.Handle("/project", r.GET(api.getProjectsHandler, EnableTracing()), r.POST(api.addProjectHandler))
+	r.Handle("/project", r.GET(api.getProjectsHandler, AllowProvider(true), EnableTracing()), r.POST(api.addProjectHandler))
 	r.Handle("/project/{permProjectKey}", r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
 	r.Handle("/project/{permProjectKey}/group", r.POST(api.addGroupInProjectHandler))
 	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler, DEPRECATED))
@@ -122,7 +127,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/variable/audit", r.GET(api.getVariablesAuditInProjectnHandler))
 	r.Handle("/project/{permProjectKey}/variable/{name}", r.GET(api.getVariableInProjectHandler), r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", r.GET(api.getVariableAuditInProjectHandler))
-	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler), r.POST(api.addApplicationHandler))
+	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler, AllowProvider(true)), r.POST(api.addApplicationHandler))
 	r.Handle("/project/{permProjectKey}/platforms", r.GET(api.getProjectPlatformsHandler), r.POST(api.postProjectPlatformHandler))
 	r.Handle("/project/{permProjectKey}/platforms/{platformName}", r.GET(api.getProjectPlatformHandler, AllowServices(true)), r.PUT(api.putProjectPlatformHandler), r.DELETE(api.deleteProjectPlatformHandler))
 	r.Handle("/project/{permProjectKey}/notifications", r.GET(api.getProjectNotificationsHandler))
@@ -160,6 +165,9 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/audit", r.GET(api.getVariablesAuditInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
+	// Application deployment
+	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config/{platform}", r.POST(api.postApplicationDeploymentStrategyConfigHandler, AllowProvider(true)), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config", r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
 
 	// Application workflow migration
 	r.Handle("/project/{key}/application/{permApplicationName}/workflow/migrate", r.POST(api.migrationApplicationWorkflowHandler))
@@ -197,6 +205,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job", r.POST(api.addJobToStageHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job/{jobID}", r.PUT(api.updateJobHandler), r.DELETE(api.deleteJobHandler))
 
+	// Preview pipeline
+	r.Handle("/project/{permProjectKey}/preview/pipeline", r.POST(api.postPipelinePreviewHandler))
 	// Import pipeline
 	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
 	// Export pipeline
@@ -311,7 +321,7 @@ func (api *API) InitRouter() {
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler, EnableTracing()))
 	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler))
-	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker()))
+	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker(), DEPRECATED, EnableTracing()))
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))

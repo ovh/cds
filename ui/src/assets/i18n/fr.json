@@ -88,6 +88,7 @@
   "application_repoman_cant_link": "ici",
   "application_repo_title": "Lier l'application à un repository : ",
   "application_repo_strat_title" : "Configuration",
+  "application_deployment_title" : "Lier l'application à une plateforme de déploiement: ",
   "application_new_title" : "Nouvelle application",
   "application_update_name_error": "Le nom de l'application est obligatoire et doit être au format alphanumérique + .-_ ([a-zA-Z0-9._-]*)",
   "application_update_ok": "L'application a été mise à jour",
@@ -245,6 +246,8 @@
   "usage_pipeline_list": "Pipelines utilisés",
   "usage_environment_list": "Environnements utilisés",
 
+  "deployment_platform_name": "Plateformes de déploiement",
+
   "danger_zone": "Zone dangereuse",
 
   "downloads_title": "Téléchargements",
@@ -269,7 +272,7 @@
   "favorite_select_type": "Sélectionnez un type de favoris",
   "favorite_project_select": "Sélectionnez un projet",
   "favorite_workflow_select": "Sélectionnez un workflow",
-  
+
   "broadcast_list_title": "Infos",
   "broadcast_new_title": "Ajouter une information",
   "broadcast_edit_title": "Éditer l'information",
@@ -516,6 +519,7 @@
   "project_pipelines_list": "Liste des pipelines du projet : ",
   "project_rename_title": "Renommer le projet : ",
   "project_repoman_title": "Lier le projet à un gestionnaire dépôt : ",
+  "project_repoman_created_by": "Lien créé par ",
   "project_ssh_error": "La clé ssh du projet doit avoir un nom",
   "project_update_msg_ok": "Le projet a été mis à jour.",
   "project_update_name_error": "Le nom du projet est obligatoire et doit être au format alphanumérique ([a-zA-Z0-9]*)",
@@ -532,6 +536,7 @@
   "platform_configuration": "Configuration de la plateforme",
 
   "provider_hook": "hook",
+  "provider_deployment": "déploiement",
 
   "repo_name": "Nom du dépôt",
   "repoman_delete_msg_ok": "Le gestionnaire de dépôt n'est plus lié au projet",
@@ -823,6 +828,7 @@
   "workflow_history_length": "Nombre de builds",
   "workflow_root_context_application": "Application (facultatif)",
   "workflow_root_context_environment": "Environnement (facultatif)",
+  "workflow_root_context_platform": "Platforme (facultatif)",
   "workflow_root_context_mutex": "Limiter à une execution à la fois",
   "workflow_root_context_pipeline": "Pipeline",
   "workflow_run_loading": "Chargement des exécutions",

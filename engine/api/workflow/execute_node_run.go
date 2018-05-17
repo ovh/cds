@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
@@ -312,6 +313,16 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		stage.Status = sdk.StatusDisabled
 	}
 
+	platformPluginBinaries, err := getPlatformPluginBinaries(db, run)
+	if err != nil {
+		return sdk.WrapError(err, "addJobsToQueue> unable to get platform plugins requirement")
+	}
+
+	groups, errGroups := getJobExecutablesGroups(db, run)
+	if errGroups != nil {
+		return sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
+	}
+
 	skippedOrDisabledJobs := 0
 	//Browse the jobs
 	for j := range stage.Jobs {
@@ -350,12 +361,13 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
-			WorkflowNodeRunID: run.ID,
-			Start:             time.Time{},
-			Queued:            time.Now(),
-			Status:            sdk.StatusWaiting.String(),
-			Parameters:        jobParams,
-			ExecGroups:        groups,
+			WorkflowNodeRunID:      run.ID,
+			Start:                  time.Time{},
+			Queued:                 time.Now(),
+			Status:                 sdk.StatusWaiting.String(),
+			Parameters:             jobParams,
+			ExecGroups:             groups,
+			PlatformPluginBinaries: platformPluginBinaries,
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
@@ -407,6 +419,30 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	}
 
 	return nil
+}
+
+func getPlatformPluginBinaries(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.GRPCPluginBinary, error) {
+	wr, errWR := LoadRunByID(db, run.WorkflowRunID, LoadRunOptions{})
+	if errWR != nil {
+		return nil, sdk.WrapError(errWR, "getPlatformPluginBinaries> Cannot load workflow run %d", run.WorkflowRunID)
+	}
+
+	node := wr.Workflow.GetNode(run.WorkflowNodeID)
+	if node == nil {
+		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find node")
+	}
+
+	if node.Context != nil && node.Context.ProjectPlatform != nil {
+		if node.Context.ProjectPlatform.Model.PluginName != "" {
+			p, err := plugin.LoadByName(db, node.Context.ProjectPlatform.Model.PluginName)
+			if err != nil {
+				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s", node.Context.ProjectPlatform.Model.PluginName)
+			}
+			return p.Binaries, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func getJobExecutablesGroups(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Group, error) {

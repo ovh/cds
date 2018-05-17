@@ -332,6 +332,22 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	return nodeRunDB, nil
 }
 
+//UpdateNodeRunBuildParameters updates build_parameters in table workflow_node_run
+func UpdateNodeRunBuildParameters(db gorp.SqlExecutor, nodeID int64, buildParameters []sdk.Parameter) error {
+	if buildParameters == nil {
+		return nil
+	}
+
+	bts, err := json.Marshal(&buildParameters)
+	if err != nil {
+		return sdk.WrapError(err, "UpdateNodeRunBuildParameters> unable to get json from build_parameters")
+	}
+
+	_, errU := db.Exec("UPDATE workflow_node_run SET build_parameters = $1 WHERE id = $2", bts, nodeID)
+
+	return sdk.WrapError(errU, "UpdateNodeRunBuildParameters>")
+}
+
 //UpdateNodeRun updates in table workflow_node_run
 func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	log.Debug("workflow.UpdateNodeRun> node.id=%d, status=%s", n.ID, n.Status)

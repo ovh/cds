@@ -88,24 +88,42 @@
                                                     </div>
                                                 </div>
                                                 <div class="fourteen wide column" *ngIf="creationMode === 'text'">
-                                                    <div class="field">
-                                                        <codemirror
-                                                                name="wfToImport"
-                                                                [(ngModel)]="wfToImport"
-                                                                (keydown)="updated = true"
-                                                                [config]="codeMirrorConfig" #codeMirror>
-                                                        </codemirror>
+                                                  <div class="ui row">
+                                                    <div class="sixteen wide column centered">
+                                                        <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)">
+                                                        </app-upload-button>
                                                     </div>
-                                                    <div class="field">
-                                                        <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' |
-                                                            translate }}
-                                                        </button>
-                                                        <button class="ui right floated green button" type="button"
-                                                                (click)="importWorkflow()" *ngIf="creationMode === 'text'"
-                                                                [disabled]="!wfToImport" [class.loading]="loading">{{ 'btn_create' |
-                                                            translate }}
-                                                        </button>
+                                                  </div>
+                                                  <div class="ui row">
+                                                    <div class="one wide column"></div>
+                                                    <div class="fourteen wide column">
+                                                        <div class="ui horizontal divider">
+                                                          {{'common_or' | translate}}
+                                                        </div>
                                                     </div>
+                                                  </div>
+                                                  <div class="ui row">
+                                                      <div class="field">
+                                                            <codemirror
+                                                                    name="wfToImport"
+                                                                    [(ngModel)]="wfToImport"
+                                                                    (keydown)="updated = true"
+                                                                    [config]="codeMirrorConfig" #codeMirror>
+                                                            </codemirror>
+                                                        </div>
+                                                  </div>
+                                                  <div class="ui row">
+                                                      <div class="field mt5">
+                                                          <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' |
+                                                              translate }}
+                                                          </button>
+                                                          <button class="ui right floated green button" type="button"
+                                                                  (click)="importWorkflow()" *ngIf="creationMode === 'text'"
+                                                                  [disabled]="!wfToImport" [class.loading]="loading">{{ 'btn_create' |
+                                                              translate }}
+                                                          </button>
+                                                      </div>
+                                                  </div>
                                                 </div>
                                                 <div class="fourteen wide column" *ngIf="creationMode === 'repository'">
                                                     <ng-container *ngIf="!asCodeResult">
@@ -150,7 +168,7 @@
                                                         </div>
                                                         <div class="ui field" *ngIf="selectedRepo">
                                                             <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy" [createOnProject]="true"
-                                                                              (strategyChange)="createWorkflowFromRepo()" [sshWarning]="true"
+                                                                              (strategyChange)="createWorkflowFromRepo()" [sshWarning]="true" [projectKeysOnly]="true"
                                                                               [hideBranch]="true" [hideButton]="true"></app-vcs-strategy>
                                                         </div>
                                                         <div class="right aligned field" *ngIf="!pollingResponse && selectedRepo">

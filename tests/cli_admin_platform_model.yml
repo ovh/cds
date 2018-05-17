@@ -1,0 +1,5 @@
+name: Platform model admin
+testcases:
+- name: List all the model
+  steps:
+  - script: {{.cds.build.cdsctl}} admin platform-model list

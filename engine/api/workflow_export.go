@@ -31,7 +31,11 @@ func (api *API) getWorkflowExportHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowExportHandler> Format invalid")
 		}
 
-		if _, err := workflow.Export(api.mustDB(), api.Cache, key, name, f, withPermissions, getUser(ctx), w); err != nil {
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowExportHandler> unable to load projet")
+		}
+		if _, err := workflow.Export(api.mustDB(), api.Cache, proj, name, f, withPermissions, getUser(ctx), w); err != nil {
 			return sdk.WrapError(err, "getWorkflowExportHandler>")
 		}
 
@@ -48,14 +52,19 @@ func (api *API) getWorkflowPullHandler() Handler {
 		name := vars["permWorkflowName"]
 		withPermissions := FormBool(r, "withPermissions")
 
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowPullHandler> unable to load projet")
+		}
+
 		buf := new(bytes.Buffer)
-		if err := workflow.Pull(api.mustDB(), api.Cache, key, name, exportentities.FormatYAML, withPermissions, project.EncryptWithBuiltinKey, getUser(ctx), buf); err != nil {
-			return sdk.WrapError(err, "getWorkflowExportHandler")
+		if err := workflow.Pull(api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, withPermissions, project.EncryptWithBuiltinKey, getUser(ctx), buf); err != nil {
+			return sdk.WrapError(err, "getWorkflowPullHandler")
 		}
 
 		w.Header().Add("Content-Type", "application/tar")
 		w.WriteHeader(http.StatusOK)
 		_, errC := io.Copy(w, buf)
-		return sdk.WrapError(errC, "getWorkflowExportHandler> Unable to copy content buffer in the response writer")
+		return sdk.WrapError(errC, "getWorkflowPullHandler> Unable to copy content buffer in the response writer")
 	}
 }

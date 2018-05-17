@@ -61,16 +61,6 @@ testcases:
   - script: {{.cds.build.cds}} pipeline job add ITCLIPIPPRJ HelloPipeline myJob1 --stage=1
   - script: {{.cds.build.cds}} pipeline job append ITCLIPIPPRJ HelloPipeline myJob1 IT_echo -p "name={{.cds.proj.VAR_2}}"
 
-- name: pipeline run
-  steps:
-  - script: {{.cds.build.cdsctl}} application add ITCLIPIPPRJ TestApp
-  - script: {{.cds.build.cds}} application pipeline add ITCLIPIPPRJ TestApp HelloPipeline -p "VAR_2=Parametre var2"
-  - script: {{.cds.build.cds}} pipeline run ITCLIPIPPRJ TestApp HelloPipeline --timeout 30
-
-- name: pipeline history
-  steps:
-  - script: {{.cds.build.cds}} pipeline history ITCLIPIPPRJ TestApp HelloPipeline
-
 - name: cleanup
   steps:
   - script: {{.cds.build.cdsctl}} project delete --force ITCLIPIPPRJ

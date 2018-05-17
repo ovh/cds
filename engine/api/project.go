@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -25,21 +26,48 @@ func (api *API) getProjectsHandler() Handler {
 		withApplications := FormBool(r, "application")
 		withWorkflows := FormBool(r, "workflow")
 		filterByRepo := r.FormValue("repo")
+		withPermissions := r.FormValue("permission")
 
-		opts := []project.LoadOptionFunc{}
+		var u = getUser(ctx)
+
+		//A provider can make a call for a specific user
+		if getProvider(ctx) != nil {
+			requestedUserName := r.Header.Get("X-Cds-Username")
+			var err error
+			//Load the specific user
+			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
+			if err != nil {
+				return sdk.WrapError(err, "getProjectsHandler> unable to load user '%s'", requestedUserName)
+			}
+		}
+
+		opts := []project.LoadOptionFunc{
+			project.LoadOptions.WithPermission,
+		}
 		if withApplications {
 			opts = append(opts, project.LoadOptions.WithApplications)
 		}
 
 		if withWorkflows {
-			opts = append(opts, project.LoadOptions.WithWorkflows)
+			opts = append(opts, project.LoadOptions.WithPlatforms, project.LoadOptions.WithWorkflows)
 		}
 
 		if filterByRepo == "" {
-			projects, err := project.LoadAll(ctx, api.mustDB(), api.Cache, getUser(ctx), opts...)
+			projects, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u, opts...)
 			if err != nil {
 				return sdk.WrapError(err, "getProjectsHandler")
 			}
+
+			if strings.ToUpper(withPermissions) == "W" {
+				res := make([]sdk.Project, 0, len(projects))
+				for _, p := range projects {
+					if p.Permission >= permission.PermissionReadWriteExecute {
+						res = append(res, p)
+					}
+				}
+				projects = res
+			}
+
 			return WriteJSON(w, projects, http.StatusOK)
 		}
 
@@ -55,7 +83,7 @@ func (api *API) getProjectsHandler() Handler {
 			ws := []sdk.Workflow{}
 			//Filter the workflow by applications
 			for i := range p.Workflows {
-				w, err := workflow.LoadByID(db, store, p.Workflows[i].ID, u, workflow.LoadOptions{})
+				w, err := workflow.LoadByID(db, store, p, p.Workflows[i].ID, u, workflow.LoadOptions{})
 				if err != nil {
 					return err
 				}
@@ -77,10 +105,21 @@ func (api *API) getProjectsHandler() Handler {
 		}
 		opts = append(opts, &filterByRepoFunc)
 
-		projects, err := project.LoadAllByRepo(api.mustDB(), api.Cache, getUser(ctx), filterByRepo, opts...)
+		projects, err := project.LoadAllByRepo(api.mustDB(), api.Cache, u, filterByRepo, opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
 		}
+
+		if strings.ToUpper(withPermissions) == "W" {
+			res := make([]sdk.Project, 0, len(projects))
+			for _, p := range projects {
+				if p.Permission >= permission.PermissionReadWriteExecute {
+					res = append(res, p)
+				}
+			}
+			projects = res
+		}
+
 		return WriteJSON(w, projects, http.StatusOK)
 	}
 }

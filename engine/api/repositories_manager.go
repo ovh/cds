@@ -144,7 +144,8 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 		defer tx.Rollback()
 
 		vcsServerForProject := &sdk.ProjectVCSServer{
-			Name: rmName,
+			Name:     rmName,
+			Username: username,
 			Data: map[string]string{
 				"token":  token,
 				"secret": secret,
@@ -219,7 +220,8 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 		log.Debug("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s", projectKey, token, secret)
 
 		vcsServerForProject := &sdk.ProjectVCSServer{
-			Name: rmName,
+			Name:     rmName,
+			Username: getUser(ctx).Username,
 			Data: map[string]string{
 				"token":  token,
 				"secret": secret,

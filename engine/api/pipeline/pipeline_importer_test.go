@@ -516,8 +516,88 @@ func TestImportUpdate(t *testing.T) {
 		},
 	}
 
+	var test8 = testcase{
+		name:    "Change stage order",
+		wantErr: false,
+		args: args{
+			u:    u,
+			pkey: sdk.RandomString(7),
+			pip: &sdk.Pipeline{
+				Type: sdk.BuildPipeline,
+			},
+		},
+		setup: func(t *testing.T, args args) {
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
+			args.pip.Name = proj.Key + "_PIP"
+			args.pip.ProjectID = proj.ID
+			args.pip.ProjectKey = proj.Key
+			test.NoError(t, pipeline.InsertPipeline(db, cache, proj, args.pip, nil))
+
+			args.pip.Parameter = []sdk.Parameter{
+				{Name: "test", Value: "test_value", Type: sdk.StringParameter, Description: "test_description"},
+			}
+			args.pip.Stages = []sdk.Stage{
+				{
+					BuildOrder: 1,
+					Enabled:    true,
+					PipelineID: args.pip.ID,
+					Name:       "This is the first stage. It has 2 jobs",
+					Jobs: []sdk.Job{
+						sdk.Job{
+							Enabled: true,
+							Action: sdk.Action{
+								Name: "Job n°1",
+							},
+						},
+						sdk.Job{
+							Enabled: true,
+							Action: sdk.Action{
+								Name: "Job n°2",
+							},
+						},
+					},
+				},
+				{
+					BuildOrder: 2,
+					Enabled:    true,
+					PipelineID: args.pip.ID,
+					Name:       "This is the second stage. It has 2 jobs",
+					Jobs: []sdk.Job{
+						sdk.Job{
+							Enabled: true,
+							Action: sdk.Action{
+								Name: "Job n°1",
+							},
+						},
+						sdk.Job{
+							Enabled: true,
+							Action: sdk.Action{
+								Name: "Job n°2",
+							},
+						},
+					},
+				},
+			}
+
+			test.NoError(t, pipeline.InsertStage(db, &args.pip.Stages[0]))
+			test.NoError(t, pipeline.InsertStage(db, &args.pip.Stages[1]))
+
+			args.pip.Stages[0].BuildOrder = 2
+			args.pip.Stages[1].BuildOrder = 1
+
+		},
+		asserts: func(t *testing.T, pip sdk.Pipeline) {
+			t.Logf("Asserts on %+v", pip)
+			assert.Equal(t, 2, len(pip.Stages))
+			assert.Equal(t, 1, pip.Stages[0].BuildOrder)
+			assert.Equal(t, 2, pip.Stages[1].BuildOrder)
+			assert.Equal(t, "This is the second stage. It has 2 jobs", pip.Stages[0].Name)
+			assert.Equal(t, "This is the first stage. It has 2 jobs", pip.Stages[1].Name)
+		},
+	}
+
 	//Run the tests
-	var tests = []testcase{test1, test2, test3, test4, test5, test6, test7}
+	var tests = []testcase{test1, test2, test3, test4, test5, test6, test7, test8}
 	for _, tt := range tests {
 		testImportUpdate(t, db, cache, tt)
 	}

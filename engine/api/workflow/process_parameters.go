@@ -17,10 +17,10 @@ import (
 
 func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, *sdk.MultiError) {
 	params := run.BuildParameters
-	tmp := map[string]string{}
-
-	tmp["cds.stage"] = stage.Name
-	tmp["cds.job"] = j.Action.Name
+	tmp := map[string]string{
+		"cds.stage": stage.Name,
+		"cds.job":   j.Action.Name,
+	}
 	errm := &sdk.MultiError{}
 
 	for k, v := range tmp {
@@ -40,8 +40,8 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 
 // GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
 func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
-	vars := map[string]string{}
 	tmpProj := sdk.ParametersFromProjectVariables(proj)
+	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
 		vars[k] = v
 	}
@@ -87,6 +87,27 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 		tmp := sdk.ParametersFromEnvironmentVariables(n.Context.Environment)
 		for k, v := range tmp {
 			vars[k] = v
+		}
+	}
+
+	// compute parameters variables
+	if n.Context != nil && n.Context.ProjectPlatform != nil {
+		vars["cds.platform"] = n.Context.ProjectPlatform.Name
+		tmp := sdk.ParametersFromPlatform(n.Context.ProjectPlatform.Config)
+		for k, v := range tmp {
+			vars[k] = v
+		}
+
+		// Process deployment strategy of the chosen platform
+		if n.Context.Application != nil {
+			for pfName, pfConfig := range n.Context.Application.DeploymentStrategies {
+				if pfName == n.Context.ProjectPlatform.Name {
+					tmp := sdk.ParametersFromPlatform(pfConfig)
+					for k, v := range tmp {
+						vars[k] = v
+					}
+				}
+			}
 		}
 	}
 
@@ -159,7 +180,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 		return nil, sdk.WrapError(err, "getParentParameters> Unable to load workflow run")
 	}
 
-	params := []sdk.Parameter{}
+	params := make([]sdk.Parameter, 0, len(nodeRunIds))
 	for _, nodeRunID := range nodeRunIds {
 		parentNodeRun, errNR := LoadNodeRunByID(db, nodeRunID, LoadRunOptions{})
 		if errNR != nil {
@@ -225,7 +246,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
 
-	params = []sdk.Parameter{}
+	params = make([]sdk.Parameter, 0, len(tmp))
 	for k, v := range tmp {
 		s, err := interpolate.Do(v, tmp)
 		if err != nil {

@@ -77,7 +77,7 @@ type Configuration struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`
 			Password string `toml:"password"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
-	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\nIf your CDS is made of a unique instance, a local cache if enough, but rememeber that all cached data will be lost on startup."`
+	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\n"`
 	Directories struct {
 		Download string `toml:"download" default:"/tmp/cds/download"`
 		Keys     string `toml:"keys" default:"/tmp/cds/keys"`
@@ -148,6 +148,12 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
+	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+}
+
+type ProviderConfiguration struct {
+	Name  string `toml:"name"`
+	Token string `toml:"token"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -301,6 +307,18 @@ func getUser(c context.Context) *sdk.User {
 		return nil
 	}
 	return u
+}
+
+func getProvider(c context.Context) *string {
+	i := c.Value(auth.ContextProvider)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(string)
+	if !ok {
+		return nil
+	}
+	return &u
 }
 
 func getAgent(r *http.Request) string {
@@ -466,7 +484,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
-	if err := platform.CreateModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := platform.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		return fmt.Errorf("cannot setup platforms: %v", err)
 	}
 

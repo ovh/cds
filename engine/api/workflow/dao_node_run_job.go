@@ -3,7 +3,6 @@ package workflow
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/tracing"
@@ -205,23 +205,28 @@ func (j *JobRun) PostInsert(s gorp.SqlExecutor) error {
 
 // PostUpdate is a db hook on workflow_node_run_job
 func (j *JobRun) PostUpdate(s gorp.SqlExecutor) error {
-	jobJSON, err := json.Marshal(j.Job)
+	jobJSON, err := gorpmapping.JSONToNullString(j.Job)
 	if err != nil {
 		return err
 	}
 
-	paramsJSON, errP := json.Marshal(j.Parameters)
+	paramsJSON, errP := gorpmapping.JSONToNullString(j.Parameters)
 	if errP != nil {
 		return errP
 	}
 
-	execGroupsJSON, errG := json.Marshal(j.ExecGroups)
+	execGroupsJSON, errG := gorpmapping.JSONToNullString(j.ExecGroups)
 	if errG != nil {
 		return sdk.WrapError(errG, "PostUpdate> err on marshal j.ExecGroups")
 	}
 
-	query := "update workflow_node_run_job set job = $2, variables = $3, exec_groups = $4 where id = $1"
-	if n, err := s.Exec(query, j.ID, jobJSON, paramsJSON, execGroupsJSON); err != nil {
+	platformPluginBinaries, errP := gorpmapping.JSONToNullString(j.PlatformPluginBinaries)
+	if errP != nil {
+		return sdk.WrapError(errP, "PostUpdate> err on marshal j.PlatformPluginRequirement")
+	}
+
+	query := "update workflow_node_run_job set job = $2, variables = $3, exec_groups = $4, platform_plugin_binaries = $5 where id = $1"
+	if n, err := s.Exec(query, j.ID, jobJSON, paramsJSON, execGroupsJSON, platformPluginBinaries); err != nil {
 		return err
 	} else if n, _ := n.RowsAffected(); n == 0 {
 		return fmt.Errorf("Unable to update workflow_node_run_job id = %d", j.ID)
@@ -239,22 +244,22 @@ func getHatcheryInfo(store cache.Store, j *JobRun) {
 
 // PostGet is a db hook on workflow_node_run_job
 func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
-	query := "SELECT job, variables, exec_groups FROM workflow_node_run_job WHERE id = $1"
-	var params, job, execGroups []byte
-	if err := s.QueryRow(query, j.ID).Scan(&job, &params, &execGroups); err != nil {
+	query := "SELECT job, variables, exec_groups, platform_plugin_binaries FROM workflow_node_run_job WHERE id = $1"
+	var params, job, execGroups, platformPluginBinaries sql.NullString
+	if err := s.QueryRow(query, j.ID).Scan(&job, &params, &execGroups, &platformPluginBinaries); err != nil {
 		return sdk.WrapError(err, "PostGet> s.QueryRow id:%d", j.ID)
 	}
-	if err := json.Unmarshal(job, &j.Job); err != nil {
+	if err := gorpmapping.JSONNullString(job, &j.Job); err != nil {
 		return sdk.WrapError(err, "PostGet> json.Unmarshal job")
 	}
-	if err := json.Unmarshal(params, &j.Parameters); err != nil {
+	if err := gorpmapping.JSONNullString(params, &j.Parameters); err != nil {
 		return sdk.WrapError(err, "PostGet> json.Unmarshal params")
 	}
-
-	if len(execGroups) > 0 {
-		if err := json.Unmarshal(execGroups, &j.ExecGroups); err != nil {
-			return sdk.WrapError(err, "PostGet> error on unmarshal exec_groups")
-		}
+	if err := gorpmapping.JSONNullString(execGroups, &j.ExecGroups); err != nil {
+		return sdk.WrapError(err, "PostGet> error on unmarshal exec_groups")
+	}
+	if err := gorpmapping.JSONNullString(platformPluginBinaries, &j.PlatformPluginBinaries); err != nil {
+		return sdk.WrapError(err, "PostGet> error on unmarshal platform_plugin_binaries")
 	}
 
 	rows, err := s.Query("SELECT DISTINCT UNNEST(spawn_attempts) FROM workflow_node_run_job WHERE id = $1", j.ID)

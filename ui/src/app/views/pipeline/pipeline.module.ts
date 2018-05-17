@@ -8,6 +8,7 @@ import {PipelineStageFormComponent} from './show/workflow/stage/form/pipeline.st
 import {PipelineApplicationComponent} from './show/application/pipeline.application.component';
 import {PipelineWorkflowComponent} from './show/workflow/pipeline.workflow.component';
 import {PipelineAuditComponent} from './show/audit/pipeline.audit.component';
+import {PipelineAsCodeEditorComponent} from './show/ascode-editor/pipeline.ascode.editor.component';
 @NgModule({
     declarations: [
         PipelineApplicationComponent,
@@ -17,6 +18,7 @@ import {PipelineAuditComponent} from './show/audit/pipeline.audit.component';
         PipelineStageFormComponent,
         PipelineAuditComponent,
         PipelineAdminComponent,
+        PipelineAsCodeEditorComponent,
     ],
     imports: [
         SharedModule,

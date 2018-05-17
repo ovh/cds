@@ -96,7 +96,7 @@ func Test_MigrateToWorkflow(t *testing.T) {
 	test.NoError(t, errA)
 	assert.Equal(t, "CLEANING", app2DB.WorkflowMigration)
 
-	wf, errW := workflow.Load(db, cache, proj.Key, "w"+app1.Name, u, workflow.LoadOptions{})
+	wf, errW := workflow.Load(db, cache, proj, "w"+app1.Name, u, workflow.LoadOptions{})
 	test.NoError(t, errW)
 
 	assert.Equal(t, pip1.ID, wf.Root.Pipeline.ID)
