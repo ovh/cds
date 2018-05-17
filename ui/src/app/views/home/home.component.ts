@@ -42,7 +42,7 @@ export class HomeComponent {
             .subscribe((broadcasts) => {
                 this.loadingBroadcasts = false
                 if (Array.isArray(broadcasts)) {
-                    this.broadcasts = broadcasts.filter((br) => !br.read).slice(0, 5);
+                    this.broadcasts = broadcasts.filter((br) => !br.read && !br.archived).slice(0, 5);
                 }
             }, () => this.loadingBroadcasts = false);
     }

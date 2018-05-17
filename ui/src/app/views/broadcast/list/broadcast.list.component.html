@@ -33,6 +33,7 @@
                                 <sui-accordion-panel [isOpen]="i === 0">
                                     <div title>
                                         <i class="dropdown icon"></i>
+                                        <span *ngIf="broadcast.archived" [smDirTooltip]="'broadcast_archived' | translate" smDirPosition="top center"> <i class="archive icon large"></i> </span>
                                         {{broadcast.title}} <span *ngIf="broadcast.project_key">({{'common_project' | translate}} {{broadcast.project_key}})</span>
                                         <ng-container *ngIf="recentView">
                                             <button class="ui icon button transparent"

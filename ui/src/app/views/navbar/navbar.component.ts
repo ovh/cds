@@ -195,7 +195,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
         this.broadcastSubscription = this._broadcastService.getBroadcastsListener()
             .subscribe((broadcasts) => {
-                let broadcastsToRead = broadcasts.filter((br) => !br.read)
+                let broadcastsToRead = broadcasts.filter((br) => !br.read && !br.archived)
                 this.broadcastsToDisplay = broadcastsToRead.slice(0, 3);
                 this.broadcasts = broadcastsToRead;
             });

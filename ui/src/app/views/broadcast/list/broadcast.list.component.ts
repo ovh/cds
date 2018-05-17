@@ -34,8 +34,8 @@ export class BroadcastListComponent {
       this._broadcastSub = this._broadcastService.getBroadcastsListener()
         .subscribe((broadcasts) => {
             this.loading = false;
-            this.recentBroadcasts = broadcasts.filter((br) => !br.read);
-            this.oldBroadcasts = broadcasts.filter((br) => br.read);
+            this.recentBroadcasts = broadcasts.filter((br) => !br.read && !br.archived);
+            this.oldBroadcasts = broadcasts.filter((br) => br.read || br.archived);
             this.filteredBroadcasts = this.recentBroadcasts;
         }, () => this.loading = false);
     }
