@@ -15,6 +15,7 @@ import (
 var hostname, cdsname string
 var kafkaBroker Broker
 var brokers []Broker
+var subscribers []chan<- sdk.Event
 
 // Broker event typed
 type Broker interface {
@@ -35,6 +36,8 @@ func getBroker(t string, option interface{}) (Broker, error) {
 
 // Initialize initializes event system
 func Initialize(k KafkaConfig) error {
+	subscribers = make([]chan<- sdk.Event, 0)
+
 	var err error
 	hostname, err = os.Hostname()
 	if err != nil {
@@ -62,6 +65,11 @@ func Initialize(k KafkaConfig) error {
 	return nil
 }
 
+// Subscribe to CDS events
+func Subscribe(ch chan<- sdk.Event) {
+	subscribers = append(subscribers, ch)
+}
+
 // DequeueEvent runs in a goroutine and dequeue event from cache
 func DequeueEvent(c context.Context) {
 	for {
@@ -70,6 +78,10 @@ func DequeueEvent(c context.Context) {
 		if err := c.Err(); err != nil {
 			log.Error("Exiting event.DequeueEvent : %v", err)
 			return
+		}
+
+		for _, s := range subscribers {
+			s <- e
 		}
 
 		// Send into external brokers

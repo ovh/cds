@@ -20,7 +20,7 @@ Depends: {{ StringsJoin .Dependencies ", "}}
 
 	postinstTmpl = `#!/bin/bash
 echo "Create the {{.SystemdServiceConfig.User}} User, Group and Directories"
-adduser --system --group --no-create-home {{.SystemdServiceConfig.User}}
+adduser --system --group {{.SystemdServiceConfig.User}}
 mkdir -p /var/lib/{{.PackageName}}
 chown -R {{.SystemdServiceConfig.User}}:{{.SystemdServiceConfig.User}} /var/lib/{{.PackageName}}
 chmod 770 /var/lib/{{.PackageName}}

@@ -118,7 +118,7 @@ func (api *API) InitRouter() {
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", r.POST(api.postPerformImportAsCodeHandler))
 
 	// Project
-	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))
+	r.Handle("/project", r.GET(api.getProjectsHandler, AllowProvider(true)), r.POST(api.addProjectHandler))
 	r.Handle("/project/{permProjectKey}", r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
 	r.Handle("/project/{permProjectKey}/group", r.POST(api.addGroupInProjectHandler))
 	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler, DEPRECATED))
@@ -128,7 +128,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/variable/audit", r.GET(api.getVariablesAuditInProjectnHandler))
 	r.Handle("/project/{permProjectKey}/variable/{name}", r.GET(api.getVariableInProjectHandler), r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", r.GET(api.getVariableAuditInProjectHandler))
-	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler), r.POST(api.addApplicationHandler))
+	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler, AllowProvider(true)), r.POST(api.addApplicationHandler))
 	r.Handle("/project/{permProjectKey}/platforms", r.GET(api.getProjectPlatformsHandler), r.POST(api.postProjectPlatformHandler))
 	r.Handle("/project/{permProjectKey}/platforms/{platformName}", r.GET(api.getProjectPlatformHandler, AllowServices(true)), r.PUT(api.putProjectPlatformHandler), r.DELETE(api.deleteProjectPlatformHandler))
 	r.Handle("/project/{permProjectKey}/notifications", r.GET(api.getProjectNotificationsHandler))

@@ -81,7 +81,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		entry := NodeEntry{}
 
 		ancestorIDs := n.Ancestors(&w, false)
-		ancestors := []string{}
+		ancestors := make([]string, 0, len(ancestorIDs))
 		for _, aID := range ancestorIDs {
 			a := w.GetNode(aID)
 			if a == nil {
@@ -348,6 +348,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	wf.Visit(w.processHooks)
 
 	//Compute permissions
+	wf.Groups = make([]sdk.GroupPermission, 0, len(w.Permissions))
 	for g, p := range w.Permissions {
 		perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
 		wf.Groups = append(wf.Groups, perm)

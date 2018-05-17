@@ -314,16 +314,14 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 	}
 	secrets = append(secrets, ev...)
 
-	//Projeft platform variable
-	pfv := []sdk.Variable{}
-	//Application deployment strategies variables
-	apv := []sdk.Variable{}
-
 	if n.Context.ProjectPlatform != nil {
 		pf, err := platform.LoadByID(db, n.Context.ProjectPlatformID, true)
 		if err != nil {
 			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load platform %d", n.Context.ProjectPlatformID)
 		}
+
+		//Projeft platform variable
+		pfv := make([]sdk.Variable, 0, len(pf.Config))
 		for k, v := range pf.Config {
 			pfv = append(pfv, sdk.Variable{
 				Name:  k,
@@ -340,6 +338,9 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 				return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load application deployment strategies %d", n.Context.ApplicationID)
 			}
 			strat, has := strats[n.Context.ProjectPlatform.Name]
+
+			//Application deployment strategies variables
+			apv := []sdk.Variable{}
 			if has {
 				for k, v := range strat {
 					apv = append(apv, sdk.Variable{
@@ -351,11 +352,10 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 			}
 			apv = sdk.VariablesPrefix(apv, "cds.platform.")
 			apv = sdk.VariablesFilter(apv, sdk.SecretVariable)
+			secrets = append(secrets, apv...)
 		}
-
+		secrets = append(secrets, pfv...)
 	}
-	secrets = append(secrets, pfv...)
-	secrets = append(secrets, apv...)
 
 	//Decrypt secrets
 	for i := range secrets {

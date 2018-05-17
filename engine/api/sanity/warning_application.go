@@ -14,10 +14,6 @@ func CheckApplication(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicati
 	warChan := make(chan []sdk.Warning)
 	done := make(chan bool)
 
-	if err := DeleteAllApplicationWarnings(db, app.ID); err != nil {
-		return err
-	}
-
 	go func() {
 		for {
 			ws, ok := <-warChan
@@ -27,9 +23,7 @@ func CheckApplication(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicati
 				for _, w := range ws {
 					w.Application.ID = app.ID
 					if w.Pipeline.ID == 0 && w.Action.ID == 0 {
-						if err := InsertApplicationWarning(db, proj.ID, app.ID, &w); err != nil {
-							log.Warning("CheckApplication> Error inserting warnings %s", err)
-						}
+
 					}
 				}
 			}

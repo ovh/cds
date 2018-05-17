@@ -131,7 +131,7 @@ func PublishDeleteProjectKey(p *sdk.Project, k sdk.ProjectKey, u *sdk.User) {
 	if sdk.NeedPlaceholder(k.Type) {
 		k.Private = sdk.PasswordPlaceholder
 	}
-	e := sdk.EventProjectKeyAdd{
+	e := sdk.EventProjectKeyDelete{
 		Key: k,
 	}
 	PublishProjectEvent(e, p.Key, u)

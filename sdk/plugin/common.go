@@ -118,7 +118,7 @@ func Main(p CDSAction) {
 // InfoMarkdown returns string formatted with markdown
 func InfoMarkdown(pl CDSAction) string {
 	var sp string
-	var keys []string
+	keys := make([]string, 0, len(pl.Parameters().DataDescription))
 	for k := range pl.Parameters().DataDescription {
 		keys = append(keys, k)
 	}
