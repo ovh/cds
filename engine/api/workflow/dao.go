@@ -588,7 +588,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	filteredPurgeTags := []string{}
 	for _, t := range w.PurgeTags {
 		if t != "" {
-			filteredPurgeTags = append(filteredPurgeTags)
+			filteredPurgeTags = append(filteredPurgeTags, t)
 		}
 	}
 	w.PurgeTags = filteredPurgeTags
