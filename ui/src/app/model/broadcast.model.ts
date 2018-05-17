@@ -8,4 +8,6 @@ export class Broadcast {
     archived: boolean;
     project_key: string;
     read: boolean;
+
+    updating: boolean;
 }
