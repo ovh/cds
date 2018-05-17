@@ -3,6 +3,7 @@ package workflow
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -498,11 +499,16 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	}
 
 	//Parse job params to get the VCS infos
+	var currentGitValuesAlreadyKnowned bool
+	sanitizedRepositoryFullname := getSanitizeRepofullname(currentGitValues[tagGitRepository])
 	previousGitValues := map[string]string{}
 	for _, param := range run.BuildParameters {
 		switch param.Name {
 		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
 			previousGitValues[param.Name] = param.Value
+		}
+		if strings.HasPrefix(param.Name, tagGitBranch+".") && param.Name == sanitizedRepositoryFullname {
+			currentGitValuesAlreadyKnowned = true
 		}
 	}
 
@@ -516,29 +522,30 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		gitValues = previousGitValues
 	}
 
-	var isMultiRepo bool
-	if (previousGitValues[tagGitURL] != "" && currentGitValues[tagGitURL] != "" && previousGitValues[tagGitURL] != currentGitValues[tagGitURL]) ||
-		(previousGitValues[tagGitHTTPURL] != "" && currentGitValues[tagGitHTTPURL] != "" && previousGitValues[tagGitHTTPURL] != currentGitValues[tagGitHTTPURL]) {
-		isMultiRepo = true
-	}
-
-	vcsInfos, errVcs := getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitValues[tagGitRepository])
-	if errVcs != nil {
-		if isRoot {
-			return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
+	var vcsInfos vcsInfos
+	if !currentGitValuesAlreadyKnowned {
+		var errVcs error
+		vcsInfos, errVcs = getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitValues[tagGitRepository])
+		if errVcs != nil {
+			if isRoot {
+				return false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
+			}
+			AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{errVcs.Error()},
+			})
+			return false, nil
 		}
-		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errVcs.Error()},
-		})
-		return false, nil
+
+		// only if it's the root pipeline, we put the git... in the build parameters
+		// this allow user to write some run conditions with .git.var on the root pipeline
+		if isRoot {
+			setValuesGitInBuildParameters(run, vcsInfos, false)
+			setValuesGitInBuildParameters(run, vcsInfos, true)
+		}
 	}
 
-	if !isMultiRepo {
-		setValuesGitInBuildParameters(run, vcsInfos)
-	}
-
-	//Check
+	// Check Run Conditions
 	if h != nil {
 		hooks := w.Workflow.GetHooks()
 		hook, ok := hooks[h.WorkflowNodeHookUUID]
@@ -546,9 +553,9 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 			return false, sdk.WrapError(sdk.ErrNoHook, "processWorkflowNodeRun> Unable to find hook %s", h.WorkflowNodeHookUUID)
 		}
 
-		//Check conditions
+		// Check conditions
 		var params = run.BuildParameters
-		//Define specific destination parameters
+		// Define specific destination parameters
 		dest := w.Workflow.GetNode(hook.WorkflowNodeID)
 		if dest == nil {
 			return false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processWorkflowNodeRun> Unable to find node %d", hook.WorkflowNodeID)
@@ -565,8 +572,9 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 	}
 
-	if isMultiRepo {
-		setValuesGitInBuildParameters(run, vcsInfos)
+	if !isRoot && !currentGitValuesAlreadyKnowned {
+		setValuesGitInBuildParameters(run, vcsInfos, false)
+		setValuesGitInBuildParameters(run, vcsInfos, true)
 
 		//Tag VCS infos
 		w.Tag(tagGitRepository, run.VCSRepository)
@@ -650,18 +658,27 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	return true, nil
 }
 
-func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
-	run.VCSRepository = vcsInfos.repository
-	run.VCSBranch = vcsInfos.branch
-	run.VCSHash = vcsInfos.hash
+func getSanitizeRepofullname(repositoryFullname string) string {
+	return strings.Replace(repositoryFullname, "/", "-", -1)
+}
 
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.url)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.httpurl)
+func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos, addSuffixRepositoryFullname bool) {
+	var suffix string
+	if addSuffixRepositoryFullname {
+		suffix = fmt.Sprintf(".%s", getSanitizeRepofullname(vcsInfos.repository))
+	} else {
+		run.VCSRepository = vcsInfos.repository
+		run.VCSBranch = vcsInfos.branch
+		run.VCSHash = vcsInfos.hash
+	}
+
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository+suffix, sdk.StringParameter, run.VCSRepository)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch+suffix, sdk.StringParameter, run.VCSBranch)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash+suffix, sdk.StringParameter, run.VCSHash)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor+suffix, sdk.StringParameter, vcsInfos.author)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage+suffix, sdk.StringParameter, vcsInfos.message)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL+suffix, sdk.StringParameter, vcsInfos.url)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL+suffix, sdk.StringParameter, vcsInfos.httpurl)
 }
 
 func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []sdk.Parameter) bool {
