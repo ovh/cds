@@ -38,7 +38,7 @@ func RandomString(strlen int) string {
 
 // DeleteEmptyValueFromArray deletes empty value from an array of string
 func DeleteEmptyValueFromArray(array []string) []string {
-	var out []string
+	out := make([]string, 0, len(array))
 	for _, str := range array {
 		if str != "" {
 			out = append(out, str)
