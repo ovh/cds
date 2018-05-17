@@ -30,7 +30,6 @@ var (
 type eventsBrokerSubscribe struct {
 	UUID  string
 	User  *sdk.User
-	Token string
 	Queue chan string
 }
 

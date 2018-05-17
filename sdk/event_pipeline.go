@@ -57,10 +57,10 @@ type EventPipelineStageAdd struct {
 
 // EventPipelineStageMove represent the event when moving a stage
 type EventPipelineStageMove struct {
-	StageName          string
-	StageID            int64
-	OldStageBuildOrder int
-	NewStageBuildOrder int
+	StageName          string `json:"stage_name"`
+	StageID            int64  `json:"stage_id"`
+	OldStageBuildOrder int    `json:"old_build_order"`
+	NewStageBuildOrder int    `json:"new_build_order"`
 }
 
 // EventPipelineStageUpdate represents the event when updating a stage
@@ -84,25 +84,25 @@ type EventPipelineStageDelete struct {
 
 // EventPipelineJobAdd represents the event when adding a job
 type EventPipelineJobAdd struct {
-	StageID         int64
-	StageName       string
-	StageBuildOrder int
-	Job             Job
+	StageID         int64  `json:"stage_id"`
+	StageName       string `json:"stage_name"`
+	StageBuildOrder int    `json:"stage_build_order"`
+	Job             Job    `json:"job"`
 }
 
 // EventPipelineJobUpdate represents the event when updating a job
 type EventPipelineJobUpdate struct {
-	StageID         int64
-	StageName       string
-	StageBuildOrder int
-	OldJob          Job
-	NewJob          Job
+	StageID         int64  `json:"stage_id"`
+	StageName       string `json:"stage_name"`
+	StageBuildOrder int    `json:"stage_build_order"`
+	OldJob          Job    `json:"old_job"`
+	NewJob          Job    `json:"new_job"`
 }
 
 // EventPipelineJobDelete represents the event when deleting a job
 type EventPipelineJobDelete struct {
-	StageID         int64
-	StageName       string
-	StageBuildOrder int
-	JobName         string
+	StageID         int64  `json:"stage_id"`
+	StageName       string `json:"stage_name"`
+	StageBuildOrder int    `json:"stage_build_order"`
+	JobName         string `json:"job_name"`
 }
