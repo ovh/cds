@@ -67,31 +67,6 @@ func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, store cache.Store
 	return pbJobs, nil
 }
 
-// GetWaitingPipelineBuildJob Get waiting pipeline build job
-func GetWaitingPipelineBuildJob(db gorp.SqlExecutor, store cache.Store) ([]sdk.PipelineBuildJob, error) {
-	var pbJobsGorp []PipelineBuildJob
-	query := `
-		SELECT *
-		FROM pipeline_build_job
-		WHERE status = $1
-	`
-	if _, err := db.Select(&pbJobsGorp, query, sdk.StatusWaiting.String()); err != nil {
-		return nil, err
-	}
-	var pbJobs []sdk.PipelineBuildJob
-	for i := range pbJobsGorp {
-		if err := pbJobsGorp[i].PostGet(db); err != nil {
-			return nil, err
-		}
-		h := sdk.Hatchery{}
-		if store.Get(keyBookJob(pbJobsGorp[i].ID), &h) {
-			pbJobsGorp[i].BookedBy = h
-		}
-		pbJobs = append(pbJobs, sdk.PipelineBuildJob(pbJobsGorp[i]))
-	}
-	return pbJobs, nil
-}
-
 // GetPipelineBuildJobForUpdate Get pipeline build job
 func GetPipelineBuildJobForUpdate(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.PipelineBuildJob, error) {
 	var pbJobGorp PipelineBuildJob

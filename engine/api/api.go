@@ -514,7 +514,7 @@ func (a *API) Serve(ctx context.Context) error {
 	hook.Init(a.Config.URL.API)
 
 	//Intialize notification package
-	notification.Init(a.Config.URL.API, a.Config.URL.UI)
+	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication driver...")
 	// Initialize the auth driver

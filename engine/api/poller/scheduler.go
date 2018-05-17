@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	pollerStatus = "Not Running"
 	pollingDelay = 60 * time.Second
 )
 
@@ -30,7 +29,6 @@ func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
 			if err != nil {
 				log.Error("poller.Scheduler> %s: %s", status, err)
 			}
-			pollerStatus = status
 		}
 	}
 }

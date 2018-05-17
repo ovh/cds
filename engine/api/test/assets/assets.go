@@ -243,16 +243,6 @@ func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Hatchery, method, u
 	return req
 }
 
-// AuthHeaders set auth headers
-func AuthHeaders(t *testing.T, u *sdk.User, token string) http.Header {
-	h := http.Header{}
-	h.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
-	h.Add(sdk.SessionTokenHeader, token)
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+token))
-	h.Add("Authorization", auth)
-	return h
-}
-
 // AuthentifyRequest  have to be used only for tests
 func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, token string) {
 	req.Header.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)

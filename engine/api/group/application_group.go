@@ -8,28 +8,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// LoadAllApplicationGroupByRole load all group for the given application and role
-func LoadAllApplicationGroupByRole(db gorp.SqlExecutor, applicationID int64, role int) ([]sdk.GroupPermission, error) {
-	groupsPermission := []sdk.GroupPermission{}
-	query := `
-		SELECT application_group.group_id, application_group.role
-		FROM application_group
-		JOIN application ON application_group.application_id = application.id
-		WHERE application.id = $1 AND role = $2;
-	`
-	rows, err := db.Query(query, applicationID, role)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var gPermission sdk.GroupPermission
-		rows.Scan(&gPermission.Group.ID, &gPermission.Permission)
-		groupsPermission = append(groupsPermission, gPermission)
-	}
-	return groupsPermission, nil
-}
-
 // LoadGroupsByApplication retrieves all groups related to project
 func LoadGroupsByApplication(db gorp.SqlExecutor, appID int64) ([]sdk.GroupPermission, error) {
 	query := `SELECT "group".id,"group".name,application_group.role FROM "group"
@@ -66,7 +44,7 @@ func CheckGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64) 
 	if err := db.QueryRow(query, applicationID, groupID).Scan(&nb); err != nil {
 		return false, err
 	}
-	return (nb != 0), nil
+	return nb != 0, nil
 }
 
 func checkAtLeastOneGroupWithWriteRoleOnApplication(db gorp.SqlExecutor, appID int64) (bool, error) {
