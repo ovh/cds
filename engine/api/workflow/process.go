@@ -499,16 +499,11 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	}
 
 	//Parse job params to get the VCS infos
-	var currentGitValuesAlreadyKnown bool
-	sanitizedRepositoryFullname := getSanitizeRepofullname(currentGitValues[tagGitRepository])
 	previousGitValues := map[string]string{}
 	for _, param := range run.BuildParameters {
 		switch param.Name {
 		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitMessage, tagGitRepository, tagGitURL, tagGitHTTPURL:
 			previousGitValues[param.Name] = param.Value
-		}
-		if strings.HasPrefix(param.Name, tagGitBranch+".") && param.Name == sanitizedRepositoryFullname {
-			currentGitValuesAlreadyKnown = true
 		}
 	}
 
@@ -536,11 +531,13 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		return false, nil
 	}
 
+	sanitizedRepositoryFullname := getSanitizeRepofullname(vcsInfos.repository)
+
 	// only if it's the root pipeline, we put the git... in the build parameters
 	// this allow user to write some run conditions with .git.var on the root pipeline
 	if isRoot {
-		setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", getSanitizeRepofullname(vcsInfos.repository)))
 		setValuesGitInBuildParameters(run, vcsInfos, "")
+		setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", sanitizedRepositoryFullname))
 	}
 
 	// Check Run Conditions
@@ -572,9 +569,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 
 	if !isRoot {
 		setValuesGitInBuildParameters(run, vcsInfos, "")
-		if !currentGitValuesAlreadyKnown {
-			setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", getSanitizeRepofullname(vcsInfos.repository)))
-		}
+		setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", sanitizedRepositoryFullname))
 	}
 
 	// Tag VCS infos : add in tag only if it does not exist
@@ -665,11 +660,9 @@ func getSanitizeRepofullname(repositoryFullname string) string {
 }
 
 func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos, suffix string) {
-	if suffix == "" {
-		run.VCSRepository = vcsInfos.repository
-		run.VCSBranch = vcsInfos.branch
-		run.VCSHash = vcsInfos.hash
-	}
+	run.VCSRepository = vcsInfos.repository
+	run.VCSBranch = vcsInfos.branch
+	run.VCSHash = vcsInfos.hash
 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository+suffix, sdk.StringParameter, run.VCSRepository)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch+suffix, sdk.StringParameter, run.VCSBranch)
