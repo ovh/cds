@@ -23,42 +23,6 @@ type Reader struct {
 	addr string
 }
 
-func NewUDPReader(addr string) (*Reader, error) {
-	var err error
-	udpAddr, err := net.ResolveUDPAddr("udp", addr)
-	if err != nil {
-		return nil, fmt.Errorf("ResolveUDPAddr('%s'): %s", addr, err)
-	}
-
-	conn, err := net.ListenUDP("udp", udpAddr)
-	if err != nil {
-		return nil, fmt.Errorf("ListenUDP: %s", err)
-	}
-
-	return &Reader{
-		conn: conn,
-		addr: conn.LocalAddr().String(),
-	}, nil
-}
-
-func NewTCPReader(addr string) (*Reader, error) {
-	var err error
-	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
-	if err != nil {
-		return nil, fmt.Errorf("ResolveTCPAddr('%s'): %s", addr, err)
-	}
-
-	ln, err := net.ListenTCP("tcp", tcpAddr)
-	if err != nil {
-		return nil, fmt.Errorf("ListenTCP: %s", err)
-	}
-
-	return &Reader{
-		ln:   ln,
-		addr: ln.Addr().String(),
-	}, nil
-}
-
 func (r *Reader) Addr() string {
 	return r.addr
 }

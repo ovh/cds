@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -212,11 +211,6 @@ func squote(str ...interface{}) string {
 	return strings.Join(out, " ")
 }
 
-func cat(v ...interface{}) string {
-	r := strings.TrimSpace(strings.Repeat("%v ", len(v)))
-	return fmt.Sprintf(r, v...)
-}
-
 func indent(spaces int, v string) string {
 	pad := strings.Repeat(" ", spaces)
 	return pad + strings.Replace(v, "\n", "\n"+pad, -1)
@@ -284,19 +278,6 @@ func trunc(c int, s string) string {
 		return s
 	}
 	return s[0:c]
-}
-
-func join(sep string, v interface{}) string {
-	return strings.Join(strslice(v), sep)
-}
-
-func split(sep, orig string) map[string]string {
-	parts := strings.Split(orig, sep)
-	res := make(map[string]string, len(parts))
-	for i, v := range parts {
-		res["_"+strconv.Itoa(i)] = v
-	}
-	return res
 }
 
 // substring creates a substring of the given string.

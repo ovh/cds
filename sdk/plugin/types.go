@@ -95,7 +95,6 @@ const (
 	PipelineParameter    ParameterType = "pipeline"
 	ListParameter        ParameterType = "list"
 	NumberParameter      ParameterType = "number"
-	PasswordParameter    ParameterType = "password"
 	StringParameter      ParameterType = "string"
 	TextParameter        ParameterType = "text"
 	BooleanParameter     ParameterType = "boolean"
