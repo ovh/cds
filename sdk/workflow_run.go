@@ -80,10 +80,7 @@ func (r *WorkflowRun) Tag(tag, value string) bool {
 }
 
 // TagExists return true if tag already exits
-func (r *WorkflowRun) TagExists(tag, value string) bool {
-	if value == "" {
-		return false
-	}
+func (r *WorkflowRun) TagExists(tag string) bool {
 	for i := range r.Tags {
 		if r.Tags[i].Tag == tag {
 			return true
