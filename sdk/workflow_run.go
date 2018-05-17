@@ -84,7 +84,6 @@ func (r *WorkflowRun) TagExists(tag, value string) bool {
 	if value == "" {
 		return false
 	}
-	var found bool
 	for i := range r.Tags {
 		if r.Tags[i].Tag == tag {
 			return true
