@@ -669,7 +669,7 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", err)
 			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{err.Error()},
+				Args: []interface{}{fmt.Sprintf("Error init LUA System: %v", err)},
 			})
 		}
 		luacheck.SetVariables(sdk.ParametersToMap(params))
@@ -680,7 +680,7 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 		log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
 		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errc.Error()},
+			Args: []interface{}{fmt.Sprintf("Error on LUA Condition: %v", errc)},
 		})
 		return false
 	}
