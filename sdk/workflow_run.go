@@ -79,6 +79,20 @@ func (r *WorkflowRun) Tag(tag, value string) bool {
 	return false
 }
 
+// TagExists return true if tag already exits
+func (r *WorkflowRun) TagExists(tag, value string) bool {
+	if value == "" {
+		return false
+	}
+	var found bool
+	for i := range r.Tags {
+		if r.Tags[i].Tag == tag {
+			return true
+		}
+	}
+	return false
+}
+
 //WorkflowRunInfo is an info on workflow run
 type WorkflowRunInfo struct {
 	APITime time.Time `json:"api_time,omitempty" db:"-"`
