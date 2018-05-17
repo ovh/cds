@@ -45,9 +45,9 @@ type OutputOpts struct {
 type cmds []cmd
 
 func (c cmds) Strings() []string {
-	res := []string{}
+	res := make([]string, len(c))
 	for i := range c {
-		res = append(res, c[i].String())
+		res[i] = c[i].String()
 	}
 	return res
 }

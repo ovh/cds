@@ -10,3 +10,12 @@ type Config struct {
 	Verbose   bool
 	Retry     int
 }
+
+//ProviderConfig is the configuration data used by the cdsclient ProviderClient interface implementation
+type ProviderConfig struct {
+	Host                  string
+	Name                  string
+	Token                 string
+	RequestSecondsTimeout int
+	InsecureSkipVerifyTLS bool
+}

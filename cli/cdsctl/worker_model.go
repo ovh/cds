@@ -187,7 +187,7 @@ func workerModelImportRun(c cli.Values) error {
 			return fmt.Errorf("Error : Unable to get group %s : %s", modelInfos.Group, err)
 		}
 
-		if _, err := client.WorkerModelAdd(modelInfos.Name, t, modelDocker, modelVm, g.ID); err != nil {
+		if _, err := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVm, g.ID); err != nil {
 			return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, err)
 		}
 

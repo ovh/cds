@@ -93,7 +93,7 @@ func (s *Service) Serve(c context.Context) error {
 	var errCache error
 	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
 	if errCache != nil {
-		return errCache
+		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
 	}
 
 	//Init the http server

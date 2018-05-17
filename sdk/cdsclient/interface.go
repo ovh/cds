@@ -227,7 +227,7 @@ type WorkerClient interface {
 	WorkerModelBook(id int64) error
 	WorkerList() ([]sdk.Worker, error)
 	WorkerDisable(id string) error
-	WorkerModelAdd(name string, modelType string, dockerModel sdk.ModelDocker, vmModel sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
+	WorkerModelAdd(name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(name string) (sdk.Model, error)
 	WorkerModelDelete(name string) error
 	WorkerModelSpawnError(id int64, info string) error
@@ -340,4 +340,39 @@ type GRPCPluginsClient interface {
 	PluginAddBinary(*sdk.GRPCPlugin, *sdk.GRPCPluginBinary) error
 	PluginDeleteBinary(string, string, string) error
 	PluginGetBinary(string, string, string, io.Writer) error
+}
+
+/* ProviderClient exposes allowed methods for providers
+ Usage:
+
+ 	cfg := ProviderConfig{
+		Host: "https://my-cds-api:8081",
+		Name: "my-provider-name",
+		Token: "my-very-long-secret-token",
+	}
+	client := NewProviderClient(cfg)
+	//Get the writable projects of a user
+	projects, err := client.ProjectsList(FilterByUser("a-username"), FilterByWritablePermission())
+	...
+*/
+type ProviderClient interface {
+	ProjectsList(opts ...RequestModifier) ([]sdk.Project, error)
+	ApplicationsList(projectKey string, opts ...RequestModifier) ([]sdk.Application, error)
+	ApplicationDeploymentStrategyUpdate(projectKey, applicationName, platformName string, config sdk.PlatformConfig) error
+}
+
+// FilterByUser allow a provider to perform a request as a user identified by its username
+func FilterByUser(username string) RequestModifier {
+	return func(req *http.Request) {
+		req.Header.Set("X-Cds-Username", username)
+	}
+}
+
+// FilterByWritablePermission allow a provider to filter only writable objects
+func FilterByWritablePermission() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("permission", "W")
+		r.URL.RawQuery = q.Encode()
+	}
 }

@@ -49,7 +49,7 @@ func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, 
 		}
 	}
 
-	if err := PostRepositoryOperation(db, store, &ope); err != nil {
+	if err := PostRepositoryOperation(db, store, *p, &ope); err != nil {
 		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to post repository operation")
 	}
 
@@ -199,15 +199,26 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 }
 
 // PostRepositoryOperation creates a new repository operation
-func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, ope *sdk.Operation) error {
+func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation) error {
 	querier := services.Querier(db, cache)
 	srvs, err := querier.FindByType(services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "PostRepositoryOperation> Unable to found repositories service")
 	}
+
+	initialKeyName := ope.RepositoryStrategy.SSHKey
+	if ope.RepositoryStrategy.ConnectionType == "ssh" {
+		for _, k := range prj.Keys {
+			if k.Name == ope.RepositoryStrategy.SSHKey {
+				ope.RepositoryStrategy.SSHKey = k.Private
+				break
+			}
+		}
+	}
 	if _, err := services.DoJSONRequest(srvs, http.MethodPost, "/operations", ope, ope); err != nil {
 		return sdk.WrapError(err, "PostRepositoryOperation> Unable to perform operation")
 	}
+	ope.RepositoryStrategy.SSHKey = initialKeyName
 	return nil
 }
 

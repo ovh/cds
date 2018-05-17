@@ -49,7 +49,7 @@ func NewAction(act sdk.Action) (a Action) {
 }
 
 func newSteps(a sdk.Action) []Step {
-	res := []Step{}
+	res := make([]Step, len(a.Actions))
 	for i := range a.Actions {
 		act := &a.Actions[i]
 		s := Step{}
@@ -150,7 +150,7 @@ func newSteps(a sdk.Action) []Step {
 			}
 			s[act.Name] = args
 		}
-		res = append(res, s)
+		res[i] = s
 	}
 
 	return res

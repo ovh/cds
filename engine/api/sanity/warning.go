@@ -41,11 +41,7 @@ func CheckPipeline(db *gorp.DbMap, store cache.Store, project *sdk.Project, pip 
 
 	for _, s := range pip.Stages {
 		for _, j := range s.Jobs {
-			warnings, err := CheckAction(tx, store, project, pip, j.Action.ID)
-			if err != nil {
-				return err
-			}
-			err = InsertActionWarnings(tx, project.ID, pip.ID, j.Action.ID, warnings)
+			_, err := CheckAction(tx, store, project, pip, j.Action.ID)
 			if err != nil {
 				return err
 			}

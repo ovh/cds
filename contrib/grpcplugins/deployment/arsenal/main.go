@@ -45,7 +45,7 @@ Arsenal platform must configured as following
 		version:
 			type: string
 		deployment.token:
-			type: string
+			type: password
 		retry.max:
 			type: string
 			value: 10
@@ -73,7 +73,7 @@ const deployData = `{
 	"metadata": {
 		"CDS_APPLICATION": "{{.cds.application}}",
 		"CDS_RUN": "{{.cds.run}}",
-		"CDS_ENVIRONMENT": "{{.cds.environment}}",
+		"CDS_ENVIRONMENT": "{{.cds.platform}}",
 		"CDS_GIT_BRANCH": "{{.git.branch}}",
 		"CDS_WORKFLOW": "{{.cds.workflow}}",
 		"CDS_PROJECT": "{{.cds.project}}",
@@ -91,18 +91,18 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 	var delayRetryStr = q.GetOptions()["cds.platform.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.platform.retry.max: %v. Default value will be used", err)
+		fmt.Printf("Error parsing cds.platform.retry.max: %v. Default value will be used\n", err)
 		maxRetry = 10
 	}
 	delayRetry, err := strconv.Atoi(delayRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.platform.retry.max: %v. Default value will be used", err)
+		fmt.Printf("Error parsing cds.platform.retry.max: %v. Default value will be used\n", err)
 		delayRetry = 5
 	}
 
 	deployData, err := interpolate.Do(deployData, q.GetOptions())
 	if err != nil {
-		return fail("Error: unable to interpolate data: %v. Please check you platform configuration", err)
+		return fail("Error: unable to interpolate data: %v. Please check you platform configuration\n", err)
 	}
 
 	httpClient := &http.Client{
@@ -116,7 +116,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 	}
 	req.Header.Add("X-Arsenal-Deployment-Token", arsenalDeploymentToken)
 
-	fmt.Printf("Deploying %s on Arsenal at %s...", application, arsenalHost)
+	fmt.Printf("Deploying %s on Arsenal at %s...\n", application, arsenalHost)
 
 	// Do the request
 	res, err := httpClient.Do(req)
@@ -144,7 +144,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 	var success bool
 	for retry < maxRetry {
 		if retry > 0 {
-			fmt.Printf("Retrying in %s seconds...", delayRetryStr)
+			fmt.Printf("Retrying in %s seconds...\n", delayRetryStr)
 			time.Sleep(time.Duration(delayRetry) * time.Second)
 		}
 
@@ -168,16 +168,18 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 		}
 
 		//Read the followUp token
-		bodyResult := map[string]string{}
+		bodyResult := map[string]interface{}{}
 		if err := json.Unmarshal(body, &bodyResult); err != nil {
 			return fail("Error: Unable to read body: %v", err)
 		}
 
-		if bodyResult["done"] == "true" {
+		doneB, doneIsBool := bodyResult["done"].(bool)
+		doneS, doneIsString := bodyResult["done"].(string)
+		if (doneIsBool && doneB) || (doneIsString && doneS == "true") {
 			success = true
 			break
 		} else {
-			fmt.Println("Not done yet.")
+			fmt.Println("Not done yet")
 		}
 		retry++
 	}
@@ -193,8 +195,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 
 func (e *arsenalDeploymentPlugin) DeployStatus(ctx context.Context, q *platformplugin.DeployStatusQuery) (*platformplugin.DeployResult, error) {
 	return &platformplugin.DeployResult{
-		Details: "none",
-		Status:  "success",
+		Status: sdk.StatusSuccess.String(),
 	}, nil
 }
 

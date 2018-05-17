@@ -33,6 +33,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -76,7 +77,7 @@ type Configuration struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`
 			Password string `toml:"password"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
-	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\nIf your CDS is made of a unique instance, a local cache if enough, but rememeber that all cached data will be lost on startup."`
+	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\n"`
 	Directories struct {
 		Download string `toml:"download" default:"/tmp/cds/download"`
 		Keys     string `toml:"keys" default:"/tmp/cds/keys"`
@@ -189,6 +190,7 @@ type API struct {
 	StartupTime         time.Time
 	lastUpdateBroker    *lastUpdateBroker
 	eventsBroker        *eventsBroker
+	warnChan            chan sdk.Event
 	Cache               cache.Store
 }
 
@@ -578,6 +580,10 @@ func (a *API) Serve(ctx context.Context) error {
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	go migrate.HatcheryCmdMigration(a.Cache, a.DBConnectionFactory.GetDBMap)
+
+	a.warnChan = make(chan sdk.Event)
+	event.Subscribe(a.warnChan)
+	go warning.Compute(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.warnChan)
 	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code

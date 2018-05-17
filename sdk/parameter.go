@@ -104,16 +104,18 @@ func ParameterValue(vars []Parameter, s string) string {
 
 // ParametersFromMap returns an array of parameters from a map
 func ParametersFromMap(m map[string]string) []Parameter {
-	res := []Parameter{}
+	res := make([]Parameter, len(m))
+	i := 0
 	for k, v := range m {
-		res = append(res, Parameter{Name: k, Value: v, Type: "string"})
+		res[i] = Parameter{Name: k, Value: v, Type: "string"}
+		i++
 	}
 	return res
 }
 
 // ParametersToMap returns a map from a slice of parameters
 func ParametersToMap(params []Parameter) map[string]string {
-	res := map[string]string{}
+	res := make(map[string]string, len(params))
 	for _, p := range params {
 		res[p.Name] = p.Value
 	}
@@ -149,26 +151,28 @@ func ParametersFromEnvironmentVariables(env *Environment) map[string]string {
 
 // ParametersFromPipelineParameters returns a map from a slice of parameters
 func ParametersFromPipelineParameters(pipParams []Parameter) map[string]string {
-	res := []Parameter{}
-	for _, t := range pipParams {
+	res := make([]Parameter, len(pipParams))
+	for i, t := range pipParams {
 		t.Name = "cds.pip." + t.Name
-		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+		res[i] = Parameter{Name: t.Name, Type: t.Type, Value: t.Value}
 	}
 	return ParametersToMap(res)
 }
 
 // ParametersFromPlatform returns a map of variables from a ProjectPlatform
 func ParametersFromPlatform(ppf PlatformConfig) map[string]string {
-	vars := []Variable{}
+	vars := make([]Variable, len(ppf))
+	i := 0
 	for k, c := range ppf {
-		vars = append(vars, Variable{Name: k, Type: c.Type, Value: c.Value})
+		vars[i] = Variable{Name: k, Type: c.Type, Value: c.Value}
+		i++
 	}
 	params := variablesToParameters("cds.platform", vars)
 	return ParametersToMap(params)
 }
 
 func variablesToParameters(prefix string, variables []Variable) []Parameter {
-	res := []Parameter{}
+	res := make([]Parameter, 0, len(variables))
 	for _, t := range variables {
 		if NeedPlaceholder(t.Type) {
 			continue

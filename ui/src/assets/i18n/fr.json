@@ -840,6 +840,7 @@
   "workflow_history_length": "Nombre de builds",
   "workflow_root_context_application": "Application (facultatif)",
   "workflow_root_context_environment": "Environnement (facultatif)",
+  "workflow_root_context_platform": "Platforme (facultatif)",
   "workflow_root_context_mutex": "Limiter à une execution à la fois",
   "workflow_root_context_pipeline": "Pipeline",
   "workflow_run_loading": "Chargement des exécutions",

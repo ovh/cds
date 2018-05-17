@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
+
+	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
@@ -10,8 +13,6 @@ import (
 
 func runDeployApplication(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		sendLog("# Starting application deployment...")
-
 		pfName := sdk.ParameterFind(params, "cds.platform")
 		if pfName == nil {
 			res := sdk.Result{
@@ -58,7 +59,17 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		go enablePluginLogger(logCtx, sendLog, pluginSocket)
 		defer stopLogs()
 
-		sendLog(fmt.Sprintf("# Plugin %s is ready", pf.Model.PluginName))
+		manifest, err := platformPluginClient.Manifest(ctx, &empty.Empty{})
+		if err != nil {
+			res := sdk.Result{
+				Reason: "Unable to retrieve plugin manifest... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(err.Error())
+			return res
+		}
+
+		sendLog(fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 
 		query := platformplugin.DeployQuery{
 			Options: sdk.ParametersToMap(*params),
@@ -74,13 +85,18 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		sendLog("# Deploy successfully called")
-
 		sendLog(fmt.Sprintf("# Details: %s", res.Details))
 		sendLog(fmt.Sprintf("# Status: %s", res.Status))
 
+		if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess.String()) {
+			return sdk.Result{
+				Status: sdk.StatusSuccess.String(),
+			}
+		}
+
 		return sdk.Result{
-			Status: sdk.StatusSuccess.String(),
+			Status: sdk.StatusFail.String(),
+			Reason: res.Details,
 		}
 	}
 }

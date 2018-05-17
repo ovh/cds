@@ -16,7 +16,7 @@ const patternColumns = `
 
 // InsertWorkerModelPattern insert a new worker model in database
 func InsertWorkerModelPattern(db gorp.SqlExecutor, modelPattern *sdk.ModelPattern) error {
-	dbmodelPattern := WorkerModelPattern(*modelPattern)
+	dbmodelPattern := workerModelPattern(*modelPattern)
 	if err := db.Insert(&dbmodelPattern); err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func InsertWorkerModelPattern(db gorp.SqlExecutor, modelPattern *sdk.ModelPatter
 
 // UpdateWorkerModelPattern insert a new worker model in database
 func UpdateWorkerModelPattern(db gorp.SqlExecutor, modelPattern *sdk.ModelPattern) error {
-	dbmodelPattern := WorkerModelPattern(*modelPattern)
+	dbmodelPattern := workerModelPattern(*modelPattern)
 	if _, err := db.Update(&dbmodelPattern); err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func UpdateWorkerModelPattern(db gorp.SqlExecutor, modelPattern *sdk.ModelPatter
 
 // DeleteWorkerModelPatter removes from database worker model pattern
 func DeleteWorkerModelPattern(db gorp.SqlExecutor, ID int64) error {
-	wmp := WorkerModelPattern(sdk.ModelPattern{ID: ID})
+	wmp := workerModelPattern(sdk.ModelPattern{ID: ID})
 	count, err := db.Delete(&wmp)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func DeleteWorkerModelPattern(db gorp.SqlExecutor, ID int64) error {
 
 // LoadWorkerModelPatterns retrieves model patterns from database
 func LoadWorkerModelPatterns(db gorp.SqlExecutor) ([]sdk.ModelPattern, error) {
-	var wmPatterns []WorkerModelPattern
+	var wmPatterns []workerModelPattern
 	query := fmt.Sprintf(`SELECT %s from WORKER_MODEL_PATTERN ORDER BY name`, patternColumns)
 	if _, err := db.Select(&wmPatterns, query); err != nil {
 		return nil, sdk.WrapError(err, "LoadWorkerModelPatterns> ")
@@ -66,7 +66,7 @@ func LoadWorkerModelPatterns(db gorp.SqlExecutor) ([]sdk.ModelPattern, error) {
 
 // LoadWorkerModelPatternByName retrieves model patterns from database given its name and type
 func LoadWorkerModelPatternByName(db gorp.SqlExecutor, patternType, name string) (*sdk.ModelPattern, error) {
-	var wmp WorkerModelPattern
+	var wmp workerModelPattern
 	query := fmt.Sprintf(`SELECT %s FROM worker_model_pattern WHERE name = $1 AND type = $2`, patternColumns)
 	if err := db.SelectOne(&wmp, query, name, patternType); err != nil {
 		return nil, sdk.WrapError(err, "LoadWorkerModelPatternByName> ")

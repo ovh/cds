@@ -250,7 +250,7 @@ func newRequirements(req []sdk.Requirement) []Requirement {
 	if req == nil {
 		return nil
 	}
-	res := []Requirement{}
+	res := make([]Requirement, 0, len(req))
 	for _, r := range req {
 		switch r.Type {
 		case sdk.BinaryRequirement:
@@ -362,6 +362,7 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 			Name:       p.Name,
 			BuildOrder: 1,
 			Enabled:    true,
+			Jobs:       make([]sdk.Job, 0, len(p.Jobs)),
 		}
 		for s, j := range p.Jobs {
 			job, err := computeJob(s, j)
@@ -373,13 +374,16 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 		pip.Stages = []sdk.Stage{stage}
 	} else {
 		//There is more than one stage
-		stageKeys := []string{}
+		stageKeys := make([]string, len(p.Stages))
+		iS := 0
 		for k := range p.Stages {
-			stageKeys = append(stageKeys, k)
+			stageKeys[iS] = k
+			iS++
 		}
 		sort.Strings(stageKeys)
 
 		//Compute stages
+		pip.Stages = make([]sdk.Stage, 0, len(stageKeys))
 		for i, stageName := range stageKeys {
 			buildOrder := i
 			name := stageName
@@ -398,7 +402,6 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 				BuildOrder: buildOrder,
 				Name:       name,
 			}
-
 			if p.Stages[stageName].Enabled != nil {
 				s.Enabled = *p.Stages[stageName].Enabled
 			} else {
@@ -406,6 +409,7 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 			}
 
 			//Compute stage Prerequisites
+			s.Prerequisites = make([]sdk.Prerequisite, 0, len(p.Stages[stageName].Conditions))
 			for n, c := range p.Stages[stageName].Conditions {
 				s.Prerequisites = append(s.Prerequisites, sdk.Prerequisite{
 					Parameter:     n,
@@ -414,6 +418,7 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 			}
 
 			//Compute jobs
+			s.Jobs = make([]sdk.Job, 0, len(p.Stages[stageName].Jobs))
 			for n, j := range p.Stages[stageName].Jobs {
 				job, err := computeJob(n, j)
 				if err != nil {
@@ -430,13 +435,13 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 }
 
 func computeSteps(steps []Step) ([]sdk.Action, error) {
-	res := []sdk.Action{}
-	for _, s := range steps {
+	res := make([]sdk.Action, len(steps))
+	for i, s := range steps {
 		a, err := computeStep(s)
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, *a)
+		res[i] = *a
 	}
 	return res, nil
 }
@@ -487,8 +492,8 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 }
 
 func computeJobRequirements(req []Requirement) []sdk.Requirement {
-	res := []sdk.Requirement{}
-	for _, r := range req {
+	res := make([]sdk.Requirement, len(req))
+	for i, r := range req {
 		var name, tpe, val string
 		if r.Binary != "" {
 			name = r.Binary
@@ -519,11 +524,11 @@ func computeJobRequirements(req []Requirement) []sdk.Requirement {
 			val = r.Service.Value
 			tpe = sdk.ServiceRequirement
 		}
-		res = append(res, sdk.Requirement{
+		res[i] = sdk.Requirement{
 			Name:  name,
 			Type:  tpe,
 			Value: val,
-		})
+		}
 	}
 	return res
 }
@@ -559,7 +564,7 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	pip = new(sdk.Pipeline)
 	pip.Name = p.Name
 	pip.Type = sdk.BuildPipeline
-
+	pip.GroupPermission = make([]sdk.GroupPermission, 0, len(p.Permissions))
 	//Compute permissions
 	for g, p := range p.Permissions {
 		perm := sdk.GroupPermission{
@@ -569,6 +574,7 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 		pip.GroupPermission = append(pip.GroupPermission, perm)
 	}
 
+	pip.Parameter = make([]sdk.Parameter, 0, len(p.Parameters))
 	//Compute parameters
 	for p, v := range p.Parameters {
 		param := sdk.Parameter{
@@ -631,8 +637,11 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 		s.Jobs = append(s.Jobs, *job)
 	}
 
+	pip.Stages = make([]sdk.Stage, len(mapStages))
+	iS := 0
 	for _, s := range mapStages {
-		pip.Stages = append(pip.Stages, *s)
+		pip.Stages[iS] = *s
+		iS++
 	}
 
 	sort.Slice(pip.Stages, func(i, j int) bool {

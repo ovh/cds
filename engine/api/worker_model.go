@@ -517,7 +517,7 @@ func (api *API) deleteWorkerModelPatternHandler() Handler {
 
 func (api *API) getWorkerModelPatternHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if getUser(ctx) == nil || getUser(ctx).ID == 0 {
+		if getUser(ctx).ID == 0 {
 			var username string
 			if getUser(ctx) != nil {
 				username = getUser(ctx).Username
