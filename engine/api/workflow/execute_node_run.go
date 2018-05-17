@@ -313,15 +313,19 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		stage.Status = sdk.StatusDisabled
 	}
 
+	_, next = tracing.Span(ctx, "workflow.getPlatformPluginBinaries")
 	platformPluginBinaries, err := getPlatformPluginBinaries(db, run)
 	if err != nil {
 		return sdk.WrapError(err, "addJobsToQueue> unable to get platform plugins requirement")
 	}
+	next()
 
+	_, next = tracing.Span(ctx, "workflow.getJobExecutablesGroups")
 	groups, errGroups := getJobExecutablesGroups(db, run)
 	if errGroups != nil {
 		return sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
 	}
+	next()
 
 	skippedOrDisabledJobs := 0
 	//Browse the jobs

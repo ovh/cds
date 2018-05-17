@@ -11,13 +11,13 @@ import (
 	"net/http"
 	"reflect"
 	"runtime"
+	"runtime/pprof"
 	"strings"
 	"time"
 
 	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/rakyll/goutil/pprofutil"
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/tracing"
@@ -101,6 +101,15 @@ type HandlerConfigParam func(*HandlerConfig)
 
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
 type HandlerConfigFunc func(Handler, ...HandlerConfigParam) *HandlerConfig
+
+func (r *Router) pprofLabel(fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		labels := pprof.Labels("http-path", r.URL.Path)
+		pprof.Do(r.Context(), labels, func(ctx context.Context) {
+			fn.ServeHTTP(w, r)
+		})
+	}
+}
 
 func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 	return handlers.CompressHandlerLevel(fn, gzip.DefaultCompression).ServeHTTP
@@ -249,8 +258,8 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 		}
 	}
 
-	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> http
-	r.Mux.Handle(uri, pprofutil.LabelHandlerFunc(r.compress(r.recoverWrap(f))))
+	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> opencensus -> http
+	r.Mux.Handle(uri, r.pprofLabel(r.compress(r.recoverWrap(f))))
 }
 
 type asynchronousRequest struct {
@@ -508,7 +517,10 @@ func (api *API) tracingMiddleware(ctx context.Context, w http.ResponseWriter, re
 		Hatchery: getHatchery(ctx),
 	}
 
-	return tracing.Start(ctx, w, req, opts, api.mustDB(), api.Cache)
+	ctx, err := tracing.Start(ctx, w, req, opts, api.mustDB(), api.Cache)
+	newReq := req.WithContext(ctx)
+	*req = *newReq
+	return ctx, err
 }
 
 func (api *API) tracingPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {

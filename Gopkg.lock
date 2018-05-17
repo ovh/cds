@@ -800,12 +800,6 @@
   revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/rakyll/goutil"
-  packages = ["pprofutil"]
-  revision = "349023fd974a46c449331f6c06109d726cb9abe2"
-
-[[projects]]
   name = "github.com/rcrowley/go-metrics"
   packages = ["."]
   revision = "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
@@ -1018,8 +1012,10 @@
     "exporter/jaeger",
     "exporter/jaeger/internal/gen-go/jaeger",
     "internal",
+    "plugin/ochttp/propagation/b3",
     "trace",
-    "trace/internal"
+    "trace/internal",
+    "trace/propagation"
   ]
   revision = "10cec2c05ea2cfb8b0d856711daedc49d8a45c56"
   version = "v0.9.0"
@@ -1322,6 +1318,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "149fdc35182206860d5911b6f29e0639924941fb2f80fce179cf6bacaae26385"
+  inputs-digest = "aaaf22144f09c693e8d80ac84d243e0673b89707196337d2dc86468659d263ce"
   solver-name = "gps-cdcl"
   solver-version = 1

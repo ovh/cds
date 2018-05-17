@@ -9,7 +9,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/exporter/jaeger"
+	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/trace"
+	"go.opencensus.io/trace/propagation"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/feature"
@@ -17,27 +19,51 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var exporter trace.Exporter
+// Attributes recorded on the span for the requests.
+// Only trace exporters will need them.
+const (
+	HostAttribute       = "http.host"
+	MethodAttribute     = "http.method"
+	PathAttribute       = "http.path"
+	UserAgentAttribute  = "http.user_agent"
+	StatusCodeAttribute = "http.status_code"
+)
 
-/*
-	Init the tracer
-	Start jarger with:
-	docker run -d -e \
-		COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
-		-p 5775:5775/udp \
-		-p 6831:6831/udp \
-		-p 6832:6832/udp \
-		-p 5778:5778 \
-		-p 16686:16686 \
-		-p 14268:14268 \
-		-p 9411:9411 \
-		jaegertracing/all-in-one:latest
+var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
+
+// Configuration is the global tracing configuration
+type Configuration struct {
+	Enable   bool
+	Exporter struct {
+		Jaeger struct {
+			HTTPCollectorEndpoint string `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268"`
+			ServiceName           string `toml:"serviceName" default:"cds-api"`
+		}
+	}
+	SamplingProbability float64
+}
+
+/* Start jarger with:
+docker run -d -e \
+	COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
+	-p 5775:5775/udp \
+	-p 6831:6831/udp \
+	-p 6832:6832/udp \
+	-p 5778:5778 \
+	-p 16686:16686 \
+	-p 14268:14268 \
+	-p 9411:9411 \
+	jaegertracing/all-in-one:latest
 */
-func Init() error {
-	var err error
-	exporter, err = jaeger.NewExporter(jaeger.Options{
-		Endpoint:    "http://localhost:14268",
-		ServiceName: "cds-tracing",
+
+// Init the tracer
+func Init(cfg Configuration) error {
+	if !cfg.Enable {
+		return nil
+	}
+	exporter, err := jaeger.NewExporter(jaeger.Options{
+		Endpoint:    cfg.Exporter.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
+		ServiceName: cfg.Exporter.Jaeger.ServiceName,           //"cds-tracing"
 	})
 	if err != nil {
 		return err
@@ -45,7 +71,7 @@ func Init() error {
 	trace.RegisterExporter(exporter)
 	trace.ApplyConfig(
 		trace.Config{
-			DefaultSampler: trace.ProbabilitySampler(.07),
+			DefaultSampler: trace.ProbabilitySampler(cfg.SamplingProbability),
 		},
 	)
 
@@ -81,45 +107,53 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 	}
 
 	var span *trace.Span
+	sc, ok := defaultFormat.SpanContextFromRequest(req)
 
-	vars := mux.Vars(req)
-	pkey := vars["key"]
-	if pkey == "" {
-		pkey = vars["permProjectKey"]
+	type setupFuncSpan func(s *trace.Span, r *http.Request, sc *trace.SpanContext)
+	var setupSpan = []setupFuncSpan{
+		func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
+			s.AddAttributes(
+				trace.StringAttribute(PathAttribute, r.URL.Path),
+				trace.StringAttribute(HostAttribute, r.URL.Host),
+				trace.StringAttribute(MethodAttribute, r.Method),
+				trace.StringAttribute(UserAgentAttribute, r.UserAgent()),
+			)
+		},
+	}
+	if ok {
+		setupSpan = append(setupSpan, func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
+			s.AddLink(trace.Link{
+				TraceID:    sc.TraceID,
+				SpanID:     sc.SpanID,
+				Type:       trace.LinkTypeChild,
+				Attributes: nil,
+			})
+		})
 	}
 
-	if pkey == "" {
-		id, _ := strconv.ParseInt(vars["id"], 10, 64)
-		//The ID found may be a node run job, let's try to find the project key behing
-		if id <= 0 {
-			id, _ = strconv.ParseInt(vars["permID"], 10, 64)
-		}
-		if id != 0 {
-			var err error
-			cacheKey := cache.Key("api:FindProjetKeyForNodeRunJob:", fmt.Sprintf("%v", id))
-			if !store.Get(cacheKey, &pkey) {
-				pkey, err = findProjetKeyForNodeRunJob(db, id)
-				if err != nil {
-					log.Error("tracingMiddleware> %v", err)
-					return ctx, nil
-				}
-				store.SetWithTTL(cacheKey, pkey, 60*15)
-			}
-		}
-	}
-
+	pkey, ok := findPrimaryKeyFromRequest(req, db, store)
 	if pkey != "" {
 		tags = append(tags, trace.StringAttribute("project_key", pkey))
 	}
 
-	if pkey == "" || !feature.IsEnabled(store, feature.FeatEnableTracing, pkey) {
-		ctx, span = trace.StartSpan(ctx, opt.Name)
+	switch {
+	case ok && feature.IsEnabled(store, feature.FeatEnableTracing, pkey):
+		ctx, span = trace.StartSpan(ctx, opt.Name,
+			trace.WithSampler(trace.AlwaysSample()),
+			trace.WithSpanKind(trace.SpanKindServer))
 		span.AddAttributes(tags...)
-		return ctx, nil
+		for _, f := range setupSpan {
+			f(span, req, &sc)
+		}
+	default:
+		ctx, span = trace.StartSpan(ctx, opt.Name,
+			trace.WithSpanKind(trace.SpanKindServer))
+		span.AddAttributes(tags...)
+		for _, f := range setupSpan {
+			f(span, req, &sc)
+		}
 	}
 
-	ctx, span = trace.StartSpan(ctx, opt.Name, trace.WithSampler(trace.AlwaysSample()))
-	span.AddAttributes(tags...)
 	return ctx, nil
 }
 
@@ -131,6 +165,20 @@ func End(ctx context.Context, w http.ResponseWriter, req *http.Request) (context
 	}
 	span.End()
 	return ctx, nil
+}
+
+// LinkTo a traceID
+func LinkTo(ctx context.Context, traceID [16]byte) {
+	s := Current(ctx)
+	if s == nil {
+		return
+	}
+
+	s.AddLink(
+		trace.Link{
+			TraceID: trace.TraceID(traceID),
+		},
+	)
 }
 
 // Current return the current span
@@ -164,6 +212,36 @@ func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Co
 		span.AddAttributes(tags...)
 	}
 	return ctx, span.End
+}
+
+func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cache.Store) (string, bool) {
+	vars := mux.Vars(req)
+	pkey := vars["key"]
+	if pkey == "" {
+		pkey = vars["permProjectKey"]
+	}
+
+	if pkey == "" {
+		id, _ := strconv.ParseInt(vars["id"], 10, 64)
+		//The ID found may be a node run job, let's try to find the project key behing
+		if id <= 0 {
+			id, _ = strconv.ParseInt(vars["permID"], 10, 64)
+		}
+		if id != 0 {
+			var err error
+			cacheKey := cache.Key("api:FindProjetKeyForNodeRunJob:", fmt.Sprintf("%v", id))
+			if !store.Get(cacheKey, &pkey) {
+				pkey, err = findProjetKeyForNodeRunJob(db, id)
+				if err != nil {
+					log.Error("tracingMiddleware> %v", err)
+					return "", false
+				}
+				store.SetWithTTL(cacheKey, pkey, 60*15)
+			}
+		}
+	}
+
+	return pkey, pkey != ""
 }
 
 // findProjetKeyForNodeRunJob load the project key from a workflow_node_run_job ID

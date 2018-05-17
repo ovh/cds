@@ -600,7 +600,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 		name := vars["permWorkflowName"]
 		u := getUser(ctx)
 
+		_, next := tracing.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures, project.LoadOptions.WithPlatforms)
+		next()
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
 		}
@@ -614,7 +616,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 		var asCodeInfosMsg []sdk.Message
 		if opts.Number != nil {
 			var errlr error
+			_, next := tracing.Span(ctx, "workflow.LoadRun")
 			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
+			next()
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
 			}
@@ -630,7 +634,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 				DeepPipeline: false,
 			}
 			var errW error
+			_, next := tracing.Span(ctx, "workflow.Load")
 			wf, errW = workflow.Load(api.mustDB(), api.Cache, p, name, u, options)
+			next()
 			if errW != nil {
 				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
 			}
@@ -681,7 +687,6 @@ func (api *API) postWorkflowRunHandler() Handler {
 					log.Error("[PANIC] workflow.startWorkflowRun> %s", string(buf))
 				}
 			}()
-
 			startWorkflowRun(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, u, asCodeInfosMsg)
 		}()
 
@@ -722,6 +727,9 @@ type workerOpts struct {
 }
 
 func startWorkflowRun(ctx context.Context, chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) {
+	ctx, end := tracing.Span(ctx, "api.startWorkflowRun")
+	defer end()
+
 	const nbWorker int = 5
 	defer close(chEvent)
 	defer close(chError)

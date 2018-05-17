@@ -149,6 +149,7 @@ type Configuration struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
 	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+	Tracing   tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
 }
 
 type ProviderConfiguration struct {
@@ -499,7 +500,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
 
-	if err := tracing.Init(); err != nil {
+	if err := tracing.Init(a.Config.Tracing); err != nil {
 		return fmt.Errorf("Unable to start tracing exporter: %v", err)
 	}
 
