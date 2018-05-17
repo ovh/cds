@@ -138,14 +138,16 @@ func (api *API) moveStageHandler() Handler {
 			return sdk.WrapError(err, "addStageHandler> Cannot create pipeline audit")
 		}
 
+		var oldStage *sdk.Stage
 		if stageData.BuildOrder <= nbStage {
 			// check if stage exist
-			s, err := pipeline.LoadStage(tx, pipelineData.ID, stageData.ID)
+			var err error
+			oldStage, err = pipeline.LoadStage(tx, pipelineData.ID, stageData.ID)
 			if err != nil {
 				return sdk.WrapError(err, "moveStageHandler> Cannot load stage")
 			}
 
-			if err := pipeline.MoveStage(tx, s, stageData.BuildOrder, pipelineData); err != nil {
+			if err := pipeline.MoveStage(tx, oldStage, stageData.BuildOrder, pipelineData); err != nil {
 				return sdk.WrapError(err, "moveStageHandler> Cannot move stage")
 			}
 		}
@@ -166,6 +168,8 @@ func (api *API) moveStageHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "moveStageHandler> Cannot commit transaction")
 		}
+
+		event.PublishPipelineStageMove(projectKey, pipelineKey, *stageData, oldStage.BuildOrder, getUser(ctx))
 		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -236,6 +240,7 @@ func (api *API) updateStageHandler() Handler {
 			return sdk.WrapError(err, "updateStageHandler> Cannot load stages")
 		}
 
+		event.PublishPipelineStageUpdate(projectKey, pipelineKey, *s, *stageData, getUser(ctx))
 		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -296,6 +301,7 @@ func (api *API) deleteStageHandler() Handler {
 			return sdk.WrapError(err, "deleteStageHandler> Cannot load stages")
 		}
 
+		event.PublishPipelineStageDelete(projectKey, pipelineKey, *s, getUser(ctx))
 		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }

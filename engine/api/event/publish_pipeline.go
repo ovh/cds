@@ -111,3 +111,73 @@ func PublishPipelineStageAdd(key string, pipName string, s sdk.Stage, u *sdk.Use
 
 	publishPipelineEvent(e, key, pipName, u)
 }
+
+// PublishPipelineStageMove publishes an event on moving a stage
+func PublishPipelineStageMove(key string, pipName string, s sdk.Stage, oldBuildOrder int, u *sdk.User) {
+	e := sdk.EventPipelineStageMove{
+		StageName:          s.Name,
+		StageID:            s.ID,
+		NewStageBuildOrder: s.BuildOrder,
+		OldStageBuildOrder: oldBuildOrder,
+	}
+	publishPipelineEvent(e, key, pipName, u)
+}
+
+// PublishPipelineStageUpdate publishes an event on updating a stage
+func PublishPipelineStageUpdate(key string, pipName string, oldStage sdk.Stage, newStage sdk.Stage, u *sdk.User) {
+	e := sdk.EventPipelineStageUpdate{
+		OldName:         oldStage.Name,
+		OldBuildOrder:   oldStage.BuildOrder,
+		OldEnabled:      oldStage.Enabled,
+		OldPrerequisite: oldStage.Prerequisites,
+		NewName:         newStage.Name,
+		NewBuildOrder:   newStage.BuildOrder,
+		NewEnabled:      newStage.Enabled,
+		NewPrerequisite: newStage.Prerequisites,
+	}
+	publishPipelineEvent(e, key, pipName, u)
+}
+
+// PublishPipelineStageDelete publishes an event on deleting a stage
+func PublishPipelineStageDelete(key string, pipName string, s sdk.Stage, u *sdk.User) {
+	e := sdk.EventPipelineStageDelete{
+		ID:         s.ID,
+		Name:       s.Name,
+		BuildOrder: s.BuildOrder,
+	}
+	publishPipelineEvent(e, key, pipName, u)
+}
+
+// PublishPipelineJobAdd publishes an event on adding a job
+func PublishPipelineJobAdd(key string, pipName string, s sdk.Stage, j sdk.Job, u *sdk.User) {
+	e := sdk.EventPipelineJobAdd{
+		StageID:         s.ID,
+		StageName:       s.Name,
+		StageBuildOrder: s.BuildOrder,
+		Job:             j,
+	}
+	publishPipelineEvent(e, key, pipName, u)
+}
+
+// PublishPipelineJobUpdate publishes an event on updating a job
+func PublishPipelineJobUpdate(key string, pipName string, s sdk.Stage, oldJob sdk.Job, newJob sdk.Job, u *sdk.User) {
+	e := sdk.EventPipelineJobUpdate{
+		StageID:         s.ID,
+		StageName:       s.Name,
+		StageBuildOrder: s.BuildOrder,
+		OldJob:          oldJob,
+		NewJob:          newJob,
+	}
+	publishPipelineEvent(e, key, pipName, u)
+}
+
+// PublishPipelineJobDelete publishes an event on deleting a job
+func PublishPipelineJobDelete(key string, pipName string, s sdk.Stage, j sdk.Job, u *sdk.User) {
+	e := sdk.EventPipelineJobDelete{
+		StageID:         s.ID,
+		StageName:       s.Name,
+		StageBuildOrder: s.BuildOrder,
+		JobName:         j.Action.Name,
+	}
+	publishPipelineEvent(e, key, pipName, u)
+}
