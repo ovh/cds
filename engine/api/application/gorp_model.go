@@ -13,7 +13,6 @@ import (
 )
 
 type dbApplication sdk.Application
-type dbVariable sdk.Variable
 type dbApplicationVariableAudit sdk.ApplicationVariableAudit
 type dbApplicationKey sdk.ApplicationKey
 

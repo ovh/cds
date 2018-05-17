@@ -116,7 +116,7 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 			ts.Total = len(ts.TestCases) - nSkipped
 		}
 		v.Total += ts.Total
-		v.TotalOK += (ts.Total - ts.Failures - ts.Errors)
+		v.TotalOK += ts.Total - ts.Failures - ts.Errors
 		v.TotalKO += ts.Failures + ts.Errors
 		v.TotalSkipped += ts.Skipped
 	}

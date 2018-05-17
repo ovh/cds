@@ -36,28 +36,6 @@ func LoadGroupsByEnvironment(db gorp.SqlExecutor, envID int64) ([]sdk.GroupPermi
 	return groups, nil
 }
 
-// LoadAllEnvironmentGroupByRole load all group for the given environment and role
-func LoadAllEnvironmentGroupByRole(db gorp.SqlExecutor, environmentID int64, role int) ([]sdk.GroupPermission, error) {
-	groupsPermission := []sdk.GroupPermission{}
-	query := `
-		SELECT environment_group.group_id, environment_group.role
-		FROM environment_group
-		JOIN environment ON environment_group.environment_id = environment.id
-		WHERE environment.id = $1 AND role = $2;
-	`
-	rows, err := db.Query(query, environmentID, role)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var gPermission sdk.GroupPermission
-		rows.Scan(&gPermission.Group.ID, &gPermission.Permission)
-		groupsPermission = append(groupsPermission, gPermission)
-	}
-	return groupsPermission, nil
-}
-
 // IsInEnvironment checks wether groups already has permissions on environment or not
 func IsInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64) (bool, error) {
 	query := `SELECT COUNT(id) FROM environment_group

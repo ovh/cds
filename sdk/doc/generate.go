@@ -177,7 +177,6 @@ type visitor struct {
 	allRoutes map[string]RouteInfo
 }
 
-var newHandle bool
 var currentRouteInfo RouteInfo
 
 // getAllRouteInfo generates the api documentation

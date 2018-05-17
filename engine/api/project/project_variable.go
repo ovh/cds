@@ -2,7 +2,6 @@ package project
 
 import (
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -54,36 +53,6 @@ func GetVariableAudit(db gorp.SqlExecutor, key string) ([]sdk.VariableAudit, err
 	return audits, nil
 }
 
-// GetAudit retrieve the current project variable audit. DEPRECATED
-func GetAudit(db gorp.SqlExecutor, key string, auditID int64) ([]sdk.Variable, error) {
-	query := `
-		SELECT project_variable_audit_old.data
-		FROM project_variable_audit_old
-		JOIN project ON project.id = project_variable_audit_old.project_id
-		WHERE project.projectkey = $1 AND project_variable_audit_old.id = $2
-		ORDER BY project_variable_audit_old.versionned DESC
-	`
-	var data string
-	err := db.QueryRow(query, key, auditID).Scan(&data)
-	if err != nil {
-		return nil, err
-	}
-	var variables []sdk.Variable
-	err = json.Unmarshal([]byte(data), &variables)
-	for i := range variables {
-		v := &variables[i]
-		if sdk.NeedPlaceholder(v.Type) {
-			decode, err := base64.StdEncoding.DecodeString(v.Value)
-			if err != nil {
-				return nil, err
-			}
-			v.Value = string(decode)
-		}
-	}
-
-	return variables, err
-}
-
 // CheckVariableInProject check if the variable is already in the project or not
 func CheckVariableInProject(db gorp.SqlExecutor, projectID int64, varName string) (bool, error) {
 	query := `SELECT COUNT(id) FROM project_variable WHERE project_id = $1 AND var_name = $2`
@@ -111,13 +80,6 @@ type GetAllVariableFuncArg func(args *structarg)
 func WithClearPassword() GetAllVariableFuncArg {
 	return func(args *structarg) {
 		args.clearsecret = true
-	}
-}
-
-// WithEncryptPassword is a function argument to GetAllVariableInProject.
-func WithEncryptPassword() GetAllVariableFuncArg {
-	return func(args *structarg) {
-		args.encryptsecret = true
 	}
 }
 

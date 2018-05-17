@@ -649,11 +649,6 @@ func updateLastModified(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 	return nil
 }
 
-// HasAccessTo checks if user has full r, rx or rwx access to the workflow
-func HasAccessTo(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
-	return true, nil
-}
-
 // IsValid cheks workflow validity
 func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 	//Check project is not empty

@@ -167,20 +167,6 @@ func DeleteExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 	return nil
 }
 
-//LoadExecutions loads all pipeline execution
-func LoadExecutions(db gorp.SqlExecutor, schedulerID int64) ([]sdk.PipelineSchedulerExecution, error) {
-	as := []PipelineSchedulerExecution{}
-	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where pipeline_scheduler_id = $1", schedulerID); err != nil {
-		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
-		return nil, err
-	}
-	ps := []sdk.PipelineSchedulerExecution{}
-	for _, s := range as {
-		ps = append(ps, sdk.PipelineSchedulerExecution(s))
-	}
-	return ps, nil
-}
-
 //LoadLastExecution loads last pipeline execution
 func LoadLastExecution(db gorp.SqlExecutor, id int64) (*sdk.PipelineSchedulerExecution, error) {
 	as := PipelineSchedulerExecution{}

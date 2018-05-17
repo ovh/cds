@@ -17,7 +17,6 @@ import (
 // ErrNoNewEvents for no new events
 var (
 	ErrNoNewEvents = fmt.Errorf("No new events")
-	ErrNoHook      = fmt.Errorf("No Hook")
 )
 
 //GetEvents calls Github et returns GithubEvents as []interface{}

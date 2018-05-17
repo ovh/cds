@@ -90,60 +90,6 @@ func InsertStagePrequisites(db gorp.SqlExecutor, s *sdk.Stage) error {
 	return nil
 }
 
-// LoadStages Get all stages for the given pipeline
-func LoadStages(db gorp.SqlExecutor, pipelineID int64) ([]sdk.Stage, error) {
-	var stages []sdk.Stage
-
-	query := `
-		SELECT pipeline_stage.id, pipeline_stage.name, pipeline_stage.enabled, pipeline_stage_prerequisite.parameter, pipeline_stage_prerequisite.expected_value
-		FROM pipeline_stage
-		LEFT OUTER JOIN pipeline_stage_prerequisite ON pipeline_stage_prerequisite.pipeline_stage_id = pipeline_stage.id
-	 	WHERE pipeline_id = $1
-		ORDER BY build_order ASC`
-
-	rows, err := db.Query(query, pipelineID)
-	if err != nil {
-		return stages, err
-	}
-	defer rows.Close()
-
-	mapStages := map[int64]*sdk.Stage{}
-	stagesPtr := []*sdk.Stage{}
-
-	for rows.Next() {
-		var id int64
-		var enabled bool
-		var name, parameter, expectedValue sql.NullString
-		err = rows.Scan(&id, &name, &enabled, &parameter, &expectedValue)
-		if err != nil {
-			return stages, err
-		}
-
-		var stageData = mapStages[id]
-		if stageData == nil {
-			stageData = &sdk.Stage{
-				ID:      id,
-				Name:    name.String,
-				Enabled: enabled,
-			}
-			mapStages[id] = stageData
-		}
-
-		if parameter.Valid && expectedValue.Valid {
-			p := sdk.Prerequisite{
-				Parameter:     parameter.String,
-				ExpectedValue: expectedValue.String,
-			}
-			stageData.Prerequisites = append(stageData.Prerequisites, p)
-		}
-		stagesPtr = append(stagesPtr, stageData)
-	}
-	for _, s := range stagesPtr {
-		stages = append(stages, *s)
-	}
-	return stages, nil
-}
-
 // LoadPipelineStage loads pipeline stage
 func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) error {
 	p.Stages = []sdk.Stage{}
