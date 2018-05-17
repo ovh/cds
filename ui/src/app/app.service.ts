@@ -29,7 +29,7 @@ export class AppService {
             event.type_event === 'sdk.EventApplicationAdd' || event.type_event === 'sdk.EventApplicationUpdate' ||
             event.type_event === 'sdk.EventApplicationDelete' ||
             event.type_event === 'sdk.EventPipelineAdd' || event.type_event === 'sdk.EventPipelineUpdate' ||
-            event.type_event === 'sdk.EventPipelineDelete' ||
+            event.type_event === 'sdk.EventPipelineDelete' || event.type_event.indexOf('sdk.EventPipelineParameter') === 0 ||
             event.type_event === 'sdk.EventEnvironmentAdd' || event.type_event === 'sdk.EventEnvironmentUpdate' ||
             event.type_event === 'sdk.EventEnvironmentDelete' ||
             event.type_event === 'sdk.EventWorkflowAdd' || event.type_event === 'sdk.EventWorkflowUpdate' ||
