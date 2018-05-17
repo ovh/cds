@@ -257,8 +257,7 @@ func (api *API) addUserHandler() Handler {
 		}
 
 		go func() {
-			errM := mail.SendMailVerifyToken(createUserRequest.User.Email, createUserRequest.User.Username, tokenVerify, createUserRequest.Callback)
-			if errM != nil {
+			if errM := mail.SendMailVerifyToken(createUserRequest.User.Email, createUserRequest.User.Username, tokenVerify, createUserRequest.Callback); errM != nil {
 				log.Warning("addUserHandler.SendMailVerifyToken> Cannot send verify token email for user %s : %v", u.Username, errM)
 			}
 		}()

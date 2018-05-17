@@ -31,7 +31,12 @@ func Update(db gorp.SqlExecutor, bc *sdk.Broadcast) error {
 
 // MarkAsRead mark the broadcast as read for an user
 func MarkAsRead(db gorp.SqlExecutor, broadcastID, userID int64) error {
-	_, err := db.Exec("INSERT INTO broadcast_read (broadcast_id, user_id) VALUES ($1, $2)", broadcastID, userID)
+	brr := broadcastRead{
+		BroadcastID: broadcastID,
+		UserID:      userID,
+	}
+	err := db.Insert(&brr)
+
 	return sdk.WrapError(err, "MarkAsRead>")
 }
 
