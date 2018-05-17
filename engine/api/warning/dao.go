@@ -54,3 +54,24 @@ func (w *warning) PostGet(db gorp.SqlExecutor) error {
 	}
 	return nil
 }
+
+// GetByProject Get all warnings for the given project
+func GetByProject(db gorp.SqlExecutor, key string) ([]sdk.WarningV2, error) {
+	query := `
+		SELECT * FROM warning WHERE project_key = $1
+	`
+	var ws []warning
+	if _, err := db.Select(&ws, query, key); err != nil {
+		return nil, sdk.WrapError(err, "warning.GetByProject> Unable to list warnings for project %s", key)
+	}
+
+	warnings := make([]sdk.WarningV2, len(ws))
+	for i, w := range ws {
+		if err := w.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "warning.GetByProject> Unable to post get warnings")
+		}
+		warnings[i] = sdk.WarningV2(w)
+	}
+
+	return warnings, nil
+}

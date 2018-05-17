@@ -7,8 +7,11 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"strings"
 )
 
 func computeWithProjectEvent(db gorp.SqlExecutor, e sdk.Event) error {
@@ -32,9 +35,19 @@ func computeWithProjectEvent(db gorp.SqlExecutor, e sdk.Event) error {
 			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectVariableDelete")
 		}
 		return manageProjectDeleteVariableEvent(db, e.ProjectKey, fmt.Sprintf("cds.proj.%s", varEvent.Variable.Name))
+	case "sdk.EventProjectPermissionAdd":
+		var permEvent sdk.EventProjectPermissionAdd
+		if err := mapstructure.Decode(e.Payload, &permEvent); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectPermissionAdd")
+		}
+		return manageProjectAddPermission(db, e.ProjectKey, permEvent.Permission)
 	case "sdk.EventProjectPermissionDelete":
 		// Check if permission is used on workflow
-
+		var permEvent sdk.EventProjectPermissionDelete
+		if err := mapstructure.Decode(e.Payload, &permEvent); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectPermissionDelete")
+		}
+		return manageProjectDeletePermission(db, e.ProjectKey, permEvent.Permission)
 	case "sdk.EventProjectKeyAdd":
 		// Check if key is used
 		// Check if there is a warning on it
@@ -49,6 +62,63 @@ func computeWithProjectEvent(db gorp.SqlExecutor, e sdk.Event) error {
 	default:
 		log.Debug("Event %s ignored", e.EventType)
 		return nil
+	}
+	return nil
+}
+
+func manageProjectAddPermission(db gorp.SqlExecutor, key string, gp sdk.GroupPermission) error {
+	if err := removeWarning(db, MissingProjectPermissionEnv, gp.Group.Name); err != nil {
+		return sdk.WrapError(err, "manageProjectAddPermission> Unable to remove warning")
+	}
+	if err := removeWarning(db, MissingProjectPermissionWorkflow, gp.Group.Name); err != nil {
+		return sdk.WrapError(err, "manageProjectAddPermission> Unable to remove warning")
+	}
+	return nil
+}
+
+func manageProjectDeletePermission(db gorp.SqlExecutor, key string, gp sdk.GroupPermission) error {
+	// Check in ENV
+	envs, err := group.EnvironmentsByGroupID(db, key, gp.Group.ID)
+	if err != nil {
+		return sdk.WrapError(err, "manageProjectDeletePermission> Unable to list environments")
+	}
+	if len(envs) > 0 {
+		w := sdk.WarningV2{
+			Key:     key,
+			Element: gp.Group.Name,
+			Created: time.Now(),
+			Type:    MissingProjectPermissionEnv,
+			MessageParams: map[string]string{
+				"GroupName":  gp.Group.Name,
+				"ProjectKey": key,
+				"EnvName":    strings.Join(envs, ","),
+			},
+		}
+		if err := insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageAddVariableEvent> Unable to insert environment warning")
+		}
+	}
+
+	// Check in workflow
+	workflows, err := workflow.ByGroupID(db, key, gp.Group.ID)
+	if err != nil {
+		return sdk.WrapError(err, "manageProjectDeletePermission> Unable to list workflows")
+	}
+	if len(envs) > 0 {
+		w := sdk.WarningV2{
+			Key:     key,
+			Element: gp.Group.Name,
+			Created: time.Now(),
+			Type:    MissingProjectPermissionWorkflow,
+			MessageParams: map[string]string{
+				"GroupName":    gp.Group.Name,
+				"ProjectKey":   key,
+				"WorkflowName": strings.Join(workflows, ","),
+			},
+		}
+		if err := insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageProjectDeletePermission> Unable to insert workflow warning")
+		}
 	}
 	return nil
 }
