@@ -71,10 +71,6 @@ func LoadWorkerModelPatternByName(db gorp.SqlExecutor, patternType, name string)
 	if err := db.SelectOne(&wmp, query, name, patternType); err != nil {
 		return nil, sdk.WrapError(err, "LoadWorkerModelPatternByName> ")
 	}
-
-	if err := wmp.PostGet(db); err != nil {
-		return nil, err
-	}
 	workerModelPattern := sdk.ModelPattern(wmp)
 
 	return &workerModelPattern, nil
