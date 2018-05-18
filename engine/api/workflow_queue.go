@@ -38,7 +38,7 @@ func (api *API) postWorkflowJobRequirementsErrorHandler() Handler {
 
 			log.Warning("%s (%s) > %s", getWorker(ctx).ID, caller.Name, string(body))
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
 

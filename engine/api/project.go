@@ -101,7 +101,7 @@ func (api *API) getProjectsHandler() Handler {
 				}
 			}
 			p.Workflows = ws
-			return WriteJSON(w, nil, http.StatusOK)
+			return nil
 		}
 		opts = append(opts, &filterByRepoFunc)
 

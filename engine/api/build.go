@@ -774,7 +774,7 @@ func (api *API) addBuildTestResultsHandler() Handler {
 			return sdk.WrapError(err, "addBuildTestsResultsHandler> Cannot insert tests results")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
 

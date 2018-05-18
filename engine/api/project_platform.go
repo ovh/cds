@@ -85,7 +85,6 @@ func (api *API) putProjectPlatformHandler() Handler {
 		event.PublishUpdateProjectPlatform(p, ppBody, ppDB, getUser(ctx))
 
 		return WriteJSON(w, ppBody, http.StatusOK)
-
 	}
 }
 
@@ -125,7 +124,7 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 		}
 
 		event.PublishDeleteProjectPlatform(p, deletedPlatform, getUser(ctx))
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
 

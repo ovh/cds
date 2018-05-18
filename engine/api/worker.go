@@ -143,7 +143,7 @@ func (api *API) workerCheckingHandler() Handler {
 		wk.Status = sdk.StatusChecking
 		api.Cache.Set(key, wk)
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
 
@@ -171,6 +171,6 @@ func (api *API) workerWaitingHandler() Handler {
 		wk.Status = sdk.StatusWaiting
 		api.Cache.Set(key, wk)
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }

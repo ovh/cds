@@ -156,6 +156,6 @@ func (api *API) deletePlatformModelHandler() Handler {
 			return sdk.WrapError(err, "deletePlatformModelHandler> Unable to commit tx")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
