@@ -90,7 +90,11 @@ export class WorkflowEventStore {
 
     setSelectedHook(h: WorkflowNodeHook) {
         if (h) {
-            this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_HOOK);
+            if (!this.isRunSelected()) {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_HOOK);
+            } else {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_HOOK);
+            }
         }
         this._selectedNode.next(null);
         this._selectedJoin.next(null);

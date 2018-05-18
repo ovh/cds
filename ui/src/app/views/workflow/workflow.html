@@ -26,15 +26,11 @@
                 [project]="project" [workflow]="workflow">
             </app-workflow-sidebar-run-node>
         </ng-container>
-        <!--ng-container *ngIf="project != null && workflow != null && selectedNodeId == null && selectedNodeRunId == null && selectedNodeRunNum == null && selectedHookId != null && number != null">
-          <app-workflow-sidebar-run-hook--
-            [project]="project"
-            [open]="sidebarOpen"
-            [runNumber]="number"
-            [workflow]="workflow"
-            [hook]="selectedHook">
+        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_HOOK">
+          <app-workflow-sidebar-run-hook
+            [project]="project">
         </app-workflow-sidebar-run-hook>
-        </ng-container-->
+        </ng-container>
     </div>
 </aside>
 <section class="content-wrap" *ngIf="!loading && workflow != null">

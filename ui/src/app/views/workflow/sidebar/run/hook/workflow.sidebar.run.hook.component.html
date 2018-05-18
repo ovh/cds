@@ -49,7 +49,7 @@
 <ng-container *ngIf="hook && node">
     <app-workflow-node-hook-form
       [project]="project"
-      [workflow]="workflow"
+      [workflow]="wr.workflow"
       [node]="node"
       (hookEvent)="updateHook($event)"
       [loading]="loading"
