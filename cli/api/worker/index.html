@@ -1946,10 +1946,10 @@
 <li><a href="#post-worker">POST <code>/worker</code></a></li>
 <li><a href="#post-worker-id-disable">POST <code>/worker/&lt;id&gt;/disable</code></a></li>
 <li><a href="#post-worker-checking">POST <code>/worker/checking</code></a></li>
-<li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
 <li><a href="#get-worker-model">GET <code>/worker/model</code></a></li>
-<li><a href="#put-worker-model-permmodelid">PUT <code>/worker/model/&lt;permModelID&gt;</code></a></li>
+<li><a href="#post-worker-model">POST <code>/worker/model</code></a></li>
 <li><a href="#delete-worker-model-permmodelid">DELETE <code>/worker/model/&lt;permModelID&gt;</code></a></li>
+<li><a href="#put-worker-model-permmodelid">PUT <code>/worker/model/&lt;permModelID&gt;</code></a></li>
 <li><a href="#put-worker-model-book-permmodelid">PUT <code>/worker/model/book/&lt;permModelID&gt;</code></a></li>
 <li><a href="#get-worker-model-capability-type">GET <code>/worker/model/capability/type</code></a></li>
 <li><a href="#get-worker-model-communication">GET <code>/worker/model/communication</code></a></li>
@@ -2094,34 +2094,6 @@
 </tbody>
 </table>
 
-<h3 id="post-worker-model">POST <code>/worker/model</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22">addWorkerModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-worker-model">GET <code>/worker/model</code></h3>
 
 <table>
@@ -2150,20 +2122,20 @@
 </tbody>
 </table>
 
-<h3 id="put-worker-model-permmodelid">PUT <code>/worker/model/&lt;permModelID&gt;</code></h3>
+<h3 id="post-worker-model">POST <code>/worker/model</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/worker/model/&lt;permModelID&gt;</code></strong></th>
+<th><strong><code>/worker/model</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>POST</td>
 </tr>
 
 <tr>
@@ -2173,7 +2145,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateWorkerModelHandler%22">updateWorkerModelHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addWorkerModelHandler%22">addWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2202,6 +2174,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelHandler%22">deleteWorkerModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-worker-model-permmodelid">PUT <code>/worker/model/&lt;permModelID&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/worker/model/&lt;permModelID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateWorkerModelHandler%22">updateWorkerModelHandler</a></td>
 </tr>
 </tbody>
 </table>
