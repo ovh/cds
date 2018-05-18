@@ -56,7 +56,7 @@ func (api *API) updateStepStatusHandler() Handler {
 		if err := pipeline.UpdatePipelineBuildJob(api.mustDB(), pbJob); err != nil {
 			return sdk.WrapError(err, "updateStepStatusHandler> Cannot update pipeline build job")
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
 

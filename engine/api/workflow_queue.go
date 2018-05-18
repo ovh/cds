@@ -382,7 +382,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
 		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
 
@@ -654,7 +654,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
 
@@ -764,6 +764,6 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to commit tx")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
