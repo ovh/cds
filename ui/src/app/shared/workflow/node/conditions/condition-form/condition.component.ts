@@ -89,4 +89,16 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
             }
         });
     }
+
+    updateConditionValue(event: any) {
+      this.condition.value = event.target.checked ?  'true' : 'false';
+    }
+
+    variableChanged(event: any) {
+        this.condition.value = null;
+        this.condition.operator = '=';
+        if (event.target.value === 'cds.manual') {
+            this.condition.value = 'false';
+        }
+    }
 }
