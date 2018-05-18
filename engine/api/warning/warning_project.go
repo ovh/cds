@@ -67,11 +67,11 @@ func computeWithProjectEvent(db gorp.SqlExecutor, e sdk.Event) error {
 }
 
 func manageProjectAddPermission(db gorp.SqlExecutor, key string, gp sdk.GroupPermission) error {
-	if err := removeWarning(db, MissingProjectPermissionEnv, gp.Group.Name); err != nil {
-		return sdk.WrapError(err, "manageProjectAddPermission> Unable to remove warning")
+	if err := removeProjectWarning(db, MissingProjectPermissionEnv, gp.Group.Name, key); err != nil {
+		return sdk.WrapError(err, "manageProjectAddPermission> Unable to remove warning %s for group %s on project %s", MissingProjectPermissionEnv, gp.Group.Name, key)
 	}
-	if err := removeWarning(db, MissingProjectPermissionWorkflow, gp.Group.Name); err != nil {
-		return sdk.WrapError(err, "manageProjectAddPermission> Unable to remove warning")
+	if err := removeProjectWarning(db, MissingProjectPermissionWorkflow, gp.Group.Name, key); err != nil {
+		return sdk.WrapError(err, "manageProjectAddPermission> Unable to remove warning %s for group %s on project %s", MissingProjectPermissionWorkflow, gp.Group.Name, key)
 	}
 	return nil
 }
@@ -124,7 +124,7 @@ func manageProjectDeletePermission(db gorp.SqlExecutor, key string, gp sdk.Group
 }
 
 func manageProjectAddVariableEvent(db gorp.SqlExecutor, key string, varName string) error {
-	if err := removeWarning(db, MissingProjectVariable, varName); err != nil {
+	if err := removeProjectWarning(db, MissingProjectVariable, varName, key); err != nil {
 		return sdk.WrapError(err, "manageAddVariableEvent> Unable to remove warning")
 	}
 
@@ -152,11 +152,11 @@ func manageProjectUpdateVariableEvent(db gorp.SqlExecutor, key string, newVar sd
 		return nil
 	}
 
-	if err := removeWarning(db, UnusedProjectVariable, fmt.Sprintf("cds.proj.%s", oldVar.Name)); err != nil {
+	if err := removeProjectWarning(db, UnusedProjectVariable, fmt.Sprintf("cds.proj.%s", oldVar.Name), key); err != nil {
 		log.Warning("manageUpdateVariableEvent> Unable to remove oldvar warning: %v", err)
 	}
 
-	if err := removeWarning(db, MissingProjectVariable, fmt.Sprintf("cds.proj.%s", newVar.Name)); err != nil {
+	if err := removeProjectWarning(db, MissingProjectVariable, fmt.Sprintf("cds.proj.%s", newVar.Name), key); err != nil {
 		log.Warning("manageUpdateVariableEvent> Unable to remove newvar warning: %v", err)
 	}
 
@@ -181,7 +181,7 @@ func manageProjectUpdateVariableEvent(db gorp.SqlExecutor, key string, newVar sd
 }
 
 func manageProjectDeleteVariableEvent(db gorp.SqlExecutor, key string, varName string) error {
-	if err := removeWarning(db, UnusedProjectVariable, varName); err != nil {
+	if err := removeProjectWarning(db, UnusedProjectVariable, varName, key); err != nil {
 		log.Warning("manageDeleteVariableEvent> Unable to remove warning: %v", err)
 	}
 	used := variableIsUsed(db, key, varName)

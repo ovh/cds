@@ -9,8 +9,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func removeWarning(db gorp.SqlExecutor, warningType string, element string) error {
-	_, err := db.Exec("DELETE FROM warning where type = $1 and element = $2", warningType, element)
+func removeProjectWarning(db gorp.SqlExecutor, warningType string, element string, key string) error {
+	_, err := db.Exec("DELETE FROM warning where type = $1 and element = $2 and project_key = $3", warningType, element, key)
 	return err
 }
 
