@@ -40,7 +40,7 @@
         <div class="ui list ml5 listmrt">
             <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
                 <div class="content pointing"
-                  [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
+                  [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', currentWorkflowRun.num, 'node', currentWorkflowNodeRun.id]"
                   [queryParams]="{name: node.name, tab: 'test'}">
                     <div>
                         <i class="bug icon"></i> {{currentWorkflowNodeRun.tests.total}}
@@ -54,7 +54,7 @@
             </div>
             <div class="item padding" *ngIf="currentWorkflowNodeRun.artifacts">
                 <div class="content pointing"
-                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
+                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', currentWorkflowRun.number, 'node', currentWorkflowNodeRun.id]"
                 [queryParams]="{name: node.name, tab: 'artifact'}"
                 [title]="'common_artifacts' | translate">
                     <div>
