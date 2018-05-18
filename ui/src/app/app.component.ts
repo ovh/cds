@@ -100,7 +100,7 @@ export class AppComponent  implements OnInit {
         // ADD user AUTH
         let sessionToken = this._authStore.getSessionToken();
         if (sessionToken) {
-            authKey = this._authStore.localStorageSessionKey
+            authKey = this._authStore.localStorageSessionKey;
             authValue = sessionToken;
         } else {
             authKey = 'Authorization';

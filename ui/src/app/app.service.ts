@@ -10,7 +10,7 @@ import {PipelineStore} from './service/pipeline/pipeline.store';
 import {WorkflowStore} from './service/workflow/workflow.store';
 import {RouterService} from './service/router/router.service';
 import {first} from 'rxjs/operators';
-import {Event} from './model/event.model';
+import {Event, EventType} from './model/event.model';
 import {EventStore} from './service/event/event.store';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
 import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
@@ -25,24 +25,24 @@ export class AppService {
     }
 
     manageEvent(event: Event): void {
-        if (event.type_event.indexOf('sdk.EventProject') === 0 || event.type_event.indexOf('sdk.EventEnvironment') === 0 ||
-            event.type_event === 'sdk.EventApplicationAdd' || event.type_event === 'sdk.EventApplicationUpdate' ||
-            event.type_event === 'sdk.EventApplicationDelete' ||
-            event.type_event === 'sdk.EventPipelineAdd' || event.type_event === 'sdk.EventPipelineUpdate' ||
-            event.type_event === 'sdk.EventPipelineDelete' || event.type_event.indexOf('sdk.EventPipelineParameter') === 0 ||
-            event.type_event === 'sdk.EventEnvironmentAdd' || event.type_event === 'sdk.EventEnvironmentUpdate' ||
-            event.type_event === 'sdk.EventEnvironmentDelete' ||
-            event.type_event === 'sdk.EventWorkflowAdd' || event.type_event === 'sdk.EventWorkflowUpdate' ||
-            event.type_event === 'sdk.EventWorkflowDelete') {
+        if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||
+            event.type_event === EventType.APPLICATION_ADD || event.type_event === EventType.APPLICATION_UPDATE ||
+            event.type_event === EventType.APPLICATION_DELETE ||
+            event.type_event === EventType.PIPELINE_ADD || event.type_event === EventType.PIPELINE_UPDATE ||
+            event.type_event === EventType.PIPELINE_DELETE || event.type_event.indexOf(EventType.PIPELINE_PARAMETER_PREFIX) === 0 ||
+            event.type_event === EventType.PIPELINE_ADD || event.type_event === EventType.PIPELINE_UPDATE ||
+            event.type_event === EventType.PIPELINE_DELETE ||
+            event.type_event === EventType.WORKFLOW_ADD || event.type_event === EventType.WORKFLOW_UPDATE ||
+            event.type_event === EventType.WORKFLOW_DELETE) {
             this.updateProjectCache(event);
         }
-        if (event.type_event.indexOf('sdk.EventApplication') === 0) {
+        if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
             this.updateApplicationCache(event);
-        } else if (event.type_event.indexOf('sdk.EventPipeline') === 0) {
+        } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
             this.updatePipelineCache(event);
-        } else if (event.type_event.indexOf('sdk.EventWorkflow') === 0) {
+        } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
             this.updateWorkflowCache(event);
-        } else if (event.type_event.indexOf('sdk.EventRunWorkflow') === 0) {
+        } else if (event.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) === 0) {
             this.updateWorkflowRunCache(event);
         }
     }
@@ -72,27 +72,27 @@ export class AppService {
                 return;
             }
 
-            if (event.type_event === 'sdk.EventProjectDelete') {
+            if (event.type_event === EventType.PROJECT_DELETE) {
                 this._projStore.removeFromStore(projectInCache.key);
                 return
             }
 
             let opts = [];
-            if (event.type_event.indexOf('sdk.EventProjectVariable') === 0) {
+            if (event.type_event.indexOf(EventType.PROJECT_VARIABLE_PREFIX) === 0) {
                 opts.push(new LoadOpts('withVariables', 'variables'));
-            } else if (event.type_event.indexOf('sdk.EventProjectPermission') === 0) {
+            } else if (event.type_event.indexOf(EventType.PROJECT_PERMISSION_PREFIX) === 0) {
                 opts.push(new LoadOpts('withGroups', 'groups'));
-            } else if (event.type_event.indexOf('sdk.EventProjectKey') === 0) {
+            } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
                 opts.push(new LoadOpts('withKeys', 'keys'));
-            } else if (event.type_event.indexOf('sdk.EventProjectPlatform') === 0) {
+            } else if (event.type_event.indexOf(EventType.PROJECT_PLATFORM_PREFIX) === 0) {
                 opts.push(new LoadOpts('withPlatforms', 'platforms'));
-            } else if (event.type_event.indexOf('sdk.EventApplication') === 0) {
+            } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
                 opts.push(new LoadOpts('withApplicationNames', 'application_names'));
-            } else if (event.type_event.indexOf('sdk.EventPipeline') === 0) {
+            } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {
                 opts.push(new LoadOpts('withPipelineNames', 'pipeline_names'));
-            } else if (event.type_event.indexOf('sdk.EventEnvironment') === 0) {
+            } else if (event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0) {
                 opts.push(new LoadOpts('withEnvironments', 'environments'));
-            } else if (event.type_event.indexOf('sdk.EventWorkflow') === 0) {
+            } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
                 opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
             }
             this._projStore.resync(projectInCache.key, opts).pipe(first()).subscribe(() => {});
@@ -101,7 +101,7 @@ export class AppService {
 
     updateApplicationCache(event: Event): void {
         let appKey = event.project_key + '-' + event.application_name;
-        if (event.type_event === 'EventApplicationDelete') {
+        if (event.type_event === EventType.APPLICATION_DELETE) {
             this._appStore.removeFromStore(appKey);
             return;
         }
@@ -139,7 +139,7 @@ export class AppService {
 
     updatePipelineCache(event: Event): void {
         let pipKey = event.project_key + '-' + event.pipeline_name;
-        if (event.type_event === 'EventPipelineDelete') {
+        if (event.type_event === EventType.PIPELINE_DELETE) {
             this._appStore.removeFromStore(pipKey);
             return;
         }
@@ -173,7 +173,7 @@ export class AppService {
 
     updateWorkflowCache(event: Event): void {
         let wfKey = event.project_key + '-' + event.workflow_name;
-        if (event.type_event === 'EventWorkflowDelete') {
+        if (event.type_event === EventType.WORKFLOW_DELETE) {
             this._appStore.removeFromStore(wfKey);
             return;
         }
@@ -206,11 +206,11 @@ export class AppService {
 
     updateWorkflowRunCache(event: Event): void {
         switch (event.type_event) {
-            case 'sdk.EventRunWorkflow':
+            case EventType.RUN_WORKFLOW_PREFIX:
                 let wr = WorkflowRun.fromEventRunWorkflow(event);
                 this._workflowEventStore.broadcastWorkflowRun(event.project_key, event.workflow_name, wr);
                 break;
-            case 'sdk.EventRunWorkflowNode':
+            case EventType.RUN_WORKFLOW_NODE:
                 let wnr = WorkflowNodeRun.fromEventRunWorkflowNode(event);
                 this._workflowEventStore.broadcastNodeRunEvents(wnr);
                 break;

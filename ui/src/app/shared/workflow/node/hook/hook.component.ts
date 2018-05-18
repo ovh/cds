@@ -44,8 +44,6 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
                 return;
             }
             this.isSelected = false;
-            return;
-
         });
     }
 
