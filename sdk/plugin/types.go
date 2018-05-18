@@ -95,7 +95,6 @@ const (
 	PipelineParameter    ParameterType = "pipeline"
 	ListParameter        ParameterType = "list"
 	NumberParameter      ParameterType = "number"
-	PasswordParameter    ParameterType = "password"
 	StringParameter      ParameterType = "string"
 	TextParameter        ParameterType = "text"
 	BooleanParameter     ParameterType = "boolean"
@@ -129,9 +128,11 @@ func (p *Parameters) Add(name string, _type ParameterType, description string, v
 }
 
 func (p *Parameters) Names() []string {
-	keys := []string{}
+	keys := make([]string, len(p.Data))
+	i := 0
 	for k := range p.Data {
-		keys = append(keys, k)
+		keys[i] = k
+		i++
 	}
 	return keys
 }

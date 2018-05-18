@@ -67,7 +67,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	//Maximim range is set to 50
 	w.Header().Add("Accept-Range", "run 50")
 	if limit-offset > rangeMax {
-		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", (limit - offset))
+		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", limit-offset)
 	}
 
 	runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit, mapFilters)
@@ -76,7 +76,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	}
 
 	if offset > count {
-		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", (limit - offset))
+		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", limit-offset)
 	}
 
 	code := http.StatusOK
@@ -643,7 +643,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 					project.LoadOptions.WithGroups,
 					project.LoadOptions.WithApplications,
 					project.LoadOptions.WithEnvironments,
-					project.LoadOptions.WithPipelines)
+					project.LoadOptions.WithPipelines,
+					project.LoadOptions.WithClearKeys,
+				)
 
 				if errp != nil {
 					return sdk.WrapError(errp, "postWorkflowRunHandler> Cannot load project %s", key)

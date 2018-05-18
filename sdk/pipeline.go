@@ -1,14 +1,11 @@
 package sdk
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"sync"
 	"time"
-
-	"github.com/lib/pq"
 
 	"github.com/ovh/venom"
 )
@@ -60,34 +57,6 @@ type PipelineBuild struct {
 	Commits               []VCSCommit          `json:"commits,omitempty"`
 	Trigger               PipelineBuildTrigger `json:"trigger"`
 	PreviousPipelineBuild *PipelineBuild       `json:"previous_pipeline_build"`
-}
-
-// pipelineBuildDbResult Gorp result when select a pipeline build
-type pipelineBuildDbResult struct {
-	ID                    int64          `db:"id"`
-	ApplicationID         int64          `db:"appID"`
-	PipelineID            int64          `db:"pipID"`
-	EnvironmentID         int64          `db:"envID"`
-	ApplicatioName        string         `db:"appName"`
-	PipelineName          string         `db:"pipName"`
-	EnvironmentName       string         `db:"envName"`
-	BuildNumber           int64          `db:"build_number"`
-	Version               int64          `db:"version"`
-	Status                string         `db:"status"`
-	Args                  string         `db:"args"`
-	Stages                string         `db:"stages"`
-	Start                 time.Time      `db:"start"`
-	Done                  pq.NullTime    `db:"done"`
-	ManualTrigger         bool           `db:"manual_trigger"`
-	TriggeredBy           sql.NullInt64  `db:"triggered_by"`
-	VCSChangesBranch      sql.NullString `db:"vcs_branch"`
-	VCSChangesHash        sql.NullString `db:"vcs_hash"`
-	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
-	VCSRemoteURL          sql.NullString `db:"vcs_remote_url"`
-	VCSRemote             sql.NullString `db:"vcs_remote"`
-	ParentPipelineBuildID sql.NullInt64  `db:"parent_pipeline_build"`
-	Username              sql.NullString `db:"username"`
-	ScheduledTrigger      bool           `db:"scheduled_trigger"`
 }
 
 // PipelineBuildTrigger Struct for history table
@@ -193,68 +162,6 @@ func AddPipeline(name string, projectKey string, pipelineType string, params []P
 	return err
 }
 
-// DeleteJob delete the given job from the given pipeline
-func DeleteJob(projectKey string, pipelineName string, jobID int64) error {
-	path := fmt.Sprintf("/project/%s/pipeline/%s/action/%d", projectKey, pipelineName, jobID)
-	_, _, err := Request("DELETE", path, nil)
-	return err
-}
-
-// MoveActionInPipeline Move an action in a pipeline
-func MoveActionInPipeline(projectKey, pipelineName string, actionPipelineID int64, newOrder int) error {
-	pipeline, err := GetPipeline(projectKey, pipelineName)
-	if err != nil {
-		return err
-	}
-	var stageID int64
-	var job *Job
-	for _, stage := range pipeline.Stages {
-		if stage.BuildOrder == newOrder {
-			stageID = stage.ID
-		}
-		for _, jobInStage := range stage.Jobs {
-			if jobInStage.PipelineActionID == actionPipelineID {
-				job = &jobInStage
-			}
-		}
-	}
-
-	if stageID != 0 && job != nil {
-		job.PipelineStageID = stageID
-
-		data, err := json.Marshal(job)
-		if err != nil {
-			return err
-		}
-
-		path := fmt.Sprintf("/project/%s/pipeline/%s/action/%d", projectKey, pipelineName, actionPipelineID)
-
-		_, _, err = Request("PUT", path, data)
-		if err != nil {
-			return err
-		}
-		e := DecodeError(data)
-		if e != nil {
-			return e
-		}
-
-		return nil
-	}
-	return fmt.Errorf("Action or stage not found")
-}
-
-// RestartPipeline will have two distinct behavior:
-// - If the pipeline build result is failed, it will only restart failed actions
-// - If the pipeline build result is success, it will restart all actions
-func RestartPipeline(key, app, pip, env string, bn int) (chan Log, error) {
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/restart", key, app, pip, bn)
-	_, _, err := Request("POST", uri, nil)
-	if err != nil {
-		return nil, err
-	}
-	return StreamPipelineBuild(key, app, pip, env, bn, false)
-}
-
 //GetPipelineCommits returns list of commit between this build and the previous
 //one the same branch. If previous build is not available, it returns only the
 //last commit for the branch
@@ -267,27 +174,6 @@ func GetPipelineCommits(key, app, pip, env string, bn int) ([]VCSCommit, error) 
 	}
 	json.Unmarshal([]byte(data), &commits)
 	return commits, nil
-}
-
-// RunPipeline trigger a CDS pipeline
-func RunPipeline(key, appName, name, env string, stream bool, request RunRequest, followTriggers bool) (chan Log, error) {
-	request.Env = Environment{Name: env}
-
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/run", key, appName, name)
-	_, _, err = Request("POST", path, data)
-	if err != nil {
-		return nil, err
-	}
-
-	if stream {
-		return StreamPipelineBuild(key, appName, name, env, 0, followTriggers)
-	}
-	return nil, nil
 }
 
 // GetPipelineBuildHistory retrieves recent build history for given pipeline
@@ -313,34 +199,6 @@ func GetPipelineBuildHistory(key, appName, name, env, buildNumber string) ([]Pip
 	}
 
 	return res, nil
-}
-
-// GetBuildLogs retrieve all output from given build
-func GetBuildLogs(key, pipelineName, env string, buildID int) ([]Log, error) {
-	var logs []Log
-	var path string
-
-	if buildID == 0 {
-		path = fmt.Sprintf("/project/%s/pipeline/%s/build/last/log", key, pipelineName)
-	} else {
-		path = fmt.Sprintf("/project/%s/pipeline/%s/build/%d/log", key, pipelineName, buildID)
-	}
-
-	if env != "" {
-		path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
-	}
-
-	data, _, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal([]byte(data), &logs)
-	if err != nil {
-		return nil, err
-	}
-
-	return logs, nil
 }
 
 // StreamPipelineBuild poll the api to fetch logs of building pipeline and push them in returned channel

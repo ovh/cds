@@ -25,6 +25,7 @@ export class VCSStrategyComponent implements OnInit {
     @Input() hideButton = false;
     @Input() createOnProject = false;
     @Input() sshWarning = false;
+    @Input() projectKeysOnly = false;
 
     selectedPublicKey: string;
 
@@ -58,9 +59,19 @@ export class VCSStrategyComponent implements OnInit {
         if (!this.strategy) {
             this.strategy = new VCSStrategy();
         }
-        this._keyService.getAllKeys(this.project.key, this.appName).subscribe(k => {
-            this.keys = k;
-        })
+        this.loadKeys();
+    }
+
+    loadKeys() {
+        if (this.projectKeysOnly) {
+            this._keyService.getProjectKeys(this.project.key).subscribe(k => {
+                this.keys = k;
+            })
+        } else {
+            this._keyService.getAllKeys(this.project.key, this.appName).subscribe(k => {
+                this.keys = k;
+            })
+        }
     }
 
     saveStrategy() {
@@ -80,9 +91,7 @@ export class VCSStrategyComponent implements OnInit {
         this._projectStore.addKey(this.project.key, event.key).pipe(first(), finalize(() => {
             this.loading = false;
             this.sshModal.approve(true);
-            this._keyService.getAllKeys(this.project.key, this.appName).subscribe(k => {
-                this.keys = k;
-            })
+            this.loadKeys();
         })).subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
     }
 

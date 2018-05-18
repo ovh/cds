@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
@@ -41,15 +42,15 @@ func (api *API) addJobToStageHandler() Handler {
 		}
 
 		// check if stage is in the current pipeline
-		found := false
+		var stage sdk.Stage
 		for _, s := range pip.Stages {
 			if s.ID == stageID {
-				found = true
+				stage = s
 				break
 			}
 		}
 
-		if !found {
+		if stage.ID == 0 {
 			return sdk.WrapError(sdk.ErrNotFound, "addJobToStageHandler>Stage not found")
 		}
 
@@ -96,6 +97,8 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
 		}
 
+		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, getUser(ctx))
+
 		return WriteJSON(w, pip, http.StatusOK)
 	}
 }
@@ -137,19 +140,21 @@ func (api *API) updateJobHandler() Handler {
 		}
 
 		// check if job is in the current pipeline
-		found := false
+		var stage sdk.Stage
+		var oldJob sdk.Job
 		for _, s := range pipelineData.Stages {
 			if s.ID == stageID {
 				for _, j := range s.Jobs {
 					if j.PipelineActionID == jobID {
-						found = true
+						stage = s
+						oldJob = j
 						break
 					}
 				}
 			}
 		}
 
-		if !found {
+		if oldJob.PipelineActionID == 0 {
 			return sdk.WrapError(sdk.ErrNotFound, "updateJobHandler>Job not found")
 		}
 
@@ -193,6 +198,8 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot load stages")
 		}
 
+		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, getUser(ctx))
+
 		return WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -220,12 +227,14 @@ func (api *API) deleteJobHandler() Handler {
 
 		// check if job is in the current pipeline
 		found := false
+		var stage sdk.Stage
 		var jobToDelete sdk.Job
 	stageLoop:
 		for _, s := range pipelineData.Stages {
 			for _, j := range s.Jobs {
 				if j.PipelineActionID == jobID {
 					jobToDelete = j
+					stage = s
 					found = true
 					break stageLoop
 				}
@@ -266,6 +275,8 @@ func (api *API) deleteJobHandler() Handler {
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")
 		}
+
+		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, getUser(ctx))
 
 		return WriteJSON(w, pipelineData, http.StatusOK)
 	}

@@ -6,8 +6,8 @@
         <div class="fourteen wide field">
             <ng-container *ngFor="let c of connectionType.values()">
                 <div class="ui radio checkbox">
-                    <input type="radio" name="connection" [value]="c" [(ngModel)]="strategy.connection_type">
-                    <label>{{c}}</label>
+                    <input type="radio" id="connection-{{c}}" name="connection" [value]="c" [(ngModel)]="strategy.connection_type">
+                    <label for="connection-{{c}}">{{c}}</label>
                 </div>
             </ng-container>
         </div>

@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	importFormat, importGit, importURL string
-	importForce                        bool
+	importFormat, importURL string
+	importForce             bool
 )
 
 func importCmd() *cobra.Command {

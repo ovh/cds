@@ -68,6 +68,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 
 	//Checks pipeline parameters
 	if len(n.Context.DefaultPipelineParameters) > 0 {
+		defaultPipParams := make([]sdk.Parameter, 0, len(n.Context.DefaultPipelineParameters))
 		for i := range n.Context.DefaultPipelineParameters {
 			var paramFound bool
 			param := &n.Context.DefaultPipelineParameters[i]
@@ -77,10 +78,11 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 					paramFound = true
 				}
 			}
-			if !paramFound {
-				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid parameter %s in pipeline %s", param.Name, n.Pipeline.Name))
+			if paramFound {
+				defaultPipParams = append(defaultPipParams, *param)
 			}
 		}
+		n.Context.DefaultPipelineParameters = defaultPipParams
 	}
 
 	if n.ID == 0 {
@@ -338,13 +340,6 @@ func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 
 	return &ctx, nil
-}
-
-// LockNodeContext lock the context for a given node id
-func LockNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) error {
-	_, err := db.Exec("SELECT id from workflow_node_context where workflow_node_id = $1 FOR UPDATE NOWAIT", nodeID)
-
-	return err
 }
 
 // LoadNodeContext load the context for a given node id and user

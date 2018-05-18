@@ -211,7 +211,7 @@ func (api *API) getActionExportHandler() Handler {
 			return sdk.WrapError(err, "getActionExportHandler> Format invalid")
 		}
 
-		if _, err := action.Export(api.mustDB(), name, f, getUser(ctx), w); err != nil {
+		if _, err := action.Export(api.mustDB(), name, f, w); err != nil {
 			return sdk.WrapError(err, "getActionExportHandler>")
 		}
 		w.Header().Add("Content-Type", exportentities.GetContentType(f))

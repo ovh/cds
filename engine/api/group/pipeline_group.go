@@ -114,21 +114,6 @@ func CheckGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) (bool,
 	return false, nil
 }
 
-// LoadGroupInPipelineByName checks if group has access to pipeline with the name
-func LoadGroupInPipelineByName(db gorp.SqlExecutor, pipelineID int64, groupName string) (int64, error) {
-	query := `SELECT pipeline_group.group_id FROM pipeline_group
-	JOIN "group" AS grouptable ON grouptable.id = pipeline_group.group_id
-	WHERE pipeline_group.pipeline_id = $1 AND grouptable.name = $2`
-
-	var nb int64
-	err := db.QueryRow(query, pipelineID, groupName).Scan(&nb)
-	if err != nil && err != sql.ErrNoRows {
-		return 0, err
-	}
-
-	return nb, nil
-}
-
 func deleteGroupPipelineByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	pipelineIDs := []int64{}
 	if _, err := db.Select(&pipelineIDs, "SELECT pipeline_id from pipeline_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {

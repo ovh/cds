@@ -100,15 +100,6 @@ func DeleteBuildLogs(db gorp.SqlExecutor, pipJobID int64) error {
 	return err
 }
 
-// DeleteBuildLogsByApplicationID Delete all log from the given build
-func DeleteBuildLogsByApplicationID(db gorp.SqlExecutor, appID int64) error {
-	query := `DELETE FROM pipeline_build_log WHERE pipeline_build_id IN (
-				SELECT id from pipeline_build WHERE application_id = $1
-			)`
-	_, err := db.Exec(query, appID)
-	return err
-}
-
 // DeleteBuildLogsByPipelineBuildID Delete all log from the given build
 func DeleteBuildLogsByPipelineBuildID(db gorp.SqlExecutor, pipID int64) error {
 	query := `DELETE FROM pipeline_build_log WHERE pipeline_build_id = $1`

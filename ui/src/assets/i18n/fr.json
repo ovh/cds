@@ -292,6 +292,8 @@
   "broadcast_project_select": "Selectionnez un projet (optionnel)",
   "broadcast_none": "Aucune information",
   "broadcast_load_broadcasts": "Chargement des informations...",
+  "broadcast_recent": "Récentes",
+  "broadcast_seen": "Vues",
 
   "group_added": "Groupe ajouté",
   "group_deleted": "Groupe supprimé",
@@ -370,6 +372,9 @@
   "navbar_application_in": "Application dans ",
   "navbar_workflow_in": "Workflow dans ",
   "navbar_all_projects": "Tous les projets",
+  "navbar_mark_read": "Marquer comme lu",
+  "navbar_see_all": "Voir tout",
+  "navbar_general": "Général",
 
   "notifications_added": "Notifications ajoutées",
   "notification_clone": "Notification à cloner",

@@ -48,16 +48,3 @@ func sortNodeTriggers(triggers *[]sdk.WorkflowNodeTrigger) {
 		return strings.Compare(t1.WorkflowDestNode.Name, t2.WorkflowDestNode.Name) < 0
 	})
 }
-
-func sortEnvironment(c1, c2 *sdk.WorkflowNodeContext) bool {
-	if c1.Environment == nil {
-		return true
-	}
-	if c1.Environment != nil && c2.Environment != nil {
-		if c1.Environment.Name == c2.Environment.Name {
-			return true
-		}
-		return strings.Compare(c1.Application.Name, c2.Application.Name) < 0
-	}
-	return false
-}

@@ -239,3 +239,56 @@ func GetPipelineIDFromJoinedActionID(db gorp.SqlExecutor, id int64) (int64, erro
 	}
 	return id, nil
 }
+
+// CountInValueVarData represents the result of CountInVarValue function
+type CountInPipelineData struct {
+	PipName    string
+	StageName  string
+	ActionName string
+	Count      int64
+}
+
+// CountInPipelines count how many times a text is used on all pipeline for the given project
+func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountInPipelineData, error) {
+	query := `
+	WITH RECURSIVE parent(pipName, stageName, actionName, id, child_id) as (
+
+		SELECT pipeline.name, pipeline_stage.name, action.name, action_edge.id as id, action_edge.child_id as child_id, action_edge_parameter.value
+		FROM pipeline
+		JOIN pipeline_stage on pipeline_stage.pipeline_id = pipeline.id
+		JOIN pipeline_action on pipeline_action.pipeline_stage_id = pipeline_stage.id
+		JOIN project on project.id = pipeline.project_id
+		JOIN action on action.id = pipeline_action.action_id
+		LEFT JOIN action_edge ON action_edge.parent_id = action.id
+		LEFT JOIN action_edge_parameter on action_edge_parameter.action_edge_id = action_edge.id
+		WHERE project.projectkey = $1 AND action_edge.id IS NOT NULL
+
+		UNION
+
+		SELECT p.pipName, p.stageName, p.actionName, c.id, c.child_id, action_edge_parameter.value FROM parent as p, action_edge as c
+		LEFT JOIN action_edge_parameter ON action_edge_parameter.action_edge_id = c.id
+		WHERE p.child_id = c.parent_id
+	)
+	SELECT pipName, stageName, actionName, id, child_id,
+		count(*) as nb
+	FROM parent
+	WHERE value LIKE $2
+	GROUP BY pipName, stageName, actionName, id, child_id;
+	`
+	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", element))
+	if err != nil {
+		return nil, sdk.WrapError(err, "pipeline.CountInPipelines> Unable to count usage")
+	}
+	defer rows.Close()
+
+	results := []CountInPipelineData{}
+	for rows.Next() {
+		var d CountInPipelineData
+		var id, childID int64
+		if err := rows.Scan(&d.PipName, &d.StageName, &d.ActionName, &id, &childID, &d.Count); err != nil {
+			return nil, sdk.WrapError(err, "pipeline.CountInPipelines> Unable to scan")
+		}
+		results = append(results, d)
+	}
+	return results, nil
+}

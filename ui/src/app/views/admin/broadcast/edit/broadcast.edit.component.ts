@@ -48,17 +48,20 @@ export class BroadcastEditComponent {
         .subscribe((data) => {
             this.loading = false;
             if (Array.isArray(data)) {
-                this.projects = data.filter((elt) => elt.type === 'project');
+                let voidProj = new NavbarProjectData();
+                voidProj.type = 'project';
+                voidProj.name = ' ';
+                this.projects = [voidProj].concat(data.filter((elt) => elt.type === 'project'));
                 this.currentUser = this._authentificationStore.getUser();
             }
         });
 
         this._route.params.subscribe(params => {
-            this.reloadData(params['id']);
+            this.reloadData(parseInt(params['id'], 10));
         });
     }
 
-    reloadData(broadcastId: string): void {
+    reloadData(broadcastId: number): void {
         this._broadcastService.getBroadcastById(broadcastId).subscribe( broadcast => {
             this.broadcast = broadcast;
             if (this.currentUser.admin) {

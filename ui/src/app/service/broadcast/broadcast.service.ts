@@ -1,13 +1,18 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
+import {map, share, flatMap} from 'rxjs/operators';
 import {Broadcast} from '../../model/broadcast.model';
 import {HttpClient} from '@angular/common/http';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 
 /**
  * Service to get broadcast
  */
 @Injectable()
 export class BroadcastService {
+
+    // List of all broadcasts.
+    private _broadcasts: BehaviorSubject<Array<Broadcast>> = new BehaviorSubject(Array<Broadcast>());
 
     constructor(private _http: HttpClient) {
     }
@@ -42,8 +47,38 @@ export class BroadcastService {
      * Get Broadcast by id
      * @returns {Observable<Broadcast>}
      */
-    getBroadcastById(broadcastId: string): Observable<Broadcast> {
-        return this._http.get<Broadcast>('/broadcast/' + broadcastId);
+    getBroadcastById(broadcastId: number): Observable<Broadcast> {
+        return this._http.get<Broadcast>('/broadcast/' + broadcastId)
+            .pipe(
+                map((broadcast) => {
+                    this._broadcasts.next(this.resync(broadcast));
+                    return broadcast;
+                })
+            );
+    }
+
+    /**
+     * Update a broadcast to mark as read for a user
+     * @returns {Observable<null>}
+     */
+    markAsRead(broadcastId: number): Observable<null> {
+        return this._http.post<null>('/broadcast/' + broadcastId + '/mark', {})
+          .pipe(
+            map(() => {
+                let broadcasts = this._broadcasts.getValue();
+                if (Array.isArray(broadcasts) && broadcasts.length) {
+                    broadcasts = broadcasts.map((br) => {
+                        if (br.id === broadcastId) {
+                            br.read = true;
+                        }
+                        return br;
+                    });
+                }
+                this._broadcasts.next(broadcasts);
+
+                return null;
+            })
+          );
     }
 
     /**
@@ -51,6 +86,39 @@ export class BroadcastService {
      * @returns {Observable<Broadcast[]>}
      */
     getBroadcasts(): Observable<Array<Broadcast>> {
-        return this._http.get<Array<Broadcast>>('/broadcast');
+        return this._http.get<Array<Broadcast>>('/broadcast')
+            .pipe(
+                share(),
+                map((broadcasts) => {
+                    this._broadcasts.next(broadcasts);
+                    return broadcasts;
+                })
+            );
+    }
+
+    /**
+     * Get the list of availablen broadcasts
+     * @returns {Observable<Broadcast[]>}
+     */
+    getBroadcastsListener(): Observable<Array<Broadcast>> {
+        let broadcasts = this._broadcasts.getValue();
+        if (!Array.isArray(broadcasts) || !broadcasts.length) {
+            return this.getBroadcasts()
+                .pipe(flatMap(() => new Observable<Array<Broadcast>>(fn => this._broadcasts.subscribe(fn))));
+        }
+        return new Observable<Array<Broadcast>>(fn => this._broadcasts.subscribe(fn));
+    }
+
+    private resync(broadcast: Broadcast): Array<Broadcast> {
+      let broadcasts = this._broadcasts.getValue();
+      if (Array.isArray(broadcasts) && broadcasts.length) {
+          broadcasts = broadcasts.map((br) => {
+              if (br.id === broadcast.id) {
+                  return broadcast;
+              }
+              return br;
+          });
+      }
+      return broadcasts;
     }
 }

@@ -152,27 +152,3 @@ func loadWorkflowGroups(db gorp.SqlExecutor, w sdk.Workflow) ([]sdk.GroupPermiss
 	}
 	return wgs, nil
 }
-
-func deleteWorkflowGroupByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
-	workflowIDs := []int64{}
-	if _, err := db.Select(&workflowIDs, "SELECT workflow_id from workflow_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
-		return sdk.WrapError(err, "deleteWorkflowGroupByGroup")
-	}
-
-	query := `DELETE FROM workflow_group WHERE group_id=$1`
-	if _, err := db.Exec(query, group.ID); err != nil {
-		return sdk.WrapError(err, "deleteWorkflowGroupByGroup")
-	}
-
-	for _, id := range workflowIDs {
-		ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, id)
-		if err != nil {
-			return sdk.WrapError(err, "deleteWorkflowGroupByGroup")
-		}
-		if !ok {
-			return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "deleteWorkflowGroupByGroup")
-		}
-	}
-
-	return nil
-}

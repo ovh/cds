@@ -33,6 +33,7 @@
         "../node_modules/semantic-ui/dist/semantic.js",
         "../node_modules/lodash/lodash.min.js",
         "../node_modules/moment/min/moment.min.js",
+        "../node_modules/moment/locale/fr.js",
         "../node_modules/codemirror/lib/codemirror.js",
         "../node_modules/codemirror/mode/shell/shell.js",
         "../node_modules/codemirror/addon/mode/simple.js",

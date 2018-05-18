@@ -75,18 +75,6 @@ func UpdateTestResults(db *gorp.DbMap, pbID int64, tests venom.Tests) error {
 	return nil
 }
 
-// DeleteTestResults removes from database test results for a specific pipeline build
-func DeleteTestResults(db gorp.SqlExecutor, pbID int64) error {
-	query := `DELETE FROM pipeline_build_test WHERE pipeline_build_id = $1`
-
-	_, err := db.Exec(query, pbID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // DeletePipelineTestResults removes from database test results for a specific pipeline
 func DeletePipelineTestResults(db gorp.SqlExecutor, pipID int64) error {
 	query := `DELETE FROM pipeline_build_test WHERE pipeline_build_id IN
