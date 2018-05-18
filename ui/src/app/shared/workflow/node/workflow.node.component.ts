@@ -17,7 +17,8 @@ import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Location} from '@angular/common';
 
 @Component({
     selector: 'app-workflow-node',
@@ -51,8 +52,15 @@ export class WorkflowNodeComponent implements OnInit {
     isSelected: boolean;
     subSelect: Subscription;
 
+    selectedNodeID: number;
 
-    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore, private _router: Router) {
+    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore, private _router: Router,
+        private _activatedRoute: ActivatedRoute, private _location: Location) {
+        this._activatedRoute.queryParams.subscribe(params => {
+            if (params['nodeID']) {
+                this.selectedNodeID = params['nodeID'];
+            }
+        });
     }
 
     ngOnInit(): void {
@@ -86,6 +94,9 @@ export class WorkflowNodeComponent implements OnInit {
                 }
             } else {
                 this.workflowRun = null;
+            }
+            if (this.node && this.selectedNodeID) {
+                this.goToNodeRun();
             }
             if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
                 this.computeWarnings();
@@ -135,6 +146,10 @@ export class WorkflowNodeComponent implements OnInit {
         } else {
             this._workflowEventStore.setSelectedNode(this.node, true);
         }
+
+        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute, queryParams: { nodeID: this.node.id}});
+        // this._router.navigate(['./'], { relativeTo: this._activatedRoute, queryParams: { nodeID: this.node.id}});
+        this._location.go(url.toString());
     }
 
     goToLogs() {
