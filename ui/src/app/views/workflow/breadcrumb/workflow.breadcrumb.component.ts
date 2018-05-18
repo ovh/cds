@@ -21,6 +21,8 @@ export class WorkflowBreadCrumbComponent {
         this.runSub = this._workflowEventStore.selectedRun().subscribe(wr => {
             if (wr) {
                 this.run = wr.num;
+            } else {
+                delete this.run;
             }
         });
 

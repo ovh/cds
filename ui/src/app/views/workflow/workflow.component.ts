@@ -165,9 +165,6 @@ export class WorkflowComponent implements OnInit {
 
     changeToRunsMode(): void {
         this._workflowEventStore.setSelectedNode(null, false);
-        this._workflowEventStore.setSelectedNodeRun(null);
-        this._workflowEventStore.setSelectedHook(null);
-        this._workflowEventStore.setSelectedJoin(null);
         this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
     }
 }

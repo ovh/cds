@@ -131,7 +131,9 @@ export class WorkflowSidebarRunNodeComponent {
                 let nodeRun = nodesRun.find( n => {
                     return n.id === this.currentWorkflowNodeRun.id;
                 });
-                return nodeRun.can_be_run;
+                if (nodeRun) {
+                    return nodeRun.can_be_run;
+                }
             }
             return false;
         }
@@ -141,14 +143,14 @@ export class WorkflowSidebarRunNodeComponent {
             return true;
         }
 
-        if (this.node && this.workflow) {
-            if (workflowRunIsNotActive && !this.currentWorkflowNodeRun && this.node.id === this.workflow.root_id) {
+        if (this.node && this.currentWorkflowRun) {
+            if (workflowRunIsNotActive && !this.currentWorkflowNodeRun && this.node.id === this.currentWorkflowRun.workflow.root_id) {
                 return true;
             }
 
             if (this.currentWorkflowRun) {
                 let nbNodeFound = 0;
-                let parentNodes = Workflow.getParentNodeIds(this.workflow, this.node.id);
+                let parentNodes = Workflow.getParentNodeIds(this.currentWorkflowRun.workflow, this.node.id);
                 for (let parentNodeId of parentNodes) {
                     for (let nodeRunId in this.currentWorkflowRun.nodes) {
                         if (!this.currentWorkflowRun.nodes[nodeRunId]) {
@@ -160,7 +162,7 @@ export class WorkflowSidebarRunNodeComponent {
                                 return false;
                             }
                             nbNodeFound++;
-                        } else if (!Workflow.getNodeByID(nodeRuns[0].workflow_node_id, this.workflow)) {
+                        } else if (!Workflow.getNodeByID(nodeRuns[0].workflow_node_id, this.currentWorkflowRun.workflow)) {
                             // workflow updated so prefer return true
                             return true;
                         }
