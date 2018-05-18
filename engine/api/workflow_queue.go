@@ -531,7 +531,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return WriteJSON(w, nil, http.StatusNoContent)
 	}
 }
 
