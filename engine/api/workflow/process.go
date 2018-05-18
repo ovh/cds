@@ -537,7 +537,9 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	// this allow user to write some run conditions with .git.var on the root pipeline
 	if isRoot {
 		setValuesGitInBuildParameters(run, vcsInfos, "")
-		setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", sanitizedRepositoryFullname))
+		if sanitizedRepositoryFullname != "" {
+			setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", sanitizedRepositoryFullname))
+		}
 	}
 
 	// Check Run Conditions
@@ -569,7 +571,9 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 
 	if !isRoot {
 		setValuesGitInBuildParameters(run, vcsInfos, "")
-		setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", sanitizedRepositoryFullname))
+		if sanitizedRepositoryFullname != "" {
+			setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", sanitizedRepositoryFullname))
+		}
 	}
 
 	// Tag VCS infos : add in tag only if it does not exist

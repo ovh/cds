@@ -9,8 +9,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func removeWarning(db gorp.SqlExecutor, warningType string, element string) error {
-	_, err := db.Exec("DELETE FROM warning where type = $1 and element = $2", warningType, element)
+func removeProjectWarning(db gorp.SqlExecutor, warningType string, element string, key string) error {
+	_, err := db.Exec("DELETE FROM warning where type = $1 and element = $2 and project_key = $3", warningType, element, key)
 	return err
 }
 
@@ -53,4 +53,25 @@ func (w *warning) PostGet(db gorp.SqlExecutor) error {
 		return err
 	}
 	return nil
+}
+
+// GetByProject Get all warnings for the given project
+func GetByProject(db gorp.SqlExecutor, key string) ([]sdk.WarningV2, error) {
+	query := `
+		SELECT * FROM warning WHERE project_key = $1
+	`
+	var ws []warning
+	if _, err := db.Select(&ws, query, key); err != nil {
+		return nil, sdk.WrapError(err, "warning.GetByProject> Unable to list warnings for project %s", key)
+	}
+
+	warnings := make([]sdk.WarningV2, len(ws))
+	for i, w := range ws {
+		if err := w.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "warning.GetByProject> Unable to post get warnings")
+		}
+		warnings[i] = sdk.WarningV2(w)
+	}
+
+	return warnings, nil
 }

@@ -18,12 +18,12 @@
             <ng-container *ngIf="selectedPlatform?.model">
                 <label>{{ 'platform_configuration' | translate }}</label>
                 <div class="inline fields" *ngFor="let k of selectedPlatform.model.deployment_default_config | keys">
-                    <div class="four wide field"><label>{{k}}</label></div> 
-                    <div class="twelve wide field"> 
+                    <div class="four wide field"><label>{{k}}</label></div>
+                    <div class="twelve wide field">
                         <input type="text" [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value" *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'string'">
                         <input type="password" [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value" *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'password'">
                         <textarea class="ui textarea" rows="3"
-                            [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value" 
+                            [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value"
                             *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'text'"></textarea>
                     </div>
                 </div>
@@ -52,19 +52,23 @@
                             </td>
                             <td>
                                 <div class="inline fields" *ngFor="let k of application.deployment_strategies[pf] | keys">
-                                    <div class="four wide field"><label>{{k}}</label></div> 
-                                    <div class="twelve wide field"> 
+                                    <div class="four wide field"><label>{{k}}</label></div>
+                                    <div class="twelve wide field">
                                         <input type="text" [(ngModel)]="application.deployment_strategies[pf][k].value" *ngIf="application.deployment_strategies[pf][k].type === 'string'">
                                         <input type="password" [(ngModel)]="application.deployment_strategies[pf][k].value" *ngIf="application.deployment_strategies[pf][k].type === 'password'">
                                         <textarea class="ui textarea" rows="3"
-                                            [(ngModel)]="application.deployment_strategies[pf][k].value" 
+                                            [(ngModel)]="application.deployment_strategies[pf][k].value"
                                             *ngIf="application.deployment_strategies[pf][k].type === 'text'"></textarea>
                                     </div>
                                 </div>
-                            </td> 
-                            <td>
-                                <button class="ui green button" [class.loading]="loadingBtn" type="button" (click)="clickSavePlatform(pf)" >{{ 'btn_save' | translate }}</button>
-                                <app-delete-button (event)="clickDeletePlatform(pf)" [loading]="loadingBtn"></app-delete-button>
+                            </td>
+                            <td class="center aligned">
+                                <div>
+                                  <button class="ui green button mb5" [class.loading]="loadingBtn" type="button" (click)="clickSavePlatform(pf)" >{{ 'btn_save' | translate }}</button>
+                                </div>
+                                <div>
+                                  <app-delete-button (event)="clickDeletePlatform(pf)" [loading]="loadingBtn"></app-delete-button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

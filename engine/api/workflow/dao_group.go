@@ -152,3 +152,27 @@ func loadWorkflowGroups(db gorp.SqlExecutor, w sdk.Workflow) ([]sdk.GroupPermiss
 	}
 	return wgs, nil
 }
+
+// ByGroupID List workflow that use the given group
+func ByGroupID(db gorp.SqlExecutor, key string, groupID int64) ([]string, error) {
+	query := `
+		SELECT workflow.name  FROM workflow_group
+		JOIN workflow ON workflow.id = workflow_group.workflow_id
+		JOIN project ON project.id = workflow.project_id
+		WHERE project.projectkey = $1 AND workflow_group.group_id = $2
+	`
+	wsName := make([]string, 0)
+	rows, err := db.Query(query, key, groupID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "group.WorkflowByGroupID> Unable to list environment")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var env string
+		if err := rows.Scan(&env); err != nil {
+			return nil, sdk.WrapError(err, "group.WorkflowByGroupID> Unable to scan")
+		}
+		wsName = append(wsName, env)
+	}
+	return wsName, nil
+}
