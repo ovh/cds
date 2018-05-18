@@ -600,6 +600,16 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	if err := insertWorkflowNodeRun(db, run); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
 	}
+
+	buildParameters := sdk.ParametersToMap(run.BuildParameters)
+	if _, ok := buildParameters["cds.ui.pipeline.run"]; !ok {
+		uiRunURL := fmt.Sprintf("%s/project/%s/workflow/%s/run/%s/node/%d?name=%s", baseUIURL, buildParameters["cds.project"], buildParameters["cds.workflow"], buildParameters["cds.run.number"], run.ID, buildParameters["cds.workflow"])
+		sdk.AddParameter(&run.BuildParameters, "cds.ui.pipeline.run", sdk.StringParameter, uiRunURL)
+		if err := UpdateNodeRunBuildParameters(db, run.ID, run.BuildParameters); err != nil {
+			return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow node run build parameters")
+		}
+	}
+
 	if chanEvent != nil {
 		chanEvent <- *run
 	}
