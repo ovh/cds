@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
+import * as moment from 'moment';
 
 @Injectable()
 export class LanguageStore {
@@ -19,7 +20,9 @@ export class LanguageStore {
     }
 
     set(l: string) {
+        moment.locale(l);
         localStorage.setItem('CDS-Language', l);
+
         this._language.next(l);
     }
 }

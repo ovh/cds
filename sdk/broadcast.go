@@ -15,4 +15,5 @@ type Broadcast struct {
 	Archived   bool      `json:"archived" db:"archived" cli:"archived"`
 	ProjectID  *int64    `json:"project_id,omitempty" db:"project_id" cli:"-"`
 	ProjectKey string    `json:"project_key,omitempty" db:"-" cli:"project"`
+	Read       bool      `json:"read" db:"-" cli:"read"`
 }

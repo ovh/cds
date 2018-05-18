@@ -97,6 +97,7 @@ func (api *API) InitRouter() {
 	// Broadcast
 	r.Handle("/broadcast", r.POST(api.addBroadcastHandler, NeedAdmin(true)), r.GET(api.getBroadcastsHandler))
 	r.Handle("/broadcast/{id}", r.GET(api.getBroadcastHandler), r.PUT(api.updateBroadcastHandler, NeedAdmin(true)), r.DELETE(api.deleteBroadcastHandler, NeedAdmin(true)))
+	r.Handle("/broadcast/{id}/mark", r.POST(api.postMarkAsReadBroadcastHandler))
 
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))

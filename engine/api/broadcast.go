@@ -47,7 +47,8 @@ func (api *API) updateBroadcastHandler() Handler {
 			return sdk.WrapError(errr, "updateBroadcast> Invalid id")
 		}
 
-		if _, err := broadcast.LoadByID(api.mustDB(), broadcastID); err != nil {
+		u := getUser(ctx)
+		if _, err := broadcast.LoadByID(api.mustDB(), broadcastID, u); err != nil {
 			return sdk.WrapError(err, "updateBroadcast> cannot load broadcast by id")
 		}
 
@@ -58,7 +59,7 @@ func (api *API) updateBroadcastHandler() Handler {
 		}
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, getUser(ctx))
+			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, u)
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "updateBroadcast> Cannot load %s", bc.ProjectKey)
 			}
@@ -86,6 +87,29 @@ func (api *API) updateBroadcastHandler() Handler {
 		}
 
 		return WriteJSON(w, bc, http.StatusOK)
+	}
+}
+
+func (api *API) postMarkAsReadBroadcastHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		broadcastID, errr := requestVarInt(r, "id")
+		if errr != nil {
+			return sdk.WrapError(errr, "updateBroadcast> Invalid id")
+		}
+
+		u := getUser(ctx)
+		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, u)
+		if errL != nil {
+			return sdk.WrapError(errL, "postMarkAsReadBroadcastHandler> cannot load broadcast by id")
+		}
+
+		if !br.Read {
+			if err := broadcast.MarkAsRead(api.mustDB(), broadcastID, u.ID); err != nil {
+				return sdk.WrapError(err, "postMarkAsReadBroadcastHandler> cannot mark as read broadcast id %d and user id %d", broadcastID, u.ID)
+			}
+		}
+
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -120,7 +144,7 @@ func (api *API) getBroadcastHandler() Handler {
 			return sdk.WrapError(errr, "getBroadcast> Invalid id")
 		}
 
-		broadcast, err := broadcast.LoadByID(api.mustDB(), id)
+		broadcast, err := broadcast.LoadByID(api.mustDB(), id, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getBroadcast> cannot load broadcasts")
 		}
@@ -131,7 +155,7 @@ func (api *API) getBroadcastHandler() Handler {
 
 func (api *API) getBroadcastsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		broadcasts, err := broadcast.LoadAll(api.mustDB())
+		broadcasts, err := broadcast.LoadAll(api.mustDB(), getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getBroadcasts> cannot load broadcasts")
 		}

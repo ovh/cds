@@ -292,6 +292,8 @@
   "broadcast_project_select": "Select a project (optional)",
   "broadcast_none": "No Broadcast",
   "broadcast_load_broadcasts": "Loading broadcasts...",
+  "broadcast_recent": "Recent",
+  "broadcast_seen": "Seen",
 
   "group_added": "Group added",
   "group_deleted": "Group deleted",
@@ -370,6 +372,9 @@
   "navbar_application_in": "Application in ",
   "navbar_workflow_in": "Workflow in ",
   "navbar_all_projects": "All projects",
+  "navbar_mark_read": "Mark as read",
+  "navbar_see_all": "See all",
+  "navbar_general": "General",
 
   "notifications_added": "Notifications added",
   "notification_clone": "Notification to clone",
