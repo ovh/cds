@@ -19,7 +19,7 @@
                         *ngIf="names"
                         class="search"
                         [(model)]="condition.variable"
-                        (change)="condition.value = null"
+                        (change)="variableChanged($event)"
                         [options]="{'fullTextSearch': true, 'allowAdditions': true}">
                         <option *ngFor="let n of names" [value]="n">{{n}}</option>
                     </sm-select>
@@ -29,8 +29,8 @@
                         <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>
                     </sm-select>
                 </div>
-                <div class="six wide field">
-                    <div class="ui input">
+                <div class="six wide field center aligned">
+                    <div class="ui input" *ngIf="condition.variable !== 'cds.manual'">
                         <ng-container *ngIf="isStatusVariable()">
                             <sui-select class="selection"
                                 name="value"
@@ -42,7 +42,15 @@
                                 </sui-select-option>
                             </sui-select>
                         </ng-container>
+
                         <input type="text" [(ngModel)]="condition.value" placeholder="" *ngIf="!isStatusVariable()">
+                    </div>
+                    <div class="ui fitted checkbox manual" *ngIf="condition.variable === 'cds.manual'">
+                      <input type="checkbox"
+                          id="cdsmanualcheck" name="cdsmanual"
+                          [checked]="condition.value === 'true'"
+                          (change)="updateConditionValue($event)">
+                      <label></label>
                     </div>
                 </div>
                 <div class="two wide field">
