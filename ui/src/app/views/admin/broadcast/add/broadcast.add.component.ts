@@ -39,7 +39,10 @@ export class BroadcastAddComponent {
         this.navbarSub = this._navbarService.getData(true).subscribe((data) => {
             this.loading = false;
             if (Array.isArray(data)) {
-                this.projects = data.filter((elt) => elt.type === 'project');
+                let voidProj = new NavbarProjectData();
+                voidProj.type = 'project';
+                voidProj.name = ' ';
+                this.projects = [voidProj].concat(data.filter((elt) => elt.type === 'project'));
                 this.currentUser = this._authentificationStore.getUser();
                 this.broadcastLevelsList = _broadcastLevelService.getBroadcastLevels();
             }

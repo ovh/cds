@@ -894,19 +894,3 @@ func CheckPrerequisites(t sdk.PipelineTrigger, pb *sdk.PipelineBuild) (bool, err
 
 	return prerequisitesOK, nil
 }
-
-//Exists checks if trigger exists
-func Exists(db gorp.SqlExecutor, applicationSource, pipelineSource, EnvSource, applicationDest, pipelineDest, EnvDest int64) (bool, error) {
-	query := `SELECT COUNT(1) FROM pipeline_trigger
-			  WHERE src_application_id = $1
-			  AND src_pipeline_id = $2
-			  AND src_environment_id = $3
-			  AND dest_application_id = $4
-			  AND dest_pipeline_id = $5
-			  AND dest_environment_id = $6`
-	var n int
-	if err := db.QueryRow(query, applicationSource, pipelineSource, EnvSource, applicationDest, pipelineDest, EnvDest).Scan(&n); err != nil {
-		return false, err
-	}
-	return n == 1, nil
-}

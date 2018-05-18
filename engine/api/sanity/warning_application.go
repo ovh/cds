@@ -3,56 +3,9 @@ package sanity
 import (
 	"sync"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-// CheckApplication checks all application variables
-func CheckApplication(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application) error {
-	warChan := make(chan []sdk.Warning)
-	done := make(chan bool)
-
-	go func() {
-		for {
-			ws, ok := <-warChan
-			if ws != nil {
-				log.Debug("CheckApplication> Inserting warnings %v", ws)
-
-				for _, w := range ws {
-					w.Application.ID = app.ID
-					if w.Pipeline.ID == 0 && w.Action.ID == 0 {
-
-					}
-				}
-			}
-			if !ok {
-				done <- true
-				return
-			}
-		}
-	}()
-
-	wg := &sync.WaitGroup{}
-	for i := range app.Variable {
-		wg.Add(1)
-		go func(v *sdk.Variable) {
-			ws, err := checkApplicationVariable(proj, app, v)
-			if err != nil {
-				log.Warning("CheckApplication> Error checking application %s/%s variable %s", proj.Name, app.Name, v.Name)
-			} else {
-				warChan <- ws
-			}
-			wg.Done()
-		}(&app.Variable[i])
-	}
-	wg.Wait()
-	close(warChan)
-	<-done
-
-	return nil
-}
 
 func checkApplicationVariable(project *sdk.Project, app *sdk.Application, variable *sdk.Variable) ([]sdk.Warning, error) {
 	resChan := make(chan usedVariablesResponse)

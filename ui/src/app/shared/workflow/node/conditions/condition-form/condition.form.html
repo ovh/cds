@@ -14,22 +14,22 @@
         <h4>{{ 'workflow_node_condition_form' | translate}}</h4>
         <div class="ui form">
             <div class="fields">
-                <div class="five wide field">
+                <div class="six wide field" [title]="condition.variable">
                     <sm-select
                         *ngIf="names"
-                        class="search" [options]="{'fullTextSearch': true}"
+                        class="search"
                         [(model)]="condition.variable"
                         (change)="condition.value = null"
-                        [options]="{'fullTextSearch': true}">
+                        [options]="{'fullTextSearch': true, 'allowAdditions': true}">
                         <option *ngFor="let n of names" [value]="n">{{n}}</option>
                     </sm-select>
                 </div>
-                <div class="four wide field">
+                <div class="two wide field">
                     <sm-select [(model)]="condition.operator" *ngIf="operators">
                         <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>
                     </sm-select>
                 </div>
-                <div class="five wide field">
+                <div class="six wide field">
                     <div class="ui input">
                         <ng-container *ngIf="isStatusVariable()">
                             <sui-select class="selection"

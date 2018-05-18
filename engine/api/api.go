@@ -514,7 +514,7 @@ func (a *API) Serve(ctx context.Context) error {
 	hook.Init(a.Config.URL.API)
 
 	//Intialize notification package
-	notification.Init(a.Config.URL.API, a.Config.URL.UI)
+	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication driver...")
 	// Initialize the auth driver
@@ -598,7 +598,7 @@ func (a *API) Serve(ctx context.Context) error {
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
-	go workflow.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
+	go workflow.Initialize(ctx, a.Cache, a.Config.URL.UI, a.DBConnectionFactory.GetDBMap)
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),

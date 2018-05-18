@@ -316,23 +316,6 @@ func (ui *Termui) pipelineLine(projKey string, app sdk.Application, pb sdk.Pipel
 	return fmt.Sprintf("[%s](%s,%s)[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", icon, color, selected, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
 }
 
-func jobLine(name string, status string) string {
-	switch status {
-	case string(sdk.StatusSuccess):
-		return fmt.Sprintf("[ [%s]](fg-green,bg-default)", name)
-	case string(sdk.StatusFail):
-		return fmt.Sprintf("[ [%s]](fg-red,bg-default)", name)
-	case string(sdk.StatusBuilding):
-		return fmt.Sprintf("[ [%s]](fg-blue,bg-default)", name)
-	case string(sdk.StatusWaiting):
-		return fmt.Sprintf("[ [%s]](fg-yellow,bg-default)", name)
-	case string(sdk.StatusDisabled):
-		return fmt.Sprintf("[ [%s-%s]](fg-cyan,bg-default)", name, status)
-	default:
-		return fmt.Sprintf("[ [%s-%s]](fg-white,bg-default)", name, status)
-	}
-}
-
 func (ui *Termui) updateQueueWorkers() string {
 	start := time.Now()
 	workers, err := client.WorkerList()

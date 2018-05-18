@@ -2,7 +2,6 @@ package application
 
 import (
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -34,45 +33,6 @@ func WithClearPassword() FuncArg {
 	return func(args *structarg) {
 		args.clearsecret = true
 	}
-}
-
-// WithEncryptPassword is a function argument to GetAllVariable to get secret encrypted
-func WithEncryptPassword() FuncArg {
-	return func(args *structarg) {
-		args.encryptsecret = true
-	}
-}
-
-// GetAudit retrieve the current application variable audit
-// Deprecated
-func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Variable, error) {
-	query := `
-		SELECT application_variable_audit_old.data
-		FROM application_variable_audit_old
-		JOIN application ON application.id = application_variable_audit_old.application_id
-		JOIN project ON project.id = application.project_id
-		WHERE application.name = $1 AND project.projectkey = $2 AND application_variable_audit_old.id = $3
-		ORDER BY application_variable_audit_old.versionned DESC
-	`
-	var data string
-	err := db.QueryRow(query, appName, key, auditID).Scan(&data)
-	if err != nil {
-		return nil, err
-	}
-	var variables []sdk.Variable
-	err = json.Unmarshal([]byte(data), &variables)
-	for i := range variables {
-		v := &variables[i]
-		if sdk.NeedPlaceholder(v.Type) {
-			decode, err := base64.StdEncoding.DecodeString(v.Value)
-			if err != nil {
-				return nil, err
-			}
-			v.Value = string(decode)
-		}
-	}
-
-	return variables, err
 }
 
 // GetVariableAudit Get variable audit for the given application

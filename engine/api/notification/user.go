@@ -16,13 +16,11 @@ import (
 )
 
 var (
-	apiURL string
-	uiURL  string
+	uiURL string
 )
 
 // Init initializes notification package
-func Init(apiurl, uiurl string) {
-	apiURL = apiurl
+func Init(uiurl string) {
 	uiURL = uiurl
 }
 

@@ -172,14 +172,3 @@ func ManualRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sd
 	}
 	return wr, nil
 }
-
-// GetTag return a specific tag from a list of tags
-func GetTag(tags []sdk.WorkflowRunTag, tag string) sdk.WorkflowRunTag {
-	for _, currentTag := range tags {
-		if currentTag.Tag == tag {
-			return currentTag
-		}
-	}
-
-	return sdk.WorkflowRunTag{}
-}

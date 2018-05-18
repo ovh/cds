@@ -1,7 +1,6 @@
 package sdk
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/tls"
 	"encoding/base64"
@@ -384,77 +383,4 @@ func UploadMultiPart(method string, path string, body io.Reader, mods ...Request
 	}
 
 	return respBody, resp.StatusCode, nil
-}
-
-// Upload upload content in given io.Reader to given HTTP endpoint
-func Upload(method string, path string, body io.ReadCloser, mods ...RequestModifier) ([]byte, int, error) {
-
-	err := ReadConfig()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
-		os.Exit(1)
-	}
-
-	var req *http.Request
-	req, _ = http.NewRequest(method, Host+path, body)
-	if err != nil {
-		return nil, 0, err
-	}
-	initRequest(req)
-
-	for i := range mods {
-		mods[i](req)
-	}
-
-	if hash != "" {
-		basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
-		req.Header.Set(AuthHeader, basedHash)
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer resp.Body.Close()
-
-	if verbose {
-		log.Printf("Response Status: %s\n", resp.Status)
-		log.Printf("Request path: %s\n", Host+path)
-		log.Printf("Request Headers: %s\n", req.Header)
-		log.Printf("Response Headers: %s\n", resp.Header)
-	}
-
-	var respBody []byte
-	respBody, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, resp.StatusCode, err
-	}
-
-	if verbose {
-		if len(respBody) > 0 {
-			log.Printf("Response Body: %s\n", respBody)
-		}
-	}
-
-	return respBody, resp.StatusCode, nil
-}
-
-// DisplayStream decode each line from http buffer and print either message or error
-func DisplayStream(buffer io.ReadCloser) error {
-	reader := bufio.NewReader(buffer)
-
-	for {
-		line, err := reader.ReadBytes('\n')
-		e := DecodeError(line)
-		if e != nil {
-			return e
-		}
-		if err != nil && err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		fmt.Fprintf(os.Stderr, "%s", line)
-	}
 }

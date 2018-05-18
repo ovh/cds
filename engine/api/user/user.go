@@ -338,12 +338,3 @@ func UpdatePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
 	}
 	return nil
 }
-
-// DeletePersistentSessionToken deletes a persistent session
-func DeletePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
-	tdb := persistentSessionToken(t)
-	if _, err := db.Delete(&tdb); err != nil {
-		return sdk.WrapError(err, "DeletePersistentSessionToken> Unable to delete persistent session token for user %d", t.UserID)
-	}
-	return nil
-}
