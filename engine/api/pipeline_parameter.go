@@ -94,13 +94,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}
 
-		var oldParam sdk.Parameter
-		for _, pa := range p.Parameter {
-			if pa.Name == paramName {
-				oldParam = pa
-				break
-			}
-		}
+		oldParam := sdk.ParameterFind(&p.Parameter, paramName)
 
 		if oldParam.Name == "" {
 			return sdk.WrapError(sdk.ErrParameterNotExists, "updateParameterInPipelineHandler> unable to find parameter %s", paramName)
@@ -129,7 +123,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterUpdate(key, pipelineName, oldParam, newParam, getUser(ctx))
+		event.PublishPipelineParameterUpdate(key, pipelineName, *oldParam, newParam, getUser(ctx))
 
 		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
 		if err != nil {
