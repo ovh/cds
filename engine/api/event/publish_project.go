@@ -94,7 +94,6 @@ func PublishDeleteProjectVariable(p *sdk.Project, v sdk.Variable, u *sdk.User) {
 // PublishAddProjectPermission publishes an event on adding a group permission on the project
 func PublishAddProjectPermission(p *sdk.Project, gp sdk.GroupPermission, u *sdk.User) {
 	e := sdk.EventProjectPermissionAdd{
-		ProjectKey: p.Key,
 		Permission: gp,
 	}
 	PublishProjectEvent(e, p.Key, u)

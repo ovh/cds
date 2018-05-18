@@ -36,6 +36,30 @@ func LoadGroupsByEnvironment(db gorp.SqlExecutor, envID int64) ([]sdk.GroupPermi
 	return groups, nil
 }
 
+// EnvironmentsByGroupID List environment that use the given group
+func EnvironmentsByGroupID(db gorp.SqlExecutor, key string, groupID int64) ([]string, error) {
+	query := `
+		SELECT environment.name  FROM environment_group
+		JOIN environment ON environment.id = environment_group.environment_id
+		JOIN project ON project.id = environment.project_id
+		WHERE project.projectkey = $1 AND environment_group.group_id = $2
+	`
+	envsName := make([]string, 0)
+	rows, err := db.Query(query, key, groupID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "group.EnvironmentsByGroupID> Unable to list environment")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var env string
+		if err := rows.Scan(&env); err != nil {
+			return nil, sdk.WrapError(err, "group.EnvironmentsByGroupID> Unable to scan")
+		}
+		envsName = append(envsName, env)
+	}
+	return envsName, nil
+}
+
 // IsInEnvironment checks wether groups already has permissions on environment or not
 func IsInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64) (bool, error) {
 	query := `SELECT COUNT(id) FROM environment_group
