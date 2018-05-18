@@ -697,7 +697,7 @@ func (api *API) deletePipelineHandler() Handler {
 		}
 
 		event.PublishPipelineDelete(key, *p, getUser(ctx))
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -791,7 +791,7 @@ func (api *API) stopPipelineBuildHandler() Handler {
 			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop pipeline build")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

@@ -49,7 +49,7 @@ func (api *API) getRequirementTypeValuesHandler() Handler {
 			return WriteJSON(w, sdk.OSArchRequirementValues.Values(), http.StatusOK)
 
 		default:
-			return nil
+			return WriteJSON(w, nil, http.StatusOK)
 
 		}
 	}

@@ -133,7 +133,7 @@ func (api *API) deleteBroadcastHandler() Handler {
 			return sdk.WrapError(err, "deleteBroadcast> Cannot commit transaction")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

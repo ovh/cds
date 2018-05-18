@@ -101,7 +101,7 @@ func (api *API) getProjectsHandler() Handler {
 				}
 			}
 			p.Workflows = ws
-			return nil
+			return WriteJSON(w, nil, http.StatusOK)
 		}
 		opts = append(opts, &filterByRepoFunc)
 
@@ -408,6 +408,6 @@ func (api *API) deleteProjectHandler() Handler {
 
 		log.Info("Project %s deleted.", p.Name)
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }

@@ -60,7 +60,7 @@ func (api *API) refreshHatcheryHandler() Handler {
 		if err := hatchery.RefreshHatchery(api.mustDB(), hatcheryID); err != nil {
 			return sdk.WrapError(err, "refreshHatcheryHandler> cannot refresh last beat of %s", hatcheryID)
 		}
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

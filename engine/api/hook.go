@@ -116,7 +116,7 @@ func (api *API) receiveHookHandler() Handler {
 			}
 		}()
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -261,7 +261,7 @@ func (api *API) deleteHookHandler() Handler {
 			return sdk.WrapError(err, "deleteHook> cannot delete hook")
 
 		}
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

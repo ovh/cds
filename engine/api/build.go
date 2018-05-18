@@ -56,7 +56,7 @@ func (api *API) updateStepStatusHandler() Handler {
 		if err := pipeline.UpdatePipelineBuildJob(api.mustDB(), pbJob); err != nil {
 			return sdk.WrapError(err, "updateStepStatusHandler> Cannot update pipeline build job")
 		}
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -162,7 +162,7 @@ func (api *API) deleteBuildHandler() Handler {
 			return sdk.WrapError(err, "deleteBuildHandler> Cannot commit transaction")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -303,7 +303,7 @@ func (api *API) addQueueResultHandler() Handler {
 			return sdk.WrapError(err, "addQueueResultHandler> Cannot commit tx")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -684,7 +684,7 @@ func (api *API) addBuildVariableHandler() Handler {
 			return sdk.WrapError(err, "addBuildVariableHandler> Cannot commit transaction")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -774,7 +774,7 @@ func (api *API) addBuildTestResultsHandler() Handler {
 			return sdk.WrapError(err, "addBuildTestsResultsHandler> Cannot insert tests results")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

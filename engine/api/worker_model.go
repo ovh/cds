@@ -93,7 +93,7 @@ func (api *API) bookWorkerModelHandler() Handler {
 		if _, err := worker.BookForRegister(api.Cache, workerModelID, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "bookWorkerModelHandler>")
 		}
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -298,7 +298,7 @@ func (api *API) deleteWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "deleteWorkerModel> Cannot commit transaction")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

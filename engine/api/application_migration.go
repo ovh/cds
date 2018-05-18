@@ -65,7 +65,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
 		}
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -129,6 +129,6 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
 		}
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }

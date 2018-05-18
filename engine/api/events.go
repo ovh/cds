@@ -464,7 +464,7 @@ func (api *API) eventSubscribeHandler() Handler {
 		}
 
 		api.Cache.Set(cache.Key(eventsKey, payload.UUID), events)
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -527,6 +527,6 @@ func (api *API) eventUnsubscribeHandler() Handler {
 			}
 		}
 		api.Cache.Set(cache.Key(eventsKey, payload.UUID), events)
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }

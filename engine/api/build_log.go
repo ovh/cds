@@ -266,6 +266,6 @@ func (api *API) addBuildLogHandler() Handler {
 			return sdk.WrapError(err, "addBuildLogHandler")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }

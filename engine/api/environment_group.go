@@ -227,7 +227,7 @@ func (api *API) addGroupInEnvironmentHandler() Handler {
 		groupPermission.Group = *g
 		event.PublishEnvironmentPermissionAdd(key, *env, groupPermission, getUser(ctx))
 
-		return nil
+		return WriteJSON(w, nil, http.StatusCreated)
 	}
 }
 
@@ -286,7 +286,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentPermissionDelete(key, *env, gp, getUser(ctx))
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
