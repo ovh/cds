@@ -30,7 +30,7 @@ func (api *API) InitRouter() {
 		messages: make(chan sdk.Event),
 		mutex:    &sync.Mutex{},
 	}
-	api.eventsBroker.Init(context.Background(), api.Cache)
+	api.eventsBroker.Init(context.Background())
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
@@ -193,10 +193,10 @@ func (api *API) InitRouter() {
 	// Pipeline
 	r.Handle("/project/{permProjectKey}/pipeline", r.GET(api.getPipelinesHandler), r.POST(api.addPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group", r.POST(api.addGroupInPipelineHandler), r.PUT(api.updateGroupsOnPipelineHandler, DEPRECATED))
+	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group", r.POST(api.addGroupInPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/import", r.POST(api.importGroupsInPipelineHandler, DEPRECATED))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/{group}", r.PUT(api.updateGroupRoleOnPipelineHandler), r.DELETE(api.deleteGroupFromPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter", r.GET(api.getParametersInPipelineHandler), r.PUT(api.updateParametersInPipelineHandler, DEPRECATED))
+	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter", r.GET(api.getParametersInPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter/{name}", r.POST(api.addParameterInPipelineHandler), r.PUT(api.updateParameterInPipelineHandler), r.DELETE(api.deleteParameterFromPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}", r.GET(api.getPipelineHandler), r.PUT(api.updatePipelineHandler), r.DELETE(api.deletePipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/audits", r.GET(api.getPipelineAuditHandler))
@@ -252,13 +252,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
-
-	// DEPRECATED
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{jobID}", r.PUT(api.updatePipelineActionHandler, DEPRECATED), r.DELETE(api.deleteJobHandler))
-
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined", r.POST(api.addJobToPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined/{actionID}", r.GET(api.getJoinedActionHandler), r.PUT(api.updateJoinedActionHandler), r.DELETE(api.deleteJoinedActionHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/joined/{actionID}/audit", r.GET(api.getJoinedActionAuditHandler))
 
 	// Triggers
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger", r.GET(api.getTriggersHandler), r.POST(api.addTriggerHandler))

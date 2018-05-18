@@ -176,27 +176,6 @@ func GetPipelineCommits(key, app, pip, env string, bn int) ([]VCSCommit, error) 
 	return commits, nil
 }
 
-// RunPipeline trigger a CDS pipeline
-func RunPipeline(key, appName, name, env string, stream bool, request RunRequest, followTriggers bool) (chan Log, error) {
-	request.Env = Environment{Name: env}
-
-	data, err := json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/run", key, appName, name)
-	_, _, err = Request("POST", path, data)
-	if err != nil {
-		return nil, err
-	}
-
-	if stream {
-		return StreamPipelineBuild(key, appName, name, env, 0, followTriggers)
-	}
-	return nil, nil
-}
-
 // GetPipelineBuildHistory retrieves recent build history for given pipeline
 func GetPipelineBuildHistory(key, appName, name, env, buildNumber string) ([]PipelineBuild, error) {
 	var res []PipelineBuild
@@ -220,34 +199,6 @@ func GetPipelineBuildHistory(key, appName, name, env, buildNumber string) ([]Pip
 	}
 
 	return res, nil
-}
-
-// GetBuildLogs retrieve all output from given build
-func GetBuildLogs(key, pipelineName, env string, buildID int) ([]Log, error) {
-	var logs []Log
-	var path string
-
-	if buildID == 0 {
-		path = fmt.Sprintf("/project/%s/pipeline/%s/build/last/log", key, pipelineName)
-	} else {
-		path = fmt.Sprintf("/project/%s/pipeline/%s/build/%d/log", key, pipelineName, buildID)
-	}
-
-	if env != "" {
-		path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
-	}
-
-	data, _, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal([]byte(data), &logs)
-	if err != nil {
-		return nil, err
-	}
-
-	return logs, nil
 }
 
 // StreamPipelineBuild poll the api to fetch logs of building pipeline and push them in returned channel
