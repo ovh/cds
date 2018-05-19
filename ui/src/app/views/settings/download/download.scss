@@ -1,0 +1,8 @@
+.table tbody tr {
+    &:last-child td {
+        border-bottom: none;
+    }
+    td:last-child {
+        border-right: none;
+    }
+}
