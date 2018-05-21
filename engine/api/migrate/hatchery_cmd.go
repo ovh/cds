@@ -96,10 +96,10 @@ export CDS_HATCHERY_NAME={{.HatcheryName}}
 export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
 export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
 export CDS_TTL={{.TTL}}
-export export CDS_GRAYLOG_HOST={{.GraylogHost}}
-export export CDS_GRAYLOG_PORT={{.GraylogPort}}
-export export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
-export export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
+export CDS_GRAYLOG_HOST={{.GraylogHost}}
+export CDS_GRAYLOG_PORT={{.GraylogPort}}
+export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
+export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
 export CDS_GRPC_API={{.GrpcAPI}}
 export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 export CDS_INSECURE={{.HTTPInsecure}}
@@ -157,10 +157,10 @@ export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
 export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
 export CDS_TTL={{.TTL}}
 export CDS_INSECURE={{.HTTPInsecure}}
-export export CDS_GRAYLOG_HOST={{.GraylogHost}}
-export export CDS_GRAYLOG_PORT={{.GraylogPort}}
-export export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
-export export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
+export CDS_GRAYLOG_HOST={{.GraylogHost}}
+export CDS_GRAYLOG_PORT={{.GraylogPort}}
+export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
+export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
 export CDS_GRPC_API={{.GrpcAPI}}
 export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 
@@ -196,9 +196,9 @@ chmod +x worker
 		}
 	}
 
-	log.Info("HatcheryCmdMigration> Done")
-
 	HatcheryMainCmdWithGraylogMigration(store, DBFunc)
+
+	log.Info("HatcheryCmdMigration> Done")
 }
 
 // HatcheryMainCmdWithGraylogMigration useful to change worker model configuration
@@ -235,10 +235,10 @@ func HatcheryMainCmdWithGraylogMigration(store cache.Store, DBFunc func() *gorp.
 			wm.ModelDocker.Cmd += " --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --grpc-api={{.GrpcAPI}} --grpc-insecure={{.GrpcInsecure}}"
 		case sdk.VSphere, sdk.Openstack:
 			wm.ModelVirtualMachine.PreCmd = strings.Replace(wm.ModelVirtualMachine.PreCmd, "export CDS_NAME={{.Name}}", `export CDS_NAME={{.Name}}
-export export CDS_GRAYLOG_HOST={{.GraylogHost}}
-export export CDS_GRAYLOG_PORT={{.GraylogPort}}
-export export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
-export export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
+export CDS_GRAYLOG_HOST={{.GraylogHost}}
+export CDS_GRAYLOG_PORT={{.GraylogPort}}
+export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
+export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
 export CDS_GRPC_API={{.GrpcAPI}}
 export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 			`, 1)
