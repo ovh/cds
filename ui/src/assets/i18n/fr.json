@@ -600,6 +600,8 @@
   "scheduler_updated": "Scheduler mis à jour",
   "scheduler_workflow_label": "Scheduler : ",
 
+  "settings_tips": "Conseils",
+
   "stage_add_label": "Ajouter un stage",
   "stage_added": "Stage ajouté",
   "stage_deleted": "Stage supprimé",
