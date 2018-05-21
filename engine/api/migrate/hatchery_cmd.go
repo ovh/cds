@@ -61,7 +61,7 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 			wm.ModelDocker = sdk.ModelDocker{
 				Image: wm.Image,
 				Shell: "sh -c",
-				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --single-use --force-exit",
+				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --single-use",
 			}
 		case sdk.Openstack:
 			var osdata deprecatedOpenstackModelData
