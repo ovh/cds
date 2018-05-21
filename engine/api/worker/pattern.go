@@ -101,8 +101,8 @@ export CDS_GRAYLOG_HOST={{.GraylogHost}}
 export CDS_GRAYLOG_PORT={{.GraylogPort}}
 export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
 export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
-export CDS_GRPC_API={{.GrpcAPI}}
-export CDS_GRPC_INSECURE={{.GrpcInsecure}}
+#export CDS_GRPC_API={{.GrpcAPI}}
+#export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 
 # Basic build binaries
 cd $HOME
@@ -141,7 +141,7 @@ chmod +x worker
 				Name: "basic_unix",
 				Model: sdk.ModelCmds{
 					Shell: "sh -c",
-					Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --grpc-api={{.GrpcAPI}} --grpc-insecure={{.GrpcInsecure}} --single-use --force-exit",
+					Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --single-use --force-exit",
 				},
 			},
 		},
@@ -175,7 +175,7 @@ chmod +x worker
 				Type: sdk.HostProcess,
 				Name: "basic_unix",
 				Model: sdk.ModelCmds{
-					Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --grpc-api={{.GrpcAPI}} --grpc-insecure={{.GrpcInsecure}} --single-use --force-exit",
+					Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --single-use --force-exit",
 				},
 			},
 		},

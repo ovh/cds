@@ -61,7 +61,7 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 			wm.ModelDocker = sdk.ModelDocker{
 				Image: wm.Image,
 				Shell: "sh -c",
-				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --grpc-api={{.GrpcAPI}} --grpc-insecure={{.GrpcInsecure}} --single-use --force-exit",
+				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --single-use --force-exit",
 			}
 		case sdk.Openstack:
 			var osdata deprecatedOpenstackModelData
@@ -99,8 +99,8 @@ export CDS_GRAYLOG_HOST={{.GraylogHost}}
 export CDS_GRAYLOG_PORT={{.GraylogPort}}
 export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
 export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
-export CDS_GRPC_API={{.GrpcAPI}}
-export CDS_GRPC_INSECURE={{.GrpcInsecure}}
+#export CDS_GRPC_API={{.GrpcAPI}}
+#export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 export CDS_INSECURE={{.HTTPInsecure}}
 `
 			userdata, errD := base64.StdEncoding.DecodeString(osdata.UserData)
@@ -160,8 +160,8 @@ export CDS_GRAYLOG_HOST={{.GraylogHost}}
 export CDS_GRAYLOG_PORT={{.GraylogPort}}
 export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
 export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
-export CDS_GRPC_API={{.GrpcAPI}}
-export CDS_GRPC_INSECURE={{.GrpcInsecure}}
+#export CDS_GRPC_API={{.GrpcAPI}}
+#export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 
 curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C -
 chmod +x worker
@@ -179,7 +179,7 @@ chmod +x worker
 			}
 			wm.ModelVirtualMachine = sdk.ModelVirtualMachine{
 				Image: wm.Name,
-				Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --grpc-api={{.GrpcAPI}} --grpc-insecure={{.GrpcInsecure}} --single-use --force-exit",
+				Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --single-use --force-exit",
 			}
 		}
 
