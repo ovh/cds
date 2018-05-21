@@ -3,6 +3,7 @@ package migrate
 import (
 	"encoding/base64"
 	"encoding/json"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 
@@ -95,6 +96,12 @@ export CDS_HATCHERY_NAME={{.HatcheryName}}
 export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
 export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
 export CDS_TTL={{.TTL}}
+export export CDS_GRAYLOG_HOST={{.GraylogHost}}
+export export CDS_GRAYLOG_PORT={{.GraylogPort}}
+export export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
+export export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
+export CDS_GRPC_API={{.GrpcAPI}}
+export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 export CDS_INSECURE={{.HTTPInsecure}}
 `
 			userdata, errD := base64.StdEncoding.DecodeString(osdata.UserData)
@@ -112,7 +119,7 @@ export CDS_INSECURE={{.HTTPInsecure}}
 			wm.ModelVirtualMachine = sdk.ModelVirtualMachine{
 				Flavor:  osdata.Flavor,
 				Image:   osdata.Image,
-				PreCmd:  preCmd + string(userdata),
+				PreCmd:  preCmd,
 				Cmd:     "./worker",
 				PostCmd: "sudo shutdown -h now",
 			}
@@ -150,6 +157,12 @@ export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
 export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
 export CDS_TTL={{.TTL}}
 export CDS_INSECURE={{.HTTPInsecure}}
+export export CDS_GRAYLOG_HOST={{.GraylogHost}}
+export export CDS_GRAYLOG_PORT={{.GraylogPort}}
+export export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
+export export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
+export CDS_GRPC_API={{.GrpcAPI}}
+export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 
 curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C -
 chmod +x worker
@@ -167,7 +180,7 @@ chmod +x worker
 			}
 			wm.ModelVirtualMachine = sdk.ModelVirtualMachine{
 				Image: wm.Name,
-				Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
+				Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --grpc-api={{.GrpcAPI}} --grpc-insecure={{.GrpcInsecure}} --single-use --force-exit",
 			}
 		}
 
@@ -184,4 +197,64 @@ chmod +x worker
 	}
 
 	log.Info("HatcheryCmdMigration> Done")
+
+	HatcheryMainCmdWithGraylogMigration(store, DBFunc)
+}
+
+// HatcheryMainCmdWithGraylogMigration useful to change worker model configuration
+func HatcheryMainCmdWithGraylogMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
+	db := DBFunc()
+
+	log.Info("HatcheryMainCmdWithGraylogMigration> Begin")
+
+	wms, err := worker.LoadWorkerModels(db)
+	if err != nil {
+		log.Warning("HatcheryMainCmdWithGraylogMigration> Cannot load worker models : %v", err)
+		return
+	}
+
+	for _, wmTmp := range wms {
+		if strings.Contains(wmTmp.ModelVirtualMachine.PreCmd, "GRAYLOG") || strings.Contains(wmTmp.ModelDocker.Cmd, "GRAYLOG") {
+			continue
+		}
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			log.Warning("HatcheryMainCmdWithGraylogMigration> cannot create a transaction : %v", errTx)
+			continue
+		}
+
+		wm, errL := worker.LoadAndLockWorkerModelByID(tx, wmTmp.ID)
+		if errL != nil {
+			log.Warning("HatcheryMainCmdWithGraylogMigration> cannot load and lock a worker model : %v", errL)
+			tx.Rollback()
+			continue
+		}
+
+		switch wm.Type {
+		case sdk.Docker:
+			wm.ModelDocker.Cmd += " --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --grpc-api={{.GrpcAPI}} --grpc-insecure={{.GrpcInsecure}}"
+		case sdk.VSphere, sdk.Openstack:
+			wm.ModelVirtualMachine.PreCmd = strings.Replace(wm.ModelVirtualMachine.PreCmd, "export CDS_NAME={{.Name}}", `export CDS_NAME={{.Name}}
+export export CDS_GRAYLOG_HOST={{.GraylogHost}}
+export export CDS_GRAYLOG_PORT={{.GraylogPort}}
+export export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
+export export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
+export CDS_GRPC_API={{.GrpcAPI}}
+export CDS_GRPC_INSECURE={{.GrpcInsecure}}
+			`, 1)
+		}
+
+		if err := worker.UpdateWorkerModelWithoutRegistration(tx, *wm); err != nil {
+			log.Warning("HatcheryMainCmdWithGraylogMigration> cannot update worker model %s : %v", wm.Name, err)
+			tx.Rollback()
+			continue
+		}
+
+		if err := tx.Commit(); err != nil {
+			log.Warning("HatcheryMainCmdWithGraylogMigration> cannot commit tx for worker model %s : %v", wm.Name, err)
+			tx.Rollback()
+		}
+	}
+
+	log.Info("HatcheryMainCmdWithGraylogMigration> Done")
 }
