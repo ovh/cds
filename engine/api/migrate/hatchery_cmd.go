@@ -3,7 +3,6 @@ package migrate
 import (
 	"encoding/base64"
 	"encoding/json"
-	"strings"
 
 	"github.com/go-gorp/gorp"
 
@@ -196,65 +195,5 @@ chmod +x worker
 		}
 	}
 
-	HatcheryMainCmdWithGraylogMigration(store, DBFunc)
-
 	log.Info("HatcheryCmdMigration> Done")
-}
-
-// HatcheryMainCmdWithGraylogMigration useful to change worker model configuration
-func HatcheryMainCmdWithGraylogMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
-	db := DBFunc()
-
-	log.Info("HatcheryMainCmdWithGraylogMigration> Begin")
-
-	wms, err := worker.LoadWorkerModels(db)
-	if err != nil {
-		log.Warning("HatcheryMainCmdWithGraylogMigration> Cannot load worker models : %v", err)
-		return
-	}
-
-	for _, wmTmp := range wms {
-		if strings.Contains(wmTmp.ModelVirtualMachine.PreCmd, "GRAYLOG") || strings.Contains(wmTmp.ModelDocker.Cmd, "GRAYLOG") {
-			continue
-		}
-		tx, errTx := db.Begin()
-		if errTx != nil {
-			log.Warning("HatcheryMainCmdWithGraylogMigration> cannot create a transaction : %v", errTx)
-			continue
-		}
-
-		wm, errL := worker.LoadAndLockWorkerModelByID(tx, wmTmp.ID)
-		if errL != nil {
-			log.Warning("HatcheryMainCmdWithGraylogMigration> cannot load and lock a worker model : %v", errL)
-			tx.Rollback()
-			continue
-		}
-
-		switch wm.Type {
-		case sdk.Docker:
-			wm.ModelDocker.Cmd += " --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --grpc-api={{.GrpcAPI}} --grpc-insecure={{.GrpcInsecure}}"
-		case sdk.VSphere, sdk.Openstack:
-			wm.ModelVirtualMachine.PreCmd = strings.Replace(wm.ModelVirtualMachine.PreCmd, "export CDS_NAME={{.Name}}", `export CDS_NAME={{.Name}}
-export CDS_GRAYLOG_HOST={{.GraylogHost}}
-export CDS_GRAYLOG_PORT={{.GraylogPort}}
-export CDS_GRAYLOG_EXTRA_KEY={{.GraylogExtraKey}}
-export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
-export CDS_GRPC_API={{.GrpcAPI}}
-export CDS_GRPC_INSECURE={{.GrpcInsecure}}
-			`, 1)
-		}
-
-		if err := worker.UpdateWorkerModelWithoutRegistration(tx, *wm); err != nil {
-			log.Warning("HatcheryMainCmdWithGraylogMigration> cannot update worker model %s : %v", wm.Name, err)
-			tx.Rollback()
-			continue
-		}
-
-		if err := tx.Commit(); err != nil {
-			log.Warning("HatcheryMainCmdWithGraylogMigration> cannot commit tx for worker model %s : %v", wm.Name, err)
-			tx.Rollback()
-		}
-	}
-
-	log.Info("HatcheryMainCmdWithGraylogMigration> Done")
 }
