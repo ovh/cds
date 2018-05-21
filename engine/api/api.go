@@ -586,6 +586,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
+	go migrate.HatcheryCmdMigration(a.Cache, a.DBConnectionFactory.GetDBMap)
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		go func() {
 			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {

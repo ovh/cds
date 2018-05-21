@@ -227,7 +227,7 @@ type WorkerClient interface {
 	WorkerModelBook(id int64) error
 	WorkerList() ([]sdk.Worker, error)
 	WorkerDisable(id string) error
-	WorkerModelAdd(name string, modelType string, image string, groupID int64) (sdk.Model, error)
+	WorkerModelAdd(name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(name string) (sdk.Model, error)
 	WorkerModelDelete(name string) error
 	WorkerModelSpawnError(id int64, info string) error

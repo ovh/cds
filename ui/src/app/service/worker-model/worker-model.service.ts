@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
-import {WorkerModel} from '../../model/worker-model.model';
+import {WorkerModel, ModelPattern} from '../../model/worker-model.model';
 import {HttpClient} from '@angular/common/http';
 
 /**
@@ -52,6 +52,46 @@ export class WorkerModelService {
      */
     getWorkerModels(): Observable<Array<WorkerModel>> {
         return this._http.get<Array<WorkerModel>>('/worker/model');
+    }
+
+    /**
+     * Create a worker model pattern
+     * @returns {Observable<ModelPattern>}
+     */
+    createWorkerModelPattern(workerModelPattern: ModelPattern): Observable<ModelPattern> {
+        return this._http.post<ModelPattern>('/worker/model/pattern', workerModelPattern);
+    }
+
+    /**
+     * update a worker model pattern
+     * @returns {Observable<ModelPattern>}
+     */
+    updateWorkerModelPattern(type: string, name: string, workerModelPattern: ModelPattern): Observable<ModelPattern> {
+        return this._http.put<ModelPattern>(`/worker/model/pattern/${type}/${name}`, workerModelPattern);
+    }
+
+    /**
+     * delete a worker model pattern
+     * @returns {Observable<null>}
+     */
+    deleteWorkerModelPattern(type: string, name: string): Observable<null> {
+        return this._http.delete<null>(`/worker/model/pattern/${type}/${name}`);
+    }
+
+    /**
+     * Get the list of available worker model patterns
+     * @returns {Observable<ModelPattern[]>}
+     */
+    getWorkerModelPatterns(): Observable<Array<ModelPattern>> {
+        return this._http.get<Array<ModelPattern>>('/worker/model/pattern');
+    }
+
+    /**
+     * Get worker model pattern
+     * @returns {Observable<ModelPattern>}
+     */
+    getWorkerModelPattern(type: string, name: string): Observable<ModelPattern> {
+        return this._http.get<ModelPattern>(`/worker/model/pattern/${type}/${name}`);
     }
 
     /**

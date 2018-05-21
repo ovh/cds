@@ -35,7 +35,7 @@ func ModelCapabilititiesCacheLoader(c context.Context, delay time.Duration, DBFu
 					}
 					for _, wm := range wms {
 						modelKey := cache.Key("worker", "modelcapabilitites", fmt.Sprintf("%d", wm.ID))
-						store.Set(modelKey, wm.Capabilities)
+						store.Set(modelKey, wm.RegisteredCapabilities)
 					}
 					store.Delete(loaderKey)
 				}

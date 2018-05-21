@@ -144,6 +144,7 @@ var (
 	ErrUnsupportedOSArchPlugin                = Error{ID: 129, Status: http.StatusNotFound}
 	ErrNoBroadcast                            = Error{ID: 130, Status: http.StatusNotFound}
 	ErrBroadcastNotFound                      = Error{ID: 131, Status: http.StatusNotFound}
+	ErrInvalidPatternModel                    = Error{ID: 132, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -276,6 +277,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUnsupportedOSArchPlugin.ID:                "Unsupported os/architecture for this plugin",
 	ErrNoBroadcast.ID:                            "Invalid broadcast",
 	ErrBroadcastNotFound.ID:                      "Broadcast not found",
+	ErrInvalidPatternModel.ID:                    "Invalid worker model pattern: name, type and main command are mandatory",
 }
 
 var errorsFrench = map[int]string{
@@ -408,6 +410,7 @@ var errorsFrench = map[int]string{
 	ErrUnsupportedOSArchPlugin.ID:                "OS/Architecture non supporté pour ce plugin",
 	ErrNoBroadcast.ID:                            "Information invalide",
 	ErrBroadcastNotFound.ID:                      "Information non trouvée",
+	ErrInvalidPatternModel.ID:                    "Pattern de modèle de worker invalide: le nom, type et commande principale sont requis",
 }
 
 var errorsLanguages = []map[int]string{
