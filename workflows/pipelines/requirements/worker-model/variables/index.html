@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>add :: CDS - Continuous Delivery Service</title>
+    <title>Worker Model Variables :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/worker/model/add/">
+  <body class="" data-url="/workflows/pipelines/requirements/worker-model/variables/">
     <nav id="sidebar" class="">
 
 
@@ -156,9 +156,10 @@
     </li>
           
           
-    <li data-nav-id="/workflows/" class="dd-item">
+    <li data-nav-id="/workflows/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/">
-        <span>Building CDS Workflows</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Building CDS Workflows</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/design/" class="dd-item">
@@ -242,9 +243,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/">
-        <span>Building Pipelines</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Building Pipelines</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/variables/" class="dd-item">
@@ -395,9 +397,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/requirements/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/requirements/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/">
-        <span>Job&#39;s Requirements</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Job&#39;s Requirements</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/pipelines/requirements/network_access/" class="dd-item">
@@ -422,9 +425,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/requirements/worker-model/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/requirements/worker-model/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">
-        <span>Worker Model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Worker Model</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker/" class="dd-item">
@@ -442,6 +446,16 @@
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
           <span>Openstack Worker Model</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item active">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">
+          <span>Worker Model Variables</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/patterns/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/patterns/">
+          <span>Worker Model patterns</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
@@ -559,10 +573,9 @@
     </li>
           
           
-    <li data-nav-id="/cli/" class="dd-item parent">
+    <li data-nav-id="/cli/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/">
-        <span>Command Line - REST API - SDK</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Command Line - REST API - SDK</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/api/" class="dd-item">
@@ -741,10 +754,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/">
-        <span>cdsctl</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
@@ -1459,10 +1471,9 @@
           <span>version</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/worker/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/worker/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/worker/">
-        <span>worker</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/worker/disable/" class="dd-item">
@@ -1475,20 +1486,19 @@
           <span>list</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/worker/model/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/worker/model/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/">
-        <span>model</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/worker/model/add/" class="dd-item active">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/add/">
-          <span>add</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/cdsctl/worker/model/delete/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/delete/">
           <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/worker/model/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/import/">
+          <span>import</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/worker/model/list/" class="dd-item">
@@ -1902,7 +1912,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/worker/model/add.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/pipelines/requirements/worker-model/variables.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -1931,7 +1941,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/worker/'>worker</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/worker/model/'>model</a> > add
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/'>Job's Requirements</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/'>Worker Model</a> > Worker Model Variables
 
  
 
@@ -1948,20 +1958,7 @@
             </div>
             <div class="progress">
     <div class="wrapper">
-<nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#cdsctl-worker-model-add">cdsctl worker model add</a>
-<ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
-</ul></li>
-</ul></li>
-</ul>
-</nav>
+
     </div>
 </div>
 
@@ -1971,7 +1968,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>add</h1>
+                <h1>Worker Model Variables</h1>
                 <p></p>
             </div>
           
@@ -1979,42 +1976,29 @@
 
 
 
+<p>When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the <code>--api</code> flag, CDS provides a variable named API that you can use like this <code>--api={{.API}}</code>.</p>
 
-
-<h2 id="cdsctl-worker-model-add">cdsctl worker model add</h2>
-
-<p>cdsctl worker model add [name] [docker|openstack|vsphere] &ndash;group [group]</p>
-
-<h3 id="synopsis">Synopsis</h3>
-
-<p>Available model type :
-- Docker images (&ldquo;docker&rdquo;)
-- Openstack image (&ldquo;openstack&rdquo;)
-- VSphere image (&ldquo;vsphere&rdquo;)</p>
-
-<pre><code>cdsctl worker model add NAME TYPE GROUP [flags]
-</code></pre>
-
-<h3 id="options">Options</h3>
-
-<pre><code>      --flavor string     Flavor value (only for openstack)
-  -h, --help              help for add
-      --image string      Image value
-      --userdata string   Path to UserData file (only for vsphere or openstack)
-</code></pre>
-
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
-
-<pre><code>  -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
-</code></pre>
-
-<h3 id="see-also">SEE ALSO</h3>
+<p>Here is the list of available variables :</p>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/">cdsctl worker model</a>   - Manage Worker Model</li>
+<li>API <code>string</code> &ndash;&gt; URI of the CDS API set in the hatchery configuration</li>
+<li>Token <code>string</code> &ndash;&gt; token set in the hatchery configuration</li>
+<li>Name <code>string</code> &ndash;&gt; Name of the worker</li>
+<li>BaseDir <code>string</code> &ndash;&gt; basedir configuration set in the hatchery configuration</li>
+<li>HTTPInsecure <code>bool</code> &ndash;&gt; http insecure configuration set in the hatchery configuration</li>
+<li>Model <code>int64</code> &ndash;&gt; ID of the model that the hatchery want to spawn</li>
+<li>Hatchery <code>int64</code> &ndash;&gt; ID of the hatchery</li>
+<li>HatcheryName <code>string</code></li>
+<li>PipelineBuildJobID <code>int64</code></li>
+<li>WorkflowJobID <code>int64</code> &ndash;&gt; Useful to know which workflow job the hatchery will launch spawning this worker</li>
+<li>TTL <code>int</code></li>
+<li>FromWorkerImage <code>bool</code><br /></li>
+<li>GraylogHost <code>string</code></li>
+<li>GraylogPort <code>int</code><br /></li>
+<li>GraylogExtraKey <code>string</code></li>
+<li>GraylogExtraValue <code>string</code></li>
+<li>GrpcAPI <code>string</code></li>
+<li>GrpcInsecure <code>bool</code></li>
 </ul>
 
 
@@ -2035,8 +2019,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/worker/model/" title="model"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/worker/model/delete/" title="delete" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/" title="Openstack Worker Model"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/patterns/" title="Worker Model patterns" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

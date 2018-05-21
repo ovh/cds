@@ -211,6 +211,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/patterns/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/files/</loc>
   </url>
   
@@ -427,10 +435,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/project/variable/add/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/worker/model/add/</loc>
   </url>
   
   <url>
@@ -835,6 +839,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/project/group/import/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/worker/model/import/</loc>
   </url>
   
   <url>

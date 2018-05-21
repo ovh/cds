@@ -444,6 +444,16 @@
           <span>Openstack Worker Model</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">
+          <span>Worker Model Variables</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/patterns/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/patterns/">
+          <span>Worker Model patterns</span>
+        </a>
+    </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
           <span>VSphere Worker Model</span>
@@ -1479,14 +1489,14 @@
         <span>model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/worker/model/add/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/add/">
-          <span>add</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/cdsctl/worker/model/delete/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/delete/">
           <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/worker/model/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/import/">
+          <span>import</span>
         </a>
     </li>
       <li data-nav-id="/cli/cdsctl/worker/model/list/" class="dd-item">
@@ -1945,10 +1955,10 @@
 <li><a href="#list-all-public-actions">List all public actions</a></li>
 <li><a href="#get-action-actionid-audit">GET <code>/action/&lt;actionID&gt;/audit</code></a></li>
 <li><a href="#get-action-actionname-using">GET <code>/action/&lt;actionName&gt;/using</code></a></li>
-<li><a href="#delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></a></li>
 <li><a href="#post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></a></li>
-<li><a href="#get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></a></li>
+<li><a href="#delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></a></li>
 <li><a href="#put-action-permactionname">PUT <code>/action/&lt;permActionName&gt;</code></a></li>
+<li><a href="#get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></a></li>
 <li><a href="#get-action-permactionname-export">GET <code>/action/&lt;permActionName&gt;/export</code></a></li>
 <li><a href="#importaction-insert-or-update-an-existing-action">importAction insert OR update an existing action.</a></li>
 <li><a href="#get-action-requirement">GET <code>/action/requirement</code></a></li>
@@ -2059,34 +2069,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22">deleteActionHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-action-permactionname">POST <code>/action/&lt;permActionName&gt;</code></h3>
 
 <table>
@@ -2115,7 +2097,7 @@
 </tbody>
 </table>
 
-<h3 id="get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></h3>
+<h3 id="delete-action-permactionname">DELETE <code>/action/&lt;permActionName&gt;</code></h3>
 
 <table>
 <thead>
@@ -2128,7 +2110,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -2138,7 +2120,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22">getActionHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteActionHandler%22">deleteActionHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2167,6 +2149,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateActionHandler%22">updateActionHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-action-permactionname">GET <code>/action/&lt;permActionName&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/action/&lt;permActionName&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getActionHandler%22">getActionHandler</a></td>
 </tr>
 </tbody>
 </table>
