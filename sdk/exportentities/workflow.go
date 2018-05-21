@@ -48,6 +48,7 @@ type NodeEntry struct {
 
 type HookEntry struct {
 	Model  string            `json:"type,omitempty" yaml:"type,omitempty"`
+	Ref    string            `json:"ref,omitempty" yaml:"ref,omitempty"`
 	Config map[string]string `json:"config,omitempty" yaml:"config,omitempty"`
 }
 
@@ -177,6 +178,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			}
 			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, HookEntry{
 				Model:  h.WorkflowHookModel.Name,
+				Ref:    h.Ref,
 				Config: h.Config.Values(),
 			})
 		}
@@ -202,6 +204,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			}
 			exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name] = append(exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name], HookEntry{
 				Model:  h.WorkflowHookModel.Name,
+				Ref:    h.Ref,
 				Config: h.Config.Values(),
 			})
 		}
@@ -481,6 +484,7 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 			}
 			n.Hooks = append(n.Hooks, sdk.WorkflowNodeHook{
 				WorkflowHookModel: sdk.GetDefaultHookModel(h.Model),
+				Ref:               h.Ref,
 				Config:            cfg,
 			})
 		}
