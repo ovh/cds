@@ -176,9 +176,6 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			if exportedWorkflow.Hooks == nil {
 				exportedWorkflow.Hooks = make(map[string][]HookEntry)
 			}
-			if h.Ref == "" {
-				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
-			}
 			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, HookEntry{
 				Model:  h.WorkflowHookModel.Name,
 				Ref:    h.Ref,
@@ -204,9 +201,6 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		for _, h := range hooks {
 			if exportedWorkflow.Hooks == nil {
 				exportedWorkflow.Hooks = make(map[string][]HookEntry)
-			}
-			if h.Ref == "" {
-				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
 			}
 			exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name] = append(exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name], HookEntry{
 				Model:  h.WorkflowHookModel.Name,
@@ -487,6 +481,9 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 					Configurable: true,
 					Type:         hType,
 				}
+			}
+			if h.Ref == "" {
+				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
 			}
 			n.Hooks = append(n.Hooks, sdk.WorkflowNodeHook{
 				WorkflowHookModel: sdk.GetDefaultHookModel(h.Model),
