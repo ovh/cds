@@ -149,12 +149,12 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 
 	f, err := os.Open(v.GetString("filename"))
 	if err != nil {
-		return fmt.Errorf("unable to open file %s", v.GetString("filename"), err)
+		return fmt.Errorf("unable to open file %s: %v", v.GetString("filename"), err)
 	}
 
 	fi, err := os.Stat(f.Name())
 	if err != nil {
-		return fmt.Errorf("unable to open file %s", v.GetString("filename"), err)
+		return fmt.Errorf("unable to open file %s: %v", v.GetString("filename"), err)
 	}
 
 	b, err := ioutil.ReadFile(v.GetString("descriptor"))
@@ -171,13 +171,13 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 	desc.Perm = uint32(fi.Mode().Perm())
 	desc.FileContent, err = ioutil.ReadFile(f.Name())
 	if err != nil {
-		return fmt.Errorf("unable to open file %s", v.GetString("filename"), err)
+		return fmt.Errorf("unable to open file %s: %v", v.GetString("filename"), err)
 	}
 
 	desc.Size = int64(len(desc.FileContent))
 	desc.MD5sum, err = sdk.FileMd5sum(f.Name())
 	if err != nil {
-		return fmt.Errorf("unable to compute md5sum for file %s", v.GetString("filename"), err)
+		return fmt.Errorf("unable to compute md5sum for file %s: %v", v.GetString("filename"), err)
 	}
 
 	if err := client.PluginAddBinary(p, &desc); err != nil {
