@@ -79,7 +79,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 			}
 		}
 
-		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfConfig); err != nil {
+		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfName, pfConfig); err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
 		}
 

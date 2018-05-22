@@ -91,7 +91,7 @@ func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) er
 }
 
 // SetDeploymentStrategy update the application_deployment_strategy table
-func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, cfg sdk.PlatformConfig) error {
+func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfName string, cfg sdk.PlatformConfig) error {
 	//Parse the config and encrypt password values
 	newcfg := sdk.PlatformConfig{}
 	for k, v := range cfg {
@@ -117,7 +117,8 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, cfg s
 	JOIN project_platform ON project_platform.id = application_deployment_strategy.project_platform_id
 	WHERE project_platform.project_id = $1
 	AND project_platform.platform_model_id = $2
-	AND application_deployment_strategy.application_id = $3`, projID, pfID, appID)
+	AND application_deployment_strategy.application_id = $3
+	AND project_platform.name = $4`, projID, pfID, appID, ppfName)
 
 	if err != nil {
 		return sdk.WrapError(err, "SetDeploymentStrategy> unable to check if deployment strategy exist")
@@ -135,8 +136,9 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, cfg s
 		WHERE project_platform.id = application_deployment_strategy.project_platform_id
 		AND application_deployment_strategy.application_id = $2
 		AND project_platform.project_id = $3
-		AND project_platform.platform_model_id = $4`
-		if _, err := db.Exec(query, scfg, appID, projID, pfID); err != nil {
+		AND project_platform.platform_model_id = $4
+		AND project_platform.name = $5`
+		if _, err := db.Exec(query, scfg, appID, projID, pfID, ppfName); err != nil {
 			return sdk.WrapError(err, "SetDeploymentStrategy> unable to update deployment strategy")
 		}
 		return nil
@@ -149,6 +151,7 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, cfg s
 			FROM project_platform
 			WHERE project_platform.project_id = $3
 			AND project_platform.platform_model_id = $4
+			AND project_platform.name = $5
 		)
 	)`
 	if _, err := db.Exec(query, scfg, appID, projID, pfID); err != nil {
