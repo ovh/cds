@@ -154,7 +154,7 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 			AND project_platform.name = $5
 		)
 	)`
-	if _, err := db.Exec(query, scfg, appID, projID, pfID); err != nil {
+	if _, err := db.Exec(query, scfg, appID, projID, pfID, ppfName); err != nil {
 		return sdk.WrapError(err, "SetDeploymentStrategy> unable to update deployment strategy")
 	}
 	return nil
