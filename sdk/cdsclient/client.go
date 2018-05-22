@@ -27,6 +27,10 @@ func New(c Config) Interface {
 	cli.config = c
 	cli.HTTPClient = &http.Client{
 		Timeout: time.Second * 60,
+		Transport: &http.Transport{
+			Proxy:           http.ProxyFromEnvironment,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.InsecureSkipVerifyTLS},
+		},
 	}
 	cli.init()
 	return cli
@@ -75,6 +79,7 @@ func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insec
 		Host:  endpoint,
 		Retry: 2,
 		Token: token,
+		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
 	}
 	cli := new(client)
 	cli.config = conf
@@ -82,7 +87,7 @@ func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insec
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
 			MaxTries:        5,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
 		},
 	}
 
