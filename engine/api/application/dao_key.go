@@ -28,7 +28,7 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.ApplicationKey) error {
 	return nil
 }
 
-// LoadAllApplicationKeys load all keys for the given application
+// LoadAllApplicationKeysByProject load all keys for the given application
 func LoadAllApplicationKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.ApplicationKey, error) {
 	var res []dbApplicationKey
 	query := `
