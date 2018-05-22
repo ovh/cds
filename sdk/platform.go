@@ -86,12 +86,12 @@ func (p PlatformModel) IsBuiltin() bool {
 
 // ProjectPlatform is an instanciation of a platform model
 type ProjectPlatform struct {
-	ID              int64          `json:"id" db:"id"`
-	ProjectID       int64          `json:"project_id" db:"project_id"`
-	Name            string         `json:"name" db:"name"`
-	PlatformModelID int64          `json:"platform_model_id" db:"platform_model_id"`
-	Model           PlatformModel  `json:"model" db:"-"`
-	Config          PlatformConfig `json:"config" db:"-"`
+	ID              int64          `json:"id" db:"id" yaml:"-"`
+	ProjectID       int64          `json:"project_id" db:"project_id" yaml:"-"`
+	Name            string         `json:"name" db:"name" cli:"name,key" yaml:"name"`
+	PlatformModelID int64          `json:"platform_model_id" db:"platform_model_id" yaml:"-"`
+	Model           PlatformModel  `json:"model" db:"-" yaml:"model"`
+	Config          PlatformConfig `json:"config" db:"-" yaml:"config"`
 }
 
 // MergeWith merge two config
