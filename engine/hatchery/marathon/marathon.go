@@ -300,6 +300,11 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 
 	mem := float64(memory * 110 / 100)
 
+	if spawnArgs.Model.ModelDocker.Envs == nil {
+		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
+	}
+	spawnArgs.Model.ModelDocker.Envs["CDS_FORCE_EXIT"] = "0"
+
 	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
 	if errEnv != nil {
 		return "", errEnv
@@ -321,9 +326,6 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 		Instances: &instance,
 		Mem:       &mem,
 		Labels:    &h.marathonLabels,
-		UnreachableStrategy: &marathon.UnreachableStrategy{
-			AbsenceReason: marathon.UnreachableStrategyAbsenceReasonDisabled,
-		},
 	}
 
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {

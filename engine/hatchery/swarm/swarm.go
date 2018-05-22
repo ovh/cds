@@ -201,6 +201,11 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	cmds := strings.Fields(spawnArgs.Model.ModelDocker.Shell)
 	cmds = append(cmds, buffer.String())
 
+	if spawnArgs.Model.ModelDocker.Envs == nil {
+		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
+	}
+	spawnArgs.Model.ModelDocker.Envs["CDS_FORCE_EXIT"] = "1"
+
 	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
 	if errEnv != nil {
 		return "", errEnv
