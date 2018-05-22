@@ -24,7 +24,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		}
 
 		pkey := sdk.ParameterFind(params, "cds.project")
-		pf, err := w.client.ProjectPlatform(pkey.Value, pfName.Value, true)
+		pf, err := w.client.ProjectPlatformGet(pkey.Value, pfName.Value, true)
 		if err != nil {
 			res := sdk.Result{
 				Reason: fmt.Sprintf("Unable to retrieve deployment platform (%v)... Aborting", err),
