@@ -95,9 +95,8 @@ func runGitTag(w *currentWorker) BuiltInAction {
 				}
 				sendLog(res.Reason)
 				return res
-			} else {
-				smver.Pre = []semver.PRVersion{{VersionStr: tagPrerelease.Value}}
 			}
+			smver.Pre = []semver.PRVersion{{VersionStr: tagPrerelease.Value}}
 		}
 
 		// metadata: this content is after '+'
@@ -109,9 +108,8 @@ func runGitTag(w *currentWorker) BuiltInAction {
 				}
 				sendLog(res.Reason)
 				return res
-			} else {
-				smver.Build = []string{tagMetadata.Value}
 			}
+			smver.Build = []string{tagMetadata.Value}
 		}
 
 		var userTag string
