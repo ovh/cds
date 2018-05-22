@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"bytes"
+	"html/template"
 	"time"
 )
 
@@ -122,10 +124,11 @@ type ModelVirtualMachine struct {
 
 // ModelDocker for swarm, marathon and kubernetes
 type ModelDocker struct {
-	Image  string `json:"image,omitempty"`
-	Memory int64  `json:"memory,omitempty"`
-	Shell  string `json:"shell,omitempty"`
-	Cmd    string `json:"cmd,omitempty"`
+	Image  string            `json:"image,omitempty"`
+	Memory int64             `json:"memory,omitempty"`
+	Envs   map[string]string `json:"envs,omitempty"`
+	Shell  string            `json:"shell,omitempty"`
+	Cmd    string            `json:"cmd,omitempty"`
 }
 
 // ModelPattern represent patterns for users and admin when creating a worker model
@@ -165,4 +168,21 @@ type WorkerArgs struct {
 	//GRPC Params
 	GrpcAPI      string `json:"grpc_api"`
 	GrpcInsecure bool   `json:"grpc_insecure"`
+}
+
+// TemplateEnvs return envs interpolated with worker arguments
+func TemplateEnvs(args WorkerArgs, envs map[string]string) (map[string]string, error) {
+	for name, value := range envs {
+		tmpl, errt := template.New("env").Parse(value)
+		if errt != nil {
+			return envs, errt
+		}
+		var buffer bytes.Buffer
+		if errTmpl := tmpl.Execute(&buffer, args); errTmpl != nil {
+			return envs, errTmpl
+		}
+		envs[name] = buffer.String()
+	}
+
+	return envs, nil
 }

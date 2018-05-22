@@ -201,6 +201,18 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	cmds := strings.Fields(spawnArgs.Model.ModelDocker.Shell)
 	cmds = append(cmds, buffer.String())
 
+	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
+	envs := make([]string, len(envsWm))
+	i := 0
+	for envName, envValue := range envsWm {
+		envs[i] = envName + "=" + envValue
+		i++
+	}
+
 	args := containerArgs{
 		name:         name,
 		image:        spawnArgs.Model.ModelDocker.Image,
@@ -211,6 +223,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		memory:       memory,
 		dockerOpts:   *dockerOpts,
 		entryPoint:   []string{},
+		env:          envs,
 	}
 
 	//start the worker

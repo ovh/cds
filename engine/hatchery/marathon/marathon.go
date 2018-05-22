@@ -300,6 +300,11 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 
 	mem := float64(memory * 110 / 100)
 
+	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
 	application := &marathon.Application{
 		ID:  fmt.Sprintf("%s/%s", h.Config.MarathonIDPrefix, workerName),
 		Cmd: &cmd,
@@ -311,10 +316,14 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 			},
 			Type: "DOCKER",
 		},
+		Env:       &envsWm,
 		CPUs:      0.5,
 		Instances: &instance,
 		Mem:       &mem,
 		Labels:    &h.marathonLabels,
+		UnreachableStrategy: &marathon.UnreachableStrategy{
+			AbsenceReason: marathon.UnreachableStrategyAbsenceReasonDisabled,
+		},
 	}
 
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
