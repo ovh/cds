@@ -289,7 +289,6 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 
 func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 		rmName := vars["name"]
@@ -321,14 +320,15 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 
 		var repos []sdk.VCSRepo
 		if !api.Cache.Get(cacheKey, &repos) || len(repos) == 0 {
-			log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
-			repos, err = client.Repos()
+			var errRepos error
+			repos, errRepos = client.Repos()
 			api.Cache.SetWithTTL(cacheKey, repos, 0)
+			if errRepos != nil {
+				// as client.Repos can return a 401 error, we avoid here to return 401 on UI too.
+				return sdk.WrapError(sdk.ErrUnknownError, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
+			}
 		}
-		if err != nil {
-			return sdk.WrapError(err, "getReposFromRepositoriesManagerHandler> Cannot get repos")
 
-		}
 		return WriteJSON(w, repos, http.StatusOK)
 	}
 }
