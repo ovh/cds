@@ -262,7 +262,11 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentPlatf
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategyConfigHandler, vars)
+	vars = map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+	}
+	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategiesConfigHandler, vars)
 	//Then we try to update
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 	// Do the request
@@ -270,43 +274,10 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentPlatf
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	cfg := sdk.PlatformConfig{}
+	cfg := map[string]sdk.PlatformConfig{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &cfg))
-	assert.Equal(t, sdk.PasswordPlaceholder, cfg["token"].Value)
+	assert.Len(t, cfg, 2)
 
-	// with clear paswword
-	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategyConfigHandler, vars)
-	// Then we try to update
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
-	q := req.URL.Query()
-	q.Set("withClearPassword", "true")
-	req.URL.RawQuery = q.Encode()
-
-	// Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	cfg2 := sdk.PlatformConfig{}
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &cfg2))
-	assert.Equal(t, "my-secret-token-2", cfg2["token"].Value)
-
-	// with clear paswword
-	uri = router.GetRoute("DELETE", api.deleteApplicationDeploymentStrategyConfigHandler, vars)
-	// Then we try to update
-	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
-	// Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategyConfigHandler, vars)
-	//Then we try to update
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
-	// Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 404, w.Code)
 }
 
 func Test_deleteApplicationDeploymentStrategyConfigHandler(t *testing.T) {
