@@ -161,6 +161,20 @@ func (api *API) postProjectPlatformHandler() Handler {
 		if pp.PlatformModelID == 0 {
 			pp.PlatformModelID = pp.Model.ID
 		}
+		if pp.PlatformModelID == 0 && pp.Model.Name != "" {
+			pfs, _ := platform.LoadModels(api.mustDB())
+			for _, pf := range pfs {
+				if pf.Name == pp.Model.Name {
+					pp.PlatformModelID = pf.ID
+					break
+				}
+			}
+		}
+
+		if pp.PlatformModelID == 0 {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postProjectPlatformHandler> model not found")
+		}
+
 		for _, pprojPlat := range p.Platforms {
 			if pprojPlat.Name == pp.Name {
 				return sdk.WrapError(sdk.ErrWrongRequest, "postProjectPlatformHandler> project platform already exist")
