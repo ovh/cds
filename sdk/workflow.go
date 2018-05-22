@@ -405,6 +405,21 @@ func (w *Workflow) InvolvedEnvironments() []int64 {
 	return res
 }
 
+//InvolvedPlatforms returns all platforms used in the workflow
+func (w *Workflow) InvolvedPlatforms() []int64 {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := w.Root.InvolvedPlatforms()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.InvolvedPlatforms()...)
+		}
+	}
+	return res
+}
+
 //Visit all the workflow and apply the visitor func on all nodes
 func (w *Workflow) Visit(visitor func(*WorkflowNode)) {
 	w.Root.Visit(visitor)
@@ -733,6 +748,57 @@ func (n *WorkflowNode) InvolvedEnvironments() []int64 {
 		res = append(res, t.WorkflowDestNode.InvolvedEnvironments()...)
 	}
 	return res
+}
+
+//InvolvedPlatforms returns all platforms used in the workflow
+func (n *WorkflowNode) InvolvedPlatforms() []int64 {
+	res := []int64{}
+	if n.Context != nil {
+		if n.Context.ProjectPlatformID == 0 && n.Context.ProjectPlatform != nil {
+			n.Context.ProjectPlatformID = n.Context.ProjectPlatform.ID
+		}
+		if n.Context.ProjectPlatformID != 0 {
+			res = []int64{n.Context.ProjectPlatformID}
+		}
+	}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.InvolvedPlatforms()...)
+	}
+	return res
+}
+
+// CheckApplicationDeploymentStrategies checks application deployment strategies
+func (n *WorkflowNode) CheckApplicationDeploymentStrategies(proj *Project) error {
+	if n.Context == nil {
+		return nil
+	}
+	if n.Context.Application == nil {
+		return nil
+	}
+
+	var id = n.Context.ProjectPlatformID
+	if id == 0 && n.Context.ProjectPlatform != nil {
+		id = n.Context.ProjectPlatform.ID
+	}
+
+	if id == 0 {
+		return nil
+	}
+
+	pf := proj.GetPlatformByID(id)
+	if pf == nil {
+		return fmt.Errorf("platform unavailable")
+	}
+
+	for _, a := range proj.Applications {
+		if a.ID == n.Context.ID || (n.Context.Application != nil && n.Context.Application.ID == a.ID) {
+			if _, has := a.DeploymentStrategies[pf.Name]; !has {
+				return fmt.Errorf("platform %s unavailable", pf.Name)
+			}
+		}
+	}
+
+	return nil
 }
 
 //WorkflowNodeTrigger is a ling betweeb two pipelines in a workflow
