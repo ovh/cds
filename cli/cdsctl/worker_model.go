@@ -114,7 +114,7 @@ func workerModelImportRun(c cli.Values) error {
 
 		var t string
 		var modelDocker sdk.ModelDocker
-		var modelVm sdk.ModelVirtualMachine
+		var modelVM sdk.ModelVirtualMachine
 		switch modelInfos.Type {
 		case sdk.Docker:
 			t = sdk.Docker
@@ -149,7 +149,7 @@ func workerModelImportRun(c cli.Values) error {
 			if d.Cmd == "" {
 				return fmt.Errorf("Error: Openstack command not provided")
 			}
-			modelVm = d
+			modelVM = d
 			break
 		case sdk.VSphere:
 			t = sdk.VSphere
@@ -168,7 +168,7 @@ func workerModelImportRun(c cli.Values) error {
 				return fmt.Errorf("Error: VSphere main worker command empty")
 			}
 
-			modelVm = d
+			modelVM = d
 			break
 		default:
 			return fmt.Errorf("Unknown worker type: %s", modelInfos.Type)
@@ -187,7 +187,7 @@ func workerModelImportRun(c cli.Values) error {
 			return fmt.Errorf("Error : Unable to get group %s : %s", modelInfos.Group, err)
 		}
 
-		if _, err := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVm, g.ID); err != nil {
+		if _, err := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVM, g.ID); err != nil {
 			return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, err)
 		}
 
