@@ -1346,6 +1346,33 @@
           <span>list</span>
         </a>
     </li>
+    <li data-nav-id="/cli/cdsctl/project/platform/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/">
+        <span>platform</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/project/platform/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/platform/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/platform/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/platform/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/cdsctl/project/show/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/project/show/">
           <span>show</span>
@@ -1954,9 +1981,9 @@
 <ul>
 <li><a href="#post-broadcast">POST <code>/broadcast</code></a></li>
 <li><a href="#get-broadcast">GET <code>/broadcast</code></a></li>
-<li><a href="#get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#delete-broadcast-id">DELETE <code>/broadcast/&lt;id&gt;</code></a></li>
+<li><a href="#get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#post-broadcast-id-mark">POST <code>/broadcast/&lt;id&gt;/mark</code></a></li>
 </ul></li>
 </ul></li>
@@ -2037,34 +2064,6 @@
 </tbody>
 </table>
 
-<h3 id="get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastHandler%22">getBroadcastHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></h3>
 
 <table>
@@ -2117,6 +2116,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBroadcastHandler%22">deleteBroadcastHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastHandler%22">getBroadcastHandler</a></td>
 </tr>
 </tbody>
 </table>

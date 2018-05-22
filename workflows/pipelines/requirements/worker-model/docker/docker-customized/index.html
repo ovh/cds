@@ -1349,6 +1349,33 @@
           <span>list</span>
         </a>
     </li>
+    <li data-nav-id="/cli/cdsctl/project/platform/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/">
+        <span>platform</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/project/platform/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/platform/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/platform/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/platform/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/cdsctl/project/show/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/project/show/">
           <span>show</span>
@@ -2094,7 +2121,7 @@ exit
 <li><strong>image</strong> <em>registry.my.infra.net/my/beautiful/worker:latest</em></li>
 <li><strong>pattern</strong> : if you aren&rsquo;t an administrator select a pattern for your configuration script (CDS provide default pattern for linux environment called basic_unix)</li>
 <li><strong>shell command</strong> : if you are an administrator in the main shell command you can indicate <code>sh -c</code> for an unix environment.</li>
-<li><strong>command</strong> : is the main worker command, typically on a unix system <code>rm -f worker &amp;&amp; curl {{.API}}/download/worker/linux/$(uname -m) -o worker &amp;&amp; chmod +x worker &amp;&amp; exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit</code> to see all the available variables to interpolate for your worker parameters <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">click here</a></li>
+<li><strong>command</strong> : is the main worker command, typically on a unix system <code>rm -f worker &amp;&amp; curl {{.API}}/download/worker/linux/$(uname -m) -o worker &amp;&amp; chmod +x worker &amp;&amp; exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use</code> to see all the available variables to interpolate for your worker parameters <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">click here</a></li>
 </ul></li>
 <li>Click on <em>Add</em> button and that&rsquo;s it</li>
 </ul>
