@@ -61,7 +61,7 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 			wm.ModelDocker = sdk.ModelDocker{
 				Image: wm.Image,
 				Shell: "sh -c",
-				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker",
+				Cmd:   "curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker",
 			}
 		case sdk.Openstack:
 			var osdata deprecatedOpenstackModelData
@@ -238,6 +238,7 @@ func HatcheryCmdMigrationForDockerEnvs(store cache.Store, DBFunc func() *gorp.Db
 		}
 
 		wm.ModelDocker.Envs = defaultEnvs
+		wm.ModelDocker.Cmd = "curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker"
 
 		if err := worker.UpdateWorkerModelWithoutRegistration(tx, *wm); err != nil {
 			log.Warning("HatcheryCmdMigrationForDockerEnvs> cannot update worker model %s : %v", wm.Name, err)

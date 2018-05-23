@@ -141,7 +141,7 @@ chmod +x worker
 				Name: "basic_unix",
 				Model: sdk.ModelCmds{
 					Shell: "sh -c",
-					Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker",
+					Cmd:   "curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker",
 				},
 			},
 		},
