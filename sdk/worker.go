@@ -139,11 +139,13 @@ type ModelPattern struct {
 	Model ModelCmds `json:"model" db:"-"`
 }
 
+// ModelCmds is the struct to represent a pattern
 type ModelCmds struct {
-	Shell   string `json:"shell,omitempty"`
-	PreCmd  string `json:"pre_cmd,omitempty"`
-	Cmd     string `json:"cmd,omitempty"`
-	PostCmd string `json:"post_cmd,omitempty"`
+	Envs    map[string]string `json:"envs,omitempty"`
+	Shell   string            `json:"shell,omitempty"`
+	PreCmd  string            `json:"pre_cmd,omitempty"`
+	Cmd     string            `json:"cmd,omitempty"`
+	PostCmd string            `json:"post_cmd,omitempty"`
 }
 
 // WorkerArgs is all the args needed to run a worker

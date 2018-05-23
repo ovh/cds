@@ -49,6 +49,7 @@ export class ModelPattern {
   type: string;
   model: {
     shell?: string;
+    envs?: {};
     pre_cmd?: string;
     cmd: string;
     post_cmd?: string;

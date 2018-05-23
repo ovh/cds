@@ -166,6 +166,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
 		Model:             spawnArgs.Model.ID,
+		TTL:               h.Config.WorkerTTL,
 		Hatchery:          h.hatch.ID,
 		HatcheryName:      h.hatch.Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
@@ -184,12 +185,6 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		}
 	}
 
-	if spawnArgs.IsWorkflowJob {
-		udataParam.WorkflowJobID = spawnArgs.JobID
-	} else {
-		udataParam.PipelineBuildJobID = spawnArgs.JobID
-	}
-
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
 		return "", errt
@@ -204,11 +199,33 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	if spawnArgs.Model.ModelDocker.Envs == nil {
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
-	spawnArgs.Model.ModelDocker.Envs["CDS_FORCE_EXIT"] = "1"
 
 	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
 	if errEnv != nil {
 		return "", errEnv
+	}
+
+	envsWm["CDS_FORCE_EXIT"] = "1"
+	envsWm["CDS_API"] = udataParam.API
+	envsWm["CDS_TOKEN"] = udataParam.Token
+	envsWm["CDS_NAME"] = udataParam.Name
+	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
+	envsWm["CDS_HATCHERY"] = fmt.Sprintf("%d", udataParam.Hatchery)
+	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
+	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
+	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
+
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		} else {
+			envsWm["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		}
+	}
+
+	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
+		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
+		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
 	}
 
 	envs := make([]string, len(envsWm))

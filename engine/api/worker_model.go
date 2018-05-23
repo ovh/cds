@@ -253,10 +253,17 @@ func (api *API) updateWorkerModelHandler() Handler {
 			}
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
-					return sdk.ErrForbidden
+					if old.Type != sdk.Docker { // Forbidden because we can't fetch previous user data
+						return sdk.ErrForbidden
+					}
+					model.ModelDocker.Cmd = old.ModelDocker.Cmd
+					model.ModelDocker.Shell = old.ModelDocker.Shell
+					model.ModelDocker.Envs = old.ModelDocker.Envs
+				} else {
+					model.ModelDocker.Cmd = modelPattern.Model.Cmd
+					model.ModelDocker.Shell = modelPattern.Model.Shell
+					model.ModelDocker.Envs = modelPattern.Model.Envs
 				}
-				model.ModelDocker.Cmd = modelPattern.Model.Cmd
-				model.ModelDocker.Shell = modelPattern.Model.Shell
 			}
 			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
@@ -267,11 +274,17 @@ func (api *API) updateWorkerModelHandler() Handler {
 			}
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
-					return sdk.ErrForbidden
+					if old.Type == sdk.Docker { // Forbidden because we can't fetch previous user data
+						return sdk.ErrForbidden
+					}
+					model.ModelVirtualMachine.PreCmd = old.ModelVirtualMachine.PreCmd
+					model.ModelVirtualMachine.Cmd = old.ModelVirtualMachine.Cmd
+					model.ModelVirtualMachine.PostCmd = old.ModelVirtualMachine.PostCmd
+				} else {
+					model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
+					model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
+					model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
 				}
-				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
-				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
-				model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
 			}
 		}
 
@@ -315,7 +328,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 		defer tx.Rollback()
 
 		// update model in db
-		if err := worker.UpdateWorkerModel(tx, model); err != nil {
+		if err := worker.UpdateWorkerModel(tx, &model); err != nil {
 			return sdk.WrapError(err, "updateWorkerModel> cannot update worker model")
 		}
 
@@ -484,7 +497,6 @@ func (api *API) putWorkerModelPatternHandler() Handler {
 		}
 		modelPattern.ID = oldWmp.ID
 
-		// Insert model pattern in db
 		if err := worker.UpdateWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
 			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot update worker model pattern")
 		}

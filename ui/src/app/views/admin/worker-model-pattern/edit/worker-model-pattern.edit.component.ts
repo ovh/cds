@@ -7,6 +7,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {User} from '../../../../model/user.model';
 import {finalize} from 'rxjs/operators';
+import {omit} from 'lodash';
 
 @Component({
     selector: 'app-worker-model-pattern-edit',
@@ -19,6 +20,9 @@ export class WorkerModelPatternEditComponent implements OnInit {
     pattern: ModelPattern;
     workerModelTypes: Array<string>;
     currentUser: User;
+    envNames: Array<string> = [];
+    newEnvName: string;
+    newEnvValue: string;
 
     private workerModelPatternNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private workerModelPatternError = false;
@@ -39,7 +43,15 @@ export class WorkerModelPatternEditComponent implements OnInit {
         this.loading = true;
         this._workerModelService.getWorkerModelPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'])
             .pipe(finalize(() => this.loading = false))
-            .subscribe((pattern) => this.pattern = pattern, () => this._router.navigate(['admin', 'worker-model-pattern']));
+            .subscribe(
+                (pattern) => {
+                    if (pattern.model.envs) {
+                        this.envNames = Object.keys(pattern.model.envs);
+                    }
+                    this.pattern = pattern;
+                },
+                () => this._router.navigate(['admin', 'worker-model-pattern'])
+            );
     }
 
     clickSaveButton(): void {
@@ -76,4 +88,22 @@ export class WorkerModelPatternEditComponent implements OnInit {
                 this._router.navigate(['admin', 'worker-model-pattern']);
             });
     }
+
+    addEnv(newEnvName: string, newEnvValue: string) {
+          if (!newEnvName) {
+              return;
+          }
+          if (!this.pattern.model.envs) {
+              this.pattern.model.envs = {};
+          }
+          this.pattern.model.envs[newEnvName] = newEnvValue;
+          this.envNames.push(newEnvName);
+          this.newEnvName = '';
+          this.newEnvValue = '';
+      }
+
+      deleteEnv(envName: string, index: number) {
+          this.envNames.splice(index, 1);
+          this.pattern.model.envs = omit(this.pattern.model.envs, envName);
+      }
 }

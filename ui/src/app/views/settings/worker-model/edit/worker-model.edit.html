@@ -150,7 +150,18 @@
                 <input class="ui input" type="text" name="shell" placeholder="sh -c" [(ngModel)]="workerModel.model_docker.shell" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
               <div class="field">
-                <label>{{'worker_model_env' | translate}}</label>
+                <label>{{'worker_model_cmd_docker' | translate}}</label>
+                <input
+                  class="ui input"
+                  type="text"
+                  name="cmd"
+                  [(ngModel)]="workerModel.model_docker.cmd"
+                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+              </div>
+              <div class="field">
+                <label suiPopup [popupText]="'worker_model_env_tooltip' | translate" popupPlacement="top left">
+                  {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+                </label>
                 <ng-container *ngIf="workerModel.model_docker.envs">
                   <div class="two fields" *ngFor="let envName of envNames; let index = index">
                     <div class="field">
@@ -175,15 +186,6 @@
                     <i class="plus icon"></i>
                   </button>
                 </div>
-              </div>
-              <div class="field">
-                <label>{{'worker_model_cmd_docker' | translate}}</label>
-                <input
-                  class="ui input"
-                  type="text"
-                  name="cmd"
-                  [(ngModel)]="workerModel.model_docker.cmd"
-                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
             </ng-container>
             <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">

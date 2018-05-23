@@ -40,6 +40,15 @@ const modelColumns = `
 
 const bookRegisterTTLInSeconds = 360
 
+var defaultEnvs = map[string]string{
+	"CDS_SINGLE_USE":          "1",
+	"CDS_TTL":                 "{{.TTL}}",
+	"CDS_GRAYLOG_HOST":        "{{.GraylogHost}}",
+	"CDS_GRAYLOG_PORT":        "{{.GraylogPort}}",
+	"CDS_GRAYLOG_EXTRA_KEY":   "{{.GraylogExtraKey}}",
+	"CDS_GRAYLOG_EXTRA_VALUE": "{{.GraylogExtraValue}}",
+}
+
 type dbResultWMS struct {
 	WorkerModel
 	GroupName string `db:"groupname"`
@@ -56,15 +65,16 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 }
 
 // UpdateWorkerModel update a worker model. If worker model have SpawnErr -> clear them
-func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
+func UpdateWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	model.UserLastModified = time.Now()
 	model.NeedRegistration = true
 	model.NbSpawnErr = 0
 	model.LastSpawnErr = ""
-	dbmodel := WorkerModel(model)
+	dbmodel := WorkerModel(*model)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err
 	}
+	*model = sdk.Model(dbmodel)
 	return nil
 }
 
@@ -327,4 +337,17 @@ func BookForRegister(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.
 		return nil, nil
 	}
 	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "BookForRegister> worker model %d already booked by %s (%d)", id, h.Name, h.ID)
+}
+
+func mergeWithDefaultEnvs(envs map[string]string) map[string]string {
+	if envs == nil {
+		return defaultEnvs
+	}
+	for envName := range defaultEnvs {
+		if _, ok := envs[envName]; !ok {
+			envs[envName] = defaultEnvs[envName]
+		}
+	}
+
+	return envs
 }

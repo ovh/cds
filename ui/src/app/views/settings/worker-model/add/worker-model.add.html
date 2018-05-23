@@ -115,6 +115,35 @@
                 <label>{{'worker_model_cmd_docker' | translate}}</label>
                 <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
+              <div class="field">
+                <label suiPopup [popupText]="'worker_model_env_tooltip' | translate" popupPlacement="top left">
+                  {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+                </label>
+                <ng-container *ngIf="workerModel.model_docker.envs">
+                  <div class="two fields" *ngFor="let envName of envNames; let index = index">
+                    <div class="field">
+                      <input type="text" name="name-{{envName}}" [placeholder]="'common_name' | translate" [value]="envName" disabled>
+                    </div>
+                    <div class="field">
+                      <input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate" [(ngModel)]="workerModel.model_docker.envs[envName]">
+                    </div>
+                    <button class="ui icon red button" (click)="deleteEnv(envName, index)">
+                      <i class="trash icon"></i>
+                    </button>
+                  </div>
+                </ng-container>
+                <div class="two fields">
+                  <div class="field">
+                    <input type="text" name="newEnvName" [placeholder]="'common_name' | translate" [(ngModel)]="newEnvName">
+                  </div>
+                  <div class="field">
+                    <input type="text" name="newEnvValue" [placeholder]="'common_value' | translate" [(ngModel)]="newEnvValue">
+                  </div>
+                  <button class="ui icon green button" (click)="addEnv(newEnvName, newEnvValue)">
+                    <i class="plus icon"></i>
+                  </button>
+                </div>
+              </div>
             </ng-container>
             <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
               <div class="field">

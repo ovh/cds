@@ -201,7 +201,7 @@ func TestUpdateWorkerModel(t *testing.T) {
 		Value: "Capa_2",
 	})
 
-	if err := UpdateWorkerModel(db, m1); err != nil {
+	if err := UpdateWorkerModel(db, &m1); err != nil {
 		t.Fatalf("Error : %s", err)
 	}
 

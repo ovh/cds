@@ -143,7 +143,11 @@ export class WorkerModelEditComponent implements OnInit {
                 this.loading = false;
                 this.patternSelected = null
             }))
-            .subscribe( wm => {
+            .subscribe(wm => {
+                this.workerModel = wm;
+                if (this.workerModel.model_docker != null && this.workerModel.model_docker.envs) {
+                    this.envNames = Object.keys(this.workerModel.model_docker.envs);
+                }
                 this._toast.success('', this._translate.instant('worker_model_saved'));
                 this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
             });
@@ -153,7 +157,11 @@ export class WorkerModelEditComponent implements OnInit {
                 this.loading = false;
                 this.patternSelected = null
             }))
-            .subscribe( wm => {
+            .subscribe(wm => {
+                this.workerModel = wm;
+                if (this.workerModel.model_docker != null && this.workerModel.model_docker.envs) {
+                    this.envNames = Object.keys(this.workerModel.model_docker.envs);
+                }
                 this.loading = false;
                 this._toast.success('', this._translate.instant('worker_model_saved'));
                 this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
@@ -178,6 +186,10 @@ export class WorkerModelEditComponent implements OnInit {
             case 'docker':
                 this.workerModel.model_docker.cmd = pattern.model.cmd;
                 this.workerModel.model_docker.shell = pattern.model.shell;
+                this.workerModel.model_docker.envs = pattern.model.envs;
+                if (pattern.model.envs) {
+                    this.envNames = Object.keys(pattern.model.envs);
+                }
                 break
             default:
                 this.workerModel.model_virtual_machine.pre_cmd = pattern.model.pre_cmd;
