@@ -996,7 +996,7 @@ func LoadAllByPlatformName(db gorp.SqlExecutor, projID int64, pfName string) ([]
 	dbRes := []Workflow{}
 	if _, err := db.Select(&dbRes, query, projID, pfName); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrWorkflowNotFound
+			return nil, nil
 		}
 		return nil, sdk.WrapError(err, "LoadAllByPlatformName> Unable to load workflows")
 	}
