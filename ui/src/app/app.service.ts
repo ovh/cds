@@ -14,6 +14,8 @@ import {Event, EventType} from './model/event.model';
 import {EventStore} from './service/event/event.store';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
 import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
+import {BroadcastStore} from './service/broadcast/broadcastStore';
+import {Broadcast, BroadcastEvent} from './model/broadcast.model';
 
 @Injectable()
 export class AppService {
@@ -21,7 +23,8 @@ export class AppService {
     constructor(private _projStore: ProjectStore, private _routeActivated: ActivatedRoute,
                 private _appStore: ApplicationStore, private _notif: NotificationService, private _authStore: AuthentificationStore,
                 private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
-                private _wfStore: WorkflowStore, private _routerService: RouterService, private _eventStore: EventStore) {
+                private _wfStore: WorkflowStore, private _routerService: RouterService, private _eventStore: EventStore,
+                private _broadcastStore: BroadcastStore) {
     }
 
     manageEvent(event: Event): void {
@@ -44,6 +47,8 @@ export class AppService {
             this.updateWorkflowCache(event);
         } else if (event.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) === 0) {
             this.updateWorkflowRunCache(event);
+        } else if (event.type_event.indexOf(EventType.BROADCAST_PREFIX) === 0) {
+            this.updateBroadcastCache(event);
         }
     }
 
@@ -216,5 +221,25 @@ export class AppService {
                 break;
         }
         this._eventStore._eventFilter.getValue();
+    }
+
+    updateBroadcastCache(event: Event): void {
+        switch (event.type_event) {
+            case EventType.BROADCAST_ADD:
+                let bEvent: BroadcastEvent = <BroadcastEvent>event.payload['Broadcast'];
+                if (bEvent) {
+                    this._broadcastStore.addBroadcastInCache(Broadcast.fromEvent(bEvent));
+                }
+                break;
+            case EventType.BROADCAST_UPDATE:
+                let bUpEvent: BroadcastEvent = <BroadcastEvent>event.payload['NewBroadcast'];
+                if (bUpEvent) {
+                    this._broadcastStore.addBroadcastInCache(Broadcast.fromEvent(bUpEvent));
+                }
+                break;
+            case EventType.BROADCAST_DELETE:
+                this._broadcastStore.removeBroadcastFromCache(event.payload['BroadcastID']);
+                break;
+        }
     }
 }

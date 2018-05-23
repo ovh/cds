@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {BroadcastService} from '../../../service/broadcast/broadcast.service';
+import {BroadcastStore} from '../../../service/broadcast/broadcastStore';
 import {Broadcast} from 'app/model/broadcast.model';
 import {Subscription} from 'rxjs/Subscription';
 import {finalize} from 'rxjs/operators';
@@ -30,12 +30,12 @@ export class BroadcastListComponent {
         });
     }
 
-    constructor(private _broadcastService: BroadcastService) {
-      this._broadcastSub = this._broadcastService.getBroadcastsListener()
+    constructor(private _broadcastStore: BroadcastStore) {
+      this._broadcastSub = this._broadcastStore.getBroadcasts()
         .subscribe((broadcasts) => {
             this.loading = false;
-            this.recentBroadcasts = broadcasts.filter((br) => !br.read && !br.archived);
-            this.oldBroadcasts = broadcasts.filter((br) => br.read || br.archived);
+            this.recentBroadcasts = broadcasts.toArray().filter((br) => !br.read && !br.archived);
+            this.oldBroadcasts = broadcasts.toArray().filter((br) => br.read || br.archived);
             this.filteredBroadcasts = this.recentBroadcasts;
         }, () => this.loading = false);
     }
@@ -59,7 +59,7 @@ export class BroadcastListComponent {
 
     markAsRead(id: number) {
       this.loading = true;
-      this._broadcastService.markAsRead(id)
+      this._broadcastStore.markAsRead(id)
         .pipe(finalize(() => this.loading = false))
         .subscribe();
     }

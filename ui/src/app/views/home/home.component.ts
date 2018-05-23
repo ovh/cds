@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {NavbarService} from '../../service/navbar/navbar.service';
-import {BroadcastService} from '../../service/broadcast/broadcast.service';
+import {BroadcastStore} from '../../service/broadcast/broadcastStore';
 import {ProjectStore} from '../../service/project/project.store';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {NavbarProjectData} from 'app/model/navbar.model';
@@ -28,7 +28,7 @@ export class HomeComponent {
       private _navbarService: NavbarService,
       private _projectStore: ProjectStore,
       private _workflowStore: WorkflowStore,
-      private _broadcastService: BroadcastService,
+      private _broadcastService: BroadcastStore,
     ) {
       this._navbarSub = this._navbarService.getData(true)
         .subscribe((data) => {
@@ -38,11 +38,11 @@ export class HomeComponent {
           }
         });
 
-        this._broadcastSub = this._broadcastService.getBroadcastsListener()
+        this._broadcastSub = this._broadcastService.getBroadcasts()
             .subscribe((broadcasts) => {
-                this.loadingBroadcasts = false
-                if (Array.isArray(broadcasts)) {
-                    this.broadcasts = broadcasts.filter((br) => !br.read && !br.archived).slice(0, 5);
+                this.loadingBroadcasts = false;
+                if (broadcasts) {
+                    this.broadcasts = broadcasts.toArray().filter((br) => !br.read && !br.archived).slice(0, 5);
                 }
             }, () => this.loadingBroadcasts = false);
     }

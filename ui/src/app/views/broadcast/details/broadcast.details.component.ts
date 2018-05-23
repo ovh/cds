@@ -1,9 +1,8 @@
 import {Component} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {BroadcastService} from '../../../service/broadcast/broadcast.service';
+import {BroadcastStore} from '../../../service/broadcast/broadcastStore';
 import {Broadcast} from 'app/model/broadcast.model';
 import {Subscription} from 'rxjs/Subscription';
-import {finalize} from 'rxjs/operators';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({
@@ -20,19 +19,21 @@ export class BroadcastDetailsComponent {
     _broadcastSub: Subscription;
     _routeParamsSub: Subscription;
 
-    constructor(private _broadcastService: BroadcastService, private _route: ActivatedRoute) {
+    constructor(private _broadcastStore: BroadcastStore, private _route: ActivatedRoute) {
         this._routeParamsSub = this._route.params.subscribe((params) => {
             let id = parseInt(params['id'], 10);
 
-            this._broadcastService.markAsRead(id)
+            this._broadcastStore.markAsRead(id)
                 .subscribe();
 
             this.loading = true;
-            this._broadcastSub = this._broadcastService.getBroadcastById(id)
-                .pipe(
-                    finalize(() => this.loading = false)
-                )
-                .subscribe((broadcast) => this.broadcast = broadcast);
+            this._broadcastSub = this._broadcastStore.getBroadcasts(id)
+                .subscribe((bcs) => {
+                    this.broadcast = bcs.get(id);
+                    if (this.broadcast) {
+                        this.loading = false;
+                    }
+                });
         });
 
     }

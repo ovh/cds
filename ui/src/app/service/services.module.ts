@@ -54,7 +54,8 @@ import {ImportAsCodeService} from './import-as-code/import.service';
 import {WorkflowEventStore} from './workflow/workflow.event.store';
 import {WorkflowSidebarStore} from './workflow/workflow.sidebar.store';
 import {EventStore} from './event/event.store';
-import {BroadcastService} from './broadcast/broadcast.service';
+import {BroadcastStore} from './broadcast/broadcastStore';
+import {BroadcastService} from './broadcast/broadcastService';
 
 @NgModule({})
 export class ServicesModule {
@@ -84,6 +85,7 @@ export class ServicesModule {
                 HookService,
                 ImportAsCodeService,
                 BroadcastService,
+                BroadcastStore,
                 KeyService,
                 LanguageStore,
                 NavbarService,
@@ -151,7 +153,7 @@ export {
     GroupService,
     HookService,
     ImportAsCodeService,
-    BroadcastService,
+    BroadcastStore,
     KeyService,
     LanguageStore,
     ParameterService,

@@ -3,7 +3,7 @@ import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
 import {ApplicationStore} from '../../service/application/application.store';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
-import {BroadcastService} from '../../service/broadcast/broadcast.service';
+import {BroadcastStore} from '../../service/broadcast/broadcastStore';
 import {Application} from '../../model/application.model';
 import {Broadcast} from '../../model/broadcast.model';
 import {User} from '../../model/user.model';
@@ -58,7 +58,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
                 private _workflowStore: WorkflowStore,
-                private _broadcastService: BroadcastService,
+                private _broadcastStore: BroadcastStore,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
                 private _translate: TranslateService,
                 private _authentificationStore: AuthentificationStore,
@@ -193,11 +193,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             this.loading = false;
         });
 
-        this.broadcastSubscription = this._broadcastService.getBroadcastsListener()
+        this.broadcastSubscription = this._broadcastStore.getBroadcasts()
             .subscribe((broadcasts) => {
-                let broadcastsToRead = broadcasts.filter((br) => !br.read && !br.archived)
-                this.broadcastsToDisplay = broadcastsToRead.slice(0, 3);
-                this.broadcasts = broadcastsToRead;
+                let broadcastsToRead = broadcasts.filter((br) => !br.read && !br.archived);
+                this.broadcasts = broadcastsToRead.toArray();
+                this.broadcastsToDisplay = this.broadcasts.slice(0, 3);
             });
     }
 
@@ -261,7 +261,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     markAsRead(event: Event, id: number) {
         event.stopPropagation();
-        this._broadcastService.markAsRead(id)
+        this._broadcastStore.markAsRead(id)
             .subscribe();
     }
 }

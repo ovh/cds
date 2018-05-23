@@ -51,4 +51,9 @@ export class EventType {
 
     static RUN_WORKFLOW_PREFIX = 'sdk.EventRunWorkflow';
     static RUN_WORKFLOW_NODE = 'sdk.EventRunWorkflowNode';
+
+    static BROADCAST_PREFIX = 'sdk.EventBroadcast';
+    static BROADCAST_ADD = 'sdk.EventBroadcastAdd';
+    static BROADCAST_UPDATE = 'sdk.EventBroadcastUpdate';
+    static BROADCAST_DELETE = 'sdk.EventBroadcastDelete';
 }
