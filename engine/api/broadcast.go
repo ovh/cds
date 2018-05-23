@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/broadcast"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
@@ -36,6 +37,7 @@ func (api *API) addBroadcastHandler() Handler {
 			return sdk.WrapError(err, "addBroadcast> cannot add broadcast")
 		}
 
+		event.PublishBroadcastAdd(bc, getUser(ctx))
 		return WriteJSON(w, bc, http.StatusCreated)
 	}
 }
@@ -48,7 +50,8 @@ func (api *API) updateBroadcastHandler() Handler {
 		}
 
 		u := getUser(ctx)
-		if _, err := broadcast.LoadByID(api.mustDB(), broadcastID, u); err != nil {
+		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, u)
+		if err != nil {
 			return sdk.WrapError(err, "updateBroadcast> cannot load broadcast by id")
 		}
 
@@ -86,6 +89,7 @@ func (api *API) updateBroadcastHandler() Handler {
 			return sdk.WrapError(err, "updateBroadcast> unable to commit transaction")
 		}
 
+		event.PublishBroadcastUpdate(*oldBC, bc, getUser(ctx))
 		return WriteJSON(w, bc, http.StatusOK)
 	}
 }
@@ -133,6 +137,7 @@ func (api *API) deleteBroadcastHandler() Handler {
 			return sdk.WrapError(err, "deleteBroadcast> Cannot commit transaction")
 		}
 
+		event.PublishBroadcastDelete(broadcastID, getUser(ctx))
 		return nil
 	}
 }

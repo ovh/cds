@@ -58,7 +58,7 @@ func (b *eventsBroker) CleanAll() {
 			close(v.Queue)
 			delete(b.clients, c)
 			// Clean cache subscription
-			if !b.cache.Lock(cache.Key(locksKey, v.UUID), 15*time.Second) {
+			if !b.LockCache(v.UUID) {
 				log.Warning("CleanAll> Cannot get lock for %s", cache.Key(locksKey, v.UUID))
 				continue
 			}
@@ -66,6 +66,14 @@ func (b *eventsBroker) CleanAll() {
 			b.cache.Unlock(cache.Key(locksKey, v.UUID))
 		}
 	}
+}
+
+func (b *eventsBroker) LockCache(uuid string) bool {
+	return b.cache.Lock(cache.Key(locksKey, uuid), 5*time.Second, 100, 5)
+}
+
+func (b *eventsBroker) UnlockCache(uuid string) {
+	b.cache.Unlock(cache.Key(locksKey, uuid))
 }
 
 // CleanClient cleans a client
@@ -79,11 +87,11 @@ func (b *eventsBroker) CleanClient(client eventsBrokerSubscribe) {
 	delete(b.clients, client.UUID)
 
 	// Clean cache subscription
-	if !b.cache.Lock(cache.Key(locksKey, client.UUID), 15*time.Second) {
+	if !b.LockCache(client.UUID) {
 		log.Warning("CleanClient> Cannot get lock for %s", cache.Key(locksKey, client.UUID))
 		return
 	}
-	defer b.cache.Unlock(cache.Key(locksKey, client.UUID))
+	defer b.UnlockCache(client.UUID)
 	b.cache.Delete(cache.Key(eventsKey, client.UUID))
 }
 
@@ -302,18 +310,55 @@ func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
 	defer b.mutex.Unlock()
 	for _, i := range b.clients {
 		if i.Queue != nil {
-			manageEvent(b.cache, receivedEvent, eventS, i)
+			b.handleEvent(b.cache, receivedEvent, eventS, i)
 		}
 
 	}
 }
 
-func manageEvent(store cache.Store, event sdk.Event, eventS string, subscriber eventsBrokerSubscribe) {
-	if !store.Lock(cache.Key(locksKey, subscriber.UUID), 15*time.Second) {
+func (b *eventsBroker) handleEvent(store cache.Store, event sdk.Event, eventS string, subscriber eventsBrokerSubscribe) {
+	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
+		if subscriber.User.Admin || permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
+			subscriber.Queue <- eventS
+		}
+		return
+	}
+	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") {
+		if subscriber.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
+			subscriber.Queue <- eventS
+		}
+		return
+	}
+	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
+		if subscriber.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
+			subscriber.Queue <- eventS
+		}
+		return
+	}
+	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
+		if subscriber.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
+			subscriber.Queue <- eventS
+		}
+		return
+	}
+	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
+		if subscriber.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
+			subscriber.Queue <- eventS
+		}
+		return
+	}
+	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
+		if subscriber.User.Admin || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, subscriber.User, permission.PermissionRead) {
+			subscriber.Queue <- eventS
+		}
+		return
+	}
+
+	if !b.LockCache(subscriber.UUID) {
 		log.Warning("manageEvent> Cannot get lock for %s", cache.Key(locksKey, subscriber.UUID))
 		return
 	}
-	defer store.Unlock(cache.Key(locksKey, subscriber.UUID))
+	defer b.UnlockCache(subscriber.UUID)
 
 	var events map[string][]sdk.EventSubscription
 	if !store.Get(cache.Key(eventsKey, subscriber.UUID), &events) {
@@ -351,37 +396,6 @@ func manageEvent(store cache.Store, event sdk.Event, eventS string, subscriber e
 		}
 		return
 	}
-
-	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if subscriber.User.Admin || permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
-		}
-		return
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") {
-		if subscriber.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
-		}
-		return
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if subscriber.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
-		}
-		return
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if subscriber.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
-		}
-		return
-	}
-	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if subscriber.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
-		}
-		return
-	}
 }
 
 func (api *API) eventSubscribeHandler() Handler {
@@ -402,10 +416,10 @@ func (api *API) eventSubscribeHandler() Handler {
 			}
 		}
 
-		if !api.Cache.Lock(cache.Key(locksKey, payload.UUID), 15*time.Second) {
+		if !api.eventsBroker.LockCache(payload.UUID) {
 			return sdk.WrapError(fmt.Errorf("unable to get lock"), "eventSubscribeHandler")
 		}
-		defer api.Cache.Unlock(cache.Key(locksKey, payload.UUID))
+		defer api.eventsBroker.UnlockCache(payload.UUID)
 
 		var events map[string][]sdk.EventSubscription
 		if !api.Cache.Get(cache.Key(eventsKey, payload.UUID), &events) {
@@ -475,10 +489,10 @@ func (api *API) eventUnsubscribeHandler() Handler {
 			return sdk.WrapError(err, "eventUnsubscribeHandler> Unable to get body")
 		}
 
-		if !api.Cache.Lock(cache.Key(locksKey, payload.UUID), 15*time.Second) {
+		if !api.eventsBroker.LockCache(payload.UUID) {
 			return sdk.WrapError(fmt.Errorf("unable to get lock"), "eventSubscribeHandler")
 		}
-		defer api.Cache.Unlock(cache.Key(locksKey, payload.UUID))
+		defer api.eventsBroker.UnlockCache(payload.UUID)
 
 		var events map[string][]sdk.EventSubscription
 		if !api.Cache.Get(cache.Key(eventsKey, payload.UUID), &events) {
