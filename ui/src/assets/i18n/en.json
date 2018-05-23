@@ -539,6 +539,7 @@
   "platform_no" : "There is no linked platform",
   "platform_model": "Platform model",
   "platform_configuration": "Platform configuration",
+  "platform_official_tooltip": "Public platform",
 
   "provider_hook": "hook",
   "provider_deployment": "deployment",

@@ -12,6 +12,7 @@ export class PlatformModel {
     block_storage: boolean;
     deployment: boolean;
     compute: boolean;
+    public: boolean;
 }
 
 export class ProjectPlatform {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -14,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -358,6 +360,22 @@ func (api *API) addProjectHandler() Handler {
 				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name)
 			}
 		}
+
+		platformModels, errP := platform.LoadModels(tx)
+		if errP != nil {
+			return sdk.WrapError(errP, "addProjectHandler> Cannot load platform models")
+		}
+
+		var wg = new(sync.WaitGroup)
+		wg.Add(len(platformModels))
+		for i := range platformModels {
+			pf := &platformModels[i]
+			go func() {
+				propagatePublicPlatformModelOnProject(tx, api.Cache, *pf, *p, getUser(ctx))
+				wg.Done()
+			}()
+		}
+		wg.Wait()
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addProjectHandler> Cannot commit transaction")
