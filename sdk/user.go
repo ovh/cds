@@ -41,6 +41,7 @@ type UserPermissions struct {
 //easyjson:json
 type UserPermissionsMap map[string]int
 
+// UserPermissionKey returns a string representing a key for a user permission
 func UserPermissionKey(k, n string) string {
 	return k + "/" + n
 }

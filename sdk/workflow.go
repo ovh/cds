@@ -8,6 +8,7 @@ import (
 	"github.com/fsamin/go-dump"
 )
 
+// DefaultHistoryLength is the default history length
 const DefaultHistoryLength int64 = 20
 
 //Workflow represents a pipeline based workflow

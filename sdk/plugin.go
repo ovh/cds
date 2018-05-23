@@ -102,11 +102,13 @@ func DeletePlugin(name string) error {
 	return nil
 }
 
+// These are type of plugins
 const (
 	GRPCPluginDeploymentPlatform = "deployment_platform"
 	GRPCPluginAction             = "action"
 )
 
+// GRPCPlugin is the type representing a plugin over GRPC
 type GRPCPlugin struct {
 	ID          int64              `json:"id" cli:"id" db:"id"`
 	Name        string             `json:"name" cli:"name,key" db:"name"`
@@ -116,6 +118,7 @@ type GRPCPlugin struct {
 	Binaries    []GRPCPluginBinary `json:"binaries" cli:"-" db:"-"`
 }
 
+// GetBinary returns the binary for a specific os and arch
 func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
 	for _, b := range p.Binaries {
 		if b.OS == os && b.Arch == arch {
@@ -125,6 +128,7 @@ func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
 	return nil
 }
 
+// GRPCPluginBinary represents a binary file (for a specific os and arch) serving a GRPCPlugin
 type GRPCPluginBinary struct {
 	OS               string          `json:"os,omitempty" yaml:"os"`
 	Arch             string          `json:"arch,omitempty" yaml:"arch"`
@@ -142,10 +146,12 @@ type GRPCPluginBinary struct {
 	PluginName       string          `json:"plugin_name,omitempty" yaml:"-"`
 }
 
+// GetName is a part of the objectstore.Object interface implementation
 func (b GRPCPluginBinary) GetName() string {
 	return b.Name
 }
 
+// GetPath is a part of the objectstore.Object interface implementation
 func (b GRPCPluginBinary) GetPath() string {
 	return b.Name + "-" + b.OS + "-" + b.Arch
 }
