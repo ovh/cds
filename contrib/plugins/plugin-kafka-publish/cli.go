@@ -43,6 +43,11 @@ func initCli(mainFunc func()) *cli.App {
 						EnvVar: "CDS_KAFKA_PASSWORD",
 					},
 					cli.StringFlag{
+						Name:   "key",
+						Usage:  " <key> Specify key used for aes encryption",
+						EnvVar: "CDS_PLUGIN_KEY",
+					},
+					cli.StringFlag{
 						Name:  "pgp-decrypt",
 						Usage: " <file> Decrypt incoming with a private ARMOR GPG Key",
 						Value: "",
@@ -64,6 +69,11 @@ func initCli(mainFunc func()) *cli.App {
 						Name:   "kafka-password",
 						Usage:  " <password> Specify kafka password",
 						EnvVar: "CDS_KAFKA_PASSWORD",
+					},
+					cli.StringFlag{
+						Name:   "key",
+						Usage:  " <key> Specify key used for aes encryption",
+						EnvVar: "CDS_PLUGIN_KEY",
 					},
 					cli.StringFlag{
 						Name:  "log",

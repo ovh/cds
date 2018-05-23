@@ -11,10 +11,11 @@ import (
 	"github.com/fsamin/go-shredder"
 
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/sdk/plugin"
 )
 
 //Wait for ACK to CDS through kafka. Entrypoint is the actionID from the context file. After a fimeout (seconds) it will return an error
-func ackFromKafka(kafka, topic, group, user, password string, timeout time.Duration, actionID int64) (*kafkapublisher.Ack, error) {
+func ackFromKafka(job plugin.IJob, kafka, topic, group, user, password, key string, timeout time.Duration, actionID int64) (*kafkapublisher.Ack, error) {
 	//Create a new client
 	var config = sarama.NewConfig()
 	config.Net.TLS.Enable = true
@@ -95,14 +96,14 @@ func ackFromKafka(kafka, topic, group, user, password string, timeout time.Durat
 	for {
 		select {
 		case msg := <-messagesChan:
-			//If we recieve a "Chunk" Message
+			//If we receive a "Chunk" Message
 			if kafkapublisher.IsChunk(msg) {
 				c, err := kafkapublisher.ReadBytes(msg)
 				if err != nil {
-					fmt.Printf("Unable to read bytes : %s\n", err)
+					fmt.Printf("Unable to read bytes: %s\n", err)
 					continue
 				}
-				fmt.Println("Chunk received")
+				plugin.SendLog(job, "Chunk received - action %d", job.ID())
 				chunks = append(chunks, *c)
 
 				allChunks := shredder.Filter(chunks)
@@ -110,9 +111,9 @@ func ackFromKafka(kafka, topic, group, user, password string, timeout time.Durat
 
 				//If we received all chunks for a file, let save it on disk
 				if cs.Completed() {
-					aes, err := getAESEncryptionOptions(password)
+					aes, err := getAESEncryptionOptions(key)
 					if err != nil {
-						fmt.Printf("Error: %s\n", err)
+						plugin.SendLog(job, fmt.Sprintf("Error on getAESEncryptionOptions: %s\n", err))
 						continue
 					}
 					var opts = &shredder.Opts{
@@ -122,20 +123,21 @@ func ackFromKafka(kafka, topic, group, user, password string, timeout time.Durat
 
 					content, err := shredder.Reassemble(cs, opts)
 					if err != nil {
-						fmt.Printf("Error: %s\n", err)
+						plugin.SendLog(job, fmt.Sprintf("Error on Reassemble: %s\n", err))
+						plugin.SendLog(job, "You have to check the '--key' flag value. It have to be the same value as 'key' parameter in job action")
 						continue
 					}
 
 					filename, data, err := content.File()
 					if err != nil {
-						fmt.Printf("Error: %s\n", err)
+						plugin.SendLog(job, fmt.Sprintf("Error: %s\n", err))
 						continue
 					}
 
-					fmt.Printf("Receiving file : %s\n", filename)
+					plugin.SendLog(job, fmt.Sprintf("Receiving file: %s\n", filename))
 
 					if err := fileHandler(nil, filename, data); err != nil {
-						fmt.Printf("Error: %s\n", err)
+						plugin.SendLog(job, fmt.Sprintf("Error: %s\n", err))
 						continue
 					}
 					//File has been processed, remove data from memory
@@ -145,7 +147,7 @@ func ackFromKafka(kafka, topic, group, user, password string, timeout time.Durat
 			} else {
 				ack := &kafkapublisher.Ack{}
 				if err := json.Unmarshal(msg, ack); err != nil {
-					fmt.Printf("Unable to parse ack: %s\n", err)
+					plugin.SendLog(job, fmt.Sprintf("Unable to parse ack: %s\n", err))
 					continue
 				}
 				if ack.Context.ActionID != actionID {

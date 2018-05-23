@@ -2,6 +2,7 @@ package kafkapublisher
 
 //Context represent a CDS stream context
 type Context struct {
+	Version       string          `json:"version"`
 	ActionID      int64           `json:"action_id"`
 	Directory     string          `json:"directory"`
 	Files         []string        `json:"files"`

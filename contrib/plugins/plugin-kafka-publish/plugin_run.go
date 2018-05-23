@@ -18,8 +18,9 @@ import (
 )
 
 var (
-	version = "0.3"
-	job     plugin.IJob
+	version = "0.4"
+
+	job plugin.IJob
 )
 
 //Run execute the action
@@ -30,6 +31,10 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	password := job.Arguments().Get("kafkaPassword")
 	group := job.Arguments().Get("kafkaGroup")
 	topic := job.Arguments().Get("topic")
+	key := job.Arguments().Get("key")
+	if key == "" {
+		key = password
+	}
 
 	if user == "" || password == "" || kafka == "" || topic == "" {
 		return plugin.Result(fmt.Sprintf("Kafka is not configured : %+v", job.Arguments().Data))
@@ -46,7 +51,6 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 		if ackTopic == "" && timeout == 0 {
 			return plugin.Result("Error: ackTopic and waitForAckTimeout parameters are mandatory")
 		}
-
 	}
 
 	message := job.Arguments().Get("message")
@@ -100,7 +104,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 	//Send all the files
 	for _, f := range files {
-		aes, err := getAESEncryptionOptions(password)
+		aes, err := getAESEncryptionOptions(key)
 		if err != nil {
 			return plugin.Result(fmt.Sprintf("Unable to shred file %s : %s", f, err))
 		}
@@ -131,7 +135,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 		}
 	}
 
-	Logf("Data sent to topic %s, action id: %d : %v", topic, job.ID(), files)
+	Logf("Data sent to topic %s, action %d : %v", topic, job.ID(), files)
 
 	//Don't wait for ack
 	if waitForAckString != "true" {
@@ -159,7 +163,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	}()
 
 	//Wait for ack
-	ack, err := ackFromKafka(kafka, ackTopic, group, user, password, time.Duration(timeout)*time.Second, job.ID())
+	ack, err := ackFromKafka(job, kafka, ackTopic, group, user, password, key, time.Duration(timeout)*time.Second, job.ID())
 	if err != nil {
 		return plugin.Result(fmt.Sprintf("Failed to get ack on topic %s: %s", ackTopic, err))
 	}
