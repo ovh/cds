@@ -791,7 +791,7 @@ func (n *WorkflowNode) CheckApplicationDeploymentStrategies(proj *Project) error
 	}
 
 	for _, a := range proj.Applications {
-		if a.ID == n.Context.ID || (n.Context.Application != nil && n.Context.Application.ID == a.ID) {
+		if a.ID == n.Context.ApplicationID || (n.Context.Application != nil && n.Context.Application.ID == a.ID) {
 			if _, has := a.DeploymentStrategies[pf.Name]; !has {
 				return fmt.Errorf("platform %s unavailable", pf.Name)
 			}

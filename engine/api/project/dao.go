@@ -320,7 +320,7 @@ var LoadOptions = struct {
 	WithClearPlatforms:                      &loadClearPlatforms,
 	WithFavorites:                           &loadFavorites,
 	WithFeatures:                            &loadFeatures,
-	WithApplicationWithDeploymentStrategies: &loadApplicationVariables,
+	WithApplicationWithDeploymentStrategies: &loadApplicationWithDeploymentStrategies,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id

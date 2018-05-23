@@ -151,6 +151,7 @@ type Configuration struct {
 	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
 }
 
+// ProviderConfiguration is the piece of configuration for each provider authentication
 type ProviderConfiguration struct {
 	Name  string `toml:"name"`
 	Token string `toml:"token"`

@@ -113,6 +113,9 @@ export class WorkflowNodeContextComponent {
     }
 
     saveContext(): void {
+        if (this.editableNode.context.project_platform_id === 0) {
+            this.editableNode.context.project_platform = null;
+        }
         if (this.editableNode.context.default_pipeline_parameters) {
             this.editableNode.context.default_pipeline_parameters.forEach(p => {
                 p.value = p.value.toString();
