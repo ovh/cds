@@ -1,4 +1,4 @@
-import {Component, Input, ElementRef, ViewChild} from '@angular/core';
+import {Component, Input, ElementRef, ViewChild, OnDestroy} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Workflow} from '../../../../../model/workflow.model';
@@ -17,7 +17,7 @@ import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event
     styleUrls: ['./workflow.sidebar.run.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunListComponent {
+export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
@@ -142,8 +142,7 @@ export class WorkflowSidebarRunListComponent {
               });
             }
             if (this.durationIntervalID) {
-                clearInterval(this.durationIntervalID);
-                this.durationIntervalID = 0;
+                this.deleteInterval();
             }
             this.refreshDuration();
             this.durationIntervalID = setInterval(() => {
@@ -163,7 +162,7 @@ export class WorkflowSidebarRunListComponent {
                 r.duration = this.getDuration(r.status, r.start, r.last_execution);
             });
             if (!stillWorking) {
-                clearInterval(this.durationIntervalID);
+                this.deleteInterval();
             }
         }
 
@@ -171,5 +170,16 @@ export class WorkflowSidebarRunListComponent {
 
     changeRun(num: number) {
         this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', num]);
+    }
+
+    ngOnDestroy(): void {
+        this.deleteInterval();
+    }
+
+    deleteInterval(): void {
+        if (this.durationIntervalID) {
+            clearInterval(this.durationIntervalID);
+            this.durationIntervalID = 0;
+        }
     }
 }

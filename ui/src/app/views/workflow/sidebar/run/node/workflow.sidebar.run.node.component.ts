@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild} from '@angular/core';
+import {Component, Input, OnDestroy, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {Project} from '../../../../../model/project.model';
 import {
@@ -23,7 +23,7 @@ import {PermissionValue} from '../../../../../model/permission.model';
     styleUrls: ['./workflow.sidebar.run.node.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunNodeComponent {
+export class WorkflowSidebarRunNodeComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
@@ -48,6 +48,8 @@ export class WorkflowSidebarRunNodeComponent {
     duration: string;
     canBeRun = false;
     pipelineStatusEnum = PipelineStatus;
+
+    durationIntervalID: number;
 
     constructor(private _wrService: WorkflowRunService, private _router: Router,
                private _durationService: DurationService,
@@ -79,7 +81,11 @@ export class WorkflowSidebarRunNodeComponent {
                     return;
                 }
                 this.loading = false;
+                this.deleteInverval();
                 this.duration = this.getDuration();
+                this.durationIntervalID = setInterval(() => {
+                    this.duration = this.getDuration();
+                }, 5000);
                 // If not the same run => display loading
                 if (this.currentWorkflowRun && this.currentWorkflowRun && this.currentWorkflowNodeRun.num !== this.currentWorkflowRun.num) {
                     this.loading = true;
@@ -110,6 +116,8 @@ export class WorkflowSidebarRunNodeComponent {
         let done = new Date(this.currentWorkflowNodeRun.done);
         if (PipelineStatus.isActive(this.currentWorkflowNodeRun.status)) {
             done = new Date();
+        } else {
+            this.deleteInverval();
         }
 
         return this._durationService.duration(new Date(this.currentWorkflowNodeRun.start), done);
@@ -191,5 +199,16 @@ export class WorkflowSidebarRunNodeComponent {
 
     openRunNode(): void {
         this.workflowRunNode.show();
+    }
+
+    ngOnDestroy(): void {
+        this.deleteInverval();
+    }
+
+    deleteInverval(): void {
+        if (this.durationIntervalID) {
+            clearInterval(this.durationIntervalID);
+            this.durationIntervalID = 0;
+        }
     }
 }

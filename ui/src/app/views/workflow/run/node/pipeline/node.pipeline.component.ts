@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
@@ -12,7 +12,7 @@ import {cloneDeep} from 'lodash';
     templateUrl: './pipeline.html',
     styleUrls: ['./pipeline.scss']
 })
-export class WorkflowRunNodePipelineComponent implements OnInit {
+export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     nodeRun: WorkflowNodeRun;
     jobTime: Map<number, string>;
@@ -22,7 +22,12 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
     @Input('run')
     set run(data: WorkflowNodeRun) {
          this.refreshNodeRun(data);
+
+         this.deleteInterval();
          this.updateTime();
+         this.durationIntervalID = setInterval(() => {
+             this.updateTime();
+         }, 5000);
     }
 
     pipelineStatusEnum = PipelineStatus;
@@ -32,6 +37,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
 
     previousStatus: string;
     manual = false;
+
+    durationIntervalID: number;
 
     constructor(private _durationService: DurationService, private _route: ActivatedRoute, private _router: Router) {
 
@@ -85,9 +92,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
 
         if (this.nodeRun) {
             this.previousStatus = this.nodeRun.status;
-            if (this.nodeRun.status === PipelineStatus.SUCCESS) {
-                this.getTriggeredNodeRun();
-            }
         }
         // Set selected job if needed or refresh step_status
         if (this.nodeRun.stages) {
@@ -131,20 +135,23 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
 
     updateTime(): void {
         this.jobTime = new Map<number, string>();
+        let stillRunning = false;
         if (this.nodeRun.stages) {
             this.nodeRun.stages.forEach(s => {
-
                if (s.run_jobs) {
                    s.run_jobs.forEach(rj => {
                        switch (rj.status) {
                            case this.pipelineStatusEnum.WAITING:
+                               stillRunning = true;
                                this.jobTime.set(rj.job.pipeline_action_id, this._durationService.duration(new Date(rj.queued), new Date()));
                                break;
                            case this.pipelineStatusEnum.BUILDING:
+                               stillRunning = true;
                                this.jobTime.set(rj.job.pipeline_action_id, this._durationService.duration(new Date(rj.start), new Date()));
                                break;
                            case this.pipelineStatusEnum.SUCCESS:
                            case this.pipelineStatusEnum.FAIL:
+                           case this.pipelineStatusEnum.STOPPED:
                                this.jobTime.set(rj.job.pipeline_action_id,
                                    this._durationService.duration( new Date(rj.start), new Date(rj.done) ));
                                break;
@@ -159,9 +166,19 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
                }
             });
         }
+        if (!stillRunning) {
+            this.deleteInterval();
+        }
      }
 
-    getTriggeredNodeRun() {
+     ngOnDestroy(): void {
+        this.deleteInterval();
+     }
 
-    }
+     deleteInterval(): void {
+        if (this.durationIntervalID) {
+            clearInterval(this.durationIntervalID);
+            this.durationIntervalID = 0;
+        }
+     }
 }

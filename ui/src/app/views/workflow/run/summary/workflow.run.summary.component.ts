@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter, OnInit} from '@angular/core';
+import {Component, Input, Output, EventEmitter} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {PermissionValue} from '../../../../model/permission.model';
 import {WorkflowRun} from '../../../../model/workflow.run.model';
@@ -20,7 +20,7 @@ declare var ansi_up: any;
     styleUrls: ['./workflow.run.summary.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowRunSummaryComponent implements OnInit {
+export class WorkflowRunSummaryComponent {
     @Input('direction')
     set direction(val) {
       this._direction = val;
@@ -49,15 +49,13 @@ export class WorkflowRunSummaryComponent implements OnInit {
         private _toast: ToastService, private _translate: TranslateService) {
         this.subWR = this._workflowEventStore.selectedRun().subscribe(wr => {
             this.workflowRun = wr;
+
+            let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
+
+            if (tagTriggeredBy) {
+                this.author = tagTriggeredBy.value;
+            }
         });
-    }
-
-    ngOnInit() {
-        let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
-
-        if (tagTriggeredBy) {
-            this.author = tagTriggeredBy.value;
-        }
     }
 
     getSpawnInfos() {
