@@ -289,7 +289,6 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 
 func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 		rmName := vars["name"]
@@ -309,9 +308,10 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 
 		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s; ok", vcsServer.Name)
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		var errAuthClient error
+		client, errAuthClient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		if errAuthClient != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s: %v", projectKey, rmName, errAuthClient)
 		}
 
 		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
@@ -321,14 +321,15 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 
 		var repos []sdk.VCSRepo
 		if !api.Cache.Get(cacheKey, &repos) || len(repos) == 0 {
-			log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
-			repos, err = client.Repos()
+			var errRepos error
+			repos, errRepos = client.Repos()
 			api.Cache.SetWithTTL(cacheKey, repos, 0)
+			if errRepos != nil {
+				// as client.Repos can return a 401 error, we avoid here to return 401 on UI too.
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
+			}
 		}
-		if err != nil {
-			return sdk.WrapError(err, "getReposFromRepositoriesManagerHandler> Cannot get repos")
 
-		}
 		return WriteJSON(w, repos, http.StatusOK)
 	}
 }
