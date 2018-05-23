@@ -1,7 +1,9 @@
 package swarm
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"strconv"
 	"strings"
 	"time"
@@ -63,6 +65,10 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 	//Memory for the worker
 	memory := int64(h.Config.DefaultMemory)
+
+	if spawnArgs.Model.ModelDocker.Memory != 0 {
+		memory = spawnArgs.Model.ModelDocker.Memory
+	}
 
 	var network, networkAlias string
 	services := []string{}
@@ -136,50 +142,9 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		}
 	}
 
-	var registerCmd string
 	if spawnArgs.RegisterOnly {
-		registerCmd = " register"
+		spawnArgs.Model.ModelDocker.Cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
-	}
-
-	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/linux/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.CDSClient().APIURL(), registerCmd)}
-
-	//CDS env needed by the worker binary
-	env := []string{
-		"CDS_API" + "=" + h.Configuration().API.HTTP.URL,
-		"CDS_NAME" + "=" + name,
-		"CDS_TOKEN" + "=" + h.Configuration().API.Token,
-		"CDS_MODEL" + "=" + strconv.FormatInt(spawnArgs.Model.ID, 10),
-		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
-		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
-		"CDS_TTL" + "=" + strconv.Itoa(h.Config.WorkerTTL),
-		"CDS_SINGLE_USE=1",
-	}
-
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
-		env = append(env, "CDS_GRAYLOG_HOST"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.Host)
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
-		env = append(env, fmt.Sprintf("CDS_GRAYLOG_PORT=%d", h.Configuration().Provision.WorkerLogsOptions.Graylog.Port))
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey)
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
-	}
-	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
-		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
-	}
-
-	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", spawnArgs.JobID))
-		} else {
-			env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", spawnArgs.JobID))
-		}
 	}
 
 	//labels are used to make container cleanup easier
@@ -195,13 +160,53 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		return name, errDockerOpts
 	}
 
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Token:             h.Configuration().API.Token,
+		HTTPInsecure:      h.Config.API.HTTP.Insecure,
+		Name:              name,
+		Model:             spawnArgs.Model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
+	}
+
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			udataParam.WorkflowJobID = spawnArgs.JobID
+		} else {
+			udataParam.PipelineBuildJobID = spawnArgs.JobID
+		}
+	}
+
+	if spawnArgs.IsWorkflowJob {
+		udataParam.WorkflowJobID = spawnArgs.JobID
+	} else {
+		udataParam.PipelineBuildJobID = spawnArgs.JobID
+	}
+
+	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
+	if errt != nil {
+		return "", errt
+	}
+	var buffer bytes.Buffer
+	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
+		return "", errTmpl
+	}
+	cmds := strings.Fields(spawnArgs.Model.ModelDocker.Shell)
+	cmds = append(cmds, buffer.String())
+
 	args := containerArgs{
 		name:         name,
-		image:        spawnArgs.Model.Image,
+		image:        spawnArgs.Model.ModelDocker.Image,
 		network:      network,
 		networkAlias: networkAlias,
-		cmd:          cmd,
-		env:          env,
+		cmd:          cmds,
 		labels:       labels,
 		memory:       memory,
 		dockerOpts:   *dockerOpts,
@@ -210,7 +215,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 	//start the worker
 	if err := h.createAndStartContainer(args, spawnArgs); err != nil {
-		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.Image, err)
+		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.ModelDocker.Image, err)
 	}
 
 	return name, nil
@@ -285,7 +290,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	var images []types.ImageSummary
 	// if we don't need to force pull links, we check if model is "latest"
 	// if model is not "latest" tag too, ListImages to get images locally
-	if listImagesToDoForLinkedImages || !strings.HasSuffix(model.Image, ":latest") {
+	if listImagesToDoForLinkedImages || !strings.HasSuffix(model.ModelDocker.Image, ":latest") {
 		var errl error
 		images, errl = h.dockerClient.ImageList(context.Background(), types.ImageListOptions{
 			All: true,
@@ -298,11 +303,11 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	var imageFound bool
 
 	// model is not latest, check if image exists locally
-	if !strings.HasSuffix(model.Image, ":latest") {
+	if !strings.HasSuffix(model.ModelDocker.Image, ":latest") {
 	checkImage:
 		for _, img := range images {
 			for _, t := range img.RepoTags {
-				if model.Image == t {
+				if model.ModelDocker.Image == t {
 					imageFound = true
 					break checkImage
 				}
@@ -311,7 +316,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	}
 
 	if !imageFound {
-		if err := h.pullImage(model.Image, timeoutPullImage); err != nil {
+		if err := h.pullImage(model.ModelDocker.Image, timeoutPullImage); err != nil {
 			//the error is already logged
 			return false
 		}
@@ -397,7 +402,7 @@ func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
 	list := []string{}
 	for _, c := range workers {
 		log.Debug("Container : %s %s [%s]", c.ID, c.Image, c.Status)
-		if c.Image == model.Image {
+		if c.Image == model.ModelDocker.Image {
 			list = append(list, c.ID)
 		}
 	}

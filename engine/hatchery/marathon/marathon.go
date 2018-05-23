@@ -1,9 +1,11 @@
 package marathon
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
+	"html/template"
 	"math"
 	"net/http"
 	"net/url"
@@ -219,9 +221,9 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 // requirements services are not supported
 func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.LogInfo)
 	}
 
 	var logJob string
@@ -229,58 +231,61 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	// Estimate needed memory, we will set 110% of required memory
 	memory := int64(h.Config.DefaultMemory)
 
-	cmd := "rm -f worker && curl ${CDS_API}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker"
-	if spawnArgs.RegisterOnly {
-		cmd += " register"
-		memory = hatchery.MemoryRegisterContainer
-	}
-
 	instance := 1
 	workerName := fmt.Sprintf("%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	if spawnArgs.RegisterOnly {
 		workerName = "register-" + workerName
 	}
-	forcePull := strings.HasSuffix(spawnArgs.Model.Image, ":latest")
+	forcePull := strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest")
 
-	env := map[string]string{
-		"CDS_API":           h.CDSClient().APIURL(),
-		"CDS_TOKEN":         h.Configuration().API.Token,
-		"CDS_NAME":          workerName,
-		"CDS_MODEL":         fmt.Sprintf("%d", spawnArgs.Model.ID),
-		"CDS_HATCHERY":      fmt.Sprintf("%d", h.hatch.ID),
-		"CDS_HATCHERY_NAME": fmt.Sprintf("%s", h.hatch.Name),
-		"CDS_SINGLE_USE":    "1",
-		"CDS_TTL":           fmt.Sprintf("%d", h.Config.WorkerTTL),
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Token:             h.Config.API.Token,
+		HTTPInsecure:      h.Config.API.HTTP.Insecure,
+		Name:              workerName,
+		Model:             spawnArgs.Model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
-		env["CDS_GRAYLOG_HOST"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.Host
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			udataParam.WorkflowJobID = spawnArgs.JobID
+		} else {
+			udataParam.PipelineBuildJobID = spawnArgs.JobID
+		}
 	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
-		env["CDS_GRAYLOG_PORT"] = strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port)
+
+	if spawnArgs.IsWorkflowJob {
+		udataParam.WorkflowJobID = spawnArgs.JobID
+	} else {
+		udataParam.PipelineBuildJobID = spawnArgs.JobID
 	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
-		env["CDS_GRAYLOG_EXTRA_KEY"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey
+
+	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
+	if errt != nil {
+		return "", errt
 	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
-		env["CDS_GRAYLOG_EXTRA_VALUE"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue
+	var buffer bytes.Buffer
+	if errTmpl := tmpl.Execute(&buffer, udataParam); errTmpl != nil {
+		return "", errTmpl
 	}
-	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		env["CDS_GRPC_API"] = h.Configuration().API.GRPC.URL
-		env["CDS_GRPC_INSECURE"] = strconv.FormatBool(h.Configuration().API.GRPC.Insecure)
+
+	cmd := buffer.String()
+	if spawnArgs.RegisterOnly {
+		cmd += " register"
+		memory = hatchery.MemoryRegisterContainer
 	}
 
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
 	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
-			env["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		} else {
-			logJob = fmt.Sprintf("for pipeline build job %d,", spawnArgs.JobID)
-			env["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		}
-
 		for _, r := range spawnArgs.Requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
@@ -301,13 +306,12 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 		Container: &marathon.Container{
 			Docker: &marathon.Docker{
 				ForcePullImage: &forcePull,
-				Image:          spawnArgs.Model.Image,
+				Image:          spawnArgs.Model.ModelDocker.Image,
 				Network:        "BRIDGE",
 			},
 			Type: "DOCKER",
 		},
 		CPUs:      0.5,
-		Env:       &env,
 		Instances: &instance,
 		Mem:       &mem,
 		Labels:    &h.marathonLabels,

@@ -151,6 +151,7 @@ type Configuration struct {
 	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
 }
 
+// ProviderConfiguration is the piece of configuration for each provider authentication
 type ProviderConfiguration struct {
 	Name  string `toml:"name"`
 	Token string `toml:"token"`
@@ -586,6 +587,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
+	go migrate.HatcheryCmdMigration(a.Cache, a.DBConnectionFactory.GetDBMap)
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		go func() {
 			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {

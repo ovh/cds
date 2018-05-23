@@ -1,0 +1,57 @@
+<h2>{{ 'worker_model_pattern_title' | translate }}</h2>
+
+<div *ngIf="!loading;then showWorkerModelPatterns;else loadWorkerModelPatterns"></div>
+<ng-template #showWorkerModelPatterns>
+  <div class="model">
+      <div class="ui form">
+          <div class="fields">
+            <div class="twelve wide field">
+              <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+            </div>
+            <div class="four wide field">
+              <a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
+            </div>
+          </div>
+      </div>
+
+      <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+          <thead>
+          <tr>
+              <th class="eight wide">{{ 'worker_model_name' | translate }}</th>
+              <th class="eight wide">{{ 'worker_model_type' | translate }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let wmp of getDataForCurrentPage()">
+              <td>
+                  <a class="ui" [routerLink]="[wmp.type, wmp.name]">
+                     {{wmp.name}}
+                  </a>
+              </td>
+              <td>{{wmp.type}}</td>
+          </tr>
+          </tbody>
+          <tfoot *ngIf="getNbOfPages() > 1">
+          <tr>
+              <th colspan="2">
+                  <div class="ui right floated pagination menu" >
+                      <a class="icon item" (click)="downPage()">
+                          <i class="left chevron icon"></i>
+                      </a>
+                      <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                      <a class="icon item" (click)="upPage()">
+                          <i class="right chevron icon"></i>
+                      </a>
+                  </div>
+              </th>
+          </tr>
+          </tfoot>
+      </table>
+      <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+          {{ 'worker_model_none' | translate }}
+      </div>
+  </div>
+</ng-template>
+<ng-template #loadWorkerModelPatterns>
+    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+</ng-template>

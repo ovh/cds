@@ -16,12 +16,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-const columns = `
+const modelColumns = `
 	worker_model.id,
 	worker_model.type,
 	worker_model.name,
-	worker_model.description,
 	worker_model.image,
+	worker_model.description,
 	worker_model.group_id,
 	worker_model.last_registration,
 	worker_model.need_registration,
@@ -68,10 +68,23 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 	return nil
 }
 
+// UpdateWorkerModelWithoutRegistration update a worker model. If worker model have SpawnErr -> clear them
+func UpdateWorkerModelWithoutRegistration(db gorp.SqlExecutor, model sdk.Model) error {
+	model.UserLastModified = time.Now()
+	model.NeedRegistration = false
+	model.NbSpawnErr = 0
+	model.LastSpawnErr = ""
+	dbmodel := WorkerModel(model)
+	if _, err := db.Update(&dbmodel); err != nil {
+		return err
+	}
+	return nil
+}
+
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, columns)
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, modelColumns)
 	if _, err := db.Select(&wms, query); err != nil {
 		return nil, sdk.WrapError(err, "LoadAllWorkerModels> ")
 	}
@@ -102,13 +115,19 @@ func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*s
 
 // LoadWorkerModelByName retrieves a specific worker model in database
 func LoadWorkerModelByName(db gorp.SqlExecutor, name string) (*sdk.Model, error) {
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, columns)
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, modelColumns)
 	return loadWorkerModel(db, query, name)
 }
 
 // LoadWorkerModelByID retrieves a specific worker model in database
 func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
-	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, columns)
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, modelColumns)
+	return loadWorkerModel(db, query, ID)
+}
+
+// LoadAndLockWorkerModelByID retrieves a specific worker model in database
+func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1 FOR UPDATE NOWAIT`, modelColumns)
 	return loadWorkerModel(db, query, ID)
 }
 
@@ -116,7 +135,7 @@ func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
 	if user.Admin {
-		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, columns)
+		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, modelColumns)
 		if _, err := db.Select(&wms, query); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for admin")
 		}
@@ -128,7 +147,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, e
 					union
 					select %s from worker_model
 					JOIN "group" on worker_model.group_id = "group".id
-					where group_id = $2`, columns, columns)
+					where group_id = $2`, modelColumns, modelColumns)
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
 		}
@@ -275,6 +294,22 @@ func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
 		return sdk.WrapError(err, "updateRegistration>")
 	}
 	log.Debug("updateRegistration> %d worker model updated", rows)
+	return nil
+}
+
+// updateOSAndArch updates os and arch for a worker model
+func updateOSAndArch(db gorp.SqlExecutor, modelID int64, OS, arch string) error {
+	query := `UPDATE worker_model SET registered_os=$1, registered_arch = $2 WHERE id = $3`
+	res, err := db.Exec(query, OS, arch, modelID)
+	if err != nil {
+		return sdk.WrapError(err, "updateOSAndArch>")
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return sdk.WrapError(err, "updateOSAndArch>")
+	}
+	log.Debug("updateOSAndArch> %d worker model updated", rows)
 	return nil
 }
 

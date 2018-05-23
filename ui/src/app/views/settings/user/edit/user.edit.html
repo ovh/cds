@@ -34,7 +34,7 @@
                 </div>
 
                 <h3>{{ 'group_list_title' | translate }}</h3>
-                <table class="ui fixed celled table" *ngIf="groups || groupsAdmin">
+                <table class="ui selectable fixed celled table" *ngIf="groups || groupsAdmin">
                     <thead>
                     <tr>
                         <th class="three wide">{{ 'group_name' | translate }}</th>
@@ -42,17 +42,19 @@
                     </thead>
                     <tbody>
                     <tr *ngFor="let v of groupsAdmin">
-                        <td>
+                        <td class="border">
                             <a class="ui" [routerLink]="['/settings', 'group', v?.name]">
-                              <i class="fa fa-user-circle-o" title="{{ 'group_user_is_admin' | translate }}"></i>
-                              {{v?.name}}
+                              <div class="ui">
+                                <i class="fa fa-user-circle-o" title="{{ 'group_user_is_admin' | translate }}"></i>
+                                {{v?.name}}
+                              </div>
                             </a>
                         </td>
                     </tr>
                     <tr *ngFor="let v of groups">
-                        <td>
+                        <td class="border">
                             <a class="ui" [routerLink]="['/settings', 'group', v?.name]">
-                              {{v?.name}}
+                            <div class="ui">{{v?.name}}</div>
                             </a>
                         </td>
                     </tr>
@@ -62,10 +64,11 @@
             </div>
 
             <div class="six wide column">
-              <div class="ui tall stacked segment">
-                <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
-                <a href="https://ovh.github.io/cds" target="_blank">https://ovh.github.io/cds</a>
-              </div>
+                <div class="ui center aligned segment">
+                    <h4 class="ui header">
+                        <i class="fa fa-book fa-3x"></i>{{ 'settings_tips' | translate }}</h4>
+                    <a class="circular ui blue button" href="https://ovh.github.io/cds" target="_blank">{{ 'common_see_documentation' | translate }}</a>
+                </div>
             </div>
         </div>
         <div class="ui row" *ngIf="username === this.currentUser.username">

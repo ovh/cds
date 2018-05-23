@@ -5,15 +5,13 @@ import (
 	"fmt"
 )
 
+// These are constants about hooks
 const (
-	WebHookModelName           = "WebHook"
-	RepositoryWebHookModelName = "RepositoryWebHook"
-	SchedulerModelName         = "Scheduler"
-	GitPollerModelName         = "Git Repository Poller"
-	KafkaHookModelName         = "Kafka hook"
-)
-
-const (
+	WebHookModelName             = "WebHook"
+	RepositoryWebHookModelName   = "RepositoryWebHook"
+	SchedulerModelName           = "Scheduler"
+	GitPollerModelName           = "Git Repository Poller"
+	KafkaHookModelName           = "Kafka hook"
 	HookConfigProject            = "project"
 	HookConfigWorkflow           = "workflow"
 	HookConfigWorkflowID         = "workflow_id"
@@ -27,6 +25,7 @@ const (
 	KafkaHookModelTopic          = "topic"
 )
 
+// KafkaHookModel is the builtin hooks
 var (
 	KafkaHookModel = WorkflowHookModel{
 		Author:     "CDS",

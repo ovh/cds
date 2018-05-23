@@ -45,6 +45,9 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	c.User = os.Getenv("CDS_USER")
 	c.Token = os.Getenv("CDS_TOKEN")
 	c.InsecureSkipVerifyTLS, _ = strconv.ParseBool(os.Getenv("CDS_INSECURE"))
+	if insecureSkipVerifyTLS { // if set from command line
+		c.InsecureSkipVerifyTLS = true
+	}
 
 	if c.Host != "" && c.User != "" {
 		if verbose {
@@ -100,10 +103,11 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	}
 
 	conf := &cdsclient.Config{
-		Host:    c.Host,
-		User:    c.User,
-		Token:   c.Token,
-		Verbose: verbose,
+		Host:                  c.Host,
+		User:                  c.User,
+		Token:                 c.Token,
+		Verbose:               verbose,
+		InsecureSkipVerifyTLS: c.InsecureSkipVerifyTLS,
 	}
 
 	return conf, nil

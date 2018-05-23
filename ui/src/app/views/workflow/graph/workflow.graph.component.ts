@@ -131,22 +131,12 @@ export class WorkflowGraphComponent implements AfterViewInit {
         // Resize svg
         let svg = d3.select('svg');
         let inner = d3.select('svg g');
-        if (this.direction === 'LR') {
-            let w = 0;
-            inner.each(function () {
-                w = this.getBBox().width;
-            });
-            this.svgWidth = w + 30;
-            inner.attr('transform', 'translate(20, 0)');
-        } else {
-            inner.attr('transform', 'translate(20, 0)');
-            // Horizontal center
-            if (event) {
-                this.svgWidth = event.target.innerWidth;
-            } else {
-                this.svgWidth = window.innerWidth;
-            }
-        }
+
+        let w = 0;
+        inner.each(function () {
+            w = this.getBBox().width;
+        });
+        this.svgWidth = w + 30;
 
         this.svgHeight = this.g.graph().height + 40;
         svg.attr('height', this.svgHeight);

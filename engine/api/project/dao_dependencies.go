@@ -53,6 +53,21 @@ var (
 		return nil
 	}
 
+	loadApplicationWithDeploymentStrategies = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		if proj.Applications == nil {
+			if err := loadApplications(db, store, proj, u); err != nil {
+				return sdk.WrapError(err, "application.loadApplicationWithDeploymentStrategies")
+			}
+		}
+		for i := range proj.Applications {
+			a := &proj.Applications[i]
+			if err := (*application.LoadOptions.WithDeploymentStrategies)(db, store, a, u); err != nil {
+				return sdk.WrapError(err, "application.loadApplicationWithDeploymentStrategies")
+			}
+		}
+		return nil
+	}
+
 	loadApplicationPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		if proj.Applications == nil {
 			if err := loadApplications(db, store, proj, u); err != nil {

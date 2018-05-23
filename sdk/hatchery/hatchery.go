@@ -329,7 +329,7 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 			if r.Type == sdk.BinaryRequirement {
 				found := false
 				// Check binary requirement against worker model capabilities
-				for _, c := range model.Capabilities {
+				for _, c := range model.RegisteredCapabilities {
 					if r.Value == c.Value || r.Value == c.Name {
 						found = true
 						break

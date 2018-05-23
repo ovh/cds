@@ -295,7 +295,7 @@ func (ui *Termui) updateStatus() string {
 	items := []string{}
 	for _, l := range statusEngine.Lines {
 		if l.Status == sdk.MonitoringStatusWarn {
-			items = append(items, fmt.Sprintf("[%s](fg-white,bg-yellow)", l.String()))
+			items = append(items, fmt.Sprintf("[%s](fg-yellow,bg-default)", l.String()))
 		} else if l.Status != sdk.MonitoringStatusOK {
 			items = append(items, fmt.Sprintf("[%s](fg-white,bg-red)", l.String()))
 		} else if strings.Contains(l.Component, "Global") {

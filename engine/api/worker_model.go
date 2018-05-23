@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/action"
+	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -24,6 +26,45 @@ func (api *API) addWorkerModelHandler() Handler {
 
 		if model.Type == "" {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid type (empty)")
+		}
+
+		var modelPattern *sdk.ModelPattern
+		if model.PatternName != "" {
+			var errP error
+			modelPattern, errP = worker.LoadWorkerModelPatternByName(api.mustDB(), model.Type, model.PatternName)
+			if errP != nil {
+				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Cannot load worker model pattern %s : %v", model.PatternName, errP)
+			}
+		}
+
+		currentUser := getUser(ctx)
+		switch model.Type {
+		case sdk.Docker:
+			if model.ModelDocker.Image == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker image")
+			}
+			if !currentUser.Admin && !model.Restricted {
+				if modelPattern == nil {
+					return sdk.ErrForbidden
+				}
+				model.ModelDocker.Cmd = modelPattern.Model.Cmd
+				model.ModelDocker.Shell = modelPattern.Model.Shell
+			}
+			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
+			}
+		default:
+			if model.ModelVirtualMachine.Image == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> Invalid worker command or invalid image")
+			}
+			if !currentUser.Admin && !model.Restricted {
+				if modelPattern == nil {
+					return sdk.ErrForbidden
+				}
+				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
+				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
+				model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
+			}
 		}
 
 		if len(model.Name) == 0 {
@@ -45,10 +86,10 @@ func (api *API) addWorkerModelHandler() Handler {
 
 		//User must be admin of the group set in the model
 		var ok bool
-		for _, g := range getUser(ctx).Groups {
+		for _, g := range currentUser.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
-					if a.ID == getUser(ctx).ID {
+					if a.ID == currentUser.ID {
 						ok = true
 					}
 				}
@@ -56,23 +97,23 @@ func (api *API) addWorkerModelHandler() Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !getUser(ctx).Admin && !ok {
+		if !currentUser.Admin && !ok {
 			return sdk.ErrForbidden
 		}
 
 		// provision is allowed only for CDS Admin
-		// or by user with a restricted model
-		if !getUser(ctx).Admin && !model.Restricted {
+		// or by currentUser with a restricted model
+		if !currentUser.Admin && !model.Restricted {
 			model.Provision = 0
 		}
 
 		model.CreatedBy = sdk.User{
-			Email:    getUser(ctx).Email,
-			Username: getUser(ctx).Username,
-			Admin:    getUser(ctx).Admin,
-			Fullname: getUser(ctx).Fullname,
-			ID:       getUser(ctx).ID,
-			Origin:   getUser(ctx).Origin,
+			Email:    currentUser.Email,
+			Username: currentUser.Username,
+			Admin:    currentUser.Admin,
+			Fullname: currentUser.Fullname,
+			ID:       currentUser.ID,
+			Origin:   currentUser.Origin,
 		}
 
 		// Insert model in db
@@ -166,13 +207,18 @@ func (api *API) updateWorkerModelHandler() Handler {
 		}
 
 		//If the model image has not been set, keep the old image
-		if model.Image == "" {
-			model.Image = old.Image
+		if model.ModelDocker.Image == "" && model.ModelVirtualMachine.Image == "" {
+			switch model.Type {
+			case sdk.Docker:
+				model.ModelDocker.Image = old.ModelDocker.Image
+			default:
+				model.ModelVirtualMachine.Image = old.ModelVirtualMachine.Image
+			}
 		}
 
-		//If the model Capabilities has not been set, keep the old Capabilities
-		if len(model.Capabilities) == 0 {
-			model.Capabilities = old.Capabilities
+		//If the model RegisteredCapabilities has not been set, keep the old RegisteredCapabilities
+		if len(model.RegisteredCapabilities) == 0 {
+			model.RegisteredCapabilities = old.RegisteredCapabilities
 		}
 
 		//If the model GroupID has not been set, keep the old GroupID
@@ -188,6 +234,45 @@ func (api *API) updateWorkerModelHandler() Handler {
 		//If the model Type has not been set, keep the old Type
 		if model.Type == "" {
 			model.Type = old.Type
+		}
+
+		var modelPattern *sdk.ModelPattern
+		if model.PatternName != "" {
+			var errP error
+			modelPattern, errP = worker.LoadWorkerModelPatternByName(api.mustDB(), model.Type, model.PatternName)
+			if errP != nil {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Cannot load worker model pattern %s : %v", model.PatternName, errP)
+			}
+		}
+
+		user := getUser(ctx)
+		switch model.Type {
+		case sdk.Docker:
+			if model.ModelDocker.Image == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker image")
+			}
+			if !user.Admin && !model.Restricted {
+				if modelPattern == nil {
+					return sdk.ErrForbidden
+				}
+				model.ModelDocker.Cmd = modelPattern.Model.Cmd
+				model.ModelDocker.Shell = modelPattern.Model.Shell
+			}
+			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
+			}
+		default:
+			if model.ModelVirtualMachine.Image == "" {
+				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid image")
+			}
+			if !user.Admin && !model.Restricted {
+				if modelPattern == nil {
+					return sdk.ErrForbidden
+				}
+				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
+				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
+				model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
+			}
 		}
 
 		//If the model modelID has not been set, keep the old modelID
@@ -351,6 +436,164 @@ func (api *API) getWorkerModelsHandler() Handler {
 		}
 
 		return WriteJSON(w, models, http.StatusOK)
+	}
+}
+
+func (api *API) putWorkerModelPatternHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		patternName := vars["name"]
+		patternType := vars["type"]
+
+		// Unmarshal body
+		var modelPattern sdk.ModelPattern
+		if err := UnmarshalBody(r, &modelPattern); err != nil {
+			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot unmarshal body")
+		}
+
+		if !sdk.NamePatternRegex.MatchString(modelPattern.Name) {
+			return sdk.ErrInvalidName
+		}
+
+		if modelPattern.Model.Cmd == "" {
+			return sdk.ErrInvalidPatternModel
+		}
+
+		if modelPattern.Type == sdk.Docker && modelPattern.Model.Shell == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "putWorkerModelPatternHandler> Cannot update a worker model pattern for %s without shell command", sdk.Docker)
+		}
+
+		var typeFound bool
+		for _, availableType := range sdk.AvailableWorkerModelType {
+			if availableType == modelPattern.Type {
+				typeFound = true
+				break
+			}
+		}
+
+		if !typeFound {
+			return sdk.ErrInvalidPatternModel
+		}
+
+		oldWmp, errOld := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		if errOld != nil {
+			if errOld == sql.ErrNoRows {
+				return sdk.WrapError(sdk.ErrNotFound, "putWorkerModelPatternHandler> cannot load worker model pattern (%s/%s) : %v", patternType, patternName, errOld)
+			}
+			return sdk.WrapError(errOld, "putWorkerModelPatternHandler> cannot load worker model pattern")
+		}
+		modelPattern.ID = oldWmp.ID
+
+		// Insert model pattern in db
+		if err := worker.UpdateWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
+			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot update worker model pattern")
+		}
+
+		return WriteJSON(w, modelPattern, http.StatusOK)
+	}
+}
+
+func (api *API) deleteWorkerModelPatternHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		patternName := vars["name"]
+		patternType := vars["type"]
+
+		wmp, err := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return sdk.WrapError(sdk.ErrNotFound, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s)", patternType, patternName)
+			}
+			return sdk.WrapError(err, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)
+		}
+
+		if err := worker.DeleteWorkerModelPattern(api.mustDB(), wmp.ID); err != nil {
+			return sdk.WrapError(err, "deleteWorkerModelPatternHandler> Cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
+		}
+
+		return WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkerModelPatternHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if getUser(ctx).ID == 0 {
+			var username string
+			if getUser(ctx) != nil {
+				username = getUser(ctx).Username
+			}
+			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
+		}
+		vars := mux.Vars(r)
+		patternName := vars["name"]
+		patternType := vars["type"]
+
+		modelPattern, err := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkerModelPatternsHandler> cannot load worker model patterns")
+		}
+
+		return WriteJSON(w, modelPattern, http.StatusOK)
+	}
+}
+
+func (api *API) postAddWorkerModelPatternHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Unmarshal body
+		var modelPattern sdk.ModelPattern
+		if err := UnmarshalBody(r, &modelPattern); err != nil {
+			return sdk.WrapError(err, "postAddWorkerModelPatternHandler> cannot unmarshal body")
+		}
+
+		if !sdk.NamePatternRegex.MatchString(modelPattern.Name) {
+			return sdk.ErrInvalidName
+		}
+
+		if modelPattern.Model.Cmd == "" {
+			return sdk.ErrInvalidPatternModel
+		}
+
+		if modelPattern.Type == sdk.Docker && modelPattern.Model.Shell == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postAddWorkerModelPatternHandler> Cannot add a worker model pattern for %s without shell command", sdk.Docker)
+		}
+
+		var typeFound bool
+		for _, availableType := range sdk.AvailableWorkerModelType {
+			if availableType == modelPattern.Type {
+				typeFound = true
+				break
+			}
+		}
+
+		if !typeFound {
+			return sdk.ErrInvalidPatternModel
+		}
+
+		// Insert model pattern in db
+		if err := worker.InsertWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
+			return sdk.WrapError(err, "postAddWorkerModelPatternHandler> cannot add worker model pattern")
+		}
+
+		return WriteJSON(w, modelPattern, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkerModelPatternsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if getUser(ctx) == nil || getUser(ctx).ID == 0 {
+			var username string
+			if getUser(ctx) != nil {
+				username = getUser(ctx).Username
+			}
+			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
+		}
+
+		modelPatterns, err := worker.LoadWorkerModelPatterns(api.mustDB())
+		if err != nil {
+			return sdk.WrapError(err, "getWorkerModelPatternsHandler> cannot load worker model patterns")
+		}
+
+		return WriteJSON(w, modelPatterns, http.StatusOK)
 	}
 }
 

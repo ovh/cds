@@ -27,6 +27,7 @@ type ActionSummary struct {
 	Name string `json:"name"`
 }
 
+// ToSummary returns an ActionSummary from an Action
 func (a Action) ToSummary() ActionSummary {
 	return ActionSummary{
 		Name: a.Name,

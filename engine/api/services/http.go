@@ -56,7 +56,7 @@ func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
 	res, code, err := doRequest(srv, method, path, b, mods...)
 	if err != nil {
-		return code, sdk.WrapError(err, "services.doJSONRequest> Unable to perform request")
+		return code, sdk.WrapError(err, "services.doJSONRequest> Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
 
 	if out != nil {

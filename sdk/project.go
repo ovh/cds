@@ -65,6 +65,16 @@ func (a Project) GetPlatform(pfName string) *ProjectPlatform {
 	return nil
 }
 
+// GetPlatformByID returns the ProjectPlatform given a name
+func (a Project) GetPlatformByID(id int64) *ProjectPlatform {
+	for i := range a.Platforms {
+		if a.Platforms[i].ID == id {
+			return &a.Platforms[i]
+		}
+	}
+	return nil
+}
+
 // ProjectVCSServer represents associations between a project and a vcs server
 type ProjectVCSServer struct {
 	Name     string            `json:"name" yaml:"name" db:"-" cli:"-"`

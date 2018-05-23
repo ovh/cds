@@ -6,7 +6,7 @@
     <form class="ui form">
       <div class="ui grid">
         <div class="ten wide column">
-            <div class="three fields">
+            <div class="four fields">
               <div class="field">
                   <label>{{'worker_model_name' | translate}}</label>
                   <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name" [disabled]="loading">
@@ -41,6 +41,16 @@
               <label>{{'common_description' | translate}}</label>
               <textarea name="description" [(ngModel)]="workerModel.description"
                         rows="{{getDescriptionHeight()}}"></textarea>
+            </div>
+            <div class="two fields">
+              <div class="field">
+                  <label>{{'worker_model_os' | translate}}</label>
+                  <input class="ui input" type="text" name="os" [(ngModel)]="workerModel.registered_os" [disabled]="true">
+              </div>
+              <div class="field">
+                  <label>{{'worker_model_arch' | translate}}</label>
+                  <input class="ui input" type="text" name="arch" [(ngModel)]="workerModel.registered_arch" [disabled]="true">
+              </div>
             </div>
             <div class="field" *ngIf="workerModel.id">
               <label>{{'worker_model_status' | translate}}</label>
@@ -81,14 +91,21 @@
             <div class="three fields">
               <div class="seven wide field">
                   <label>{{'worker_model_type' | translate}}</label>
-                  <sm-select class="fluid search"
-                      name="type"
-                      *ngIf="workerModelTypes"
-                      [disabled]="loading"
-                      [(model)]="workerModel.type"
-                      [options]="{'fullTextSearch': true}">
-                      <option *ngFor="let type of workerModelTypes" [value]="type">{{type}}</option>
-                  </sm-select>
+                  <ng-container *ngIf="workerModelTypes">
+                    <sui-select class="selection"
+                                name ="type"
+                                placeholder="{{'common_select' | translate}}"
+                                [isDisabled]="loading"
+                                [options]="workerModelTypes"
+                                isSearchable="true"
+                                [(ngModel)]="workerModel.type"
+                                (ngModelChange)="filterPatterns($event)"
+                                #selectType>
+                        <sui-select-option *ngFor="let option of selectType.filteredOptions"
+                                           [value]="option">
+                        </sui-select-option>
+                    </sui-select>
+                  </ng-container>
               </div>
               <div class="five wide field">
                 <label>{{'worker_model_communication' | translate}}</label>
@@ -106,10 +123,94 @@
                   <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision" [disabled]="loading">
               </div>
             </div>
-            <div class="field">
-              <label>{{'worker_model_image' | translate}}</label>
-              <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.image" [disabled]="loading">
-            </div>
+
+            <ng-container *ngIf="workerModel.type === 'docker'">
+              <div class="field">
+                <label>{{'worker_model_image' | translate}}</label>
+                <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_docker.image" [disabled]="loading">
+              </div>
+              <div class="field">
+                <label>{{'worker_model_pattern_title' | translate}}</label>
+                <sui-select class="selection"
+                            name="pattern"
+                            placeholder="{{'common_select' | translate}}"
+                            labelField="name"
+                            [options]="workerModelPatternsFiltered"
+                            isSearchable="true"
+                            [(ngModel)]="patternSelected"
+                            (ngModelChange)="preFillModel($event)"
+                            #selectPattern>
+                    <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
+                                       [value]="option">
+                    </sui-select-option>
+                </sui-select>
+              </div>
+              <div class="field">
+                <label>{{'worker_model_shell_docker' | translate}}</label>
+                <input class="ui input" type="text" name="shell" placeholder="sh -c" [(ngModel)]="workerModel.model_docker.shell" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+              </div>
+              <div class="field">
+                <label>{{'worker_model_cmd_docker' | translate}}</label>
+                <input
+                  class="ui input"
+                  type="text"
+                  name="cmd"
+                  [(ngModel)]="workerModel.model_docker.cmd"
+                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+              </div>
+            </ng-container>
+            <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
+              <div class="field">
+                <label>{{'worker_model_image' | translate}}</label>
+                <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_virtual_machine.image" [disabled]="loading">
+              </div>
+              <div class="field" *ngIf="workerModel.type === 'openstack'">
+                <label>Flavor</label>
+                <input class="ui input" type="text" name="flavor" [(ngModel)]="workerModel.model_virtual_machine.flavor" [disabled]="loading">
+              </div>
+              <div class="field">
+                <label>{{'worker_model_pattern_title' | translate}}</label>
+                <sui-select class="selection"
+                            name="pattern"
+                            placeholder="{{'common_select' | translate}}"
+                            labelField="name"
+                            [options]="workerModelPatternsFiltered"
+                            isSearchable="true"
+                            [(ngModel)]="patternSelected"
+                            (ngModelChange)="preFillModel($event)"
+                            #selectPattern>
+                    <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
+                                       [value]="option">
+                    </sui-select-option>
+                </sui-select>
+              </div>
+              <div class="field">
+                <label>{{'worker_model_pre_cmd' | translate}}</label>
+                <textarea
+                  class="ui input"
+                  name="pre_cmd"
+                  [(ngModel)]="workerModel.model_virtual_machine.pre_cmd"
+                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </textarea>
+              </div>
+              <div class="field">
+                <label>{{'worker_model_cmd' | translate}}</label>
+                <input
+                  class="ui input"
+                    type="text"
+                    name="cmd"
+                    [(ngModel)]="workerModel.model_virtual_machine.cmd"
+                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+              </div>
+              <div class="field">
+                <label>{{'worker_model_post_cmd' | translate}}</label>
+                <textarea class="ui input"
+                  name="post_cmd"
+                  [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
+                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </textarea>
+              </div>
+            </ng-container>
 
             <div *ngIf="canEdit" class="field">
                 <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
@@ -119,8 +220,8 @@
             </div>
         </div>
         <div class="six wide column">
-          <div class="ui tall stacked segment">
-            <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
+          <div class="ui segment">
+            <h4 class="ui header"><i class="fa fa-book fa-3x"></i>{{ 'settings_tips' | translate }}</h4>
             <p>{{'worker_model_help_line_1' | translate}}</p>
             <p>{{'worker_model_help_line_2' | translate}}</p>
 

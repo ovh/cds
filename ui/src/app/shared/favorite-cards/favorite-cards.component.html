@@ -89,10 +89,14 @@
           </ng-container>
         </ng-container>
       </div>
-      <div class="ui bottom attached button text-black" (click)="updateFav(favorite)" [class.disabled]="loading[favorite.key + favorite.workflow_name]">
-        <i class="trash icon" *ngIf="!loading[favorite.key + favorite.workflow_name]"></i>
-        <div class="ui active small inline loader" *ngIf="loading[favorite.key + favorite.workflow_name]"></div>
-        {{'common_favorites_delete' | translate}}
+      <div class="ui bottom attached vertical animated button" (click)="updateFav(favorite)" [class.disabled]="loading[favorite.key + favorite.workflow_name]" tabindex="0">
+        <div class="hidden content">{{'common_favorites_delete' | translate}}</div>
+        <div class="visible content">
+          <div class="ui active small inline loader" *ngIf="loading[favorite.key + favorite.workflow_name]"></div>
+          <i class="trash icon" *ngIf="!loading[favorite.key + favorite.workflow_name]"></i>
+        </div>
+
+
       </div>
     </div>
   </ng-container>
