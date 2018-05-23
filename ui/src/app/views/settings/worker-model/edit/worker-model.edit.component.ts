@@ -88,6 +88,10 @@ export class WorkerModelEditComponent implements OnInit {
           }
 
 
+          if (!this.currentUser.admin && wm.group.name === 'shared.infra') {
+            this.canEdit = false;
+            return;
+          }
           // here, check if user is admin of worker model group
           this._groupService.getGroupByName(wm.group.name).subscribe( gr => {
               if (gr.admins) {

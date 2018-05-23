@@ -61,7 +61,7 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 			wm.ModelDocker = sdk.ModelDocker{
 				Image: wm.Image,
 				Shell: "sh -c",
-				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --single-use",
+				Cmd:   "rm -f worker && curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker",
 			}
 		case sdk.Openstack:
 			var osdata deprecatedOpenstackModelData
@@ -196,4 +196,60 @@ chmod +x worker
 	}
 
 	log.Info("HatcheryCmdMigration> Done")
+}
+
+// HatcheryCmdMigrationForDockerEnvs useful to change worker model configuration TO DELETE BEFORE RELEASE
+func HatcheryCmdMigrationForDockerEnvs(store cache.Store, DBFunc func() *gorp.DbMap) {
+	db := DBFunc()
+
+	log.Info("HatcheryCmdMigrationForDockerEnvs> Begin")
+
+	wms, err := worker.LoadWorkerModels(db)
+	if err != nil {
+		log.Warning("HatcheryCmdMigrationForDockerEnvs> Cannot load worker models : %v", err)
+		return
+	}
+
+	for _, wmTmp := range wms {
+		if wmTmp.Type != sdk.Docker || len(wmTmp.ModelDocker.Envs) != 0 {
+			continue
+		}
+
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			log.Warning("HatcheryCmdMigrationForDockerEnvs> cannot create a transaction : %v", errTx)
+			continue
+		}
+
+		wm, errL := worker.LoadAndLockWorkerModelByID(tx, wmTmp.ID)
+		if errL != nil {
+			log.Warning("HatcheryCmdMigrationForDockerEnvs> cannot load and lock a worker model : %v", errL)
+			tx.Rollback()
+			continue
+		}
+
+		defaultEnvs := map[string]string{
+			"CDS_SINGLE_USE":          "1",
+			"CDS_TTL":                 "{{.TTL}}",
+			"CDS_GRAYLOG_HOST":        "{{.GraylogHost}}",
+			"CDS_GRAYLOG_PORT":        "{{.GraylogPort}}",
+			"CDS_GRAYLOG_EXTRA_KEY":   "{{.GraylogExtraKey}}",
+			"CDS_GRAYLOG_EXTRA_VALUE": "{{.GraylogExtraValue}}",
+		}
+
+		wm.ModelDocker.Envs = defaultEnvs
+
+		if err := worker.UpdateWorkerModelWithoutRegistration(tx, *wm); err != nil {
+			log.Warning("HatcheryCmdMigrationForDockerEnvs> cannot update worker model %s : %v", wm.Name, err)
+			tx.Rollback()
+			continue
+		}
+
+		if err := tx.Commit(); err != nil {
+			log.Warning("HatcheryCmdMigrationForDockerEnvs> cannot commit tx for worker model %s : %v", wm.Name, err)
+			tx.Rollback()
+		}
+	}
+
+	log.Info("HatcheryCmdMigrationForDockerEnvs> Done")
 }
