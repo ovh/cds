@@ -308,9 +308,10 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 
 		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s; ok", vcsServer.Name)
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		var errAuthClient error
+		client, errAuthClient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		if errAuthClient != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s: %v", projectKey, rmName, errAuthClient)
 		}
 
 		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
