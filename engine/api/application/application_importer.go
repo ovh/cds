@@ -135,7 +135,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		if pf == nil {
 			return sdk.WrapError(sdk.NewError(sdk.ErrNotFound, fmt.Errorf("platform %s not found", pfName)), "application.Import")
 		}
-		if err := SetDeploymentStrategy(db, proj.ID, app.ID, pf.PlatformModelID, pfConfig); err != nil {
+		if err := SetDeploymentStrategy(db, proj.ID, app.ID, pf.PlatformModelID, pfName, pfConfig); err != nil {
 			return sdk.WrapError(err, "application.Import> unable to set deployment strategy %s", pfName)
 		}
 	}

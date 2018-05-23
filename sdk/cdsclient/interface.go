@@ -172,7 +172,10 @@ type ProjectClient interface {
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectGroupsImport(projectKey string, content io.Reader, format string, force bool) (sdk.Project, error)
-	ProjectPlatform(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error)
+	ProjectPlatformImport(projectKey string, content io.Reader, format string, force bool) (sdk.ProjectPlatform, error)
+	ProjectPlatformGet(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error)
+	ProjectPlatformList(projectKey string) ([]sdk.ProjectPlatform, error)
+	ProjectPlatformDelete(projectKey string, platformName string) error
 }
 
 // ProjectKeysClient exposes project keys related functions

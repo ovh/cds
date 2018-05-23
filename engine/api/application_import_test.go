@@ -629,7 +629,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	}
 	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
 
-	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, sdk.PlatformConfig{
+	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.PlatformConfig{
 		"token": sdk.PlatformConfigValue{
 			Type:  sdk.PlatformConfigTypePassword,
 			Value: "my-secret-token-2",

@@ -29,6 +29,7 @@ func project() *cobra.Command {
 		projectKey,
 		projectGroup,
 		projectVariable,
+		projectPlatform,
 	}
 	if cli.ShellMode {
 		cmds = append(cmds, application, workflow, environment)

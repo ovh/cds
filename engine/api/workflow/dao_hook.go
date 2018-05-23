@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -70,7 +71,11 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 		if erruuid != nil {
 			return sdk.WrapError(erruuid, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
 		}
+
 		hook.UUID = string(uuid)
+		if hook.Ref == "" {
+			hook.Ref = fmt.Sprintf("%d", time.Now().Unix())
+		}
 
 		hook.Config["hookIcon"] = sdk.WorkflowNodeHookConfigValue{
 			Value:        icon,
@@ -129,7 +134,7 @@ func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
 // LoadAllHooks returns all hooks
 func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.WorkflowNodeHook, error) {
 	res := []NodeHook{}
-	if _, err := db.Select(&res, "select id, uuid, workflow_hook_model_id, workflow_node_id from workflow_node_hook"); err != nil {
+	if _, err := db.Select(&res, "select id, uuid, ref, workflow_hook_model_id, workflow_node_id from workflow_node_hook"); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -151,7 +156,7 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.WorkflowNodeHook, error) {
 
 func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeHook, error) {
 	res := []NodeHook{}
-	if _, err := db.Select(&res, "select id, uuid, workflow_hook_model_id, workflow_node_id from workflow_node_hook where workflow_node_id = $1", node.ID); err != nil {
+	if _, err := db.Select(&res, "select id, uuid, ref, workflow_hook_model_id, workflow_node_id from workflow_node_hook where workflow_node_id = $1", node.ID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -172,7 +177,7 @@ func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeH
 // LoadHookByUUID loads a single hook
 func LoadHookByUUID(db gorp.SqlExecutor, uuid string) (*sdk.WorkflowNodeHook, error) {
 	query := `
-		SELECT id, uuid, workflow_hook_model_id, workflow_node_id
+		SELECT id, uuid, ref, workflow_hook_model_id, workflow_node_id
 			FROM workflow_node_hook
 		WHERE uuid = $1`
 

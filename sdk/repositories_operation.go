@@ -20,28 +20,34 @@ type Operation struct {
 	Date               *time.Time               `json:"date,omitempty"`
 }
 
+// OperationSetup is the setup for an operation basically its a checkout
 type OperationSetup struct {
 	Checkout OperationCheckout `json:"checkout,omitempty"`
 }
 
+// OperationRepositoryInfo represents global information about the repository
 type OperationRepositoryInfo struct {
 	Name          string `json:"name,omitempty"`
 	FetchURL      string `json:"fetch_url,omitempty"`
 	DefaultBranch string `json:"default_branch,omitempty"`
 }
 
+// OperationLoadFiles represents files loading from a globbing pattern
 type OperationLoadFiles struct {
 	Pattern string            `json:"pattern,omitempty"`
 	Results map[string][]byte `json:"results,omitempty"`
 }
 
+// OperationCheckout represents a smart git checkout
 type OperationCheckout struct {
 	Branch string `json:"branch,omitempty"`
 	Commit string `json:"commit,omitempty"`
 }
 
+// OperationStatus is the status of an operation
 type OperationStatus int
 
+// There are the different OperationStatus values
 const (
 	OperationStatusPending OperationStatus = iota
 	OperationStatusProcessing
@@ -49,12 +55,14 @@ const (
 	OperationStatusError
 )
 
+// OperationRepo is an operation
 type OperationRepo struct {
 	Basedir            string
 	URL                string
 	RepositoryStrategy RepositoryStrategy
 }
 
+// ID returns a generated ID for a Operation
 func (r OperationRepo) ID() string {
 	return base64.StdEncoding.EncodeToString([]byte(r.URL))
 }

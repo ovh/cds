@@ -22,7 +22,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 	var hookToDelete map[string]sdk.WorkflowNodeHook
 
 	if oldW != nil {
-		hookToUpdate, hookToDelete = diffHook(oldW.GetHooks(), wf.GetHooks())
+		hookToUpdate, hookToDelete = mergeAndDiffHook(oldW.GetHooks(), wf.GetHooks())
 	} else {
 		hookToUpdate = wf.GetHooks()
 	}
@@ -213,9 +213,19 @@ func createVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	return nil
 }
 
-func diffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.WorkflowNodeHook) (hookToUpdate map[string]sdk.WorkflowNodeHook, hookToDelete map[string]sdk.WorkflowNodeHook) {
+func mergeAndDiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.WorkflowNodeHook) (hookToUpdate map[string]sdk.WorkflowNodeHook, hookToDelete map[string]sdk.WorkflowNodeHook) {
 	hookToUpdate = make(map[string]sdk.WorkflowNodeHook)
 	hookToDelete = make(map[string]sdk.WorkflowNodeHook)
+
+	for o := range oldHooks {
+		for n := range newHooks {
+			if oldHooks[o].Ref == newHooks[n].Ref {
+				nh := newHooks[n]
+				nh.UUID = oldHooks[o].UUID
+				newHooks[n] = nh
+			}
+		}
+	}
 
 	for key, hNew := range newHooks {
 		hold, ok := oldHooks[key]
