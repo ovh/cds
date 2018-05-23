@@ -65,8 +65,17 @@ export class WorkflowSidebarRunListComponent {
     ready = false;
     filteredTags: {[key: number]: WorkflowRunTags[]} = {};
 
+    durationIntervalID: number;
+
+    selectedWorkfowRun: WorkflowRun;
+    subWorkflowRun: Subscription;
+
     constructor(private _workflowRunService: WorkflowRunService,
       private _duration: DurationService, private _router: Router, private _eventStore: WorkflowEventStore) {
+
+        this.subWorkflowRun = this._eventStore.selectedRun().subscribe(wr => {
+            this.selectedWorkfowRun = wr;
+        })
     }
 
     startWorker(): void {
@@ -132,11 +141,32 @@ export class WorkflowSidebarRunListComponent {
                   });
               });
             }
-            this.filteredWorkflowRuns.forEach((r) => {
-              this.filteredTags[r.id] = this.getFilteredTags(r.tags);
-              r.duration = this.getDuration(r.status, r.start, r.last_execution);
-            });
+            if (this.durationIntervalID) {
+                clearInterval(this.durationIntervalID);
+                this.durationIntervalID = 0;
+            }
+            this.refreshDuration();
+            this.durationIntervalID = setInterval(() => {
+                this.refreshDuration();
+            }, 5000);
         }
+    }
+
+    refreshDuration(): void {
+        if (this.filteredWorkflowRuns) {
+            let stillWorking = false;
+            this.filteredWorkflowRuns.forEach((r) => {
+                if (PipelineStatus.isActive(r.status)) {
+                    stillWorking = true;
+                }
+                this.filteredTags[r.id] = this.getFilteredTags(r.tags);
+                r.duration = this.getDuration(r.status, r.start, r.last_execution);
+            });
+            if (!stillWorking) {
+                clearInterval(this.durationIntervalID);
+            }
+        }
+
     }
 
     changeRun(num: number) {

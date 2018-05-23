@@ -17,6 +17,7 @@ import {PermissionValue} from '../../../model/permission.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {finalize, first} from 'rxjs/operators';
+import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 
 @Component({
     selector: 'app-workflow',
@@ -56,7 +57,7 @@ export class WorkflowShowComponent {
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
                 private _translate: TranslateService, private _toast: ToastService,
-                private _workflowCoreService: WorkflowCoreService) {
+                private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -74,6 +75,7 @@ export class WorkflowShowComponent {
 
             this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
+            this._workflowEventStore.unselectAll();
             if (projkey && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
