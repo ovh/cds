@@ -58,8 +58,8 @@ func (d *dao) loadAllOperations() ([]*sdk.Operation, error) {
 var errLockUnavailable = fmt.Errorf("errLockUnavailable")
 
 func (d *dao) lock(uuid string) error {
-	if d.store.Lock(cache.Key(locksKey, uuid), 10*time.Minute) {
-		d.store.Lock(cache.Key(lastAccessKey, uuid), 3*24*time.Hour)
+	if d.store.Lock(cache.Key(locksKey, uuid), 10*time.Minute, -1, -1) {
+		d.store.Lock(cache.Key(lastAccessKey, uuid), 3*24*time.Hour, -1, -1)
 		return nil
 	}
 	return errLockUnavailable
@@ -71,7 +71,7 @@ func (d *dao) deleteLock(uuid string) {
 
 func (d *dao) unlock(uuid string, retention time.Duration) error {
 	d.store.Unlock(cache.Key(locksKey, uuid))
-	d.store.Lock(cache.Key(lastAccessKey, uuid), retention)
+	d.store.Lock(cache.Key(lastAccessKey, uuid), retention, -1, -1)
 	return nil
 }
 
