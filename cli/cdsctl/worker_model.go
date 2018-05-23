@@ -79,19 +79,20 @@ For admin:
 }
 
 type workerModelFile struct {
-	Name          string `json:"name" yaml:"name"`
-	Group         string `json:"group" yaml:"group"`
-	Communication string `json:"communication,omitempty" yaml:"communication,omitempty"`
-	Provision     int    `json:"provision,omitempty" yaml:"provision,omitempty"`
-	Image         string `json:"image" yaml:"image"`
-	Description   string `json:"description" yaml:"description"`
-	Type          string `json:"type" yaml:"type"`
-	Flavor        string `json:"flavor,omitempty" yaml:"flavor,omitempty"`
-	Shell         string `json:"shell,omitempty" yaml:"shell,omitempty"`
-	PreCmd        string `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
-	Cmd           string `json:"cmd,omitempty" yaml:"cmd,omitempty"`
-	PostCmd       string `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
-	Restricted    bool   `json:"restricted" yaml:"restricted"`
+	Name          string            `json:"name" yaml:"name"`
+	Group         string            `json:"group" yaml:"group"`
+	Communication string            `json:"communication,omitempty" yaml:"communication,omitempty"`
+	Provision     int               `json:"provision,omitempty" yaml:"provision,omitempty"`
+	Image         string            `json:"image" yaml:"image"`
+	Description   string            `json:"description" yaml:"description"`
+	Type          string            `json:"type" yaml:"type"`
+	Flavor        string            `json:"flavor,omitempty" yaml:"flavor,omitempty"`
+	Envs          map[string]string `json:"envs,omitempty" yaml:"envs,omitempty"`
+	Shell         string            `json:"shell,omitempty" yaml:"shell,omitempty"`
+	PreCmd        string            `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
+	Cmd           string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`
+	PostCmd       string            `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
+	Restricted    bool              `json:"restricted" yaml:"restricted"`
 }
 
 func workerModelImportRun(c cli.Values) error {

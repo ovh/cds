@@ -3,39 +3,65 @@ testcases:
 - name: prepare test
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModel --force
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: worker model import
   steps:
   - script: {{.cds.build.cdsctl}} worker model import ./tests/fixtures/my_worker_model.yml
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: worker model show
   steps:
   - script: {{.cds.build.cdsctl}} worker model show myITModel
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: worker model list
   steps:
   - script: {{.cds.build.cdsctl}} worker model list
+  assertions:
+    - result.code ShouldEqual 0
+
+- name: worker model import with force
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model import ./tests/fixtures/my_worker_model_updated.yml --force
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: cleanup
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModel --force
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: prepare test openstack model
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModelOS --force
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: worker model import openstack model
   steps:
   - script: {{.cds.build.cdsctl}} worker model import ./tests/fixtures/my_worker_model_openstack.yml
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: worker model show
   steps:
   - script: {{.cds.build.cdsctl}} worker model show myITModelOS
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: worker model list
   steps:
   - script: {{.cds.build.cdsctl}} worker model list
+  assertions:
+    - result.code ShouldEqual 0
 
 - name: cleanup
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModelOS --force
+  assertions:
+    - result.code ShouldEqual 0
