@@ -1,0 +1,24 @@
+name: arsenal
+deployment: true
+deployment_default_config:
+  version:
+    type: string
+    value: "{{.cds.version}}"
+  deployment.token:
+    type: password
+  retry.max:
+    type: string
+    value: 10
+  retry.delay:
+    type: string
+    value: 5
+public: true
+public_configurations: 
+  arsenal-dev: 
+    host: 
+      type: string
+      value: arsenal-dev-host
+  arsenal-prod: 
+    host: 
+      type: string
+      value: arsenal-prod-host

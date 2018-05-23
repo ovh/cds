@@ -30,7 +30,10 @@ func LoadModels(db gorp.SqlExecutor) ([]sdk.PlatformModel, error) {
 func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
 	var pm platformModel
 	if err := db.SelectOne(&pm, "SELECT * from platform_model where id = $1", modelID); err != nil {
-		return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> Cannot select platform model %d", modelID)
+		if err == sql.ErrNoRows {
+			return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> Cannot select platform model %d", modelID)
+		}
+		return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> Cannot select platform model %d", modelID)
 	}
 	return sdk.PlatformModel(pm), nil
 }
@@ -101,9 +104,10 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 		DefaultConfig           sql.NullString `db:"default_config"`
 		DeploymentDefaultConfig sql.NullString `db:"deployment_default_config"`
 		PluginName              sql.NullString `db:"plugin_name"`
+		PublicConfigurations    sql.NullString `db:"public_configurations"`
 	}{}
 
-	query := `SELECT default_config, grpc_plugin.name as "plugin_name", deployment_default_config 
+	query := `SELECT default_config, grpc_plugin.name as "plugin_name", deployment_default_config, public_configurations
 	FROM platform_model 
 	LEFT OUTER JOIN grpc_plugin ON grpc_plugin.id = platform_model.grpc_plugin_id
 	WHERE platform_model.id = $1`
@@ -117,6 +121,10 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 
 	if err := gorpmapping.JSONNullString(res.DeploymentDefaultConfig, &pm.DeploymentDefaultConfig); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load deployment_default_config")
+	}
+
+	if err := gorpmapping.JSONNullString(res.PublicConfigurations, &pm.PublicConfigurations); err != nil {
+		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load public_configurations")
 	}
 
 	if res.PluginName.Valid {
@@ -137,9 +145,10 @@ func (pm *platformModel) PostUpdate(db gorp.SqlExecutor) error {
 		pm.DefaultConfig = sdk.PlatformConfig{}
 	}
 
-	defaultConfig, err := gorpmapping.JSONToNullString(pm.DefaultConfig)
-	deploymentDefaultConfig, err := gorpmapping.JSONToNullString(pm.DeploymentDefaultConfig)
+	defaultConfig, _ := gorpmapping.JSONToNullString(pm.DefaultConfig)
+	deploymentDefaultConfig, _ := gorpmapping.JSONToNullString(pm.DeploymentDefaultConfig)
+	publicConfig, _ := gorpmapping.JSONToNullString(pm.PublicConfigurations)
 
-	_, err = db.Exec("update platform_model set default_config = $2, deployment_default_config = $3 where id = $1", pm.ID, defaultConfig, deploymentDefaultConfig)
+	_, err := db.Exec("update platform_model set default_config = $2, deployment_default_config = $3, public_configurations = $4 where id = $1", pm.ID, defaultConfig, deploymentDefaultConfig, publicConfig)
 	return sdk.WrapError(err, "PostUpdate> Unable to update platform_model")
 }

@@ -30,7 +30,7 @@ func (pp *dbProjectPlatform) PostGet(db gorp.SqlExecutor) error {
 	return nil
 }
 
-// DeletePlatform
+// DeletePlatform deletes a platform
 func DeletePlatform(db gorp.SqlExecutor, platform sdk.ProjectPlatform) error {
 	pp := dbProjectPlatform(platform)
 	if _, err := db.Delete(&pp); err != nil {

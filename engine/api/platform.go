@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/plugin"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -57,7 +62,7 @@ func (api *API) postPlatformModelHandler() Handler {
 		if m.PluginName != "" {
 			p, err := plugin.LoadByName(tx, m.PluginName)
 			if err != nil {
-				return sdk.WrapError(err, "putPlatformModelHandler")
+				return sdk.WrapError(err, "postPlatformModelHandler")
 			}
 			m.PluginID = &p.ID
 		}
@@ -68,6 +73,10 @@ func (api *API) postPlatformModelHandler() Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postPlatformModelHandler> Unable to commit tx")
+		}
+
+		if m.Public {
+			go propagatePublicPlatformModel(api.mustDB(), api.Cache, *m, getUser(ctx))
 		}
 
 		return WriteJSON(w, m, http.StatusCreated)
@@ -128,7 +137,65 @@ func (api *API) putPlatformModelHandler() Handler {
 			return sdk.WrapError(err, "putPlatformModelHandler> Unable to commit tx")
 		}
 
+		if m.Public {
+			go propagatePublicPlatformModel(api.mustDB(), api.Cache, *m, getUser(ctx))
+		}
+
 		return WriteJSON(w, m, http.StatusOK)
+	}
+}
+
+func propagatePublicPlatformModel(db gorp.SqlExecutor, store cache.Store, m sdk.PlatformModel, u *sdk.User) {
+	if !m.Public && len(m.PublicConfigurations) > 0 {
+		return
+	}
+
+	projs, err := project.LoadAll(db, store, nil, project.LoadOptions.WithClearPlatforms)
+	if err != nil {
+		log.Error("propagatePublicPlatformModel> Unable to retrieve all projects: %v", err)
+		return
+	}
+
+	for _, p := range projs {
+		propagatePublicPlatformModelOnProject(db, store, m, p, u)
+	}
+}
+
+func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.PlatformModel, p sdk.Project, u *sdk.User) {
+	if !m.Public {
+		return
+	}
+	for pfName, cfg := range m.PublicConfigurations {
+		oldPP := p.GetPlatform(pfName)
+
+		if oldPP == nil {
+			pp := sdk.ProjectPlatform{
+				Model:           m,
+				PlatformModelID: m.ID,
+				Name:            pfName,
+				Config:          cfg,
+				ProjectID:       p.ID,
+			}
+			if err := platform.InsertPlatform(db, &pp); err != nil {
+				log.Error("propagatePublicPlatformModelOnProject> Unable to insert %+v", pp)
+			}
+			event.PublishAddProjectPlatform(&p, pp, u)
+			continue
+		}
+
+		pp := sdk.ProjectPlatform{
+			ID:              oldPP.ID,
+			Model:           m,
+			PlatformModelID: m.ID,
+			Name:            pfName,
+			Config:          cfg,
+			ProjectID:       p.ID,
+		}
+		oldPP.Config = m.DefaultConfig
+		if err := platform.UpdatePlatform(db, pp); err != nil {
+			log.Error("propagatePublicPlatformModelOnProject> Unable to update %+v", oldPP)
+		}
+		event.PublishUpdateProjectPlatform(&p, *oldPP, pp, u)
 	}
 }
 
