@@ -40,11 +40,13 @@ func (api *API) addWorkerModelHandler() Handler {
 		currentUser := getUser(ctx)
 		//User must be admin of the group set in the model
 		var ok bool
+	currentUGroup:
 		for _, g := range currentUser.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
 					if a.ID == currentUser.ID {
 						ok = true
+						break currentUGroup
 					}
 				}
 			}
@@ -248,11 +250,13 @@ func (api *API) updateWorkerModelHandler() Handler {
 		user := getUser(ctx)
 		//User must be admin of the group set in the model
 		var ok bool
+	currentUGroup:
 		for _, g := range getUser(ctx).Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
 					if a.ID == getUser(ctx).ID {
 						ok = true
+						break currentUGroup
 					}
 				}
 			}
