@@ -6,6 +6,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// LoadFeatures loads features into a project from the feature flipping provider
 func LoadFeatures(store cache.Store, p *sdk.Project) error {
 	for _, f := range feature.List() {
 		// force load cache for the given project
