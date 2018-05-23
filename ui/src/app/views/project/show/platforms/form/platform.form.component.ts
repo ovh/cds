@@ -24,10 +24,9 @@ export class ProjectPlatformFormComponent {
                 private _toast: ToastService, private _translate: TranslateService) {
         this.newPlatform = new ProjectPlatform();
         this._platformService.getPlatformModels().pipe(first()).subscribe(platfs => {
-            platfs.filter(pf => {
+            this.models = platfs.filter(pf => {
                 return !pf.public;
-            })
-            this.models = platfs;
+            });
         });
     }
 
