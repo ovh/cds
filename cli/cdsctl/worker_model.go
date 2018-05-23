@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -61,6 +62,20 @@ For admin:
 	VariadicArgs: cli.Arg{
 		Name: "filepath",
 	},
+	Flags: []cli.Flag{
+		{
+			Name:  "force",
+			Usage: "Use force flag to update your worker model",
+			IsValid: func(s string) bool {
+				if s != "true" && s != "false" {
+					return false
+				}
+				return true
+			},
+			Default: "false",
+			Kind:    reflect.Bool,
+		},
+	},
 }
 
 type workerModelFile struct {
@@ -80,6 +95,7 @@ type workerModelFile struct {
 }
 
 func workerModelImportRun(c cli.Values) error {
+	force := c.GetBool("force")
 	if c.GetString("filepath") == "" {
 		return fmt.Errorf("filepath for worker model is mandatory")
 	}
@@ -187,11 +203,24 @@ func workerModelImportRun(c cli.Values) error {
 			return fmt.Errorf("Error : Unable to get group %s : %s", modelInfos.Group, err)
 		}
 
-		if _, err := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVm, g.ID); err != nil {
-			return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, err)
+		if force {
+			if existingWm, err := client.WorkerModel(modelInfos.Name); err != nil {
+				if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVm, g.ID); errAdd != nil {
+					return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
+				}
+				fmt.Printf("Worker model %s added with success", modelInfos.Name)
+			} else {
+				if _, errU := client.WorkerModelUpdate(existingWm.ID, modelInfos.Name, t, &modelDocker, &modelVm, g.ID); errU != nil {
+					return fmt.Errorf("Error: cannot update worker model %s (%s)", modelInfos.Name, errU)
+				}
+				fmt.Printf("Worker model %s updated with success", modelInfos.Name)
+			}
+		} else {
+			if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVm, g.ID); errAdd != nil {
+				return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
+			}
+			fmt.Printf("Worker model %s added with success", modelInfos.Name)
 		}
-
-		fmt.Printf("Worker model %s added with success", modelInfos.Name)
 	}
 
 	return nil

@@ -30,6 +30,7 @@ export class WorkerModel {
 export class ModelDocker {
   image: string;
   shell: string;
+  envs: {};
   cmd: string;
   memory: number;
 }

@@ -184,6 +184,7 @@
   "common_loading_environments": "Loading environments",
   "common_loading_workflow": "Loading workflow...",
   "common_name": "Name",
+  "common_value": "Value",
   "common_no": "No",
   "common_notifications": "Notifications",
   "common_parameters": "Parameters",
@@ -689,6 +690,7 @@
   "wizard_ssh_key_name": "Ssh key name",
 
   "worker_model_type": "Type",
+  "worker_model_env": "Variables d'environnement",
   "worker_model_official": "Verified worker model (added by an administrator)",
   "worker_model_unofficial": "Unverified worker model (added by a user)",
   "worker_model_capabilities": "Executable binaries in the directories named by the PATH environment variable",

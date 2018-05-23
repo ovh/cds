@@ -10,6 +10,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {User} from '../../../../model/user.model';
 import {finalize} from 'rxjs/operators';
+import {omit} from 'lodash';
 
 @Component({
     selector: 'app-worker-model-edit',
@@ -28,6 +29,9 @@ export class WorkerModelEditComponent implements OnInit {
     patternSelected: ModelPattern;
     currentUser: User;
     canEdit = false;
+    envNames: Array<string> = [];
+    newEnvName: string;
+    newEnvValue: string;
 
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private workerModelPatternError = false;
@@ -73,6 +77,9 @@ export class WorkerModelEditComponent implements OnInit {
 
     reloadData(workerModelName: string): void {
       this._workerModelService.getWorkerModelByName(workerModelName).subscribe( wm => {
+          if (wm.model_docker.envs) {
+              this.envNames = Object.keys(wm.model_docker.envs);
+          }
           this.workerModel = wm;
           this.workerModelPatternsFiltered = this.workerModelPatterns.filter((wmp) => wmp.type === wm.type);
           if (this.currentUser.admin) {
@@ -177,5 +184,23 @@ export class WorkerModelEditComponent implements OnInit {
                 this.workerModel.model_virtual_machine.cmd = pattern.model.cmd;
                 this.workerModel.model_virtual_machine.post_cmd = pattern.model.post_cmd;
         }
+    }
+
+    addEnv(newEnvName: string, newEnvValue: string) {
+        if (!newEnvName) {
+            return;
+        }
+        if (!this.workerModel.model_docker.envs) {
+            this.workerModel.model_docker.envs = {};
+        }
+        this.workerModel.model_docker.envs[newEnvName] = newEnvValue;
+        this.envNames.push(newEnvName);
+        this.newEnvName = '';
+        this.newEnvValue = '';
+    }
+
+    deleteEnv(envName: string, index: number) {
+        this.envNames.splice(index, 1);
+        this.workerModel.model_docker.envs = omit(this.workerModel.model_docker.envs, envName);
     }
 }
