@@ -178,6 +178,7 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 			}
 			if err := platform.InsertPlatform(db, &pp); err != nil {
 				log.Error("propagatePublicPlatformModelOnProject> Unable to insert %+v", pp)
+				continue
 			}
 			event.PublishAddProjectPlatform(&p, pp, u)
 			continue
@@ -194,6 +195,7 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 		oldPP.Config = m.DefaultConfig
 		if err := platform.UpdatePlatform(db, pp); err != nil {
 			log.Error("propagatePublicPlatformModelOnProject> Unable to update %+v", oldPP)
+			continue
 		}
 		event.PublishUpdateProjectPlatform(&p, *oldPP, pp, u)
 	}
