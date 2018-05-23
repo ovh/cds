@@ -3,6 +3,7 @@ package sdk
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/sha512"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -68,4 +69,21 @@ func FileMd5sum(filePath string) (md5sum string, err error) {
 
 	md5sum = fmt.Sprintf("%x", h.Sum(nil))
 	return
+}
+
+// FileSHA512sum returns the sha512sum of a file
+func FileSHA512sum(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	h := sha512.New()
+	if _, err = io.Copy(h, file); err != nil {
+		return "", err
+	}
+
+	sha512sum := fmt.Sprintf("%x", h.Sum(nil))
+	return sha512sum, nil
 }

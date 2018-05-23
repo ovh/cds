@@ -234,6 +234,11 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		return errFileContent
 	}
 
+	sha512sum, err512 := sdk.FileSHA512sum(filePath)
+	if err512 != nil {
+		return err512
+	}
+
 	//Compute md5sum
 	hash := md5.New()
 	if _, errcopy := io.Copy(hash, bytes.NewBuffer(fileContent)); errcopy != nil {
@@ -244,12 +249,13 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 	_, name := filepath.Split(filePath)
 
 	art := sdk.WorkflowNodeRunArtifact{
-		Name:    name,
-		Tag:     tag,
-		Size:    stat.Size(),
-		Perm:    uint32(stat.Mode().Perm()),
-		MD5sum:  md5sumStr,
-		Created: time.Now(),
+		Name:      name,
+		Tag:       tag,
+		Size:      stat.Size(),
+		Perm:      uint32(stat.Mode().Perm()),
+		MD5sum:    md5sumStr,
+		SHA512sum: sha512sum,
+		Created:   time.Now(),
 	}
 
 	var retryURL = 10
@@ -333,6 +339,11 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 		return errst
 	}
 
+	sha512sum, err512 := sdk.FileSHA512sum(filePath)
+	if err512 != nil {
+		return err512
+	}
+
 	//Read the file once
 	fileContent, errFileContent := ioutil.ReadAll(f)
 	if errFileContent != nil {
@@ -362,6 +373,7 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 	writer.WriteField("size", strconv.FormatInt(stat.Size(), 10))
 	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10))
 	writer.WriteField("md5sum", md5sumStr)
+	writer.WriteField("sha512sum", sha512sum)
 
 	if errclose := writer.Close(); errclose != nil {
 		return errclose

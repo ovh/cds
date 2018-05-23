@@ -33,7 +33,8 @@ type Artifact struct {
 	DownloadHash     string `json:"download_hash" cli:"download_hash"`
 	Size             int64  `json:"size,omitempty" cli:"size"`
 	Perm             uint32 `json:"perm,omitempty"`
-	MD5sum           string `json:"md5sum,omitempty" cli:"md5sum"`
+	MD5sum           string `json:"md5sum,omitempty" cli:"-"`
+	SHA512sum        string `json:"sha512sum,omitempty" cli:"sha512sum"`
 	ObjectPath       string `json:"object_path,omitempty"`
 	TempURL          string `json:"temp_url,omitempty"`
 	TempURLSecretKey string `json:"-"`
@@ -218,6 +219,11 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	tag = url.QueryEscape(tag)
 	tag = strings.Replace(tag, "/", "-", -1)
 
+	sha512sum, err512 := FileSHA512sum(filePath)
+	if err512 != nil {
+		return false, 0, fmt.Errorf("unable to compte sha512sum on file %s (%v)", filePath, err512)
+	}
+
 	fileForMD5, errop := os.Open(filePath)
 	if errop != nil {
 		return false, 0, fmt.Errorf("unable on open file %s (%v)", filePath, errop)
@@ -251,7 +257,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		_ = json.Unmarshal(bodyRes, store)
 
 		if store.TemporaryURLSupported {
-			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileContent, stat, md5sumStr)
+			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileContent, stat, md5sumStr, sha512sum)
 			if err == nil {
 				return tempURL, dur, err // do not wrap error here, could be nil
 			}
@@ -274,6 +280,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer.WriteField("size", strconv.FormatInt(stat.Size(), 10))
 	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10))
 	writer.WriteField("md5sum", md5sumStr)
+	writer.WriteField("sha512sum", sha512sum)
 
 	if err := writer.Close(); err != nil {
 		return false, 0, fmt.Errorf("unable to close multipart form writer (%v)", err)
@@ -297,13 +304,14 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	return false, 0, fmt.Errorf("x10: %s", err)
 }
 
-func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, fileContent []byte, stat os.FileInfo, md5sum string) (bool, time.Duration, error) {
+func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, fileContent []byte, stat os.FileInfo, md5sum, sha512sum string) (bool, time.Duration, error) {
 	t0 := time.Now()
 	art := Artifact{
-		Name:   filename,
-		MD5sum: md5sum,
-		Size:   stat.Size(),
-		Perm:   uint32(stat.Mode().Perm()),
+		Name:      filename,
+		MD5sum:    md5sum,
+		SHA512sum: sha512sum,
+		Size:      stat.Size(),
+		Perm:      uint32(stat.Mode().Perm()),
 	}
 
 	b, err := json.Marshal(art)

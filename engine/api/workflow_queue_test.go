@@ -685,6 +685,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	params["size"] = "12"
 	params["perm"] = "7"
 	params["md5sum"] = "123"
+	params["sha512sum"] = "1234"
 	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)

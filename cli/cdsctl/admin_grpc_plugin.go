@@ -180,6 +180,11 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 		return fmt.Errorf("unable to compute md5sum for file %s: %v", v.GetString("filename"), err)
 	}
 
+	desc.SHA512sum, err = sdk.FileSHA512sum(f.Name())
+	if err != nil {
+		return fmt.Errorf("unable to compute sha512sum for file %s: %v", v.GetString("filename"), err)
+	}
+
 	if err := client.PluginAddBinary(p, &desc); err != nil {
 		return err
 	}

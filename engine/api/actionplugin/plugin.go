@@ -41,6 +41,11 @@ func Get(name, path string) (*sdk.ActionPlugin, *plugin.Parameters, error) {
 		return nil, nil, err
 	}
 
+	sha512sum, err512 := sdk.FileSHA512sum(path)
+	if err512 != nil {
+		return nil, nil, sdk.WrapError(err, "actionplugin.Get> FileSHA512sum")
+	}
+
 	//Compute md5sum
 	hash := md5.New()
 	if _, err := io.Copy(hash, fi); err != nil {
@@ -58,6 +63,7 @@ func Get(name, path string) (*sdk.ActionPlugin, *plugin.Parameters, error) {
 		Size:        stat.Size(),
 		Perm:        uint32(stat.Mode().Perm()),
 		MD5sum:      md5sumStr,
+		SHA512sum:   sha512sum,
 	}
 
 	params := _plugin.Parameters()
