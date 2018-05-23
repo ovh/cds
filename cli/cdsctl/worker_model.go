@@ -206,18 +206,18 @@ func workerModelImportRun(c cli.Values) error {
 
 		if force {
 			if existingWm, err := client.WorkerModel(modelInfos.Name); err != nil {
-				if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVm, g.ID); errAdd != nil {
+				if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errAdd != nil {
 					return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
 				}
 				fmt.Printf("Worker model %s added with success", modelInfos.Name)
 			} else {
-				if _, errU := client.WorkerModelUpdate(existingWm.ID, modelInfos.Name, t, &modelDocker, &modelVm, g.ID); errU != nil {
+				if _, errU := client.WorkerModelUpdate(existingWm.ID, modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errU != nil {
 					return fmt.Errorf("Error: cannot update worker model %s (%s)", modelInfos.Name, errU)
 				}
 				fmt.Printf("Worker model %s updated with success", modelInfos.Name)
 			}
 		} else {
-			if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVm, g.ID); errAdd != nil {
+			if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errAdd != nil {
 				return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
 			}
 			fmt.Printf("Worker model %s added with success", modelInfos.Name)

@@ -400,7 +400,8 @@ func (h *HatcheryKubernetes) killAwolWorkers() error {
 	for _, pod := range pods.Items {
 		toDelete := false
 		for _, container := range pod.Status.ContainerStatuses {
-			if (container.State.Terminated != nil && container.State.Terminated.Reason == "Completed") || (container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull") {
+			if (container.State.Terminated != nil && (container.State.Terminated.Reason == "Completed" || container.State.Terminated.Reason == "Error")) ||
+				(container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull") {
 				toDelete = true
 			}
 		}
