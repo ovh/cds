@@ -1,5 +1,6 @@
 package sdk
 
+// This is the buitin platform model
 const (
 	KafkaPlatformModel = "Kafka"
 )
@@ -45,7 +46,7 @@ type PlatformConfig map[string]PlatformConfigValue
 const (
 	// PlatformConfigTypeString represents a string configuration value
 	PlatformConfigTypeString = "string"
-	// PlatformConfigTypeString represents a password configuration value
+	// PlatformConfigTypePassword represents a password configuration value
 	PlatformConfigTypePassword = "password"
 )
 
