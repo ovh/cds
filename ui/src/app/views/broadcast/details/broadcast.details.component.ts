@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {BroadcastStore} from '../../../service/broadcast/broadcastStore';
+import {BroadcastStore} from '../../../service/broadcast/broadcast.store';
 import {Broadcast} from 'app/model/broadcast.model';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';

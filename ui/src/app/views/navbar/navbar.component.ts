@@ -3,7 +3,7 @@ import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
 import {ApplicationStore} from '../../service/application/application.store';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
-import {BroadcastStore} from '../../service/broadcast/broadcastStore';
+import {BroadcastStore} from '../../service/broadcast/broadcast.store';
 import {Application} from '../../model/application.model';
 import {Broadcast} from '../../model/broadcast.model';
 import {User} from '../../model/user.model';

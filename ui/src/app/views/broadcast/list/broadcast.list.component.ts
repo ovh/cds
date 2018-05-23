@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {BroadcastStore} from '../../../service/broadcast/broadcastStore';
+import {BroadcastStore} from '../../../service/broadcast/broadcast.store';
 import {Broadcast} from 'app/model/broadcast.model';
 import {Subscription} from 'rxjs/Subscription';
 import {finalize} from 'rxjs/operators';

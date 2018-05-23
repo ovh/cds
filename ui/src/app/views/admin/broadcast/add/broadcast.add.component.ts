@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthentificationStore} from 'app/service/auth/authentification.store';
 import {Broadcast} from 'app/model/broadcast.model';
-import {BroadcastStore} from 'app/service/broadcast/broadcastStore';
+import {BroadcastStore} from 'app/service/broadcast/broadcast.store';
 import {BroadcastLevelService} from '../../../../shared/broadcast/broadcast.level.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {NavbarService} from 'app/service/navbar/navbar.service';

@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {NavbarService} from '../../service/navbar/navbar.service';
-import {BroadcastStore} from '../../service/broadcast/broadcastStore';
+import {BroadcastStore} from '../../service/broadcast/broadcast.store';
 import {ProjectStore} from '../../service/project/project.store';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {NavbarProjectData} from 'app/model/navbar.model';

@@ -14,7 +14,7 @@ import {Event, EventType} from './model/event.model';
 import {EventStore} from './service/event/event.store';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
 import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
-import {BroadcastStore} from './service/broadcast/broadcastStore';
+import {BroadcastStore} from './service/broadcast/broadcast.store';
 import {Broadcast, BroadcastEvent} from './model/broadcast.model';
 
 @Injectable()

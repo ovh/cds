@@ -1,7 +1,7 @@
 import {Component, Input} from '@angular/core';
 import {Broadcast} from '../../../../model/broadcast.model';
 import {Table} from '../../../../shared/table/table';
-import {BroadcastStore} from '../../../../service/broadcast/broadcastStore';
+import {BroadcastStore} from '../../../../service/broadcast/broadcast.store';
 
 @Component({
     selector: 'app-broadcast-list',
