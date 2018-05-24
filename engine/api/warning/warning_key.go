@@ -13,7 +13,7 @@ import (
 func keyIsUsed(db gorp.SqlExecutor, projectKey string, keyName string) ([]string, []string) {
 
 	// Check if used on application vcs configuration
-	resultsApplication, errApp := application.CountKeysInVcsConfiguration(db, projectKey, keyName)
+	resultsApplication, errApp := application.CountApplicationByVcsConfigurationKeys(db, projectKey, keyName)
 	if errApp != nil {
 		log.Warning("keyIsUsed> Unable to search key in application vcs configuration: %s", errApp)
 	}

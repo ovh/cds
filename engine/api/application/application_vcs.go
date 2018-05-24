@@ -39,8 +39,8 @@ func DecryptVCSStrategyPassword(app *sdk.Application) error {
 	return nil
 }
 
-// CountKeysInVcsConfiguration counts key use in application vcs configuration for the given project
-func CountKeysInVcsConfiguration(db gorp.SqlExecutor, projectKey string, vcsName string) ([]string, error) {
+// CountApplicationByVcsConfigurationKeys counts key use in application vcs configuration for the given project
+func CountApplicationByVcsConfigurationKeys(db gorp.SqlExecutor, projectKey string, vcsName string) ([]string, error) {
 	query := `
 		SELECT prequery.name FROM 
 		(

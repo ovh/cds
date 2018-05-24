@@ -64,8 +64,8 @@ func commit(tx *gorp.Transaction) {
 }
 
 func pipelineSliceMerge(paramDataSlice []pipeline.CountInValueParamData, pipDataSlice []pipeline.CountInPipelineData) []string {
-	elementsMap := make(map[string]bool)
-	pipelinesName := make([]string, 0)
+	elementsMap := make(map[string]bool, len(paramDataSlice)+len(pipDataSlice))
+	pipelinesName := make([]string, 0, len(paramDataSlice)+len(pipDataSlice))
 	for _, v := range paramDataSlice {
 		if !elementsMap[v.Name] {
 			elementsMap[v.Name] = true

@@ -12,7 +12,7 @@ import (
 func variableIsUsed(db gorp.SqlExecutor, key string, varName string) (envsName []string, appsName []string, pipsName []string) {
 
 	// Check if used in environment
-	envsName, errE := environment.CountInVarValue(db, key, varName)
+	envsName, errE := environment.CountEnvironmentByVarValue(db, key, varName)
 	if errE != nil {
 		log.Warning("manageAddVariableEvent> Unable to search variable in environments: %v", errE)
 	}
