@@ -99,7 +99,15 @@ type ProjectPlatform struct {
 
 // MergeWith merge two config
 func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
+	if config == nil {
+		*config = PlatformConfig{}
+	}
 	for k, v := range cfg {
-		(*config)[k] = v
+		val, has := (*config)[k]
+		if !has {
+			val.Type = v.Type
+		}
+		val.Value = v.Value
+		(*config)[k] = val
 	}
 }

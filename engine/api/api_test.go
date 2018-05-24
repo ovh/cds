@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -28,4 +30,23 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 	event.Cache = api.Cache
 	api.InitRouter()
 	return api, db, router
+}
+
+func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string, func()) {
+	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrapFunc...)
+	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "")
+	api := &API{
+		StartupTime:         time.Now(),
+		Router:              router,
+		DBConnectionFactory: test.DBConnectionFactory,
+		Config:              Configuration{},
+		Cache:               cache,
+	}
+	event.Cache = api.Cache
+	api.InitRouter()
+	ts := httptest.NewServer(router.Mux)
+	url, _ := url.Parse(ts.URL)
+	url.Path = url.Path
+	return api, url.String(), ts.Close
 }

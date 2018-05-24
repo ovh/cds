@@ -75,6 +75,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if providerOK {
 			ctx = context.WithValue(ctx, auth.ContextUser, &sdk.User{Username: providerName, Admin: true})
 			ctx = context.WithValue(ctx, auth.ContextProvider, providerName)
+			return ctx, nil
 		}
 	}
 

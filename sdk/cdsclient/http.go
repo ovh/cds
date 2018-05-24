@@ -195,6 +195,10 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 		if c.name != "" {
 			req.Header.Add(RequestedNameHeader, c.name)
 		}
+		if c.isProvider {
+			req.Header.Add("X-Provider-Name", c.config.User)
+			req.Header.Add("X-Provider-Token", c.config.Token)
+		}
 
 		//No auth on /login route
 		if !strings.HasPrefix(path, "/login") {
