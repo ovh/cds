@@ -180,12 +180,12 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jo
 
 	env = append(env, h.getGraylogGrpcEnv(model)...)
 
-	udata := model.ModelVirtualMachine.PreCmd + "; \n" + model.ModelVirtualMachine.Cmd
+	udata := model.ModelVirtualMachine.PreCmd + "\n" + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
 		udata += " register"
 	}
-	udata += (";\n" + model.ModelVirtualMachine.PostCmd)
+	udata += ("\n" + model.ModelVirtualMachine.PostCmd)
 
 	tmpl, errt := template.New("udata").Parse(udata)
 	if errt != nil {

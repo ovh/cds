@@ -75,8 +75,8 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 	if spawnArgs.RegisterOnly {
 		spawnArgs.Model.ModelVirtualMachine.Cmd = strings.Replace(spawnArgs.Model.ModelVirtualMachine.Cmd, "worker ", "worker register ", 1)
 	}
-	// udata = udataBegin + string(udataModel) + buffer.String()
-	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "; \n" + spawnArgs.Model.ModelVirtualMachine.Cmd + "; \n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
+
+	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "\n" + spawnArgs.Model.ModelVirtualMachine.Cmd + "\n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
 
 	tmpl, errt := template.New("udata").Parse(udata)
 	if errt != nil {
