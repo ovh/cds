@@ -397,35 +397,18 @@ func LoadVariableAudits(db gorp.SqlExecutor, appID, varID int64) ([]sdk.Applicat
 	return avas, nil
 }
 
-// CountInValueVarData represents the result of CountInVarValue function
-type CountInValueVarData struct {
-	Name  string
-	Count int64
-}
-
 // CountInVarValue counts how many time a pattern is in variable value for the given project
-func CountInVarValue(db gorp.SqlExecutor, key string, value string) ([]CountInValueVarData, error) {
+func CountInVarValue(db gorp.SqlExecutor, key string, value string) ([]string, error) {
 	query := `
-		SELECT count(*), application.name
+		SELECT DISTINCT application.name
 		FROM application_variable
 		JOIN application ON application.id = application_variable.application_id
 		JOIN project ON project.id = application.project_id
-		WHERE var_value like $2 AND project.projectkey = $1
-		GROUP BY application.name;
+		WHERE var_value like $2 AND project.projectkey = $1;
 	`
-	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", value))
-	if err != nil {
+	var appsName []string
+	if _, err := db.Select(&appsName, query, key, fmt.Sprintf("%%%s%%", value)); err != nil {
 		return nil, sdk.WrapError(err, "application.CountInVarValue> Unable to count usage")
 	}
-	defer rows.Close()
-
-	results := []CountInValueVarData{}
-	for rows.Next() {
-		var d CountInValueVarData
-		if err := rows.Scan(&d.Count, &d.Name); err != nil {
-			return nil, sdk.WrapError(err, "application.CountInVarValue> Unable to scan")
-		}
-		results = append(results, d)
-	}
-	return results, nil
+	return appsName, nil
 }

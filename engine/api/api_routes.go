@@ -140,6 +140,8 @@ func (api *API) InitRouter() {
 	// Export Application
 	r.Handle("/project/{key}/export/application/{permApplicationName}", r.GET(api.getApplicationExportHandler))
 
+	r.Handle("/warning/{permProjectKey}", r.GET(api.getWarningsHandler))
+
 	// Application
 	r.Handle("/project/{key}/application/{permApplicationName}", r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/keys", r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))

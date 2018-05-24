@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -60,4 +61,22 @@ func commit(tx *gorp.Transaction) {
 		_ = tx.Rollback()
 	}
 	return
+}
+
+func pipelineSliceMerge(paramDataSlice []pipeline.CountInValueParamData, pipDataSlice []pipeline.CountInPipelineData) []string {
+	elementsMap := make(map[string]bool)
+	pipelinesName := make([]string, 0)
+	for _, v := range paramDataSlice {
+		if !elementsMap[v.Name] {
+			elementsMap[v.Name] = true
+			pipelinesName = append(pipelinesName, v.Name)
+		}
+	}
+	for _, v := range pipDataSlice {
+		if !elementsMap[v.PipName] {
+			elementsMap[v.PipName] = true
+			pipelinesName = append(pipelinesName, v.PipName)
+		}
+	}
+	return pipelinesName
 }

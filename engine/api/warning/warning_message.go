@@ -20,12 +20,12 @@ const (
 	UnusedPipelineParameter          = "UNUSED_PIPELINE_PARAMETER"
 )
 
-var messageAmericanEnglish = map[string]string{
-	MissingProjectVariable:           `Variable {{index . "VarName"}} is used but does not exist on project {{index . "ProjectKey"}}`,
+var MessageAmericanEnglish = map[string]string{
+	MissingProjectVariable:           `Variable {{index . "VarName"}} is used by {{if index . "EnvsName"}}Environments: "{{index . "EnvsName"}}"{{end}}{{if index . "AppsName"}} and Applications: "{{index . "AppsName"}}"{{end}}{{if index . "PipsName"}} and Pipelines: "{{index . "PipsName"}}"{{end}} but does not exist on project {{index . "ProjectKey"}}`,
 	UnusedProjectVariable:            `Unused variable {{index . "VarName"}} on project {{index . "ProjectKey"}}.`,
 	MissingProjectPermissionEnv:      `Group {{index . "GroupName"}} is not on project {{index . "ProjectKey"}} but is used on Environment {{index . "EnvName"}}.`,
 	MissingProjectPermissionWorkflow: `Group {{index . "GroupName"}} is not on project {{index . "ProjectKey"}} but is used on Workflow {{index . "WorkflowName"}}.`,
-	MissingProjectKey:                `Key {{index . "KeyName"}} is used but does not exist on project {{index . "ProjectKey"}}`,
+	MissingProjectKey:                `Key {{index . "KeyName"}} is used by {{if index . "AppsName"}}Applications: "{{index . "AppsName"}}"{{end}}{{if index . "PipsName"}} and Pipelines: "{{index . "PipsName"}}"{{end}} but does not exist on project {{index . "ProjectKey"}}`,
 	UnusedProjectKey:                 `Unused key {{index . "KeyName"}} on project {{index . "ProjectKey"}}.`,
 	MissingVCSConfiguration:          `CDS variables .git.* are used but there is no repository manager on project {{index . "ProjectKey"}}`,
 	MissingApplicationVariable:       `Variable {{index . "VarName"}} is used but does not exist on project/application {{index . "ProjectKey"}}/{{index . "ApplicationName"}}`,
@@ -40,12 +40,12 @@ var messageAmericanEnglish = map[string]string{
 	UnusedPipelineParameter:          `Unused parameter {{index . "ParamName"}} on project/pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}.`,
 }
 
-var messageFrench = map[string]string{
-	MissingProjectVariable:           `La variable de projet {{index . "VarName"}} est utilisée mais n'existe pas dans le projet s{{index . "ProjectKey"}}`,
+var MessageFrench = map[string]string{
+	MissingProjectVariable:           `La variable de projet {{index . "VarName"}} est utilisée par {{if index . "EnvsName"}}Environnements: {{index . "EnvsName"}} and {{if index . "AppsName"}}Applications: {{index . "AppsName"}}{{end}} and {{if index . "PipsName"}}Pipelines: {{index . "PipsName"}}{{end}} mais n'existe pas dans le projet s{{index . "ProjectKey"}}`,
 	UnusedProjectVariable:            `La variable {{index . "VarName"}} est inutilisée dans le projet {{index . "ProjectKey"}}.`,
 	MissingProjectPermissionEnv:      `Le groupe {{index . "GroupName"}} n'a pas accès au projet {{index . "ProjectKey"}} mais est positionné sur l'environment {{index . "EnvName"}}.`,
 	MissingProjectPermissionWorkflow: `Le groupe {{index . "GroupName"}} n'a pas accès au projet {{index . "ProjectKey"}} mais est positionné sur le workflow {{index . "WorkflowName"}}.`,
-	MissingProjectKey:                `La clé {{index . "KeyName"}} est utilisée mais n'existe pas sur le projet {{index . "ProjectKey"}}`,
+	MissingProjectKey:                `La clé {{index . "KeyName"}} est utilisée par {{if index . "AppsName"}}Applications: {{index . "AppsName"}}{{end}} and {{if index . "PipsName"}}Pipelines: {{index . "PipsName"}}{{end}} mais n'existe pas sur le projet {{index . "ProjectKey"}}`,
 	UnusedProjectKey:                 `La clé {{index . "KeyName"}} est inutilisé dans le projet {{index . "ProjectKey"}}.`,
 	MissingVCSConfiguration:          `Les variables CDS git.* sont utilisées mais aucun repository manager n'est lié au projet {{index . "ProjectKey"}}`,
 	MissingApplicationVariable:       `La variable {{index . "VarName"}} est utilisée mais n'existe pas dans l'application {{index . "ProjectKey"}}/{{index . "ApplicationName"}}`,

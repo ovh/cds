@@ -49,19 +49,72 @@ func computeWithProjectEvent(db gorp.SqlExecutor, e sdk.Event) error {
 		}
 		return manageProjectDeletePermission(db, e.ProjectKey, permEvent.Permission)
 	case "sdk.EventProjectKeyAdd":
-		// Check if key is used
-		// Check if there is a warning on it
+		var keyAddEvent sdk.EventProjectKeyAdd
+		if err := mapstructure.Decode(e.Payload, &keyAddEvent); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectKeyAdd")
+		}
+		return manageProjectAddKey(db, e.ProjectKey, keyAddEvent.Key)
 
 	case "sdk.EventProjectKeyDelete":
-		// Check if key is used
-		// Check if there is a warning on it
-
+		var keyDeleteEvent sdk.EventProjectKeyDelete
+		if err := mapstructure.Decode(e.Payload, &keyDeleteEvent); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectKeyDelete")
+		}
+		return manageProjectDeleteKey(db, e.ProjectKey, keyDeleteEvent.Key)
 	case "sdk.EventProjectVCSServerDelete":
 		// Check if vcs is used
 
 	default:
 		log.Debug("Event %s ignored", e.EventType)
 		return nil
+	}
+	return nil
+}
+
+func manageProjectAddKey(db gorp.SqlExecutor, projectKey string, key sdk.ProjectKey) error {
+	if err := removeProjectWarning(db, MissingProjectKey, key.Name, projectKey); err != nil {
+		return sdk.WrapError(err, "manageProjectAddKey> Unable to remove warning %s for key %s on project %s", MissingProjectKey, key.Name, projectKey)
+	}
+	appsName, pipsName := keyIsUsed(db, projectKey, key.Name)
+	if len(appsName) == 0 && len(pipsName) == 0 {
+		w := sdk.WarningV2{
+			Key:     projectKey,
+			Element: key.Name,
+			Created: time.Now(),
+			Type:    UnusedProjectKey,
+			MessageParams: map[string]string{
+				"KeyName":    key.Name,
+				"ProjectKey": projectKey,
+			},
+		}
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageProjectAddKey> Unable to insert warning")
+		}
+	}
+	return nil
+}
+
+func manageProjectDeleteKey(db gorp.SqlExecutor, projectKey string, key sdk.ProjectKey) error {
+	if err := removeProjectWarning(db, UnusedProjectKey, key.Name, projectKey); err != nil {
+		return sdk.WrapError(err, "manageProjectDeleteKey> Unable to remove warning %s for key %s on project %s", UnusedProjectKey, key.Name, projectKey)
+	}
+	appsName, pipsName := keyIsUsed(db, projectKey, key.Name)
+	if len(appsName) > 0 || len(pipsName) > 0 {
+		w := sdk.WarningV2{
+			Key:     projectKey,
+			Element: key.Name,
+			Created: time.Now(),
+			Type:    MissingProjectKey,
+			MessageParams: map[string]string{
+				"KeyName":    key.Name,
+				"ProjectKey": projectKey,
+				"AppsName":   strings.Join(appsName, ", "),
+				"PipsName":   strings.Join(pipsName, ", "),
+			},
+		}
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageProjectAddKey> Unable to insert warning")
+		}
 	}
 	return nil
 }
@@ -94,8 +147,8 @@ func manageProjectDeletePermission(db gorp.SqlExecutor, key string, gp sdk.Group
 				"EnvName":    strings.Join(envs, ","),
 			},
 		}
-		if err := insert(db, w); err != nil {
-			return sdk.WrapError(err, "manageAddVariableEvent> Unable to insert environment warning")
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageAddVariableEvent> Unable to Insert environment warning")
 		}
 	}
 
@@ -116,8 +169,8 @@ func manageProjectDeletePermission(db gorp.SqlExecutor, key string, gp sdk.Group
 				"WorkflowName": strings.Join(workflows, ","),
 			},
 		}
-		if err := insert(db, w); err != nil {
-			return sdk.WrapError(err, "manageProjectDeletePermission> Unable to insert workflow warning")
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageProjectDeletePermission> Unable to Insert workflow warning")
 		}
 	}
 	return nil
@@ -128,8 +181,8 @@ func manageProjectAddVariableEvent(db gorp.SqlExecutor, key string, varName stri
 		return sdk.WrapError(err, "manageAddVariableEvent> Unable to remove warning")
 	}
 
-	used := variableIsUsed(db, key, varName)
-	if !used {
+	envs, apps, pips := variableIsUsed(db, key, varName)
+	if len(envs) == 0 && len(apps) == 0 && len(pips) == 0 {
 		w := sdk.WarningV2{
 			Key:     key,
 			Element: varName,
@@ -140,8 +193,8 @@ func manageProjectAddVariableEvent(db gorp.SqlExecutor, key string, varName stri
 				"ProjectKey": key,
 			},
 		}
-		if err := insert(db, w); err != nil {
-			return sdk.WrapError(err, "manageAddVariableEvent> Unable to insert warning")
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageAddVariableEvent> Unable to Insert warning")
 		}
 	}
 	return nil
@@ -161,8 +214,8 @@ func manageProjectUpdateVariableEvent(db gorp.SqlExecutor, key string, newVar sd
 	}
 
 	projVarName := fmt.Sprintf("cds.proj.%s", newVar.Name)
-	used := variableIsUsed(db, key, projVarName)
-	if !used {
+	envs, apps, pips := variableIsUsed(db, key, projVarName)
+	if len(envs) == 0 && len(apps) == 0 && len(pips) == 0 {
 		w := sdk.WarningV2{
 			Key:     key,
 			Element: projVarName,
@@ -173,8 +226,8 @@ func manageProjectUpdateVariableEvent(db gorp.SqlExecutor, key string, newVar sd
 				"ProjectKey": key,
 			},
 		}
-		if err := insert(db, w); err != nil {
-			return sdk.WrapError(err, "manageUpdateVariableEvent> Unable to insert warning")
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageUpdateVariableEvent> Unable to Insert warning")
 		}
 	}
 	return nil
@@ -184,8 +237,8 @@ func manageProjectDeleteVariableEvent(db gorp.SqlExecutor, key string, varName s
 	if err := removeProjectWarning(db, UnusedProjectVariable, varName, key); err != nil {
 		log.Warning("manageDeleteVariableEvent> Unable to remove warning: %v", err)
 	}
-	used := variableIsUsed(db, key, varName)
-	if !used {
+	envs, apps, pips := variableIsUsed(db, key, varName)
+	if len(envs) == 0 && len(apps) == 0 && len(pips) == 0 {
 		return nil
 	}
 
@@ -197,10 +250,13 @@ func manageProjectDeleteVariableEvent(db gorp.SqlExecutor, key string, varName s
 		MessageParams: map[string]string{
 			"VarName":    varName,
 			"ProjectKey": key,
+			"EnvsName":   strings.Join(envs, ", "),
+			"AppsName":   strings.Join(apps, ", "),
+			"PipsName":   strings.Join(pips, ", "),
 		},
 	}
-	if err := insert(db, w); err != nil {
-		return sdk.WrapError(err, "manageDeleteVariableEvent> Unable to insert warning")
+	if err := Insert(db, w); err != nil {
+		return sdk.WrapError(err, "manageDeleteVariableEvent> Unable to Insert warning")
 	}
 
 	return nil

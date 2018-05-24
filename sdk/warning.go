@@ -18,6 +18,7 @@ type WarningV2 struct {
 	Element       string            `json:"element" db:"element"`
 	Created       time.Time         `json:"created" db:"created"`
 	MessageParams map[string]string `json:"message_params" db:"-"`
+	Message       string            `json:"message" db:"-"`
 }
 
 // Warning contains information about user action configuration
