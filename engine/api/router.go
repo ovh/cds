@@ -413,8 +413,6 @@ func NeedAdmin(admin bool) HandlerConfigParam {
 func AllowProvider(need bool) HandlerConfigParam {
 	f := func(rc *HandlerConfig) {
 		rc.Options["allowProvider"] = fmt.Sprintf("%v", need)
-		log.Warning("AllowProvider %v %v %#v", rc.Handler, need, rc)
-
 	}
 	return f
 }
