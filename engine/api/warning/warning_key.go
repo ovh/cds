@@ -10,22 +10,22 @@ import (
 
 // keyIsUsed returns if given key is used.
 // Return []string (applications name), []string (pipelines name)
-func keyIsUsed(db gorp.SqlExecutor, key string, keyName string) ([]string, []string) {
+func keyIsUsed(db gorp.SqlExecutor, projectKey string, keyName string) ([]string, []string) {
 
 	// Check if used on application vcs configuration
-	resultsApplication, errApp := application.CountKeysInVcsConfiguration(db, key, keyName)
+	resultsApplication, errApp := application.CountKeysInVcsConfiguration(db, projectKey, keyName)
 	if errApp != nil {
 		log.Warning("keyIsUsed> Unable to search key in application vcs configuration: %s", errApp)
 	}
 
 	// Check if used on pipeline parameters
-	resultsP, errP := pipeline.CountInParamValue(db, key, keyName)
+	resultsP, errP := pipeline.CountInParamValue(db, projectKey, keyName)
 	if errP != nil {
 		log.Warning("keyIsUsed> Unable to search key in pipeline parameters: %s", errP)
 	}
 
 	// Check if used on pipeline jobs
-	resultsPip, errP2 := pipeline.CountInPipelines(db, key, keyName)
+	resultsPip, errP2 := pipeline.CountInPipelines(db, projectKey, keyName)
 	if errP2 != nil {
 		log.Warning("keyIsUsed> Unable to search key in pipelines: %s", errP2)
 	}

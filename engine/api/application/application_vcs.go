@@ -40,7 +40,7 @@ func DecryptVCSStrategyPassword(app *sdk.Application) error {
 }
 
 // CountKeysInVcsConfiguration counts key use in application vcs configuration for the given project
-func CountKeysInVcsConfiguration(db gorp.SqlExecutor, key string, keyName string) ([]string, error) {
+func CountKeysInVcsConfiguration(db gorp.SqlExecutor, projectKey string, vcsName string) ([]string, error) {
 	query := `
 		SELECT prequery.name FROM 
 		(
@@ -50,7 +50,7 @@ func CountKeysInVcsConfiguration(db gorp.SqlExecutor, key string, keyName string
 		) prequery
 		WHERE sshkey = $2 OR pgpkey = $2`
 	var appsName []string
-	if _, err := db.Select(&appsName, query, key, keyName); err != nil {
+	if _, err := db.Select(&appsName, query, projectKey, vcsName); err != nil {
 		return nil, sdk.WrapError(err, "CountKeysInVcsConfigurationt> Cannot count keyName in vcs configuration")
 	}
 	return appsName, nil

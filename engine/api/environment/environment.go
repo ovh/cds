@@ -474,7 +474,7 @@ func Permission(key string, envName string, u *sdk.User) int {
 }
 
 // CountInVarValue counts how many time a pattern is in variable value for the given project
-func CountInVarValue(db gorp.SqlExecutor, key string, value string) ([]string, error) {
+func CountInVarValue(db gorp.SqlExecutor, projectKey string, value string) ([]string, error) {
 	query := `
 		SELECT DISTINCT environment.name
 		FROM environment_variable
@@ -484,7 +484,7 @@ func CountInVarValue(db gorp.SqlExecutor, key string, value string) ([]string, e
 	`
 
 	var envsName []string
-	if _, err := db.Select(&envsName, query, key, fmt.Sprintf("%%%s%%", value)); err != nil {
+	if _, err := db.Select(&envsName, query, projectKey, fmt.Sprintf("%%%s%%", value)); err != nil {
 		return nil, sdk.WrapError(err, "environment.CountInVarValue> Unable to count usage")
 	}
 	return envsName, nil

@@ -45,11 +45,11 @@ var MessageAmericanEnglish = map[string]string{
 }
 
 var MessageFrench = map[string]string{
-	MissingProjectVariable:           `La variable de projet {{index . "VarName"}} est utilisée par {{if index . "EnvsName"}}Environnements: {{index . "EnvsName"}} and {{if index . "AppsName"}}Applications: {{index . "AppsName"}}{{end}} and {{if index . "PipsName"}}Pipelines: {{index . "PipsName"}}{{end}} mais n'existe pas dans le projet s{{index . "ProjectKey"}}`,
+	MissingProjectVariable:           `La variable de projet {{index . "VarName"}} est utilisée par {{if index . "EnvsName"}}Environnements: {{index . "EnvsName"}}{{if index . "AppsName"}} et Applications: {{index . "AppsName"}}{{end}}{{if index . "PipsName"}} et Pipelines: {{index . "PipsName"}}{{end}} mais n'existe pas dans le projet s{{index . "ProjectKey"}}`,
 	UnusedProjectVariable:            `La variable {{index . "VarName"}} est inutilisée dans le projet {{index . "ProjectKey"}}.`,
 	MissingProjectPermissionEnv:      `Le groupe {{index . "GroupName"}} n'a pas accès au projet {{index . "ProjectKey"}} mais est positionné sur l'environment {{index . "EnvName"}}.`,
 	MissingProjectPermissionWorkflow: `Le groupe {{index . "GroupName"}} n'a pas accès au projet {{index . "ProjectKey"}} mais est positionné sur le workflow {{index . "WorkflowName"}}.`,
-	MissingProjectKey:                `La clé {{index . "KeyName"}} est utilisée par {{if index . "AppsName"}}Applications: {{index . "AppsName"}}{{end}} and {{if index . "PipsName"}}Pipelines: {{index . "PipsName"}}{{end}} mais n'existe pas sur le projet {{index . "ProjectKey"}}`,
+	MissingProjectKey:                `La clé {{index . "KeyName"}} est utilisée par {{if index . "AppsName"}}Applications: {{index . "AppsName"}}{{end}}{{if index . "PipsName"}} et Pipelines: {{index . "PipsName"}}{{end}} mais n'existe pas sur le projet {{index . "ProjectKey"}}`,
 	UnusedProjectKey:                 `La clé {{index . "KeyName"}} est inutilisé dans le projet {{index . "ProjectKey"}}.`,
 	MissingProjectVCSServer:          `Le gestionnaire de dépôt {{index . "VCSName"}} est utilisés par les applications : "{{index . "AppsName"}}" mais n'existe pas sur le projet {{index . "ProjectKey"}}`,
 	UnusedProjectVCSServer:           `Le gestionnaire de dépôt {{index . "VCSName"}} est inutilisé dans le project {{index . "ProjectKey"}}`,
