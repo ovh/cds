@@ -77,7 +77,7 @@ func FileSHA512sum(file *os.File) (string, error) {
 		return "", fmt.Errorf("FileSHA512sum> error: %v", err)
 	}
 
-	hashInBytes := hash.Sum(nil)[:16]
+	hashInBytes := hash.Sum(nil)[:64]
 	sum := hex.EncodeToString(hashInBytes)
 	return sum, nil
 }
