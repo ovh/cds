@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/sdk/cdsclient"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/test"
@@ -285,32 +287,26 @@ func Test_deleteApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 }
 
 func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, tsURL, tsClose := newTestServer(t)
+	defer tsClose()
+
 	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
 		Name:  "test-provider",
 		Token: "my-token",
 	})
-	u, pass := assets.InsertAdminUser(api.mustDB())
+
+	u, _ := assets.InsertAdminUser(api.mustDB())
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
 	pf := sdk.PlatformModel{
-		Name:       "test-deploy-2",
+		Name:       "test-deploy-3",
 		Deployment: true,
-	}
-	test.NoError(t, platform.InsertModel(db, &pf))
-	defer platform.DeleteModel(db, pf.ID)
-
-	pp := sdk.ProjectPlatform{
-		Model:           pf,
-		Name:            pf.Name,
-		PlatformModelID: pf.ID,
-		ProjectID:       proj.ID,
-		Config: sdk.PlatformConfig{
+		DeploymentDefaultConfig: sdk.PlatformConfig{
 			"token": sdk.PlatformConfigValue{
 				Type:  sdk.PlatformConfigTypePassword,
 				Value: "my-secret-token",
@@ -321,74 +317,53 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 			},
 		},
 	}
-	test.NoError(t, platform.InsertPlatform(db, &pp))
+	test.NoError(t, platform.InsertModel(api.mustDB(), &pf))
+	defer platform.DeleteModel(api.mustDB(), pf.ID)
 
-	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
-		"platform":            pf.Name,
+	pp := sdk.ProjectPlatform{
+		Model:           pf,
+		Name:            pf.Name,
+		PlatformModelID: pf.ID,
+		ProjectID:       proj.ID,
 	}
+	test.NoError(t, platform.InsertPlatform(api.mustDB(), &pp))
 
-	uri := router.GetRoute("POST", api.postApplicationDeploymentStrategyConfigHandler, vars)
-	req := assets.NewAuthentifiedRequestFromProvider(t, "test-provider", "my-token", "POST", uri, sdk.PlatformConfig{
-		"token": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypePassword,
-			Value: "my-secret-token",
-		},
-		"url": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypeString,
-			Value: "my-url",
-		},
+	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
+		Host:  tsURL,
+		Name:  "test-provider",
+		Token: "my-token",
 	})
 
-	// Do the request
-	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	//Then we try to update
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.PlatformConfig{
+	err := sdkclient.ApplicationDeploymentStrategyUpdate(proj.Key, app.Name, pf.Name, sdk.PlatformConfig{
 		"token": sdk.PlatformConfigValue{
 			Type:  sdk.PlatformConfigTypePassword,
 			Value: "my-secret-token-2",
 		},
-		"url": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypeString,
-			Value: "my-url-2",
-		},
 	})
+	test.NoError(t, err)
 
-	// Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	cfg, err := application.LoadDeploymentStrategies(api.mustDB(), app.ID, true)
+	test.NoError(t, err)
 
-	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategyConfigHandler, vars)
-	//Then we try to update
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
-	// Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	var assertCfg = func(key string, cfg sdk.PlatformConfig, expected sdk.PlatformConfigValue) {
+		actual, has := cfg[key]
+		assert.True(t, has, "%s not found", key)
+		assert.Equal(t, expected.Value, actual.Value)
+		assert.Equal(t, expected.Type, actual.Type)
+	}
 
-	cfg := sdk.PlatformConfig{}
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &cfg))
-	assert.Equal(t, sdk.PasswordPlaceholder, cfg["token"].Value)
+	pfcfg, has := cfg[pf.Name]
+	assert.True(t, has, "%s not found", pf.Name)
+	assertCfg("token", pfcfg,
+		sdk.PlatformConfigValue{
+			Type:  sdk.PlatformConfigTypePassword,
+			Value: "my-secret-token-2",
+		})
 
-	// with clear paswword
-	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategyConfigHandler, vars)
-	// Then we try to update
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
-	q := req.URL.Query()
-	q.Set("withClearPassword", "true")
-	req.URL.RawQuery = q.Encode()
+	assertCfg("url", pfcfg,
+		sdk.PlatformConfigValue{
+			Type:  sdk.PlatformConfigTypeString,
+			Value: "my-url",
+		})
 
-	// Do the request
-	w = httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
-
-	cfg2 := sdk.PlatformConfig{}
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &cfg2))
-	assert.Equal(t, "my-secret-token-2", cfg2["token"].Value)
 }
