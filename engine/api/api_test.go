@@ -19,7 +19,7 @@ import (
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
 	db, cache := test.SetupPG(t, bootstrapFunc...)
-	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "" /*"/"+test.GetTestName(t)*/)
+	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "/"+test.GetTestName(t))
 	api := &API{
 		StartupTime:         time.Now(),
 		Router:              router,

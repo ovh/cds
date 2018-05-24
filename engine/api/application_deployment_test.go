@@ -6,14 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
