@@ -2121,7 +2121,7 @@ exit
 <li><strong>image</strong> <em>registry.my.infra.net/my/beautiful/worker:latest</em></li>
 <li><strong>pattern</strong> : if you aren&rsquo;t an administrator select a pattern for your configuration script (CDS provide default pattern for linux environment called basic_unix)</li>
 <li><strong>shell command</strong> : if you are an administrator in the main shell command you can indicate <code>sh -c</code> for an unix environment.</li>
-<li><strong>command</strong> : is the main worker command, typically on a unix system <code>rm -f worker &amp;&amp; curl {{.API}}/download/worker/linux/$(uname -m) -o worker &amp;&amp; chmod +x worker &amp;&amp; exec ./worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use</code> to see all the available variables to interpolate for your worker parameters <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">click here</a></li>
+<li><strong>command</strong> : is the main worker command, typically on a unix system <code>curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 -C - &amp;&amp; chmod +x worker &amp;&amp; exec ./worker</code> to see all the available variables to interpolate for your worker parameters <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">click here</a></li>
 </ul></li>
 <li>Click on <em>Add</em> button and that&rsquo;s it</li>
 </ul>
