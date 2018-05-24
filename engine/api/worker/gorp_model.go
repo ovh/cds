@@ -30,6 +30,7 @@ func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
 	var modelBtes []byte
 	switch m.Type {
 	case sdk.Docker:
+		m.ModelDocker.Envs = mergeWithDefaultEnvs(m.ModelDocker.Envs)
 		var err error
 		if modelBtes, err = json.Marshal(m.ModelDocker); err != nil {
 			return err

@@ -1140,6 +1140,26 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk7(in *jlexer.Lexer, out *ModelDocke
 			out.Image = string(in.String())
 		case "memory":
 			out.Memory = int64(in.Int64())
+		case "envs":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Envs = make(map[string]string)
+				} else {
+					out.Envs = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v4 string
+					v4 = string(in.String())
+					(out.Envs)[key] = v4
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
 		case "shell":
 			out.Shell = string(in.String())
 		case "cmd":
@@ -1177,6 +1197,30 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk7(out *jwriter.Writer, in ModelDock
 			out.RawString(prefix)
 		}
 		out.Int64(int64(in.Memory))
+	}
+	if len(in.Envs) != 0 {
+		const prefix string = ",\"envs\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('{')
+			v5First := true
+			for v5Name, v5Value := range in.Envs {
+				if v5First {
+					v5First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v5Name))
+				out.RawByte(':')
+				out.String(string(v5Value))
+			}
+			out.RawByte('}')
+		}
 	}
 	if in.Shell != "" {
 		const prefix string = ",\"shell\":"
@@ -1243,6 +1287,26 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk8(in *jlexer.Lexer, out *ModelCmds)
 			continue
 		}
 		switch key {
+		case "envs":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				if !in.IsDelim('}') {
+					out.Envs = make(map[string]string)
+				} else {
+					out.Envs = nil
+				}
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v6 string
+					v6 = string(in.String())
+					(out.Envs)[key] = v6
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
 		case "shell":
 			out.Shell = string(in.String())
 		case "pre_cmd":
@@ -1265,6 +1329,30 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk8(out *jwriter.Writer, in ModelCmds
 	out.RawByte('{')
 	first := true
 	_ = first
+	if len(in.Envs) != 0 {
+		const prefix string = ",\"envs\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('{')
+			v7First := true
+			for v7Name, v7Value := range in.Envs {
+				if v7First {
+					v7First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v7Name))
+				out.RawByte(':')
+				out.String(string(v7Value))
+			}
+			out.RawByte('}')
+		}
+	}
 	if in.Shell != "" {
 		const prefix string = ",\"shell\":"
 		if first {
@@ -1390,11 +1478,11 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk9(in *jlexer.Lexer, out *Model) {
 					out.RegisteredCapabilities = (out.RegisteredCapabilities)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v4 Requirement
+					var v8 Requirement
 					if data := in.Raw(); in.Ok() {
-						in.AddError((v4).UnmarshalJSON(data))
+						in.AddError((v8).UnmarshalJSON(data))
 					}
-					out.RegisteredCapabilities = append(out.RegisteredCapabilities, v4)
+					out.RegisteredCapabilities = append(out.RegisteredCapabilities, v8)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1569,11 +1657,11 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk9(out *jwriter.Writer, in Model) {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v5, v6 := range in.RegisteredCapabilities {
-				if v5 > 0 {
+			for v9, v10 := range in.RegisteredCapabilities {
+				if v9 > 0 {
 					out.RawByte(',')
 				}
-				out.Raw((v6).MarshalJSON())
+				out.Raw((v10).MarshalJSON())
 			}
 			out.RawByte(']')
 		}
@@ -1797,9 +1885,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk11(in *jlexer.Lexer, out *Group) {
 					out.Admins = (out.Admins)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v7 User
-					easyjson82a45abeDecodeGithubComOvhCdsSdk10(in, &v7)
-					out.Admins = append(out.Admins, v7)
+					var v11 User
+					easyjson82a45abeDecodeGithubComOvhCdsSdk10(in, &v11)
+					out.Admins = append(out.Admins, v11)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1820,9 +1908,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk11(in *jlexer.Lexer, out *Group) {
 					out.Users = (out.Users)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v8 User
-					easyjson82a45abeDecodeGithubComOvhCdsSdk10(in, &v8)
-					out.Users = append(out.Users, v8)
+					var v12 User
+					easyjson82a45abeDecodeGithubComOvhCdsSdk10(in, &v12)
+					out.Users = append(out.Users, v12)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1843,9 +1931,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk11(in *jlexer.Lexer, out *Group) {
 					out.Tokens = (out.Tokens)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v9 Token
-					easyjson82a45abeDecodeGithubComOvhCdsSdk12(in, &v9)
-					out.Tokens = append(out.Tokens, v9)
+					var v13 Token
+					easyjson82a45abeDecodeGithubComOvhCdsSdk12(in, &v13)
+					out.Tokens = append(out.Tokens, v13)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1894,11 +1982,11 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk11(out *jwriter.Writer, in Group) {
 		}
 		{
 			out.RawByte('[')
-			for v10, v11 := range in.Admins {
-				if v10 > 0 {
+			for v14, v15 := range in.Admins {
+				if v14 > 0 {
 					out.RawByte(',')
 				}
-				easyjson82a45abeEncodeGithubComOvhCdsSdk10(out, v11)
+				easyjson82a45abeEncodeGithubComOvhCdsSdk10(out, v15)
 			}
 			out.RawByte(']')
 		}
@@ -1913,11 +2001,11 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk11(out *jwriter.Writer, in Group) {
 		}
 		{
 			out.RawByte('[')
-			for v12, v13 := range in.Users {
-				if v12 > 0 {
+			for v16, v17 := range in.Users {
+				if v16 > 0 {
 					out.RawByte(',')
 				}
-				easyjson82a45abeEncodeGithubComOvhCdsSdk10(out, v13)
+				easyjson82a45abeEncodeGithubComOvhCdsSdk10(out, v17)
 			}
 			out.RawByte(']')
 		}
@@ -1932,11 +2020,11 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk11(out *jwriter.Writer, in Group) {
 		}
 		{
 			out.RawByte('[')
-			for v14, v15 := range in.Tokens {
-				if v14 > 0 {
+			for v18, v19 := range in.Tokens {
+				if v18 > 0 {
 					out.RawByte(',')
 				}
-				easyjson82a45abeEncodeGithubComOvhCdsSdk12(out, v15)
+				easyjson82a45abeEncodeGithubComOvhCdsSdk12(out, v19)
 			}
 			out.RawByte(']')
 		}
@@ -2121,9 +2209,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk10(in *jlexer.Lexer, out *User) {
 					out.Groups = (out.Groups)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v16 Group
-					easyjson82a45abeDecodeGithubComOvhCdsSdk11(in, &v16)
-					out.Groups = append(out.Groups, v16)
+					var v20 Group
+					easyjson82a45abeDecodeGithubComOvhCdsSdk11(in, &v20)
+					out.Groups = append(out.Groups, v20)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2146,9 +2234,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk10(in *jlexer.Lexer, out *User) {
 					out.Favorites = (out.Favorites)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v17 Favorite
-					easyjson82a45abeDecodeGithubComOvhCdsSdk13(in, &v17)
-					out.Favorites = append(out.Favorites, v17)
+					var v21 Favorite
+					easyjson82a45abeDecodeGithubComOvhCdsSdk13(in, &v21)
+					out.Favorites = append(out.Favorites, v21)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2231,11 +2319,11 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk10(out *jwriter.Writer, in User) {
 		}
 		{
 			out.RawByte('[')
-			for v18, v19 := range in.Groups {
-				if v18 > 0 {
+			for v22, v23 := range in.Groups {
+				if v22 > 0 {
 					out.RawByte(',')
 				}
-				easyjson82a45abeEncodeGithubComOvhCdsSdk11(out, v19)
+				easyjson82a45abeEncodeGithubComOvhCdsSdk11(out, v23)
 			}
 			out.RawByte(']')
 		}
@@ -2262,11 +2350,11 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk10(out *jwriter.Writer, in User) {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v20, v21 := range in.Favorites {
-				if v20 > 0 {
+			for v24, v25 := range in.Favorites {
+				if v24 > 0 {
 					out.RawByte(',')
 				}
-				easyjson82a45abeEncodeGithubComOvhCdsSdk13(out, v21)
+				easyjson82a45abeEncodeGithubComOvhCdsSdk13(out, v25)
 			}
 			out.RawByte(']')
 		}
@@ -2318,9 +2406,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Favorite)
 					out.ProjectIDs = (out.ProjectIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v22 int64
-					v22 = int64(in.Int64())
-					out.ProjectIDs = append(out.ProjectIDs, v22)
+					var v26 int64
+					v26 = int64(in.Int64())
+					out.ProjectIDs = append(out.ProjectIDs, v26)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2341,9 +2429,9 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk13(in *jlexer.Lexer, out *Favorite)
 					out.WorkflowIDs = (out.WorkflowIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v23 int64
-					v23 = int64(in.Int64())
-					out.WorkflowIDs = append(out.WorkflowIDs, v23)
+					var v27 int64
+					v27 = int64(in.Int64())
+					out.WorkflowIDs = append(out.WorkflowIDs, v27)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2374,11 +2462,11 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk13(out *jwriter.Writer, in Favorite
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v24, v25 := range in.ProjectIDs {
-				if v24 > 0 {
+			for v28, v29 := range in.ProjectIDs {
+				if v28 > 0 {
 					out.RawByte(',')
 				}
-				out.Int64(int64(v25))
+				out.Int64(int64(v29))
 			}
 			out.RawByte(']')
 		}
@@ -2395,11 +2483,11 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk13(out *jwriter.Writer, in Favorite
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v26, v27 := range in.WorkflowIDs {
-				if v26 > 0 {
+			for v30, v31 := range in.WorkflowIDs {
+				if v30 > 0 {
 					out.RawByte(',')
 				}
-				out.Int64(int64(v27))
+				out.Int64(int64(v31))
 			}
 			out.RawByte(']')
 		}

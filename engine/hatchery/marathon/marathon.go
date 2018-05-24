@@ -243,6 +243,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 		Token:             h.Config.API.Token,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              workerName,
+		TTL:               h.Config.WorkerTTL,
 		Model:             spawnArgs.Model.ID,
 		Hatchery:          h.hatch.ID,
 		HatcheryName:      h.hatch.Name,
@@ -300,6 +301,38 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 
 	mem := float64(memory * 110 / 100)
 
+	if spawnArgs.Model.ModelDocker.Envs == nil {
+		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
+	}
+
+	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
+	envsWm["CDS_FORCE_EXIT"] = "0"
+	envsWm["CDS_API"] = udataParam.API
+	envsWm["CDS_TOKEN"] = udataParam.Token
+	envsWm["CDS_NAME"] = udataParam.Name
+	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
+	envsWm["CDS_HATCHERY"] = fmt.Sprintf("%d", udataParam.Hatchery)
+	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
+	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
+	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
+
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		} else {
+			envsWm["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		}
+	}
+
+	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
+		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
+		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
+	}
+
 	application := &marathon.Application{
 		ID:  fmt.Sprintf("%s/%s", h.Config.MarathonIDPrefix, workerName),
 		Cmd: &cmd,
@@ -311,6 +344,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 			},
 			Type: "DOCKER",
 		},
+		Env:       &envsWm,
 		CPUs:      0.5,
 		Instances: &instance,
 		Mem:       &mem,

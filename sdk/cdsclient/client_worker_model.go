@@ -55,7 +55,7 @@ func (c *client) WorkerModelSpawnError(id int64, info string) error {
 
 // WorkerModelAdd create a new worker model available
 func (c *client) WorkerModelAdd(name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error) {
-	uri := fmt.Sprintf("/worker/model")
+	uri := "/worker/model"
 	model := sdk.Model{
 		Name:          name,
 		Type:          modelType,
@@ -90,6 +90,45 @@ func (c *client) WorkerModelAdd(name string, modelType string, dockerModel *sdk.
 	}
 
 	return modelCreated, nil
+}
+
+// WorkerModelUpdate update a worker model
+func (c *client) WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error) {
+	uri := fmt.Sprintf("/worker/model/%d", ID)
+	model := sdk.Model{
+		Name:          name,
+		Type:          modelType,
+		GroupID:       groupID,
+		Communication: "http",
+	}
+
+	if dockerModel == nil && vmModel == nil {
+		return model, fmt.Errorf("You have to choose 1 model minimum: docker or vm model")
+	}
+
+	switch modelType {
+	case sdk.Docker:
+		if dockerModel == nil {
+			return model, fmt.Errorf("with model %s then dockerModel parameter could not be nil", modelType)
+		}
+		model.ModelDocker = *dockerModel
+	default:
+		if vmModel == nil {
+			return model, fmt.Errorf("with model %s then vmModel parameter could not be nil", modelType)
+		}
+		model.ModelVirtualMachine = *vmModel
+	}
+
+	modelUpdated := sdk.Model{}
+	code, err := c.PutJSON(uri, model, &modelUpdated)
+	if err != nil {
+		return modelUpdated, err
+	}
+	if code >= 300 {
+		return modelUpdated, fmt.Errorf("WorkerModelUpdate> HTTP %d", code)
+	}
+
+	return modelUpdated, nil
 }
 
 func (c *client) WorkerModel(name string) (sdk.Model, error) {

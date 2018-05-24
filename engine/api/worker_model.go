@@ -38,6 +38,25 @@ func (api *API) addWorkerModelHandler() Handler {
 		}
 
 		currentUser := getUser(ctx)
+		//User must be admin of the group set in the model
+		var ok bool
+	currentUGroup:
+		for _, g := range currentUser.Groups {
+			if g.ID == model.GroupID {
+				for _, a := range g.Admins {
+					if a.ID == currentUser.ID {
+						ok = true
+						break currentUGroup
+					}
+				}
+			}
+		}
+
+		//User should have the right permission or be admin
+		if !currentUser.Admin && !ok {
+			return sdk.ErrWorkerModelNoAdmin
+		}
+
 		switch model.Type {
 		case sdk.Docker:
 			if model.ModelDocker.Image == "" {
@@ -45,7 +64,7 @@ func (api *API) addWorkerModelHandler() Handler {
 			}
 			if !currentUser.Admin && !model.Restricted {
 				if modelPattern == nil {
-					return sdk.ErrForbidden
+					return sdk.ErrWorkerModelNoPattern
 				}
 				model.ModelDocker.Cmd = modelPattern.Model.Cmd
 				model.ModelDocker.Shell = modelPattern.Model.Shell
@@ -59,7 +78,7 @@ func (api *API) addWorkerModelHandler() Handler {
 			}
 			if !currentUser.Admin && !model.Restricted {
 				if modelPattern == nil {
-					return sdk.ErrForbidden
+					return sdk.ErrWorkerModelNoPattern
 				}
 				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
 				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
@@ -82,23 +101,6 @@ func (api *API) addWorkerModelHandler() Handler {
 		// check if worker model already exists
 		if _, err := worker.LoadWorkerModelByName(api.mustDB(), model.Name); err == nil {
 			return sdk.WrapError(sdk.ErrModelNameExist, "addWorkerModel> worker model already exists")
-		}
-
-		//User must be admin of the group set in the model
-		var ok bool
-		for _, g := range currentUser.Groups {
-			if g.ID == model.GroupID {
-				for _, a := range g.Admins {
-					if a.ID == currentUser.ID {
-						ok = true
-					}
-				}
-			}
-		}
-
-		//User should have the right permission or be admin
-		if !currentUser.Admin && !ok {
-			return sdk.ErrForbidden
 		}
 
 		// provision is allowed only for CDS Admin
@@ -246,6 +248,25 @@ func (api *API) updateWorkerModelHandler() Handler {
 		}
 
 		user := getUser(ctx)
+		//User must be admin of the group set in the model
+		var ok bool
+	currentUGroup:
+		for _, g := range getUser(ctx).Groups {
+			if g.ID == model.GroupID {
+				for _, a := range g.Admins {
+					if a.ID == getUser(ctx).ID {
+						ok = true
+						break currentUGroup
+					}
+				}
+			}
+		}
+
+		//User should have the right permission or be admin
+		if !getUser(ctx).Admin && !ok {
+			return sdk.ErrWorkerModelNoAdmin
+		}
+
 		switch model.Type {
 		case sdk.Docker:
 			if model.ModelDocker.Image == "" {
@@ -253,10 +274,17 @@ func (api *API) updateWorkerModelHandler() Handler {
 			}
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
-					return sdk.ErrForbidden
+					if old.Type != sdk.Docker { // Forbidden because we can't fetch previous user data
+						return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "updateWorkerModel> We can't fetch previous user data because type is different")
+					}
+					model.ModelDocker.Cmd = old.ModelDocker.Cmd
+					model.ModelDocker.Shell = old.ModelDocker.Shell
+					model.ModelDocker.Envs = old.ModelDocker.Envs
+				} else {
+					model.ModelDocker.Cmd = modelPattern.Model.Cmd
+					model.ModelDocker.Shell = modelPattern.Model.Shell
+					model.ModelDocker.Envs = modelPattern.Model.Envs
 				}
-				model.ModelDocker.Cmd = modelPattern.Model.Cmd
-				model.ModelDocker.Shell = modelPattern.Model.Shell
 			}
 			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
@@ -267,34 +295,23 @@ func (api *API) updateWorkerModelHandler() Handler {
 			}
 			if !user.Admin && !model.Restricted {
 				if modelPattern == nil {
-					return sdk.ErrForbidden
+					if old.Type == sdk.Docker { // Forbidden because we can't fetch previous user data
+						return sdk.WrapError(sdk.ErrWorkerModelNoPattern, "updateWorkerModel> We can't fetch previous user data because type is different")
+					}
+					model.ModelVirtualMachine.PreCmd = old.ModelVirtualMachine.PreCmd
+					model.ModelVirtualMachine.Cmd = old.ModelVirtualMachine.Cmd
+					model.ModelVirtualMachine.PostCmd = old.ModelVirtualMachine.PostCmd
+				} else {
+					model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
+					model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
+					model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
 				}
-				model.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
-				model.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
-				model.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
 			}
 		}
 
 		//If the model modelID has not been set, keep the old modelID
 		if model.ID == 0 {
 			model.ID = old.ID
-		}
-
-		//User must be admin of the group set in the model
-		var ok bool
-		for _, g := range getUser(ctx).Groups {
-			if g.ID == model.GroupID {
-				for _, a := range g.Admins {
-					if a.ID == getUser(ctx).ID {
-						ok = true
-					}
-				}
-			}
-		}
-
-		//User should have the right permission or be admin
-		if !getUser(ctx).Admin && !ok {
-			return sdk.ErrForbidden
 		}
 
 		// provision is allowed only for CDS Admin
@@ -315,7 +332,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 		defer tx.Rollback()
 
 		// update model in db
-		if err := worker.UpdateWorkerModel(tx, model); err != nil {
+		if err := worker.UpdateWorkerModel(tx, &model); err != nil {
 			return sdk.WrapError(err, "updateWorkerModel> cannot update worker model")
 		}
 
@@ -484,7 +501,6 @@ func (api *API) putWorkerModelPatternHandler() Handler {
 		}
 		modelPattern.ID = oldWmp.ID
 
-		// Insert model pattern in db
 		if err := worker.UpdateWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
 			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot update worker model pattern")
 		}

@@ -10,6 +10,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {User} from '../../../../model/user.model';
 import {finalize} from 'rxjs/operators';
+import {omit} from 'lodash';
 
 @Component({
     selector: 'app-worker-model-edit',
@@ -28,6 +29,9 @@ export class WorkerModelEditComponent implements OnInit {
     patternSelected: ModelPattern;
     currentUser: User;
     canEdit = false;
+    envNames: Array<string> = [];
+    newEnvName: string;
+    newEnvValue: string;
 
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private workerModelPatternError = false;
@@ -73,6 +77,9 @@ export class WorkerModelEditComponent implements OnInit {
 
     reloadData(workerModelName: string): void {
       this._workerModelService.getWorkerModelByName(workerModelName).subscribe( wm => {
+          if (wm.model_docker.envs) {
+              this.envNames = Object.keys(wm.model_docker.envs);
+          }
           this.workerModel = wm;
           this.workerModelPatternsFiltered = this.workerModelPatterns.filter((wmp) => wmp.type === wm.type);
           if (this.currentUser.admin) {
@@ -81,6 +88,10 @@ export class WorkerModelEditComponent implements OnInit {
           }
 
 
+          if (!this.currentUser.admin && wm.group.name === 'shared.infra') {
+            this.canEdit = false;
+            return;
+          }
           // here, check if user is admin of worker model group
           this._groupService.getGroupByName(wm.group.name).subscribe( gr => {
               if (gr.admins) {
@@ -136,7 +147,11 @@ export class WorkerModelEditComponent implements OnInit {
                 this.loading = false;
                 this.patternSelected = null
             }))
-            .subscribe( wm => {
+            .subscribe(wm => {
+                this.workerModel = wm;
+                if (this.workerModel.model_docker != null && this.workerModel.model_docker.envs) {
+                    this.envNames = Object.keys(this.workerModel.model_docker.envs);
+                }
                 this._toast.success('', this._translate.instant('worker_model_saved'));
                 this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
             });
@@ -146,7 +161,11 @@ export class WorkerModelEditComponent implements OnInit {
                 this.loading = false;
                 this.patternSelected = null
             }))
-            .subscribe( wm => {
+            .subscribe(wm => {
+                this.workerModel = wm;
+                if (this.workerModel.model_docker != null && this.workerModel.model_docker.envs) {
+                    this.envNames = Object.keys(this.workerModel.model_docker.envs);
+                }
                 this.loading = false;
                 this._toast.success('', this._translate.instant('worker_model_saved'));
                 this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
@@ -171,11 +190,33 @@ export class WorkerModelEditComponent implements OnInit {
             case 'docker':
                 this.workerModel.model_docker.cmd = pattern.model.cmd;
                 this.workerModel.model_docker.shell = pattern.model.shell;
+                this.workerModel.model_docker.envs = pattern.model.envs;
+                if (pattern.model.envs) {
+                    this.envNames = Object.keys(pattern.model.envs);
+                }
                 break
             default:
                 this.workerModel.model_virtual_machine.pre_cmd = pattern.model.pre_cmd;
                 this.workerModel.model_virtual_machine.cmd = pattern.model.cmd;
                 this.workerModel.model_virtual_machine.post_cmd = pattern.model.post_cmd;
         }
+    }
+
+    addEnv(newEnvName: string, newEnvValue: string) {
+        if (!newEnvName) {
+            return;
+        }
+        if (!this.workerModel.model_docker.envs) {
+            this.workerModel.model_docker.envs = {};
+        }
+        this.workerModel.model_docker.envs[newEnvName] = newEnvValue;
+        this.envNames.push(newEnvName);
+        this.newEnvName = '';
+        this.newEnvValue = '';
+    }
+
+    deleteEnv(envName: string, index: number) {
+        this.envNames.splice(index, 1);
+        this.workerModel.model_docker.envs = omit(this.workerModel.model_docker.envs, envName);
     }
 }

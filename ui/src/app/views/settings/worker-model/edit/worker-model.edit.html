@@ -8,7 +8,7 @@
         <div class="ten wide column">
             <div class="four fields">
               <div class="field">
-                  <label>{{'worker_model_name' | translate}}</label>
+                  <label>{{'worker_model_name' | translate}} *</label>
                   <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name" [disabled]="loading">
               </div>
               <div class="field">
@@ -90,7 +90,7 @@
             </div>
             <div class="three fields">
               <div class="seven wide field">
-                  <label>{{'worker_model_type' | translate}}</label>
+                  <label>{{'worker_model_type' | translate}} *</label>
                   <ng-container *ngIf="workerModelTypes">
                     <sui-select class="selection"
                                 name ="type"
@@ -126,7 +126,7 @@
 
             <ng-container *ngIf="workerModel.type === 'docker'">
               <div class="field">
-                <label>{{'worker_model_image' | translate}}</label>
+                <label>{{'worker_model_image' | translate}} *</label>
                 <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_docker.image" [disabled]="loading">
               </div>
               <div class="field">
@@ -146,11 +146,11 @@
                 </sui-select>
               </div>
               <div class="field">
-                <label>{{'worker_model_shell_docker' | translate}}</label>
+                <label>{{'worker_model_shell_docker' | translate}} *</label>
                 <input class="ui input" type="text" name="shell" placeholder="sh -c" [(ngModel)]="workerModel.model_docker.shell" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
               <div class="field">
-                <label>{{'worker_model_cmd_docker' | translate}}</label>
+                <label>{{'worker_model_cmd_docker' | translate}} *</label>
                 <input
                   class="ui input"
                   type="text"
@@ -158,10 +158,39 @@
                   [(ngModel)]="workerModel.model_docker.cmd"
                   [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
               </div>
+              <div class="field">
+                <label suiPopup [popupText]="'worker_model_env_tooltip' | translate" popupPlacement="top left">
+                  {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+                </label>
+                <ng-container *ngIf="workerModel.model_docker.envs">
+                  <div class="two fields" *ngFor="let envName of envNames; let index = index">
+                    <div class="field">
+                      <input type="text" name="name-{{envName}}" [placeholder]="'common_name' | translate" [value]="envName" disabled>
+                    </div>
+                    <div class="field">
+                      <input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate" [(ngModel)]="workerModel.model_docker.envs[envName]">
+                    </div>
+                    <button class="ui icon red button" (click)="deleteEnv(envName, index)">
+                      <i class="trash icon"></i>
+                    </button>
+                  </div>
+                </ng-container>
+                <div class="two fields">
+                  <div class="field">
+                    <input type="text" name="newEnvName" [placeholder]="'common_name' | translate" [(ngModel)]="newEnvName">
+                  </div>
+                  <div class="field">
+                    <input type="text" name="newEnvValue" [placeholder]="'common_value' | translate" [(ngModel)]="newEnvValue">
+                  </div>
+                  <button class="ui icon green button" (click)="addEnv(newEnvName, newEnvValue)">
+                    <i class="plus icon"></i>
+                  </button>
+                </div>
+              </div>
             </ng-container>
             <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
               <div class="field">
-                <label>{{'worker_model_image' | translate}}</label>
+                <label>{{'worker_model_image' | translate}} *</label>
                 <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_virtual_machine.image" [disabled]="loading">
               </div>
               <div class="field" *ngIf="workerModel.type === 'openstack'">
@@ -194,7 +223,7 @@
                 </textarea>
               </div>
               <div class="field">
-                <label>{{'worker_model_cmd' | translate}}</label>
+                <label>{{'worker_model_cmd' | translate}} *</label>
                 <input
                   class="ui input"
                     type="text"
@@ -248,7 +277,7 @@
           </div>
 
           <table class="ui fixed celled table">
-              <tr *ngFor="let v of workerModel?.capabilities">
+              <tr *ngFor="let v of workerModel?.registered_capabilities">
                   <td>
                       <div class="ui">{{v.value}}</div>
                   </td>

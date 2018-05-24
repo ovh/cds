@@ -74,6 +74,9 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 			Image: "buildpack-deps:jessie",
 			Shell: "sh -c",
 			Cmd:   "worker --api={{.API}}",
+			Envs: map[string]string{
+				"CDS_TEST": "THIS IS A TEST",
+			},
 		},
 		RegisteredCapabilities: sdk.RequirementList{
 			{
@@ -100,6 +103,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &newModel))
 
 	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
+	test.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
 }
 
 func Test_addWorkerModelWithWrongRequest(t *testing.T) {
