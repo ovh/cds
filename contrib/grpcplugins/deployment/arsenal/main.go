@@ -129,7 +129,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 	body, _ := ioutil.ReadAll(res.Body)
 	if res.StatusCode != http.StatusOK {
 		fmt.Println("Body: ", string(body))
-		return fail("deployment failure")
+		return fail("deployment failure (HTTP Status Code: %d)", res.StatusCode)
 	}
 
 	//Read the followUp token
