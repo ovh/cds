@@ -1,19 +1,33 @@
-
 <h2>{{ 'worker_model_list_title' | translate }}</h2>
 
-<div *ngIf="workerModels;then showWorkerModels;else loadWorkerModels"></div>
+<div *ngIf="!loading && workerModels;then showWorkerModels;else loadWorkerModels"></div>
 <ng-template #showWorkerModels>
   <div class="model">
-      <div class="ui form">
-          <div class="fields">
-            <div class="twelve wide field">
-              <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
-            </div>
-            <div class="four wide field">
-              <a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
-            </div>
+    <div class="ui grid">
+      <div class="ui row">
+        <div class="ui five wide column">
+          <div class="ui fluid input">
+            <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
           </div>
+        </div>
+        <div class="ui one wide column"></div>
+        <div class="ui four wide column">
+          <div class="ui fluid action input">
+            <input type="text" [placeholder]="'worker_model_binary_capability' | translate" [(ngModel)]="binaryValue">
+            <button class="ui blue button" (click)="searchBinary(binaryValue)" *ngIf="searchView">
+              {{'common_search' | translate}}
+            </button>
+            <button class="ui button" (click)="searchBinary(null)" *ngIf="!searchView">
+              {{'common_cancel' | translate}}
+            </button>
+          </div>
+        </div>
+        <div class="ui two wide column"></div>
+        <div class="ui four wide column">
+          <a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
+        </div>
       </div>
+    </div>
 
       <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
           <thead>

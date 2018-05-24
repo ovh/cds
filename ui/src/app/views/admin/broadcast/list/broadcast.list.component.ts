@@ -28,6 +28,7 @@ export class BroadcastListComponent extends Table {
         if (!this.filter) {
             return this.broadcasts;
         }
-        return this.broadcasts.filter(v => v.title.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
+        let lowerFilter = this.filter.toLowerCase();
+        return this.broadcasts.filter(v => v.title.toLowerCase().indexOf(lowerFilter) !== -1);
     }
 }

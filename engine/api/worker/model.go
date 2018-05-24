@@ -17,7 +17,7 @@ import (
 )
 
 const modelColumns = `
-	worker_model.id,
+	DISTINCT worker_model.id,
 	worker_model.type,
 	worker_model.name,
 	worker_model.image,
@@ -160,6 +160,41 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, e
 					where group_id = $2`, modelColumns, modelColumns)
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
+		}
+	}
+	return scanWorkerModels(db, wms)
+}
+
+// LoadWorkerModelsByUserAndBinary returns worker models list according to user's groups and binary capability
+func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary string) ([]sdk.Model, error) {
+	wms := []dbResultWMS{}
+	if user.Admin {
+		query := fmt.Sprintf(`
+			SELECT %s
+				FROM worker_model
+					JOIN "group" ON worker_model.group_id = "group".id
+					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+					WHERE worker_capability.type = 'binary' AND worker_capability.name = $1
+		`, modelColumns)
+		if _, err := db.Select(&wms, query, binary); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUserAndBinary> for admin")
+		}
+	} else {
+		query := fmt.Sprintf(`
+			SELECT %s
+				FROM worker_model
+					JOIN "group" ON worker_model.group_id = "group".id
+					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+				WHERE group_id IN (SELECT group_id FROM group_user WHERE user_id = $1) AND worker_capability.type = 'binary' AND worker_capability.name = $3
+			UNION
+			SELECT %s
+				FROM worker_model
+					JOIN "group" ON worker_model.group_id = "group".id
+					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+				WHERE group_id = $2 AND worker_capability.type = 'binary' AND worker_capability.name = $3
+		`, modelColumns, modelColumns)
+		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID, binary); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUserAndBinary> for user")
 		}
 	}
 	return scanWorkerModels(db, wms)

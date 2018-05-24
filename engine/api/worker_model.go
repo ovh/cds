@@ -436,21 +436,28 @@ func (api *API) getWorkerModelsHandler() Handler {
 			return api.getWorkerModel(w, r, name)
 		}
 
-		models := []sdk.Model{}
-		if getUser(ctx) != nil && getUser(ctx).ID > 0 {
-			var errbyuser error
-			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), getUser(ctx))
-			if errbyuser != nil {
-				return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
-			}
-			log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", getUser(ctx).ID, getUser(ctx).Username, getUser(ctx).Admin, models)
-		} else {
+		binary := r.FormValue("binary")
+
+		u := getUser(ctx)
+		if u == nil || u.ID == 0 {
 			var username string
-			if getUser(ctx) != nil {
-				username = getUser(ctx).Username
+			if u != nil {
+				username = u.Username
 			}
 			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
 		}
+
+		models := []sdk.Model{}
+		var errbyuser error
+		if binary != "" {
+			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), getUser(ctx), binary)
+		} else {
+			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), getUser(ctx))
+		}
+		if errbyuser != nil {
+			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
+		}
+		log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", getUser(ctx).ID, getUser(ctx).Username, getUser(ctx).Admin, models)
 
 		return WriteJSON(w, models, http.StatusOK)
 	}
