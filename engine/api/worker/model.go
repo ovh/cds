@@ -174,7 +174,7 @@ func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary
 				FROM worker_model
 					JOIN "group" ON worker_model.group_id = "group".id
 					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-					WHERE worker_capability.type = 'binary' AND worker_capability.name = $1
+					WHERE worker_capability.type = 'binary' AND worker_capability.argument = $1
 		`, modelColumns)
 		if _, err := db.Select(&wms, query, binary); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUserAndBinary> for admin")
@@ -185,13 +185,13 @@ func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary
 				FROM worker_model
 					JOIN "group" ON worker_model.group_id = "group".id
 					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-				WHERE group_id IN (SELECT group_id FROM group_user WHERE user_id = $1) AND worker_capability.type = 'binary' AND worker_capability.name = $3
+				WHERE group_id IN (SELECT group_id FROM group_user WHERE user_id = $1) AND worker_capability.type = 'binary' AND worker_capability.argument = $3
 			UNION
 			SELECT %s
 				FROM worker_model
 					JOIN "group" ON worker_model.group_id = "group".id
 					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
-				WHERE group_id = $2 AND worker_capability.type = 'binary' AND worker_capability.name = $3
+				WHERE group_id = $2 AND worker_capability.type = 'binary' AND worker_capability.argument = $3
 		`, modelColumns, modelColumns)
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID, binary); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUserAndBinary> for user")
