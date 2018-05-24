@@ -141,7 +141,7 @@ chmod +x worker
 				Name: "basic_unix",
 				Model: sdk.ModelCmds{
 					Shell: "sh -c",
-					Cmd:   "curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker",
+					Cmd:   "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 -C - && chmod +x worker && exec ./worker",
 				},
 			},
 		},
