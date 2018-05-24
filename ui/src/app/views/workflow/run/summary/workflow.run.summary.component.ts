@@ -49,11 +49,12 @@ export class WorkflowRunSummaryComponent {
         private _toast: ToastService, private _translate: TranslateService) {
         this.subWR = this._workflowEventStore.selectedRun().subscribe(wr => {
             this.workflowRun = wr;
+            if (this.workflowRun) {
+                let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
 
-            let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
-
-            if (tagTriggeredBy) {
-                this.author = tagTriggeredBy.value;
+                if (tagTriggeredBy) {
+                    this.author = tagTriggeredBy.value;
+                }
             }
         });
     }
