@@ -55,3 +55,18 @@ func CountKeysInVcsConfiguration(db gorp.SqlExecutor, key string, keyName string
 	}
 	return appsName, nil
 }
+
+// GetNameByVCSServer Get the name of application that are linked to the given repository manager
+func GetNameByVCSServer(db gorp.SqlExecutor, vcsName string, projectKey string) ([]string, error) {
+	var appsName []string
+	query := `
+		SELECT application.name
+		FROM application
+		JOIN project on project.id = application.project_id
+		WHERE project.projectkey = $1 AND application.vcs_server = $2
+	`
+	if _, err := db.Select(&appsName, query, projectKey, vcsName); err != nil {
+		return nil, sdk.WrapError(err, "GetNameByVCSServer> Unable to list application name")
+	}
+	return appsName, nil
+}

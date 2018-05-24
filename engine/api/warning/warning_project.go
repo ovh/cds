@@ -8,6 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -61,12 +62,74 @@ func computeWithProjectEvent(db gorp.SqlExecutor, e sdk.Event) error {
 			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectKeyDelete")
 		}
 		return manageProjectDeleteKey(db, e.ProjectKey, keyDeleteEvent.Key)
+	case "sdk.EventProjectVCSServerAdd":
+		var vcsServerAddServer sdk.EventProjectVCSServerAdd
+		if err := mapstructure.Decode(e.Payload, &vcsServerAddServer); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectVCSServerAdd")
+		}
+		return manageProjectVCSServerAdd(db, e.ProjectKey, vcsServerAddServer)
 	case "sdk.EventProjectVCSServerDelete":
-		// Check if vcs is used
-
+		var vcsServerDeleteServer sdk.EventProjectVCSServerDelete
+		if err := mapstructure.Decode(e.Payload, &vcsServerDeleteServer); err != nil {
+			return sdk.WrapError(err, "computeWithProjectEvent> Unable to decode EventProjectVCSServerDelete")
+		}
+		return manageProjectVCSServerDelete(db, e.ProjectKey, vcsServerDeleteServer)
 	default:
 		log.Debug("Event %s ignored", e.EventType)
 		return nil
+	}
+	return nil
+}
+
+func manageProjectVCSServerAdd(db gorp.SqlExecutor, projectKey string, vcs sdk.EventProjectVCSServerAdd) error {
+	if err := removeProjectWarning(db, MissingProjectVCSServer, vcs.VCSServerName, projectKey); err != nil {
+		return sdk.WrapError(err, "manageProjectVCSServerAdd> Unable to remove warning %s for vcsserver %s on project %s", MissingProjectVCSServer, vcs.VCSServerName, projectKey)
+	}
+	apps, err := application.GetNameByVCSServer(db, vcs.VCSServerName, projectKey)
+	if err != nil {
+		return sdk.WrapError(err, "manageProjectVCSServerAdd>")
+	}
+	if len(apps) == 0 {
+		w := sdk.WarningV2{
+			Key:     projectKey,
+			Element: vcs.VCSServerName,
+			Created: time.Now(),
+			Type:    UnusedProjectVCSServer,
+			MessageParams: map[string]string{
+				"VCSName":    vcs.VCSServerName,
+				"ProjectKey": projectKey,
+			},
+		}
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageProjectVCSServerAdd> Unable to insert warning")
+		}
+	}
+	return nil
+}
+func manageProjectVCSServerDelete(db gorp.SqlExecutor, projectKey string, vcs sdk.EventProjectVCSServerDelete) error {
+	if err := removeProjectWarning(db, UnusedProjectVCSServer, vcs.VCSServerName, projectKey); err != nil {
+		return sdk.WrapError(err, "manageProjectVCSServerDelete> Unable to remove warning %s for vcsserver %s on project %s", UnusedProjectVCSServer, vcs.VCSServerName, projectKey)
+	}
+	apps, err := application.GetNameByVCSServer(db, vcs.VCSServerName, projectKey)
+	if err != nil {
+		return sdk.WrapError(err, "manageProjectVCSServerDelete>")
+	}
+
+	if len(apps) > 0 {
+		w := sdk.WarningV2{
+			Key:     projectKey,
+			Element: vcs.VCSServerName,
+			Created: time.Now(),
+			Type:    MissingProjectVCSServer,
+			MessageParams: map[string]string{
+				"VCSName":    vcs.VCSServerName,
+				"ProjectKey": projectKey,
+				"AppsName":   strings.Join(apps, ", "),
+			},
+		}
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "manageProjectVCSServerDelete> Unable to insert warning")
+		}
 	}
 	return nil
 }

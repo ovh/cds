@@ -7,6 +7,8 @@ const (
 	MissingProjectPermissionWorkflow = "MISSING_PROJECT_PERMISSION_WORKFLOW"
 	MissingProjectKey                = "MISSING_PROJECT_KEY"
 	UnusedProjectKey                 = "UNUSED_PROJECT_KEY"
+	MissingProjectVCSServer          = "MISSING_PROJECT_VCS"
+	UnusedProjectVCSServer           = "UNUSED_PROJECT_VCS"
 	MissingVCSConfiguration          = "MISSING_VCS_CONFIGURATION"
 	MissingApplicationVariable       = "MISSING_APPLICATION_VARIABLE"
 	UnusedApplicationVariable        = "UNUSED_APPLICATION_VARIABLE"
@@ -27,6 +29,8 @@ var MessageAmericanEnglish = map[string]string{
 	MissingProjectPermissionWorkflow: `Group {{index . "GroupName"}} is not on project {{index . "ProjectKey"}} but is used on Workflow {{index . "WorkflowName"}}.`,
 	MissingProjectKey:                `Key {{index . "KeyName"}} is used by {{if index . "AppsName"}}Applications: "{{index . "AppsName"}}"{{end}}{{if index . "PipsName"}} and Pipelines: "{{index . "PipsName"}}"{{end}} but does not exist on project {{index . "ProjectKey"}}`,
 	UnusedProjectKey:                 `Unused key {{index . "KeyName"}} on project {{index . "ProjectKey"}}.`,
+	MissingProjectVCSServer:          `Repository manager {{index . "VCSName"}} is used by Applications: "{{index . "AppsName"}}" but does not exist on project {{index . "ProjectKey"}}`,
+	UnusedProjectVCSServer:           `Unused repository manager {{index . "VCSName"}} on project {{index . "ProjectKey"}}.`,
 	MissingVCSConfiguration:          `CDS variables .git.* are used but there is no repository manager on project {{index . "ProjectKey"}}`,
 	MissingApplicationVariable:       `Variable {{index . "VarName"}} is used but does not exist on project/application {{index . "ProjectKey"}}/{{index . "ApplicationName"}}`,
 	UnusedApplicationVariable:        `Unused variable {{index . "VarName"}} on project/application {{index . "ProjectKey"}}/{{index . "ApplicationName"}}.`,
@@ -47,6 +51,8 @@ var MessageFrench = map[string]string{
 	MissingProjectPermissionWorkflow: `Le groupe {{index . "GroupName"}} n'a pas accès au projet {{index . "ProjectKey"}} mais est positionné sur le workflow {{index . "WorkflowName"}}.`,
 	MissingProjectKey:                `La clé {{index . "KeyName"}} est utilisée par {{if index . "AppsName"}}Applications: {{index . "AppsName"}}{{end}} and {{if index . "PipsName"}}Pipelines: {{index . "PipsName"}}{{end}} mais n'existe pas sur le projet {{index . "ProjectKey"}}`,
 	UnusedProjectKey:                 `La clé {{index . "KeyName"}} est inutilisé dans le projet {{index . "ProjectKey"}}.`,
+	MissingProjectVCSServer:          `Le gestionnaire de dépôt {{index . "VCSName"}} est utilisés par les applications : "{{index . "AppsName"}}" mais n'existe pas sur le projet {{index . "ProjectKey"}}`,
+	UnusedProjectVCSServer:           `Le gestionnaire de dépôt {{index . "VCSName"}} est inutilisé dans le project {{index . "ProjectKey"}}`,
 	MissingVCSConfiguration:          `Les variables CDS git.* sont utilisées mais aucun repository manager n'est lié au projet {{index . "ProjectKey"}}`,
 	MissingApplicationVariable:       `La variable {{index . "VarName"}} est utilisée mais n'existe pas dans l'application {{index . "ProjectKey"}}/{{index . "ApplicationName"}}`,
 	UnusedApplicationVariable:        `La variable {{index . "VarName"}} est inutilisée dans l'application {{index . "ProjectKey"}}/{{index . "ApplicationName"}}.`,
