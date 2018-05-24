@@ -55,6 +55,10 @@ func listenAction(c *cli.Context) error {
 	group := c.Args().Get(2)
 	user := c.Args().Get(3)
 	password := c.String("kafka-password")
+	key := c.String("key")
+	if key == "" {
+		key = password
+	}
 
 	//If provided, read the pgp private key file, and ask for the password
 	pgpPrivKey := c.String("pgp-decrypt")
@@ -88,7 +92,7 @@ func listenAction(c *cli.Context) error {
 	}
 
 	//Goroutine for kafka listening
-	if err := consumeFromKafka(kafka, topic, group, user, password, pgpPrivateKey, pgpPassphrase, execScript); err != nil {
+	if err := consumeFromKafka(kafka, topic, group, user, password, key, pgpPrivateKey, pgpPassphrase, execScript); err != nil {
 		return cli.NewExitError(err.Error(), 13)
 	}
 
@@ -118,6 +122,10 @@ func ackAction(c *cli.Context) error {
 	contextFile := c.Args().Get(3)
 	result := c.Args().Get(4)
 	password := c.String("kafka-password")
+	key := c.String("key")
+	if key == "" {
+		key = password
+	}
 
 	//Connect to kafka
 	producer, err := initKafkaProducer(kafka, user, password)
@@ -165,7 +173,7 @@ func ackAction(c *cli.Context) error {
 	//Send artifacts
 	if len(artifacts) > 0 {
 		//Artifacts are send with AES encryption
-		aes, err := getAESEncryptionOptions(password)
+		aes, err := getAESEncryptionOptions(key)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 65)
 		}
@@ -214,8 +222,8 @@ func ackAction(c *cli.Context) error {
 	return nil
 }
 
-func getAESEncryptionOptions(password string) (*shredder.AESEncryption, error) {
-	aeskey := []byte(password)
+func getAESEncryptionOptions(key string) (*shredder.AESEncryption, error) {
+	aeskey := []byte(key)
 	if len(aeskey) > 32 {
 		aeskey = aeskey[:32]
 	} else {

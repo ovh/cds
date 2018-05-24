@@ -43,6 +43,7 @@ func (m KafkaPlugin) Parameters() plugin.Parameters {
 	params.Add("topic", plugin.StringParameter, "Kafka Topic", "{{.cds.env.kafkaTopic}}")
 	params.Add("artifacts", plugin.StringParameter, "Artifacts list (comma separated)", "")
 	params.Add("publicKey", plugin.StringParameter, "GPG Public Key (ASCII armored format)", "{{.cds.proj.gpgPubAsc}}")
+	params.Add("key", plugin.StringParameter, "Key used by AES Encryption. It have to be the same value as --key on plugin binary", "")
 	params.Add("waitForAck", plugin.BooleanParameter, `Wait for Ack`, "true")
 	params.Add("waitForAckTopic", plugin.StringParameter, `Kafka Topic. Used only if "waitForAck" is true.`, "{{.cds.env.kafkaAckTopic}}")
 	params.Add("waitForAckTimeout", plugin.NumberParameter, `Ack timeout (seconds). Used only if "waitForAck" is true.`, "120")
