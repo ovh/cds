@@ -13,7 +13,7 @@
         <div class="ui one wide column"></div>
         <div class="ui four wide column">
           <div class="ui fluid action input">
-            <input type="text" [placeholder]="'worker_model_binary_capability' | translate" [(ngModel)]="binaryValue">
+            <input type="text" [placeholder]="'worker_model_binary_capability' | translate" (keydown)="searchView = true" [(ngModel)]="binaryValue">
             <button class="ui blue button" (click)="searchBinary(binaryValue)" *ngIf="searchView">
               {{'common_search' | translate}}
             </button>
