@@ -219,30 +219,29 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	tag = url.QueryEscape(tag)
 	tag = strings.Replace(tag, "/", "-", -1)
 
-	sha512sum, err512 := FileSHA512sum(filePath)
+	f, errop := os.Open(filePath)
+	if errop != nil {
+		return false, 0, fmt.Errorf("unable on open file %s (%v)", filePath, errop)
+	}
+	sha512sum, err512 := FileSHA512sum(f)
 	if err512 != nil {
 		return false, 0, fmt.Errorf("unable to compte sha512sum on file %s (%v)", filePath, err512)
 	}
 
-	fileForMD5, errop := os.Open(filePath)
-	if errop != nil {
-		return false, 0, fmt.Errorf("unable on open file %s (%v)", filePath, errop)
-	}
-
 	//File stat
-	stat, errst := fileForMD5.Stat()
+	stat, errst := f.Stat()
 	if errst != nil {
 		return false, 0, fmt.Errorf("unable to get file info (%v)", errst)
 	}
 
 	//Compute md5sum
 	hash := md5.New()
-	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
+	if _, errcopy := io.Copy(hash, f); errcopy != nil {
 		return false, 0, fmt.Errorf("unable to read file content (%v)", errcopy)
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
-	fileForMD5.Close()
+	f.Close()
 
 	//Reopen the file because we already read it for md5
 	fileContent, erro := ioutil.ReadFile(filePath)

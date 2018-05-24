@@ -87,20 +87,21 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		if err := client.WorkflowNodeRunArtifactDownload(v[_ProjectKey], v[_WorkflowName], a, f); err != nil {
 			return err
 		}
-		if err := f.Close(); err != nil {
-			return err
-		}
 
-		sha512sum, err512 := sdk.FileSHA512sum(a.GetName())
+		sha512sum, err512 := sdk.FileSHA512sum(f)
 		if err512 != nil {
 			return err512
+		}
+
+		if err := f.Close(); err != nil {
+			return err
 		}
 
 		if sha512sum != a.SHA512sum {
 			return fmt.Errorf("Invalid sha512sum \ndownloaded file:%s\n%s:%s", sha512sum, f.Name(), a.SHA512sum)
 		}
 
-		md5sum, errmd5 := sdk.FileMd5sum(a.GetName())
+		md5sum, errmd5 := sdk.FileMd5sum(f)
 		if errmd5 != nil {
 			return errmd5
 		}

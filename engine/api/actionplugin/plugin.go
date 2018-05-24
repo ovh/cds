@@ -2,10 +2,7 @@ package actionplugin
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/go-gorp/gorp"
@@ -41,18 +38,15 @@ func Get(name, path string) (*sdk.ActionPlugin, *plugin.Parameters, error) {
 		return nil, nil, err
 	}
 
-	sha512sum, err512 := sdk.FileSHA512sum(path)
+	sha512sum, err512 := sdk.FileSHA512sum(fi)
 	if err512 != nil {
-		return nil, nil, sdk.WrapError(err, "actionplugin.Get> FileSHA512sum")
+		return nil, nil, sdk.WrapError(err512, "actionplugin.Get> FileSHA512sum")
 	}
 
-	//Compute md5sum
-	hash := md5.New()
-	if _, err := io.Copy(hash, fi); err != nil {
-		return nil, nil, err
+	md5sum, errmd5 := sdk.FileMd5sum(fi)
+	if errmd5 != nil {
+		return nil, nil, sdk.WrapError(err512, "actionplugin.Get> FileMd5sum")
 	}
-	hashInBytes := hash.Sum(nil)[:16]
-	md5sumStr := hex.EncodeToString(hashInBytes)
 
 	ap := sdk.ActionPlugin{
 		Filename:    name,
@@ -62,7 +56,7 @@ func Get(name, path string) (*sdk.ActionPlugin, *plugin.Parameters, error) {
 		Path:        path,
 		Size:        stat.Size(),
 		Perm:        uint32(stat.Mode().Perm()),
-		MD5sum:      md5sumStr,
+		MD5sum:      md5sum,
 		SHA512sum:   sha512sum,
 	}
 

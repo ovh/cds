@@ -171,16 +171,16 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 	desc.Perm = uint32(fi.Mode().Perm())
 	desc.FileContent, err = ioutil.ReadFile(f.Name())
 	if err != nil {
-		return fmt.Errorf("unable to open file %s: %v", v.GetString("filename"), err)
+		return fmt.Errorf("unable to open file %s : %v", v.GetString("filename"), err)
 	}
 
 	desc.Size = int64(len(desc.FileContent))
-	desc.MD5sum, err = sdk.FileMd5sum(f.Name())
+	desc.MD5sum, err = sdk.FileMd5sum(f)
 	if err != nil {
 		return fmt.Errorf("unable to compute md5sum for file %s: %v", v.GetString("filename"), err)
 	}
 
-	desc.SHA512sum, err = sdk.FileSHA512sum(f.Name())
+	desc.SHA512sum, err = sdk.FileSHA512sum(f)
 	if err != nil {
 		return fmt.Errorf("unable to compute sha512sum for file %s: %v", v.GetString("filename"), err)
 	}

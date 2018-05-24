@@ -1,9 +1,11 @@
 package sdk
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/md5"
 	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,35 +57,27 @@ func JSONWithoutHTMLEncode(t interface{}) ([]byte, error) {
 }
 
 // FileMd5sum returns the md5sum ofr a file
-func FileMd5sum(filePath string) (md5sum string, err error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	h := md5.New()
-	if _, err = io.Copy(h, file); err != nil {
-		return
+func FileMd5sum(file *os.File) (string, error) {
+	reader := bufio.NewReader(file)
+	hash := md5.New()
+	if _, err := io.Copy(hash, reader); err != nil {
+		return "", fmt.Errorf("FileMd5sum> error: %v", err)
 	}
 
-	md5sum = fmt.Sprintf("%x", h.Sum(nil))
-	return
+	hashInBytes := hash.Sum(nil)[:16]
+	sum := hex.EncodeToString(hashInBytes)
+	return sum, nil
 }
 
 // FileSHA512sum returns the sha512sum of a file
-func FileSHA512sum(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	h := sha512.New()
-	if _, err = io.Copy(h, file); err != nil {
-		return "", err
+func FileSHA512sum(file *os.File) (string, error) {
+	reader := bufio.NewReader(file)
+	hash := sha512.New()
+	if _, err := io.Copy(hash, reader); err != nil {
+		return "", fmt.Errorf("FileSHA512sum> error: %v", err)
 	}
 
-	sha512sum := fmt.Sprintf("%x", h.Sum(nil))
-	return sha512sum, nil
+	hashInBytes := hash.Sum(nil)[:16]
+	sum := hex.EncodeToString(hashInBytes)
+	return sum, nil
 }
