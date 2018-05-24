@@ -201,8 +201,22 @@ func LoadArtifacts(db gorp.SqlExecutor, pipelineID int64, applicationID int64, e
 		art := sdk.Artifact{}
 		var md5sum, sha512sum, objectpath sql.NullString
 		var size, perm sql.NullInt64
-		err = rows.Scan(&art.ID, &art.Name, &art.Tag, &art.DownloadHash, &size, &perm, &md5sum, &sha512sum, &objectpath, &art.Pipeline, &art.Project, &art.Application, &art.Environment)
-		if err != nil {
+
+		if err := rows.Scan(
+			&art.ID,
+			&art.Name,
+			&art.Tag,
+			&art.DownloadHash,
+			&size,
+			&perm,
+			&md5sum,
+			&sha512sum,
+			&objectpath,
+			&art.Pipeline,
+			&art.Project,
+			&art.Application,
+			&art.Environment,
+		); err != nil {
 			return nil, err
 		}
 		if md5sum.Valid {
@@ -260,8 +274,22 @@ func LoadArtifactByApplicationID(db gorp.SqlExecutor, applicationID int64) ([]sd
 		art := sdk.Artifact{}
 		var md5sum, sha512sum, objectpath sql.NullString
 		var size, perm sql.NullInt64
-		err = rows.Scan(&art.ID, &art.Name, &art.Tag, &art.DownloadHash, &size, &perm, &md5sum, &sha512sum, &objectpath, &art.Pipeline, &art.Project, &art.Application, &art.Environment)
-		if err != nil {
+
+		if err := rows.Scan(
+			&art.ID,
+			&art.Name,
+			&art.Tag,
+			&art.DownloadHash,
+			&size,
+			&perm,
+			&md5sum,
+			&sha512sum,
+			&objectpath,
+			&art.Pipeline,
+			&art.Project,
+			&art.Application,
+			&art.Environment,
+		); err != nil {
 			return nil, err
 		}
 		if md5sum.Valid {
@@ -298,8 +326,22 @@ func LoadArtifact(db gorp.SqlExecutor, id int64) (*sdk.Artifact, error) {
 	s := &sdk.Artifact{}
 	var md5sum, sha512sum, objectpath sql.NullString
 	var size, perm sql.NullInt64
-	err := db.QueryRow(query, id).Scan(&s.Name, &s.Tag, &s.DownloadHash, &size, &perm, &md5sum, &sha512sum, &objectpath,
-		&s.Pipeline, &s.Project, &s.Application, &s.Environment)
+	if err := db.QueryRow(query, id).Scan(
+		&s.Name,
+		&s.Tag,
+		&s.DownloadHash,
+		&size,
+		&perm,
+		&md5sum,
+		&sha512sum,
+		&objectpath,
+		&s.Pipeline,
+		&s.Project,
+		&s.Application,
+		&s.Environment,
+	); err != nil {
+		return nil, err
+	}
 	if md5sum.Valid {
 		s.MD5sum = md5sum.String
 	}
@@ -315,7 +357,7 @@ func LoadArtifact(db gorp.SqlExecutor, id int64) (*sdk.Artifact, error) {
 	if perm.Valid {
 		s.Perm = uint32(perm.Int64)
 	}
-	return s, err
+	return s, nil
 }
 
 // Delete lock the artifact in database,
@@ -346,10 +388,11 @@ func Delete(db gorp.SqlExecutor, id int64) error {
 	return nil
 }
 
+// InsertArtifact inserts a new artifact in database
 func InsertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, environmentID int64, art sdk.Artifact) error {
 	query := `DELETE FROM "artifact" WHERE name = $1 AND tag = $2 AND pipeline_id = $3 AND application_id = $4 AND environment_id = $5`
-	_, err := db.Exec(query, art.Name, art.Tag, pipelineID, applicationID, environmentID)
-	if err != nil {
+
+	if _, err := db.Exec(query, art.Name, art.Tag, pipelineID, applicationID, environmentID); err != nil {
 		return err
 	}
 
@@ -357,8 +400,21 @@ func InsertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, enviro
 			(name, tag, pipeline_id, application_id, build_number, environment_id, download_hash, size, perm, md5sum, sha512sum, object_path) 
 			VALUES 
 			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
-	_, err = db.Exec(query, art.Name, art.Tag, pipelineID, applicationID, art.BuildNumber, environmentID, art.DownloadHash, art.Size, art.Perm, art.MD5sum, art.SHA512sum, art.ObjectPath)
-	if err != nil {
+
+	if _, err := db.Exec(query,
+		art.Name,
+		art.Tag,
+		pipelineID,
+		applicationID,
+		art.BuildNumber,
+		environmentID,
+		art.DownloadHash,
+		art.Size,
+		art.Perm,
+		art.MD5sum,
+		art.SHA512sum,
+		art.ObjectPath,
+	); err != nil {
 		return sdk.WrapError(err, "insertArtifact> Unable to insert artifact")
 	}
 	return nil
