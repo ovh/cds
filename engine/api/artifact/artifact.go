@@ -28,10 +28,24 @@ func LoadArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.Artifact, error)
 
 	var md5sum, sha512sum, objectpath sql.NullString
 	var size, perm sql.NullInt64
-	err := db.QueryRow(query, hash).Scan(&art.ID, &art.Name, &art.Tag, &art.Pipeline, &art.Project, &art.Application, &art.Environment, &size, &perm, &md5sum, &sha512sum, &objectpath)
-	if err != nil {
+
+	if err := db.QueryRow(query, hash).Scan(
+		&art.ID,
+		&art.Name,
+		&art.Tag,
+		&art.Pipeline,
+		&art.Project,
+		&art.Application,
+		&art.Environment,
+		&size,
+		&perm,
+		&md5sum,
+		&sha512sum,
+		&objectpath,
+	); err != nil {
 		return nil, err
 	}
+
 	if md5sum.Valid {
 		art.MD5sum = md5sum.String
 	}
@@ -87,10 +101,25 @@ func LoadArtifactsByBuildNumber(db gorp.SqlExecutor, pipelineID int64, applicati
 		art := sdk.Artifact{}
 		var md5sum, sha512sum, objectpath sql.NullString
 		var size, perm sql.NullInt64
-		err = rows.Scan(&art.ID, &art.Name, &art.Tag, &art.DownloadHash, &size, &perm, &md5sum, &sha512sum, &objectpath, &art.Pipeline, &art.Project, &art.Application, &art.Environment)
-		if err != nil {
+
+		if err := rows.Scan(
+			&art.ID,
+			&art.Name,
+			&art.Tag,
+			&art.DownloadHash,
+			&size,
+			&perm,
+			&md5sum,
+			&sha512sum,
+			&objectpath,
+			&art.Pipeline,
+			&art.Project,
+			&art.Application,
+			&art.Environment,
+		); err != nil {
 			return nil, err
 		}
+
 		if md5sum.Valid {
 			art.MD5sum = md5sum.String
 		}
