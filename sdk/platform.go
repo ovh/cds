@@ -100,6 +100,8 @@ type ProjectPlatform struct {
 // MergeWith merge two config
 func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
 	for k, v := range cfg {
-		(*config)[k] = v
+		val := (*config)[k]
+		val.Value = v.Value
+		(*config)[k] = val
 	}
 }
