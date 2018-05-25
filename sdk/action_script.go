@@ -135,6 +135,15 @@ func NewCheckoutApplication(s string) Action {
 	return newAction
 }
 
+// NewDeployApplication returns an action (basically used as a step of a job) of deploy application type
+func NewDeployApplication(s string) Action {
+	newAction := Action{
+		Name: DeployApplicationAction,
+		Type: BuiltinAction,
+	}
+	return newAction
+}
+
 // NewStepPlugin returns an action (basically used as a step of a job) of plugin type
 func NewStepPlugin(v map[string]map[string]string) (*Action, error) {
 	if len(v) != 1 {
