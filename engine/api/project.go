@@ -273,10 +273,15 @@ func (api *API) addProjectHandler() Handler {
 				continue
 			}
 			// the default group could not be selected on ui 'Project Add'
-			if !group.IsDefaultGroupID(groupPermission.Group.ID) {
+			if groupPermission.Group.ID != 0 && !group.IsDefaultGroupID(groupPermission.Group.ID) {
+				groupAttached = true
+				continue
+			}
+			if groupPermission.Group.Name != "" && !group.IsDefaultGroupName(groupPermission.Group.Name) {
 				groupAttached = true
 			}
 		}
+
 		if !groupAttached {
 			// check if new auto group does not already exists
 			if _, errl := group.LoadGroup(api.mustDB(), p.Name); errl != nil {
