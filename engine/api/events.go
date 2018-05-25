@@ -56,7 +56,7 @@ func (b *eventsBroker) getSubEvents(uuid string) (map[string][]sdk.EventSubscrip
 }
 
 func (b *eventsBroker) setSubEvents(uuid string, subEvents map[string][]sdk.EventSubscription) {
-	b.cache.SetWithTTL(cache.Key(eventsKey, uuid), subEvents, -1)
+	b.cache.SetWithTTL(cache.Key(eventsKey, uuid), subEvents, 600)
 }
 
 func (b *eventsBroker) deleteSubEvents(uuid string) {
