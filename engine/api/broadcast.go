@@ -109,7 +109,7 @@ func (api *API) postMarkAsReadBroadcastHandler() Handler {
 			}
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

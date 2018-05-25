@@ -75,7 +75,7 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 
 		event.PublishApplicationKeyDelete(key, *app, keyToDelete, getUser(ctx))
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

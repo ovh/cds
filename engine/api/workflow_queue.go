@@ -223,7 +223,7 @@ func (api *API) postBookWorkflowJobHandler() Handler {
 		if _, err := workflow.BookNodeJobRun(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "postBookWorkflowJobHandler> job already booked")
 		}
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

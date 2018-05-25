@@ -128,7 +128,7 @@ func (api *API) spawnErrorWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Cannot commit tx")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

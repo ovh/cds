@@ -409,7 +409,7 @@ func (api *API) bookPipelineBuildJobHandler() Handler {
 		if _, err := pipeline.BookPipelineBuildJob(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "bookPipelineBuildJobHandler> job already booked")
 		}
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -438,7 +438,7 @@ func (api *API) addSpawnInfosPipelineBuildJobHandler() Handler {
 			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

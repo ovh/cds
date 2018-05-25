@@ -102,7 +102,7 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 
 		event.PublishDeleteProjectVariable(p, *varToDelete, getUser(ctx))
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

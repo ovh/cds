@@ -118,7 +118,7 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 
 		event.PublishDeleteProjectKey(p, deletedKey, getUser(ctx))
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

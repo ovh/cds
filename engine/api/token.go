@@ -109,6 +109,6 @@ func (api *API) deleteTokenHandler() Handler {
 			return sdk.WrapError(err, "deleteTokenHandler> cannot load delete token id %d", tokenID)
 		}
 
-		return nil
+		return WriteJSON(w, nil, http.StatusOK)
 	}
 }

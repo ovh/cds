@@ -302,7 +302,7 @@ func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
 			return sdk.WrapError(err, "getUserNotificationApplicationPipelineHandler> cannot load notification settings")
 		}
 		if notifs == nil {
-			return nil
+			return WriteJSON(w, nil, http.StatusOK)
 		}
 
 		return WriteJSON(w, notifs, http.StatusOK)
