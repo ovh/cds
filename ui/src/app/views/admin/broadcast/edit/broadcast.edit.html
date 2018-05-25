@@ -40,7 +40,7 @@
             </div>
             <div class="two fields">
                 <div class="field">
-                  <label>{{ 'project' | translate }}</label>
+                  <label>{{ 'common_project' | translate }}</label>
                   <sui-select class="selection mt5"
                         placeholder="{{'broadcast_project_select' | translate}}"
                         name="project"
@@ -63,6 +63,14 @@
                 <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
                   <i class="save icon"></i>{{ 'btn_save' | translate }}
                 </button>
+            </div>
+            <div class="field">
+              <label>{{'common_preview' | translate}}</label>
+              <div class="ui segment">
+                <ng-container *ngIf="broadcast.content">
+                  <markdown [data]="broadcast.content"></markdown>
+                </ng-container>
+              </div>
             </div>
         </div>
         <div class="six wide column">

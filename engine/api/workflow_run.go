@@ -448,6 +448,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		}
 
 		if wNode == nil || errW != nil {
+			log.Debug("getWorkflowCommitsHandler> node not found")
 			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, getUser(ctx), name, nodeName, workflow.LoadOptions{})
 			if errCtx != nil {
 				return sdk.WrapError(errCtx, "getWorkflowCommitsHandler> Unable to load workflow node context")
@@ -483,6 +484,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 			}
 		}
 
+		log.Debug("getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
 		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
 		if errC != nil {
 			// as workflow.GetNodeRunBuildCommits can return a 401 error, we avoid here to return 401 on UI too
