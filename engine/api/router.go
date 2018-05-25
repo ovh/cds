@@ -344,6 +344,8 @@ func (r *Router) GET(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 	rc.Options["auth"] = "true"
 	rc.Method = "GET"
 	rc.Options["allowServices"] = "false"
+	rc.Options["allowProvider"] = "false"
+
 	for _, c := range cfg {
 		c(rc)
 	}
@@ -356,6 +358,8 @@ func (r *Router) POST(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
 	rc.Options["allowServices"] = "false"
+	rc.Options["allowProvider"] = "false"
+
 	rc.Method = "POST"
 	for _, c := range cfg {
 		c(rc)
@@ -371,6 +375,8 @@ func (r *Router) POSTEXECUTE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerC
 	rc.Options["allowServices"] = "false"
 	rc.Method = "POST"
 	rc.Options["isExecution"] = "true"
+	rc.Options["allowProvider"] = "false"
+
 	for _, c := range cfg {
 		c(rc)
 	}
@@ -383,6 +389,8 @@ func (r *Router) PUT(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 	rc.Handler = h()
 	rc.Options["allowServices"] = "false"
 	rc.Options["auth"] = "true"
+	rc.Options["allowProvider"] = "false"
+
 	rc.Method = "PUT"
 	for _, c := range cfg {
 		c(rc)
@@ -396,6 +404,8 @@ func (r *Router) DELETE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig
 	rc.Handler = h()
 	rc.Options["allowServices"] = "false"
 	rc.Options["auth"] = "true"
+	rc.Options["allowProvider"] = "false"
+
 	rc.Method = "DELETE"
 	for _, c := range cfg {
 		c(rc)

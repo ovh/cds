@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// These are constant for events about workflow runs
 const (
 	EventSubsWorkflowRuns = "event:workflow:runs"
 	EventSubWorkflowRun   = "event:workflow:run"
@@ -45,7 +46,7 @@ type EventEngine struct {
 	Message string `json:"message"`
 }
 
-// EventWorkflowNodeJobRun contains event data for a workflow node run job
+// EventRunWorkflowNodeJob contains event data for a workflow node run job
 type EventRunWorkflowNodeJob struct {
 	ID                int64  `json:"id"`
 	WorkflowNodeRunID int64  `json:"workflow_node_run_id,omitempty"`
@@ -56,7 +57,7 @@ type EventRunWorkflowNodeJob struct {
 	Model             string `json:"model,omitempty"`
 }
 
-// EventWorkflowNodeRun contains event data for a workflow node run
+// EventRunWorkflowNode contains event data for a workflow node run
 type EventRunWorkflowNode struct {
 	ID                    int64                     `json:"id,omitempty"`
 	NodeID                int64                     `json:"node_id,omitempty"`
@@ -79,7 +80,7 @@ type EventRunWorkflowNode struct {
 	StagesSummary         []StageSummary            `json:"stages_summary"`
 }
 
-// EventWorkflowRun contains event data for a workflow run
+// EventRunWorkflow contains event data for a workflow run
 type EventRunWorkflow struct {
 	ID            int64            `json:"id"`
 	Number        int64            `json:"num"`

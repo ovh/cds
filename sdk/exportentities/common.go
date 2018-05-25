@@ -17,11 +17,11 @@ func GetFormat(f string) (Format, error) {
 	s := strings.ToLower(f)
 	s = strings.TrimSpace(s)
 	switch s {
-	case "yaml", "yml":
+	case "yaml", "yml", ".yaml", ".yml":
 		return FormatYAML, nil
-	case "json":
+	case "json", ".json":
 		return FormatJSON, nil
-	case "toml", "tml":
+	case "toml", "tml", ".toml", ".tml":
 		return FormatTOML, nil
 	default:
 		return UnknownFormat, ErrUnsupportedFormat
@@ -40,7 +40,21 @@ func GetContentType(f Format) string {
 	}
 }
 
-//Marshal suppoets JSON, YAML and HCL
+//Unmarshal supports JSON, YAML
+func Unmarshal(btes []byte, f Format, i interface{}) error {
+	var errMarshal error
+	switch f {
+	case FormatJSON:
+		errMarshal = json.Unmarshal(btes, i)
+	case FormatYAML:
+		errMarshal = yaml.Unmarshal(btes, i)
+	default:
+		errMarshal = ErrUnsupportedFormat
+	}
+	return errMarshal
+}
+
+//Marshal supports JSON, YAML
 func Marshal(i interface{}, f Format) ([]byte, error) {
 	var btes []byte
 	var errMarshal error

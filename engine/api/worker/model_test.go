@@ -48,11 +48,13 @@ func insertGroup(t *testing.T, db gorp.SqlExecutor) *sdk.Group {
 
 func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID int64) *sdk.Model {
 	m := sdk.Model{
-		Name:    name,
-		Type:    sdk.Docker,
-		Image:   "foo/bar:3.4",
+		Name: name,
+		Type: sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "foo/bar:3.4",
+		},
 		GroupID: groupID,
-		Capabilities: sdk.RequirementList{
+		RegisteredCapabilities: sdk.RequirementList{
 			{
 				Name:  "capa_1",
 				Type:  sdk.BinaryRequirement,
@@ -182,7 +184,7 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cannot load worker model capabilities: %s", err)
 	}
-	assert.EqualValues(t, m.Capabilities, capa)
+	assert.EqualValues(t, m.RegisteredCapabilities, capa)
 }
 
 func TestUpdateWorkerModel(t *testing.T) {
@@ -193,13 +195,13 @@ func TestUpdateWorkerModel(t *testing.T) {
 
 	m := insertWorkerModel(t, db, "lol", g.ID)
 	m1 := *m
-	m1.Capabilities = append(m1.Capabilities, sdk.Requirement{
+	m1.RegisteredCapabilities = append(m1.RegisteredCapabilities, sdk.Requirement{
 		Name:  "Capa_2",
 		Type:  sdk.BinaryRequirement,
 		Value: "Capa_2",
 	})
 
-	if err := UpdateWorkerModel(db, m1); err != nil {
+	if err := UpdateWorkerModel(db, &m1); err != nil {
 		t.Fatalf("Error : %s", err)
 	}
 
@@ -210,5 +212,5 @@ func TestUpdateWorkerModel(t *testing.T) {
 	}
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m3.Type)
-	assert.Equal(t, 2, len(m3.Capabilities))
+	assert.Equal(t, 2, len(m3.RegisteredCapabilities))
 }

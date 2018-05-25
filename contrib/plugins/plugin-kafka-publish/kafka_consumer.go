@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
 )
 
-func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey, gpgPassphrase []byte, execScript string) error {
+func consumeFromKafka(kafka, topic, group, user, password, key string, gpgPrivatekey, gpgPassphrase []byte, execScript string) error {
 	//Create a new client
 	var config = sarama.NewConfig()
 	config.Net.TLS.Enable = true
@@ -42,25 +42,6 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 	consumer, err := sarama.NewConsumerFromClient(client)
 	if err != nil {
 		return err
-	}
-
-	//Default is AES encryption based on password
-	aes, err := getAESEncryptionOptions(password)
-	if err != nil {
-		return err
-	}
-	var opts = &shredder.Opts{
-		ChunkSize:     512 * 1024,
-		AESEncryption: aes,
-	}
-
-	//If provided use GPG encryption
-	if len(gpgPrivatekey) > 0 && len(gpgPassphrase) > 0 {
-		opts.AESEncryption = nil
-		opts.GPGEncryption = &shredder.GPGEncryption{
-			PrivateKey: gpgPrivatekey,
-			Passphrase: gpgPassphrase,
-		}
 	}
 
 	fmt.Printf("Listening Kafka %s on topic %s...\n", kafka, topic)
@@ -131,6 +112,12 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 				chunks = append(chunks, *c)
 
 				actionID := c.Ctx.GetUUID()
+				opts, errOpts := getShredderOpts(key, gpgPrivatekey, gpgPassphrase)
+				if errOpts != nil {
+					fmt.Printf("Error on getShredderOpts : %s\n", errOpts)
+					continue
+				}
+
 				//Try to match a context
 				ctx, ok := contexts[actionID]
 				if !ok {
@@ -183,7 +170,6 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 							fmt.Println(stdErr.String())
 						}
 					}
-
 				}
 				continue
 			}
@@ -198,6 +184,28 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 			return nil
 		}
 	}
+}
+
+func getShredderOpts(key string, gpgPrivatekey, gpgPassphrase []byte) (*shredder.Opts, error) {
+	//Default is AES encryption
+	aes, err := getAESEncryptionOptions(key)
+	if err != nil {
+		return nil, err
+	}
+	var opts = &shredder.Opts{
+		ChunkSize:     512 * 1024,
+		AESEncryption: aes,
+	}
+
+	//If provided use GPG encryption
+	if len(gpgPrivatekey) > 0 && len(gpgPassphrase) > 0 {
+		opts.AESEncryption = nil
+		opts.GPGEncryption = &shredder.GPGEncryption{
+			PrivateKey: gpgPrivatekey,
+			Passphrase: gpgPassphrase,
+		}
+	}
+	return opts, nil
 }
 
 // ConsumptionHandler pipes the handled messages and push them to a chan

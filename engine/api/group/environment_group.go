@@ -36,26 +36,28 @@ func LoadGroupsByEnvironment(db gorp.SqlExecutor, envID int64) ([]sdk.GroupPermi
 	return groups, nil
 }
 
-// LoadAllEnvironmentGroupByRole load all group for the given environment and role
-func LoadAllEnvironmentGroupByRole(db gorp.SqlExecutor, environmentID int64, role int) ([]sdk.GroupPermission, error) {
-	groupsPermission := []sdk.GroupPermission{}
+// EnvironmentsByGroupID List environment that use the given group
+func EnvironmentsByGroupID(db gorp.SqlExecutor, key string, groupID int64) ([]string, error) {
 	query := `
-		SELECT environment_group.group_id, environment_group.role
-		FROM environment_group
-		JOIN environment ON environment_group.environment_id = environment.id
-		WHERE environment.id = $1 AND role = $2;
+		SELECT environment.name  FROM environment_group
+		JOIN environment ON environment.id = environment_group.environment_id
+		JOIN project ON project.id = environment.project_id
+		WHERE project.projectkey = $1 AND environment_group.group_id = $2
 	`
-	rows, err := db.Query(query, environmentID, role)
+	envsName := make([]string, 0)
+	rows, err := db.Query(query, key, groupID)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "group.EnvironmentsByGroupID> Unable to list environment")
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var gPermission sdk.GroupPermission
-		rows.Scan(&gPermission.Group.ID, &gPermission.Permission)
-		groupsPermission = append(groupsPermission, gPermission)
+		var env string
+		if err := rows.Scan(&env); err != nil {
+			return nil, sdk.WrapError(err, "group.EnvironmentsByGroupID> Unable to scan")
+		}
+		envsName = append(envsName, env)
 	}
-	return groupsPermission, nil
+	return envsName, nil
 }
 
 // IsInEnvironment checks wether groups already has permissions on environment or not

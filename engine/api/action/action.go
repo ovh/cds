@@ -151,19 +151,6 @@ func LoadActionByID(db gorp.SqlExecutor, actionID int64) (*sdk.Action, error) {
 	return &a[0], nil
 }
 
-// LoadActionByPipelineActionID load an action from database
-func LoadActionByPipelineActionID(db gorp.SqlExecutor, pipelineActionID int64) (*sdk.Action, error) {
-	query := `SELECT action.id, action.name, action.description, action.type, action.last_modified, action.enabled, action.deprecated
-	          FROM action
-	          JOIN pipeline_action ON pipeline_action.action_id = action.id
-	          WHERE pipeline_action.id = $1`
-	a, err := loadActions(db, query, pipelineActionID)
-	if err != nil {
-		return nil, err
-	}
-	return &a[0], nil
-}
-
 // LoadActions load all actions from database
 func LoadActions(db gorp.SqlExecutor) ([]sdk.Action, error) {
 	query := `SELECT id, name, description, type, last_modified, enabled, deprecated FROM action WHERE public = true ORDER BY name`

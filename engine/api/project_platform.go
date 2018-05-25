@@ -49,6 +49,11 @@ func (api *API) putProjectPlatformHandler() Handler {
 			return sdk.WrapError(errP, "putProjectPlatformHandler> Cannot load project platform")
 		}
 
+		//If the platform model is public, it's forbidden to update the project platform
+		if ppDB.Model.Public {
+			return sdk.ErrForbidden
+		}
+
 		ppBody.ID = ppDB.ID
 
 		for kkBody := range ppBody.Config {
@@ -108,6 +113,11 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 		var deletedPlatform sdk.ProjectPlatform
 		for _, plat := range p.Platforms {
 			if plat.Name == platformName {
+				//If the platform model is public, it's forbidden to delete the project platform
+				if plat.Model.Public {
+					return sdk.ErrForbidden
+				}
+
 				deletedPlatform = plat
 				if err := platform.DeletePlatform(tx, plat); err != nil {
 					return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot delete project platform")
@@ -161,8 +171,25 @@ func (api *API) postProjectPlatformHandler() Handler {
 		if pp.PlatformModelID == 0 {
 			pp.PlatformModelID = pp.Model.ID
 		}
+		if pp.PlatformModelID == 0 && pp.Model.Name != "" {
+			pfs, _ := platform.LoadModels(api.mustDB())
+			for _, pf := range pfs {
+				if pf.Name == pp.Model.Name {
+					pp.PlatformModelID = pf.ID
+					break
+				}
+			}
+		}
+
+		if pp.PlatformModelID == 0 {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postProjectPlatformHandler> model not found")
+		}
+
 		for _, pprojPlat := range p.Platforms {
 			if pprojPlat.Name == pp.Name {
+				if pprojPlat.Model.Public {
+					return sdk.ErrForbidden
+				}
 				return sdk.WrapError(sdk.ErrWrongRequest, "postProjectPlatformHandler> project platform already exist")
 			}
 		}

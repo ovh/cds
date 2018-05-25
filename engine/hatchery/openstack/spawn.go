@@ -3,18 +3,17 @@ package openstack
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/ovh/cds/sdk/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 // SpawnWorker creates a new cloud instances
@@ -32,8 +31,6 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 		log.Debug("spawnWorker> spawning worker %s model:%s - %s", name, spawnArgs.Model.Name, spawnArgs.LogInfo)
 	}
 
-	var omd sdk.OpenstackModelData
-
 	if h.hatch == nil {
 		return "", fmt.Errorf("hatchery disconnected from engine")
 	}
@@ -43,73 +40,17 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 		return "", nil
 	}
 
-	if err := json.Unmarshal([]byte(spawnArgs.Model.Image), &omd); err != nil {
-		return "", err
-	}
-
 	// Get image ID
-	imageID, erri := h.imageID(omd.Image)
+	imageID, erri := h.imageID(spawnArgs.Model.ModelVirtualMachine.Image)
 	if erri != nil {
 		return "", erri
 	}
 
 	// Get flavor ID
-	flavorID, errf := h.flavorID(omd.Flavor)
+	flavorID, errf := h.flavorID(spawnArgs.Model.ModelVirtualMachine.Flavor)
 	if errf != nil {
 		return "", errf
 	}
-
-	// Decode base64 given user data
-	udataModel, errd := base64.StdEncoding.DecodeString(omd.UserData)
-	if errd != nil {
-		return "", errd
-	}
-
-	graylog := ""
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_HOST=%s ", h.Configuration().Provision.WorkerLogsOptions.Graylog.Host)
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_PORT=%d ", h.Configuration().Provision.WorkerLogsOptions.Graylog.Port)
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s ", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey)
-	}
-	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
-	}
-
-	grpc := ""
-	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
-		grpc += fmt.Sprintf("export CDS_GRPC_API=%s ", h.Configuration().API.GRPC.URL)
-		grpc += fmt.Sprintf("export CDS_GRPC_INSECURE=%t ", h.Configuration().API.GRPC.Insecure)
-	}
-
-	udataEnd := `
-cd $HOME
-# Download and start worker with curl
-rm -f worker
-curl  "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
-chmod +x worker
-export CDS_SINGLE_USE=1
-export CDS_FORCE_EXIT=1
-export CDS_API={{.API}}
-export CDS_TOKEN={{.Key}}
-export CDS_NAME={{.Name}}
-export CDS_MODEL={{.Model}}
-export CDS_HATCHERY={{.Hatchery}}
-export CDS_HATCHERY_NAME={{.HatcheryName}}
-export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
-export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
-export CDS_TTL={{.TTL}}
-{{.Graylog}}
-{{.Grpc}}
-./worker`
-
-	if spawnArgs.RegisterOnly {
-		udataEnd += " register"
-	}
-	udataEnd += " ; sudo shutdown -h now;"
 
 	var withExistingImage bool
 	if !spawnArgs.Model.NeedRegistration && !spawnArgs.RegisterOnly {
@@ -131,32 +72,31 @@ export CDS_TTL={{.TTL}}
 		}
 	}
 
-	tmpl, errt := template.New("udata").Parse(string(udataEnd))
+	if spawnArgs.RegisterOnly {
+		spawnArgs.Model.ModelVirtualMachine.Cmd = strings.Replace(spawnArgs.Model.ModelVirtualMachine.Cmd, "worker ", "worker register ", 1)
+	}
+
+	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "\n" + spawnArgs.Model.ModelVirtualMachine.Cmd + "\n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
+
+	tmpl, errt := template.New("udata").Parse(udata)
 	if errt != nil {
 		return "", errt
 	}
-	udataParam := struct {
-		API                string
-		Name               string
-		Key                string
-		Model              int64
-		Hatchery           int64
-		HatcheryName       string
-		PipelineBuildJobID int64
-		WorkflowJobID      int64
-		TTL                int
-		Graylog            string
-		Grpc               string
-	}{
-		API:          h.Configuration().API.HTTP.URL,
-		Name:         name,
-		Key:          h.Configuration().API.Token,
-		Model:        spawnArgs.Model.ID,
-		Hatchery:     h.hatch.ID,
-		HatcheryName: h.hatch.Name,
-		TTL:          h.Config.WorkerTTL,
-		Graylog:      graylog,
-		Grpc:         grpc,
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Name:              name,
+		Token:             h.Configuration().API.Token,
+		Model:             spawnArgs.Model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		TTL:               h.Config.WorkerTTL,
+		FromWorkerImage:   withExistingImage,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
 	if spawnArgs.IsWorkflowJob {
@@ -170,33 +110,16 @@ export CDS_TTL={{.TTL}}
 		return "", err
 	}
 
-	var udataBegin, udata string
-
-	if withExistingImage {
-		log.Debug("spawnWorker> using userdata from existing image")
-		udataBegin = `#!/bin/bash
-set +e
-export CDS_FROM_WORKER_IMAGE="true";
-`
-	} else {
-		log.Debug("spawnWorker> using userdata from worker model")
-		udataBegin = `#!/bin/bash
-set +e
-export CDS_FROM_WORKER_IMAGE="false";
-`
-	}
-	udata = udataBegin + string(udataModel) + buffer.String()
-
 	// Encode again
-	udata64 := base64.StdEncoding.EncodeToString([]byte(udata))
+	udata64 := base64.StdEncoding.EncodeToString(buffer.Bytes())
 
 	// Create openstack vm
 	meta := map[string]string{
 		"worker":                     name,
 		"hatchery_name":              h.Hatchery().Name,
 		"register_only":              fmt.Sprintf("%t", spawnArgs.RegisterOnly),
-		"flavor":                     omd.Flavor,
-		"model":                      omd.Image,
+		"flavor":                     spawnArgs.Model.ModelVirtualMachine.Flavor,
+		"model":                      spawnArgs.Model.ModelVirtualMachine.Image,
 		"worker_model_name":          spawnArgs.Model.Name,
 		"worker_model_last_modified": fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 	}

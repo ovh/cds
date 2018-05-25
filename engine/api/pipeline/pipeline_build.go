@@ -397,21 +397,6 @@ func LoadPipelineBuildByID(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuild, e
 	return scanPipelineBuild(row)
 }
 
-// LoadPipelineBuildByBuildNumber load a pipeline build for a given build number, pipeline ID, application ID, env ID
-func LoadPipelineBuildByBuildNumber(db gorp.SqlExecutor, buildNumber, pipID, appID, envID int64) (*sdk.PipelineBuild, error) {
-	whereCondition := `
-		WHERE pb.build_number = $1 AND pb.pipeline_id = $2 AND pb.application_id = $3 AND pb.environment_id = $4
-	`
-
-	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-
-	var row pipelineBuildDbResult
-	if err := db.SelectOne(&row, query, buildNumber, pipID, appID, envID); err != nil {
-		return nil, err
-	}
-	return scanPipelineBuild(row)
-}
-
 // LoadPipelineBuildChildren load triggered pipeline from given build
 func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64) ([]sdk.PipelineBuild, error) {
 	pbs := []sdk.PipelineBuild{}
@@ -564,23 +549,6 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 
 	pb.Status = newStatus
 	return nil
-}
-
-func DeletePipelineBuildByApplicationID(db gorp.SqlExecutor, appID int64) error {
-	if err := DeleteBuildLogsByApplicationID(db, appID); err != nil {
-		return err
-	}
-	if err := DeletePipelineBuildJobByApplicationID(db, appID); err != nil {
-		return err
-	}
-
-	query := `
-		DELETE FROM pipeline_build
-		WHERE application_id = $1
-	`
-
-	_, errDelete := db.Exec(query, appID)
-	return errDelete
 }
 
 // DeletePipelineBuildByID  Delete pipeline build by his ID

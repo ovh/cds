@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 )
 
@@ -12,5 +13,6 @@ import (
 func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) error {
 	go CheckHeartbeat(c, DBFunc)
 	go ModelCapabilititiesCacheLoader(c, 10*time.Second, DBFunc, store)
+	go insertFirstPatterns(DBFunc())
 	return nil
 }

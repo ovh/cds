@@ -17,35 +17,38 @@ type Workflow struct {
 	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty"`
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty"`
 	// This will be filled for simple workflows
-	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
-	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	Payload         map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
-	Parameters      map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
-	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
-	PipelineHooks   []HookEntry                 `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
-	Permissions     map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
-	Metadata        map[string]string           `json:"metadata,omitempty" yaml:"metadata,omitempty" db:"-"`
-	PurgeTags       []string                    `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty" db:"-"`
+	DependsOn           []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
+	Conditions          *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	When                []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
+	PipelineName        string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+	Payload             map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Parameters          map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	ApplicationName     string                      `json:"application,omitempty" yaml:"application,omitempty"`
+	EnvironmentName     string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
+	ProjectPlatformName string                      `json:"platform,omitempty" yaml:"platform,omitempty"`
+	PipelineHooks       []HookEntry                 `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
+	Permissions         map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	Metadata            map[string]string           `json:"metadata,omitempty" yaml:"metadata,omitempty" db:"-"`
+	PurgeTags           []string                    `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty" db:"-"`
 }
 
 type NodeEntry struct {
-	ID              int64                       `json:"-" yaml:"-"`
-	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
-	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
-	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
-	OneAtATime      *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
-	Payload         map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
-	Parameters      map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	ID                  int64                       `json:"-" yaml:"-"`
+	DependsOn           []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
+	Conditions          *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	When                []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
+	PipelineName        string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+	ApplicationName     string                      `json:"application,omitempty" yaml:"application,omitempty"`
+	EnvironmentName     string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
+	ProjectPlatformName string                      `json:"platform,omitempty" yaml:"platform,omitempty"`
+	OneAtATime          *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
+	Payload             map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Parameters          map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
 type HookEntry struct {
 	Model  string            `json:"type,omitempty" yaml:"type,omitempty"`
+	Ref    string            `json:"ref,omitempty" yaml:"ref,omitempty"`
 	Config map[string]string `json:"config,omitempty" yaml:"config,omitempty"`
 }
 
@@ -120,6 +123,9 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		if n.Context.Environment != nil {
 			entry.EnvironmentName = n.Context.Environment.Name
 		}
+		if n.Context.ProjectPlatform != nil {
+			entry.ProjectPlatformName = n.Context.ProjectPlatform.Name
+		}
 
 		if n.Context.Mutex {
 			entry.OneAtATime = &n.Context.Mutex
@@ -160,6 +166,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		exportedWorkflow.ApplicationName = entry.ApplicationName
 		exportedWorkflow.PipelineName = entry.PipelineName
 		exportedWorkflow.EnvironmentName = entry.EnvironmentName
+		exportedWorkflow.ProjectPlatformName = entry.ProjectPlatformName
 		exportedWorkflow.DependsOn = entry.DependsOn
 		if entry.Conditions != nil && (len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "") {
 			exportedWorkflow.When = entry.When
@@ -171,6 +178,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			}
 			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, HookEntry{
 				Model:  h.WorkflowHookModel.Name,
+				Ref:    h.Ref,
 				Config: h.Config.Values(),
 			})
 		}
@@ -196,6 +204,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			}
 			exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name] = append(exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name], HookEntry{
 				Model:  h.WorkflowHookModel.Name,
+				Ref:    h.Ref,
 				Config: h.Config.Values(),
 			})
 		}
@@ -211,14 +220,15 @@ func (w Workflow) Entries() map[string]NodeEntry {
 	}
 
 	singleEntry := NodeEntry{
-		ApplicationName: w.ApplicationName,
-		EnvironmentName: w.EnvironmentName,
-		PipelineName:    w.PipelineName,
-		Conditions:      w.Conditions,
-		DependsOn:       w.DependsOn,
-		When:            w.When,
-		Payload:         w.Payload,
-		Parameters:      w.Parameters,
+		ApplicationName:     w.ApplicationName,
+		EnvironmentName:     w.EnvironmentName,
+		ProjectPlatformName: w.ProjectPlatformName,
+		PipelineName:        w.PipelineName,
+		Conditions:          w.Conditions,
+		DependsOn:           w.DependsOn,
+		When:                w.When,
+		Payload:             w.Payload,
+		Parameters:          w.Parameters,
 	}
 	return map[string]NodeEntry{
 		w.PipelineName: singleEntry,
@@ -238,6 +248,9 @@ func (w Workflow) checkValidity() error {
 		}
 		if w.EnvironmentName != "" {
 			mError.Append(fmt.Errorf("Error: wrong usage: environment %s not allowed here", w.EnvironmentName))
+		}
+		if w.ProjectPlatformName != "" {
+			mError.Append(fmt.Errorf("Error: wrong usage: platform %s not allowed here", w.ProjectPlatformName))
 		}
 		if w.PipelineName != "" {
 			mError.Append(fmt.Errorf("Error: wrong usage: pipeline %s not allowed here", w.PipelineName))
@@ -383,6 +396,16 @@ func (e *NodeEntry) getNode(name string) (*sdk.WorkflowNode, error) {
 		}
 	}
 
+	if e.ProjectPlatformName != "" {
+		if node.Context == nil {
+			node.Context = new(sdk.WorkflowNodeContext)
+		}
+
+		node.Context.ProjectPlatform = &sdk.ProjectPlatform{
+			Name: e.ProjectPlatformName,
+		}
+	}
+
 	if e.Conditions != nil {
 		if node.Context == nil {
 			node.Context = new(sdk.WorkflowNodeContext)
@@ -459,8 +482,12 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 					Type:         hType,
 				}
 			}
+			if h.Ref == "" {
+				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
+			}
 			n.Hooks = append(n.Hooks, sdk.WorkflowNodeHook{
 				WorkflowHookModel: sdk.GetDefaultHookModel(h.Model),
+				Ref:               h.Ref,
 				Config:            cfg,
 			})
 		}

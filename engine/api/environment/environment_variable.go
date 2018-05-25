@@ -2,8 +2,6 @@ package environment
 
 import (
 	"database/sql"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,34 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
-
-// Deprecated
-// GetAudit retrieve the current environment variable audit
-func GetAudit(db gorp.SqlExecutor, auditID int64) ([]sdk.Variable, error) {
-	query := `
-		SELECT environment_variable_audit_old.data
-		FROM environment_variable_audit_old
-		WHERE environment_variable_audit_old.id = $1
-	`
-	var data string
-	err := db.QueryRow(query, auditID).Scan(&data)
-	if err != nil {
-		return nil, err
-	}
-	var vars []sdk.Variable
-	err = json.Unmarshal([]byte(data), &vars)
-	for i := range vars {
-		v := &vars[i]
-		if sdk.NeedPlaceholder(v.Type) {
-			decode, err := base64.StdEncoding.DecodeString(v.Value)
-			if err != nil {
-				return nil, err
-			}
-			v.Value = string(decode)
-		}
-	}
-	return vars, err
-}
 
 // GetAllVariableNameByProject Get all variable from all environment
 func GetAllVariableNameByProject(db gorp.SqlExecutor, key string) ([]string, error) {
@@ -80,13 +50,6 @@ type GetAllVariableFuncArg func(args *structarg)
 func WithClearPassword() GetAllVariableFuncArg {
 	return func(args *structarg) {
 		args.clearsecret = true
-	}
-}
-
-// WithEncryptPassword is a function argument to GetAllVariable
-func WithEncryptPassword() GetAllVariableFuncArg {
-	return func(args *structarg) {
-		args.encryptsecret = true
 	}
 }
 

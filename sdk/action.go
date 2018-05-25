@@ -27,6 +27,7 @@ type ActionSummary struct {
 	Name string `json:"name"`
 }
 
+// ToSummary returns an ActionSummary from an Action
 func (a Action) ToSummary() ActionSummary {
 	return ActionSummary{
 		Name: a.Name,
@@ -137,7 +138,7 @@ func NewScriptAction(content string) Action {
 
 // AddJob creates a joined action in given pipeline
 func AddJob(projectKey, pipelineName string, j *Job) error {
-	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/joined", projectKey, pipelineName, j.PipelineStageID)
+	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/job", projectKey, pipelineName, j.PipelineStageID)
 
 	data, err := json.Marshal(j)
 	if err != nil {

@@ -172,7 +172,10 @@ type ProjectClient interface {
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectGroupsImport(projectKey string, content io.Reader, format string, force bool) (sdk.Project, error)
-	ProjectPlatform(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error)
+	ProjectPlatformImport(projectKey string, content io.Reader, format string, force bool) (sdk.ProjectPlatform, error)
+	ProjectPlatformGet(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error)
+	ProjectPlatformList(projectKey string) ([]sdk.ProjectPlatform, error)
+	ProjectPlatformDelete(projectKey string, platformName string) error
 }
 
 // ProjectKeysClient exposes project keys related functions
@@ -227,7 +230,8 @@ type WorkerClient interface {
 	WorkerModelBook(id int64) error
 	WorkerList() ([]sdk.Worker, error)
 	WorkerDisable(id string) error
-	WorkerModelAdd(name string, modelType string, image string, groupID int64) (sdk.Model, error)
+	WorkerModelAdd(name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
+	WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(name string) (sdk.Model, error)
 	WorkerModelDelete(name string) error
 	WorkerModelSpawnError(id int64, info string) error

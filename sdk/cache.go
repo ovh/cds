@@ -35,6 +35,7 @@ func (c *Cache) GetPath() string {
 	return container
 }
 
+// CreateTarFromPaths returns a tar formatted reader of a tar made of several path
 func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
 	// Create a buffer to write our archive to.
 	buf := new(bytes.Buffer)

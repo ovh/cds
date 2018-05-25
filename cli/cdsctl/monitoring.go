@@ -295,7 +295,7 @@ func (ui *Termui) updateStatus() string {
 	items := []string{}
 	for _, l := range statusEngine.Lines {
 		if l.Status == sdk.MonitoringStatusWarn {
-			items = append(items, fmt.Sprintf("[%s](fg-white,bg-yellow)", l.String()))
+			items = append(items, fmt.Sprintf("[%s](fg-yellow,bg-default)", l.String()))
 		} else if l.Status != sdk.MonitoringStatusOK {
 			items = append(items, fmt.Sprintf("[%s](fg-white,bg-red)", l.String()))
 		} else if strings.Contains(l.Component, "Global") {
@@ -314,23 +314,6 @@ func (ui *Termui) pipelineLine(projKey string, app sdk.Application, pb sdk.Pipel
 	}
 	icon, color := statusShort(pb.Status.String())
 	return fmt.Sprintf("[%s](%s,%s)[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", icon, color, selected, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
-}
-
-func jobLine(name string, status string) string {
-	switch status {
-	case string(sdk.StatusSuccess):
-		return fmt.Sprintf("[ [%s]](fg-green,bg-default)", name)
-	case string(sdk.StatusFail):
-		return fmt.Sprintf("[ [%s]](fg-red,bg-default)", name)
-	case string(sdk.StatusBuilding):
-		return fmt.Sprintf("[ [%s]](fg-blue,bg-default)", name)
-	case string(sdk.StatusWaiting):
-		return fmt.Sprintf("[ [%s]](fg-yellow,bg-default)", name)
-	case string(sdk.StatusDisabled):
-		return fmt.Sprintf("[ [%s-%s]](fg-cyan,bg-default)", name, status)
-	default:
-		return fmt.Sprintf("[ [%s-%s]](fg-white,bg-default)", name, status)
-	}
 }
 
 func (ui *Termui) updateQueueWorkers() string {

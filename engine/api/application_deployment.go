@@ -2,12 +2,15 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -71,15 +74,18 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to load application")
 		}
 
-		// If the call is made by a provider, merge the config
+		// If the call is made by a provider, merge the existing
+		// or the default config with the provided config
 		if getProvider(ctx) != nil {
 			oldPfConfig, has := app.DeploymentStrategies[pfName]
-			if has {
-				pfConfig.MergeWith(oldPfConfig)
+			if !has {
+				oldPfConfig = pf.Model.DeploymentDefaultConfig
 			}
+			oldPfConfig.MergeWith(pfConfig)
+			pfConfig = oldPfConfig
 		}
 
-		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfConfig); err != nil {
+		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfName, pfConfig); err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
 		}
 
@@ -138,6 +144,19 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() Handler {
 		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load application")
+		}
+
+		ws, err := workflow.LoadAllByPlatformName(tx, proj.ID, pfName)
+		if err != nil {
+			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load workflows")
+		}
+
+		if len(ws) > 0 {
+			var wNames = make([]string, len(ws))
+			for i, w := range ws {
+				wNames[i] = w.Name
+			}
+			return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("platform used by %s", strings.Join(wNames, ",")))
 		}
 
 		if _, has := app.DeploymentStrategies[pfName]; !has {

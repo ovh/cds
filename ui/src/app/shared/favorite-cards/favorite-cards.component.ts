@@ -12,6 +12,7 @@ import {finalize} from 'rxjs/operators';
 export class FavoriteCardsComponent {
 
     @Input() favorites: Array<NavbarProjectData>;
+    @Input() centered = true;
     @Input('projects')
     set projects(projects: Array<NavbarProjectData>) {
          this._projects = projects;

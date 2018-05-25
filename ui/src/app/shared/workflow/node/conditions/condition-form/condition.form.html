@@ -14,23 +14,23 @@
         <h4>{{ 'workflow_node_condition_form' | translate}}</h4>
         <div class="ui form">
             <div class="fields">
-                <div class="five wide field">
+                <div class="six wide field" [title]="condition.variable">
                     <sm-select
                         *ngIf="names"
-                        class="search" [options]="{'fullTextSearch': true}"
+                        class="search"
                         [(model)]="condition.variable"
-                        (change)="condition.value = null"
-                        [options]="{'fullTextSearch': true}">
+                        (change)="variableChanged($event)"
+                        [options]="{'fullTextSearch': true, 'allowAdditions': true}">
                         <option *ngFor="let n of names" [value]="n">{{n}}</option>
                     </sm-select>
                 </div>
-                <div class="four wide field">
+                <div class="two wide field">
                     <sm-select [(model)]="condition.operator" *ngIf="operators">
                         <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>
                     </sm-select>
                 </div>
-                <div class="five wide field">
-                    <div class="ui input">
+                <div class="six wide field center aligned">
+                    <div class="ui input" *ngIf="condition.variable !== 'cds.manual'">
                         <ng-container *ngIf="isStatusVariable()">
                             <sui-select class="selection"
                                 name="value"
@@ -42,7 +42,15 @@
                                 </sui-select-option>
                             </sui-select>
                         </ng-container>
+
                         <input type="text" [(ngModel)]="condition.value" placeholder="" *ngIf="!isStatusVariable()">
+                    </div>
+                    <div class="ui fitted checkbox manual" *ngIf="condition.variable === 'cds.manual'">
+                      <input type="checkbox"
+                          id="cdsmanualcheck" name="cdsmanual"
+                          [checked]="condition.value === 'true'"
+                          (change)="updateConditionValue($event)">
+                      <label></label>
                     </div>
                 </div>
                 <div class="two wide field">

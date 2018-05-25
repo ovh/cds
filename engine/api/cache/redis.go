@@ -56,7 +56,8 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 	}, nil
 }
 
-const retryWaitDuration = 30 * time.Millisecond
+const retryWait = 30
+const retryWaitDuration = retryWait * time.Millisecond
 
 //Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) bool {
@@ -375,15 +376,21 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	return nil
 }
 
-func (s *RedisStore) Lock(key string, expiration time.Duration) bool {
+func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMillisecond int, retryCount int) bool {
 	var errRedis error
 	var res bool
-	for i := 0; i < 3; i++ {
+	if retrywdMillisecond == -1 {
+		retrywdMillisecond = retryWait
+	}
+	if retryCount == -1 {
+		retryCount = 3
+	}
+	for i := 0; i < retryCount; i++ {
 		res, errRedis = s.Client.SetNX(key, "true", expiration).Result()
 		if errRedis == nil {
 			break
 		}
-		time.Sleep(retryWaitDuration)
+		time.Sleep(time.Duration(retrywdMillisecond) * time.Millisecond)
 	}
 	if errRedis != nil {
 		log.Error("redis> set error %s: %v", key, errRedis)

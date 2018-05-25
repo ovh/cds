@@ -256,7 +256,11 @@ func (api *API) addUserHandler() Handler {
 			return sdk.WrapError(err, "AddUser: Cannot insert user")
 		}
 
-		go mail.SendMailVerifyToken(createUserRequest.User.Email, createUserRequest.User.Username, tokenVerify, createUserRequest.Callback)
+		go func() {
+			if errM := mail.SendMailVerifyToken(createUserRequest.User.Email, createUserRequest.User.Username, tokenVerify, createUserRequest.Callback); errM != nil {
+				log.Warning("addUserHandler.SendMailVerifyToken> Cannot send verify token email for user %s : %v", u.Username, errM)
+			}
+		}()
 
 		// If it's the first user, add him to shared.infra group
 		if nbUsers == 0 {

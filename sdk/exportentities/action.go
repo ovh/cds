@@ -140,6 +140,8 @@ func newSteps(a sdk.Action) []Step {
 				if directory != nil {
 					s["checkout"] = directory.Value
 				}
+			case sdk.DeployApplicationAction:
+				s["perform"] = "deploy"
 			}
 		default:
 			args := map[string]string{}
@@ -415,6 +417,39 @@ func (s Step) AsCheckoutApplication() (*sdk.Action, bool, error) {
 		return nil, true, fmt.Errorf("Malformatted Step : checkout must be a string")
 	}
 	a := sdk.NewCheckoutApplication(bS)
+
+	var err error
+	a.Enabled, err = s.IsFlagged("enabled")
+	if err != nil {
+		return nil, true, err
+	}
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
+//AsDeployApplication returns the step as a sdk.Action
+func (s Step) AsDeployApplication() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+	bI, ok := s["checkout"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	bS, ok := bI.(string)
+	if !ok {
+		return nil, true, fmt.Errorf("Malformatted Step : checkout must be a string")
+	}
+	a := sdk.NewDeployApplication(bS)
 
 	var err error
 	a.Enabled, err = s.IsFlagged("enabled")

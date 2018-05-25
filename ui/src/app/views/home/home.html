@@ -1,17 +1,65 @@
 <div id="CDSHome">
-    <h1 class="ui center aligned header">{{ 'home_title' | translate }} <a href="https://ovh.github.io/cds" target="_blank"><i class="fa fa-book ml5"></i></a></h1>
     <div class="ui row" *ngIf="!loading">
       <div class="ui grid">
-        <div class="two wide column">
-        </div>
-        <div class="twelve wide column">
-            <app-favorite-cards [favorites]="favorites"></app-favorite-cards>
-        </div>
-      </div>
-    </div>
+        <div class="ui row">
+          <div class="one wide column">
+          </div>
+          <div class="twelve wide column">
+            <h1 class="ui header">{{ 'home_title' | translate }}</h1>
+          </div>
+          <div class="three wide column">
 
-    <div class="ui raised padded text container segment" *ngIf="!loading && (!favorites || !favorites.length)">
-        {{'common_no_favorites' | translate}}
+          </div>
+        </div>
+        <div class="ui row">
+          <div class="one wide column">
+          </div>
+          <div class="ten wide column border-right">
+              <h3>{{'navbar_favorites' | translate}}</h3>
+              <div class="ui raised padded text container segment" *ngIf="!loading && (!favorites || !favorites.length)">
+                  {{'common_no_favorites' | translate}}
+              </div>
+              <app-favorite-cards [favorites]="favorites" [centered]="false"></app-favorite-cards>
+          </div>
+          <div class="five wide column">
+              <div>
+                  <a class="fluid ui blue basic button link" href="https://ovh.github.io/cds" target="_blank">
+                      <i class="book icon"></i>Guide
+                  </a>
+              </div>
+              <div>
+                  <a class="fluid ui blue basic button link mt5" href="" [routerLink]="['/broadcast']">
+                      <i class="bell icon"></i>{{'broadcast_list_title' | translate}}
+                  </a>
+              </div>
+              <div class="ui active centered inline loader mt25" *ngIf="loadingBroadcasts"></div>
+              <div class="ui relaxed divided list" *ngIf="!loadingBroadcasts && broadcasts && broadcasts.length">
+                  <div class="item" *ngFor="let broadcast of broadcasts">
+                    <i class="large bell outline middle aligned icon pointing"
+                        *ngIf="!broadcast.updating"
+                        suiPopup
+                        [popupText]="'navbar_mark_read' | translate"
+                        [popupInverted]="true"
+                        popupPlacement="bottom center"
+                        (click)="markAsRead(broadcast.id)"
+                        [class.orange]="broadcast.level === 'warning'" [class.blue]="broadcast.level === 'info'">
+                    </i>
+                    <i class="large spinner middle aligned icon animated rotateOut infinite"
+                        *ngIf="broadcast.updating">
+                    </i>
+                    <div class="content">
+                      <a class="header" [routerLink]="['/broadcast', broadcast.id]">
+                          {{broadcast.title}}
+                          <span *ngIf="broadcast.project_key">({{'common_project' | translate}} {{broadcast.project_key}})</span>
+                      </a>
+                      <div class="description">{{broadcast.updated | amTimeAgo}}</div>
+                    </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+
+      </div>
     </div>
 
     <div class="ui active text loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>

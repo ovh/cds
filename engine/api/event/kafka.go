@@ -11,8 +11,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var producer sarama.SyncProducer
-
 // KafkaClient enbeddes the Kafka connecion
 type KafkaClient struct {
 	options  KafkaConfig

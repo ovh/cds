@@ -280,51 +280,53 @@ type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
-	Default                        LoadOptionFunc
-	WithApplications               LoadOptionFunc
-	WithApplicationNames           LoadOptionFunc
-	WithVariables                  LoadOptionFunc
-	WithVariablesWithClearPassword LoadOptionFunc
-	WithPipelines                  LoadOptionFunc
-	WithPipelineNames              LoadOptionFunc
-	WithEnvironments               LoadOptionFunc
-	WithGroups                     LoadOptionFunc
-	WithPermission                 LoadOptionFunc
-	WithApplicationPipelines       LoadOptionFunc
-	WithApplicationVariables       LoadOptionFunc
-	WithKeys                       LoadOptionFunc
-	WithWorkflows                  LoadOptionFunc
-	WithWorkflowNames              LoadOptionFunc
-	WithLock                       LoadOptionFunc
-	WithLockNoWait                 LoadOptionFunc
-	WithClearKeys                  LoadOptionFunc
-	WithPlatforms                  LoadOptionFunc
-	WithClearPlatforms             LoadOptionFunc
-	WithFavorites                  LoadOptionFunc
-	WithFeatures                   LoadOptionFunc
+	Default                                 LoadOptionFunc
+	WithApplications                        LoadOptionFunc
+	WithApplicationNames                    LoadOptionFunc
+	WithVariables                           LoadOptionFunc
+	WithVariablesWithClearPassword          LoadOptionFunc
+	WithPipelines                           LoadOptionFunc
+	WithPipelineNames                       LoadOptionFunc
+	WithEnvironments                        LoadOptionFunc
+	WithGroups                              LoadOptionFunc
+	WithPermission                          LoadOptionFunc
+	WithApplicationPipelines                LoadOptionFunc
+	WithApplicationVariables                LoadOptionFunc
+	WithApplicationWithDeploymentStrategies LoadOptionFunc
+	WithKeys                                LoadOptionFunc
+	WithWorkflows                           LoadOptionFunc
+	WithWorkflowNames                       LoadOptionFunc
+	WithLock                                LoadOptionFunc
+	WithLockNoWait                          LoadOptionFunc
+	WithClearKeys                           LoadOptionFunc
+	WithPlatforms                           LoadOptionFunc
+	WithClearPlatforms                      LoadOptionFunc
+	WithFavorites                           LoadOptionFunc
+	WithFeatures                            LoadOptionFunc
 }{
-	Default:                        &loadDefault,
-	WithPipelines:                  &loadPipelines,
-	WithPipelineNames:              &loadPipelineNames,
-	WithEnvironments:               &loadEnvironments,
-	WithGroups:                     &loadGroups,
-	WithPermission:                 &loadPermission,
-	WithApplications:               &loadApplications,
-	WithApplicationNames:           &loadApplicationNames,
-	WithVariables:                  &loadVariables,
-	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,
-	WithApplicationPipelines:       &loadApplicationPipelines,
-	WithApplicationVariables:       &loadApplicationVariables,
-	WithKeys:                       &loadKeys,
-	WithWorkflows:                  &loadWorkflows,
-	WithWorkflowNames:              &loadWorkflowNames,
-	WithLock:                       &lockProject,
-	WithLockNoWait:                 &lockAndWaitProject,
-	WithClearKeys:                  &loadClearKeys,
-	WithPlatforms:                  &loadPlatforms,
-	WithClearPlatforms:             &loadClearPlatforms,
-	WithFavorites:                  &loadFavorites,
-	WithFeatures:                   &loadFeatures,
+	Default:                                 &loadDefault,
+	WithPipelines:                           &loadPipelines,
+	WithPipelineNames:                       &loadPipelineNames,
+	WithEnvironments:                        &loadEnvironments,
+	WithGroups:                              &loadGroups,
+	WithPermission:                          &loadPermission,
+	WithApplications:                        &loadApplications,
+	WithApplicationNames:                    &loadApplicationNames,
+	WithVariables:                           &loadVariables,
+	WithVariablesWithClearPassword:          &loadVariablesWithClearPassword,
+	WithApplicationPipelines:                &loadApplicationPipelines,
+	WithApplicationVariables:                &loadApplicationVariables,
+	WithKeys:                                &loadKeys,
+	WithWorkflows:                           &loadWorkflows,
+	WithWorkflowNames:                       &loadWorkflowNames,
+	WithLock:                                &lockProject,
+	WithLockNoWait:                          &lockAndWaitProject,
+	WithClearKeys:                           &loadClearKeys,
+	WithPlatforms:                           &loadPlatforms,
+	WithClearPlatforms:                      &loadClearPlatforms,
+	WithFavorites:                           &loadFavorites,
+	WithFeatures:                            &loadFeatures,
+	WithApplicationWithDeploymentStrategies: &loadApplicationWithDeploymentStrategies,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id
@@ -375,18 +377,18 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoProject
 		}
-		return nil, err
+		return nil, sdk.WrapError(err, "loadprojects> db.Select")
 	}
 
 	projs := make([]sdk.Project, len(res))
 	for i := range res {
 		p := &res[i]
 		if err := p.PostGet(db); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "loadprojects> PostGet error")
 		}
 		proj, err := unwrap(db, store, p, u, opts)
 		if err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "loadprojects> unwrap error")
 		}
 		projs[i] = *proj
 	}

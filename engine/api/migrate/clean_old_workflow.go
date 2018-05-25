@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -278,12 +277,6 @@ func cleanApplication(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, ap
 		return
 	}
 
-	if err := sanity.DeleteAllApplicationWarnings(db, app.ID); err != nil {
-		errF := fmt.Errorf("cleanApplication> Unable to delete warnings for application %s: %s", app.Name, err)
-		log.Warning("%s", errF)
-		chErr <- errF
-		return
-	}
 	log.Debug("cleanApplication> End deleting scheduler/poller/trigger/warining")
 	return
 }

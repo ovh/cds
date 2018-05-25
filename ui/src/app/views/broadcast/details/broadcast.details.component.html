@@ -1,0 +1,30 @@
+<div *ngIf="!loading; then broadcastsPart;else loadingPart"></div>
+<ng-template #broadcastsPart>
+    <div class="broadcastDetails">
+        <div class="scrollingContent">
+            <div class="paddingContent">
+                <div class="viewContent">
+                    <div class="ui grid">
+                        <div class="ui row">
+                          <div class="ui styled fluid accordion mt5">
+                            <div class="active title">
+                              {{broadcast.title}}
+                              <span *ngIf="broadcast.project_key">({{'common_project' | translate}} {{broadcast.project_key}})</span>
+                              <div class="ui label right floated" [class.orange]="broadcast.level === 'warning'" [class.blue]="broadcast.level === 'info'">
+                                  {{broadcast.created | date:'short'}}
+                              </div>
+                            </div>
+                            <div class="active content">
+                                <markdown [data]="broadcast.content"></markdown>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
+<ng-template #loadingPart>
+    <div class="ui text active loader">{{'common_loading' | translate}}</div>
+</ng-template>

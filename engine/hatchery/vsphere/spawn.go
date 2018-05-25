@@ -1,9 +1,11 @@
 package vsphere
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"strings"
 	"time"
 
@@ -25,11 +27,6 @@ type annotation struct {
 	Model                   bool      `json:"model"`
 	ToDelete                bool      `json:"to_delete"`
 	Created                 time.Time `json:"created"`
-}
-
-type imageConfiguration struct {
-	OS       string `json:"os"`
-	UserData string `json:"user_data"` //Commands to execute when create vm model
 }
 
 // SpawnWorker creates a new vm instance
@@ -89,13 +86,8 @@ func (h *HatcheryVSphere) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string
 func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine, error) {
 	log.Info("Create vm model %s", model.Name)
 	ctx := context.Background()
-	imgCfg := imageConfiguration{}
 
-	if err := json.Unmarshal([]byte(model.Image), &imgCfg); err != nil {
-		return nil, sdk.WrapError(err, "createVMModel> Cannot unmarshal image")
-	}
-
-	vm, errV := h.finder.VirtualMachine(ctx, imgCfg.OS)
+	vm, errV := h.finder.VirtualMachine(ctx, model.ModelVirtualMachine.Image)
 	if errV != nil {
 		return vm, sdk.WrapError(errV, "createVMModel> Cannot find virtual machine")
 	}
@@ -129,7 +121,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
 	}
 
-	if _, errS := h.launchClientOp(vm, imgCfg.UserData+"; shutdown -h now", nil); errS != nil {
+	if _, errS := h.launchClientOp(vm, model.ModelVirtualMachine.PreCmd+"; \n"+model.ModelVirtualMachine.Cmd+"; \n"+model.ModelVirtualMachine.PostCmd, nil); errS != nil {
 		log.Warning("createVMModel> cannot start program %s", errS)
 		annot := annotation{ToDelete: true}
 		if annotStr, err := json.Marshal(annot); err == nil {
@@ -183,37 +175,51 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jo
 	}
 
 	env := []string{
-		"CDS_SINGLE_USE=1",
-		"CDS_FORCE_EXIT=1",
 		"CDS_FROM_WORKER_IMAGE=true",
-		"CDS_API=" + h.Configuration().API.HTTP.URL,
-		"CDS_TOKEN=" + h.Configuration().API.Token,
-		"CDS_NAME=" + name,
-		"CDS_MODEL=" + fmt.Sprintf("%d", model.ID),
-		"CDS_HATCHERY=" + fmt.Sprintf("%d", h.Hatchery().ID),
-		"CDS_HATCHERY_NAME=" + h.Hatchery().Name,
-		"CDS_TTL=" + fmt.Sprintf("%d", h.workerTTL),
-	}
-
-	if isWorkflowJob {
-		env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", jobID))
-	} else {
-		env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", jobID))
 	}
 
 	env = append(env, h.getGraylogGrpcEnv(model)...)
 
-	script := fmt.Sprintf(
-		`cd $HOME; rm -f worker; curl "%s/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1; chmod +x worker; PATH=$PATH ./worker`,
-		h.Configuration().API.HTTP.URL,
-	)
+	udata := model.ModelVirtualMachine.PreCmd + "\n" + model.ModelVirtualMachine.Cmd
 
 	if registerOnly {
-		script += " register"
+		udata += " register"
 	}
-	script += " ; shutdown -h now;"
+	udata += ("\n" + model.ModelVirtualMachine.PostCmd)
 
-	if _, errS := h.launchClientOp(vm, script, env); errS != nil {
+	tmpl, errt := template.New("udata").Parse(udata)
+	if errt != nil {
+		return errt
+	}
+	udataParam := sdk.WorkerArgs{
+		API:               h.Configuration().API.HTTP.URL,
+		Name:              name,
+		Token:             h.Configuration().API.Token,
+		Model:             model.ID,
+		Hatchery:          h.hatch.ID,
+		HatcheryName:      h.hatch.Name,
+		TTL:               h.Config.WorkerTTL,
+		FromWorkerImage:   true,
+		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
+		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
+		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
+		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
+		GrpcAPI:           h.Configuration().API.GRPC.URL,
+		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
+	}
+
+	if isWorkflowJob {
+		udataParam.WorkflowJobID = jobID
+	} else {
+		udataParam.PipelineBuildJobID = jobID
+	}
+
+	var buffer bytes.Buffer
+	if err := tmpl.Execute(&buffer, udataParam); err != nil {
+		return err
+	}
+
+	if _, errS := h.launchClientOp(vm, buffer.String(), env); errS != nil {
 		log.Warning("launchScript> cannot start program %s", errS)
 
 		// tag vm to delete

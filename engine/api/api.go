@@ -34,6 +34,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -152,6 +153,7 @@ type Configuration struct {
 	Tracing   tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
 }
 
+// ProviderConfiguration is the piece of configuration for each provider authentication
 type ProviderConfiguration struct {
 	Name  string `toml:"name"`
 	Token string `toml:"token"`
@@ -191,6 +193,7 @@ type API struct {
 	StartupTime         time.Time
 	lastUpdateBroker    *lastUpdateBroker
 	eventsBroker        *eventsBroker
+	warnChan            chan sdk.Event
 	Cache               cache.Store
 }
 
@@ -518,7 +521,7 @@ func (a *API) Serve(ctx context.Context) error {
 	hook.Init(a.Config.URL.API)
 
 	//Intialize notification package
-	notification.Init(a.Config.URL.API, a.Config.URL.UI)
+	notification.Init(a.Config.URL.UI)
 
 	log.Info("Initializing Authentication driver...")
 	// Initialize the auth driver
@@ -583,9 +586,14 @@ func (a *API) Serve(ctx context.Context) error {
 	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+
+	a.warnChan = make(chan sdk.Event)
+	event.Subscribe(a.warnChan)
+	go warning.Compute(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.warnChan)
 	go a.serviceAPIHeartbeat(ctx)
 
 	//Temporary migration code
+	go migrate.HatcheryCmdMigration(a.Cache, a.DBConnectionFactory.GetDBMap)
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		go func() {
 			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
@@ -598,7 +606,7 @@ func (a *API) Serve(ctx context.Context) error {
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
-	go workflow.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
+	go workflow.Initialize(ctx, a.Cache, a.Config.URL.UI, a.DBConnectionFactory.GetDBMap)
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),

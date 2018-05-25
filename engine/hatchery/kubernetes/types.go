@@ -30,7 +30,7 @@ type HatcheryConfiguration struct {
 	// KubernetesMasterURL Worker default memory
 	KubernetesNamespace string `mapstructure:"namespace" toml:"namespace" default:"default" commented:"false" comment:"Kubernetes namespace in which workers are spawned"`
 	// KubernetesMasterURL Worker default memory
-	KubernetesMasterURL string `mapstructure:"masterURL" toml:"kubernetesMasterURL" default:"https://1.1.1.1:8443" commented:"false" comment:"Address of kubernetes master"`
+	KubernetesMasterURL string `mapstructure:"kubernetesMasterURL" toml:"kubernetesMasterURL" default:"https://1.1.1.1:8443" commented:"false" comment:"Address of kubernetes master"`
 	// KubernetesUsername Worker default memory
 	KubernetesUsername string `mapstructure:"username" toml:"username" default:"" commented:"true" comment:"Username to connect to kubernetes cluster"`
 	// KubernetesPassword Worker default memory

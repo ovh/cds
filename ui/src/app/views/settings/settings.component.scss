@@ -4,5 +4,7 @@
   flex-direction: column;
   align-content: stretch;
   height: 100%;
-  padding: 20px;
+  .scrollingContent {
+    padding: 20px;
+  }
 }

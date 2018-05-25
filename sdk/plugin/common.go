@@ -3,12 +3,9 @@ package plugin
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -146,46 +143,6 @@ More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/pl
 		pl.Name())
 
 	return info
-}
-
-// request executes an authentificated HTTP request on $path given $method
-func request(method string, path string, args []byte) ([]byte, int, error) {
-	if auth == nil {
-		return []byte{}, 0, errors.New("Auth must be initialized")
-	}
-	var req *http.Request
-	var err error
-	if args != nil {
-		req, err = http.NewRequest(method, auth.GetURL()+path, bytes.NewReader(args))
-		if err != nil {
-			return nil, 0, err
-		}
-	} else {
-		req, err = http.NewRequest(method, auth.GetURL()+path, nil)
-		if err != nil {
-			return nil, 0, err
-		}
-	}
-
-	basedHash := base64.StdEncoding.EncodeToString([]byte(auth.Hash()))
-	req.Header.Set("User-Agent", "CDS/worker")
-	req.Header.Set(AuthHeader, basedHash)
-	req.Header.Set(RequestedWithHeader, RequestedWithValue)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer resp.Body.Close()
-
-	code := resp.StatusCode
-
-	var body []byte
-	body, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, code, err
-	}
-
-	return body, code, nil
 }
 
 // Log struct holds a single line of build log

@@ -68,7 +68,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	//Maximim range is set to 50
 	w.Header().Add("Accept-Range", "run 50")
 	if limit-offset > rangeMax {
-		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", (limit - offset))
+		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", limit-offset)
 	}
 
 	runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit, mapFilters)
@@ -77,7 +77,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	}
 
 	if offset > count {
-		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", (limit - offset))
+		return sdk.WrapError(sdk.ErrWrongRequest, "searchWorkflowRun> Requested range %d not allowed", limit-offset)
 	}
 
 	code := http.StatusOK
@@ -486,7 +486,8 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 
 		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
 		if errC != nil {
-			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits")
+			// as workflow.GetNodeRunBuildCommits can return a 401 error, we avoid here to return 401 on UI too
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getWorkflowCommitsHandler> Unable to load commits: %v", errC)
 		}
 
 		return WriteJSON(w, commits, http.StatusOK)

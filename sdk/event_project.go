@@ -38,7 +38,6 @@ type EventProjectVariableDelete struct {
 
 // EventProjectPermissionAdd represents the event when adding a project permission
 type EventProjectPermissionAdd struct {
-	ProjectKey string          `json:"project_key"`
 	Permission GroupPermission `json:"group_permission"`
 }
 

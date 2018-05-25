@@ -53,9 +53,8 @@ func grpcInit(dbConnectionFactory *database.DBConnectionFactory, addr string, po
 type key string
 
 const (
-	keyWorkerID    key = "worker_id"
-	keyWorkerName  key = "worker_name"
-	keyWorkerGroup key = "worker_group"
+	keyWorkerID   key = "worker_id"
+	keyWorkerName key = "worker_name"
 )
 
 func (h *grpcHandlers) streamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {

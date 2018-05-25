@@ -49,11 +49,6 @@ type Configuration struct {
 	Repositories repositories.Configuration `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################"`
 }
 
-type ServiceServeOptions struct {
-	SetHeaderFunc func() map[string]string
-	Middlewares   []api.Middleware
-}
-
 func AsEnvVariables(o interface{}, prefix string, skipCommented bool) map[string]string {
 	r := map[string]string{}
 	prefix = strings.ToUpper(prefix)

@@ -79,6 +79,16 @@ func (r *WorkflowRun) Tag(tag, value string) bool {
 	return false
 }
 
+// TagExists return true if tag already exits
+func (r *WorkflowRun) TagExists(tag string) bool {
+	for i := range r.Tags {
+		if r.Tags[i].Tag == tag {
+			return true
+		}
+	}
+	return false
+}
+
 //WorkflowRunInfo is an info on workflow run
 type WorkflowRunInfo struct {
 	APITime time.Time `json:"api_time,omitempty" db:"-"`
@@ -198,7 +208,7 @@ type WorkflowNodeJobRunSummary struct {
 	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
 }
 
-// ExecutedJobSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
+// ToSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
 func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
 	sum := WorkflowNodeJobRunSummary{
 		Done:              wnjr.Done.Unix(),
@@ -222,10 +232,10 @@ type WorkflowNodeJobRunInfo struct {
 }
 
 // Translate translates messages in WorkflowNodeJobRun
-func (njr *WorkflowNodeJobRun) Translate(lang string) {
-	for ki, info := range njr.SpawnInfos {
+func (wnjr *WorkflowNodeJobRun) Translate(lang string) {
+	for ki, info := range wnjr.SpawnInfos {
 		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-		njr.SpawnInfos[ki].UserMessage = m.String(lang)
+		wnjr.SpawnInfos[ki].UserMessage = m.String(lang)
 	}
 }
 
@@ -243,13 +253,13 @@ type WorkflowNodeRunManual struct {
 }
 
 //GetName returns the name the artifact
-func (a *WorkflowNodeRunArtifact) GetName() string {
-	return a.Name
+func (w *WorkflowNodeRunArtifact) GetName() string {
+	return w.Name
 }
 
 //GetPath returns the path of the artifact
-func (a *WorkflowNodeRunArtifact) GetPath() string {
-	container := fmt.Sprintf("%d-%d-%s", a.WorkflowID, a.WorkflowNodeRunID, a.Tag)
+func (w *WorkflowNodeRunArtifact) GetPath() string {
+	container := fmt.Sprintf("%d-%d-%s", w.WorkflowID, w.WorkflowNodeRunID, w.Tag)
 	container = url.QueryEscape(container)
 	container = strings.Replace(container, "/", "-", -1)
 	return container

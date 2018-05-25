@@ -38,7 +38,7 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	}
 
 	// allow hatchery to not declare any model
-	if h.Model.Name == "" && h.Model.Image == "" {
+	if h.Model.Name == "" && (h.Model.ModelDocker.Image == "" || h.Model.ModelVirtualMachine.Image == "") {
 		return tx.Commit()
 	}
 
@@ -47,6 +47,10 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	h.Model.Type = string(sdk.HostProcess)
 	h.Model.GroupID = h.GroupID
 	h.Model.UserLastModified = time.Now()
+	h.Model.ModelVirtualMachine = sdk.ModelVirtualMachine{
+		Image: h.Model.Name,
+		Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
+	}
 
 	if err := worker.InsertWorkerModel(tx, &h.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
 		return sdk.ErrModelNameExist

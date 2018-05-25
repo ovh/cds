@@ -32,7 +32,7 @@ func (api *API) registerWorkerHandler() Handler {
 		}
 
 		// Try to register worker
-		worker, err := worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, h, params.BinaryCapabilities)
+		worker, err := worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, h, params.BinaryCapabilities, params.OS, params.Arch)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "registerWorkerHandler> [%s] Registering failed", params.Name)

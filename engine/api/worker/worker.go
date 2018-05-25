@@ -248,7 +248,7 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *sdk.Hatchery, binaryCapabilities []string) (*sdk.Worker, error) {
+func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *sdk.Hatchery, binaryCapabilities []string, OS, arch string) (*sdk.Worker, error) {
 	if name == "" {
 		return nil, fmt.Errorf("cannot register worker with empty name")
 	}
@@ -364,6 +364,14 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 					}
 				}
 			}
+
+			if OS != "" && arch != "" {
+				if err := updateOSAndArch(ntx, modelID, OS, arch); err != nil {
+					log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", modelID, err)
+					return
+				}
+			}
+
 			if err := ntx.Commit(); err != nil {
 				log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
 			}

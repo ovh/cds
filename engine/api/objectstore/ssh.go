@@ -20,29 +20,6 @@ type SSHStore struct {
 	client *ssh.Client
 }
 
-// NewSSHStore instanciate a ssh store
-func NewSSHStore(protocol, host, port, basedir string, cfg ssh.ClientConfig) (*SSHStore, error) {
-	s := &SSHStore{
-		p:      protocol,
-		h:      host + ":" + port,
-		d:      basedir,
-		config: cfg,
-	}
-
-	var err error
-	s.client, err = ssh.Dial(s.p, s.h, &s.config)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to dial SSHStore: " + err.Error())
-	}
-	session, err := s.client.NewSession()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create SSHStore session: " + err.Error())
-
-	}
-	defer session.Close()
-	return s, nil
-}
-
 //Status return filesystem storage status
 func (s *SSHStore) Status() sdk.MonitoringStatusLine {
 	if s.client == nil {

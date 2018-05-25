@@ -21,7 +21,7 @@ const (
 	OSArchRequirement = "os-architecture"
 )
 
-// RequirementsList is a list of requirement
+// RequirementList is a list of requirement
 type RequirementList []Requirement
 
 // Values returns all Requirement.Value
