@@ -33,10 +33,27 @@ var (
 var workerModelListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS worker models",
+	Flags: []cli.Flag{
+		{
+			Name:      "binary",
+			Usage:     "Use this flag to filter worker model list by its binary capabilities",
+			Kind:      reflect.String,
+			ShortHand: "b",
+		},
+	},
 }
 
 func workerModelListRun(v cli.Values) (cli.ListResult, error) {
-	workerModels, err := client.WorkerModels()
+	var err error
+	var workerModels []sdk.Model
+	binaryFlag := v.GetString("binary")
+
+	if binaryFlag != "" {
+		workerModels, err = client.WorkerModelsByBinary(binaryFlag)
+	} else {
+		workerModels, err = client.WorkerModels()
+	}
+
 	if err != nil {
 		return nil, err
 	}

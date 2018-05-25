@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -19,18 +20,26 @@ func (c *client) WorkerModelBook(id int64) error {
 
 // WorkerModelsEnabled retrieves all worker models enabled and available to user
 func (c *client) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return c.workerModels(false)
+	return c.workerModels(false, "")
 }
 
 // WorkerModels retrieves all worker models available to user (enabled or not)
 func (c *client) WorkerModels() ([]sdk.Model, error) {
-	return c.workerModels(true)
+	return c.workerModels(true, "")
 }
 
-func (c *client) workerModels(withDisabled bool) ([]sdk.Model, error) {
+// WorkerModels retrieves all worker models available to user (enabled or not)
+func (c *client) WorkerModelsByBinary(binary string) ([]sdk.Model, error) {
+	return c.workerModels(true, binary)
+}
+
+func (c *client) workerModels(withDisabled bool, binary string) ([]sdk.Model, error) {
 	var uri string
 	if withDisabled {
 		uri = fmt.Sprintf("/worker/model")
+		if binary != "" {
+			uri += "?binary=" + url.QueryEscape(binary)
+		}
 	} else {
 		uri = fmt.Sprintf("/worker/model/enabled")
 	}

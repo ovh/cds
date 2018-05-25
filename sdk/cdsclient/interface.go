@@ -237,6 +237,7 @@ type WorkerClient interface {
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerModels() ([]sdk.Model, error)
+	WorkerModelsByBinary(binary string) ([]sdk.Model, error)
 	WorkerRegister(sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
 	WorkerSetStatus(sdk.Status) error
 }
