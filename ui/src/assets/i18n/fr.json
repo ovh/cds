@@ -143,6 +143,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_search": "Rechercher",
   "common_project": "Projet",
   "common_preview": "Prévisualisation",
   "common_details": "Détails",
@@ -160,6 +161,7 @@
   "common_branch_title": "Branche : ",
   "common_clean_app": "Nettoyage de l'application",
   "common_close": "Fermer",
+  "common_cancel": "Annuler",
   "common_commit": "Changement",
   "common_commits": "Changements",
   "common_commit_title": "Changement : ",
@@ -697,6 +699,7 @@
   "worker_model_official": "Modèle de worker vérifié (ajouté par un administrateur)",
   "worker_model_unofficial": "Modèle de worker non vérifié (ajouté par un utilisateur)",
   "worker_model_created_by": "Créé par",
+  "worker_model_binary_capability": "Binaire",
   "worker_model_capabilities": "Binaires présents dans les répertoires de la variable d'environnement PATH",
   "worker_model_capabilities_up_to_date": "La liste des binaires est à jour",
   "worker_model_capabilities_need_refresh": "La liste des binaires a besoin d'être rafraîchie par CDS. Dernière mise à jour : ",

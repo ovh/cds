@@ -60,6 +60,13 @@ testcases:
   assertions:
     - result.code ShouldEqual 0
 
+- name: worker model list with binary filter
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model list --binary=go
+  assertions:
+    - result.code ShouldEqual 0
+    - result.systemout ShouldContainSubstring nothing
+
 - name: cleanup
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModelOS --force

@@ -143,6 +143,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_search": "Search",
   "common_project": "Project",
   "common_preview": "Preview",
   "common_details": "Details",
@@ -160,6 +161,7 @@
   "common_branch_title": "Branch: ",
   "common_clean_app": "Clean application",
   "common_close": "Close",
+  "common_cancel": "Cancel",
   "common_commit": "Commit",
   "common_commits": "Commits",
   "common_commit_title": "Commit: ",
@@ -695,6 +697,7 @@
   "worker_model_env_tooltip": "You can set environment variables to put in your worker. If you have no specific need, the default environment variables will be added automatically at the creation",
   "worker_model_official": "Verified worker model (added by an administrator)",
   "worker_model_unofficial": "Unverified worker model (added by a user)",
+  "worker_model_binary_capability": "Binary capability",
   "worker_model_capabilities": "Executable binaries in the directories named by the PATH environment variable",
   "worker_model_capabilities_up_to_date": "Binaries list is up to date",
   "worker_model_capabilities_need_refresh": "Binaries list need to be refresh by CDS. Last Registration:",
