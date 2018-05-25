@@ -20,9 +20,13 @@ type PipelineV1 struct {
 	Permissions  map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
+// PipelineVersion is a version
 type PipelineVersion string
 
-const PipelineVersion1 = "v1.0"
+// There are the supported versions
+const (
+	PipelineVersion1 = "v1.0"
+)
 
 // Pipeline represents exported sdk.Pipeline
 type Pipeline struct {

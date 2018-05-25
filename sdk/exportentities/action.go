@@ -20,9 +20,13 @@ type Action struct {
 	Steps        []Step                    `json:"steps,omitempty" yaml:"steps,omitempty"`
 }
 
+// ActionVersion is a version
 type ActionVersion string
 
-const ActionVersion1 = "v1.0"
+// There are the supported versions
+const (
+	ActionVersion1 = "v1.0"
+)
 
 // NewAction returns a ready to export action
 func NewAction(act sdk.Action) (a Action) {
