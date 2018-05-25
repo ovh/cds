@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // VersionHandler returns version of current uservice
@@ -55,7 +54,6 @@ func (api *API) Status() sdk.MonitoringStatus {
 }
 
 func getStatusLine(s sdk.MonitoringStatusLine) sdk.MonitoringStatusLine {
-	log.Debug("Status> %s", s.String())
 	return s
 }
 

@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,9 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"go.opencensus.io/plugin/ochttp/propagation/b3"
+	"go.opencensus.io/trace"
+	"go.opencensus.io/trace/propagation"
 )
 
 const (
@@ -38,6 +42,8 @@ const (
 	// ResponseProcessTimeHeader is used as HTTP header
 	ResponseProcessTimeHeader = "X-Api-Process-Time"
 )
+
+var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
 // RequestModifier is used to modify behavior of Request and Steam functions
 type RequestModifier func(req *http.Request)
@@ -179,6 +185,19 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 			continue
 		}
 
+		if c.ctx != nil && c.ctx.TraceID.String() != "00000000000000000000000000000000" {
+			var isSampled = "0"
+			if c.ctx.IsSampled() {
+				isSampled = "1"
+			}
+			req.Header.Add(sdk.TraceIDHeader, hex.EncodeToString(c.ctx.TraceID[:]))
+			req.Header.Add(sdk.SpanIDHeader, hex.EncodeToString(c.ctx.SpanID[:]))
+			req.Header.Add(sdk.SampledHeader, isSampled)
+			fmt.Printf("-> Span Context [%v]:%v %v %v\n", req.URL, c.ctx.TraceID, c.ctx.SpanID, c.ctx.IsSampled())
+
+			//Unable to see the headers in the API side
+		}
+
 		for i := range mods {
 			if mods[i] != nil {
 				mods[i](req)
@@ -235,6 +254,20 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 
 		// if everything is fine, return body
 		if errDo == nil && resp.StatusCode < 500 {
+			traceID, ok1 := sdk.ParseTraceID(resp.Header.Get(sdk.TraceIDHeader))
+			spanID, ok2 := sdk.ParseSpanID(resp.Header.Get(sdk.SpanIDHeader))
+			sampled, _ := sdk.ParseSampled(resp.Header.Get(sdk.SampledHeader))
+
+			if ok1 && ok2 {
+				fmt.Printf("<- Span Context [%v]:%v %v %v\n", req.URL, traceID, spanID, sampled)
+				c.ctx = &trace.SpanContext{
+					TraceID:      traceID,
+					SpanID:       spanID,
+					TraceOptions: sampled,
+				}
+			} else {
+				c.ctx = nil
+			}
 			return resp.Body, resp.Header, resp.StatusCode, nil
 		}
 

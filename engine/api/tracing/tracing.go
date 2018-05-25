@@ -2,46 +2,16 @@ package tracing
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
 	"go.opencensus.io/exporter/jaeger"
-	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/trace"
-	"go.opencensus.io/trace/propagation"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/feature"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-// Attributes recorded on the span for the requests.
-// Only trace exporters will need them.
-const (
-	HostAttribute       = "http.host"
-	MethodAttribute     = "http.method"
-	PathAttribute       = "http.path"
-	UserAgentAttribute  = "http.user_agent"
-	StatusCodeAttribute = "http.status_code"
-)
-
-var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
-
-// Configuration is the global tracing configuration
-type Configuration struct {
-	Enable   bool
-	Exporter struct {
-		Jaeger struct {
-			HTTPCollectorEndpoint string `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268"`
-			ServiceName           string `toml:"serviceName" default:"cds-api"`
-		}
-	}
-	SamplingProbability float64
-}
 
 /* Start jarger with:
 docker run -d -e \
@@ -78,15 +48,6 @@ func Init(cfg Configuration) error {
 	return nil
 }
 
-//Options is the options struct for a new tracing span
-type Options struct {
-	Name     string
-	Enable   bool
-	User     *sdk.User
-	Worker   *sdk.Worker
-	Hatchery *sdk.Hatchery
-}
-
 // Start may start a tracing span
 func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
 	if !opt.Enable {
@@ -95,7 +56,7 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 
 	log.Debug("tracing.Start> staring a new %s span", opt.Name)
 
-	tags := []trace.Attribute{trace.StringAttribute("path", req.URL.Path)}
+	tags := []trace.Attribute{}
 	if opt.Worker != nil {
 		tags = append(tags, trace.StringAttribute("worker", opt.Worker.Name))
 	}
@@ -107,7 +68,9 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 	}
 
 	var span *trace.Span
-	sc, ok := defaultFormat.SpanContextFromRequest(req)
+	rootSpanContext, hasSpanContext := defaultFormat.SpanContextFromRequest(req)
+
+	log.Info("%v %+v", req.URL, req.Header)
 
 	type setupFuncSpan func(s *trace.Span, r *http.Request, sc *trace.SpanContext)
 	var setupSpan = []setupFuncSpan{
@@ -120,14 +83,22 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 			)
 		},
 	}
-	if ok {
+	if hasSpanContext {
+		log.Info("TRACE ID %s found", rootSpanContext.TraceID)
 		setupSpan = append(setupSpan, func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
 			s.AddLink(trace.Link{
-				TraceID:    sc.TraceID,
-				SpanID:     sc.SpanID,
+				TraceID:    rootSpanContext.TraceID,
+				SpanID:     rootSpanContext.SpanID,
 				Type:       trace.LinkTypeChild,
 				Attributes: nil,
 			})
+			spanContextToReponse(*sc, r, w)
+		})
+	} else {
+		setupSpan = append(setupSpan, func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
+			log.Info("NEW TRACE ID %v", sc.TraceID)
+			defaultFormat.SpanContextToRequest(*sc, r)
+			spanContextToReponse(*sc, r, w)
 		})
 	}
 
@@ -141,17 +112,18 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 		ctx, span = trace.StartSpan(ctx, opt.Name,
 			trace.WithSampler(trace.AlwaysSample()),
 			trace.WithSpanKind(trace.SpanKindServer))
-		span.AddAttributes(tags...)
-		for _, f := range setupSpan {
-			f(span, req, &sc)
-		}
 	default:
 		ctx, span = trace.StartSpan(ctx, opt.Name,
 			trace.WithSpanKind(trace.SpanKindServer))
-		span.AddAttributes(tags...)
-		for _, f := range setupSpan {
-			f(span, req, &sc)
-		}
+	}
+
+	var sc trace.SpanContext
+	if !hasSpanContext {
+		sc = span.SpanContext()
+	}
+	span.AddAttributes(tags...)
+	for _, f := range setupSpan {
+		f(span, req, &sc)
 	}
 
 	return ctx, nil
@@ -163,102 +135,7 @@ func End(ctx context.Context, w http.ResponseWriter, req *http.Request) (context
 	if span == nil {
 		return ctx, nil
 	}
+
 	span.End()
 	return ctx, nil
-}
-
-// LinkTo a traceID
-func LinkTo(ctx context.Context, traceID [16]byte) {
-	s := Current(ctx)
-	if s == nil {
-		return
-	}
-
-	s.AddLink(
-		trace.Link{
-			TraceID: trace.TraceID(traceID),
-		},
-	)
-}
-
-// Current return the current span
-func Current(ctx context.Context, tags ...trace.Attribute) *trace.Span {
-	if ctx == nil {
-		return nil
-	}
-	span := trace.FromContext(ctx)
-	if span == nil {
-		return nil
-	}
-	if len(tags) > 0 {
-		span.AddAttributes(tags...)
-	}
-	return span
-}
-
-// Tag is helper function to instanciate trace.Attribute
-func Tag(key string, value interface{}) trace.Attribute {
-	return trace.StringAttribute(key, fmt.Sprintf("%v", value))
-}
-
-// Span start a new span from the parent context
-func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Context, func()) {
-	if ctx == nil {
-		return nil, func() {}
-	}
-	var span *trace.Span
-	ctx, span = trace.StartSpan(ctx, name)
-	if len(tags) > 0 {
-		span.AddAttributes(tags...)
-	}
-	return ctx, span.End
-}
-
-func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cache.Store) (string, bool) {
-	vars := mux.Vars(req)
-	pkey := vars["key"]
-	if pkey == "" {
-		pkey = vars["permProjectKey"]
-	}
-
-	if pkey == "" {
-		id, _ := strconv.ParseInt(vars["id"], 10, 64)
-		//The ID found may be a node run job, let's try to find the project key behing
-		if id <= 0 {
-			id, _ = strconv.ParseInt(vars["permID"], 10, 64)
-		}
-		if id != 0 {
-			var err error
-			cacheKey := cache.Key("api:FindProjetKeyForNodeRunJob:", fmt.Sprintf("%v", id))
-			if !store.Get(cacheKey, &pkey) {
-				pkey, err = findProjetKeyForNodeRunJob(db, id)
-				if err != nil {
-					log.Error("tracingMiddleware> %v", err)
-					return "", false
-				}
-				store.SetWithTTL(cacheKey, pkey, 60*15)
-			}
-		}
-	}
-
-	return pkey, pkey != ""
-}
-
-// findProjetKeyForNodeRunJob load the project key from a workflow_node_run_job ID
-func findProjetKeyForNodeRunJob(db gorp.SqlExecutor, id int64) (string, error) {
-	query := `select project.projectkey from project
-	join workflow on workflow.project_id = project.id
-	join workflow_run on workflow_run.workflow_id = workflow.id
-	join workflow_node_run on workflow_node_run.workflow_run_id = workflow_run.id
-	join workflow_node_run_job on workflow_node_run_job.workflow_node_run_id = workflow_node_run.id
-	where workflow_node_run_job.id = $1`
-	pkey, err := db.SelectNullStr(query, id)
-	if err != nil {
-		return "", sdk.WrapError(err, "FindProjetKeyForNodeRunJob")
-	}
-	if pkey.Valid {
-		return pkey.String, nil
-	}
-	log.Warning("FindProjetKeyForNodeRunJob> project key not found for node run job %d", id)
-	return "", nil
 }

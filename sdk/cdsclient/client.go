@@ -8,10 +8,13 @@ import (
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
+	"go.opencensus.io/trace"
+
 	"github.com/ovh/cds/sdk"
 )
 
 type client struct {
+	ctx        *trace.SpanContext //This context is updated from the http layer from the opencensus instrumentation
 	isWorker   bool
 	isHatchery bool
 	isService  bool

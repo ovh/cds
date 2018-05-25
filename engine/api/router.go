@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -20,7 +19,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -163,14 +161,23 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+var headers = []string{
+	http.CanonicalHeaderKey(sdk.TraceIDHeader),
+	http.CanonicalHeaderKey(sdk.SpanIDHeader),
+	http.CanonicalHeaderKey(sdk.SampledHeader),
+	http.CanonicalHeaderKey(sdk.WorkflowAsCodeHeader),
+	http.CanonicalHeaderKey(sdk.ResponseWorkflowIDHeader),
+	http.CanonicalHeaderKey(sdk.ResponseWorkflowNameHeader),
+}
+
 // DefaultHeaders is a set of default header for the router
 func DefaultHeaders() map[string]string {
 	now := time.Now()
 	return map[string]string{
 		"Access-Control-Allow-Origin":              "*",
 		"Access-Control-Allow-Methods":             "GET,OPTIONS,PUT,POST,DELETE",
-		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition, " + sdk.WorkflowAsCodeHeader,
-		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition, " + sdk.ResponseWorkflowIDHeader + ", " + sdk.ResponseWorkflowNameHeader,
+		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition, " + strings.Join(headers, ", "),
+		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition, " + strings.Join(headers, ", "),
 		cdsclient.ResponseAPINanosecondsTimeHeader: fmt.Sprintf("%d", now.UnixNano()),
 		cdsclient.ResponseAPITimeHeader:            now.Format(time.RFC3339),
 		cdsclient.ResponseEtagHeader:               fmt.Sprintf("%d", now.Unix()),
@@ -486,9 +493,11 @@ func Auth(v bool) HandlerConfigParam {
 	return f
 }
 
-func EnableTracing() HandlerConfigParam {
+// EnableTracing on a route
+func EnableTracing(initTrace bool) HandlerConfigParam {
 	f := func(rc *HandlerConfig) {
 		rc.Options["trace_enable"] = "true"
+		rc.Options["trace_new_trace"] = fmt.Sprintf("%v", initTrace)
 	}
 	return f
 }
@@ -512,27 +521,4 @@ func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
 		statusPanic = sdk.MonitoringStatusWarn
 	}
 	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
-}
-
-func (api *API) tracingMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
-	name := runtime.FuncForPC(reflect.ValueOf(rc.Handler).Pointer()).Name()
-	name = strings.Replace(name, ".func1", "", 1)
-	name = strings.Replace(name, "github.com/ovh/cds/engine/api.(*API).", "", 1)
-
-	opts := tracing.Options{
-		Name:     name,
-		Enable:   rc.Options["trace_enable"] == "true",
-		User:     getUser(ctx),
-		Worker:   getWorker(ctx),
-		Hatchery: getHatchery(ctx),
-	}
-
-	ctx, err := tracing.Start(ctx, w, req, opts, api.mustDB(), api.Cache)
-	newReq := req.WithContext(ctx)
-	*req = *newReq
-	return ctx, err
-}
-
-func (api *API) tracingPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
-	return tracing.End(ctx, w, req)
 }
