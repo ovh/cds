@@ -249,7 +249,7 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsEmptyUserNotificat
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, 204, w.Code)
+		assert.Equal(t, 200, w.Code)
 		assert.Equal(t, "", w.Body.String())
 	})
 }
