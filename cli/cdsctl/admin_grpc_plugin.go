@@ -175,12 +175,12 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 	}
 
 	desc.Size = int64(len(desc.FileContent))
-	desc.MD5sum, err = sdk.FileMd5sum(f)
+	desc.MD5sum, err = sdk.FileMd5sum(v.GetString("filename"))
 	if err != nil {
 		return fmt.Errorf("unable to compute md5sum for file %s: %v", v.GetString("filename"), err)
 	}
 
-	desc.SHA512sum, err = sdk.FileSHA512sum(f)
+	desc.SHA512sum, err = sdk.FileSHA512sum(v.GetString("filename"))
 	if err != nil {
 		return fmt.Errorf("unable to compute sha512sum for file %s: %v", v.GetString("filename"), err)
 	}
