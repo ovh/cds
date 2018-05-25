@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -19,18 +20,26 @@ func (c *client) WorkerModelBook(id int64) error {
 
 // WorkerModelsEnabled retrieves all worker models enabled and available to user
 func (c *client) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return c.workerModels(false)
+	return c.workerModels(false, "")
 }
 
 // WorkerModels retrieves all worker models available to user (enabled or not)
 func (c *client) WorkerModels() ([]sdk.Model, error) {
-	return c.workerModels(true)
+	return c.workerModels(true, "")
 }
 
-func (c *client) workerModels(withDisabled bool) ([]sdk.Model, error) {
+// WorkerModels retrieves all worker models available to user (enabled or not)
+func (c *client) WorkerModelsByBinary(binary string) ([]sdk.Model, error) {
+	return c.workerModels(true, binary)
+}
+
+func (c *client) workerModels(withDisabled bool, binary string) ([]sdk.Model, error) {
 	var uri string
 	if withDisabled {
 		uri = fmt.Sprintf("/worker/model")
+		if binary != "" {
+			uri += "?binary=" + url.QueryEscape(binary)
+		}
 	} else {
 		uri = fmt.Sprintf("/worker/model/enabled")
 	}
@@ -55,7 +64,7 @@ func (c *client) WorkerModelSpawnError(id int64, info string) error {
 
 // WorkerModelAdd create a new worker model available
 func (c *client) WorkerModelAdd(name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error) {
-	uri := fmt.Sprintf("/worker/model")
+	uri := "/worker/model"
 	model := sdk.Model{
 		Name:          name,
 		Type:          modelType,
@@ -90,6 +99,45 @@ func (c *client) WorkerModelAdd(name string, modelType string, dockerModel *sdk.
 	}
 
 	return modelCreated, nil
+}
+
+// WorkerModelUpdate update a worker model
+func (c *client) WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error) {
+	uri := fmt.Sprintf("/worker/model/%d", ID)
+	model := sdk.Model{
+		Name:          name,
+		Type:          modelType,
+		GroupID:       groupID,
+		Communication: "http",
+	}
+
+	if dockerModel == nil && vmModel == nil {
+		return model, fmt.Errorf("You have to choose 1 model minimum: docker or vm model")
+	}
+
+	switch modelType {
+	case sdk.Docker:
+		if dockerModel == nil {
+			return model, fmt.Errorf("with model %s then dockerModel parameter could not be nil", modelType)
+		}
+		model.ModelDocker = *dockerModel
+	default:
+		if vmModel == nil {
+			return model, fmt.Errorf("with model %s then vmModel parameter could not be nil", modelType)
+		}
+		model.ModelVirtualMachine = *vmModel
+	}
+
+	modelUpdated := sdk.Model{}
+	code, err := c.PutJSON(uri, model, &modelUpdated)
+	if err != nil {
+		return modelUpdated, err
+	}
+	if code >= 300 {
+		return modelUpdated, fmt.Errorf("WorkerModelUpdate> HTTP %d", code)
+	}
+
+	return modelUpdated, nil
 }
 
 func (c *client) WorkerModel(name string) (sdk.Model, error) {

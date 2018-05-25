@@ -231,11 +231,13 @@ type WorkerClient interface {
 	WorkerList() ([]sdk.Worker, error)
 	WorkerDisable(id string) error
 	WorkerModelAdd(name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
+	WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(name string) (sdk.Model, error)
 	WorkerModelDelete(name string) error
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerModels() ([]sdk.Model, error)
+	WorkerModelsByBinary(binary string) ([]sdk.Model, error)
 	WorkerRegister(sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
 	WorkerSetStatus(sdk.Status) error
 }

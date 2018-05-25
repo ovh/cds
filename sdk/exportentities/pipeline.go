@@ -126,7 +126,9 @@ func NewPipelineV1(pip sdk.Pipeline, withPermission bool) (p PipelineV1) {
 	for _, s := range pip.Stages {
 		for _, j := range s.Jobs {
 			jo := newJob(j)
-			jo.Stage = s.Name
+			if len(pip.Stages) > 1 {
+				jo.Stage = s.Name
+			}
 			jo.Name = j.Action.Name
 			p.Jobs = append(p.Jobs, jo)
 		}

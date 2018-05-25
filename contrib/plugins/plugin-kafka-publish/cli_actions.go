@@ -55,6 +55,10 @@ func listenAction(c *cli.Context) error {
 	group := c.Args().Get(2)
 	user := c.Args().Get(3)
 	password := c.String("kafka-password")
+	key := c.String("key")
+	if key == "" {
+		key = password
+	}
 
 	//If provided, read the pgp private key file, and ask for the password
 	pgpPrivKey := c.String("pgp-decrypt")
@@ -88,7 +92,7 @@ func listenAction(c *cli.Context) error {
 	}
 
 	//Goroutine for kafka listening
-	if err := consumeFromKafka(kafka, topic, group, user, password, pgpPrivateKey, pgpPassphrase, execScript); err != nil {
+	if err := consumeFromKafka(kafka, topic, group, user, password, key, pgpPrivateKey, pgpPassphrase, execScript); err != nil {
 		return cli.NewExitError(err.Error(), 13)
 	}
 
@@ -118,6 +122,10 @@ func ackAction(c *cli.Context) error {
 	contextFile := c.Args().Get(3)
 	result := c.Args().Get(4)
 	password := c.String("kafka-password")
+	key := c.String("key")
+	if key == "" {
+		key = password
+	}
 
 	//Connect to kafka
 	producer, err := initKafkaProducer(kafka, user, password)
@@ -149,16 +157,23 @@ func ackAction(c *cli.Context) error {
 		return cli.NewExitError(err.Error(), 42)
 	}
 
-	//Parste the context file
+	//Parse the context file
 	ctx := &kafkapublisher.Context{}
 	if err := json.Unmarshal(contextBody, ctx); err != nil {
 		return cli.NewExitError(err.Error(), 43)
 	}
 
+	if ctx.ActionID == 0 {
+		return cli.NewExitError("Invalid context file. The file have to contains a field action_id", 44)
+	}
+
+	artifacts := c.StringSlice("artifact")
+	fmt.Printf("%d file(s) to send over kafka on actionID: %d\n", len(artifacts), ctx.ActionID)
+
 	//Send artifacts
-	if artifacts := c.StringSlice("artifact"); len(artifacts) > 0 {
+	if len(artifacts) > 0 {
 		//Artifacts are send with AES encryption
-		aes, err := getAESEncryptionOptions(password)
+		aes, err := getAESEncryptionOptions(key)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 65)
 		}
@@ -168,6 +183,7 @@ func ackAction(c *cli.Context) error {
 		}
 
 		for _, a := range artifacts {
+			fmt.Printf("Prepare file %s to send over kafka on action\n", a)
 			chunks, err := shredder.ShredFile(a, fmt.Sprintf("%d", ctx.ActionID), opts)
 			if err != nil {
 				return cli.NewExitError(err.Error(), 66)
@@ -179,6 +195,7 @@ func ackAction(c *cli.Context) error {
 			if _, _, err := sendDataOnKafka(producer, topic, datas); err != nil {
 				return cli.NewExitError(err.Error(), 68)
 			}
+			fmt.Printf("File %s is well sent over kafka\n", a)
 		}
 	}
 
@@ -200,11 +217,13 @@ func ackAction(c *cli.Context) error {
 		return cli.NewExitError(err.Error(), 47)
 	}
 
+	fmt.Println("ACK is well send over kafka")
+
 	return nil
 }
 
-func getAESEncryptionOptions(password string) (*shredder.AESEncryption, error) {
-	aeskey := []byte(password)
+func getAESEncryptionOptions(key string) (*shredder.AESEncryption, error) {
+	aeskey := []byte(key)
 	if len(aeskey) > 32 {
 		aeskey = aeskey[:32]
 	} else {

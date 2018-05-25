@@ -17,7 +17,7 @@ import (
 )
 
 const modelColumns = `
-	worker_model.id,
+	DISTINCT worker_model.id,
 	worker_model.type,
 	worker_model.name,
 	worker_model.image,
@@ -40,6 +40,15 @@ const modelColumns = `
 
 const bookRegisterTTLInSeconds = 360
 
+var defaultEnvs = map[string]string{
+	"CDS_SINGLE_USE":          "1",
+	"CDS_TTL":                 "{{.TTL}}",
+	"CDS_GRAYLOG_HOST":        "{{.GraylogHost}}",
+	"CDS_GRAYLOG_PORT":        "{{.GraylogPort}}",
+	"CDS_GRAYLOG_EXTRA_KEY":   "{{.GraylogExtraKey}}",
+	"CDS_GRAYLOG_EXTRA_VALUE": "{{.GraylogExtraValue}}",
+}
+
 type dbResultWMS struct {
 	WorkerModel
 	GroupName string `db:"groupname"`
@@ -56,15 +65,16 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 }
 
 // UpdateWorkerModel update a worker model. If worker model have SpawnErr -> clear them
-func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
+func UpdateWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	model.UserLastModified = time.Now()
 	model.NeedRegistration = true
 	model.NbSpawnErr = 0
 	model.LastSpawnErr = ""
-	dbmodel := WorkerModel(model)
+	dbmodel := WorkerModel(*model)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err
 	}
+	*model = sdk.Model(dbmodel)
 	return nil
 }
 
@@ -150,6 +160,41 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, e
 					where group_id = $2`, modelColumns, modelColumns)
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
+		}
+	}
+	return scanWorkerModels(db, wms)
+}
+
+// LoadWorkerModelsByUserAndBinary returns worker models list according to user's groups and binary capability
+func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary string) ([]sdk.Model, error) {
+	wms := []dbResultWMS{}
+	if user.Admin {
+		query := fmt.Sprintf(`
+			SELECT %s
+				FROM worker_model
+					JOIN "group" ON worker_model.group_id = "group".id
+					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+					WHERE worker_capability.type = 'binary' AND worker_capability.argument = $1
+		`, modelColumns)
+		if _, err := db.Select(&wms, query, binary); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUserAndBinary> for admin")
+		}
+	} else {
+		query := fmt.Sprintf(`
+			SELECT %s
+				FROM worker_model
+					JOIN "group" ON worker_model.group_id = "group".id
+					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+				WHERE group_id IN (SELECT group_id FROM group_user WHERE user_id = $1) AND worker_capability.type = 'binary' AND worker_capability.argument = $3
+			UNION
+			SELECT %s
+				FROM worker_model
+					JOIN "group" ON worker_model.group_id = "group".id
+					JOIN worker_capability ON worker_model.id = worker_capability.worker_model_id
+				WHERE group_id = $2 AND worker_capability.type = 'binary' AND worker_capability.argument = $3
+		`, modelColumns, modelColumns)
+		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID, binary); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUserAndBinary> for user")
 		}
 	}
 	return scanWorkerModels(db, wms)
@@ -327,4 +372,17 @@ func BookForRegister(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.
 		return nil, nil
 	}
 	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "BookForRegister> worker model %d already booked by %s (%d)", id, h.Name, h.ID)
+}
+
+func mergeWithDefaultEnvs(envs map[string]string) map[string]string {
+	if envs == nil {
+		return defaultEnvs
+	}
+	for envName := range defaultEnvs {
+		if _, ok := envs[envName]; !ok {
+			envs[envName] = defaultEnvs[envName]
+		}
+	}
+
+	return envs
 }

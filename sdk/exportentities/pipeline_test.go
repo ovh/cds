@@ -711,7 +711,9 @@ func TestExportAndImportPipelineV1_YAML(t *testing.T) {
 				}
 
 			}
-			assert.True(t, stageFound, "Stage not found")
+			if len(tc.arg.Stages) > 1 {
+				assert.True(t, stageFound, "Stage not found")
+			}
 		}
 	}
 }

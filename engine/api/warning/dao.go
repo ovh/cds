@@ -14,7 +14,7 @@ func removeProjectWarning(db gorp.SqlExecutor, warningType string, element strin
 	return err
 }
 
-func insert(db gorp.SqlExecutor, w sdk.WarningV2) error {
+func Insert(db gorp.SqlExecutor, w sdk.WarningV2) error {
 	warn := warning(w)
 	return db.Insert(&warn)
 }

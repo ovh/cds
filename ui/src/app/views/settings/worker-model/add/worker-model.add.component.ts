@@ -9,6 +9,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {User} from '../../../../model/user.model';
 import {finalize} from 'rxjs/operators';
+import {omit} from 'lodash';
 
 @Component({
     selector: 'app-worker-model-add',
@@ -27,6 +28,9 @@ export class WorkerModelAddComponent implements OnInit {
     patternSelected: ModelPattern;
     currentUser: User;
     canAdd = false;
+    envNames: Array<string> = [];
+    newEnvName: string;
+    newEnvValue: string;
 
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private workerModelPatternError = false;
@@ -106,11 +110,33 @@ export class WorkerModelAddComponent implements OnInit {
             case 'docker':
                 this.workerModel.model_docker.cmd = pattern.model.cmd;
                 this.workerModel.model_docker.shell = pattern.model.shell;
+                this.workerModel.model_docker.envs = pattern.model.envs;
+                if (pattern.model.envs) {
+                    this.envNames = Object.keys(pattern.model.envs);
+                }
                 break
             default:
                 this.workerModel.model_virtual_machine.pre_cmd = pattern.model.pre_cmd;
                 this.workerModel.model_virtual_machine.cmd = pattern.model.cmd;
                 this.workerModel.model_virtual_machine.post_cmd = pattern.model.post_cmd;
         }
+    }
+
+    addEnv(newEnvName: string, newEnvValue: string) {
+        if (!newEnvName) {
+            return;
+        }
+        if (!this.workerModel.model_docker.envs) {
+            this.workerModel.model_docker.envs = {};
+        }
+        this.workerModel.model_docker.envs[newEnvName] = newEnvValue;
+        this.envNames.push(newEnvName);
+        this.newEnvName = '';
+        this.newEnvValue = '';
+    }
+
+    deleteEnv(envName: string, index: number) {
+        this.envNames.splice(index, 1);
+        this.workerModel.model_docker.envs = omit(this.workerModel.model_docker.envs, envName);
     }
 }

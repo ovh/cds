@@ -41,7 +41,7 @@ func (api *API) uploadArtifactHandler() Handler {
 		m := r.MultipartForm
 		envName := m.Value["env"][0]
 
-		var sizeStr, permStr, md5sum string
+		var sizeStr, permStr, md5sum, sha512sum string
 		if len(m.Value["size"]) > 0 {
 			sizeStr = m.Value["size"][0]
 		}
@@ -50,6 +50,9 @@ func (api *API) uploadArtifactHandler() Handler {
 		}
 		if len(m.Value["md5sum"]) > 0 {
 			md5sum = m.Value["md5sum"][0]
+		}
+		if len(m.Value["sha512sum"]) > 0 {
+			sha512sum = m.Value["sha512sum"][0]
 		}
 
 		if fileName == "" {
@@ -114,6 +117,7 @@ func (api *API) uploadArtifactHandler() Handler {
 			Size:         size,
 			Perm:         uint32(perm),
 			MD5sum:       md5sum,
+			SHA512sum:    sha512sum,
 		}
 
 		files := m.File[fileName]

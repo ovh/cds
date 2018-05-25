@@ -203,26 +203,12 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		label = "register"
 	}
 
-	envs := []apiv1.EnvVar{
-		{Name: "CDS_API", Value: h.Config.API.HTTP.URL},
-		{Name: "CDS_NAME", Value: name},
-		{Name: "CDS_TOKEN", Value: h.Configuration().API.Token},
-		{Name: "CDS_SINGLE_USE", Value: "1"},
-		{Name: "CDS_MODEL", Value: fmt.Sprintf("%d", spawnArgs.Model.ID)},
-		{Name: "CDS_HATCHERY", Value: fmt.Sprintf("%d", h.hatch.ID)},
-		{Name: "CDS_HATCHERY_NAME", Value: h.hatch.Name},
-		{Name: "CDS_FORCE_EXIT", Value: "1"},
-		{Name: "CDS_TTL", Value: fmt.Sprintf("%d", h.Config.WorkerTTL)},
-	}
-
 	var logJob string
 	if spawnArgs.JobID > 0 {
 		if spawnArgs.IsWorkflowJob {
 			logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
-			envs = append(envs, apiv1.EnvVar{Name: "CDS_BOOKED_WORKFLOW_JOB_ID", Value: fmt.Sprintf("%d", spawnArgs.JobID)})
 		} else {
 			logJob = fmt.Sprintf("for pipeline build job %d,", spawnArgs.JobID)
-			envs = append(envs, apiv1.EnvVar{Name: "CDS_BOOKED_PB_JOB_ID", Value: fmt.Sprintf("%d", spawnArgs.JobID)})
 		}
 	}
 
@@ -246,20 +232,13 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		Model:             spawnArgs.Model.ID,
 		Hatchery:          h.hatch.ID,
 		HatcheryName:      h.hatch.Name,
+		TTL:               h.Config.WorkerTTL,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
 		GraylogExtraValue: h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue,
 		GrpcAPI:           h.Configuration().API.GRPC.URL,
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
-	}
-
-	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			udataParam.WorkflowJobID = spawnArgs.JobID
-		} else {
-			udataParam.PipelineBuildJobID = spawnArgs.JobID
-		}
 	}
 
 	if spawnArgs.IsWorkflowJob {
@@ -281,6 +260,45 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 	if spawnArgs.RegisterOnly {
 		cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
+	}
+
+	if spawnArgs.Model.ModelDocker.Envs == nil {
+		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
+	}
+
+	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
+	envsWm["CDS_FORCE_EXIT"] = "1"
+	envsWm["CDS_API"] = udataParam.API
+	envsWm["CDS_TOKEN"] = udataParam.Token
+	envsWm["CDS_NAME"] = udataParam.Name
+	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
+	envsWm["CDS_HATCHERY"] = fmt.Sprintf("%d", udataParam.Hatchery)
+	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
+	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
+	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
+
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		} else {
+			envsWm["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		}
+	}
+
+	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
+		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
+		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
+	}
+
+	envs := make([]apiv1.EnvVar, len(envsWm))
+	i := 0
+	for envName, envValue := range envsWm {
+		envs[i] = apiv1.EnvVar{Name: envName, Value: envValue}
+		i++
 	}
 
 	var gracePeriodSecs int64
@@ -382,7 +400,8 @@ func (h *HatcheryKubernetes) killAwolWorkers() error {
 	for _, pod := range pods.Items {
 		toDelete := false
 		for _, container := range pod.Status.ContainerStatuses {
-			if (container.State.Terminated != nil && container.State.Terminated.Reason == "Completed") || (container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull") {
+			if (container.State.Terminated != nil && (container.State.Terminated.Reason == "Completed" || container.State.Terminated.Reason == "Error")) ||
+				(container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull") {
 				toDelete = true
 			}
 		}

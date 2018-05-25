@@ -7,6 +7,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {User} from '../../../../model/user.model';
 import {finalize} from 'rxjs/operators';
+import {omit} from 'lodash';
 
 @Component({
     selector: 'app-worker-model-pattern-add',
@@ -19,6 +20,9 @@ export class WorkerModelPatternAddComponent {
     pattern: ModelPattern;
     workerModelTypes: Array<string>;
     currentUser: User;
+    envNames: Array<string> = [];
+    newEnvName: string;
+    newEnvValue: string;
 
     private workerModelPatternNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private workerModelPatternError = false;
@@ -53,5 +57,23 @@ export class WorkerModelPatternAddComponent {
               this._toast.success('', this._translate.instant('worker_model_pattern_saved'));
               this._router.navigate(['admin', 'worker-model-pattern', pattern.type, pattern.name]);
           });
+    }
+
+    addEnv(newEnvName: string, newEnvValue: string) {
+        if (!newEnvName) {
+            return;
+        }
+        if (!this.pattern.model.envs) {
+            this.pattern.model.envs = {};
+        }
+        this.pattern.model.envs[newEnvName] = newEnvValue;
+        this.envNames.push(newEnvName);
+        this.newEnvName = '';
+        this.newEnvValue = '';
+    }
+
+    deleteEnv(envName: string, index: number) {
+        this.envNames.splice(index, 1);
+        this.pattern.model.envs = omit(this.pattern.model.envs, envName);
     }
 }

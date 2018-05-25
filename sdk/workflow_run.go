@@ -159,7 +159,8 @@ type WorkflowNodeRunArtifact struct {
 	DownloadHash      string    `json:"download_hash" db:"download_hash"`
 	Size              int64     `json:"size,omitempty" db:"size"`
 	Perm              uint32    `json:"perm,omitempty" db:"perm"`
-	MD5sum            string    `json:"md5sum,omitempty" db:"md5sum" cli:"md5sum"`
+	MD5sum            string    `json:"md5sum,omitempty" db:"md5sum" cli:"-"`
+	SHA512sum         string    `json:"sha512sum,omitempty" db:"sha512sum" cli:"sha512sum"`
 	ObjectPath        string    `json:"object_path,omitempty" db:"object_path"`
 	Created           time.Time `json:"created,omitempty" db:"created"`
 	TempURL           string    `json:"temp_url,omitempty" db:"-"`
@@ -168,6 +169,14 @@ type WorkflowNodeRunArtifact struct {
 
 // Equal returns true if w WorkflowNodeRunArtifact equals c
 func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
+	if w.SHA512sum != "" {
+		return w.WorkflowID == c.WorkflowID &&
+			w.WorkflowNodeRunID == c.WorkflowNodeRunID &&
+			w.DownloadHash == c.DownloadHash &&
+			w.Tag == c.Tag &&
+			w.TempURL == c.TempURL &&
+			w.SHA512sum == c.SHA512sum
+	}
 	return w.WorkflowID == c.WorkflowID &&
 		w.WorkflowNodeRunID == c.WorkflowNodeRunID &&
 		w.DownloadHash == c.DownloadHash &&

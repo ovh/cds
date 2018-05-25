@@ -1,4 +1,4 @@
-<h2>{{'worker_model_pattern_add' | translate}}</h2>
+<h2>{{'worker_model_pattern_edit' | translate}}</h2>
 
 <div *ngIf="!loading;then showPattern;else loadPattern"></div>
 <ng-template #showPattern>
@@ -40,6 +40,35 @@
             <div class="field">
               <label>{{'worker_model_cmd' | translate}}</label>
               <input class="ui input" type="text" name="cmd" [(ngModel)]="pattern.model.cmd" [disabled]="loading || !currentUser.admin">
+            </div>
+            <div class="field" *ngIf="pattern.type && pattern.type === 'docker'">
+              <label suiPopup [popupText]="'worker_model_env_tooltip' | translate" popupPlacement="top left">
+                {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+              </label>
+              <ng-container *ngIf="pattern.model.envs">
+                <div class="two fields" *ngFor="let envName of envNames; let index = index">
+                  <div class="field">
+                    <input type="text" name="name-{{envName}}" [placeholder]="'common_name' | translate" [value]="envName" disabled>
+                  </div>
+                  <div class="field">
+                    <input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate" [(ngModel)]="pattern.model.envs[envName]">
+                  </div>
+                  <button class="ui icon red button" (click)="deleteEnv(envName, index)">
+                    <i class="trash icon"></i>
+                  </button>
+                </div>
+              </ng-container>
+              <div class="two fields">
+                <div class="field">
+                  <input type="text" name="newEnvName" [placeholder]="'common_name' | translate" [(ngModel)]="newEnvName">
+                </div>
+                <div class="field">
+                  <input type="text" name="newEnvValue" [placeholder]="'common_value' | translate" [(ngModel)]="newEnvValue">
+                </div>
+                <button class="ui icon green button" (click)="addEnv(newEnvName, newEnvValue)">
+                  <i class="plus icon"></i>
+                </button>
+              </div>
             </div>
             <div class="field" *ngIf="pattern.type && pattern.type !== 'docker'">
               <label>{{'worker_model_post_cmd' | translate}}</label>

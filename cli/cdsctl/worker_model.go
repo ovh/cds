@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -32,10 +33,27 @@ var (
 var workerModelListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS worker models",
+	Flags: []cli.Flag{
+		{
+			Name:      "binary",
+			Usage:     "Use this flag to filter worker model list by its binary capabilities",
+			Kind:      reflect.String,
+			ShortHand: "b",
+		},
+	},
 }
 
 func workerModelListRun(v cli.Values) (cli.ListResult, error) {
-	workerModels, err := client.WorkerModels()
+	var err error
+	var workerModels []sdk.Model
+	binaryFlag := v.GetString("binary")
+
+	if binaryFlag != "" {
+		workerModels, err = client.WorkerModelsByBinary(binaryFlag)
+	} else {
+		workerModels, err = client.WorkerModels()
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -61,25 +79,41 @@ For admin:
 	VariadicArgs: cli.Arg{
 		Name: "filepath",
 	},
+	Flags: []cli.Flag{
+		{
+			Name:  "force",
+			Usage: "Use force flag to update your worker model",
+			IsValid: func(s string) bool {
+				if s != "true" && s != "false" {
+					return false
+				}
+				return true
+			},
+			Default: "false",
+			Kind:    reflect.Bool,
+		},
+	},
 }
 
 type workerModelFile struct {
-	Name          string `json:"name" yaml:"name"`
-	Group         string `json:"group" yaml:"group"`
-	Communication string `json:"communication,omitempty" yaml:"communication,omitempty"`
-	Provision     int    `json:"provision,omitempty" yaml:"provision,omitempty"`
-	Image         string `json:"image" yaml:"image"`
-	Description   string `json:"description" yaml:"description"`
-	Type          string `json:"type" yaml:"type"`
-	Flavor        string `json:"flavor,omitempty" yaml:"flavor,omitempty"`
-	Shell         string `json:"shell,omitempty" yaml:"shell,omitempty"`
-	PreCmd        string `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
-	Cmd           string `json:"cmd,omitempty" yaml:"cmd,omitempty"`
-	PostCmd       string `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
-	Restricted    bool   `json:"restricted" yaml:"restricted"`
+	Name          string            `json:"name" yaml:"name"`
+	Group         string            `json:"group" yaml:"group"`
+	Communication string            `json:"communication,omitempty" yaml:"communication,omitempty"`
+	Provision     int               `json:"provision,omitempty" yaml:"provision,omitempty"`
+	Image         string            `json:"image" yaml:"image"`
+	Description   string            `json:"description" yaml:"description"`
+	Type          string            `json:"type" yaml:"type"`
+	Flavor        string            `json:"flavor,omitempty" yaml:"flavor,omitempty"`
+	Envs          map[string]string `json:"envs,omitempty" yaml:"envs,omitempty"`
+	Shell         string            `json:"shell,omitempty" yaml:"shell,omitempty"`
+	PreCmd        string            `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
+	Cmd           string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`
+	PostCmd       string            `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
+	Restricted    bool              `json:"restricted" yaml:"restricted"`
 }
 
 func workerModelImportRun(c cli.Values) error {
+	force := c.GetBool("force")
 	if c.GetString("filepath") == "" {
 		return fmt.Errorf("filepath for worker model is mandatory")
 	}
@@ -187,11 +221,24 @@ func workerModelImportRun(c cli.Values) error {
 			return fmt.Errorf("Error : Unable to get group %s : %s", modelInfos.Group, err)
 		}
 
-		if _, err := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVM, g.ID); err != nil {
-			return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, err)
+		if force {
+			if existingWm, err := client.WorkerModel(modelInfos.Name); err != nil {
+				if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errAdd != nil {
+					return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
+				}
+				fmt.Printf("Worker model %s added with success", modelInfos.Name)
+			} else {
+				if _, errU := client.WorkerModelUpdate(existingWm.ID, modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errU != nil {
+					return fmt.Errorf("Error: cannot update worker model %s (%s)", modelInfos.Name, errU)
+				}
+				fmt.Printf("Worker model %s updated with success", modelInfos.Name)
+			}
+		} else {
+			if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errAdd != nil {
+				return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
+			}
+			fmt.Printf("Worker model %s added with success", modelInfos.Name)
 		}
-
-		fmt.Printf("Worker model %s added with success", modelInfos.Name)
 	}
 
 	return nil

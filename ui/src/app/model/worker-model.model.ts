@@ -30,6 +30,7 @@ export class WorkerModel {
 export class ModelDocker {
   image: string;
   shell: string;
+  envs: {};
   cmd: string;
   memory: number;
 }
@@ -48,6 +49,7 @@ export class ModelPattern {
   type: string;
   model: {
     shell?: string;
+    envs?: {};
     pre_cmd?: string;
     cmd: string;
     post_cmd?: string;

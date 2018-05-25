@@ -463,6 +463,8 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk6(in *jlexer.Lexer, out *GRPCPlugin
 			out.Perm = uint32(in.Uint32())
 		case "md5sum":
 			out.MD5sum = string(in.String())
+		case "sha512sum":
+			out.SHA512sum = string(in.String())
 		case "temp_url":
 			out.TempURL = string(in.String())
 		case "cmd":
@@ -607,6 +609,16 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk6(out *jwriter.Writer, in GRPCPlugi
 			out.RawString(prefix)
 		}
 		out.String(string(in.MD5sum))
+	}
+	if in.SHA512sum != "" {
+		const prefix string = ",\"sha512sum\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.SHA512sum))
 	}
 	if in.TempURL != "" {
 		const prefix string = ",\"temp_url\":"

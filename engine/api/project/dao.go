@@ -371,18 +371,18 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoProject
 		}
-		return nil, err
+		return nil, sdk.WrapError(err, "loadprojects> db.Select")
 	}
 
 	projs := make([]sdk.Project, len(res))
 	for i := range res {
 		p := &res[i]
 		if err := p.PostGet(db); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "loadprojects> PostGet error")
 		}
 		proj, err := unwrap(db, store, p, u, opts)
 		if err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "loadprojects> unwrap error")
 		}
 		projs[i] = *proj
 	}

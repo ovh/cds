@@ -1,16 +1,14 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var (
@@ -89,23 +87,27 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		if err := client.WorkflowNodeRunArtifactDownload(v[_ProjectKey], v[_WorkflowName], a, f); err != nil {
 			return err
 		}
+
+		sha512sum, err512 := sdk.FileSHA512sum(f)
+		if err512 != nil {
+			return err512
+		}
+
 		if err := f.Close(); err != nil {
 			return err
 		}
-		fileForMD5, errop := os.Open(a.GetName())
-		if errop != nil {
-			return errop
+
+		if sha512sum != a.SHA512sum {
+			return fmt.Errorf("Invalid sha512sum \ndownloaded file:%s\n%s:%s", sha512sum, f.Name(), a.SHA512sum)
 		}
-		//Compute md5sum
-		hash := md5.New()
-		if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
-			return errcopy
+
+		md5sum, errmd5 := sdk.FileMd5sum(f)
+		if errmd5 != nil {
+			return errmd5
 		}
-		hashInBytes := hash.Sum(nil)[:16]
-		md5sumStr := hex.EncodeToString(hashInBytes)
-		fileForMD5.Close()
-		if md5sumStr != a.MD5sum {
-			return fmt.Errorf("Invalid md5sum \ndownloaded file:%s\n%s:%s", md5sumStr, f.Name(), a.MD5sum)
+
+		if md5sum != a.MD5sum {
+			return fmt.Errorf("Invalid md5sum \ndownloaded file:%s\n%s:%s", md5sum, f.Name(), a.MD5sum)
 		}
 
 		fmt.Printf("File %s created, checksum OK\n", f.Name())

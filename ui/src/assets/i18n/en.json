@@ -102,6 +102,7 @@
 
   "artifact_name": "Artifact name",
   "artifact_tag": "Tag",
+  "artifact_sha512": "SHA512 Checksum",
 
   "audit_change": "Change",
   "audit_no": "No audit for this variable",
@@ -143,6 +144,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_search": "Search",
   "common_project": "Project",
   "common_preview": "Preview",
   "common_details": "Details",
@@ -160,6 +162,7 @@
   "common_branch_title": "Branch: ",
   "common_clean_app": "Clean application",
   "common_close": "Close",
+  "common_cancel": "Cancel",
   "common_commit": "Commit",
   "common_commits": "Commits",
   "common_commit_title": "Commit: ",
@@ -184,6 +187,7 @@
   "common_loading_environments": "Loading environments",
   "common_loading_workflow": "Loading workflow...",
   "common_name": "Name",
+  "common_value": "Value",
   "common_no": "No",
   "common_notifications": "Notifications",
   "common_parameters": "Parameters",
@@ -539,6 +543,7 @@
   "platform_no" : "There is no linked platform",
   "platform_model": "Platform model",
   "platform_configuration": "Platform configuration",
+  "platform_official_tooltip": "Public platform",
 
   "provider_hook": "hook",
   "provider_deployment": "deployment",
@@ -689,8 +694,11 @@
   "wizard_ssh_key_name": "Ssh key name",
 
   "worker_model_type": "Type",
+  "worker_model_env": "Environment variables",
+  "worker_model_env_tooltip": "You can set environment variables to put in your worker. If you have no specific need, the default environment variables will be added automatically at the creation",
   "worker_model_official": "Verified worker model (added by an administrator)",
   "worker_model_unofficial": "Unverified worker model (added by a user)",
+  "worker_model_binary_capability": "Binary capability",
   "worker_model_capabilities": "Executable binaries in the directories named by the PATH environment variable",
   "worker_model_capabilities_up_to_date": "Binaries list is up to date",
   "worker_model_capabilities_need_refresh": "Binaries list need to be refresh by CDS. Last Registration:",
@@ -750,6 +758,7 @@
   "worker_model_arch": "Architecture",
   "worker_model_pattern_title": "Patterns of configuration scripts",
   "worker_model_pattern_add": "Add a worker model pattern",
+  "worker_model_pattern_edit": "Edit a worker model pattern",
   "worker_model_pre_cmd": "Pre worker command",
   "worker_model_cmd_docker": "Command",
   "worker_model_shell_docker": "Shell command",
