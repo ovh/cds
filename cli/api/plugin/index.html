@@ -1356,6 +1356,31 @@
         <span>platform</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/cli/cdsctl/admin/plugins/binary-add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/binary-add/">
+          <span>binary-add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/plugins/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/plugins/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/plugins/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/plugins/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/list/">
+          <span>list</span>
+        </a>
+    </li>
         </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/project/show/" class="dd-item">
@@ -1964,8 +1989,8 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-plugin">POST <code>/plugin</code></a></li>
 <li><a href="#put-plugin">PUT <code>/plugin</code></a></li>
+<li><a href="#post-plugin">POST <code>/plugin</code></a></li>
 <li><a href="#delete-plugin-name">DELETE <code>/plugin/&lt;name&gt;</code></a></li>
 <li><a href="#get-plugin-download-name">GET <code>/plugin/download/&lt;name&gt;</code></a></li>
 </ul></li>
@@ -1991,34 +2016,6 @@
 
 
 
-<h3 id="post-plugin">POST <code>/plugin</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/plugin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addPluginHandler%22">addPluginHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-plugin">PUT <code>/plugin</code></h3>
 
 <table>
@@ -2043,6 +2040,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updatePluginHandler%22">updatePluginHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-plugin">POST <code>/plugin</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/plugin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addPluginHandler%22">addPluginHandler</a></td>
 </tr>
 </tbody>
 </table>
