@@ -61,7 +61,7 @@ func FileMd5sum(file *os.File) (string, error) {
 	reader := bufio.NewReader(file)
 	hash := md5.New()
 	if _, err := io.Copy(hash, reader); err != nil {
-		return "", fmt.Errorf("FileMd5sum> error: %v", err)
+		return "", fmt.Errorf("unable to copy file content to md5: %v", err)
 	}
 
 	hashInBytes := hash.Sum(nil)[:16]
@@ -74,7 +74,7 @@ func FileSHA512sum(file *os.File) (string, error) {
 	reader := bufio.NewReader(file)
 	hash := sha512.New()
 	if _, err := io.Copy(hash, reader); err != nil {
-		return "", fmt.Errorf("FileSHA512sum> error: %v", err)
+		return "", fmt.Errorf("unable to copy file content to sha512: %v", err)
 	}
 
 	hashInBytes := hash.Sum(nil)[:64]
