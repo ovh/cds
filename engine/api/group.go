@@ -120,7 +120,7 @@ func (api *API) deleteGroupHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteGroupHandler> cannot commit transaction")
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -304,7 +304,7 @@ func (api *API) removeUserFromGroupHandler() Handler {
 			return sdk.WrapError(err, "removeUserFromGroupHandler: Cannot delete user %s from group %s", userName, g.Name)
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -371,7 +371,7 @@ func (api *API) setUserGroupAdminHandler() Handler {
 			return sdk.WrapError(err, "setUserGroupAdminHandler: cannot set user group admin")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -396,6 +396,6 @@ func (api *API) removeUserGroupAdminHandler() Handler {
 			return sdk.WrapError(err, "removeUserGroupAdminHandler: cannot remove user group admin privilege")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }

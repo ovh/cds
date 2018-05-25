@@ -38,7 +38,7 @@ func (api *API) postWorkflowJobRequirementsErrorHandler() Handler {
 
 			log.Warning("%s (%s) > %s", getWorker(ctx).ID, caller.Name, string(body))
 		}
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }
 
@@ -223,7 +223,7 @@ func (api *API) postBookWorkflowJobHandler() Handler {
 		if _, err := workflow.BookNodeJobRun(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "postBookWorkflowJobHandler> job already booked")
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -362,7 +362,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 					// this log is here to stats it and we returns nil for unlock the worker
 					// and avoid a "worker timeout"
 					log.Warning("postWorkflowJobResultHandler> NodeJobRun not found: %d err:%v", id, errLn)
-					return WriteJSON(w, nil, http.StatusOK)
+					return nil
 				}
 				return sdk.WrapError(errLn, "postWorkflowJobResultHandler> Cannot load NodeJobRun %d", id)
 			}
@@ -382,7 +382,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
 		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }
 
@@ -531,7 +531,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }
 
@@ -654,7 +654,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
 		}
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }
 
@@ -693,7 +693,7 @@ func (api *API) postWorkflowJobTagsHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to commit transaction")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -764,6 +764,6 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to commit tx")
 		}
 
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }

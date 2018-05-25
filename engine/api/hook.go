@@ -116,7 +116,7 @@ func (api *API) receiveHookHandler() Handler {
 			}
 		}()
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -261,7 +261,7 @@ func (api *API) deleteHookHandler() Handler {
 			return sdk.WrapError(err, "deleteHook> cannot delete hook")
 
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -431,7 +431,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			return sdk.WrapError(err, "getHookPollingVCSEvents> cannot check if polling is enabled")
 		} else if info.PollingDisabled || !info.PollingSupported {
 			log.Info("getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
-			return WriteJSON(w, nil, http.StatusOK)
+			return nil
 		}
 
 		events, pollingDelay, err := client.GetEvents(h.Config["repoFullName"].Value, lastExec)

@@ -116,6 +116,6 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }

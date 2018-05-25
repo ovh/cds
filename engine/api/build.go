@@ -56,7 +56,7 @@ func (api *API) updateStepStatusHandler() Handler {
 		if err := pipeline.UpdatePipelineBuildJob(api.mustDB(), pbJob); err != nil {
 			return sdk.WrapError(err, "updateStepStatusHandler> Cannot update pipeline build job")
 		}
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }
 
@@ -162,7 +162,7 @@ func (api *API) deleteBuildHandler() Handler {
 			return sdk.WrapError(err, "deleteBuildHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -303,7 +303,7 @@ func (api *API) addQueueResultHandler() Handler {
 			return sdk.WrapError(err, "addQueueResultHandler> Cannot commit tx")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -409,7 +409,7 @@ func (api *API) bookPipelineBuildJobHandler() Handler {
 		if _, err := pipeline.BookPipelineBuildJob(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "bookPipelineBuildJobHandler> job already booked")
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -438,7 +438,7 @@ func (api *API) addSpawnInfosPipelineBuildJobHandler() Handler {
 			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -684,7 +684,7 @@ func (api *API) addBuildVariableHandler() Handler {
 			return sdk.WrapError(err, "addBuildVariableHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -774,7 +774,7 @@ func (api *API) addBuildTestResultsHandler() Handler {
 			return sdk.WrapError(err, "addBuildTestsResultsHandler> Cannot insert tests results")
 		}
 
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }
 

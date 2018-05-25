@@ -109,7 +109,7 @@ func (api *API) postMarkAsReadBroadcastHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -133,7 +133,7 @@ func (api *API) deleteBroadcastHandler() Handler {
 			return sdk.WrapError(err, "deleteBroadcast> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 

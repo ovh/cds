@@ -73,7 +73,7 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentKeyDelete(key, *env, envKey, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 

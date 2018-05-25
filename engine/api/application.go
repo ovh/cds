@@ -565,7 +565,7 @@ func (api *API) deleteApplicationHandler() Handler {
 
 		event.PublishDeleteApplication(proj.Key, *app, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 

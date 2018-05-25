@@ -101,7 +101,7 @@ func (api *API) disableWorkerHandler() Handler {
 		key := cache.Key("worker", wor.ID)
 		api.Cache.Delete(key)
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -110,7 +110,7 @@ func (api *API) refreshWorkerHandler() Handler {
 		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", getWorker(ctx).ID)
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -119,7 +119,7 @@ func (api *API) unregisterWorkerHandler() Handler {
 		if err := worker.DeleteWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
 			return sdk.WrapError(err, "unregisterWorkerHandler> cannot delete worker %s", getWorker(ctx).ID)
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 
@@ -133,7 +133,7 @@ func (api *API) workerCheckingHandler() Handler {
 
 		if wk.Status != sdk.StatusWaiting {
 			log.Debug("workerCheckingHandler> Worker %s cannot be Checking. Current status: %s", wk.Name, wk.Status)
-			return WriteJSON(w, nil, http.StatusOK)
+			return nil
 		}
 
 		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusChecking); err != nil {
@@ -143,7 +143,7 @@ func (api *API) workerCheckingHandler() Handler {
 		wk.Status = sdk.StatusChecking
 		api.Cache.Set(key, wk)
 
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }
 
@@ -156,12 +156,12 @@ func (api *API) workerWaitingHandler() Handler {
 		}
 
 		if wk.Status == sdk.StatusWaiting {
-			return WriteJSON(w, nil, http.StatusOK)
+			return nil
 		}
 
 		if wk.Status != sdk.StatusChecking && wk.Status != sdk.StatusBuilding {
 			log.Debug("workerWaitingHandler> Worker %s cannot be Waiting. Current status: %s", wk.Name, wk.Status)
-			return WriteJSON(w, nil, http.StatusOK)
+			return nil
 		}
 
 		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusWaiting); err != nil {
@@ -171,6 +171,6 @@ func (api *API) workerWaitingHandler() Handler {
 		wk.Status = sdk.StatusWaiting
 		api.Cache.Set(key, wk)
 
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }

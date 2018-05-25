@@ -68,7 +68,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 
 		event.PublishDeleteProjectPermission(p, gp, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 

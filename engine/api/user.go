@@ -49,7 +49,7 @@ func (api *API) deleteUserHandler() Handler {
 			return sdk.WrapError(err, "deleteUserHandler> cannot commit transaction")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 

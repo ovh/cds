@@ -408,6 +408,6 @@ func (api *API) deleteProjectHandler() Handler {
 
 		log.Info("Project %s deleted.", p.Name)
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }

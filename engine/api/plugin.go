@@ -235,7 +235,7 @@ func (api *API) deletePluginHandler() Handler {
 		if err := objectstore.Delete(&sdk.ActionPlugin{Name: name}); err != nil {
 			return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in objectstore", name)
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 

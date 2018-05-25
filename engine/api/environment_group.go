@@ -286,7 +286,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentPermissionDelete(key, *env, gp, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 

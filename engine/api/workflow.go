@@ -298,7 +298,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 
 		event.PublishWorkflowDelete(key, *oldW, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return nil
 	}
 }
 

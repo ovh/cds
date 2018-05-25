@@ -124,7 +124,7 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 		}
 
 		event.PublishDeleteProjectPlatform(p, deletedPlatform, getUser(ctx))
-		return WriteJSON(w, nil, http.StatusNoContent)
+		return nil
 	}
 }
 
