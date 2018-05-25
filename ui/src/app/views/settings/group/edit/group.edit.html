@@ -15,7 +15,7 @@
               </div>
               <div class="buttons" *ngIf="currentUser.admin || currentUserIsAdminOnGroup">
                   <app-delete-button *ngIf="group.id" class="right floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
-                  <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
+                  <button class="ui green right floated button" *ngIf="group.id" [class.loading]="loading" (click)="clickSaveButton()">
                     <i class="save icon"></i>{{ 'btn_save' | translate }}
                   </button>
               </div>

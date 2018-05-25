@@ -185,7 +185,7 @@ func (api *API) updateGroupHandler() Handler {
 			return sdk.WrapError(err, "updateGroupHandler: Cannot commit transaction")
 		}
 
-		return nil
+		return WriteJSON(w, updatedGroup, http.StatusOK)
 	}
 }
 
@@ -225,8 +225,8 @@ func (api *API) getGroupsHandler() Handler {
 			}
 			return WriteJSON(w, filteredGroups, http.StatusOK)
 		}
-		return WriteJSON(w, groups, http.StatusOK)
 
+		return WriteJSON(w, groups, http.StatusOK)
 	}
 }
 
@@ -270,8 +270,7 @@ func (api *API) addGroupHandler() Handler {
 			return sdk.WrapError(err, "addGroupHandler> cannot commit tx")
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		return nil
+		return WriteJSON(w, g, http.StatusCreated)
 	}
 }
 
