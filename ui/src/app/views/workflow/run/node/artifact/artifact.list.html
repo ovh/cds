@@ -2,21 +2,26 @@
     <table class="ui fixed celled table">
         <thead>
         <tr>
-            <th class="six wide">{{ 'artifact_name' | translate }}</th>
-            <th class="six wide">{{ 'artifact_tag' | translate }}</th>
-            <th class="four wide">{{ 'common_download' | translate }}</th>
+            <th class="four wide">{{ 'artifact_name' | translate }}</th>
+            <th class="four wide">{{ 'artifact_tag' | translate }}</th>
+            <th class="four wide">{{ 'artifact_sha512' | translate }}</th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let a of getDataForCurrentPage()">
             <td>
-                {{a.name + ' (' + getHumainFileSize(a.size) + ')'}}
+                <a href="{{getUrl(a)}}">{{a.name + ' (' + getHumainFileSize(a.size) + ')'}}</a>
             </td>
             <td>
                 {{a.tag}}
             </td>
             <td>
-                <a href="{{getUrl(a)}}">Download</a>
+                <div class="ui action input">
+                    <input type="text" value="{{a.sha512sum}}">
+                    <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate" ngxClipboard [cbContent]="a.sha512sum">
+                        <i class="copy icon"></i>
+                    </button>
+                </div>
             </td>
         </tr>
         </tbody>

@@ -137,6 +137,7 @@ type GRPCPluginBinary struct {
 	Size             int64           `json:"size,omitempty" yaml:"-"`
 	Perm             uint32          `json:"perm,omitempty" yaml:"-"`
 	MD5sum           string          `json:"md5sum,omitempty" yaml:"-"`
+	SHA512sum        string          `json:"sha512sum,omitempty" yaml:"-"`
 	TempURL          string          `json:"temp_url,omitempty" yaml:"-"`
 	TempURLSecretKey string          `json:"-" yaml:"-"`
 	Cmd              string          `json:"cmd,omitempty" yaml:"cmd"`
