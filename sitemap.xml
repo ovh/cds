@@ -1338,6 +1338,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/warning/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/worker/</loc>
   </url>
   
