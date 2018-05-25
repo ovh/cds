@@ -9,7 +9,19 @@ import (
 // LoadWorkfowArtifactByHash retrieves an artiface using its download hash
 func LoadWorkfowArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.WorkflowNodeRunArtifact, error) {
 	var artGorp NodeRunArtifact
-	query := `SELECT workflow_node_run_artifacts.*
+	query := `SELECT
+				id,
+				name,
+				tag,
+				workflow_node_run_id,
+				download_hash,
+				size,
+				perm,
+				md5sum,
+				object_path,
+				created,
+				workflow_run_id,
+				coalesce(sha512sum, '')
 		  FROM workflow_node_run_artifacts
 		  WHERE workflow_node_run_artifacts.download_hash = $1`
 	if err := db.SelectOne(&artGorp, query, hash); err != nil {
@@ -24,7 +36,19 @@ func LoadWorkfowArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.WorkflowN
 func LoadArtifactByIDs(db gorp.SqlExecutor, workflowID, artifactID int64) (*sdk.WorkflowNodeRunArtifact, error) {
 	var artGorp NodeRunArtifact
 	query := `
-		SELECT *
+		SELECT
+			id,
+			name,
+			tag,
+			workflow_node_run_id,
+			download_hash,
+			size,
+			perm,
+			md5sum,
+			object_path,
+			created,
+			workflow_run_id,
+			coalesce(sha512sum, '')
 		FROM workflow_node_run_artifacts
 		JOIN workflow_run ON workflow_run.id = workflow_node_run_artifacts.workflow_run_id
 		WHERE workflow_run.workflow_id = $1 AND workflow_node_run_artifacts.id = $2
@@ -39,7 +63,20 @@ func LoadArtifactByIDs(db gorp.SqlExecutor, workflowID, artifactID int64) (*sdk.
 
 func loadArtifactByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) ([]sdk.WorkflowNodeRunArtifact, error) {
 	var artifactsGorp []NodeRunArtifact
-	if _, err := db.Select(&artifactsGorp, "SELECT * FROM workflow_node_run_artifacts WHERE workflow_node_run_id = $1", nodeRunID); err != nil {
+	if _, err := db.Select(&artifactsGorp, `SELECT
+			id,
+			name,
+			tag,
+			workflow_node_run_id,
+			download_hash,
+			size,
+			perm,
+			md5sum,
+			object_path,
+			created,
+			workflow_run_id,
+			coalesce(sha512sum, '')
+		FROM workflow_node_run_artifacts WHERE workflow_node_run_id = $1`, nodeRunID); err != nil {
 		return nil, err
 	}
 
