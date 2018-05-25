@@ -270,7 +270,7 @@ func (api *API) addGroupHandler() Handler {
 			return sdk.WrapError(err, "addGroupHandler> cannot commit tx")
 		}
 
-		return WriteJSON(w, nil, http.StatusCreated)
+		return WriteJSON(w, g, http.StatusCreated)
 	}
 }
 
