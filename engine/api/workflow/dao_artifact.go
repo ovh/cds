@@ -9,7 +9,7 @@ import (
 // LoadWorkfowArtifactByHash retrieves an artiface using its download hash
 func LoadWorkfowArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.WorkflowNodeRunArtifact, error) {
 	var artGorp NodeRunArtifact
-	query := `SELECT *
+	query := `SELECT
 				id,
 				name,
 				tag,
