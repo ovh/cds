@@ -37,18 +37,18 @@ func LoadArtifactByIDs(db gorp.SqlExecutor, workflowID, artifactID int64) (*sdk.
 	var artGorp NodeRunArtifact
 	query := `
 		SELECT
-			id,
-			name,
-			tag,
-			workflow_node_run_id,
-			download_hash,
-			size,
-			perm,
-			md5sum,
-			object_path,
-			created,
-			workflow_run_id,
-			coalesce(sha512sum, '')
+			workflow_node_run_artifacts.id,
+			workflow_node_run_artifacts.name,
+			workflow_node_run_artifacts.tag,
+			workflow_node_run_artifacts.workflow_node_run_id,
+			workflow_node_run_artifacts.download_hash,
+			workflow_node_run_artifacts.size,
+			workflow_node_run_artifacts.perm,
+			workflow_node_run_artifacts.md5sum,
+			workflow_node_run_artifacts.object_path,
+			workflow_node_run_artifacts.created,
+			workflow_node_run_artifacts.workflow_run_id,
+			workflow_node_run_artifacts.coalesce(sha512sum, '')
 		FROM workflow_node_run_artifacts
 		JOIN workflow_run ON workflow_run.id = workflow_node_run_artifacts.workflow_run_id
 		WHERE workflow_run.workflow_id = $1 AND workflow_node_run_artifacts.id = $2
