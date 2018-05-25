@@ -473,37 +473,21 @@ func Permission(key string, envName string, u *sdk.User) int {
 	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey(key, envName)]
 }
 
-// CountInValueVarData represents the result of CountInVarValue function
-type CountInValueVarData struct {
-	Name  string
-	Count int64
-}
-
-// CountInVarValue counts how many time a pattern is in variable value for the given project
-func CountInVarValue(db gorp.SqlExecutor, key string, value string) ([]CountInValueVarData, error) {
+// CountEnvironmentByVarValue counts how many time a pattern is in variable value for the given project
+func CountEnvironmentByVarValue(db gorp.SqlExecutor, projectKey string, value string) ([]string, error) {
 	query := `
-		SELECT count(*), environment.name
+		SELECT DISTINCT environment.name
 		FROM environment_variable
 		JOIN environment ON environment.id = environment_variable.environment_id
 		JOIN project ON project.id = environment.project_id
-		WHERE value like $2 AND project.projectkey = $1
-		GROUP BY environment.name;
+		WHERE value like $2 AND project.projectkey = $1;
 	`
-	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", value))
-	if err != nil {
-		return nil, sdk.WrapError(err, "environment.CountInVarValue> Unable to count usage")
-	}
-	defer rows.Close()
 
-	results := []CountInValueVarData{}
-	for rows.Next() {
-		var d CountInValueVarData
-		if err := rows.Scan(&d.Count, &d.Name); err != nil {
-			return nil, sdk.WrapError(err, "environment.CountInVarValue> Unable to scan")
-		}
-		results = append(results, d)
+	var envsName []string
+	if _, err := db.Select(&envsName, query, projectKey, fmt.Sprintf("%%%s%%", value)); err != nil {
+		return nil, sdk.WrapError(err, "environment.CountEnvironmentByVarValue> Unable to count usage")
 	}
-	return results, nil
+	return envsName, nil
 }
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
