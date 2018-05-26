@@ -348,3 +348,75 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 }
+
+func BenchmarkGetWorkflows(b *testing.B) {
+	// Init database
+	db, cache := test.SetupPG(b)
+
+	// Init user
+	u, _ := assets.InsertAdminUser(db)
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(nil, db, cache, key, key, u)
+	// Init pipeline
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+		Type:      sdk.BuildPipeline,
+	}
+
+	if err := pipeline.InsertPipeline(db, cache, proj, &pip, nil); err != nil {
+		b.Logf("Cannot insert pipeline : %v", err)
+		b.Fail()
+		return
+	}
+
+	app := sdk.Application{
+		Name: sdk.RandomString(10),
+	}
+
+	if err := application.Insert(db, cache, proj, &app, u); err != nil {
+		b.Logf("Cannot insert application : %v", err)
+		b.Fail()
+		return
+	}
+
+	prj, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithWorkflows)
+	if err != nil {
+		b.Logf("Cannot load project : %v", err)
+		b.Fail()
+		return
+	}
+
+	for i := 0; i < 200; i++ {
+		wf := sdk.Workflow{
+			ProjectID:  proj.ID,
+			ProjectKey: proj.Key,
+			Name:       sdk.RandomString(10),
+			Root: &sdk.WorkflowNode{
+				Name:       "root",
+				PipelineID: pip.ID,
+				Pipeline:   pip,
+				Context: &sdk.WorkflowNodeContext{
+					Application:   &app,
+					ApplicationID: app.ID,
+				},
+			},
+		}
+
+		if err := workflow.Insert(db, cache, &wf, prj, u); err != nil {
+			b.Logf("Cannot insert workflow : %v", err)
+			b.Fail()
+			return
+		}
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		if _, err := workflow.LoadAll(db, prj.Key); err != nil {
+			b.Logf("Cannot insert workflow : %v", err)
+			b.Fail()
+			return
+		}
+	}
+}

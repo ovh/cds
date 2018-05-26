@@ -34,6 +34,8 @@ var (
 // Logger defines the logs levels used
 type Logger interface {
 	Logf(fmt string, values ...interface{})
+	Errorf(fmt string, values ...interface{})
+	Fatalf(fmt string, values ...interface{})
 }
 
 // SetLogger override private logger reference
