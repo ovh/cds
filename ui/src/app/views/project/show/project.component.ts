@@ -1,4 +1,4 @@
-import {Component, OnInit, OnDestroy} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../service/project/project.store';
@@ -9,13 +9,18 @@ import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../model/permission.model';
 import {User} from '../../../model/user.model';
 import {finalize} from 'rxjs/operators';
+import {WarningStore} from '../../../service/warning/warning.store';
+import {Warning} from '../../../model/warning.model';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import * as  immutable from 'immutable';
 
 @Component({
     selector: 'app-project-show',
     templateUrl: './project.html',
     styleUrls: ['./project.scss']
 })
-export class ProjectShowComponent implements OnInit, OnDestroy {
+@AutoUnsubscribe()
+export class ProjectShowComponent implements OnInit {
     currentUser: User;
 
     project: Project;
@@ -32,16 +37,13 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
     workflowPipeline: string;
     loadingFav = false;
 
+    warnings: immutable.Map<string, Warning>;
+    warningsSub: Subscription;
+
     constructor(private _projectStore: ProjectStore, private _route: ActivatedRoute, private _router: Router,
                 private _toast: ToastService, public _translate: TranslateService,
-                private _authentificationStore: AuthentificationStore) {
+                private _authentificationStore: AuthentificationStore, private _warningStore: WarningStore) {
         this.currentUser = this._authentificationStore.getUser();
-    }
-
-    ngOnDestroy(): void {
-        if (this.projectSubscriber) {
-            this.projectSubscriber.unsubscribe();
-        }
     }
 
     ngOnInit() {
@@ -109,6 +111,10 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
             }
         }, () => {
             this._router.navigate(['/home']);
+        });
+
+        this.warningsSub = this._warningStore.getProjectWarnings(key).subscribe(ws => {
+            this.warnings = ws.get(key);
         });
     }
 
