@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -206,4 +207,68 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T)
 	projs := []sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projs))
 	assert.Len(t, projs, 1, "should have one project")
+}
+
+func Test_getprojectsHandler_AsProvider(t *testing.T) {
+	api, tsURL, tsClose := newTestServer(t)
+	defer tsClose()
+
+	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	u, _ := assets.InsertLambdaUser(api.mustDB())
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+
+	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
+		Host:  tsURL,
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	projs, err := sdkclient.ProjectsList()
+	test.NoError(t, err)
+	assert.True(t, len(projs) > 0)
+
+}
+
+func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
+	api, tsURL, tsClose := newTestServer(t)
+	defer tsClose()
+
+	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	u, _ := assets.InsertLambdaUser(api.mustDB())
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+
+	app := &sdk.Application{
+		Name: sdk.RandomString(10),
+	}
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.AddGroup(api.mustDB(), api.Cache, proj, app, u, proj.ProjectGroups...))
+
+	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
+		Host:  tsURL,
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	projs, err := sdkclient.ProjectsList(cdsclient.FilterByUser(u.Username))
+	test.NoError(t, err)
+	assert.Len(t, projs, 1)
+
+	apps, err := sdkclient.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username))
+	test.NoError(t, err)
+	assert.Len(t, apps, 1)
+
 }

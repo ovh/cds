@@ -35,15 +35,18 @@ func (api *API) getApplicationsHandler() Handler {
 		withPermissions := r.FormValue("permission")
 
 		var u = getUser(ctx)
+		requestedUserName := r.Header.Get("X-Cds-Username")
 
 		//A provider can make a call for a specific user
-		if getProvider(ctx) != nil {
-			requestedUserName := r.Header.Get("X-Cds-Username")
+		if getProvider(ctx) != nil && requestedUserName != "" {
 			var err error
 			//Load the specific user
 			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
 			if err != nil {
 				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s'", requestedUserName)
+			}
+			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
+				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s' permissions", requestedUserName)
 			}
 		}
 
