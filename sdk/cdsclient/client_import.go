@@ -20,9 +20,13 @@ func (c *client) PipelineImport(projectKey string, content io.Reader, format str
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, _, errReq := c.Request("POST", url, content)
+	btes, _, code, errReq := c.Request("POST", url, content)
 	if errReq != nil {
 		return nil, errReq
+	}
+
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Status code %d", code)
 	}
 
 	var msgs []string
@@ -61,6 +65,10 @@ func (c *client) ApplicationImport(projectKey string, content io.Reader, format 
 	btes, _, code, err := c.Request("POST", url, content, mods...)
 	if err != nil {
 		return nil, err
+	}
+
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Status code %d", code)
 	}
 
 	messages := []string{}
@@ -108,8 +116,8 @@ func (c *client) EnvironmentImport(projectKey string, content io.Reader, format 
 		return nil, err
 	}
 
-	if code > 400 {
-		return nil, fmt.Errorf("HTTP Code %d", code)
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Status code %d", code)
 	}
 
 	messages := []string{}
@@ -150,8 +158,8 @@ func (c *client) WorkflowImport(projectKey string, content io.Reader, format str
 		return nil, err
 	}
 
-	if code > 400 {
-		return nil, fmt.Errorf("HTTP Code %d", code)
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Status code %d", code)
 	}
 
 	messages := []string{}
@@ -176,7 +184,7 @@ func (c *client) WorkflowPush(projectKey string, tarContent io.Reader, mods ...R
 	}
 
 	if code >= 400 {
-		return nil, nil, fmt.Errorf("HTTP Code %d", code)
+		return nil, nil, fmt.Errorf("HTTP Status code %d", code)
 	}
 
 	messages := []string{}
