@@ -312,12 +312,8 @@ func (b *eventsBroker) ServeHTTP() Handler {
 				b.cleanClient(messageChan)
 				break leave
 			case <-w.(http.CloseNotifier).CloseNotify():
-<<<<<<< Updated upstream
-				b.cleanClient(messageChan)
-=======
 				log.Info("events.Http: client deconnected")
-				b.CleanClient(messageChan)
->>>>>>> Stashed changes
+				b.cleanClient(messageChan)
 				break leave
 			case <-tick.C:
 				f.Flush()
