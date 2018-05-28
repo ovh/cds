@@ -76,6 +76,8 @@ func (b *eventsBroker) cleanAll() {
 				log.Warning("CleanAll> Cannot get lock for %s", cache.Key(locksKey, v.UUID))
 				continue
 			}
+
+			log.Info("CleanALL store subscribe for %s", v.UUID)
 			b.deleteSubEvents(v.UUID)
 			b.unlockCache(v.UUID)
 		}
@@ -105,7 +107,9 @@ func (b *eventsBroker) cleanClient(client eventsBrokerSubscribe) {
 		log.Warning("CleanClient> Cannot get lock for %s", cache.Key(locksKey, client.UUID))
 		return
 	}
+
 	defer b.unlockCache(client.UUID)
+	log.Info("Clean store subscribe for %s", client.UUID)
 	b.deleteSubEvents(client.UUID)
 }
 
@@ -308,6 +312,7 @@ func (b *eventsBroker) ServeHTTP() Handler {
 				b.cleanClient(messageChan)
 				break leave
 			case <-w.(http.CloseNotifier).CloseNotify():
+				log.Info("events.Http: client deconnected")
 				b.cleanClient(messageChan)
 				break leave
 			case <-tick.C:
