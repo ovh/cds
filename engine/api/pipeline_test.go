@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/trigger"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -328,14 +329,20 @@ func Test_deletePipelineHandlerShouldReturnError(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
 
-	app2 := &sdk.Application{
-		Name: sdk.RandomString(10),
+	wf := sdk.Workflow{
+		Name:       sdk.RandomString(10),
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline:   *pip,
+			PipelineID: pip.ID,
+			Name:       "root",
+		},
 	}
-	err := application.Insert(api.mustDB(), api.Cache, proj, app2, nil)
-	test.NoError(t, err)
 
-	_, err = application.AttachPipeline(api.mustDB(), app2.ID, pip.ID)
-	test.NoError(t, err)
+	proj.Pipelines = append(proj.Pipelines, *pip)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &wf, proj, u))
 
 	vars := map[string]string{
 		"key":             proj.Key,
