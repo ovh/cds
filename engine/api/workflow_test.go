@@ -349,15 +349,15 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 }
 
-func BenchmarkGetWorkflows(b *testing.B) {
+func TestBenchmarkGetWorkflowsWithoutAPI(t *testing.T) {
 	// Init database
-	db, cache := test.SetupPG(b)
+	db, cache := test.SetupPG(t)
 
 	// Init user
 	u, _ := assets.InsertAdminUser(db)
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(nil, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -365,30 +365,18 @@ func BenchmarkGetWorkflows(b *testing.B) {
 		Type:      sdk.BuildPipeline,
 	}
 
-	if err := pipeline.InsertPipeline(db, cache, proj, &pip, nil); err != nil {
-		b.Logf("Cannot insert pipeline : %v", err)
-		b.Fail()
-		return
-	}
+	assert.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, nil))
 
 	app := sdk.Application{
 		Name: sdk.RandomString(10),
 	}
 
-	if err := application.Insert(db, cache, proj, &app, u); err != nil {
-		b.Logf("Cannot insert application : %v", err)
-		b.Fail()
-		return
-	}
+	assert.NoError(t, application.Insert(db, cache, proj, &app, u))
 
 	prj, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithWorkflows)
-	if err != nil {
-		b.Logf("Cannot load project : %v", err)
-		b.Fail()
-		return
-	}
+	assert.NoError(t, err)
 
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 300; i++ {
 		wf := sdk.Workflow{
 			ProjectID:  proj.ID,
 			ProjectKey: proj.Key,
@@ -404,19 +392,98 @@ func BenchmarkGetWorkflows(b *testing.B) {
 			},
 		}
 
-		if err := workflow.Insert(db, cache, &wf, prj, u); err != nil {
-			b.Logf("Cannot insert workflow : %v", err)
-			b.Fail()
-			return
-		}
+		assert.NoError(t, workflow.Insert(db, cache, &wf, prj, u))
 	}
 
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		if _, err := workflow.LoadAll(db, prj.Key); err != nil {
-			b.Logf("Cannot insert workflow : %v", err)
-			b.Fail()
-			return
+	res := testing.Benchmark(func(b *testing.B) {
+		b.ResetTimer()
+		for n := 0; n < b.N; n++ {
+			if _, err := workflow.LoadAll(db, prj.Key); err != nil {
+				b.Logf("Cannot load workflows : %v", err)
+				b.Fail()
+				return
+			}
 		}
+		b.StopTimer()
+	})
+
+	t.Logf("N : %d", res.N)
+	t.Logf("ns/op : %d", res.NsPerOp())
+	assert.False(t, res.NsPerOp() >= 500000000, "Workflows load is too long: GOT %d and EXPECTED lower than 500000000 (500ms)", res.NsPerOp())
+}
+
+func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	// Init user
+	u, pass := assets.InsertAdminUser(db)
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	// Init pipeline
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+		Type:      sdk.BuildPipeline,
 	}
+
+	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, nil))
+
+	app := sdk.Application{
+		Name: sdk.RandomString(10),
+	}
+
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+
+	prj, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithWorkflows)
+	assert.NoError(t, err)
+
+	for i := 0; i < 300; i++ {
+		wf := sdk.Workflow{
+			ProjectID:  proj.ID,
+			ProjectKey: proj.Key,
+			Name:       sdk.RandomString(10),
+			Root: &sdk.WorkflowNode{
+				Name:       "root",
+				PipelineID: pip.ID,
+				Pipeline:   pip,
+				Context: &sdk.WorkflowNodeContext{
+					Application:   &app,
+					ApplicationID: app.ID,
+				},
+			},
+		}
+
+		assert.NoError(t, workflow.Insert(db, api.Cache, &wf, prj, u))
+	}
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("GET", api.getWorkflowsHandler, vars)
+	test.NotEmpty(t, uri)
+
+	res := testing.Benchmark(func(b *testing.B) {
+		b.ResetTimer()
+
+		for n := 0; n < b.N; n++ {
+			b.StopTimer()
+			req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+			b.StartTimer()
+			//Do the request
+			w := httptest.NewRecorder()
+			router.Mux.ServeHTTP(w, req)
+			assert.Equal(t, 200, w.Code)
+			b.StopTimer()
+			workflows := []sdk.Workflow{}
+			json.Unmarshal(w.Body.Bytes(), &workflows)
+			test.Equal(t, 300, len(workflows))
+		}
+		b.StopTimer()
+	})
+
+	t.Logf("N : %d", res.N)
+	t.Logf("ns/op : %d", res.NsPerOp())
+	assert.False(t, res.NsPerOp() >= 500000000, "Workflows load is too long: GOT %d and EXPECTED lower than 500000000 (500ms)", res.NsPerOp())
 }
