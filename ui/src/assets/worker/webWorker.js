@@ -25,8 +25,13 @@ onmessage = function (e) {
                 }
                 return;
             }
-            postMessage(JSON.parse(evt.data));
+            let myEvent = JSON.parse(evt.data);
+            console.log(myEvent.type_event + ': ' + myEvent.workflow_name);
+            postMessage(myEvent);
         };
+        sse.onerror = function (err) {
+            console.log('SSE Error: ', err);
+        }
     }
 
     if(e.data.add_filter) {
