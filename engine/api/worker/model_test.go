@@ -170,6 +170,45 @@ func TestLoadWorkerModels(t *testing.T) {
 	}
 }
 
+func TestLoadWorkerModelsByUserAndBinary(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	deleteAllWorkerModel(t, db)
+	s := sdk.RandomString(10)
+	_, hash, _ := user.GeneratePassword()
+	u := &sdk.User{
+		Admin:    false,
+		Email:    "no-reply-" + s + "@corp.ovh.com",
+		Username: s,
+		Origin:   "local",
+		Fullname: "Test " + s,
+		Auth: sdk.Auth{
+			EmailVerified:  true,
+			HashedPassword: hash,
+		},
+	}
+	user.InsertUser(db, u, &u.Auth)
+	g := insertGroup(t, db)
+	group.InsertUserInGroup(db, g.ID, u.ID, false)
+
+	insertWorkerModel(t, db, "lol", g.ID)
+	insertWorkerModel(t, db, "foo", g.ID)
+
+	models, err := LoadWorkerModelsByUserAndBinary(db, u, "capa_1")
+	if err != nil {
+		t.Fatalf("Cannot load worker model: %s", err)
+	}
+
+	if len(models) != 2 {
+		t.Fatalf("Expected 2 models, got %d", len(models))
+	}
+
+	for _, m := range models {
+		if m.Type != sdk.Docker {
+			t.Fatalf("Unexpected model type '%s', wanted '%s'", m.Type, sdk.Docker)
+		}
+	}
+}
+
 func TestLoadWorkerModelCapabilities(t *testing.T) {
 	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)

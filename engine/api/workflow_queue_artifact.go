@@ -43,7 +43,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 		//get a ref to the parsed multipart form
 		m := r.MultipartForm
 
-		var sizeStr, permStr, md5sum string
+		var sizeStr, permStr, md5sum, sha512sum string
 		if len(m.Value["size"]) > 0 {
 			sizeStr = m.Value["size"][0]
 		}
@@ -52,6 +52,9 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 		}
 		if len(m.Value["md5sum"]) > 0 {
 			md5sum = m.Value["md5sum"][0]
+		}
+		if len(m.Value["sha512sum"]) > 0 {
+			sha512sum = m.Value["sha512sum"][0]
 		}
 
 		if fileName == "" {
@@ -92,6 +95,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 			Size:              size,
 			Perm:              uint32(perm),
 			MD5sum:            md5sum,
+			SHA512sum:         sha512sum,
 			WorkflowNodeRunID: nodeRun.ID,
 			WorkflowID:        nodeRun.WorkflowRunID,
 			Created:           time.Now(),

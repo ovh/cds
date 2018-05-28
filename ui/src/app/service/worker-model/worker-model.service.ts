@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {WorkerModel, ModelPattern} from '../../model/worker-model.model';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
  * Service to get worker model
@@ -50,8 +50,13 @@ export class WorkerModelService {
      * Get the list of available worker models
      * @returns {Observable<WorkerModel[]>}
      */
-    getWorkerModels(): Observable<Array<WorkerModel>> {
-        return this._http.get<Array<WorkerModel>>('/worker/model');
+    getWorkerModels(binary?: string): Observable<Array<WorkerModel>> {
+        let params = new HttpParams();
+        if (binary) {
+          params = params.append('binary', binary);
+        }
+
+        return this._http.get<Array<WorkerModel>>('/worker/model', {params});
     }
 
     /**

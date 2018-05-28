@@ -20,9 +20,13 @@ type PipelineV1 struct {
 	Permissions  map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
+// PipelineVersion is a version
 type PipelineVersion string
 
-const PipelineVersion1 = "v1.0"
+// There are the supported versions
+const (
+	PipelineVersion1 = "v1.0"
+)
 
 // Pipeline represents exported sdk.Pipeline
 type Pipeline struct {
@@ -476,6 +480,11 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 	}
 
 	a, ok, e = s.AsCheckoutApplication()
+	if ok {
+		return
+	}
+
+	a, ok, e = s.AsDeployApplication()
 	if ok {
 		return
 	}

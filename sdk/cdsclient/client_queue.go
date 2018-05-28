@@ -3,8 +3,6 @@ package cdsclient
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -222,34 +220,34 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 	if errop != nil {
 		return errop
 	}
+	defer f.Close()
+
 	//File stat
 	stat, errst := f.Stat()
 	if errst != nil {
 		return errst
 	}
 
-	//Read the file once
-	fileContent, errFileContent := ioutil.ReadAll(f)
-	if errFileContent != nil {
-		return errFileContent
+	sha512sum, err512 := sdk.FileSHA512sum(filePath)
+	if err512 != nil {
+		return err512
 	}
 
-	//Compute md5sum
-	hash := md5.New()
-	if _, errcopy := io.Copy(hash, bytes.NewBuffer(fileContent)); errcopy != nil {
-		return errcopy
+	md5sum, errmd5 := sdk.FileMd5sum(filePath)
+	if errmd5 != nil {
+		return errmd5
 	}
-	hashInBytes := hash.Sum(nil)[:16]
-	md5sumStr := hex.EncodeToString(hashInBytes)
+
 	_, name := filepath.Split(filePath)
 
 	art := sdk.WorkflowNodeRunArtifact{
-		Name:    name,
-		Tag:     tag,
-		Size:    stat.Size(),
-		Perm:    uint32(stat.Mode().Perm()),
-		MD5sum:  md5sumStr,
-		Created: time.Now(),
+		Name:      name,
+		Tag:       tag,
+		Size:      stat.Size(),
+		Perm:      uint32(stat.Mode().Perm()),
+		MD5sum:    md5sum,
+		SHA512sum: sha512sum,
+		Created:   time.Now(),
 	}
 
 	var retryURL = 10
@@ -270,6 +268,12 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 
 	if c.config.Verbose {
 		fmt.Printf("Uploading %s with to %s\n", art.Name, art.TempURL)
+	}
+
+	//Read the file once
+	fileContent, errFileContent := ioutil.ReadAll(f)
+	if errFileContent != nil {
+		return errFileContent
 	}
 
 	//Post the file to the temporary URL
@@ -327,10 +331,21 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 	if errop != nil {
 		return errop
 	}
+	defer f.Close()
 	//File stat
 	stat, errst := f.Stat()
 	if errst != nil {
 		return errst
+	}
+
+	sha512sum, err512 := sdk.FileSHA512sum(filePath)
+	if err512 != nil {
+		return err512
+	}
+
+	md5sum, errmd5 := sdk.FileMd5sum(filePath)
+	if errmd5 != nil {
+		return errmd5
 	}
 
 	//Read the file once
@@ -339,15 +354,7 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 		return errFileContent
 	}
 
-	//Compute md5sum
-	hash := md5.New()
-	if _, errcopy := io.Copy(hash, bytes.NewBuffer(fileContent)); errcopy != nil {
-		return errcopy
-	}
-	hashInBytes := hash.Sum(nil)[:16]
-	md5sumStr := hex.EncodeToString(hashInBytes)
 	_, name := filepath.Split(filePath)
-
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
@@ -361,7 +368,8 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 
 	writer.WriteField("size", strconv.FormatInt(stat.Size(), 10))
 	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10))
-	writer.WriteField("md5sum", md5sumStr)
+	writer.WriteField("md5sum", md5sum)
+	writer.WriteField("sha512sum", sha512sum)
 
 	if errclose := writer.Close(); errclose != nil {
 		return errclose

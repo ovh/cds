@@ -365,16 +365,19 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wf *sdk.Workflow, wNodeName string, number int64, nodeRun *sdk.WorkflowNodeRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
 	var cur sdk.BuildNumberAndHash
 	if app == nil {
+		log.Debug("GetNodeRunBuildCommits> No app linked")
 		return nil, cur, nil
 	}
 
 	if app.VCSServer == "" {
+		log.Debug("GetNodeRunBuildCommits> No repository linked")
 		return nil, cur, nil
 	}
 	cur.BuildNumber = number
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 	if vcsServer == nil {
+		log.Debug("GetNodeRunBuildCommits> No vcsServer found")
 		return nil, cur, nil
 	}
 
@@ -444,6 +447,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 	}
 
+	log.Debug("GetNodeRunBuildCommits> Before PreviousNodeRunVCSInfos %s current: %+v appId: %d envId: %d", wNodeName, cur, app.ID, envID)
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
 	prev, errcurr := PreviousNodeRunVCSInfos(db, p.Key, wf, wNodeName, cur, app.ID, envID)
 	if errcurr != nil {
@@ -451,14 +455,15 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 
 	if prev.Hash == "" {
-		log.Debug("GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
+		log.Warning("GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
 	} else {
-		log.Debug("GetNodeRunBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
+		log.Info("GetNodeRunBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
 	}
 
 	if prev.Hash != "" && cur.Hash == prev.Hash {
-		log.Debug("GetNodeRunBuildCommits> there is not difference between the previous build and the current build")
+		log.Info("GetNodeRunBuildCommits> there is not difference between the previous build and the current build for node %s", nodeRun.WorkflowNodeName)
 	} else if prev.Hash != "" {
+		log.Debug("GetNodeRunBuildCommits> Previous hash is NOT empty, node %s and current hash %v ", nodeRun.WorkflowNodeName, cur)
 		if cur.Hash == "" {
 			br, err := client.Branch(repo, cur.Branch)
 			if err != nil {
@@ -473,6 +478,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 		res = commits
 	} else if prev.Hash == "" {
+		log.Debug("GetNodeRunBuildCommits> Previous hash is empty, return just the last commit for node %s ", nodeRun.WorkflowNodeName)
 		if lastCommit.Hash != "" {
 			res = []sdk.VCSCommit{lastCommit}
 		}

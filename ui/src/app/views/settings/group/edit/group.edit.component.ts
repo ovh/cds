@@ -77,13 +77,14 @@ export class GroupEditComponent implements OnInit {
 
     clickDeleteButton(): void {
       this.deleteLoading = true;
-      this._groupService.deleteGroup(this.group.name).subscribe( wm => {
-          this.deleteLoading = false;
-          this._toast.success('', this._translate.instant('group_deleted'));
-          this._router.navigate(['../'], { relativeTo: this._route });
-      }, () => {
-          this.deleteLoading = false;
-      });
+      this._groupService.deleteGroup(this.group.name)
+        .pipe(
+          finalize(() => this.deleteLoading = false)
+        )
+        .subscribe( wm => {
+            this._toast.success('', this._translate.instant('group_deleted'));
+            this._router.navigate(['../'], { relativeTo: this._route });
+        });
     }
 
     clickSaveButton(): void {
@@ -98,55 +99,60 @@ export class GroupEditComponent implements OnInit {
 
       this.loading = true;
       if (this.group.id > 0) {
-        this._groupService.updateGroup(this.groupname, this.group).subscribe( wm => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('group_saved'));
-            this._router.navigate(['settings', 'group', this.group.name]);
-        }, () => {
-            this.loading = false;
-        });
+        this._groupService.updateGroup(this.groupname, this.group)
+            .pipe(
+              finalize(() => this.loading = false)
+            )
+            .subscribe( wm => {
+                this._toast.success('', this._translate.instant('group_saved'));
+                this._router.navigate(['settings', 'group', this.group.name]);
+            });
       } else {
-        this._groupService.createGroup(this.group).subscribe( wm => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('group_saved'));
-            this._router.navigate(['settings', 'group', this.group.name]);
-        }, () => {
-            this.loading = false;
-        });
+        this._groupService.createGroup(this.group)
+            .pipe(
+              finalize(() => this.loading = false)
+            )
+            .subscribe( wm => {
+                this._toast.success('', this._translate.instant('group_saved'));
+                this._router.navigate(['settings', 'group', this.group.name]);
+            });
       }
     }
 
     clickAddAdminButton(username: string): void {
       this.loading = true;
-      this._groupService.addUserAdmin(this.group.name, username).subscribe( wm => {
-          this.loading = false;
-          this._toast.success('', this._translate.instant('group_add_admin_saved'));
-          this.reloadData(this.group.name);
-      }, () => {
-          this.loading = false;
-      });
+      this._groupService.addUserAdmin(this.group.name, username)
+          .pipe(
+            finalize(() => this.loading = false)
+          )
+          .subscribe( wm => {
+              this._toast.success('', this._translate.instant('group_add_admin_saved'));
+              this.reloadData(this.group.name);
+          });
     }
 
     clickRemoveAdminButton(username: string): void {
       this.loading = true;
-      this._groupService.removeUserAdmin(this.group.name, username).subscribe( wm => {
-          this.loading = false;
-          this._toast.success('', this._translate.instant('group_remove_admin_saved'));
-          this.reloadData(this.group.name);
-      }, () => {
-          this.loading = false;
-      });
+      this._groupService.removeUserAdmin(this.group.name, username)
+          .pipe(
+              finalize(() => this.loading = false)
+          )
+          .subscribe( wm => {
+              this._toast.success('', this._translate.instant('group_remove_admin_saved'));
+              this.reloadData(this.group.name);
+          });
     }
 
     clickRemoveUserButton(username: string): void {
       this.loading = true;
-      this._groupService.removeUser(this.group.name, username).subscribe( wm => {
-          this.loading = false;
-          this._toast.success('', this._translate.instant('group_remove_user_saved'));
-          this.reloadData(this.group.name);
-      }, () => {
-          this.loading = false;
-      });
+      this._groupService.removeUser(this.group.name, username)
+          .pipe(
+            finalize(() => this.loading = false)
+          )
+          .subscribe( wm => {
+              this._toast.success('', this._translate.instant('group_remove_user_saved'));
+              this.reloadData(this.group.name);
+          });
     }
 
     clickAddUserButton(): void {

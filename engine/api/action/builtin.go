@@ -210,8 +210,6 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 		if errcreate := createBuiltinAction(db, a); errcreate != nil {
 			return errcreate
 		}
-	} else {
-		log.Debug("checkBuiltinAction> builtin action %s already exists", a.Name)
 	}
 
 	return nil
@@ -244,8 +242,6 @@ func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 		if err != nil {
 			return sdk.WrapError(err, "CreateBuiltinArtifactActions> cannot create builtin artifact upload action")
 		}
-	} else {
-		log.Debug("CreateBuiltinArtifactActions> builtin action %s already exists", sdk.ArtifactUpload)
 	}
 
 	// Check ArtifactDownload action
@@ -255,8 +251,6 @@ func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 		if err != nil {
 			return sdk.WrapError(err, "CreateBuiltinArtifactActions> cannot create builtin artifact download action")
 		}
-	} else {
-		log.Debug("CreateBuiltinArtifactActions> builtin action %s already exists", sdk.ArtifactDownload)
 	}
 
 	return nil

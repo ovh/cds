@@ -15,6 +15,7 @@ import (
 var SharedInfraGroup *sdk.Group
 
 var defaultGroupID int64
+var defaultGroupName string
 
 // CreateDefaultGroup creates a group 'public' where every user will be
 func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
@@ -26,8 +27,6 @@ func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
 		if _, err := db.Exec(query, groupName); err != nil {
 			return err
 		}
-	} else {
-		log.Debug("CreateDefaultGroup> group %s already exists", groupName)
 	}
 	return nil
 }
@@ -48,7 +47,7 @@ func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 }
 
 // InitializeDefaultGroupName initializes sharedInfraGroup and Default Group
-func InitializeDefaultGroupName(db *gorp.DbMap, defaultGroupName string) error {
+func InitializeDefaultGroupName(db *gorp.DbMap, defaultGrpName string) error {
 	//Load the famous sharedInfraGroup
 	var errlsg error
 	SharedInfraGroup, errlsg = LoadGroup(db, sdk.SharedInfraGroupName)
@@ -58,11 +57,12 @@ func InitializeDefaultGroupName(db *gorp.DbMap, defaultGroupName string) error {
 	//Inject SharedInfraGroup.ID in permission package
 	permission.SharedInfraGroupID = SharedInfraGroup.ID
 
-	if defaultGroupName != "" {
-		defaultGroup, errldg := LoadGroup(db, defaultGroupName)
+	if defaultGrpName != "" {
+		defaultGroup, errldg := LoadGroup(db, defaultGrpName)
 		if errldg != nil {
-			return sdk.WrapError(errldg, "group.InitializeDefaultGroupName> Cannot load %s group", defaultGroupName)
+			return sdk.WrapError(errldg, "group.InitializeDefaultGroupName> Cannot load %s group", defaultGrpName)
 		}
+		defaultGroupName = defaultGrpName
 
 		defaultGroupID = defaultGroup.ID
 		//Inject DefaultGroupID in permission package
@@ -70,6 +70,11 @@ func InitializeDefaultGroupName(db *gorp.DbMap, defaultGroupName string) error {
 	}
 
 	return nil
+}
+
+// IsDefaultGroupName returns true if groupName is the defaultGroupName
+func IsDefaultGroupName(groupName string) bool {
+	return groupName == defaultGroupName
 }
 
 // IsDefaultGroupID returns true if groupID is the defaultGroupID

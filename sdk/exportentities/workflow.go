@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// Workflow is the "as code" representation of a sdk.Workflow
 type Workflow struct {
 	Name    string `json:"name" yaml:"name"`
 	Version string `json:"version,omitempty" yaml:"version,omitempty"`
@@ -32,6 +33,7 @@ type Workflow struct {
 	PurgeTags           []string                    `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty" db:"-"`
 }
 
+// NodeEntry represents a node as code
 type NodeEntry struct {
 	ID                  int64                       `json:"-" yaml:"-"`
 	DependsOn           []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
@@ -46,15 +48,20 @@ type NodeEntry struct {
 	Parameters          map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
+// HookEntry represents a hook as code
 type HookEntry struct {
 	Model  string            `json:"type,omitempty" yaml:"type,omitempty"`
 	Ref    string            `json:"ref,omitempty" yaml:"ref,omitempty"`
 	Config map[string]string `json:"config,omitempty" yaml:"config,omitempty"`
 }
 
+// WorkflowVersion is the type for the version
 type WorkflowVersion string
 
-const WorkflowVersion1 = "v1.0"
+// There are the supported versions
+const (
+	WorkflowVersion1 = "v1.0"
+)
 
 //NewWorkflow creates a new exportable workflow
 func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {

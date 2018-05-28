@@ -55,6 +55,7 @@ type ActionPlugin struct {
 	Size       int64  `json:"size,omitempty"`
 	Perm       uint32 `json:"perm,omitempty"`
 	MD5sum     string `json:"md5sum,omitempty"`
+	SHA512sum  string `json:"sha512sum,omitempty"`
 	ObjectPath string `json:"object_path,omitempty"`
 }
 

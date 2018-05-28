@@ -45,7 +45,7 @@ func (c *client) GroupRename(oldGroupname, newGroupname string) error {
 
 	group.Name = newGroupname
 	code, err := c.PutJSON("/group/"+oldGroupname, group, nil)
-	if code != 204 {
+	if code > 400 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
 		}

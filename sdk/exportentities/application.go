@@ -23,9 +23,13 @@ type Application struct {
 	DeploymentStrategies map[string]map[string]VariableValue `json:"deployments,omitempty" yaml:"deployments,omitempty"`
 }
 
+// ApplicationVersion is a version
 type ApplicationVersion string
 
-const ApplicationVersion1 = "v1.0"
+// There are the supported versions
+const (
+	ApplicationVersion1 = "v1.0"
+)
 
 // EncryptedKey represents an encrypted secret
 type EncryptedKey struct {

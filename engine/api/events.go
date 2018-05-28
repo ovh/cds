@@ -43,14 +43,28 @@ type eventsBroker struct {
 }
 
 // AddClient add a client to the client map
-func (b *eventsBroker) AddClient(uuid string, messageChan eventsBrokerSubscribe) {
+func (b *eventsBroker) addClient(uuid string, messageChan eventsBrokerSubscribe) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	b.clients[uuid] = messageChan
 }
 
+func (b *eventsBroker) getSubEvents(uuid string) (map[string][]sdk.EventSubscription, bool) {
+	var subEvents map[string][]sdk.EventSubscription
+	is := b.cache.Get(cache.Key(eventsKey, uuid), &subEvents)
+	return subEvents, is
+}
+
+func (b *eventsBroker) setSubEvents(uuid string, subEvents map[string][]sdk.EventSubscription) {
+	b.cache.SetWithTTL(cache.Key(eventsKey, uuid), subEvents, 600)
+}
+
+func (b *eventsBroker) deleteSubEvents(uuid string) {
+	b.cache.Delete(cache.Key(eventsKey, uuid))
+}
+
 // CleanAll cleans all clients
-func (b *eventsBroker) CleanAll() {
+func (b *eventsBroker) cleanAll() {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	if b.clients != nil {
@@ -58,26 +72,26 @@ func (b *eventsBroker) CleanAll() {
 			close(v.Queue)
 			delete(b.clients, c)
 			// Clean cache subscription
-			if !b.LockCache(v.UUID) {
+			if !b.lockCache(v.UUID) {
 				log.Warning("CleanAll> Cannot get lock for %s", cache.Key(locksKey, v.UUID))
 				continue
 			}
-			b.cache.Delete(cache.Key(eventsKey, v.UUID))
-			b.cache.Unlock(cache.Key(locksKey, v.UUID))
+			b.deleteSubEvents(v.UUID)
+			b.unlockCache(v.UUID)
 		}
 	}
 }
 
-func (b *eventsBroker) LockCache(uuid string) bool {
+func (b *eventsBroker) lockCache(uuid string) bool {
 	return b.cache.Lock(cache.Key(locksKey, uuid), 5*time.Second, 100, 5)
 }
 
-func (b *eventsBroker) UnlockCache(uuid string) {
+func (b *eventsBroker) unlockCache(uuid string) {
 	b.cache.Unlock(cache.Key(locksKey, uuid))
 }
 
 // CleanClient cleans a client
-func (b *eventsBroker) CleanClient(client eventsBrokerSubscribe) {
+func (b *eventsBroker) cleanClient(client eventsBrokerSubscribe) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -87,15 +101,15 @@ func (b *eventsBroker) CleanClient(client eventsBrokerSubscribe) {
 	delete(b.clients, client.UUID)
 
 	// Clean cache subscription
-	if !b.LockCache(client.UUID) {
+	if !b.lockCache(client.UUID) {
 		log.Warning("CleanClient> Cannot get lock for %s", cache.Key(locksKey, client.UUID))
 		return
 	}
-	defer b.UnlockCache(client.UUID)
-	b.cache.Delete(cache.Key(eventsKey, client.UUID))
+	defer b.unlockCache(client.UUID)
+	b.deleteSubEvents(client.UUID)
 }
 
-func (b *eventsBroker) SetUser(user *sdk.User) {
+func (b *eventsBroker) setUser(user *sdk.User) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	for _, c := range b.clients {
@@ -106,7 +120,7 @@ func (b *eventsBroker) SetUser(user *sdk.User) {
 	}
 }
 
-func (b *eventsBroker) GetUser(username string) *sdk.User {
+func (b *eventsBroker) getUser(username string) *sdk.User {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	for _, c := range b.clients {
@@ -204,7 +218,7 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 func (b *eventsBroker) UpdateUserPermissions(username string) {
 	var user *sdk.User
 
-	user = b.GetUser(username)
+	user = b.getUser(username)
 
 	if user == nil {
 		return
@@ -215,7 +229,7 @@ func (b *eventsBroker) UpdateUserPermissions(username string) {
 	}
 
 	// then, relock map and update user
-	b.SetUser(user)
+	b.setUser(user)
 
 }
 
@@ -224,7 +238,7 @@ func (b *eventsBroker) Start(c context.Context) {
 	for {
 		select {
 		case <-c.Done():
-			b.CleanAll()
+			b.cleanAll()
 			if c.Err() != nil {
 				log.Error("eventsBroker.CacheSubscribe> Exiting: %v", c.Err())
 				return
@@ -265,7 +279,7 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.AddClient(uuid, messageChan)
+		b.addClient(uuid, messageChan)
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -291,10 +305,10 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		for {
 			select {
 			case <-ctx.Done():
-				b.CleanClient(messageChan)
+				b.cleanClient(messageChan)
 				break leave
 			case <-w.(http.CloseNotifier).CloseNotify():
-				b.CleanClient(messageChan)
+				b.cleanClient(messageChan)
 				break leave
 			case <-tick.C:
 				f.Flush()
@@ -310,13 +324,13 @@ func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
 	defer b.mutex.Unlock()
 	for _, i := range b.clients {
 		if i.Queue != nil {
-			b.handleEvent(b.cache, receivedEvent, eventS, i)
+			b.handleEvent(receivedEvent, eventS, i)
 		}
 
 	}
 }
 
-func (b *eventsBroker) handleEvent(store cache.Store, event sdk.Event, eventS string, subscriber eventsBrokerSubscribe) {
+func (b *eventsBroker) handleEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscribe) {
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
 		if subscriber.User.Admin || permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
@@ -354,15 +368,16 @@ func (b *eventsBroker) handleEvent(store cache.Store, event sdk.Event, eventS st
 		return
 	}
 
-	if !b.LockCache(subscriber.UUID) {
+	if !b.lockCache(subscriber.UUID) {
 		log.Warning("manageEvent> Cannot get lock for %s", cache.Key(locksKey, subscriber.UUID))
 		return
 	}
-	defer b.UnlockCache(subscriber.UUID)
+	defer b.unlockCache(subscriber.UUID)
 
-	var events map[string][]sdk.EventSubscription
-	if !store.Get(cache.Key(eventsKey, subscriber.UUID), &events) {
-		events = make(map[string][]sdk.EventSubscription)
+	events, ok := b.getSubEvents(subscriber.UUID)
+	if !ok {
+		log.Debug("Nothing in cache for uuid: %s", subscriber.UUID)
+		return
 	}
 
 	if strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
@@ -416,13 +431,13 @@ func (api *API) eventSubscribeHandler() Handler {
 			}
 		}
 
-		if !api.eventsBroker.LockCache(payload.UUID) {
+		if !api.eventsBroker.lockCache(payload.UUID) {
 			return sdk.WrapError(fmt.Errorf("unable to get lock"), "eventSubscribeHandler")
 		}
-		defer api.eventsBroker.UnlockCache(payload.UUID)
+		defer api.eventsBroker.unlockCache(payload.UUID)
 
-		var events map[string][]sdk.EventSubscription
-		if !api.Cache.Get(cache.Key(eventsKey, payload.UUID), &events) {
+		events, ok := api.eventsBroker.getSubEvents(payload.UUID)
+		if !ok {
 			events = make(map[string][]sdk.EventSubscription)
 		}
 
@@ -477,70 +492,7 @@ func (api *API) eventSubscribeHandler() Handler {
 			}
 		}
 
-		api.Cache.Set(cache.Key(eventsKey, payload.UUID), events)
-		return nil
-	}
-}
-
-func (api *API) eventUnsubscribeHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var payload sdk.EventSubscription
-		if err := UnmarshalBody(r, &payload); err != nil {
-			return sdk.WrapError(err, "eventUnsubscribeHandler> Unable to get body")
-		}
-
-		if !api.eventsBroker.LockCache(payload.UUID) {
-			return sdk.WrapError(fmt.Errorf("unable to get lock"), "eventSubscribeHandler")
-		}
-		defer api.eventsBroker.UnlockCache(payload.UUID)
-
-		var events map[string][]sdk.EventSubscription
-		if !api.Cache.Get(cache.Key(eventsKey, payload.UUID), &events) {
-			return nil
-		}
-
-		if payload.WorkflowName != "" {
-			if payload.WorkflowRuns {
-				// Subscribe to all workflow run
-				if runs, ok := events[sdk.EventSubsWorkflowRuns]; ok {
-					found := false
-					index := 0
-					for i, es := range runs {
-						if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName {
-							found = true
-							index = i
-							break
-						}
-					}
-					if found {
-						runs = append(runs[:index], runs[index+1:]...)
-						events[sdk.EventSubsWorkflowRuns] = runs
-					}
-				}
-
-			}
-
-			if payload.WorkflowNum > 0 {
-				// Subscribe to the given workflow run
-				if runs, ok := events[sdk.EventSubWorkflowRun]; ok {
-					found := false
-					index := 0
-					for i, es := range runs {
-						if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName &&
-							es.WorkflowNum == payload.WorkflowNum {
-							found = true
-							index = i
-							break
-						}
-					}
-					if found {
-						runs = append(runs[:index], runs[index+1:]...)
-						events[sdk.EventSubWorkflowRun] = runs
-					}
-				}
-			}
-		}
-		api.Cache.Set(cache.Key(eventsKey, payload.UUID), events)
+		api.eventsBroker.setSubEvents(payload.UUID, events)
 		return nil
 	}
 }

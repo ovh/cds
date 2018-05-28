@@ -407,8 +407,7 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler, NeedService()))
 	r.Handle("/workflow/hook/model/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
-	// SSE`
-	r.Handle("/events/unsubscribe", r.POST(api.eventUnsubscribeHandler))
+	// SSE
 	r.Handle("/events/subscribe", r.POST(api.eventSubscribeHandler))
 	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
