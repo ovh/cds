@@ -50,6 +50,8 @@ func Initialize(conf *Conf) {
 		log.SetLevel(log.InfoLevel)
 	case "error":
 		log.SetLevel(log.ErrorLevel)
+	case "warning":
+		log.SetLevel(log.WarnLevel)
 	default:
 		log.SetLevel(log.InfoLevel)
 	}
