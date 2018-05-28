@@ -1,10 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -91,6 +93,73 @@ func Test_getProjectsHandler(t *testing.T) {
 	projs := []sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projs))
 	assert.Len(t, projs, 1)
+}
+
+func Test_addProjectHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(db)
+
+	proj := sdk.Project{
+		Key:  strings.ToUpper(sdk.RandomString(10)),
+		Name: sdk.RandomString(10),
+	}
+
+	jsonBody, _ := json.Marshal(proj)
+	body := bytes.NewBuffer(jsonBody)
+
+	uri := api.Router.GetRoute("POST", api.addProjectHandler, nil)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	projCreated := sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projCreated))
+	assert.Equal(t, proj.Key, projCreated.Key)
+
+	gr, err := group.LoadGroup(db, proj.Name)
+	assert.NotNil(t, gr)
+	assert.NoError(t, err)
+}
+
+func Test_addProjectHandlerWithGroup(t *testing.T) {
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(db)
+	g := sdk.Group{Name: sdk.RandomString(10)}
+	test.NoError(t, group.InsertGroup(db, &g))
+
+	proj := sdk.Project{
+		Key:  strings.ToUpper(sdk.RandomString(10)),
+		Name: sdk.RandomString(10),
+		ProjectGroups: []sdk.GroupPermission{
+			{Group: sdk.Group{Name: g.Name}},
+		},
+	}
+
+	jsonBody, _ := json.Marshal(proj)
+	body := bytes.NewBuffer(jsonBody)
+
+	uri := api.Router.GetRoute("POST", api.addProjectHandler, nil)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	projCreated := sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projCreated))
+	assert.Equal(t, proj.Key, projCreated.Key)
+
+	gr, err := group.LoadGroup(db, proj.Name)
+	assert.Nil(t, gr)
+	assert.Error(t, err)
 }
 
 func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T) {
