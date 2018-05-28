@@ -29,7 +29,7 @@ func (c *gitlabClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 		var err error
 		url, err = buildGitlabURL(hook.URL)
 		if err != nil {
-			return sdk.WrapError(err, "github.CreateHook> buildGitlabURL")
+			return sdk.WrapError(err, "GitlabClient.CreateHook> buildGitlabURL")
 		}
 	} else {
 		url = hook.URL
@@ -46,7 +46,7 @@ func (c *gitlabClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	log.Debug("GitlabClient.CreateHook: %s %s\n", repo, *opt.URL)
 	ph, resp, err := c.client.Projects.AddProjectHook(repo, &opt)
 	if err != nil {
-		return sdk.WrapError(err, "github.CreateHook> AddProjectHook")
+		return sdk.WrapError(err, "GitlabClient.CreateHook> AddProjectHook")
 	}
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("GitlabClient.CreateHook> Cannot create hook. Http %d, Repo %s, hook %+v", resp.StatusCode, repo, opt)
@@ -63,7 +63,7 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 			var err error
 			url, err = buildGitlabURL(hook.URL)
 			if err != nil {
-				return sdk.WrapError(err, "github.DeleteHook> buildGitlabURL")
+				return sdk.WrapError(err, "GitlabClient.DeleteHook> buildGitlabURL")
 			}
 		} else {
 			url = hook.URL
@@ -71,7 +71,7 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 
 		hooks, _, err := c.client.Projects.ListProjectHooks(repo, nil)
 		if err != nil {
-			return sdk.WrapError(err, "github.DeleteHook> ListProjectHooks")
+			return sdk.WrapError(err, "GitlabClient.DeleteHook> ListProjectHooks")
 		}
 
 		log.Debug("GitlabClient.DeleteHook: Got '%s'", url)
@@ -80,10 +80,10 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 			log.Debug("GitlabClient.DeleteHook: Found '%s'", h.URL)
 			if h.URL == url {
 				_, err = c.client.Projects.DeleteProjectHook(repo, h.ID)
-				return sdk.WrapError(err, "github.DeleteHook> DeleteProjectHook")
+				return sdk.WrapError(err, "GitlabClient.DeleteHook> DeleteProjectHook")
 			}
 		}
-		return fmt.Errorf("github.DeleteHook> not found")
+		return fmt.Errorf("GitlabClient.DeleteHook> not found")
 	}
 	hookID, errI := strconv.Atoi(hook.ID)
 	if errI != nil {
@@ -97,7 +97,6 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 }
 
 func buildGitlabURL(givenURL string) (string, error) {
-
 	u, err := url.Parse(givenURL)
 	if err != nil {
 		return "", err
