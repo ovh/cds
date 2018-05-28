@@ -35,7 +35,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 		case sdk.KafkaHookModelPlatform:
 			kafkaPlatform = v.Value
 		case sdk.KafkaHookModelConsumerGroup:
-			consumerGroup = v.Value
+			consumerGroup = fmt.Sprintf("%s-%s-%s", projectKey, t.UUID, v.Value)
 		case sdk.KafkaHookModelTopic:
 			topic = v.Value
 		case sdk.HookConfigProject:
