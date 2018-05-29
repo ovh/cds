@@ -651,6 +651,12 @@
   revision = "ad45545899c7b13c020ea92b2072220eefad42b8"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/hashstructure"
+  packages = ["."]
+  revision = "2bca23e0e452137f789efbc8610126fd8b94f73b"
+
+[[projects]]
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "f3009df150dadf309fdee4a54ed65c124afad715"
@@ -1318,6 +1324,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aaaf22144f09c693e8d80ac84d243e0673b89707196337d2dc86468659d263ce"
+  inputs-digest = "7427d4229507cb094756a1a4e1d8f1e25d62a408f9ab059648951d134e48e7ca"
   solver-name = "gps-cdcl"
   solver-version = 1

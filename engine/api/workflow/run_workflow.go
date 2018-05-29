@@ -25,15 +25,17 @@ const (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, chanEvent chan<- interface{}, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, error) {
+func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.RunFromHook")
 	defer end()
 
+	report := new(ProcessorReport)
+
 	hooks := w.GetHooks()
 	h, ok := hooks[e.WorkflowNodeHookUUID]
 	if !ok {
-		return nil, sdk.ErrNoHook
+		return nil, report, sdk.ErrNoHook
 	}
 
 	//If the hook is on the root, it will trigger a new workflow run
@@ -45,7 +47,7 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 		var errnum error
 		number, errnum = nextRunNumber(db, w)
 		if errnum != nil {
-			return nil, sdk.WrapError(errnum, "RunFromHook> Unable to get next number")
+			return nil, report, sdk.WrapError(errnum, "RunFromHook> Unable to get next number")
 		}
 
 		//Compute a new workflow run
@@ -72,25 +74,26 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 
 		//Insert it
 		if err := insertWorkflowRun(db, wr); err != nil {
-			return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
+			return nil, report, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 		}
 
 		//Process it
-		hasRun, errWR := processWorkflowRun(ctx, dbCopy, db, store, p, wr, e, nil, nil, chanEvent)
+		r1, hasRun, errWR := processWorkflowRun(ctx, dbCopy, db, store, p, wr, e, nil, nil)
 		if errWR != nil {
-			return nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
+			return nil, report, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
+		report.Merge(r1, nil)
 		if !hasRun {
 			wr.Status = sdk.StatusNeverBuilt.String()
 			wr.LastExecution = time.Now()
-			return wr, UpdateWorkflowRun(ctx, db, wr)
+			return wr, report, UpdateWorkflowRun(ctx, db, wr)
 		}
 	} else {
 
 		//Load the last workflow run
 		lastWorkflowRun, err := LoadLastRun(db, w.ProjectKey, w.Name, LoadRunOptions{})
 		if err != nil {
-			return nil, sdk.WrapError(err, "RunFromHook> Unable to load last run")
+			return nil, report, sdk.WrapError(err, "RunFromHook> Unable to load last run")
 		}
 
 		number = lastWorkflowRun.Number
@@ -99,54 +102,60 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 		oldHooks := lastWorkflowRun.Workflow.GetHooks()
 		oldH, ok := oldHooks[h.UUID]
 		if !ok {
-			return nil, sdk.WrapError(sdk.ErrNoHook, "RunFromHook> Hook not found")
+			return nil, report, sdk.WrapError(sdk.ErrNoHook, "RunFromHook> Hook not found")
 		}
 
 		//Process the workflow run from the node ID
-		if _, err := processWorkflowRun(ctx, dbCopy, db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID, chanEvent); err != nil {
-			return nil, sdk.WrapError(err, "RunFromHook> Unable to process workflow run")
+		r1, _, err := processWorkflowRun(ctx, dbCopy, db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID)
+		if err != nil {
+			return nil, report, sdk.WrapError(err, "RunFromHook> Unable to process workflow run")
 		}
+		report.Merge(r1, nil)
 	}
 
 	run, err := LoadRun(db, w.ProjectKey, w.Name, number, LoadRunOptions{})
 	if err != nil {
-		return nil, sdk.WrapError(err, "RunFromHook> Unable to reload workflow run")
+		return nil, report, sdk.WrapError(err, "RunFromHook> Unable to reload workflow run")
 	}
 
-	return run, nil
+	return run, report, nil
 }
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
-func ManualRunFromNode(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64, chanEvent chan<- interface{}) (*sdk.WorkflowRun, error) {
+func ManualRunFromNode(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, *ProcessorReport, error) {
+	report := new(ProcessorReport)
+
 	lastWorkflowRun, errLoadRun := LoadRun(db, w.ProjectKey, w.Name, number, LoadRunOptions{})
 	if errLoadRun != nil {
-		return nil, sdk.WrapError(errLoadRun, "ManualRunFromNode> Unable to load last run")
+		return nil, report, sdk.WrapError(errLoadRun, "ManualRunFromNode> Unable to load last run")
 	}
 	lastWorkflowRun.Tag(tagTriggeredBy, e.User.Username)
 
-	condOk, err := processWorkflowRun(ctx, dbCopy, db, store, p, lastWorkflowRun, nil, e, &nodeID, chanEvent)
+	r1, condOk, err := processWorkflowRun(ctx, dbCopy, db, store, p, lastWorkflowRun, nil, e, &nodeID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
+		return nil, report, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
 	}
+	report.Merge(r1, nil)
 
 	if !condOk {
-		return nil, sdk.WrapError(sdk.ErrConditionsNotOk, "ManualRunFromNode> Conditions aren't ok")
+		return nil, report, sdk.WrapError(sdk.ErrConditionsNotOk, "ManualRunFromNode> Conditions aren't ok")
 	}
 
 	var errLoadRunByID error
 	lastWorkflowRun, errLoadRunByID = LoadRunByIDAndProjectKey(db, w.ProjectKey, lastWorkflowRun.ID, LoadRunOptions{})
 	if errLoadRunByID != nil {
-		return nil, errLoadRunByID
+		return nil, report, errLoadRunByID
 	}
 
-	return lastWorkflowRun, nil
+	return lastWorkflowRun, report, nil
 }
 
 //ManualRun is the entry point to trigger a workflow manually
-func ManualRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}, asCodeInfos []sdk.Message) (*sdk.WorkflowRun, error) {
+func ManualRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual, asCodeInfos []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
+	report := new(ProcessorReport)
 	number, err := nextRunNumber(db, w)
 	if err != nil {
-		return nil, sdk.WrapError(err, "ManualRun> Unable to get next number")
+		return nil, report, sdk.WrapError(err, "ManualRun> Unable to get next number")
 	}
 
 	ctx, end := tracing.Span(ctx, "workflow.ManualRun", tracing.Tag("run_number", number))
@@ -168,16 +177,17 @@ func ManualRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, sto
 	}
 
 	if err := insertWorkflowRun(db, wr); err != nil {
-		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
+		return nil, report, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	hasRun, errWR := processWorkflowRun(ctx, dbCopy, db, store, p, wr, nil, e, nil, chanEvent)
+	r1, hasRun, errWR := processWorkflowRun(ctx, dbCopy, db, store, p, wr, nil, e, nil)
 	if errWR != nil {
-		return wr, sdk.WrapError(errWR, "ManualRun")
+		return wr, report, sdk.WrapError(errWR, "ManualRun")
 	}
+	report.Merge(r1, nil)
 	if !hasRun {
 		wr.Status = sdk.StatusNeverBuilt.String()
-		return wr, UpdateWorkflowRun(ctx, db, wr)
+		return wr, report, UpdateWorkflowRun(ctx, db, wr)
 	}
-	return wr, nil
+	return wr, report, nil
 }

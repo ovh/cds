@@ -4,14 +4,15 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"github.com/ovh/cds/sdk"
 	"go.opencensus.io/trace"
+
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 func spanContextToReponse(ctx trace.SpanContext, r *http.Request, w http.ResponseWriter) {
-	w.Header().Add(sdk.TraceIDHeader, hex.EncodeToString(ctx.TraceID[:]))
-	w.Header().Add(sdk.SpanIDHeader, hex.EncodeToString(ctx.SpanID[:]))
-	w.Header().Add(sdk.SampledHeader, r.Header.Get(sdk.SampledHeader))
+	w.Header().Add(tracingutils.TraceIDHeader, hex.EncodeToString(ctx.TraceID[:]))
+	w.Header().Add(tracingutils.SpanIDHeader, hex.EncodeToString(ctx.SpanID[:]))
+	w.Header().Add(tracingutils.SampledHeader, r.Header.Get(tracingutils.SampledHeader))
 }
 
 // spanContextToRequest writes span context to http requests

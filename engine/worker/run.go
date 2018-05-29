@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
@@ -232,7 +232,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 		childName := fmt.Sprintf("%s/%s-%d", stepName, child.Name, i+1)
 		if !child.Enabled || w.manualExit {
 			// Update step status and continue
-			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusDisabled.String()); err != nil {
+			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusDisabled.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 
@@ -247,7 +247,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 
 		if !criticalStepFailed || child.AlwaysExecuted {
 			// Update step status
-			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
+			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 			w.sendLog(buildID, fmt.Sprintf("Starting step %s\n", childName), w.currentJob.currentStep, false)
@@ -264,12 +264,12 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			}
 
 			// Update step status
-			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, r.Status); err != nil {
+			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, r.Status); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 		} else if criticalStepFailed && !child.AlwaysExecuted { // Update status of steps which are never built
 			// Update step status
-			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusNeverBuilt.String()); err != nil {
+			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusNeverBuilt.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusNeverBuilt.String(), buildID, err)
 			}
 		}
@@ -284,16 +284,12 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 	return r, nbDisabledChildren
 }
 
-func (w *currentWorker) updateStepStatus(buildID int64, stepOrder int, status string) error {
+func (w *currentWorker) updateStepStatus(ctx context.Context, buildID int64, stepOrder int, status string) error {
 	step := sdk.StepStatus{
 		StepOrder: stepOrder,
 		Status:    status,
 		Start:     time.Now(),
 		Done:      time.Now(),
-	}
-	body, errM := json.Marshal(step)
-	if errM != nil {
-		return errM
 	}
 
 	var path string
@@ -305,7 +301,7 @@ func (w *currentWorker) updateStepStatus(buildID int64, stepOrder int, status st
 
 	for try := 1; try <= 10; try++ {
 		log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
-		_, code, lasterr := sdk.Request("POST", path, body)
+		code, lasterr := w.client.(cdsclient.Raw).PostJSON(path, step, nil)
 		if lasterr == nil && code < 300 {
 			log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d OK", status, buildID, stepOrder)
 			return nil

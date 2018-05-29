@@ -1,6 +1,7 @@
-package sdk
+package tracingutils
 
 import (
+	"context"
 	"encoding/hex"
 
 	"go.opencensus.io/trace"
@@ -23,11 +24,17 @@ import (
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+type contextKey int
+
 // B3 headers that OpenCensus understands.
 const (
 	TraceIDHeader = "X-B3-TraceId"
 	SpanIDHeader  = "X-B3-SpanId"
 	SampledHeader = "X-B3-Sampled"
+
+	ContextTraceIDHeader contextKey = iota
+	ContextSpanIDHeader
+	ContextSampledHeader
 )
 
 // ParseTraceID parses the value of the X-B3-TraceId header.
@@ -74,4 +81,58 @@ func ParseSampled(sampled string) (trace.TraceOptions, bool) {
 	default:
 		return trace.TraceOptions(0), false
 	}
+}
+
+// SpanContextToContext merge a span context in a context
+func SpanContextToContext(ctx context.Context, sc trace.SpanContext) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	ctx = context.WithValue(ctx, ContextTraceIDHeader, sc.TraceID)
+	ctx = context.WithValue(ctx, ContextSpanIDHeader, sc.SpanID)
+	ctx = context.WithValue(ctx, ContextSampledHeader, sc.IsSampled())
+	return ctx
+}
+
+// ContextToSpanContext instanciates a span context from a context.Context
+func ContextToSpanContext(ctx context.Context) (trace.SpanContext, bool) {
+	if ctx == nil {
+		return trace.SpanContext{}, false
+	}
+
+	val := ctx.Value(ContextTraceIDHeader)
+	if val == nil {
+		return trace.SpanContext{}, false
+	}
+	traceID, ok := val.(trace.TraceID)
+	if !ok {
+		return trace.SpanContext{}, false
+	}
+
+	val = ctx.Value(ContextSpanIDHeader)
+	if val == nil {
+		return trace.SpanContext{}, false
+	}
+	spanID, ok := val.(trace.SpanID)
+	if !ok {
+		return trace.SpanContext{}, false
+	}
+
+	val = ctx.Value(ContextSpanIDHeader)
+	if val == nil {
+		return trace.SpanContext{}, false
+	}
+	sampled, ok := val.(trace.TraceOptions)
+	if !ok {
+		return trace.SpanContext{}, false
+	}
+
+	sc := trace.SpanContext{
+		TraceID:      traceID,
+		SpanID:       spanID,
+		TraceOptions: sampled,
+	}
+
+	return sc, true
 }

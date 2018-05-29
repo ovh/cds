@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -21,36 +22,92 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// ProcessorReport represents the state of the workflow processor
+type ProcessorReport struct {
+	mutex     sync.Mutex
+	jobs      []sdk.WorkflowNodeJobRun
+	nodes     []sdk.WorkflowNodeRun
+	workflows []sdk.WorkflowRun
+	errors    []error
+}
+
+// Add something to the report
+func (r *ProcessorReport) Add(i ...interface{}) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	for _, w := range i {
+		switch x := w.(type) {
+		case sdk.WorkflowNodeJobRun:
+			r.jobs = append(r.jobs, x)
+		case *sdk.WorkflowNodeJobRun:
+			r.jobs = append(r.jobs, *x)
+		case sdk.WorkflowNodeRun:
+			r.nodes = append(r.nodes, x)
+		case *sdk.WorkflowNodeRun:
+			r.nodes = append(r.nodes, *x)
+		case sdk.WorkflowRun:
+			r.workflows = append(r.workflows, x)
+		case *sdk.WorkflowRun:
+			r.workflows = append(r.workflows, *x)
+		default:
+			log.Warning("ProcessorReport> unknown type %T", w)
+		}
+	}
+}
+
+//All returns all the objects in the reports
+func (r *ProcessorReport) All() []interface{} {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	res := []interface{}{}
+	res = append(res, sdk.InterfaceSlice(r.workflows)...)
+	res = append(res, sdk.InterfaceSlice(r.nodes)...)
+	res = append(res, sdk.InterfaceSlice(r.jobs)...)
+	return res
+}
+
+// Merge to the provided report and the current report
+func (r *ProcessorReport) Merge(r1 *ProcessorReport, err error) (*ProcessorReport, error) {
+	if r == nil {
+		return r1, err
+	}
+	if r1 == nil {
+		return r, err
+	}
+	data := r1.All()
+	r.Add(data...)
+	return r, err
+}
+
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
+func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.UpdateNodeJobRunStatus")
+	ctx, end = tracing.Span(ctx, "workflow.UpdateNodeJobRunStatus",
+		tracing.Tag("workflow_node_run_job", job.ID),
+		tracing.Tag("workflow_node_run_job_status", status),
+	)
 	defer end()
+
+	report := new(ProcessorReport)
 
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
-	defer func(j *sdk.WorkflowNodeJobRun, chanE chan<- interface{}) {
-		// Push update on node run job
-		if chanEvent != nil {
-			chanEvent <- *j
-		}
-	}(job, chanEvent)
-
 	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
 	if errLoad != nil {
-		sdk.WrapError(errLoad, "workflow.UpdateNodeJobRunStatus> Unable to load node run id %d", job.WorkflowNodeRunID)
+		return nil, sdk.WrapError(errLoad, "workflow.UpdateNodeJobRunStatus> Unable to load node run id %d", job.WorkflowNodeRunID)
 	}
 
 	query := `SELECT status FROM workflow_node_run_job WHERE id = $1`
 	var currentStatus string
 	if err := db.QueryRow(query, job.ID).Scan(&currentStatus); err != nil {
-		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot select status from workflow_node_run_job node job run %d", job.ID)
+		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot select status from workflow_node_run_job node job run %d", job.ID)
 	}
 
 	switch status {
 	case sdk.StatusBuilding:
 		if currentStatus != sdk.StatusWaiting.String() {
-			return fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
+			return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
 				job.ID, status, sdk.StatusWaiting, currentStatus)
 		}
 		job.Start = time.Now()
@@ -60,22 +117,22 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		if currentStatus != string(sdk.StatusWaiting) && currentStatus != string(sdk.StatusBuilding) && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
 			log.Debug("workflow.UpdateNodeJobRunStatus> Status is %s, cannot update %d to %s", currentStatus, job.ID, status)
 			// too late, Nate
-			return nil
+			return nil, nil
 		}
 		job.Done = time.Now()
 		job.Status = status.String()
 
 		wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{})
 		if errLoadWf != nil {
-			return sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", node.WorkflowRunID)
+			return nil, sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", node.WorkflowRunID)
 		}
 
 		wf.LastExecution = time.Now()
 		if err := UpdateWorkflowRun(ctx, db, wf); err != nil {
-			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowRun %d", wf.ID)
+			return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowRun %d", wf.ID)
 		}
 	default:
-		return fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status.String())
+		return nil, fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status.String())
 	}
 
 	//If the job has been set to building, set the stage to building
@@ -90,18 +147,39 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	}
 
 	if err := UpdateNodeJobRun(ctx, db, store, job); err != nil {
-		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
+		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
+
+	report.Add(*job)
 
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
 		nodeRun, errNR := LoadNodeRunByID(db, node.ID, LoadRunOptions{})
 		if errNR != nil {
-			return sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot LoadNodeRunByID node run %d", node.ID)
+			return nil, sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot LoadNodeRunByID node run %d", node.ID)
 		}
-		return syncTakeJobInNodeRun(db, nodeRun, job, stageIndex, chanEvent)
+		return report.Merge(syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex))
 	}
-	return execute(ctx, dbCopy, db, store, proj, node, chanEvent)
+
+	var errReport error
+	report, errReport = report.Merge(execute(ctx, dbCopy, db, store, proj, node))
+
+	//Start a goroutine to update commit statuses in repositories manager
+	go func() {
+		wr, err := LoadRunByID(dbCopy, node.WorkflowRunID, LoadRunOptions{})
+		if err != nil {
+			log.Error("workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", node.WorkflowRunID)
+			return
+		}
+		if sdk.StatusIsTerminated(wr.Status) {
+			wr.LastExecution = time.Now()
+			if err := resyncCommitStatus(ctx, dbCopy, store, proj, wr); err != nil {
+				log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
+			}
+		}
+	}()
+
+	return report, errReport
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
@@ -131,19 +209,21 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
+func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.TakeNodeJobRun")
 	defer end()
 
+	report := new(ProcessorReport)
+
 	// first load without FOR UPDATE WAIT to quick check status
 	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
 	if errS != nil {
-		return nil, sdk.WrapError(errS, "workflow.UpdateNodeJobRunStatus> Cannot select status from workflow_node_run_job node job run %d", jobID)
+		return nil, report, sdk.WrapError(errS, "workflow.UpdateNodeJobRunStatus> Cannot select status from workflow_node_run_job node job run %d", jobID)
 	}
 
 	if err := checkStatusWaiting(store, jobID, currentStatus); err != nil {
-		return nil, err
+		return nil, report, err
 	}
 
 	// reload and recheck status
@@ -152,10 +232,10 @@ func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor
 		if errPG, ok := errl.(*pq.Error); ok && errPG.Code == "55P03" {
 			errl = sdk.ErrJobAlreadyBooked
 		}
-		return nil, sdk.WrapError(errl, "TakeNodeJobRun> Cannot load node job run (WAIT) %d", jobID)
+		return nil, report, sdk.WrapError(errl, "TakeNodeJobRun> Cannot load node job run (WAIT) %d", jobID)
 	}
 	if err := checkStatusWaiting(store, jobID, job.Status); err != nil {
-		return nil, err
+		return nil, report, err
 	}
 
 	job.Model = workerModel
@@ -164,15 +244,17 @@ func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor
 	job.Start = time.Now()
 
 	if err := AddSpawnInfosNodeJobRun(db, jobID, PrepareSpawnInfos(infos)); err != nil {
-		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
+		return nil, report, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
 	}
 
-	if err := UpdateNodeJobRunStatus(ctx, dbCopy, db, store, p, job, sdk.StatusBuilding, chanEvent); err != nil {
+	var err error
+	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, dbCopy, db, store, p, job, sdk.StatusBuilding))
+	if err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
-		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", jobID)
+		return nil, report, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", jobID)
 	}
 
-	return job, nil
+	return job, report, nil
 }
 
 func checkStatusWaiting(store cache.Store, jobID int64, status string) error {

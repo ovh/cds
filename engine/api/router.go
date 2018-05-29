@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 const nbPanicsBeforeFail = 50
@@ -162,9 +163,9 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 }
 
 var headers = []string{
-	http.CanonicalHeaderKey(sdk.TraceIDHeader),
-	http.CanonicalHeaderKey(sdk.SpanIDHeader),
-	http.CanonicalHeaderKey(sdk.SampledHeader),
+	http.CanonicalHeaderKey(tracingutils.TraceIDHeader),
+	http.CanonicalHeaderKey(tracingutils.SpanIDHeader),
+	http.CanonicalHeaderKey(tracingutils.SampledHeader),
 	http.CanonicalHeaderKey(sdk.WorkflowAsCodeHeader),
 	http.CanonicalHeaderKey(sdk.ResponseWorkflowIDHeader),
 	http.CanonicalHeaderKey(sdk.ResponseWorkflowNameHeader),
@@ -494,10 +495,9 @@ func Auth(v bool) HandlerConfigParam {
 }
 
 // EnableTracing on a route
-func EnableTracing(initTrace bool) HandlerConfigParam {
+func EnableTracing() HandlerConfigParam {
 	f := func(rc *HandlerConfig) {
 		rc.Options["trace_enable"] = "true"
-		rc.Options["trace_new_trace"] = fmt.Sprintf("%v", initTrace)
 	}
 	return f
 }

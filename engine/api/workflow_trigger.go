@@ -66,7 +66,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 		if len(params) == 0 {
 			var errp error
 			ancestorIds := refNode.Ancestors(wf, true)
-			params, errp = workflow.NodeBuildParametersFromWorkflow(api.mustDB(), api.Cache, proj, wf, refNode, ancestorIds)
+			params, errp = workflow.NodeBuildParametersFromWorkflow(ctx, api.mustDB(), api.Cache, proj, wf, refNode, ancestorIds)
 			if errp != nil {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow")
 			}
