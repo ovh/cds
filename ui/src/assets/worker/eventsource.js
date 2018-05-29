@@ -363,7 +363,8 @@ var EventSourcePolyfill = (function (global) {
             }
 
             if ((currentState === OPEN || currentState === CONNECTING) &&
-                (type === "load" || type === "error" || isWrongStatusCodeOrContentType || (charOffset > 1024 * 1024) || (timeout === 0 && (!wasActivity || !checkActivity)))) {
+                (type === "load" || type === "error" || isWrongStatusCodeOrContentType || (timeout === 0 && (!wasActivity || !checkActivity)))) {
+                console.log(currentState, type, isWrongStatusCodeOrContentType, charOffset, timeout, wasActivity, checkActivity);
                 if (isWrongStatusCodeOrContentType) {
                     close();
                 } else {
