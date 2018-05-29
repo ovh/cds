@@ -37,7 +37,14 @@ export class ProjectShowComponent implements OnInit {
     workflowPipeline: string;
     loadingFav = false;
 
-    warnings: immutable.Map<string, Warning>;
+    warnVariable: Array<Warning>;
+    warnPerm: Array<Warning>;
+    warnKeys: Array<Warning>;
+    warnVCS: Array<Warning>;
+    warnApplications: Array<Warning>;
+    warnPipelines: Array<Warning>;
+    warnWorkflow: Array<Warning>;
+    warnEnvironment: Array<Warning>;
     warningsSub: Subscription;
 
     constructor(private _projectStore: ProjectStore, private _route: ActivatedRoute, private _router: Router,
@@ -114,8 +121,41 @@ export class ProjectShowComponent implements OnInit {
         });
 
         this.warningsSub = this._warningStore.getProjectWarnings(key).subscribe(ws => {
-            this.warnings = ws.get(key);
+            this.splitWarnings(ws.get(key));
         });
+    }
+
+    splitWarnings(warnings: immutable.Map<string, Warning>): void {
+        if (warnings) {
+            this.warnVariable = new Array<Warning>();
+            this.warnPerm = new Array<Warning>();
+            this.warnKeys = new Array<Warning>();
+            this.warnVCS = new Array<Warning>();
+            this.warnApplications = new Array<Warning>();
+            this.warnPipelines = new Array<Warning>();
+            this.warnWorkflow = new Array<Warning>();
+            this.warnEnvironment = new Array<Warning>();
+            warnings.valueSeq().toArray().forEach(v => {
+               switch (v.type) {
+                   case 'MISSING_PROJECT_VARIABLE':
+                   case 'UNUSED_PROJECT_VARIABLE':
+                       this.warnVariable.push(v);
+                       break;
+                   case 'MISSING_PROJECT_PERMISSION_ENV':
+                   case 'MISSING_PROJECT_PERMISSION_WORKFLOW':
+                       this.warnPerm.push(v);
+                       break;
+                   case 'MISSING_PROJECT_KEY':
+                   case 'UNUSED_PROJECT_KEY':
+                       this.warnKeys.push(v);
+                       break;
+                   case 'MISSING_PROJECT_VCS':
+                   case 'UNUSED_PROJECT_VCS':
+                       this.warnVCS.push(v);
+                       break;
+               }
+            });
+        }
     }
 
     updateFav() {

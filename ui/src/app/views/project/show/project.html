@@ -21,17 +21,24 @@
             <a sm-item [class.active]="selectedTab === 'environments'" id="ProjectEnvironmentTab" (click)="showTab('environments')"><i class="tree icon"></i>{{
                 'common_environments' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'variables'" id="ProjectVariableTab" (click)="showTab('variables')"><i class="font icon"></i>{{
-                'common_variables' | translate }}</a>
+                'common_variables' | translate }}
+                <app-warning-tab [warnings]="warnVariable"></app-warning-tab>
+            </a>
             <a sm-item [class.active]="selectedTab === 'permissions'" id="ProjectPermissionTab" (click)="showTab('permissions')"><i class="users icon"></i>{{
-                'common_permissions' | translate }}</a>
+                'common_permissions' | translate }}
+                <app-warning-tab [warnings]="warnPerm"></app-warning-tab>
+            </a>
             <a sm-item [class.active]="selectedTab === 'keys'" id="ProjectKeysTab" (click)="showTab('keys')"><i class="privacy icon"></i>
                 {{ 'common_keys' | translate }}
+                <app-warning-tab [warnings]="warnKeys"></app-warning-tab>
             </a>
             <a sm-item [class.active]="selectedTab === 'platforms'" id="ProjectPlatformsTab" (click)="showTab('platforms')"><i class="plug icon"></i>
                 {{ 'common_platforms' | translate }}
             </a>
             <a sm-item [class.active]="selectedTab === 'advanced'" id="ProjectAdvancedTab" (click)="showTab('advanced')" *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE"><i class="graduation icon"></i>{{
-                'common_advanced' | translate }}</a>
+                'common_advanced' | translate }}
+                <app-warning-tab [warnings]="warnVCS"></app-warning-tab>
+            </a>
         </sm-menu>
     </div>
 
@@ -53,7 +60,7 @@
                 </div>
 
                 <div *ngSwitchCase="'variables'">
-                  <app-project-variables [project]="project"></app-project-variables>
+                  <app-project-variables [project]="project" [warnings]="warnVariable"></app-project-variables>
                 </div>
 
                 <div *ngSwitchCase="'permissions'">

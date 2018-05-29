@@ -16,6 +16,7 @@ import (
 )
 
 func computeWithProjectEvent(db gorp.SqlExecutor, e sdk.Event) error {
+	log.Warning("%s", e.EventType)
 	switch e.EventType {
 
 	case "sdk.EventProjectVariableAdd":
@@ -198,6 +199,7 @@ func manageProjectDeletePermission(db gorp.SqlExecutor, key string, gp sdk.Group
 	if err != nil {
 		return sdk.WrapError(err, "manageProjectDeletePermission> Unable to list environments")
 	}
+	log.Warning("%d", len(envs))
 	if len(envs) > 0 {
 		w := sdk.WarningV2{
 			Key:     key,
@@ -220,7 +222,7 @@ func manageProjectDeletePermission(db gorp.SqlExecutor, key string, gp sdk.Group
 	if err != nil {
 		return sdk.WrapError(err, "manageProjectDeletePermission> Unable to list workflows")
 	}
-	if len(envs) > 0 {
+	if len(workflows) > 0 {
 		w := sdk.WarningV2{
 			Key:     key,
 			Element: gp.Group.Name,

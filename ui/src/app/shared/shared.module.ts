@@ -83,6 +83,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
 import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.component';
 import {ClipboardModule} from 'ngx-clipboard';
 import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component';
+import {WarningTabComponent} from './warning/tab/warning.tab.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -127,6 +128,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         VariableValueComponent,
         WarningModalComponent,
         DeleteModalComponent,
+        WarningTabComponent,
         WorkflowNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -212,6 +214,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
+        WarningTabComponent,
         WarningModalComponent,
         DeleteModalComponent,
         WorkflowNodeComponent,

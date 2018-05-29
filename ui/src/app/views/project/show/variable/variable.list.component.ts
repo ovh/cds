@@ -7,6 +7,8 @@ import {VariableEvent} from '../../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize, first} from 'rxjs/operators';
+import {Warning} from '../../../../model/warning.model';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-project-variables',
@@ -16,6 +18,19 @@ import {finalize, first} from 'rxjs/operators';
 export class ProjectVariablesComponent implements OnInit {
 
     @Input() project: Project;
+    @Input('warnings')
+    set warnings(data: Array<Warning>) {
+        if (data) {
+            this.varWarning = data.map(v => {
+                let w = cloneDeep(v);
+                w.element = w.element.replace('cds.proj.', '');
+                return w;
+            })
+        }
+
+    };
+
+    varWarning: Array<Warning>;
 
     @ViewChild('varWarning')
     varWarningModal: WarningModalComponent;
