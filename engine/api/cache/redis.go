@@ -268,7 +268,7 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 
 	_, errP := s.Client.Publish(channel, iUnquoted).Result()
 	if errP != nil {
-		log.Warning("redis.Publish> Unable to publish in channel %s the message %v", channel, value)
+		log.Warning("redis.Publish> Unable to publish in channel %s the message %v: %s", channel, value, errP)
 	}
 }
 
