@@ -295,7 +295,12 @@ func (api *API) getWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{WithArtifacts: true, WithLightTests: true})
+		run, err := workflow.LoadRun(api.mustDB(), key, name, number,
+			workflow.LoadRunOptions{
+				WithArtifacts:  true,
+				WithLightTests: true,
+			},
+		)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load workflow %s run number %d", name, number)
 		}
@@ -585,7 +590,7 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true})
+		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true, WithDetailledNodeRun: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 		}

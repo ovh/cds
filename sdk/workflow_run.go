@@ -19,9 +19,9 @@ type WorkflowRun struct {
 	Workflow         Workflow                         `json:"workflow" db:"-"`
 	Start            time.Time                        `json:"start" db:"start" cli:"start"`
 	LastModified     time.Time                        `json:"last_modified" db:"last_modified"`
-	WorkflowNodeRuns map[int64][]WorkflowNodeRun      `json:"nodes" db:"-"`
-	Infos            []WorkflowRunInfo                `json:"infos" db:"-"`
-	Tags             []WorkflowRunTag                 `json:"tags" db:"-" cli:"tags"`
+	WorkflowNodeRuns map[int64][]WorkflowNodeRun      `json:"nodes,omitempty" db:"-"`
+	Infos            []WorkflowRunInfo                `json:"infos,omitempty" db:"-"`
+	Tags             []WorkflowRunTag                 `json:"tags,omitempty" db:"-" cli:"tags"`
 	LastSubNumber    int64                            `json:"last_subnumber" db:"last_sub_num"`
 	LastExecution    time.Time                        `json:"last_execution" db:"last_execution" cli:"last_execution"`
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
@@ -33,7 +33,7 @@ type WorkflowNodeRunRelease struct {
 	TagName        string   `json:"tag_name"`
 	ReleaseTitle   string   `json:"release_title"`
 	ReleaseContent string   `json:"release_content"`
-	Artifacts      []string `json:"artifacts"`
+	Artifacts      []string `json:"artifacts,omitempty"`
 }
 
 // WorkflowRunPostHandlerOption contains the body content for launch a workflow
@@ -101,8 +101,8 @@ type WorkflowRunInfo struct {
 //WorkflowRunTag is a tag on workflow run
 type WorkflowRunTag struct {
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
-	Tag           string `json:"tag" db:"tag" cli:"tag"`
-	Value         string `json:"value" db:"value" cli:"value"`
+	Tag           string `json:"tag,omitempty" db:"tag" cli:"tag"`
+	Value         string `json:"value,omitempty" db:"value" cli:"value"`
 }
 
 //WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
@@ -114,16 +114,16 @@ type WorkflowNodeRun struct {
 	Number             int64                            `json:"num"`
 	SubNumber          int64                            `json:"subnumber"`
 	Status             string                           `json:"status"`
-	Stages             []Stage                          `json:"stages"`
+	Stages             []Stage                          `json:"stages,omitempty"`
 	Start              time.Time                        `json:"start"`
 	LastModified       time.Time                        `json:"last_modified"`
 	Done               time.Time                        `json:"done"`
-	HookEvent          *WorkflowNodeRunHookEvent        `json:"hook_event"`
-	Manual             *WorkflowNodeRunManual           `json:"manual"`
-	SourceNodeRuns     []int64                          `json:"source_node_runs"`
-	Payload            interface{}                      `json:"payload"`
-	PipelineParameters []Parameter                      `json:"pipeline_parameters"`
-	BuildParameters    []Parameter                      `json:"build_parameters"`
+	HookEvent          *WorkflowNodeRunHookEvent        `json:"hook_event,omitempty"`
+	Manual             *WorkflowNodeRunManual           `json:"manual,omitempty"`
+	SourceNodeRuns     []int64                          `json:"source_node_runs,omitempty"`
+	Payload            interface{}                      `json:"payload,omitempty"`
+	PipelineParameters []Parameter                      `json:"pipeline_parameters,omitempty"`
+	BuildParameters    []Parameter                      `json:"build_parameters,omitempty"`
 	Artifacts          []WorkflowNodeRunArtifact        `json:"artifacts,omitempty"`
 	Tests              *venom.Tests                     `json:"tests,omitempty"`
 	Commits            []VCSCommit                      `json:"commits,omitempty"`
