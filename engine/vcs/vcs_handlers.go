@@ -663,7 +663,7 @@ func (s *Service) postHookHandler() api.Handler {
 		}
 
 		if err := client.CreateHook(fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
-			return sdk.WrapError(err, "postHookHandler> CreateHook")
+			return sdk.WrapError(err, "VCS> postHookHandler> CreateHook")
 		}
 		return api.WriteJSON(w, body, http.StatusOK)
 	}
