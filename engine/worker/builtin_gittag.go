@@ -79,8 +79,11 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		switch tagLevel.Value {
 		case "major":
 			smver.Major++
+			smver.Minor = 0
+			smver.Patch = 0
 		case "minor":
 			smver.Minor++
+			smver.Patch = 0
 		default:
 			smver.Patch++
 		}
