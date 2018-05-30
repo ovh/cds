@@ -110,7 +110,7 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 		if err != nil {
 			return nil, report, sdk.WrapError(err, "RunFromHook> Unable to process workflow run")
 		}
-		report.Merge(r1, nil)
+		_, _ = report.Merge(r1, nil)
 	}
 
 	run, err := LoadRun(db, w.ProjectKey, w.Name, number, LoadRunOptions{})

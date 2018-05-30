@@ -681,7 +681,7 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	if err != nil {
 		return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to execute workflow run")
 	}
-	report.Merge(r1, nil)
+	_, _ = report.Merge(r1, nil)
 	return report, true, nil
 }
 

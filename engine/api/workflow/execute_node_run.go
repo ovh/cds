@@ -722,7 +722,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, db *gorp.DbMap, store cache.Sto
 // SyncNodeRunRunJob sync step status and spawnInfos in a specific run job
 func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJobRun sdk.WorkflowNodeJobRun) (bool, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.SyncNodeRunRunJob")
+	_, end = tracing.Span(ctx, "workflow.SyncNodeRunRunJob")
 	defer end()
 
 	found := false
