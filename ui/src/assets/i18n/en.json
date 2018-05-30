@@ -499,6 +499,7 @@
   "prerequisite_value": "Expected value",
 
   "project_list": "All projects",
+  "project_list_card_updated": "Updated the {{date}}",
   "project_advanced_title": "Project administration",
   "project_added": "Project has just been created",
   "project_add_ssh_key": "Generate a ssh key",

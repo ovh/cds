@@ -228,12 +228,12 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		return errst
 	}
 
-	sha512sum, err512 := sdk.FileSHA512sum(f)
+	sha512sum, err512 := sdk.FileSHA512sum(filePath)
 	if err512 != nil {
 		return err512
 	}
 
-	md5sum, errmd5 := sdk.FileMd5sum(f)
+	md5sum, errmd5 := sdk.FileMd5sum(filePath)
 	if errmd5 != nil {
 		return errmd5
 	}
@@ -338,12 +338,12 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 		return errst
 	}
 
-	sha512sum, err512 := sdk.FileSHA512sum(f)
+	sha512sum, err512 := sdk.FileSHA512sum(filePath)
 	if err512 != nil {
 		return err512
 	}
 
-	md5sum, errmd5 := sdk.FileMd5sum(f)
+	md5sum, errmd5 := sdk.FileMd5sum(filePath)
 	if errmd5 != nil {
 		return errmd5
 	}

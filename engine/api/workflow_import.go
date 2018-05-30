@@ -32,6 +32,7 @@ func (api *API) postWorkflowPreviewHandler() Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "postWorkflowPreviewHandler>> Unable load project")
@@ -85,6 +86,8 @@ func (api *API) postWorkflowImportHandler() Handler {
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPlatforms,
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "postWorkflowImportHandler>> Unable load project")
@@ -179,7 +182,9 @@ func (api *API) postWorkflowPushHandler() Handler {
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPipelines)
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPlatforms)
 		if errp != nil {
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
 		}

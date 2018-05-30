@@ -105,14 +105,14 @@ func (c *gitlabClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitSta
 			CreatedAt:  *s.CreatedAt,
 			Decription: s.Description,
 			Ref:        ref,
-			State:      processBitbucketState(*s),
+			State:      processGitlabState(*s),
 		})
 	}
 
 	return vcsStatuses, nil
 }
 
-func processBitbucketState(s gitlab.CommitStatus) string {
+func processGitlabState(s gitlab.CommitStatus) string {
 	switch s.Status {
 	case string(gitlab.Success):
 		return sdk.StatusSuccess.String()

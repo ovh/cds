@@ -15,7 +15,7 @@
               </div>
               <div class="buttons" *ngIf="currentUser.admin || currentUserIsAdminOnGroup">
                   <app-delete-button *ngIf="group.id" class="right floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
-                  <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
+                  <button class="ui green right floated button" *ngIf="group.id" [class.loading]="loading" (click)="clickSaveButton()">
                     <i class="save icon"></i>{{ 'btn_save' | translate }}
                   </button>
               </div>
@@ -92,7 +92,7 @@
 
         <div class="six wide column">
           <div class="ui center aligned segment">
-            <h4 class="ui header"><i class="fa fa-book fa-3x"></i>{{ 'settings_tips' | translate }}</h4>
+            <h2 class="ui header"><i class="fa fa-book"></i> {{ 'settings_tips' | translate }}</h2>
             <a class="circular ui blue button" href="https://ovh.github.io/cds" target="_blank">{{ 'common_see_documentation' | translate }}</a>
           </div>
         </div>
