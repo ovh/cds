@@ -53,11 +53,9 @@ func (wk *currentWorker) logProcessor(ctx context.Context) error {
 		wk.logger.llist = list.New()
 		for {
 			select {
-			case l, ok := <-wk.logger.logChan:
-				if ok {
-					wk.logger.llist.PushBack(l)
-				}
-				break
+			case l := <-wk.logger.logChan:
+				wk.logger.llist.PushBack(l)
+
 			case <-time.After(250 * time.Millisecond):
 				var logs []*sdk.Log
 				var currentStepLog *sdk.Log

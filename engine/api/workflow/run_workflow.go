@@ -82,7 +82,7 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 		if errWR != nil {
 			return nil, report, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
-		report.Merge(r1, nil)
+		_, _ = report.Merge(r1, nil)
 		if !hasRun {
 			wr.Status = sdk.StatusNeverBuilt.String()
 			wr.LastExecution = time.Now()
@@ -135,7 +135,7 @@ func ManualRunFromNode(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecu
 	if err != nil {
 		return nil, report, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
 	}
-	report.Merge(r1, nil)
+	_, _ = report.Merge(r1, nil)
 
 	if !condOk {
 		return nil, report, sdk.WrapError(sdk.ErrConditionsNotOk, "ManualRunFromNode> Conditions aren't ok")
@@ -184,7 +184,7 @@ func ManualRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, sto
 	if errWR != nil {
 		return wr, report, sdk.WrapError(errWR, "ManualRun")
 	}
-	report.Merge(r1, nil)
+	_, _ = report.Merge(r1, nil)
 	if !hasRun {
 		wr.Status = sdk.StatusNeverBuilt.String()
 		return wr, report, UpdateWorkflowRun(ctx, db, wr)
