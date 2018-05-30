@@ -206,7 +206,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 				if err := h.CDSClient().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
 					log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", timestamp, jobID, err)
 				}
-				if err := h.CDSClient().WorkerModelSpawnError(model.ID, fmt.Sprintf("routine> cannot spawn worker %s for job %d: %s", model.Name, jobID, errSpawn)); err != nil {
+				if err := h.CDSClient().WorkerModelSpawnError(model.ID, fmt.Sprintf("hatchery %s cannot spawn worker %s for job %d: %v", h.Hatchery().Name, model.Name, jobID, errSpawn)); err != nil {
 					log.Error("routine> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model.Name, errSpawn)
 				}
 				continue // try another model
@@ -253,7 +253,7 @@ func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
 				go func(m sdk.Model) {
 					if name, errSpawn := h.SpawnWorker(SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
-						if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("routine> cannot spawn worker %s for provisioning: %s", m.Name, errSpawn)); err != nil {
+						if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning: %v", h.Hatchery().Name, m.Name, errSpawn)); err != nil {
 							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
 						}
 					}
