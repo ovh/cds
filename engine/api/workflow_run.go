@@ -344,7 +344,7 @@ func stopWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	if errTx != nil {
 		return nil, sdk.WrapError(errTx, "stopWorkflowRunHandler> Unable to create transaction")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint
 
 	spwnMsg := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}}
 
@@ -367,9 +367,8 @@ func stopWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 			r1, errS := workflow.StopWorkflowNodeRun(ctx, db, store, p, wnr, stopInfos)
 			if errS != nil {
 				return nil, sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
-				tx.Rollback()
 			}
-			report.Merge(r1, nil)
+			_, _ = report.Merge(r1, nil)
 			wnr.Status = sdk.StatusStopped.String()
 		}
 	}
@@ -558,7 +557,7 @@ func stopWorkflowNodeRun(ctx context.Context, db *gorp.DbMap, store cache.Store,
 		return nil, sdk.WrapError(errR, "stopWorkflowNodeRunHandler> Unable to resync workflow run status")
 	}
 
-	report.Merge(r1, nil)
+	_, _ = report.Merge(r1, nil)
 
 	if errC := tx.Commit(); errC != nil {
 		return nil, sdk.WrapError(errC, "stopWorkflowNodeRunHandler> Unable to commit")
@@ -788,7 +787,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		if errmr != nil {
 			return nil, sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 		}
-		report.Merge(r1, nil)
+		_, _ = report.Merge(r1, nil)
 	}
 
 	//Commit and return success
