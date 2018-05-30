@@ -152,7 +152,7 @@ func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64)
 //LoadAndLockNodeJobRunNoWait load for update a NodeJobRun given its ID
 func LoadAndLockNodeJobRunNoWait(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.LoadAndLockNodeJobRunNoWait")
+	_, end = tracing.Span(ctx, "workflow.LoadAndLockNodeJobRunNoWait")
 	defer end()
 
 	j := JobRun{}
@@ -184,7 +184,7 @@ func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 //UpdateNodeJobRun updates a workflow_node_run_job
 func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, j *sdk.WorkflowNodeJobRun) error {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.UpdateNodeJobRun")
+	_, end = tracing.Span(ctx, "workflow.UpdateNodeJobRun")
 	defer end()
 
 	dbj := JobRun(*j)

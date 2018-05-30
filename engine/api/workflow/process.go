@@ -93,7 +93,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 		if errP != nil {
 			return report, false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
-		report.Merge(r1, nil)
+		report, _ = report.Merge(r1, nil)
 		return report, conditionOK, nil
 	}
 
@@ -143,7 +143,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 								Args: []interface{}{errPwnr.Error()},
 							})
 						}
-						report.Merge(r1, nil)
+						_, _ = report.Merge(r1, nil)
 
 						if conditionOk {
 							nodesRunBuilding++
@@ -179,7 +179,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 
 			if haveToUpdate {
 				if err := updateNodeRunStatusAndTriggersRun(db, nodeRun); err != nil {
-					return report, false, sdk.WrapError(err, "process> Cannot update node run")
+					return nil, false, sdk.WrapError(err, "process> Cannot update node run")
 				}
 			}
 		}
@@ -263,7 +263,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 						})
 						log.Error("processWorkflowRun> Unable to process node ID=%d: %v", t.WorkflowDestNode.ID, err)
 					}
-					report.Merge(r1, nil)
+					_, _ = report.Merge(r1, nil)
 					if conditionOK {
 						if w.JoinTriggersRun == nil {
 							w.JoinTriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)

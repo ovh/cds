@@ -8,9 +8,10 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"go.opencensus.io/trace"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk/log"
-	"go.opencensus.io/trace"
 )
 
 // LinkTo a traceID

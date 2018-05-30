@@ -1,9 +1,10 @@
 package tracing
 
 import (
-	"github.com/ovh/cds/sdk"
 	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/trace/propagation"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // Attributes recorded on the span for the requests.
