@@ -90,7 +90,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 //LoadAndLockNodeRunByID load and lock a specific node run on a workflow
 func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, wait bool) (*sdk.WorkflowNodeRun, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.LoadAndLockNodeRunByID")
+	_, end = tracing.Span(ctx, "workflow.LoadAndLockNodeRunByID")
 	defer end()
 
 	var rr = NodeRun{}

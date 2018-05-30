@@ -14,8 +14,3 @@ func spanContextToReponse(ctx trace.SpanContext, r *http.Request, w http.Respons
 	w.Header().Add(tracingutils.SpanIDHeader, hex.EncodeToString(ctx.SpanID[:]))
 	w.Header().Add(tracingutils.SampledHeader, r.Header.Get(tracingutils.SampledHeader))
 }
-
-// spanContextToRequest writes span context to http requests
-func spanContextToRequest(ctx trace.SpanContext, r *http.Request) {
-	defaultFormat.SpanContextToRequest(ctx, r)
-}

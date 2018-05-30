@@ -18,8 +18,9 @@ import (
 )
 
 // GetWorkflowRunEventData read channel to get elements to push
-func GetWorkflowRunEventData(report *ProcessorReport, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun, error) {
-	return report.workflows, report.nodes, report.jobs, nil
+// TODO: refactor this useless function
+func GetWorkflowRunEventData(report *ProcessorReport, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun) {
+	return report.workflows, report.nodes, report.jobs
 }
 
 // SendEvent Send event on workflow run

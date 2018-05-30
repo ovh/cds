@@ -13,8 +13,6 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
-	"go.opencensus.io/plugin/ochttp/propagation/b3"
-	"go.opencensus.io/trace/propagation"
 )
 
 const (
@@ -40,8 +38,6 @@ const (
 	// ResponseProcessTimeHeader is used as HTTP header
 	ResponseProcessTimeHeader = "X-Api-Process-Time"
 )
-
-var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
 // RequestModifier is used to modify behavior of Request and Steam functions
 type RequestModifier func(req *http.Request)

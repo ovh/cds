@@ -28,7 +28,6 @@ type ProcessorReport struct {
 	jobs      []sdk.WorkflowNodeJobRun
 	nodes     []sdk.WorkflowNodeRun
 	workflows []sdk.WorkflowRun
-	errors    []error
 }
 
 // Add something to the report

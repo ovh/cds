@@ -203,13 +203,13 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 
 	// Save the node run in database
 	if err := updateNodeRunStatusAndStage(db, n); err != nil {
-		return report, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.execute> Unable to execute node")
+		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.execute> Unable to execute node")
 	}
 
 	//Reload the workflow
 	updatedWorkflowRun, err := LoadRunByID(db, n.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
-		return report, sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
+		return nil, sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
@@ -221,14 +221,14 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 
 			r1, _, err := processWorkflowRun(ctx, dbCopy, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 			if err != nil {
-				return report, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 			}
-			report.Merge(r1, nil)
+			report, _ = report.Merge(r1, nil)
 		}
 
 		//Delete the line in workflow_node_run_job
 		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
-			return report, sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
+			return nil, sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
 		}
 
 		node := updatedWorkflowRun.Workflow.GetNode(n.WorkflowNodeID)
@@ -277,14 +277,14 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 			})
 
 			if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
-				return report, sdk.WrapError(err, "workflow.execute> Unable to update workflow run %d after mutex release", workflowRun.ID)
+				return nil, sdk.WrapError(err, "workflow.execute> Unable to update workflow run %d after mutex release", workflowRun.ID)
 			}
 
 			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
 			var err error
 			report, err = report.Merge(execute(ctx, dbCopy, db, store, proj, waitingRun))
 			if err != nil {
-				return report, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
+				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
 			}
 
 			next()
@@ -618,7 +618,8 @@ func StopWorkflowNodeRun(ctx context.Context, db *gorp.DbMap, store cache.Store,
 	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
 	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
 		go func() {
-			report.Merge(stopWorkflowNodeJobRun(ctx, db, store, proj, &nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
+			//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
+			_, _ = report.Merge(stopWorkflowNodeJobRun(ctx, db, store, proj, &nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
 		}()
 	}
 

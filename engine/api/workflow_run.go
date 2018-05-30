@@ -330,10 +330,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowRun> Unable to stop workflow")
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(report, proj.Key)
-		if err != nil {
-			return err
-		}
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
 		return WriteJSON(w, run, http.StatusOK)
@@ -527,10 +524,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to stop workflow run")
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(report, p.Key)
-		if err != nil {
-			return err
-		}
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		return WriteJSON(w, nodeRun, http.StatusOK)
@@ -680,10 +674,10 @@ func (api *API) postWorkflowRunHandler() Handler {
 		}
 
 		report, err := startWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, u, asCodeInfosMsg)
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(report, p.Key)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to start workflow %s/%s", key, name)
 		}
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
@@ -781,7 +775,8 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			if err != nil {
 				log.Error("error: %v", err)
 			}
-			report.Merge(r1, nil)
+			//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
+			_, _ = report.Merge(r1, nil)
 			wg.Done()
 		}(fromNodes[i])
 	}
@@ -815,7 +810,7 @@ func runFromNode(ctx context.Context, db *gorp.DbMap, store cache.Store, opts sd
 		return nil, errb
 	}
 
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	report := new(workflow.ProcessorReport)
 
@@ -843,7 +838,8 @@ func runFromNode(ctx context.Context, db *gorp.DbMap, store cache.Store, opts sd
 		if errmr != nil {
 			return nil, sdk.WrapError(errmr, "runFromNode> Unable to run workflow from node")
 		}
-		report.Merge(r1, nil)
+		//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
+		_, _ = report.Merge(r1, nil)
 	}
 
 	if err := tx.Commit(); err != nil {

@@ -105,11 +105,11 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		pbji := &worker.WorkflowNodeJobRunInfo{}
 
 		report, err := takeJob(ctx, api.mustDB(), api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
-
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(report, p.Key)
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
+
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
@@ -369,10 +369,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(report, proj.Key)
-		if err != nil {
-			return err
-		}
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 		db := api.mustDB()
 
 		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)

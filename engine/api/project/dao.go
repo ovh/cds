@@ -64,7 +64,7 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo str
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "project.LoadAll")
+	_, end = tracing.Span(ctx, "project.LoadAll")
 	defer end()
 
 	var query string
@@ -398,7 +398,7 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 
 func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "project.load")
+	_, end = tracing.Span(ctx, "project.load")
 	defer end()
 
 	dbProj := &dbProject{}
