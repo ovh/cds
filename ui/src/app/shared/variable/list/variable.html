@@ -27,7 +27,7 @@
             <td>
                 <div class="warname">
                     <ng-container *ngIf="warnings">
-                        <app-warning-variable [warning]="warnings.get(v.name)"></app-warning-variable>
+                        <app-warning-mark [warning]="warnings.get(v.name)"></app-warning-mark>
                     </ng-container>
                     <div class="varname">
                         <div class="ui fluid input" *ngIf="mode === 'edit'">

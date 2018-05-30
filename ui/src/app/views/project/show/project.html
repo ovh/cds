@@ -64,7 +64,7 @@
                 </div>
 
                 <div *ngSwitchCase="'permissions'">
-                  <app-project-permissions [project]="project"></app-project-permissions>
+                  <app-project-permissions [project]="project" [warnings]="warnPerm"></app-project-permissions>
                 </div>
                 <div *ngSwitchCase="'keys'">
                     <app-project-keys [project]="project"></app-project-keys>

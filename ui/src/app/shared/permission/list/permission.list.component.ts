@@ -18,7 +18,6 @@ export class PermissionListComponent extends Table {
 
     // submit(project/app/pip view), form (wizard)
     @Input() mode = 'submit';
-    @Input() warning: Map<string, Warning>;
 
     @Output() event = new EventEmitter<PermissionEvent>();
 
