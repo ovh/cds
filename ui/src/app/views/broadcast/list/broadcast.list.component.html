@@ -20,9 +20,9 @@
                         </div>
                         <div class="ui row">
                             <div class="sixteen wide column">
-                                <div class="ui fluid buttons">
-                                  <button class="ui button" [class.active]="recentView" [class.blue]="recentView" (click)="switchToRecentView(true)">{{'broadcast_recent' | translate}}</button>
-                                  <button class="ui button" [class.active]="!recentView" [class.blue]="!recentView" (click)="switchToRecentView(false)">{{'broadcast_seen' | translate}}</button>
+                                <div class="ui grey two item pointing menu">
+                                  <div class="item" [class.active]="recentView" (click)="switchToRecentView(true)">{{'broadcast_recent' | translate}}</div>
+                                  <div class="item" [class.active]="!recentView" (click)="switchToRecentView(false)">{{'broadcast_seen' | translate}}</div>
                                 </div>
                             </div>
                         </div>
@@ -59,7 +59,7 @@
                     </ng-container>
                     <ng-container *ngIf="!filteredBroadcasts || filteredBroadcasts.length === 0">
                         <div class="ui row mt5">
-                            <div class="centered sixteen wide column">
+                            <div class="ui segment centered sixteen wide column">
                                 {{'broadcast_none' | translate}}
                             </div>
                         </div>
