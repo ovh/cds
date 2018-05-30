@@ -673,9 +673,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 			}
 		}
 
-		report, err := startWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, u, asCodeInfosMsg)
-		if err != nil {
-			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to start workflow %s/%s", key, name)
+		report, errS := startWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, u, asCodeInfosMsg)
+		if errS != nil {
+			return sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", key, name)
 		}
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)

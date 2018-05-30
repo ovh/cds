@@ -104,9 +104,9 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 
 		pbji := &worker.WorkflowNodeJobRunInfo{}
 
-		report, err := takeJob(ctx, api.mustDB(), api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
-		if err != nil {
-			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
+		report, errT := takeJob(ctx, api.mustDB(), api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
+		if errT != nil {
+			return sdk.WrapError(errT, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
