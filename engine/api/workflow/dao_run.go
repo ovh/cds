@@ -49,8 +49,7 @@ func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 
 // UpdateWorkflowRun updates in table "workflow_run""
 func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
-	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.UpdateWorkflowRun")
+	_, end := tracing.Span(ctx, "workflow.UpdateWorkflowRun")
 	defer end()
 
 	wr.LastModified = time.Now()
