@@ -201,7 +201,6 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	params := wk.currentJob.wJob.Parameters
-	fmt.Println(params)
 	projectKey := sdk.ParameterValue(params, "cds.project")
 	if err := wk.client.WorkflowCachePush(projectKey, vars["tag"], res); err != nil {
 		err = sdk.Error{
