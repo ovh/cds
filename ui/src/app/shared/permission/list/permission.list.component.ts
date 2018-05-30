@@ -4,7 +4,6 @@ import {Table} from '../../table/table';
 import {GroupPermission} from '../../../model/group.model';
 import {PermissionService} from '../permission.service';
 import {PermissionEvent} from '../permission.event.model';
-import {Warning} from '../../../model/warning.model';
 
 @Component({
     selector: 'app-permission-list',
