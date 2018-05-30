@@ -25,9 +25,17 @@
                 </button>
             </td>
             <td>
-                <div class="ui fluid input" *ngIf="mode === 'edit'">
-                    <input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="v.updating">
+                <div class="warname">
+                    <ng-container *ngIf="warnings">
+                        <app-warning-variable [warning]="warnings.get(v.name)"></app-warning-variable>
+                    </ng-container>
+                    <div class="varname">
+                        <div class="ui fluid input" *ngIf="mode === 'edit'">
+                            <input [(ngModel)]="v.name" (keydown)="v.hasChanged = true" name="varname" [disabled]="v.updating">
+                        </div>
+                    </div>
                 </div>
+
                 <div class="ui input field" *ngIf="mode !== 'edit'">{{v.name}}</div>
             </td>
             <td>

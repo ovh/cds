@@ -4,6 +4,7 @@ import {Table} from '../../table/table';
 import {GroupPermission} from '../../../model/group.model';
 import {PermissionService} from '../permission.service';
 import {PermissionEvent} from '../permission.event.model';
+import {Warning} from '../../../model/warning.model';
 
 @Component({
     selector: 'app-permission-list',
@@ -17,6 +18,7 @@ export class PermissionListComponent extends Table {
 
     // submit(project/app/pip view), form (wizard)
     @Input() mode = 'submit';
+    @Input() warning: Map<string, Warning>;
 
     @Output() event = new EventEmitter<PermissionEvent>();
 

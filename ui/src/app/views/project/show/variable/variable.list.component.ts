@@ -21,16 +21,15 @@ export class ProjectVariablesComponent implements OnInit {
     @Input('warnings')
     set warnings(data: Array<Warning>) {
         if (data) {
-            this.varWarning = data.map(v => {
+            this.variableWarning = new Map<string, Warning>();
+            data.forEach(v => {
                 let w = cloneDeep(v);
                 w.element = w.element.replace('cds.proj.', '');
-                return w;
-            })
+                this.variableWarning.set(w.element, w);
+            });
         }
-
     };
-
-    varWarning: Array<Warning>;
+    variableWarning: Map<string, Warning>;
 
     @ViewChild('varWarning')
     varWarningModal: WarningModalComponent;

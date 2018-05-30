@@ -84,6 +84,7 @@ import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.comp
 import {ClipboardModule} from 'ngx-clipboard';
 import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component';
 import {WarningTabComponent} from './warning/tab/warning.tab.component';
+import {WarningVariableComponent} from './warning/variable/warning.variable.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -129,6 +130,7 @@ import {WarningTabComponent} from './warning/tab/warning.tab.component';
         WarningModalComponent,
         DeleteModalComponent,
         WarningTabComponent,
+        WarningVariableComponent,
         WorkflowNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -215,6 +217,7 @@ import {WarningTabComponent} from './warning/tab/warning.tab.component';
         VariableFormComponent,
         VariableValueComponent,
         WarningTabComponent,
+        WarningVariableComponent,
         WarningModalComponent,
         DeleteModalComponent,
         WorkflowNodeComponent,
