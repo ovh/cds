@@ -26,6 +26,7 @@ export class WorkflowEventStore {
     broadcastWorkflowRun(key: string, name: string, wr: WorkflowRun): void {
         let store = this._currentWorkflowRuns.getValue();
         let w = store.get(wr.id);
+
         // Update workflow runs list
         if (!w || (w && (new Date(wr.last_modified).getTime() > (new Date(w.last_modified)).getTime())) ) {
             this._currentWorkflowRuns.next(store.set(wr.id, wr));
@@ -33,14 +34,11 @@ export class WorkflowEventStore {
 
         let sRun = this._currentWorkflowRun.getValue();
         if (sRun && sRun.id === wr.id && new Date(wr.last_modified).getTime() > new Date(sRun.last_modified).getTime()) {
-            if (!wr.workflow) {
-                this._workflowRunService.getWorkflowRun(key, name, wr.num).subscribe(wrUpdated => {
-                    wr = wrUpdated;
-                    this._currentWorkflowRun.next(wr);
-                });
-            } else {
+            // Call get workflow run to get workflow
+            this._workflowRunService.getWorkflowRun(key, name, wr.num).subscribe(wrUpdated => {
+                wr = wrUpdated;
                 this._currentWorkflowRun.next(wr);
-            }
+            });
         }
     }
 
