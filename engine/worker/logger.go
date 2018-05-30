@@ -84,7 +84,7 @@ func (wk *currentWorker) sendHTTPLog() {
 		count := 1
 		for wk.logger.llist.Len() > 0 {
 			n := wk.logger.llist.Front().Value.(sdk.Log)
-			if string(n.Val) != string(l.Val) {
+			if n.Val != l.Val {
 				break
 			}
 			count++
