@@ -44,7 +44,7 @@ type Parameter struct {
 	ID          int64  `json:"id" yaml:"-"`
 	Name        string `json:"name"`
 	Type        string `json:"type"`
-	Value       string `json:"value,omitempty"`
+	Value       string `json:"value"`
 	Description string `json:"description,omitempty" yaml:"desc,omitempty"`
 }
 
