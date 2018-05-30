@@ -21,7 +21,7 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *
 
 	var rows *sql.Rows
 	var err error
-	if u.Admin {
+	if u == nil || u.Admin {
 		query := `SELECT environment.id, environment.name, environment.last_modified, 7 as "perm"
 		  FROM environment
 		  JOIN project ON project.id = environment.project_id
