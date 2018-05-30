@@ -297,8 +297,9 @@ func (api *API) getWorkflowRunHandler() Handler {
 		}
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
-				WithArtifacts:  true,
-				WithLightTests: true,
+				WithArtifacts:           true,
+				WithLightTests:          true,
+				DisableDetailledNodeRun: true,
 			},
 		)
 		if err != nil {
@@ -408,7 +409,7 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 			return err
 		}
 
-		run, errR := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
+		run, errR := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errR != nil {
 			return sdk.WrapError(errR, "getWorkflowNodeRunHistoryHandler")
 		}
@@ -447,7 +448,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		var errCtx error
 		var nodeCtx *sdk.WorkflowNodeContext
 		var wNode *sdk.WorkflowNode
-		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
+		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errW == nil {
 			wNode = wfRun.Workflow.GetNodeByName(nodeName)
 		}
@@ -590,7 +591,7 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true, WithDetailledNodeRun: true})
+		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 		}

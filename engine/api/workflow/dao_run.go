@@ -30,10 +30,10 @@ workflow_run.to_delete
 
 // LoadRunOptions are options for loading a run (node or workflow)
 type LoadRunOptions struct {
-	WithArtifacts        bool
-	WithTests            bool
-	WithLightTests       bool
-	WithDetailledNodeRun bool
+	WithArtifacts           bool
+	WithTests               bool
+	WithLightTests          bool
+	DisableDetailledNodeRun bool
 }
 
 // insertWorkflowRun inserts in table "workflow_run""
