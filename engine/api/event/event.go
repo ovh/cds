@@ -87,7 +87,7 @@ func DequeueEvent(c context.Context) {
 		// Send into external brokers
 		for _, b := range brokers {
 			if err := b.sendEvent(&e); err != nil {
-				log.Warning("Error while sending message: %s", err)
+				log.Warning("Error while sending message [%s: %s/%s/%s/%s/%s]: %s", e.EventType, e.ProjectKey, e.WorkflowName, e.ApplicationName, e.PipelineName, e.EnvironmentName, err)
 			}
 		}
 	}
