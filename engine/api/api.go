@@ -128,11 +128,12 @@ type Configuration struct {
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported"`
 	Events struct {
 		Kafka struct {
-			Enabled  bool   `toml:"enabled"`
-			Broker   string `toml:"broker"`
-			Topic    string `toml:"topic"`
-			User     string `toml:"user"`
-			Password string `toml:"password"`
+			Enabled         bool   `toml:"enabled"`
+			Broker          string `toml:"broker"`
+			Topic           string `toml:"topic"`
+			User            string `toml:"user"`
+			Password        string `toml:"password"`
+			MaxMessageBytes int    `toml:"maxmessagebytes" default:"10000000"`
 		} `toml:"kafka"`
 	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################"`
 	Features struct {
@@ -562,6 +563,7 @@ func (a *API) Serve(ctx context.Context) error {
 		User:            a.Config.Events.Kafka.User,
 		Password:        a.Config.Events.Kafka.Password,
 		Topic:           a.Config.Events.Kafka.Topic,
+		MaxMessageByte:  a.Config.Events.Kafka.MaxMessageBytes,
 	}
 	if err := event.Initialize(kafkaOptions); err != nil {
 		log.Error("error while initializing event system: %s", err)

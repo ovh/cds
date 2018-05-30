@@ -7,9 +7,7 @@ import (
 	"github.com/ovh/cds/cli/cds/admin/importer"
 	"github.com/ovh/cds/cli/cds/admin/maintenance"
 	"github.com/ovh/cds/cli/cds/admin/plugin"
-	"github.com/ovh/cds/cli/cds/admin/repositoriesmanager"
 	"github.com/ovh/cds/cli/cds/admin/user"
-	"github.com/ovh/cds/cli/cds/admin/warning"
 )
 
 var (
@@ -24,9 +22,7 @@ func init() {
 	rootCmd.AddCommand(importer.Cmd())
 	rootCmd.AddCommand(maintenance.Cmd())
 	rootCmd.AddCommand(plugin.Cmd())
-	rootCmd.AddCommand(repositoriesmanager.Cmd())
 	rootCmd.AddCommand(user.Cmd())
-	rootCmd.AddCommand(warning.Cmd())
 }
 
 //Cmd returns the root command

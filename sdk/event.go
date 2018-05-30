@@ -85,7 +85,6 @@ type EventRunWorkflow struct {
 	ID            int64            `json:"id"`
 	Number        int64            `json:"num"`
 	Status        string           `json:"status"`
-	Workflow      Workflow         `json:"workflow"`
 	Start         int64            `json:"start"`
 	LastExecution int64            `json:"last_execution"`
 	LastModified  int64            `json:"last_modified"`

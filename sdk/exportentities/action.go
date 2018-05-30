@@ -145,7 +145,7 @@ func newSteps(a sdk.Action) []Step {
 					s["checkout"] = directory.Value
 				}
 			case sdk.DeployApplicationAction:
-				s["perform"] = "deploy"
+				s["deploy"] = "{{.cds.application}}"
 			}
 		default:
 			args := map[string]string{}

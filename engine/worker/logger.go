@@ -50,88 +50,99 @@ func (wk *currentWorker) logProcessor(ctx context.Context) error {
 			return nil
 		}
 	} else {
+		ticker := time.NewTicker(250 * time.Millisecond)
+		defer func() {
+			ticker.Stop()
+		}()
+
 		wk.logger.llist = list.New()
 		for {
 			select {
 			case l := <-wk.logger.logChan:
 				wk.logger.llist.PushBack(l)
-
-			case <-time.After(250 * time.Millisecond):
-				var logs []*sdk.Log
-				var currentStepLog *sdk.Log
-				// While list is not empty
-				for wk.logger.llist.Len() > 0 {
-					// get older log line
-					l := wk.logger.llist.Front().Value.(sdk.Log)
-					wk.logger.llist.Remove(wk.logger.llist.Front())
-
-					// then count how many lines are exactly the same
-					count := 1
-					for wk.logger.llist.Len() > 0 {
-						n := wk.logger.llist.Front().Value.(sdk.Log)
-						if string(n.Val) != string(l.Val) {
-							break
-						}
-						count++
-						wk.logger.llist.Remove(wk.logger.llist.Front())
-					}
-
-					// and if count > 1, then add it at the beginning of the log
-					if count > 1 {
-						l.Val = fmt.Sprintf("[x%d]", count) + l.Val
-					}
-					// and append to the loerrorgs batch
-					l.Val = strings.Trim(strings.Replace(l.Val, "\n", " ", -1), " \t\n") + "\n"
-
-					// First log
-					if currentStepLog == nil {
-						currentStepLog = &l
-					} else if l.StepOrder == currentStepLog.StepOrder {
-						currentStepLog.Val += l.Val
-						currentStepLog.LastModified = l.LastModified
-						currentStepLog.Done = l.Done
-					} else {
-						// new Step
-						logs = append(logs, currentStepLog)
-						currentStepLog = &l
-
-					}
-				}
-
-				// insert last step
-				if currentStepLog != nil {
-					logs = append(logs, currentStepLog)
-				}
-
-				if len(logs) == 0 {
-					continue
-				}
-
-				for _, l := range logs {
-					log.Debug("LOG: %v", l.Val)
-					// Buffer log list is empty, sending batch to API
-					data, err := json.Marshal(l)
-					if err != nil {
-						log.Error("Error: cannot marshal logs: %s", err)
-						continue
-					}
-
-					var path string
-					if wk.currentJob.wJob != nil {
-						path = fmt.Sprintf("/queue/workflows/%d/log", wk.currentJob.wJob.ID)
-					} else {
-						path = fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
-					}
-
-					if _, _, err := sdk.Request("POST", path, data); err != nil {
-						log.Error("error: cannot send logs: %s", err)
-						continue
-					}
-				}
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-ticker.C:
+				wk.sendHTTPLog()
 			}
 		}
 	}
+
 	return nil
+}
+
+func (wk *currentWorker) sendHTTPLog() {
+	var logs []*sdk.Log
+	var currentStepLog *sdk.Log
+	// While list is not empty
+	for wk.logger.llist.Len() > 0 {
+		// get older log line
+		l := wk.logger.llist.Front().Value.(sdk.Log)
+		wk.logger.llist.Remove(wk.logger.llist.Front())
+
+		// then count how many lines are exactly the same
+		count := 1
+		for wk.logger.llist.Len() > 0 {
+			n := wk.logger.llist.Front().Value.(sdk.Log)
+			if n.Val != l.Val {
+				break
+			}
+			count++
+			wk.logger.llist.Remove(wk.logger.llist.Front())
+		}
+
+		// and if count > 1, then add it at the beginning of the log
+		if count > 1 {
+			l.Val = fmt.Sprintf("[x%d]", count) + l.Val
+		}
+		// and append to the loerrorgs batch
+		l.Val = strings.Trim(strings.Replace(l.Val, "\n", " ", -1), " \t\n") + "\n"
+
+		// First log
+		if currentStepLog == nil {
+			currentStepLog = &l
+		} else if l.StepOrder == currentStepLog.StepOrder {
+			currentStepLog.Val += l.Val
+			currentStepLog.LastModified = l.LastModified
+			currentStepLog.Done = l.Done
+		} else {
+			// new Step
+			logs = append(logs, currentStepLog)
+			currentStepLog = &l
+
+		}
+	}
+
+	// insert last step
+	if currentStepLog != nil {
+		logs = append(logs, currentStepLog)
+	}
+
+	if len(logs) == 0 {
+		return
+	}
+
+	for _, l := range logs {
+		log.Debug("LOG: %v", l.Val)
+		// Buffer log list is empty, sending batch to API
+		data, err := json.Marshal(l)
+		if err != nil {
+			log.Error("Error: cannot marshal logs: %s", err)
+			continue
+		}
+
+		var path string
+		if wk.currentJob.wJob != nil {
+			path = fmt.Sprintf("/queue/workflows/%d/log", wk.currentJob.wJob.ID)
+		} else {
+			path = fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
+		}
+
+		if _, _, err := sdk.Request("POST", path, data); err != nil {
+			log.Error("error: cannot send logs: %s", err)
+			continue
+		}
+	}
 }
 
 func (wk *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) error {

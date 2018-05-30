@@ -70,7 +70,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		return nil, sdk.WrapError(err, "workflow.LoadNodeRun> Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
 	}
 
-	r, err := fromDBNodeRun(rr)
+	r, err := fromDBNodeRun(rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeRun>")
 	}
@@ -104,7 +104,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, 
 	if err := db.SelectOne(&rr, query, id); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadAndLockNodeRunByID> Unable to load workflow_node_run node=%d", id)
 	}
-	return fromDBNodeRun(rr)
+	return fromDBNodeRun(rr, LoadRunOptions{})
 }
 
 //LoadNodeRunByID load a specific node run on a workflow
@@ -124,7 +124,7 @@ func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*s
 		return nil, sdk.WrapError(err, "workflow.LoadNodeRunByID> Unable to load workflow_node_run node=%d", id)
 	}
 
-	r, err := fromDBNodeRun(rr)
+	r, err := fromDBNodeRun(rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeRun>")
 	}
@@ -161,7 +161,7 @@ func nodeRunExist(db gorp.SqlExecutor, nodeID, num int64, subnumber int) (bool, 
 	return nb > 0, err
 }
 
-func fromDBNodeRun(rr NodeRun) (*sdk.WorkflowNodeRun, error) {
+func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	r := new(sdk.WorkflowNodeRun)
 	r.WorkflowRunID = rr.WorkflowRunID
 	r.ID = rr.ID
@@ -199,35 +199,40 @@ func fromDBNodeRun(rr NodeRun) (*sdk.WorkflowNodeRun, error) {
 			}
 		}
 	}
-	if err := gorpmapping.JSONNullString(rr.SourceNodeRuns, &r.SourceNodeRuns); err != nil {
-		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d : SourceNodeRuns", r.ID)
-	}
-	if err := gorpmapping.JSONNullString(rr.Commits, &r.Commits); err != nil {
-		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Commits", r.ID)
-	}
-	if rr.HookEvent.Valid {
-		r.HookEvent = new(sdk.WorkflowNodeRunHookEvent)
-		if err := gorpmapping.JSONNullString(rr.HookEvent, r.HookEvent); err != nil {
-			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: HookEvent", r.ID)
-		}
-	}
-	if rr.Manual.Valid {
-		r.Manual = new(sdk.WorkflowNodeRunManual)
-		if err := gorpmapping.JSONNullString(rr.Manual, r.Manual); err != nil {
-			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Manual", r.ID)
-		}
-	}
+
 	if err := gorpmapping.JSONNullString(rr.Payload, &r.Payload); err != nil {
 		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Payload", r.ID)
 	}
-	if err := gorpmapping.JSONNullString(rr.BuildParameters, &r.BuildParameters); err != nil {
-		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: BuildParameters", r.ID)
-	}
-	if rr.PipelineParameters.Valid {
-		if err := gorpmapping.JSONNullString(rr.PipelineParameters, &r.PipelineParameters); err != nil {
-			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: PipelineParameters", r.ID)
+
+	if !opts.DisableDetailledNodeRun {
+		if err := gorpmapping.JSONNullString(rr.SourceNodeRuns, &r.SourceNodeRuns); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d : SourceNodeRuns", r.ID)
+		}
+		if err := gorpmapping.JSONNullString(rr.Commits, &r.Commits); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Commits", r.ID)
+		}
+		if rr.HookEvent.Valid {
+			r.HookEvent = new(sdk.WorkflowNodeRunHookEvent)
+			if err := gorpmapping.JSONNullString(rr.HookEvent, r.HookEvent); err != nil {
+				return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: HookEvent", r.ID)
+			}
+		}
+		if rr.Manual.Valid {
+			r.Manual = new(sdk.WorkflowNodeRunManual)
+			if err := gorpmapping.JSONNullString(rr.Manual, r.Manual); err != nil {
+				return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Manual", r.ID)
+			}
+		}
+		if err := gorpmapping.JSONNullString(rr.BuildParameters, &r.BuildParameters); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: BuildParameters", r.ID)
+		}
+		if rr.PipelineParameters.Valid {
+			if err := gorpmapping.JSONNullString(rr.PipelineParameters, &r.PipelineParameters); err != nil {
+				return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: PipelineParameters", r.ID)
+			}
 		}
 	}
+
 	if rr.Tests.Valid {
 		r.Tests = new(venom.Tests)
 		if err := gorpmapping.JSONNullString(rr.Tests, r.Tests); err != nil {
@@ -509,7 +514,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
 		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run: %s [%s %d %s %d %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID)
 	}
-	pNodeRun, errF := fromDBNodeRun(rr)
+	pNodeRun, errF := fromDBNodeRun(rr, LoadRunOptions{})
 	if errF != nil {
 		return nodeRun, sdk.WrapError(errF, "PreviousNodeRun> Cannot read node run")
 	}

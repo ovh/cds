@@ -829,8 +829,8 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		log.Debug("Push> Parsing %s", filename)
 		appDB, msgList, err := application.ParseAndImport(tx, store, proj, &app, true, decryptFunc, u)
 		if err != nil {
-			err = sdk.SetError(err, "unable to import application %s", app.Name)
-			return nil, nil, sdk.WrapError(err, "Push> ", err)
+			err = fmt.Errorf("unable to import application %s: %v", app.Name, err)
+			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		allMsg = append(allMsg, msgList...)
 
@@ -854,8 +854,8 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		log.Debug("Push> Parsing %s", filename)
 		envDB, msgList, err := environment.ParseAndImport(tx, store, proj, &env, true, decryptFunc, u)
 		if err != nil {
-			err = sdk.SetError(err, "unable to import environment %s", env.Name)
-			return nil, nil, sdk.WrapError(err, "Push> ", err)
+			err = fmt.Errorf("unable to import environment %s: %v", env.Name, err)
+			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		allMsg = append(allMsg, msgList...)
 
@@ -879,8 +879,8 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		log.Debug("Push> Parsing %s", filename)
 		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, true, u)
 		if err != nil {
-			err = sdk.SetError(err, "unable to import pipeline %s", pip.Name)
-			return nil, nil, sdk.WrapError(err, "Push> ", err)
+			err = fmt.Errorf("unable to import pipeline %s: %v", pip.Name, err)
+			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		allMsg = append(allMsg, msgList...)
 
