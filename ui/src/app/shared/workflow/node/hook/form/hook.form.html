@@ -35,7 +35,12 @@
                     <div class="inline fields" *ngFor="let k of hook.config | keys">
                         <div class="four wide field"><label>{{k}}</label></div>
                         <div class="twelve wide field">
-                          <input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable || readonly" *ngIf="k !== 'payload' && (_hook.config[k].type === 'string' || !_hook.config[k].type)">
+                          <input type="text" [(ngModel)]="_hook.config[k].value" 
+                                [readonly]="!_hook.config[k].configurable || readonly" 
+                                *ngIf="k !== 'payload' && (_hook.config[k].type === 'string' || !_hook.config[k].type)"/>
+                          <input type="password" [(ngModel)]="_hook.config[k].value" 
+                                [readonly]="!_hook.config[k].configurable || readonly" 
+                                *ngIf="k !== 'payload' && _hook.config[k].type === 'password'"/>
                           <ng-container *ngIf="k === 'payload' && _hook.config[k].type === 'string'">
                               <codemirror
                                 [class.invalid]="invalidJSON"
@@ -47,14 +52,14 @@
                           </ng-container>
                           <ng-container *ngIf="_hook.config[k].type === 'platform'">
                               <sui-select class="selection" placeholder="{{'platform_name' | translate}}"
-                                          [(ngModel)]="_hook.config[k].value"
-                                          [options]="project.platforms"
-                                          [isSearchable]="true"
-                                          labelField="name"
-                                          valueField="name" #select>
-                                  <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
-                                  </sui-select-option>
-                              </sui-select>
+                                [(ngModel)]="selectedPlatform"
+                                (ngModelChange)="updatePlatform()"
+                                [options]="availablePlatforms"
+                                [isSearchable]="true"
+                                labelField="name" #select>
+                                    <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
+                                    </sui-select-option>
+                                </sui-select>
                           </ng-container>
                         </div>
                     </div>

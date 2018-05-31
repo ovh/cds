@@ -29,13 +29,11 @@ func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 }
 
 func (s *Service) startKafkaHook(t *sdk.Task) error {
-	var kafkaPlatform, kafkaUser, projectKey, consumerGroup, topic string
+	var kafkaPlatform, kafkaUser, projectKey, topic string
 	for k, v := range t.Config {
 		switch k {
 		case sdk.KafkaHookModelPlatform:
 			kafkaPlatform = v.Value
-		case sdk.KafkaHookModelConsumerGroup:
-			consumerGroup = fmt.Sprintf("%s-%s-%s", projectKey, t.UUID, v.Value)
 		case sdk.KafkaHookModelTopic:
 			topic = v.Value
 		case sdk.HookConfigProject:
@@ -74,6 +72,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 	clusterConfig.Config = *config
 	clusterConfig.Consumer.Return.Errors = true
 
+	var consumerGroup = fmt.Sprintf("%s.%s", kafkaUser, t.UUID)
 	var errConsumer error
 	consumer, errConsumer := cluster.NewConsumer(
 		[]string{broker},
@@ -83,9 +82,12 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 
 	if errConsumer != nil {
 		s.stopTask(t)
-		return fmt.Errorf("startKafkaHook>Error creating consumer: %s", errConsumer)
+		return fmt.Errorf("startKafkaHook>Error creating consumer: (%s %s %s %s): %v", broker, consumerGroup, topic, kafkaUser, errConsumer)
 	}
 
+	vConsumer := t.Config[sdk.KafkaHookModelConsumerGroup]
+	vConsumer.Value = consumerGroup
+	t.Config[sdk.KafkaHookModelConsumerGroup] = vConsumer
 	s.saveKafkaExecution(t, "", 0)
 
 	// Consume errors

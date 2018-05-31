@@ -43,6 +43,45 @@ var (
 // PlatformConfig represent the configuration of a plateform
 type PlatformConfig map[string]PlatformConfigValue
 
+// Clone return a copy of the config (with a copy of the underlying data structure)
+func (config PlatformConfig) Clone() PlatformConfig {
+	new := make(PlatformConfig, len(config))
+	for k, v := range config {
+		new[k] = v
+	}
+	return new
+}
+
+// EncryptSecrets encrypt secrets given a cypher func
+func (config PlatformConfig) EncryptSecrets(encryptFunc func(string) (string, error)) error {
+	for k, v := range config {
+		if v.Type == PlatformConfigTypePassword {
+			s, errS := encryptFunc(v.Value)
+			if errS != nil {
+				return WrapError(errS, "EncryptSecrets> Cannot encrypt password")
+			}
+			v.Value = string(s)
+			config[k] = v
+		}
+	}
+	return nil
+}
+
+// DecryptSecrets decrypt secrets given a cypher func
+func (config PlatformConfig) DecryptSecrets(decryptFunc func(string) (string, error)) error {
+	for k, v := range config {
+		if v.Type == PlatformConfigTypePassword {
+			s, errS := decryptFunc(v.Value)
+			if errS != nil {
+				return WrapError(errS, "DecryptSecrets> Cannot descrypt password")
+			}
+			v.Value = string(s)
+			config[k] = v
+		}
+	}
+	return nil
+}
+
 const (
 	// PlatformConfigTypeString represents a string configuration value
 	PlatformConfigTypeString = "string"

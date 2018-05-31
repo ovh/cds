@@ -56,13 +56,13 @@ func (a Project) PGPKeys() []ProjectKey {
 }
 
 // GetPlatform returns the ProjectPlatform given a name
-func (a Project) GetPlatform(pfName string) *ProjectPlatform {
+func (a Project) GetPlatform(pfName string) (ProjectPlatform, bool) {
 	for i := range a.Platforms {
 		if a.Platforms[i].Name == pfName {
-			return &a.Platforms[i]
+			return a.Platforms[i], true
 		}
 	}
-	return nil
+	return ProjectPlatform{}, false
 }
 
 // GetPlatformByID returns the ProjectPlatform given a name
