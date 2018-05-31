@@ -202,9 +202,9 @@ workflow:
     depends_on:
     - pip1
     pipeline: pip1
-history_length: 20
 permissions:
   Test_getWorkflowExportHandlerWithPermissions-Group2: 7
+history_length: 20
 `, rec.Body.String())
 
 }
