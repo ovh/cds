@@ -60,7 +60,7 @@ func (config PlatformConfig) EncryptSecrets(encryptFunc func(string) (string, er
 			if errS != nil {
 				return WrapError(errS, "EncryptSecrets> Cannot encrypt password")
 			}
-			v.Value = string(s)
+			v.Value = s
 			config[k] = v
 		}
 	}
@@ -75,7 +75,7 @@ func (config PlatformConfig) DecryptSecrets(decryptFunc func(string) (string, er
 			if errS != nil {
 				return WrapError(errS, "DecryptSecrets> Cannot descrypt password")
 			}
-			v.Value = string(s)
+			v.Value = s
 			config[k] = v
 		}
 	}
