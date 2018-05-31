@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -11,43 +12,15 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // GetWorkflowRunEventData read channel to get elements to push
-func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun, error) {
-	wrs := []sdk.WorkflowRun{}
-	wnrs := []sdk.WorkflowNodeRun{}
-	wnjrs := []sdk.WorkflowNodeJobRun{}
-	var err error
-
-	for {
-		select {
-		case e, has := <-cError:
-			if e != nil {
-				err = sdk.WrapError(e, "GetWorkflowRunEventData> Error received on project %s", projectKey)
-			}
-
-			if !has {
-				return wrs, wnrs, wnjrs, err
-			}
-		case w, has := <-cEvent:
-			if !has {
-				return wrs, wnrs, wnjrs, err
-			}
-			switch x := w.(type) {
-			case sdk.WorkflowNodeJobRun:
-				wnjrs = append(wnjrs, x)
-			case sdk.WorkflowNodeRun:
-				wnrs = append(wnrs, x)
-			case sdk.WorkflowRun:
-				wrs = append(wrs, x)
-			default:
-				log.Warning("GetWorkflowRunEventData> unknown type %T", w)
-			}
-		}
-	}
+// TODO: refactor this useless function
+func GetWorkflowRunEventData(report *ProcessorReport, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun) {
+	return report.workflows, report.nodes, report.jobs
 }
 
 // SendEvent Send event on workflow run
@@ -104,8 +77,13 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 	}
 }
 
-func resyncCommitStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
-	log.Debug("resyncCommitStatus> %s %d.%d", wr.Workflow.Name, wr.Number, wr.LastSubNumber)
+func resyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
+	_, end := tracing.Span(ctx, "workflow.resyncCommitStatus",
+		tracing.Tag("workflow", wr.Workflow.Name),
+		tracing.Tag("workflow_run", wr.Number),
+	)
+	defer end()
+
 	for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
 		sort.Slice(nodeRuns, func(i, j int) bool {
 			return nodeRuns[i].SubNumber >= nodeRuns[j].SubNumber

@@ -24,6 +24,7 @@ type KafkaConfig struct {
 	User            string
 	Password        string
 	Topic           string
+	MaxMessageByte  int
 }
 
 // initialize returns broker, isInit and err if
@@ -66,6 +67,9 @@ func (c *KafkaClient) initProducer() error {
 	config.Net.SASL.Password = c.options.Password
 	config.ClientID = c.options.User
 	config.Producer.Return.Successes = true
+	if config.Producer.MaxMessageBytes != 0 {
+		config.Producer.MaxMessageBytes = c.options.MaxMessageByte
+	}
 
 	producer, errp := sarama.NewSyncProducer(strings.Split(c.options.BrokerAddresses, ","), config)
 	if errp != nil {

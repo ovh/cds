@@ -94,13 +94,15 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 		var artifactToUpload []sdk.WorkflowNodeRunArtifact
 		for _, a := range workflowArtifacts {
 			for _, aToUp := range req.Artifacts {
-				ok, errRX := regexp.Match(aToUp, []byte(a.Name))
-				if errRX != nil {
-					return sdk.WrapError(errRX, "releaseApplicationWorkflowHandler> %s is not a valid regular expression", aToUp)
-				}
-				if ok {
-					artifactToUpload = append(artifactToUpload, a)
-					break
+				if len(aToUp) > 0 {
+					ok, errRX := regexp.Match(aToUp, []byte(a.Name))
+					if errRX != nil {
+						return sdk.WrapError(errRX, "releaseApplicationWorkflowHandler> %s is not a valid regular expression", aToUp)
+					}
+					if ok {
+						artifactToUpload = append(artifactToUpload, a)
+						break
+					}
 				}
 			}
 		}

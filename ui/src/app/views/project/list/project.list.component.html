@@ -6,7 +6,7 @@
                 <div class="viewContent">
                     <div class="ui grid">
                         <div class="eight wide column">
-                            <h3>{{ 'project_list' | translate }}</h3>
+                            <h1 translate="project_list"></h1>
                         </div>
                         <div class="eight wide column" *ngIf="projects && projects.length > 0">
                             <div class="floated right">
@@ -17,24 +17,25 @@
                             </div>
                         </div>
                     </div>
-                    <div class="ui segment">
-                        <div *ngIf="projects && projects.length > 0;then projectslist;else noprojectslist"></div>
-                        <ng-template #projectslist>
-                            <div class="ui stackable four column grid">
-                                <div class="center aligned column" *ngFor="let proj of filteredProjects">
-                                    <a [routerLink]="['/project', proj.key]">{{proj.name}}</a>
+                    <div *ngIf="projects && projects.length > 0;then projectslist;else noprojectslist"></div>
+                    <ng-template #projectslist>
+                        <div class="ui stackable four cards">
+                            <a [routerLink]="['/project', proj.key]" class="ui link card" *ngFor="let proj of filteredProjects">
+                                <div class="content">
+                                    <div class="header" [innerText]="proj.name"></div>
+                                    <div class="meta" translate="project_list_card_updated" [translateParams]="{date: (proj.last_modified | date:'short')}"></div>
                                 </div>
-                            </div>
-                        </ng-template>
-                        <ng-template #noprojectslist>
-                            <span>{{ 'project_no' | translate }}</span>
-                        </ng-template>
-                    </div>
+                            </a>
+                        </div>
+                    </ng-template>
+                    <ng-template #noprojectslist>
+                        <span translate="project_no"></span>
+                    </ng-template>
                 </div>
             </div>
         </div>
     </div>
 </ng-template>
 <ng-template #loadingPart>
-    <div class="ui text active loader">{{'common_loading_projects' | translate}}</div>
+    <div class="ui text active loader" translate="common_loading_projects"></div>
 </ng-template>

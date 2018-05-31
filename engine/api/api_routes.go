@@ -12,8 +12,8 @@ import (
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware)
-	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware)
+	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware)
+	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, api.tracingPostMiddleware)
 	api.lastUpdateBroker = &lastUpdateBroker{
 		clients:  make(map[string]lastUpdateBrokerSubscribe),
 		messages: make(chan string),
@@ -118,7 +118,7 @@ func (api *API) InitRouter() {
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", r.POST(api.postPerformImportAsCodeHandler))
 
 	// Project
-	r.Handle("/project", r.GET(api.getProjectsHandler, AllowProvider(true)), r.POST(api.addProjectHandler))
+	r.Handle("/project", r.GET(api.getProjectsHandler, AllowProvider(true), EnableTracing()), r.POST(api.addProjectHandler))
 	r.Handle("/project/{permProjectKey}", r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
 	r.Handle("/project/{permProjectKey}/group", r.POST(api.addGroupInProjectHandler))
 	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler, DEPRECATED))
@@ -238,7 +238,7 @@ func (api *API) InitRouter() {
 
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/runs", r.GET(api.getWorkflowAllRunsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true)))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true), EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
@@ -293,7 +293,7 @@ func (api *API) InitRouter() {
 	r.Handle("/artifact/{hash}", r.GET(api.downloadArtifactDirectHandler, Auth(false)))
 
 	// Cache
-	r.Handle("/project/{key}/cache/{tag}", r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker()), r.GET(api.getPullCacheHandler, NeedWorker()))
+	r.Handle("/project/{permProjectKey}/cache/{tag}", r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker()), r.GET(api.getPullCacheHandler, NeedWorker()))
 
 	// Hooks
 	r.Handle("/project/{key}/application/{permApplicationName}/hook", r.GET(api.getApplicationHooksHandler))
@@ -317,21 +317,21 @@ func (api *API) InitRouter() {
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler))
 	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler))
-	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker(), DEPRECATED))
-	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker()))
-	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery()))
-	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery()))
-	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker()))
+	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker(), DEPRECATED, EnableTracing()))
+	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing()))
+	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))
+	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 3), NeedHatchery()))
-	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 5), NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(api.postWorkflowJobTagsHandler, NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/artifact/{tag}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(api.postWorkflowJobTagsHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/artifact/{tag}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", r.GET(api.getParameterTypeHandler))
@@ -407,8 +407,7 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler, NeedService()))
 	r.Handle("/workflow/hook/model/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
-	// SSE`
-	r.Handle("/events/unsubscribe", r.POST(api.eventUnsubscribeHandler))
+	// SSE
 	r.Handle("/events/subscribe", r.POST(api.eventSubscribeHandler))
 	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))

@@ -48,7 +48,7 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, e
 	//Parse workflow
 	w, errW := Parse(proj, ew)
 	if errW != nil {
-		return nil, nil, sdk.NewError(sdk.ErrWrongRequest, errW)
+		return nil, nil, errW
 	}
 
 	//Import

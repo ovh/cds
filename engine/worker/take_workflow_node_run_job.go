@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -50,7 +50,8 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 				if !ok {
 					return
 				}
-				b, code, err := sdk.Request("GET", fmt.Sprintf("/queue/workflows/%d/infos", jobID), nil)
+				j := &sdk.WorkflowNodeJobRun{}
+				code, err := w.client.(cdsclient.Raw).GetJSON(fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
 				if err != nil {
 					if code == http.StatusNotFound {
 						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
@@ -61,11 +62,6 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 					continue // do not kill the worker here, could be a timeout
 				}
 
-				j := &sdk.WorkflowNodeJobRun{}
-				if err := json.Unmarshal(b, j); err != nil {
-					log.Error("takeWorkflowJob> Unable to load workflow job (Unmarshal) %d: %v", jobID, err)
-					continue // do not kill the worker here
-				}
 				if j.Status != sdk.StatusBuilding.String() {
 					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context", j.Status, err)
 					cancel()

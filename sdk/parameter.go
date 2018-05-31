@@ -45,7 +45,7 @@ type Parameter struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Value       string `json:"value"`
-	Description string `json:"description" yaml:"desc,omitempty"`
+	Description string `json:"description,omitempty" yaml:"desc,omitempty"`
 }
 
 // NewStringParameter creates a Parameter from a string with <name>=<value> format

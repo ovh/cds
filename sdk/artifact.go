@@ -223,7 +223,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	if errop != nil {
 		return false, 0, fmt.Errorf("unable on open file %s (%v)", filePath, errop)
 	}
-	sha512sum, err512 := FileSHA512sum(f)
+	sha512sum, err512 := FileSHA512sum(filePath)
 	if err512 != nil {
 		return false, 0, fmt.Errorf("unable to compte sha512sum on file %s (%v)", filePath, err512)
 	}

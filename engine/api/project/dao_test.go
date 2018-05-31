@@ -141,7 +141,7 @@ func TestLoadAll(t *testing.T) {
 	u1, _ := InsertAdminUser(t, db, "test_TestLoadAll_admin")
 	u2, _ := InsertLambdaUser(t, db, "test_TestLoadAll_user", &proj.ProjectGroups[0].Group)
 
-	actualGroups1, err := project.LoadAll(db, cache, u1)
+	actualGroups1, err := project.LoadAll(nil, db, cache, u1)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups1) > 1, "This should return more than one project")
 
@@ -151,7 +151,7 @@ func TestLoadAll(t *testing.T) {
 		}
 	}
 
-	actualGroups2, err := project.LoadAll(db, cache, u2)
+	actualGroups2, err := project.LoadAll(nil, db, cache, u2)
 	t.Log(actualGroups2)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups2) == 1, "This should return one project")

@@ -33,6 +33,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -127,11 +128,12 @@ type Configuration struct {
 	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported"`
 	Events struct {
 		Kafka struct {
-			Enabled  bool   `toml:"enabled"`
-			Broker   string `toml:"broker"`
-			Topic    string `toml:"topic"`
-			User     string `toml:"user"`
-			Password string `toml:"password"`
+			Enabled         bool   `toml:"enabled"`
+			Broker          string `toml:"broker"`
+			Topic           string `toml:"topic"`
+			User            string `toml:"user"`
+			Password        string `toml:"password"`
+			MaxMessageBytes int    `toml:"maxmessagebytes" default:"10000000"`
 		} `toml:"kafka"`
 	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################"`
 	Features struct {
@@ -149,6 +151,7 @@ type Configuration struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
 	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+	Tracing   tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
@@ -501,6 +504,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
 
+	if err := tracing.Init(a.Config.Tracing); err != nil {
+		return fmt.Errorf("Unable to start tracing exporter: %v", err)
+	}
+
 	log.Info("Initializing HTTP router")
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
@@ -556,6 +563,7 @@ func (a *API) Serve(ctx context.Context) error {
 		User:            a.Config.Events.Kafka.User,
 		Password:        a.Config.Events.Kafka.Password,
 		Topic:           a.Config.Events.Kafka.Topic,
+		MaxMessageByte:  a.Config.Events.Kafka.MaxMessageBytes,
 	}
 	if err := event.Initialize(kafkaOptions); err != nil {
 		log.Error("error while initializing event system: %s", err)

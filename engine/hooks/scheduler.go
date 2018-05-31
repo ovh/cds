@@ -92,6 +92,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 						// the branch was deleted from git repository, it will never work
 						if strings.Contains(e.LastError, "branchName parameter must be provided") {
 							log.Warning("Hooks> retryTaskExecutionsRoutine > Do not re-enqueue this taskExecution with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+							s.Dao.DeleteTaskExecution(&e)
 							continue
 						}
 						log.Warning("Hooks> retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)

@@ -31,47 +31,47 @@
 
       <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
           <thead>
-          <tr>
-              <th class="four wide">{{ 'worker_model_name' | translate }}</th>
-              <th class="four wide">{{ 'worker_model_description' | translate }}</th>
-              <th class="two wide">{{ 'worker_model_type' | translate }}</th>
-              <th class="three wide">{{ 'worker_model_image' | translate }}</th>
-              <th class="three wide">{{ 'worker_model_group' | translate }}</th>
-          </tr>
+            <tr>
+                <th class="four wide">{{ 'worker_model_name' | translate }}</th>
+                <th class="four wide">{{ 'worker_model_description' | translate }}</th>
+                <th class="two wide">{{ 'worker_model_type' | translate }}</th>
+                <th class="three wide">{{ 'worker_model_image' | translate }}</th>
+                <th class="three wide">{{ 'worker_model_group' | translate }}</th>
+            </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let v of getDataForCurrentPage()">
-              <td>
-                  <a class="ui" [routerLink]="[v.name]">
-                    <div class="ui">
-                        {{v.name}}
-                        <span *ngIf="v.disabled" [smDirTooltip]="'worker_model_disabled' | translate" smDirPosition="top center"> {{ 'worker_model_disabled' | translate }}</span>
-                        <span *ngIf="v.nb_spawn_err > 0" [smDirTooltip]="'worker_model_spawn_error_tooltip' | translate" smDirPosition="top center">  <i class="exclamation triangle icon large red" title="{{ 'worker_model_warning' | translate }}"></i> </span>
-                        <span *ngIf="v.is_official" [smDirTooltip]="'worker_model_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
-                        <span *ngIf="v.is_deprecated" [smDirTooltip]="'worker_model_deprecated_tooltip' | translate" smDirPosition="top center"> <i class="exclamation circle icon large orange"></i> </span>
-                    </div>
-                  </a>
-              </td>
-              <td>{{v.description}}</td>
-              <td>{{v.type}}</td>
-              <td>{{getImageName(v)}}</td>
-              <td>{{v.group.name}}</td>
-          </tr>
+            <tr *ngFor="let v of getDataForCurrentPage()">
+                <td class="border">
+                    <a class="ui" [routerLink]="[v.name]">
+                        <div class="ui">
+                            {{v.name}}
+                            <span *ngIf="v.disabled" [smDirTooltip]="'worker_model_disabled' | translate" smDirPosition="top center"> {{ 'worker_model_disabled' | translate }}</span>
+                            <span *ngIf="v.nb_spawn_err > 0" [smDirTooltip]="'worker_model_spawn_error_tooltip' | translate" smDirPosition="top center">  <i class="exclamation triangle icon large red" title="{{ 'worker_model_warning' | translate }}"></i> </span>
+                            <span *ngIf="v.is_official" [smDirTooltip]="'worker_model_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
+                            <span *ngIf="v.is_deprecated" [smDirTooltip]="'worker_model_deprecated_tooltip' | translate" smDirPosition="top center"> <i class="exclamation circle icon large orange"></i> </span>
+                        </div>
+                    </a>
+                </td>
+                <td class="border">{{v.description}}</td>
+                <td class="border">{{v.type}}</td>
+                <td class="border">{{getImageName(v)}}</td>
+                <td class="border">{{v.group.name}}</td>
+            </tr>
           </tbody>
           <tfoot *ngIf="getNbOfPages() > 1">
-          <tr>
-              <th colspan="4">
-                  <div class="ui right floated pagination menu" >
-                      <a class="icon item" (click)="downPage()">
-                          <i class="left chevron icon"></i>
-                      </a>
-                      <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
-                      <a class="icon item" (click)="upPage()">
-                          <i class="right chevron icon"></i>
-                      </a>
-                  </div>
-              </th>
-          </tr>
+            <tr>
+                <td colspan="6">
+                    <div class="ui right floated pagination menu" >
+                        <a class="icon item" (click)="downPage()">
+                            <i class="left chevron icon"></i>
+                        </a>
+                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                        <a class="icon item" (click)="upPage()">
+                            <i class="right chevron icon"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
           </tfoot>
       </table>
       <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">

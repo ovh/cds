@@ -90,7 +90,6 @@ func (api *API) putProjectPlatformHandler() Handler {
 		event.PublishUpdateProjectPlatform(p, ppBody, ppDB, getUser(ctx))
 
 		return WriteJSON(w, ppBody, http.StatusOK)
-
 	}
 }
 

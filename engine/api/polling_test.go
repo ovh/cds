@@ -36,7 +36,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor, store cache.Store)
 		return nil
 	}
 
-	projs, err := project.LoadAll(db, store, nil)
+	projs, err := project.LoadAll(nil, db, store, nil)
 	if err != nil {
 		t.Error(err.Error())
 		return nil

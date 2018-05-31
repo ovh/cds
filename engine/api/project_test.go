@@ -1,10 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -14,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,6 +96,73 @@ func Test_getProjectsHandler(t *testing.T) {
 	assert.Len(t, projs, 1)
 }
 
+func Test_addProjectHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(db)
+
+	proj := sdk.Project{
+		Key:  strings.ToUpper(sdk.RandomString(10)),
+		Name: sdk.RandomString(10),
+	}
+
+	jsonBody, _ := json.Marshal(proj)
+	body := bytes.NewBuffer(jsonBody)
+
+	uri := api.Router.GetRoute("POST", api.addProjectHandler, nil)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	projCreated := sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projCreated))
+	assert.Equal(t, proj.Key, projCreated.Key)
+
+	gr, err := group.LoadGroup(db, proj.Name)
+	assert.NotNil(t, gr)
+	assert.NoError(t, err)
+}
+
+func Test_addProjectHandlerWithGroup(t *testing.T) {
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(db)
+	g := sdk.Group{Name: sdk.RandomString(10)}
+	test.NoError(t, group.InsertGroup(db, &g))
+
+	proj := sdk.Project{
+		Key:  strings.ToUpper(sdk.RandomString(10)),
+		Name: sdk.RandomString(10),
+		ProjectGroups: []sdk.GroupPermission{
+			{Group: sdk.Group{Name: g.Name}},
+		},
+	}
+
+	jsonBody, _ := json.Marshal(proj)
+	body := bytes.NewBuffer(jsonBody)
+
+	uri := api.Router.GetRoute("POST", api.addProjectHandler, nil)
+	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+
+	projCreated := sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projCreated))
+	assert.Equal(t, proj.Key, projCreated.Key)
+
+	gr, err := group.LoadGroup(db, proj.Name)
+	assert.Nil(t, gr)
+	assert.Error(t, err)
+}
+
 func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 	assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -137,4 +207,68 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T)
 	projs := []sdk.Project{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projs))
 	assert.Len(t, projs, 1, "should have one project")
+}
+
+func Test_getprojectsHandler_AsProvider(t *testing.T) {
+	api, tsURL, tsClose := newTestServer(t)
+	defer tsClose()
+
+	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	u, _ := assets.InsertLambdaUser(api.mustDB())
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+
+	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
+		Host:  tsURL,
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	projs, err := sdkclient.ProjectsList()
+	test.NoError(t, err)
+	assert.True(t, len(projs) > 0)
+
+}
+
+func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
+	api, tsURL, tsClose := newTestServer(t)
+	defer tsClose()
+
+	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	u, _ := assets.InsertLambdaUser(api.mustDB())
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+
+	app := &sdk.Application{
+		Name: sdk.RandomString(10),
+	}
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.AddGroup(api.mustDB(), api.Cache, proj, app, u, proj.ProjectGroups...))
+
+	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
+		Host:  tsURL,
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	projs, err := sdkclient.ProjectsList(cdsclient.FilterByUser(u.Username))
+	test.NoError(t, err)
+	assert.Len(t, projs, 1)
+
+	apps, err := sdkclient.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username))
+	test.NoError(t, err)
+	assert.Len(t, apps, 1)
+
 }

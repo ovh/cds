@@ -33,7 +33,7 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 		}
 	}
 
-	return UpdateWorkflowRun(db, wr)
+	return UpdateWorkflowRun(nil, db, wr)
 }
 
 func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
@@ -59,7 +59,8 @@ func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
 }
 
 //ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
-func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent chan<- interface{}) error {
+func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
+	report := new(ProcessorReport)
 	var success, building, failed, stopped, skipped, disabled int
 	for _, wnrs := range wr.WorkflowNodeRuns {
 		for _, wnr := range wnrs {
@@ -84,11 +85,12 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent c
 
 	if newStatus != wr.Status {
 		wr.Status = newStatus
-		chEvent <- *wr
-		return UpdateWorkflowRunStatus(db, wr)
+		report.Add(*wr)
+
+		return report, UpdateWorkflowRunStatus(db, wr)
 	}
 
-	return nil
+	return report, nil
 }
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run

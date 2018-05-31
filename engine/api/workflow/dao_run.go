@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -30,9 +32,10 @@ workflow_run.to_delete
 
 // LoadRunOptions are options for loading a run (node or workflow)
 type LoadRunOptions struct {
-	WithArtifacts  bool
-	WithTests      bool
-	WithLightTests bool
+	WithArtifacts           bool
+	WithTests               bool
+	WithLightTests          bool
+	DisableDetailledNodeRun bool
 }
 
 // insertWorkflowRun inserts in table "workflow_run""
@@ -46,7 +49,10 @@ func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 }
 
 // UpdateWorkflowRun updates in table "workflow_run""
-func UpdateWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+	_, end := tracing.Span(ctx, "workflow.UpdateWorkflowRun")
+	defer end()
+
 	wr.LastModified = time.Now()
 
 	for _, info := range wr.Infos {
@@ -592,7 +598,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 	}
 
 	for _, n := range dbNodeRuns {
-		wnr, err := fromDBNodeRun(n)
+		wnr, err := fromDBNodeRun(n, loadOpts)
 		if err != nil {
 			return err
 		}
