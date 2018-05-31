@@ -123,9 +123,19 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load deployment_default_config")
 	}
 
-	if err := gorpmapping.JSONNullString(res.PublicConfigurations, &pm.PublicConfigurations); err != nil {
+	cfg := map[string]sdk.PlatformConfig{}
+	if err := gorpmapping.JSONNullString(res.PublicConfigurations, &cfg); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load public_configurations")
 	}
+
+	for pfName, pfCfg := range cfg {
+		newCfg := pfCfg.Clone()
+		if err := newCfg.DecryptSecrets(decryptPlatformValue); err != nil {
+			return sdk.WrapError(err, "PostUpdate> unable to encrypt config")
+		}
+		cfg[pfName] = newCfg
+	}
+	pm.PublicConfigurations = cfg
 
 	if res.PluginName.Valid {
 		pm.PluginName = res.PluginName.String
@@ -147,7 +157,15 @@ func (pm *platformModel) PostUpdate(db gorp.SqlExecutor) error {
 
 	defaultConfig, _ := gorpmapping.JSONToNullString(pm.DefaultConfig)
 	deploymentDefaultConfig, _ := gorpmapping.JSONToNullString(pm.DeploymentDefaultConfig)
-	publicConfig, _ := gorpmapping.JSONToNullString(pm.PublicConfigurations)
+	cfg := make(map[string]sdk.PlatformConfig, len(pm.PublicConfigurations))
+	for pfName, pfCfg := range pm.PublicConfigurations {
+		newCfg := pfCfg.Clone()
+		if err := newCfg.EncryptSecrets(encryptPlatformValue); err != nil {
+			return sdk.WrapError(err, "PostUpdate> unable to encrypt config")
+		}
+		cfg[pfName] = newCfg
+	}
+	publicConfig, _ := gorpmapping.JSONToNullString(cfg)
 
 	_, err := db.Exec("update platform_model set default_config = $2, deployment_default_config = $3, public_configurations = $4 where id = $1", pm.ID, defaultConfig, deploymentDefaultConfig, publicConfig)
 	return sdk.WrapError(err, "PostUpdate> Unable to update platform_model")

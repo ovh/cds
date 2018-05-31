@@ -165,10 +165,11 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 	if !m.Public {
 		return
 	}
-	for pfName, cfg := range m.PublicConfigurations {
-		oldPP := p.GetPlatform(pfName)
 
-		if oldPP == nil {
+	for pfName, immutableCfg := range m.PublicConfigurations {
+		cfg := immutableCfg.Clone()
+		oldPP, _ := platform.LoadPlatformsByName(db, p.Key, pfName, true)
+		if oldPP.ID == 0 {
 			pp := sdk.ProjectPlatform{
 				Model:           m,
 				PlatformModelID: m.ID,
@@ -197,7 +198,7 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 			log.Error("propagatePublicPlatformModelOnProject> Unable to update %+v", oldPP)
 			continue
 		}
-		event.PublishUpdateProjectPlatform(&p, *oldPP, pp, u)
+		event.PublishUpdateProjectPlatform(&p, oldPP, pp, u)
 	}
 }
 
