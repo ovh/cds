@@ -19,5 +19,4 @@ export class MonitoringService {
     getStatus(): Observable<MonitoringStatus> {
         return this._http.get<MonitoringStatus>('/mon/status');
     }
-
 }

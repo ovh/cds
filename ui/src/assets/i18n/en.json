@@ -41,6 +41,7 @@
   "admin_migration_title": "Status of application migration to workflow",
 
   "admin_status_title": "Status of CDS Engine",
+  "admin_queue_title": "Current CDS jobs queue",
 
   "application_create": "Create a new application",
   "application_created": "Application created",

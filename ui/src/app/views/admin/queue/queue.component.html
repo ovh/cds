@@ -1,0 +1,65 @@
+<div class="status ui segment">
+    <h3>{{'admin_queue_title' | translate }} <span *ngIf="!loading && nodeJobRuns && nodeJobRuns.length > 0">({{nodeJobRuns.length}} jobs)</span></h3>
+
+    <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+
+    <table class="ui fixed celled table" *ngIf="!loading">
+        <thead>
+        <tr>
+            <th class="two wide">since</th>
+            <th class="two wide">booked</th>
+            <th class="one wide">run</th>
+            <th class="two wide">project/workflow</th>
+            <th class="one wide">node</th>
+            <th class="two wide">triggered_by</th>
+            <th class="three wide">requirements</th>
+            <th class="two wide"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let wNodeJobRun of nodeJobRuns; let index = index">
+            <td>
+                {{wNodeJobRun.queued | amTimeAgo}}
+            </td>
+            <td>
+                <span *ngIf="wNodeJobRun.bookedby != null">{{wNodeJobRun.bookedby.name}}</span>
+                <span *ngIf="wNodeJobRun.bookedby == null">/</span>
+            </td>
+            <td>
+                <a class="ui" [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow'], 'run', parametersMaps[index]['cds.run.number']]" *ngIf="parametersMaps[index] != null">
+                   {{parametersMaps[index]['cds.run.number']}}
+                </a>
+            </td>
+            <td>
+                <a class="ui" [routerLink]="['/project', parametersMaps[index]['cds.project'], 'workflow', parametersMaps[index]['cds.workflow']]" *ngIf="parametersMaps[index] != null">
+                   {{parametersMaps[index]['cds.project']}}/{{parametersMaps[index]['cds.workflow']}}
+                </a>
+            </td>
+            <td>
+                <a class="ui" [href]="parametersMaps[index]['cds.ui.pipeline.run']">
+                   {{parametersMaps[index]['cds.node']}}
+                </a>
+            </td>
+            <td>
+                <span *ngIf="parametersMaps[index] != null">
+                    {{parametersMaps[index]['cds.triggered_by'] || parametersMaps[index]['cds.triggered_by.username']}}
+                </span>
+            </td>
+            <td>
+                <span *ngIf="wNodeJobRun.job != null && wNodeJobRun.job.action != null && wNodeJobRun.job.action.requirements != null">
+                    {{requirementsList[index]}}
+                </span>
+            </td>
+            <td class="center aligned">
+                <button class="ui labeled icon button red"
+                    [class.loading]="wNodeJobRun.updating"
+                    [disabled]="wNodeJobRun.updating"
+                    (click)="stopNode(index)">
+                    <i class="stop icon"></i>
+                    {{ 'common_stop' | translate }}
+                </button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
