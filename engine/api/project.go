@@ -58,7 +58,7 @@ func (api *API) getProjectsHandler() Handler {
 		}
 
 		if filterByRepo == "" {
-			projects, err := project.LoadAll(api.mustDB(), api.Cache, u, opts...)
+			projects, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u, opts...)
 			if err != nil {
 				return sdk.WrapError(err, "getProjectsHandler")
 			}

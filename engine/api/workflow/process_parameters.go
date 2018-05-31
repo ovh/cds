@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
@@ -39,7 +41,7 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 }
 
 // GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
-func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
+func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
 	tmpProj := sdk.ParametersFromProjectVariables(proj)
 	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
@@ -61,14 +63,20 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 			if errclient != nil {
 				return nil, sdk.WrapError(errclient, "GetNodeBuildParameters> Cannot connect get repository manager client")
 			}
+			_, next := tracing.Span(ctx, "workflow.GetNodeBuildParameters.vcs.RepoByFullname")
 			r, errR := client.RepoByFullname(n.Context.Application.RepositoryFullname)
+			next()
+
 			if errR != nil {
 				return nil, sdk.WrapError(errR, "GetNodeBuildParameters> Cannot get git.url")
 			}
 			vars["git.url"] = r.SSHCloneURL
 			vars["git.http_url"] = r.HTTPCloneURL
 
+			_, next = tracing.Span(ctx, "workflow.GetNodeBuildParameters.vcs.Branches")
 			branches, errB := client.Branches(r.Fullname)
+			next()
+
 			if errB != nil {
 				return nil, sdk.WrapError(errB, "GetNodeBuildParameters> Cannot get branches on %s, app:%s", r.SSHCloneURL, n.Context.Application.Name)
 			}
@@ -173,13 +181,7 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 	return params, nil
 }
 
-func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {
-	//Load workflow run
-	w, err := LoadRunByID(db, run.WorkflowRunID, LoadRunOptions{})
-	if err != nil {
-		return nil, sdk.WrapError(err, "getParentParameters> Unable to load workflow run")
-	}
-
+func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {
 	params := make([]sdk.Parameter, 0, len(nodeRunIds))
 	for _, nodeRunID := range nodeRunIds {
 		parentNodeRun, errNR := LoadNodeRunByID(db, nodeRunID, LoadRunOptions{})
@@ -219,12 +221,13 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 	return params, nil
 }
 
-func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
-	//Load workflow run
-	w, err := LoadRunByID(db, run.WorkflowRunID, LoadRunOptions{})
-	if err != nil {
-		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load workflow run")
-	}
+func getNodeRunBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
+	ctx, end := tracing.Span(ctx, "workflow.getNodeRunBuildParameters",
+		tracing.Tag("workflow", w.Workflow.Name),
+		tracing.Tag("workflow_run", w.Number),
+		tracing.Tag("workflow_node_run", run.ID),
+	)
+	defer end()
 
 	//Load node definition
 	n := w.Workflow.GetNode(run.WorkflowNodeID)
@@ -233,9 +236,9 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 
 	//Get node build parameters
-	params, errparam := GetNodeBuildParameters(db, store, proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
+	params, errparam := GetNodeBuildParameters(ctx, db, store, proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
 	if errparam != nil {
-		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to compute node build parameters")
+		return nil, sdk.WrapError(errparam, "getNodeRunParameters> Unable to compute node build parameters")
 	}
 
 	errm := &sdk.MultiError{}
@@ -246,6 +249,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
 
+	_, next := tracing.Span(ctx, "workflow.interpolate")
 	params = make([]sdk.Parameter, 0, len(tmp))
 	for k, v := range tmp {
 		s, err := interpolate.Do(v, tmp)
@@ -255,6 +259,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk
 		}
 		sdk.AddParameter(&params, k, sdk.StringParameter, s)
 	}
+	next()
 
 	if errm.IsEmpty() {
 		return params, nil

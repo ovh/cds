@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/mitchellh/hashstructure"
 )
 
 // Project represent a team with group of users and pipelines
@@ -80,6 +82,12 @@ type ProjectVCSServer struct {
 	Name     string            `json:"name" yaml:"name" db:"-" cli:"-"`
 	Username string            `json:"username" yaml:"username" db:"-" cli:"-"`
 	Data     map[string]string `json:"-" yaml:"data" db:"-" cli:"-"`
+}
+
+// Hash creating a unique hash value
+func (vcs ProjectVCSServer) Hash() uint64 {
+	hash, _ := hashstructure.Hash(vcs, nil)
+	return hash
 }
 
 // ProjectVariableAudit represents an audit on a project variable

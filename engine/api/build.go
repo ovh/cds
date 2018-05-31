@@ -360,7 +360,10 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 
 		infos := []sdk.SpawnInfo{{
 			RemoteTime: takeForm.Time,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{getWorker(ctx).Name}},
+			Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{
+				fmt.Sprintf("%d", id),
+				getWorker(ctx).Name},
+			},
 		}}
 
 		if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {

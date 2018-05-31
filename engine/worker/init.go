@@ -46,6 +46,7 @@ const (
 	flagModel               = "model"
 	flagHatchery            = "hatchery"
 	flagHatcheryName        = "hatchery-name"
+	flagDisableOldWorkflows = "disable-old-workflows"
 )
 
 func initFlagsRun(cmd *cobra.Command) {
@@ -74,6 +75,7 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.Int(flagModel, 0, "Model of worker")
 	flags.Int(flagHatchery, 0, "Hatchery ID spawing worker")
 	flags.String(flagHatcheryName, "", "Hatchery Name spawing worker")
+	flags.Bool(flagDisableOldWorkflows, false, "Disable old workflows")
 }
 
 // FlagBool replaces viper.GetBool
@@ -213,6 +215,7 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 	w.singleUse = FlagBool(cmd, flagSingleUse)
 	w.grpc.address = FlagString(cmd, flagGRPCAPI)
 	w.grpc.insecure = FlagBool(cmd, flagGRPCInsecure)
+	w.disableOldWorkflows = FlagBool(cmd, flagDisableOldWorkflows)
 }
 
 func (w *currentWorker) initServer(c context.Context) {

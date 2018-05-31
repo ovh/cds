@@ -104,12 +104,15 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		go w.logProcessor(ctx)
 
 		// start queue polling
-		pbjobs := make(chan sdk.PipelineBuildJob, 1)
+		var pbjobs chan sdk.PipelineBuildJob
+		if !w.disableOldWorkflows {
+			pbjobs = make(chan sdk.PipelineBuildJob, 1)
+		}
 		wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
 		errs := make(chan error, 1)
 
 		//Before start the loop, take the bookJobID
-		if w.bookedPBJobID != 0 {
+		if !w.disableOldWorkflows && w.bookedPBJobID != 0 {
 			w.processBookedPBJob(pbjobs)
 		}
 		if w.bookedWJobID != 0 {
@@ -173,7 +176,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				return
 
 			case j := <-pbjobs:
-				if j.ID == 0 {
+				if w.disableOldWorkflows || j.ID == 0 {
 					continue
 				}
 

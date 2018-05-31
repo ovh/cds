@@ -150,7 +150,7 @@ func propagatePublicPlatformModel(db gorp.SqlExecutor, store cache.Store, m sdk.
 		return
 	}
 
-	projs, err := project.LoadAll(db, store, nil, project.LoadOptions.WithClearPlatforms)
+	projs, err := project.LoadAll(context.Background(), db, store, nil, project.LoadOptions.WithClearPlatforms)
 	if err != nil {
 		log.Error("propagatePublicPlatformModel> Unable to retrieve all projects: %v", err)
 		return

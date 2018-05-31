@@ -85,25 +85,23 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 
 	db := h.dbConnectionFactory.GetDBMap()
 
-	p, errP := project.LoadProjectByNodeRunID(db, h.store, res.BuildID, workerUser, project.LoadOptions.WithVariables)
+	p, errP := project.LoadProjectByNodeRunID(nil, db, h.store, res.BuildID, workerUser, project.LoadOptions.WithVariables)
 	if errP != nil {
 		return new(empty.Empty), sdk.WrapError(errP, "SendResult> Cannot load project")
 	}
-
-	chanEvent := make(chan interface{}, 1)
-	chanError := make(chan error, 1)
 
 	wr, errW := worker.LoadWorker(db, workerID)
 	if errW != nil {
 		return new(empty.Empty), sdk.WrapError(errW, "SendResult> Cannot load worker info")
 	}
-	go postJobResult(chanEvent, chanError, db, h.store, p, wr, res)
-
-	workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent, p.Key)
+	report, err := postJobResult(c, db, h.store, p, wr, res)
 	if err != nil {
-		return new(empty.Empty), err
+		return new(empty.Empty), sdk.WrapError(err, "SendResult> Cannot post job result")
 	}
+
+	workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 	workflow.ResyncNodeRunsWithCommits(db, h.store, p, workflowNodeRuns)
+
 	go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 	return new(empty.Empty), nil

@@ -33,6 +33,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -150,6 +151,7 @@ type Configuration struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
 	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+	Tracing   tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
@@ -500,6 +502,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.TTL)
 	if errCache != nil {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
+	}
+
+	if err := tracing.Init(a.Config.Tracing); err != nil {
+		return fmt.Errorf("Unable to start tracing exporter: %v", err)
 	}
 
 	log.Info("Initializing HTTP router")

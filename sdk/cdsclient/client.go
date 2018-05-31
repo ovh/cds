@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
+
 	"github.com/ovh/cds/sdk"
 )
 
