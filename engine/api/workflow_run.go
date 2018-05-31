@@ -728,7 +728,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 
 		//Commit and return success
 		if err := tx.Commit(); err != nil {
-			return nil, sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+			return nil, sdk.WrapError(err, "startWorkflowRun> Unable to commit transaction")
 		}
 
 		return report.Merge(r1, nil)
@@ -752,7 +752,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		for _, fromNodeID := range opts.FromNodeIDs {
 			fromNode := lastRun.Workflow.GetNode(fromNodeID)
 			if fromNode == nil {
-				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node %d", fromNodeID)
+				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "startWorkflowRun> Payload: Unable to get node %d", fromNodeID)
 			}
 			fromNodes = append(fromNodes, fromNode)
 		}
@@ -797,14 +797,14 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 	if lastRun == nil {
 		_, r1, errmr := workflow.ManualRun(ctx, db, tx, store, p, wf, opts.Manual, asCodeInfos)
 		if errmr != nil {
-			return nil, sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
+			return nil, sdk.WrapError(errmr, "startWorkflowRun> Unable to run workflow")
 		}
 		_, _ = report.Merge(r1, nil)
 	}
 
 	//Commit and return success
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+		return nil, sdk.WrapError(err, "startWorkflowRun> Unable to commit transaction")
 	}
 
 	return report, nil
