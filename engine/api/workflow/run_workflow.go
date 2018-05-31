@@ -74,13 +74,13 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 
 		//Insert it
 		if err := insertWorkflowRun(db, wr); err != nil {
-			return nil, report, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
+			return nil, nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 		}
 
 		//Process it
 		r1, hasRun, errWR := processWorkflowRun(ctx, dbCopy, db, store, p, wr, e, nil, nil)
 		if errWR != nil {
-			return nil, report, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
+			return nil, nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
 		_, _ = report.Merge(r1, nil)
 		if !hasRun {
@@ -93,7 +93,7 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 		//Load the last workflow run
 		lastWorkflowRun, err := LoadLastRun(db, w.ProjectKey, w.Name, LoadRunOptions{})
 		if err != nil {
-			return nil, report, sdk.WrapError(err, "RunFromHook> Unable to load last run")
+			return nil, nil, sdk.WrapError(err, "RunFromHook> Unable to load last run")
 		}
 
 		number = lastWorkflowRun.Number
@@ -102,20 +102,20 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 		oldHooks := lastWorkflowRun.Workflow.GetHooks()
 		oldH, ok := oldHooks[h.UUID]
 		if !ok {
-			return nil, report, sdk.WrapError(sdk.ErrNoHook, "RunFromHook> Hook not found")
+			return nil, nil, sdk.WrapError(sdk.ErrNoHook, "RunFromHook> Hook not found")
 		}
 
 		//Process the workflow run from the node ID
 		r1, _, err := processWorkflowRun(ctx, dbCopy, db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID)
 		if err != nil {
-			return nil, report, sdk.WrapError(err, "RunFromHook> Unable to process workflow run")
+			return nil, nil, sdk.WrapError(err, "RunFromHook> Unable to process workflow run")
 		}
 		_, _ = report.Merge(r1, nil)
 	}
 
 	run, err := LoadRun(db, w.ProjectKey, w.Name, number, LoadRunOptions{})
 	if err != nil {
-		return nil, report, sdk.WrapError(err, "RunFromHook> Unable to reload workflow run")
+		return nil, nil, sdk.WrapError(err, "RunFromHook> Unable to reload workflow run")
 	}
 
 	return run, report, nil

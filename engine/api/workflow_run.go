@@ -725,6 +725,12 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		if err != nil {
 			return nil, sdk.WrapError(err, "startWorkflowRun> Unable to run workflow from hook")
 		}
+
+		//Commit and return success
+		if err := tx.Commit(); err != nil {
+			return nil, sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+		}
+
 		return report.Merge(r1, nil)
 	}
 
