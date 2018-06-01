@@ -27,7 +27,7 @@ func LoadModels(db gorp.SqlExecutor) ([]sdk.PlatformModel, error) {
 }
 
 // LoadModel Load a platform model by its ID
-func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
+func LoadModel(db gorp.SqlExecutor, modelID int64, clearPassword bool) (sdk.PlatformModel, error) {
 	var pm platformModel
 	if err := db.SelectOne(&pm, "SELECT * from platform_model where id = $1", modelID); err != nil {
 		if err == sql.ErrNoRows {
@@ -35,17 +35,35 @@ func LoadModel(db gorp.SqlExecutor, modelID int64) (sdk.PlatformModel, error) {
 		}
 		return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> Cannot select platform model %d", modelID)
 	}
+	if clearPassword {
+		for pfName, pfCfg := range pm.PublicConfigurations {
+			newCfg := pfCfg.Clone()
+			if err := newCfg.DecryptSecrets(decryptPlatformValue); err != nil {
+				return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> unable to encrypt config")
+			}
+			pm.PublicConfigurations[pfName] = newCfg
+		}
+	}
 	return sdk.PlatformModel(pm), nil
 }
 
 // LoadModelByName Load a platform model by its name
-func LoadModelByName(db gorp.SqlExecutor, name string) (sdk.PlatformModel, error) {
+func LoadModelByName(db gorp.SqlExecutor, name string, clearPassword bool) (sdk.PlatformModel, error) {
 	var pm platformModel
 	if err := db.SelectOne(&pm, "SELECT * from platform_model where name = $1", name); err != nil {
 		if err == sql.ErrNoRows {
 			return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> platform model %s not found", name)
 		}
 		return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> Cannot select platform model %s", name)
+	}
+	if clearPassword {
+		for pfName, pfCfg := range pm.PublicConfigurations {
+			newCfg := pfCfg.Clone()
+			if err := newCfg.DecryptSecrets(decryptPlatformValue); err != nil {
+				return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> unable to encrypt config")
+			}
+			pm.PublicConfigurations[pfName] = newCfg
+		}
 	}
 	return sdk.PlatformModel(pm), nil
 }
@@ -85,7 +103,7 @@ func UpdateModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 
 // DeleteModel deletes a platform model in database
 func DeleteModel(db gorp.SqlExecutor, id int64) error {
-	m, err := LoadModel(db, id)
+	m, err := LoadModel(db, id, false)
 	if err != nil {
 		return sdk.WrapError(err, "DeleteModel")
 	}
@@ -123,19 +141,9 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load deployment_default_config")
 	}
 
-	cfg := map[string]sdk.PlatformConfig{}
-	if err := gorpmapping.JSONNullString(res.PublicConfigurations, &cfg); err != nil {
+	if err := gorpmapping.JSONNullString(res.PublicConfigurations, &pm.PublicConfigurations); err != nil {
 		return sdk.WrapError(err, "PlatformModel.PostGet> Unable to load public_configurations")
 	}
-
-	for pfName, pfCfg := range cfg {
-		newCfg := pfCfg.Clone()
-		if err := newCfg.DecryptSecrets(decryptPlatformValue); err != nil {
-			return sdk.WrapError(err, "PostUpdate> unable to encrypt config")
-		}
-		cfg[pfName] = newCfg
-	}
-	pm.PublicConfigurations = cfg
 
 	if res.PluginName.Valid {
 		pm.PluginName = res.PluginName.String

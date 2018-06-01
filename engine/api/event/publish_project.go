@@ -154,12 +154,7 @@ func PublishDeleteVCSServer(p *sdk.Project, vcsServerName string, u *sdk.User) {
 
 // PublishAddProjectPlatform publishes an event on adding a project platform
 func PublishAddProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, u *sdk.User) {
-	for k, v := range pf.Config {
-		if sdk.NeedPlaceholder(v.Type) {
-			v.Value = sdk.PasswordPlaceholder
-			pf.Config[k] = v
-		}
-	}
+	pf.HideSecrets()
 	e := sdk.EventProjectPlatformAdd{
 		Platform: pf,
 	}
@@ -168,12 +163,14 @@ func PublishAddProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, u *sdk.Us
 
 // PublishUpdateProjectPlatform publishes an event on updating a project platform
 func PublishUpdateProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, pfOld sdk.ProjectPlatform, u *sdk.User) {
+	pf.HideSecrets()
 	for k, v := range pf.Config {
 		if sdk.NeedPlaceholder(v.Type) {
 			v.Value = sdk.PasswordPlaceholder
 			pf.Config[k] = v
 		}
 	}
+	pfOld.HideSecrets()
 	for k, v := range pfOld.Config {
 		if sdk.NeedPlaceholder(v.Type) {
 			v.Value = sdk.PasswordPlaceholder
