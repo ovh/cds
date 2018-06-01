@@ -242,10 +242,10 @@ func GetPipelineIDFromJoinedActionID(db gorp.SqlExecutor, id int64) (int64, erro
 
 // CountInValueVarData represents the result of CountInVarValue function
 type CountInPipelineData struct {
-	PipName    string
-	StageName  string
-	ActionName string
-	Count      int64
+	PipName   string
+	StageName string
+	JobName   string
+	Count     int64
 }
 
 // CountInPipelines count how many times a text is used on all pipeline for the given project
@@ -285,7 +285,7 @@ func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountI
 	for rows.Next() {
 		var d CountInPipelineData
 		var id, childID int64
-		if err := rows.Scan(&d.PipName, &d.StageName, &d.ActionName, &id, &childID, &d.Count); err != nil {
+		if err := rows.Scan(&d.PipName, &d.StageName, &d.JobName, &id, &childID, &d.Count); err != nil {
 			return nil, sdk.WrapError(err, "pipeline.CountInPipelines> Unable to scan")
 		}
 		results = append(results, d)

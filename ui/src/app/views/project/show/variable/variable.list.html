@@ -1,6 +1,9 @@
 <div *ngIf="!loading">
   <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
-      <h3>{{ 'project_variable_form_title' | translate }}</h3>
+      <h3>
+          {{ 'project_variable_form_title' | translate }}
+          <app-warning-mark-list [warnings]=""></app-warning-mark-list>
+      </h3>
       <app-variable-form (createVariableEvent)="variableEvent($event)" [loading]="varFormLoading"></app-variable-form>
   </ng-container>
   <div>

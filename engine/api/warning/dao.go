@@ -5,6 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"fmt"
+	"github.com/mitchellh/hashstructure"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
@@ -26,6 +28,11 @@ func removeProjectWarning(db gorp.SqlExecutor, warningType string, element strin
 }
 
 func Insert(db gorp.SqlExecutor, w sdk.WarningV2) error {
+	h, err := hashstructure.Hash(w, nil)
+	if err != nil {
+		return sdk.WrapError(err, "warning.Insert> Unable to calculate hash")
+	}
+	w.Hash = fmt.Sprintf("%v", h)
 	warn := warning(w)
 	if err := db.Insert(&warn); err != nil {
 		return sdk.WrapError(err, "warning.Insert> Unable to insert warning")
