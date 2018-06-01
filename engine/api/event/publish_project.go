@@ -164,19 +164,7 @@ func PublishAddProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, u *sdk.Us
 // PublishUpdateProjectPlatform publishes an event on updating a project platform
 func PublishUpdateProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, pfOld sdk.ProjectPlatform, u *sdk.User) {
 	pf.HideSecrets()
-	for k, v := range pf.Config {
-		if sdk.NeedPlaceholder(v.Type) {
-			v.Value = sdk.PasswordPlaceholder
-			pf.Config[k] = v
-		}
-	}
 	pfOld.HideSecrets()
-	for k, v := range pfOld.Config {
-		if sdk.NeedPlaceholder(v.Type) {
-			v.Value = sdk.PasswordPlaceholder
-			pfOld.Config[k] = v
-		}
-	}
 	e := sdk.EventProjectPlatformUpdate{
 		NewsPlatform: pf,
 		OldPlatform:  pfOld,
