@@ -28,6 +28,7 @@ type ProcessorReport struct {
 	jobs      []sdk.WorkflowNodeJobRun
 	nodes     []sdk.WorkflowNodeRun
 	workflows []sdk.WorkflowRun
+	errors    []error
 }
 
 // Add something to the report
@@ -37,6 +38,8 @@ func (r *ProcessorReport) Add(i ...interface{}) {
 
 	for _, w := range i {
 		switch x := w.(type) {
+		case error:
+			r.errors = append(r.errors, x)
 		case sdk.WorkflowNodeJobRun:
 			r.jobs = append(r.jobs, x)
 		case *sdk.WorkflowNodeJobRun:
@@ -63,6 +66,7 @@ func (r *ProcessorReport) All() []interface{} {
 	res = append(res, sdk.InterfaceSlice(r.workflows)...)
 	res = append(res, sdk.InterfaceSlice(r.nodes)...)
 	res = append(res, sdk.InterfaceSlice(r.jobs)...)
+	res = append(res, sdk.InterfaceSlice(r.errors)...)
 	return res
 }
 
@@ -77,6 +81,17 @@ func (r *ProcessorReport) Merge(r1 *ProcessorReport, err error) (*ProcessorRepor
 	data := r1.All()
 	r.Add(data...)
 	return r, err
+}
+
+// Errors return errors
+func (r *ProcessorReport) Errors() []error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if len(r.errors) > 0 {
+		return r.errors
+	}
+	return nil
 }
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
