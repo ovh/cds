@@ -136,17 +136,24 @@ type dockerOpts struct {
 	extraHosts []string
 }
 
-func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
+func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dockerOpts, error) {
 	dockerOpts := &dockerOpts{}
+
+	// support for add-host on hatchery configuration
+	if strings.HasPrefix(h.Config.DockerOpts, "--add-host=") {
+		if err := dockerOpts.computeDockerOptsExtraHosts(h.Config.DockerOpts); err != nil {
+			return nil, err
+		}
+	}
 
 	for _, r := range requirements {
 		switch r.Type {
 		case sdk.ModelRequirement:
-			if err := dockerOpts.computeDockerOptsOnModelRequirement(isSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnModelRequirement(h.hatch.IsSharedInfra, r); err != nil {
 				return nil, err
 			}
 		case sdk.VolumeRequirement:
-			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(isSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(h.hatch.IsSharedInfra, r); err != nil {
 				return nil, err
 			}
 		}

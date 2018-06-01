@@ -23,6 +23,9 @@ type HatcheryConfiguration struct {
 
 	// WorkerTTL Worker TTL (minutes)
 	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"10" commented:"false" comment:"Worker TTL (minutes)"`
+
+	// DockerOpts Docker options
+	DockerOpts string `mapstructure:"dockerOpts" toml:"dockerOpts" default:"" commented:"true" comment:"Docker Options. --add-host supported. Example: --add-host=myhost:x.x.x.x,myhost2:y.y.y.y"`
 }
 
 // HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
