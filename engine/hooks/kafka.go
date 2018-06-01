@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -75,7 +76,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 	var consumerGroup = fmt.Sprintf("%s.%s", kafkaUser, t.UUID)
 	var errConsumer error
 	consumer, errConsumer := cluster.NewConsumer(
-		[]string{broker},
+		strings.Split(broker, ","),
 		consumerGroup,
 		[]string{topic},
 		clusterConfig)
