@@ -26,7 +26,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 
 	pip.ID = oldPipeline.ID
 
-	if pip.GroupPermission != nil {
+	if len(pip.GroupPermission) > 0 {
 		//Browse all new persmission to know if we had to insert of update
 		for _, gp := range pip.GroupPermission {
 			var gpFound bool

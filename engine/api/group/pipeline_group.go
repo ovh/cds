@@ -63,15 +63,7 @@ func UpdateGroupRoleInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64, r
 	if _, err := db.Exec(query, role, pipelineID, groupID); err != nil {
 		return sdk.WrapError(err, "UpdateGroupRoleInPipeline")
 	}
-
-	ok, err := checkAtLeastOneGroupWithWriteRoleOnPipeline(db, pipelineID)
-	if err != nil {
-		return sdk.WrapError(err, "UpdateGroupRoleInPipeline")
-	}
-	if !ok {
-		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "UpdateGroupRoleInPipeline")
-	}
-	return err
+	return nil
 }
 
 // DeleteGroupFromPipeline removes access to pipeline to group members
