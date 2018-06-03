@@ -45,7 +45,7 @@ func Test_postPlatformModelHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
 
-	model, _ = platform.LoadModelByName(db, model.Name)
+	model, _ = platform.LoadModelByName(db, model.Name, false)
 	test.NoError(t, platform.DeleteModel(db, model.ID))
 }
 
