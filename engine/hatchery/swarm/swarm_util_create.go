@@ -140,9 +140,13 @@ func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dock
 	dockerOpts := &dockerOpts{}
 
 	// support for add-host on hatchery configuration
-	if strings.HasPrefix(h.Config.DockerOpts, "--add-host=") {
-		if err := dockerOpts.computeDockerOptsExtraHosts(h.Config.DockerOpts); err != nil {
-			return nil, err
+	for _, opt := range strings.Split(h.Config.DockerOpts, " ") {
+		if strings.HasPrefix(opt, "--add-host=") {
+			if err := dockerOpts.computeDockerOptsExtraHosts(opt); err != nil {
+				return nil, err
+			}
+		} else if opt == "--privileged" {
+			dockerOpts.privileged = true
 		}
 	}
 
