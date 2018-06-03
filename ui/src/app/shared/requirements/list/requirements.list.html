@@ -17,7 +17,7 @@
                                         [(ngModel)]="r.type"
                                         (selectedOptionChange)="change()"
                                         [isSearchable]="true">
-                                <sui-select-option *ngFor="let r of availableRequirements" value="{{r}}">AAAA {{r}}</sui-select-option>
+                                <sui-select-option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</sui-select-option>
                             </sui-select>
                         </div>
                     </div>
