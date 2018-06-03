@@ -136,6 +136,17 @@ type ProjectPlatform struct {
 	Config          PlatformConfig `json:"config" db:"-" yaml:"config"`
 }
 
+// HideSecrets replaces password with a placeholder
+func (pf *ProjectPlatform) HideSecrets() {
+	pf.Config.HideSecrets()
+	pf.Model.DefaultConfig.HideSecrets()
+	for k, cfg := range pf.Model.PublicConfigurations {
+		cfg.HideSecrets()
+		pf.Model.PublicConfigurations[k] = cfg
+	}
+	pf.Model.DeploymentDefaultConfig.HideSecrets()
+}
+
 // MergeWith merge two config
 func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
 	if config == nil {
@@ -148,5 +159,15 @@ func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
 		}
 		val.Value = v.Value
 		(*config)[k] = val
+	}
+}
+
+// HideSecrets replaces password with a placeholder
+func (config *PlatformConfig) HideSecrets() {
+	for k, v := range *config {
+		if NeedPlaceholder(v.Type) {
+			v.Value = PasswordPlaceholder
+			(*config)[k] = v
+		}
 	}
 }

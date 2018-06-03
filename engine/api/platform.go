@@ -31,7 +31,9 @@ func (api *API) getPlatformModelHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		p, err := platform.LoadModelByName(api.mustDB(), name)
+		clearPassword := FormBool(r, "clearPassword")
+
+		p, err := platform.LoadModelByName(api.mustDB(), name, clearPassword)
 		if err != nil {
 			return sdk.WrapError(err, "getPlatformModelHandler> Cannot get platform model")
 		}
@@ -105,7 +107,7 @@ func (api *API) putPlatformModelHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		old, err := platform.LoadModelByName(tx, name)
+		old, err := platform.LoadModelByName(tx, name, true)
 		if err != nil {
 			return sdk.WrapError(err, "putPlatformModelHandler> Unable to load model")
 		}
@@ -213,7 +215,7 @@ func (api *API) deletePlatformModelHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		old, err := platform.LoadModelByName(tx, name)
+		old, err := platform.LoadModelByName(tx, name, false)
 		if err != nil {
 			return sdk.WrapError(err, "deletePlatformModelHandler> Unable to load model")
 		}
