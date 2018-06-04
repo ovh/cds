@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/sdk/log"
 	"text/template"
 	"time"
+
+	"github.com/ovh/cds/sdk/log"
 )
 
 const (

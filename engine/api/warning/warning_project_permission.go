@@ -2,13 +2,14 @@ package warning
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"time"
 )
 
 type missingProjectPermissionEnvWarning struct {
@@ -17,8 +18,8 @@ type missingProjectPermissionEnvWarning struct {
 
 func (warn missingProjectPermissionEnvWarning) events() []string {
 	return []string{
-		"sdk.EventProjectPermissionAdd",
-		"sdk.EventProjectPermissionDelete",
+		fmt.Sprintf("%T", sdk.EventProjectPermissionAdd{}),
+		fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}),
 	}
 }
 
@@ -28,7 +29,7 @@ func (warn missingProjectPermissionEnvWarning) name() string {
 
 func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
-	case "sdk.EventProjectPermissionAdd":
+	case fmt.Sprintf("%T", sdk.EventProjectPermissionAdd{}):
 		payload, err := e.ToEventProjectPermissionAdd()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to get payload from EventProjectPermissionAdd")
@@ -36,7 +37,7 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Permission.Group.Name), e.ProjectKey); err != nil {
 			log.Warning("missingProjectPermissionEnvWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
 		}
-	case "sdk.EventProjectPermissionDelete":
+	case fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}):
 		payload, err := e.ToEventProjectPermissionDelete()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to get payload from ToEventProjectPermissionDelete")
@@ -73,8 +74,8 @@ type missingProjectPermissionWorkflowWarning struct {
 
 func (warn missingProjectPermissionWorkflowWarning) events() []string {
 	return []string{
-		"sdk.EventProjectPermissionAdd",
-		"sdk.EventProjectPermissionDelete",
+		fmt.Sprintf("%T", sdk.EventProjectPermissionAdd{}),
+		fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}),
 	}
 }
 
@@ -84,7 +85,7 @@ func (warn missingProjectPermissionWorkflowWarning) name() string {
 
 func (warn missingProjectPermissionWorkflowWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
-	case "sdk.EventProjectPermissionAdd":
+	case fmt.Sprintf("%T", sdk.EventProjectPermissionAdd{}):
 		payload, err := e.ToEventProjectPermissionAdd()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to get payload from EventProjectPermissionAdd")
@@ -92,7 +93,7 @@ func (warn missingProjectPermissionWorkflowWarning) compute(db gorp.SqlExecutor,
 		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Permission.Group.Name), e.ProjectKey); err != nil {
 			log.Warning("missingProjectPermissionWorkflowWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
 		}
-	case "sdk.EventProjectPermissionDelete":
+	case fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}):
 		payload, err := e.ToEventProjectPermissionDelete()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to get payload from ToEventProjectPermissionDelete")

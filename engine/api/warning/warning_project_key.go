@@ -1,6 +1,7 @@
 package warning
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -17,8 +18,8 @@ type unusedProjectKeyWarning struct {
 
 func (warn unusedProjectKeyWarning) events() []string {
 	return []string{
-		"sdk.EventProjectKeyAdd",
-		"sdk.EventProjectKeyDelete",
+		fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}),
+		fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}),
 	}
 }
 
@@ -28,7 +29,7 @@ func (warn unusedProjectKeyWarning) name() string {
 
 func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
-	case "sdk.EventProjectKeyAdd":
+	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
 			return sdk.WrapError(err, "unusedProjectKeyWarning.compute> Unable to get payload from EventProjectKeyAdd")
@@ -50,7 +51,7 @@ func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 				return sdk.WrapError(err, "unusedProjectKeyWarning> Unable to Insert warning")
 			}
 		}
-	case "sdk.EventProjectKeyDelete":
+	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
 		if err != nil {
 			return sdk.WrapError(err, "unusedProjectKeyWarning.compute> Unable to get payload from EventProjectKeyDelete")
@@ -68,8 +69,8 @@ type missingProjectKeyPipelineParameterWarning struct {
 
 func (warn missingProjectKeyPipelineParameterWarning) events() []string {
 	return []string{
-		"sdk.EventProjectKeyAdd",
-		"sdk.EventProjectKeyDelete",
+		fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}),
+		fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}),
 	}
 }
 
@@ -79,7 +80,7 @@ func (warn missingProjectKeyPipelineParameterWarning) name() string {
 
 func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
-	case "sdk.EventProjectKeyAdd":
+	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to get payload from EventProjectKeyAdd")
@@ -87,7 +88,7 @@ func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecuto
 		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
 			log.Warning("missingProjectKeyPipelineParameterWarning.compute> Unable to remove warning from EventProjectKeyAdd")
 		}
-	case "sdk.EventProjectKeyDelete":
+	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to get payload from EventProjectKeyDelete")
@@ -123,8 +124,8 @@ type missingProjectKeyPipelineJobWarning struct {
 
 func (warn missingProjectKeyPipelineJobWarning) events() []string {
 	return []string{
-		"sdk.EventProjectKeyAdd",
-		"sdk.EventProjectKeyDelete",
+		fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}),
+		fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}),
 	}
 }
 
@@ -134,7 +135,7 @@ func (warn missingProjectKeyPipelineJobWarning) name() string {
 
 func (warn missingProjectKeyPipelineJobWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
-	case "sdk.EventProjectKeyAdd":
+	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectKeyPipelineJobWarning.compute> Unable to get payload from EventProjectKeyAdd")
@@ -142,7 +143,7 @@ func (warn missingProjectKeyPipelineJobWarning) compute(db gorp.SqlExecutor, e s
 		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
 			log.Warning("missingProjectKeyPipelineJobWarning.compute> Unable to remove warning from EventProjectKeyAdd")
 		}
-	case "sdk.EventProjectKeyDelete":
+	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectKeyPipelineJobWarning.compute> Unable to get payload from EventProjectKeyDelete")
@@ -180,8 +181,8 @@ type missingProjectKeyApplicationWarning struct {
 
 func (warn missingProjectKeyApplicationWarning) events() []string {
 	return []string{
-		"sdk.EventProjectKeyAdd",
-		"sdk.EventProjectKeyDelete",
+		fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}),
+		fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}),
 	}
 }
 
@@ -191,7 +192,7 @@ func (warn missingProjectKeyApplicationWarning) name() string {
 
 func (warn missingProjectKeyApplicationWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
-	case "sdk.EventProjectKeyAdd":
+	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectKeyApplicationWarning.compute> Unable to get payload from EventProjectKeyAdd")
@@ -199,7 +200,7 @@ func (warn missingProjectKeyApplicationWarning) compute(db gorp.SqlExecutor, e s
 		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
 			log.Warning("missingProjectKeyApplicationWarning.compute> Unable to remove warning from EventProjectKeyAdd")
 		}
-	case "sdk.EventProjectKeyDelete":
+	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectKeyApplicationWarning.compute> Unable to get payload from EventProjectKeyDelete")
