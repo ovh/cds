@@ -17,6 +17,7 @@
     <ng-template #pipelines>
         <div class="ui stackable four column grid">
             <div class="center aligned column" *ngFor="let pip of filteredPipelines">
+                <app-warning-mark-list [warnings]="warnMap?.get(pip.name)"></app-warning-mark-list>
                 <a [routerLink]="['./pipeline', pip.name]">{{pip.name}}</a>
             </div>
         </div>

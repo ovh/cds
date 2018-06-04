@@ -13,13 +13,21 @@
     <div class="CDSmenu">
         <sm-menu title="" class="pointing stackable secondary">
             <a *ngIf="currentUser.admin || project.workflow_migration !== 'NOT_BEGUN'" sm-item [class.active]="selectedTab === 'workflows'" id="ProjectWorkflowTab" (click)="showTab('workflows')"><i class="share alternate icon"></i>{{
-                'common_workflows' | translate }}</a>
+                'common_workflows' | translate }}
+                <app-warning-tab [warnings]="warnWorkflow"></app-warning-tab>
+            </a>
             <a sm-item [class.active]="selectedTab === 'applications'" id="ProjectApplicationTab" (click)="showTab('applications')"><i class="rocket icon"></i>{{
-                'common_applications' | translate }}</a>
+                'common_applications' | translate }}
+                <app-warning-tab [warnings]="warnApplications"></app-warning-tab>
+            </a>
             <a sm-item [class.active]="selectedTab === 'pipelines'" id="ProjectPipelineTab" (click)="showTab('pipelines')"><i class="sitemap icon"></i>{{
-                'common_pipelines' | translate }}</a>
+                'common_pipelines' | translate }}
+                <app-warning-tab [warnings]="warnPipelines"></app-warning-tab>
+            </a>
             <a sm-item [class.active]="selectedTab === 'environments'" id="ProjectEnvironmentTab" (click)="showTab('environments')"><i class="tree icon"></i>{{
-                'common_environments' | translate }}</a>
+                'common_environments' | translate }}
+                <app-warning-tab [warnings]="warnEnvironment"></app-warning-tab>
+            </a>
             <a sm-item [class.active]="selectedTab === 'variables'" id="ProjectVariableTab" (click)="showTab('variables')"><i class="font icon"></i>{{
                 'common_variables' | translate }}
                 <app-warning-tab [warnings]="warnVariable"></app-warning-tab>
@@ -46,17 +54,17 @@
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'workflows'">
-                    <app-project-workflows [project]="project"></app-project-workflows>
+                    <app-project-workflows [project]="project" [warnings]="warnWorkflow"></app-project-workflows>
                 </div>
                 <div *ngSwitchCase="'applications'">
-                    <app-project-applications [project]="project"></app-project-applications>
+                    <app-project-applications [project]="project" [warnings]="warnApplications"></app-project-applications>
                 </div>
                 <div *ngSwitchCase="'pipelines'">
-                    <app-project-pipelines [project]="project"></app-project-pipelines>
+                    <app-project-pipelines [project]="project" [warnings]="warnPipelines"></app-project-pipelines>
                 </div>
                 <div *ngSwitchCase="'environments'">
                     <h3>{{ 'project_env_list_title' | translate}}</h3>
-                    <app-environment-list [project]="project"></app-environment-list>
+                    <app-environment-list [project]="project" [warnings]="warnEnvironment"></app-environment-list>
                 </div>
 
                 <div *ngSwitchCase="'variables'">

@@ -22,14 +22,20 @@ export class ProjectVariablesComponent implements OnInit {
     set warnings(data: Array<Warning>) {
         if (data) {
             this.variableWarning = new Map<string, Warning>();
+            this.unusedVariableWarning = new Array<Warning>();
             data.forEach(v => {
                 let w = cloneDeep(v);
                 w.element = w.element.replace('cds.proj.', '');
-                this.variableWarning.set(w.element, w);
+                if (w.type.indexOf('MISSING') !== -1) {
+                    this.unusedVariableWarning.push(w);
+                } else {
+                    this.variableWarning.set(w.element, w);
+                }
             });
         }
     };
     variableWarning: Map<string, Warning>;
+    unusedVariableWarning: Array<Warning>;
 
     @ViewChild('varWarning')
     varWarningModal: WarningModalComponent;

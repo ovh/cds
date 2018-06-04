@@ -136,24 +136,34 @@ export class ProjectShowComponent implements OnInit {
             this.warnWorkflow = new Array<Warning>();
             this.warnEnvironment = new Array<Warning>();
             warnings.valueSeq().toArray().forEach(v => {
-               switch (v.type) {
-                   case 'MISSING_PROJECT_VARIABLE':
-                   case 'UNUSED_PROJECT_VARIABLE':
-                       this.warnVariable.push(v);
-                       break;
-                   case 'MISSING_PROJECT_PERMISSION_ENV':
-                   case 'MISSING_PROJECT_PERMISSION_WORKFLOW':
-                       this.warnPerm.push(v);
-                       break;
-                   case 'MISSING_PROJECT_KEY':
-                   case 'UNUSED_PROJECT_KEY':
-                       this.warnKeys.push(v);
-                       break;
-                   case 'MISSING_PROJECT_VCS':
-                   case 'UNUSED_PROJECT_VCS':
-                       this.warnVCS.push(v);
-                       break;
-               }
+                if (v.application_name !== '') {
+                    this.warnApplications.push(v);
+                }
+                if (v.pipeline_name !== '') {
+                    this.warnPipelines.push(v);
+                }
+                if (v.environment_name !== '') {
+                    this.warnEnvironment.push(v);
+                }
+                if (v.workflow_name !== '') {
+                    this.warnWorkflow.push(v);
+                }
+                if (v.type.indexOf('_VARIABLE') !== -1) {
+                    this.warnVariable.push(v);
+                    return;
+                }
+                if (v.type.indexOf('_PERMISSION') !== -1) {
+                    this.warnPerm.push(v);
+                    return;
+                }
+                if (v.type.indexOf('_KEY') !== -1) {
+                    this.warnKeys.push(v);
+                    return
+                }
+                if (v.type.indexOf('PROJECT_VCS') !== -1) {
+                    this.warnVCS.push(v);
+                    return;
+                }
             });
         }
     }

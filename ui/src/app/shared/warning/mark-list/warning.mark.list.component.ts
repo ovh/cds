@@ -13,15 +13,10 @@ export class WarningMarkListComponent {
     @Input('warnings')
     set warnings(data: Array<Warning>) {
         this._warnings = data;
-        if (this._warnings) {
-            this.message = this._warnings.map(w => w.message).join('\n');
-        }
     };
     get warnings() {
         return this._warnings;
     }
-
-    message: string;
 
     constructor(private _globalConfig: SuiPopupConfig) {
         this._globalConfig.isBasic = false;
