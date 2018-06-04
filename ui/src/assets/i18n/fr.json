@@ -41,7 +41,7 @@
   "admin_migration_title": "Statut de la migration des applications vers les workflows",
 
   "admin_status_title": "CDS Engine - Statut",
-  "admin_queue_title": "File d'attente CDS",
+  "admin_queue_title": "File d'attente",
 
   "application_create": "Créer une application",
   "application_created": "Application créée",
@@ -361,7 +361,7 @@
   "navbar_project_create": "Créer un projet",
   "navbar_admin_broadcast": "Informations",
   "navbar_admin_migration": "Migration vers les workflows",
-  "navbar_admin_status": "CDS Engine - Statut",
+  "navbar_admin_status": "Statut",
   "navbar_documentation": "Documentation",
   "navbar_downloads": "Télécharger",
   "navbar_groups": "Groupes",
@@ -380,6 +380,7 @@
   "navbar_mark_read": "Marquer comme lu",
   "navbar_see_all": "Voir tout",
   "navbar_general": "Général",
+  "navbar_disconnect": "Déconnexion",
 
   "notifications_added": "Notifications ajoutées",
   "notification_clone": "Notification à cloner",
