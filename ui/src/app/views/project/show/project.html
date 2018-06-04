@@ -75,14 +75,14 @@
                   <app-project-permissions [project]="project" [warnings]="warnPerm"></app-project-permissions>
                 </div>
                 <div *ngSwitchCase="'keys'">
-                    <app-project-keys [project]="project"></app-project-keys>
+                    <app-project-keys [project]="project" [warnings]="warnKeys"></app-project-keys>
                 </div>
                 <div *ngSwitchCase="'platforms'">
                     <app-project-platforms [project]="project"></app-project-platforms>
                 </div>
                 <div *ngSwitchCase="'advanced'">
                     <h3>{{ 'project_advanced_title' | translate }}</h3>
-                    <app-project-admin [project]="project"></app-project-admin>
+                    <app-project-admin [project]="project" [warnings]="warnVCS"></app-project-admin>
                 </div>
             </div>
         </div>

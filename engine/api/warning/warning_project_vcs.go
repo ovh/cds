@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"fmt"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/sdk"
 )
@@ -15,8 +16,8 @@ type unusedProjectVCSWarning struct {
 
 func (warn unusedProjectVCSWarning) events() []string {
 	return []string{
-		"sdk.EventProjectVCSServerAdd",
-		"sdk.EventProjectVCSServerDelete",
+		fmt.Sprintf("%T", sdk.EventProjectVCSServerAdd{}),
+		fmt.Sprintf("%T", sdk.EventProjectVCSServerDelete{}),
 	}
 }
 
@@ -26,7 +27,7 @@ func (warn unusedProjectVCSWarning) name() string {
 
 func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
-	case "sdk.EventProjectVCSServerAdd":
+	case fmt.Sprintf("%T", sdk.EventProjectVCSServerAdd{}):
 		payload, err := e.ToEventProjectVCSServerAdd()
 		if err != nil {
 			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to get payload from ToEventProjectVCSServerAdd")
@@ -51,7 +52,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 				return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to insert warning")
 			}
 		}
-	case "sdk.EventProjectKeyDelete":
+	case fmt.Sprintf("%T", sdk.EventProjectVCSServerDelete{}):
 		payload, err := e.ToEventProjectVCSServerDelete()
 		if err != nil {
 			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to get payload from EventProjectKeyDelete")
@@ -80,7 +81,7 @@ func (warn missingProjectVCSWarning) name() string {
 
 func (warn missingProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
-	case "sdk.EventProjectVCSServerAdd":
+	case fmt.Sprintf("%T", sdk.EventProjectVCSServerAdd{}):
 		payload, err := e.ToEventProjectVCSServerAdd()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectVCSWarning.compute> Unable to get payload from ToEventProjectVCSServerAdd")
@@ -88,7 +89,7 @@ func (warn missingProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) e
 		if err := removeProjectWarning(db, warn.name(), payload.VCSServerName, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "missingProjectVCSWarning.compute> Unable to remove warning")
 		}
-	case "sdk.EventProjectKeyDelete":
+	case fmt.Sprintf("%T", sdk.EventProjectVCSServerDelete{}):
 		payload, err := e.ToEventProjectVCSServerDelete()
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectVCSWarning.compute> Unable to get payload from EventProjectKeyDelete")
