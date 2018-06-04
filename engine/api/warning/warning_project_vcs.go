@@ -1,11 +1,11 @@
 package warning
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"fmt"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/sdk"
 )
