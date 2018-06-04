@@ -126,6 +126,9 @@
             <a sm-item href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
             <div class="divider"></div>
+            <a sm-item href="#" [routerLink]="['settings', 'queue']">{{ 'admin_queue_title' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['settings', 'status']">{{ 'navbar_admin_status' | translate }}</a>
+            <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
             <a sm-item href="https://ovh.github.io/cds/" target="_blank">{{ 'navbar_documentation' | translate }}</a>
         </sm-dropdown>
@@ -133,8 +136,6 @@
             <a sm-item href="#" [routerLink]="['admin', 'broadcast']">{{ 'navbar_admin_broadcast' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'migration']">{{ 'navbar_admin_migration' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'worker-model-pattern']">{{ 'worker_model_pattern_title' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['admin', 'queue']">{{ 'admin_queue_title' | translate }}</a>
-            <a sm-item href="#" [routerLink]="['admin', 'status']">{{ 'navbar_admin_status' | translate }}</a>
         </sm-dropdown>
         <sm-select class="languageSelect"
             [options]="{'fullTextSearch': true}"
