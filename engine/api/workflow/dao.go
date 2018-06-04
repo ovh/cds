@@ -37,8 +37,8 @@ type LoadOptions struct {
 
 // CountVarInWorkflowData represents the result of CountVariableInWorkflow function
 type CountVarInWorkflowData struct {
-	WorkflowName string
-	NodeName     string
+	WorkflowName string `db:"workflow_name"`
+	NodeName     string `db:"node_name"`
 }
 
 // Exists checks if a workflow exists
@@ -59,7 +59,7 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 // CountVariableInWorkflow counts how many time the given variable is used on all workflows of the given project
 func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName string) ([]CountVarInWorkflowData, error) {
 	query := `
-		SELECT DISTINCT workflow.name
+		SELECT DISTINCT workflow.name as workflow_name, workflow_node.name as node_name
 		FROM workflow
 		JOIN project ON project.id = workflow.project_id
 		JOIN workflow_node ON workflow_node.workflow_id = workflow.id
@@ -72,7 +72,7 @@ func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName str
 		);
 	`
 	var datas []CountVarInWorkflowData
-	if _, err := db.Select(&datas, query, projectKey, varName); err != nil {
+	if _, err := db.Select(&datas, query, projectKey, fmt.Sprintf("%%%s%%", varName)); err != nil {
 		return nil, sdk.WrapError(err, "CountVariableInWorkflow> Unable to count var in workflow")
 	}
 	return datas, nil

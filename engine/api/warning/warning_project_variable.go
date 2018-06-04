@@ -62,12 +62,29 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.OldVariable.Name), e.ProjectKey); err != nil {
 			log.Warning("unusedProjectVariableWarning.compute> Unable to remove warning from EventProjectVariableUpdate")
 		}
+		varName := fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name)
+		ws, envs, apps, pips, pipJobs := variableIsUsed(db, e.ProjectKey, varName)
+		if len(ws) == 0 && len(envs) == 0 && len(apps) == 0 && len(pips) == 0 && len(pipJobs) == 0 {
+			w := sdk.WarningV2{
+				Key:     e.ProjectKey,
+				Element: varName,
+				Created: time.Now(),
+				Type:    warn.name(),
+				MessageParams: map[string]string{
+					"VarName":    varName,
+					"ProjectKey": e.ProjectKey,
+				},
+			}
+			if err := Insert(db, w); err != nil {
+				return sdk.WrapError(err, "unusedProjectVariableWarning> Unable to Insert warning on event EventProjectVariableUpdate")
+			}
+		}
 	case fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}):
 		payload, err := e.ToEventProjectVariableDelete()
 		if err != nil {
 			return sdk.WrapError(err, "unusedProjectVariableWarning.compute> Unable to get payload from EventProjectVariableDelete")
 		}
-		if err := removeProjectWarning(db, warn.name(), payload.Variable.Name, e.ProjectKey); err != nil {
+		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "unusedProjectVariableWarning.compute> Unable to remove warning from EventProjectVariableDelete")
 		}
 	}
