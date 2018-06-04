@@ -34,7 +34,7 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to get payload from EventProjectPermissionAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Permission.Group.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
 			log.Warning("missingProjectPermissionEnvWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}):
@@ -90,7 +90,7 @@ func (warn missingProjectPermissionWorkflowWarning) compute(db gorp.SqlExecutor,
 		if err != nil {
 			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to get payload from EventProjectPermissionAdd")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Permission.Group.Name), e.ProjectKey); err != nil {
+		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
 			log.Warning("missingProjectPermissionWorkflowWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}):
