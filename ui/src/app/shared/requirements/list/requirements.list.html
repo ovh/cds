@@ -12,9 +12,13 @@
                 <td class="border">
                     <div *ngIf="edit;else rType">
                         <div class="ui form">
-                            <sm-select class="search" *ngIf="availableRequirements.length > 0" [options]="{'fullTextSearch': true}" [(model)]="r.type" (modelChange)="change()">
-                                <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
-                            </sm-select>
+                            <sui-select class="selection mt5"
+                                        *ngIf="availableRequirements.length > 0"
+                                        [(ngModel)]="r.type"
+                                        (selectedOptionChange)="change()"
+                                        [isSearchable]="true">
+                                <sui-select-option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</sui-select-option>
+                            </sui-select>
                         </div>
                     </div>
                     <ng-template #rType>
