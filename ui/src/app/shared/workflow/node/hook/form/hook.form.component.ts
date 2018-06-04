@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild, OnInit} from '@angular/core';
 import {
     Workflow, WorkflowNode, WorkflowNodeHook
 } from '../../../../../model/workflow.model';
@@ -12,13 +12,14 @@ import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {HookEvent} from '../hook.event';
 import {first, finalize} from 'rxjs/operators';
 import {Observable} from 'rxjs/Observable';
+import {ProjectPlatform} from '../../../../../model/platform.model';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
     templateUrl: './hook.form.html',
     styleUrls: ['./hook.form.scss']
 })
-export class WorkflowNodeHookFormComponent {
+export class WorkflowNodeHookFormComponent implements OnInit {
 
     _hook: WorkflowNodeHook = new WorkflowNodeHook();
     canDelete = false;
@@ -32,7 +33,7 @@ export class WorkflowNodeHookFormComponent {
     set hook(data: WorkflowNodeHook) {
         if (data) {
             this.canDelete = true;
-            this._hook = cloneDeep(data);
+            this._hook = cloneDeep<WorkflowNodeHook>(data);
             if (this.hooksModel) {
                 this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
             }
@@ -54,6 +55,8 @@ export class WorkflowNodeHookFormComponent {
     invalidJSON = false;
     updateMode = false;
     codeMirrorConfig: any;
+    selectedPlatform: ProjectPlatform;
+    availablePlatforms: Array<ProjectPlatform>;
 
     // Ng semantic modal
     @ViewChild('nodeHookFormModal')
@@ -75,6 +78,18 @@ export class WorkflowNodeHookFormComponent {
         this.hook.model = this.selectedHookModel;
         this.hook.config = cloneDeep(this.selectedHookModel.default_config);
         this.displayConfig = Object.keys(this.hook.config).length !== 0;
+    }
+
+    updatePlatform(): void {
+        Object.keys(this.hook.config).forEach( k => {
+            if (k === 'platform') {
+                this.hook.config[k].value = this.selectedPlatform.name;
+            } else {
+                if (this.selectedPlatform.config[k]) {
+                    this.hook.config[k] = cloneDeep(this.selectedPlatform.config[k])
+                }
+            }
+        });
     }
 
     show(): void {
@@ -120,6 +135,13 @@ export class WorkflowNodeHookFormComponent {
             } catch (e) {
                 this.invalidJSON = true;
             }
+        }
+    }
+
+    ngOnInit(): void {
+        this.availablePlatforms = this.project.platforms.filter(pf =>  pf.model.hook);
+        if (this.hook && this.hook.config && this.hook.config['platform']) {
+            this.selectedPlatform = this.project.platforms.find(pf => pf.name === this.hook.config['platform'].value);
         }
     }
 }

@@ -85,7 +85,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 
 		hasKafka := false
 		for _, platform := range p.Platforms {
-			if platform.Model.Name == sdk.KafkaPlatformModel {
+			if platform.Model.Hook {
 				hasKafka = true
 				break
 			}

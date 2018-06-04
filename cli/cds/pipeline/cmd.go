@@ -24,7 +24,6 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(pipelineShowBuildCmd())
 	cmd.AddCommand(pipelineCommitsCmd())
 	cmd.AddCommand(pipelineStageCmd)
-	cmd.AddCommand(pipelineHookCmd)
 	cmd.AddCommand(pipelineParameterCmd)
 	cmd.AddCommand(pipelineJobCmd())
 	cmd.AddCommand(pipelineJoinedCmd())

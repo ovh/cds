@@ -13,11 +13,14 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+var traceEnable bool
+
 // Init the tracer
 func Init(cfg Configuration) error {
 	if !cfg.Enable {
 		return nil
 	}
+	traceEnable = true
 	exporter, err := jaeger.NewExporter(jaeger.Options{
 		Endpoint:    cfg.Exporter.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
 		ServiceName: cfg.Exporter.Jaeger.ServiceName,           //"cds-tracing"
@@ -37,7 +40,7 @@ func Init(cfg Configuration) error {
 
 // Start may start a tracing span
 func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
-	if !opt.Enable {
+	if !traceEnable || !opt.Enable {
 		return ctx, nil
 	}
 
@@ -57,8 +60,6 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 	var span *trace.Span
 	rootSpanContext, hasSpanContext := defaultFormat.SpanContextFromRequest(req)
 
-	log.Info("%v %+v", req.URL, req.Header)
-
 	type setupFuncSpan func(s *trace.Span, r *http.Request, sc *trace.SpanContext)
 	var setupSpan = []setupFuncSpan{
 		func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
@@ -71,7 +72,6 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 		},
 	}
 	if hasSpanContext {
-		log.Info("TRACE ID %s found", rootSpanContext.TraceID)
 		setupSpan = append(setupSpan, func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
 			s.AddLink(trace.Link{
 				TraceID:    rootSpanContext.TraceID,
@@ -83,7 +83,6 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 		})
 	} else {
 		setupSpan = append(setupSpan, func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
-			log.Info("NEW TRACE ID %v", sc.TraceID)
 			defaultFormat.SpanContextToRequest(*sc, r)
 			spanContextToReponse(*sc, r, w)
 		})
