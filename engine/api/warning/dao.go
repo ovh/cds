@@ -2,11 +2,11 @@ package warning
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
-
-	"fmt"
 	"github.com/mitchellh/hashstructure"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
