@@ -10,6 +10,8 @@ import {GroupEditComponent} from './group/edit/group.edit.component';
 import {GroupListComponent} from './group/list/group.list.component';
 import {UserEditComponent} from './user/edit/user.edit.component';
 import {UserListComponent} from './user/list/user.list.component';
+import {QueueComponent} from './queue/queue.component';
+import {StatusComponent} from './status/status.component';
 import {WorkerModelAddComponent} from './worker-model/add/worker-model.add.component';
 import {WorkerModelEditComponent} from './worker-model/edit/worker-model.edit.component';
 import {WorkerModelListComponent} from './worker-model/list/worker-model.list.component';
@@ -32,6 +34,8 @@ const routes: Routes = [
             { path: 'action', component: ActionListComponent },
             { path: 'action/add', component: ActionAddComponent },
             { path: 'action/:name', component: ActionEditComponent },
+            { path: 'queue', component: QueueComponent },
+            { path: 'status', component: StatusComponent },
             { path: 'downloads', component: DownloadComponent }
         ]
     }
