@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type missingProjectPermissionEnvWarning struct {
@@ -35,7 +34,7 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to get payload from EventProjectPermissionAdd")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
-			log.Warning("missingProjectPermissionEnvWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
+			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}):
 		payload, err := e.ToEventProjectPermissionDelete()
@@ -91,7 +90,7 @@ func (warn missingProjectPermissionWorkflowWarning) compute(db gorp.SqlExecutor,
 			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to get payload from EventProjectPermissionAdd")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
-			log.Warning("missingProjectPermissionWorkflowWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
+			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}):
 		payload, err := e.ToEventProjectPermissionDelete()

@@ -86,7 +86,7 @@ func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecuto
 			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to get payload from EventProjectKeyAdd")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
-			log.Warning("missingProjectKeyPipelineParameterWarning.compute> Unable to remove warning from EventProjectKeyAdd")
+			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to remove warning from EventProjectKeyAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
