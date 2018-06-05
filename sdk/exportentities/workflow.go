@@ -80,6 +80,8 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 	if w.HistoryLength > 0 {
 		exportedWorkflow.HistoryLength = w.HistoryLength
+	} else {
+		exportedWorkflow.HistoryLength = 20
 	}
 
 	exportedWorkflow.PurgeTags = w.PurgeTags
@@ -345,7 +347,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 			wf.Metadata[k] = v
 		}
 	}
-	if w.HistoryLength > 0 {
+	if w.HistoryLength > 0 && w.HistoryLength != sdk.DefaultHistoryLength {
 		wf.HistoryLength = w.HistoryLength
 	}
 
