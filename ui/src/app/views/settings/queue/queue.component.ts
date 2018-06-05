@@ -3,6 +3,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {finalize} from 'rxjs/operators';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
+import {User} from '../../../model/user.model';
 import {WorkflowNodeJobRun} from '../../../model/workflow.run.model';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
@@ -22,6 +23,7 @@ export class QueueComponent implements OnDestroy {
     zone: NgZone;
     queueSubscription: Subscription;
 
+    user: User;
     nodeJobRuns: Array<WorkflowNodeJobRun> = [];
     parametersMaps: Array<{}> = [];
     requirementsList: Array<string> = [];
@@ -36,6 +38,7 @@ export class QueueComponent implements OnDestroy {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.loading = true;
         this.startWorker();
+        this.user = this._authStore.getUser();
     }
 
     ngOnDestroy(): void {
@@ -70,7 +73,7 @@ export class QueueComponent implements OnDestroy {
                 if (Array.isArray(this.nodeJobRuns) && this.nodeJobRuns.length > 0) {
                     this.requirementsList = [];
                     this.parametersMaps = this.nodeJobRuns.map((nj) => {
-                        if (nj.job && nj.job.action && nj.job.action.requirements) {
+                        if (this.user.admin && nj.job && nj.job.action && nj.job.action.requirements) {
                             let requirements = nj.job.action.requirements
                                 .reduce((reqs, req) => `type: ${req.type}, value: ${req.value}; ${reqs}`, '');
                             this.requirementsList.push(requirements);
