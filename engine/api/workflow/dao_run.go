@@ -531,6 +531,7 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 				SELECT id, status
 					FROM workflow_run
 				WHERE workflow_id = $1
+				ORDER BY id DESC 
 				OFFSET $2
 			) as wr
 		WHERE status = $3
