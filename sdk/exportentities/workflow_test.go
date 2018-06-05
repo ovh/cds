@@ -27,6 +27,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		ProjectPlatformName string
 		PipelineHooks       []HookEntry
 		Permissions         map[string]int
+		HistoryLength       int64
 	}
 	tests := []struct {
 		name    string
@@ -210,6 +211,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		ProjectPlatformName string
 		PipelineHooks       []HookEntry
 		Permissions         map[string]int
+		HistoryLength       int64
 	}
 	tsts := []struct {
 		name    string
@@ -322,6 +324,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						PipelineName: "pipeline-root",
 					},
 				},
+				HistoryLength: 25,
 			},
 			wantErr: false,
 			want: sdk.Workflow{
@@ -345,6 +348,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						},
 					},
 				},
+				HistoryLength: 25,
 			},
 		},
 		// root(pipeline-root) -> first(pipeline-child) -> second(pipeline-child)
@@ -598,6 +602,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				ProjectPlatformName: tt.fields.ProjectPlatformName,
 				PipelineHooks:       tt.fields.PipelineHooks,
 				Permissions:         tt.fields.Permissions,
+				HistoryLength:       tt.fields.HistoryLength,
 			}
 			got, err := w.GetWorkflow()
 			if (err != nil) != tt.wantErr {
