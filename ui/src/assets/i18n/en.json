@@ -41,6 +41,7 @@
   "admin_migration_title": "Status of application migration to workflow",
 
   "admin_status_title": "Status of CDS Engine",
+  "admin_queue_title": "Current CDS jobs queue",
 
   "application_create": "Create a new application",
   "application_created": "Application created",
@@ -379,6 +380,7 @@
   "navbar_mark_read": "Mark as read",
   "navbar_see_all": "See all",
   "navbar_general": "General",
+  "navbar_disconnect": "Logout",
 
   "notifications_added": "Notifications added",
   "notification_clone": "Notification to clone",

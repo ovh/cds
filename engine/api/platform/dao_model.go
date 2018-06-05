@@ -43,6 +43,12 @@ func LoadModel(db gorp.SqlExecutor, modelID int64, clearPassword bool) (sdk.Plat
 			}
 			pm.PublicConfigurations[pfName] = newCfg
 		}
+	} else {
+		for pfName, pfCfg := range pm.PublicConfigurations {
+			newCfg := pfCfg.Clone()
+			newCfg.HideSecrets()
+			pm.PublicConfigurations[pfName] = newCfg
+		}
 	}
 	return sdk.PlatformModel(pm), nil
 }
@@ -62,6 +68,12 @@ func LoadModelByName(db gorp.SqlExecutor, name string, clearPassword bool) (sdk.
 			if err := newCfg.DecryptSecrets(decryptPlatformValue); err != nil {
 				return sdk.PlatformModel{}, sdk.WrapError(err, "LoadModel> unable to encrypt config")
 			}
+			pm.PublicConfigurations[pfName] = newCfg
+		}
+	} else {
+		for pfName, pfCfg := range pm.PublicConfigurations {
+			newCfg := pfCfg.Clone()
+			newCfg.HideSecrets()
 			pm.PublicConfigurations[pfName] = newCfg
 		}
 	}
