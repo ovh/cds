@@ -296,13 +296,7 @@ func (b *eventsBroker) ServeHTTP() Handler {
 
 		go func() {
 			for msg := range messageChan.Queue {
-				if _, err := w.Write([]byte("data: ")); err != nil {
-					continue
-				}
-				if _, err := w.Write([]byte(msg)); err != nil {
-					continue
-				}
-				if _, err := w.Write([]byte("\n\n")); err != nil {
+				if _, err := w.Write([]byte(fmt.Sprintf("data: %s\n\n", msg))); err != nil {
 					continue
 				}
 				f.Flush()
