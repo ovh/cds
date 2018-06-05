@@ -90,7 +90,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
+				{
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip,
 					},
@@ -165,7 +165,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
+				{
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip,
 					},
@@ -256,7 +256,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
+				{
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip,
 					},
@@ -334,7 +334,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
+				{
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip,
 					},
