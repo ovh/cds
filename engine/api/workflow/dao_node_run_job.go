@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -148,7 +150,11 @@ func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64)
 }
 
 //LoadAndLockNodeJobRunNoWait load for update a NodeJobRun given its ID
-func LoadAndLockNodeJobRunNoWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func LoadAndLockNodeJobRunNoWait(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+	var end func()
+	_, end = tracing.Span(ctx, "workflow.LoadAndLockNodeJobRunNoWait")
+	defer end()
+
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update nowait`
 	if err := db.SelectOne(&j, query, id); err != nil {
@@ -176,7 +182,11 @@ func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 }
 
 //UpdateNodeJobRun updates a workflow_node_run_job
-func UpdateNodeJobRun(db gorp.SqlExecutor, store cache.Store, j *sdk.WorkflowNodeJobRun) error {
+func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, j *sdk.WorkflowNodeJobRun) error {
+	var end func()
+	_, end = tracing.Span(ctx, "workflow.UpdateNodeJobRun")
+	defer end()
+
 	dbj := JobRun(*j)
 	if _, err := db.Update(&dbj); err != nil {
 		return err

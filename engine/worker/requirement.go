@@ -40,8 +40,7 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, 
 		log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
 	}
 
-	log.Debug("checkRequirements> for JobID:%d model of worker: %+v", bookedJobID, w.model)
-	log.Debug("checkRequirements> for JobID:%d execGroups: %+v", bookedJobID, execGroups)
+	log.Debug("checkRequirements> for JobID:%d model of worker: %s", bookedJobID, w.model.Name)
 
 	// DEPRECATED
 	// this code is useful for pipelineBuildJob
@@ -81,7 +80,7 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, 
 func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	check := requirementCheckFuncs[r.Type]
 	if check == nil {
-		return false, fmt.Errorf("checkRequirement> Unknown type of requirement: %s supported requirements are : %v", r.Type, requirementCheckFuncs)
+		return false, fmt.Errorf("checkRequirement> Unknown type of requirement: %s", r.Type)
 	}
 	return check(w, r)
 }

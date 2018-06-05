@@ -40,7 +40,6 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		Number:        wr.Number,
 		Status:        wr.Status,
 		Start:         wr.Start.Unix(),
-		Workflow:      wr.Workflow,
 		LastExecution: wr.LastExecution.Unix(),
 		LastModified:  wr.LastModified.Unix(),
 		Tags:          wr.Tags,

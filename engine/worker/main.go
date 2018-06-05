@@ -49,8 +49,9 @@ type currentWorker struct {
 		Name   string `json:"name"`
 		Status string `json:"status"`
 	}
-	client          cdsclient.Interface
-	mapPluginClient map[string]*pluginClientSocket
+	client              cdsclient.Interface
+	mapPluginClient     map[string]*pluginClientSocket
+	disableOldWorkflows bool
 }
 
 func main() {

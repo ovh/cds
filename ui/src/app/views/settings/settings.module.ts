@@ -3,7 +3,6 @@ import {SharedModule} from '../../shared/shared.module';
 import {RouterModule} from '@angular/router';
 import {SettingsRouting} from './settings.routing';
 import {SettingsComponent} from './settings.component';
-import {SettingsSidebarComponent} from './sidebar/settings-sidebar.component';
 import {ActionAddComponent} from './action/add/action.add.component';
 import {ActionEditComponent} from './action/edit/action.edit.component';
 import {ActionListComponent} from './action/list/action.list.component';
@@ -15,11 +14,12 @@ import {UserListComponent} from './user/list/user.list.component';
 import {WorkerModelAddComponent} from './worker-model/add/worker-model.add.component';
 import {WorkerModelEditComponent} from './worker-model/edit/worker-model.edit.component';
 import {WorkerModelListComponent} from './worker-model/list/worker-model.list.component';
+import {StatusComponent} from './status/status.component';
+import {QueueComponent} from './queue/queue.component';
 
 @NgModule({
     declarations: [
         SettingsComponent,
-        SettingsSidebarComponent,
         ActionAddComponent,
         ActionEditComponent,
         ActionListComponent,
@@ -30,7 +30,9 @@ import {WorkerModelListComponent} from './worker-model/list/worker-model.list.co
         UserListComponent,
         WorkerModelAddComponent,
         WorkerModelEditComponent,
-        WorkerModelListComponent
+        WorkerModelListComponent,
+        StatusComponent,
+        QueueComponent
     ],
     imports: [
       SharedModule,

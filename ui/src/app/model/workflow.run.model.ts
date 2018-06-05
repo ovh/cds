@@ -223,6 +223,10 @@ export class WorkflowNodeJobRun {
     model: string;
     bookedby: Hatchery;
     spawninfos: Array<SpawnInfo>;
+
+    // UI infos for queue
+    duration: string;
+    updating: boolean;
 }
 
 // WorkflowNodeRunHookEvent is an instanc of event received on a hook

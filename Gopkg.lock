@@ -2,6 +2,13 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "git.apache.org/thrift.git"
+  packages = ["lib/go/thrift"]
+  revision = "e59b73d3c2bf1c328ccb78e683c0462fa1a473c7"
+  source = "github.com/apache/thrift"
+
+[[projects]]
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
   revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
@@ -644,6 +651,12 @@
   revision = "ad45545899c7b13c020ea92b2072220eefad42b8"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/hashstructure"
+  packages = ["."]
+  revision = "2bca23e0e452137f789efbc8610126fd8b94f73b"
+
+[[projects]]
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "f3009df150dadf309fdee4a54ed65c124afad715"
@@ -791,12 +804,6 @@
     "xfs"
   ]
   revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/rakyll/goutil"
-  packages = ["pprofutil"]
-  revision = "349023fd974a46c449331f6c06109d726cb9abe2"
 
 [[projects]]
   name = "github.com/rcrowley/go-metrics"
@@ -1006,6 +1013,20 @@
   revision = "8c2befcd3908152acadb961802fecd7636321747"
 
 [[projects]]
+  name = "go.opencensus.io"
+  packages = [
+    "exporter/jaeger",
+    "exporter/jaeger/internal/gen-go/jaeger",
+    "internal",
+    "plugin/ochttp/propagation/b3",
+    "trace",
+    "trace/internal",
+    "trace/propagation"
+  ]
+  revision = "10cec2c05ea2cfb8b0d856711daedc49d8a45c56"
+  version = "v0.9.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
@@ -1043,6 +1064,12 @@
   revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/sync"
+  packages = ["semaphore"]
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
+
+[[projects]]
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -1066,6 +1093,12 @@
     "unicode/rangetable"
   ]
   revision = "bd91bbf73e9a4a801adbfb97133c992678533126"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/api"
+  packages = ["support/bundler"]
+  revision = "aedc137bffcaca05f836e35c6d182fcb7a68b1c0"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -1291,6 +1324,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a42ac0515abf953024c27aedd873943499cae9706e5eefb07ea27fca8d0082a5"
+  inputs-digest = "7427d4229507cb094756a1a4e1d8f1e25d62a408f9ab059648951d134e48e7ca"
   solver-name = "gps-cdcl"
   solver-version = 1

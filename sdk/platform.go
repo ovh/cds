@@ -43,6 +43,45 @@ var (
 // PlatformConfig represent the configuration of a plateform
 type PlatformConfig map[string]PlatformConfigValue
 
+// Clone return a copy of the config (with a copy of the underlying data structure)
+func (config PlatformConfig) Clone() PlatformConfig {
+	new := make(PlatformConfig, len(config))
+	for k, v := range config {
+		new[k] = v
+	}
+	return new
+}
+
+// EncryptSecrets encrypt secrets given a cypher func
+func (config PlatformConfig) EncryptSecrets(encryptFunc func(string) (string, error)) error {
+	for k, v := range config {
+		if v.Type == PlatformConfigTypePassword {
+			s, errS := encryptFunc(v.Value)
+			if errS != nil {
+				return WrapError(errS, "EncryptSecrets> Cannot encrypt password")
+			}
+			v.Value = s
+			config[k] = v
+		}
+	}
+	return nil
+}
+
+// DecryptSecrets decrypt secrets given a cypher func
+func (config PlatformConfig) DecryptSecrets(decryptFunc func(string) (string, error)) error {
+	for k, v := range config {
+		if v.Type == PlatformConfigTypePassword {
+			s, errS := decryptFunc(v.Value)
+			if errS != nil {
+				return WrapError(errS, "DecryptSecrets> Cannot descrypt password")
+			}
+			v.Value = s
+			config[k] = v
+		}
+	}
+	return nil
+}
+
 const (
 	// PlatformConfigTypeString represents a string configuration value
 	PlatformConfigTypeString = "string"
@@ -97,6 +136,17 @@ type ProjectPlatform struct {
 	Config          PlatformConfig `json:"config" db:"-" yaml:"config"`
 }
 
+// HideSecrets replaces password with a placeholder
+func (pf *ProjectPlatform) HideSecrets() {
+	pf.Config.HideSecrets()
+	pf.Model.DefaultConfig.HideSecrets()
+	for k, cfg := range pf.Model.PublicConfigurations {
+		cfg.HideSecrets()
+		pf.Model.PublicConfigurations[k] = cfg
+	}
+	pf.Model.DeploymentDefaultConfig.HideSecrets()
+}
+
 // MergeWith merge two config
 func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
 	if config == nil {
@@ -109,5 +159,15 @@ func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
 		}
 		val.Value = v.Value
 		(*config)[k] = val
+	}
+}
+
+// HideSecrets replaces password with a placeholder
+func (config *PlatformConfig) HideSecrets() {
+	for k, v := range *config {
+		if NeedPlaceholder(v.Type) {
+			v.Value = PasswordPlaceholder
+			(*config)[k] = v
+		}
 	}
 }

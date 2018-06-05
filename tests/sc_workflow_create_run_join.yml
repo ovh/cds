@@ -40,5 +40,5 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Building
-    - result.systemoutjson.payload ShouldContainSubstring master
+    - result.systemoutjson.tags ShouldContainSubstring master
     - result.systemoutjson.num ShouldContainSubstring 2

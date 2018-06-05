@@ -10,14 +10,14 @@
         </thead>
         <tbody>
         <tr *ngFor="let p of getDataForCurrentPage()">
-            <td>
+            <td class="border">
                 {{ p.name }}
                 <span *ngIf="p.model.public" [smDirTooltip]="'platform_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
             </td>
-            <td>
+            <td class="border">
                 {{ p.model.name}}
             </td>
-            <td>
+            <td class="border">
                 <div class="ui form">
                     <div class="inline fields" *ngFor="let k of p.config | keys">
                         <div class="four wide field">
@@ -30,7 +30,7 @@
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="border">
                 <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE && !p.model.public">
                     <app-delete-button [loading]="loading" [disabled]="loading" (event)="deletePlatform(p)" *ngIf="!p.hasChanged"></app-delete-button>
                     <button type="button" class="ui green button" *ngIf="p.hasChanged" (click)="updatePlatform(p)">{{ 'btn_save' | translate}}</button>

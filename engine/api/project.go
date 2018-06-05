@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"sync"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -58,7 +57,7 @@ func (api *API) getProjectsHandler() Handler {
 		}
 
 		if filterByRepo == "" {
-			projects, err := project.LoadAll(api.mustDB(), api.Cache, u, opts...)
+			projects, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u, opts...)
 			if err != nil {
 				return sdk.WrapError(err, "getProjectsHandler")
 			}
@@ -374,16 +373,12 @@ func (api *API) addProjectHandler() Handler {
 			return sdk.WrapError(errP, "addProjectHandler> Cannot load platform models")
 		}
 
-		var wg = new(sync.WaitGroup)
-		wg.Add(len(platformModels))
 		for i := range platformModels {
 			pf := &platformModels[i]
-			go func() {
-				propagatePublicPlatformModelOnProject(tx, api.Cache, *pf, *p, getUser(ctx))
-				wg.Done()
-			}()
+			if err := propagatePublicPlatformModelOnProject(tx, api.Cache, *pf, *p, getUser(ctx)); err != nil {
+				return sdk.WrapError(err, "addProjectHandler> propagatePublicPlatformModelOnProject error")
+			}
 		}
-		wg.Wait()
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addProjectHandler> Cannot commit transaction")

@@ -76,7 +76,6 @@ func (b *eventsBroker) cleanAll() {
 				log.Warning("CleanAll> Cannot get lock for %s", cache.Key(locksKey, v.UUID))
 				continue
 			}
-
 			log.Info("CleanALL store subscribe for %s", v.UUID)
 			b.deleteSubEvents(v.UUID)
 			b.unlockCache(v.UUID)
@@ -85,7 +84,7 @@ func (b *eventsBroker) cleanAll() {
 }
 
 func (b *eventsBroker) lockCache(uuid string) bool {
-	return b.cache.Lock(cache.Key(locksKey, uuid), 5*time.Second, 100, 5)
+	return b.cache.Lock(cache.Key(locksKey, uuid), 5*time.Second, 100, 10)
 }
 
 func (b *eventsBroker) unlockCache(uuid string) {
@@ -244,12 +243,13 @@ func (b *eventsBroker) Start(c context.Context) {
 		case <-c.Done():
 			b.cleanAll()
 			if c.Err() != nil {
-				log.Error("eventsBroker.CacheSubscribe> Exiting: %v", c.Err())
+				log.Error("eventsBroker.Start> Exiting: %v", c.Err())
 				return
 			}
 		case receivedEvent := <-b.messages:
 			bEvent, err := json.Marshal(receivedEvent)
 			if err != nil {
+				log.Warning("eventsBroker.Start> Unable to marshal event: %+v", receivedEvent)
 				continue
 			}
 			b.manageEvent(receivedEvent, string(bEvent))
@@ -330,6 +330,8 @@ func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
 	for _, i := range b.clients {
 		if i.Queue != nil {
 			b.handleEvent(receivedEvent, eventS, i)
+		} else {
+			log.Warning("eventsBroker.manageEvent > Queue is null for client %+v/%s", i.User, i.UUID)
 		}
 
 	}

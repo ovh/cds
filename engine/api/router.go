@@ -10,17 +10,19 @@ import (
 	"io/ioutil"
 	"net/http"
 	"runtime"
+	"runtime/pprof"
+	"strings"
 	"time"
 
 	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/rakyll/goutil/pprofutil"
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 const nbPanicsBeforeFail = 50
@@ -99,6 +101,15 @@ type HandlerConfigParam func(*HandlerConfig)
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
 type HandlerConfigFunc func(Handler, ...HandlerConfigParam) *HandlerConfig
 
+func (r *Router) pprofLabel(fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		labels := pprof.Labels("http-path", r.URL.Path)
+		pprof.Do(r.Context(), labels, func(ctx context.Context) {
+			fn.ServeHTTP(w, r)
+		})
+	}
+}
+
 func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 	return handlers.CompressHandlerLevel(fn, gzip.DefaultCompression).ServeHTTP
 }
@@ -151,14 +162,23 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+var headers = []string{
+	http.CanonicalHeaderKey(tracingutils.TraceIDHeader),
+	http.CanonicalHeaderKey(tracingutils.SpanIDHeader),
+	http.CanonicalHeaderKey(tracingutils.SampledHeader),
+	http.CanonicalHeaderKey(sdk.WorkflowAsCodeHeader),
+	http.CanonicalHeaderKey(sdk.ResponseWorkflowIDHeader),
+	http.CanonicalHeaderKey(sdk.ResponseWorkflowNameHeader),
+}
+
 // DefaultHeaders is a set of default header for the router
 func DefaultHeaders() map[string]string {
 	now := time.Now()
 	return map[string]string{
 		"Access-Control-Allow-Origin":              "*",
 		"Access-Control-Allow-Methods":             "GET,OPTIONS,PUT,POST,DELETE",
-		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition, " + sdk.WorkflowAsCodeHeader,
-		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition, " + sdk.ResponseWorkflowIDHeader + ", " + sdk.ResponseWorkflowNameHeader,
+		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition, " + strings.Join(headers, ", "),
+		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition, " + strings.Join(headers, ", "),
 		cdsclient.ResponseAPINanosecondsTimeHeader: fmt.Sprintf("%d", now.UnixNano()),
 		cdsclient.ResponseAPITimeHeader:            now.Format(time.RFC3339),
 		cdsclient.ResponseEtagHeader:               fmt.Sprintf("%d", now.Unix()),
@@ -246,8 +266,8 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 		}
 	}
 
-	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> http
-	r.Mux.Handle(uri, pprofutil.LabelHandlerFunc(r.compress(r.recoverWrap(f))))
+	// The chain is http -> mux -> f -> recover -> wrap -> pprof -> opencensus -> http
+	r.Mux.Handle(uri, r.pprofLabel(r.compress(r.recoverWrap(f))))
 }
 
 type asynchronousRequest struct {
@@ -470,6 +490,14 @@ func AllowServices(s bool) HandlerConfigParam {
 func Auth(v bool) HandlerConfigParam {
 	f := func(rc *HandlerConfig) {
 		rc.Options["auth"] = fmt.Sprintf("%v", v)
+	}
+	return f
+}
+
+// EnableTracing on a route
+func EnableTracing() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["trace_enable"] = "true"
 	}
 	return f
 }

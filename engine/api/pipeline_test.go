@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/trigger"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -263,4 +264,103 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	assert.Equal(t, pb.Pipeline.ID, pb1.Trigger.ParentPipelineBuild.Pipeline.ID)
 	assert.Equal(t, pb.Environment.ID, pb1.Trigger.ParentPipelineBuild.Environment.ID)
 
+}
+
+func Test_deletePipelineHandler(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	//1. Create admin user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	//2. Create project
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	//3. Create Pipeline
+	pipelineKey := sdk.RandomString(10)
+	pip := &sdk.Pipeline{
+		Name:       pipelineKey,
+		Type:       sdk.BuildPipeline,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+
+	vars := map[string]string{
+		"key":             proj.Key,
+		"permPipelineKey": pip.Name,
+	}
+	uri := router.GetRoute("DELETE", api.deletePipelineHandler, vars)
+	test.NotEmpty(t, uri)
+
+	req, err := http.NewRequest("DELETE", uri, nil)
+	if err != nil {
+		t.FailNow()
+		return
+	}
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	//8. Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 204, w.Code)
+
+	pip2, err := pipeline.LoadPipeline(db, proj.Key, pip.Name, false)
+	assert.Nil(t, pip2)
+	assert.Error(t, err)
+}
+
+func Test_deletePipelineHandlerShouldReturnError(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	//1. Create admin user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	//2. Create project
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	//3. Create Pipeline
+	pipelineKey := sdk.RandomString(10)
+	pip := &sdk.Pipeline{
+		Name:       pipelineKey,
+		Type:       sdk.BuildPipeline,
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, nil))
+
+	wf := sdk.Workflow{
+		Name:       sdk.RandomString(10),
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline:   *pip,
+			PipelineID: pip.ID,
+			Name:       "root",
+		},
+	}
+
+	proj.Pipelines = append(proj.Pipelines, *pip)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &wf, proj, u))
+
+	vars := map[string]string{
+		"key":             proj.Key,
+		"permPipelineKey": pip.Name,
+	}
+	uri := router.GetRoute("DELETE", api.deletePipelineHandler, vars)
+	test.NotEmpty(t, uri)
+
+	req, err := http.NewRequest("DELETE", uri, nil)
+	if err != nil {
+		t.FailNow()
+		return
+	}
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	//8. Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
 }

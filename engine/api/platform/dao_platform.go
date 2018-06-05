@@ -13,7 +13,7 @@ import (
 
 // PostGet is a db hook
 func (pp *dbProjectPlatform) PostGet(db gorp.SqlExecutor) error {
-	model, err := LoadModel(db, pp.PlatformModelID)
+	model, err := LoadModel(db, pp.PlatformModelID, false)
 	if err != nil {
 		return sdk.WrapError(err, "dbProjectPlatform.PostGet> Cannot load model")
 	}

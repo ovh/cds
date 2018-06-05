@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
@@ -48,6 +50,14 @@ type vcsClient struct {
 	token  string
 	secret string
 	srvs   []sdk.Service
+	cache  *gocache.Cache
+}
+
+func (c *vcsClient) Cache() *gocache.Cache {
+	if c.cache == nil {
+		c.cache = gocache.New(5*time.Second, 60*time.Second)
+	}
+	return c.cache
 }
 
 // GetProjectVCSServer returns sdk.ProjectVCSServer for a project
@@ -121,7 +131,36 @@ func (c *vcsConsumer) GetAuthorizedClient(token string, secret string) (sdk.VCSA
 		token:  token,
 		secret: secret,
 		srvs:   srvs,
+		cache:  gocache.New(5*time.Second, 60*time.Second),
 	}, nil
+}
+
+var local = localAuthorizedClientCache{
+	cache: make(map[uint64]sdk.VCSAuthorizedClient),
+}
+
+type localAuthorizedClientCache struct {
+	mutex sync.RWMutex
+	cache map[uint64]sdk.VCSAuthorizedClient
+}
+
+func (c *localAuthorizedClientCache) Set(repo *sdk.ProjectVCSServer, vcs sdk.VCSAuthorizedClient) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	hash := repo.Hash()
+	if hash == 0 {
+		return
+	}
+	c.cache[hash] = vcs
+}
+
+func (c *localAuthorizedClientCache) Get(repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, bool) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+
+	vcs, ok := c.cache[repo.Hash()]
+	return vcs, ok
 }
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
@@ -130,18 +169,25 @@ func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectV
 		return nil, sdk.ErrUnauthorized
 	}
 
+	vcs, has := local.Get(repo)
+	if has {
+		return vcs, nil
+	}
+
 	servicesDao := services.Querier(db, store)
 	srvs, err := servicesDao.FindByType(services.TypeVCS)
 	if err != nil {
 		return nil, err
 	}
 
-	return &vcsClient{
+	vcs = &vcsClient{
 		name:   repo.Name,
 		token:  repo.Data["token"],
 		secret: repo.Data["secret"],
 		srvs:   srvs,
-	}, nil
+	}
+	local.Set(repo, vcs)
+	return vcs, nil
 }
 
 func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out interface{}) (int, error) {
@@ -176,29 +222,53 @@ func (c *vcsClient) postMultipart(path string, fileContent []byte, out interface
 }
 
 func (c *vcsClient) Repos() ([]sdk.VCSRepo, error) {
+	items, has := c.Cache().Get("/repos")
+	if has {
+		return items.([]sdk.VCSRepo), nil
+	}
+
 	repos := []sdk.VCSRepo{}
 	path := fmt.Sprintf("/vcs/%s/repos", c.name)
 	if _, err := c.doJSONRequest("GET", path, nil, &repos); err != nil {
 		return nil, err
 	}
+
+	c.Cache().SetDefault("/repos", repos)
+
 	return repos, nil
 }
 
 func (c *vcsClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
+	items, has := c.Cache().Get("/repos/" + fullname)
+	if has {
+		return items.(sdk.VCSRepo), nil
+	}
+
 	repo := sdk.VCSRepo{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s", c.name, fullname)
 	if _, err := c.doJSONRequest("GET", path, nil, &repo); err != nil {
 		return repo, err
 	}
+
+	c.Cache().SetDefault("/repos/"+fullname, repo)
+
 	return repo, nil
 }
 
 func (c *vcsClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
+	items, has := c.Cache().Get("/branches/" + fullname)
+	if has {
+		return items.([]sdk.VCSBranch), nil
+	}
+
 	branches := []sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches", c.name, fullname)
 	if _, err := c.doJSONRequest("GET", path, nil, &branches); err != nil {
 		return nil, err
 	}
+
+	c.Cache().SetDefault("/branches/"+fullname, branches)
+
 	return branches, nil
 }
 
