@@ -148,9 +148,10 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	pip.Stages = append(pip.Stages, *s)
 
 	w := sdk.Workflow{
-		Name:       "test_1",
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
+		Name:          "test_1",
+		ProjectID:     proj.ID,
+		ProjectKey:    proj.Key,
+		HistoryLength: 25,
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 			Triggers: []sdk.WorkflowNodeTrigger{
@@ -203,6 +204,7 @@ workflow:
     pipeline: pip1
 permissions:
   Test_getWorkflowExportHandlerWithPermissions-Group2: 7
+history_length: 25
 `, rec.Body.String())
 
 }

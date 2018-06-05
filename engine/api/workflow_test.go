@@ -351,6 +351,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 }
 
 func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
+	t.SkipNow()
 	// Init database
 	db, cache := test.SetupPG(t)
 
@@ -414,6 +415,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 }
 
 func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
+	t.SkipNow()
 	api, db, router := newTestAPI(t)
 
 	// Init project
