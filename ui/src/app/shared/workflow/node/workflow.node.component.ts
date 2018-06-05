@@ -90,7 +90,8 @@ export class WorkflowNodeComponent implements OnInit {
                 }
                 this.workflowRun = wr;
                 if (wr.nodes && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
-                    if (!this.currentNodeRun || ( (new Date(wr.nodes[this.node.id][0].last_modified)) > (new Date(this.currentNodeRun.last_modified)) )) {
+                    if (!this.currentNodeRun ||
+                        ( (new Date(wr.nodes[this.node.id][0].last_modified)) > (new Date(this.currentNodeRun.last_modified)) )) {
                         this.currentNodeRun = wr.nodes[this.node.id][0];
                     }
                 }
