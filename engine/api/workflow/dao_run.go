@@ -525,15 +525,34 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	}
 
 	if len(filteredPurgeTags) == 0 {
+		qLastSuccess := `
+		SELECT id
+			FROM (
+				SELECT id, status
+					FROM workflow_run
+				WHERE workflow_id = $1
+				OFFSET $2
+			) as wr
+		WHERE status = $3
+		LIMIT 1`
+
+		lastWfrID, errID := db.SelectInt(qLastSuccess, wf.ID, wf.HistoryLength, sdk.StatusSuccess.String())
+		if errID != nil && errID != sql.ErrNoRows {
+			log.Warning("PurgeWorkflowRun> Unable to last success run for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, errID)
+			return errID
+		}
+
 		qDelete := `
 			UPDATE workflow_run SET to_delete = true
 			WHERE workflow_run.id IN (
-				SELECT workflow_run.id FROM workflow_run
+				SELECT workflow_run.id
+					FROM workflow_run
 				WHERE workflow_run.workflow_id = $1
-				ORDER BY workflow_run.id DESC OFFSET $2 ROWS
+				AND workflow_run.id <> $2
+				ORDER BY workflow_run.id DESC OFFSET $3 ROWS
 			)
 		`
-		if _, err := db.Exec(qDelete, wf.ID, wf.HistoryLength); err != nil {
+		if _, err := db.Exec(qDelete, wf.ID, lastWfrID, wf.HistoryLength); err != nil {
 			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 			return err
 		}
@@ -541,10 +560,16 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		return nil
 	}
 
-	queryGetIds := `SELECT string_agg(id::text, ',') AS ids FROM
-		(SELECT workflow_run.id AS id, workflow_run_tag.tag AS tag, workflow_run_tag.value AS value FROM workflow_run
-		JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
-		WHERE workflow_run.workflow_id = $1 AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[]) ORDER BY workflow_run.id DESC) as wr
+	queryGetIds := `
+		SELECT string_agg(id::text, ',') AS ids
+			FROM (
+				SELECT workflow_run.id AS id, workflow_run_tag.tag AS tag, workflow_run_tag.value AS value
+					FROM workflow_run
+						JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
+					WHERE workflow_run.workflow_id = $1
+					AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[])
+				ORDER BY workflow_run.id DESC
+			) as wr
 		GROUP BY tag, value HAVING COUNT(id) > $3
 	`
 
@@ -553,10 +578,52 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		return errS
 	}
 
+	querySuccessIds := `
+	 SELECT id
+		 FROM (
+		   SELECT max(id::bigint)::text AS id, status
+		     FROM (
+		       SELECT workflow_run.id AS id, workflow_run_tag.tag AS tag, workflow_run_tag.value AS value, workflow_run.status AS status
+		         FROM workflow_run
+		           JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
+		         WHERE workflow_run.workflow_id = $1
+		         AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[])
+		       ORDER BY workflow_run.id DESC
+		     ) as wr
+		    GROUP BY tag, value, status
+		 ) as wrGrouped
+		 WHERE status = $3;
+	 `
+
+	successIDs := []struct {
+		ID string `db:"id"`
+	}{}
+	if _, errS := db.Select(&successIDs, querySuccessIds, wf.ID, strings.Join(filteredPurgeTags, ","), sdk.StatusSuccess.String()); errS != nil {
+		log.Warning("PurgeWorkflowRun> Unable to get workflow run in success for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
+		return errS
+	}
+
 	idsToUpdate := []string{}
+	fmt.Printf("%+v\n", successIDs)
 	for _, idToUp := range ids {
 		if idToUp.Ids != "" {
-			idsToUpdate = append(idsToUpdate, strings.Join(strings.Split(idToUp.Ids, ",")[wf.HistoryLength:], ","))
+			idsSplitted := strings.Split(idToUp.Ids, ",")[wf.HistoryLength:]
+			idsStr := make([]string, 0, len(idsSplitted))
+
+			for _, id := range idsSplitted {
+				found := false
+				for _, successID := range successIDs {
+					if successID.ID == id {
+						found = true
+						break
+					}
+				}
+				// If id is the last success id don't add in the id's array to delete
+				if !found {
+					idsStr = append(idsStr, id)
+				}
+			}
+			idsToUpdate = append(idsToUpdate, strings.Join(idsStr, ","))
 		}
 	}
 
