@@ -465,6 +465,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		log.Info("GetNodeRunBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
 	}
 
+	//TODO: to delete after debug commits
 	log.Debug("GetNodeRunBuildCommits> current : %+v , previous: %+v", cur, prev)
 	if prev.Hash != "" && cur.Hash == prev.Hash {
 		log.Info("GetNodeRunBuildCommits> there is not difference between the previous build and the current build for node %s", nodeRun.WorkflowNodeName)
