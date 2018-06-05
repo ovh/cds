@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/audit"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
@@ -591,6 +592,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.warnChan = make(chan sdk.Event)
 	event.Subscribe(a.warnChan)
+	go audit.ComputeWorkflowAudit(ctx)
 	go warning.Compute(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.warnChan)
 	go a.serviceAPIHeartbeat(ctx)
 
