@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"bytes"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -296,10 +297,11 @@ func (b *eventsBroker) ServeHTTP() Handler {
 
 		go func() {
 			for msg := range messageChan.Queue {
-
-				b := append([]byte("data: "), []byte(msg)...)
-				b = append(b, []byte("\n\n")...)
-				if _, err := w.Write(b); err != nil {
+				var buffer bytes.Buffer
+				buffer.WriteString("data: ")
+				buffer.WriteString(msg)
+				buffer.WriteString("\n\n")
+				if _, err := w.Write(buffer.Bytes()); err != nil {
 					continue
 				}
 				f.Flush()
