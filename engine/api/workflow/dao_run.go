@@ -531,7 +531,7 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 				SELECT id, status
 					FROM workflow_run
 				WHERE workflow_id = $1
-				ORDER BY id DESC 
+				ORDER BY id DESC
 				OFFSET $2
 			) as wr
 		WHERE status = $3
@@ -605,7 +605,6 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	}
 
 	idsToUpdate := []string{}
-	fmt.Printf("%+v\n", successIDs)
 	for _, idToUp := range ids {
 		if idToUp.Ids != "" {
 			idsSplitted := strings.Split(idToUp.Ids, ",")[wf.HistoryLength:]
