@@ -26,7 +26,6 @@ onmessage = function (e) {
                 return;
             }
             let myEvent = JSON.parse(evt.data);
-            console.log(myEvent.type_event + ': ' + myEvent.workflow_name);
             postMessage(myEvent);
         };
         sse.onerror = function (err) {
