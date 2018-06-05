@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -296,9 +297,13 @@ func (b *eventsBroker) ServeHTTP() Handler {
 
 		go func() {
 			for msg := range messageChan.Queue {
-				w.Write([]byte("data: "))
-				w.Write([]byte(msg))
-				w.Write([]byte("\n\n"))
+				var buffer bytes.Buffer
+				buffer.WriteString("data: ")
+				buffer.WriteString(msg)
+				buffer.WriteString("\n\n")
+				if _, err := w.Write(buffer.Bytes()); err != nil {
+					continue
+				}
 				f.Flush()
 			}
 		}()
