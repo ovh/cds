@@ -96,16 +96,19 @@ func (api *API) getMonDBTimesDBProjectLoadAllRawHandler(ctx context.Context) str
 
 func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context, r *http.Request) string {
 	groupsID := []int64{}
-	for _, g := range getUser(ctx).Groups {
+	usr := getUser(ctx)
+	for _, g := range usr.Groups {
 		groupsID = append(groupsID, g.ID)
 	}
 	s1 := time.Now()
 	permissions := permission.PermissionReadExecute
 	if !isHatcheryOrWorker(r) {
 		permissions = permission.PermissionRead
+	} else {
+		usr = nil
 	}
 
-	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, nil, nil); err != nil {
+	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, nil, nil); err != nil {
 		return fmt.Sprintf("getMonDBTimesDBQueueWorkflow> Unable to load queue:: %s", err)
 	}
 	return elapsed("getMonDBTimesDBQueueWorkflow", s1)
