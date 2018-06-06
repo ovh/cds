@@ -1,6 +1,7 @@
 -- +migrate Up
 CREATE TABLE workflow_audit (
-  id BIGSERIAL PRIMARY KEY
+  id BIGSERIAL PRIMARY KEY,
+  project_key VARCHAR(50),
   workflow_id BIGINT,
   triggered_by VARCHAR(100),
   created TIMESTAMP WITH TIME ZONE,
@@ -10,4 +11,4 @@ CREATE TABLE workflow_audit (
 );
 
 -- +migrate Down
-DROP TABLE warning;
+DROP TABLE workflow_audit;
