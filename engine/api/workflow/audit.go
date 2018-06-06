@@ -3,13 +3,13 @@ package workflow
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
 
-	"encoding/json"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
