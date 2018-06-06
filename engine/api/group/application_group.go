@@ -91,7 +91,10 @@ func DeleteAllGroupFromApplication(db gorp.SqlExecutor, applicationID int64) err
 
 // DeleteGroupFromApplication removes access to application to group members
 func DeleteGroupFromApplication(db gorp.SqlExecutor, appID, groupID int64) error {
-	ok, err := checkAtLeastOneGroupWithWriteRoleOnPipeline(db, appID)
+	query := `DELETE FROM application_group WHERE application_id=$1 AND group_id=$2`
+	_, errE := db.Exec(query, appID, groupID)
+
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnApplication(db, appID)
 	if err != nil {
 		return sdk.WrapError(err, "DeleteGroupFromApplication")
 	}
@@ -100,8 +103,6 @@ func DeleteGroupFromApplication(db gorp.SqlExecutor, appID, groupID int64) error
 		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "DeleteGroupFromApplication")
 	}
 
-	query := `DELETE FROM application_group WHERE application_id=$1 AND group_id=$2`
-	_, errE := db.Exec(query, appID, groupID)
 	return errE
 }
 
