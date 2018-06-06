@@ -6,7 +6,7 @@ import {Warning} from '../../model/warning.model';
 import {WarningService} from './warning.service';
 
 /**
- * Service to get broadcast
+ * Service to get warnings
  */
 @Injectable()
 export class WarningStore {

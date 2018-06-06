@@ -7,7 +7,6 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {Key} from '../../../../model/keys.model';
 import {Warning} from '../../../../model/warning.model';
-import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-project-keys',
@@ -37,11 +36,10 @@ export class ProjectKeysComponent implements OnInit {
             this.unusedWarning = new Map<string, Warning>();
             this.missingWarnings = new Array<Warning>();
             data.forEach(v => {
-                let w = cloneDeep(v);
-                if (w.type.indexOf('MISSING') !== -1) {
-                    this.missingWarnings.push(w);
+                if (v.type.indexOf('MISSING') !== -1) {
+                    this.missingWarnings.push(v);
                 } else {
-                    this.unusedWarning.set(w.element, w);
+                    this.unusedWarning.set(v.element, v);
                 }
             });
         }

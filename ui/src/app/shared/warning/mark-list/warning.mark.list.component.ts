@@ -9,14 +9,7 @@ import {SuiPopupConfig} from 'ng2-semantic-ui';
 })
 export class WarningMarkListComponent {
 
-    _warnings: Array<Warning>;
-    @Input('warnings')
-    set warnings(data: Array<Warning>) {
-        this._warnings = data;
-    };
-    get warnings() {
-        return this._warnings;
-    }
+    @Input() warnings: Array<Warning>;
 
     constructor(private _globalConfig: SuiPopupConfig) {
         this._globalConfig.isBasic = false;

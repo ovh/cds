@@ -158,7 +158,7 @@ export class ProjectShowComponent implements OnInit {
                 }
                 if (v.type.indexOf('_KEY') !== -1) {
                     this.warnKeys.push(v);
-                    return
+                    return;
                 }
                 if (v.type.indexOf('PROJECT_VCS') !== -1) {
                     this.warnVCS.push(v);
