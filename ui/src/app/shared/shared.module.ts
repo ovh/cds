@@ -83,6 +83,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
 import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.component';
 import {ClipboardModule} from 'ngx-clipboard';
 import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component';
+import {AuditListComponent} from './audit/list/audit.list.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -91,6 +92,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
+        AuditListComponent,
         BreadcrumbComponent,
         CommitListComponent,
         CutPipe,
@@ -169,6 +171,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
     ],
     exports: [
         ActionComponent,
+        AuditListComponent,
         BreadcrumbComponent,
         CodemirrorModule,
         CommitListComponent,

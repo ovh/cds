@@ -7,7 +7,8 @@ CREATE TABLE workflow_audit (
   created TIMESTAMP WITH TIME ZONE,
   data_before TEXT,
   data_after TEXT,
-  event_type VARCHAR(100)
+  event_type VARCHAR(100),
+  data_type VARCHAR(20)
 );
 
 -- +migrate Down

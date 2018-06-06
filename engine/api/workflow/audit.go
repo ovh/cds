@@ -74,6 +74,7 @@ func (a addWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 		DataAfter:   buffer.String(),
 		WorkflowID:  wEvent.Workflow.ID,
 		ProjectKey:  e.ProjectKey,
+		DataType:    "yaml",
 	}
 	return insertAudit(db, audit)
 }
@@ -104,6 +105,7 @@ func (u updateWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 		DataBefore:  oldWorkflowBuffer.String(),
 		WorkflowID:  wEvent.NewWorkflow.ID,
 		ProjectKey:  e.ProjectKey,
+		DataType:    "yaml",
 	}
 	return insertAudit(db, a)
 }
@@ -128,6 +130,7 @@ func (d deleteWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 		DataBefore:  oldWorkflowBuffer.String(),
 		WorkflowID:  wEvent.Workflow.ID,
 		ProjectKey:  e.ProjectKey,
+		DataType:    "yaml",
 	}
 	return insertAudit(db, a)
 }
@@ -140,7 +143,7 @@ func (a addWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) er
 		return sdk.WrapError(err, "addWorkflowPermissionAudit.Compute> Unable to decode payload")
 	}
 
-	b, err := json.Marshal(wEvent.Permission)
+	b, err := json.MarshalIndent(wEvent.Permission, "", "  ")
 	if err != nil {
 		return sdk.WrapError(err, "addWorkflowPermissionAudit.Compute> Unable to marshal permission")
 	}
@@ -152,6 +155,7 @@ func (a addWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) er
 		DataAfter:   string(b),
 		WorkflowID:  wEvent.WorkflowID,
 		ProjectKey:  e.ProjectKey,
+		DataType:    "json",
 	}
 	return insertAudit(db, audit)
 }
@@ -164,12 +168,12 @@ func (u updateWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 		return sdk.WrapError(err, "updateWorkflowPermissionAudit.Compute> Unable to decode payload")
 	}
 
-	oldPerm, err := json.Marshal(wEvent.OldPermission)
+	oldPerm, err := json.MarshalIndent(wEvent.OldPermission, "", "  ")
 	if err != nil {
 		return sdk.WrapError(err, "updateWorkflowPermissionAudit.Compute> Unable to marshal old permission")
 	}
 
-	newPerm, err := json.Marshal(wEvent.NewPermission)
+	newPerm, err := json.MarshalIndent(wEvent.NewPermission, "", "  ")
 	if err != nil {
 		return sdk.WrapError(err, "updateWorkflowPermissionAudit.Compute> Unable to marshal new permission")
 	}
@@ -182,6 +186,7 @@ func (u updateWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 		DataAfter:   string(newPerm),
 		WorkflowID:  wEvent.WorkflowID,
 		ProjectKey:  e.ProjectKey,
+		DataType:    "json",
 	}
 	return insertAudit(db, audit)
 }
@@ -194,7 +199,7 @@ func (a deleteWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 		return sdk.WrapError(err, "deleteWorkflowPermissionAudit.Compute> Unable to decode payload")
 	}
 
-	b, err := json.Marshal(wEvent.Permission)
+	b, err := json.MarshalIndent(wEvent.Permission, "", " ")
 	if err != nil {
 		return sdk.WrapError(err, "deleteWorkflowPermissionAudit.Compute> Unable to marshal permission")
 	}
@@ -206,6 +211,7 @@ func (a deleteWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 		DataBefore:  string(b),
 		WorkflowID:  wEvent.WorkflowID,
 		ProjectKey:  e.ProjectKey,
+		DataType:    "json",
 	}
 	return insertAudit(db, audit)
 }

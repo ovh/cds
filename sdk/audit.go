@@ -23,6 +23,7 @@ type AuditWorklflow struct {
 	DataBefore  string    `json:"data_before" db:"data_before"`
 	DataAfter   string    `json:"data_after" db:"data_after"`
 	EventType   string    `json:"event_type" db:"event_type"`
+	DataType    string    `json:"data_type" db:"data_type"`
 }
 
 // Audit represents audit interface
