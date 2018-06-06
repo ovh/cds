@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -322,11 +323,11 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 		defer tx.Rollback()
 
 		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d", id)
+			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
+			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot commit tx")
 		}
 
 		return nil
@@ -536,10 +537,15 @@ func (api *API) countWorkflowJobQueueHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until := getSinceUntilHeader(ctx, w, r)
 		groupsID := []int64{}
-		for _, g := range getUser(ctx).Groups {
+		usr := getUser(ctx)
+		for _, g := range usr.Groups {
 			groupsID = append(groupsID, g.ID)
 		}
-		count, err := workflow.CountNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since, &until)
+		if isHatcheryOrWorker(r) {
+			usr = nil
+		}
+
+		count, err := workflow.CountNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, usr, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
@@ -552,16 +558,19 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until := getSinceUntilHeader(ctx, w, r)
 		groupsID := make([]int64, len(getUser(ctx).Groups))
-		for i, g := range getUser(ctx).Groups {
+		usr := getUser(ctx)
+		for i, g := range usr.Groups {
 			groupsID[i] = g.ID
 		}
 
 		permissions := permission.PermissionReadExecute
 		if !isHatcheryOrWorker(r) {
 			permissions = permission.PermissionRead
+		} else {
+			usr = nil
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, &since, &until)
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}

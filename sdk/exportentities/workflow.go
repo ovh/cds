@@ -3,6 +3,7 @@ package exportentities
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -107,6 +108,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			ancestors = append(ancestors, a.Name)
 		}
 
+		sort.Strings(ancestors)
 		entry.DependsOn = ancestors
 		entry.PipelineName = n.Pipeline.Name
 		conditions := []sdk.WorkflowNodeCondition{}
