@@ -771,6 +771,8 @@
   "worker_model_shell_cmd": "Commande principale du shell",
 
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
+  "workflow_resync_vcs": "Resynchroniser les statuts VCS",
+  "workflow_vcs_resynced": "Statuts du dépot distant resynchronisés",
   "workflow_app_info_new_wf_have_pipeline": "Cette application a un ancien workflow, vous pouvez le migrer automatiquement dans l'onglet Administration de l'application.",
   "workflow_app_info_new_wf_link_pipeline": "ATTENTION. Cette action est obsolète. Vous devriez utiliser les nouveaux Workflows CDS (Projet -> Worflow) pour créer et gérer vos workflows.",
   "workflow_added": "Workflow créé",

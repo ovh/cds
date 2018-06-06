@@ -77,7 +77,8 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 	}
 }
 
-func resyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
+// ResyncCommitStatus resync commit status for a workflow run
+func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
 	_, end := tracing.Span(ctx, "workflow.resyncCommitStatus",
 		tracing.Tag("workflow", wr.Workflow.Name),
 		tracing.Tag("workflow_run", wr.Number),
@@ -95,142 +96,155 @@ func resyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		node := wr.Workflow.GetNode(nodeID)
-		if node.IsLinkedToRepo() {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
-			if vcsServer == nil {
-				return nil
-			}
+		if !node.IsLinkedToRepo() {
+			return nil
+		}
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
+		if vcsServer == nil {
+			return nil
+		}
 
-			//Get the RepositoriesManager Client
-			client, errClient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
-			if errClient != nil {
-				return sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client")
-			}
+		//Get the RepositoriesManager Client
+		client, errClient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+		if errClient != nil {
+			return sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client")
+		}
 
-			statuses, errStatuses := client.ListStatuses(node.Context.Application.RepositoryFullname, nodeRun.VCSHash)
-			if errStatuses != nil {
-				return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses")
-			}
+		statuses, errStatuses := client.ListStatuses(node.Context.Application.RepositoryFullname, nodeRun.VCSHash)
+		if errStatuses != nil {
+			return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses")
+		}
 
-			var statusFound *sdk.VCSCommitStatus
-			expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
-				NodeName: node.Name,
-			})
+		var statusFound *sdk.VCSCommitStatus
+		expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
+			NodeName: node.Name,
+		})
 
-			var sendEvent = func() error {
-				log.Debug("Resync status for node run %d", nodeRun.ID)
-				var eventWNR = sdk.EventRunWorkflowNode{
-					ID:             nodeRun.ID,
-					Number:         nodeRun.Number,
-					SubNumber:      nodeRun.SubNumber,
-					Status:         nodeRun.Status,
-					Start:          nodeRun.Start.Unix(),
-					Done:           nodeRun.Done.Unix(),
-					Manual:         nodeRun.Manual,
-					HookEvent:      nodeRun.HookEvent,
-					Payload:        nodeRun.Payload,
-					SourceNodeRuns: nodeRun.SourceNodeRuns,
-					Hash:           nodeRun.VCSHash,
-					BranchName:     nodeRun.VCSBranch,
-					NodeID:         nodeRun.WorkflowNodeID,
-					RunID:          nodeRun.WorkflowRunID,
-					StagesSummary:  make([]sdk.StageSummary, len(nodeRun.Stages)),
-				}
-
-				for i := range nodeRun.Stages {
-					eventWNR.StagesSummary[i] = nodeRun.Stages[i].ToSummary()
-				}
-
-				var pipName, appName, envName string
-				node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
-				if node != nil {
-					pipName = node.Pipeline.Name
-					eventWNR.NodeName = node.Name
-				}
-				if node.Context != nil {
-					if node.Context.Application != nil {
-						appName = node.Context.Application.Name
-						eventWNR.RepositoryManagerName = node.Context.Application.VCSServer
-						eventWNR.RepositoryFullName = node.Context.Application.RepositoryFullname
-					}
-					if node.Context.Environment != nil {
-						envName = node.Context.Environment.Name
-					}
-				}
-
-				evt := sdk.Event{
-					EventType:       fmt.Sprintf("%T", eventWNR),
-					Payload:         structs.Map(eventWNR),
-					Timestamp:       time.Now(),
-					ProjectKey:      proj.Key,
-					WorkflowName:    wr.Workflow.Name,
-					PipelineName:    pipName,
-					ApplicationName: appName,
-					EnvironmentName: envName,
-				}
-				if err := client.SetStatus(evt); err != nil {
-					repositoriesmanager.RetryEvent(&evt, err, store)
-					return fmt.Errorf("resyncCommitStatus> err:%s", err)
-				}
-				return nil
-			}
-
-			for i, status := range statuses {
-				if status.Decription == expected {
-					statusFound = &statuses[i]
-					break
-				}
-			}
-
-			if statusFound == nil {
-				if err := sendEvent(); err != nil {
-					log.Error("resyncCommitStatus> Error sending status: %v", err)
-				}
-				continue
-			}
-
-			if statusFound.State == sdk.StatusBuilding.String() {
-				if err := sendEvent(); err != nil {
-					log.Error("resyncCommitStatus> Error sending status: %v", err)
-				}
-				continue
-			}
-
-			switch statusFound.State {
-			case sdk.StatusSuccess.String():
-				switch nodeRun.Status {
-				case sdk.StatusSuccess.String():
-					continue
-				default:
-					if err := sendEvent(); err != nil {
-						log.Error("resyncCommitStatus> Error sending status: %v", err)
-					}
-					continue
-				}
-
-			case sdk.StatusFail.String():
-				switch nodeRun.Status {
-				case sdk.StatusFail.String():
-					continue
-				default:
-					if err := sendEvent(); err != nil {
-						log.Error("resyncCommitStatus> Error sending status: %v", err)
-					}
-					continue
-				}
-
-			case sdk.StatusSkipped.String():
-				switch nodeRun.Status {
-				case sdk.StatusDisabled.String(), sdk.StatusNeverBuilt.String(), sdk.StatusSkipped.String():
-					continue
-				default:
-					if err := sendEvent(); err != nil {
-						log.Error("resyncCommitStatus> Error sending status: %v", err)
-					}
-					continue
-				}
+		for i, status := range statuses {
+			if status.Decription == expected {
+				statusFound = &statuses[i]
+				break
 			}
 		}
+
+		if statusFound == nil {
+			if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+				log.Error("resyncCommitStatus> Error sending status: %v", err)
+			}
+			continue
+		}
+
+		if statusFound.State == sdk.StatusBuilding.String() {
+			if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+				log.Error("resyncCommitStatus> Error sending status: %v", err)
+			}
+			continue
+		}
+
+		switch statusFound.State {
+		case sdk.StatusSuccess.String():
+			switch nodeRun.Status {
+			case sdk.StatusSuccess.String():
+				continue
+			default:
+				if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+					log.Error("resyncCommitStatus> Error sending status: %v", err)
+				}
+				continue
+			}
+
+		case sdk.StatusFail.String():
+			switch nodeRun.Status {
+			case sdk.StatusFail.String():
+				continue
+			default:
+				if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+					log.Error("resyncCommitStatus> Error sending status: %v", err)
+				}
+				continue
+			}
+
+		case sdk.StatusSkipped.String():
+			switch nodeRun.Status {
+			case sdk.StatusDisabled.String(), sdk.StatusNeverBuilt.String(), sdk.StatusSkipped.String():
+				continue
+			default:
+				if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+					log.Error("resyncCommitStatus> Error sending status: %v", err)
+				}
+				continue
+			}
+		}
+	}
+	return nil
+}
+
+// sendVCSEventStatus send status
+func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) error {
+	log.Debug("Send status for node run %d", nodeRun.ID)
+
+	node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
+	if !node.IsLinkedToRepo() {
+		return nil
+	}
+
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
+	if vcsServer == nil {
+		return nil
+	}
+	//Get the RepositoriesManager Client
+	client, errClient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+	if errClient != nil {
+		return sdk.WrapError(errClient, "sendEvent> Cannot get client")
+	}
+
+	var eventWNR = sdk.EventRunWorkflowNode{
+		ID:             nodeRun.ID,
+		Number:         nodeRun.Number,
+		SubNumber:      nodeRun.SubNumber,
+		Status:         nodeRun.Status,
+		Start:          nodeRun.Start.Unix(),
+		Done:           nodeRun.Done.Unix(),
+		Manual:         nodeRun.Manual,
+		HookEvent:      nodeRun.HookEvent,
+		Payload:        nodeRun.Payload,
+		SourceNodeRuns: nodeRun.SourceNodeRuns,
+		Hash:           nodeRun.VCSHash,
+		BranchName:     nodeRun.VCSBranch,
+		NodeID:         nodeRun.WorkflowNodeID,
+		RunID:          nodeRun.WorkflowRunID,
+		StagesSummary:  make([]sdk.StageSummary, len(nodeRun.Stages)),
+		NodeName:       node.Name,
+	}
+
+	for i := range nodeRun.Stages {
+		eventWNR.StagesSummary[i] = nodeRun.Stages[i].ToSummary()
+	}
+
+	var pipName, appName, envName string
+
+	pipName = node.Pipeline.Name
+	appName = node.Context.Application.Name
+	eventWNR.RepositoryManagerName = node.Context.Application.VCSServer
+	eventWNR.RepositoryFullName = node.Context.Application.RepositoryFullname
+
+	if node.Context.Environment != nil {
+		envName = node.Context.Environment.Name
+	}
+
+	evt := sdk.Event{
+		EventType:       fmt.Sprintf("%T", eventWNR),
+		Payload:         structs.Map(eventWNR),
+		Timestamp:       time.Now(),
+		ProjectKey:      proj.Key,
+		WorkflowName:    wr.Workflow.Name,
+		PipelineName:    pipName,
+		ApplicationName: appName,
+		EnvironmentName: envName,
+	}
+	if err := client.SetStatus(evt); err != nil {
+		repositoriesmanager.RetryEvent(&evt, err, store)
+		return fmt.Errorf("sendEvent> err:%s", err)
 	}
 	return nil
 }
