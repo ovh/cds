@@ -119,6 +119,13 @@
             </div>
         </div>
 
+        <sm-select class="languageSelect"
+            [options]="{'fullTextSearch': true}"
+            [(model)]="currentCountry"
+            (modelChange)="changeCountry()">
+            <option value="fr"><i class="france flag"></i></option>
+            <option value="en"><i class="gb flag"></i></option>
+        </sm-select>
         <sm-dropdown icon="settings" *ngIf="currentUser">
             <a sm-item href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
@@ -131,23 +138,13 @@
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
             <a sm-item href="https://ovh.github.io/cds/" target="_blank">{{ 'navbar_documentation' | translate }}</a>
+            <div class="divider"></div>
+            <a sm-item href="#" [routerLink]="['account', 'login']">{{ 'navbar_disconnect' | translate }}</a>
         </sm-dropdown>
         <sm-dropdown icon="student" *ngIf="currentUser && currentUser.admin">
             <a sm-item href="#" [routerLink]="['admin', 'broadcast']">{{ 'navbar_admin_broadcast' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'migration']">{{ 'navbar_admin_migration' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'worker-model-pattern']">{{ 'worker_model_pattern_title' | translate }}</a>
         </sm-dropdown>
-        <sm-select class="languageSelect"
-            [options]="{'fullTextSearch': true}"
-            [(model)]="currentCountry"
-            (modelChange)="changeCountry()">
-            <option value="fr"><i class="france flag"></i></option>
-            <option value="en"><i class="gb flag"></i></option>
-        </sm-select>
-        <div class="item link">
-            <a routerLink="/account/login" routerLinkActive="active">
-                <i class="fa fa-sign-out"></i>
-            </a>
-        </div>
     </div>
 </div>
