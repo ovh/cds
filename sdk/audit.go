@@ -1,8 +1,9 @@
 package sdk
 
 import (
-	"github.com/go-gorp/gorp"
 	"time"
+
+	"github.com/go-gorp/gorp"
 )
 
 // Different type of Audit event
