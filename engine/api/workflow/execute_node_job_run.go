@@ -233,7 +233,7 @@ func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor
 	// first load without FOR UPDATE WAIT to quick check status
 	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
 	if errS != nil {
-		return nil, report, sdk.WrapError(errS, "workflow.UpdateNodeJobRunStatus> Cannot select status from workflow_node_run_job node job run %d", jobID)
+		return nil, report, sdk.WrapError(errS, "TakeNodeJobRun> Cannot select status from workflow_node_run_job node job run %d", jobID)
 	}
 
 	if err := checkStatusWaiting(store, jobID, currentStatus); err != nil {
@@ -276,9 +276,9 @@ func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
 		k := keyBookJob(jobID)
 		h := sdk.Hatchery{}
 		if store.Get(k, &h) {
-			return sdk.WrapError(sdk.ErrAlreadyTaken, "TakeNodeJobRun> job %d is not waiting status and was booked by hatchery %d. Current status:%s", jobID, h.ID, status)
+			return sdk.WrapError(sdk.ErrAlreadyTaken, "checkStatusWaiting> job %d is not waiting status and was booked by hatchery %d. Current status:%s", jobID, h.ID, status)
 		}
-		return sdk.WrapError(sdk.ErrAlreadyTaken, "TakeNodeJobRun> job %d is not waiting status. Current status:%s", jobID, status)
+		return sdk.WrapError(sdk.ErrAlreadyTaken, "checkStatusWaiting> job %d is not waiting status. Current status:%s", jobID, status)
 	}
 	return nil
 }
