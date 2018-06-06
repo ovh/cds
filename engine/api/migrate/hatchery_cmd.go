@@ -61,7 +61,7 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 			wm.ModelDocker = sdk.ModelDocker{
 				Image: wm.Image,
 				Shell: "sh -c",
-				Cmd:   "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 -C - && chmod +x worker && exec ./worker",
+				Cmd:   "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker",
 			}
 		case sdk.Openstack:
 			var osdata deprecatedOpenstackModelData
@@ -112,7 +112,7 @@ export CDS_INSECURE={{.HTTPInsecure}}
 			preCmd += string(userdata)
 
 			preCmd += `
-			curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C -
+			curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120
 			chmod +x worker
 			`
 			wm.ModelVirtualMachine = sdk.ModelVirtualMachine{
@@ -163,7 +163,7 @@ export CDS_GRAYLOG_EXTRA_VALUE={{.GraylogExtraValue}}
 #export CDS_GRPC_API={{.GrpcAPI}}
 #export CDS_GRPC_INSECURE={{.GrpcInsecure}}
 
-curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C -
+curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120
 chmod +x worker
 `
 			wm.ModelVirtualMachine = sdk.ModelVirtualMachine{
