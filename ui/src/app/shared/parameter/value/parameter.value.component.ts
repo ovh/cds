@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {AfterViewChecked, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {SharedService} from '../../shared.service';
 import {Project} from '../../../model/project.model';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
@@ -16,7 +16,7 @@ declare var CodeMirror: any;
     templateUrl: './parameter.value.html',
     styleUrls: ['./parameter.value.scss']
 })
-export class ParameterValueComponent implements OnInit {
+export class ParameterValueComponent implements OnInit, AfterViewChecked {
 
     editableValue: string | number | boolean;
     @Input() type: string;
@@ -61,7 +61,6 @@ export class ParameterValueComponent implements OnInit {
 
     @ViewChild('codeMirror')
     codemirror: CodemirrorComponent;
-
     codeMirrorConfig: any;
 
     repositoriesManager: Array<RepositoriesManager>;
@@ -88,12 +87,12 @@ export class ParameterValueComponent implements OnInit {
             this.suggest = new Array<string>();
         }
         this.updateListRepo();
-        setTimeout(() => {
-            this.valueChange.emit(this.editableValue);
-            if (this.codemirror && this.codemirror.instance) {
-                this.codemirror.instance.refresh();
-            }
-        }, 1);
+    }
+
+    ngAfterViewChecked(): void {
+        if (this.codemirror && this.codemirror.instance) {
+            this.codemirror.instance.refresh();
+        }
     }
 
     castValue(data: string | number | boolean): string | number | boolean {
