@@ -1,0 +1,13 @@
+@import '../../../../common.scss';
+
+td {
+  word-break: initial;
+
+  pre {
+    font-family: inherit;
+  }
+}
+
+.area {
+  margin-top:  20px;
+}

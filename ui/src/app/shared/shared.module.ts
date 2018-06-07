@@ -83,6 +83,7 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
 import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.component';
 import {ClipboardModule} from 'ngx-clipboard';
 import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component';
+import {AuditListComponent} from './audit/list/audit.list.component';
 import {WarningTabComponent} from './warning/tab/warning.tab.component';
 import {WarningMarkComponent} from './warning/mark-single/warning.mark.component';
 import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.component';
@@ -94,6 +95,7 @@ import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.co
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
+        AuditListComponent,
         BreadcrumbComponent,
         CommitListComponent,
         CutPipe,
@@ -175,6 +177,7 @@ import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.co
     ],
     exports: [
         ActionComponent,
+        AuditListComponent,
         BreadcrumbComponent,
         CodemirrorModule,
         CommitListComponent,

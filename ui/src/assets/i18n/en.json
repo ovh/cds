@@ -106,15 +106,16 @@
   "artifact_sha512": "SHA512 Checksum",
 
   "audit_change": "Change",
-  "audit_no": "No audit for this variable",
+  "audit_no": "No audit",
   "audit_time_author": "Change date",
-  "audit_title_variable": "Change history",
+  "audit_title": "Change history",
   "audit_action": "Action",
   "audit_username": "User",
   "audit_before": "Before modification",
   "audit_after": "After modification",
   "audit_diff": "Differences",
   "audit_context": "Context",
+  "audit_modification_type": "Modification type",
 
   "btn_cancel": "Cancel",
   "btn_continue": "Continue",

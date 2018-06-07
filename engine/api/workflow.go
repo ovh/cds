@@ -44,6 +44,7 @@ func (api *API) getWorkflowHandler() Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
+		withAudits := FormBool(r, "withAudits")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
@@ -61,6 +62,14 @@ func (api *API) getWorkflowHandler() Handler {
 				return sdk.WrapError(errU, "getWorkflowHandler> Cannot load usage for workflow %s", name)
 			}
 			w1.Usage = &usage
+		}
+
+		if withAudits {
+			audits, errA := workflow.LoadAudits(api.mustDB(), w1.ID)
+			if errA != nil {
+				return sdk.WrapError(errA, "getWorkflowHandler> Cannot load audits for workflow %s", name)
+			}
+			w1.Audits = audits
 		}
 
 		w1.Permission = permission.WorkflowPermission(key, w1.Name, getUser(ctx))

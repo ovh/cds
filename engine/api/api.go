@@ -591,6 +591,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.warnChan = make(chan sdk.Event)
 	event.Subscribe(a.warnChan)
+	go workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	go warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)
 	go a.serviceAPIHeartbeat(ctx)
 
