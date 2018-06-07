@@ -3,6 +3,7 @@ import {Table} from '../../table/table';
 import {PermissionValue} from '../../../model/permission.model';
 import {KeyEvent} from '../key.event';
 import {Key} from '../../../model/keys.model';
+import {Warning} from '../../../model/warning.model';
 
 @Component({
     selector: 'app-keys-list',
@@ -14,6 +15,7 @@ export class KeysListComponent extends Table {
     @Input() keys: Array<Key>;
     @Input() loading: boolean;
     @Input() edit: number;
+    @Input() warnings: Map<string, Warning>;
     @Output() deleteEvent = new EventEmitter<KeyEvent>();
     permission = PermissionValue;
 

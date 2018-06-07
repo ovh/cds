@@ -4,6 +4,7 @@
             <div class="step" *ngFor="let e of project.environments; let i = index"
                  [class.active]="selectedEnv?.name === e.name">
                 <div class="content">
+                    <app-warning-mark-list [warnings]="warnMap?.get(e.name)"></app-warning-mark-list>
                     <a class="title pointing" (click)="selectNewEnv(e.name)">{{e.name}}</a>
                 </div>
             </div>

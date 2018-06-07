@@ -6,6 +6,7 @@ import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {Project} from '../../../../../../model/project.model';
 import {WarningModalComponent} from '../../../../../../shared/modal/warning/warning.component';
+import {Warning} from '../../../../../../model/warning.model';
 
 @Component({
     selector: 'app-project-repomanager-list',
@@ -14,6 +15,7 @@ import {WarningModalComponent} from '../../../../../../shared/modal/warning/warn
 })
 export class ProjectRepoManagerComponent extends Table {
 
+    @Input() warnings: Map<string, Warning>;
     @Input() project: Project;
     @Input() reposmanagers: RepositoriesManager[];
 

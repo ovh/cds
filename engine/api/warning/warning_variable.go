@@ -6,10 +6,16 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func variableIsUsed(db gorp.SqlExecutor, key string, varName string) (envsName []string, appsName []string, pipsName []string) {
+func variableIsUsed(db gorp.SqlExecutor, key string, varName string) ([]workflow.CountVarInWorkflowData, []string, []string, []string, []pipeline.CountInPipelineData) {
+
+	ws, errWS := workflow.CountVariableInWorkflow(db, key, varName)
+	if errWS != nil {
+		log.Warning("manageAddVariableEvent> Unable to search variable in workflow: %v", errWS)
+	}
 
 	// Check if used in environment
 	envsName, errE := environment.CountEnvironmentByVarValue(db, key, varName)
@@ -24,17 +30,16 @@ func variableIsUsed(db gorp.SqlExecutor, key string, varName string) (envsName [
 	}
 
 	// Check if used on pipeline parameters
-	resultsP, errP := pipeline.CountInParamValue(db, key, varName)
+	pipsName, errP := pipeline.CountInParamValue(db, key, varName)
 	if errP != nil {
 		log.Warning("manageAddVariableEvent> Unable to search variable in pipeline parameters: %s", errP)
 	}
 
 	// Check if used on pipeline jobs
-	resultsPip, errP2 := pipeline.CountInPipelines(db, key, varName)
+	pipsJob, errP2 := pipeline.CountInPipelines(db, key, varName)
 	if errP2 != nil {
 		log.Warning("manageAddVariableEvent> Unable to search variable in pipelines: %s", errP2)
 	}
 
-	pipsName = pipelineSliceMerge(resultsP, resultsPip)
-	return
+	return ws, envsName, appsName, pipsName, pipsJob
 }

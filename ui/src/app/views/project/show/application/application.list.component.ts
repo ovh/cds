@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import {Project, IdName} from '../../../../model/project.model';
+import {Warning} from '../../../../model/warning.model';
 
 @Component({
     selector: 'app-project-applications',
@@ -7,6 +8,22 @@ import {Project, IdName} from '../../../../model/project.model';
     styleUrls: ['./application.list.scss']
 })
 export class ProjectApplicationListComponent {
+
+    warnMap: Map<string, Array<Warning>>;
+    @Input('warnings')
+    set warnings(data: Array<Warning>) {
+        if (data) {
+            this.warnMap = new Map<string, Array<Warning>>();
+            data.forEach(w => {
+                let arr = this.warnMap.get(w.application_name);
+                if (!arr) {
+                    arr = new Array<Warning>();
+                }
+                arr.push(w);
+                this.warnMap.set(w.application_name, arr);
+            });
+        }
+    }
 
     @Input()
     set project(project: Project) {

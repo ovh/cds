@@ -7,3 +7,16 @@
   vertical-align: top;
 }
 
+.warname {
+  display: flex;
+
+  app-warning-mark {
+    padding-top: 10px;
+  }
+
+  .varname {
+    width: 100%;
+  }
+}
+
+

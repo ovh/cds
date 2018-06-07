@@ -1,0 +1,13 @@
+<ng-container *ngIf="warnings">
+    <i class="red exclamation triangle icon" suiPopup [popupTemplate]="permTemplate"></i>
+</ng-container>
+<ng-template let-popup #permTemplate>
+    <div class="popsize">
+        <ul>
+            <li *ngFor="let w of warnings">
+                {{w.message}}
+            </li>
+        </ul>
+    </div>
+
+</ng-template>

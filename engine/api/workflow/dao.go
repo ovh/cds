@@ -35,6 +35,12 @@ type LoadOptions struct {
 	WithFavorites bool
 }
 
+// CountVarInWorkflowData represents the result of CountVariableInWorkflow function
+type CountVarInWorkflowData struct {
+	WorkflowName string `db:"workflow_name"`
+	NodeName     string `db:"node_name"`
+}
+
 // Exists checks if a workflow exists
 func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 	query := `
@@ -48,6 +54,28 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 		return false, sdk.WrapError(err, "Exists>")
 	}
 	return count > 0, nil
+}
+
+// CountVariableInWorkflow counts how many time the given variable is used on all workflows of the given project
+func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName string) ([]CountVarInWorkflowData, error) {
+	query := `
+		SELECT DISTINCT workflow.name as workflow_name, workflow_node.name as node_name
+		FROM workflow
+		JOIN project ON project.id = workflow.project_id
+		JOIN workflow_node ON workflow_node.workflow_id = workflow.id
+		JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
+		WHERE project.projectkey = $1 
+		AND (
+			workflow_node_context.default_pipeline_parameters::TEXT LIKE $2
+			OR
+			workflow_node_context.default_payload::TEXT LIKE $2
+		);
+	`
+	var datas []CountVarInWorkflowData
+	if _, err := db.Select(&datas, query, projectKey, fmt.Sprintf("%%%s%%", varName)); err != nil {
+		return nil, sdk.WrapError(err, "CountVariableInWorkflow> Unable to count var in workflow")
+	}
+	return datas, nil
 }
 
 // UpdateMetadata update the metadata of a workflow

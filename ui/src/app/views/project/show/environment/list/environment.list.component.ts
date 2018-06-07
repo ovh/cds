@@ -5,6 +5,7 @@ import {ProjectStore} from '../../../../../service/project/project.store';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs/Subscription';
 import {flatMap} from 'rxjs/operators';
+import {Warning} from '../../../../../model/warning.model';
 
 @Component({
     selector: 'app-environment-list',
@@ -12,6 +13,22 @@ import {flatMap} from 'rxjs/operators';
     styleUrls: ['./environment.list.scss']
 })
 export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestroy {
+
+    warnMap: Map<string, Array<Warning>>;
+    @Input('warnings')
+    set warnings(data: Array<Warning>) {
+        if (data) {
+            this.warnMap = new Map<string, Array<Warning>>();
+            data.forEach(w => {
+                let arr = this.warnMap.get(w.environment_name);
+                if (!arr) {
+                    arr = new Array<Warning>();
+                }
+                arr.push(w);
+                this.warnMap.set(w.environment_name, arr);
+            });
+        }
+    }
 
     @Input('project') project: Project;
     oldLastModifiedDate: number;

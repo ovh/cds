@@ -1,4 +1,4 @@
-import {Component, OnInit, OnDestroy} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../service/project/project.store';
@@ -9,13 +9,18 @@ import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../model/permission.model';
 import {User} from '../../../model/user.model';
 import {finalize} from 'rxjs/operators';
+import {WarningStore} from '../../../service/warning/warning.store';
+import {Warning} from '../../../model/warning.model';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import * as  immutable from 'immutable';
 
 @Component({
     selector: 'app-project-show',
     templateUrl: './project.html',
     styleUrls: ['./project.scss']
 })
-export class ProjectShowComponent implements OnInit, OnDestroy {
+@AutoUnsubscribe()
+export class ProjectShowComponent implements OnInit {
     currentUser: User;
 
     project: Project;
@@ -32,16 +37,20 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
     workflowPipeline: string;
     loadingFav = false;
 
+    warnVariable: Array<Warning>;
+    warnPerm: Array<Warning>;
+    warnKeys: Array<Warning>;
+    warnVCS: Array<Warning>;
+    warnApplications: Array<Warning>;
+    warnPipelines: Array<Warning>;
+    warnWorkflow: Array<Warning>;
+    warnEnvironment: Array<Warning>;
+    warningsSub: Subscription;
+
     constructor(private _projectStore: ProjectStore, private _route: ActivatedRoute, private _router: Router,
                 private _toast: ToastService, public _translate: TranslateService,
-                private _authentificationStore: AuthentificationStore) {
+                private _authentificationStore: AuthentificationStore, private _warningStore: WarningStore) {
         this.currentUser = this._authentificationStore.getUser();
-    }
-
-    ngOnDestroy(): void {
-        if (this.projectSubscriber) {
-            this.projectSubscriber.unsubscribe();
-        }
     }
 
     ngOnInit() {
@@ -110,6 +119,53 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         }, () => {
             this._router.navigate(['/home']);
         });
+
+        this.warningsSub = this._warningStore.getProjectWarnings(key).subscribe(ws => {
+            this.splitWarnings(ws.get(key));
+        });
+    }
+
+    splitWarnings(warnings: immutable.Map<string, Warning>): void {
+        if (warnings) {
+            this.warnVariable = new Array<Warning>();
+            this.warnPerm = new Array<Warning>();
+            this.warnKeys = new Array<Warning>();
+            this.warnVCS = new Array<Warning>();
+            this.warnApplications = new Array<Warning>();
+            this.warnPipelines = new Array<Warning>();
+            this.warnWorkflow = new Array<Warning>();
+            this.warnEnvironment = new Array<Warning>();
+            warnings.valueSeq().toArray().forEach(v => {
+                if (v.application_name !== '') {
+                    this.warnApplications.push(v);
+                }
+                if (v.pipeline_name !== '') {
+                    this.warnPipelines.push(v);
+                }
+                if (v.environment_name !== '') {
+                    this.warnEnvironment.push(v);
+                }
+                if (v.workflow_name !== '') {
+                    this.warnWorkflow.push(v);
+                }
+                if (v.type.indexOf('_VARIABLE') !== -1) {
+                    this.warnVariable.push(v);
+                    return;
+                }
+                if (v.type.indexOf('_PERMISSION') !== -1) {
+                    this.warnPerm.push(v);
+                    return;
+                }
+                if (v.type.indexOf('_KEY') !== -1) {
+                    this.warnKeys.push(v);
+                    return;
+                }
+                if (v.type.indexOf('PROJECT_VCS') !== -1) {
+                    this.warnVCS.push(v);
+                    return;
+                }
+            });
+        }
     }
 
     updateFav() {

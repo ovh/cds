@@ -10,6 +10,7 @@ import {Environment} from '../../../model/environment.model';
 import {Application} from '../../../model/application.model';
 import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
 import {ApplicationAuditService} from '../../../service/application/application.audit.service';
+import {Warning} from '../../../model/warning.model';
 
 @Component({
     selector: 'app-variable',
@@ -38,6 +39,7 @@ export class VariableComponent extends Table {
     @Input() project: Project;
     @Input() environment: Environment;
     @Input() application: Application;
+    @Input() warnings: Map<string, Warning>;
 
     @Output() event = new EventEmitter<VariableEvent>();
 
