@@ -122,12 +122,26 @@ export class WorkflowNodeRunParamComponent {
             this.getCommits(this.num, false);
         }
 
+        let isRoot = false
         if (this.workflowRun && this.workflowRun.workflow.root_id !== this.nodeToRun.id) {
             this.readOnly = true;
             this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: true});
         } else {
             this.readOnly = false;
+            isRoot = true;
             this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: false});
+        }
+
+        if (isRoot === true && this.workflowRun) {
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
+            if (rootNodeRun && rootNodeRun.hook_event) {
+                this._nodeToRun.context.default_payload = rootNodeRun.hook_event.payload;
+                this._nodeToRun.context.default_pipeline_parameters = rootNodeRun.hook_event.pipeline_parameter;
+            }
+            if (rootNodeRun && rootNodeRun.manual) {
+                this._nodeToRun.context.default_payload = rootNodeRun.manual.payload;
+                this._nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
+            }
         }
     }
 
