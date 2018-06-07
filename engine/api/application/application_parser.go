@@ -16,7 +16,6 @@ import (
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
 func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, force bool, decryptFunc keys.DecryptFunc, u *sdk.User) (*sdk.Application, []sdk.Message, error) {
 	log.Info("ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, force)
-	log.Debug("ParseAndImport>> App: %+v", eapp)
 
 	//Check valid application name
 	rx := sdk.NamePatternRegex

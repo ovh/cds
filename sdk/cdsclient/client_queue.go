@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/engine/api/worker"
@@ -215,6 +216,61 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) (bool, time
 	return false, time.Since(t0), err
 }
 
+func (c *client) queueIndirectArtifactTempURL(id int64, tag string, art *sdk.WorkflowNodeRunArtifact) error {
+	var retryURL = 10
+	var globalURLErr error
+	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, tag)
+	for i := 0; i < retryURL; i++ {
+		var code int
+		code, globalURLErr = c.PostJSON(uri, art, art)
+		if code < 300 {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	if globalURLErr != nil {
+		return globalURLErr
+	}
+	return nil
+}
+
+func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) error {
+	//Post the file to the temporary URL
+	var retry = 10
+	var globalErr error
+	var body []byte
+	for i := 0; i < retry; i++ {
+		req, errRequest := http.NewRequest("PUT", url, bytes.NewBuffer(content))
+		if errRequest != nil {
+			return errRequest
+		}
+
+		var resp *http.Response
+		resp, globalErr = http.DefaultClient.Do(req)
+		if globalErr == nil {
+			defer resp.Body.Close()
+
+			var err error
+			body, err = ioutil.ReadAll(resp.Body)
+			if err != nil {
+				globalErr = err
+				continue
+			}
+
+			if resp.StatusCode >= 300 {
+				globalErr = fmt.Errorf("[%d] Unable to upload artifact: (HTTP %d) %s", i, resp.StatusCode, string(body))
+				continue
+			}
+
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return globalErr
+}
+
 func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) error {
 	f, errop := os.Open(filePath)
 	if errop != nil {
@@ -250,20 +306,8 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		Created:   time.Now(),
 	}
 
-	var retryURL = 10
-	var globalURLErr error
-	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, tag)
-	for i := 0; i < retryURL; i++ {
-		var code int
-		code, globalURLErr = c.PostJSON(uri, &art, &art)
-		if code < 300 {
-			break
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-
-	if globalURLErr != nil {
-		return globalURLErr
+	if err := c.queueIndirectArtifactTempURL(id, tag, &art); err != nil {
+		return err
 	}
 
 	if c.config.Verbose {
@@ -276,45 +320,23 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		return errFileContent
 	}
 
-	//Post the file to the temporary URL
-	var retry = 10
-	var globalErr error
-	var body []byte
-	for i := 0; i < retry; i++ {
-		req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewBuffer(fileContent))
-		if errRequest != nil {
-			return errRequest
-		}
-
-		var resp *http.Response
-		resp, globalErr = http.DefaultClient.Do(req)
-		if globalErr == nil {
-			defer resp.Body.Close()
-
-			var err error
-			body, err = ioutil.ReadAll(resp.Body)
-			if err != nil {
-				globalErr = err
-				continue
+	if err := c.queueIndirectArtifactTempURLPost(art.TempURL, fileContent); err != nil {
+		// If we got a 401 error from the objectstore, ask for a fresh temporary url and repost the artifact
+		if strings.Contains(err.Error(), "401 Unauthorized: Temp URL invalid") {
+			if err := c.queueIndirectArtifactTempURL(id, tag, &art); err != nil {
+				return err
 			}
 
-			if resp.StatusCode >= 300 {
-				globalErr = fmt.Errorf("[%d] Unable to upload artifact: (HTTP %d) %s", i, resp.StatusCode, string(body))
-				continue
+			if err := c.queueIndirectArtifactTempURLPost(art.TempURL, fileContent); err != nil {
+				return err
 			}
-
-			break
 		}
-		time.Sleep(500 * time.Millisecond)
-	}
-
-	if globalErr != nil {
-		return globalErr
+		return err
 	}
 
 	//Try 50 times to make the callback
 	var callbackErr error
-	retry = 50
+	retry := 50
 	for i := 0; i < retry; i++ {
 		uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url/callback", id, tag)
 		_, callbackErr = c.PostJSON(uri, &art, nil)

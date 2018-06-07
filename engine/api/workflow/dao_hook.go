@@ -149,7 +149,7 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.WorkflowNodeHook, error) {
 		nodes = append(nodes, sdk.WorkflowNodeHook(res[i]))
 	}
 
-	log.Debug("LoadAllHooks> %+v", nodes)
+	log.Debug("LoadAllHooks> %d hooks loaded", len(nodes))
 
 	return nodes, nil
 }

@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/feature"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var traceEnable bool
@@ -43,8 +42,6 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 	if !traceEnable || !opt.Enable {
 		return ctx, nil
 	}
-
-	log.Debug("tracing.Start> staring a new %s span", opt.Name)
 
 	tags := []trace.Attribute{}
 	if opt.Worker != nil {

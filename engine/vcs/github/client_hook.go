@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
@@ -22,7 +21,6 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 			ContentType: "json",
 		},
 	}
-	log.Debug("github.CreateHook > %+v", r)
 	b, err := json.Marshal(r)
 	if err != nil {
 		return sdk.WrapError(err, "github.CreateHook > Cannot marshal body %+v", r)

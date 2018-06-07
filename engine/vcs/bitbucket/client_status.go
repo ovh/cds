@@ -51,8 +51,6 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 		Description: statusData.description,
 	}
 
-	log.Debug("SetStatus> hash:%s status:%+v", statusData.hash, status)
-
 	values, err := json.Marshal(status)
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to marshall status")

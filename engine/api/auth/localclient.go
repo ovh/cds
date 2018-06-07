@@ -84,8 +84,6 @@ func (c *LocalClient) Authentify(username, password string) (bool, error) {
 		return false, err
 	}
 
-	log.Debug("Authentify> %+v", u)
-
 	b := user.IsCheckValid(password, u.Auth.HashedPassword)
 	return b, err
 }

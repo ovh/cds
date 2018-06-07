@@ -93,7 +93,6 @@ func (c *KafkaClient) sendEvent(event *sdk.Event) error {
 	if errs != nil {
 		return errs
 	}
-	log.Debug("Event %+v sent to topic %s partition %d offset %d", event, c.options.Topic, partition, offset)
 	return nil
 }
 

@@ -99,8 +99,6 @@ func (api *API) putPlatformModelHandler() Handler {
 			return sdk.WrapError(err, "putPlatformModelHandler")
 		}
 
-		log.Debug("putPlatformModelHandler> %+v", m)
-
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "putPlatformModelHandler> Unable to start tx")
