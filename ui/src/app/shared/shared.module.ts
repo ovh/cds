@@ -84,6 +84,9 @@ import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.comp
 import {ClipboardModule} from 'ngx-clipboard';
 import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component';
 import {AuditListComponent} from './audit/list/audit.list.component';
+import {WarningTabComponent} from './warning/tab/warning.tab.component';
+import {WarningMarkComponent} from './warning/mark-single/warning.mark.component';
+import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -129,6 +132,9 @@ import {AuditListComponent} from './audit/list/audit.list.component';
         VariableValueComponent,
         WarningModalComponent,
         DeleteModalComponent,
+        WarningTabComponent,
+        WarningMarkComponent,
+        WarningMarkListComponent,
         WorkflowNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -215,6 +221,9 @@ import {AuditListComponent} from './audit/list/audit.list.component';
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
+        WarningTabComponent,
+        WarningMarkComponent,
+        WarningMarkListComponent,
         WarningModalComponent,
         DeleteModalComponent,
         WorkflowNodeComponent,

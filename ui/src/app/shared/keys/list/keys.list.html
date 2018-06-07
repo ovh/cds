@@ -12,6 +12,9 @@
         <tbody>
         <tr *ngFor="let k of getDataForCurrentPage()">
             <td>
+                <ng-container *ngIf="warnings">
+                    <app-warning-mark [warning]="warnings.get(k.name)"></app-warning-mark>
+                </ng-container>
                 {{ k.name }}
             </td>
             <td>

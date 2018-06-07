@@ -17,6 +17,7 @@
     <ng-template #applications>
         <div class="ui stackable four column grid">
             <div class="center aligned column" *ngFor="let app of filteredApplications">
+                <app-warning-mark-list [warnings]="warnMap?.get(app.name)"></app-warning-mark-list>
                 <a [routerLink]="['./application', app.name]">{{app.name}}</a>
             </div>
         </div>

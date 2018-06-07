@@ -9,6 +9,9 @@
         <tbody>
         <tr *ngFor="let r of getDataForCurrentPage()">
             <td>
+                <ng-container *ngIf="warnings">
+                    <app-warning-mark [warning]="warnings.get(r.name)"></app-warning-mark>
+                </ng-container>
                 {{r.name}}
                 <span *ngIf="r.username !== ''"> - {{ 'project_repoman_created_by' | translate }}{{r.username}}</span>
             </td>
