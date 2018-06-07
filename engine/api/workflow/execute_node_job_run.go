@@ -187,7 +187,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		}
 		if sdk.StatusIsTerminated(wr.Status) {
 			wr.LastExecution = time.Now()
-			if err := resyncCommitStatus(ctx, dbCopy, store, proj, wr); err != nil {
+			if err := ResyncCommitStatus(ctx, dbCopy, store, proj, wr); err != nil {
 				log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
 			}
 		}

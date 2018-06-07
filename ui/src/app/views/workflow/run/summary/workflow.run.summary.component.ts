@@ -76,4 +76,11 @@ export class WorkflowRunSummaryComponent implements OnInit {
             .pipe(finalize(() => this.loadingAction = false))
             .subscribe(() => this._toast.success('', this._translate.instant('workflow_stopped')));
     }
+
+    resyncVCSStatus() {
+      this.loadingAction = true;
+      this._workflowRunService.resyncVCSStatus(this.project.key, this.workflowName, this.workflowRun.num)
+          .pipe(finalize(() => this.loadingAction = false))
+          .subscribe(() => this._toast.success('', this._translate.instant('workflow_vcs_resynced')));
+    }
 }
