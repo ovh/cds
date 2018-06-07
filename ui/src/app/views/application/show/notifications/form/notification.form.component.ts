@@ -18,7 +18,7 @@ import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ProjectService} from '../../../../../service/project/project.service';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {cloneDeep} from 'lodash';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 
 @Component({

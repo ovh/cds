@@ -1,3 +1,5 @@
+
+import {zip as observableZip} from 'rxjs';
 import {Component, EventEmitter, Input, Output, ViewChild, OnInit} from '@angular/core';
 import {
     Workflow, WorkflowNode, WorkflowNodeHook
@@ -11,7 +13,6 @@ import {Project} from '../../../../../model/project.model';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {HookEvent} from '../hook.event';
 import {first, finalize} from 'rxjs/operators';
-import {Observable} from 'rxjs/Observable';
 import {ProjectPlatform} from '../../../../../model/platform.model';
 
 @Component({
@@ -94,7 +95,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
 
     show(): void {
         this.loadingModels = true;
-        Observable.zip(
+        observableZip(
             this._hookService.getHookModel(this.project, this.workflow, this.node),
             this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id),
             (hms, wtc) => {

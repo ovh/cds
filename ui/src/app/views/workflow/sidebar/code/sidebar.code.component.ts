@@ -8,7 +8,7 @@ import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.se
 import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 
 @Component({

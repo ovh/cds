@@ -1,5 +1,7 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {HttpClient, HttpParams, HttpHeaders} from '@angular/common/http';
 import {GroupPermission} from '../../model/group.model';
@@ -105,7 +107,7 @@ export class WorkflowService {
      * @returns {Observable<boolean>}
      */
     deleteWorkflow(key: string, workflow: Workflow): Observable<boolean> {
-        return this._http.delete('/project/' + key + '/workflows/' + workflow.name).map(res => true);
+        return this._http.delete('/project/' + key + '/workflows/' + workflow.name).pipe(map(res => true));
     }
 
     getTriggerCondition(key: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {

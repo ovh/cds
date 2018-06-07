@@ -14,8 +14,9 @@ export class PermissionFormComponent {
 
     public ready = false;
 
-    private permissionList;
-    private groupList: Group[];
+
+    permissionList: {};
+    groupList: Group[];
     newGroupPermission: GroupPermission;
 
     @Input() loading = false;

@@ -1,5 +1,7 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {Workflow} from '../../../model/workflow.model';
 import {Commit} from '../../../model/repositories.model';
 import {RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
@@ -52,7 +54,7 @@ export class WorkflowRunService {
      * @returns {Observable<boolean>}
      */
     stopWorkflowRun(key: string, workflowName: string, num: number): Observable<boolean> {
-        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/stop', null).map(() => true);
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/stop', null).pipe(map(() => true));
     }
 
     /**
@@ -64,8 +66,8 @@ export class WorkflowRunService {
      * @returns {Observable<boolean>}
      */
     stopNodeRun(key: string, workflowName: string, num: number, id: number): Observable<boolean> {
-        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/nodes/' + id + '/stop', null)
-            .map (() => true);
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/nodes/' + id + '/stop', null).pipe(
+            map (() => true));
     }
 
     /**
@@ -141,6 +143,6 @@ export class WorkflowRunService {
     updateRunNumber(key: string, workflow: Workflow, num: number): Observable<boolean> {
         let r = new RunNumber();
         r.num = num;
-        return this._http.post<void>('/project/' + key + '/workflows/' + workflow.name + '/runs/num', r).map(() => true);
+        return this._http.post<void>('/project/' + key + '/workflows/' + workflow.name + '/runs/num', r).pipe(map(() => true));
     }
 }

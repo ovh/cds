@@ -1,5 +1,7 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {Application} from '../../model/application.model';
 import {Variable} from '../../model/variable.model';
 import {RepositoryPoller} from '../../model/polling.model';
@@ -41,10 +43,10 @@ export class ApplicationService {
                 params = params.append('remote', filter.remote);
             }
         }
-        return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params}).map(a => {
+        return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params}).pipe(map(a => {
             a.vcs_strategy.password = '**********';
             return a;
-        });
+        }));
     }
 
     /**
@@ -86,9 +88,9 @@ export class ApplicationService {
      * @returns {Observable<boolean>}
      */
     deleteApplication(key: string, appName: string): Observable<boolean> {
-        return this._http.delete('/project/' + key + '/application/' + appName).map(res => {
+        return this._http.delete('/project/' + key + '/application/' + appName).pipe(map(res => {
             return true;
-        });
+        }));
     }
 
     /**

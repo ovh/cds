@@ -34,7 +34,7 @@ export class WorkerModelEditComponent implements OnInit {
     newEnvValue: string;
 
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
-    private workerModelPatternError = false;
+    workerModelPatternError = false;
 
     constructor(private sharedService: SharedService,
                 private _workerModelService: WorkerModelService, private _groupService: GroupService,

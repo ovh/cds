@@ -4,7 +4,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {ResolveEnd, ResolveStart, Router} from '@angular/router';
 import {CDSWorker} from './shared/worker/worker';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';

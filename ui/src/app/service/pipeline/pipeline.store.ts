@@ -1,7 +1,7 @@
+
+import {of as observableOf, Observable, BehaviorSubject} from 'rxjs';
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
-import {Observable} from 'rxjs/Observable';
-import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 
 import {Pipeline} from '../../model/pipeline.model';
 import {Application} from '../../model/application.model';
@@ -10,7 +10,7 @@ import {Stage} from '../../model/stage.model';
 import {Job} from '../../model/job.model';
 import {GroupPermission} from '../../model/group.model';
 import {Parameter} from '../../model/parameter.model';
-import 'rxjs/add/observable/of';
+
 import {mergeMap, map} from 'rxjs/operators';
 
 
@@ -37,12 +37,12 @@ export class PipelineStore {
         let store = this._pipeline.getValue();
         let pipKey = key + '-' + pipName;
         if (store.size === 0 || !store.get(pipKey)) {
-            return this._pipelineService.getPipeline(key, pipName).map( res => {
+            return this._pipelineService.getPipeline(key, pipName).pipe(map( res => {
                 this._pipeline.next(store.set(pipKey, res));
                 return res;
-            });
+            }));
         } else {
-            return Observable.of(store.get(pipKey));
+            return observableOf(store.get(pipKey));
         }
     }
 
@@ -109,7 +109,7 @@ export class PipelineStore {
               if (pipName) {
                 return this._pipelineService.getPipeline(key, pipName);
               }
-              return Observable.of(null);
+              return observableOf(null);
             }),
             map((pip) => {
                 if (pip) {
@@ -130,12 +130,12 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     createPipeline(key: string, pipeline: Pipeline): Observable<Pipeline> {
-        return this._pipelineService.createPipeline(key, pipeline).map(pip => {
+        return this._pipelineService.createPipeline(key, pipeline).pipe(map(pip => {
             let store = this._pipeline.getValue();
             let pipKey = key + '-' + pip.name;
             this._pipeline.next(store.set(pipKey, pip));
             return pip;
-        });
+        }));
     }
 
     /**
@@ -146,7 +146,7 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     updatePipeline(key: string, oldName: string, pipeline: Pipeline): Observable<Pipeline> {
-        return this._pipelineService.updatePipeline(key, oldName, pipeline).map(pip => {
+        return this._pipelineService.updatePipeline(key, oldName, pipeline).pipe(map(pip => {
             // update project cache
             let cache = this._pipeline.getValue();
             let pipKey = key + '-' + oldName;
@@ -157,7 +157,7 @@ export class PipelineStore {
                 this._pipeline.next(cache.set(key + '-' + pip.name, pToUpdate).remove(pipKey));
             }
             return pip;
-        });
+        }));
     }
 
     /**
@@ -167,11 +167,11 @@ export class PipelineStore {
      * @returns {Observable<boolean>}
      */
     deletePipeline(key: string, pipName: string): Observable<boolean> {
-        return this._pipelineService.deletePipeline(key, pipName).map(() => {
+        return this._pipelineService.deletePipeline(key, pipName).pipe(map(() => {
             let pipKey = key + '-' + pipName;
             this.removeFromStore(pipKey);
             return true;
-        });
+        }));
     }
 
     /**
@@ -181,10 +181,10 @@ export class PipelineStore {
      * @param stage Stage to add
      */
     addStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
-        return this._pipelineService.insertStage(key, pipName, stage).map(res => {
+        return this._pipelineService.insertStage(key, pipName, stage).pipe(map(res => {
             this.refreshPipelineStageCache(key, pipName, res);
             return res;
-        });
+        }));
     }
 
     /**
@@ -195,9 +195,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     updateStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
-        return this._pipelineService.updateStage(key, pipName, stage).map(res => {
+        return this._pipelineService.updateStage(key, pipName, stage).pipe(map(res => {
             return this.refreshPipelineStageCache(key, pipName, res);
-        });
+        }));
     }
 
     /**
@@ -208,9 +208,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     removeStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
-        return this._pipelineService.deleteStage(key, pipName, stage).map(res => {
+        return this._pipelineService.deleteStage(key, pipName, stage).pipe(map(res => {
             return this.refreshPipelineStageCache(key, pipName, res);
-        });
+        }));
     }
 
     /**
@@ -242,9 +242,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     addJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
-        return this._pipelineService.addJob(key, pipName, stageID, job).map(res => {
+        return this._pipelineService.addJob(key, pipName, stageID, job).pipe(map(res => {
             return this.refreshPipelineStageCache(key, pipName, res);
-        });
+        }));
     }
 
     /**
@@ -256,9 +256,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     updateJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
-        return this._pipelineService.updateJob(key, pipName, stageID, job).map(res => {
+        return this._pipelineService.updateJob(key, pipName, stageID, job).pipe(map(res => {
             return this.refreshPipelineStageCache(key, pipName, res);
-        });
+        }));
     }
 
     /**
@@ -270,9 +270,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     removeJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
-        return this._pipelineService.removeJob(key, pipName, stageID, job).map(res => {
+        return this._pipelineService.removeJob(key, pipName, stageID, job).pipe(map(res => {
             return this.refreshPipelineStageCache(key, pipName, res);
-        });
+        }));
     }
 
     /**
@@ -283,9 +283,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     addPermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._pipelineService.addPermission(key, pipName, gp).map(pip => {
+        return this._pipelineService.addPermission(key, pipName, gp).pipe(map(pip => {
             return this.refreshPipelinePermissionsCache(key, pipName, pip);
-        });
+        }));
     }
 
     /**
@@ -296,9 +296,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     updatePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._pipelineService.updatePermission(key, pipName, gp).map(pip => {
+        return this._pipelineService.updatePermission(key, pipName, gp).pipe(map(pip => {
             return this.refreshPipelinePermissionsCache(key, pipName, pip);
-        });
+        }));
     }
 
     /**
@@ -309,9 +309,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     removePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._pipelineService.removePermission(key, pipName, gp).map(pip => {
+        return this._pipelineService.removePermission(key, pipName, gp).pipe(map(pip => {
             return this.refreshPipelinePermissionsCache(key, pipName, pip);
-        });
+        }));
     }
 
     /**
@@ -342,9 +342,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     addParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._pipelineService.addParameter(key, pipName, param).map(pip => {
+        return this._pipelineService.addParameter(key, pipName, param).pipe(map(pip => {
             return this.refreshPipelineParameterCache(key, pipName, pip);
-        });
+        }));
     }
 
     /**
@@ -355,9 +355,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     updateParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._pipelineService.updateParameter(key, pipName, param).map(pip => {
+        return this._pipelineService.updateParameter(key, pipName, param).pipe(map(pip => {
             return this.refreshPipelineParameterCache(key, pipName, pip);
-        });
+        }));
     }
 
     /**
@@ -368,9 +368,9 @@ export class PipelineStore {
      * @returns {Observable<Pipeline>}
      */
     removeParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
-        return this._pipelineService.removeParameter(key, pipName, param).map(pip => {
+        return this._pipelineService.removeParameter(key, pipName, param).pipe(map(pip => {
             return this.refreshPipelineParameterCache(key, pipName, pip);
-        });
+        }));
     }
 
     /**
@@ -400,9 +400,9 @@ export class PipelineStore {
      * @param stageMoved Stage to move
      */
     moveStage(key: string, pipName: string, stageMoved: Stage) {
-        return this._pipelineService.moveStage(key, pipName, stageMoved).map( pip => {
+        return this._pipelineService.moveStage(key, pipName, stageMoved).pipe(map( pip => {
            return this.refreshPipelineStageCache(key, pipName, pip);
-        });
+        }));
     }
 
 

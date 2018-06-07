@@ -1,7 +1,7 @@
 import {Component, ViewChild} from '@angular/core';
 import {Project} from '../../../model/project.model';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';

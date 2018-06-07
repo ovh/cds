@@ -18,7 +18,6 @@
   "include": [
     "**/*.ts",
     "../node_modules/ng2-codemirror-typescript/**/*.ts",
-    "../node_modules/ngx-auto-scroll/**/*.ts",
     "../node_modules/ng-semantic/**/*.ts"
   ],
   "exclude": [

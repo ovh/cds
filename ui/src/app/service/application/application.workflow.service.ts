@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {Branch, Remote} from '../../model/repositories.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
 

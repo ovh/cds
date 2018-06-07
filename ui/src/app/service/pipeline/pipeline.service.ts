@@ -1,5 +1,7 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {Pipeline} from '../../model/pipeline.model';
 import {Application} from '../../model/application.model';
 import {GroupPermission} from '../../model/group.model';
@@ -73,9 +75,9 @@ export class PipelineService {
      * @returns {Observable<boolean>}
      */
     deletePipeline(key: string, pipName: string): Observable<boolean> {
-        return this._http.delete('/project/' + key + '/pipeline/' + pipName).map(() => {
+        return this._http.delete('/project/' + key + '/pipeline/' + pipName).pipe(map(() => {
             return true;
-        });
+        }));
     }
 
     /**

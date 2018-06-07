@@ -1,6 +1,8 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import {PipelineBuild, PipelineRunRequest} from '../../../model/pipeline.model';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {Commit} from '../../../model/repositories.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
@@ -14,7 +16,7 @@ export class ApplicationPipelineService {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/stop';
         let params = new HttpParams();
         params = params.append('envName', envName);
-        return this._http.post(url, null, {params: params}).map(res => true);
+        return this._http.post(url, null, {params: params}).pipe(map(res => true));
     }
 
     /**
@@ -134,6 +136,6 @@ export class ApplicationPipelineService {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber;
         let params = new HttpParams();
         params = params.append('envName', envName);
-        return this._http.delete(url, {params: params}).map(res => true);
+        return this._http.delete(url, {params: params}).pipe(map(res => true));
     }
 }

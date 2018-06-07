@@ -14,9 +14,9 @@ import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
-import 'rxjs/add/observable/zip';
+
 
 @Component({
     selector: 'app-workflow-sidebar-run-node',

@@ -1,6 +1,6 @@
 import {Component, Input, OnInit, NgZone, ViewChild, ElementRef, OnDestroy} from '@angular/core';
 import {Router, ActivatedRoute} from '@angular/router';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
 import {Job, StepStatus} from '../../../../../../model/job.model';

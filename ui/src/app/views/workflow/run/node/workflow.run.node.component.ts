@@ -4,7 +4,7 @@ import {CDSWorker} from '../../../../shared/worker/worker';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {environment} from '../../../../../environments/environment';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';

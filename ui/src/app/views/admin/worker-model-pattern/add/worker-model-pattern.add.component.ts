@@ -24,8 +24,8 @@ export class WorkerModelPatternAddComponent {
     newEnvName: string;
     newEnvValue: string;
 
-    private workerModelPatternNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
-    private workerModelPatternError = false;
+    workerModelPatternNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
+    workerModelPatternError = false;
 
     constructor(private _workerModelService: WorkerModelService,
                 private _toast: ToastService,

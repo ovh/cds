@@ -24,7 +24,7 @@ import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook
 import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 
 @Component({
     selector: 'app-workflow-graph',

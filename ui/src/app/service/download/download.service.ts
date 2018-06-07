@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {Download} from '../../model/download.model';
 import {HttpClient} from '@angular/common/http';
 
