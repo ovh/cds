@@ -31,7 +31,6 @@ export class AuditListComponent extends Table {
     }
 
     updateSelectedAudit(a: AuditWorkflow): void {
-        console.log(a);
         this.selectedAudit = a;
         switch (a.data_type) {
             case 'yaml':
