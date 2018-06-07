@@ -89,7 +89,7 @@ func CleanOldWorkflow(c context.Context, store cache.Store, DBFunc func() *gorp.
 				close(chanErr)
 
 				for has := range hasErrorChan {
-					log.Debug("CanClean pipeline %+v", has)
+					log.Debug("CanClean pipeline %v", has)
 					if !has {
 						log.Debug("CleanOldWorkflow> Start removing pipelines")
 						tx, errT := DBFunc().Begin()

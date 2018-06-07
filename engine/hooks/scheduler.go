@@ -57,7 +57,6 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 			return c.Err()
 		case <-tick.C:
 			size := s.Dao.QueueLen()
-			log.Debug("Hooks> retryTaskExecutionsRoutine> begin - queue size: %d - ticker:%d", size, s.Cfg.RetryDelay)
 			if size > 20 {
 				log.Warning("Hooks> too many tasks in scheduler for now, skipped this retry ticker. size:%d", size)
 				continue
@@ -101,7 +100,6 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					}
 				}
 			}
-			log.Debug("Hooks> retryTaskExecutionsRoutine> end")
 		}
 	}
 }

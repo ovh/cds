@@ -148,7 +148,6 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 	if err != nil {
 		return "", sdk.WrapError(err, "SwiftStore> Unable to get container %s", container)
 	}
-	log.Debug("SwiftStore> Get container %s metadata %+v", container, headers)
 
 	key := headers["X-Container-Meta-Temp-Url-Key"]
 	if key == "" {

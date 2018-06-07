@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -140,7 +139,6 @@ bigloop:
 			}
 
 			// Migrate pipeline parameter
-			log.Warning("%+v", childPip.Trigger.Parameters)
 			n.Context.DefaultPipelineParameters = childPip.Trigger.Parameters
 
 			t.WorkflowDestNode = *n
