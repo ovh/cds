@@ -45,7 +45,7 @@
                     <app-workflow-tests-result [tests]="nodeRun.tests"></app-workflow-tests-result>
                 </div>
                 <div *ngSwitchCase="'history'">
-                    <app-workflow-node-run-history [project]="project" [currentBuild]="nodeRun" [history]="nodeRunsHistory" [workflowName]="workflowName"></app-workflow-node-run-history>
+                    <app-workflow-node-run-history [run]="workflowRun" [project]="project" [currentBuild]="nodeRun" [history]="nodeRunsHistory" [workflowName]="workflowName"></app-workflow-node-run-history>
                 </div>
             </div>
         </div>
