@@ -189,6 +189,7 @@ func (g *githubClient) allCommitBetween(repo string, untilDate time.Time, sinceD
 			} else {
 				nextPage += "?"
 			}
+			log.Debug("github.allCommitBetween> [GET] %s", nextPage+urlValues.Encode())
 			status, body, headers, err := g.get(nextPage+urlValues.Encode(), withoutETag)
 			if err != nil {
 				log.Warning("githubClient.Commits> Error %s", err)
