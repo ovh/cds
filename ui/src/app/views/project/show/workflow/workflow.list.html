@@ -17,6 +17,7 @@
     <ng-template #workflows>
         <div class="ui stackable four column grid">
             <div class="center aligned column" *ngFor="let wfName of filteredWorkflows">
+                <app-warning-mark-list [warnings]="warnMap?.get(wfName)"></app-warning-mark-list>
                 <a [routerLink]="['./workflow', wfName]">{{wfName}}</a>
             </div>
         </div>

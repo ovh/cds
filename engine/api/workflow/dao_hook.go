@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdateHook Update a workflow node hook
@@ -148,8 +147,6 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.WorkflowNodeHook, error) {
 		}
 		nodes = append(nodes, sdk.WorkflowNodeHook(res[i]))
 	}
-
-	log.Debug("LoadAllHooks> %d hooks loaded", len(nodes))
 
 	return nodes, nil
 }

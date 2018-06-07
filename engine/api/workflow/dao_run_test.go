@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -89,7 +90,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
+				{
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip,
 					},
@@ -135,6 +136,175 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	test.Equal(t, 3, toDeleteNb, "Number of workflow runs to be purged isn't correct")
 }
 
+func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_purge_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+		HistoryLength: 2,
+		PurgeTags:     []string{"git.branch"},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	w1, err := workflow.Load(db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	_, _, errWr := workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		User: *u,
+		Payload: map[string]string{
+			"git.branch": "master",
+			"git.author": "test",
+		},
+	}, nil)
+	test.NoError(t, errWr)
+
+	for i := 0; i < 5; i++ {
+		wfr, _, errWr := workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": "master",
+				"git.author": "test",
+			},
+		}, nil)
+		test.NoError(t, errWr)
+
+		wfr.Status = sdk.StatusFail.String()
+		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
+	}
+
+	errP := workflow.PurgeWorkflowRun(db, *w1)
+	test.NoError(t, errP)
+
+	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	test.NoError(t, errRuns)
+	test.Equal(t, 6, count, "Number of workflow runs isn't correct")
+	toDeleteNb := 0
+	wfInSuccess := false
+	for _, wfRun := range wruns {
+		if wfRun.ToDelete {
+			toDeleteNb++
+			if wfRun.Status == sdk.StatusSuccess.String() {
+				wfInSuccess = true
+			}
+		}
+	}
+
+	test.Equal(t, 3, toDeleteNb, "Number of workflow runs to be purged isn't correct")
+	test.Equal(t, false, wfInSuccess, "The workflow should keep at least one workflow run in success")
+}
+
+func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_purge_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+		HistoryLength: 2,
+		PurgeTags:     []string{"git.branch"},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	w1, err := workflow.Load(db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	for i := 0; i < 5; i++ {
+		wfr, _, errWr := workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": "master",
+				"git.author": "test",
+			},
+		}, nil)
+		test.NoError(t, errWr)
+
+		wfr.Status = sdk.StatusFail.String()
+		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
+	}
+
+	errP := workflow.PurgeWorkflowRun(db, *w1)
+	test.NoError(t, errP)
+
+	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	test.NoError(t, errRuns)
+	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
+	fmt.Printf("%+v\n", wruns)
+	toDeleteNb := 0
+	for _, wfRun := range wruns {
+		if wfRun.ToDelete {
+			toDeleteNb++
+		}
+	}
+
+	test.Equal(t, 3, toDeleteNb, "Number of workflow runs to be purged isn't correct")
+}
+
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
@@ -164,7 +334,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
 			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
+				{
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip,
 					},
@@ -207,5 +377,80 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		}
 	}
 
-	test.Equal(t, 8, toDeleteNb, "Number of workflow runs to be purged isn't correct")
+	test.Equal(t, 7, toDeleteNb, "Number of workflow runs to be purged isn't correct (because it should keep at least one in success)")
+}
+
+func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_purge_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+		HistoryLength: 20,
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	w1, err := workflow.Load(db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
+	for i := 0; i < 10; i++ {
+		_, _, errWr := workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": branches[i],
+				"git.author": "test",
+			},
+		}, nil)
+		test.NoError(t, errWr)
+	}
+
+	errP := workflow.PurgeWorkflowRun(db, *w1)
+	test.NoError(t, errP)
+
+	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	test.NoError(t, errRuns)
+	test.Equal(t, 10, count, "Number of workflow runs isn't correct")
+
+	toDeleteNb := 0
+	for _, wfRun := range wruns {
+		if wfRun.ToDelete {
+			toDeleteNb++
+		}
+	}
+
+	test.Equal(t, 0, toDeleteNb, "Number of workflow runs to be purged isn't correct (because it should keep at least one in success)")
 }

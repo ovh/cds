@@ -1,7 +1,6 @@
 import {NgModule, ModuleWithProviders, SkipSelf, Optional} from '@angular/core';
 import {ProjectService} from './project/project.service';
 import {ProjectStore} from './project/project.store';
-import {Http} from '@angular/http';
 import {AuthentificationStore} from './auth/authentification.store';
 import {UserService} from './user/user.service';
 import {CanActivateAuthRoute} from './auth/authenRouteActivate';
@@ -54,6 +53,8 @@ import {KeyService} from './keys/keys.service';
 import {PlatformService} from './platform/platform.service';
 import {ImportAsCodeService} from './import-as-code/import.service';
 import {BroadcastService} from './broadcast/broadcast.service';
+import {WarningService} from './warning/warning.service';
+import {WarningStore} from './warning/warning.store';
 
 @NgModule({})
 export class ServicesModule {
@@ -107,6 +108,8 @@ export class ServicesModule {
                 RouterService,
                 UserService,
                 VariableService,
+                WarningService,
+                WarningStore,
                 WorkerModelService,
                 WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
@@ -168,9 +171,9 @@ export {
     RouterService,
     UserService,
     VariableService,
+    WarningStore,
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,
-    WorkflowCoreService,
-    Http
+    WorkflowCoreService
 }

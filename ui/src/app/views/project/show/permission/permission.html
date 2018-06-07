@@ -1,4 +1,7 @@
-<h3>{{ 'project_permission_list_title' | translate }}</h3>
+<h3>
+    <app-warning-mark-list [warnings]="warnings"></app-warning-mark-list>
+    {{ 'project_permission_list_title' | translate }}
+</h3>
 <app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
 <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
     <h3>{{ 'project_permission_form_title' | translate }}</h3>

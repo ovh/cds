@@ -266,9 +266,15 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 		return
 	}
 
-	if _, errP := s.Client.Publish(channel, iUnquoted).Result(); errP != nil {
+	for i := 0; i < 10; i++ {
+		_, errP := s.Client.Publish(channel, iUnquoted).Result()
+		if errP == nil {
+			break
+		}
 		log.Warning("redis.Publish> Unable to publish in channel %s the message %v: %v", channel, value, errP)
+		time.Sleep(100 * time.Millisecond)
 	}
+
 }
 
 // Subscribe to a channel
@@ -387,7 +393,7 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 	}
 	for i := 0; i < retryCount; i++ {
 		res, errRedis = s.Client.SetNX(key, "true", expiration).Result()
-		if errRedis == nil {
+		if errRedis == nil && res {
 			break
 		}
 		time.Sleep(time.Duration(retrywdMillisecond) * time.Millisecond)

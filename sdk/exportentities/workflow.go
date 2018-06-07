@@ -3,6 +3,7 @@ package exportentities
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -31,6 +32,7 @@ type Workflow struct {
 	Permissions         map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 	Metadata            map[string]string           `json:"metadata,omitempty" yaml:"metadata,omitempty" db:"-"`
 	PurgeTags           []string                    `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty" db:"-"`
+	HistoryLength       int64                       `json:"history_length,omitempty" yaml:"history_length,omitempty" db:"-"`
 }
 
 // NodeEntry represents a node as code
@@ -77,6 +79,12 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		}
 	}
 
+	if w.HistoryLength > 0 {
+		exportedWorkflow.HistoryLength = w.HistoryLength
+	} else {
+		exportedWorkflow.HistoryLength = 20
+	}
+
 	exportedWorkflow.PurgeTags = w.PurgeTags
 	nodes := w.Nodes(false)
 
@@ -100,6 +108,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			ancestors = append(ancestors, a.Name)
 		}
 
+		sort.Strings(ancestors)
 		entry.DependsOn = ancestors
 		entry.PipelineName = n.Pipeline.Name
 		conditions := []sdk.WorkflowNodeCondition{}
@@ -339,6 +348,9 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 		for k, v := range w.Metadata {
 			wf.Metadata[k] = v
 		}
+	}
+	if w.HistoryLength > 0 && w.HistoryLength != sdk.DefaultHistoryLength {
+		wf.HistoryLength = w.HistoryLength
 	}
 
 	rand.Seed(time.Now().Unix())

@@ -2,21 +2,44 @@ package warning
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
+	"github.com/mitchellh/hashstructure"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 )
 
 func removeProjectWarning(db gorp.SqlExecutor, warningType string, element string, key string) error {
-	_, err := db.Exec("DELETE FROM warning where type = $1 and element = $2 and project_key = $3", warningType, element, key)
+	result, err := db.Exec("DELETE FROM warning where type = $1 and element = $2 and project_key = $3", warningType, element, key)
+	if err != nil {
+		return sdk.WrapError(err, "removeProjectWarning> Unable to remove warning %s/%s", warningType, element)
+	}
+	nb, errR := result.RowsAffected()
+	if errR != nil {
+		return sdk.WrapError(errR, "removeProjectWarning> Unable to read result")
+	}
+	if nb == 1 {
+		event.PublishDeleteWarning(warningType, element, key, "", "", "", "")
+	}
 	return err
 }
 
 func Insert(db gorp.SqlExecutor, w sdk.WarningV2) error {
+	h, err := hashstructure.Hash(w, nil)
+	if err != nil {
+		return sdk.WrapError(err, "warning.Insert> Unable to calculate hash")
+	}
+	w.Hash = fmt.Sprintf("%v", h)
 	warn := warning(w)
-	return db.Insert(&warn)
+	if err := db.Insert(&warn); err != nil {
+		return sdk.WrapError(err, "warning.Insert> Unable to insert warning")
+	}
+	w = sdk.WarningV2(warn)
+	event.PublishAddWarning(w)
+	return nil
 }
 
 // PostInsert is a db hook

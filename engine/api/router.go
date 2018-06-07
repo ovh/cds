@@ -306,10 +306,15 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 		select {
 		case req := <-chanRequest:
 			if err := req.do(ctx, handler); err != nil {
-				if req.nbErrors > retry {
-					log.Error("Asynchronous Request on Error : %v", err)
+				myError, ok := err.(sdk.Error)
+				if ok && myError.Status >= 500 {
+					if req.nbErrors > retry {
+						log.Error("Asynchronous Request on Error: %v with status:%d", err, myError.Status)
+					} else {
+						chanRequest <- req
+					}
 				} else {
-					chanRequest <- req
+					log.Error("Asynchronous Request on Error: %v", err)
 				}
 			}
 		case <-ctx.Done():
@@ -320,7 +325,7 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 
 // Asynchronous handles an AsynchronousHandlerFunc
 func (r *Router) Asynchronous(handler AsynchronousHandlerFunc, retry int) HandlerFunc {
-	chanRequest := make(chan asynchronousRequest, runtime.GOMAXPROCS(0))
+	chanRequest := make(chan asynchronousRequest, 1000)
 	go processAsyncRequests(r.Background, chanRequest, handler, retry)
 
 	return func() Handler {

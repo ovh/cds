@@ -7,6 +7,7 @@ import {WarningModalComponent} from '../../../../shared/modal/warning/warning.co
 import {Router} from '@angular/router';
 import {User} from '../../../../model/user.model';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {Warning} from '../../../../model/warning.model';
 
 @Component({
     selector: 'app-project-admin',
@@ -14,6 +15,23 @@ import {AuthentificationStore} from '../../../../service/auth/authentification.s
     styleUrls: ['./project.admin.scss']
 })
 export class ProjectAdminComponent implements OnInit {
+
+    @Input('warnings')
+    set warnings(data: Array<Warning>) {
+        if (data) {
+            this.unusedWarning = new Map<string, Warning>();
+            this.missingWarnings = new Array<Warning>();
+            data.forEach(v => {
+                if (v.type.indexOf('MISSING') !== -1) {
+                    this.missingWarnings.push(v);
+                } else {
+                    this.unusedWarning.set(v.element, v);
+                }
+            });
+        }
+    };
+    missingWarnings: Array<Warning>;
+    unusedWarning: Map<string, Warning>;
 
     @Input() project: Project;
     @ViewChild('updateWarning')

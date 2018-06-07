@@ -82,7 +82,9 @@ services:
       # DOCKER_HOST: unix://var/run/docker.sock
       # DOCKER_CERT_PATH: /Users/me/.docker/machines/.client
       # DOCKER_TLS_VERIFY: 1
-      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_HTTP_URL: http://cds-api:8081
+      # CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_HTTP_URL will be use by hatchery to communicate with cds-api
+      # and by container spawned by hatchery to download the binary worker from api.
+      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_HTTP_URL: http://${HOSTNAME}:8081
       CDS_HATCHERY_SWARM_MAXCONTAINERS: 4
     links:
        - cds-api

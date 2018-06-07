@@ -162,21 +162,14 @@ func DeleteAllParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64) error
 	return sdk.WrapError(err, "DeleteAllParameterFromPipeline> Unable to delete all parameters")
 }
 
-// CountInValueParamData represents the result of CountInParamValue function
-type CountInValueParamData struct {
-	Name  string
-	Count int64
-}
-
 // CountInParamValue counts how many time a pattern is in parameter value for the given project
-func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]CountInValueParamData, error) {
+func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]string, error) {
 	query := `
-		SELECT count(*), pipeline.name
+		SELECT DISTINCT pipeline.name
 		FROM pipeline_parameter
 		JOIN pipeline ON pipeline.id = pipeline_parameter.pipeline_id
 		JOIN project ON project.id = pipeline.project_id
-		WHERE value like $2 AND project.projectkey = $1
-		GROUP BY pipeline.name;
+		WHERE value like $2 AND project.projectkey = $1;
 	`
 	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", value))
 	if err != nil {
@@ -184,13 +177,13 @@ func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]CountIn
 	}
 	defer rows.Close()
 
-	results := []CountInValueParamData{}
+	var results []string
 	for rows.Next() {
-		var d CountInValueParamData
-		if err := rows.Scan(&d.Count, &d.Name); err != nil {
+		var pipName string
+		if err := rows.Scan(&pipName); err != nil {
 			return nil, sdk.WrapError(err, "pipeline.CountInParamValue> Unable to scan")
 		}
-		results = append(results, d)
+		results = append(results, pipName)
 	}
 	return results, nil
 }

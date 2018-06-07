@@ -51,11 +51,47 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 			}
 		}
 		if gp.Permission == 0 {
-			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteGroupFromProjectHandler: Group %s doesn't exist on poject %s", groupName, p.Key)
+			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteGroupFromProjectHandler: Group %s doesn't exist on project %s", groupName, p.Key)
 		}
 
 		if err := group.DeleteGroupFromProject(tx, p.ID, g.ID); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from project %s", g.Name, p.Name)
+		}
+
+		// delete from application
+		applications, errla := application.LoadAll(tx, api.Cache, p.Key, getUser(ctx))
+		if errla != nil {
+			return sdk.WrapError(errla, "deleteGroupFromProjectHandler: Cannot load applications for project %s", p.Name)
+		}
+
+		for _, app := range applications {
+			if err := group.DeleteGroupFromApplication(tx, app.ID, g.ID); err != nil {
+				return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from application %s", groupName, app.Name)
+			}
+		}
+
+		// delete from pipelines
+		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, getUser(ctx))
+		if errlp != nil {
+			return sdk.WrapError(errlp, "deleteGroupFromProjectHandler: Cannot load pipelines for project %s", p.Name)
+		}
+
+		for _, pip := range pipelines {
+			if err := group.DeleteGroupFromPipeline(tx, pip.ID, g.ID); err != nil {
+				return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from pipeline %s", groupName, pip.Name)
+			}
+		}
+
+		// delete from environments
+		envs, errle := environment.LoadEnvironments(tx, p.Key, false, getUser(ctx))
+		if errle != nil {
+			return sdk.WrapError(errle, "deleteGroupFromProjectHandler: Cannot load environments for project %s", p.Name)
+		}
+
+		for _, env := range envs {
+			if err := group.DeleteGroupFromEnvironment(tx, env.ID, g.ID); err != nil {
+				return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from environment %s", groupName, env.Name)
+			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {

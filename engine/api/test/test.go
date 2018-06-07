@@ -42,7 +42,7 @@ type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
 var DBConnectionFactory *database.DBConnectionFactory
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
+func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
 	log.SetLogger(t)
 	cfg := LoadTestingConf(t)
 	DBDriver = cfg["dbDriver"]
@@ -91,7 +91,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 }
 
 // LoadTestingConf loads test configuraiton tests.cfg.json
-func LoadTestingConf(t *testing.T) map[string]string {
+func LoadTestingConf(t log.Logger) map[string]string {
 	var f string
 	u, _ := user.Current()
 	if u != nil {

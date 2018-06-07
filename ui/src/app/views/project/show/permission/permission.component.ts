@@ -8,6 +8,7 @@ import {EnvironmentPermissionEvent, PermissionEvent} from '../../../../shared/pe
 import {Environment} from '../../../../model/environment.model';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize, first} from 'rxjs/operators';
+import {Warning} from '../../../../model/warning.model';
 
 @Component({
     selector: 'app-project-permissions',
@@ -16,6 +17,7 @@ import {finalize, first} from 'rxjs/operators';
 export class ProjectPermissionsComponent implements OnInit {
 
     @Input() project: Project;
+    @Input() warnings: Array<Warning>;
 
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;

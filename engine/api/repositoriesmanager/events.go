@@ -81,8 +81,7 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 		var eventWNR sdk.EventRunWorkflowNode
 
 		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
-			log.Error("Error during consumption: %s", err)
-			return err
+			return fmt.Errorf("repositoriesmanager>processEvent> Error during consumption: %s", err)
 		}
 		if eventWNR.RepositoryManagerName == "" {
 			return nil

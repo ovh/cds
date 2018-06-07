@@ -30,11 +30,17 @@
             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitProjectUpdate(true)" #updateWarning></app-warning-modal>
         </app-zone-content>
     </app-zone>
-    <app-zone header="{{ 'project_repoman_title' | translate }}">
+    <app-zone>
+        <h4 class="ui top attached segment">
+            <app-warning-mark-list [warnings]="missingWarnings"></app-warning-mark-list>
+            {{ 'project_repoman_title' | translate }}
+        </h4>
         <app-zone-content class="bottom">
             <app-repomanager-form [project]="project"></app-repomanager-form>
             <app-project-repomanager-list *ngIf="project.vcs_servers && project.vcs_servers.length > 0"
-                                          [project]="project" [reposmanagers]="project.vcs_servers"></app-project-repomanager-list>
+                                          [project]="project" [reposmanagers]="project.vcs_servers"
+                                          [warnings]="unusedWarning"
+            ></app-project-repomanager-list>
         </app-zone-content>
     </app-zone>
     <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">

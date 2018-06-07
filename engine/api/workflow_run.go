@@ -1074,3 +1074,32 @@ func (api *API) getWorkflowRunTagsHandler() Handler {
 		return WriteJSON(w, res, http.StatusOK)
 	}
 }
+
+func (api *API) postResyncVCSWorkflowRunHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		db := api.mustDB()
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+
+		proj, errP := project.Load(db, api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "postResyncVCSWorkflowRunHandler> Cannot load project")
+		}
+
+		wfr, errW := workflow.LoadRun(db, key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if errW != nil {
+			return sdk.WrapError(errW, "postResyncVCSWorkflowRunHandler> Cannot load workflow run")
+		}
+
+		if err := workflow.ResyncCommitStatus(ctx, db, api.Cache, proj, wfr); err != nil {
+			return sdk.WrapError(err, "postResyncVCSWorkflowRunHandler> Cannot resync workflow run commit status")
+		}
+
+		return nil
+	}
+}

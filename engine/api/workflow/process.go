@@ -621,9 +621,17 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	}
 
 	buildParameters := sdk.ParametersToMap(run.BuildParameters)
-	if _, ok := buildParameters["cds.ui.pipeline.run"]; !ok {
-		uiRunURL := fmt.Sprintf("%s/project/%s/workflow/%s/run/%s/node/%d?name=%s", baseUIURL, buildParameters["cds.project"], buildParameters["cds.workflow"], buildParameters["cds.run.number"], run.ID, buildParameters["cds.workflow"])
-		sdk.AddParameter(&run.BuildParameters, "cds.ui.pipeline.run", sdk.StringParameter, uiRunURL)
+	_, okUI := buildParameters["cds.ui.pipeline.run"]
+	_, okID := buildParameters["cds.node.id"]
+	if !okUI || !okID {
+		if !okUI {
+			uiRunURL := fmt.Sprintf("%s/project/%s/workflow/%s/run/%s/node/%d?name=%s", baseUIURL, buildParameters["cds.project"], buildParameters["cds.workflow"], buildParameters["cds.run.number"], run.ID, buildParameters["cds.workflow"])
+			sdk.AddParameter(&run.BuildParameters, "cds.ui.pipeline.run", sdk.StringParameter, uiRunURL)
+		}
+		if !okID {
+			sdk.AddParameter(&run.BuildParameters, "cds.node.id", sdk.StringParameter, fmt.Sprintf("%d", run.ID))
+		}
+
 		if err := UpdateNodeRunBuildParameters(db, run.ID, run.BuildParameters); err != nil {
 			return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow node run build parameters")
 		}

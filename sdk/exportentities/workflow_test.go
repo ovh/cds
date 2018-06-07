@@ -1,6 +1,7 @@
 package exportentities
 
 import (
+	"sort"
 	"strings"
 	"testing"
 
@@ -27,6 +28,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		ProjectPlatformName string
 		PipelineHooks       []HookEntry
 		Permissions         map[string]int
+		HistoryLength       int64
 	}
 	tests := []struct {
 		name    string
@@ -210,6 +212,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		ProjectPlatformName string
 		PipelineHooks       []HookEntry
 		Permissions         map[string]int
+		HistoryLength       int64
 	}
 	tsts := []struct {
 		name    string
@@ -322,6 +325,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						PipelineName: "pipeline-root",
 					},
 				},
+				HistoryLength: 25,
 			},
 			wantErr: false,
 			want: sdk.Workflow{
@@ -345,6 +349,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						},
 					},
 				},
+				HistoryLength: 25,
 			},
 		},
 		// root(pipeline-root) -> first(pipeline-child) -> second(pipeline-child)
@@ -598,6 +603,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				ProjectPlatformName: tt.fields.ProjectPlatformName,
 				PipelineHooks:       tt.fields.PipelineHooks,
 				Permissions:         tt.fields.Permissions,
+				HistoryLength:       tt.fields.HistoryLength,
 			}
 			got, err := w.GetWorkflow()
 			if (err != nil) != tt.wantErr {
@@ -607,7 +613,15 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 
 			expextedValues, _ := dump.ToStringMap(tt.want)
 			actualValues, _ := dump.ToStringMap(got)
-			for expectedKey, expectedValue := range expextedValues {
+
+			var keysExpextedValues []string
+			for k := range expextedValues {
+				keysExpextedValues = append(keysExpextedValues, k)
+			}
+			sort.Strings(keysExpextedValues)
+
+			for _, expectedKey := range keysExpextedValues {
+				expectedValue := expextedValues[expectedKey]
 				actualValue, ok := actualValues[expectedKey]
 				if strings.Contains(expectedKey, ".Ref") {
 					assert.NotEmpty(t, actualValue, "value %s is empty but shoud not be empty", expectedKey)

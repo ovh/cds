@@ -16,7 +16,7 @@ type Workflow struct {
 	ID                      int64                  `json:"id" db:"id" cli:"-"`
 	Name                    string                 `json:"name" db:"name" cli:"name,key"`
 	Description             string                 `json:"description,omitempty" db:"description" cli:"description"`
-	LastModified            time.Time              `json:"last_modified" db:"last_modified"`
+	LastModified            time.Time              `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	ProjectID               int64                  `json:"project_id,omitempty" db:"project_id" cli:"-"`
 	ProjectKey              string                 `json:"project_key" db:"-" cli:"-"`
 	RootID                  int64                  `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
@@ -34,6 +34,7 @@ type Workflow struct {
 	DerivedFromWorkflowName string                 `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
 	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
 	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
+	Audits                  []AuditWorklflow       `json:"audits" db:"-"`
 }
 
 // WorkflowNotification represents notifications on a workflow

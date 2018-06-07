@@ -145,7 +145,7 @@ func (api *API) putPlatformModelHandler() Handler {
 	}
 }
 
-func propagatePublicPlatformModel(db gorp.SqlExecutor, store cache.Store, m sdk.PlatformModel, u *sdk.User) {
+func propagatePublicPlatformModel(db *gorp.DbMap, store cache.Store, m sdk.PlatformModel, u *sdk.User) {
 	if !m.Public && len(m.PublicConfigurations) > 0 {
 		return
 	}
@@ -157,13 +157,25 @@ func propagatePublicPlatformModel(db gorp.SqlExecutor, store cache.Store, m sdk.
 	}
 
 	for _, p := range projs {
-		propagatePublicPlatformModelOnProject(db, store, m, p, u)
+		tx, err := db.Begin()
+		if err != nil {
+			log.Error("propagatePublicPlatformModel> error: %v", err)
+			continue
+		}
+		if err := propagatePublicPlatformModelOnProject(tx, store, m, p, u); err != nil {
+			log.Error("propagatePublicPlatformModel> error: %v", err)
+			_ = tx.Rollback()
+			continue
+		}
+		if err := tx.Commit(); err != nil {
+			log.Error("propagatePublicPlatformModel> unable to commit: %v", err)
+		}
 	}
 }
 
-func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.PlatformModel, p sdk.Project, u *sdk.User) {
+func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Store, m sdk.PlatformModel, p sdk.Project, u *sdk.User) error {
 	if !m.Public {
-		return
+		return nil
 	}
 
 	for pfName, immutableCfg := range m.PublicConfigurations {
@@ -178,8 +190,7 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 				ProjectID:       p.ID,
 			}
 			if err := platform.InsertPlatform(db, &pp); err != nil {
-				log.Error("propagatePublicPlatformModelOnProject> Unable to insert %+v", pp)
-				continue
+				return sdk.WrapError(err, "propagatePublicPlatformModelOnProject> Unable to insert project platform %s", pp.Name)
 			}
 			event.PublishAddProjectPlatform(&p, pp, u)
 			continue
@@ -195,11 +206,11 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 		}
 		oldPP.Config = m.DefaultConfig
 		if err := platform.UpdatePlatform(db, pp); err != nil {
-			log.Error("propagatePublicPlatformModelOnProject> Unable to update %+v", oldPP)
-			continue
+			return sdk.WrapError(err, "propagatePublicPlatformModelOnProject> unable to update project platform %s", pp.Name)
 		}
 		event.PublishUpdateProjectPlatform(&p, oldPP, pp, u)
 	}
+	return nil
 }
 
 func (api *API) deletePlatformModelHandler() Handler {

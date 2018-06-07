@@ -41,6 +41,7 @@
   "admin_migration_title": "Statut de la migration des applications vers les workflows",
 
   "admin_status_title": "CDS Engine - Statut",
+  "admin_queue_title": "File d'attente",
 
   "application_create": "Créer une application",
   "application_created": "Application créée",
@@ -105,15 +106,16 @@
   "artifact_sha512": "SHA512 Checksum",
 
   "audit_change": "Modification",
-  "audit_no": "Aucun audit pour cette variable",
+  "audit_no": "Aucun audit",
   "audit_time_author": "Heure de modification",
-  "audit_title_variable": "Historique des modifications",
+  "audit_title": "Historique des modifications",
   "audit_action": "Action",
   "audit_username": "Utilisateur",
   "audit_before": "Avant modification",
   "audit_after": "Après modification",
   "audit_diff": "Différences",
   "audit_context": "Contexte",
+  "audit_modification_type": "Type de modification",
 
   "btn_cancel": "Annuler",
   "btn_close": "Fermer",
@@ -360,7 +362,7 @@
   "navbar_project_create": "Créer un projet",
   "navbar_admin_broadcast": "Informations",
   "navbar_admin_migration": "Migration vers les workflows",
-  "navbar_admin_status": "CDS Engine - Statut",
+  "navbar_admin_status": "Statut",
   "navbar_documentation": "Documentation",
   "navbar_downloads": "Télécharger",
   "navbar_groups": "Groupes",
@@ -379,6 +381,7 @@
   "navbar_mark_read": "Marquer comme lu",
   "navbar_see_all": "Voir tout",
   "navbar_general": "Général",
+  "navbar_disconnect": "Déconnexion",
 
   "notifications_added": "Notifications ajoutées",
   "notification_clone": "Notification à cloner",
@@ -769,6 +772,9 @@
   "worker_model_shell_cmd": "Commande principale du shell",
 
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
+  "workflow_resync_vcs": "Resynchroniser les statuts VCS",
+  "workflow_resync_vcs_tooltip": "Cette action va renvoyer les statuts de vos pipelines à votre gestionnaire de dépots distants",
+  "workflow_vcs_resynced": "Statuts du dépot distant resynchronisés",
   "workflow_app_info_new_wf_have_pipeline": "Cette application a un ancien workflow, vous pouvez le migrer automatiquement dans l'onglet Administration de l'application.",
   "workflow_app_info_new_wf_link_pipeline": "ATTENTION. Cette action est obsolète. Vous devriez utiliser les nouveaux Workflows CDS (Projet -> Worflow) pour créer et gérer vos workflows.",
   "workflow_added": "Workflow créé",
