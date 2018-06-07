@@ -11,5 +11,7 @@ CREATE TABLE workflow_audit (
   data_type VARCHAR(20)
 );
 
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_AUDIT', 'workflow_audit', 'workflow', 'workflow_id', 'id');
+
 -- +migrate Down
 DROP TABLE workflow_audit;
