@@ -65,7 +65,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 		}
 
 		for _, app := range applications {
-			if err := group.DeleteGroupFromApplication(tx, p.Key, app.Name, groupName); err != nil {
+			if err := group.DeleteGroupFromApplication(tx, app.ID, g.ID); err != nil {
 				return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from application %s", groupName, app.Name)
 			}
 		}
