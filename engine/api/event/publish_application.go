@@ -127,7 +127,7 @@ func PublishApplicationRepositoryAdd(projKey string, app sdk.Application, u *sdk
 	publishApplicationEvent(e, projKey, app.Name, u)
 }
 
-// EventApplicationRepositoryDelete publishes an envet when deleting a repository from an application
+// PublishApplicationRepositoryDelete publishes an envet when deleting a repository from an application
 func PublishApplicationRepositoryDelete(projKey string, appName string, vcsServer string, repository string, u *sdk.User) {
 	e := sdk.EventApplicationRepositoryDelete{
 		VCSServer:  vcsServer,
