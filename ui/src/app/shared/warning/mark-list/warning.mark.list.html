@@ -1,4 +1,4 @@
-<ng-container *ngIf="warnings">
+<ng-container *ngIf="warnings && warnings.length > 0">
     <i class="red exclamation triangle icon" suiPopup [popupTemplate]="permTemplate"></i>
 </ng-container>
 <ng-template let-popup #permTemplate>
