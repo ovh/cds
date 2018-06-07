@@ -148,48 +148,46 @@ func takeJob(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Proj
 	//Take node job run
 	job, report, errTake := workflow.TakeNodeJobRun(ctx, db, tx, store, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos)
 	if errTake != nil {
-		return report, sdk.WrapError(errTake, "takeJob> Cannot take job %d", id)
+		return nil, sdk.WrapError(errTake, "takeJob> Cannot take job %d", id)
 	}
 
 	//Change worker status
 	if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
-		return report, sdk.WrapError(err, "takeJob> Cannot update worker status")
+		return nil, sdk.WrapError(err, "takeJob> Cannot update worker status")
 	}
 
 	//Load the node run
 	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	if errn != nil {
-		return report, sdk.WrapError(errn, "takeJob> Cannot get node run")
+		return nil, sdk.WrapError(errn, "takeJob> Cannot get node run")
 	}
 
-	workflowNodeRunEvent := []sdk.WorkflowNodeRun{}
 	if noderun.Status == sdk.StatusWaiting.String() {
 		noderun.Status = sdk.StatusBuilding.String()
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
-			return report, sdk.WrapError(err, "takeJob> Cannot get node run")
+			return nil, sdk.WrapError(err, "takeJob> Cannot get node run")
 		}
-		workflowNodeRunEvent = append(workflowNodeRunEvent, *noderun)
+		report.Add(*noderun)
 	}
 
 	//Load workflow run
 	workflowRun, err := workflow.LoadRunByID(tx, noderun.WorkflowRunID, workflow.LoadRunOptions{})
 	if err != nil {
-		return report, sdk.WrapError(err, "takeJob> Unable to load workflow run")
+		return nil, sdk.WrapError(err, "takeJob> Unable to load workflow run")
 	}
 
 	//Load the secrets
 	pv, err := project.GetAllVariableInProject(tx, p.ID, project.WithClearPassword())
 	if err != nil {
-		return report, sdk.WrapError(err, "takeJob> Cannot load project variable")
+		return nil, sdk.WrapError(err, "takeJob> Cannot load project variable")
 	}
 
 	secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, store, job, noderun, workflowRun, pv)
 	if errSecret != nil {
-		return report, sdk.WrapError(errSecret, "takeJob> Cannot load secrets")
+		return nil, sdk.WrapError(errSecret, "takeJob> Cannot load secrets")
 	}
 
 	//Feed the worker
-
 	wnjri.NodeJobRun = *job
 	wnjri.Number = noderun.Number
 	wnjri.SubNumber = noderun.SubNumber
@@ -197,13 +195,13 @@ func takeJob(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Proj
 
 	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, store, job, noderun, workflowRun, p)
 	if errK != nil {
-		return report, sdk.WrapError(errK, "takeJob> Cannot load keys")
+		return nil, sdk.WrapError(errK, "takeJob> Cannot load keys")
 	}
 	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
 	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
 	if err := tx.Commit(); err != nil {
-		return report, sdk.WrapError(err, "takeJob> Cannot commit transaction")
+		return nil, sdk.WrapError(err, "takeJob> Cannot commit transaction")
 	}
 
 	return report, nil
