@@ -771,6 +771,7 @@
 
   "workflow_app_info_new_wf": "This project is allowed to use the new CDS Workflows.",
   "workflow_resync_vcs": "Resync VCS status",
+  "workflow_resync_vcs_tooltip": "This action will resend to your repository manager the current status of all your pipelines",
   "workflow_vcs_resynced": "VCS status resynced",
   "workflow_app_info_new_wf_have_pipeline": "This application have an old Workflow, you can migrate it to a new CDS Worklow, see advanced section.",
   "workflow_app_info_new_wf_link_pipeline": "WARNING. This action is deprecated. You should use the new CDS Workflow (Project -> Worflow) to create and manage your worklow.",
