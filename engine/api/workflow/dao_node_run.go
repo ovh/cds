@@ -211,6 +211,9 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 		if err := gorpmapping.JSONNullString(rr.Commits, &r.Commits); err != nil {
 			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Commits", r.ID)
 		}
+		if err := gorpmapping.JSONNullString(rr.BuildParameters, &r.BuildParameters); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: BuildParameters", r.ID)
+		}
 	}
 
 	if rr.HookEvent.Valid {
@@ -224,9 +227,6 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 		if err := gorpmapping.JSONNullString(rr.Manual, r.Manual); err != nil {
 			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Manual", r.ID)
 		}
-	}
-	if err := gorpmapping.JSONNullString(rr.BuildParameters, &r.BuildParameters); err != nil {
-		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: BuildParameters", r.ID)
 	}
 	if rr.PipelineParameters.Valid {
 		if err := gorpmapping.JSONNullString(rr.PipelineParameters, &r.PipelineParameters); err != nil {
