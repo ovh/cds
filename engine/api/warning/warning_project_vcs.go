@@ -18,6 +18,8 @@ func (warn unusedProjectVCSWarning) events() []string {
 	return []string{
 		fmt.Sprintf("%T", sdk.EventProjectVCSServerAdd{}),
 		fmt.Sprintf("%T", sdk.EventProjectVCSServerDelete{}),
+		fmt.Sprintf("%T", sdk.EventApplicationRepositoryAdd{}),
+		fmt.Sprintf("%T", sdk.EventApplicationRepositoryDelete{}),
 	}
 }
 
@@ -27,6 +29,38 @@ func (warn unusedProjectVCSWarning) name() string {
 
 func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
+	case fmt.Sprintf("%T", sdk.EventApplicationRepositoryAdd{}):
+		payload, err := e.ToEventApplicationRepositoryAdd()
+		if err != nil {
+			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to get payload from EventApplicationRepositoryAdd")
+		}
+		if err := removeProjectWarning(db, warn.name(), payload.VCSServer, e.ProjectKey); err != nil {
+			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to remove warning from EventApplicationRepositoryAdd")
+		}
+	case fmt.Sprintf("%T", sdk.EventApplicationRepositoryDelete{}):
+		payload, err := e.ToEventApplicationRepositoryDelete()
+		if err != nil {
+			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to get payload from EventApplicationRepositoryDelete")
+		}
+		apps, err := application.GetNameByVCSServer(db, payload.VCSServer, e.ProjectKey)
+		if err != nil {
+			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Cannot list application from EventApplicationRepositoryDelete")
+		}
+		if len(apps) == 0 {
+			w := sdk.WarningV2{
+				Key:     e.ProjectKey,
+				Element: payload.VCSServer,
+				Created: time.Now(),
+				Type:    warn.name(),
+				MessageParams: map[string]string{
+					"VCSName":    payload.VCSServer,
+					"ProjectKey": e.ProjectKey,
+				},
+			}
+			if err := Insert(db, w); err != nil {
+				return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to insert warning from EventApplicationRepositoryDelete")
+			}
+		}
 	case fmt.Sprintf("%T", sdk.EventProjectVCSServerAdd{}):
 		payload, err := e.ToEventProjectVCSServerAdd()
 		if err != nil {
@@ -35,7 +69,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 
 		apps, err := application.GetNameByVCSServer(db, payload.VCSServerName, e.ProjectKey)
 		if err != nil {
-			return sdk.WrapError(err, "unusedProjectVCSWarning.compute>")
+			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Cannot list application from EventApplicationRepositoryDelete")
 		}
 		if len(apps) == 0 {
 			w := sdk.WarningV2{
@@ -49,7 +83,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 				},
 			}
 			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to insert warning")
+				return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Unable to insert warning from EventApplicationRepositoryDelete")
 			}
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectVCSServerDelete{}):
