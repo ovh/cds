@@ -56,7 +56,31 @@
   }
 
   .details {
-
+    .title {
+      font-size: 1.1em;	
+      &.bold {	
+        font-weight: bold;	
+      }	
+    }	
+    .notif {	
+      font-size: 0.8em;	
+      &.bold {	
+        font-weight: bold;	
+      }	
+      &.blue {	
+        color: $cds_color_teal !important;	
+      }	
+      &.orange {	
+        color: $cds_color_orange !important;	
+      }	
+    }	
+    .info {	
+      font-size: 0.8em;	
+      color: black;	
+      &.mt {	
+        margin-top: 4px;	
+      }	
+    }
   }
 
   .dropdown {
