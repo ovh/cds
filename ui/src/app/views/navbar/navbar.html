@@ -109,13 +109,15 @@
                 </div>
                 <div *ngIf="recentView" class="notification mt5">
                     <div class="ui relaxed divided list" *ngIf="recentBroadcastsToDisplay && recentBroadcastsToDisplay.length > 0">
-                        <a class="item" *ngFor="let broadcast of recentBroadcastsToDisplay" (click)="goToBroadcast(broadcast.id); popup.close()">
+                        <div class="item" *ngFor="let broadcast of recentBroadcastsToDisplay">
                             <div class="notif">
-                              <i class="check icon right floated" suiPopup [popupText]="'navbar_mark_read' | translate" [popupInverted]="true" popupPlacement="bottom center" (click)="markAsRead($event, broadcast.id)"></i>
-                              <div class="title bold" [class.blue]="broadcast.level === 'info'" [class.orange]="broadcast.level === 'warning'">
+                              <span class="right floated pointing">
+                                  <i class="check icon" suiPopup [popupText]="'navbar_mark_read' | translate" [popupInverted]="true" popupPlacement="bottom center" (click)="markAsRead($event, broadcast.id)"></i>
+                              </span>
+                              <a class="title bold" (click)="popup.close()" [routerLink]="['broadcast', broadcast.id]" [class.blue]="broadcast.level === 'info'" [class.orange]="broadcast.level === 'warning'">
                                   {{broadcast.title}}
-                              </div>
-                              <div class="info mt">
+                              </a>
+                              <a class="info mt" [routerLink]="['broadcast', broadcast.id]" (click)="popup.close()">
                                   <span *ngIf="broadcast.project_key">
                                       {{'common_project' | translate}} {{broadcast.project_key}}
                                   </span>
@@ -125,9 +127,9 @@
                                   <span class="right floated">
                                       {{broadcast.updated | amTimeAgo}}
                                   </span>
-                              </div>
+                              </a>
                             </div>
-                        </a>
+                        </div>
                         <a class="item" *ngIf="broadcasts.length > 4" [routerLink]="['broadcast']" (click)="popup.close()">
                             {{'navbar_see_all' | translate}}
                         </a>
@@ -138,7 +140,7 @@
                 </div>
                 <div *ngIf="!recentView">
                     <div class="ui relaxed divided list" *ngIf="previousBroadcastsToDisplay && previousBroadcastsToDisplay.length > 0">
-                        <a class="item" *ngFor="let broadcast of previousBroadcastsToDisplay" (click)="goToBroadcast(broadcast.id); popup.close()">
+                        <a class="item" *ngFor="let broadcast of previousBroadcastsToDisplay" [routerLink]="['broadcast', broadcast.id]" (click)="popup.close()">
                             <div class="notif">
                               <div class="title bold" [class.blue]="broadcast.level === 'info'" [class.orange]="broadcast.level === 'warning'">
                                   {{broadcast.title}}

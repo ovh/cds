@@ -57,29 +57,29 @@
 
   .details {
     .title {
-      font-size: 1.1em;	
-      &.bold {	
-        font-weight: bold;	
-      }	
-    }	
-    .notif {	
-      font-size: 0.8em;	
-      &.bold {	
-        font-weight: bold;	
-      }	
-      &.blue {	
-        color: $cds_color_teal !important;	
-      }	
-      &.orange {	
-        color: $cds_color_orange !important;	
-      }	
-    }	
-    .info {	
-      font-size: 0.8em;	
-      color: black;	
-      &.mt {	
-        margin-top: 4px;	
-      }	
+      font-size: 1.1em;
+      &.bold {
+        font-weight: bold;
+      }
+    }
+    .notif {
+      font-size: 0.8em;
+      &.bold {
+        font-weight: bold;
+      }
+      &.blue {
+        color: $cds_color_teal !important;
+      }
+      &.orange {
+        color: $cds_color_orange !important;
+      }
+    }
+    .info {
+      font-size: 0.8em;
+      color: black;
+      &.mt {
+        margin-top: 4px;
+      }
     }
   }
 
@@ -132,6 +132,11 @@
   i {
     &.check {
       font-size: 1.5em;
+      color: black;
+      opacity: 0.3;
+      &:hover {
+        opacity: 1;
+      }
     }
   }
   .title {
@@ -149,6 +154,7 @@
   .info {
     font-size: 1em;
     color: black;
+    display: block;
     &.mt {
       margin-top: 4px;
     }
