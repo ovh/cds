@@ -219,8 +219,6 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 				break
 			}
 
-			log.Debug("Checking source %s (#%d.%d) status = %s", w.Workflow.GetNode(nodeRun.WorkflowNodeID).Name, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
-
 			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() || nodeRun.SubNumber < maxsn {
 				//One of the sources have not been completed
 				ok = false

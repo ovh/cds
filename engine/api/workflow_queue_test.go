@@ -567,7 +567,6 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 	assert.NotNil(t, nodeRun.Tests)
 	assert.Equal(t, 2, nodeRun.Tests.Total)
-	//t.Logf("%+v", nodeRun.Tests)
 }
 
 func Test_postWorkflowJobVariableHandler(t *testing.T) {

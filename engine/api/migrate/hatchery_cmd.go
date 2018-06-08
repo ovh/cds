@@ -44,7 +44,6 @@ func HatcheryCmdMigration(store cache.Store, DBFunc func() *gorp.DbMap) {
 			log.Warning("HatcheryCmdMigration> cannot create a transaction : %v", errTx)
 			continue
 		}
-
 		wm, errL := worker.LoadAndLockWorkerModelByID(tx, wmTmp.ID)
 		if errL != nil {
 			log.Warning("HatcheryCmdMigration> cannot load and lock a worker model : %v", errL)

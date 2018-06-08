@@ -288,7 +288,7 @@ func (api *API) downloadArtifactDirectHandler() Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		log.Debug("downloadArtifactDirectHandler: Serving %+v", art)
+		log.Debug("downloadArtifactDirectHandler: Serving %s/%s", art.GetPath(), art.GetName())
 		f, err := objectstore.Fetch(art)
 		if err != nil {
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot fetch artifact")

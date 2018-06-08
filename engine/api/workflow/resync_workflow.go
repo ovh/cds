@@ -113,7 +113,6 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 			}
 
 			if n.Context == nil || n.Context.Application == nil {
-				log.Debug("ResyncNodeRuns> no application linked")
 				return
 			}
 

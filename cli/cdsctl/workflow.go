@@ -64,7 +64,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 		return 0, err
 	}
 	if len(runs) < 1 {
-		return 0, fmt.Errorf("workflow run not found : %+v", runs)
+		return 0, fmt.Errorf("workflow run not found")
 	}
 
 	if runs[0].Number > 0 {
@@ -78,7 +78,7 @@ func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) 
 	}
 
 	if len(runs) != 1 {
-		return 0, fmt.Errorf("workflow run not found : %+v", runs)
+		return 0, fmt.Errorf("workflow run not found")
 	}
 
 	return runs[0].Number, nil

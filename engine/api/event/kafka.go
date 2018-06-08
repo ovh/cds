@@ -89,11 +89,9 @@ func (c *KafkaClient) sendEvent(event *sdk.Event) error {
 	}
 
 	msg := &sarama.ProducerMessage{Topic: c.options.Topic, Value: sarama.ByteEncoder(data)}
-	partition, offset, errs := c.producer.SendMessage(msg)
-	if errs != nil {
+	if _, _, errs := c.producer.SendMessage(msg); errs != nil {
 		return errs
 	}
-	log.Debug("Event %+v sent to topic %s partition %d offset %d", event, c.options.Topic, partition, offset)
 	return nil
 }
 
