@@ -132,7 +132,7 @@ export class WorkflowNodeRunParamComponent {
             this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: false});
         }
 
-        if (isRoot === true && this.workflowRun) {
+        if (isRoot && this.workflowRun) {
             let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
             if (rootNodeRun && rootNodeRun.hook_event) {
                 this._nodeToRun.context.default_payload = rootNodeRun.hook_event.payload;
