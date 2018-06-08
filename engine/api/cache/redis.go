@@ -393,7 +393,7 @@ func (s *RedisStore) Lock(key string, expiration time.Duration, retrywdMilliseco
 	}
 	for i := 0; i < retryCount; i++ {
 		res, errRedis = s.Client.SetNX(key, "true", expiration).Result()
-		if errRedis == nil {
+		if errRedis == nil && res {
 			break
 		}
 		time.Sleep(time.Duration(retrywdMillisecond) * time.Millisecond)

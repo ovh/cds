@@ -1,6 +1,7 @@
 package exportentities
 
 import (
+	"sort"
 	"strings"
 	"testing"
 
@@ -612,7 +613,15 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 
 			expextedValues, _ := dump.ToStringMap(tt.want)
 			actualValues, _ := dump.ToStringMap(got)
-			for expectedKey, expectedValue := range expextedValues {
+
+			var keysExpextedValues []string
+			for k := range expextedValues {
+				keysExpextedValues = append(keysExpextedValues, k)
+			}
+			sort.Strings(keysExpextedValues)
+
+			for _, expectedKey := range keysExpextedValues {
+				expectedValue := expextedValues[expectedKey]
 				actualValue, ok := actualValues[expectedKey]
 				if strings.Contains(expectedKey, ".Ref") {
 					assert.NotEmpty(t, actualValue, "value %s is empty but shoud not be empty", expectedKey)

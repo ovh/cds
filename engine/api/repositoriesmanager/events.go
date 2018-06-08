@@ -55,8 +55,6 @@ func RetryEvent(e *sdk.Event, err error, store cache.Store) {
 }
 
 func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
-	log.Debug("repositoriesmanager>processEvent> receive: type:%s", event.EventType)
-
 	var c sdk.VCSAuthorizedClient
 	var errC error
 
@@ -83,8 +81,7 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 		var eventWNR sdk.EventRunWorkflowNode
 
 		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
-			log.Error("Error during consumption: %s", err)
-			return err
+			return fmt.Errorf("repositoriesmanager>processEvent> Error during consumption: %s", err)
 		}
 		if eventWNR.RepositoryManagerName == "" {
 			return nil

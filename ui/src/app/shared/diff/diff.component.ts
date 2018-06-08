@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild, OnInit, ComponentFactoryResolver, ViewContainerRef} from '@angular/core';
+import {Component, Input, ViewChild, ComponentFactoryResolver, ViewContainerRef} from '@angular/core';
 import {SpanColoredComponent} from './span-colored/span-colored.component';
 import * as JsDiff from 'diff';
 
@@ -7,17 +7,39 @@ import * as JsDiff from 'diff';
     templateUrl: './diff.html',
     styleUrls: ['./diff.scss']
 })
-export class DiffComponent implements OnInit {
+export class DiffComponent {
 
-    @Input() original: string;
-    @Input() updated: string;
+    _original: string;
+    @Input('original')
+    set original(data: string) {
+        this._original = data;
+        if (this.original && this.updated) {
+            this.refresh();
+        }
+    }
+    get original() {
+        return this._original;
+    }
+
+    _updated: string;
+    @Input('updated')
+    set updated(data: string) {
+        this._updated = data;
+        if (this.original && this.updated) {
+            this.refresh();
+        }
+    }
+    get updated() {
+        return this._updated;
+    }
+
     @ViewChild('diffDisplayUpdated', {read: ViewContainerRef}) diffDisplayUpdated;
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver) {
 
     }
 
-    ngOnInit() {
+    refresh() {
       let original = this.original || '';
       if (original === 'null') {
         original = '';

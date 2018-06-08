@@ -421,6 +421,8 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot commit transaction")
 		}
 
+		event.PublishApplicationRepositoryAdd(projectKey, *app, getUser(ctx))
+
 		return WriteJSON(w, app, http.StatusOK)
 	}
 }
@@ -493,6 +495,8 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit transaction")
 		}
+
+		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, getUser(ctx))
 
 		return WriteJSON(w, app, http.StatusOK)
 	}

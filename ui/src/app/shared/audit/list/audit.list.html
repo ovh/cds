@@ -1,0 +1,68 @@
+<div class="audits">
+    <h3>{{ 'audit_title' | translate }}</h3>
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+        <thead>
+        <tr>
+            <th class="two wide">{{ 'audit_modification_type' | translate}}</th>
+            <th class="two wide">{{ 'audit_time_author' | translate }}</th>
+            <th class="four wide">{{ 'audit_username' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let a of getDataForCurrentPage()" class="ui form pointer" (click)="updateSelectedAudit(a)">
+            <td class="middle-aligned border">
+                {{a.event_type}}
+            </td>
+            <td class="middle-aligned border">
+                {{a.created | amCalendar}}
+            </td>
+            <td class="middle-aligned border">
+                {{a.triggered_by}}
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="3">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'audit_no' | translate }}
+    </div>
+</div>
+<div *ngIf="selectedAudit" class="area">
+    <h3>{{selectedAudit.created | amCalendar}}</h3>
+    <table class="ui fixed striped table">
+        <thead>
+        <tr>
+            <th class="five wide column">{{ 'audit_before' | translate }}</th>
+            <th class="six wide column">{{ 'audit_diff'| translate }}</th>
+            <th class="five wide column">{{ 'audit_after'|translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="pad" valign="top">
+                <codemirror [(ngModel)]="selectedAudit.data_before" [config]="codeMirrorConfig"></codemirror>
+            </td>
+            <td valign="top">
+                <app-diff [original]="selectedAudit.data_before" [updated]="selectedAudit.data_after"></app-diff>
+            </td>
+            <td valign="top">
+                <codemirror [(ngModel)]="selectedAudit.data_after" [config]="codeMirrorConfig"></codemirror>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

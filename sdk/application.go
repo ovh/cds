@@ -23,7 +23,7 @@ type Application struct {
 	PipelinesBuild       []PipelineBuild           `json:"pipelines_build,omitempty" db:"-"`
 	Permission           int                       `json:"permission" db:"-"`
 	Notifications        []UserNotification        `json:"notifications,omitempty" db:"-"`
-	LastModified         time.Time                 `json:"last_modified" db:"last_modified"`
+	LastModified         time.Time                 `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	VCSServer            string                    `json:"vcs_server,omitempty" db:"vcs_server"`
 	RepositoryFullname   string                    `json:"repository_fullname,omitempty" db:"repo_fullname" cli:"repository_fullname"`
 	RepositoryPollers    []RepositoryPoller        `json:"pollers,omitempty" db:"-"`

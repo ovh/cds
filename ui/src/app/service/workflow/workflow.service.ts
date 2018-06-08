@@ -19,6 +19,7 @@ export class WorkflowService {
     getWorkflow(key: string, workflowName: string): Observable<Workflow> {
         let params = new HttpParams();
         params = params.append('withUsage', 'true');
+        params = params.append('withAudits', 'true');
 
         return this._http.get<Workflow>('/project/' + key + '/workflows/' + workflowName, {params});
     }

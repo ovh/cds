@@ -38,7 +38,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     recentItems: Array<NavbarSearchItem> = [];
     items: Array<NavbarSearchItem> = [];
     broadcasts: Array<Broadcast> = [];
-    broadcastsToDisplay: Array<Broadcast> = [];
+    recentBroadcastsToDisplay: Array<Broadcast> = [];
+    previousBroadcastsToDisplay: Array<Broadcast> = [];
     loading = true;
 
     listWorkflows: List<NavbarRecentData>;
@@ -50,6 +51,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     broadcastSubscription: Subscription;
 
     currentRoute: {};
+    recentView = true;
 
 
     public currentUser: User;
@@ -196,8 +198,10 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         this.broadcastSubscription = this._broadcastStore.getBroadcasts()
             .subscribe((broadcasts) => {
                 let broadcastsToRead = broadcasts.filter((br) => !br.read && !br.archived);
-                this.broadcasts = broadcastsToRead.toArray();
-                this.broadcastsToDisplay = this.broadcasts.slice(0, 3);
+                let previousBroadcasts = broadcasts.filter((br) => br.read && !br.archived);
+                this.recentBroadcastsToDisplay = broadcastsToRead.slice(0, 4);
+                this.previousBroadcastsToDisplay = previousBroadcasts.slice(0, 4);
+                this.broadcasts = broadcastsToRead;
             });
     }
 

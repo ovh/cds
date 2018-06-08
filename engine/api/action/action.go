@@ -64,7 +64,7 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 			log.Debug("InsertAction> Child Action %s is knowned with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
 		}
 
-		log.Debug("InsertAction> Insert Child Action %s with enabled:%t and parameters: %+v", a.Actions[i].Name, a.Actions[i].Enabled, a.Actions[i].Parameters)
+		log.Debug("InsertAction> Insert Child Action %s", a.Actions[i].Name)
 		if err := insertActionChild(tx, a.ID, a.Actions[i], i+1); err != nil {
 			return err
 		}

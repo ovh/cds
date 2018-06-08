@@ -71,6 +71,11 @@ $scrollbarradius: 0px;
 }
 
 // Override semantic-ui color to apply CDS theme
+.ui.popup {
+  padding: 10px;
+  margin: 0;
+}
+
 body ::-webkit-scrollbar {
   width: $scrollbarsize;
   height: $scrollbarsize;

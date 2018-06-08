@@ -1,5 +1,7 @@
 package sdk
 
+import "github.com/mitchellh/mapstructure"
+
 // EventApplicationAdd represents the event when adding an application
 type EventApplicationAdd struct {
 	Application
@@ -59,4 +61,34 @@ type EventApplicationKeyAdd struct {
 // EventApplicationKeyDelete represents the event when deleting an application key
 type EventApplicationKeyDelete struct {
 	Key ApplicationKey `json:"key"`
+}
+
+// EventApplicationRepositoryAdd represents the event when adding a repository to an application
+type EventApplicationRepositoryAdd struct {
+	VCSServer  string `json:"vcs_server"`
+	Repository string `json:"repository"`
+}
+
+// EventApplicationRepositoryDelete represents the event when deleting a repository to an application
+type EventApplicationRepositoryDelete struct {
+	VCSServer  string `json:"vcs_server"`
+	Repository string `json:"repository"`
+}
+
+// ToEventApplicationRepositoryAdd get the payload as EventApplicationRepositoryAdd
+func (e Event) ToEventApplicationRepositoryAdd() (EventApplicationRepositoryAdd, error) {
+	var vcsEvent EventApplicationRepositoryAdd
+	if err := mapstructure.Decode(e.Payload, &vcsEvent); err != nil {
+		return vcsEvent, WrapError(err, "ToEventApplicationRepositoryAdd> Unable to decode EventApplicationRepositoryAdd")
+	}
+	return vcsEvent, nil
+}
+
+// ToEventApplicationRepositoryDelete get the payload as EventApplicationRepositoryDelete
+func (e Event) ToEventApplicationRepositoryDelete() (EventApplicationRepositoryDelete, error) {
+	var vcsEvent EventApplicationRepositoryDelete
+	if err := mapstructure.Decode(e.Payload, &vcsEvent); err != nil {
+		return vcsEvent, WrapError(err, "ToEventApplicationRepositoryDelete> Unable to decode EventApplicationRepositoryDelete")
+	}
+	return vcsEvent, nil
 }

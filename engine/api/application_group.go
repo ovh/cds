@@ -160,8 +160,9 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		groupName := vars["group"]
+		db := api.mustDB()
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithGroups)
+		app, err := application.LoadByName(db, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application %s", appName)
 		}
@@ -178,14 +179,19 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteGroupFromApplicationHandler> Group does not exist on application")
 		}
 
-		tx, err := api.mustDB().Begin()
+		gr, errG := group.LoadGroup(db, groupName)
+		if errG != nil {
+			return sdk.WrapError(sdk.ErrGroupNotFound, "deleteGroupFromApplicationHandler> Group does not exist")
+		}
+
+		tx, err := db.Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := group.DeleteGroupFromApplication(tx, key, appName, groupName); err != nil {
-			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot delete group %s from pipeline %s", groupName, appName)
+		if err := group.DeleteGroupFromApplication(tx, app.ID, gr.ID); err != nil {
+			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot delete group %s from application %s", groupName, appName)
 		}
 
 		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
@@ -196,7 +202,7 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot commit transaction")
 		}
 
-		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
+		if err := application.LoadGroupByApplication(db, app); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application groups")
 		}
 

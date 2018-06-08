@@ -19,6 +19,10 @@
                 <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs" (click)="showTab('permissions')">
                     <i class="users icon"></i>
                     {{'common_permissions' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'audits'" id="WorkflowAuditsTabs" (click)="showTab('audits')">
+                    <i class="history icon"></i>
+                    {{'common_audit' | translate }}
+                </a>
                 <a sm-item [class.active]="selectedTab === 'usage'" id="WorkflowUsageTabs"
                    [class.disabled]="usageCount === 0"
                    (click)="usageCount !== 0 && showTab('usage')">
@@ -126,6 +130,9 @@
                                    [applications]="detailedWorkflow.usage.applications"
                                    [environments]="detailedWorkflow.usage.environments">
                         </app-usage>
+                    </div>
+                    <div *ngSwitchCase="'audits'" class="padded">
+                        <app-audit-list [audits]="detailedWorkflow.audits"></app-audit-list>
                     </div>
                 </div>
             </div>

@@ -83,6 +83,10 @@ import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
 import {RepoManagerFormComponent} from './repomanager/from/repomanager.form.component';
 import {ClipboardModule} from 'ngx-clipboard';
 import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component';
+import {AuditListComponent} from './audit/list/audit.list.component';
+import {WarningTabComponent} from './warning/tab/warning.tab.component';
+import {WarningMarkComponent} from './warning/mark-single/warning.mark.component';
+import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -91,6 +95,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
+        AuditListComponent,
         BreadcrumbComponent,
         CommitListComponent,
         CutPipe,
@@ -127,6 +132,9 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         VariableValueComponent,
         WarningModalComponent,
         DeleteModalComponent,
+        WarningTabComponent,
+        WarningMarkComponent,
+        WarningMarkListComponent,
         WorkflowNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -169,6 +177,7 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
     ],
     exports: [
         ActionComponent,
+        AuditListComponent,
         BreadcrumbComponent,
         CodemirrorModule,
         CommitListComponent,
@@ -212,6 +221,9 @@ import {FavoriteCardsComponent} from './favorite-cards/favorite-cards.component'
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,
+        WarningTabComponent,
+        WarningMarkComponent,
+        WarningMarkListComponent,
         WarningModalComponent,
         DeleteModalComponent,
         WorkflowNodeComponent,

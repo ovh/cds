@@ -4,6 +4,7 @@ import {Project} from '../../../../../model/project.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
 import {Parameter} from '../../../../../model/parameter.model';
 import {Router} from '@angular/router';
+import {Workflow} from '../../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-node-run-history',
@@ -29,8 +30,9 @@ export class WorkflowNodeRunHistoryComponent extends Table {
     }
 
     goToSubNumber(nodeRun: WorkflowNodeRun): void {
+        let node = Workflow.getNodeByID(nodeRun.workflow_node_id, this.run.workflow);
         this._router.navigate(['/project', this.project.key, 'workflow', this.workflowName, 'run', nodeRun.num, 'node',
-            nodeRun.id], {queryParams: {sub: nodeRun.subnumber}});
+            nodeRun.id], {queryParams: {sub: nodeRun.subnumber, name: node.pipeline.name}});
     }
 
     getTriggerSource(nr: WorkflowNodeRun): string {

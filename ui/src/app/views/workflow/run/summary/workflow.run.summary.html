@@ -78,6 +78,17 @@
                         </div>
                     </div>
                     <div class="info content animated fadeIn spawninfo" *ngIf="showInfos">
+                        <div class="sixteen wide column center aligned">
+                            <button class="ui labeled icon button"
+                                suiPopup
+                                [popupText]="'workflow_resync_vcs_tooltip' | translate"
+                                popupPlacement="top center"
+                                [class.loading]="loadingAction"
+                                (click)="resyncVCSStatus()">
+                                <i class="handshake outline icon"></i>
+                                {{ 'workflow_resync_vcs' | translate }}
+                            </button>
+                        </div>
                         <div class="ui black message scrollable">
                             <pre [innerHTML]="getSpawnInfos()"></pre>
                         </div>

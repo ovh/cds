@@ -130,7 +130,7 @@ else
 	service docker restart >> /tmp/user_data 2>&1
 fi;
 
-curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
+curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 >> /tmp/user_data 2>&1
 chmod +x worker
 `
 	patternCases := [...]patternCase{
@@ -141,7 +141,7 @@ chmod +x worker
 				Name: "basic_unix",
 				Model: sdk.ModelCmds{
 					Shell: "sh -c",
-					Cmd:   "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 -C - && chmod +x worker && exec ./worker",
+					Cmd:   "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker",
 				},
 			},
 		},

@@ -56,6 +56,8 @@ import {WorkflowSidebarStore} from './workflow/workflow.sidebar.store';
 import {EventStore} from './event/event.store';
 import {BroadcastStore} from './broadcast/broadcast.store';
 import {BroadcastService} from './broadcast/broadcast.service';
+import {WarningService} from './warning/warning.service';
+import {WarningStore} from './warning/warning.store';
 
 @NgModule({})
 export class ServicesModule {
@@ -110,6 +112,8 @@ export class ServicesModule {
                 RouterService,
                 UserService,
                 VariableService,
+                WarningService,
+                WarningStore,
                 WorkerModelService,
                 WorkflowEventStore,
                 WorkflowSidebarStore,
@@ -173,6 +177,7 @@ export {
     RouterService,
     UserService,
     VariableService,
+    WarningStore,
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,

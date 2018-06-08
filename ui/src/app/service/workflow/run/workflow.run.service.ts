@@ -105,11 +105,22 @@ export class WorkflowRunService {
      * Resync pipeline inside workflow run
      * @param {string} key Project unique key
      * @param {Workflow} workflow Workflow
-     * @param {number} workflow_run_id Workflow run id to resync
+     * @param {number} workflowNum Workflow run id to resync
      */
-    resync(key: string, workflow: Workflow, workflow_run_id: number): Observable<WorkflowRun> {
+    resync(key: string, workflow: Workflow, workflowNum: number): Observable<WorkflowRun> {
         return this._http.post<WorkflowRun>(
-            '/project/' + key + '/workflows/' + workflow.name + '/runs/' + workflow_run_id + '/resync', null);
+            '/project/' + key + '/workflows/' + workflow.name + '/runs/' + workflowNum + '/resync', null);
+    }
+
+    /**
+     * Resync workflow run vcs status
+     * @param {string} key Project unique key
+     * @param {Workflow} workflow Workflow
+     * @param {number} workflowNum Workflow run id to resync
+     */
+    resyncVCSStatus(key: string, workflowName: string, workflowNum: number): Observable<WorkflowRun> {
+        return this._http.post<WorkflowRun>(
+            '/project/' + key + '/workflows/' + workflowName + '/runs/' + workflowNum + '/vcs/resync', {});
     }
 
     /**
