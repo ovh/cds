@@ -66,7 +66,15 @@ func (r *WorkflowRun) Tag(tag, value string) bool {
 	for i := range r.Tags {
 		if r.Tags[i].Tag == tag {
 			found = true
-			if !strings.Contains(r.Tags[i].Value, value) {
+			tagValues := strings.Split(r.Tags[i].Value, ",")
+			var exist bool
+			for _, tagVal := range tagValues {
+				if tagVal == value {
+					exist = true
+					break
+				}
+			}
+			if !exist {
 				r.Tags[i].Value = strings.Join([]string{r.Tags[i].Value, value}, ",")
 			}
 		}
