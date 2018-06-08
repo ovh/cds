@@ -153,7 +153,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                 this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
             }
 
-            setTimeout(() => this.runWithParamComponent.show(true));
+            setTimeout(() => this.runWithParamComponent.show());
         }
     }
 

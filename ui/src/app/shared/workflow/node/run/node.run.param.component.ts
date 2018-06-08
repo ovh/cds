@@ -85,7 +85,7 @@ export class WorkflowNodeRunParamComponent {
         };
     }
 
-    show(isNewWorkflow: boolean): void {
+    show(): void {
         let num: number;
         let nodeRunID: number;
 
@@ -119,7 +119,7 @@ export class WorkflowNodeRunParamComponent {
             });
         } else {
             let isPipelineRoot = false;
-            if (isNewWorkflow) {
+            if (!this.workflowRun) {
                 isPipelineRoot = true;
             } else if (this.workflowRun && this.workflowRun.workflow.root_id === this.nodeToRun.id) {
                 isPipelineRoot = true;

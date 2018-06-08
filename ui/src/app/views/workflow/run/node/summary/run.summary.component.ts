@@ -83,7 +83,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
 
     runNewWithParameter(): void {
         if (this.runWithParamComponent) {
-            this.runWithParamComponent.show(false);
+            this.runWithParamComponent.show();
         }
     }
 }
