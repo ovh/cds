@@ -1258,38 +1258,6 @@
         <span>pipeline</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/pipeline/delete/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/">
-          <span>delete</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/pipeline/export/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/export/">
-          <span>export</span>
-        </a>
-    </li>
-    <li data-nav-id="/cli/cdsctl/pipeline/group/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/">
-        <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/pipeline/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/">
-          <span>import</span>
-        </a>
-    </li>
-        </ul>
-    </li>
-      <li data-nav-id="/cli/cdsctl/pipeline/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/import/">
-          <span>import</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/pipeline/list/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/pipeline/list/">
-          <span>list</span>
-        </a>
-    </li>
         </ul>
     </li>
     <li data-nav-id="/cli/cdsctl/project/" class="dd-item">
@@ -1984,11 +1952,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#get-platform-models">GET <code>/platform/models</code></a></li>
 <li><a href="#post-platform-models">POST <code>/platform/models</code></a></li>
+<li><a href="#get-platform-models">GET <code>/platform/models</code></a></li>
+<li><a href="#put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></a></li>
 <li><a href="#delete-platform-models-name">DELETE <code>/platform/models/&lt;name&gt;</code></a></li>
 <li><a href="#get-platform-models-name">GET <code>/platform/models/&lt;name&gt;</code></a></li>
-<li><a href="#put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -2011,6 +1979,34 @@
 
 
 
+
+<h3 id="post-platform-models">POST <code>/platform/models</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/platform/models</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPlatformModelHandler%22">postPlatformModelHandler</a></td>
+</tr>
+</tbody>
+</table>
 
 <h3 id="get-platform-models">GET <code>/platform/models</code></h3>
 
@@ -2040,20 +2036,20 @@
 </tbody>
 </table>
 
-<h3 id="post-platform-models">POST <code>/platform/models</code></h3>
+<h3 id="put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/platform/models</code></strong></th>
+<th><strong><code>/platform/models/&lt;name&gt;</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -2063,7 +2059,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPlatformModelHandler%22">postPlatformModelHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putPlatformModelHandler%22">putPlatformModelHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2120,34 +2116,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPlatformModelHandler%22">getPlatformModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/platform/models/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putPlatformModelHandler%22">putPlatformModelHandler</a></td>
 </tr>
 </tbody>
 </table>
