@@ -533,15 +533,26 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 	var previous sdk.BuildNumberAndHash
 	var prevHash, prevBranch, prevRepository sql.NullString
 	var previousBuildNumber sql.NullInt64
-	lastRun, errL := LoadLastRun(db, projectKey, wf.Name, LoadRunOptions{})
-	if errL == sql.ErrNoRows || lastRun == nil {
-		return previous, nil
+	var wfRun *sdk.WorkflowRun
+	var errL error
+
+	if current.BuildNumber == 0 {
+		wfRun, errL = LoadLastRun(db, projectKey, wf.Name, LoadRunOptions{DisableDetailledNodeRun: true})
+		if errL == sql.ErrNoRows || wfRun == nil {
+			return previous, nil
+		}
+	} else {
+		wfRun, errL = LoadRun(db, projectKey, wf.Name, current.BuildNumber, LoadRunOptions{DisableDetailledNodeRun: true})
+		if errL == sql.ErrNoRows || wfRun == nil {
+			return previous, nil
+		}
 	}
+
 	if errL != nil {
 		return previous, sdk.WrapError(errL, "PreviousNodeRunVCSInfos> Unable to load last run")
 	}
 
-	node := lastRun.Workflow.GetNodeByName(nodeName)
+	node := wfRun.Workflow.GetNodeByName(nodeName)
 	if node == nil {
 		return previous, nil
 	}
