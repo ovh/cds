@@ -737,7 +737,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 		}
 		if br != nil {
 			if br.LatestCommit == "" {
-				return nil, sdk.WrapError(sdk.ErrNoBranch, "UpdatePipelineBuildCommits> Branch or lastest commit not found")
+				return nil, sdk.WrapError(sdk.ErrNoBranch, "UpdatePipelineBuildCommits> Branch or latest commit not found")
 			}
 
 			//and return the last commit of the branch

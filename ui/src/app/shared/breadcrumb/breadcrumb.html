@@ -16,12 +16,6 @@
            [queryParams]="getApplicationQueryParams()">
             {{ application?.name}}
         </a>
-        <sm-dropdown>
-            <a sm-item *ngFor="let app of project.applications"
-                     [routerLink]="['/project', project.key, 'application', app?.name]">
-                {{app.name}}
-            </a>
-        </sm-dropdown>
     </ng-container>
 
     <ng-container *ngIf="workflow">
@@ -38,18 +32,6 @@
         <a class="section" [class.active]="pipeline && !action && !version"
            [routerLink]="['/project', project.key, 'pipeline', pipeline?.name]"
            [queryParams]="getPipelineQueryParams()">{{ pipeline?.name}}</a>
-        <sm-dropdown *ngIf="project && !application">
-            <a sm-item *ngFor="let pip of project.pipeline_names"
-                     [routerLink]="['/project', project.key, 'pipeline', pip?.name]">
-                {{pip.name}}
-            </a>
-        </sm-dropdown>
-        <sm-dropdown *ngIf="project && application">
-            <a *ngFor="let apppip of application.pipelines"
-                     [routerLink]="['/project', project.key, 'pipeline', apppip?.pipeline.name]">
-                {{apppip.pipeline.name}}
-            </a>
-        </sm-dropdown>
     </ng-container>
 
     <ng-container *ngIf="workflowRun">
