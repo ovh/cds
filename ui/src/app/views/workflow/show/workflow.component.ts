@@ -221,7 +221,7 @@ export class WorkflowShowComponent {
 
     runWithParameter(): void {
         if (this.runWithParamComponent) {
-            this.runWithParamComponent.show(true, null);
+            this.runWithParamComponent.show(true);
         }
     }
 }

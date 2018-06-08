@@ -85,33 +85,26 @@ export class WorkflowNodeRunParamComponent {
         };
     }
 
-    show(isNewWorkflow: boolean, workflowRun: WorkflowRun): void {
-        let workflowName: string;
+    show(isNewWorkflow: boolean): void {
         let num: number;
         let nodeRunID: number;
 
-        if (this.workflowRun && this.workflowRun.workflow) {
-            workflowName = this.workflowRun.workflow.name;
-        }
-
-        if (workflowRun) { // relaunch btn
-            let rootNodeRun = workflowRun.nodes[workflowRun.workflow.root.id][0];
-            num = rootNodeRun.num;
-            nodeRunID = rootNodeRun.id;
-            workflowName = workflowRun.workflow.name;
-        } else if (this.nodeRun) { // relaunch a pipeline
+        if (this.nodeRun) { // relaunch a pipeline
             num = this.nodeRun.num;
             nodeRunID = this.nodeRun.id;
-            workflowName = this.workflowRun.workflow.name;
+        } else if (this.workflowRun) {
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
+            num = rootNodeRun.num;
+            nodeRunID = rootNodeRun.id;
         }
 
         // if the pipeline was already launched, we refresh data from API
 
         // relaunch a workflow or a pipeline
-        if (workflowName && num > 0 && nodeRunID > 0) {
+        if (num > 0 && nodeRunID > 0) {
             this.readOnly = true;
             this._workflowRunService.getWorkflowNodeRun(
-                this.project.key, workflowName, num, nodeRunID)
+                this.project.key, this.workflow.name, num, nodeRunID)
                 .subscribe(nodeRun => {
                     if (nodeRun && nodeRun.hook_event) {
                         this._nodeToRun.context.default_payload = nodeRun.hook_event.payload;
