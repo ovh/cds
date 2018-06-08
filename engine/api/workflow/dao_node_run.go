@@ -532,34 +532,21 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 	var previous sdk.BuildNumberAndHash
 	var prevHash, prevBranch, prevRepository sql.NullString
 	var previousBuildNumber sql.NullInt64
-	lastRun, errL := LoadLastRun(db, projectKey, wf.Name, LoadRunOptions{})
-	if errL == sql.ErrNoRows || lastRun == nil {
-		return previous, nil
-	}
-	if errL != nil {
-		return previous, sdk.WrapError(errL, "PreviousNodeRunVCSInfos> Unable to load last run")
-	}
-
-	node := lastRun.Workflow.GetNodeByName(nodeName)
-	if node == nil {
-		return previous, nil
-	}
 
 	queryPrevious := `
 		SELECT workflow_node_run.vcs_branch, workflow_node_run.vcs_hash, workflow_node_run.vcs_repository, workflow_node_run.num
 		FROM workflow_node_run
-		JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
+		JOIN workflow_node ON workflow_node.name = workflow_node_run.workflow_node_name AND workflow_node.name = $1 AND workflow_node.workflow_id = $2
 		JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
 		WHERE workflow_node_run.vcs_hash IS NOT NULL
-		AND workflow_node_run.workflow_node_id = $3
-		AND workflow_node_run.num < $4
-    AND workflow_node_context.application_id = $5
+		AND workflow_node_run.num < $3
+    AND workflow_node_context.application_id = $4
 	`
 
-	argPrevious := []interface{}{nodeName, wf.ID, node.ID, current.BuildNumber, appID}
+	argPrevious := []interface{}{nodeName, wf.ID, current.BuildNumber, appID}
 	if envID > 0 {
 		argPrevious = append(argPrevious, envID)
-		queryPrevious += "AND workflow_node_context.environment_id = $6"
+		queryPrevious += "AND workflow_node_context.environment_id = $5"
 	}
 	queryPrevious += fmt.Sprintf(" ORDER BY workflow_node_run.num DESC LIMIT 1")
 
