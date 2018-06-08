@@ -61,7 +61,7 @@ import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigg
 import {RouterModule} from '@angular/router';
 import {ForMapPipe} from './pipes/map.pipe';
 import {PermissionEnvironmentFormComponent} from './permission/environment/form/permission.env.form.component';
-import {NgxAutoScroll} from 'ngx-auto-scroll';
+import {NgxAutoScroll, NgxAutoScrollModule} from 'ngx-auto-scroll';
 import {SuiModule} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
@@ -90,7 +90,7 @@ import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.co
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
-        CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, SuiModule ],
+        CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, SuiModule, NgxAutoScrollModule ],
     declarations: [
         ActionComponent,
         ActionStepComponent,
@@ -109,7 +109,6 @@ import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.co
         KeysListComponent,
         NgForNumber,
         TokenListComponent,
-        NgxAutoScroll,
         ParameterDescriptionComponent,
         ParameterListComponent,
         ParameterFormComponent,
