@@ -37,9 +37,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     searchItems: Array<NavbarSearchItem> = [];
     recentItems: Array<NavbarSearchItem> = [];
     items: Array<NavbarSearchItem> = [];
-    broadcasts: Array<Broadcast> = [];
-    recentBroadcastsToDisplay: Array<Broadcast> = [];
-    previousBroadcastsToDisplay: Array<Broadcast> = [];
+    broadcasts: Array<Broadcast> = new Array<Broadcast>();
+    recentBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
+    previousBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     loading = true;
 
     listWorkflows: List<NavbarRecentData>;
@@ -197,8 +197,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
         this.broadcastSubscription = this._broadcastStore.getBroadcasts()
             .subscribe((broadcasts) => {
-                let broadcastsToRead = broadcasts.filter((br) => !br.read && !br.archived);
-                let previousBroadcasts = broadcasts.filter((br) => br.read && !br.archived);
+                let broadcastsToRead = broadcasts.toArray().filter((br) => !br.read && !br.archived);
+                let previousBroadcasts = broadcasts.toArray().filter((br) => br.read && !br.archived);
                 this.recentBroadcastsToDisplay = broadcastsToRead.slice(0, 4);
                 this.previousBroadcastsToDisplay = previousBroadcasts.slice(0, 4);
                 this.broadcasts = broadcastsToRead;
