@@ -65,7 +65,10 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this._workflowRun = data;
             this.workflow = data.workflow;
             this.nodeHeight = 78;
-            this.calculateDynamicWidth();
+            if (!this.previousWorkflowRunId || this.previousWorkflowRunId !== data.id) {
+                this.calculateDynamicWidth();
+            }
+            this.previousWorkflowRunId = data.id;
             this.changeDisplay();
         }
     }
@@ -103,6 +106,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     linkWithJoin = false;
     nodeToLink: WorkflowNode;
+    previousWorkflowRunId = 0;
 
     nodesComponent = new Map<string, ComponentRef<WorkflowNodeComponent>>();
     joinsComponent = new Map<string, ComponentRef<WorkflowJoinComponent>>();
@@ -196,6 +200,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         // Add listener on graph element
         this.addListener(d3.select('svg'));
         this.svgHeight = this.g.graph().height + 40;
+        this.svgWidth = this.g.graph().width;
     }
 
     private createCustomArrow() {
@@ -246,6 +251,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 nbofNodes = this.getWorkflowJoinMaxNodeByLevel(nbofNodes);
                 break;
         }
+
 
         let windowsWidth = window.innerWidth;
         if (this.sidebarOpen) {
