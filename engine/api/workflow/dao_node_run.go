@@ -483,7 +483,6 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
 		}
-		log.Debug("GetNodeRunBuildCommits> length of commits %d", len(commits))
 		res = commits
 	} else if prev.Hash == "" {
 		log.Debug("GetNodeRunBuildCommits> Previous hash is empty, return just the last commit for node %s ", nodeRun.WorkflowNodeName)
