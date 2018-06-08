@@ -85,12 +85,81 @@ export class WorkflowNodeRunParamComponent {
         };
     }
 
-    show(): void {
+    show(isNewWorkflow: boolean, workflowRun: WorkflowRun): void {
+        let workflowName: string;
+        let num: number;
+        let nodeRunID: number;
+
+        if (this.workflowRun && this.workflowRun.workflow) {
+            workflowName = this.workflowRun.workflow.name;
+        }
+
+        if (workflowRun) { // relaunch btn
+            let rootNodeRun = workflowRun.nodes[workflowRun.workflow.root.id][0];
+            num = rootNodeRun.num;
+            nodeRunID = rootNodeRun.id;
+            workflowName = workflowRun.workflow.name;
+        } else if (this.nodeRun) { // relaunch a pipeline
+            num = this.nodeRun.num;
+            nodeRunID = this.nodeRun.id;
+            workflowName = this.workflowRun.workflow.name;
+        }
+
+        // if the pipeline was already launched, we refresh data from API
+
+        // relaunch a workflow or a pipeline
+        if (workflowName && num > 0 && nodeRunID > 0) {
+            this.readOnly = true;
+            this._workflowRunService.getWorkflowNodeRun(
+                this.project.key, workflowName, num, nodeRunID)
+                .subscribe(nodeRun => {
+                    if (nodeRun && nodeRun.hook_event) {
+                        this._nodeToRun.context.default_payload = nodeRun.hook_event.payload;
+                        this._nodeToRun.context.default_pipeline_parameters = nodeRun.hook_event.pipeline_parameter;
+                    }
+                    if (nodeRun && nodeRun.manual) {
+                        this._nodeToRun.context.default_payload = nodeRun.manual.payload;
+                        this._nodeToRun.context.default_pipeline_parameters = nodeRun.manual.pipeline_parameter;
+                    }
+
+                    this.prepareDisplay(null);
+            });
+        } else {
+            let isPipelineRoot = false;
+            if (isNewWorkflow) {
+                isPipelineRoot = true;
+            } else if (this.workflowRun && this.workflowRun.workflow.root_id === this.nodeToRun.id) {
+                isPipelineRoot = true;
+            }
+            // run a workflow or a child pipeline, first run
+            let payload = null;
+            this.readOnly = false;
+            // if it's not the pipeline root, we take the payload on the pipelineRoot
+            if (!isPipelineRoot) {
+                this.readOnly = true;
+                let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
+                payload = rootNodeRun.payload;
+            }
+            this.prepareDisplay(payload);
+        }
+    }
+
+    prepareDisplay(payload): void {
         this._firstCommitLoad = false;
         this._previousBranch = null;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
         config.mustScroll = true;
+
+        let currentPayload = payload;
+        if (!currentPayload) {
+            currentPayload = this.getCurrentPayload();
+        }
+
+        this.payloadString = JSON.stringify(currentPayload, undefined, 4);
+
         this.modal = this._modalService.open(config);
+
+        this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: this.readOnly});
 
         if (!this.nodeToRun.context.application) {
             return;
@@ -107,41 +176,15 @@ export class WorkflowNodeRunParamComponent {
         if (this.num == null) {
             this.loadingCommits = true;
             this._workflowRunService.getRunNumber(this.project.key, this.workflow)
-                .pipe(
-                    first()
-                )
+                .pipe(first())
                 .subscribe(n => {
                     this.lastNum = n.num + 1;
                     this.getCommits(n.num + 1, false);
                 });
         }
 
-        let currentPayload = this.getCurrentPayload();
-        this.payloadString = JSON.stringify(currentPayload, undefined, 4);
         if (this.num != null) {
             this.getCommits(this.num, false);
-        }
-
-        let isRoot = false
-        if (this.workflowRun && this.workflowRun.workflow.root_id !== this.nodeToRun.id) {
-            this.readOnly = true;
-            this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: true});
-        } else {
-            this.readOnly = false;
-            isRoot = true;
-            this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: false});
-        }
-
-        if (isRoot && this.workflowRun) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
-            if (rootNodeRun && rootNodeRun.hook_event) {
-                this._nodeToRun.context.default_payload = rootNodeRun.hook_event.payload;
-                this._nodeToRun.context.default_pipeline_parameters = rootNodeRun.hook_event.pipeline_parameter;
-            }
-            if (rootNodeRun && rootNodeRun.manual) {
-                this._nodeToRun.context.default_payload = rootNodeRun.manual.payload;
-                this._nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
-            }
         }
     }
 

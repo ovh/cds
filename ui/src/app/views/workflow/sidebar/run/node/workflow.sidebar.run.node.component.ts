@@ -212,6 +212,6 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     }
 
     openRunNode(): void {
-        this.workflowRunNode.show();
+        this.workflowRunNode.show(false, null);
     }
 }
