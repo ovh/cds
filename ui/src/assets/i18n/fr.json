@@ -104,6 +104,7 @@
   "artifact_name": "Nom de l'artefact",
   "artifact_tag": "Tag",
   "artifact_sha512": "SHA512 Checksum",
+  "artifact_none": "Aucun artefact",
 
   "audit_change": "Modification",
   "audit_no": "Aucun audit",

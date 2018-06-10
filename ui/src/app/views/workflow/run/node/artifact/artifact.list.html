@@ -1,5 +1,14 @@
 <div class="artifact" *ngIf="artifacts">
-    <table class="ui fixed celled table">
+    <div class="ui form">
+        <div class="field">
+            <div class="fields">
+            <div class="sixteen wide field">
+                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+            </div>
+            </div>
+        </div>
+    </div>
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th class="four wide">{{ 'artifact_name' | translate }}</th>
@@ -41,4 +50,7 @@
         </tr>
         </tfoot>
     </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'artifact_none' | translate }}
+    </div>
 </div>
