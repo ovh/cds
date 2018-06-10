@@ -435,9 +435,19 @@ func serve(c context.Context, s service.Service, serviceName string) error {
 		}
 	}()
 
-	if err := s.Serve(c); err != nil {
-		return err
-	}
+	go func() {
+		if err := s.Serve(c); err != nil {
+			log.Error("%s> Serve: %v", serviceName, err)
+			cancel()
+		}
+	}()
 
+	<-ctx.Done()
+
+	if ctx.Err() != nil {
+		log.Error("%s> Service exiting with err: %v", serviceName, ctx.Err())
+	} else {
+		log.Info("%s> Service exiting", serviceName)
+	}
 	return ctx.Err()
 }
