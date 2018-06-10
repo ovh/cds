@@ -20,10 +20,10 @@
             <tr *ngIf="tc.displayed && (tc.errors || tc.failures)" class="log">
                 <td>
                     <div *ngIf="tc.errors && tc.errors.length > 0">
-                        <pre [innerHTML]="getLogs(e)"  *ngFor="let e of tc.errors"></pre>
+                        <pre *ngFor="let e of tc.errors">{{getLogs(e)}}</pre>
                     </div>
                     <div *ngIf="tc.failures && tc.failures.length > 0">
-                        <pre [innerHTML]="getLogs(f)"  *ngFor="let f of tc.failures"></pre>
+                        <pre *ngFor="let f of tc.failures">{{getLogs(f)}}</pre>
                     </div>
                 </td>
             </tr>
