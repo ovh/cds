@@ -1,6 +1,6 @@
 import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {AuthentificationStore} from './auth/authentification.store';
 import {environment} from '../../environments/environment';
 

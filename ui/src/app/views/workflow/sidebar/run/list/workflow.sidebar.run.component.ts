@@ -6,7 +6,7 @@ import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {CDSWorker} from '../../../../../shared/worker/worker';
 import {AuthentificationStore} from '../../../../../service/auth/authentification.store';
 import {environment} from '../../../../../../environments/environment';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
 import {cloneDeep} from 'lodash';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';

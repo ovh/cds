@@ -1,10 +1,11 @@
+
+import {map, flatMap} from 'rxjs/operators';
 import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {Environment} from '../../../../../model/environment.model';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs/Subscription';
-import {flatMap} from 'rxjs/operators';
+import {Subscription} from 'rxjs';
 import {Warning} from '../../../../../model/warning.model';
 
 @Component({
@@ -50,14 +51,14 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
 
     ngOnInit(): void {
         let currentTab;
-        this.routerSubscription = this._routerActivatedRoute.queryParams
-          .map((q) => {
+        this.routerSubscription = this._routerActivatedRoute.queryParams.pipe(
+          map((q) => {
             if (q['envName']) {
                 this.envInRoute = q['envName'];
             }
             currentTab = q['tab'];
             return q;
-          })
+          }))
           .pipe(
               flatMap((q) => this._projectStore.getProjectEnvironmentsResolver(this.project.key))
           )

@@ -6,7 +6,8 @@ import {AuthentificationStore} from './service/auth/authentification.store';
 import {ResolveEnd, ResolveStart, Router, ActivatedRoute, NavigationEnd} from '@angular/router';
 import {CDSWorker} from './shared/worker/worker';
 import {Subscription} from 'rxjs/Subscription';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
+import {map, filter, mergeMap} from 'rxjs/operators';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
@@ -81,7 +82,7 @@ export class AppComponent  implements OnInit {
         });
 
         this._routerSubscription = this._router.events
-            .filter((event) => event instanceof ResolveStart || event instanceof ResolveEnd)
+            .pipe(filter((event) => event instanceof ResolveStart || event instanceof ResolveEnd))
             .subscribe(e => {
                 if (e instanceof ResolveStart) {
                     this.displayResolver = true;
@@ -92,18 +93,18 @@ export class AppComponent  implements OnInit {
             });
 
         this._routerNavEndSubscription = this._router.events
-            .filter((event) => event instanceof NavigationEnd)
-            .map(() => this._activatedRoute)
-            .map((route) => {
+            .pipe(filter((event) => event instanceof NavigationEnd))
+            .pipe(map(() => this._activatedRoute))
+            .pipe(map((route) => {
                 let params = {};
                 while (route.firstChild) {
                     route = route.firstChild;
                     Object.assign(params, route.snapshot.params, route.snapshot.queryParams);
                 }
                 return { route, params: Observable.of(params) };
-            })
-            .filter((event) => event.route.outlet === 'primary')
-            .mergeMap((event) => Observable.zip(event.route.data, event.params))
+            }))
+            .pipe(filter((event) => event.route.outlet === 'primary'))
+            .pipe(mergeMap((event) => Observable.zip(event.route.data, event.params)))
             .subscribe((routeData) => {
                 if (!Array.isArray(routeData) || routeData.length < 2) {
                     return;

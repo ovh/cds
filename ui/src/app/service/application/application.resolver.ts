@@ -1,9 +1,12 @@
+
+import {of as observableOf, Observable} from 'rxjs';
+
+import {catchError, map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import {Resolve, ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/router';
-import {Observable} from 'rxjs/Observable';
 import {Application} from '../../model/application.model';
 import {ApplicationStore} from './application.store';
-import 'rxjs/add/observable/of';
+
 
 @Injectable()
 export class ApplicationResolver implements Resolve<Application> {
@@ -20,13 +23,13 @@ export class ApplicationQueryParamResolver implements Resolve<Application> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         if (route.queryParams['application']) {
-            return this.appStore.getApplicationResolver(route.params['key'], route.queryParams['application']).map( app => {
+            return this.appStore.getApplicationResolver(route.params['key'], route.queryParams['application']).pipe(map( app => {
                 return app;
-            }).catch(() => {
-                return Observable.of(null);
-            });
+            }), catchError(() => {
+                return observableOf(null);
+            }));
         } else {
-            return Observable.of(null);
+            return observableOf(null);
         }
     }
 

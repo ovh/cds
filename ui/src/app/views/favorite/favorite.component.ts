@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 import {NavbarService} from '../../service/navbar/navbar.service';
 import {NavbarProjectData} from 'app/model/navbar.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 
 @Component({

@@ -22,7 +22,7 @@ import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
 import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/node/conditions/node.conditions.component';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {cloneDeep} from 'lodash';
 
 @Component({

@@ -76,15 +76,22 @@ func Do(input string, vars map[string]string) (string, error) {
 						nameWithDot := strings.Replace(e, "__", ".", -1)
 						nameWithDot = strings.Replace(nameWithDot, "µµµ", ".", -1)
 						nameWithDot = strings.Replace(nameWithDot, "\"", "\\\"", -1)
+
+						helperPos := strings.Index(e, "|")
 						// "-"" are not a valid char in go template var name, as we don't know e, no pb to replace "-" with "µ"
-						eb := strings.Replace(e, "-", "µµµ", -1)
+						var eb string
+						if helperPos > 0 {
+							eb = strings.Replace(e[:helperPos], "-", "µµµ", -1) + e[helperPos:]
+						} else {
+							eb = strings.Replace(e, "-", "µµµ", -1)
+						}
 
 						// check if helper exists. if helper does not exist, as
 						// '{{"conf"|uvault}}' -> return '{{"conf"|uvault}}' in defaultCDS value
 						// '{{ defaultCDS "{{\"conf\"|uvault}}" "" }}'
 
-						if pos := strings.Index(eb, "|"); pos > 0 && len(eb) > pos {
-							helper = strings.TrimSpace(eb[pos+1:])
+						if helperPos > 0 && len(eb) > helperPos {
+							helper = strings.TrimSpace(eb[helperPos+1:])
 							if strings.HasPrefix(helper, "default") {
 								// 7 = len("default") --> helper[7:]
 								input = strings.Replace(input, sm[i][1], "{{ defaultCDS "+helper[7:]+" "+eb+" }}", -1)

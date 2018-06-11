@@ -12,7 +12,7 @@ import {
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {cloneDeep} from 'lodash';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router, ActivatedRoute} from '@angular/router';

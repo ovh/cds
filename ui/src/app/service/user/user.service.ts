@@ -1,8 +1,10 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import {User} from '../../model/user.model';
 import {Token} from '../../model/token.model';
 import {Groups} from '../../model/group.model';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {AuthentificationStore} from '../auth/authentification.store';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 
@@ -26,7 +28,7 @@ export class UserService {
      * @returns {Observable<User>}
      */
     login(user: User): Observable<User> {
-        return this._http.post<any>('/login', user, {observe: 'response'}).map(res => {
+        return this._http.post<any>('/login', user, {observe: 'response'}).pipe(map(res => {
             let u = res.body.user;
             let headers: HttpHeaders = res.headers;
 
@@ -43,7 +45,7 @@ export class UserService {
                 this._authStore.addUser(u, false);
             }
             return u;
-        });
+        }));
     }
 
     resetPassword(user: User, href: string) {
@@ -51,9 +53,9 @@ export class UserService {
             user: user,
             callback: href + 'account/verify/%s/%s'
         };
-        return this._http.post('/user/' + user.username + '/reset', request).map(() => {
+        return this._http.post('/user/' + user.username + '/reset', request).pipe(map(() => {
             return true;
-        });
+        }));
     }
 
     /**
@@ -66,9 +68,9 @@ export class UserService {
             user: user,
             callback: href + 'account/verify/%s/%s'
         };
-        return this._http.post('/user/signup', request).map(() => {
+        return this._http.post('/user/signup', request).pipe(map(() => {
             return true;
-        });
+        }));
     }
 
     /**

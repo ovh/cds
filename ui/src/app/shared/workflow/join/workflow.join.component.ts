@@ -10,7 +10,7 @@ import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.ser
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 
 @Component({

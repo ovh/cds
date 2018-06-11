@@ -5,7 +5,7 @@ import {ProjectStore} from '../../../service/project/project.store';
 import {Project, LoadOpts} from '../../../model/project.model';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {PermissionValue} from '../../../model/permission.model';
 import {User} from '../../../model/user.model';
 import {finalize} from 'rxjs/operators';

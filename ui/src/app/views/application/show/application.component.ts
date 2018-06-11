@@ -15,7 +15,7 @@ import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {NotificationEvent} from './notifications/notification.event';
