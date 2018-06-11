@@ -148,7 +148,7 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 	}
 
 	//Check if the polling if disabled
-	if info, err := repositoriesmanager.GetPollingInfos(client); err != nil {
+	if info, err := repositoriesmanager.GetPollingInfos(client, *proj); err != nil {
 		return nil, err
 	} else if info.PollingDisabled || !info.PollingSupported {
 		log.Info("Polling> %s polling is disabled", vcsServer.Name)

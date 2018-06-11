@@ -75,7 +75,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 				}
 				repoWebHookEnable = webHookInfo.WebhooksSupported && !webHookInfo.WebhooksDisabled
 
-				pollInfo, errPoll := repositoriesmanager.GetPollingInfos(client)
+				pollInfo, errPoll := repositoriesmanager.GetPollingInfos(client, *p)
 				if errPoll != nil {
 					return sdk.WrapError(errPoll, "getWorkflowHookModelsHandler> Cannot get vcs poller info")
 				}
