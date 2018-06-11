@@ -16,10 +16,12 @@ const pipelineRoutes: Routes = [
                 component: PipelineAddComponent,
                 resolve: {
                     project: ProjectResolver
-                }
+                },
+                data: { title: 'CDS - Add a pipeline' }
             },
             { path: ':pipName',
                 component: PipelineShowComponent,
+                data: { title: 'CDS - Pipeline {pipName}' },
                 resolve: {
                     project: ProjectResolver,
                     application: ApplicationQueryParamResolver

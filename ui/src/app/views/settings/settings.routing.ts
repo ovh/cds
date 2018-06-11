@@ -23,20 +23,24 @@ const routes: Routes = [
         canActivateChild: [CanActivateAuthRoute],
         canActivate: [CanActivateAuthRoute],
         children: [
-            { path: 'profile/:username', component: UserEditComponent },
-            { path: 'worker-model', component: WorkerModelListComponent },
-            { path: 'worker-model/add', component: WorkerModelAddComponent },
-            { path: 'worker-model/:workerModelName', component: WorkerModelEditComponent },
-            { path: 'group', component: GroupListComponent },
-            { path: 'group/:groupname', component: GroupEditComponent },
-            { path: 'user', component: UserListComponent },
-            { path: 'user/:username', component: UserEditComponent },
-            { path: 'action', component: ActionListComponent },
-            { path: 'action/add', component: ActionAddComponent },
-            { path: 'action/:name', component: ActionEditComponent },
-            { path: 'queue', component: QueueComponent },
-            { path: 'status', component: StatusComponent },
-            { path: 'downloads', component: DownloadComponent }
+            { path: 'profile/:username', component: UserEditComponent, data: { title: 'CDS - Profile' }},
+            { path: 'worker-model', component: WorkerModelListComponent, data: { title: 'CDS - Worker Model' } },
+            { path: 'worker-model/add', component: WorkerModelAddComponent, data: { title: 'CDS - Worker Model - Add' } },
+            {
+                path: 'worker-model/:workerModelName',
+                component: WorkerModelEditComponent,
+                data: { title: 'CDS - Worker Model {workerModelName}' }
+            },
+            { path: 'group', component: GroupListComponent, data: { title: 'CDS - Groups' } },
+            { path: 'group/:groupname', component: GroupEditComponent, data: { title: 'CDS - Group {groupname}' } },
+            { path: 'user', component: UserListComponent, data: { title: 'CDS - User list' } },
+            { path: 'user/:username', component: UserEditComponent, data: { title: 'CDS - User {username}' } },
+            { path: 'action', component: ActionListComponent, data: { title: 'CDS - Actions' } },
+            { path: 'action/add', component: ActionAddComponent, data: { title: 'CDS - Action - Add' } },
+            { path: 'action/:name', component: ActionEditComponent, data: { title: 'CDS - Action {name}' } },
+            { path: 'queue', component: QueueComponent, data: { title: 'CDS - Queue' }},
+            { path: 'status', component: StatusComponent, data: { title: 'CDS - Status' } },
+            { path: 'downloads', component: DownloadComponent, data: { title: 'CDS - Downloads' } }
         ]
     }
 ];

@@ -1,10 +1,12 @@
+import { Title } from '@angular/platform-browser';
 import {registerLocaleData} from '@angular/common';
 import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
-import {ResolveEnd, ResolveStart, Router} from '@angular/router';
+import {ResolveEnd, ResolveStart, Router, ActivatedRoute, NavigationEnd} from '@angular/router';
 import {CDSWorker} from './shared/worker/worker';
 import {Subscription} from 'rxjs/Subscription';
+import {Observable} from 'rxjs/Observable';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
@@ -12,6 +14,7 @@ import {ToastService} from './shared/toast/ToastService';
 import {AppService} from './app.service';
 import {LastUpdateService} from './service/sse/lastupdate.sservice';
 import {LastModification} from './model/lastupdate.model';
+import * as format from 'string-format-obj';
 import localeFR from '@angular/common/locales/fr';
 import localeEN from '@angular/common/locales/en';
 
@@ -20,7 +23,7 @@ import localeEN from '@angular/common/locales/en';
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-@AutoUnsubscribe([])
+@AutoUnsubscribe()
 export class AppComponent  implements OnInit {
 
     open: boolean;
@@ -35,11 +38,14 @@ export class AppComponent  implements OnInit {
     warningWorkerSubscription: Subscription;
     languageSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
+    _routerSubscription: Subscription;
+    _routerNavEndSubscription: Subscription;
 
     displayResolver = false;
     toasterConfig: any;
 
     constructor(_translate: TranslateService, private _language: LanguageStore,
+                private _activatedRoute: ActivatedRoute, private _titleService: Title,
                 private _authStore: AuthentificationStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService,
                 private _last: LastUpdateService, private _toastService: ToastService) {
@@ -74,14 +80,41 @@ export class AppComponent  implements OnInit {
             this.startVersionWorker();
         });
 
-        this._router.events.subscribe(e => {
-            if (e instanceof ResolveStart) {
-                this.displayResolver = true;
-            }
-            if (e instanceof ResolveEnd) {
-                this.displayResolver = false;
-            }
-        });
+        this._routerSubscription = this._router.events
+            .filter((event) => event instanceof ResolveStart || event instanceof ResolveEnd)
+            .subscribe(e => {
+                if (e instanceof ResolveStart) {
+                    this.displayResolver = true;
+                }
+                if (e instanceof ResolveEnd) {
+                    this.displayResolver = false;
+                }
+            });
+
+        this._routerNavEndSubscription = this._router.events
+            .filter((event) => event instanceof NavigationEnd)
+            .map(() => this._activatedRoute)
+            .map((route) => {
+                let params = {};
+                while (route.firstChild) {
+                    route = route.firstChild;
+                    Object.assign(params, route.snapshot.params, route.snapshot.queryParams);
+                }
+                return { route, params: Observable.of(params) };
+            })
+            .filter((event) => event.route.outlet === 'primary')
+            .mergeMap((event) => Observable.zip(event.route.data, event.params))
+            .subscribe((routeData) => {
+                if (!Array.isArray(routeData) || routeData.length < 2) {
+                    return;
+                }
+                if (routeData[0]['title']) {
+                    let title = format(routeData[0]['title'], routeData[1])
+                    this._titleService.setTitle(title);
+                } else {
+                    this._titleService.setTitle('CDS');
+                }
+            });
     }
 
     stopWorker(w: CDSWorker, s: Subscription): void {

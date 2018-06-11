@@ -18,14 +18,38 @@ const routes: Routes = [
         canActivateChild: [CanActivateAuthAdminRoute],
         canActivate: [CanActivateAuthAdminRoute],
         children: [
-            { path: 'migration', component: MigrationOverviewComponent },
+            { path: 'migration', component: MigrationOverviewComponent, data: { title: 'CDS - Admin - Migration' } },
             { path: 'migration/:key', component: MigrationProjectComponent },
-            { path: 'worker-model-pattern', component: WorkerModelPatternComponent },
-            { path: 'worker-model-pattern/add', component: WorkerModelPatternAddComponent },
-            { path: 'worker-model-pattern/:type/:name', component: WorkerModelPatternEditComponent },
-            { path: 'broadcast', component: BroadcastListComponent },
-            { path: 'broadcast/add', component: BroadcastAddComponent },
-            { path: 'broadcast/:id', component: BroadcastEditComponent }
+            {
+                path: 'worker-model-pattern',
+                component: WorkerModelPatternComponent,
+                data: { title: 'CDS - Admin - Worker Model Pattern - List' }
+            },
+            {
+                path: 'worker-model-pattern/add',
+                component: WorkerModelPatternAddComponent,
+                data: { title: 'CDS - Admin - Worker Model Pattern - Add' }
+            },
+            {
+                path: 'worker-model-pattern/:type/:name',
+                component: WorkerModelPatternEditComponent,
+                data: { title: 'CDS - Admin - Worker Model Pattern - Edit {name}' }
+            },
+            {
+                path: 'broadcast',
+                component: BroadcastListComponent,
+                data: { title: 'CDS - Admin - Broadcast - List' }
+            },
+            {
+                path: 'broadcast/add',
+                component: BroadcastAddComponent,
+                data: { title: 'CDS - Admin - Broadcast - Add' }
+            },
+            {
+                path: 'broadcast/:id',
+                component: BroadcastEditComponent,
+                data: { title: 'CDS - Admin - Broadcast - Edit {id}' }
+            }
         ]
     }
 ];
