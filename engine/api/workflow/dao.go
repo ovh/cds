@@ -931,6 +931,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 	if opts != nil {
 		dryRun = opts.DryRun
 	}
+
 	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, dryRun)
 	if err != nil {
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)

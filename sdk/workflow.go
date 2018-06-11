@@ -483,6 +483,48 @@ func (n *WorkflowNode) IsLinkedToRepo() bool {
 	return n.Context != nil && n.Context.Application != nil && n.Context.Application.RepositoryFullname != ""
 }
 
+// Application return an application and a boolean (false if no application)
+func (n *WorkflowNode) Application() (a Application, b bool) {
+	if n == nil {
+		return a, false
+	}
+	if n.Context == nil {
+		return a, false
+	}
+	if n.Context.Application == nil {
+		return a, false
+	}
+	return *n.Context.Application, true
+}
+
+// Environment return an environment and a boolean (false if no environment)
+func (n *WorkflowNode) Environment() (e Environment, b bool) {
+	if n == nil {
+		return e, false
+	}
+	if n.Context == nil {
+		return e, false
+	}
+	if n.Context.Environment == nil {
+		return e, false
+	}
+	return *n.Context.Environment, true
+}
+
+// ProjectPlatform return an projectPlatform and a boolean (false if no projectPlatform)
+func (n *WorkflowNode) ProjectPlatform() (p ProjectPlatform, b bool) {
+	if n == nil {
+		return p, false
+	}
+	if n.Context == nil {
+		return p, false
+	}
+	if n.Context.ProjectPlatform == nil {
+		return p, false
+	}
+	return *n.Context.ProjectPlatform, true
+}
+
 // EqualsTo returns true if a node has the same pipeline and context than another
 func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 	if n.PipelineID != n1.PipelineID {

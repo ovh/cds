@@ -344,7 +344,8 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		if err := UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
-		customCtx, _ := context.WithTimeout(context.Background(), 90*time.Second)
+		customCtx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+		defer cancel()
 		dbWithCtx := api.mustDBWithCtx(customCtx)
 
 		proj, errP := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
