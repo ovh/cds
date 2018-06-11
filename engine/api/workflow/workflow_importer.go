@@ -25,7 +25,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	var pipelineLoader = func(n *sdk.WorkflowNode) {
 		pip, err := pipeline.LoadPipeline(db, proj.Key, n.Pipeline.Name, true)
 		if err != nil {
-			log.Warning("workflow.Import> %s > Pipeline %s not found", w.Name, n.Pipeline.Name)
+			log.Warning("workflow.Import> %s > Pipeline %s not found: %v", w.Name, n.Pipeline.Name, err)
 			mError.Append(fmt.Errorf("pipeline %s/%s not found", proj.Key, n.Pipeline.Name))
 			return
 		}
@@ -39,7 +39,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		}
 		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
 		if err != nil {
-			log.Warning("workflow.Import> %s > Application %s not found", w.Name, n.Context.Application.Name)
+			log.Warning("workflow.Import> %s > Application %s not found: %v", w.Name, n.Context.Application.Name, err)
 			mError.Append(fmt.Errorf("application %s/%s not found", proj.Key, n.Context.Application.Name))
 			return
 		}
@@ -53,7 +53,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		}
 		env, err := environment.LoadEnvironmentByName(db, proj.Key, n.Context.Environment.Name)
 		if err != nil {
-			log.Warning("workflow.Import> %s > Environment %s not found", w.Name, n.Context.Environment.Name)
+			log.Warning("workflow.Import> %s > Environment %s not found: %v", w.Name, n.Context.Environment.Name, err)
 			mError.Append(fmt.Errorf("environment %s/%s not found", proj.Key, n.Context.Environment.Name))
 			return
 		}
@@ -66,7 +66,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 			h := &n.Hooks[i]
 			m, err := LoadHookModelByName(db, h.WorkflowHookModel.Name)
 			if err != nil {
-				log.Warning("workflow.Import> %s > Hook %s not found", w.Name, h.WorkflowHookModel.Name)
+				log.Warning("workflow.Import> %s > Hook %s not found: %v", w.Name, h.WorkflowHookModel.Name, err)
 				mError.Append(fmt.Errorf("hook %s not found", h.WorkflowHookModel.Name))
 				return
 			}
@@ -85,7 +85,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		if n.Context != nil && n.Context.ProjectPlatform != nil && n.Context.ProjectPlatform.Name != "" {
 			ppf, err := platform.LoadPlatformsByName(db, proj.Key, n.Context.ProjectPlatform.Name, true)
 			if err != nil {
-				log.Warning("workflow.Import> %s > Project platform %s not found", n.Context.ProjectPlatform.Name)
+				log.Warning("workflow.Import> %s > Project platform %s not found: %v", n.Context.ProjectPlatform.Name, err)
 				mError.Append(fmt.Errorf("Project platform %s not found", n.Context.ProjectPlatform.Name))
 				return
 			}
