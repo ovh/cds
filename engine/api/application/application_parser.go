@@ -24,7 +24,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	}
 
 	//Check if app exist
-	oldApp, errl := LoadByName(db, cache, proj.Key, eapp.Name, nil, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithKeys)
+	oldApp, errl := LoadByName(db, cache, proj.Key, eapp.Name, nil, LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithKeys, LoadOptions.WithClearDeploymentStrategies)
 	if errl != nil && sdk.ErrorIs(errl, sdk.ErrApplicationNotFound) {
 		return nil, nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load application")
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -36,7 +37,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		if n.Context == nil || n.Context.Application == nil || n.Context.Application.Name == "" {
 			return
 		}
-		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u)
+		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
 		if err != nil {
 			log.Warning("workflow.Import> %s > Application %s not found", w.Name, n.Context.Application.Name)
 			mError.Append(fmt.Errorf("application %s/%s not found", proj.Key, n.Context.Application.Name))
@@ -79,6 +80,19 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		}
 	}
 	w.Visit(hookLoad)
+
+	var projectPlatfoformLoad = func(n *sdk.WorkflowNode) {
+		if n.Context != nil && n.Context.ProjectPlatform != nil && n.Context.ProjectPlatform.Name != "" {
+			ppf, err := platform.LoadPlatformsByName(db, proj.Key, n.Context.ProjectPlatform.Name, true)
+			if err != nil {
+				log.Warning("workflow.Import> %s > Project platform %s not found", n.Context.ProjectPlatform.Name)
+				mError.Append(fmt.Errorf("Project platform %s not found", n.Context.ProjectPlatform.Name))
+				return
+			}
+			n.Context.ProjectPlatform = &ppf
+		}
+	}
+	w.Visit(projectPlatfoformLoad)
 
 	if !mError.IsEmpty() {
 		return sdk.NewError(sdk.ErrWrongRequest, mError)
