@@ -18,14 +18,38 @@ const routes: Routes = [
         canActivateChild: [CanActivateAuthAdminRoute],
         canActivate: [CanActivateAuthAdminRoute],
         children: [
-            { path: 'migration', component: MigrationOverviewComponent },
+            { path: 'migration', component: MigrationOverviewComponent, data: { title: 'Admin - Migration' } },
             { path: 'migration/:key', component: MigrationProjectComponent },
-            { path: 'worker-model-pattern', component: WorkerModelPatternComponent },
-            { path: 'worker-model-pattern/add', component: WorkerModelPatternAddComponent },
-            { path: 'worker-model-pattern/:type/:name', component: WorkerModelPatternEditComponent },
-            { path: 'broadcast', component: BroadcastListComponent },
-            { path: 'broadcast/add', component: BroadcastAddComponent },
-            { path: 'broadcast/:id', component: BroadcastEditComponent }
+            {
+                path: 'worker-model-pattern',
+                component: WorkerModelPatternComponent,
+                data: { title: 'List • Worker Model Pattern' }
+            },
+            {
+                path: 'worker-model-pattern/add',
+                component: WorkerModelPatternAddComponent,
+                data: { title: 'Add • Worker Model Pattern' }
+            },
+            {
+                path: 'worker-model-pattern/:type/:name',
+                component: WorkerModelPatternEditComponent,
+                data: { title: '{name} • Edit • Worker Model Pattern' }
+            },
+            {
+                path: 'broadcast',
+                component: BroadcastListComponent,
+                data: { title: 'List • Broadcast' }
+            },
+            {
+                path: 'broadcast/add',
+                component: BroadcastAddComponent,
+                data: { title: 'Add • Broadcast' }
+            },
+            {
+                path: 'broadcast/:id',
+                component: BroadcastEditComponent,
+                data: { title: 'Edit {id} • Broadcast' }
+            }
         ]
     }
 ];

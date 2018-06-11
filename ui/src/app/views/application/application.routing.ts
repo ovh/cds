@@ -12,19 +12,22 @@ const applicationRoutes: Routes = [
         canActivateChild: [CanActivateAuthRoute],
         children: [
             { path: '', component: ApplicationAddComponent ,
+                data: { title: 'Add • Application' },
                 resolve: {
                     project: ProjectForWorkflowResolver
                 }
             },
             { path: ':appName',
                 component: ApplicationShowComponent,
+                data: { title: '{appName} • Application' },
                 resolve: {
                     project: ProjectForApplicationResolver
                 }
             },
             {
                 path: ':appName/pipeline/:pipName/build',
-                loadChildren: 'app/views/run/application.run.module#ApplicationRunModule'
+                loadChildren: 'app/views/run/application.run.module#ApplicationRunModule',
+                data: { title: 'Pipeline {pipName} • Application {appName}' }
             }
         ]
     }

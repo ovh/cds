@@ -11,9 +11,9 @@ const projectRoutes: Routes = [
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
         children: [
-            { path: '', component: ProjectAddComponent },
-            { path: 'list/all', component: ProjectListComponent },
-            { path: ':key', component: ProjectShowComponent },
+            { path: '', component: ProjectAddComponent, data: { title: 'Add • Project' } },
+            { path: 'list/all', component: ProjectListComponent, data: { title: 'List • Project' } },
+            { path: ':key', component: ProjectShowComponent, data: { title: '{key} • Project' } },
             { path: ':key/workflow', loadChildren: 'app/views/workflow/workflow.module#WorkflowModule'},
             { path: ':key/application', loadChildren: 'app/views/application/application.module#ApplicationModule'},
             { path: ':key/pipeline', loadChildren: 'app/views/pipeline/pipeline.module#PipelineModule'}
