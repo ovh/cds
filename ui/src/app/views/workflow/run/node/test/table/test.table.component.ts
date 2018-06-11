@@ -2,8 +2,6 @@ import {Component, Input} from '@angular/core';
 import {Table} from '../../../../../../shared/table/table';
 import {TestCase, TestSuite} from '../../../../../../model/pipeline.model';
 
-declare var ansi_up: any;
-
 @Component({
     selector: 'app-workflow-test-table',
     templateUrl: './test.table.html',
@@ -75,12 +73,5 @@ export class WorkflowRunTestTableComponent extends Table {
                     this.filteredTests.push(...testCases);
                 }
         }
-    }
-
-    getLogs(logs) {
-        if (logs && logs.value) {
-            return ansi_up.ansi_to_html(logs.value);
-        }
-        return '';
     }
 }
