@@ -123,28 +123,19 @@ func ParametersToMap(params []Parameter) map[string]string {
 }
 
 // ParametersFromProjectVariables returns a map from a slice of parameters
-func ParametersFromProjectVariables(proj *Project) map[string]string {
-	if proj == nil {
-		return nil
-	}
+func ParametersFromProjectVariables(proj Project) map[string]string {
 	params := variablesToParameters("cds.proj", proj.Variable)
 	return ParametersToMap(params)
 }
 
 // ParametersFromApplicationVariables returns a map from a slice of parameters
-func ParametersFromApplicationVariables(app *Application) map[string]string {
-	if app == nil {
-		return nil
-	}
+func ParametersFromApplicationVariables(app Application) map[string]string {
 	params := variablesToParameters("cds.app", app.Variable)
 	return ParametersToMap(params)
 }
 
 // ParametersFromEnvironmentVariables returns a map from a slice of parameters
-func ParametersFromEnvironmentVariables(env *Environment) map[string]string {
-	if env == nil {
-		return nil
-	}
+func ParametersFromEnvironmentVariables(env Environment) map[string]string {
 	params := variablesToParameters("cds.env", env.Variable)
 	return ParametersToMap(params)
 }

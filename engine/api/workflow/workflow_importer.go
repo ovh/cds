@@ -34,7 +34,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	w.Visit(pipelineLoader)
 
 	var applicationLoader = func(n *sdk.WorkflowNode) {
-		if n.Context == nil || n.Context.Application == nil || n.Context.Application.Name == "" {
+		if _, has := n.Application(); !has {
 			return
 		}
 		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
@@ -48,7 +48,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	w.Visit(applicationLoader)
 
 	var envLoader = func(n *sdk.WorkflowNode) {
-		if n.Context == nil || n.Context.Environment == nil || n.Context.Environment.Name == "" {
+		if _, has := n.Environment(); !has {
 			return
 		}
 		env, err := environment.LoadEnvironmentByName(db, proj.Key, n.Context.Environment.Name)
@@ -82,15 +82,16 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	w.Visit(hookLoad)
 
 	var projectPlatfoformLoad = func(n *sdk.WorkflowNode) {
-		if n.Context != nil && n.Context.ProjectPlatform != nil && n.Context.ProjectPlatform.Name != "" {
-			ppf, err := platform.LoadPlatformsByName(db, proj.Key, n.Context.ProjectPlatform.Name, true)
-			if err != nil {
-				log.Warning("workflow.Import> %s > Project platform %s not found: %v", n.Context.ProjectPlatform.Name, err)
-				mError.Append(fmt.Errorf("Project platform %s not found", n.Context.ProjectPlatform.Name))
-				return
-			}
-			n.Context.ProjectPlatform = &ppf
+		if _, has := n.ProjectPlatform(); !has {
+			return
 		}
+		ppf, err := platform.LoadPlatformsByName(db, proj.Key, n.Context.ProjectPlatform.Name, true)
+		if err != nil {
+			log.Warning("workflow.Import> %s > Project platform %s not found: %v", n.Context.ProjectPlatform.Name, err)
+			mError.Append(fmt.Errorf("Project platform %s not found", n.Context.ProjectPlatform.Name))
+			return
+		}
+		n.Context.ProjectPlatform = &ppf
 	}
 	w.Visit(projectPlatfoformLoad)
 
