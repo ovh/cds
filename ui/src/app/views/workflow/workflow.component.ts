@@ -2,7 +2,7 @@ import {Component, ViewChild, OnInit} from '@angular/core';
 import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
 import {ActivatedRoute, ResolveEnd, Router} from '@angular/router';
 import {Project} from '../../model/project.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';

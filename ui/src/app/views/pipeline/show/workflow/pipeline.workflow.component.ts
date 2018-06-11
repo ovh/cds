@@ -15,7 +15,7 @@ import {ActionEvent} from '../../../../shared/action/action.event.model';
 import {DragulaService} from 'ng2-dragula';
 import {PermissionValue} from '../../../../model/permission.model';
 import {first} from 'rxjs/operators';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 
 @Component({
     selector: 'app-pipeline-workflow',

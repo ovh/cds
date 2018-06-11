@@ -1,11 +1,14 @@
+
+import {throwError as observableThrowError, Observable} from 'rxjs';
+
+import {catchError} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
-import {Observable} from 'rxjs/Observable';
 import {ToastService} from '../shared/toast/ToastService';
 import {AuthentificationStore} from './auth/authentification.store';
 import {Router} from '@angular/router';
-import 'rxjs/add/observable/throw';
+
 
 @Injectable()
 export class LogoutInterceptor implements HttpInterceptor {
@@ -18,7 +21,7 @@ export class LogoutInterceptor implements HttpInterceptor {
     }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        return next.handle(req).catch(e => {
+        return next.handle(req).pipe(catchError(e => {
             if (e instanceof HttpErrorResponse) {
                 if (e.status === 0) {
                     this._toast.error('API Unreachable', '');
@@ -37,8 +40,8 @@ export class LogoutInterceptor implements HttpInterceptor {
                         }
                     }
                 }
-                return Observable.throw(e);
+                return observableThrowError(e);
             }
-        });
+        }));
     }
 }

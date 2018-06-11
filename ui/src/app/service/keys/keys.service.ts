@@ -1,6 +1,8 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {AllKeys, KeyType, Keys, Key} from '../../model/keys.model';
 
 @Injectable()
@@ -20,9 +22,9 @@ export class KeyService {
             p = p.append('appName', appName);
         }
 
-        return this._http.get<Keys>('/project/' + projectKey + '/all/keys', {params: p}).map(keys => {
+        return this._http.get<Keys>('/project/' + projectKey + '/all/keys', {params: p}).pipe(map(keys => {
             return Keys.formatForSelect(keys);
-        });
+        }));
     }
 
     /**
@@ -31,11 +33,11 @@ export class KeyService {
      * @returns {Observable<Keys>}
      */
     getProjectKeys(projectKey: string): Observable<AllKeys> {
-        return this._http.get<Array<Key>>('/project/' + projectKey + '/keys').map(keys => {
+        return this._http.get<Array<Key>>('/project/' + projectKey + '/keys').pipe(map(keys => {
             let k = new AllKeys();
             k.ssh.push(...keys.filter(key => key.type === KeyType.SSH).map(key => key.name));
             k.pgp.push(...keys.filter(key => key.type === KeyType.PGP).map(key => key.name));
             return k;
-        });
+        }));
     }
 }

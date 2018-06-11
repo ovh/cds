@@ -9,7 +9,7 @@ import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisit
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {cloneDeep} from 'lodash';
 import {Parameter} from '../../../../../model/parameter.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 
 @Component({
     selector: 'app-application-trigger',

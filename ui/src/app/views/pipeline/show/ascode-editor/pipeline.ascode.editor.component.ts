@@ -8,7 +8,7 @@ import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.se
 import {PipelineService} from '../../../../service/pipeline/pipeline.service';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 
 @Component({

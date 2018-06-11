@@ -1,13 +1,13 @@
-import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+
+import {of as observableOf, BehaviorSubject, Observable} from 'rxjs';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
-import {Observable} from 'rxjs/Observable';
 import {WorkflowService} from './workflow.service';
 import {NavbarService} from '../navbar/navbar.service';
 import {GroupPermission} from '../../model/group.model';
 import {NavbarRecentData} from '../../model/navbar.model';
-import 'rxjs/add/observable/of';
+
 import {mergeMap, map} from 'rxjs/operators';
 
 @Injectable()
@@ -100,13 +100,13 @@ export class WorkflowStore {
     }
 
     renameWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
-        return this._workflowService.updateWorkflow(key, name, workflow).map(w => {
+        return this._workflowService.updateWorkflow(key, name, workflow).pipe(map(w => {
             let workflowKey = key + '-' + workflow.name;
             let store = this._workflows.getValue();
             w.permission = workflow.permission;
             this._workflows.next(store.set(workflowKey, w));
             return w;
-        });
+        }));
     }
 
     /**
@@ -115,12 +115,12 @@ export class WorkflowStore {
      * @param workflow workflow to update
      */
     updateWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
-        return this._workflowService.updateWorkflow(key, workflow.name, workflow).map(w => {
+        return this._workflowService.updateWorkflow(key, workflow.name, workflow).pipe(map(w => {
             let workflowKey = key + '-' + workflow.name;
             let store = this._workflows.getValue();
             this._workflows.next(store.set(workflowKey, w));
             return w;
-        });
+        }));
     }
 
     /**
@@ -129,7 +129,7 @@ export class WorkflowStore {
      * @param workflow workflow to update
      */
     updateFavorite(key: string, workflowName: string): Observable<Workflow> {
-        return this._workflowService.updateFavorite(key, workflowName).map(() => {
+        return this._workflowService.updateFavorite(key, workflowName).pipe(map(() => {
             let workflowKey = key + '-' + workflowName;
             let store = this._workflows.getValue();
             let wf = store.get(workflowKey);
@@ -140,7 +140,7 @@ export class WorkflowStore {
             }
             this._navbarService.getData();
             return wf;
-        });
+        }));
     }
 
     /**
@@ -155,7 +155,7 @@ export class WorkflowStore {
                   if (workflowName) {
                     return this._workflowService.getWorkflow(key, workflowName);
                   }
-                  return Observable.of(null);
+                  return observableOf(null);
                 }),
                 map((wf) => {
                     if (wf) {
@@ -174,12 +174,12 @@ export class WorkflowStore {
      * @param workflow Workflow name
      */
     deleteWorkflow(key: string, workflow: Workflow): Observable<boolean> {
-        return this._workflowService.deleteWorkflow(key, workflow).map(w => {
+        return this._workflowService.deleteWorkflow(key, workflow).pipe(map(w => {
             let workflowKey = key + '-' + workflow.name;
             let store = this._workflows.getValue();
             this._workflows.next(store.delete(workflowKey));
             return w;
-        });
+        }));
     }
 
     getTriggerCondition(key: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {
@@ -212,7 +212,7 @@ export class WorkflowStore {
     }
 
     addPermission(key: string, detailedWorkflow: Workflow, gp: GroupPermission) {
-        return this._workflowService.addPermission(key, detailedWorkflow.name, gp).map(w => {
+        return this._workflowService.addPermission(key, detailedWorkflow.name, gp).pipe(map(w => {
             let workflowKey = key + '-' + detailedWorkflow.name;
             let store = this._workflows.getValue();
             let workflowToUpdate = store.get(workflowKey);
@@ -220,11 +220,11 @@ export class WorkflowStore {
             workflowToUpdate.last_modified = w.last_modified;
             this._workflows.next(store.set(workflowKey, workflowToUpdate));
             return w;
-        });
+        }));
     }
 
     updatePermission(key: string, detailedWorkflow: Workflow, gp: GroupPermission) {
-        return this._workflowService.updatePermission(key, detailedWorkflow.name, gp).map(w => {
+        return this._workflowService.updatePermission(key, detailedWorkflow.name, gp).pipe(map(w => {
             let workflowKey = key + '-' + detailedWorkflow.name;
             let store = this._workflows.getValue();
             let workflowToUpdate = store.get(workflowKey);
@@ -232,11 +232,11 @@ export class WorkflowStore {
             workflowToUpdate.last_modified = w.last_modified;
             this._workflows.next(store.set(workflowKey, workflowToUpdate));
             return w;
-        });
+        }));
     }
 
     deletePermission(key: string, detailedWorkflow: Workflow, gp: GroupPermission) {
-        return this._workflowService.deletePermission(key, detailedWorkflow.name, gp).map(w => {
+        return this._workflowService.deletePermission(key, detailedWorkflow.name, gp).pipe(map(w => {
             let workflowKey = key + '-' + detailedWorkflow.name;
             let store = this._workflows.getValue();
             let workflowToUpdate = store.get(workflowKey);
@@ -244,7 +244,7 @@ export class WorkflowStore {
             workflowToUpdate.last_modified = w.last_modified;
             this._workflows.next(store.set(workflowKey, workflowToUpdate));
             return w;
-        });
+        }));
     }
 
     externalModification(wfKey: string) {

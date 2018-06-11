@@ -1,5 +1,7 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {WorkerModel, ModelPattern} from '../../model/worker-model.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
@@ -25,9 +27,9 @@ export class WorkerModelService {
      * @returns {Observable<WorkerModel>}
      */
     deleteWorkerModel(workerModel: WorkerModel): Observable<boolean> {
-        return this._http.delete('/worker/model/' + workerModel.id).map(() => {
+        return this._http.delete('/worker/model/' + workerModel.id).pipe(map(() => {
             return true;
-        });
+        }));
     }
 
     /**

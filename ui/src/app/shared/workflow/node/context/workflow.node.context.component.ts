@@ -8,7 +8,7 @@ import {VariableService} from '../../../../service/variable/variable.service';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {ParameterEvent} from '../../../parameter/parameter.event.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {finalize} from 'rxjs/operators';

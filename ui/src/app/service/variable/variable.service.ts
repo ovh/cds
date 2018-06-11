@@ -1,5 +1,7 @@
+
+import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable} from 'rxjs';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Variable} from '../../model/variable.model';
 
@@ -32,10 +34,10 @@ export class VariableService {
      * @returns {Observable<string[]>}
      */
     getTypesFromAPI(): Observable<string[]> {
-        return this._http.get<string[]>('/variable/type').map(vts => {
+        return this._http.get<string[]>('/variable/type').pipe(map(vts => {
             this.variablesType = <string[]>vts;
             return vts;
-        });
+        }));
     }
 
     /**

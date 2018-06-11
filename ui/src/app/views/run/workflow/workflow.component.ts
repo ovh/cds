@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {Pipeline, PipelineBuild, PipelineBuildJob, PipelineStatus} from '../../../model/pipeline.model';
 import {Stage} from '../../../model/stage.model';
 import {Job} from '../../../model/job.model';

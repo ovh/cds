@@ -1,7 +1,7 @@
 import {Component, Input, OnInit, OnDestroy, NgZone, ElementRef, ViewChild} from '@angular/core';
 import {Action} from '../../../../model/action.model';
 import {CDSWorker} from '../../../../shared/worker/worker';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {DurationService} from '../../../../shared/duration/duration.service';
 import {environment} from '../../../../../environments/environment';

@@ -1,9 +1,8 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
+import {Observable, BehaviorSubject} from 'rxjs';
 import {map, share, flatMap} from 'rxjs/operators';
 import {Broadcast} from '../../model/broadcast.model';
 import {HttpClient} from '@angular/common/http';
-import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 
 /**
  * Service to get broadcast
@@ -30,9 +29,9 @@ export class BroadcastService {
      * @returns {Observable<Broadcast>}
      */
     deleteBroadcast(broadcast: Broadcast): Observable<boolean> {
-        return this._http.delete('/broadcast/' + broadcast.id).map(() => {
+        return this._http.delete('/broadcast/' + broadcast.id).pipe(map(() => {
             return true;
-        });
+        }));
     }
 
     /**
