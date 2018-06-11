@@ -23,24 +23,24 @@ const routes: Routes = [
         canActivateChild: [CanActivateAuthRoute],
         canActivate: [CanActivateAuthRoute],
         children: [
-            { path: 'profile/:username', component: UserEditComponent, data: { title: 'CDS - Profile' }},
-            { path: 'worker-model', component: WorkerModelListComponent, data: { title: 'CDS - Worker Model' } },
-            { path: 'worker-model/add', component: WorkerModelAddComponent, data: { title: 'CDS - Worker Model - Add' } },
+            { path: 'profile/:username', component: UserEditComponent, data: { title: 'Profile' }},
+            { path: 'worker-model', component: WorkerModelListComponent, data: { title: 'Worker Model' } },
+            { path: 'worker-model/add', component: WorkerModelAddComponent, data: { title: 'Add • Worker Model' } },
             {
                 path: 'worker-model/:workerModelName',
                 component: WorkerModelEditComponent,
-                data: { title: 'CDS - Worker Model {workerModelName}' }
+                data: { title: 'Worker Model {workerModelName}' }
             },
-            { path: 'group', component: GroupListComponent, data: { title: 'CDS - Groups' } },
-            { path: 'group/:groupname', component: GroupEditComponent, data: { title: 'CDS - Group {groupname}' } },
-            { path: 'user', component: UserListComponent, data: { title: 'CDS - User list' } },
-            { path: 'user/:username', component: UserEditComponent, data: { title: 'CDS - User {username}' } },
-            { path: 'action', component: ActionListComponent, data: { title: 'CDS - Actions' } },
-            { path: 'action/add', component: ActionAddComponent, data: { title: 'CDS - Action - Add' } },
-            { path: 'action/:name', component: ActionEditComponent, data: { title: 'CDS - Action {name}' } },
-            { path: 'queue', component: QueueComponent, data: { title: 'CDS - Queue' }},
-            { path: 'status', component: StatusComponent, data: { title: 'CDS - Status' } },
-            { path: 'downloads', component: DownloadComponent, data: { title: 'CDS - Downloads' } }
+            { path: 'group', component: GroupListComponent, data: { title: 'Groups' } },
+            { path: 'group/:groupname', component: GroupEditComponent, data: { title: '{groupname} • Group' } },
+            { path: 'user', component: UserListComponent, data: { title: 'List • User' } },
+            { path: 'user/:username', component: UserEditComponent, data: { title: '{username} • User' } },
+            { path: 'action', component: ActionListComponent, data: { title: 'Actions' } },
+            { path: 'action/add', component: ActionAddComponent, data: { title: 'Add • Action' } },
+            { path: 'action/:name', component: ActionEditComponent, data: { title: '{name} • Action' } },
+            { path: 'queue', component: QueueComponent, data: { title: 'Queue' }},
+            { path: 'status', component: StatusComponent, data: { title: 'Engine Status' } },
+            { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } }
         ]
     }
 ];

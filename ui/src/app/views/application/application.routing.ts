@@ -12,14 +12,14 @@ const applicationRoutes: Routes = [
         canActivateChild: [CanActivateAuthRoute],
         children: [
             { path: '', component: ApplicationAddComponent ,
-                data: { title: 'CDS - Application' },
+                data: { title: 'Add • Application' },
                 resolve: {
                     project: ProjectForWorkflowResolver
                 }
             },
             { path: ':appName',
                 component: ApplicationShowComponent,
-                data: { title: 'CDS - Application {appName}' },
+                data: { title: '{appName} • Application' },
                 resolve: {
                     project: ProjectForApplicationResolver
                 }
@@ -27,7 +27,7 @@ const applicationRoutes: Routes = [
             {
                 path: ':appName/pipeline/:pipName/build',
                 loadChildren: 'app/views/run/application.run.module#ApplicationRunModule',
-                data: { title: 'CDS - Application {appName} - Pipeline {pipName}' }
+                data: { title: 'Pipeline {pipName} • Application {appName}' }
             }
         ]
     }

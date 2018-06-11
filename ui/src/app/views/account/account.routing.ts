@@ -13,10 +13,10 @@ const routes: Routes = [
             {
                 path: 'login',
                 component: LoginComponent,
-                data: { title: 'CDS - Login' }
+                data: { title: 'Login' }
             },
-            { path: 'password', component: PasswordComponent, data: { title: 'CDS - Reset Password' }},
-            { path: 'signup', component: SignUpComponent, data: { title: 'CDS - Signup' }},
+            { path: 'password', component: PasswordComponent, data: { title: 'Reset Password' }},
+            { path: 'signup', component: SignUpComponent, data: { title: 'Signup' }},
             { path: 'verify/:username/:token', component: VerifyComponent }
         ]
     }

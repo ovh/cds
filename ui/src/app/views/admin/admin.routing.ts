@@ -18,37 +18,37 @@ const routes: Routes = [
         canActivateChild: [CanActivateAuthAdminRoute],
         canActivate: [CanActivateAuthAdminRoute],
         children: [
-            { path: 'migration', component: MigrationOverviewComponent, data: { title: 'CDS - Admin - Migration' } },
+            { path: 'migration', component: MigrationOverviewComponent, data: { title: 'Admin - Migration' } },
             { path: 'migration/:key', component: MigrationProjectComponent },
             {
                 path: 'worker-model-pattern',
                 component: WorkerModelPatternComponent,
-                data: { title: 'CDS - Admin - Worker Model Pattern - List' }
+                data: { title: 'List • Worker Model Pattern' }
             },
             {
                 path: 'worker-model-pattern/add',
                 component: WorkerModelPatternAddComponent,
-                data: { title: 'CDS - Admin - Worker Model Pattern - Add' }
+                data: { title: 'Add • Worker Model Pattern' }
             },
             {
                 path: 'worker-model-pattern/:type/:name',
                 component: WorkerModelPatternEditComponent,
-                data: { title: 'CDS - Admin - Worker Model Pattern - Edit {name}' }
+                data: { title: '{name} • Edit • Worker Model Pattern' }
             },
             {
                 path: 'broadcast',
                 component: BroadcastListComponent,
-                data: { title: 'CDS - Admin - Broadcast - List' }
+                data: { title: 'List • Broadcast' }
             },
             {
                 path: 'broadcast/add',
                 component: BroadcastAddComponent,
-                data: { title: 'CDS - Admin - Broadcast - Add' }
+                data: { title: 'Add • Broadcast' }
             },
             {
                 path: 'broadcast/:id',
                 component: BroadcastEditComponent,
-                data: { title: 'CDS - Admin - Broadcast - Edit {id}' }
+                data: { title: 'Edit {id} • Broadcast' }
             }
         ]
     }

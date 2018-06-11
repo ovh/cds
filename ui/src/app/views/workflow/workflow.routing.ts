@@ -18,7 +18,7 @@ const workflowRoutes: Routes = [
             project: ProjectForWorkflowResolver
         },
         data: {
-          title: 'CDS - Workflow - Add'
+          title: 'Add • Workflow'
         },
     },
     {
@@ -27,7 +27,7 @@ const workflowRoutes: Routes = [
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
         data: {
-          title: 'CDS - Workflow {workflowName}'
+          title: '{workflowName} • Workflow'
         },
         resolve: {
             project: ProjectForWorkflowResolver
@@ -45,7 +45,7 @@ const workflowRoutes: Routes = [
                     project: ProjectResolver
                 },
                 data: {
-                  title: 'CDS - Workflow {workflowName} - Run {number}'
+                  title: '#{number} • {workflowName}'
                 },
             },
             {
@@ -54,7 +54,7 @@ const workflowRoutes: Routes = [
                     project: ProjectForWorkflowResolver
                 },
                 data: {
-                  title: 'CDS - Workflow {workflowName} - Run {number} - Pipeline {name}'
+                  title: 'Pipeline {name} • #{number} • {workflowName}'
                 },
             }
         ]
