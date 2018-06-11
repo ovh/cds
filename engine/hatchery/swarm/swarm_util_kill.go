@@ -39,6 +39,11 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			continue
 		}
 
+		//If it's the default docker bridge... skip
+		if network.Driver != "bridge" || network.Name == "docker0" || network.Name == "bridge" {
+			continue
+		}
+
 		// If we succeed to get the network, kill and remove all the container on the network
 		if netname, ok := network.Labels["worker_net"]; ok {
 			log.Debug("killAndRemove> Remove network %s", netname)
