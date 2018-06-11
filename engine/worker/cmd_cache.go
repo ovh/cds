@@ -202,6 +202,16 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
+	if projectKey == "" {
+		errP := sdk.Error{
+			Message: "worker cache push > Cannot find project info",
+			Status:  http.StatusInternalServerError,
+		}
+		log.Error("%s", errP)
+		writeError(w, r, errP)
+		return
+	}
+
 	if err := wk.client.WorkflowCachePush(projectKey, vars["tag"], res); err != nil {
 		err = sdk.Error{
 			Message: "worker cache push > Cannot push cache : " + err.Error(),
