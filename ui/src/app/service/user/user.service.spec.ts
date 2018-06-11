@@ -63,9 +63,7 @@ describe('CDS: User Service + Authent Store', () => {
         started = true;
         let userService = TestBed.get(UserService);
         userService.login(u).subscribe( () => {});
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/login';
-        })).flush(loginResponse);
+        http.expectOne('http://localhost:80801/login').flush(loginResponse);
 
 
         // Final assertion

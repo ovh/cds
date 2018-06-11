@@ -5,15 +5,15 @@ import {APP_BASE_HREF} from '@angular/common';
 import {AppModule} from '../../app.module';
 import {RouterModule} from '@angular/router';
 import {ProjectStore} from './project.store';
-import {Project} from '../../model/project.model';
+import {LoadOpts, Project} from '../../model/project.model';
 import {Variable} from '../../model/variable.model';
 import {Group, GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
 import {Application} from '../../model/application.model';
 import {RepositoriesManager} from '../../model/repositories.model';
 import {first} from 'rxjs/operators';
+import {Observable} from 'rxjs/Observable';
+import {ProjectService} from './project.service';
 
 describe('CDS: project Store', () => {
 
@@ -22,11 +22,11 @@ describe('CDS: project Store', () => {
             declarations: [],
             providers: [
                 {provide: APP_BASE_HREF, useValue: '/'},
+                {provide: ProjectService, useClass: MockProjectService}
             ],
             imports: [
                 AppModule,
-                RouterModule,
-                HttpClientTestingModule
+                RouterModule
             ]
         });
 
@@ -34,31 +34,18 @@ describe('CDS: project Store', () => {
 
     it('should Get Projects', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
-
-        let projects = new Array<Project>();
-        projects.push(createProject('key1', 'myProject'));
-        projects.push(createProject('key2', 'myProject2'));
-        projects.push(createProject('key3', 'myProject3'));
-        projects.push(createProject('key4', 'myProject4'));
 
         // Get projects from HTTP Call
         projectStore.getProjectsList().pipe(first()).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project'
-        })).flush(projects);
 
         projectStore.getProjectsList().pipe(first()).subscribe(pdata => {
             expect(pdata.size).toBe(4, 'Wrong number of project. Must be 4.');
         });
-
-        http.verify();
     }));
 
     it('should create a Project', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
 
         let project = createProject('key1', 'myProject');
         let project2 = createProject('key2', 'myProject2');
@@ -66,16 +53,9 @@ describe('CDS: project Store', () => {
         // Create project
         projectStore.createProject(createProject('key1', 'myProject')).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project'
-        })).flush(project);
 
         projectStore.createProject(createProject('key2', 'myProject2')).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project'
-        })).flush(project2);
-
 
         // check cache for nav
         let checkedNav = false;
@@ -88,12 +68,9 @@ describe('CDS: project Store', () => {
         // check get project: first time ( get from http call)
         projectStore.getProjects('key1').subscribe(projs => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(project);
         let checkedSingleProject = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
-            expect(projs.get('key1').name).toBe('myProject', 'Wrong project name. Must be myProject');
+            expect(projs.get('key1').key).toBe('key1', 'Wrong project key. Must be key1');
             checkedSingleProject = true;
         });
         expect(checkedSingleProject).toBeTruthy('Need to get project key1');
@@ -102,88 +79,30 @@ describe('CDS: project Store', () => {
         // Delete project
         projectStore.deleteProject('key1').subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(null);
 
         let checkedDeleteProject = false;
         projectStore.getProjects('key1').subscribe(() => {
             checkedDeleteProject = true;
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(null);
-
-        http.verify();
-    }));
-
-    it('should update application in Project', async(() => {
-        const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
-
-        let projectMock = createProject('key1', 'myProject');
-        projectMock.applications = new Array<Application>();
-        projectMock.applications.push(createApplication('app1'));
-        projectMock.applications.push(createApplication('app2'));
-        projectMock.applications.push(createApplication('app3'));
-
-
-        // Create project
-        let p = createProject('key1', 'myProject');
-        projectStore.createProject(p).subscribe(() => {
-        });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project'
-        })).flush(projectMock);
-
-        let projectChecked = false;
-        projectStore.getProjects('key1').subscribe(projs => {
-        });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectMock);
-        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
-            expect(projs.get('key1').applications.length).toBe(3, 'Wrong number of applications. Must be 3.');
-            projectChecked = true;
-        });
-        expect(projectChecked).toBeTruthy();
-
-        projectStore.updateApplicationName('key1', 'app2', 'appupdated');
-
-        let projectAppChecked = false;
-        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
-            expect(projs.get('key1').applications.length).toBe(3, 'Wrong number of applications. Must be 3.');
-            expect(projs.get('key1').applications[1].name).toBe('appupdated');
-            projectAppChecked = true;
-        });
-        expect(projectAppChecked).toBeTruthy();
-
-        http.verify();
     }));
 
     it('should update Project', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
-
-        let projectAdd = createProject('key1', 'myProject');
-        let projectUp = createProject('key1', 'myProjectUpdate1');
-        let projectUp2 = createProject('key1', 'myProjectUpdate2');
 
         // Create project
         let p = createProject('key1', 'myProject');
         projectStore.createProject(p).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project'
-        })).flush(projectAdd);
+
+        // check get project: first time ( get from http call)
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
+
+        });
 
         // Update
         p.name = 'myProjectUpdate1';
         projectStore.updateProject(p).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectUp);
 
         // check cache for nav
         let checkedNav = false;
@@ -194,12 +113,6 @@ describe('CDS: project Store', () => {
         });
         expect(checkedNav).toBeTruthy('Need at least 2 projects in nav');
 
-        // check get project: first time ( get from http call)
-        projectStore.getProjects('key1').subscribe(projs => {
-        });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectUp);
         let checkedSingleProject = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             expect(projs.get('key1').name).toBe('myProjectUpdate1', 'Wrong project name. Must be myProjectUpdate1');
@@ -211,35 +124,18 @@ describe('CDS: project Store', () => {
         p.name = 'myProjectUpdate2';
         projectStore.updateProject(p).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectUp2);
 
         // check get project: second time (get from cache
         let checkedSingleProjectTwice = false;
-        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
-            expect(projs.get('key1').name).toBe('myProjectUpdate2', 'Wrong project name. Must be myProjectUpdate2');
+        projectStore.getProjects('key1').pipe(first()).subscribe(pp => {
+            expect(pp.get('key1').name).toBe('myProjectUpdate2', 'Wrong project name. Must be myProjectUpdate2');
             checkedSingleProjectTwice = true;
         });
         expect(checkedSingleProjectTwice).toBeTruthy('Need to get project key1 twice');
-
-        http.verify();
-
     }));
 
     it('should add a repomananger + validate repo manager + delete repomanager', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
-
-        let projectAdd = createProject('key1', 'myProject');
-
-        let projectRepoAdd: any = {
-            'project_key': 'key1',
-            'last_modified': '123',
-            'repositories_manager': 'repoName',
-            'url': 'ff/.c',
-            'request_token': 'mytoken'
-        };
 
         let projectValidation = createProject('key1', 'myProject');
         projectValidation.last_modified = '456';
@@ -255,60 +151,42 @@ describe('CDS: project Store', () => {
         // Get project in cache
         projectStore.getProjects('key1').pipe(first()).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectAdd);
 
 
         // Add repo
         projectStore.connectRepoManager('key1', 'repoName').subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/repositories_manager/repoName/authorize'
-        })).flush(projectRepoAdd);
 
         let addRepoCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addRepoCheck = true;
-            expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
         });
         expect(addRepoCheck).toBeTruthy('Must check project update');
 
         // validate repo
         projectStore.verificationCallBackRepoManager('key1', 'repoName', 'token', 'code').subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/repositories_manager/repoName/authorize/callback'
-        })).flush(projectValidation);
 
         let validationRepoCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             validationRepoCheck = true;
-            expect(projs.get('key1').last_modified).toBe('456');
             expect(projs.get('key1').vcs_servers.length).toBe(1);
         });
         expect(validationRepoCheck).toBeTruthy('Must check project update');
 
-        projectStore.disconnectRepoManager('key1', 'repoName').subscribe(() => {
+        projectStore.disconnectRepoManager('key1', 'repoName').subscribe((p) => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/repositories_manager/repoName'
-        })).flush(projectRepoDel);
 
         let deleteRepoCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deleteRepoCheck = true;
-            expect(projs.get('key1').last_modified).toBe('789');
             expect(projs.get('key1').vcs_servers.length).toBe(0);
         });
         expect(deleteRepoCheck).toBeTruthy('Must check project update');
-
-        http.verify();
     }));
 
     it('should add/update/delete a variable', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
 
         let projectAdd = createProject('key1', 'myProject');
         projectAdd.last_modified = '0';
@@ -333,9 +211,6 @@ describe('CDS: project Store', () => {
         // Get project in cache
         projectStore.getProjects('key1').pipe(first()).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectAdd);
 
         // Add variable
         let v: Variable = new Variable();
@@ -345,26 +220,20 @@ describe('CDS: project Store', () => {
         v.description = 'myDescription';
         projectStore.addProjectVariable('key1', v).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/variable/var1'
-        })).flush(projectAddVar);
 
         let addVariableCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addVariableCheck = true;
-            expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
             expect(projs.get('key1').variables.length).toBe(1, 'Project must have 1 variable');
-            expect(projs.get('key1').variables[0].name).toBe('myvar');
+            expect(projs.get('key1').variables[0].name).toBe('var1');
         });
         expect(addVariableCheck).toBeTruthy('Must check project update');
 
 
         // update variable
+        v.name = 'myvarUpdate';
         projectStore.updateProjectVariable('key1', v).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/variable/var1'
-        })).flush(projectUpVar.variables[0]);
 
         let updateVariableCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
@@ -377,9 +246,6 @@ describe('CDS: project Store', () => {
         // Delete variable
         projectStore.deleteProjectVariable('key1', v).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/variable/var1'
-        })).flush(projectDelVar);
 
         let deleteVariableCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
@@ -387,13 +253,10 @@ describe('CDS: project Store', () => {
             expect(projs.get('key1').variables.length).toBe(0);
         });
         expect(deleteVariableCheck).toBeTruthy('Must check project update');
-
-        http.verify();
     }));
 
     it('should add/update/delete a permission', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
 
         let grp = new Group();
         grp.id = 1;
@@ -421,10 +284,6 @@ describe('CDS: project Store', () => {
         // Get project in cache
         projectStore.getProjects('key1').subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectAdd);
-
 
         // Add groupPermission
         let gp: GroupPermission = new GroupPermission();
@@ -434,9 +293,6 @@ describe('CDS: project Store', () => {
         gp.permission = 7;
         projectStore.addProjectPermission('key1', gp).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/group'
-        })).flush(projectAddGrp.groups);
 
         let addPermissionCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
@@ -448,11 +304,9 @@ describe('CDS: project Store', () => {
 
 
         // update permission
+        gp.permission = 4;
         projectStore.updateProjectPermission('key1', gp).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/group/mygroup'
-        })).flush(projectUpGrp.groups[0]);
 
         let updatePermissionCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
@@ -466,9 +320,6 @@ describe('CDS: project Store', () => {
         gp.group.id = 1;
         projectStore.removeProjectPermission('key1', gp).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/group/mygroup'
-        })).flush(projectDelGrp.groups);
 
         let deletePermissionCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
@@ -476,13 +327,10 @@ describe('CDS: project Store', () => {
             expect(projs.get('key1').groups.length).toBe(0);
         });
         expect(deletePermissionCheck).toBeTruthy('Must check project update');
-
-        http.verify();
     }));
 
     it('should add/update/delete an environment', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
 
         let projectAdd = createProject('key1', 'myProject');
 
@@ -507,24 +355,16 @@ describe('CDS: project Store', () => {
         // Get project in cache
         projectStore.getProjects('key1').subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectAdd);
-
 
         // Add evn
         let env: Environment = new Environment();
         env.name = 'Production';
         projectStore.addProjectEnvironment('key1', env).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment'
-        })).flush(projectAddEnv);
 
         let addEnvCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addEnvCheck = true;
-            expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
             expect(projs.get('key1').environments.length).toBe(1, 'Project must have 1 variable');
             expect(projs.get('key1').environments[0].name).toBe('Production');
         });
@@ -532,16 +372,13 @@ describe('CDS: project Store', () => {
 
 
         // update env
+        env.name = 'PreProduction';
         projectStore.renameProjectEnvironment('key1', env.name, env).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment/Production'
-        })).flush(projectUpEnv);
 
         let renameEnvCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             renameEnvCheck = true;
-            expect(projs.get('key1').last_modified).toBe('456');
             expect(projs.get('key1').environments.length).toBe(1);
             expect(projs.get('key1').environments[0].name).toBe('PreProduction');
         });
@@ -551,24 +388,17 @@ describe('CDS: project Store', () => {
         env.name = 'PreProduction';
         projectStore.deleteProjectEnvironment('key1', env).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment/PreProduction'
-        })).flush(projectDelEnv);
 
         let deleteEnvCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deleteEnvCheck = true;
-            expect(projs.get('key1').last_modified).toBe('789');
             expect(projs.get('key1').environments.length).toBe(0);
         });
         expect(deleteEnvCheck).toBeTruthy('Must check project delete env');
-
-        http.verify();
     }));
 
     it('should add/update/delete an environment variable', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
 
         let projectAdd = createProject('key1', 'myProject');
         projectAdd.environments = new Array<Environment>();
@@ -609,24 +439,16 @@ describe('CDS: project Store', () => {
         // Get project in cache
         projectStore.getProjects('key1').subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectAdd);
-
 
         // Add env variable
         let v: Variable = new Variable();
         v.name = 'foo';
         projectStore.addEnvironmentVariable('key1', 'prod', v).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment/prod/variable/foo'
-        })).flush(projectAddEnvVar);
 
         let addEnvCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addEnvCheck = true;
-            expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
             expect(projs.get('key1').environments.length).toBe(1, 'Project must have 1 variable');
             expect(projs.get('key1').environments[0].variables.length).toBe(1);
             expect(projs.get('key1').environments[0].variables[0].name).toBe('foo');
@@ -635,16 +457,13 @@ describe('CDS: project Store', () => {
 
 
         // update var
+        v.name = 'fooUpdated';
         projectStore.updateEnvironmentVariable('key1', 'prod', v).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment/prod/variable/foo'
-        })).flush(projectUpEnvVar);
 
         let renameVarEnvCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             renameVarEnvCheck = true;
-            expect(projs.get('key1').last_modified).toBe('456');
             expect(projs.get('key1').environments.length).toBe(1);
             expect(projs.get('key1').environments[0].variables.length).toBe(1);
             expect(projs.get('key1').environments[0].variables[0].name).toBe('fooUpdated');
@@ -652,88 +471,39 @@ describe('CDS: project Store', () => {
         expect(renameVarEnvCheck).toBeTruthy('Must check project update');
 
         // Delete var
-        v.name = 'fooUpdated';
         projectStore.removeEnvironmentVariable('key1', 'prod', v).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment/prod/variable/fooUpdated'
-        })).flush(projectDelEnvVar);
 
         let deleteVarCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deleteVarCheck = true;
-            expect(projs.get('key1').last_modified).toBe('789');
             expect(projs.get('key1').environments.length).toBe(1);
             expect(projs.get('key1').environments[0].variables.length).toBe(0);
         });
         expect(deleteVarCheck).toBeTruthy('Must check project delete var');
-
-        http.verify();
     }));
 
     it('should add/update/delete an environment permission', async(() => {
         const projectStore = TestBed.get(ProjectStore);
-        const http = TestBed.get(HttpTestingController);
 
-        let grp = new Group();
-        grp.name = 'grp1';
-
-        let projectAdd = createProject('key1', 'myProject');
-        projectAdd.environments = new Array<Environment>();
         let envAdd = new Environment();
         envAdd.name = 'prod';
-        projectAdd.environments.push(envAdd);
-
-        let projectAddEnvGroup = createProject('key1', 'myProject');
-        projectAdd.last_modified = '123';
-        projectAddEnvGroup.environments = new Array<Environment>();
-        let envAddGrp = new Environment();
-        envAddGrp.name = 'prod';
-        envAddGrp.groups = new Array<GroupPermission>();
-        let gpAdd = new GroupPermission();
-        gpAdd.group = grp;
-        gpAdd.permission = 7;
-        envAddGrp.groups.push(gpAdd);
-        projectAddEnvGroup.environments.push(envAddGrp);
-
-        let projectUpEnvGroup = createProject('key1', 'myProject');
-        projectUpEnvGroup.last_modified = '456';
-        projectUpEnvGroup.environments = new Array<Environment>();
-        let envUpGrp = new Environment();
-        envUpGrp.name = 'prod';
-        envUpGrp.groups = new Array<GroupPermission>();
-        let gpUp = new GroupPermission();
-        gpUp.group = grp;
-        gpUp.permission = 4;
-        envUpGrp.groups.push(gpUp);
-        projectUpEnvGroup.environments.push(envUpGrp);
-
-        let projectDelEnvGrp = createProject('key1', 'myProject');
-        projectDelEnvGrp.last_modified = '789';
-        projectDelEnvGrp.environments = new Array<Environment>();
-        let envDel = new Environment();
-        envDel.name = 'prod';
-        projectDelEnvGrp.environments.push(envDel);
 
         // Get project in cache
         projectStore.getProjects('key1').subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1'
-        })).flush(projectAdd);
+
+        projectStore.addProjectEnvironment('key1', envAdd).subscribe(() => {});
 
         // Add env permission
         let gpA: Array<GroupPermission> = new Array<GroupPermission>();
         let gp = new GroupPermission();
         gp.permission = 7;
         gp.group = new Group();
+        gp.group.id = 1;
         gp.group.name = 'grp1';
         gpA.push(gp);
-        projectStore.addEnvironmentPermission('key1', 'prod', gpA).subscribe(() => {
-        });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment/prod/groups'
-        })).flush(projectAddEnvGroup.environments[0]);
+        projectStore.addEnvironmentPermission('key1', envAdd.name, gpA).subscribe(() => {});
 
         let addEnvCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
@@ -747,11 +517,8 @@ describe('CDS: project Store', () => {
 
         // update gp
         gp.permission = 4;
-        projectStore.updateEnvironmentPermission('key1', 'prod', gp).subscribe(() => {
+        projectStore.updateEnvironmentPermission('key1', envAdd.name, gp).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment/prod/group/grp1'
-        })).flush(projectUpEnvGroup.environments[0]);
 
         let renameVarEnvCheck = false;
         projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
@@ -761,23 +528,6 @@ describe('CDS: project Store', () => {
             expect(projs.get('key1').environments[0].groups[0].permission).toBe(4);
         });
         expect(renameVarEnvCheck).toBeTruthy('Must check env update');
-
-        // Delete gp
-        projectStore.removeEnvironmentPermission('key1', 'prod', gp).subscribe(() => {
-        });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/environment/prod/group/grp1'
-        })).flush(null);
-
-        let deletePermCheck = false;
-        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
-            deletePermCheck = true;
-            expect(projs.get('key1').environments.length).toBe(1);
-            expect(projs.get('key1').environments[0].groups.length).toBe(0);
-        });
-        expect(deletePermCheck).toBeTruthy('Must check env delete perm');
-
-        http.verify();
     }));
 
 
@@ -792,5 +542,164 @@ describe('CDS: project Store', () => {
         let app = new Application();
         app.name = name;
         return app;
+    }
+
+    class MockProjectService {
+
+        getProjects(withApplication: boolean): Observable<Project[]> {
+            let projects = new Array<Project>();
+            projects.push(createProject('key1', 'myProject'));
+            projects.push(createProject('key2', 'myProject2'));
+            projects.push(createProject('key3', 'myProject3'));
+            projects.push(createProject('key4', 'myProject4'));
+            return Observable.of(projects);
+        }
+
+        addProject(project: Project): Observable<Project> {
+            project.name = 'myProject';
+            project.applications = new Array<Application>();
+            project.applications.push(createApplication('app1'));
+            project.applications.push(createApplication('app2'));
+            project.applications.push(createApplication('app3'));
+            return Observable.of(project);
+        }
+
+        updateProject(project: Project): Observable<Project> {
+            return Observable.of(project);
+        }
+
+        getProject(key: string, opts: LoadOpts[]): Observable<Project> {
+            let p = new Project();
+            p.key = key;
+            return Observable.of(p);
+        }
+
+        addVariable(key: string, v: Variable): Observable<Project> {
+            let p = new Project();
+            p.key = key;
+            p.variables = new Array<Variable>();
+            p.variables.push(v);
+            return Observable.of(p);
+        }
+
+        updateVariable(key: string, v: Variable): Observable<Variable> {
+            return Observable.of(v);
+        }
+
+        removeVariable(key: string, varName: string): Observable<boolean> {
+            return Observable.of(true);
+        }
+
+        addPermission(key: string, gp: GroupPermission): Observable<Array<GroupPermission>> {
+            let gps = new Array<GroupPermission>();
+            gps.push(gp);
+            return Observable.of(gps);
+        }
+
+        updatePermission(key: string, gp: GroupPermission): Observable<GroupPermission> {
+            return Observable.of(gp);
+        }
+
+        removePermission(key: string, gp: GroupPermission): Observable<boolean> {
+            return Observable.of(true);
+        }
+
+        connectRepoManager(key: string, repoName: string): Observable<any> {
+            return Observable.of({
+                'project_key': 'key1',
+                'last_modified': '123',
+                'repositories_manager': 'repoName',
+                'url': 'ff/.c',
+                'request_token': 'mytoken'
+            });
+        }
+
+        disconnectRepoManager(key: string, repoName: string): Observable<Project> {
+            let p = new Project();
+            p.vcs_servers = new Array<RepositoriesManager>();
+            return Observable.of(p);
+        }
+
+        callback(key: string, repoName: string, token: string, verifier: string): Observable<Project> {
+            let p = new Project();
+            p.vcs_servers = new Array<RepositoriesManager>();
+            let r = new RepositoriesManager();
+            r.name = repoName;
+            p.vcs_servers.push(r);
+            return Observable.of(p);
+        }
+
+        addEnvironment(key: string, environment: Environment): Observable<Project> {
+            let p = new Project();
+            p.environments = new Array<Environment>();
+            p.environments.push(environment);
+            return Observable.of(p);
+        }
+
+        renameEnvironment(key: string, oldName: string, environment: Environment): Observable<Project> {
+            let p = new Project();
+            p.environments = new Array<Environment>();
+            p.environments.push(environment);
+            return Observable.of(p);
+        }
+
+        removeEnvironment(key: string, environment: Environment): Observable<Project> {
+            let p = new Project();
+            p.environments = new Array<Environment>();
+            return Observable.of(p);
+        }
+
+        addEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
+            let p = new Project();
+            p.environments = new Array<Environment>();
+
+            let e = new Environment();
+            p.environments.push(e);
+            e.variables = new Array<Variable>();
+            e.variables.push(v);
+            return Observable.of(p);
+        }
+
+        updateEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
+            let p = new Project();
+            p.environments = new Array<Environment>();
+
+            let e = new Environment();
+            p.environments.push(e);
+            e.variables = new Array<Variable>();
+            e.variables.push(v);
+            return Observable.of(p);
+        }
+
+        removeEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
+            let p = new Project();
+            p.environments = new Array<Environment>();
+
+            let e = new Environment();
+            p.environments.push(e);
+            e.variables = new Array<Variable>();
+            return Observable.of(p);
+        }
+
+        addEnvironmentPermission(key: string, envName: string, gps: Array<GroupPermission>): Observable<Environment> {
+            let e = new Environment();
+            e.groups = gps
+            return Observable.of(e);
+        }
+
+        updateEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<Environment> {
+            let e = new Environment();
+            e.groups = new Array<GroupPermission>();
+            e.groups.push(gp);
+            return Observable.of(e);
+        }
+
+        removeEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<boolean> {
+            return Observable.of(true);
+        }
+
+        deleteProject(key: string): Observable<boolean> {
+            return Observable.of(true);
+        }
     }
 });
