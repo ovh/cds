@@ -53,7 +53,7 @@ func BenchmarkDoNothing(b *testing.B) {
 			args: args{
 				input: `
 				Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam felis nulla, vulputate ac eros vel, placerat dignissim turpis. Sed et ex lectus. Donec viverra nisi vel dictum rhoncus. Sed dictum tempus quam, ut efficitur arcu viverra vitae. Suspendisse aliquam venenatis scelerisque. Praesent et mattis enim. In efficitur imperdiet nulla a sagittis. Maecenas aliquet magna in sollicitudin ornare.
-				
+
 				Suspendisse viverra enim nec ante blandit tempus. Sed ut erat suscipit, semper ex eu, eleifend neque. Sed orci justo, bibendum laoreet libero cursus, venenatis fringilla dui. Curabitur tristique odio ut neque sollicitudin ultrices. Integer metus nibh, dignissim non pellentesque et, volutpat vel ante. Pellentesque ultrices ante vel mauris aliquam porttitor. Nunc nec sem facilisis, ullamcorper ex sed, elementum elit. Nulla risus magna, tempor et ultricies id, vehicula ac massa. Mauris venenatis libero libero, id lobortis mi semper aliquam. Aenean neque turpis, feugiat vel rutrum vitae, auctor quis nisl. Donec placerat nec mauris vitae malesuada. Proin quis gravida nulla. Pellentesque in pellentesque metus, in finibus dui. Sed rutrum, libero sit amet cursus scelerisque, sem orci condimentum nunc, quis egestas tellus orci ac nisl. Mauris viverra tincidunt diam ac sollicitudin. Nunc venenatis, nibh at laoreet pellentesque, lacus tellus molestie lorem, et sollicitudin nunc neque ut turpis.
 				`,
 				vars: map[string]string{"cds.env.name": "", "cds.env.token": "aValidTokenString", "cds.env.addr": "", "cds.env.vAppKey": "aValue"},
@@ -294,6 +294,29 @@ workflow:
     payload:
       git.author: ""
       git.branch: master`,
+		},
+		{
+			name: "- inside function parameter",
+			args: args{
+				input: `name: "coucou-{{ .name | default "0.0.1-dirty" }}"`,
+				vars: map[string]string{
+					"git.branch": "master",
+					"git.author": "",
+				},
+			},
+			want: `name: "coucou-0.0.1-dirty"`,
+		},
+		{
+			name: "- inside function parameter but not used",
+			args: args{
+				input: `name: "coucou-{{ .name | default "0.0.1-dirty" }}"`,
+				vars: map[string]string{
+					"git.branch": "master",
+					"git.author": "",
+					"name":       "toi",
+				},
+			},
+			want: `name: "coucou-toi"`,
 		},
 	}
 	for _, tt := range tests {
