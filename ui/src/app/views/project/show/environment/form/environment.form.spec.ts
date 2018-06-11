@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -46,6 +46,7 @@ describe('CDS: Environment From Component', () => {
                 ProjectModule,
                 SharedModule,
                 ServicesModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]

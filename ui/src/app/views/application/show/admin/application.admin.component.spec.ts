@@ -9,7 +9,7 @@ import {ApplicationStore} from '../../../../service/application/application.stor
 import {ApplicationAdminComponent} from './application.admin.component';
 import {ApplicationService} from '../../../../service/application/application.service';
 import {SharedModule} from '../../../../shared/shared.module';
-import {TranslateLoader, TranslateService} from '@ngx-translate/core';
+import {TranslateLoader, TranslateModule, TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {Project} from '../../../../model/project.model';
 import {RepoManagerService} from '../../../../service/repomanager/project.repomanager.service';
@@ -69,6 +69,7 @@ describe('CDS: Application Admin Component', () => {
                 ApplicationModule,
                 ServicesModule,
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });

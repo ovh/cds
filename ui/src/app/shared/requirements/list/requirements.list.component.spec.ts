@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../shared.module';
 import {RequirementsListComponent} from './requirements.list.component';
@@ -9,7 +9,6 @@ import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
 import {RequirementStore} from '../../../service/requirement/requirement.store';
 import {RequirementService} from '../../../service/requirement/requirement.service';
 
@@ -25,9 +24,10 @@ describe('CDS: Requirement List Component', () => {
                 TranslateService,
                 RequirementStore,
                 WorkerModelService,
-                TranslateLoader,
+                TranslateLoader
             ],
             imports : [
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 HttpClientTestingModule
@@ -46,9 +46,8 @@ describe('CDS: Requirement List Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/worker/model/capability/type';
-        })).flush(mock);
+        http.expectOne('/requirement/types').flush(mock);
+
 
         expect(JSON.stringify(fixture.componentInstance.availableRequirements)).toBe(JSON.stringify(['binary', 'network']));
 

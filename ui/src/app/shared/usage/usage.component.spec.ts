@@ -2,7 +2,7 @@
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
 import {UsageComponent} from './usage.component';
@@ -26,6 +26,7 @@ describe('CDS: Usage Component', () => {
             ],
             imports : [
                 SharedModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([])
             ]
         });

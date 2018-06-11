@@ -16,7 +16,7 @@ import {ProjectStore} from '../../../service/project/project.store';
 import {ProjectService} from '../../../service/project/project.service';
 import {ApplicationModule} from '../application.module';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {Project} from '../../../model/project.model';
 import {ApplicationAddComponent} from './application.add.component';
 import {Parameter} from '../../../model/parameter.model';
@@ -56,6 +56,7 @@ describe('CDS: Application Add Component', () => {
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 ServicesModule,
                 HttpClientTestingModule
             ]

@@ -15,7 +15,7 @@ import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {EnvironmentService} from '../../../service/environment/environment.service';
 import {VariableService} from '../../../service/variable/variable.service';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {Project} from '../../../model/project.model';
 import {Application} from '../../../model/application.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
@@ -57,6 +57,7 @@ describe('CDS: Pipeline Add Component', () => {
                 PipelineModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });
@@ -96,8 +97,6 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.newPipeline = new Pipeline();
         fixture.componentInstance.newPipeline.name = 'myPip';
         fixture.componentInstance.newPipeline.type = 'build';
-        fixture.componentInstance.selectedApplications = new Array<string>();
-        fixture.componentInstance.selectedApplications.push('app2');
 
         spyOn(pipStore, 'createPipeline').and.callFake( () => {
             return Observable.of(fixture.componentInstance.newPipeline);

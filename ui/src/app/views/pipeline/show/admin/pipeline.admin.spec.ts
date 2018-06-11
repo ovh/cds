@@ -6,7 +6,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Observable} from 'rxjs/Observable';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {PipelineService} from '../../../../service/pipeline/pipeline.service';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
@@ -42,6 +42,7 @@ describe('CDS: Pipeline Admin Component', () => {
                 PipelineModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });

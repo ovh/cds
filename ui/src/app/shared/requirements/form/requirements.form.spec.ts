@@ -1,24 +1,18 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {RequirementsFormComponent} from './requirements.form.component';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
-import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {RequirementService} from '../../../service/requirement/requirement.service';
 import {RequirementStore} from '../../../service/requirement/requirement.store';
 
 describe('CDS: Requirement Form Component', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,40 +23,28 @@ describe('CDS: Requirement Form Component', () => {
                 RequirementStore,
                 TranslateService,
                 WorkerModelService,
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
             ],
             imports : [
                 SharedModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(MockBackend);
-
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
     it('should create a new requirement and auto write name', fakeAsync( () => {
-        let call = 0;
-        // Mock Http request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '["binary", "network"]'})));
-        });
+        const http = TestBed.get(HttpTestingController);
 
 
         // Create component
         let fixture = TestBed.createComponent(RequirementsFormComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
+
+        http.expectOne('/requirement/types').flush(['binary', 'network']);
 
         let compiled = fixture.debugElement.nativeElement;
 
@@ -71,7 +53,7 @@ describe('CDS: Requirement Form Component', () => {
         r.value = 'foo';
 
         fixture.detectChanges();
-        tick(50);
+        tick(250);
 
         // simulate typing new variable
         let inputName = compiled.querySelector('input[name="value"]');
@@ -80,7 +62,7 @@ describe('CDS: Requirement Form Component', () => {
         inputName.dispatchEvent(new Event('keyup'));
 
         fixture.detectChanges();
-        tick(50);
+        tick(250);
 
         spyOn(fixture.componentInstance.event, 'emit');
         compiled.querySelector('.ui.blue.button').click();

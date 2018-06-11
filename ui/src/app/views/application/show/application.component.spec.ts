@@ -18,7 +18,7 @@ import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {VariableService} from '../../../service/variable/variable.service';
 import {ApplicationModule} from '../application.module';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {Variable} from '../../../model/variable.model';
 import {Application} from '../../../model/application.model';
@@ -68,6 +68,7 @@ describe('CDS: Application', () => {
                 ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });

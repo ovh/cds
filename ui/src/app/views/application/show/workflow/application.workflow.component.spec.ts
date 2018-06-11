@@ -12,7 +12,7 @@ import {PipelineService} from '../../../../service/pipeline/pipeline.service';
 import {EnvironmentService} from '../../../../service/environment/environment.service';
 import {VariableService} from '../../../../service/variable/variable.service';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {Project} from '../../../../model/project.model';
 import {Application, ApplicationFilter} from '../../../../model/application.model';
 import {XHRBackend} from '@angular/http';
@@ -49,6 +49,7 @@ describe('CDS: Application Workflow', () => {
             ],
             imports : [
                 ApplicationModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 HttpClientTestingModule

@@ -4,7 +4,7 @@ import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {ApplicationService} from '../../../../../../service/application/application.service';
 import {ProjectStore} from '../../../../../../service/project/project.store';
@@ -50,6 +50,7 @@ describe('CDS: Application pipeline link', () => {
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });

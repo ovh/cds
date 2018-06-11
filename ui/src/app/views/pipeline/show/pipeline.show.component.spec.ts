@@ -3,7 +3,7 @@ import {TestBed, fakeAsync} from '@angular/core/testing';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Observable} from 'rxjs/Observable';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {ProjectService} from '../../../service/project/project.service';
 import {ProjectStore} from '../../../service/project/project.store';
 import {PipelineService} from '../../../service/pipeline/pipeline.service';
@@ -43,6 +43,7 @@ describe('CDS: Pipeline Show', () => {
             ],
             imports: [
                 PipelineModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 HttpClientTestingModule

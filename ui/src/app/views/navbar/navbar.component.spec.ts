@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -53,6 +53,7 @@ describe('CDS: Navbar Component', () => {
             ],
             imports: [
                 SharedModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]

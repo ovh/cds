@@ -3,7 +3,7 @@
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {VariableComponent} from './variable.component';
 import {VariableService} from '../../../service/variable/variable.service';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {SharedService} from '../../shared.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Variable} from '../../../model/variable.model';
@@ -34,6 +34,7 @@ describe('CDS: Variable List Component', () => {
             imports : [
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });

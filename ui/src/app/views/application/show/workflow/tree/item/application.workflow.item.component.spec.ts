@@ -17,7 +17,7 @@ import {Observable} from 'rxjs/Observable';
 import {PipelineBuild, Pipeline, PipelineRunRequest, PipelineBuildTrigger} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {Application} from '../../../../../../model/application.model';
-import {TranslateParser, TranslateService, TranslateLoader} from '@ngx-translate/core';
+import {TranslateParser, TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {PipelineStore} from '../../../../../../service/pipeline/pipeline.store';
 import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
 import {EnvironmentService} from '../../../../../../service/environment/environment.service';
@@ -55,6 +55,7 @@ describe('CDS: Application Workflow Item', () => {
                 RouterTestingModule.withRoutes([]),
                 ServicesModule,
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });

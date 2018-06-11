@@ -4,7 +4,7 @@ import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {XHRBackend} from '@angular/http';
 import {MockBackend} from '@angular/http/testing';
 
@@ -54,6 +54,7 @@ describe('CDS: Application Workflow', () => {
             ],
             imports : [
                 ApplicationModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 HttpClientTestingModule

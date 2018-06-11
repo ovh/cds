@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import { TranslateService, TranslateLoader} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -56,6 +56,7 @@ describe('CDS: Project Admin Component', () => {
                 ProjectModule,
                 SharedModule,
                 ServicesModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ],
