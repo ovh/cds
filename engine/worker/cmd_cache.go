@@ -165,7 +165,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot read body : " + errRead.Error(),
 			Status:  http.StatusInternalServerError,
 		}
-		log.Error("%s", errRead)
+		log.Error("%v", errRead)
 		writeError(w, r, errRead)
 		return
 	}
@@ -176,7 +176,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot unmarshall body : " + err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
-		log.Error("%s", err)
+		log.Error("%v", err)
 		writeError(w, r, err)
 		return
 	}
@@ -187,7 +187,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot tar : " + errTar.Error(),
 			Status:  http.StatusInternalServerError,
 		}
-		log.Error("%s", errTar)
+		log.Error("%v", errTar)
 		writeError(w, r, errTar)
 		return
 	}
@@ -196,7 +196,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot find workflow job info",
 			Status:  http.StatusInternalServerError,
 		}
-		log.Error("%s", errW)
+		log.Error("%v", errW)
 		writeError(w, r, errW)
 		return
 	}
@@ -204,10 +204,10 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 	projectKey := sdk.ParameterValue(params, "cds.project")
 	if projectKey == "" {
 		errP := sdk.Error{
-			Message: "worker cache push > Cannot find project info",
+			Message: "worker cache push > Cannot find project",
 			Status:  http.StatusInternalServerError,
 		}
-		log.Error("%s", errP)
+		log.Error("%v", errP)
 		writeError(w, r, errP)
 		return
 	}
@@ -217,7 +217,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 			Message: "worker cache push > Cannot push cache : " + err.Error(),
 			Status:  http.StatusInternalServerError,
 		}
-		log.Error("%s", err)
+		log.Error("%v", err)
 		writeError(w, r, err)
 		return
 	}
