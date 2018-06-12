@@ -72,7 +72,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 	if !has {
 		return nil, sdk.ErrNotFound
 	}
-	fmt.Printf("%+v", serverCfg.Github)
+
 	if serverCfg.Github != nil {
 		return github.New(
 			serverCfg.Github.ClientID,
