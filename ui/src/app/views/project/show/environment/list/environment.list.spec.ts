@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
+import {TestBed, getTestBed} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
@@ -65,7 +65,7 @@ describe('CDS: Environment List Component', () => {
         this.injector = undefined;
     });
 
-    it('should load component', fakeAsync( () => {
+    it('should load component', () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentListComponent);
         let component = fixture.debugElement.componentInstance;
@@ -83,7 +83,7 @@ describe('CDS: Environment List Component', () => {
 
         fixture.componentInstance.project = project;
         fixture.componentInstance.ngOnInit();
-    }));
+    });
 });
 
 class MockActivatedRoutes extends ActivatedRoute {
