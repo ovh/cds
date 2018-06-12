@@ -3,8 +3,6 @@
 import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
 import {Injector} from '@angular/core';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../service/project/project.service';
@@ -36,7 +34,6 @@ describe('CDS: Environment From Component', () => {
                 ProjectService,
                 { provide: ToastService, useClass: MockToast },
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
                 VariableService,
@@ -61,7 +58,7 @@ describe('CDS: Environment From Component', () => {
         this.injector = undefined;
     });
 
-    it('Create new environment', fakeAsync( () => {
+    it('Create new environment', () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentFormComponent);
         let component = fixture.debugElement.componentInstance;
@@ -84,7 +81,7 @@ describe('CDS: Environment From Component', () => {
         fixture.debugElement.nativeElement.querySelector('.ui.green.button').click();
 
         expect(projStore.addProjectEnvironment).toHaveBeenCalledWith('key1', env);
-    }));
+    });
 });
 
 class MockToast {

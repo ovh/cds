@@ -3,8 +3,6 @@
 import {TestBed, getTestBed, fakeAsync, tick} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
 import {ProjectEnvironmentComponent} from './environment.component';
 import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../../../../service/project/project.store';
@@ -42,7 +40,6 @@ describe('CDS: Environment Component', () => {
                 ProjectService,
                 TranslateService,
                 NavbarService,
-                { provide: XHRBackend, useClass: MockBackend },
                 { provide: ToastService, useClass: MockToast },
                 TranslateLoader,
                 TranslateParser,
@@ -69,7 +66,7 @@ describe('CDS: Environment Component', () => {
         this.injector = undefined;
     });
 
-    it('should rename environment', fakeAsync( () => {
+    it('should rename environment',  () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentComponent);
         let component = fixture.debugElement.componentInstance;
@@ -88,29 +85,23 @@ describe('CDS: Environment Component', () => {
         fixture.componentInstance.project = project;
         fixture.componentInstance.environment = e;
 
-        fixture.detectChanges();
-        tick(250);
+        fixture.detectChanges(true);
 
         let compiled = fixture.debugElement.nativeElement;
-        let inputName = compiled.querySelector('input[name="envname"]');
-        inputName.value = 'production';
-        inputName.dispatchEvent(new Event('input'));
-        inputName.dispatchEvent(new Event('keydown'));
 
-        fixture.detectChanges();
-        tick(250);
-
+        fixture.detectChanges(true);
+        fixture.componentInstance.environment.name = 'production';
         e.name = 'production';
         let projectStore: ProjectStore = this.injector.get(ProjectStore);
         spyOn(projectStore, 'renameProjectEnvironment').and.callFake(() => {
            return Observable.of(project);
         });
 
-        compiled.querySelector('button[name="renamebtn"]').click();
+        fixture.componentInstance.renameEnvironment();
         expect(projectStore.renameProjectEnvironment).toHaveBeenCalledWith('key1', 'prod', e);
-    }));
+    });
 
-    it('should delete environment', fakeAsync( () => {
+    it('should delete environment',  () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentComponent);
         let component = fixture.debugElement.componentInstance;
@@ -129,8 +120,7 @@ describe('CDS: Environment Component', () => {
         fixture.componentInstance.project = project;
         fixture.componentInstance.environment = e;
 
-        fixture.detectChanges();
-        tick(250);
+        fixture.detectChanges(true);
 
 
         let projectStore: ProjectStore = this.injector.get(ProjectStore);
@@ -141,14 +131,14 @@ describe('CDS: Environment Component', () => {
         let compiled = fixture.debugElement.nativeElement;
         // Delete poller
         compiled.querySelector('.ui.red.button').click();
-        fixture.detectChanges();
-        tick(50);
+        fixture.detectChanges(true);
+
         compiled.querySelector('.ui.red.button.active').click();
 
         expect(projectStore.deleteProjectEnvironment).toHaveBeenCalledWith('key1', e);
-    }));
+    });
 
-    it('should add/update/delete an environment variable', fakeAsync( () => {
+    it('should add/update/delete an environment variable',  () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentComponent);
         let component = fixture.debugElement.componentInstance;
@@ -198,7 +188,7 @@ describe('CDS: Environment Component', () => {
         fixture.componentInstance.variableEvent(event);
         expect(projectStore.removeEnvironmentVariable).toHaveBeenCalledWith('key1', 'prod', v);
 
-    }));
+    });
 });
 
 class MockToast {

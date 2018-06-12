@@ -47,7 +47,7 @@ describe('CDS: Project Admin Component', () => {
                 TranslateService,
                 TranslateParser,
                 AuthentificationStore,
-                { provide: ToastService, useClass: MockToast}
+                { provide: ToastService, useClass: MockToastt}
             ],
             imports : [
                 ProjectModule,
@@ -96,7 +96,7 @@ describe('CDS: Project Admin Component', () => {
     });
 });
 
-class MockToast {
+class MockToastt {
     success(title: string, msg: string) {
 
     }
