@@ -1584,14 +1584,24 @@
         <span>artifact</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/workflow/artifact/download/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/download/">
-          <span>download</span>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
+          <span>Openstack Worker Model</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/workflow/artifact/list/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/list/">
-          <span>list</span>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">
+          <span>Worker Model Variables</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/patterns/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/patterns/">
+          <span>Worker Model patterns</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
+          <span>VSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -1984,11 +1994,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-broadcast">POST <code>/broadcast</code></a></li>
 <li><a href="#get-broadcast">GET <code>/broadcast</code></a></li>
+<li><a href="#post-broadcast">POST <code>/broadcast</code></a></li>
+<li><a href="#put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#delete-broadcast-id">DELETE <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></a></li>
-<li><a href="#put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#post-broadcast-id-mark">POST <code>/broadcast/&lt;id&gt;/mark</code></a></li>
 </ul></li>
 </ul></li>
@@ -2012,6 +2022,34 @@
 
 
 
+
+<h3 id="get-broadcast">GET <code>/broadcast</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/broadcast</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastsHandler%22">getBroadcastsHandler</a></td>
+</tr>
+</tbody>
+</table>
 
 <h3 id="post-broadcast">POST <code>/broadcast</code></h3>
 
@@ -2041,30 +2079,30 @@
 </tbody>
 </table>
 
-<h3 id="get-broadcast">GET <code>/broadcast</code></h3>
+<h3 id="put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/broadcast</code></strong></th>
+<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>PUT</td>
 </tr>
 
 <tr>
 <td>Permissions</td>
-<td>Auth: true</td>
+<td>NeedAdmin: true -  Auth: true</td>
 </tr>
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastsHandler%22">getBroadcastsHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22">updateBroadcastHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2121,34 +2159,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastHandler%22">getBroadcastHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22">updateBroadcastHandler</a></td>
 </tr>
 </tbody>
 </table>
