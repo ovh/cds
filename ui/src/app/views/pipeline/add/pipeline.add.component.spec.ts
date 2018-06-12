@@ -24,6 +24,7 @@ import {PipelineAddComponent} from './pipeline.add.component';
 import {Pipeline} from '../../../model/pipeline.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../service/navbar/navbar.service';
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
@@ -49,6 +50,7 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 PipelineStore,
+                NavbarService,
                 PipelineService,
                 EnvironmentService,
                 VariableService
@@ -77,7 +79,7 @@ describe('CDS: Pipeline Add Component', () => {
         prjStore = undefined;
     });
 
-    it('should create an empty pipeline with attached application', fakeAsync( () => {
+    it('should create an empty pipeline', fakeAsync( () => {
 
         // Create component
         let fixture = TestBed.createComponent(PipelineAddComponent);
@@ -103,7 +105,6 @@ describe('CDS: Pipeline Add Component', () => {
         });
 
         fixture.componentInstance.createPipeline();
-        expect(fixture.componentInstance.newPipeline.usage.applications.length).toBe(1);
         expect(pipStore.createPipeline).toHaveBeenCalledWith(project.key, fixture.componentInstance.newPipeline);
 
     }));

@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
+import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
 import {Router, ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {ApplicationShowComponent} from './application.component';
 import {ApplicationStore} from '../../../service/application/application.store';
@@ -34,6 +34,8 @@ import {Environment} from '../../../model/environment.model';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../service/navbar/navbar.service';
+import {Usage} from '../../../model/usage.model';
 
 describe('CDS: Application', () => {
 
@@ -55,6 +57,7 @@ describe('CDS: Application', () => {
                 PipelineService,
                 VariableService,
                 EnvironmentService,
+                NavbarService,
                 ApplicationWorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: Router, useClass: MockRouter},
@@ -94,6 +97,7 @@ describe('CDS: Application', () => {
             let mapApp: Map<string, Application> = Map<string, Application>();
             let app: Application = new Application();
             app.name = 'app1';
+            app.usage = new Usage();
             return Observable.of(mapApp.set('key1-app1', app));
         });
 
@@ -101,8 +105,10 @@ describe('CDS: Application', () => {
         let fixture = TestBed.createComponent(ApplicationShowComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
+
         expect(fixture.componentInstance.project.key).toBe('key1');
         expect(appStore.updateRecentApplication).toHaveBeenCalled();
+
     }));
 
     it('Load component + load application with error', fakeAsync( () => {
@@ -120,8 +126,10 @@ describe('CDS: Application', () => {
             return req.url === '/project/key1/application/app1';
         })).flush({'name': 'app1'}, { status: 404, statusText: 'App does not exist'});
 
+        tick(250);
+
         expect(appStore.updateRecentApplication).not.toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1']);
+        expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1'], { queryParams: { tab: 'applications'}});
     }));
 
     it('should run add variable', fakeAsync( () => {
@@ -133,6 +141,7 @@ describe('CDS: Application', () => {
             let mapApp: Map<string, Application> = Map<string, Application>();
             let app: Application = new Application();
             app.name = 'app1';
+            app.usage = new Usage();
             return Observable.of(mapApp.set('key1-app1', app));
         });
 
@@ -151,6 +160,7 @@ describe('CDS: Application', () => {
         let v: Variable = new Variable();
         v.name = 'foo';
         fixture.componentInstance.variableEvent(new VariableEvent('add', v));
+        tick(250);
         expect(appStore.addVariable).toHaveBeenCalledWith('key1', 'app1', v);
     }));
 
@@ -162,6 +172,7 @@ describe('CDS: Application', () => {
             let mapApp: Map<string, Application> = Map<string, Application>();
             let app: Application = new Application();
             app.name = 'app1';
+            app.usage = new Usage();
             return Observable.of(mapApp.set('key1-app1', app));
         });
 
@@ -180,6 +191,7 @@ describe('CDS: Application', () => {
         let v: Variable = new Variable();
         v.name = 'foo';
         fixture.componentInstance.variableEvent(new VariableEvent('update', v));
+        tick(250);
         expect(appStore.updateVariable).toHaveBeenCalledWith('key1', 'app1', v);
     }));
 
@@ -191,6 +203,7 @@ describe('CDS: Application', () => {
             let mapApp: Map<string, Application> = Map<string, Application>();
             let app: Application = new Application();
             app.name = 'app1';
+            app.usage = new Usage();
             return Observable.of(mapApp.set('key1-app1', app));
         });
 
@@ -209,6 +222,7 @@ describe('CDS: Application', () => {
         let v: Variable = new Variable();
         v.name = 'foo';
         fixture.componentInstance.variableEvent(new VariableEvent('delete', v));
+        tick(250);
         expect(appStore.removeVariable).toHaveBeenCalledWith('key1', 'app1', v);
     }));
 
@@ -220,6 +234,7 @@ describe('CDS: Application', () => {
             let mapApp: Map<string, Application> = Map<string, Application>();
             let app: Application = new Application();
             app.name = 'app1';
+            app.usage = new Usage();
             return Observable.of(mapApp.set('key1-app1', app));
         });
 
@@ -249,6 +264,7 @@ describe('CDS: Application', () => {
             let mapApp: Map<string, Application> = Map<string, Application>();
             let app: Application = new Application();
             app.name = 'app1';
+            app.usage = new Usage();
             return Observable.of(mapApp.set('key1-app1', app));
         });
 
@@ -278,6 +294,7 @@ describe('CDS: Application', () => {
             let mapApp: Map<string, Application> = Map<string, Application>();
             let app: Application = new Application();
             app.name = 'app1';
+            app.usage = new Usage();
             return Observable.of(mapApp.set('key1-app1', app));
         });
 
@@ -296,6 +313,7 @@ describe('CDS: Application', () => {
         let gp: GroupPermission = new GroupPermission();
         gp.permission = 7;
         fixture.componentInstance.groupEvent(new PermissionEvent('delete', gp));
+        tick(250);
         expect(appStore.removePermission).toHaveBeenCalledWith('key1', 'app1', gp);
     }));
 
@@ -308,6 +326,7 @@ describe('CDS: Application', () => {
             let mapApp: Map<string, Application> = Map<string, Application>();
             let app: Application = new Application();
             app.name = 'app1';
+            app.usage = new Usage();
             return Observable.of(mapApp.set('key1-app1', app));
         });
 
@@ -347,6 +366,7 @@ describe('CDS: Application', () => {
         });
 
         fixture.componentInstance.notificationEvent(new NotificationEvent('delete', notifs));
+        tick(250);
         expect(appStore.deleteNotification).toHaveBeenCalledWith('key1', 'app1', 'pip1', 'production');
     }));
 });

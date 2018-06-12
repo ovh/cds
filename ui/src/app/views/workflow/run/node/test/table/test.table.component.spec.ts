@@ -2,7 +2,7 @@
 import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {WorkflowModule} from '../../../../workflow.module';
 import {SharedModule} from '../../../../../../shared/shared.module';
 import {WorkflowRunTestTableComponent} from './test.table.component';
@@ -22,6 +22,7 @@ describe('CDS: Test table component', () => {
             ],
             imports: [
                 WorkflowModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule
             ]

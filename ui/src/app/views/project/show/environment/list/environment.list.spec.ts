@@ -22,6 +22,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {Observable} from 'rxjs/Observable';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../../../service/navbar/navbar.service';
 
 describe('CDS: Environment List Component', () => {
 
@@ -39,6 +40,7 @@ describe('CDS: Environment List Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 VariableService,
+                NavbarService,
                 PipelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: Router, useClass: MockRouter},

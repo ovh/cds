@@ -8,9 +8,7 @@ import {AppModule} from '../../../app.module';
 import {PasswordComponent} from './password.component';
 import {RouterTestingModule} from '@angular/router/testing';
 import {AccountModule} from '../account.module';
-import {HttpRequest} from '@angular/common/http';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {User} from '../../../model/user.model';
 
 describe('CDS: PasswordComponent', () => {
 
@@ -58,9 +56,10 @@ describe('CDS: PasswordComponent', () => {
         // Simulate user click
         compiled.querySelector('#resetPasswordButton').click();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/user/foo/reset' && req.body.user.username === 'foo' && req.body.user.email === 'bar@foo.bar';
-        })).flush(null);
+        const req = http.expectOne('http://localhost:8081/user/foo/reset');
+        expect(req.request.body.user.username).toBe('foo');
+        expect(req.request.body.user.email).toBe('bar@foo.bar');
+        req.flush(null);
 
         expect(fixture.componentInstance.showWaitingMessage).toBeTruthy('Waiting message must be true');
 

@@ -23,6 +23,7 @@ import {Observable} from 'rxjs/Observable';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../../../../service/navbar/navbar.service';
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
@@ -46,6 +47,7 @@ describe('CDS: Project RepoManager List Component', () => {
                 ToasterService,
                 TranslateService,
                 TranslateParser,
+                NavbarService,
                 { provide: ToastService, useClass: MockToast}
             ],
             imports : [

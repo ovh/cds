@@ -205,7 +205,6 @@ describe('CDS: Action Component', () => {
 
 
             http.expectOne(((req: HttpRequest<any>) => {
-                console.log(req.url);
                 return req.url === '/requirement/types';
             })).flush(actionMock);
 

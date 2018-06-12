@@ -23,16 +23,22 @@ import {HttpClientTestingModule, HttpTestingController} from '@angular/common/ht
 import {HttpRequest} from '@angular/common/http';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../service/navbar/navbar.service';
+import {KeyService} from '../../../service/keys/keys.service';
+import {PipelineCoreService} from '../../../service/pipeline/pipeline.core.service';
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                KeyService,
+                PipelineCoreService,
                 PipelineService,
                 PipelineStore,
                 ProjectService,
                 ProjectStore,
+                NavbarService,
                 ApplicationPipelineService,
                 {provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 {provide: ToastService, useClass: MockToast},

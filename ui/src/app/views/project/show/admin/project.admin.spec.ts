@@ -25,6 +25,7 @@ import {Project} from '../../../../model/project.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../../service/navbar/navbar.service';
 
 describe('CDS: Project Admin Component', () => {
 
@@ -42,6 +43,7 @@ describe('CDS: Project Admin Component', () => {
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,
+                NavbarService,
                 ProjectService,
                 PipelineService,
                 EnvironmentService,

@@ -23,6 +23,10 @@ import {ProjectModule} from '../../../../project/project.module';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
 import 'rxjs/add/observable/of';
+import {KeyService} from '../../../../../service/keys/keys.service';
+import {ProjectStore} from '../../../../../service/project/project.store';
+import {ProjectService} from '../../../../../service/project/project.service';
+import {NavbarService} from '../../../../../service/navbar/navbar.service';
 
 @Component({
     template: ''
@@ -44,6 +48,10 @@ describe('CDS: Application Repo Component', () => {
             providers: [
                 { provide: ApplicationStore, useClass: MockStore },
                 ApplicationService,
+                KeyService,
+                ProjectStore,
+                NavbarService,
+                ProjectService,
                 PipelineService,
                 EnvironmentService,
                 VariableService,

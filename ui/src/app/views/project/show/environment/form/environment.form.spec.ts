@@ -21,6 +21,7 @@ import {SharedModule} from '../../../../../shared/shared.module';
 import {Environment} from '../../../../../model/environment.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../../../service/navbar/navbar.service';
 
 describe('CDS: Environment From Component', () => {
 
@@ -40,6 +41,7 @@ describe('CDS: Environment From Component', () => {
                 TranslateParser,
                 VariableService,
                 PipelineService,
+                NavbarService,
                 EnvironmentService
             ],
             imports : [

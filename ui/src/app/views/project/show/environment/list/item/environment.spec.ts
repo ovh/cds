@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, fakeAsync, tick} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -27,6 +27,7 @@ import {EnvironmentAuditService} from '../../../../../../service/environment/env
 import {ApplicationAuditService} from '../../../../../../service/application/application.audit.service';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../../../../service/navbar/navbar.service';
 describe('CDS: Environment Component', () => {
 
     beforeEach(() => {
@@ -40,6 +41,7 @@ describe('CDS: Environment Component', () => {
                 ProjectStore,
                 ProjectService,
                 TranslateService,
+                NavbarService,
                 { provide: XHRBackend, useClass: MockBackend },
                 { provide: ToastService, useClass: MockToast },
                 TranslateLoader,
@@ -54,6 +56,7 @@ describe('CDS: Environment Component', () => {
                 ProjectModule,
                 SharedModule,
                 ServicesModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]

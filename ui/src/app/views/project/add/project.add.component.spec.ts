@@ -24,6 +24,7 @@ import {Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../service/navbar/navbar.service';
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
@@ -38,6 +39,7 @@ describe('CDS: Project Show Component', () => {
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,
+                NavbarService,
                 ProjectService,
                 PipelineService,
                 EnvironmentService,

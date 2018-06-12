@@ -10,7 +10,6 @@ import {AppModule} from '../../../app.module';
 import {SignUpComponent} from './signup.component';
 import {AccountModule} from '../account.module';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: SignUPComponent', () => {
 
@@ -61,10 +60,11 @@ describe('CDS: SignUPComponent', () => {
         // Simulate user click
         compiled.querySelector('#signUpButton').click();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/user/signup' && req.body.user.username === 'foo' && req.body.user.email === 'bar@foo.bar'
-                && req.body.user.fullname === 'foo bar';
-        })).flush(null);
+        const req = http.expectOne('http://localhost:8081/user/signup');
+        expect(req.request.body.user.username).toBe('foo');
+        expect(req.request.body.user.email).toBe('bar@foo.bar');
+        expect(req.request.body.user.fullname).toBe('foo bar');
+        req.flush(null);
 
         expect(fixture.componentInstance.showWaitingMessage).toBeTruthy('Waiting Message must be true');
     }));

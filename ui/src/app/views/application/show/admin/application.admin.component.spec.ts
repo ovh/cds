@@ -27,6 +27,7 @@ import {HttpClientTestingModule, HttpTestingController} from '@angular/common/ht
 import {HttpRequest} from '@angular/common/http';
 import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {NavbarService} from '../../../../service/navbar/navbar.service';
 
 @Component({
     template: ''
@@ -52,6 +53,7 @@ describe('CDS: Application Admin Component', () => {
                 ProjectService,
                 PipelineService,
                 EnvironmentService,
+                NavbarService,
                 VariableService,
                 {provide: ToastService, useClass: MockToast},
                 TranslateLoader,
