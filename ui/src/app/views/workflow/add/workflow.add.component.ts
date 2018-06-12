@@ -13,7 +13,7 @@ import {Repository} from '../../../model/repositories.model';
 import {VCSStrategy} from '../../../model/vcs.model';
 import {ImportAsCodeService} from '../../../service/import-as-code/import.service';
 import {CDSWorker} from '../../../shared/worker/worker';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {environment} from '../../../../environments/environment';
@@ -100,7 +100,7 @@ workflow:
     }
 
     goToNextStep(stepNum: number): void {
-        if (Array.isArray(this.project.workflow_names) && this.project.workflow_names.find((w) => w === this.workflow.name)) {
+        if (Array.isArray(this.project.workflow_names) && this.project.workflow_names.find((w) => w.name === this.workflow.name)) {
             this.duplicateWorkflowName = true;
             return;
         }

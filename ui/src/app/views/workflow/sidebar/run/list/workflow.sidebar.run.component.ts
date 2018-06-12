@@ -3,7 +3,7 @@ import {Project} from '../../../../../model/project.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Workflow} from '../../../../../model/workflow.model';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
 import {cloneDeep} from 'lodash';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';

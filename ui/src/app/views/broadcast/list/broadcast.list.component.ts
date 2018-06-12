@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 import {BroadcastStore} from '../../../service/broadcast/broadcast.store';
 import {Broadcast} from 'app/model/broadcast.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 

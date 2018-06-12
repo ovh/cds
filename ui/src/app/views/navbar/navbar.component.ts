@@ -11,7 +11,7 @@ import {NavigationEnd, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {List} from 'immutable';
 import {LanguageStore} from '../../service/language/language.store';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {RouterService} from '../../service/router/router.service';
 import {NavbarRecentData} from '../../model/navbar.model';

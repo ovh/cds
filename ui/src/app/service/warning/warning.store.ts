@@ -1,6 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
-import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+import {Observable, BehaviorSubject} from 'rxjs';
 import * as immutable from 'immutable';
 import {Warning} from '../../model/warning.model';
 import {WarningService} from './warning.service';

@@ -27,7 +27,7 @@ export class UserEditComponent implements OnInit {
 
     private username: string;
     private usernamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
-    private userPatternError = false;
+    userPatternError = false;
 
     constructor(private _userService: UserService,
                 private _toast: ToastService, private _translate: TranslateService,

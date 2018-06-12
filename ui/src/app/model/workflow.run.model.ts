@@ -205,6 +205,7 @@ export class WorkflowNodeRunArtifact {
     size: number;
     perm: number;
     md5sum: string;
+    sha512sum: string;
     object_path: string;
     created: string;
 }

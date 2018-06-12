@@ -8,7 +8,7 @@ import {Environment} from '../../../model/environment.model';
 import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {TranslateService} from '@ngx-translate/core';

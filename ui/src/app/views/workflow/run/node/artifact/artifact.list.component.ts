@@ -14,6 +14,7 @@ export class WorkflowRunArtifactListComponent extends Table {
 
     // Allow angular update from work started outside angular context
     zone: NgZone;
+    filter: string;
 
     constructor() {
         super();
@@ -21,7 +22,10 @@ export class WorkflowRunArtifactListComponent extends Table {
     }
 
     getData(): any[] {
-        return this.artifacts;
+        if (!this.filter) {
+            return this.artifacts;
+        }
+        return this.artifacts.filter(v => (v.name.indexOf(this.filter) !== -1 || v.sha512sum.indexOf(this.filter) !== -1));
     }
 
     getHumainFileSize(size: number): string {

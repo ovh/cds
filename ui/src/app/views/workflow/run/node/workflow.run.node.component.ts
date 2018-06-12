@@ -1,6 +1,7 @@
 import {Component} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
@@ -11,7 +12,6 @@ import {first} from 'rxjs/operators';
 import {EventSubscription} from '../../../../model/event.model';
 import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 import {EventStore} from '../../../../service/event/event.store';
-import {Subscription} from 'rxjs/Subscription';
 import {Workflow} from '../../../../model/workflow.model';
 
 @Component({

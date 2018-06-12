@@ -11,7 +11,7 @@ import {
     WorkflowNode
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';

@@ -26,9 +26,9 @@ export class BroadcastService {
      * @returns {Observable<Broadcast>}
      */
     deleteBroadcast(broadcast: Broadcast): Observable<boolean> {
-        return this._http.delete('/broadcast/' + broadcast.id).map(() => {
+        return this._http.delete('/broadcast/' + broadcast.id).pipe(map(() => {
             return true;
-        });
+        }));
     }
 
     /**

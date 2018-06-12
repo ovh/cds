@@ -32,7 +32,6 @@ export class RunSummaryComponent implements OnInit {
     }
 
     ngOnInit(): void {
-
         this.application.workflows.forEach(wi => {
             if (wi.application.id === this.currentBuild.application.id &&
                 wi.pipeline.id === this.currentBuild.pipeline.id &&
@@ -42,14 +41,12 @@ export class RunSummaryComponent implements OnInit {
             }
             this.checkParent(wi);
         });
-
     }
 
     getAuthor(): string {
         if (this.currentBuild) {
             return PipelineBuild.GetTriggerSource(this.currentBuild);
         }
-
     }
 
     checkParent(wi: WorkflowItem): void {

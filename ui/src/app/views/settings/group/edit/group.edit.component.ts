@@ -28,7 +28,7 @@ export class GroupEditComponent implements OnInit {
 
     private groupname: string;
     private groupnamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
-    private groupPatternError = false;
+    groupPatternError = false;
 
     constructor(private _userService: UserService, private _groupService: GroupService,
                 private _toast: ToastService, private _translate: TranslateService,

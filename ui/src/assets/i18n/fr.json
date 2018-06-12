@@ -104,6 +104,7 @@
   "artifact_name": "Nom de l'artefact",
   "artifact_tag": "Tag",
   "artifact_sha512": "SHA512 Checksum",
+  "artifact_none": "Aucun artefact",
 
   "audit_change": "Modification",
   "audit_no": "Aucun audit",
@@ -215,6 +216,7 @@
   "common_stop": "Stop",
   "common_relaunch": "Relancer",
   "common_deprecated": "Déprécié",
+  "common_no_description": "Sans description",
   "common_no_pipeline": "Il n'y a aucun pipeline lié",
   "common_no_application": "Il n'y a aucune application liée",
   "common_no_workflow": "Il n'y a aucun workflow lié",

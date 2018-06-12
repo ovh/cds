@@ -11,7 +11,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {User} from 'app/model/user.model';
 import {NavbarProjectData} from 'app/model/navbar.model';
 import {finalize} from 'rxjs/operators';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 
 @Component({

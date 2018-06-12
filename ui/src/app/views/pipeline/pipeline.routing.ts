@@ -16,10 +16,12 @@ const pipelineRoutes: Routes = [
                 component: PipelineAddComponent,
                 resolve: {
                     project: ProjectResolver
-                }
+                },
+                data: { title: 'Add • Pipeline' }
             },
             { path: ':pipName',
                 component: PipelineShowComponent,
+                data: { title: '{pipName} • Pipeline' },
                 resolve: {
                     project: ProjectResolver,
                     application: ApplicationQueryParamResolver

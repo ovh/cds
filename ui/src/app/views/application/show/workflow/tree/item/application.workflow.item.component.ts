@@ -1,5 +1,5 @@
 import {Component, Input, ViewChild, DoCheck, ChangeDetectorRef} from '@angular/core';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {WorkflowItem} from '../../../../../../model/application.workflow.model';
 import {Application} from '../../../../../../model/application.model';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';

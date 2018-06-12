@@ -23,7 +23,7 @@ import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook
 import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -63,7 +63,10 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this._workflowRun = data;
             this.workflow = data.workflow;
             this.nodeHeight = 78;
-            this.calculateDynamicWidth();
+            if (!this.previousWorkflowRunId || this.previousWorkflowRunId !== data.id) {
+                this.calculateDynamicWidth();
+            }
+            this.previousWorkflowRunId = data.id;
             this.changeDisplay();
         }
     }
@@ -100,6 +103,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     linkWithJoin = false;
     nodeToLink: WorkflowNode;
+    previousWorkflowRunId = 0;
 
     nodesComponent = new Map<string, ComponentRef<WorkflowNodeComponent>>();
     joinsComponent = new Map<string, ComponentRef<WorkflowJoinComponent>>();
@@ -185,6 +189,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         // Add listener on graph element
         this.addListener(d3.select('svg'));
         this.svgHeight = this.g.graph().height + 40;
+        this.svgWidth = this.g.graph().width;
     }
 
     private createCustomArrow() {

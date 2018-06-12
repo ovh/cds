@@ -8,7 +8,7 @@ import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.compone
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 

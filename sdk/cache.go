@@ -44,20 +44,25 @@ func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
 	tw := tar.NewWriter(buf)
 
 	for _, path := range paths {
-		fstat, err := os.Stat(path)
+		symlink, err := filepath.EvalSymlinks(path)
 		if err != nil {
-			return nil, WrapError(err, "CreateTarFromPaths> Cannot stat path %s", path)
+			return nil, WrapError(err, "CreateTarFromPaths> cannot get resolve path %s", path)
+		}
+
+		fstat, err := os.Lstat(symlink)
+		if err != nil {
+			return nil, WrapError(err, "CreateTarFromPaths> cannot get resolve(lstat) link")
 		}
 
 		if fstat.IsDir() {
-			if err := iterDirectory(cwd, path, tw); err != nil {
+			if err := iterDirectory(cwd, symlink, tw); err != nil {
 				tw.Close()
-				return nil, err
+				return nil, WrapError(err, "CreateTarFromPaths> cannot iter directory for path %s and symlink %s", path, symlink)
 			}
 		} else {
-			if err := tarWrite(cwd, path, tw, fstat); err != nil {
+			if err := tarWrite(cwd, symlink, tw, fstat); err != nil {
 				tw.Close()
-				return nil, WrapError(err, "CreateTarFromPaths> Cannot tar write %s", path)
+				return nil, WrapError(err, "CreateTarFromPaths> Cannot tar write %s and symlink %s", path, symlink)
 			}
 		}
 	}
@@ -108,6 +113,11 @@ func tarWrite(cwd, path string, tw *tar.Writer, fi os.FileInfo) error {
 		}
 
 		hdr.Size = fil.Size()
+
+		// Useful to not copy files like socket or device files
+		if !fil.IsDir() && !fil.Mode().IsRegular() {
+			return nil
+		}
 	}
 
 	if err := tw.WriteHeader(hdr); err != nil {
@@ -115,7 +125,7 @@ func tarWrite(cwd, path string, tw *tar.Writer, fi os.FileInfo) error {
 	}
 
 	if _, err := io.Copy(tw, filR); err != nil {
-		return err
+		return WrapError(err, "tarWrite> cannot copy")
 	}
 	return nil
 }
@@ -132,13 +142,23 @@ func iterDirectory(cwd, dirPath string, tw *tar.Writer) error {
 	}
 	for _, fi := range fis {
 		curPath := dirPath + "/" + fi.Name()
-		if fi.IsDir() {
-			if err := iterDirectory(cwd, curPath, tw); err != nil {
-				return err
+		symlink, err := filepath.EvalSymlinks(curPath)
+		if err != nil {
+			return WrapError(err, "tarWrite> cannot get resolve path %s", curPath)
+		}
+
+		fil, err := os.Lstat(symlink)
+		if err != nil {
+			return WrapError(err, "tarWrite> cannot get resolve(lstat) link")
+		}
+
+		if fil.IsDir() {
+			if err := iterDirectory(cwd, symlink, tw); err != nil {
+				return WrapError(err, "iterDirectory> cannot iter on directory")
 			}
 		} else {
-			if err := tarWrite(cwd, curPath, tw, fi); err != nil {
-				return WrapError(err, "iterDirectory> cannot tar write (%s)", curPath)
+			if err := tarWrite(cwd, symlink, tw, fil); err != nil {
+				return WrapError(err, "tarWrite> cannot tar write (%s)", symlink)
 			}
 		}
 	}

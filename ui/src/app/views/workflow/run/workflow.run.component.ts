@@ -5,7 +5,7 @@ import {NotificationService} from '../../../service/notification/notification.se
 import {Project} from '../../../model/project.model';
 import {WorkflowRun} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
@@ -141,6 +141,7 @@ export class WorkflowRunComponent implements OnInit {
                 this.nodeToRun.context.default_payload = rootNodeRun.manual.payload;
                 this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
             }
+
             setTimeout(() => this.runWithParamComponent.show());
         }
     }

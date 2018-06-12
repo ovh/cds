@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {BroadcastStore} from '../../../service/broadcast/broadcast.store';
 import {Broadcast} from 'app/model/broadcast.model';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({

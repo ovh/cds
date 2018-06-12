@@ -11,11 +11,12 @@ import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
-import {Subscription} from 'rxjs/Subscription';
+import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
 import 'rxjs/add/observable/zip';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {PermissionValue} from '../../../../../model/permission.model';
+
 
 @Component({
     selector: 'app-workflow-sidebar-run-node',

@@ -1,3 +1,7 @@
+
+import {zip as observableZip, Observable} from 'rxjs';
+
+import {map, finalize} from 'rxjs/operators';
 import {Component, EventEmitter, Input, NgZone, OnInit, OnDestroy, Output, ViewChild} from '@angular/core';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {Application} from '../../../../model/application.model';
@@ -8,9 +12,7 @@ import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.co
 import {Branch, Remote} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
-import {Observable} from 'rxjs/Observable';
-import {finalize} from 'rxjs/operators';
-import 'rxjs/add/observable/zip';
+
 
 @Component({
     selector: 'app-application-workflow',
@@ -72,7 +74,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
         this.branches = null;
         this.loading.remote = true;
         this.loading.branch = true;
-        Observable.zip(
+        observableZip(
             this._appWorkflow.getRemotes(this.project.key, this.application.name),
             this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote),
             (remotes, branches) => {
@@ -310,8 +312,8 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     loadVersions(key: string, appName: string): Observable<Array<string>> {
         this.loading.version = true;
         return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch || 'master', this.applicationFilter.remote)
-            .pipe(finalize(() => this.loading.version = false))
-            .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
+            .pipe(finalize(() => this.loading.version = false)).pipe(
+            map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]));
 
     }
 

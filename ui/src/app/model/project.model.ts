@@ -12,7 +12,7 @@ export class Project {
     key: string;
     name: string;
     workflows: Array<Workflow>;
-    workflow_names: Array<string>;
+    workflow_names: Array<IdName>;
     pipelines: Array<Pipeline>;
     pipeline_names: Array<IdName>;
     applications: Array<Application>;
@@ -43,4 +43,5 @@ export class LoadOpts {
 export class IdName {
   id: number;
   name: string;
+  description?: string;
 }

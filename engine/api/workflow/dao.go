@@ -64,7 +64,7 @@ func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName str
 		JOIN project ON project.id = workflow.project_id
 		JOIN workflow_node ON workflow_node.workflow_id = workflow.id
 		JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
-		WHERE project.projectkey = $1 
+		WHERE project.projectkey = $1
 		AND (
 			workflow_node_context.default_pipeline_parameters::TEXT LIKE $2
 			OR
@@ -194,14 +194,14 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 }
 
 // LoadAllNames loads all workflow names for a project.
-func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName, error) {
 	query := `
-		SELECT workflow.name
+		SELECT workflow.name, workflow.id, workflow.description
 		FROM workflow
 		WHERE workflow.project_id = $1
 		ORDER BY workflow.name ASC`
 
-	res := []string{}
+	var res []sdk.IDName
 	if _, err := db.Select(&res, query, projID); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil
@@ -931,6 +931,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 	if opts != nil {
 		dryRun = opts.DryRun
 	}
+
 	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, dryRun)
 	if err != nil {
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
