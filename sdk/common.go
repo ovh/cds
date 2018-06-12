@@ -21,8 +21,9 @@ type EncryptFunc func(gorp.SqlExecutor, int64, string, string) (string, error)
 
 // IDName is generally used when you want to get basic informations from db
 type IDName struct {
-	ID   string `json:"id" db:"id"`
-	Name string `json:"name" db:"name"`
+	ID          string `json:"id" db:"id"`
+	Name        string `json:"name" db:"name"`
+	Description string `json:"description,omitempty" db:"description"`
 }
 
 // NamePattern  Pattern for project/application/pipeline/group name
