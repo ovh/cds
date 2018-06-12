@@ -2,6 +2,7 @@ package vcs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
@@ -70,8 +71,9 @@ type GithubServerConfiguration struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
-	DisablePolling  bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a public proxy for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
 }
 
 func (s GithubServerConfiguration) check() error {
@@ -80,6 +82,9 @@ func (s GithubServerConfiguration) check() error {
 	}
 	if s.ClientSecret == "" {
 		return errGithubConfigurationError
+	}
+	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
+		return fmt.Errorf("Github proxy webhook must have the HTTP scheme")
 	}
 	return nil
 }
@@ -94,11 +99,15 @@ type GitlabServerConfiguration struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
-	DisablePolling  bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a public proxy for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
 }
 
 func (s GitlabServerConfiguration) check() error {
+	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
+		return fmt.Errorf("Gitlab proxy webhook must have the HTTP scheme")
+	}
 	return nil
 }
 
@@ -109,11 +118,15 @@ type BitbucketServerConfiguration struct {
 	Status      struct {
 		Disable bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 	}
-	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
-	DisablePolling  bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a public proxy for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
 }
 
 func (s BitbucketServerConfiguration) check() error {
+	if s.ProxyWebhook != "" && !strings.Contains(s.ProxyWebhook, "://") {
+		return fmt.Errorf("Bitbucket proxy webhook must have the HTTP scheme")
+	}
 	return nil
 }
 

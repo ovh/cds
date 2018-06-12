@@ -58,15 +58,19 @@ func (c *gitlabClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 //DeleteHook disables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 	if !hook.Workflow {
-		var url string
-		if !hook.Workflow {
-			var err error
-			url, err = buildGitlabURL(hook.URL)
-			if err != nil {
-				return sdk.WrapError(err, "GitlabClient.DeleteHook> buildGitlabURL")
+		if c.proxyURL != "" {
+			lastIndexSlash := strings.LastIndex(hook.URL, "/")
+			if c.proxyURL[len(c.proxyURL)-1] == '/' {
+				lastIndexSlash++
 			}
-		} else {
-			url = hook.URL
+			hook.URL = c.proxyURL + hook.URL[lastIndexSlash:]
+		}
+
+		var url string
+		var err error
+		url, err = buildGitlabURL(hook.URL)
+		if err != nil {
+			return sdk.WrapError(err, "GitlabClient.DeleteHook> buildGitlabURL")
 		}
 
 		hooks, _, err := c.client.Projects.ListProjectHooks(repo, nil)
@@ -75,7 +79,6 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 		}
 
 		log.Debug("GitlabClient.DeleteHook: Got '%s'", url)
-		log.Debug("GitlabClient.DeleteHook: Want '%s'", url)
 		for _, h := range hooks {
 			log.Debug("GitlabClient.DeleteHook: Found '%s'", h.URL)
 			if h.URL == url {

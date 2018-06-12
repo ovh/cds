@@ -39,7 +39,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", cache, true, true)
+	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", "", cache, true, true)
 	return glConsummer
 }
 
@@ -62,7 +62,7 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", cache, true, true)
+	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", "", cache, true, true)
 	cli, err := glConsummer.GetAuthorizedClient(accessToken, "")
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)

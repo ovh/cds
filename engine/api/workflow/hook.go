@@ -209,6 +209,11 @@ func createVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		Value:        vcsHook.ID,
 		Configurable: false,
 	}
+	h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+		Value:        vcsHook.URL,
+		Configurable: false,
+		Type:         sdk.HookConfigTypeString,
+	}
 
 	return nil
 }

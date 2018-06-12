@@ -69,6 +69,9 @@ Set value to `privateKey`. You can modify `consumerKey` if you want.
         # Does webhooks are supported by VCS Server
         disableWebHooks = false
 
+        # If you want to have a public proxy for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = "https://myproxy.com"
+
         privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
 
         [vcs.servers.Bitbucket.bitbucket.Status]
@@ -102,6 +105,9 @@ You can configure many instances of Bitbucket:
         disableWebHooksCreation = false
         privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
 
+        # If you want to have a public proxy for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = "https://myproxy.com"
+
         [vcs.servers.mybitbucket_instance1.bitbucket.Status]
 
           # Set to true if you don't want CDS to push statuses on the VCS server
@@ -127,6 +133,9 @@ You can configure many instances of Bitbucket:
         # Does webhooks creation are supported by VCS Server
         disableWebHooksCreation = false
         privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
+
+        # If you want to have a public proxy for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = "https://myproxy.com"
 
         [vcs.servers.mybitbucket_instance2.bitbucket.Status]
 

@@ -11,11 +11,12 @@ import (
 type gitlabClient struct {
 	client              *gitlab.Client
 	uiURL               string
+	proxyURL            string
 	disableStatus       bool
 	disableStatusDetail bool
 }
 
-// gitlabConsumer implements vcs.Server and it's used to instanciate a githubClient
+// gitlabConsumer implements vcs.Server and it's used to instanciate a gitlabClient
 type gitlabConsumer struct {
 	URL                      string `json:"url"`
 	appID                    string
@@ -23,12 +24,13 @@ type gitlabConsumer struct {
 	cache                    cache.Store
 	AuthorizationCallbackURL string
 	uiURL                    string
+	proxyURL                 string
 	disableStatus            bool
 	disableStatusDetail      bool
 }
 
 // New instanciate a new gitlab consumer
-func New(appID string, clientSecret string, URL string, callbackURL string, uiURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
+func New(appID, clientSecret, URL, callbackURL, uiURL, proxyURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
 	return &gitlabConsumer{
 		URL:    URL,
 		secret: clientSecret,
@@ -36,6 +38,7 @@ func New(appID string, clientSecret string, URL string, callbackURL string, uiUR
 		appID:  appID,
 		AuthorizationCallbackURL: callbackURL,
 		uiURL:               uiURL,
+		proxyURL:            proxyURL,
 		disableStatus:       disableStatus,
 		disableStatusDetail: disableStatusDetail,
 	}

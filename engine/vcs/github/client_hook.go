@@ -12,6 +12,14 @@ import (
 
 func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	url := "/repos/" + repo + "/hooks"
+	if g.proxyURL != "" {
+		lastIndexSlash := strings.LastIndex(hook.URL, "/")
+		if g.proxyURL[len(g.proxyURL)-1] == '/' {
+			lastIndexSlash++
+		}
+		hook.URL = g.proxyURL + hook.URL[lastIndexSlash:]
+	}
+
 	r := WebhookCreate{
 		Name:   "web",
 		Active: true,
