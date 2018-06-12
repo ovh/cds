@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {RouterTestingModule} from '@angular/router/testing';
-import {fakeAsync, getTestBed, TestBed, tick} from '@angular/core/testing';
+import {getTestBed, TestBed} from '@angular/core/testing';
 import {Router} from '@angular/router';
 import {Component, Injector} from '@angular/core';
 import {Application} from '../../../../model/application.model';
@@ -88,7 +88,7 @@ describe('CDS: Application Admin Component', () => {
         router = undefined;
     });
 
-    it('Load component + renamed app', fakeAsync(() => {
+    it('Load component + renamed app', () => {
         const http = TestBed.get(HttpTestingController);
 
         let appRenamed = new Application();
@@ -117,29 +117,19 @@ describe('CDS: Application Admin Component', () => {
 
         fixture.componentInstance.application = app;
         fixture.componentInstance.project = p;
+        fixture.componentInstance.newName = 'appRenamed';
 
-        fixture.detectChanges();
-        tick(50);
+
+        spyOn(router, 'navigate');
 
         let compiled = fixture.debugElement.nativeElement;
 
-        let inputName = compiled.querySelector('input[name="formApplicationUpdateName"]');
-        inputName.value = 'appRenamed';
-        inputName.dispatchEvent(new Event('input'));
-
-        spyOn(router, 'navigate');
         compiled.querySelector('button[name="updateNameButton"]').click();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project/key1/application/app';
-        })).flush(appRenamed);
-
+        http.expectOne('/project/key1/application/app').flush(appRenamed);
 
         expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1', 'application', 'appRenamed']);
-
-        tick(50);
-
-    }));
+    });
 });
 
 class MockToast {

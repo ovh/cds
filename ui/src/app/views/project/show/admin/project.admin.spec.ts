@@ -1,10 +1,8 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, getTestBed} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
 import {TranslateParser} from '@ngx-translate/core';
@@ -30,7 +28,6 @@ import {NavbarService} from '../../../../service/navbar/navbar.service';
 describe('CDS: Project Admin Component', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
     let projectStore: ProjectStore;
 
     beforeEach(() => {
@@ -38,8 +35,6 @@ describe('CDS: Project Admin Component', () => {
             declarations: [
             ],
             providers: [
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,
@@ -67,19 +62,17 @@ describe('CDS: Project Admin Component', () => {
             ]
         });
         injector = getTestBed();
-        backend = injector.get(MockBackend);
         projectStore = injector.get(ProjectStore);
 
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
         projectStore = undefined;
     });
 
 
-    it('it should update the project', fakeAsync( () => {
+    it('it should update the project', () => {
         // Create Project RepoManager Form Component
         let fixture = TestBed.createComponent(ProjectAdminComponent);
         let component = fixture.debugElement.componentInstance;
@@ -90,8 +83,7 @@ describe('CDS: Project Admin Component', () => {
         p.permission = 7;
         fixture.componentInstance.project = p;
 
-        fixture.detectChanges();
-        tick(250);
+        fixture.detectChanges(true);
 
         spyOn(projectStore, 'updateProject').and.callFake(() => {
             return Observable.of(p);
@@ -101,7 +93,7 @@ describe('CDS: Project Admin Component', () => {
         compiled.querySelector('button[name="btnrename"]').click();
 
         expect(projectStore.updateProject).toHaveBeenCalledWith(p);
-    }));
+    });
 });
 
 class MockToast {
