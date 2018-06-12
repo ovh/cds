@@ -100,7 +100,7 @@ workflow:
     }
 
     goToNextStep(stepNum: number): void {
-        if (Array.isArray(this.project.workflow_names) && this.project.workflow_names.find((w) => w === this.workflow.name)) {
+        if (Array.isArray(this.project.workflow_names) && this.project.workflow_names.find((w) => w.name === this.workflow.name)) {
             this.duplicateWorkflowName = true;
             return;
         }

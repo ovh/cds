@@ -216,6 +216,7 @@
   "common_stop": "Stop",
   "common_relaunch": "Relaunch",
   "common_deprecated": "Deprecated",
+  "common_no_description": "No description available",
   "common_no_pipeline": "There is no pipeline linked",
   "common_no_application": "There is no application linked",
   "common_no_workflow": "There is no workflow linked",
