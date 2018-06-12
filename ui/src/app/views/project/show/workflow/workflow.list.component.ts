@@ -1,5 +1,5 @@
 import {Component, Input} from '@angular/core';
-import {Project} from '../../../../model/project.model';
+import {Project, IdName} from '../../../../model/project.model';
 import {Warning} from '../../../../model/warning.model';
 
 @Component({
@@ -30,7 +30,7 @@ export class ProjectWorkflowListComponent {
     this._project = project;
     if (project.workflow_names) {
       let filter = this.filter.toLowerCase();
-      this.filteredWorkflows = project.workflow_names.filter((wf) => wf.toLowerCase().indexOf(filter) !== -1);
+      this.filteredWorkflows = project.workflow_names.filter((wf) => wf.name.toLowerCase().indexOf(filter) !== -1);
     }
   }
   get project(): Project {
@@ -41,7 +41,7 @@ export class ProjectWorkflowListComponent {
     this._filter = filter;
     if (this.project.workflow_names) {
       let filterLower = filter.toLowerCase();
-      this.filteredWorkflows = this.project.workflow_names.filter((wf) => wf.toLowerCase().indexOf(filterLower) !== -1);
+      this.filteredWorkflows = this.project.workflow_names.filter((wf) => wf.name.toLowerCase().indexOf(filterLower) !== -1);
     }
   }
   get filter(): string {
@@ -51,7 +51,7 @@ export class ProjectWorkflowListComponent {
   _project: Project;
   _filter = '';
 
-  filteredWorkflows: Array<string> = [];
+  filteredWorkflows: Array<IdName> = [];
 
     constructor() { }
 }

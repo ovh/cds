@@ -10,9 +10,13 @@ const routes: Routes = [
         path: '',
         children : [
             { path: '', redirectTo: 'login', pathMatch: 'full' },
-            { path: 'login', component: LoginComponent },
-            { path: 'password', component: PasswordComponent },
-            { path: 'signup', component: SignUpComponent },
+            {
+                path: 'login',
+                component: LoginComponent,
+                data: { title: 'Login' }
+            },
+            { path: 'password', component: PasswordComponent, data: { title: 'Reset Password' }},
+            { path: 'signup', component: SignUpComponent, data: { title: 'Signup' }},
             { path: 'verify/:username/:token', component: VerifyComponent }
         ]
     }

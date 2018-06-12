@@ -87,7 +87,10 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 				if network == "" {
 					network = name + "-net"
 					networkAlias = "worker"
-					h.createNetwork(network)
+					if err := h.createNetwork(network); err != nil {
+						log.Warning("SpawnWorker>Unable to create network %s for jobID %d : %v", network, spawnArgs.JobID, err)
+						continue
+					}
 				}
 
 				//name= <alias> => the name of the host put in /etc/hosts of the worker

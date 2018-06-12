@@ -42,29 +42,30 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 
 // GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
 func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
-	tmpProj := sdk.ParametersFromProjectVariables(proj)
+	tmpProj := sdk.ParametersFromProjectVariables(*proj)
 	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
 		vars[k] = v
 	}
 
 	// compute application variables
-	if n.Context != nil && n.Context.Application != nil {
-		vars["cds.application"] = n.Context.Application.Name
-		tmp := sdk.ParametersFromApplicationVariables(n.Context.Application)
+	app, has := n.Application()
+	if has {
+		vars["cds.application"] = app.Name
+		tmp := sdk.ParametersFromApplicationVariables(app)
 		for k, v := range tmp {
 			vars[k] = v
 		}
 
 		// Get GitUrl
-		projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, n.Context.Application.VCSServer)
+		projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 		if projectVCSServer != nil {
 			client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
 			if errclient != nil {
 				return nil, sdk.WrapError(errclient, "GetNodeBuildParameters> Cannot connect get repository manager client")
 			}
 			_, next := tracing.Span(ctx, "workflow.GetNodeBuildParameters.vcs.RepoByFullname")
-			r, errR := client.RepoByFullname(n.Context.Application.RepositoryFullname)
+			r, errR := client.RepoByFullname(app.RepositoryFullname)
 			next()
 
 			if errR != nil {
@@ -90,18 +91,20 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	// compute environment variables
-	if n.Context != nil && n.Context.Environment != nil {
-		vars["cds.environment"] = n.Context.Environment.Name
-		tmp := sdk.ParametersFromEnvironmentVariables(n.Context.Environment)
+	env, has := n.Environment()
+	if has {
+		vars["cds.environment"] = env.Name
+		tmp := sdk.ParametersFromEnvironmentVariables(env)
 		for k, v := range tmp {
 			vars[k] = v
 		}
 	}
 
 	// compute parameters variables
-	if n.Context != nil && n.Context.ProjectPlatform != nil {
-		vars["cds.platform"] = n.Context.ProjectPlatform.Name
-		tmp := sdk.ParametersFromPlatform(n.Context.ProjectPlatform.Config)
+	ppf, has := n.ProjectPlatform()
+	if has {
+		vars["cds.platform"] = ppf.Name
+		tmp := sdk.ParametersFromPlatform(ppf.Config)
 		for k, v := range tmp {
 			vars[k] = v
 		}

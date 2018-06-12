@@ -14,7 +14,7 @@ import (
 func (api *API) postPushCacheHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
+		projectKey := vars["permProjectKey"]
 		tag := vars["tag"]
 
 		// check tag name pattern
@@ -46,7 +46,7 @@ func (api *API) postPushCacheHandler() Handler {
 func (api *API) getPullCacheHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
+		projectKey := vars["permProjectKey"]
 		tag := vars["tag"]
 
 		// check tag name pattern

@@ -10,6 +10,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+const (
+	bridge  = "bridge"
+	docker0 = "docker0"
+)
+
 func (h *HatcherySwarm) killAndRemove(ID string) error {
 	container, err := h.dockerClient.ContainerInspect(context.Background(), ID)
 	if err != nil {
@@ -36,6 +41,11 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			if !strings.Contains(err.Error(), "No such network") {
 				return sdk.WrapError(err, "killAndRemove> unable to get network for %s", ID[:7])
 			}
+			continue
+		}
+
+		//If it's the default docker bridge... skip
+		if network.Driver == bridge || network.Name == docker0 || network.Name == bridge {
 			continue
 		}
 
@@ -90,7 +100,7 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 			continue
 		}
 
-		if n.Driver != "bridge" || n.Name == "docker0" || n.Name == "bridge" {
+		if n.Driver == bridge || n.Name == docker0 || n.Name == bridge {
 			continue
 		}
 

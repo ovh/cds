@@ -16,18 +16,23 @@ const workflowRoutes: Routes = [
         canActivateChild: [CanActivateAuthRoute],
         resolve: {
             project: ProjectForWorkflowResolver
-        }
+        },
+        data: {
+          title: 'Add • Workflow'
+        },
     },
     {
         path: ':workflowName',
         component: WorkflowComponent,
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
+        data: {
+          title: '{workflowName} • Workflow'
+        },
         resolve: {
             project: ProjectForWorkflowResolver
         },
         children: [
-
             {
                 path: '', component: WorkflowShowComponent,
                 resolve: {
@@ -38,13 +43,19 @@ const workflowRoutes: Routes = [
                 path: 'run/:number', component: WorkflowRunComponent,
                 resolve: {
                     project: ProjectResolver
-                }
+                },
+                data: {
+                  title: '#{number} • {workflowName}'
+                },
             },
             {
                 path: 'run/:number/node/:nodeId', component: WorkflowNodeRunComponent,
                 resolve: {
                     project: ProjectForWorkflowResolver
-                }
+                },
+                data: {
+                  title: 'Pipeline {name} • #{number} • {workflowName}'
+                },
             }
         ]
     }

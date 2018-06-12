@@ -148,7 +148,7 @@ var (
 
 	loadWorkflowNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		var err error
-		var wfs []string
+		var wfs []sdk.IDName
 
 		if wfs, err = workflow.LoadAllNames(db, proj.ID, u); err != nil {
 			return sdk.WrapError(err, "workflow.loadworkflownames")
