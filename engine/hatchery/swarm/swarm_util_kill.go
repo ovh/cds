@@ -45,7 +45,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 		}
 
 		//If it's the default docker bridge... skip
-		if network.Driver == bridge || network.Name == docker0 || network.Name == bridge {
+		if network.Driver != bridge || network.Name == docker0 || network.Name == bridge {
 			continue
 		}
 
@@ -100,7 +100,7 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 			continue
 		}
 
-		if n.Driver == bridge || n.Name == docker0 || n.Name == bridge {
+		if n.Driver != bridge || n.Name == docker0 || n.Name == bridge {
 			continue
 		}
 
