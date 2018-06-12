@@ -40,6 +40,7 @@ module.exports = function (config) {
         colors: true,
         logLevel: config.LOG_INFO,
         autoWatch: true,
+        concurrency: 1,
         browsers: ['ChromeHeadless'],
         browserNoActivityTimeout: 60000,
         customLaunchers: {

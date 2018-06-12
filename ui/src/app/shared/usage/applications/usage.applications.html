@@ -3,7 +3,7 @@
     <div class="ui grid">
         <ng-container *ngIf="applications.length">
             <div class="four wide center aligned column" *ngFor="let app of applications">
-                <a [routerLink]="['/project/', project.key, 'application', app.name]">{{app.name}}</a>
+                <a [routerLink]="['project', project.key, 'application', app.name]">{{app.name}}</a>
             </div>
         </ng-container>
 

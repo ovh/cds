@@ -1,21 +1,23 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
 import {UsageComponent} from './usage.component';
 import {Workflow} from '../../model/workflow.model';
-import {User} from '../../model/user.model';
 import {Application} from '../../model/application.model';
 import {Environment} from '../../model/environment.model';
+import {Component, NO_ERRORS_SCHEMA} from '@angular/core';
+import {Project} from '../../model/project.model';
 
 describe('CDS: Usage Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
+                DummyComponent
             ],
             providers: [
                 SharedService,
@@ -27,45 +29,60 @@ describe('CDS: Usage Component', () => {
             imports : [
                 SharedModule,
                 TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([])
-            ]
+                RouterTestingModule.withRoutes([
+                    { path: 'project/:key/workflow/:name', component: DummyComponent},
+                    { path: 'project/:key/application/:name', component: DummyComponent},
+                    { path: 'project/:key/pipeline/:name', component: DummyComponent},
+                    { path: 'project/:key/environment/:name', component: DummyComponent}
+                ])
+            ],
+            schemas: [ NO_ERRORS_SCHEMA ]
         });
     });
 
-    it('should display workflows linked', fakeAsync( () => {
+    it('should display workflows linked', () => {
         // Create component
         let fixture = TestBed.createComponent(UsageComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        let fakeUser = new User();
-        fakeUser.admin = true;
-
+        let p = new Project();
+        p.key = 'key';
+        fixture.componentInstance.project = p;
         fixture.componentInstance.workflows = [new Workflow(), new Workflow()];
 
-        fixture.detectChanges();
-        tick(50);
+        fixture.detectChanges(true);
 
         let compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('app-usage-workflows')).toBeTruthy('workflows not rendered');
-    }));
 
-    it('should display applications and environments', fakeAsync( () => {
+    });
+
+    it('should display applications and environments', () => {
         let fixture = TestBed.createComponent(UsageComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+        let p = new Project();
+        p.key = 'key';
+        fixture.componentInstance.project = p;
         fixture.componentInstance.applications = [new Application(), new Application()];
         fixture.componentInstance.environments = [new Environment(), new Environment()];
         fixture.componentInstance.workflows = [];
 
-
-        fixture.detectChanges();
-        tick(50);
+        fixture.detectChanges(true);
 
         let compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('app-usage-applications')).toBeTruthy('applications not rendered');
         expect(compiled.querySelector('app-usage-environments')).toBeTruthy('environments not rendered');
         expect(compiled.querySelector('app-usage-workflows')).toBeFalsy('workflows rendered but should not');
-    }));
+
+    });
 });
+
+
+@Component({
+    template: '',
+})
+export class DummyComponent {
+}
