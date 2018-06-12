@@ -29,7 +29,7 @@
                     </div>
                 </a>
             </div>
-            <div class="ui segment" *ngIf="!project || !project.workflow_names || !project.workflow_names.length === 0">
+            <div class="ui segment" *ngIf="!project || !project.workflow_names || project.workflow_names.length === 0">
                 <span>{{ 'project_no_workflow' | translate }}</span>
             </div>
         </div>
