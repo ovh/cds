@@ -89,6 +89,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					networkAlias = "worker"
 					if err := h.createNetwork(network); err != nil {
 						log.Warning("SpawnWorker>Unable to create network %s for jobID %d : %v", network, spawnArgs.JobID, err)
+						continue
 					}
 				}
 
