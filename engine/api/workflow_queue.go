@@ -546,6 +546,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			log.Warning("postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", errW)
 			return nil
 		}
+		nodeRun.Translate(r.Header.Get("Accept-Language"))
 		event.PublishWorkflowNodeRun(api.mustDB(), nodeRun, work, nil)
 		return nil
 	}
