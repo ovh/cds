@@ -285,7 +285,7 @@ func (c *vcsClient) Commits(fullname, branch, since, until string) ([]sdk.VCSCom
 	commits := []sdk.VCSCommit{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/commits?branch=%s&since=%s&until=%s", c.name, fullname, url.QueryEscape(branch), url.QueryEscape(since), url.QueryEscape(until))
 	if code, err := c.doJSONRequest("GET", path, nil, &commits); err != nil {
-		if code == http.StatusNotFound {
+		if code != http.StatusNotFound {
 			return nil, err
 		}
 	}
@@ -296,7 +296,7 @@ func (c *vcsClient) Commit(fullname, hash string) (sdk.VCSCommit, error) {
 	commit := sdk.VCSCommit{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s", c.name, fullname, hash)
 	if code, err := c.doJSONRequest("GET", path, nil, &commit); err != nil {
-		if code == http.StatusNotFound {
+		if code != http.StatusNotFound {
 			return commit, err
 		}
 	}
