@@ -13,7 +13,7 @@ const routes: Routes = [
             {
                 path: 'login',
                 component: LoginComponent,
-                data: { title: 'Login' }
+                data: { title: 'CDS • Login' }
             },
             { path: 'password', component: PasswordComponent, data: { title: 'Reset Password' }},
             { path: 'signup', component: SignUpComponent, data: { title: 'Signup' }},
