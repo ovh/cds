@@ -123,20 +123,6 @@ export class WorkflowNodeRun {
                     wnjr.workflow_node_run_id = rjs['WorkflowNodeRunID'];
                     wnjr.job = new Job();
                     wnjr.job.step_status = new Array<StepStatus>();
-                    if (rjs['StepStatusSummary']) {
-                        rjs['StepStatusSummary'].forEach(sss => {
-                           let ss = new StepStatus();
-                           if (sss['Done'] > 0) {
-                               wnjr.done = new Date(sss['Done'] * 1000).toString();
-                           }
-                            if (sss['Start'] > 0) {
-                                wnjr.start = new Date(sss['Start'] * 1000).toString();
-                            }
-                           ss.status = sss['Status'];
-                           ss.step_order = sss['StepOrder'];
-                            wnjr.job.step_status.push(ss);
-                        });
-                    }
 
                     wnjr.job.action = new Action();
                     let eventJob = rjs['Job'];
@@ -149,6 +135,21 @@ export class WorkflowNodeRun {
                            let jobStep = new Action();
                            jobStep.name = step['Name'];
                             wnjr.job.action.actions.push(jobStep);
+                        });
+                    }
+
+                    if (eventJob['StepStatusSummary']) {
+                        eventJob['StepStatusSummary'].forEach(sss => {
+                            let ss = new StepStatus();
+                            if (sss['Done'] > 0) {
+                                wnjr.done = new Date(sss['Done'] * 1000).toString();
+                            }
+                            if (sss['Start'] > 0) {
+                                wnjr.start = new Date(sss['Start'] * 1000).toString();
+                            }
+                            ss.status = sss['Status'];
+                            ss.step_order = sss['StepOrder'];
+                            wnjr.job.step_status.push(ss);
                         });
                     }
 

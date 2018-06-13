@@ -163,7 +163,7 @@ export class WorkflowNodeComponent implements OnInit {
                 'workflow', this.workflow.name,
                 'run', this.currentNodeRun.num,
                 'node', this.currentNodeRun.id
-            ]);
+            ], {queryParams: {name: this.node.name}});
         } else {
             this._workflowEventStore.setSelectedNode(this.node, true);
             this._router.navigate([
