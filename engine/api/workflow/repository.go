@@ -195,6 +195,11 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 	ope.Setup.Checkout.Commit = commit
 	ope.Setup.Checkout.Branch = branch
 
+	// This should not append because the hook must set a default payload with git.branch
+	if ope.Setup.Checkout.Branch == "" {
+		return ope, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("branch parameter is mandatory")), "createOperationRequest")
+	}
+
 	return ope, nil
 }
 
