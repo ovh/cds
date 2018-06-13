@@ -95,10 +95,14 @@ func newSteps(a sdk.Action) []Step {
 				}
 				s["artifactDownload"] = artifactDownloadArgs
 			case sdk.ArtifactUpload:
-				var artifactUploadArgs string
+				artifactUploadArgs := map[string]string{}
 				path := sdk.ParameterFind(&act.Parameters, "path")
 				if path != nil {
-					artifactUploadArgs = path.Value
+					artifactUploadArgs["path"] = path.Value
+				}
+				tag := sdk.ParameterFind(&act.Parameters, "tag")
+				if tag != nil {
+					artifactUploadArgs["tag"] = tag.Value
 				}
 
 				s["artifactUpload"] = artifactUploadArgs
