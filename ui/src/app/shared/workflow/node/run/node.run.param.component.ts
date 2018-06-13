@@ -108,11 +108,15 @@ export class WorkflowNodeRunParamComponent {
                 .subscribe(nodeRun => {
                     if (nodeRun && nodeRun.hook_event) {
                         this._nodeToRun.context.default_payload = nodeRun.hook_event.payload;
-                        this._nodeToRun.context.default_pipeline_parameters = nodeRun.hook_event.pipeline_parameter;
+                        if (this.nodeRun) {
+                            this._nodeToRun.context.default_pipeline_parameters = nodeRun.hook_event.pipeline_parameter;
+                        }
                     }
                     if (nodeRun && nodeRun.manual) {
                         this._nodeToRun.context.default_payload = nodeRun.manual.payload;
-                        this._nodeToRun.context.default_pipeline_parameters = nodeRun.manual.pipeline_parameter;
+                        if (this.nodeRun) {
+                            this._nodeToRun.context.default_pipeline_parameters = nodeRun.manual.pipeline_parameter;
+                        }
                     }
 
                     this.prepareDisplay(null);

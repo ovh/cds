@@ -107,7 +107,9 @@ export class WorkflowNodeContextComponent {
                         this.editableNode.context.default_payload = {};
                     }
                 }
-                this.pipelineSubscription.unsubscribe();
+                if (this.pipelineSubscription) {
+                  this.pipelineSubscription.unsubscribe();
+                }
             });
         }
     }
