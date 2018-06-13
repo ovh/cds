@@ -69,6 +69,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     selectedRepo: string;
     loadingRepos: boolean;
     connectRepos: boolean;
+    alreadyRefreshed: boolean;
 
     list: Array<string>;
 
@@ -90,7 +91,8 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     }
 
     ngAfterViewChecked(): void {
-        if (this.codemirror && this.codemirror.instance) {
+        if (this.codemirror && this.codemirror.instance && !this.alreadyRefreshed) {
+            this.alreadyRefreshed = true;
             this.codemirror.instance.refresh();
         }
     }
