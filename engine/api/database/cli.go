@@ -1,16 +1,15 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/olekukonko/tablewriter"
 	"github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -166,44 +165,16 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 		sdk.Exit("Error: %s\n", err)
 	}
 
-	source := migrate.FileMigrationSource{
-		Dir: sqlMigrateDir,
-	}
-
-	if dryrun {
-		migrations, _, err := migrate.PlanMigration(connFactory.DB(), "postgres", source, dir, limit)
-		if err != nil {
-			return fmt.Errorf("Cannot plan migration: %s", err)
-		}
-
-		for _, m := range migrations {
-			printMigration(m, dir)
-		}
-		return nil
-	}
-
-	hostname, err := os.Hostname()
+	migrations, err := dbmigrate.Do(connFactory.DB, sqlMigrateDir, dir, dryrun, limit)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
-	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
-	if err := lockMigrate(connFactory.DB(), hostname); err != nil {
-		sdk.Exit("Unable to lock database: %s\n", err)
+
+	if dryrun {
+		for _, m := range migrations {
+			printMigration(m, dir)
+		}
 	}
-
-	defer unlockMigrate(connFactory.DB(), hostname)
-
-	n, err := migrate.ExecMax(connFactory.DB(), "postgres", source, dir, limit)
-	if err != nil {
-		return fmt.Errorf("Migration failed: %s", err)
-	}
-
-	if n == 1 {
-		fmt.Println("Applied 1 migration")
-	} else {
-		fmt.Printf("Applied %d migrations\n", n)
-	}
-
 	return nil
 }
 
@@ -221,93 +192,4 @@ func printMigration(m *migrate.PlannedMigration, dir migrate.MigrationDirection)
 	} else {
 		panic("Not reached")
 	}
-}
-
-//MigrationLock is used to lock the migration (managed by gorp)
-type MigrationLock struct {
-	ID       string     `db:"id"`
-	Locked   *time.Time `db:"locked"`
-	Unlocked *time.Time `db:"unlocked"`
-}
-
-func lockMigrate(db *sql.DB, id string) error {
-	// construct a gorp DbMap
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
-	// create table if not exist
-	if err := dbmap.CreateTablesIfNotExists(); err != nil {
-		return err
-	}
-
-	tx, err := dbmap.Begin()
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
-
-	var pendingMigration []MigrationLock
-	if _, err := tx.Select(&pendingMigration, "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"); err != nil {
-		return err
-	}
-
-	if len(pendingMigration) > 0 {
-		return fmt.Errorf("Migration is locked by %s since %v", pendingMigration[0].ID, pendingMigration[0].Locked)
-	}
-
-	t := time.Now()
-	m := MigrationLock{
-		ID:     id,
-		Locked: &t,
-	}
-
-	if err := tx.Insert(&m); err != nil {
-		return err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func unlockMigrate(db *sql.DB, id string) error {
-	// construct a gorp DbMap
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
-
-	tx, err := dbmap.Begin()
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
-
-	var pendingMigration []MigrationLock
-	if _, err := tx.Select(&pendingMigration, "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"); err != nil {
-		return err
-	}
-
-	if len(pendingMigration) == 0 {
-		return fmt.Errorf("There is no migration to unlock")
-	}
-
-	m := MigrationLock{}
-	if err := tx.SelectOne(&m, "SELECT * FROM gorp_migrations_lock WHERE id = $1", id); err != nil {
-		return err
-	}
-
-	t := time.Now()
-	m.Unlocked = &t
-
-	if _, err := tx.Update(&m); err != nil {
-		return err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
 }

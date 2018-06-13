@@ -29,16 +29,8 @@ type Configuration struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
 		Port int    `toml:"port" default:"8085"`
 	} `toml:"http" comment:"######################\n CDS Repositories HTTP Configuration \n######################"`
-	URL string `default:"http://localhost:8085"`
-	API struct {
-		HTTP struct {
-			URL      string `toml:"url" default:"http://localhost:8081"`
-			Insecure bool   `toml:"insecure" commented:"true"`
-		} `toml:"http"`
-		Token                string `toml:"token" default:"************"`
-		RequestTimeout       int    `toml:"requestTimeout" default:"10"`
-		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10"`
-	} `toml:"api" comment:"######################\n CDS API Settings \n######################"`
+	URL   string                          `default:"http://localhost:8085"`
+	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {

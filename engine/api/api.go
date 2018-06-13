@@ -61,18 +61,8 @@ type Configuration struct {
 	Secrets struct {
 		Key string `toml:"key"`
 	} `toml:"secrets"`
-	Database struct {
-		User           string `toml:"user" default:"cds"`
-		Password       string `toml:"password" default:"cds"`
-		Name           string `toml:"name" default:"cds"`
-		Host           string `toml:"host" default:"localhost"`
-		Port           int    `toml:"port" default:"5432"`
-		SSLMode        string `toml:"sslmode" default:"disable" comment:"DB SSL Mode: require (default), verify-full, or disable"`
-		MaxConn        int    `toml:"maxconn" default:"20" comment:"DB Max connection"`
-		ConnectTimeout int    `toml:"connectTimeout" default:"10" comment:"Maximum wait for connection, in seconds"`
-		Timeout        int    `toml:"timeout" default:"3000" comment:"Statement timeout value in milliseconds"`
-	} `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
-	Cache struct {
+	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
+	Cache    struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`

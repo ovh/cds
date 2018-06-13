@@ -26,6 +26,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/vcs"
@@ -146,6 +147,7 @@ Comming soon...`,
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Repositories.API.Token = conf.API.Auth.SharedInfraToken
+		conf.DatabaseMigrate.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
 		conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
@@ -209,6 +211,13 @@ var configCheckCmd = &cobra.Command{
 		var hasError bool
 		if conf.API.URL.API != "" {
 			if err := api.New().CheckConfiguration(conf.API); err != nil {
+				fmt.Println(err)
+				hasError = true
+			}
+		}
+
+		if conf.DatabaseMigrate.API.HTTP.URL != "" {
+			if err := api.New().CheckConfiguration(conf.DatabaseMigrate); err != nil {
 				fmt.Println(err)
 				hasError = true
 			}
@@ -343,6 +352,9 @@ See $ engine config command for more details.
 			case "api":
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: conf.API})
 				names = append(names, conf.API.Name)
+			case "migrate":
+				services = append(services, serviceConf{arg: a, service: migrateservice.New(), cfg: conf.DatabaseMigrate})
+				names = append(names, conf.DatabaseMigrate.Name)
 			case "hatchery:local":
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
@@ -389,9 +401,22 @@ See $ engine config command for more details.
 			Ctx:                    ctx,
 		})
 
+		//Configure the services
+		for _, s := range services {
+			if err := s.service.ApplyConfiguration(s.cfg); err != nil {
+				sdk.Exit("Unable to init service %s: %v", s.arg, err)
+			}
+
+			if srv, ok := s.service.(service.BeforeStart); ok {
+				if err := srv.BeforeStart(); err != nil {
+					sdk.Exit("Unable to start service %s: %v", s.arg, err)
+				}
+			}
+		}
+
+		//Start the services
 		for _, s := range services {
 			go start(ctx, s.service, s.cfg, s.arg)
-
 			//Stupid trick: when API is starting wait a bit before start the other
 			if s.arg == "API" || s.arg == "api" {
 				time.Sleep(2 * time.Second)
@@ -407,10 +432,6 @@ See $ engine config command for more details.
 }
 
 func start(c context.Context, s service.Service, cfg interface{}, serviceName string) {
-	if err := s.ApplyConfiguration(cfg); err != nil {
-		sdk.Exit("Unable to init service %s: %v", serviceName, err)
-	}
-
 	if err := serve(c, s, serviceName); err != nil {
 		sdk.Exit("Service has been stopped: %s %v", serviceName, err)
 	}
