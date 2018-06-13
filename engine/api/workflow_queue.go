@@ -111,10 +111,10 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(errT, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
+		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
 		return WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -370,12 +370,12 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
+		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 		db := api.mustDB()
 
 		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
 
-		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
+		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, proj.Key)
 
 		return nil
 	}
@@ -546,7 +546,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			log.Warning("postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", errW)
 			return nil
 		}
-		event.PublishWorkflowNodeJobRun(work.ProjectKey, *nodeJobRun, nodeRun, work.GetNode(nodeRun.WorkflowNodeID), work.Name)
+		event.PublishWorkflowNodeRun(api.mustDB(), nodeRun, work, nil)
 		return nil
 	}
 }

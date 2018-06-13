@@ -45,7 +45,7 @@ func (s Stage) ToSummary() StageSummary {
 		Jobs:           s.Jobs,
 	}
 	for i := range s.RunJobs {
-		sum.RunJobsSummary[i] = s.RunJobs[i].ToSummary(false)
+		sum.RunJobsSummary[i] = s.RunJobs[i].ToSummary()
 	}
 	return sum
 }

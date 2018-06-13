@@ -19,12 +19,12 @@ import (
 
 // GetWorkflowRunEventData read channel to get elements to push
 // TODO: refactor this useless function
-func GetWorkflowRunEventData(report *ProcessorReport, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun) {
-	return report.workflows, report.nodes, report.jobs
+func GetWorkflowRunEventData(report *ProcessorReport, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun) {
+	return report.workflows, report.nodes
 }
 
 // SendEvent Send event on workflow run
-func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNodeRun, wnjrs []sdk.WorkflowNodeJobRun, key string) {
+func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNodeRun, key string) {
 	for _, wr := range wrs {
 		event.PublishWorkflowRun(wr, key)
 	}
@@ -54,23 +54,7 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 			}
 		}
 
-		event.PublishWorkflowNodeRun(db, wnr, *wr, &previousNodeRun, key)
-	}
-	for _, wnjr := range wnjrs {
-		wnr, errWNR := LoadNodeRunByID(db, wnjr.WorkflowNodeRunID, LoadRunOptions{
-			WithLightTests: true,
-		})
-		if errWNR != nil {
-			log.Warning("SendEvent.workflow.wnjrs > Unable to find workflow node run %d: %s", wnjr.WorkflowNodeRunID, errWNR)
-			continue
-		}
-
-		w, errW := LoadWorkflowFromWorkflowRunID(db, wnr.WorkflowRunID)
-		if errW != nil {
-			log.Warning("SendEvent.workflow.wnjrs> Unable to load workflow from run %d: %s", wnr.WorkflowRunID, errW)
-			continue
-		}
-		event.PublishWorkflowNodeJobRun(w.ProjectKey, wnjr, *wnr, w.GetNode(wnr.WorkflowNodeID), w.Name)
+		event.PublishWorkflowNodeRun(db, wnr, wr.Workflow, &previousNodeRun)
 	}
 }
 
