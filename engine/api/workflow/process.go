@@ -106,7 +106,6 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 
 			haveToUpdate := false
 
-			log.Debug("processWorkflowRun> last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
 				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)

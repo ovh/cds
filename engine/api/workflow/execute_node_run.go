@@ -194,7 +194,6 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 		}
 	}
 
-	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
 
 	if sdk.StatusIsTerminated(n.Status) && n.Status != sdk.StatusNeverBuilt.String() {

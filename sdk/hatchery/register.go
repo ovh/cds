@@ -96,7 +96,7 @@ func Create(h Interface) error {
 		case <-tickerCountWorkersStarted.C:
 			workersStarted = int64(h.WorkersStarted())
 			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
-				log.Info("max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
+				log.Debug("max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
 			}
 			log.Debug("workers already started:%d", workersStarted)
 		case <-tickerGetModels.C:
