@@ -934,8 +934,9 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 
 	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, dryRun)
 	if err != nil {
+		log.Error("Push> Unable to import workflow: %v", err)
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
-		return nil, nil, sdk.WrapError(err, "Push> ", err)
+		return nil, nil, sdk.WrapError(err, "Push> %v ", err)
 	}
 
 	// TODO workflow as code, manage derivation workflow
@@ -952,13 +953,15 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
 					UUID:              opts.HookUUID,
 				})
+				if wf.Root.Context.DefaultPayload, err = DefaultPayload(tx, store, proj, u, wf); err != nil {
+					return nil, nil, sdk.WrapError(err, "Push> Unable to get default payload")
+				}
 			}
 
-			if wf.Root.Context.Application != nil && (wf.Root.Context.Application.RepositoryFullname == "" || wf.Root.Context.Application.VCSServer == "") {
+			if wf.Root.Context.Application != nil {
 				wf.Root.Context.Application.VCSServer = opts.VCSServer
 				wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
 				wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
-
 				if err := application.Update(tx, store, wf.Root.Context.Application, u); err != nil {
 					return nil, nil, sdk.WrapError(err, "Push> Unable to update application vcs datas")
 				}

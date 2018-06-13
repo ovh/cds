@@ -211,11 +211,10 @@ func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Pro
 		return sdk.WrapError(err, "PostRepositoryOperation> Unable to found repositories service")
 	}
 
-	initialKeyName := ope.RepositoryStrategy.SSHKey
 	if ope.RepositoryStrategy.ConnectionType == "ssh" {
 		for _, k := range prj.Keys {
 			if k.Name == ope.RepositoryStrategy.SSHKey {
-				ope.RepositoryStrategy.SSHKey = k.Private
+				ope.RepositoryStrategy.SSHKeyContent = k.Private
 				break
 			}
 		}
@@ -223,7 +222,6 @@ func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Pro
 	if _, err := services.DoJSONRequest(srvs, http.MethodPost, "/operations", ope, ope); err != nil {
 		return sdk.WrapError(err, "PostRepositoryOperation> Unable to perform operation")
 	}
-	ope.RepositoryStrategy.SSHKey = initialKeyName
 	return nil
 }
 

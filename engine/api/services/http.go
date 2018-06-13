@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // HTTPClient will be set to a default httpclient if not set
@@ -170,8 +169,6 @@ func doRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 	basedHash := base64.StdEncoding.EncodeToString([]byte(srv.Hash))
 	req.Header.Set(sdk.AuthHeader, basedHash)
 
-	log.Debug("services.DoRequest> request: %s", req.URL.String())
-
 	//Do the request
 	resp, errDo := HTTPClient.Do(req)
 	if errDo != nil {
@@ -184,8 +181,6 @@ func doRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 	if errBody != nil {
 		return nil, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
 	}
-
-	log.Debug("services.DoRequest> response: %s", string(body))
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {
