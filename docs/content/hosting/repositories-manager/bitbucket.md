@@ -69,7 +69,7 @@ Set value to `privateKey`. You can modify `consumerKey` if you want.
         # Does webhooks are supported by VCS Server
         disableWebHooks = false
 
-        # If you want to have a public proxy for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = "https://myproxy.com"
 
         privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
