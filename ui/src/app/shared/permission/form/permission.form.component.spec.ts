@@ -1,11 +1,10 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync, inject} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TestBed, tick, fakeAsync, inject} from '@angular/core/testing';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
+import {XHRBackend} from '@angular/http';
 import {GroupService} from '../../../service/group/group.service';
 import {PermissionFormComponent} from './permission.form.component';
 import {Group, GroupPermission} from '../../../model/group.model';
@@ -31,6 +30,7 @@ describe('CDS: Permission From Component', () => {
             ],
             imports : [
                 SharedModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]

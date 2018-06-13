@@ -1,9 +1,8 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
-import {XHRBackend} from '@angular/http';
 import {Injector} from '@angular/core';
 import {ActionStepFormComponent} from './step.form.component';
 import {SharedService} from '../../../shared.service';
@@ -30,6 +29,7 @@ describe('CDS: Step Form Component', () => {
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),
+                TranslateModule.forRoot(),
                 SharedModule
             ]
         });

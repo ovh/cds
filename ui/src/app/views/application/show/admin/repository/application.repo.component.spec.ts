@@ -3,7 +3,7 @@
 import {TestBed, fakeAsync, getTestBed, tick, inject} from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import {Injector, NO_ERRORS_SCHEMA, Component} from '@angular/core';
-import {TranslateService, TranslateLoader} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ApplicationRepositoryComponent} from './application.repo.component';
 import {ApplicationService} from '../../../../../service/application/application.service';
@@ -23,6 +23,10 @@ import {ProjectModule} from '../../../../project/project.module';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
 import 'rxjs/add/observable/of';
+import {KeyService} from '../../../../../service/keys/keys.service';
+import {ProjectStore} from '../../../../../service/project/project.store';
+import {ProjectService} from '../../../../../service/project/project.service';
+import {NavbarService} from '../../../../../service/navbar/navbar.service';
 
 @Component({
     template: ''
@@ -44,6 +48,10 @@ describe('CDS: Application Repo Component', () => {
             providers: [
                 { provide: ApplicationStore, useClass: MockStore },
                 ApplicationService,
+                KeyService,
+                ProjectStore,
+                NavbarService,
+                ProjectService,
                 PipelineService,
                 EnvironmentService,
                 VariableService,
@@ -60,6 +68,7 @@ describe('CDS: Application Repo Component', () => {
                 ProjectModule,
                 ApplicationModule,
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ],
             schemas: [ NO_ERRORS_SCHEMA ]

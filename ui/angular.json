@@ -161,6 +161,26 @@
               "src/assets",
               "src/favicon.ico"
             ]
+          },
+          "configurations": {
+            "model": {
+              "main": "src/test_model.ts"
+            },
+            "service": {
+              "main": "src/test_service.ts"
+            },
+            "shared": {
+              "main": "src/test_shared.ts"
+            },
+            "shared": {
+              "main": "src/test_shared.ts"
+            },
+            "views": {
+              "main": "src/test_views.ts"
+            },
+            "all": {
+              "main": "src/test.ts"
+            }
           }
         },
         "lint": {

@@ -15,7 +15,7 @@ import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {EnvironmentService} from '../../../service/environment/environment.service';
 import {VariableService} from '../../../service/variable/variable.service';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {Project} from '../../../model/project.model';
 import {Application} from '../../../model/application.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
@@ -24,6 +24,7 @@ import {PipelineAddComponent} from './pipeline.add.component';
 import {Pipeline} from '../../../model/pipeline.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../service/navbar/navbar.service';
 describe('CDS: Pipeline Add Component', () => {
 
     let injector: Injector;
@@ -49,6 +50,7 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 PipelineStore,
+                NavbarService,
                 PipelineService,
                 EnvironmentService,
                 VariableService
@@ -57,6 +59,7 @@ describe('CDS: Pipeline Add Component', () => {
                 PipelineModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });
@@ -76,7 +79,7 @@ describe('CDS: Pipeline Add Component', () => {
         prjStore = undefined;
     });
 
-    it('should create an empty pipeline with attached application', fakeAsync( () => {
+    it('should create an empty pipeline', fakeAsync( () => {
 
         // Create component
         let fixture = TestBed.createComponent(PipelineAddComponent);
@@ -96,15 +99,12 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.newPipeline = new Pipeline();
         fixture.componentInstance.newPipeline.name = 'myPip';
         fixture.componentInstance.newPipeline.type = 'build';
-        fixture.componentInstance.selectedApplications = new Array<string>();
-        fixture.componentInstance.selectedApplications.push('app2');
 
         spyOn(pipStore, 'createPipeline').and.callFake( () => {
             return Observable.of(fixture.componentInstance.newPipeline);
         });
 
         fixture.componentInstance.createPipeline();
-        expect(fixture.componentInstance.newPipeline.usage.applications.length).toBe(1);
         expect(pipStore.createPipeline).toHaveBeenCalledWith(project.key, fixture.componentInstance.newPipeline);
 
     }));

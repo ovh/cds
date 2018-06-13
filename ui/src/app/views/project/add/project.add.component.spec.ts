@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader} from '@ngx-translate/core';
+import {TestBed, getTestBed} from '@angular/core/testing';
+import {TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -24,6 +24,7 @@ import {Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../service/navbar/navbar.service';
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
@@ -38,6 +39,7 @@ describe('CDS: Project Show Component', () => {
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,
+                NavbarService,
                 ProjectService,
                 PipelineService,
                 EnvironmentService,
@@ -51,6 +53,7 @@ describe('CDS: Project Show Component', () => {
             imports: [
                 ProjectModule,
                 SharedModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ],
@@ -68,7 +71,7 @@ describe('CDS: Project Show Component', () => {
     });
 
 
-    it('it should create a project', fakeAsync(() => {
+    it('it should create a project', () => {
         let projectStore: ProjectStore = injector.get(ProjectStore);
         let router: Router = injector.get(Router);
 
@@ -104,16 +107,16 @@ describe('CDS: Project Show Component', () => {
         project.groups[0].permission = 7;
         expect(projectStore.createProject).toHaveBeenCalledWith(project);
         expect(router.navigate).toHaveBeenCalled();
-    }));
+    });
 
-    it('it should generate an project key', fakeAsync(() => {
+    it('it should generate an project key', () => {
         let fixture = TestBed.createComponent(ProjectAddComponent);
         fixture.componentInstance.generateKey('^r%t*$f#|m');
         expect(fixture.componentInstance.project.key).toBe('RTFM');
 
-    }));
+    });
 
-    it('it should generate errors', fakeAsync(() => {
+    it('it should generate errors', () => {
         let fixture = TestBed.createComponent(ProjectAddComponent);
         fixture.componentInstance.addSshKey = true;
         fixture.componentInstance.createProject();
@@ -126,7 +129,7 @@ describe('CDS: Project Show Component', () => {
         fixture.componentInstance.project.key = 'aze';
         fixture.componentInstance.createProject();
         expect(fixture.componentInstance.keyError).toBeTruthy();
-    }));
+    });
 });
 
 class MockToast {

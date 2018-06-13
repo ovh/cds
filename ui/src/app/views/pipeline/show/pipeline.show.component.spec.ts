@@ -3,7 +3,7 @@ import {TestBed, fakeAsync} from '@angular/core/testing';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Observable} from 'rxjs/Observable';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {ProjectService} from '../../../service/project/project.service';
 import {ProjectStore} from '../../../service/project/project.store';
 import {PipelineService} from '../../../service/pipeline/pipeline.service';
@@ -23,16 +23,22 @@ import {HttpClientTestingModule, HttpTestingController} from '@angular/common/ht
 import {HttpRequest} from '@angular/common/http';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../service/navbar/navbar.service';
+import {KeyService} from '../../../service/keys/keys.service';
+import {PipelineCoreService} from '../../../service/pipeline/pipeline.core.service';
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                KeyService,
+                PipelineCoreService,
                 PipelineService,
                 PipelineStore,
                 ProjectService,
                 ProjectStore,
+                NavbarService,
                 ApplicationPipelineService,
                 {provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 {provide: ToastService, useClass: MockToast},
@@ -43,6 +49,7 @@ describe('CDS: Pipeline Show', () => {
             ],
             imports: [
                 PipelineModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 HttpClientTestingModule

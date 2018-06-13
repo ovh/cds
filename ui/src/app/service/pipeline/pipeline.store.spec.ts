@@ -11,9 +11,9 @@ import {Job} from '../../model/job.model';
 import {Project} from '../../model/project.model';
 import {Group, GroupPermission} from '../../model/group.model';
 import {Parameter} from '../../model/parameter.model';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
 import {first} from 'rxjs/operators';
+import {PipelineService} from './pipeline.service';
+import {Observable} from 'rxjs/Observable';
 
 describe('CDS: pipeline Store', () => {
 
@@ -22,11 +22,11 @@ describe('CDS: pipeline Store', () => {
             declarations: [],
             providers: [
                 {provide: APP_BASE_HREF, useValue: '/'},
+                {provide: PipelineService, useClass: MockPipelineService}
             ],
             imports: [
                 AppModule,
-                RouterModule,
-                HttpClientTestingModule
+                RouterModule
             ]
         });
 
@@ -34,7 +34,6 @@ describe('CDS: pipeline Store', () => {
 
     it('Create and Delete Pipeline', async(() => {
         const pipelineStore = TestBed.get(PipelineStore);
-        const http = TestBed.get(HttpTestingController);
 
         let pipeline1 = new Pipeline();
         pipeline1.name = 'myPipeline';
@@ -50,9 +49,6 @@ describe('CDS: pipeline Store', () => {
             expect(res.name).toBe('myPipeline', 'Wrong pipeline name');
             checkPipelineCreated = true;
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline'
-        })).flush(pipeline1);
 
         // check get pipeline (get from cache)
         let checkedSinglePipeline = false;
@@ -63,18 +59,7 @@ describe('CDS: pipeline Store', () => {
         });
         expect(checkedSinglePipeline).toBeTruthy('Need to get pipeline myPipeline');
 
-        // check get pipeline not in cache
-        let checkednotCachedPipeline = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
-            expect(pips.get(projectKey + '-' + 'myPipeline2')).toBeFalsy();
-            checkednotCachedPipeline = true;
-        });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline2'
-        })).flush(pipeline2);
-        expect(checkednotCachedPipeline).toBeTruthy('Need to get pipeline myPipeline2');
 
-        // Now in cache
         let checkedInCachedPipeline = false;
         pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline2')).toBeTruthy();
@@ -85,25 +70,16 @@ describe('CDS: pipeline Store', () => {
         // Pipeline deletion
         pipelineStore.deletePipeline(projectKey, 'myPipeline2').subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline2'
-        })).flush(null);
 
         let checkedDeletedPipeline = false;
         pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
             checkedDeletedPipeline = true;
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline2'
-        })).flush(pipeline2);
         expect(checkedDeletedPipeline).toBeTruthy('Need to get pipeline myPipeline');
-
-        http.verify();
     }));
 
     it('Update pipeline', async(() => {
         const pipelineStore = TestBed.get(PipelineStore);
-        const http = TestBed.get(HttpTestingController);
 
         let pip1 = new Pipeline();
         pip1.name = 'myPipeline';
@@ -117,17 +93,11 @@ describe('CDS: pipeline Store', () => {
         let p = createPipeline('myPipeline');
         pipelineStore.createPipeline(projectKey, p).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline'
-        })).flush(pip1);
 
         // Update
         p.name = 'myPipelineUpdate1';
         pipelineStore.updatePipeline(projectKey, 'myPipeline', p).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline'
-        })).flush(pipUp);
 
         // check get pipeline
         let checkedPipeline = false;
@@ -138,13 +108,10 @@ describe('CDS: pipeline Store', () => {
             checkedPipeline = true;
         }).unsubscribe();
         expect(checkedPipeline).toBeTruthy('Need to get pipeline myPipelineUpdate1');
-
-        http.verify();
     }));
 
     it('should create/update and delete a stage', async(() => {
         const pipelineStore = TestBed.get(PipelineStore);
-        const http = TestBed.get(HttpTestingController);
 
         let pip1 = new Pipeline();
         pip1.name = 'myPipeline';
@@ -172,9 +139,6 @@ describe('CDS: pipeline Store', () => {
             expect(res.name).toBe('myPipeline', 'Wrong pipeline name');
             checkPipelineCreated = true;
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline'
-        })).flush(pip1);
 
         // ADD STAGE
         let s: Stage = new Stage();
@@ -182,9 +146,6 @@ describe('CDS: pipeline Store', () => {
         s.id = 1;
         pipelineStore.addStage(projectKey, 'myPipeline', s).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage'
-        })).flush(pipAddStage);
 
         // check get pipeline (get from cache)
         let checkStageAdd = false;
@@ -197,12 +158,9 @@ describe('CDS: pipeline Store', () => {
         expect(checkStageAdd).toBeTruthy();
 
         // UPDATE STAGE
-
+        s.name = 'stage1Updated';
         pipelineStore.updateStage(projectKey, 'myPipeline', s).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1'
-        })).flush(pipUpStage);
 
         let checkStageUpdate = false;
         pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
@@ -216,9 +174,6 @@ describe('CDS: pipeline Store', () => {
         // DELETE STAGE
         pipelineStore.removeStage(projectKey, 'myPipeline', s).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1'
-        })).flush(pipDelStage);
 
         let checkStageDelete = false;
         pipelineStore.getPipelines(projectKey, 'myPipeline').subscribe(pips => {
@@ -227,13 +182,10 @@ describe('CDS: pipeline Store', () => {
             checkStageDelete = true;
         }).unsubscribe();
         expect(checkStageDelete).toBeTruthy();
-
-        http.verify();
     }));
 
     it('should create/update and delete a job', async(() => {
         const pipelineStore = TestBed.get(PipelineStore);
-        const http = TestBed.get(HttpTestingController);
 
         let pip = new Pipeline();
         pip.name = 'myPipeline';
@@ -282,9 +234,6 @@ describe('CDS: pipeline Store', () => {
             expect(res.name).toBe('myPipeline', 'Wrong pipeline name');
             checkPipelineCreated = true;
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline'
-        })).flush(pip);
 
         // ADD Job
         let j = new Job();
@@ -294,9 +243,6 @@ describe('CDS: pipeline Store', () => {
         j.pipeline_action_id = 0;
         pipelineStore.addJob(projectKey, 'myPipeline', 1, j).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1/job'
-        })).flush(pipAddJob);
 
 
         let checkJobAdd = false;
@@ -311,11 +257,9 @@ describe('CDS: pipeline Store', () => {
 
         // UPDATE JOB
 
+        j.action.name = 'action1Updated';
         pipelineStore.updateJob(projectKey, 'myPipeline', 1, j).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1/job/0'
-        })).flush(pipUpJob);
 
         let checkJobUpdate = false;
         pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
@@ -330,9 +274,6 @@ describe('CDS: pipeline Store', () => {
         // DELETE JOB
         pipelineStore.removeJob(projectKey, 'myPipeline', 1, j).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1/job/0'
-        })).flush(pipDelJob);
 
         let checkJobDelete = false;
         pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
@@ -342,13 +283,10 @@ describe('CDS: pipeline Store', () => {
             checkJobDelete = true;
         });
         expect(checkJobDelete).toBeTruthy();
-
-        http.verify();
     }));
 
     it('should add/update/delete a permission', async(() => {
         const pipelineStore = TestBed.get(PipelineStore);
-        const http = TestBed.get(HttpTestingController);
 
         let grp1 = new Group();
         grp1.name = 'grp';
@@ -387,41 +325,31 @@ describe('CDS: pipeline Store', () => {
         let pipeline = createPipeline('myPipeline');
         pipelineStore.createPipeline(proj.key, pipeline).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline'
-        })).flush(pip);
 
         let gp: GroupPermission = new GroupPermission();
-        gp.permission = 0;
+        gp.permission = 7;
         gp.group = new Group();
         gp.group.name = 'grp';
 
         pipelineStore.addPermission(proj.key, pip.name, gp).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/group'
-        })).flush(pipAddGroup);
 
         // check get pipeline
         let checkedAddPermission = false;
         pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(123, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'A group must have been added');
             expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(7, 'Permission must be 7');
             checkedAddPermission = true;
         });
         expect(checkedAddPermission).toBeTruthy('Need pipeline to be updated');
 
+        gp.permission = 4;
         pipelineStore.updatePermission(proj.key, pip.name, gp).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/group/grp'
-        })).flush(pipUpGroup);
 
         // check get pipeline
         let checkedUpdatePermission = false;
         pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(456, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'Pip must have 1 group');
             expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(4, 'Group permission must be 4');
             checkedUpdatePermission = true;
@@ -430,25 +358,18 @@ describe('CDS: pipeline Store', () => {
 
         pipelineStore.removePermission(proj.key, pip.name, gp).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/group/grp'
-        })).flush(pipDelGroup);
 
         // check get pipeline
         let checkedDeletePermission = false;
         pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(789, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(0, 'Ouo must have 0 group');
             checkedDeletePermission = true;
         });
         expect(checkedDeletePermission).toBeTruthy('Need pipeline to be updated');
-
-        http.verify();
     }));
 
     it('should add/update/delete a parameter', async(() => {
         const pipelineStore = TestBed.get(PipelineStore);
-        const http = TestBed.get(HttpTestingController);
 
         let pip = new Pipeline();
         pip.name = 'myPipeline';
@@ -482,9 +403,6 @@ describe('CDS: pipeline Store', () => {
         let pipeline = createPipeline('myPipeline');
         pipelineStore.createPipeline(proj.key, pipeline).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline'
-        })).flush(pip);
 
         let param: Parameter = new Parameter();
         param.name = 'foo';
@@ -495,14 +413,10 @@ describe('CDS: pipeline Store', () => {
 
         pipelineStore.addParameter(proj.key, pip.name, param).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/parameter/foo'
-        })).flush(pipAddParam);
 
         // check get pipeline
         let checkedAddParam = false;
         pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(123, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(1, 'A parameter must have been added');
             expect(apps.get(proj.key + '-myPipeline').parameters[0].name).toBe('foo', 'Name must be foo');
             checkedAddParam = true;
@@ -510,16 +424,13 @@ describe('CDS: pipeline Store', () => {
         expect(checkedAddParam).toBeTruthy('Need pipeline to be updated');
 
 
+        param.name = 'fooUpdated';
         pipelineStore.updateParameter(proj.key, pip.name, param).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/parameter/foo'
-        })).flush(pipUpParam);
 
         // check get pipeline
         let checkedUpdateParam = false;
         pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(456, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(1, 'Pip must have 1 group');
             expect(apps.get(proj.key + '-myPipeline').parameters[0].name).toBe('fooUpdated', 'Name must be fooUpdated');
             checkedUpdateParam = true;
@@ -529,25 +440,143 @@ describe('CDS: pipeline Store', () => {
 
         pipelineStore.removeParameter(proj.key, pip.name, param).subscribe(() => {
         });
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/parameter/foo'
-        })).flush(pipDelParam);
 
         // check get pipeline
         let checkedDeleteParam = false;
         pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(789, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(0, 'Pip must have 0 parameter');
             checkedDeleteParam = true;
         }).unsubscribe();
         expect(checkedDeleteParam).toBeTruthy('Need pipeline to be updated');
-
-        http.verify();
     }));
 
     function createPipeline(name: string): Pipeline {
         let pip: Pipeline = new Pipeline();
         pip.name = name;
         return pip;
+    }
+
+    class MockPipelineService {
+
+        getPipeline(key: string, pipName: string): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            return Observable.of(pip);
+        }
+        createPipeline(key: string, pipeline: Pipeline): Observable<Pipeline> {
+            return Observable.of(pipeline);
+        };
+
+        updatePipeline(key: string, oldName: string, pipeline: Pipeline): Observable<Pipeline> {
+            return Observable.of(pipeline);
+        }
+
+        deletePipeline(key: string, pipName: string): Observable<boolean> {
+            return Observable.of(true);
+        }
+
+        addJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.stages = new Array<Stage>();
+            let s = new Stage();
+            s.id = stageID;
+            s.jobs = new Array<Job>();
+            s.jobs.push(job);
+            pip.stages.push(s);
+            return Observable.of(pip);
+        }
+
+        updateJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.stages = new Array<Stage>();
+            let s = new Stage();
+            s.id = stageID;
+            s.jobs = new Array<Job>();
+            s.jobs.push(job);
+            pip.stages.push(s);
+            return Observable.of(pip);
+        }
+
+        removeJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.stages = new Array<Stage>();
+            let s = new Stage();
+            s.id = stageID;
+            s.jobs = new Array<Job>();
+            pip.stages.push(s);
+            return Observable.of(pip);
+        }
+
+        addPermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.groups = new Array<GroupPermission>();
+            pip.groups.push(gp);
+            return Observable.of(pip);
+        }
+
+        updatePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.groups = new Array<GroupPermission>();
+            pip.groups.push(gp);
+            return Observable.of(pip);
+        }
+
+        removePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.groups = new Array<GroupPermission>();
+            return Observable.of(pip);
+        }
+
+        addParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.parameters = new Array<Parameter>();
+            pip.parameters.push(param);
+            return Observable.of(pip);
+        }
+
+        updateParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.parameters = new Array<Parameter>();
+            pip.parameters.push(param);
+            return Observable.of(pip);
+        }
+
+        removeParameter(key: string, pipName: string, param: Parameter): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.parameters = new Array<Parameter>();
+            return Observable.of(pip);
+        }
+
+        insertStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.stages = new Array<Stage>();
+            pip.stages.push(stage);
+            return Observable.of(pip);
+        }
+
+        updateStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.stages = new Array<Stage>();
+            pip.stages.push(stage);
+            return Observable.of(pip);
+        }
+
+        deleteStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
+            let pip = new Pipeline();
+            pip.name = pipName;
+            pip.stages = new Array<Stage>();
+            return Observable.of(pip);
+        }
     }
 });

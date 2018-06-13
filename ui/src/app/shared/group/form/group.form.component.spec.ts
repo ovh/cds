@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, fakeAsync, tick} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../shared.module';
 import {GroupFormComponent} from './group.form.component';
@@ -19,6 +19,7 @@ describe('CDS: Group form component', () => {
             ],
             imports : [
                 SharedModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([])
             ]
         });

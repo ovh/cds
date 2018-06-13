@@ -1,23 +1,25 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import { TranslateService, TranslateLoader} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
-import {ProjectRepoManagerFormComponent} from './project.repomanager.form.component';
-import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
-import {ProjectStore} from '../../../../../../service/project/project.store';
-import {ProjectService} from '../../../../../../service/project/project.service';
-import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
-import {EnvironmentService} from '../../../../../../service/environment/environment.service';
-import {VariableService} from '../../../../../../service/variable/variable.service';
-import {SharedModule} from '../../../../../../shared/shared.module';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
-import {Project} from '../../../../../../model/project.model';
 import {TranslateParser} from '@ngx-translate/core';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {RepositoriesManager} from '../../../../../../model/repositories.model';
+
 import {HttpRequest} from '@angular/common/http';
+import {ProjectStore} from '../../../service/project/project.store';
+import {RepoManagerFormComponent} from './repomanager.form.component';
+import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {ProjectService} from '../../../service/project/project.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../service/environment/environment.service';
+import {VariableService} from '../../../service/variable/variable.service';
+import {SharedModule} from '../../shared.module';
+import {RepositoriesManager} from '../../../model/repositories.model';
+import {Project} from '../../../model/project.model';
+import {NavbarService} from '../../../service/navbar/navbar.service';
 
 describe('CDS: Project RepoManager Form Component', () => {
 
@@ -26,9 +28,6 @@ describe('CDS: Project RepoManager Form Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                ProjectRepoManagerFormComponent
-            ],
             providers: [
                 TranslateLoader,
                 RepoManagerService,
@@ -39,10 +38,12 @@ describe('CDS: Project RepoManager Form Component', () => {
                 VariableService,
                 ToasterService,
                 TranslateService,
-                TranslateParser
+                TranslateParser,
+                NavbarService
             ],
             imports : [
                 SharedModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ],
@@ -78,7 +79,7 @@ describe('CDS: Project RepoManager Form Component', () => {
         projectMock.vcs_servers = [];
 
         // Create Project RepoManager Form Component
-        let fixture = TestBed.createComponent(ProjectRepoManagerFormComponent);
+        let fixture = TestBed.createComponent(RepoManagerFormComponent);
         let component = fixture.debugElement.componentInstance;
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === '/repositories_manager';

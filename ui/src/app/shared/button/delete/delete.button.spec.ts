@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import { TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {DeleteButtonComponent} from '../../button/delete/delete.button';
 import {SharedModule} from '../../shared.module';
 
@@ -17,7 +17,8 @@ describe('CDS: Delete Button', () => {
                 TranslateParser
             ],
             imports : [
-                SharedModule
+                SharedModule,
+                TranslateModule.forRoot()
             ]
         });
     });

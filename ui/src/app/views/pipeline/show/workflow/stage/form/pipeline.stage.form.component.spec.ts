@@ -5,7 +5,7 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {Observable} from 'rxjs/Observable';
 
 import {PipelineStageFormComponent} from './pipeline.stage.form.component';
-import {TranslateLoader, TranslateParser, TranslateService} from '@ngx-translate/core';
+import {TranslateLoader, TranslateModule, TranslateParser, TranslateService} from '@ngx-translate/core';
 import {PipelineModule} from '../../../../pipeline.module';
 import {SharedModule} from '../../../../../../shared/shared.module';
 import {Stage} from '../../../../../../model/stage.model';
@@ -26,6 +26,7 @@ describe('CDS: Stage From component', () => {
             ],
             imports: [
                 PipelineModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 SharedModule
             ]
