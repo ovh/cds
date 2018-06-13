@@ -61,7 +61,6 @@ func (c *Common) DoHeartbeat(status func() sdk.MonitoringStatus) (int, error) {
 		Type:             c.Type,
 		MonitoringStatus: status(),
 	}
-	log.Debug("%s> DoHeartbeat", c.Name)
 	hash, err := c.Client.ServiceRegister(srv)
 	if err != nil {
 		return 0, sdk.WrapError(err, "DoHeartbeat>")
