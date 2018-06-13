@@ -64,6 +64,7 @@ func (a Application) PGPKeys() []ApplicationKey {
 type RepositoryStrategy struct {
 	ConnectionType string `json:"connection_type"`
 	SSHKey         string `json:"ssh_key"`
+	SSHKeyContent  string `json:"ssh_key_content,omitempty"`
 	User           string `json:"user"`
 	Password       string `json:"password"`
 	Branch         string `json:"branch"`

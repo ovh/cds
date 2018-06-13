@@ -633,6 +633,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			options := workflow.LoadOptions{
 				OnlyRootNode: true,
 				DeepPipeline: false,
+				Base64Keys:   true,
 			}
 			var errW error
 			_, next := tracing.Span(ctx, "workflow.Load")
