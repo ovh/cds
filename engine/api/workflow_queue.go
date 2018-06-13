@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -507,6 +508,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run. JobID on handler: %d", id)
 		}
 
+		var nodeRun sdk.WorkflowNodeRun
 		if !found {
 			nodeRun, errNR := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeJobRun.WorkflowNodeRunID, false)
 			if errNR != nil {
@@ -528,6 +530,23 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot commit transaction")
 		}
 
+		if nodeRun.ID == 0 {
+			nodeRunP, errN := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{
+				DisableDetailledNodeRun: true,
+			})
+			if errN != nil {
+				log.Warning("postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", errN)
+				return nil
+			}
+			nodeRun = *nodeRunP
+		}
+
+		work, errW := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), nodeRun.WorkflowRunID)
+		if errW != nil {
+			log.Warning("postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", errW)
+			return nil
+		}
+		event.PublishWorkflowNodeJobRun(work.ProjectKey, *nodeJobRun, nodeRun, work.GetNode(nodeRun.WorkflowNodeID), work.Name)
 		return nil
 	}
 }

@@ -226,7 +226,7 @@ type WorkflowNodeJobRunSummary struct {
 }
 
 // ToSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
-func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
+func (wnjr WorkflowNodeJobRun) ToSummary(includeStep bool) WorkflowNodeJobRunSummary {
 	sum := WorkflowNodeJobRunSummary{
 		Done:              wnjr.Done.Unix(),
 		WorkflowNodeRunID: wnjr.WorkflowNodeRunID,
@@ -234,7 +234,7 @@ func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
 		ID:                wnjr.ID,
 		Queued:            wnjr.Queued.Unix(),
 		Start:             wnjr.Start.Unix(),
-		Job:               wnjr.Job.ToSummary(),
+		Job:               wnjr.Job.ToSummary(includeStep),
 	}
 	return sum
 }

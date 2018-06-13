@@ -87,6 +87,19 @@ func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	return nil
 }
 
+// LoadWorkflowFromWorkflowRunID loads the workflow for the given workfloxw run id
+func LoadWorkflowFromWorkflowRunID(db gorp.SqlExecutor, wrID int64) (sdk.Workflow, error) {
+	var workflow sdk.Workflow
+	wNS, err := db.SelectNullStr("SELECT workflow FROM workflow_run WHERE id = $1", wrID)
+	if err != nil {
+		return workflow, sdk.WrapError(err, "LoadWorkflowFromWorkflowRunID> Unable to load workflow for workflow run %d", wrID)
+	}
+	if err := gorpmapping.JSONNullString(wNS, &workflow); err != nil {
+		return workflow, sdk.WrapError(err, "LoadWorkflowFromWorkflowRunID> Unable to write into workflow struct")
+	}
+	return workflow, nil
+}
+
 //PostInsert is a db hook on WorkflowRun
 func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 	w, errw := json.Marshal(r.Workflow)

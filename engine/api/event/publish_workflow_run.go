@@ -95,7 +95,6 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.
 			envName = node.Context.Environment.Name
 		}
 	}
-
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
@@ -103,7 +102,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.
 }
 
 // PublishWorkflowNodeJobRun publish event on a workflow node job run
-func PublishWorkflowNodeJobRun(prokectKey string, njr sdk.WorkflowNodeJobRun, wnr sdk.WorkflowNodeRun, wr sdk.WorkflowRun) {
+func PublishWorkflowNodeJobRun(prokectKey string, njr sdk.WorkflowNodeJobRun, wnr sdk.WorkflowNodeRun, wn *sdk.WorkflowNode, wName string) {
 	e := sdk.EventRunWorkflowNodeJob{
 		ID:                njr.ID,
 		Status:            njr.Status,
@@ -111,26 +110,26 @@ func PublishWorkflowNodeJobRun(prokectKey string, njr sdk.WorkflowNodeJobRun, wn
 		Start:             njr.Start.Unix(),
 		Model:             njr.Model,
 		Queued:            njr.Queued.Unix(),
+		Job:               njr.Job.ToSummary(true),
 	}
 	if njr.Status != sdk.StatusBuilding.String() && njr.Status != sdk.StatusWaiting.String() {
 		e.Done = njr.Done.Unix()
 	}
 
 	var pipName string
-	node := wr.Workflow.GetNode(wnr.WorkflowNodeID)
-	if node != nil {
-		pipName = node.Pipeline.Name
-	}
 	var envName string
 	var appName string
-	if node.Context != nil {
-		if node.Context.Application != nil {
-			appName = node.Context.Application.Name
-		}
-		if node.Context.Environment != nil {
-			envName = node.Context.Environment.Name
+	if wn != nil {
+		pipName = wn.Pipeline.Name
+		if wn.Context != nil {
+			if wn.Context.Application != nil {
+				appName = wn.Context.Application.Name
+			}
+			if wn.Context.Environment != nil {
+				envName = wn.Context.Environment.Name
+			}
 		}
 	}
 
-	PublishRunWorkflow(e, prokectKey, wr.Workflow.Name, appName, pipName, envName, wr.Number, nil)
+	PublishRunWorkflow(e, prokectKey, wName, appName, pipName, envName, wnr.Number, nil)
 }

@@ -48,13 +48,14 @@ type EventEngine struct {
 
 // EventRunWorkflowNodeJob contains event data for a workflow node run job
 type EventRunWorkflowNodeJob struct {
-	ID                int64  `json:"id"`
-	WorkflowNodeRunID int64  `json:"workflow_node_run_id,omitempty"`
-	Status            string `json:"status"`
-	Queued            int64  `json:"queued,omitempty"`
-	Start             int64  `json:"start,omitempty"`
-	Done              int64  `json:"done,omitempty"`
-	Model             string `json:"model,omitempty"`
+	ID                int64              `json:"id"`
+	WorkflowNodeRunID int64              `json:"workflow_node_run_id,omitempty"`
+	Status            string             `json:"status"`
+	Queued            int64              `json:"queued,omitempty"`
+	Start             int64              `json:"start,omitempty"`
+	Done              int64              `json:"done,omitempty"`
+	Model             string             `json:"model,omitempty"`
+	Job               ExecutedJobSummary `json:"job,omitempty"`
 }
 
 // EventRunWorkflowNode contains event data for a workflow node run

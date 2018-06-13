@@ -59,22 +59,26 @@ type ExecutedJobSummary struct {
 }
 
 // ToSummary transforms an ExecutedJob to an ExecutedJobSummary
-func (j ExecutedJob) ToSummary() ExecutedJobSummary {
+func (j ExecutedJob) ToSummary(includeStep bool) ExecutedJobSummary {
 	sum := ExecutedJobSummary{
-		StepStatusSummary: make([]StepStatusSummary, len(j.StepStatus)),
-		JobName:           j.Action.Name,
-		Reason:            j.Reason,
-		WorkerName:        j.WorkerName,
-		Steps:             make([]ActionSummary, len(j.Action.Actions)),
-		PipelineActionID:  j.PipelineActionID,
-		PipelineStageID:   j.PipelineStageID,
+		JobName:          j.Action.Name,
+		Reason:           j.Reason,
+		WorkerName:       j.WorkerName,
+		PipelineActionID: j.PipelineActionID,
+		PipelineStageID:  j.PipelineStageID,
 	}
-	for i := range j.Action.Actions {
-		sum.Steps[i] = j.Action.Actions[i].ToSummary()
+	if includeStep {
+		sum.StepStatusSummary = make([]StepStatusSummary, len(j.StepStatus))
+		for i := range j.StepStatus {
+			sum.StepStatusSummary[i] = j.StepStatus[i].ToSummary()
+		}
+
+		sum.Steps = make([]ActionSummary, len(j.Action.Actions))
+		for i := range j.Action.Actions {
+			sum.Steps[i] = j.Action.Actions[i].ToSummary()
+		}
 	}
-	for i := range j.StepStatus {
-		sum.StepStatusSummary[i] = j.StepStatus[i].ToSummary()
-	}
+
 	return sum
 }
 

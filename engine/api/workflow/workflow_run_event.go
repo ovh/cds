@@ -65,15 +65,12 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 			continue
 		}
 
-		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
-			WithLightTests: true,
-		})
-		if errWR != nil {
-			log.Warning("SendEvent.workflow.wnjrs> Unable to load workflow run %d: %s", wnr.WorkflowRunID, errWR)
+		w, errW := LoadWorkflowFromWorkflowRunID(db, wnr.WorkflowRunID)
+		if errW != nil {
+			log.Warning("SendEvent.workflow.wnjrs> Unable to load workflow from run %d: %s", wnr.WorkflowRunID, errW)
 			continue
 		}
-		event.PublishWorkflowNodeRun(db, *wnr, *wr, nil, key)
-		event.PublishWorkflowNodeJobRun(key, wnjr, *wnr, *wr)
+		event.PublishWorkflowNodeJobRun(w.ProjectKey, wnjr, *wnr, w.GetNode(wnr.WorkflowNodeID), w.Name)
 	}
 }
 
