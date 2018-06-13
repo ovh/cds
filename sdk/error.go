@@ -560,7 +560,7 @@ func ErrorIs(err error, t Error) bool {
 		return false
 	}
 	for _, l := range errorsLanguages {
-		if l[t.ID] == err.Error() {
+		if l[t.ID] == err.Error() || l[t.ID] == errors.Cause(err).Error() {
 			return true
 		}
 	}

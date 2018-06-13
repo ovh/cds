@@ -199,7 +199,7 @@ func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out inter
 	if code >= 400 {
 		switch code {
 		case http.StatusUnauthorized:
-			err = sdk.WrapError(sdk.ErrUnauthorized, "%s", err)
+			err = sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "%s", err)
 		case http.StatusBadRequest:
 			err = sdk.WrapError(sdk.ErrWrongRequest, "%s", err)
 		case http.StatusNotFound:
@@ -285,7 +285,9 @@ func (c *vcsClient) Commits(fullname, branch, since, until string) ([]sdk.VCSCom
 	commits := []sdk.VCSCommit{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/commits?branch=%s&since=%s&until=%s", c.name, fullname, url.QueryEscape(branch), url.QueryEscape(since), url.QueryEscape(until))
 	if _, err := c.doJSONRequest("GET", path, nil, &commits); err != nil {
-		return nil, err
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, err
+		}
 	}
 	return commits, nil
 }
@@ -294,7 +296,9 @@ func (c *vcsClient) Commit(fullname, hash string) (sdk.VCSCommit, error) {
 	commit := sdk.VCSCommit{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s", c.name, fullname, hash)
 	if _, err := c.doJSONRequest("GET", path, nil, &commit); err != nil {
-		return commit, err
+		if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return commit, err
+		}
 	}
 	return commit, nil
 }

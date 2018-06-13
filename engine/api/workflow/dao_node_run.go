@@ -447,7 +447,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			if errcm != nil {
 				// not found is not an error, it's probably that the br.LatestCommit commit is not found on repo (git push)
 				if !sdk.ErrorIs(errcm, sdk.ErrNotFound) {
-					return nil, cur, sdk.WrapError(errcm, "GetNodeRunBuildCommits> Cannot get commits")
+					return nil, cur, sdk.WrapError(errcm, "GetNodeRunBuildCommits> Cannot get commits with cur.Hash %s", cur.Hash)
 				}
 			}
 			lastCommit = cm
@@ -484,10 +484,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		//If we are lucky, return a true diff
 		commits, err := client.Commits(repo, cur.Branch, prev.Hash, cur.Hash)
 		if err != nil {
-			// prev.Hash could be empty -> 404 returned from vcs, it's not an error
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
-			}
+			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
 		}
 		res = commits
 	} else if prev.Hash == "" {
@@ -500,10 +497,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		log.Debug("GetNodeRunBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(repo, cur.Branch, "", cur.Hash)
 		if err != nil {
-			// cur.Hash could be empty -> 404 returned from vcs, it's not an error
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
-			}
+			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
 		}
 		res = c
 	}
