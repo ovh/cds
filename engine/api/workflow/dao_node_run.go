@@ -445,10 +445,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			log.Debug("get the last commit : %s", br.LatestCommit)
 			cm, errcm := client.Commit(repo, br.LatestCommit)
 			if errcm != nil {
-				// not found is not an error, it's probably that the br.LatestCommit commit is not found on repo (git push)
-				if !sdk.ErrorIs(errcm, sdk.ErrNotFound) {
-					return nil, cur, sdk.WrapError(errcm, "GetNodeRunBuildCommits> Cannot get commits with cur.Hash %s", cur.Hash)
-				}
+				return nil, cur, sdk.WrapError(errcm, "GetNodeRunBuildCommits> Cannot get commits with cur.Hash %s", cur.Hash)
 			}
 			lastCommit = cm
 			cur.Hash = cm.Hash
