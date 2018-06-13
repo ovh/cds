@@ -43,6 +43,9 @@ Set value to `appId` and `secret`
 
         secret = "xxxx"
 
+        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # proxyWebhook = "https://myproxy.com"
+
         [vcs.servers.Gitlab.gitlab.Status]
 
           # Set to true if you don't want CDS to push statuses on the VCS server
