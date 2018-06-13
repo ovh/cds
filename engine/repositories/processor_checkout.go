@@ -17,7 +17,8 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 	// Get the git repository
 	opts := []repo.Option{repo.WithVerbose()}
 	if op.RepositoryStrategy.ConnectionType == "ssh" {
-		opts = append(opts, repo.WithSSHAuth([]byte(op.RepositoryStrategy.SSHKey)))
+		log.Debug("Repositories> processCheckout> using ssh key %s", op.RepositoryStrategy.SSHKey)
+		opts = append(opts, repo.WithSSHAuth([]byte(op.RepositoryStrategy.SSHKeyContent)))
 	} else if op.RepositoryStrategy.User != "" && op.RepositoryStrategy.Password != "" {
 		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, op.RepositoryStrategy.Password))
 	}
