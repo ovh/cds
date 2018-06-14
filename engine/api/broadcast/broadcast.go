@@ -133,3 +133,13 @@ func Delete(db gorp.SqlExecutor, ID int64) error {
 	}
 	return nil
 }
+
+func deleteOldBroadcasts(db *gorp.DbMap) error {
+	query := `DELETE
+		FROM broadcast
+		WHERE archived = true
+		AND age(updated) > interval '30 days'
+	`
+	_, err := db.Exec(query)
+	return err
+}
