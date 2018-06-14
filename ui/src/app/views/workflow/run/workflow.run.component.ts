@@ -49,6 +49,9 @@ export class WorkflowRunComponent implements OnInit {
                 private _workflowStore: WorkflowStore, private _notification: NotificationService,
                 private _translate: TranslateService, private _workflowEventStore: WorkflowEventStore,
                 private _workflowRunService: WorkflowRunService) {
+        this._workflowEventStore.setSelectedNodeRun(null, false);
+        this._workflowEventStore.setSelectedNode(null, false);
+
         // Get project
         this._activatedRoute.data.subscribe(datas => {
             if (!this.project || (<Project>datas['project']).key !== this.project.key) {

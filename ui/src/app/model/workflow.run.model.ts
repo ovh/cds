@@ -124,6 +124,18 @@ export class WorkflowNodeRun {
                     wnjr.job = new Job();
                     wnjr.job.step_status = new Array<StepStatus>();
 
+                    wnjr.spawninfos = new Array<SpawnInfo>();
+                    let pSpawn = rjs['SpawnInfos'];
+                    if (pSpawn) {
+                        pSpawn.forEach(ps => {
+                           let spawn = new SpawnInfo();
+                           spawn.api_time = new Date(ps['APITime']);
+                           spawn.remote_time = new Date(ps['RemoteTime']);
+                           spawn.user_message = ps['UserMessage'];
+                            wnjr.spawninfos.push(spawn);
+                        });
+                    }
+
                     wnjr.job.action = new Action();
                     let eventJob = rjs['Job'];
                     wnjr.job.pipeline_stage_id = eventJob['PipelineStageID'];
@@ -142,17 +154,16 @@ export class WorkflowNodeRun {
                         eventJob['StepStatusSummary'].forEach(sss => {
                             let ss = new StepStatus();
                             if (sss['Done'] > 0) {
-                                wnjr.done = new Date(sss['Done'] * 1000).toString();
+                                ss.done = new Date(sss['Done'] * 1000).toString();
                             }
                             if (sss['Start'] > 0) {
-                                wnjr.start = new Date(sss['Start'] * 1000).toString();
+                                ss.start = new Date(sss['Start'] * 1000).toString();
                             }
                             ss.status = sss['Status'];
                             ss.step_order = sss['StepOrder'];
                             wnjr.job.step_status.push(ss);
                         });
                     }
-
                     stage.run_jobs.push(wnjr);
                 });
             }

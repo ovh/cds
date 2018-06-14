@@ -181,6 +181,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.stepStatus || PipelineStatus.neverRun(this.currentStatus)) {
             return;
         }
+
         if (this.stepStatus.start && this.stepStatus.start.indexOf('0001-01-01') !== -1) {
             return;
         }
