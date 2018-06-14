@@ -185,7 +185,7 @@ func doRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 		return nil, resp.StatusCode, sdk.WrapError(errBody, "services.DoRequest> Unable to read body")
 	}
 
-	log.Debug("services.DoRequest> response: %s", string(body))
+	log.Debug("services.DoRequest> response code:%d body:%s", resp.StatusCode, string(body))
 
 	// if everything is fine, return body
 	if resp.StatusCode < 400 {

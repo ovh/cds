@@ -325,8 +325,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 			repos, errRepos = client.Repos()
 			api.Cache.SetWithTTL(cacheKey, repos, 0)
 			if errRepos != nil {
-				// as client.Repos can return a 401 error, we avoid here to return 401 on UI too.
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
+				return sdk.WrapError(errRepos, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
 			}
 		}
 

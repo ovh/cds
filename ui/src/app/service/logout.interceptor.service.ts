@@ -27,10 +27,13 @@ export class LogoutInterceptor implements HttpInterceptor {
                     } else if (e.status === 401) {
                         this._authStore.removeUser();
                         let navigationExtras: NavigationExtras = {
-                            queryParams: {
-                                redirect: this._router.routerState.snapshot.url
-                            }
+                            queryParams: {}
                         };
+
+                        if (this._router.routerState.snapshot.url
+                            && this._router.routerState.snapshot.url.indexOf('account/login') === -1) {
+                          navigationExtras.queryParams = {redirect: this._router.routerState.snapshot.url};
+                        }
 
                         if (navigationExtras.queryParams.redirect) {
                             this._router.navigate(['/account/login'], navigationExtras);

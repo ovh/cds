@@ -386,7 +386,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 				var errb error
 				branches, errb = client.Branches(app.RepositoryFullname)
 				if errb != nil {
-					return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
+					return sdk.WrapError(errb, "getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 				}
 			}
 		} else {
@@ -430,7 +430,7 @@ func (api *API) getApplicationRemoteHandler() Handler {
 			var errb error
 			prs, errb = client.PullRequests(app.RepositoryFullname)
 			if errb != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
+				return sdk.WrapError(errb, "getApplicationRemoteHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 			}
 
 			found := map[string]bool{app.RepositoryFullname: true}
