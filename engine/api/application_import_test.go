@@ -599,19 +599,11 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
+	pfname := sdk.RandomString(10)
 	pf := sdk.PlatformModel{
-		Name:       "test-deploy-2",
+		Name:       pfname,
 		Deployment: true,
-	}
-	test.NoError(t, platform.InsertModel(db, &pf))
-	defer platform.DeleteModel(db, pf.ID)
-
-	pp := sdk.ProjectPlatform{
-		Model:           pf,
-		Name:            pf.Name,
-		PlatformModelID: pf.ID,
-		ProjectID:       proj.ID,
-		Config: sdk.PlatformConfig{
+		DeploymentDefaultConfig: sdk.PlatformConfig{
 			"token": sdk.PlatformConfigValue{
 				Type:  sdk.PlatformConfigTypePassword,
 				Value: "my-secret-token",
@@ -621,6 +613,15 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 				Value: "my-url",
 			},
 		},
+	}
+	test.NoError(t, platform.InsertModel(db, &pf))
+	defer platform.DeleteModel(db, pf.ID)
+
+	pp := sdk.ProjectPlatform{
+		Model:           pf,
+		Name:            pf.Name,
+		PlatformModelID: pf.ID,
+		ProjectID:       proj.ID,
 	}
 	test.NoError(t, platform.InsertPlatform(db, &pp))
 
@@ -640,25 +641,36 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 		},
 	}))
 
-	//Prepare request
 	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+	}
+	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	body := rec.Body.String()
+
+	//Prepare request
+	vars = map[string]string{
 		"permProjectKey": proj.Key,
 	}
-	uri := api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
+	uri = api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?force=true", nil)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?force=true", nil)
 
-	body := `version: v1.0
-name: myNewApp
-deployments:
-  test-deploy-2:
-    url: 
-      value: my-url-3`
+	body = strings.Replace(body, "my-url-2", "my-url-3", 1)
+
 	req.Body = ioutil.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
 	//Do the request
-	rec := httptest.NewRecorder()
+	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
@@ -683,4 +695,10 @@ deployments:
 
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
+
+	actualApp, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
+	test.NoError(t, err)
+	assert.Equal(t, "my-secret-token-2", actualApp.DeploymentStrategies[pfname]["token"].Value)
+	assert.Equal(t, "my-url-3", actualApp.DeploymentStrategies[pfname]["url"].Value)
+
 }
