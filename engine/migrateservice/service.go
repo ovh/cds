@@ -79,17 +79,20 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 
 func (s *dbmigservice) BeforeStart() error {
 	log.Info("DBMigrate> Starting Database migration...")
-	if err := s.doMigrate(); err != nil {
-		log.Error("DBMigrate> Migration failed %v", err)
-		s.currentStatus.err = err
+	errDo := s.doMigrate()
+	if errDo != nil {
+		log.Error("DBMigrate> Migration failed %v", errDo)
+		s.currentStatus.err = errDo
 	}
 
 	log.Info("DBMigrate> Retrieving Database migration status...")
-	status, err := s.getMigrate()
-	if err != nil {
-		log.Error("DBMigrate> Migration status unavailable %v", err)
+	status, errGet := s.getMigrate()
+	if errGet != nil {
+		log.Error("DBMigrate> Migration status unavailable %v", errGet)
 	}
-	s.currentStatus.err = err
+	if errDo == nil && errGet != nil {
+		s.currentStatus.err = errGet
+	}
 	s.currentStatus.migrations = status
 
 	// From now the database access won't be used. Erase the configuration...

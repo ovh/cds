@@ -3,15 +3,15 @@ package migrateservice
 import (
 	"fmt"
 
+	"github.com/ovh/cds/sdk"
+
 	"github.com/rubenv/sql-migrate"
 
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/database/dbmigrate"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *dbmigservice) doMigrate() error {
-	log.Info("%+v", s.cfg.DB)
 	dbConn, err := database.Init(
 		s.cfg.DB.User,
 		s.cfg.DB.Password,
@@ -23,11 +23,11 @@ func (s *dbmigservice) doMigrate() error {
 		s.cfg.DB.Timeout,
 		s.cfg.DB.MaxConn)
 	if err != nil {
-		return fmt.Errorf("cannot connect to database: %v", err)
+		return sdk.WrapError(fmt.Errorf("cannot connect to database: %v", err), "doMigrate")
 	}
 
 	if _, err := dbmigrate.Do(dbConn.DB, s.cfg.Directory, migrate.Up, false, -1); err != nil {
-		return err
+		return sdk.WrapError(err, "doMigrate")
 	}
 
 	return nil
@@ -45,7 +45,7 @@ func (s *dbmigservice) getMigrate() ([]dbmigrate.MigrationStatus, error) {
 		s.cfg.DB.Timeout,
 		s.cfg.DB.MaxConn)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to database: %v", err)
+		return nil, sdk.WrapError(fmt.Errorf("cannot connect to database: %v", err), "getMigrate")
 	}
 
 	return dbmigrate.Get(dbConn.DB, s.cfg.Directory)

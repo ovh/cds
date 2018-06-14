@@ -51,6 +51,7 @@ type Configuration struct {
 	DatabaseMigrate migrateservice.Configuration `toml:"databaseMigrate" comment:"######################\n CDS DB Migrate Service Settings \n######################"`
 }
 
+// AsEnvVariables returns the object attributes as env variables. It used for configuration structs
 func AsEnvVariables(o interface{}, prefix string, skipCommented bool) map[string]string {
 	r := map[string]string{}
 	prefix = strings.ToUpper(prefix)

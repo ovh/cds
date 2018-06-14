@@ -36,6 +36,7 @@ type Common struct {
 	MaxHeartbeatFailures int
 }
 
+//Service is the interface for a engine service
 type Service interface {
 	ApplyConfiguration(cfg interface{}) error
 	Serve(ctx context.Context) error
@@ -45,6 +46,7 @@ type Service interface {
 	Status() sdk.MonitoringStatus
 }
 
+// BeforeStart has to be implemented if you want to run some code after the ApplyConfiguration and before the Serve of a Service
 type BeforeStart interface {
 	BeforeStart() error
 }
