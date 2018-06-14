@@ -491,8 +491,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		log.Debug("getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
 		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
 		if errC != nil {
-			// as workflow.GetNodeRunBuildCommits can return a 401 error, we avoid here to return 401 on UI too
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getWorkflowCommitsHandler> Unable to load commits: %v", errC)
+			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits: %v", errC)
 		}
 
 		return WriteJSON(w, commits, http.StatusOK)
@@ -634,6 +633,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			options := workflow.LoadOptions{
 				OnlyRootNode: true,
 				DeepPipeline: false,
+				Base64Keys:   true,
 			}
 			var errW error
 			_, next := tracing.Span(ctx, "workflow.Load")

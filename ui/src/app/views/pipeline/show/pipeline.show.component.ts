@@ -86,7 +86,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
 
           this.asCodeEditorSubscription = this._pipCoreService.getAsCodeEditor()
             .subscribe((state) => {
-                if (state != null && !state.save && !state.open) {
+                if (state != null && !state.save && !state.open && this.pipeline) {
                     let pipName = this.pipeline.name;
                     this.pipeline = null;
                     this.refreshDatas(this.project.key, pipName);

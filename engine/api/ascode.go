@@ -58,7 +58,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 
 		branches, errB := client.Branches(ope.RepoFullName)
 		if errB != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postImportAsCodeHandler> Cannot list branches for %s/%s", ope.VCSServer, ope.RepoFullName)
+			return sdk.WrapError(errB, "postImportAsCodeHandler> Cannot list branches for %s/%s", ope.VCSServer, ope.RepoFullName)
 		}
 		for _, b := range branches {
 			if b.Default {
@@ -136,6 +136,8 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to read cds files")
 		}
 
+		ope.RepositoryStrategy.Branch = "{{git.branch}}"
+		ope.RepositoryStrategy.DefaultBranch = ope.RepositoryInfo.DefaultBranch
 		opt := &workflow.PushOption{
 			VCSServer:          ope.VCSServer,
 			RepositoryName:     ope.RepositoryInfo.Name,

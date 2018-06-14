@@ -304,7 +304,7 @@ func (w Workflow) checkValidity() error {
 func (w Workflow) checkDependencies() error {
 	mError := new(sdk.MultiError)
 	for s, e := range w.Entries() {
-		if err := e.checkDependencies(w); err != nil {
+		if err := e.checkDependencies(s, w); err != nil {
 			mError.Append(fmt.Errorf("Error: %s invalid: %v", s, err))
 		}
 	}
@@ -315,7 +315,7 @@ func (w Workflow) checkDependencies() error {
 	return mError
 }
 
-func (e NodeEntry) checkDependencies(w Workflow) error {
+func (e NodeEntry) checkDependencies(nodeName string, w Workflow) error {
 	mError := new(sdk.MultiError)
 nextDep:
 	for _, d := range e.DependsOn {
@@ -324,7 +324,7 @@ nextDep:
 				continue nextDep
 			}
 		}
-		mError.Append(fmt.Errorf("%s not found", d))
+		mError.Append(fmt.Errorf("the pipeline %s depends on an unknown pipeline: %s", nodeName, d))
 	}
 	if mError.IsEmpty() {
 		return nil
