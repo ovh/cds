@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -125,7 +124,9 @@ func (s *dbmigservice) Serve(c context.Context) error {
 	//Gracefully shutdown the http server
 	<-c.Done()
 	log.Info("DBMigrate> Shutdown HTTP Server")
-	server.Shutdown(c)
+	if err := server.Shutdown(c); err != nil {
+		return fmt.Errorf("unable to shutdown server: %v", err)
+	}
 
 	return c.Err()
 }
@@ -143,22 +144,22 @@ func (s *dbmigservice) Status() sdk.MonitoringStatus {
 		return response
 	}
 
-	var i int
+	var theNumberOfSuccessfulMigations int
 	for _, m := range s.currentStatus.migrations {
 		if m.Migrated {
-			i++
+			theNumberOfSuccessfulMigations++
 		}
 	}
 
 	var status = sdk.MonitoringStatusWarn
-	if i == len(s.currentStatus.migrations) {
+	if theNumberOfSuccessfulMigations == len(s.currentStatus.migrations) {
 		status = sdk.MonitoringStatusOK
 	}
 
 	response.Lines = append(response.Lines,
 		sdk.MonitoringStatusLine{
 			Component: "SQL",
-			Value:     fmt.Sprintf("%d/%d", i, len(s.currentStatus.migrations)),
+			Value:     fmt.Sprintf("%d/%d", theNumberOfSuccessfulMigations, len(s.currentStatus.migrations)),
 			Status:    status,
 		},
 	)

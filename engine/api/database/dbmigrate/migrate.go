@@ -20,7 +20,7 @@ func Do(DBFunc func() *sql.DB, sqlMigrateDir string, dir migrate.MigrationDirect
 	if dryrun {
 		migrations, _, err := migrate.PlanMigration(DBFunc(), "postgres", source, dir, limit)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot plan migration: %s", err)
+			return nil, fmt.Errorf("Cannot plan migration: %v", err)
 		}
 
 		return migrations, nil
@@ -35,10 +35,13 @@ func Do(DBFunc func() *sql.DB, sqlMigrateDir string, dir migrate.MigrationDirect
 		return nil, err
 	}
 
-	defer unlockMigrate(DBFunc(), hostname)
+	_, errExec := migrate.ExecMax(DBFunc(), "postgres", source, dir, limit)
 
-	_, err = migrate.ExecMax(DBFunc(), "postgres", source, dir, limit)
-	return nil, err
+	if err := unlockMigrate(DBFunc(), hostname); err != nil {
+		return nil, fmt.Errorf("Cannot unlock migration: %v", err)
+	}
+
+	return nil, errExec
 }
 
 // MigrationLock is used to lock the migration (managed by gorp)
@@ -69,7 +72,7 @@ func lockMigrate(db *sql.DB, id string) error {
 		return err
 	}
 
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	var pendingMigration []MigrationLock
 	if _, err := tx.Select(&pendingMigration, "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"); err != nil {
@@ -107,7 +110,7 @@ func unlockMigrate(db *sql.DB, id string) error {
 		return err
 	}
 
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	var pendingMigration []MigrationLock
 	if _, err := tx.Select(&pendingMigration, "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"); err != nil {
