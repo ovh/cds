@@ -19,8 +19,18 @@ export class WorkflowEventStore {
     private _selectedJoin: BehaviorSubject<WorkflowNodeJoin> = new BehaviorSubject<WorkflowNodeJoin>(null);
     private _selectedHook: BehaviorSubject<WorkflowNodeHook> = new BehaviorSubject<WorkflowNodeHook>(null);
 
+    private _isListingRuns: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+
 
     constructor(private _sidebarStore: WorkflowSidebarStore, private _workflowRunService: WorkflowRunService) {
+    }
+
+    isListingRuns(): Observable<boolean> {
+        return new Observable<boolean>(fn => this._isListingRuns.subscribe(fn));
+    }
+
+    setListingRuns(b: boolean) {
+        this._isListingRuns.next(b);
     }
 
     broadcastWorkflowRun(key: string, name: string, wr: WorkflowRun): void {

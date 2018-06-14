@@ -32,9 +32,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                 haveToStart = true;
             }
 
-            if (this._workflow && this._workflow.id !== data.id) {
-                this.ready = false;
-            }
             this._workflow = data;
             this.initSelectableTags();
             if (haveToStart) {
@@ -43,7 +40,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                         return b.num - a.num;
                     });
                     this.refreshRun();
-                    this.ready = true;
                 });
             }
         }
@@ -63,6 +59,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     tagToDisplay: Array<string>;
     pipelineStatusEnum = PipelineStatus;
     ready = false;
+    listingSub: Subscription;
     filteredTags: {[key: number]: WorkflowRunTags[]} = {};
 
     durationIntervalID: number;
@@ -75,11 +72,11 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
         this.subWorkflowRun = this._eventStore.selectedRun().subscribe(wr => {
             this.selectedWorkfowRun = wr;
-        })
-    }
+        });
 
-    startWorker(): void {
-
+        this.listingSub = this._eventStore.isListingRuns().subscribe(b => {
+            this.ready = !b;
+        });
     }
 
     initSelectableTags(): void {
