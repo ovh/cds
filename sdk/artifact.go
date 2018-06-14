@@ -216,8 +216,6 @@ func ListArtifacts(project string, application string, pipeline string, tag stri
 // UploadArtifact read file at filePath and upload it in projet-pipeline-tag starage directory
 func UploadArtifact(project string, pipeline string, application string, tag string, filePath string, buildNumber int, env string) (bool, time.Duration, error) {
 	t0 := time.Now()
-	tag = url.QueryEscape(tag)
-	tag = strings.Replace(tag, "/", "-", -1)
 
 	f, errop := os.Open(filePath)
 	if errop != nil {
