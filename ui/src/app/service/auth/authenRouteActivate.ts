@@ -35,10 +35,12 @@ export class CanActivateAuthRoute implements CanActivate , CanActivateChild {
             return true;
         }
         let navigationExtras: NavigationExtras = {
-            queryParams: {
-                redirect: state.url
-            }
+            queryParams: {}
         };
+
+        if (state.url && state.url.indexOf('account/login') === -1) {
+          navigationExtras.queryParams = {redirect: state.url};
+        }
 
         this._router.navigate(['account/login'], navigationExtras);
         return false;
