@@ -981,9 +981,73 @@
         <span>group</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/application/group/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/application/group/import/">
-          <span>import</span>
+      <li data-nav-id="/hosting/requirements/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/requirements/">
+          <span>Requirements</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/download/">
+          <span>Download</span>
+        </a>
+    </li>
+    <li data-nav-id="/hosting/ready-to-run/" class="dd-item">
+      <a href="https://ovh.github.io/cds/hosting/ready-to-run/">
+        <span>Ready to RUN</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/hosting/ready-to-run/docker-compose/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/">
+          <span>Docker Compose</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/ready-to-run/from-binaries/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/">
+          <span>Run with binaries</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/hosting/configuration/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/configuration/">
+          <span>Configuration</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/database/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/database/">
+          <span>Database Management</span>
+        </a>
+    </li>
+    <li data-nav-id="/hosting/repositories-manager/" class="dd-item">
+      <a href="https://ovh.github.io/cds/hosting/repositories-manager/">
+        <span>Repositories Manager</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
+          <span>Github</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/">
+          <span>Bitbucket</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
+          <span>Gitlab</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+      <li data-nav-id="/hosting/monitoring/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/monitoring/">
+          <span>Monitoring</span>
+        </a>
+    </li>
+      <li data-nav-id="/hosting/upgrade/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/upgrade/">
+          <span>Upgrade your CDS Instance</span>
         </a>
     </li>
         </ul>
@@ -1984,10 +2048,10 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-group">POST <code>/group</code></a></li>
 <li><a href="#get-group">GET <code>/group</code></a></li>
-<li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#post-group">POST <code>/group</code></a></li>
 <li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#put-group-group-name">PUT <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></a></li>
 <li><a href="#generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</a></li>
@@ -2020,34 +2084,6 @@
 
 
 
-<h3 id="post-group">POST <code>/group</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22">addGroupHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-group">GET <code>/group</code></h3>
 
 <table>
@@ -2076,20 +2112,20 @@
 </tbody>
 </table>
 
-<h3 id="delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></h3>
+<h3 id="post-group">POST <code>/group</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+<th><strong><code>/group</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>POST</td>
 </tr>
 
 <tr>
@@ -2099,7 +2135,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22">deleteGroupHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addGroupHandler%22">addGroupHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2128,6 +2164,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22">getGroupHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupHandler%22">deleteGroupHandler</a></td>
 </tr>
 </tbody>
 </table>
