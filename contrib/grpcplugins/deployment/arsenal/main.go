@@ -78,6 +78,7 @@ const deployData = `{
 		"CDS_WORKFLOW": "{{.cds.workflow}}",
 		"CDS_PROJECT": "{{.cds.project}}",
 		"CDS_VERSION": "{{.cds.version}}",
+		"CDS_SEMVER": "{{.cds.semver}}",
 		"CDS_GIT_REPOSITORY": "{{.git.repository}}",
 		"CDS_GIT_HASH": "{{.git.hash}}"
 	}
