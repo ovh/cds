@@ -11,7 +11,6 @@ import {Router, ActivatedRoute} from '@angular/router';
 import {VerifyComponent} from './verify.component';
 import {AccountModule} from '../account.module';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: VerifyComponent', () => {
 
@@ -51,9 +50,8 @@ describe('CDS: VerifyComponent', () => {
 
         fixture.componentInstance.ngOnInit();
 
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/user/foo/confirm/myToken';
-        })).flush(null);
+        const req = http.expectOne('http://localhost:8081/user/foo/confirm/myToken');
+        req.flush(mock);
 
         expect(fixture.componentInstance.showErrorMessage).toBeFalsy('We must not show error message is activation is ok');
 

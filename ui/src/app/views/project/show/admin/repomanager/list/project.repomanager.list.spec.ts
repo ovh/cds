@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import { TranslateService, TranslateLoader} from '@ngx-translate/core';
+import {TestBed, getTestBed} from '@angular/core/testing';
+import {TranslateService, TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -23,6 +23,7 @@ import {Observable} from 'rxjs/Observable';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../../../../service/navbar/navbar.service';
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;
@@ -46,11 +47,13 @@ describe('CDS: Project RepoManager List Component', () => {
                 ToasterService,
                 TranslateService,
                 TranslateParser,
+                NavbarService,
                 { provide: ToastService, useClass: MockToast}
             ],
             imports : [
                 ProjectModule,
                 SharedModule,
+                TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ],
@@ -71,7 +74,7 @@ describe('CDS: Project RepoManager List Component', () => {
     });
 
 
-    it('it should delete a repo manager', fakeAsync( () => {
+    it('it should delete a repo manager',  () => {
         // Create Project RepoManager Form Component
         let fixture = TestBed.createComponent(ProjectRepoManagerComponent);
         let component = fixture.debugElement.componentInstance;
@@ -86,8 +89,7 @@ describe('CDS: Project RepoManager List Component', () => {
         reposMans.push(r);
         fixture.componentInstance.reposmanagers = reposMans;
 
-        fixture.detectChanges();
-        tick(250);
+        fixture.detectChanges(true);
 
         spyOn(projectStore, 'disconnectRepoManager').and.callFake(() => {
             return Observable.of(p);
@@ -95,12 +97,12 @@ describe('CDS: Project RepoManager List Component', () => {
 
         let compiled = fixture.debugElement.nativeElement;
         compiled.querySelector('.ui.red.button').click();
-        fixture.detectChanges();
-        tick(50);
+        fixture.detectChanges(true);
+
         compiled.querySelector('.ui.red.button.active').click();
 
         expect(projectStore.disconnectRepoManager).toHaveBeenCalledWith('key1', 'stash');
-    }));
+    });
 });
 
 class MockToast {

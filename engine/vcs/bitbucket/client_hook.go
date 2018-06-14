@@ -3,6 +3,7 @@ package bitbucket
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -60,6 +61,13 @@ func (b *bitbucketClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 		hcfg, err := b.getHooksConfig(repo)
 		if err != nil {
 			return err
+		}
+		if b.proxyURL != "" {
+			lastIndexSlash := strings.LastIndex(hook.URL, "/")
+			if b.proxyURL[len(b.proxyURL)-1] == '/' {
+				lastIndexSlash++
+			}
+			hook.URL = b.proxyURL + hook.URL[lastIndexSlash:]
 		}
 
 		hcfg.Details = append(hcfg.Details, HookConfigDetail{

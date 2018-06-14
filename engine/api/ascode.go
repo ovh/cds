@@ -58,7 +58,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 
 		branches, errB := client.Branches(ope.RepoFullName)
 		if errB != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postImportAsCodeHandler> Cannot list branches for %s/%s", ope.VCSServer, ope.RepoFullName)
+			return sdk.WrapError(errB, "postImportAsCodeHandler> Cannot list branches for %s/%s", ope.VCSServer, ope.RepoFullName)
 		}
 		for _, b := range branches {
 			if b.Default {

@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {ActivatedRoute, NavigationExtras, Router} from '@angular/router';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
 import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
@@ -120,10 +120,11 @@ export class WorkflowNodeRunComponent {
     }
 
     showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key +
-            '/workflow/' + this.workflowName +
-            '/run/' + this.nodeRun.num +
-            '/node/' + this.nodeRun.id +
-            '?&tab=' + tab);
+        let queryParams = Object.assign({}, this._activatedRoute.snapshot.queryParams, { tab })
+        let navExtras: NavigationExtras = { queryParams };
+        this._router.navigate(['project', this.project.key,
+            'workflow', this.workflowName,
+            'run', this.nodeRun.num,
+            'node', this.nodeRun.id], navExtras);
     }
 }

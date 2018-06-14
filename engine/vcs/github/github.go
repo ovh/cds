@@ -14,6 +14,7 @@ type githubClient struct {
 	Cache               cache.Store
 	apiURL              string
 	uiURL               string
+	proxyURL            string
 }
 
 //GithubConsumer implements vcs.Server and it's used to instanciate a githubClient
@@ -23,18 +24,20 @@ type githubConsumer struct {
 	Cache               cache.Store
 	uiURL               string
 	apiURL              string
+	proxyURL            string
 	disableStatus       bool
 	disableStatusDetail bool
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret string, apiURL, uiURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
+func New(ClientID, ClientSecret string, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	return &githubConsumer{
 		ClientID:            ClientID,
 		ClientSecret:        ClientSecret,
 		Cache:               store,
 		apiURL:              apiURL,
 		uiURL:               uiURL,
+		proxyURL:            proxyURL,
 		disableStatus:       disableStatus,
 		disableStatusDetail: disableStatusDetail,
 	}

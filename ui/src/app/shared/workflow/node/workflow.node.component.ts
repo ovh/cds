@@ -120,6 +120,9 @@ export class WorkflowNodeComponent implements OnInit {
 
     computeWarnings() {
         this.warnings = 0;
+        if (!this.currentNodeRun || !this.currentNodeRun.stages) {
+          return;
+        }
         this.currentNodeRun.stages.forEach((stage) => {
             if (Array.isArray(stage.run_jobs)) {
                 this.warnings += stage.run_jobs.reduce((fail, job) => {

@@ -13,7 +13,6 @@ import {AccountModule} from '../account.module';
 
 import {Observable} from 'rxjs/Observable';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
 import 'rxjs/add/observable/of';
 
 describe('CDS: LoginComponent', () => {
@@ -69,9 +68,10 @@ describe('CDS: LoginComponent', () => {
 
         // Simulate user click
         compiled.querySelector('#loginButton').click();
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/login' && req.body.username === 'foo' && req.body.password === 'bar';
-        })).flush(mock);
+        const req = http.expectOne('http://localhost:8081/login');
+        expect(req.request.body.username).toBe('foo');
+        expect(req.request.body.password).toBe('bar');
+        req.flush(mock);
 
         http.verify();
     }));

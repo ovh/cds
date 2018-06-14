@@ -61,6 +61,10 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 		}
 	}
 
+	if sdk.StatusIsTerminated(wr.Status) {
+		wr.LastExecution = time.Now()
+	}
+
 	runDB := Run(*wr)
 	if _, err := db.Update(&runDB); err != nil {
 		return sdk.WrapError(err, "updateWorkflowRun> Unable to update workflow run")
@@ -72,9 +76,12 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 //UpdateWorkflowRunStatus update status of a workflow run
 func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	wr.LastModified = time.Now()
+	if sdk.StatusIsTerminated(wr.Status) {
+		wr.LastExecution = time.Now()
+	}
 	//Update workflow run status
-	query := "UPDATE workflow_run SET status = $1, last_modified = $2 WHERE id = $3"
-	if _, err := db.Exec(query, wr.Status, wr.LastModified, wr.ID); err != nil {
+	query := "UPDATE workflow_run SET status = $1, last_modified = $2, last_execution = $3 WHERE id = $4"
+	if _, err := db.Exec(query, wr.Status, wr.LastModified, wr.LastExecution, wr.ID); err != nil {
 		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", wr.ID, wr.Status)
 	}
 	return nil

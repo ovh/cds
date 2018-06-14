@@ -1,10 +1,8 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TestBed, getTestBed} from '@angular/core/testing';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../service/project/project.service';
 import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
@@ -22,6 +20,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {Observable} from 'rxjs/Observable';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
+import {NavbarService} from '../../../../../service/navbar/navbar.service';
 
 describe('CDS: Environment List Component', () => {
 
@@ -33,12 +32,12 @@ describe('CDS: Environment List Component', () => {
                 ProjectStore,
                 ProjectService,
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 ToasterService,
                 ToastService,
                 TranslateLoader,
                 TranslateParser,
                 VariableService,
+                NavbarService,
                 PipelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: Router, useClass: MockRouter},
@@ -47,6 +46,7 @@ describe('CDS: Environment List Component', () => {
             imports : [
                 ProjectModule,
                 SharedModule,
+                TranslateModule.forRoot(),
                 ServicesModule,
                 RouterTestingModule.withRoutes([
                     { path: 'project/:key', component: ProjectEnvironmentListComponent },
@@ -62,7 +62,7 @@ describe('CDS: Environment List Component', () => {
         this.injector = undefined;
     });
 
-    it('should load component', fakeAsync( () => {
+    it('should load component', () => {
         // Create component
         let fixture = TestBed.createComponent(ProjectEnvironmentListComponent);
         let component = fixture.debugElement.componentInstance;
@@ -80,7 +80,7 @@ describe('CDS: Environment List Component', () => {
 
         fixture.componentInstance.project = project;
         fixture.componentInstance.ngOnInit();
-    }));
+    });
 });
 
 class MockActivatedRoutes extends ActivatedRoute {

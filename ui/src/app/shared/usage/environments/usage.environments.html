@@ -4,7 +4,7 @@
     <ng-template #environmentsDisplay>
         <div class="ui stackable four column grid">
             <div class="center aligned column" *ngFor="let env of environments">
-                <a [routerLink]="['/project/', project.key]" [queryParams]="{tab: 'environments', envName: env.name}">{{env.name}}</a>
+                <a [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: env.name}">{{env.name}}</a>
             </div>
         </div>
     </ng-template>

@@ -5,6 +5,7 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "target": "es5",
     "lib": [
       "es2016",
       "dom"
@@ -19,12 +20,15 @@
   },
   "files": [
     "test.ts",
+    "test_shared.ts",
+    "test_views.ts",
+    "test_model.ts",
+    "test_service.ts",
     "polyfills.ts"
   ],
   "include": [
     "**/*.spec.ts",
     "../node_modules/ng2-codemirror-typescript/**/*.ts",
-    "../node_modules/ngx-auto-scroll/**/*.ts",
     "../node_modules/ng-semantic/**/*.ts"
   ],
   "exclude": [

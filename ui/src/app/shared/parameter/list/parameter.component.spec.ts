@@ -1,10 +1,8 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, tick, fakeAsync, inject} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
+import {TestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {SharedModule} from '../../shared.module';
 import {ParameterService} from '../../../service/parameter/parameter.service';
 import {ParameterListComponent} from './parameter.component';
@@ -30,6 +28,7 @@ describe('CDS: Parameter List Component', () => {
             imports : [
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });

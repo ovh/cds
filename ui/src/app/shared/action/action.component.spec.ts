@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {fakeAsync, TestBed, tick} from '@angular/core/testing';
-import {TranslateLoader, TranslateParser, TranslateService} from '@ngx-translate/core';
+import {TranslateLoader, TranslateModule, TranslateParser, TranslateService} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -47,6 +47,7 @@ describe('CDS: Action Component', () => {
             imports: [
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                TranslateModule.forRoot(),
                 HttpClientTestingModule
             ]
         });
@@ -202,6 +203,12 @@ describe('CDS: Action Component', () => {
             let component = fixture.debugElement.componentInstance;
             expect(component).toBeTruthy();
 
+
+            http.expectOne(((req: HttpRequest<any>) => {
+                return req.url === '/requirement/types';
+            })).flush(actionMock);
+
+            fixture.componentInstance.ngOnInit();
             http.expectOne(((req: HttpRequest<any>) => {
                 return req.url === '/action';
             })).flush(actionMock);
