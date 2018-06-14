@@ -21,6 +21,22 @@ func (c *client) ApplicationPipelinesAttach(projectKey string, appName string, p
 	return nil
 }
 
+func (c *client) ApplicationDoMigrationWorkflow(projectKey string, appName string, force, disablePrefix, withCurrentVersion, withRepositoryWebHook bool) error {
+	uri := fmt.Sprintf("/project/%s/application/%s/workflow/migrate", projectKey, appName)
+	uri += fmt.Sprintf("?force=%t&disablePrefix=%t&withCurrentVersion=%t&withRepositoryWebHook=%t", force, disablePrefix, withCurrentVersion, withRepositoryWebHook)
+
+	code, err := c.PostJSON(uri, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	if code >= 300 {
+		return fmt.Errorf("cds: api error (%d)", code)
+	}
+
+	return nil
+}
+
 func (c *client) ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error {
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/trigger", t.SrcProject.Key, t.SrcApplication.Name, t.SrcPipeline.Name)
 

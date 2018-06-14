@@ -20,10 +20,15 @@ const (
 	STATUS_DONE     = "DONE"
 )
 
-func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline, proj *sdk.Project, u *sdk.User, force bool) error {
+func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline, proj *sdk.Project, u *sdk.User, force, disablePrefix, withCurrentVersion, withRepositoryWebHook bool) ([]sdk.Workflow, error) {
+	workflows := make([]sdk.Workflow, len(cdTree))
 	for i := range cdTree {
 		oldW := cdTree[i]
-		name := "w" + oldW.Application.Name
+		name := oldW.Application.Name
+		if !disablePrefix {
+			name = "w" + name
+		}
+
 		if len(cdTree) > 1 {
 			name = fmt.Sprintf("%s_%d", name, i)
 		}
@@ -34,14 +39,14 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 		}
 
 		if err := addGroupOnWorkflow(db, &newW, &oldW.Application); err != nil {
-			return sdk.WrapError(err, "MigrateToWorkflow")
+			return workflows, sdk.WrapError(err, "MigrateToWorkflow")
 		}
 
 		currentApplicationID := oldW.Application.ID
 
 		n, err := migratePipeline(db, store, proj, oldW, currentApplicationID, u)
 		if err != nil {
-			return sdk.WrapError(err, "MigrateToWorkflow")
+			return workflows, sdk.WrapError(err, "MigrateToWorkflow migratePipeline>")
 		}
 		newW.Root = n
 
@@ -49,22 +54,73 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 			w, err := workflow.Load(db, store, proj, newW.Name, u, workflow.LoadOptions{})
 			if err == nil {
 				if errD := workflow.Delete(db, store, proj, w, u); errD != nil {
-					return sdk.WrapError(errD, "MigrateToWorkflow")
+					return workflows, sdk.WrapError(errD, "MigrateToWorkflow workflow.Load>")
 				}
 			}
 		}
 
 		if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
-			return sdk.WrapError(errW, "MigrateToWorkflow")
+			return workflows, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
+		}
+
+		if withRepositoryWebHook {
+			h := &sdk.WorkflowNodeHook{}
+			m, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
+			if err != nil {
+				return nil, sdk.WrapError(err, "migratePipeline> hook %s not found", h.WorkflowHookModel.Name)
+			}
+			h.WorkflowHookModel = *m
+			h.WorkflowHookModelID = m.ID
+			h.Config = make(map[string]sdk.WorkflowNodeHookConfigValue, len(m.DefaultConfig))
+			for k, v := range m.DefaultConfig {
+				if _, has := h.Config[k]; !has {
+					h.Config[k] = v
+				}
+			}
+			newW.Root.Hooks = []sdk.WorkflowNodeHook{*h}
+
+			if err := workflow.HookRegistration(db, store, nil, newW, proj); err != nil {
+				return nil, sdk.WrapError(err, "migratePipeline> Cannot register hook")
+			}
+
+			oldW, errO := workflow.Load(db, store, proj, newW.Name, u, workflow.LoadOptions{})
+			if errO != nil {
+				return nil, sdk.WrapError(errO, "migratePipeline> Unable to load old workflow")
+			}
+
+			newW.ID = oldW.ID
+			if err := workflow.Update(db, store, &newW, oldW, proj, u); err != nil {
+				return nil, sdk.WrapError(err, "migratePipeline> Unable to update workflow 2")
+			}
+
+			if errHr := workflow.HookRegistration(db, store, oldW, newW, proj); errHr != nil {
+				return nil, sdk.WrapError(errHr, "migratePipeline> Cannot register hook 2")
+			}
+		}
+
+		if withCurrentVersion {
+			opts := []pipeline.ExecOptionFunc{
+				pipeline.LoadPipelineBuildOpts.WithStatus(sdk.StatusSuccess.String()),
+			}
+			pbs, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, oldW.Application.ID, oldW.Pipeline.ID, oldW.Environment.ID, 1, opts...)
+			if errPB != nil {
+				return nil, sdk.WrapError(err, "migratePipeline> Cannot load pipeline")
+			}
+			if len(pbs) == 1 {
+				if err := workflow.InsertRunNum(db, &newW, pbs[0].Version); err != nil {
+					return nil, sdk.WrapError(err, "migratePipeline> Cannot set the version %d", pbs[0].Version)
+				}
+			}
 		}
 
 		for _, g := range newW.Groups {
 			if err := workflow.AddGroup(db, &newW, g); err != nil {
-				return sdk.WrapError(err, "MigrateToWorkflow> Cannot add group")
+				return workflows, sdk.WrapError(err, "MigrateToWorkflow> Cannot add group")
 			}
 		}
+		workflows[i] = newW
 	}
-	return nil
+	return workflows, nil
 }
 
 func addGroupOnWorkflow(db gorp.SqlExecutor, w *sdk.Workflow, app *sdk.Application) error {
@@ -119,7 +175,11 @@ bigloop:
 		}
 	}
 	if foundApp {
-		newNode.Context.Application = &oldPipeline.Application
+		app, err := application.LoadByName(db, store, p.Key, oldPipeline.Application.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
+		if err != nil {
+			return nil, sdk.WrapError(err, "migratePipeline> Cannot load application")
+		}
+		newNode.Context.Application = app
 	}
 
 	if oldPipeline.Environment.ID != 0 && oldPipeline.Environment.ID != sdk.DefaultEnv.ID {

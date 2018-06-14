@@ -81,7 +81,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	}
 	w.Visit(hookLoad)
 
-	var projectPlatfoformLoad = func(n *sdk.WorkflowNode) {
+	var projectPlatformLoad = func(n *sdk.WorkflowNode) {
 		if _, has := n.ProjectPlatform(); !has {
 			return
 		}
@@ -93,7 +93,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		}
 		n.Context.ProjectPlatform = &ppf
 	}
-	w.Visit(projectPlatfoformLoad)
+	w.Visit(projectPlatformLoad)
 
 	if !mError.IsEmpty() {
 		return sdk.NewError(sdk.ErrWrongRequest, mError)
@@ -106,7 +106,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 
 	doUpdate, errE := Exists(db, proj.Key, w.Name)
 	if errE != nil {
-		return sdk.WrapError(errE, "Import> Cannot check if workflow exist")
+		return sdk.WrapError(errE, "Import> Cannot check if workflow exists")
 	}
 
 	if !doUpdate {
