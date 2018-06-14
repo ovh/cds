@@ -256,7 +256,7 @@ func DefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *s
 	if wf.Root.Context == nil || wf.Root.Context.Application == nil || wf.Root.Context.Application.ID == 0 {
 		app, errLa := application.LoadByID(db, store, wf.Root.Context.ApplicationID, u)
 		if errLa != nil {
-			return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "getDefaultPayload> unable to load application by id %d", wf.Root.Context.ApplicationID)
+			return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "DefaultPayload> unable to load application by id %d", wf.Root.Context.ApplicationID)
 		}
 		wf.Root.Context.Application = app
 	}
@@ -267,12 +267,12 @@ func DefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *s
 		if projectVCSServer != nil {
 			client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
 			if errclient != nil {
-				return wf.Root.Context.DefaultPayload, sdk.WrapError(errclient, "getDefaultPayload> Cannot get authorized client")
+				return wf.Root.Context.DefaultPayload, sdk.WrapError(errclient, "DefaultPayload> Cannot get authorized client")
 			}
 
 			branches, errBr := client.Branches(wf.Root.Context.Application.RepositoryFullname)
 			if errBr != nil {
-				return wf.Root.Context.DefaultPayload, sdk.WrapError(errBr, "getDefaultPayload> Cannot get branches for %s", wf.Root.Context.Application.RepositoryFullname)
+				return wf.Root.Context.DefaultPayload, sdk.WrapError(errBr, "DefaultPayload> Cannot get branches for %s", wf.Root.Context.Application.RepositoryFullname)
 			}
 
 			for _, branch := range branches {
