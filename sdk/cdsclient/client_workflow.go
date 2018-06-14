@@ -232,8 +232,8 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 	return nodeRun, nil
 }
 
-func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader) error {
-	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
+func (c *client) WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error {
+	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
 
 	mods := []RequestModifier{
 		(func(r *http.Request) {
@@ -253,8 +253,8 @@ func (c *client) WorkflowCachePush(projectKey, tag string, tarContent io.Reader)
 	return nil
 }
 
-func (c *client) WorkflowCachePull(projectKey, tag string) (io.Reader, error) {
-	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, tag)
+func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
+	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
 
 	mods := []RequestModifier{
 		(func(r *http.Request) {
