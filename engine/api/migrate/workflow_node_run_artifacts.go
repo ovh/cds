@@ -21,7 +21,7 @@ func WorkflowNodeRunArtifacts(store cache.Store, DBFunc func() *gorp.DbMap) {
 		Tag string         `db:"tag"`
 	}{}
 
-	if _, err := db.Select(&wfrArtifacts, "SELECT id, ref, tag FROM workflow_node_run_artifacts"); err != nil {
+	if _, err := db.Select(&wfrArtifacts, "SELECT id, ref, tag FROM workflow_node_run_artifacts WHERE ref IS NULL"); err != nil {
 		log.Error("WorkflowNodeRunArtifacts> Cannot load workflow_node_run_artifacts : %v", err)
 		return
 	}

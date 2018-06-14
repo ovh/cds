@@ -476,7 +476,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		}
 		if hash != "" {
 			wfNodeRun.VCSHash = hash
-		} else if wNode != nil && errW == nil {
+		} else if wNode != nil && errW == nil && wNode.ID != wfRun.Workflow.Root.ID {
 			// Find hash and branch of ancestor node run
 			nodeIDsAncestors := wNode.Ancestors(&wfRun.Workflow, false)
 			for _, ancestorID := range nodeIDsAncestors {
