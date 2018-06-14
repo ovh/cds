@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"path/filepath"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/venom"
@@ -77,6 +78,14 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		// replace secrets in the content of the xml files analyzed
+		dataS := string(data)
+		for i := range logsecrets {
+			if len(logsecrets[i].Value) >= 6 {
+				dataS = strings.Replace(dataS, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
+			}
+		}
+
 		var uri string
 		if w.currentJob.wJob != nil {
 			uri = fmt.Sprintf("/queue/workflows/%d/test", w.currentJob.wJob.ID)
@@ -84,7 +93,7 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 			uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, url.QueryEscape(envName))
 		}
 
-		_, code, err := sdk.Request("POST", uri, data)
+		_, code, err := sdk.Request("POST", uri, []byte(dataS))
 		if err == nil && code > 300 {
 			err = fmt.Errorf("HTTP %d", code)
 		}
