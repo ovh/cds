@@ -137,7 +137,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 }
 
 // GetUserWorkflowEvents return events to send for the given workflow run
-func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
+func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
 	events := []sdk.EventNotif{}
 
 	//Compute notification
@@ -146,7 +146,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 		params[p.Name] = p.Value
 	}
 	//Set PipelineBuild UI URL
-	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", uiURL, wr.Workflow.ProjectKey, wr.Workflow.Name, wr.Number)
+	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", uiURL, w.ProjectKey, w.Name, nr.Number)
 	if p, ok := params["cds.triggered_by.email"]; ok {
 		params["cds.author.email"] = p
 	} else if p, ok := params["git.author.email"]; ok {
@@ -159,7 +159,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 	}
 	params["cds.status"] = nr.Status
 
-	for _, notif := range wr.Workflow.Notifications {
+	for _, notif := range w.Notifications {
 		if ShouldSendUserWorkflowNotification(notif, nr, previousWR) {
 			switch notif.Type {
 			case sdk.JabberUserNotification:
@@ -170,7 +170,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(db, wr.Workflow.ProjectID, permission.PermissionRead)
+					u, errPerm := projectPermissionUsers(db, w.ProjectID, permission.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Jabber]. error while loading permission:%s", errPerm.Error())
 					}
@@ -195,7 +195,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
-					u, errPerm := projectPermissionUsers(db, wr.Workflow.ProjectID, permission.PermissionRead)
+					u, errPerm := projectPermissionUsers(db, w.ProjectID, permission.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Email].SendPipelineBuild> error while loading permission:%s", errPerm.Error())
 						return nil

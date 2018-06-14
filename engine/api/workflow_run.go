@@ -336,8 +336,8 @@ func (api *API) stopWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowRun> Unable to stop workflow")
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
+		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, proj.Key)
 
 		return WriteJSON(w, run, http.StatusOK)
 	}
@@ -528,8 +528,8 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to stop workflow run")
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
+		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
 		return WriteJSON(w, nodeRun, http.StatusOK)
 	}
@@ -682,9 +682,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 		if errS != nil {
 			return sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", key, name)
 		}
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
+		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
 		// Purge workflow run
 		go func() {

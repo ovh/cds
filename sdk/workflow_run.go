@@ -223,6 +223,7 @@ type WorkflowNodeJobRunSummary struct {
 	Start             int64              `json:"start,omitempty" db:"start"`
 	Done              int64              `json:"done,omitempty" db:"done"`
 	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
+	SpawnInfos        []SpawnInfo        `json:"spawninfos" db:"-"`
 }
 
 // ToSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
@@ -235,6 +236,7 @@ func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
 		Queued:            wnjr.Queued.Unix(),
 		Start:             wnjr.Start.Unix(),
 		Job:               wnjr.Job.ToSummary(),
+		SpawnInfos:        wnjr.SpawnInfos,
 	}
 	return sum
 }
