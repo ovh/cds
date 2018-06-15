@@ -10,7 +10,7 @@ import (
 )
 
 // PublishWarningEvent publish application event
-func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, workflowName string) {
+func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, workflowName string, u *sdk.User) {
 	event := sdk.Event{
 		Timestamp:       time.Now(),
 		Hostname:        hostname,
@@ -23,15 +23,27 @@ func PublishWarningEvent(payload interface{}, key, appName, pipName, envName, wo
 		EnvironmentName: envName,
 		WorkflowName:    workflowName,
 	}
+	if u != nil {
+		event.Username = u.Username
+		event.UserMail = u.Email
+	}
 	publishEvent(event)
 }
 
 // PublishAddWarning publishes an event for the creation of the given warning
-func PublishAddWarning(w sdk.WarningV2) {
+func PublishAddWarning(w sdk.Warning) {
 	e := sdk.EventWarningAdd{
-		WarningV2: w,
+		Warning: w,
 	}
-	PublishWarningEvent(e, w.Key, w.AppName, w.PipName, w.EnvName, w.WorkflowName)
+	PublishWarningEvent(e, w.Key, w.AppName, w.PipName, w.EnvName, w.WorkflowName, nil)
+}
+
+// PublishUpdateWarning publishes an event for the edition of the given warning
+func PublishUpdateWarning(w sdk.Warning, u *sdk.User) {
+	e := sdk.EventWarningUpdate{
+		Warning: w,
+	}
+	PublishWarningEvent(e, w.Key, w.AppName, w.PipName, w.EnvName, w.WorkflowName, u)
 }
 
 // PublishDeleteWarning publishes an event for the deletion of the given warning
@@ -40,5 +52,5 @@ func PublishDeleteWarning(t string, element string, projectKey, appName, pipName
 		Type:    t,
 		Element: element,
 	}
-	PublishWarningEvent(e, projectKey, appName, pipName, envName, workflowName)
+	PublishWarningEvent(e, projectKey, appName, pipName, envName, workflowName, nil)
 }

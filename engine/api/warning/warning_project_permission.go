@@ -47,7 +47,7 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to list environments")
 		}
 		for _, env := range envs {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				EnvName: env,
 				Element: payload.Permission.Group.Name,
@@ -102,7 +102,7 @@ func (warn missingProjectPermissionWorkflowWarning) compute(db gorp.SqlExecutor,
 			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to list worklflows")
 		}
 		for _, w := range workflows {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:          e.ProjectKey,
 				WorkflowName: w,
 				Element:      payload.Permission.Group.Name,

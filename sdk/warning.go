@@ -38,8 +38,8 @@ const (
 	WarningUnusedPipelineParameter                 = "UNUSED_PIPELINE_PARAMETER"
 )
 
-// WarningV2 Represents warning database structure
-type WarningV2 struct {
+// Warning Represents warning database structure
+type Warning struct {
 	ID            int64             `json:"id" db:"id"`
 	Key           string            `json:"key" db:"project_key"`
 	AppName       string            `json:"application_name" db:"application_name"`
@@ -52,6 +52,7 @@ type WarningV2 struct {
 	MessageParams map[string]string `json:"message_params" db:"-"`
 	Message       string            `json:"message" db:"-"`
 	Hash          string            `json:"hash" db:"hash"`
+	Ignored       bool              `json:"ignored" db:"ignored"`
 }
 
 var MessageAmericanEnglish = map[string]string{
@@ -110,7 +111,7 @@ var MessageFrench = map[string]string{
 	WarningUnusedPipelineParameter:                 `Le paramètre {{index . "ParamName"}} est inutilisé dans le pipeline {{index . "ProjectKey"}}/{{index . "PipelineName"}}.`,
 }
 
-func (w *WarningV2) ComputeMessage(language string) {
+func (w *Warning) ComputeMessage(language string) {
 	var buffer bytes.Buffer
 
 	var tmplBody string
@@ -131,23 +132,9 @@ func (w *WarningV2) ComputeMessage(language string) {
 	w.Message = buffer.String()
 }
 
-// Warning contains information about user action configuration
-type Warning struct {
-	ID           int64             `json:"id"`
-	Message      string            `json:"message"`
-	MessageParam map[string]string `json:"message_param"`
-
-	Action      Action      `json:"action"`
-	StageID     int64       `json:"stage_id"`
-	Project     Project     `json:"project"`
-	Application Application `json:"application"`
-	Pipeline    Pipeline    `json:"pipeline"`
-	Environment Environment `json:"environment"`
-}
-
 // GetWarnings retrieves warnings related to Action accessible to caller
-func GetWarnings() ([]Warning, error) {
-	uri := "/mon/warning"
+func GetWarnings(key string) ([]Warning, error) {
+	uri := "/warning/" + key
 
 	data, code, err := Request("GET", uri, nil)
 	if err != nil {

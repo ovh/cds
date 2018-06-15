@@ -19,6 +19,7 @@ import {ProjectKeysComponent} from './show/keys/project.keys.component';
 import {ProjectPlatformsComponent} from './show/platforms/project.platforms.component';
 import {ProjectPlatformFormComponent} from './show/platforms/form/platform.form.component';
 import {ProjectPlatformListComponent} from './show/platforms/list/platform.list.component';
+import {ProjectWarningsComponent} from './show/warnings/warnings.component';
 
 @NgModule({
     declarations: [
@@ -38,7 +39,8 @@ import {ProjectPlatformListComponent} from './show/platforms/list/platform.list.
         ProjectWorkflowListComponent,
         ProjectPlatformsComponent,
         ProjectPlatformFormComponent,
-        ProjectPlatformListComponent
+        ProjectPlatformListComponent,
+        ProjectWarningsComponent
     ],
     imports: [
         SharedModule,

@@ -107,7 +107,6 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/db/times", r.GET(api.getMonDBTimesDBHandler, NeedAdmin(true)))
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
-	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 
 	r.Handle("/navbar", r.GET(api.getNavbarHandler))
@@ -141,6 +140,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/export/application/{permApplicationName}", r.GET(api.getApplicationExportHandler))
 
 	r.Handle("/warning/{permProjectKey}", r.GET(api.getWarningsHandler))
+	r.Handle("/warning/{permProjectKey}/{hash}", r.PUT(api.putWarningsHandler))
 
 	// Application
 	r.Handle("/project/{key}/application/{permApplicationName}", r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
