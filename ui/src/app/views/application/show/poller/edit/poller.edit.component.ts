@@ -1,9 +1,9 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Project} from '../../../../../model/project.model';
+import {first} from 'rxjs/operators';
 import {Application} from '../../../../../model/application.model';
 import {RepositoryPoller} from '../../../../../model/polling.model';
+import {Project} from '../../../../../model/project.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
-import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-poller-form',

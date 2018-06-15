@@ -1,10 +1,10 @@
 
-import {map} from 'rxjs/operators';
-import {Injectable} from '@angular/core';
-import {PipelineBuild, PipelineRunRequest} from '../../../model/pipeline.model';
-import {Observable} from 'rxjs';
-import {Commit} from '../../../model/repositories.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
+import {PipelineBuild, PipelineRunRequest} from '../../../model/pipeline.model';
+import {Commit} from '../../../model/repositories.model';
 
 @Injectable()
 export class ApplicationPipelineService {

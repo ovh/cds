@@ -1,15 +1,15 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Trigger} from '../../../../../model/trigger.model';
-import {Project} from '../../../../../model/project.model';
-import {Pipeline} from '../../../../../model/pipeline.model';
-import {ApplicationStore} from '../../../../../service/application/application.store';
-import {ApplicationPipeline} from '../../../../../model/application.model';
-import {Prerequisite} from '../../../../../model/prerequisite.model';
-import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {cloneDeep} from 'lodash';
-import {Parameter} from '../../../../../model/parameter.model';
 import {Subscription} from 'rxjs';
+import {ApplicationPipeline} from '../../../../../model/application.model';
+import {Parameter} from '../../../../../model/parameter.model';
+import {Pipeline} from '../../../../../model/pipeline.model';
+import {Prerequisite} from '../../../../../model/prerequisite.model';
+import {Project} from '../../../../../model/project.model';
+import {Trigger} from '../../../../../model/trigger.model';
+import {ApplicationStore} from '../../../../../service/application/application.store';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
 
 @Component({
     selector: 'app-application-trigger',

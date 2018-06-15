@@ -1,18 +1,18 @@
-import {Component, ViewChild, OnInit} from '@angular/core';
-import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, ResolveEnd, Router} from '@angular/router';
-import {Project} from '../../model/project.model';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
 import {Subscription} from 'rxjs';
-import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
+import {finalize} from 'rxjs/operators';
+import {Project} from '../../model/project.model';
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin} from '../../model/workflow.model';
-import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {ProjectStore} from '../../service/project/project.store';
 import {RouterService} from '../../service/router/router.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
+import {WorkflowStore} from '../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize} from 'rxjs/operators';
-import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-workflow',

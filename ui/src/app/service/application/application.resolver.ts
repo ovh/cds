@@ -1,9 +1,9 @@
 
-import {of as observableOf, Observable} from 'rxjs';
+import {Observable, of as observableOf} from 'rxjs';
 
-import {catchError, map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
-import {Resolve, ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/router';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {catchError, map} from 'rxjs/operators';
 import {Application} from '../../model/application.model';
 import {ApplicationStore} from './application.store';
 

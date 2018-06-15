@@ -1,13 +1,13 @@
-import {Component, OnInit, Input, ViewChild} from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
+import {finalize, first} from 'rxjs/operators';
 import {Application} from '../../../../../model/application.model';
-import {RepoManagerService} from '../../../../../service/repomanager/project.repomanager.service';
+import {Project} from '../../../../../model/project.model';
 import {Repository} from '../../../../../model/repositories.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
-import {Project} from '../../../../../model/project.model';
-import {ToastService} from '../../../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
+import {RepoManagerService} from '../../../../../service/repomanager/project.repomanager.service';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
-import {finalize, first} from 'rxjs/operators';
+import {ToastService} from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-repo',

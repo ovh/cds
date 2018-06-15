@@ -1,5 +1,5 @@
-import {Component, Input, EventEmitter, Output} from '@angular/core';
-import {Token, TokenEvent, ExpirationToString} from '../../../model/token.model';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {ExpirationToString, Token, TokenEvent} from '../../../model/token.model';
 import {Table} from '../../table/table';
 
 @Component({

@@ -1,14 +1,14 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Project} from '../../../../model/project.model';
-import {Pipeline, PipelineAudit, PipelineAuditDiff} from '../../../../model/pipeline.model';
-import {PipelineAuditService} from '../../../../service/pipeline/pipeline.audit.service';
-import {Table} from '../../../../shared/table/table';
 import {compare} from 'fast-json-patch'
 import {cloneDeep} from 'lodash';
-import {Stage} from '../../../../model/stage.model';
-import {Job} from '../../../../model/job.model';
-import {Action} from '../../../../model/action.model';
 import {first} from 'rxjs/operators';
+import {Action} from '../../../../model/action.model';
+import {Job} from '../../../../model/job.model';
+import {Pipeline, PipelineAudit, PipelineAuditDiff} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
+import {Stage} from '../../../../model/stage.model';
+import {PipelineAuditService} from '../../../../service/pipeline/pipeline.audit.service';
+import {Table} from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-pipeline-audit',

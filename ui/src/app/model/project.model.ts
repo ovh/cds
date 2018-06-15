@@ -1,12 +1,12 @@
-import {Pipeline} from './pipeline.model';
 import {Application} from './application.model';
-import {GroupPermission} from './group.model';
-import {Variable} from './variable.model';
 import {Environment} from './environment.model';
-import {RepositoriesManager} from './repositories.model';
-import {Workflow} from './workflow.model';
+import {GroupPermission} from './group.model';
 import {Key} from './keys.model';
+import {Pipeline} from './pipeline.model';
 import {ProjectPlatform} from './platform.model';
+import {RepositoriesManager} from './repositories.model';
+import {Variable} from './variable.model';
+import {Workflow} from './workflow.model';
 
 export class Project {
     key: string;

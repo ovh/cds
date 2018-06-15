@@ -1,8 +1,8 @@
 import {AfterViewInit, Component, ElementRef, Input} from '@angular/core';
-import {Router, ActivatedRoute} from '@angular/router';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
-import {Project} from '../../../../model/project.model';
+import {ActivatedRoute, Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
+import {Project} from '../../../../model/project.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-node-hook',

@@ -1,15 +1,15 @@
-import {Component, OnDestroy, NgZone} from '@angular/core';
+import {Component, NgZone, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Application} from '../../model/application.model';
-import {Project} from '../../model/project.model';
-import {Pipeline, PipelineBuild, PipelineStatus} from '../../model/pipeline.model';
 import {Subscription} from 'rxjs';
 import {environment} from '../../../environments/environment';
-import {AuthentificationStore} from '../../service/auth/authentification.store';
-import {CDSWorker} from '../../shared/worker/worker';
+import {Application} from '../../model/application.model';
+import {Pipeline, PipelineBuild, PipelineStatus} from '../../model/pipeline.model';
+import {Project} from '../../model/project.model';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
-import {DurationService} from '../../shared/duration/duration.service';
+import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {RouterService} from '../../service/router/router.service';
+import {DurationService} from '../../shared/duration/duration.service';
+import {CDSWorker} from '../../shared/worker/worker';
 
 @Component({
     selector: 'app-pipeline-build',

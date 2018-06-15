@@ -1,9 +1,9 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Scheduler} from '../../../../../model/scheduler.model';
-import {Project} from '../../../../../model/project.model';
+import {differenceBy, unionBy} from 'lodash';
 import {Application} from '../../../../../model/application.model';
 import {Pipeline} from '../../../../../model/pipeline.model';
-import {unionBy, differenceBy} from 'lodash';
+import {Project} from '../../../../../model/project.model';
+import {Scheduler} from '../../../../../model/scheduler.model';
 
 @Component({
     selector: 'app-application-scheduler-form',

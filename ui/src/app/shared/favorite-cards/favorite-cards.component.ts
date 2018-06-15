@@ -1,8 +1,8 @@
 import {Component, Input} from '@angular/core';
+import {finalize} from 'rxjs/operators';
 import {NavbarProjectData} from '../../model/navbar.model';
 import {ProjectStore} from '../../service/project/project.store';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
-import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-favorite-cards',

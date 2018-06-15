@@ -1,12 +1,12 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {Application} from '../../../../../model/application.model';
-import {ProjectPlatform} from '../../../../../model/platform.model';
-import {ApplicationStore} from '../../../../../service/application/application.store';
-import {Project} from '../../../../../model/project.model';
 // import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
 import {finalize, first} from 'rxjs/operators';
+import {Application} from '../../../../../model/application.model';
+import {ProjectPlatform} from '../../../../../model/platform.model';
+import {Project} from '../../../../../model/project.model';
+import {ApplicationStore} from '../../../../../service/application/application.store';
+import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
 
 @Component({
     selector: 'app-application-deployment',

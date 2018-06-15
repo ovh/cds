@@ -1,10 +1,10 @@
 import {Component, Input} from '@angular/core';
-import {Table} from '../../../../../shared/table/table';
-import {Project} from '../../../../../model/project.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
-import {Parameter} from '../../../../../model/parameter.model';
 import {Router} from '@angular/router';
+import {Parameter} from '../../../../../model/parameter.model';
+import {Project} from '../../../../../model/project.model';
 import {Workflow} from '../../../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
+import {Table} from '../../../../../shared/table/table';
 
 @Component({
     selector: 'app-workflow-node-run-history',

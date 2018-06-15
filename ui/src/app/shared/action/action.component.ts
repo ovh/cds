@@ -1,17 +1,17 @@
-import {Component, Input, Output, EventEmitter, OnDestroy, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
+import {cloneDeep} from 'lodash';
+import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {Action} from '../../model/action.model';
-import {SharedService} from '../shared.service';
-import {RequirementEvent} from '../requirements/requirement.event.model';
-import {Requirement} from '../../model/requirement.model';
-import {ParameterEvent} from '../parameter/parameter.event.model';
 import {Parameter} from '../../model/parameter.model';
 import {Pipeline} from '../../model/pipeline.model';
-import {ActionEvent} from './action.event.model';
-import {ActionStore} from '../../service/action/action.store';
-import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {Project} from '../../model/project.model';
+import {Requirement} from '../../model/requirement.model';
+import {ActionStore} from '../../service/action/action.store';
+import {ParameterEvent} from '../parameter/parameter.event.model';
+import {RequirementEvent} from '../requirements/requirement.event.model';
+import {SharedService} from '../shared.service';
+import {ActionEvent} from './action.event.model';
 import {StepEvent} from './step/step.event';
-import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-action',

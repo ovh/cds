@@ -1,20 +1,20 @@
-import {WorkflowNode} from '../../../model/workflow.model';
 import {Component, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {NotificationService} from '../../../service/notification/notification.service';
-import {Project} from '../../../model/project.model';
-import {CDSWorker} from '../../../shared/worker/worker';
-import {WorkflowRun} from '../../../model/workflow.run.model';
-import {PipelineStatus} from '../../../model/pipeline.model';
-import {environment} from '../../../../environments/environment';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {Subscription} from 'rxjs';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {cloneDeep} from 'lodash';
 import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {Subscription} from 'rxjs';
+import {environment} from '../../../../environments/environment';
+import {PipelineStatus} from '../../../model/pipeline.model';
+import {Project} from '../../../model/project.model';
+import {WorkflowNode} from '../../../model/workflow.model';
+import {WorkflowRun} from '../../../model/workflow.run.model';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {NotificationService} from '../../../service/notification/notification.service';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
+import {WorkflowStore} from '../../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {CDSWorker} from '../../../shared/worker/worker';
+import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 
 @Component({
     selector: 'app-workflow-run',

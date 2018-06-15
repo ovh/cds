@@ -1,15 +1,15 @@
+import {HttpClient, HttpClientModule} from '@angular/common/http';
+import {LOCALE_ID, NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
-import {NgModule, LOCALE_ID} from '@angular/core';
-import {AppComponent} from './app.component';
-import {ServicesModule} from './service/services.module';
-import {TranslateModule, TranslateLoader} from '@ngx-translate/core';
+import {TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {TranslateHttpLoader} from '@ngx-translate/http-loader';
-import {routing} from './app.routing';
-import {NavbarModule} from './views/navbar/navbar.module';
-import {SharedModule} from './shared/shared.module';
 import {ToasterModule} from 'angular2-toaster/angular2-toaster';
+import {AppComponent} from './app.component';
+import {routing} from './app.routing';
 import {AppService} from './app.service';
-import {HttpClientModule, HttpClient} from '@angular/common/http';
+import {ServicesModule} from './service/services.module';
+import {SharedModule} from './shared/shared.module';
+import {NavbarModule} from './views/navbar/navbar.module';
 
 @NgModule({
     declarations: [

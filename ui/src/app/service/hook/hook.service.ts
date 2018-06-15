@@ -1,11 +1,11 @@
 
-import {map} from 'rxjs/operators';
+import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {HttpClient} from '@angular/common/http';
+import {map} from 'rxjs/operators';
+import {Project} from '../../model/project.model';
 import {WorkflowHookModel, WorkflowHookTask} from '../../model/workflow.hook.model';
 import {Workflow, WorkflowNode} from '../../model/workflow.model';
-import {Project} from '../../model/project.model';
 
 
 @Injectable()

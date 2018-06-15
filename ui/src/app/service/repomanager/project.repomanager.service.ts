@@ -1,7 +1,7 @@
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {Repository} from '../../model/repositories.model';
-import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
  * Service to access Repository Manager from API.

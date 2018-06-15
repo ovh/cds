@@ -1,17 +1,17 @@
-import {AfterViewInit, Component, ElementRef, Input, Output, EventEmitter, NgZone, ViewChild, OnInit} from '@angular/core';
-import {Router, ActivatedRoute} from '@angular/router';
-import {Workflow, WorkflowNodeJoin} from '../../../model/workflow.model';
-import {WorkflowRun, WorkflowRunRequest, WorkflowNodeRunManual} from '../../../model/workflow.run.model';
-import {PipelineStatus} from '../../../model/pipeline.model';
+import {AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnInit, Output, ViewChild} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
-import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
-import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
-import {Project} from '../../../model/project.model';
-import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
+import {PipelineStatus} from '../../../model/pipeline.model';
+import {Project} from '../../../model/project.model';
+import {Workflow, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
+import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
+import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
+import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
 
 @Component({
     selector: 'app-workflow-join',

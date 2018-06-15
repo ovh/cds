@@ -1,4 +1,4 @@
-import {Component, Output, EventEmitter, Input} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {Variable} from '../../../model/variable.model';
 import {VariableService} from '../../../service/variable/variable.service';
 import {VariableEvent} from '../variable.event.model';

@@ -1,7 +1,7 @@
-import {Prerequisite} from './prerequisite.model';
+import {ActionWarning} from './action.model';
 import {Job} from './job.model';
 import {PipelineBuildJob} from './pipeline.model';
-import {ActionWarning} from './action.model';
+import {Prerequisite} from './prerequisite.model';
 import {WorkflowNodeJobRun} from './workflow.run.model';
 
 export class Stage {

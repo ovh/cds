@@ -1,14 +1,14 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {finalize, first} from 'rxjs/operators';
-import {User} from '../../../../model/user.model';
-import {Token, TokenEvent} from '../../../../model/token.model';
-import {Group} from '../../../../model/group.model';
-import {UserService} from '../../../../service/user/user.service';
-import {GroupService} from '../../../../service/group/group.service';
-import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
+import {finalize, first} from 'rxjs/operators';
+import {Group} from '../../../../model/group.model';
+import {Token, TokenEvent} from '../../../../model/token.model';
+import {User} from '../../../../model/user.model';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {GroupService} from '../../../../service/group/group.service';
+import {UserService} from '../../../../service/user/user.service';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-user-edit',

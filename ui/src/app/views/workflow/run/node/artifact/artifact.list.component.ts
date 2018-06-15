@@ -1,7 +1,7 @@
 import {Component, Input, NgZone} from '@angular/core';
-import {Table} from '../../../../../shared/table/table';
-import {WorkflowNodeRunArtifact} from '../../../../../model/workflow.run.model';
 import {environment} from '../../../../../../environments/environment';
+import {WorkflowNodeRunArtifact} from '../../../../../model/workflow.run.model';
+import {Table} from '../../../../../shared/table/table';
 
 @Component({
     selector: 'app-workflow-artifact-list',

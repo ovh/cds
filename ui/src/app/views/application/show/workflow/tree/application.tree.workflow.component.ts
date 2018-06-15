@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
-import {WorkflowItem} from '../../../../../model/application.workflow.model';
 import {Application} from '../../../../../model/application.model';
+import {WorkflowItem} from '../../../../../model/application.workflow.model';
 import {Project} from '../../../../../model/project.model';
 import {Remote} from '../../../../../model/repositories.model';
 

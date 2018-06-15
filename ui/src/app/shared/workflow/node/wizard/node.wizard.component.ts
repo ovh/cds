@@ -1,20 +1,20 @@
 
-import {of as observableOf, Observable} from 'rxjs';
+import {Observable, of as observableOf} from 'rxjs';
 
-import {map, first, finalize} from 'rxjs/operators';
-import {Component, Input, Output, EventEmitter, OnInit} from '@angular/core';
-import {WorkflowNode} from '../../../../model/workflow.model';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Router} from '@angular/router';
-import {Project, IdName} from '../../../../model/project.model';
-import {Application} from '../../../../model/application.model';
-import {Pipeline} from '../../../../model/pipeline.model';
-import {Environment} from '../../../../model/environment.model';
-import {ApplicationStore} from '../../../../service/application/application.store';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../../shared/toast/ToastService';
 import {cloneDeep} from 'lodash';
+import {finalize, first, map} from 'rxjs/operators';
+import {Application} from '../../../../model/application.model';
+import {Environment} from '../../../../model/environment.model';
+import {Pipeline} from '../../../../model/pipeline.model';
+import {IdName, Project} from '../../../../model/project.model';
+import {WorkflowNode} from '../../../../model/workflow.model';
+import {ApplicationStore} from '../../../../service/application/application.store';
+import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
+import {ProjectStore} from '../../../../service/project/project.store';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-node-add-wizard',

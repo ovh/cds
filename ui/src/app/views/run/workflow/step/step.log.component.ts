@@ -1,14 +1,14 @@
-import {Component, Input, OnInit, OnDestroy, NgZone, ElementRef, ViewChild} from '@angular/core';
-import {Action} from '../../../../model/action.model';
-import {CDSWorker} from '../../../../shared/worker/worker';
+import {Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Subscription} from 'rxjs';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {DurationService} from '../../../../shared/duration/duration.service';
 import {environment} from '../../../../../environments/environment';
-import {Project} from '../../../../model/project.model';
+import {Action} from '../../../../model/action.model';
 import {Application} from '../../../../model/application.model';
 import {Job} from '../../../../model/job.model';
-import {Pipeline, PipelineBuild, Log, BuildResult, PipelineStatus} from '../../../../model/pipeline.model';
+import {BuildResult, Log, Pipeline, PipelineBuild, PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {DurationService} from '../../../../shared/duration/duration.service';
+import {CDSWorker} from '../../../../shared/worker/worker';
 
 declare var ansi_up: any;
 

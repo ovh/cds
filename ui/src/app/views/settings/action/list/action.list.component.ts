@@ -1,9 +1,9 @@
 import {Component, Input} from '@angular/core';
 import {Action} from '../../../../model/action.model';
-import {Table} from '../../../../shared/table/table';
-import {ActionService} from '../../../../service/action/action.service';
 import {User} from '../../../../model/user.model';
+import {ActionService} from '../../../../service/action/action.service';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {Table} from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-action-list',

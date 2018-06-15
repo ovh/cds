@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
-import {DownloadService} from '../../../service/download/download.service';
 import {Download} from 'app/model/download.model';
 import {environment} from '../../../../environments/environment';
+import {DownloadService} from '../../../service/download/download.service';
 
 @Component({
     selector: 'app-download',

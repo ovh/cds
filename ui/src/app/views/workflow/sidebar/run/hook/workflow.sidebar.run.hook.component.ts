@@ -1,12 +1,12 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
-import {WorkflowHookTask, HookStatus, TaskExecution} from '../../../../../model/workflow.hook.model';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
-import {WorkflowNodeHookDetailsComponent} from '../../../../../shared/workflow/node/hook/details/hook.details.component';
-import {Project} from '../../../../../model/project.model';
-import {HookService} from '../../../../../service/hook/hook.service';
 import {finalize} from 'rxjs/operators';
+import {Project} from '../../../../../model/project.model';
+import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
+import {HookService} from '../../../../../service/hook/hook.service';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {WorkflowNodeHookDetailsComponent} from '../../../../../shared/workflow/node/hook/details/hook.details.component';
+import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 
 @Component({
     selector: 'app-workflow-sidebar-run-hook',

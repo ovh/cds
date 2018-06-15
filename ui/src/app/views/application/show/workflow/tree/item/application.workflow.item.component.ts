@@ -1,28 +1,28 @@
-import {Component, Input, ViewChild, DoCheck, ChangeDetectorRef} from '@angular/core';
-import {Subscription} from 'rxjs';
-import {WorkflowItem} from '../../../../../../model/application.workflow.model';
-import {Application} from '../../../../../../model/application.model';
-import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
-import {NotificationService} from '../../../../../../service/notification/notification.service';
+import {ChangeDetectorRef, Component, DoCheck, Input, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
-import {PipelineRunRequest, PipelineBuild, Pipeline, PipelineStatus} from '../../../../../../model/pipeline.model';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Project} from '../../../../../../model/project.model';
-import {Parameter} from '../../../../../../model/parameter.model';
+import {Subscription} from 'rxjs';
+import {finalize} from 'rxjs/operators';
+import {Application} from '../../../../../../model/application.model';
+import {WorkflowItem} from '../../../../../../model/application.workflow.model';
 import {Environment} from '../../../../../../model/environment.model';
+import {Hook} from '../../../../../../model/hook.model';
+import {Parameter} from '../../../../../../model/parameter.model';
+import {PermissionValue} from '../../../../../../model/permission.model';
+import {Pipeline, PipelineBuild, PipelineRunRequest, PipelineStatus} from '../../../../../../model/pipeline.model';
+import {RepositoryPoller} from '../../../../../../model/polling.model';
+import {Project} from '../../../../../../model/project.model';
+import {Remote} from '../../../../../../model/repositories.model';
+import {Scheduler} from '../../../../../../model/scheduler.model';
 import {Trigger} from '../../../../../../model/trigger.model';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
-import {ToastService} from '../../../../../../shared/toast/ToastService';
+import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
+import {NotificationService} from '../../../../../../service/notification/notification.service';
 import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
-import {TranslateService} from '@ngx-translate/core';
-import {Scheduler} from '../../../../../../model/scheduler.model';
-import {Hook} from '../../../../../../model/hook.model';
-import {RepositoryPoller} from '../../../../../../model/polling.model';
 import {PipelineLaunchModalComponent} from '../../../../../../shared/pipeline/launch/pipeline.launch.modal.component';
-import {PermissionValue} from '../../../../../../model/permission.model';
-import {cloneDeep} from 'lodash';
-import {Remote} from '../../../../../../model/repositories.model';
-import {finalize} from 'rxjs/operators';
+import {ToastService} from '../../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-workflow-item',

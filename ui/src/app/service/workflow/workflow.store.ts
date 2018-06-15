@@ -1,14 +1,14 @@
 
-import {of as observableOf, BehaviorSubject, Observable} from 'rxjs';
-import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
-import {WorkflowService} from './workflow.service';
-import {NavbarService} from '../navbar/navbar.service';
+import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 import {GroupPermission} from '../../model/group.model';
 import {NavbarRecentData} from '../../model/navbar.model';
+import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
+import {NavbarService} from '../navbar/navbar.service';
+import {WorkflowService} from './workflow.service';
 
-import {mergeMap, map} from 'rxjs/operators';
+import {map, mergeMap} from 'rxjs/operators';
 
 @Injectable()
 export class WorkflowStore {

@@ -1,8 +1,8 @@
 import {Component, OnInit} from '@angular/core';
-import {ProjectStore} from '../../../../service/project/project.store';
 import {ActivatedRoute} from '@angular/router';
-import {Project} from '../../../../model/project.model';
 import {first} from 'rxjs/operators';
+import {Project} from '../../../../model/project.model';
+import {ProjectStore} from '../../../../service/project/project.store';
 
 @Component({
     selector: 'app-migration-project',

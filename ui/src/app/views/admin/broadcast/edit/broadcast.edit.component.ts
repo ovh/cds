@@ -1,18 +1,18 @@
 import {Component} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {AuthentificationStore} from 'app/service/auth/authentification.store';
+import {TranslateService} from '@ngx-translate/core';
 import {Broadcast} from 'app/model/broadcast.model';
+import {NavbarProjectData} from 'app/model/navbar.model';
+import {User} from 'app/model/user.model';
+import {AuthentificationStore} from 'app/service/auth/authentification.store';
 import {BroadcastService} from 'app/service/broadcast/broadcast.service';
+import {NavbarService} from 'app/service/navbar/navbar.service';
+import {Subscription} from 'rxjs';
+import {finalize} from 'rxjs/operators';
 import {BroadcastLevelService} from '../../../../shared/broadcast/broadcast.level.service';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {SharedService} from '../../../../shared/shared.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {NavbarService} from 'app/service/navbar/navbar.service';
-import {TranslateService} from '@ngx-translate/core';
-import {User} from 'app/model/user.model';
-import {NavbarProjectData} from 'app/model/navbar.model';
-import {finalize} from 'rxjs/operators';
-import {Subscription} from 'rxjs';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-broadcast-edit',

@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
+import {finalize, first} from 'rxjs/operators';
 import {Project} from '../../../../model/project.model';
 import {ProjectStore} from '../../../../service/project/project.store';
-import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-platforms',

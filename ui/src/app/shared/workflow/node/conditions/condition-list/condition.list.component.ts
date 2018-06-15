@@ -1,8 +1,8 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {Table} from '../../../../table/table';
-import {Workflow, WorkflowNodeCondition, WorkflowNodeConditions} from '../../../../../model/workflow.model';
 import {PermissionValue} from '../../../../../model/permission.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
+import {Workflow, WorkflowNodeCondition, WorkflowNodeConditions} from '../../../../../model/workflow.model';
+import {Table} from '../../../../table/table';
 
 @Component({
     selector: 'app-workflow-node-condition-list',

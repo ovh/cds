@@ -1,9 +1,9 @@
 import { ModuleWithProviders } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
-import {ProjectShowComponent} from './show/project.component';
-import {ProjectListComponent} from './list/project.list.component';
-import {ProjectAddComponent} from './add/project.add.component';
+import { RouterModule, Routes } from '@angular/router';
 import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
+import {ProjectAddComponent} from './add/project.add.component';
+import {ProjectListComponent} from './list/project.list.component';
+import {ProjectShowComponent} from './show/project.component';
 
 const projectRoutes: Routes = [
     {

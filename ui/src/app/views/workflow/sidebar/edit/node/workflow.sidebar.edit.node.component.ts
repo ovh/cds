@@ -1,29 +1,29 @@
 import {Component, Input, ViewChild} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {Subscription} from 'rxjs';
 import {Project} from '../../../../../model/project.model';
 import {
     Workflow,
     WorkflowNode,
-    WorkflowNodeTrigger,
     WorkflowNodeHook,
     WorkflowNodeJoin,
+    WorkflowNodeTrigger,
     WorkflowPipelineNameImpact
 } from '../../../../../model/workflow.model';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {WorkflowTriggerComponent} from '../../../../../shared/workflow/trigger/workflow.trigger.component';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/node/delete/workflow.node.delete.component';
-import {WorkflowNodeContextComponent} from '../../../../../shared/workflow/node/context/workflow.node.context.component';
 import {PipelineStore} from '../../../../../service/pipeline/pipeline.store';
-import {TranslateService} from '@ngx-translate/core';
+import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
+import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../../shared/toast/ToastService';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/node/conditions/node.conditions.component';
+import {WorkflowNodeContextComponent} from '../../../../../shared/workflow/node/context/workflow.node.context.component';
+import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/node/delete/workflow.node.delete.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
-import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/node/conditions/node.conditions.component';
-import {Subscription} from 'rxjs';
-import {cloneDeep} from 'lodash';
+import {WorkflowTriggerComponent} from '../../../../../shared/workflow/trigger/workflow.trigger.component';
 
 @Component({
     selector: 'app-workflow-sidebar-edit-node',

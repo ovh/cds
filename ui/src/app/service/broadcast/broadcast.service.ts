@@ -1,8 +1,8 @@
-import {Injectable} from '@angular/core';
-import {Observable, BehaviorSubject} from 'rxjs';
-import {map, share, flatMap} from 'rxjs/operators';
-import {Broadcast} from '../../model/broadcast.model';
 import {HttpClient} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {BehaviorSubject, Observable} from 'rxjs';
+import {flatMap, map, share} from 'rxjs/operators';
+import {Broadcast} from '../../model/broadcast.model';
 
 /**
  * Service to get broadcast

@@ -1,14 +1,14 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
-import {Project} from '../../../../model/project.model';
-import {PermissionValue} from '../../../../model/permission.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {VariableEvent} from '../../../../shared/variable/variable.event.model';
-import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
-import {Warning} from '../../../../model/warning.model';
 import {cloneDeep} from 'lodash';
+import {finalize, first} from 'rxjs/operators';
+import {PermissionValue} from '../../../../model/permission.model';
+import {Project} from '../../../../model/project.model';
+import {Warning} from '../../../../model/warning.model';
+import {ProjectStore} from '../../../../service/project/project.store';
+import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
+import {ToastService} from '../../../../shared/toast/ToastService';
+import {VariableEvent} from '../../../../shared/variable/variable.event.model';
 
 @Component({
     selector: 'app-project-variables',

@@ -1,13 +1,13 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {PipelineBuild, PipelineRunRequest, PipelineStatus} from '../../../model/pipeline.model';
-import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
 import {Application} from '../../../model/application.model';
 import {WorkflowItem} from '../../../model/application.workflow.model';
 import {Parameter} from '../../../model/parameter.model';
+import {PipelineBuild, PipelineRunRequest, PipelineStatus} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
 
 @Component({
     selector: 'app-run-summary',

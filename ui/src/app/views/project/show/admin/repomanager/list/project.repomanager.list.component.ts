@@ -1,12 +1,12 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {RepositoriesManager} from '../../../../../../model/repositories.model';
-import {Table} from '../../../../../../shared/table/table';
 import {TranslateService} from '@ngx-translate/core';
-import {ProjectStore} from '../../../../../../service/project/project.store';
-import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {Project} from '../../../../../../model/project.model';
-import {WarningModalComponent} from '../../../../../../shared/modal/warning/warning.component';
+import {RepositoriesManager} from '../../../../../../model/repositories.model';
 import {Warning} from '../../../../../../model/warning.model';
+import {ProjectStore} from '../../../../../../service/project/project.store';
+import {WarningModalComponent} from '../../../../../../shared/modal/warning/warning.component';
+import {Table} from '../../../../../../shared/table/table';
+import {ToastService} from '../../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-repomanager-list',

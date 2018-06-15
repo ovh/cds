@@ -1,13 +1,13 @@
 import {AfterViewChecked, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {SharedService} from '../../shared.service';
-import {Project} from '../../../model/project.model';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {RepositoriesManager, Repository} from '../../../model/repositories.model';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {cloneDeep} from 'lodash';
-import {Parameter} from '../../../model/parameter.model';
+import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {first} from 'rxjs/operators';
 import {AllKeys} from '../../../model/keys.model';
+import {Parameter} from '../../../model/parameter.model';
+import {Project} from '../../../model/project.model';
+import {RepositoriesManager, Repository} from '../../../model/repositories.model';
+import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {SharedService} from '../../shared.service';
 
 declare var CodeMirror: any;
 

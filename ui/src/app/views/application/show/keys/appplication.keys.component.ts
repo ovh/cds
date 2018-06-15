@@ -1,11 +1,11 @@
 import {Component, Input} from '@angular/core';
-import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {Application} from '../../../../model/application.model';
-import {ApplicationStore} from '../../../../service/application/application.store';
-import {Project} from '../../../../model/project.model';
 import {finalize} from 'rxjs/operators';
+import {Application} from '../../../../model/application.model';
+import {Project} from '../../../../model/project.model';
+import {ApplicationStore} from '../../../../service/application/application.store';
 import {KeyEvent} from '../../../../shared/keys/key.event';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-keys',

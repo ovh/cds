@@ -1,13 +1,13 @@
-import {Component, Input, Output, EventEmitter, OnInit} from '@angular/core';
-import {Project} from '../../../../model/project.model';
-import {PermissionValue} from '../../../../model/permission.model';
-import {WorkflowRun} from '../../../../model/workflow.run.model';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize} from 'rxjs/operators';
+import {PermissionValue} from '../../../../model/permission.model';
+import {PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
+import {WorkflowRun} from '../../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 declare var ansi_up: any;
 

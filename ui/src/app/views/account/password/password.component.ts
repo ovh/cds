@@ -1,9 +1,9 @@
 import {Component} from '@angular/core';
-import {User} from '../../../model/user.model';
-import {UserService} from '../../../service/user/user.service';
 import {Router} from '@angular/router';
-import {AccountComponent} from '../account.component';
+import {User} from '../../../model/user.model';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {UserService} from '../../../service/user/user.service';
+import {AccountComponent} from '../account.component';
 
 @Component({
     selector: 'app-account-password',

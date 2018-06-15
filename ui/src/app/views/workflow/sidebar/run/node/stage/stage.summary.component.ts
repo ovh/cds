@@ -1,8 +1,8 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Router, ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {PipelineStatus} from '../../../../../../model/pipeline.model';
 import {Stage} from '../../../../../../model/stage.model';
-import {WorkflowRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../../../../model/workflow.run.model';
 
 @Component({
     selector: 'app-stage-step-summary',

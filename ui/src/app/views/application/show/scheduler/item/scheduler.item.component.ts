@@ -1,13 +1,13 @@
-import {Component, Input, ViewChild, Output, EventEmitter} from '@angular/core';
-import {Project} from '../../../../../model/project.model';
-import {Application} from '../../../../../model/application.model';
-import {Scheduler} from '../../../../../model/scheduler.model';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Pipeline} from '../../../../../model/pipeline.model';
-import {ApplicationStore} from '../../../../../service/application/application.store';
-import {ToastService} from '../../../../../shared/toast/ToastService';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
+import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {Application} from '../../../../../model/application.model';
+import {Pipeline} from '../../../../../model/pipeline.model';
+import {Project} from '../../../../../model/project.model';
+import {Scheduler} from '../../../../../model/scheduler.model';
+import {ApplicationStore} from '../../../../../service/application/application.store';
+import {ToastService} from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-scheduler-item',

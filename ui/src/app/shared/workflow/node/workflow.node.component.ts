@@ -6,19 +6,19 @@ import {
     OnInit,
     ViewChild
 } from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {cloneDeep} from 'lodash';
+import {Subscription} from 'rxjs';
+import {PipelineStatus} from '../../../model/pipeline.model';
+import {Project} from '../../../model/project.model';
 import {
     Workflow,
     WorkflowNode
 } from '../../../model/workflow.model';
-import {Project} from '../../../model/project.model';
-import {cloneDeep} from 'lodash';
-import {Subscription} from 'rxjs';
-import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
-import {Router, ActivatedRoute} from '@angular/router';
-import {PipelineStatus} from '../../../model/pipeline.model';
-import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
+import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
+import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 
 @Component({
     selector: 'app-workflow-node',
