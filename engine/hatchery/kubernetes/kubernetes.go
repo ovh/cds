@@ -301,8 +301,11 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		i++
 	}
 
+	// Useful for service https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+
 	var gracePeriodSecs int64
-	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&apiv1.Pod{
+
+	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
@@ -330,7 +333,21 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 				},
 			},
 		},
-	})
+	}
+
+	var services []sdk.Requirement
+	for _, req := range spawnArgs.Requirements {
+		if req.Type == sdk.ServiceRequirement {
+			services = append(services, req)
+		}
+	}
+
+	for _, serv := range services {
+		servContainer := apiv1.Container{}
+		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
+	}
+
+	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&podSchema)
 
 	return pod.Name, err
 }
