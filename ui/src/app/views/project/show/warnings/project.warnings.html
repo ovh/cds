@@ -1,11 +1,4 @@
 <div class="warning">
-    <div class="ui grid">
-        <div class="ui right aligned column">
-            <div class="ui input">
-                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
-            </div>
-        </div>
-    </div>
 
     <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
