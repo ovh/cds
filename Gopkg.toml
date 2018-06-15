@@ -21,7 +21,7 @@
 
 [[constraint]]
   name = "github.com/Shopify/sarama"
-  version = "1.11.0"
+  version = "1.17.0"
 
 [[constraint]]
   name = "github.com/aokoli/goutils"
