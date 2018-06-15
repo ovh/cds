@@ -9,10 +9,7 @@ import {PermissionValue} from '../../../model/permission.model';
 import {Project} from '../../../model/project.model';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-<<<<<<< HEAD
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
-=======
->>>>>>> master
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
