@@ -1,8 +1,8 @@
-import {Component, EventEmitter, Input, Output, OnInit, ViewChild} from '@angular/core';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
+import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {cloneDeep} from 'lodash';
-import {WorkflowNodeCondition, WorkflowNodeConditions, Workflow} from '../../../../../model/workflow.model';
+import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
+import {Workflow, WorkflowNodeCondition, WorkflowNodeConditions} from '../../../../../model/workflow.model';
 declare var CodeMirror: any;
 
 @Component({

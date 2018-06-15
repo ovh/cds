@@ -1,19 +1,19 @@
-import {Component, Input, Output, EventEmitter, OnChanges} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, Output} from '@angular/core';
 import {Router} from '@angular/router';
-import {Environment} from '../../../../../../model/environment.model';
-import {Application} from '../../../../../../model/application.model';
-import {Pipeline} from '../../../../../../model/pipeline.model';
-import {User} from '../../../../../../model/user.model';
-import {Workflow} from '../../../../../../model/workflow.model';
-import {Project} from '../../../../../../model/project.model';
-import {VariableEvent} from '../../../../../../shared/variable/variable.event.model';
-import {ProjectStore} from '../../../../../../service/project/project.store';
-import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
-import {EnvironmentService} from '../../../../../../service/environment/environment.service';
-import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
+import {Application} from '../../../../../../model/application.model';
+import {Environment} from '../../../../../../model/environment.model';
+import {Pipeline} from '../../../../../../model/pipeline.model';
+import {Project} from '../../../../../../model/project.model';
+import {User} from '../../../../../../model/user.model';
+import {Workflow} from '../../../../../../model/workflow.model';
+import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
+import {EnvironmentService} from '../../../../../../service/environment/environment.service';
+import {ProjectStore} from '../../../../../../service/project/project.store';
+import {ToastService} from '../../../../../../shared/toast/ToastService';
+import {VariableEvent} from '../../../../../../shared/variable/variable.event.model';
 
 @Component({
     selector: 'app-environment',

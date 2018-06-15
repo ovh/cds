@@ -1,9 +1,9 @@
 import {ModuleWithProviders} from '@angular/core';
-import {Routes, RouterModule} from '@angular/router';
+import {RouterModule, Routes} from '@angular/router';
 import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
-import {ApplicationShowComponent} from './show/application.component';
-import {ApplicationAddComponent} from './add/application.add.component';
 import {ProjectForApplicationResolver, ProjectForWorkflowResolver} from '../../service/project/project.resolver';
+import {ApplicationAddComponent} from './add/application.add.component';
+import {ApplicationShowComponent} from './show/application.component';
 
 const applicationRoutes: Routes = [
     {

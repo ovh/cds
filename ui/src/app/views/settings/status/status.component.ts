@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
-import {MonitoringService} from '../../../service/monitoring/monitoring.service';
 import { MonitoringStatus } from 'app/model/monitoring.model';
+import {MonitoringService} from '../../../service/monitoring/monitoring.service';
 
 @Component({
     selector: 'app-status',

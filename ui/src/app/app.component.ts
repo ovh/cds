@@ -1,23 +1,23 @@
-import { Title } from '@angular/platform-browser';
 import {registerLocaleData} from '@angular/common';
-import {Component, OnInit, NgZone} from '@angular/core';
+import localeEN from '@angular/common/locales/en';
+import localeFR from '@angular/common/locales/fr';
+import {Component, NgZone, OnInit} from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import {ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
-import {AuthentificationStore} from './service/auth/authentification.store';
-import {ResolveEnd, ResolveStart, Router, ActivatedRoute, NavigationEnd} from '@angular/router';
-import {CDSWorker} from './shared/worker/worker';
-import {Subscription} from 'rxjs/Subscription';
 import {Observable} from 'rxjs';
-import {map, filter, mergeMap} from 'rxjs/operators';
+import {filter, map, mergeMap} from 'rxjs/operators';
+import {Subscription} from 'rxjs/Subscription';
+import * as format from 'string-format-obj';
+import {AppService} from './app.service';
+import {LastModification} from './model/lastupdate.model';
+import {AuthentificationStore} from './service/auth/authentification.store';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
+import {LastUpdateService} from './service/sse/lastupdate.sservice';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
 import {ToastService} from './shared/toast/ToastService';
-import {AppService} from './app.service';
-import {LastUpdateService} from './service/sse/lastupdate.sservice';
-import {LastModification} from './model/lastupdate.model';
-import * as format from 'string-format-obj';
-import localeFR from '@angular/common/locales/fr';
-import localeEN from '@angular/common/locales/en';
+import {CDSWorker} from './shared/worker/worker';
 
 @Component({
     selector: 'app-root',

@@ -1,21 +1,21 @@
-import {Component, Input, OnInit, OnDestroy, ViewChild} from '@angular/core';
+import {Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {DragulaService} from 'ng2-dragula';
+import {Subscription} from 'rxjs';
+import {first} from 'rxjs/operators';
+import {Job} from '../../../../model/job.model';
+import {PermissionValue} from '../../../../model/permission.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
 import {Stage} from '../../../../model/stage.model';
-import {ToastService} from '../../../../shared/toast/ToastService';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {TranslateService} from '@ngx-translate/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
+import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {VariableService} from '../../../../service/variable/variable.service';
-import {cloneDeep} from 'lodash';
-import {Job} from '../../../../model/job.model';
 import {ActionEvent} from '../../../../shared/action/action.event.model';
-import {DragulaService} from 'ng2-dragula';
-import {PermissionValue} from '../../../../model/permission.model';
-import {first} from 'rxjs/operators';
-import {Subscription} from 'rxjs';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-workflow',

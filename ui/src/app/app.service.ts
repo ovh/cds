@@ -1,16 +1,16 @@
 import {Injectable} from '@angular/core';
-import {LastModification} from './model/lastupdate.model';
-import {ProjectStore} from './service/project/project.store';
 import {ActivatedRoute} from '@angular/router';
-import {ApplicationStore} from './service/application/application.store';
-import {NotificationService} from './service/notification/notification.service';
-import {AuthentificationStore} from './service/auth/authentification.store';
 import {TranslateService} from '@ngx-translate/core';
-import {LoadOpts} from './model/project.model';
-import {PipelineStore} from './service/pipeline/pipeline.store';
-import {WorkflowStore} from './service/workflow/workflow.store';
-import {RouterService} from './service/router/router.service';
 import {first} from 'rxjs/operators';
+import {LastModification} from './model/lastupdate.model';
+import {LoadOpts} from './model/project.model';
+import {ApplicationStore} from './service/application/application.store';
+import {AuthentificationStore} from './service/auth/authentification.store';
+import {NotificationService} from './service/notification/notification.service';
+import {PipelineStore} from './service/pipeline/pipeline.store';
+import {ProjectStore} from './service/project/project.store';
+import {RouterService} from './service/router/router.service';
+import {WorkflowStore} from './service/workflow/workflow.store';
 
 @Injectable()
 export class AppService {

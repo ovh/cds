@@ -1,18 +1,18 @@
 import {Component, NgZone, OnDestroy} from '@angular/core';
-import {ActivatedRoute, Router, NavigationExtras} from '@angular/router';
-import {CDSWorker} from '../../../../shared/worker/worker';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {environment} from '../../../../../environments/environment';
-import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
+import {ActivatedRoute, NavigationExtras, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {first} from 'rxjs/operators';
+import {environment} from '../../../../../environments/environment';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {RouterService} from '../../../../service/router/router.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {DurationService} from '../../../../shared/duration/duration.service';
-import {first} from 'rxjs/operators';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {DurationService} from '../../../../shared/duration/duration.service';
+import {CDSWorker} from '../../../../shared/worker/worker';
 
 @Component({
     selector: 'app-workflow-run-node',

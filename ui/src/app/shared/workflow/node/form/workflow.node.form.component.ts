@@ -1,11 +1,11 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Project, IdName} from '../../../../model/project.model';
+import { ApplicationStore } from 'app/service/services.module';
+import {cloneDeep} from 'lodash';
+import { finalize, first } from 'rxjs/operators';
 import {Application} from '../../../../model/application.model';
 import {Environment} from '../../../../model/environment.model';
+import {IdName, Project} from '../../../../model/project.model';
 import {WorkflowNode} from '../../../../model/workflow.model';
-import {cloneDeep} from 'lodash';
-import { ApplicationStore } from 'app/service/services.module';
-import { finalize, first } from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-form',

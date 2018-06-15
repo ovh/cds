@@ -1,10 +1,10 @@
 import {NgModule} from '@angular/core';
-import {LoginComponent} from './login/login.component';
+import {SharedModule} from '../../shared/shared.module';
 import {accountRouting} from './account.routing';
+import {LoginComponent} from './login/login.component';
 import {PasswordComponent} from './password/password.component';
 import {SignUpComponent} from './signup/signup.component';
 import {VerifyComponent} from './verify/verify.component';
-import {SharedModule} from '../../shared/shared.module';
 
 @NgModule({
     declarations: [

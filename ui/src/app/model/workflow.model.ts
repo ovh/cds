@@ -1,13 +1,13 @@
-import {Pipeline} from './pipeline.model';
+import {notificationTypes, UserNotificationSettings} from 'app/model/notification.model';
+import {intersection} from 'lodash';
 import {Application} from './application.model';
 import {Environment} from './environment.model';
-import {intersection} from 'lodash';
-import {Parameter} from './parameter.model';
-import {WorkflowHookModel} from './workflow.hook.model';
 import {GroupPermission} from './group.model';
-import {Usage} from './usage.model';
-import {notificationTypes, UserNotificationSettings} from 'app/model/notification.model';
+import {Parameter} from './parameter.model';
+import {Pipeline} from './pipeline.model';
 import { ProjectPlatform } from './platform.model';
+import {Usage} from './usage.model';
+import {WorkflowHookModel} from './workflow.hook.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {

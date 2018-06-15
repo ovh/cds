@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
-import {Table} from '../../../../../../shared/table/table';
 import {TestCase, TestSuite} from '../../../../../../model/pipeline.model';
+import {Table} from '../../../../../../shared/table/table';
 
 @Component({
     selector: 'app-workflow-test-table',

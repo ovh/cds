@@ -1,11 +1,11 @@
 import {ModuleWithProviders} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
-import {ProjectResolver, ProjectForWorkflowResolver} from '../../service/project/project.resolver';
+import {ProjectForWorkflowResolver, ProjectResolver} from '../../service/project/project.resolver';
 import {WorkflowAddComponent} from './add/workflow.add.component';
-import {WorkflowShowComponent} from './show/workflow.component';
-import {WorkflowRunComponent} from './run/workflow.run.component';
 import {WorkflowNodeRunComponent} from './run/node/workflow.run.node.component';
+import {WorkflowRunComponent} from './run/workflow.run.component';
+import {WorkflowShowComponent} from './show/workflow.component';
 import {WorkflowComponent} from './workflow.component';
 
 const workflowRoutes: Routes = [

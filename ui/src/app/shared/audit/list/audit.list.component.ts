@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
-import {Table} from '../../table/table';
 import {AuditWorkflow} from '../../../model/audit.model';
+import {Table} from '../../table/table';
 
 @Component({
     selector: 'app-audit-list',

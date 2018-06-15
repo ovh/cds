@@ -1,12 +1,12 @@
 
-import {map, flatMap} from 'rxjs/operators';
 import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
-import {Project} from '../../../../../model/project.model';
-import {Environment} from '../../../../../model/environment.model';
-import {ProjectStore} from '../../../../../service/project/project.store';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
+import {flatMap, map} from 'rxjs/operators';
+import {Environment} from '../../../../../model/environment.model';
+import {Project} from '../../../../../model/project.model';
 import {Warning} from '../../../../../model/warning.model';
+import {ProjectStore} from '../../../../../service/project/project.store';
 
 @Component({
     selector: 'app-environment-list',

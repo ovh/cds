@@ -1,6 +1,6 @@
+import {Group} from './group.model';
 import {Requirement} from './requirement.model';
 import {User} from './user.model';
-import {Group} from './group.model';
 
 export class WorkerModel {
     id: number;

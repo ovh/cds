@@ -1,14 +1,14 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../../../model/workflow.model';
-import {cloneDeep} from 'lodash';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {WorkflowDeleteJoinComponent} from '../../../../../shared/workflow/join/delete/workflow.join.delete.component';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {Project} from '../../../../../model/project.model';
-import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {WorkflowTriggerJoinComponent} from '../../../../../shared/workflow/join/trigger/trigger.join.component';
+import {cloneDeep} from 'lodash';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {Project} from '../../../../../model/project.model';
+import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../../../model/workflow.model';
+import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../../../shared/toast/ToastService';
+import {WorkflowDeleteJoinComponent} from '../../../../../shared/workflow/join/delete/workflow.join.delete.component';
+import {WorkflowTriggerJoinComponent} from '../../../../../shared/workflow/join/trigger/trigger.join.component';
 
 @Component({
     selector: 'app-workflow-sidebar-edit-join',

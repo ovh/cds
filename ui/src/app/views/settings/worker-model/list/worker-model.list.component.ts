@@ -1,8 +1,8 @@
 import {Component} from '@angular/core';
-import {WorkerModel} from '../../../../model/worker-model.model';
-import {Table} from '../../../../shared/table/table';
-import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
 import {finalize} from 'rxjs/operators';
+import {WorkerModel} from '../../../../model/worker-model.model';
+import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
+import {Table} from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-worker-model-list',

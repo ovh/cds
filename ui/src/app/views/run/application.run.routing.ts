@@ -1,10 +1,10 @@
 import {ModuleWithProviders} from '@angular/core';
-import {Routes, RouterModule} from '@angular/router';
-import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
-import {ApplicationPipelineBuildComponent} from './pipeline.build.component';
-import {PipelineResolver} from '../../service/pipeline/pipeline.resolver';
+import {RouterModule, Routes} from '@angular/router';
 import {ApplicationResolver} from '../../service/application/application.resolver';
+import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
+import {PipelineResolver} from '../../service/pipeline/pipeline.resolver';
 import {ProjectResolver} from '../../service/project/project.resolver';
+import {ApplicationPipelineBuildComponent} from './pipeline.build.component';
 
 const applicationRunRoutes: Routes = [
     {

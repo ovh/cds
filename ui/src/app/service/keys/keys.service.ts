@@ -1,9 +1,9 @@
 
-import {map} from 'rxjs/operators';
-import {Injectable} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
+import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {AllKeys, KeyType, Keys, Key} from '../../model/keys.model';
+import {map} from 'rxjs/operators';
+import {AllKeys, Key, Keys, KeyType} from '../../model/keys.model';
 
 @Injectable()
 export class KeyService {

@@ -1,15 +1,15 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Project} from '../../../model/project.model';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {first} from 'rxjs/operators';
 import {Application} from '../../../model/application.model';
+import {Project} from '../../../model/project.model';
 import {Variable} from '../../../model/variable.model';
 import {ApplicationStore} from '../../../service/application/application.store';
 import {ProjectStore} from '../../../service/project/project.store';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../shared/toast/ToastService';
 import {VariableService} from '../../../service/variable/variable.service';
-import {cloneDeep} from 'lodash';
-import {first} from 'rxjs/operators';
+import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-add',

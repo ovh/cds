@@ -1,7 +1,7 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {Variable} from '../../../../model/variable.model';
-import {Parameter} from '../../../../model/parameter.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {Parameter} from '../../../../model/parameter.model';
+import {Variable} from '../../../../model/variable.model';
 
 @Component({
     selector: 'app-job-variable',

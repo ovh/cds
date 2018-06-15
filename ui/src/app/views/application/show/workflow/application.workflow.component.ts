@@ -1,17 +1,17 @@
 
-import {zip as observableZip, Observable} from 'rxjs';
+import {Observable, zip as observableZip} from 'rxjs';
 
-import {map, finalize} from 'rxjs/operators';
-import {Component, EventEmitter, Input, NgZone, OnInit, OnDestroy, Output, ViewChild} from '@angular/core';
-import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
-import {Application} from '../../../../model/application.model';
-import {Project} from '../../../../model/project.model';
-import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
-import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
-import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
-import {Branch, Remote} from '../../../../model/repositories.model';
+import {Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
+import {finalize, map} from 'rxjs/operators';
+import {Application} from '../../../../model/application.model';
+import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
+import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
+import {Branch, Remote} from '../../../../model/repositories.model';
+import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
+import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
 
 
 @Component({

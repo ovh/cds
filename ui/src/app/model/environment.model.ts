@@ -1,6 +1,6 @@
 import {GroupPermission} from './group.model';
-import {Variable} from './variable.model';
 import {Usage} from './usage.model';
+import {Variable} from './variable.model';
 
 export class Environment {
     id: number;

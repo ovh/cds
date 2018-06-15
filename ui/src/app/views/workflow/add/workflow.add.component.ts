@@ -1,22 +1,22 @@
 import {Component, NgZone, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode} from '../../../model/workflow.model';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Project} from '../../../model/project.model';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {finalize, first} from 'rxjs/operators';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
+import {Subscription} from 'rxjs';
+import {finalize, first} from 'rxjs/operators';
+import {environment} from '../../../../environments/environment';
 import {Operation, PerformAsCodeResponse} from '../../../model/operation.model';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {Project} from '../../../model/project.model';
 import {Repository} from '../../../model/repositories.model';
 import {VCSStrategy} from '../../../model/vcs.model';
-import {ImportAsCodeService} from '../../../service/import-as-code/import.service';
-import {CDSWorker} from '../../../shared/worker/worker';
-import {Subscription} from 'rxjs';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {Workflow, WorkflowNode} from '../../../model/workflow.model';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {environment} from '../../../../environments/environment';
+import {ImportAsCodeService} from '../../../service/import-as-code/import.service';
+import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {WorkflowStore} from '../../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../shared/toast/ToastService';
+import {CDSWorker} from '../../../shared/worker/worker';
 
 @Component({
     selector: 'app-workflow-add',

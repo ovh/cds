@@ -1,10 +1,10 @@
-import {Component, Output, EventEmitter, ViewChild, ElementRef, Input} from '@angular/core';
-import {SharedService} from '../../shared.service';
-import {Parameter} from '../../../model/parameter.model';
-import {ParameterEvent} from '../parameter.event.model';
-import {ParameterService} from '../../../service/parameter/parameter.service';
-import {Project} from '../../../model/project.model';
+import {Component, ElementRef, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {AllKeys} from '../../../model/keys.model';
+import {Parameter} from '../../../model/parameter.model';
+import {Project} from '../../../model/project.model';
+import {ParameterService} from '../../../service/parameter/parameter.service';
+import {SharedService} from '../../shared.service';
+import {ParameterEvent} from '../parameter.event.model';
 
 @Component({
     selector: 'app-parameter-form',

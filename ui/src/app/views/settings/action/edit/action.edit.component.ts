@@ -1,12 +1,12 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Action, PipelineUsingAction} from '../../../../model/action.model';
-import {ActionEvent} from '../../../../shared/action/action.event.model';
-import {ActionService} from '../../../../service/action/action.service';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {first} from 'rxjs/operators';
+import {Action, PipelineUsingAction} from '../../../../model/action.model';
+import {ActionService} from '../../../../service/action/action.service';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {ActionEvent} from '../../../../shared/action/action.event.model';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-action-edit',

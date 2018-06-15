@@ -1,21 +1,21 @@
 
-import {of as observableOf, Observable, BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 
-import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import * as immutable from 'immutable';
+import {map} from 'rxjs/operators';
 import {Application} from '../../model/application.model';
-import {ApplicationService} from './application.service';
-import {RepositoryPoller} from '../../model/polling.model';
-import {Project} from '../../model/project.model';
-import {Hook} from '../../model/hook.model';
-import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
-import {ProjectStore} from '../project/project.store';
-import {Trigger} from '../../model/trigger.model';
+import {Hook} from '../../model/hook.model';
 import {NavbarRecentData} from '../../model/navbar.model';
 import {Notification} from '../../model/notification.model';
+import {RepositoryPoller} from '../../model/polling.model';
+import {Project} from '../../model/project.model';
 import {Scheduler} from '../../model/scheduler.model';
+import {Trigger} from '../../model/trigger.model';
+import {Variable} from '../../model/variable.model';
+import {ProjectStore} from '../project/project.store';
+import {ApplicationService} from './application.service';
 
 import {Key} from '../../model/keys.model';
 

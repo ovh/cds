@@ -1,5 +1,5 @@
-import {Pipeline} from './pipeline.model';
 import {Application} from './application.model';
+import {Pipeline} from './pipeline.model';
 
 export class RepositoryPoller {
     name: string;

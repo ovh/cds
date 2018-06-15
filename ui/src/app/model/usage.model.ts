@@ -1,7 +1,7 @@
-import {Workflow} from './workflow.model';
-import {Environment} from './environment.model';
 import {Application} from './application.model';
+import {Environment} from './environment.model';
 import {Pipeline} from './pipeline.model';
+import {Workflow} from './workflow.model';
 
 export class Usage {
     workflows: Array<Workflow>;

@@ -1,11 +1,11 @@
-import {Component, Input, EventEmitter, Output} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {AllKeys} from '../../../model/keys.model';
+import {Parameter} from '../../../model/parameter.model';
+import {Project} from '../../../model/project.model';
+import {ParameterService} from '../../../service/parameter/parameter.service';
 import {SharedService} from '../../shared.service';
 import {Table} from '../../table/table';
-import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../parameter.event.model';
-import {ParameterService} from '../../../service/parameter/parameter.service';
-import {Project} from '../../../model/project.model';
-import {AllKeys} from '../../../model/keys.model';
 
 @Component({
     selector: 'app-parameter-list',

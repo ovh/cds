@@ -1,11 +1,11 @@
 import {Component, Input} from '@angular/core';
-import {Table} from '../../../../../shared/table/table';
-import {Project} from '../../../../../model/project.model';
+import {TranslateService} from '@ngx-translate/core';
+import {finalize, first} from 'rxjs/operators';
 import {PermissionValue} from '../../../../../model/permission.model';
 import {ProjectPlatform} from '../../../../../model/platform.model';
+import {Project} from '../../../../../model/project.model';
 import {ProjectStore} from '../../../../../service/project/project.store';
-import {finalize, first} from 'rxjs/operators';
-import {TranslateService} from '@ngx-translate/core';
+import {Table} from '../../../../../shared/table/table';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 
 @Component({

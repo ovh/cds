@@ -1,9 +1,9 @@
 
-import {map} from 'rxjs/operators';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {WorkerModel, ModelPattern} from '../../model/worker-model.model';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {map} from 'rxjs/operators';
+import {ModelPattern, WorkerModel} from '../../model/worker-model.model';
 
 /**
  * Service to get worker model

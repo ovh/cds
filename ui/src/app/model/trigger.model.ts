@@ -1,9 +1,9 @@
-import {Project} from './project.model';
 import {Application} from './application.model';
-import {Pipeline} from './pipeline.model';
 import {Environment} from './environment.model';
 import {Parameter} from './parameter.model';
+import {Pipeline} from './pipeline.model';
 import {Prerequisite} from './prerequisite.model';
+import {Project} from './project.model';
 
 export class Trigger {
     id: number;

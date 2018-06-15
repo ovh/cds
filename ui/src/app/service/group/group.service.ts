@@ -1,10 +1,10 @@
 
-import {map} from 'rxjs/operators';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
 import {Group} from '../../model/group.model';
 import {Token} from '../../model/token.model';
-import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
  * Service to access Group from API.
