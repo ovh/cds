@@ -1,21 +1,21 @@
 import {Component, Input, OnDestroy, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
+import {Subscription} from 'rxjs';
+import 'rxjs/add/observable/zip';
+import {first} from 'rxjs/operators';
+import {PermissionValue} from '../../../../../model/permission.model';
+import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {
     Workflow,
     WorkflowNode
 } from '../../../../../model/workflow.model';
-import {WorkflowRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
+import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
-import {DurationService} from '../../../../../shared/duration/duration.service';
-import {Subscription} from 'rxjs';
-import {first} from 'rxjs/operators';
-import 'rxjs/add/observable/zip';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
-import {PermissionValue} from '../../../../../model/permission.model';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {DurationService} from '../../../../../shared/duration/duration.service';
+import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
 
 
 @Component({

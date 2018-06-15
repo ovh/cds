@@ -1,18 +1,18 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import * as  immutable from 'immutable';
+import {Subscription} from 'rxjs';
+import {finalize} from 'rxjs/operators';
+import {PermissionValue} from '../../../model/permission.model';
+import {LoadOpts, Project} from '../../../model/project.model';
+import {User} from '../../../model/user.model';
+import {Warning} from '../../../model/warning.model';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../service/project/project.store';
-import {Project, LoadOpts} from '../../../model/project.model';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {Subscription} from 'rxjs';
-import {PermissionValue} from '../../../model/permission.model';
-import {User} from '../../../model/user.model';
-import {finalize} from 'rxjs/operators';
 import {WarningStore} from '../../../service/warning/warning.store';
-import {Warning} from '../../../model/warning.model';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import * as  immutable from 'immutable';
+import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-show',

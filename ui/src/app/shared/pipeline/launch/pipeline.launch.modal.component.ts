@@ -1,13 +1,13 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {cloneDeep} from 'lodash';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {Application} from '../../../model/application.model';
+import {WorkflowItem} from '../../../model/application.workflow.model';
 import {Parameter} from '../../../model/parameter.model';
 import {Pipeline, PipelineBuild, PipelineRunRequest} from '../../../model/pipeline.model';
-import {Application} from '../../../model/application.model';
 import {Project} from '../../../model/project.model';
-import {WorkflowItem} from '../../../model/application.workflow.model';
-import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {Commit, Remote} from '../../../model/repositories.model';
-import {cloneDeep} from 'lodash';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 
 @Component({
     selector: 'app-pipeline-launch-modal',

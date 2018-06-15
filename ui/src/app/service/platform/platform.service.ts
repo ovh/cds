@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {PlatformModel} from '../../model/platform.model';
+import { Injectable } from '@angular/core';
 import {Observable} from 'rxjs';
+import {PlatformModel} from '../../model/platform.model';
 
 @Injectable()
 export class PlatformService {

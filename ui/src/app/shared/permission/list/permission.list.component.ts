@@ -1,9 +1,9 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
-import {Table} from '../../table/table';
 import {GroupPermission} from '../../../model/group.model';
-import {PermissionService} from '../permission.service';
+import {Table} from '../../table/table';
 import {PermissionEvent} from '../permission.event.model';
+import {PermissionService} from '../permission.service';
 
 @Component({
     selector: 'app-permission-list',

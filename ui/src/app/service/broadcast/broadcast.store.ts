@@ -1,8 +1,8 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Observable';
-import {Broadcast} from '../../model/broadcast.model';
 import * as immutable from 'immutable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+import {Observable} from 'rxjs/Observable';
+import {Broadcast} from '../../model/broadcast.model';
 import {BroadcastService} from './broadcast.service';
 
 /**

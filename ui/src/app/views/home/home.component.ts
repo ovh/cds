@@ -1,11 +1,11 @@
 import {Component} from '@angular/core';
-import {NavbarService} from '../../service/navbar/navbar.service';
+import {Broadcast} from 'app/model/broadcast.model';
+import {NavbarProjectData} from 'app/model/navbar.model';
+import {Subscription} from 'rxjs';
 import {BroadcastStore} from '../../service/broadcast/broadcast.store';
+import {NavbarService} from '../../service/navbar/navbar.service';
 import {ProjectStore} from '../../service/project/project.store';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
-import {NavbarProjectData} from 'app/model/navbar.model';
-import {Broadcast} from 'app/model/broadcast.model';
-import {Subscription} from 'rxjs';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 
 @Component({

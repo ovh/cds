@@ -1,22 +1,22 @@
 import {Component, Input, ViewChild} from '@angular/core';
+import {Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
-import {Project} from '../../../../model/project.model';
+import {debounceTime, finalize, first} from 'rxjs/operators';
 import {Parameter} from '../../../../model/parameter.model';
-import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
 import {Commit} from '../../../../model/repositories.model';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
-import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest, WorkflowRun} from '../../../../model/workflow.run.model';
-import {Router} from '@angular/router';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {finalize, first, debounceTime} from 'rxjs/operators';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../toast/ToastService';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
+import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {ToastService} from '../../../toast/ToastService';
 declare var CodeMirror: any;
 
 @Component({

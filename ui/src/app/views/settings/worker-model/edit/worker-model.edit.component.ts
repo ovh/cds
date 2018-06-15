@@ -1,16 +1,16 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {WorkerModel, ModelPattern} from '../../../../model/worker-model.model';
+import {TranslateService} from '@ngx-translate/core';
+import {omit} from 'lodash';
+import {finalize} from 'rxjs/operators';
 import {Group} from '../../../../model/group.model';
-import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
+import {User} from '../../../../model/user.model';
+import {ModelPattern, WorkerModel} from '../../../../model/worker-model.model';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {GroupService} from '../../../../service/group/group.service';
+import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
 import {SharedService} from '../../../../shared/shared.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {User} from '../../../../model/user.model';
-import {finalize} from 'rxjs/operators';
-import {omit} from 'lodash';
 
 @Component({
     selector: 'app-worker-model-edit',

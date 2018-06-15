@@ -1,12 +1,12 @@
 
-import {map} from 'rxjs/operators';
-import {Injectable} from '@angular/core';
-import {User} from '../../model/user.model';
-import {Token} from '../../model/token.model';
-import {Groups} from '../../model/group.model';
-import {Observable} from 'rxjs';
-import {AuthentificationStore} from '../auth/authentification.store';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
+import {Groups} from '../../model/group.model';
+import {Token} from '../../model/token.model';
+import {User} from '../../model/user.model';
+import {AuthentificationStore} from '../auth/authentification.store';
 
 @Injectable()
 export class UserService {

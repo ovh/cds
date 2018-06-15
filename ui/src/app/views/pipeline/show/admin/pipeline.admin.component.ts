@@ -1,10 +1,10 @@
 import {Component, Input, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {Router} from '@angular/router';
-import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-pipeline-admin',

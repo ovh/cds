@@ -1,11 +1,11 @@
 import {Component} from '@angular/core';
 import {Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
 import {Action} from '../../../../model/action.model';
-import {ActionEvent} from '../../../../shared/action/action.event.model';
 import {ActionService} from '../../../../service/action/action.service';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {ActionEvent} from '../../../../shared/action/action.event.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
 
 @Component({
     selector: 'app-action-add',

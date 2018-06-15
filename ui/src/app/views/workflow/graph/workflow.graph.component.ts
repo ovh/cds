@@ -14,16 +14,16 @@ import {
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
+import {Subscription} from 'rxjs';
 import {Project} from '../../../model/project.model';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
 import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook.component';
 import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
-import {Subscription} from 'rxjs';
 
 @Component({
     selector: 'app-workflow-graph',

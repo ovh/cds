@@ -1,16 +1,16 @@
-import {Component, Input, EventEmitter, Output, ViewChild} from '@angular/core';
-import {Variable, VariableAudit} from '../../../model/variable.model';
-import {Table} from '../../table/table';
-import {VariableService} from '../../../service/variable/variable.service';
-import {VariableEvent} from '../variable.event.model';
-import {ProjectAuditService} from '../../../service/project/project.audit.service';
-import {Project} from '../../../model/project.model';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Environment} from '../../../model/environment.model';
 import {Application} from '../../../model/application.model';
-import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
-import {ApplicationAuditService} from '../../../service/application/application.audit.service';
+import {Environment} from '../../../model/environment.model';
+import {Project} from '../../../model/project.model';
+import {Variable, VariableAudit} from '../../../model/variable.model';
 import {Warning} from '../../../model/warning.model';
+import {ApplicationAuditService} from '../../../service/application/application.audit.service';
+import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
+import {ProjectAuditService} from '../../../service/project/project.audit.service';
+import {VariableService} from '../../../service/variable/variable.service';
+import {Table} from '../../table/table';
+import {VariableEvent} from '../variable.event.model';
 
 @Component({
     selector: 'app-variable',

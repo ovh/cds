@@ -2,14 +2,14 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
+import {cloneDeep} from 'lodash';
+import {finalize, first} from 'rxjs/operators';
 import { Project } from '../../../../model/project.model';
 import { Workflow } from '../../../../model/workflow.model';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import { WorkflowStore } from '../../../../service/workflow/workflow.store';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-admin',

@@ -1,7 +1,7 @@
 import {Component, Input} from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
 import {Project} from '../../../model/project.model';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
-import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({

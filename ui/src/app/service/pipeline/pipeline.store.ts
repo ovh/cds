@@ -1,17 +1,17 @@
 
-import {of as observableOf, Observable, BehaviorSubject} from 'rxjs';
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
+import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 
-import {Pipeline} from '../../model/pipeline.model';
 import {Application} from '../../model/application.model';
-import {PipelineService} from './pipeline.service';
-import {Stage} from '../../model/stage.model';
-import {Job} from '../../model/job.model';
 import {GroupPermission} from '../../model/group.model';
+import {Job} from '../../model/job.model';
 import {Parameter} from '../../model/parameter.model';
+import {Pipeline} from '../../model/pipeline.model';
+import {Stage} from '../../model/stage.model';
+import {PipelineService} from './pipeline.service';
 
-import {mergeMap, map} from 'rxjs/operators';
+import {map, mergeMap} from 'rxjs/operators';
 
 
 @Injectable()

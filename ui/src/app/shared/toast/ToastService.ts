@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {ToasterService, ToasterConfig} from 'angular2-toaster/angular2-toaster';
+import {ToasterConfig, ToasterService} from 'angular2-toaster/angular2-toaster';
 
 @Injectable()
 export class ToastService {

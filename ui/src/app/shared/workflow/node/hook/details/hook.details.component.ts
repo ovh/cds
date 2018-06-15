@@ -1,8 +1,8 @@
 import {Component, ViewChild} from '@angular/core';
-import {TaskExecution} from '../../../../../model/workflow.hook.model';
+import {cloneDeep} from 'lodash';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {cloneDeep} from 'lodash';
+import {TaskExecution} from '../../../../../model/workflow.hook.model';
 
 @Component({
     selector: 'app-workflow-node-hook-details',

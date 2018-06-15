@@ -1,22 +1,22 @@
-import {AfterViewInit, Component, OnInit, ChangeDetectorRef} from '@angular/core';
-import {AuthentificationStore} from '../../service/auth/authentification.store';
-import {NavbarService} from '../../service/navbar/navbar.service';
-import {ApplicationStore} from '../../service/application/application.store';
-import {WorkflowStore} from '../../service/workflow/workflow.store';
-import {BroadcastStore} from '../../service/broadcast/broadcast.store';
-import {Application} from '../../model/application.model';
-import {Broadcast} from '../../model/broadcast.model';
-import {User} from '../../model/user.model';
+import {AfterViewInit, ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {NavigationEnd, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
+import {NavbarProjectData, NavbarSearchItem} from 'app/model/navbar.model';
 import {List} from 'immutable';
-import {LanguageStore} from '../../service/language/language.store';
 import {Subscription} from 'rxjs';
-import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
-import {RouterService} from '../../service/router/router.service';
-import {NavbarRecentData} from '../../model/navbar.model';
 import {filter} from 'rxjs/operators';
-import {NavbarSearchItem, NavbarProjectData} from 'app/model/navbar.model';
+import {Application} from '../../model/application.model';
+import {Broadcast} from '../../model/broadcast.model';
+import {NavbarRecentData} from '../../model/navbar.model';
+import {User} from '../../model/user.model';
+import {ApplicationStore} from '../../service/application/application.store';
+import {AuthentificationStore} from '../../service/auth/authentification.store';
+import {BroadcastStore} from '../../service/broadcast/broadcast.store';
+import {LanguageStore} from '../../service/language/language.store';
+import {NavbarService} from '../../service/navbar/navbar.service';
+import {RouterService} from '../../service/router/router.service';
+import {WorkflowStore} from '../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-navbar',

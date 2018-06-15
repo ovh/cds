@@ -1,11 +1,11 @@
 
-import {map} from 'rxjs/operators';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {Workflow} from '../../../model/workflow.model';
+import {map} from 'rxjs/operators';
 import {Commit} from '../../../model/repositories.model';
+import {Workflow} from '../../../model/workflow.model';
 import {RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
-import {HttpClient, HttpParams} from '@angular/common/http';
 
 @Injectable()
 export class WorkflowRunService {

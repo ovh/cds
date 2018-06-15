@@ -1,11 +1,11 @@
 import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
+import {cloneDeep} from 'lodash';
+import {Job, StepStatus} from '../../../../../model/job.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
-import {Job, StepStatus} from '../../../../../model/job.model';
+import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
 import {DurationService} from '../../../../../shared/duration/duration.service';
-import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-node-run-pipeline',

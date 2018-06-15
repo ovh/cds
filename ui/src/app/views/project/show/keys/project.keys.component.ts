@@ -1,12 +1,12 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Project} from '../../../../model/project.model';
-import {KeyEvent} from '../../../../shared/keys/key.event';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {finalize, first} from 'rxjs/operators';
-import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
+import {finalize, first} from 'rxjs/operators';
 import {Key} from '../../../../model/keys.model';
+import {Project} from '../../../../model/project.model';
 import {Warning} from '../../../../model/warning.model';
+import {ProjectStore} from '../../../../service/project/project.store';
+import {KeyEvent} from '../../../../shared/keys/key.event';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-keys',

@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
-import {Workflow} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
+import {Workflow} from '../../../model/workflow.model';
 
 @Component({
     selector: 'app-usage-workflows',

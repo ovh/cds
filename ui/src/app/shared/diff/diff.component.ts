@@ -1,6 +1,6 @@
-import {Component, Input, ViewChild, ComponentFactoryResolver, ViewContainerRef} from '@angular/core';
-import {SpanColoredComponent} from './span-colored/span-colored.component';
+import {Component, ComponentFactoryResolver, Input, ViewChild, ViewContainerRef} from '@angular/core';
 import * as JsDiff from 'diff';
+import {SpanColoredComponent} from './span-colored/span-colored.component';
 
 @Component({
     selector: 'app-diff',

@@ -1,21 +1,21 @@
-import {Component, ViewChild, OnInit} from '@angular/core';
-import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
-import {Project} from '../../model/project.model';
-import {Subscription} from 'rxjs';
-import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
-import {Workflow} from '../../model/workflow.model';
-import {WorkflowStore} from '../../service/workflow/workflow.store';
-import {ProjectStore} from '../../service/project/project.store';
-import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
-import {ToastService} from '../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
+import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
-import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../service/workflow/workflow.sidebar.store';
-import {WorkflowRunService} from '../../service/workflow/run/workflow.run.service';
-import {WorkflowEventStore} from '../../service/workflow/workflow.event.store';
-import {EventStore} from '../../service/event/event.store';
 import {EventSubscription} from '../../model/event.model';
+import {Project} from '../../model/project.model';
+import {Workflow} from '../../model/workflow.model';
+import {EventStore} from '../../service/event/event.store';
+import {ProjectStore} from '../../service/project/project.store';
+import {WorkflowRunService} from '../../service/workflow/run/workflow.run.service';
+import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
+import {WorkflowEventStore} from '../../service/workflow/workflow.event.store';
+import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../service/workflow/workflow.sidebar.store';
+import {WorkflowStore} from '../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow',

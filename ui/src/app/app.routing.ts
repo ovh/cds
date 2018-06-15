@@ -1,5 +1,5 @@
-import {Routes, RouterModule, PreloadAllModules} from '@angular/router';
 import {ModuleWithProviders} from '@angular/core';
+import {PreloadAllModules, RouterModule, Routes} from '@angular/router';
 
 const routes: Routes = [
     { path: '', redirectTo: 'home', pathMatch: 'full' },

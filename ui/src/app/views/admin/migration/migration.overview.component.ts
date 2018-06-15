@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
-import {ProjectStore} from '../../../service/project/project.store';
-import {Project} from '../../../model/project.model';
 import {TranslateService} from '@ngx-translate/core';
+import {Project} from '../../../model/project.model';
+import {ProjectStore} from '../../../service/project/project.store';
 import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({

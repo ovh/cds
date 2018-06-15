@@ -1,4 +1,4 @@
-import {EventEmitter, Output, Input, Component} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 
 @Component({
     selector: 'app-upload-button',

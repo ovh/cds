@@ -1,20 +1,20 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
-import {WorkflowHookTask, HookStatus, TaskExecution} from '../../../../../model/workflow.hook.model';
+import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
+import {finalize} from 'rxjs/operators';
+import {Subscription} from 'rxjs/Subscription';
+import {Project} from '../../../../../model/project.model';
+import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
+import {HookService} from '../../../../../service/hook/hook.service';
+import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
+import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {DeleteModalComponent} from '../../../../../shared/modal/delete/delete.component';
+import {ToastService} from '../../../../../shared/toast/ToastService';
 import {WorkflowNodeHookDetailsComponent} from '../../../../../shared/workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
-import {DeleteModalComponent} from '../../../../../shared/modal/delete/delete.component';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {Project} from '../../../../../model/project.model';
-import {ToastService} from '../../../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {HookService} from '../../../../../service/hook/hook.service';
-import {finalize} from 'rxjs/operators';
-import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
-import {Subscription} from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-sidebar-hook',

@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Application} from '../../../../../../model/application.model';
-import {Pipeline} from '../../../../../../model/pipeline.model';
 import {WorkflowItem} from '../../../../../../model/application.workflow.model';
+import {Pipeline} from '../../../../../../model/pipeline.model';
 
 @Component({
     selector: 'app-application-pipeline-detach',

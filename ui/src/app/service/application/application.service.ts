@@ -1,17 +1,17 @@
 
-import {map} from 'rxjs/operators';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
 import {Application} from '../../model/application.model';
-import {Variable} from '../../model/variable.model';
-import {RepositoryPoller} from '../../model/polling.model';
 import {GroupPermission} from '../../model/group.model';
-import {Trigger} from '../../model/trigger.model';
-import {Notification, UserNotificationSettings} from '../../model/notification.model';
-import {Scheduler} from '../../model/scheduler.model';
 import {Hook} from '../../model/hook.model';
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Key} from '../../model/keys.model';
+import {Notification, UserNotificationSettings} from '../../model/notification.model';
+import {RepositoryPoller} from '../../model/polling.model';
+import {Scheduler} from '../../model/scheduler.model';
+import {Trigger} from '../../model/trigger.model';
+import {Variable} from '../../model/variable.model';
 
 @Injectable()
 export class ApplicationService {

@@ -1,17 +1,17 @@
 
-import {of as observableOf, Observable, BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 
-import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
-import {Project, LoadOpts} from '../../model/project.model';
-import {ProjectService} from './project.service';
-import {EnvironmentService} from '../environment/environment.service';
-import {VariableService} from '../variable/variable.service';
-import {NavbarService} from '../navbar/navbar.service';
-import {Variable} from '../../model/variable.model';
-import {GroupPermission} from '../../model/group.model';
+import {map} from 'rxjs/operators';
 import {Environment} from '../../model/environment.model';
+import {GroupPermission} from '../../model/group.model';
+import {LoadOpts, Project} from '../../model/project.model';
+import {Variable} from '../../model/variable.model';
+import {EnvironmentService} from '../environment/environment.service';
+import {NavbarService} from '../navbar/navbar.service';
+import {VariableService} from '../variable/variable.service';
+import {ProjectService} from './project.service';
 
 import {Key} from '../../model/keys.model';
 import {ProjectPlatform} from '../../model/platform.model';

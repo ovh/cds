@@ -1,5 +1,5 @@
-import {Requirement} from './requirement.model';
 import {Parameter} from './parameter.model';
+import {Requirement} from './requirement.model';
 
 export class Action {
     id: number;

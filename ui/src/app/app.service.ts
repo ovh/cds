@@ -1,21 +1,21 @@
 import {Injectable} from '@angular/core';
-import {ProjectStore} from './service/project/project.store';
 import {ActivatedRoute} from '@angular/router';
-import {ApplicationStore} from './service/application/application.store';
-import {NotificationService} from './service/notification/notification.service';
-import {AuthentificationStore} from './service/auth/authentification.store';
 import {TranslateService} from '@ngx-translate/core';
-import {LoadOpts} from './model/project.model';
-import {PipelineStore} from './service/pipeline/pipeline.store';
-import {WorkflowStore} from './service/workflow/workflow.store';
-import {RouterService} from './service/router/router.service';
 import {first} from 'rxjs/operators';
-import {Event, EventType} from './model/event.model';
-import {EventStore} from './service/event/event.store';
-import {WorkflowEventStore} from './service/workflow/workflow.event.store';
-import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
-import {BroadcastStore} from './service/broadcast/broadcast.store';
 import {Broadcast, BroadcastEvent} from './model/broadcast.model';
+import {Event, EventType} from './model/event.model';
+import {LoadOpts} from './model/project.model';
+import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
+import {ApplicationStore} from './service/application/application.store';
+import {AuthentificationStore} from './service/auth/authentification.store';
+import {BroadcastStore} from './service/broadcast/broadcast.store';
+import {EventStore} from './service/event/event.store';
+import {NotificationService} from './service/notification/notification.service';
+import {PipelineStore} from './service/pipeline/pipeline.store';
+import {ProjectStore} from './service/project/project.store';
+import {RouterService} from './service/router/router.service';
+import {WorkflowEventStore} from './service/workflow/workflow.event.store';
+import {WorkflowStore} from './service/workflow/workflow.store';
 
 @Injectable()
 export class AppService {

@@ -1,16 +1,16 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core';
-import {Project} from '../../../../model/project.model';
-import {PermissionValue} from '../../../../model/permission.model';
-import {WorkflowRun} from '../../../../model/workflow.run.model';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize} from 'rxjs/operators';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 import {Subscription} from 'rxjs/Subscription';
+import {PermissionValue} from '../../../../model/permission.model';
+import {PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
+import {WorkflowRun} from '../../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 declare var ansi_up: any;
 

@@ -1,16 +1,16 @@
-import {Component, Input, OnInit, NgZone, ViewChild, ElementRef, OnDestroy} from '@angular/core';
-import {Router, ActivatedRoute} from '@angular/router';
+import {Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
+import {environment} from '../../../../../../../environments/environment';
 import {Action} from '../../../../../../model/action.model';
-import {Project} from '../../../../../../model/project.model';
 import {Job, StepStatus} from '../../../../../../model/job.model';
 import {BuildResult, Log, PipelineStatus} from '../../../../../../model/pipeline.model';
+import {Project} from '../../../../../../model/project.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
-import {CDSWorker} from '../../../../../../shared/worker/worker';
-import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
 import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
+import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
 import {DurationService} from '../../../../../../shared/duration/duration.service';
-import {environment} from '../../../../../../../environments/environment';
+import {CDSWorker} from '../../../../../../shared/worker/worker';
 
 declare var ansi_up: any;
 

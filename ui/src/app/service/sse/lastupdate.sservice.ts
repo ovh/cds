@@ -1,7 +1,7 @@
 import {Injectable, NgZone} from '@angular/core';
+import {EventSourcePolyfill} from 'ng-event-source';
 import {Observable} from 'rxjs';
 import {environment} from '../../../environments/environment';
-import {EventSourcePolyfill} from 'ng-event-source';
 import {AuthentificationStore} from '../auth/authentification.store';
 
 @Injectable()

@@ -1,15 +1,15 @@
-import {Component, Input, ElementRef, ViewChild, OnDestroy} from '@angular/core';
-import {Project} from '../../../../../model/project.model';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Workflow} from '../../../../../model/workflow.model';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {Subscription} from 'rxjs';
-import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
-import {cloneDeep} from 'lodash';
-import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
-import {DurationService} from '../../../../../shared/duration/duration.service';
+import {Component, ElementRef, Input, OnDestroy, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
+import {cloneDeep} from 'lodash';
+import {Subscription} from 'rxjs';
+import {PipelineStatus} from '../../../../../model/pipeline.model';
+import {Project} from '../../../../../model/project.model';
+import {Workflow} from '../../../../../model/workflow.model';
+import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {DurationService} from '../../../../../shared/duration/duration.service';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',

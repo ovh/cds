@@ -1,8 +1,8 @@
-import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Broadcast} from '../../model/broadcast.model';
+import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {map} from 'rxjs/operators';
+import {Broadcast} from '../../model/broadcast.model';
 
 /**
  * Service to access Broadcast from API.

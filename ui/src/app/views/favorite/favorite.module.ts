@@ -1,7 +1,7 @@
 import {NgModule} from '@angular/core';
+import {SharedModule} from '../../shared/shared.module';
 import {FavoriteComponent} from './favorite.component';
 import { favoriteRouting } from './favorite.routing';
-import {SharedModule} from '../../shared/shared.module';
 
 @NgModule({
     declarations: [

@@ -1,25 +1,25 @@
-import {Component, Input, ViewChild, Output, EventEmitter, AfterViewInit} from '@angular/core';
-import {
-    UserNotificationSettings,
-    notificationTypes,
-    notificationOnSuccess,
-    notificationOnFailure,
-    Notification
-} from '../../../../../model/notification.model';
-import {Project} from '../../../../../model/project.model';
-import {Application, ApplicationPipeline} from '../../../../../model/application.model';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {AfterViewInit, Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {FormControl} from '@angular/forms';
-import {Environment} from '../../../../../model/environment.model';
-import {NotificationEvent} from '../notification.event';
 import {TranslateService} from '@ngx-translate/core';
-import {DeleteButtonComponent} from '../../../../../shared/button/delete/delete.button';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {ProjectService} from '../../../../../service/project/project.service';
-import {ProjectStore} from '../../../../../service/project/project.store';
 import {cloneDeep} from 'lodash';
+import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
+import {Application, ApplicationPipeline} from '../../../../../model/application.model';
+import {Environment} from '../../../../../model/environment.model';
+import {
+    Notification,
+    notificationOnFailure,
+    notificationOnSuccess,
+    notificationTypes,
+    UserNotificationSettings
+} from '../../../../../model/notification.model';
+import {Project} from '../../../../../model/project.model';
+import {ProjectService} from '../../../../../service/project/project.service';
+import {ProjectStore} from '../../../../../service/project/project.store';
+import {DeleteButtonComponent} from '../../../../../shared/button/delete/delete.button';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {NotificationEvent} from '../notification.event';
 
 @Component({
     selector: 'app-notification-form-modal',

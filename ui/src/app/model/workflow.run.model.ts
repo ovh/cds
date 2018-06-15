@@ -1,14 +1,14 @@
 // WorkflowRun is an execution instance of a run
-import {Workflow} from './workflow.model';
-import {Stage} from './stage.model';
+import {Action} from './action.model';
+import {Event} from './event.model';
+import {Hatchery} from './hatchery.model';
+import {Job, StepStatus} from './job.model';
 import {Parameter} from './parameter.model';
 import {SpawnInfo, Tests} from './pipeline.model';
 import {Commit} from './repositories.model';
-import {Job, StepStatus} from './job.model';
-import {Hatchery} from './hatchery.model';
+import {Stage} from './stage.model';
 import {User} from './user.model';
-import {Event} from './event.model';
-import {Action} from './action.model';
+import {Workflow} from './workflow.model';
 
 
 export class RunNumber {

@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {Prerequisite} from '../../../model/prerequisite.model';
 import {Table} from '../../table/table';
 import {PrerequisiteEvent} from '../prerequisite.event.model';

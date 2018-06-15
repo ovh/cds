@@ -1,15 +1,15 @@
 import {Component, Input, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {Project} from '../../../../model/project.model';
+import {Subscription} from 'rxjs';
+import {finalize} from 'rxjs/operators';
 import {Pipeline} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
 import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
 import {PipelineService} from '../../../../service/pipeline/pipeline.service';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-pipeline-ascode-editor',

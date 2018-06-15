@@ -1,5 +1,5 @@
-import {Pipeline} from './pipeline.model';
 import {Environment} from './environment.model';
+import {Pipeline} from './pipeline.model';
 
 export const notificationTypes = ['jabber', 'email'];
 export const notificationOnSuccess = ['always', 'change', 'never'];

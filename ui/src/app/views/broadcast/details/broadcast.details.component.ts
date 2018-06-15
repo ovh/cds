@@ -1,8 +1,8 @@
 import {Component} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {BroadcastStore} from '../../../service/broadcast/broadcast.store';
 import {Broadcast} from 'app/model/broadcast.model';
 import {Subscription} from 'rxjs';
+import {BroadcastStore} from '../../../service/broadcast/broadcast.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({

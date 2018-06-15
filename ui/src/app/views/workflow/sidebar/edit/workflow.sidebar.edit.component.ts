@@ -1,9 +1,9 @@
 import {Component, Input} from '@angular/core';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {Subscription} from 'rxjs/Subscription';
 import {Project} from '../../../../model/project.model';
 import { Workflow} from '../../../../model/workflow.model';
 import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../../../service/workflow/workflow.sidebar.store';
-import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-sidebar-edit',

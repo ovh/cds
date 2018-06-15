@@ -1,7 +1,7 @@
 import {Component, Input, NgZone} from '@angular/core';
-import {Table} from '../../../shared/table/table';
-import {Artifact} from '../../../model/artifact.model';
 import {environment} from '../../../../environments/environment';
+import {Artifact} from '../../../model/artifact.model';
+import {Table} from '../../../shared/table/table';
 
 @Component({
     selector: 'app-artifact-list',
