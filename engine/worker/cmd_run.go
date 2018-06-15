@@ -120,7 +120,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			if errP := w.processBookedWJob(wjobs); errP != nil {
 				// Unbook job
 				if errR := w.client.QueueJobRelease(true, w.bookedWJobID); errR != nil {
-					log.Error("QueueJobRelease> Cannot release job")
+					log.Error("runCmd> QueueJobRelease> Cannot release job")
 				}
 				exceptJobID = w.bookedWJobID
 				w.bookedWJobID = 0
