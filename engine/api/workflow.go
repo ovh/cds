@@ -43,13 +43,14 @@ func (api *API) getWorkflowHandler() Handler {
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
 		withAudits := FormBool(r, "withAudits")
+		withDeepPipelines := FormBool(r, "withDeepPipelines")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> unable to load projet")
 		}
 
-		w1, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
+		w1, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}

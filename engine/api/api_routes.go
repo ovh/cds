@@ -171,6 +171,7 @@ func (api *API) InitRouter() {
 	// Application deployment
 	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config/{platform}", r.POST(api.postApplicationDeploymentStrategyConfigHandler, AllowProvider(true)), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config", r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/metadata/{metadata}", r.POST(api.postApplicationMetadataHandler, AllowProvider(true)))
 
 	// Application workflow migration
 	r.Handle("/project/{key}/application/{permApplicationName}/workflow/migrate", r.POST(api.migrationApplicationWorkflowHandler))
@@ -218,8 +219,8 @@ func (api *API) InitRouter() {
 	// Workflows
 	r.Handle("/workflow/artifact/{hash}", r.GET(api.downloadworkflowArtifactDirectHandler, Auth(false)))
 
-	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler, AllowProvider(true)))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler, AllowProvider(true)), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", r.GET(api.getWorkflowHookHandler))
