@@ -82,7 +82,7 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 	if existingToken != "" {
 		bded.Token = existingToken
 		if _, err := db.Update(&bded); err != nil {
-			return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to save encrypted_data")
+			return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to update encrypted_data")
 		}
 	} else {
 		if err := db.Insert(&bded); err != nil {
