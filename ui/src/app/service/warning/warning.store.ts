@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
-import {Observable, BehaviorSubject} from 'rxjs';
 import * as immutable from 'immutable';
+import {BehaviorSubject, Observable} from 'rxjs';
 import {Warning} from '../../model/warning.model';
 import {WarningService} from './warning.service';
 
@@ -36,5 +36,16 @@ export class WarningStore {
             });
             this._projectWarning.next(this._projectWarning.getValue().set(key, projWarnings));
         }
+    }
+
+    updateWarning(key: string, w: Warning): Observable<Warning> {
+        return this._warningService.update(key, w).map(warn => {
+            let m = this._projectWarning.getValue();
+            let mw = m.get(key);
+            mw = mw.set(warn.type + '-' + warn.element, warn);
+            m = m.set(key, mw);
+            this._projectWarning.next(m);
+            return warn;
+        });
     }
 }

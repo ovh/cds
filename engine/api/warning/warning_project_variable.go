@@ -39,7 +39,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 		varName := fmt.Sprintf("cds.proj.%s", payload.Variable.Name)
 		ws, envs, apps, pips, pipJobs := variableIsUsed(db, e.ProjectKey, varName)
 		if len(ws) == 0 && len(envs) == 0 && len(apps) == 0 && len(pips) == 0 && len(pipJobs) == 0 {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				Element: varName,
 				Created: time.Now(),
@@ -64,7 +64,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 		varName := fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name)
 		ws, envs, apps, pips, pipJobs := variableIsUsed(db, e.ProjectKey, varName)
 		if len(ws) == 0 && len(envs) == 0 && len(apps) == 0 && len(pips) == 0 && len(pipJobs) == 0 {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				Element: varName,
 				Created: time.Now(),
@@ -135,7 +135,7 @@ func (warn missingProjectVariableEnv) compute(db gorp.SqlExecutor, e sdk.Event) 
 			return sdk.WrapError(errE, "missingProjectVariableEnv> Unable to list environment")
 		}
 		for _, envName := range envs {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				EnvName: envName,
 				Element: varName,
@@ -200,7 +200,7 @@ func (warn missingProjectVariableWorkflow) compute(db gorp.SqlExecutor, e sdk.Ev
 			return sdk.WrapError(errW, "missingProjectVariableWorkflow.compute> Unable to get workflows")
 		}
 		for _, wName := range workflows {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:          e.ProjectKey,
 				WorkflowName: wName.WorkflowName,
 				Element:      varName,
@@ -266,7 +266,7 @@ func (warn missingProjectVariableApplication) compute(db gorp.SqlExecutor, e sdk
 			return sdk.WrapError(errA, "missingProjectVariableApplication.compute> Unable to list application")
 		}
 		for _, appName := range apps {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				AppName: appName,
 				Element: varName,
@@ -331,7 +331,7 @@ func (warn missingProjectVariablePipelineParameter) compute(db gorp.SqlExecutor,
 			return sdk.WrapError(errP, "missingProjectVariablePipelineParameter.compute> Unable to list pipeline")
 		}
 		for _, pipName := range pips {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				PipName: pipName,
 				Element: varName,
@@ -396,7 +396,7 @@ func (warn missingProjectVariablePipelineJob) compute(db gorp.SqlExecutor, e sdk
 			return sdk.WrapError(errP, "missingProjectVariablePipelineJob.compute> Unable to list pipeline")
 		}
 		for _, pip := range pips {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				PipName: pip.PipName,
 				Element: varName,
