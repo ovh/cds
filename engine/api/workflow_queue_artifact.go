@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"mime"
 	"net/http"
 	"strconv"
@@ -26,7 +27,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 		}
 
 		vars := mux.Vars(r)
-		tag := vars["tag"]
+		ref := vars["ref"]
 
 		_, params, errM := mime.ParseMediaType(r.Header.Get("Content-Disposition"))
 		if errM != nil {
@@ -67,7 +68,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
@@ -88,9 +89,14 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 			perm, _ = strconv.ParseUint(permStr, 10, 32)
 		}
 
+		tag, errT := base64.RawURLEncoding.DecodeString(ref)
+		if errT != nil {
+			return sdk.WrapError(errT, "postWorkflowJobArtifactHandler> Cannot decode ref")
+		}
 		art := sdk.WorkflowNodeRunArtifact{
 			Name:              fileName,
-			Tag:               tag,
+			Tag:               string(tag),
+			Ref:               ref,
 			DownloadHash:      hash,
 			Size:              size,
 			Perm:              uint32(perm),
@@ -144,7 +150,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() Handler {
 		}
 
 		vars := mux.Vars(r)
-		tag := vars["tag"]
+		ref := vars["ref"]
 
 		hash, errG := generateHash()
 		if errG != nil {
@@ -153,23 +159,29 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() Handler {
 
 		art := sdk.WorkflowNodeRunArtifact{}
 		if err := UnmarshalBody(r, &art); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLHandler")
+			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLHandler>")
 		}
 
 		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
 		if errJ != nil {
-			return sdk.WrapError(errJ, "Cannot load node job run")
+			return sdk.WrapError(errJ, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node job run")
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
 		if errR != nil {
-			return sdk.WrapError(errR, "Cannot load node run")
+			return sdk.WrapError(errR, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node run")
+		}
+
+		tag, errT := base64.RawURLEncoding.DecodeString(ref)
+		if errT != nil {
+			return sdk.WrapError(errT, "postWorkflowJobArtifacWithTempURLHandler> Cannot decode ref")
 		}
 
 		art.WorkflowID = nodeRun.WorkflowRunID
 		art.WorkflowNodeRunID = nodeRun.ID
 		art.DownloadHash = hash
-		art.Tag = tag
+		art.Tag = string(tag)
+		art.Ref = ref
 
 		url, key, err := store.StoreURL(&art)
 		if err != nil {
@@ -207,7 +219,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler> Submitted artifact doesn't match, key:%s art:%v cachedArt:%v", cacheKey, art, cachedArt)
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), art.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true})
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), art.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}

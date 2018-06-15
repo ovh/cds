@@ -36,7 +36,7 @@ func (api *API) postPushCacheHandler() Handler {
 
 		_, errO := objectstore.Store(&cacheObject, r.Body)
 		if errO != nil {
-			return sdk.WrapError(errO, "SaveFile>Cannot store cache")
+			return sdk.WrapError(errO, "postPushCacheHandler>Cannot store cache")
 		}
 
 		return nil
