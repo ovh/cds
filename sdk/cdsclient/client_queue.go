@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int) error {
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, exceptWfJobID *int64) error {
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
 	pbjobsTicker := time.NewTicker(delay)
@@ -81,7 +81,10 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 						if c.config.Verbose {
 							fmt.Printf("job %d send on chan\n", j.ID)
 						}
-						jobs <- j
+						// Useful to not relaunch a job on a worker with bad requirements
+						if exceptWfJobID == nil || *exceptWfJobID != j.ID {
+							jobs <- j
+						}
 					} else {
 						if c.config.Verbose {
 							fmt.Printf("job %d too new\n", j.ID)
@@ -195,6 +198,18 @@ func (c *client) QueueJobBook(isWorkflowJob bool, id int64) error {
 		path = fmt.Sprintf("/queue/%d/book", id)
 	}
 	_, err := c.PostJSON(path, nil, nil)
+	return err
+}
+
+// QueueJobRelease release a job for a worker
+func (c *client) QueueJobRelease(isWorkflowJob bool, id int64) error {
+	path := fmt.Sprintf("/queue/workflows/%d/book", id)
+	if !isWorkflowJob {
+		// DEPRECATED code -> it's for pipelineBuildJob
+		return fmt.Errorf("Not implemented")
+	}
+
+	_, err := c.DeleteJSON(path, nil)
 	return err
 }
 

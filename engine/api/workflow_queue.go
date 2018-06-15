@@ -222,6 +222,20 @@ func (api *API) postBookWorkflowJobHandler() Handler {
 	}
 }
 
+func (api *API) deleteBookWorkflowJobHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		id, errc := requestVarInt(r, "id")
+		if errc != nil {
+			return sdk.WrapError(errc, "deleteBookWorkflowJobHandler> invalid id")
+		}
+
+		if err := workflow.FreeNodeJobRun(api.Cache, id); err != nil {
+			return sdk.WrapError(err, "deleteBookWorkflowJobHandler> job not booked")
+		}
+		return WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 func (api *API) postIncWorkflowJobAttemptHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")

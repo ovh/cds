@@ -200,9 +200,10 @@ type QueueClient interface {
 	QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
-	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
+	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int, *int64) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
 	QueueJobBook(isWorkflowJob bool, id int64) error
+	QueueJobRelease(isWorkflowJob bool, id int64) error
 	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
 	QueueSendResult(int64, sdk.Result) error

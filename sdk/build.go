@@ -24,8 +24,8 @@ type PipelineBuildJob struct {
 
 // SpawnInfo contains an information about spawning
 type SpawnInfo struct {
-	APITime    time.Time `json:"api_time,omitempty" db:"-"`
-	RemoteTime time.Time `json:"remote_time,omitempty" db:"-"`
+	APITime    time.Time `json:"api_time,omitempty" db:"-" mapstructure:"-"`
+	RemoteTime time.Time `json:"remote_time,omitempty" db:"-" mapstructure:"-"`
 	Message    SpawnMsg  `json:"message,omitempty" db:"-"`
 	// UserMessage contains msg translated for end user
 	UserMessage string `json:"user_message,omitempty" db:"-"`

@@ -115,18 +115,26 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if !w.disableOldWorkflows && w.bookedPBJobID != 0 {
 			w.processBookedPBJob(pbjobs)
 		}
+		var exceptJobID int64
 		if w.bookedWJobID != 0 {
-			w.processBookedWJob(wjobs)
+			if errP := w.processBookedWJob(wjobs); errP != nil {
+				// Unbook job
+				if errR := w.client.QueueJobRelease(true, w.bookedWJobID); errR != nil {
+					log.Error("QueueJobRelease> Cannot release job")
+				}
+				exceptJobID = w.bookedWJobID
+				w.bookedWJobID = 0
+			}
 		}
 		if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 			log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 		}
 
-		go func(ctx context.Context) {
-			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0); err != nil {
+		go func(ctx context.Context, exceptID *int64) {
+			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0, exceptID); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 			}
-		}(ctx)
+		}(ctx, &exceptJobID)
 
 		//Definition of the function which must be called to stop the worker
 		var endFunc = func() {
@@ -304,12 +312,11 @@ func (w *currentWorker) processBookedPBJob(pbjobs chan<- sdk.PipelineBuildJob) {
 	pbjobs <- *j
 }
 
-func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) {
+func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) error {
 	log.Debug("Try to take the workflow node job %d", w.bookedWJobID)
 	wjob, err := w.client.QueueJobInfo(w.bookedWJobID)
 	if err != nil {
-		log.Error("Unable to load workflow node job %d: %v", w.bookedWJobID, err)
-		return
+		return sdk.WrapError(err, "processBookedWJob> Unable to load workflow node job %d", w.bookedWJobID)
 	}
 
 	requirementsOK, errRequirements := checkRequirements(w, &wjob.Job.Action, nil, wjob.ID)
@@ -323,9 +330,9 @@ func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) {
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
 		}}
 		if err := w.client.QueueJobSendSpawnInfo(true, wjob.ID, infos); err != nil {
-			log.Warning("Cannot record QueueJobSendSpawnInfo for job (err spawn): %d %s", wjob.ID, err)
+			return sdk.WrapError(err, "processBookedWJob> Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
-		return
+		return fmt.Errorf("processBookedWJob> the worker have no all requirements")
 	}
 
 	pluginsOK, errPlugins := checkPlugins(w, *wjob)
@@ -337,13 +344,15 @@ func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) {
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
 		}}
 		if err := w.client.QueueJobSendSpawnInfo(true, wjob.ID, infos); err != nil {
-			log.Warning("Cannot record QueueJobSendSpawnInfo for job (err spawn): %d %s", wjob.ID, err)
+			return sdk.WrapError(err, "processBookedWJob> Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
-		return
+		return fmt.Errorf("processBookedWJob> the worker have no all plugins")
 	}
 
 	// requirementsOK is ok
 	wjobs <- *wjob
+
+	return nil
 }
 
 func (w *currentWorker) doUpdate() {
