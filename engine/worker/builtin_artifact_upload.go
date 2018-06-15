@@ -105,8 +105,6 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			sendLog(res.Reason)
 			return res
 		}
-		tag.Value = strings.Replace(tag.Value, "/", "-", -1)
-		tag.Value = url.QueryEscape(tag.Value)
 
 		// Global all files matching filePath
 		filesPath, err := filepath.Glob(path)

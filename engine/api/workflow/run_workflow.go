@@ -187,6 +187,7 @@ func ManualRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, sto
 	_, _ = report.Merge(r1, nil)
 	if !hasRun {
 		wr.Status = sdk.StatusNeverBuilt.String()
+		report.Add(wr)
 		return wr, report, UpdateWorkflowRun(ctx, db, wr)
 	}
 	return wr, report, nil

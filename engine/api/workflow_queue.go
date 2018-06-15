@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -110,10 +111,10 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(errT, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
+		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
 		return WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -369,12 +370,12 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
-		workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
+		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 		db := api.mustDB()
 
 		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
 
-		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
+		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, proj.Key)
 
 		return nil
 	}
@@ -507,6 +508,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run. JobID on handler: %d", id)
 		}
 
+		var nodeRun sdk.WorkflowNodeRun
 		if !found {
 			nodeRun, errNR := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeJobRun.WorkflowNodeRunID, false)
 			if errNR != nil {
@@ -528,6 +530,24 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot commit transaction")
 		}
 
+		if nodeRun.ID == 0 {
+			nodeRunP, errN := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{
+				DisableDetailledNodeRun: true,
+			})
+			if errN != nil {
+				log.Warning("postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", errN)
+				return nil
+			}
+			nodeRun = *nodeRunP
+		}
+
+		work, errW := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), nodeRun.WorkflowRunID)
+		if errW != nil {
+			log.Warning("postWorkflowJobStepStatusHandler> Unable to load workflow for event: %v", errW)
+			return nil
+		}
+		nodeRun.Translate(r.Header.Get("Accept-Language"))
+		event.PublishWorkflowNodeRun(api.mustDB(), nodeRun, work, nil)
 		return nil
 	}
 }

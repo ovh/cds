@@ -3,11 +3,13 @@ package main
 import (
 	"archive/tar"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -97,12 +99,6 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("worker cache push > Wrong usage: Example : worker cache push myTagValue filea fileb filec\n")
 		}
 
-		// check tag name pattern
-		regexp := sdk.NamePatternRegex
-		if !regexp.MatchString(args[0]) {
-			sdk.Exit("worker cache push > Wrong tag pattern, must satisfy %s\n", sdk.NamePattern)
-		}
-
 		files := make([]string, len(args)-1)
 		for i, arg := range args[1:] {
 			absPath, err := filepath.Abs(arg)
@@ -129,7 +125,11 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		fmt.Printf("Worker cache push in progress... (tag: %s)\n", args[0])
-		req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/cache/%s/push", port, args[0]), bytes.NewReader(data))
+		req, errRequest := http.NewRequest(
+			"POST",
+			fmt.Sprintf("http://127.0.0.1:%d/cache/%s/push", port, base64.RawURLEncoding.EncodeToString([]byte(args[0]))),
+			bytes.NewReader(data),
+		)
 		if errRequest != nil {
 			sdk.Exit("worker cache push > cannot post worker cache push (Request): %s\n", errRequest)
 		}
@@ -149,7 +149,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("cache push HTTP error %v\n", err)
 			}
 			cdsError := sdk.DecodeError(body)
-			sdk.Exit("Error: %v\n", cdsError)
+			sdk.Exit("Error: http cod %d : %v\n", resp.StatusCode, cdsError)
 		}
 
 		fmt.Printf("Worker cache push with success (tag: %s)\n", args[0])
@@ -212,7 +212,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := wk.client.WorkflowCachePush(projectKey, vars["tag"], res); err != nil {
+	if err := wk.client.WorkflowCachePush(projectKey, vars["ref"], res); err != nil {
 		err = sdk.Error{
 			Message: "worker cache push > Cannot push cache : " + err.Error(),
 			Status:  http.StatusInternalServerError,
@@ -271,7 +271,11 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		fmt.Printf("Worker cache pull in progress... (tag: %s)\n", args[0])
-		req, errRequest := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull?path=%s", port, args[0], dir), nil)
+		req, errRequest := http.NewRequest(
+			"GET",
+			fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull?path=%s", port, base64.RawURLEncoding.EncodeToString([]byte(args[0])), url.QueryEscape(dir)),
+			nil,
+		)
 		if errRequest != nil {
 			sdk.Exit("worker cache pull > cannot post worker cache pull with tag %s (Request): %s\n", args[0], errRequest)
 		}
@@ -309,7 +313,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
-	bts, err := wk.client.WorkflowCachePull(projectKey, vars["tag"])
+	bts, err := wk.client.WorkflowCachePull(projectKey, vars["ref"])
 	if err != nil {
 		err = sdk.Error{
 			Message: "worker cache pull > Cannot pull cache : " + err.Error(),
