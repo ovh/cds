@@ -2,7 +2,6 @@ package broadcast
 
 import (
 	"context"
-	"math/rand"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -12,12 +11,10 @@ import (
 
 //Initialize starts goroutine for broadcast
 func Initialize(c context.Context, DBFunc func() *gorp.DbMap) {
-	rand.Seed(time.Now().Unix())
 	tickPurge := time.NewTicker(6 * time.Hour)
+	defer tickPurge.Stop()
 
 	for {
-		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
