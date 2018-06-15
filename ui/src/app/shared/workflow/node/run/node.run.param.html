@@ -17,7 +17,7 @@
     </div>
     <div class="content">
         <div class="ui form">
-            <ng-container *ngIf="_nodeToRun">
+            <ng-container *ngIf="_nodeToRun && _nodeToRun.context.default_pipeline_parameters.length > 0 ">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
                 <app-parameter-list [project]="project" [parameters]="_nodeToRun.context.default_pipeline_parameters"
                                     [paramsRef]="_nodeToRun.pipeline.parameters" mode="launcher"
