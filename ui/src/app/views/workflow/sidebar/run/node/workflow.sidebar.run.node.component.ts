@@ -89,7 +89,8 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy {
                     this.duration = this.getDuration();
                 }, 5000);
                 // If not the same run => display loading
-                if (this.currentWorkflowRun && this.currentWorkflowRun && this.currentWorkflowNodeRun.num !== this.currentWorkflowRun.num) {
+                if (this.currentWorkflowRun && this.currentWorkflowNodeRun &&
+                    this.currentWorkflowNodeRun.num !== this.currentWorkflowRun.num) {
                     this.loading = true;
                 } else {
                     this.refreshData();
