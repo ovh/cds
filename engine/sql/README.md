@@ -1,5 +1,27 @@
 # CDS Database Management
 
+## Database and Roles creation
+
+The CDS API should be authenticated on the database with a RW Role on all tables in the database. A role with CREATE role is needed only to run migration scripts.
+Here is an example of roles creation script
+```sql
+CREATE ROLE "cds-adm";
+ALTER ROLE "cds-adm" WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB NOLOGIN NOREPLICATION;
+CREATE ROLE "cds-rw";
+ALTER ROLE "cds-rw" WITH NOSUPERUSER INHERIT NOCREATEROLE NOCREATEDB NOLOGIN NOREPLICATION;
+GRANT "cds-rw" TO "cds-adm" GRANTED BY postgres;
+GRANT CREATE ON DATABASE cds TO "cds-adm";
+GRANT CREATE ON SCHEMA public TO "cds-adm";
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "cds-adm" IN SCHEMA public REVOKE ALL ON SEQUENCES  FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES FOR ROLE "cds-adm" IN SCHEMA public REVOKE ALL ON SEQUENCES  FROM "cds-adm";
+ALTER DEFAULT PRIVILEGES FOR ROLE "cds-adm" IN SCHEMA public GRANT USAGE,UPDATE ON SEQUENCES  TO "cds-rw";
+ALTER DEFAULT PRIVILEGES FOR ROLE "cds-adm" IN SCHEMA public REVOKE ALL ON TABLES  FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES FOR ROLE "cds-adm" IN SCHEMA public REVOKE ALL ON TABLES  FROM "cds-adm";
+ALTER DEFAULT PRIVILEGES FOR ROLE "cds-adm" IN SCHEMA public GRANT TRIGGER,TRUNCATE ON TABLES  TO "cds-adm";
+ALTER DEFAULT PRIVILEGES FOR ROLE "cds-adm" IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,UPDATE ON TABLES  TO "cds-rw";
+```
+
 ## Organization of this folder
 
 This folder contains Migration scripts. Each migration scripts contains Upgrade and Downgrade statements.

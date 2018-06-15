@@ -32,19 +32,7 @@ type Configuration struct {
 			URL string `toml:"url" default:"http://localhost:2015"`
 		} `toml:"http"`
 	}
-	API struct {
-		HTTP struct {
-			URL      string `toml:"url" default:"http://localhost:8081"`
-			Insecure bool   `toml:"insecure" commented:"true"`
-		} `toml:"http"`
-		GRPC struct {
-			URL      string `toml:"url" default:"http://localhost:8082"`
-			Insecure bool   `toml:"insecure" commented:"true"`
-		} `toml:"grpc"`
-		Token                string `toml:"token" default:"************"`
-		RequestTimeout       int    `toml:"requestTimeout" default:"10"`
-		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10"`
-	} `toml:"api" comment:"######################\n CDS API Settings \n######################"`
+	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {
