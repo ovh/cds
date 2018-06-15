@@ -14,10 +14,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var Cache cache.Store
+var store cache.Store
 
 func publishEvent(e sdk.Event) {
-	Cache.Enqueue("events", e)
+	store.Enqueue("events", e)
 
 	// send to cache for cds repositories manager
 	var toSkipSendReposManager bool
@@ -29,7 +29,7 @@ func publishEvent(e sdk.Event) {
 		}
 	}
 	if !toSkipSendReposManager {
-		Cache.Enqueue("events_repositoriesmanager", e)
+		store.Enqueue("events_repositoriesmanager", e)
 	}
 
 	b, err := json.Marshal(e)
@@ -37,7 +37,7 @@ func publishEvent(e sdk.Event) {
 		log.Warning("publishEvent> Cannot marshal event %+v", e)
 		return
 	}
-	Cache.Publish("events_pubsub", string(b))
+	store.Publish("events_pubsub", string(b))
 }
 
 // Publish sends a event to a queue
