@@ -74,16 +74,12 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to load application")
 		}
 
-		// If the call is made by a provider, merge the existing
-		// or the default config with the provided config
-		if getProvider(ctx) != nil {
-			oldPfConfig, has := app.DeploymentStrategies[pfName]
-			if !has {
-				oldPfConfig = pf.Model.DeploymentDefaultConfig
-			}
-			oldPfConfig.MergeWith(pfConfig)
-			pfConfig = oldPfConfig
+		oldPfConfig, has := app.DeploymentStrategies[pfName]
+		if !has {
+			oldPfConfig = pf.Model.DeploymentDefaultConfig
 		}
+		oldPfConfig.MergeWith(pfConfig)
+		pfConfig = oldPfConfig
 
 		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfName, pfConfig); err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")

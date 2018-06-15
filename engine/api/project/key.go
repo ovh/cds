@@ -32,9 +32,7 @@ type dbEncryptedData struct {
 // EncryptWithBuiltinKey encrypt a content with the builtin gpg key encode, compress it and encode with base64
 func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content string) (string, error) {
 	existingToken, err := db.SelectStr("select token from encrypted_data where project_id = $1 and content_name = $2", projectID, name)
-	if existingToken != "" {
-		return existingToken, nil
-	} else if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != sql.ErrNoRows {
 		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to request encrypted_data")
 	}
 
@@ -81,8 +79,15 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 		EncyptedContent: []byte(s),
 	}
 
-	if err := db.Insert(&bded); err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to save encrypted_data")
+	if existingToken != "" {
+		bded.Token = existingToken
+		if _, err := db.Update(&bded); err != nil {
+			return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to save encrypted_data")
+		}
+	} else {
+		if err := db.Insert(&bded); err != nil {
+			return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to save encrypted_data")
+		}
 	}
 
 	return bded.Token, nil
