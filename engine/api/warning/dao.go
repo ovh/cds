@@ -27,7 +27,8 @@ func removeProjectWarning(db gorp.SqlExecutor, warningType string, element strin
 	return err
 }
 
-func Insert(db gorp.SqlExecutor, w sdk.WarningV2) error {
+// Insert a warning
+func Insert(db gorp.SqlExecutor, w sdk.Warning) error {
 	h, err := hashstructure.Hash(w, nil)
 	if err != nil {
 		return sdk.WrapError(err, "warning.Insert> Unable to calculate hash")
@@ -37,8 +38,17 @@ func Insert(db gorp.SqlExecutor, w sdk.WarningV2) error {
 	if err := db.Insert(&warn); err != nil {
 		return sdk.WrapError(err, "warning.Insert> Unable to insert warning")
 	}
-	w = sdk.WarningV2(warn)
+	w = sdk.Warning(warn)
 	event.PublishAddWarning(w)
+	return nil
+}
+
+// Update a warning
+func Update(db gorp.SqlExecutor, w sdk.Warning) error {
+	warn := warning(w)
+	if _, err := db.Update(&warn); err != nil {
+		return sdk.WrapError(err, "warning.Update> Unable to update a warning")
+	}
 	return nil
 }
 
@@ -79,7 +89,7 @@ func (w *warning) PostGet(db gorp.SqlExecutor) error {
 }
 
 // GetByProject Get all warnings for the given project
-func GetByProject(db gorp.SqlExecutor, key string) ([]sdk.WarningV2, error) {
+func GetByProject(db gorp.SqlExecutor, key string) ([]sdk.Warning, error) {
 	query := `
 		SELECT * FROM warning WHERE project_key = $1
 	`
@@ -88,13 +98,23 @@ func GetByProject(db gorp.SqlExecutor, key string) ([]sdk.WarningV2, error) {
 		return nil, sdk.WrapError(err, "warning.GetByProject> Unable to list warnings for project %s", key)
 	}
 
-	warnings := make([]sdk.WarningV2, len(ws))
+	warnings := make([]sdk.Warning, len(ws))
 	for i, w := range ws {
 		if err := w.PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "warning.GetByProject> Unable to post get warnings")
 		}
-		warnings[i] = sdk.WarningV2(w)
+		warnings[i] = sdk.Warning(w)
 	}
 
 	return warnings, nil
+}
+
+// GetByProjectAndHash Retrieve a warning by project key and hash
+func GetByProjectAndHash(db gorp.SqlExecutor, key string, hash string) (sdk.Warning, error) {
+	query := `SELECT * FROM warning WHERE project_key = $1 AND hash = $2`
+	var warn warning
+	if err := db.SelectOne(&warn, query, key, hash); err != nil {
+		return sdk.Warning{}, sdk.WrapError(err, "warning.GetByProjectAndHash> Unable to get warning")
+	}
+	return sdk.Warning(warn), nil
 }

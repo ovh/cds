@@ -164,6 +164,7 @@ type WorkflowNodeRunArtifact struct {
 	ID                int64     `json:"id" db:"id"`
 	Name              string    `json:"name" db:"name" cli:"name"`
 	Tag               string    `json:"tag" db:"tag" cli:"tag"`
+	Ref               string    `json:"ref" db:"ref" cli:"ref"`
 	DownloadHash      string    `json:"download_hash" db:"download_hash"`
 	Size              int64     `json:"size,omitempty" db:"size"`
 	Perm              uint32    `json:"perm,omitempty" db:"perm"`
@@ -223,6 +224,7 @@ type WorkflowNodeJobRunSummary struct {
 	Start             int64              `json:"start,omitempty" db:"start"`
 	Done              int64              `json:"done,omitempty" db:"done"`
 	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
+	SpawnInfos        []SpawnInfo        `json:"spawninfos" db:"-"`
 }
 
 // ToSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
@@ -235,6 +237,7 @@ func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
 		Queued:            wnjr.Queued.Unix(),
 		Start:             wnjr.Start.Unix(),
 		Job:               wnjr.Job.ToSummary(),
+		SpawnInfos:        wnjr.SpawnInfos,
 	}
 	return sum
 }
@@ -276,7 +279,11 @@ func (w *WorkflowNodeRunArtifact) GetName() string {
 
 //GetPath returns the path of the artifact
 func (w *WorkflowNodeRunArtifact) GetPath() string {
-	container := fmt.Sprintf("%d-%d-%s", w.WorkflowID, w.WorkflowNodeRunID, w.Tag)
+	ref := w.Ref
+	if ref == "" {
+		ref = w.Tag
+	}
+	container := fmt.Sprintf("%d-%d-%s", w.WorkflowID, w.WorkflowNodeRunID, ref)
 	container = url.QueryEscape(container)
 	container = strings.Replace(container, "/", "-", -1)
 	return container

@@ -9,6 +9,7 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -247,4 +248,55 @@ func mergeAndDiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[str
 		}
 	}
 	return
+}
+
+// DefaultPayload returns the default payload for the workflow root
+func DefaultPayload(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *sdk.User, wf *sdk.Workflow) (interface{}, error) {
+	var defaultPayload interface{}
+	if wf.Root.Context == nil || wf.Root.Context.Application == nil || wf.Root.Context.Application.ID == 0 {
+		app, errLa := application.LoadByID(db, store, wf.Root.Context.ApplicationID, u)
+		if errLa != nil {
+			return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "DefaultPayload> unable to load application by id %d", wf.Root.Context.ApplicationID)
+		}
+		wf.Root.Context.Application = app
+	}
+
+	if wf.Root.Context.Application.RepositoryFullname != "" {
+		defaultBranch := "master"
+		projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, wf.Root.Context.Application.VCSServer)
+		if projectVCSServer != nil {
+			client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
+			if errclient != nil {
+				return wf.Root.Context.DefaultPayload, sdk.WrapError(errclient, "DefaultPayload> Cannot get authorized client")
+			}
+
+			branches, errBr := client.Branches(wf.Root.Context.Application.RepositoryFullname)
+			if errBr != nil {
+				return wf.Root.Context.DefaultPayload, sdk.WrapError(errBr, "DefaultPayload> Cannot get branches for %s", wf.Root.Context.Application.RepositoryFullname)
+			}
+
+			for _, branch := range branches {
+				if branch.Default {
+					defaultBranch = branch.DisplayID
+					break
+				}
+			}
+		}
+
+		defaultPayload = wf.Root.Context.DefaultPayload
+		if !wf.Root.Context.HasDefaultPayload() {
+			defaultPayload = sdk.WorkflowNodeContextDefaultPayloadVCS{
+				GitBranch:     defaultBranch,
+				GitRepository: wf.Root.Context.Application.RepositoryFullname,
+			}
+		} else if defaultPayloadMap, err := wf.Root.Context.DefaultPayloadToMap(); err == nil && defaultPayloadMap["git.branch"] == "" {
+			defaultPayloadMap["git.branch"] = defaultBranch
+			defaultPayloadMap["git.repository"] = wf.Root.Context.Application.RepositoryFullname
+			defaultPayload = defaultPayloadMap
+		}
+	} else {
+		defaultPayload = wf.Root.Context.DefaultPayload
+	}
+
+	return defaultPayload, nil
 }

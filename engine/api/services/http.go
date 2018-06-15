@@ -170,7 +170,7 @@ func doRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 	basedHash := base64.StdEncoding.EncodeToString([]byte(srv.Hash))
 	req.Header.Set(sdk.AuthHeader, basedHash)
 
-	log.Debug("services.DoRequest> request: %s", req.URL.String())
+	log.Debug("services.DoRequest> request %v", req.URL)
 
 	//Do the request
 	resp, errDo := HTTPClient.Do(req)

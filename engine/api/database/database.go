@@ -26,8 +26,6 @@ type DBConnectionFactory struct {
 	dbMaxConn        int
 	db               *sql.DB
 	mutex            *sync.Mutex
-	SecretDBUser     string
-	SecretDBPassword string
 }
 
 // DB returns the current sql.DB object
@@ -95,14 +93,6 @@ func Init(user, password, name, host string, port int, sslmode string, connectTi
 		f.dbHost == "" ||
 		f.dbPort == 0 {
 		return nil, fmt.Errorf("Missing database infos")
-	}
-
-	if f.SecretDBUser != "" {
-		f.dbUser = f.SecretDBUser
-	}
-
-	if f.SecretDBPassword != "" {
-		f.dbPassword = f.SecretDBPassword
 	}
 
 	if f.dbTimeout < 200 || f.dbTimeout > 30000 {

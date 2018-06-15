@@ -24,8 +24,8 @@ type PipelineBuildJob struct {
 
 // SpawnInfo contains an information about spawning
 type SpawnInfo struct {
-	APITime    time.Time `json:"api_time,omitempty" db:"-"`
-	RemoteTime time.Time `json:"remote_time,omitempty" db:"-"`
+	APITime    time.Time `json:"api_time,omitempty" db:"-" mapstructure:"-"`
+	RemoteTime time.Time `json:"remote_time,omitempty" db:"-" mapstructure:"-"`
 	Message    SpawnMsg  `json:"message,omitempty" db:"-"`
 	// UserMessage contains msg translated for end user
 	UserMessage string `json:"user_message,omitempty" db:"-"`
@@ -61,20 +61,22 @@ type ExecutedJobSummary struct {
 // ToSummary transforms an ExecutedJob to an ExecutedJobSummary
 func (j ExecutedJob) ToSummary() ExecutedJobSummary {
 	sum := ExecutedJobSummary{
-		StepStatusSummary: make([]StepStatusSummary, len(j.StepStatus)),
-		JobName:           j.Action.Name,
-		Reason:            j.Reason,
-		WorkerName:        j.WorkerName,
-		Steps:             make([]ActionSummary, len(j.Action.Actions)),
-		PipelineActionID:  j.PipelineActionID,
-		PipelineStageID:   j.PipelineStageID,
+		JobName:          j.Action.Name,
+		Reason:           j.Reason,
+		WorkerName:       j.WorkerName,
+		PipelineActionID: j.PipelineActionID,
+		PipelineStageID:  j.PipelineStageID,
 	}
-	for i := range j.Action.Actions {
-		sum.Steps[i] = j.Action.Actions[i].ToSummary()
-	}
+	sum.StepStatusSummary = make([]StepStatusSummary, len(j.StepStatus))
 	for i := range j.StepStatus {
 		sum.StepStatusSummary[i] = j.StepStatus[i].ToSummary()
 	}
+
+	sum.Steps = make([]ActionSummary, len(j.Action.Actions))
+	for i := range j.Action.Actions {
+		sum.Steps[i] = j.Action.Actions[i].ToSummary()
+	}
+
 	return sum
 }
 

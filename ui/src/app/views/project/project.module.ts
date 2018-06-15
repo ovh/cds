@@ -18,6 +18,7 @@ import {ProjectPlatformListComponent} from './show/platforms/list/platform.list.
 import {ProjectPlatformsComponent} from './show/platforms/project.platforms.component';
 import {ProjectShowComponent} from './show/project.component';
 import {ProjectVariablesComponent} from './show/variable/variable.list.component';
+import {ProjectWarningsComponent} from './show/warnings/warnings.component';
 import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.component';
 
 @NgModule({
@@ -38,7 +39,8 @@ import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.compon
         ProjectWorkflowListComponent,
         ProjectPlatformsComponent,
         ProjectPlatformFormComponent,
-        ProjectPlatformListComponent
+        ProjectPlatformListComponent,
+        ProjectWarningsComponent
     ],
     imports: [
         SharedModule,

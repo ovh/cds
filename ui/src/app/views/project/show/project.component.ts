@@ -37,6 +37,7 @@ export class ProjectShowComponent implements OnInit {
     workflowPipeline: string;
     loadingFav = false;
 
+    allWarnings: Array<Warning>;
     warnVariable: Array<Warning>;
     warnPerm: Array<Warning>;
     warnKeys: Array<Warning>;
@@ -127,6 +128,9 @@ export class ProjectShowComponent implements OnInit {
 
     splitWarnings(warnings: immutable.Map<string, Warning>): void {
         if (warnings) {
+            this.allWarnings = warnings.toArray().sort((a, b) => {
+                return a.id - b.id;
+            });
             this.warnVariable = new Array<Warning>();
             this.warnPerm = new Array<Warning>();
             this.warnKeys = new Array<Warning>();
@@ -136,6 +140,9 @@ export class ProjectShowComponent implements OnInit {
             this.warnWorkflow = new Array<Warning>();
             this.warnEnvironment = new Array<Warning>();
             warnings.valueSeq().toArray().forEach(v => {
+                if (v.ignored) {
+                    return;
+                }
                 if (v.application_name !== '') {
                     this.warnApplications.push(v);
                 }

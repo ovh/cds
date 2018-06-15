@@ -36,7 +36,7 @@ func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 
 		apps, pips, pipJobs := keyIsUsed(db, e.ProjectKey, payload.Key.Name)
 		if len(apps) == 0 && len(pips) == 0 && len(pipJobs) == 0 {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				Element: payload.Key.Name,
 				Created: time.Now(),
@@ -97,7 +97,7 @@ func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecuto
 			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to list pipeline")
 		}
 		for _, p := range pips {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				PipName: p,
 				Element: payload.Key.Name,
@@ -152,7 +152,7 @@ func (warn missingProjectKeyPipelineJobWarning) compute(db gorp.SqlExecutor, e s
 			return sdk.WrapError(err, "missingProjectKeyPipelineJobWarning.compute> Unable to list pipeline")
 		}
 		for _, p := range pips {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				PipName: p.PipName,
 				Element: payload.Key.Name,
@@ -209,7 +209,7 @@ func (warn missingProjectKeyApplicationWarning) compute(db gorp.SqlExecutor, e s
 			return sdk.WrapError(err, "missingProjectKeyApplicationWarning.compute> Unable to list pipeline")
 		}
 		for _, a := range apps {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				AppName: a,
 				Element: payload.Key.Name,

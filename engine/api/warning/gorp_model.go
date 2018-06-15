@@ -5,7 +5,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type warning sdk.WarningV2
+type warning sdk.Warning
 
 func init() {
 	gorpmapping.Register(

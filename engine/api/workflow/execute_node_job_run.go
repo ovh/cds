@@ -178,20 +178,20 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	var errReport error
 	report, errReport = report.Merge(execute(ctx, dbCopy, db, store, proj, node))
 
+	wr, err := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true})
+	if err != nil {
+		return report, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", node.WorkflowRunID)
+	}
+
 	//Start a goroutine to update commit statuses in repositories manager
-	go func() {
-		wr, err := LoadRunByID(dbCopy, node.WorkflowRunID, LoadRunOptions{})
-		if err != nil {
-			log.Error("workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", node.WorkflowRunID)
-			return
-		}
-		if sdk.StatusIsTerminated(wr.Status) {
+	go func(wfRun *sdk.WorkflowRun) {
+		if sdk.StatusIsTerminated(wfRun.Status) {
 			wr.LastExecution = time.Now()
-			if err := ResyncCommitStatus(ctx, dbCopy, store, proj, wr); err != nil {
+			if err := ResyncCommitStatus(ctx, dbCopy, store, proj, wfRun); err != nil {
 				log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
 			}
 		}
-	}()
+	}(wr)
 
 	return report, errReport
 }

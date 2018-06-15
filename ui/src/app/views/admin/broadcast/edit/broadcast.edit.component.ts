@@ -5,7 +5,11 @@ import {Broadcast} from 'app/model/broadcast.model';
 import {NavbarProjectData} from 'app/model/navbar.model';
 import {User} from 'app/model/user.model';
 import {AuthentificationStore} from 'app/service/auth/authentification.store';
+<<<<<<< HEAD
 import {BroadcastStore} from 'app/service/broadcast/broadcast.store';
+=======
+import {BroadcastService} from 'app/service/broadcast/broadcast.service';
+>>>>>>> master
 import {NavbarService} from 'app/service/navbar/navbar.service';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';

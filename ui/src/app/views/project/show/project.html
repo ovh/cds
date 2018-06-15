@@ -43,6 +43,9 @@
             <a sm-item [class.active]="selectedTab === 'platforms'" id="ProjectPlatformsTab" (click)="showTab('platforms')"><i class="plug icon"></i>
                 {{ 'common_platforms' | translate }}
             </a>
+            <a sm-item [class.active]="selectedTab === 'warnings'" id="ProjectWarningsTab" (click)="showTab('warnings')"><i class="bug icon"></i>
+                {{ 'common_warnings' | translate }}
+            </a>
             <a sm-item [class.active]="selectedTab === 'advanced'" id="ProjectAdvancedTab" (click)="showTab('advanced')" *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE"><i class="graduation icon"></i>{{
                 'common_advanced' | translate }}
                 <app-warning-tab [warnings]="warnVCS"></app-warning-tab>
@@ -79,6 +82,9 @@
                 </div>
                 <div *ngSwitchCase="'platforms'">
                     <app-project-platforms [project]="project"></app-project-platforms>
+                </div>
+                <div *ngSwitchCase="'warnings'">
+                    <app-project-warnings [project]="project" [warnings]="allWarnings"></app-project-warnings>
                 </div>
                 <div *ngSwitchCase="'advanced'">
                     <h3>{{ 'project_advanced_title' | translate }}</h3>

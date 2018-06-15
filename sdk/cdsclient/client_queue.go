@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -216,10 +217,11 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) (bool, time
 	return false, time.Since(t0), err
 }
 
-func (c *client) queueIndirectArtifactTempURL(id int64, tag string, art *sdk.WorkflowNodeRunArtifact) error {
+func (c *client) queueIndirectArtifactTempURL(id int64, art *sdk.WorkflowNodeRunArtifact) error {
 	var retryURL = 10
 	var globalURLErr error
-	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, tag)
+	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, art.Ref)
+
 	for i := 0; i < retryURL; i++ {
 		var code int
 		code, globalURLErr = c.PostJSON(uri, art, art)
@@ -296,9 +298,11 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 
 	_, name := filepath.Split(filePath)
 
+	ref := base64.RawURLEncoding.EncodeToString([]byte(tag))
 	art := sdk.WorkflowNodeRunArtifact{
 		Name:      name,
 		Tag:       tag,
+		Ref:       ref,
 		Size:      stat.Size(),
 		Perm:      uint32(stat.Mode().Perm()),
 		MD5sum:    md5sum,
@@ -306,7 +310,7 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		Created:   time.Now(),
 	}
 
-	if err := c.queueIndirectArtifactTempURL(id, tag, &art); err != nil {
+	if err := c.queueIndirectArtifactTempURL(id, &art); err != nil {
 		return err
 	}
 
@@ -323,7 +327,7 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 	if err := c.queueIndirectArtifactTempURLPost(art.TempURL, fileContent); err != nil {
 		// If we got a 401 error from the objectstore, ask for a fresh temporary url and repost the artifact
 		if strings.Contains(err.Error(), "401 Unauthorized: Temp URL invalid") {
-			if err := c.queueIndirectArtifactTempURL(id, tag, &art); err != nil {
+			if err := c.queueIndirectArtifactTempURL(id, &art); err != nil {
 				return err
 			}
 
@@ -338,7 +342,7 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 	var callbackErr error
 	retry := 50
 	for i := 0; i < retry; i++ {
-		uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url/callback", id, tag)
+		uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url/callback", id, art.Ref)
 		_, callbackErr = c.PostJSON(uri, &art, nil)
 		if callbackErr == nil {
 			return nil
@@ -398,7 +402,8 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 	}
 
 	var err error
-	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s", id, tag)
+	ref := base64.RawURLEncoding.EncodeToString([]byte(tag))
+	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s", id, ref)
 	for i := 0; i <= c.config.Retry; i++ {
 		var code int
 		_, code, err = c.UploadMultiPart("POST", uri, body,

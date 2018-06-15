@@ -47,7 +47,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Cannot list application from EventApplicationRepositoryDelete")
 		}
 		if len(apps) == 0 {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				Element: payload.VCSServer,
 				Created: time.Now(),
@@ -72,7 +72,7 @@ func (warn unusedProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 			return sdk.WrapError(err, "unusedProjectVCSWarning.compute> Cannot list application from EventProjectVCSServerAdd")
 		}
 		if len(apps) == 0 {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				Element: payload.VCSServerName,
 				Created: time.Now(),
@@ -134,7 +134,7 @@ func (warn missingProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) e
 		}
 
 		for _, app := range apps {
-			w := sdk.WarningV2{
+			w := sdk.Warning{
 				Key:     e.ProjectKey,
 				AppName: app,
 				Element: payload.VCSServerName,

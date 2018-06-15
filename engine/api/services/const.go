@@ -7,4 +7,5 @@ const (
 	TypeVCS          = "vcs"
 	TypeAPI          = "api"
 	TypeHatchery     = "hatchery"
+	TypeDBMigrate    = "dbmigrate"
 )

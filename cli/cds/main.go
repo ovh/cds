@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -29,18 +28,6 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "cds",
 	Short: "CDS - Command Line Tool",
-}
-
-func displayWarnings() {
-	// Display warnings, on failure, fail silently
-	warnings, err := sdk.GetWarnings()
-	if err == nil && len(warnings) > 0 {
-		fmt.Printf("/!\\ %d warnings found in your CDS configuration:\n", len(warnings))
-		for _, w := range warnings {
-			fmt.Printf("- %s\n", w.Message)
-		}
-		fmt.Printf("\n")
-	}
 }
 
 func main() {
@@ -83,11 +70,6 @@ func main() {
 
 		//Just one try
 		sdk.SetRetry(1)
-
-		//Manage warnings
-		if !internal.NoWarnings && cmd != user.Cmd {
-			displayWarnings()
-		}
 
 	}
 

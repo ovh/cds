@@ -111,7 +111,9 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithFeatures)
+			project.LoadOptions.WithFeatures,
+			project.LoadOptions.WithClearPlatforms,
+		)
 		if errp != nil {
 			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
 		}
@@ -136,6 +138,8 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to read cds files")
 		}
 
+		ope.RepositoryStrategy.Branch = "{{git.branch}}"
+		ope.RepositoryStrategy.DefaultBranch = ope.RepositoryInfo.DefaultBranch
 		opt := &workflow.PushOption{
 			VCSServer:          ope.VCSServer,
 			RepositoryName:     ope.RepositoryInfo.Name,

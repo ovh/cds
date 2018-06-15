@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"context"
-	"math/rand"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -16,12 +15,10 @@ var baseUIURL string
 //Initialize starts goroutines for workflows
 func Initialize(c context.Context, store cache.Store, uiURL string, DBFunc func() *gorp.DbMap) {
 	baseUIURL = uiURL
-	rand.Seed(time.Now().Unix())
 	tickPurge := time.NewTicker(30 * time.Minute)
+	defer tickPurge.Stop()
 
 	for {
-		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-
 		select {
 		case <-c.Done():
 			if c.Err() != nil {

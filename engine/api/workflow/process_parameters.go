@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, *sdk.MultiError) {
@@ -142,8 +141,6 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	//Merge the dumped payload with vars
 	vars = sdk.ParametersMapMerge(vars, tmpVars)
-
-	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
 
 	// TODO Update suggest.go  with new variable
 

@@ -10,4 +10,8 @@ export class WarningService {
     getProjectWarnings(key: string): Observable<Array<Warning>> {
         return this._http.get<Array<Warning>>('/warning/' + key);
     }
+
+    update(key: string, w: Warning): Observable<Warning> {
+        return this._http.put<Warning>('/warning/' + key + '/' + w.hash, w);
+    }
 }

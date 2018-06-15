@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -664,7 +665,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"tag":    "latest",
+		"ref":    base64.RawURLEncoding.EncodeToString([]byte("latest")),
 		"permID": fmt.Sprintf("%d", ctx.job.ID),
 	}
 
