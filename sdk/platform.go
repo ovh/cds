@@ -149,7 +149,7 @@ func (pf *ProjectPlatform) HideSecrets() {
 
 // MergeWith merge two config
 func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
-	if config == nil {
+	if *config == nil {
 		*config = PlatformConfig{}
 	}
 	for k, v := range cfg {
