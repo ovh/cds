@@ -361,9 +361,12 @@ type GRPCPluginsClient interface {
 	...
 */
 type ProviderClient interface {
-	ProjectsList(opts ...RequestModifier) ([]sdk.Project, error)
 	ApplicationsList(projectKey string, opts ...RequestModifier) ([]sdk.Application, error)
 	ApplicationDeploymentStrategyUpdate(projectKey, applicationName, platformName string, config sdk.PlatformConfig) error
+	ApplicationMetadataUpdate(projectKey, applicationName, key, value string) error
+	ProjectsList(opts ...RequestModifier) ([]sdk.Project, error)
+	WorkflowsList(projectKey string) ([]sdk.Workflow, error)
+	WorkflowLoad(projectKey, workflowName string) (*sdk.Workflow, error)
 }
 
 // FilterByUser allow a provider to perform a request as a user identified by its username
@@ -378,6 +381,15 @@ func FilterByWritablePermission() RequestModifier {
 	return func(r *http.Request) {
 		q := r.URL.Query()
 		q.Set("permission", "W")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithUsage allow a provider to retrieve an application with its usage
+func WithUsage() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withUsage", "true")
 		r.URL.RawQuery = q.Encode()
 	}
 }
