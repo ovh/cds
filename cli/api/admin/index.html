@@ -1989,22 +1989,22 @@
 <li><a href="#getcpuprofile-responds-with-the-pprof-formatted-cpu-profile">getCPUProfile responds with the pprof-formatted cpu profile.</a></li>
 <li><a href="#gettrace-responds-with-the-execution-trace-in-binary-form">getTrace responds with the execution trace in binary form.</a></li>
 <li><a href="#get-admin-maintenance">GET <code>/admin/maintenance</code></a></li>
-<li><a href="#post-admin-maintenance">POST <code>/admin/maintenance</code></a></li>
 <li><a href="#delete-admin-maintenance">DELETE <code>/admin/maintenance</code></a></li>
+<li><a href="#post-admin-maintenance">POST <code>/admin/maintenance</code></a></li>
 <li><a href="#post-admin-plugin">POST <code>/admin/plugin</code></a></li>
 <li><a href="#get-admin-plugin">GET <code>/admin/plugin</code></a></li>
 <li><a href="#put-admin-plugin-name">PUT <code>/admin/plugin/&lt;name&gt;</code></a></li>
-<li><a href="#delete-admin-plugin-name">DELETE <code>/admin/plugin/&lt;name&gt;</code></a></li>
 <li><a href="#get-admin-plugin-name">GET <code>/admin/plugin/&lt;name&gt;</code></a></li>
+<li><a href="#delete-admin-plugin-name">DELETE <code>/admin/plugin/&lt;name&gt;</code></a></li>
 <li><a href="#post-admin-plugin-name-binary">POST <code>/admin/plugin/&lt;name&gt;/binary</code></a></li>
-<li><a href="#delete-admin-plugin-name-binary-os-arch">DELETE <code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></a></li>
 <li><a href="#get-admin-plugin-name-binary-os-arch">GET <code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></a></li>
+<li><a href="#delete-admin-plugin-name-binary-os-arch">DELETE <code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></a></li>
 <li><a href="#get-admin-service-name">GET <code>/admin/service/&lt;name&gt;</code></a></li>
 <li><a href="#get-admin-services">GET <code>/admin/services</code></a></li>
-<li><a href="#get-admin-services-call">GET <code>/admin/services/call</code></a></li>
-<li><a href="#delete-admin-services-call">DELETE <code>/admin/services/call</code></a></li>
 <li><a href="#post-admin-services-call">POST <code>/admin/services/call</code></a></li>
+<li><a href="#get-admin-services-call">GET <code>/admin/services/call</code></a></li>
 <li><a href="#put-admin-services-call">PUT <code>/admin/services/call</code></a></li>
+<li><a href="#delete-admin-services-call">DELETE <code>/admin/services/call</code></a></li>
 <li><a href="#delete-admin-warning">DELETE <code>/admin/warning</code></a></li>
 </ul></li>
 </ul></li>
@@ -2169,34 +2169,6 @@
 </tbody>
 </table>
 
-<h3 id="post-admin-maintenance">POST <code>/admin/maintenance</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/maintenance</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminMaintenanceHandler%22">postAdminMaintenanceHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="delete-admin-maintenance">DELETE <code>/admin/maintenance</code></h3>
 
 <table>
@@ -2221,6 +2193,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminMaintenanceHandler%22">deleteAdminMaintenanceHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-admin-maintenance">POST <code>/admin/maintenance</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/maintenance</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAdminMaintenanceHandler%22">postAdminMaintenanceHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2309,34 +2309,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-admin-plugin-name">DELETE <code>/admin/plugin/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginHandler%22">deleteGRPCluginHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-admin-plugin-name">GET <code>/admin/plugin/&lt;name&gt;</code></h3>
 
 <table>
@@ -2361,6 +2333,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginHandler%22">getGRPCluginHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-admin-plugin-name">DELETE <code>/admin/plugin/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/plugin/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginHandler%22">deleteGRPCluginHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2393,34 +2393,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-admin-plugin-name-binary-os-arch">DELETE <code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginBinaryHandler%22">deleteGRPCluginBinaryHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-admin-plugin-name-binary-os-arch">GET <code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></h3>
 
 <table>
@@ -2445,6 +2417,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGRPCluginBinaryHandler%22">getGRPCluginBinaryHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-admin-plugin-name-binary-os-arch">DELETE <code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/plugin/&lt;name&gt;/binary/&lt;os&gt;/&lt;arch&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGRPCluginBinaryHandler%22">deleteGRPCluginBinaryHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2505,62 +2505,6 @@
 </tbody>
 </table>
 
-<h3 id="get-admin-services-call">GET <code>/admin/services/call</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22">getAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="delete-admin-services-call">DELETE <code>/admin/services/call</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/admin/services/call</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22">deleteAdminServiceCallHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-admin-services-call">POST <code>/admin/services/call</code></h3>
 
 <table>
@@ -2589,6 +2533,34 @@
 </tbody>
 </table>
 
+<h3 id="get-admin-services-call">GET <code>/admin/services/call</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/services/call</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getAdminServiceCallHandler%22">getAdminServiceCallHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="put-admin-services-call">PUT <code>/admin/services/call</code></h3>
 
 <table>
@@ -2613,6 +2585,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putAdminServiceCallHandler%22">putAdminServiceCallHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-admin-services-call">DELETE <code>/admin/services/call</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/admin/services/call</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteAdminServiceCallHandler%22">deleteAdminServiceCallHandler</a></td>
 </tr>
 </tbody>
 </table>
