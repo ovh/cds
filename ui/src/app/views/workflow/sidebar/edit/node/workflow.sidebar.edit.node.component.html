@@ -88,7 +88,7 @@
 <ng-template let-context let-modal="modal" #nodeNameWarningModal>
     <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>
     <div class="content">
-        <ng-container *ngIf="nameWarning && nameWarning.hooks.length > 0">
+        <ng-container *ngIf="nameWarning && nameWarning.hooks && nameWarning.hooks.length > 0">
             <h3>{{'workflow_node_name_warning_modal_hooks' | translate }}</h3>
             <ul>
                 <li *ngFor="let h of nameWarning.hooks">
