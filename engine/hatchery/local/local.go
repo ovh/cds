@@ -58,30 +58,6 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
-	req, err := h.CDSClient().Requirements()
-	if err != nil {
-		return fmt.Errorf("Cannot fetch requirements: %s", err)
-	}
-
-	capa, err := checkCapabilities(req)
-	if err != nil {
-		return fmt.Errorf("Cannot check local capabilities: %s", err)
-	}
-
-	h.hatch = &sdk.Hatchery{
-		Name: genname,
-		Model: sdk.Model{
-			Name: genname,
-			Type: sdk.HostProcess,
-			ModelVirtualMachine: sdk.ModelVirtualMachine{
-				Image: genname,
-			},
-			RegisteredCapabilities: capa,
-			Provision:              int64(h.Config.NbProvision),
-		},
-		Version: sdk.VERSION,
-	}
-
 	return nil
 }
 
@@ -140,6 +116,30 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	req, err := h.CDSClient().Requirements()
+	if err != nil {
+		return fmt.Errorf("Cannot fetch requirements: %s", err)
+	}
+
+	capa, err := checkCapabilities(req)
+	if err != nil {
+		return fmt.Errorf("Cannot check local capabilities: %s", err)
+	}
+
+	h.hatch = &sdk.Hatchery{
+		Name: h.Name,
+		Model: sdk.Model{
+			Name: h.Name,
+			Type: sdk.HostProcess,
+			ModelVirtualMachine: sdk.ModelVirtualMachine{
+				Image: h.Name,
+			},
+			RegisteredCapabilities: capa,
+			Provision:              int64(h.Config.NbProvision),
+		},
+		Version: sdk.VERSION,
+	}
+
 	return h.CommonServe(ctx, h)
 }
 
