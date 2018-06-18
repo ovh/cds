@@ -33,7 +33,7 @@ type dbEncryptedData struct {
 func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content string) (string, error) {
 	existingToken, err := db.SelectStr("select token from encrypted_data where project_id = $1 and content_name = $2", projectID, name)
 	if err != nil && err != sql.ErrNoRows {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to request encrypted_data")
+		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to request encrypted_data")
 	}
 
 	k, err := loadBuildinKey(db, projectID)
@@ -48,16 +48,16 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 
 	encryptedContent, err := ioutil.ReadAll(encryptedReader)
 	if err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to ungzip content")
+		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to ungzip content")
 	}
 
 	compressedContent := new(bytes.Buffer)
 	gzipWriter := gzip.NewWriter(compressedContent)
 	if _, err := gzipWriter.Write(encryptedContent); err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to write gzip content")
+		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to write gzip content")
 	}
 	if err := gzipWriter.Close(); err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to gzip content")
+		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to gzip content")
 	}
 
 	s := base64.StdEncoding.EncodeToString(compressedContent.Bytes())
@@ -82,11 +82,11 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 	if existingToken != "" {
 		bded.Token = existingToken
 		if _, err := db.Update(&bded); err != nil {
-			return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to update encrypted_data")
+			return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to update encrypted_data")
 		}
 	} else {
 		if err := db.Insert(&bded); err != nil {
-			return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to save encrypted_data")
+			return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to save encrypted_data")
 		}
 	}
 

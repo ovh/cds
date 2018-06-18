@@ -78,6 +78,9 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 		if !has {
 			oldPfConfig = pf.Model.DeploymentDefaultConfig
 		}
+		if oldPfConfig == nil {
+			oldPfConfig = sdk.PlatformConfig{}
+		}
 		oldPfConfig.MergeWith(pfConfig)
 		pfConfig = oldPfConfig
 
