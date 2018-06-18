@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"time"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/auth"
@@ -14,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
-	"time"
 )
 
 func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
@@ -29,7 +30,7 @@ func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...tes
 		Cache:               cache,
 	}
 	api.Config.Features.Izanami.Token = token
-	event.Cache = api.Cache
+	_ = event.Initialize(event.KafkaConfig{}, api.Cache)
 	api.InitRouter()
 	return api, db, router
 }

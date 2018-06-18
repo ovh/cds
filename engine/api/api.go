@@ -506,9 +506,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
-	//Init events package
-	event.Cache = a.Cache
-
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
 
@@ -556,7 +553,7 @@ func (a *API) Serve(ctx context.Context) error {
 		Topic:           a.Config.Events.Kafka.Topic,
 		MaxMessageByte:  a.Config.Events.Kafka.MaxMessageBytes,
 	}
-	if err := event.Initialize(kafkaOptions); err != nil {
+	if err := event.Initialize(kafkaOptions, a.Cache); err != nil {
 		log.Error("error while initializing event system: %s", err)
 	} else {
 		go event.DequeueEvent(ctx)

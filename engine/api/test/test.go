@@ -85,7 +85,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	if err != nil {
 		t.Fatalf("Unable to connect to redis: %v", err)
 	}
-	event.Cache = store
+	event.Initialize(event.KafkaConfig{}, store)
 
 	return DBConnectionFactory.GetDBMap(), store
 }

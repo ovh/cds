@@ -53,7 +53,7 @@ func PublishPipelineDelete(key string, pip sdk.Pipeline, u *sdk.User) {
 // PublishPipelinePermissionAdd publishes an event for pipeline permission adding
 func PublishPipelinePermissionAdd(key string, pipName string, gp sdk.GroupPermission, u *sdk.User) {
 	e := sdk.EventPipelinePermissionAdd{
-		gp,
+		Permission: gp,
 	}
 	publishPipelineEvent(e, key, pipName, u)
 }
