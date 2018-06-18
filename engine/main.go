@@ -401,20 +401,7 @@ See $ engine config command for more details.
 			Ctx:                    ctx,
 		})
 
-		//Configure the services
-		for _, s := range services {
-			if err := s.service.ApplyConfiguration(s.cfg); err != nil {
-				sdk.Exit("Unable to init service %s: %v", s.arg, err)
-			}
-
-			if srv, ok := s.service.(service.BeforeStart); ok {
-				if err := srv.BeforeStart(); err != nil {
-					sdk.Exit("Unable to start service %s: %v", s.arg, err)
-				}
-			}
-		}
-
-		//Start the services
+		// Configure and start the services
 		for _, s := range services {
 			go start(ctx, s.service, s.cfg, s.arg)
 			//Stupid trick: when API is starting wait a bit before start the other
@@ -432,6 +419,16 @@ See $ engine config command for more details.
 }
 
 func start(c context.Context, s service.Service, cfg interface{}, serviceName string) {
+	if err := s.ApplyConfiguration(cfg); err != nil {
+		sdk.Exit("Unable to init service %s: %v", serviceName, err)
+	}
+
+	if srv, ok := s.(service.BeforeStart); ok {
+		if err := srv.BeforeStart(); err != nil {
+			sdk.Exit("Unable to start service %s: %v", serviceName, err)
+		}
+	}
+
 	if err := serve(c, s, serviceName); err != nil {
 		sdk.Exit("Service has been stopped: %s %v", serviceName, err)
 	}
