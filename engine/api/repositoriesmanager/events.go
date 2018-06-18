@@ -35,7 +35,7 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Sto
 		db := DBFunc()
 		if db != nil {
 			if err := processEvent(db, e, store); err != nil {
-				log.Error("ReceiveEvents> err while processing error=%s : %v", err, e)
+				log.Error("ReceiveEvents> err while processing error = %s", err)
 				RetryEvent(&e, err, store)
 			}
 			continue
@@ -48,7 +48,7 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Sto
 func RetryEvent(e *sdk.Event, err error, store cache.Store) {
 	e.Attempts++
 	if e.Attempts > 2 {
-		log.Error("ReceiveEvents> Aborting event processing %v: %v", err, e)
+		log.Error("ReceiveEvents> Aborting event processing %v", err)
 		return
 	}
 	store.Enqueue("events_repositoriesmanager", e)
@@ -81,7 +81,7 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 		var eventWNR sdk.EventRunWorkflowNode
 
 		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> Error during consumption: %s", err)
+			return fmt.Errorf("repositoriesmanager>processEvent> Error during consumption: %v", err)
 		}
 		if eventWNR.RepositoryManagerName == "" {
 			return nil

@@ -147,6 +147,7 @@ var (
 	ErrInvalidPatternModel                    = Error{ID: 132, Status: http.StatusBadRequest}
 	ErrWorkerModelNoAdmin                     = Error{ID: 133, Status: http.StatusForbidden}
 	ErrWorkerModelNoPattern                   = Error{ID: 134, Status: http.StatusForbidden}
+	ErrJobNotBooked                           = Error{ID: 135, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -282,6 +283,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidPatternModel.ID:                    "Invalid worker model pattern: name, type and main command are mandatory",
 	ErrWorkerModelNoAdmin.ID:                     "Forbidden: you are neither a CDS administrator or the administrator for the group in which you want to create the worker model",
 	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scrips. If you have specific needs, please contact a CDS administrator",
+	ErrJobNotBooked.ID:                           "Job already released",
 }
 
 var errorsFrench = map[int]string{
@@ -417,6 +419,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidPatternModel.ID:                    "Pattern de modèle de worker invalide: le nom, type et commande principale sont requis",
 	ErrWorkerModelNoAdmin.ID:                     "Accès refusé: vous n'êtes ni un administrateur CDS ni un administrateur du groupe pour lequel vous tentez de créer votre modèle",
 	ErrWorkerModelNoPattern.ID:                   "Accès refusé: vous devez obligatoirement sélectionner un pattern de script de configuration. Si vous souhaitez ajouter un pattern particulier, veuillez contacter un administrateur CDS",
+	ErrJobNotBooked.ID:                           "Le job est déjà libéré",
 }
 
 var errorsLanguages = []map[int]string{
