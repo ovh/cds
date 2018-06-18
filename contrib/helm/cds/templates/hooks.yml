@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{.Release.Name}}"
+  labels:
+    heritage: {{.Release.Service | quote }}
+    release: {{.Release.Name | quote }}
+    chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{.Release.Name}}"
+      labels:
+        heritage: {{.Release.Service | quote }}
+        release: {{.Release.Name | quote }}
+        chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: {{ template "cds.fullname" . }}-migrate
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+        {{- if .Values.allowEmptyPassword }}
+          value: "yes"
+        {{- else }}
+          value: "no"
+        {{- end }}
+        - name: CDS_DATABASE_HOST
+        {{- if .Values.postgresql.enabled }}
+          value: {{ template "cds.postgresql.fullname" . }}
+        {{- else }}
+          value: {{ default "" .Values.externalDatabase.host | quote }}
+        {{- end }}
+        - name: CDS_DATABASE_PASSWORD
+        {{- if .Values.postgresql.enabled }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.postgresql.fullname" . }}
+              key: postgres-password #reference postgresql chart secret
+        {{- else }}
+          value: {{ default "" .Values.externalDatabase.password | quote }}
+        {{- end }}
+        - name: CDS_USERNAME
+          value: {{ default "" .Values.cdsUsername | quote }}
+        - name: CDS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}
+              key: cds-password
+        command: ["/bin/sh"]
+        #FIXME : there MUST exist a better way !!!
+        #args: ["-xc", "for i in 1 2 3 4 5; do echo $i; /app/cds-engine-linux-amd64 database upgrade --db-host $CDS_DATABASE_HOST --db-user cds --db-password $CDS_DATABASE_PASSWORD --db-name cds --db-sslmode disable  --migrate-dir /app/sql && break; echo $i; sleep 10; done"]
+        args: ["-xc", "/app/cds-engine-linux-amd64 database upgrade --db-host $CDS_DATABASE_HOST --db-user cds --db-password $CDS_DATABASE_PASSWORD --db-name cds --db-sslmode disable  --migrate-dir /app/sql"]

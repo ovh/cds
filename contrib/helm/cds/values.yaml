@@ -1,0 +1,579 @@
+## Bitnami Drupal image version
+## ref: https://hub.docker.com/r/bitnami/drupal/tags/
+##
+image:
+  registry: docker.io
+  repository: ovhcom/cds-engine
+  tag: latest
+  ## Specify a imagePullPolicy
+  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ##
+  pullPolicy: IfNotPresent
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ##
+  # pullSecrets:
+  #   - myRegistrKeySecretName
+
+## User of the application
+## ref: https://github.com/bitnami/bitnami-docker-drupal#configuration
+##
+cdsUsername: cds
+
+## Application password
+## Defaults to a random 10-character alphanumeric string if not set
+## ref: https://github.com/bitnami/bitnami-docker-drupal#configuration
+##
+# drupalPassword:
+
+## Admin email
+## ref: https://github.com/bitnami/bitnami-docker-drupal#configuration
+##
+cdsEmail: user@example.com
+
+## Set to `yes` to allow the container to be started with blank passwords
+## ref: https://github.com/bitnami/bitnami-docker-wordpress#environment-variables
+allowEmptyPassword: "yes"
+
+##
+## External database configuration
+##
+externalDatabase:
+  ## Database host
+  # host:
+
+  ## Database user
+  # user: bn_drupal
+
+  ## Database password
+  # password:
+
+  ## Database name
+  # database: bitnami_drupal
+
+##
+## Postgresql chart configuration
+##
+
+postgresql:
+
+  ## Whether to use the database specified as a requirement or not. For example, to configure the chart with an existing database server.
+  enabled: true
+  #imageTag: "9.6.2"
+
+  ## Specify a imagePullPolicy
+  ## 'Always' if imageTag is 'latest', else set to 'IfNotPresent'
+  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ##
+  # imagePullPolicy:
+
+  ## Specify imagePullSecrets
+  ## ref: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+  ##
+  # imagePullSecrets: myregistrykey
+
+  ## Create a database user
+  postgresUser: cds
+  ## Default: random 10 character string
+  # postgresPassword:
+
+  ## Use Existing secret instead of creating one
+  ## It must have a postgres-password key containing the desired password
+  # existingSecret: 'secret'
+
+  ## Create a database
+  ## Default: the postgres user
+  postgresDatabase: cds
+
+  ## Other agrs available
+  ## ref: https://github.com/docker-library/docs/blob/master/postgres/content.md#postgres_initdb_args
+  ## ref: https://www.postgresql.org/docs/current/static/app-initdb.html
+  # postgresInitdbArgs:
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Specify runtime config parameters as a dict, using camelCase, e.g.
+  ## {"sharedBuffers": "500MB"}
+  ## ref: https://www.postgresql.org/docs/current/static/runtime-config.html
+  # postgresConfig:
+
+  ## Persist data to a persistent volume
+  persistence:
+    enabled: true
+
+    ## A manually managed Persistent Volume and Claim
+    ## Requires persistence.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    # existingClaim:
+
+    ## database data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    accessMode: ReadWriteOnce
+    size: 8Gi
+    subPath: "postgresql-db"
+    mountPath: /tmp/pgdata #FIXME:  default value is NOK but there should be a better path
+
+    # annotations: {}
+
+  metrics:
+    enabled: false
+    image: wrouesnel/postgres_exporter
+    imageTag: v0.1.1
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      ## Define additional custom metrics
+      ## ref: https://github.com/wrouesnel/postgres_exporter#adding-new-metrics-via-a-config-file
+      # customMetrics:
+      #   pg_database:
+      #     query: "SELECT d.datname AS name, CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT') THEN pg_catalog.pg_database_size(d.datname) ELSE 0 END AS size FROM pg_catalog.pg_database d where datname not in ('template0', 'template1', 'postgres')"
+      #     metrics:
+      #       - name:
+      #           usage: "LABEL"
+      #           description: "Name of the database"
+      #       - size_bytes:
+      #           usage: "GAUGE"
+      #           description: "Size of the database in bytes"
+
+  ## Configure resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+
+  service:
+    type: ClusterIP
+    port: 5432
+    externalIPs: []
+    ## Manually set NodePort value
+    ## Requires service.type: NodePort
+    # nodePort:
+
+  networkPolicy:
+    ## Enable creation of NetworkPolicy resources.
+    ##
+    enabled: false
+
+    ## The Policy model to apply. When set to false, only pods with the correct
+    ## client label will have network access to the port PostgreSQL is listening
+    ## on. When true, PostgreSQL will accept connections from any source
+    ## (with the correct destination port).
+    ##
+    allowExternal: true
+
+  ## Node labels and tolerations for pod assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations-beta-feature
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  ## Annotations for the deployment and nodes.
+  deploymentAnnotations: {}
+  podAnnotations: {}
+
+redis:
+## Bitnami Redis image version
+## ref: https://hub.docker.com/r/bitnami/redis/tags/
+##
+  image:
+    registry: docker.io
+    repository: bitnami/redis
+    tag: 4.0.9
+
+    ## Specify a imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    #pullPolicy: Always
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistrKeySecretName
+
+
+  ## Cluster settings
+  cluster:
+    enabled: true
+    slaveCount: 1
+
+  metrics:
+    enabled: false
+    # resources: {}
+    # podAnnotations: {}
+    service:
+      type: ClusterIP
+      annotations: {}
+    #   prometheus.io/scrape: "true"
+    #   prometheus.io/port: "9121"
+      loadBalancerIP:
+    image:
+      registry: docker.io
+      repository: oliver006/redis_exporter
+      tag: v0.11
+      pullPolicy: IfNotPresent
+      ## Optionally specify an array of imagePullSecrets.
+      ## Secrets must be manually created in the namespace.
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+      ##
+      # pullSecrets:
+      #   - myRegistrKeySecretName
+
+    ## Metrics exporter labels and tolerations for pod assignment
+    # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
+    # tolerations: []
+
+    ## Metrics exporter pod Annotation and Labels
+    # podLabels: {}
+
+  networkPolicy:
+    ## Enable creation of NetworkPolicy resources.
+    ##
+    enabled: false
+
+    ## The Policy model to apply. When set to false, only pods with the correct
+    ## client label will have network access to the port Redis is listening
+    ## on. When true, Redis will accept connections from any source
+    ## (with the correct destination port).
+    ##
+    # allowExternal: true
+
+  ## Redis password (both master and slave)
+  ## Defaults to a random 10-character alphanumeric string if not set and usePassword is true
+  ## ref: https://github.com/bitnami/bitnami-docker-redis#setting-the-server-password-on-first-run
+  ##
+  usePassword: false #FIXME : set to true, check in deployement, secret ref is correctly referenced, but see it fail with "Serve: cannot connect to cache store: NOAUTH Authentication required."
+  password:
+  ## Use existing secret (ignores previous password)
+  # existingSecret:
+
+  ## Persist data to a persistent volume
+  persistence: {}
+    ## A manually managed Persistent Volume and Claim
+    ## Requires persistence.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    # existingClaim:
+
+  ##
+  ## Redis Master parameters
+  ##
+  master:
+    ## Use password authentication
+    port: 6379
+    ## Redis command arguments
+    ##
+    ## Can be used to specify command line arguments, for example:
+    ##
+    ## args:
+    ##  - "redis-server"
+    ##  - "--maxmemory-policy volatile-ttl"
+    args: []
+    ## Redis additional command line flags
+    ##
+    ## Can be used to specify command line flags, for example:
+    ##
+    ## redisExtraFlags:
+    ##  - "--maxmemory-policy volatile-ttl"
+    ##  - "--repl-backlog-size 1024mb"
+    extraFlags: []
+    ## Comma-separated list of Redis commands to disable
+    ##
+    ## Can be used to disable Redis commands for security reasons.
+    ## ref: https://github.com/bitnami/bitnami-docker-redis#disabling-redis-commands
+    ##
+    disableCommands: "FLUSHDB,FLUSHALL"
+    ## Enable persistence using Persistent Volume Claims
+    ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+    ##
+    ## Redis Master additional pod labels
+    ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+    podLabels: {}
+    ## Redis Master resource requests and limits
+    ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+    # resources:
+    #   requests:
+    #     memory: 256Mi
+    #     cpu: 100m
+    ## Use an alternate scheduler, e.g. "stork".
+    ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+    ##
+    # schedulerName:
+
+
+    ## Redis Master Liveness Probe
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      successThreshold: 1
+      failureThreshold: 5
+
+    ## Redis Master Readiness Probe
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 1
+      successThreshold: 1
+      failureThreshold: 5
+    ## Redis Master Node labels and tolerations for pod assignment
+    ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+    ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations-beta-feature
+    # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
+    # tolerations: []
+    ## Redis Master pod annotations
+    podAnnotations: {}
+    ## Redis Master Service properties
+    service:
+      ##  Redis Master Service type
+      type: ClusterIP
+
+      ## Specify the nodePort value for the LoadBalancer and NodePort service types.
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
+      ##
+      # nodePort:
+
+      ## Provide any additional annotations which may be required. This can be used to
+      ## set the LoadBalancer service type to internal only.
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
+      ##
+      annotations: {}
+      loadBalancerIP:
+    ## Redis Master Pod Security Context
+    securityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+    persistence:
+      enabled: true
+
+      ## The path the volume will be mounted at, useful when using different
+      ## Redis images.
+      path: /bitnami/redis/data
+
+      ## The subdirectory of the volume to mount to, useful in dev environments and one PV for multiple services.
+      subPath: ""
+
+      ## redis data Persistent Volume Storage Class
+      ## If defined, storageClassName: <storageClass>
+      ## If set to "-", storageClassName: "", which disables dynamic provisioning
+      ## If undefined (the default) or set to null, no storageClassName spec is
+      ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+      ##   GKE, AWS & OpenStack)
+      ##
+      # storageClass: "-"
+      accessModes:
+      - ReadWriteOnce
+      size: 8Gi
+
+
+  ##
+  ## Redis Slave properties
+  ## Note: serviceType and service are mandatory parameters
+  ## The rest of the parameters, if undefined, will inherit those declared in Redis Master
+  ##
+  slave:
+    ## Slave Service properties
+    service:
+      ##  Redis Slave Service type
+      type: ClusterIP
+      ## Specify the nodePort value for the LoadBalancer and NodePort service types.
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
+      ##
+      # nodePort:
+
+      ## Provide any additional annotations which may be required. This can be used to
+      ## set the LoadBalancer service type to internal only.
+      ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer
+      ##
+      annotations: {}
+      loadBalancerIP:
+
+    ## Redis port
+    # port: 6379
+    ## Redis command arguments
+    # args: []
+    ## Redis extra flags
+    # extraFlags: []
+    ## Comma-separated list of Redis commands to disable
+    # disableCommands: ""
+
+    affinity: {}
+
+    ## Redis slave Liveness Probe
+    # livenessProbe:
+    #   enabled: true
+    #   initialDelaySeconds: 30
+    #   periodSeconds: 10
+    #   timeoutSeconds: 5
+    #   successThreshold: 1
+    #   failureThreshold: 5
+
+    ## Redis slave Readiness Probe
+    # readinessProbe:
+    #   enabled: true
+    #   initialDelaySeconds: 5
+    #   periodSeconds: 10
+    #   timeoutSeconds: 10
+    #   successThreshold: 1
+    #   failureThreshold: 5
+
+    ## Redis slave Resource
+    # resources:
+    #   requests:
+    #     memory: 256Mi
+    #     cpu: 100m
+
+    ## Redis slave labels and tolerations for pod assignment
+    # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
+    # tolerations: []
+
+    ## Use an alternate scheduler, e.g. "stork".
+    ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+    ##
+    # schedulerName:
+
+    ## Redis slave pod Annotation and Labels
+    # podLabels: {}
+    ## annotations for redis pods
+    # podAnnotations: {}
+
+    ## Redis slave pod Security Context
+    # securityContext:
+    #   enabled: true
+    #   fsGroup: 1001
+    #   runAsUser: 1001
+
+  ## Kubernetes configuration
+  ## For minikube, set this to NodePort, elsewhere use LoadBalancer
+  ## Use ClusterIP if your setup includes ingress controller
+  ##
+serviceType: LoadBalancer
+
+## Configure Ingress resource that allow you to access the Drupal installation
+## Set up the URL
+## ref: http://kubernetes.io/docs/user-guide/ingress/
+##
+ingress:
+  enabled: false
+  # Used to create Ingress record (should used with ServiceType: ClusterIP).
+  # hostname: drupal.local
+
+  ## Ingress annotations
+  ##
+  # annotations:
+  #   kubernetes.io/ingress.class: nginx
+
+  ## Ingress TLS configuration
+  ## Secrets must be manually created in the namespace
+  ##
+  # tls:
+  #   - secretName: wordpress.local-tls
+  #     hosts:
+  #       - drupal.local
+
+## Enable persistence using Persistent Volume Claims
+## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+##
+persistence:
+  enabled: true
+  cds:
+    ## drupal data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    accessMode: ReadWriteOnce
+    size: 8Gi
+
+    ## A manually managed Persistent Volume Claim
+    ## Requires persistence.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    ##
+    # existingClaim:
+
+    ## If defined, the drupal-data volume will mount to the specified hostPath.
+    ## Requires persistence.enabled: true
+    ## Requires persistence.existingClaim: nil|false
+    ## Default: nil.
+    ##
+    # hostPath:
+
+## Configure resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+##
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 300m
+
+## Pass extra environment variables to the Drupal container.
+##
+# extraVars:
+# - name: EXTRA_VAR_1
+#   value: extra-var-value-1
+# - name: EXTRA_VAR_2
+#   value: extra-var-value-2
+
+gui:
+  image:
+    registry: docker.io
+    repository: ovhcom/cds-ui
+    tag: latest
+  baseUrl: /
+  api.livenessProbe:
+    httpGet:
+      path: /
+      port: 8081
+    initialDelaySeconds: 120
+  api.readinessProbe:
+    httpGet:
+      path: /
+      port: 8081
+    initialDelaySeconds: 30
+
+## Configure liveness and readiness probes.
+## Drupal core exposes /user/login to unauthenticated requests, making it a good
+## default liveness and readiness path. However, that may not always be the
+## case. For example, if the image value is overridden to an image containing a
+## module that alters that route, or an image that does not auto-install Drupal.
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+#
+api :
+  #TODO : find a good api readiness probe
+  # livenessProbe:
+  #   httpGet:
+  #     path: /
+  #     port: 8081
+  #   initialDelaySeconds: 120
+  # readinessProbe:
+  #   httpGet:
+  #     path: /
+  #     port: 8081
+  #   initialDelaySeconds: 30
+  ## Configure volume mounts. This is useful for images whose data mount paths are
+  ## different than the default.
+  ##
+  volumeMounts:
+      mountPath: /app/artifacts

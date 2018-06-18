@@ -1,0 +1,111 @@
+#TODO : make migrate a statefull and &&
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "cds.fullname" . }}
+  labels:
+    app: {{ template "cds.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "cds.fullname" . }}
+    spec:
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end}}
+      {{- end }}
+      #TODO : question what is migrate container ?
+      containers:
+      - name: {{ template "cds.fullname" . }}-api
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        env:
+        - name: ALLOW_EMPTY_PASSWORD #TODO : handle ?
+        {{- if .Values.allowEmptyPassword }}
+          value: "yes"
+        {{- else }}
+          value: "no"
+        {{- end }}
+        - name: CDS_API_DATABASE_HOST
+        {{- if .Values.postgresql.enabled }}
+          value: {{ template "cds.postgresql.fullname" . }}
+        {{- else }}
+          value: {{ default "" .Values.externalDatabase.host | quote }}
+        {{- end }}
+        - name: CDS_API_DATABASE_PASSWORD
+        {{- if .Values.postgresql.enabled }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.postgresql.fullname" . }}
+              key: postgres-password #reference postgresql chart secret
+        {{- else }}
+          value: {{ default "" .Values.externalDatabase.password | quote }}
+        {{- end }}
+        - name: CDS_USERNAME
+          value: {{ default "" .Values.cdsUsername | quote }}
+        - name: CDS_API_AUTH_DEFAULTGROUP
+          value: cdsdemo #TODO CONF
+        - name: CDS_LOG_LEVEL
+          value: debug #TODO CONF
+        - name: CDS_API_CACHE_MODE
+          value: redis #TODO CONF
+        - name: CDS_API_CACHE_REDIS_HOST
+          value: {{ template "cds.redis.fullname" . }}-master:6379 #TOOD : issue on CDS : need splitted conf #FIXME : need related redis
+        - name: CDS_API_CACHE_REDIS_PASSWORD
+        {{- if .Values.redis.enabled }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.redis.fullname" . }}
+              key: redis-password #reference postgresql chart secret
+        {{- else }}
+          value: {{ default "" .Values.redis.password | quote }} #FIXME : check if correct way
+        {{- end }}
+        - name: CDS_API_DIRECTORIES_DOWNLOAD
+          value: /app
+        - name: CDS_API_DIRECTORIES_KEYS
+          value: /app/keys
+        - name: CDS_API_ARTIFACT_LOCAL_BASEDIRECTORY
+          value: /app/artifacts
+        - name: CDS_API_AUTH_SHAREDINFRATOKEN
+          value: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+        - name: CDS_API_SECRETS_KEY
+          value: changeitchangeitchangeitchangeit
+        - name: CDS_PASSWORD #TODO : wich password ??
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}
+              key: cds-password
+        command: ["/bin/sh"]
+        #TODO : refactor with vars and agrs and what is migrate-dir for ?
+        #args: ["-c", "/app/cds-engine-linux-amd64 start api"]
+        args: ["-c", "/app/cds-engine-linux-amd64 start api"]
+#TODO : if migrate needs ports, probes and claims
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8081
+        livenessProbe:
+{{ toYaml .Values.api.livenessProbe | indent 10 }} #FIXME: add level in values.yml or add other chart ? And find somethign that does not say ` 404  | /   resource not found`
+        readinessProbe:
+{{ toYaml .Values.api.readinessProbe | indent 10 }}
+        resources:
+{{ toYaml .Values.api.resources | indent 10 }}
+        volumeMounts:
+        - name: cds-data
+          mountPath: {{ .Values.api.volumeMounts.mountPath }}
+      volumes:
+      - name: cds-data
+      {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.cds.existingClaim | default (printf "%s-cds" (include "cds.fullname" .)) }}
+      {{- else }}
+        emptyDir: {}
+      {{- end }}
