@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"database/sql"
-	"encoding/base64"
 
 	"github.com/go-gorp/gorp"
 
@@ -43,8 +42,7 @@ func WorkflowNodeRunArtifacts(store cache.Store, DBFunc func() *gorp.DbMap) {
 			continue
 		}
 
-		ref := base64.RawURLEncoding.EncodeToString([]byte(art.Tag))
-		if _, err := tx.Exec("UPDATE workflow_node_run_artifacts SET ref = $1 WHERE id = $2", ref, art.ID); err != nil {
+		if _, err := tx.Exec("UPDATE workflow_node_run_artifacts SET ref = tag WHERE id = $1", art.ID); err != nil {
 			_ = tx.Rollback()
 			log.Error("WorkflowNodeRunArtifacts> cannot update workflow node run artifact %d : %v", art.ID, err)
 			continue
