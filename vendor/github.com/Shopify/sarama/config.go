@@ -1,7 +1,10 @@
 package sarama
 
 import (
+	"compress/gzip"
 	"crypto/tls"
+	"fmt"
+	"io/ioutil"
 	"regexp"
 	"time"
 
@@ -72,6 +75,12 @@ type Config struct {
 		// Defaults to 10 minutes. Set to 0 to disable. Similar to
 		// `topic.metadata.refresh.interval.ms` in the JVM version.
 		RefreshFrequency time.Duration
+
+		// Whether to maintain a full set of metadata for all topics, or just
+		// the minimal set that has been necessary so far. The full set is simpler
+		// and usually more convenient, but can take up a substantial amount of
+		// memory if you have many topics and partitions. Defaults to true.
+		Full bool
 	}
 
 	// Producer is the namespace for configuration related to producing messages,
@@ -93,13 +102,20 @@ type Config struct {
 		// The type of compression to use on messages (defaults to no compression).
 		// Similar to `compression.codec` setting of the JVM producer.
 		Compression CompressionCodec
+		// The level of compression to use on messages. The meaning depends
+		// on the actual compression type used and defaults to default compression
+		// level for the codec.
+		CompressionLevel int
 		// Generates partitioners for choosing the partition to send messages to
 		// (defaults to hashing the message key). Similar to the `partitioner.class`
 		// setting for the JVM producer.
 		Partitioner PartitionerConstructor
 
 		// Return specifies what channels will be populated. If they are set to true,
-		// you must read from the respective channels to prevent deadlock.
+		// you must read from the respective channels to prevent deadlock. If,
+		// however, this config is used to create a `SyncProducer`, both must be set
+		// to true and you shall not read from the channels since the producer does
+		// this internally.
 		Return struct {
 			// If enabled, successfully delivered messages will be returned on the
 			// Successes channel (default disabled).
@@ -166,7 +182,7 @@ type Config struct {
 			// Equivalent to the JVM's `fetch.min.bytes`.
 			Min int32
 			// The default number of message bytes to fetch from the broker in each
-			// request (default 32768). This should be larger than the majority of
+			// request (default 1MB). This should be larger than the majority of
 			// your messages, or else the consumer will spend a lot of time
 			// negotiating sizes and not actually consuming. Similar to the JVM's
 			// `fetch.message.max.bytes`.
@@ -187,11 +203,23 @@ type Config struct {
 		// Equivalent to the JVM's `fetch.wait.max.ms`.
 		MaxWaitTime time.Duration
 
-		// The maximum amount of time the consumer expects a message takes to process
-		// for the user. If writing to the Messages channel takes longer than this,
-		// that partition will stop fetching more messages until it can proceed again.
+		// The maximum amount of time the consumer expects a message takes to
+		// process for the user. If writing to the Messages channel takes longer
+		// than this, that partition will stop fetching more messages until it
+		// can proceed again.
 		// Note that, since the Messages channel is buffered, the actual grace time is
 		// (MaxProcessingTime * ChanneBufferSize). Defaults to 100ms.
+		// If a message is not written to the Messages channel between two ticks
+		// of the expiryTicker then a timeout is detected.
+		// Using a ticker instead of a timer to detect timeouts should typically
+		// result in many fewer calls to Timer functions which may result in a
+		// significant performance improvement if many messages are being sent
+		// and timeouts are infrequent.
+		// The disadvantage of using a ticker instead of a timer is that
+		// timeouts will be less accurate. That is, the effective timeout could
+		// be between `MaxProcessingTime` and `2 * MaxProcessingTime`. For
+		// example, if `MaxProcessingTime` is 100ms then a delay of 180ms
+		// between two messages being sent may not be recognized as a timeout.
 		MaxProcessingTime time.Duration
 
 		// Return specifies what channels will be populated. If they are set to true,
@@ -260,6 +288,7 @@ func NewConfig() *Config {
 	c.Metadata.Retry.Max = 3
 	c.Metadata.Retry.Backoff = 250 * time.Millisecond
 	c.Metadata.RefreshFrequency = 10 * time.Minute
+	c.Metadata.Full = true
 
 	c.Producer.MaxMessageBytes = 1000000
 	c.Producer.RequiredAcks = WaitForLocal
@@ -268,9 +297,10 @@ func NewConfig() *Config {
 	c.Producer.Retry.Max = 3
 	c.Producer.Retry.Backoff = 100 * time.Millisecond
 	c.Producer.Return.Errors = true
+	c.Producer.CompressionLevel = CompressionLevelDefault
 
 	c.Consumer.Fetch.Min = 1
-	c.Consumer.Fetch.Default = 32768
+	c.Consumer.Fetch.Default = 1024 * 1024
 	c.Consumer.Retry.Backoff = 2 * time.Second
 	c.Consumer.MaxWaitTime = 250 * time.Millisecond
 	c.Consumer.MaxProcessingTime = 100 * time.Millisecond
@@ -280,7 +310,7 @@ func NewConfig() *Config {
 
 	c.ClientID = defaultClientID
 	c.ChannelBufferSize = 256
-	c.Version = minVersion
+	c.Version = MinVersion
 	c.MetricRegistry = metrics.NewRegistry()
 
 	return c
@@ -305,10 +335,13 @@ func (c *Config) Validate() error {
 		Logger.Println("Producer.RequiredAcks > 1 is deprecated and will raise an exception with kafka >= 0.8.2.0.")
 	}
 	if c.Producer.MaxMessageBytes >= int(MaxRequestSize) {
-		Logger.Println("Producer.MaxMessageBytes is larger than MaxRequestSize; it will be ignored.")
+		Logger.Println("Producer.MaxMessageBytes must be smaller than MaxRequestSize; it will be ignored.")
 	}
 	if c.Producer.Flush.Bytes >= int(MaxRequestSize) {
-		Logger.Println("Producer.Flush.Bytes is larger than MaxRequestSize; it will be ignored.")
+		Logger.Println("Producer.Flush.Bytes must be smaller than MaxRequestSize; it will be ignored.")
+	}
+	if (c.Producer.Flush.Bytes > 0 || c.Producer.Flush.Messages > 0) && c.Producer.Flush.Frequency == 0 {
+		Logger.Println("Producer.Flush: Bytes or Messages are set, but Frequency is not; messages may not get flushed.")
 	}
 	if c.Producer.Timeout%time.Millisecond != 0 {
 		Logger.Println("Producer.Timeout only supports millisecond resolution; nanoseconds will be truncated.")
@@ -382,6 +415,14 @@ func (c *Config) Validate() error {
 
 	if c.Producer.Compression == CompressionLZ4 && !c.Version.IsAtLeast(V0_10_0_0) {
 		return ConfigurationError("lz4 compression requires Version >= V0_10_0_0")
+	}
+
+	if c.Producer.Compression == CompressionGZIP {
+		if c.Producer.CompressionLevel != CompressionLevelDefault {
+			if _, err := gzip.NewWriterLevel(ioutil.Discard, c.Producer.CompressionLevel); err != nil {
+				return ConfigurationError(fmt.Sprintf("gzip compression does not work with level %d: %v", c.Producer.CompressionLevel, err))
+			}
+		}
 	}
 
 	// validate the Consumer values
