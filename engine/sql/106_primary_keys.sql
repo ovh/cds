@@ -25,6 +25,8 @@ select create_primary_key('template_action', 'template_id,action_id');
 select create_primary_key('action_audit', 'action_id,user_id,versionned');
 select create_primary_key('gorp_migrations_lock', 'ID');
 
+DROP TABLE IF EXISTS sla;
+
 -- +migrate Down
 
 select 1;
