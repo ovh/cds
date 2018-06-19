@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/structs"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
@@ -48,6 +49,7 @@ type Configuration struct {
 	Hooks           hooks.Configuration          `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################"`
 	VCS             vcs.Configuration            `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################"`
 	Repositories    repositories.Configuration   `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################"`
+	ElasticSearch   elasticsearch.Configuration  `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n######################"`
 	DatabaseMigrate migrateservice.Configuration `toml:"databaseMigrate" comment:"######################\n CDS DB Migrate Service Settings \n######################"`
 }
 

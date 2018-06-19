@@ -150,3 +150,6 @@
   non-go = true
   go-tests = true
   unused-packages = true
+[[constraint]]
+  name = "gopkg.in/olivere/elastic.v5"
+  version = "5.0.69"

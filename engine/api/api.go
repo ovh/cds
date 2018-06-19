@@ -602,6 +602,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 	go workflow.Initialize(ctx, a.Cache, a.Config.URL.UI, a.DBConnectionFactory.GetDBMap)
+	go event.PushInElasticSearch(ctx, a.mustDB(), a.Cache)
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),
