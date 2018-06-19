@@ -82,7 +82,10 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		force := r.FormValue("force") == "true"
+		force := FormBool(r, "force")
+		disablePrefix := FormBool(r, "disablePrefix")
+		withCurrentVersion := FormBool(r, "withCurrentVersion")
+		withRepositoryWebHook := FormBool(r, "withRepositoryWebHook")
 
 		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errP != nil {
@@ -104,10 +107,13 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		var wfs []sdk.Workflow
 		if len(cdTree) == 0 {
 			app.WorkflowMigration = migrate.STATUS_CLEANING
 		} else {
-			if errM := migrate.MigrateToWorkflow(tx, api.Cache, cdTree, p, getUser(ctx), force); errM != nil {
+			var errM error
+			wfs, errM = migrate.ToWorkflow(tx, api.Cache, cdTree, p, getUser(ctx), force, disablePrefix, withCurrentVersion, withRepositoryWebHook)
+			if errM != nil {
 				return sdk.WrapError(errM, "migrationApplicationWorkflowHandler")
 			}
 			app.WorkflowMigration = migrate.STATUS_START
@@ -129,6 +135,6 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
 		}
-		return nil
+		return WriteJSON(w, wfs, http.StatusOK)
 	}
 }
