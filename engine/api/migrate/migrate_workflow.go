@@ -1,10 +1,10 @@
 package migrate
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
-	"database/sql"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
