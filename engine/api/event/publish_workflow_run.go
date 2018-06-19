@@ -11,8 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// PublishRunWorkflow
-func PublishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, u *sdk.User) {
+func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, u *sdk.User) {
 	event := sdk.Event{
 		Timestamp:       time.Now(),
 		Hostname:        hostname,
@@ -44,7 +43,7 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		LastModified:  wr.LastModified.Unix(),
 		Tags:          wr.Tags,
 	}
-	PublishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, nil)
+	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, nil)
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
@@ -99,5 +98,5 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
-	PublishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nil)
+	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nil)
 }

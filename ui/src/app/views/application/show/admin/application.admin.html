@@ -2,18 +2,44 @@
     <app-zone header="{{ 'application_workflow_migration' | translate }}" *ngIf="user.admin || project.workflow_migration !== 'NOT_BEGUN'">
         <app-zone-content class="bottom">
             <div [ngSwitch]="application.workflow_migration">
-                <div *ngSwitchCase="'STARTED'">
-                    <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
-                    <button class="ui red button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
-                </div>
                 <div *ngSwitchCase="'CLEANING'">
                     <i class="green check icon"></i>
                 </div>
                 <div *ngSwitchCase="'DONE'">
                     <i class="green check icon"></i>
                 </div>
-                <div *ngSwitchDefault>
-                    <button class="ui green button" (click)="generateWorkflow(false)" [class.loading]="loading" [disabled]="loading" >{{ 'application_migration_generate' | translate }}</button>
+                <div *ngSwitchDefault class="ui form">
+                    <div class="ui segment sixteen wide column">
+                       <p>You can choose how to migrate your application to new CDS Workflow. By default:</p>
+                           <ul>
+                               <li>workflow generated will be 'wYouApplicationName', </li>
+                               <li>start cds.version with the current value of cds.version on your old workflow</li>
+                               <li>do not create Repository Webhook on Bitbucket / Github / Gitlab</li>
+                           </ul>
+                        <p>You can adjust theses default values with options below.</p>
+
+                        <p>Once the new CDS Workflow will be generated, old workflow is still usable. </p>
+                        <p>We recomand you to
+                            test the new CDW Workflow, then 'clean' this application to remove old workflow as soon as possible.</p>
+                    </div>
+                    <div class="fields">
+                        <div class="field">
+                            <sm-checkbox label="Disable prefix 'w' in Workflow name generated" [control]="disablePrefix" type="toggle"></sm-checkbox>
+                        </div>
+                        <div class="field">
+                            <sm-checkbox label="Create Repository Webhook if needed" [control]="withRepositoryWebHook" type="toggle"></sm-checkbox>
+                        </div>
+                        <div class="field">
+                            <sm-checkbox label="Keep current cds.version" [control]="withCurrentVersion" type="toggle"></sm-checkbox>
+                        </div>                        
+                    </div>
+                    <ng-container *ngIf="application.workflow_migration === 'STARTED'">
+                        <button class="ui submit green button" [class.loading]="loading" [disabled]="loading" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
+                        <button class="ui submit red button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
+                    </ng-container>
+                    <ng-container *ngIf="application.workflow_migration !== 'STARTED'">
+                        <button class="ui submit green button" (click)="generateWorkflow(false)" [class.loading]="loading" [disabled]="loading" >{{ 'application_migration_generate' | translate }}</button>
+                    </ng-container>
                 </div>
             </div>
         </app-zone-content>
@@ -36,7 +62,6 @@
                         </button>
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitApplicationUpdate(true)" #updateWarning></app-warning-modal>
                     </div>
-
                 </div>
             </form>
         </app-zone-content>

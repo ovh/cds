@@ -158,11 +158,18 @@ func checkServiceRequirement(w *currentWorker, r sdk.Requirement) (bool, error) 
 	if w.model.Type != sdk.Docker {
 		return false, nil
 	}
-	if _, err := net.LookupIP(r.Name); err != nil {
-		log.Debug("Error checking requirement : %s", err)
-		return false, nil
+
+	retry := 3
+	for attempt := 0; attempt < retry; attempt++ {
+		if _, err := net.LookupIP(r.Name); err != nil {
+			log.Debug("Error checking requirement : %s", err)
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		return true, nil
 	}
-	return true, nil
+
+	return false, nil
 }
 
 func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {

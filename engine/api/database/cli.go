@@ -51,6 +51,7 @@ var (
 func setFlags(cmd *cobra.Command) {
 	pflags := cmd.Flags()
 	pflags.StringVarP(&connFactory.dbUser, "db-user", "", "cds", "DB User")
+	pflags.StringVarP(&connFactory.dbRole, "db-role", "", "", "DB Role")
 	pflags.StringVarP(&connFactory.dbPassword, "db-password", "", "", "DB Password")
 	pflags.StringVarP(&connFactory.dbName, "db-name", "", "cds", "DB Name")
 	pflags.StringVarP(&connFactory.dbHost, "db-host", "", "localhost", "DB Host")
@@ -97,7 +98,7 @@ func downgradeCmdFunc(cmd *cobra.Command, args []string) {
 
 func statusCmdFunc(cmd *cobra.Command, args []string) {
 	var err error
-	connFactory, err = Init(connFactory.dbUser, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
+	connFactory, err = Init(connFactory.dbUser, connFactory.dbRole, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
@@ -160,7 +161,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	var err error
-	connFactory, err = Init(connFactory.dbUser, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
+	connFactory, err = Init(connFactory.dbUser, connFactory.dbRole, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}

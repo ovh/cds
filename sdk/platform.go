@@ -148,17 +148,16 @@ func (pf *ProjectPlatform) HideSecrets() {
 }
 
 // MergeWith merge two config
-func (config *PlatformConfig) MergeWith(cfg PlatformConfig) {
-	if config == nil {
-		*config = PlatformConfig{}
-	}
+func (config PlatformConfig) MergeWith(cfg PlatformConfig) {
 	for k, v := range cfg {
-		val, has := (*config)[k]
+		val, has := config[k]
 		if !has {
 			val.Type = v.Type
 		}
-		val.Value = v.Value
-		(*config)[k] = val
+		if val.Type != PlatformConfigTypePassword || (val.Type == PlatformConfigTypePassword && v.Value != PasswordPlaceholder) {
+			val.Value = v.Value
+		}
+		config[k] = val
 	}
 }
 

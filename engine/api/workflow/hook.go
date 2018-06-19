@@ -21,7 +21,6 @@ import (
 func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) error {
 	var hookToUpdate map[string]sdk.WorkflowNodeHook
 	var hookToDelete map[string]sdk.WorkflowNodeHook
-
 	if oldW != nil {
 		hookToUpdate, hookToDelete = mergeAndDiffHook(oldW.GetHooks(), wf.GetHooks())
 	} else {
@@ -121,7 +120,6 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 					return sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
 			}
-
 			if err := UpdateHook(db, &h); err != nil {
 				return sdk.WrapError(err, "HookRegistration> Cannot update hook")
 			}

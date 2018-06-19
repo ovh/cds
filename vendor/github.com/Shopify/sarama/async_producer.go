@@ -1,6 +1,7 @@
 package sarama
 
 import (
+	"encoding/binary"
 	"fmt"
 	"sync"
 	"time"
@@ -17,24 +18,23 @@ import (
 // scope.
 type AsyncProducer interface {
 
-	// AsyncClose triggers a shutdown of the producer, flushing any messages it may
-	// have buffered. The shutdown has completed when both the Errors and Successes
-	// channels have been closed. When calling AsyncClose, you *must* continue to
-	// read from those channels in order to drain the results of any messages in
-	// flight.
+	// AsyncClose triggers a shutdown of the producer. The shutdown has completed
+	// when both the Errors and Successes channels have been closed. When calling
+	// AsyncClose, you *must* continue to read from those channels in order to
+	// drain the results of any messages in flight.
 	AsyncClose()
 
-	// Close shuts down the producer and flushes any messages it may have buffered.
-	// You must call this function before a producer object passes out of scope, as
-	// it may otherwise leak memory. You must call this before calling Close on the
-	// underlying client.
+	// Close shuts down the producer and waits for any buffered messages to be
+	// flushed. You must call this function before a producer object passes out of
+	// scope, as it may otherwise leak memory. You must call this before calling
+	// Close on the underlying client.
 	Close() error
 
 	// Input is the input channel for the user to write messages to that they
 	// wish to send.
 	Input() chan<- *ProducerMessage
 
-	// Successes is the success output channel back to the user when AckSuccesses is
+	// Successes is the success output channel back to the user when Return.Successes is
 	// enabled. If Return.Successes is true, you MUST read from this channel or the
 	// Producer will deadlock. It is suggested that you send and read messages
 	// together in a single select statement.
@@ -120,6 +120,10 @@ type ProducerMessage struct {
 	// StringEncoder and ByteEncoder.
 	Value Encoder
 
+	// The headers are key-value pairs that are transparently passed
+	// by Kafka between producers and consumers.
+	Headers []RecordHeader
+
 	// This field is used to hold arbitrary data you wish to include so it
 	// will be available when receiving on the Successes and Errors channels.
 	// Sarama completely ignores this field and is only to be used for
@@ -147,8 +151,16 @@ type ProducerMessage struct {
 
 const producerMessageOverhead = 26 // the metadata overhead of CRC, flags, etc.
 
-func (m *ProducerMessage) byteSize() int {
-	size := producerMessageOverhead
+func (m *ProducerMessage) byteSize(version int) int {
+	var size int
+	if version >= 2 {
+		size = maximumRecordOverhead
+		for _, h := range m.Headers {
+			size += len(h.Key) + len(h.Value) + 2*binary.MaxVarintLen32
+		}
+	} else {
+		size = producerMessageOverhead
+	}
 	if m.Key != nil {
 		size += m.Key.Length()
 	}
@@ -200,7 +212,7 @@ func (p *asyncProducer) Close() error {
 
 	if p.conf.Producer.Return.Successes {
 		go withRecover(func() {
-			for _ = range p.successes {
+			for range p.successes {
 			}
 		})
 	}
@@ -255,7 +267,11 @@ func (p *asyncProducer) dispatcher() {
 			p.inFlight.Add(1)
 		}
 
-		if msg.byteSize() > p.conf.Producer.MaxMessageBytes {
+		version := 1
+		if p.conf.Version.IsAtLeast(V0_11_0_0) {
+			version = 2
+		}
+		if msg.byteSize(version) > p.conf.Producer.MaxMessageBytes {
 			p.returnError(msg, ErrMessageSizeTooLarge)
 			continue
 		}

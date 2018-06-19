@@ -30,7 +30,7 @@ func publishEnvironmentEvent(payload interface{}, key, envName string, u *sdk.Us
 // PublishEnvironmentAdd publishes an event for the creation of the given environment
 func PublishEnvironmentAdd(projKey string, env sdk.Environment, u *sdk.User) {
 	e := sdk.EventEnvironmentAdd{
-		env,
+		Environment: env,
 	}
 	publishEnvironmentEvent(e, projKey, env.Name, u)
 }

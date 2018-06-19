@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ovh/cds/sdk/namesgenerator"
-
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 var hostname, cdsname string
@@ -35,9 +35,9 @@ func getBroker(t string, option interface{}) (Broker, error) {
 }
 
 // Initialize initializes event system
-func Initialize(k KafkaConfig) error {
+func Initialize(k KafkaConfig, cache cache.Store) error {
 	subscribers = make([]chan<- sdk.Event, 0)
-
+	store = cache
 	var err error
 	hostname, err = os.Hostname()
 	if err != nil {
@@ -74,7 +74,7 @@ func Subscribe(ch chan<- sdk.Event) {
 func DequeueEvent(c context.Context) {
 	for {
 		e := sdk.Event{}
-		Cache.DequeueWithContext(c, "events", &e)
+		store.DequeueWithContext(c, "events", &e)
 		if err := c.Err(); err != nil {
 			log.Error("Exiting event.DequeueEvent : %v", err)
 			return
