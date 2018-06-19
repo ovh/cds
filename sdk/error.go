@@ -422,7 +422,7 @@ var errorsFrench = map[int]string{
 	ErrWorkerModelNoAdmin.ID:                     "Accès refusé: vous n'êtes ni un administrateur CDS ni un administrateur du groupe pour lequel vous tentez de créer votre modèle",
 	ErrWorkerModelNoPattern.ID:                   "Accès refusé: vous devez obligatoirement sélectionner un pattern de script de configuration. Si vous souhaitez ajouter un pattern particulier, veuillez contacter un administrateur CDS",
 	ErrJobNotBooked.ID:                           "Le job est déjà libéré",
-	ErrUserNotFound.ID:                           "Utilisateur invalide",
+	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
 }
 
 var errorsLanguages = []map[int]string{
