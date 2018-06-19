@@ -18,29 +18,28 @@
                            </ul>
                         <p>You can adjust theses default values with options below.</p>
 
-                        <p>Once the new CDS Workflow will be generated, old workflow is still usable. We recomand you to
+                        <p>Once the new CDS Workflow will be generated, old workflow is still usable. </p>
+                        <p>We recomand you to
                             test the new CDW Workflow, then 'clean' this application to remove old workflow as soon as possible.</p>
                     </div>
                     <div class="fields">
-                        <div class="four field">
+                        <div class="field">
                             <sm-checkbox label="Disable prefix 'w' in Workflow name generated" [control]="disablePrefix" type="toggle"></sm-checkbox>
                         </div>
-                        <div class="four field">
+                        <div class="field">
                             <sm-checkbox label="Create Repository Webhook if needed" [control]="withRepositoryWebHook" type="toggle"></sm-checkbox>
                         </div>
-                        <div class="four field">
+                        <div class="field">
                             <sm-checkbox label="Keep current cds.version" [control]="withCurrentVersion" type="toggle"></sm-checkbox>
                         </div>                        
-                        <div class="four field">
-                            <div *ngIf="application.workflow_migration === 'STARTED'">
-                                <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
-                                <button class="ui red button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
-                            </div>
-                            <div *ngIf="application.workflow_migration !== 'STARTED'">
-                                    <button class="ui green button" (click)="generateWorkflow(false)" [class.loading]="loading" [disabled]="loading" >{{ 'application_migration_generate' | translate }}</button>
-                            </div>
-                        </div>
                     </div>
+                    <ng-container *ngIf="application.workflow_migration === 'STARTED'">
+                        <button class="ui submit green button" [class.loading]="loading" [disabled]="loading" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
+                        <button class="ui submit red button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
+                    </ng-container>
+                    <ng-container *ngIf="application.workflow_migration !== 'STARTED'">
+                        <button class="ui submit green button" (click)="generateWorkflow(false)" [class.loading]="loading" [disabled]="loading" >{{ 'application_migration_generate' | translate }}</button>
+                    </ng-container>
                 </div>
             </div>
         </app-zone-content>
