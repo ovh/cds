@@ -39,14 +39,14 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 		}
 
 		if err := addGroupOnWorkflow(db, &newW, &oldW.Application); err != nil {
-			return workflows, sdk.WrapError(err, "MigrateToWorkflow")
+			return nil, sdk.WrapError(err, "MigrateToWorkflow")
 		}
 
 		currentApplicationID := oldW.Application.ID
 
 		n, err := migratePipeline(db, store, proj, oldW, currentApplicationID, u)
 		if err != nil {
-			return workflows, sdk.WrapError(err, "MigrateToWorkflow migratePipeline>")
+			return nil, sdk.WrapError(err, "MigrateToWorkflow migratePipeline>")
 		}
 		newW.Root = n
 
@@ -54,13 +54,13 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 			w, err := workflow.Load(db, store, proj, newW.Name, u, workflow.LoadOptions{})
 			if err == nil {
 				if errD := workflow.Delete(db, store, proj, w, u); errD != nil {
-					return workflows, sdk.WrapError(errD, "MigrateToWorkflow workflow.Load>")
+					return nil, sdk.WrapError(errD, "MigrateToWorkflow workflow.Load>")
 				}
 			}
 		}
 
 		if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
-			return workflows, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
+			return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
 		}
 
 		if withRepositoryWebHook {
@@ -115,7 +115,7 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 
 		for _, g := range newW.Groups {
 			if err := workflow.AddGroup(db, &newW, g); err != nil {
-				return workflows, sdk.WrapError(err, "MigrateToWorkflow> Cannot add group")
+				return nil, sdk.WrapError(err, "MigrateToWorkflow> Cannot add group")
 			}
 		}
 		workflows[i] = newW

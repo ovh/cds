@@ -82,10 +82,10 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		force := r.FormValue("force") == "true"
-		disablePrefix := r.FormValue("disablePrefix") == "true"
-		withCurrentVersion := r.FormValue("withCurrentVersion") == "true"
-		withRepositoryWebHook := r.FormValue("withRepositoryWebHook") == "true"
+		force := FormBool(r, "force")
+		disablePrefix := FormBool(r, "disablePrefix")
+		withCurrentVersion := FormBool(r, "withCurrentVersion")
+		withRepositoryWebHook := FormBool(r, "withRepositoryWebHook")
 
 		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errP != nil {
