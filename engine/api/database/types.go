@@ -3,6 +3,7 @@ package database
 // DBConfiguration is the exposed type for database API configuration
 type DBConfiguration struct {
 	User           string `toml:"user" default:"cds"`
+	Role           string `toml:"role" default:""`
 	Password       string `toml:"password" default:"cds"`
 	Name           string `toml:"name" default:"cds"`
 	Host           string `toml:"host" default:"localhost"`
