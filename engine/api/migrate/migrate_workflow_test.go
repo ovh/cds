@@ -90,7 +90,7 @@ func Test_MigrateToWorkflow(t *testing.T) {
 	proj2, errP := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithEnvironments, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines)
 	fmt.Printf("%+v", proj2)
 	test.NoError(t, errP)
-	wfs, err := MigrateToWorkflow(db, cache, oldW, proj2, u, true, false, true)
+	wfs, err := MigrateToWorkflow(db, cache, oldW, proj2, u, true, false, true, true)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(wfs))
 
