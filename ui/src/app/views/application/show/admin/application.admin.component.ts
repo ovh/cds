@@ -57,7 +57,7 @@ export class ApplicationAdminComponent implements OnInit {
 
         this.disablePrefix = new FormControl(false);
         this.withRepositoryWebHook = new FormControl(false);
-        this.withCurrentVersion = new FormControl(false);
+        this.withCurrentVersion = new FormControl(true);
     }
 
     generateWorkflow(force: boolean): void {
