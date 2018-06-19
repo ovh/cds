@@ -3,6 +3,7 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -433,6 +434,18 @@ func (w *Workflow) Visit(visitor func(*WorkflowNode)) {
 	}
 }
 
+//Sort sorts the workflow
+func (w *Workflow) Sort() {
+	w.Visit(func(n *WorkflowNode) {
+		n.Sort()
+	})
+	for _, join := range w.Joins {
+		sort.Slice(join.Triggers, func(i, j int) bool {
+			return join.Triggers[i].WorkflowDestNode.Name < join.Triggers[j].WorkflowDestNode.Name
+		})
+	}
+}
+
 //Visit all the workflow and apply the visitor func on the current node and the children
 func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
 	visitor(n)
@@ -440,6 +453,13 @@ func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
 		d := &n.Triggers[i].WorkflowDestNode
 		d.Visit(visitor)
 	}
+}
+
+//Sort sorts the workflow node
+func (n *WorkflowNode) Sort() {
+	sort.Slice(n.Triggers, func(i, j int) bool {
+		return n.Triggers[i].WorkflowDestNode.Name < n.Triggers[j].WorkflowDestNode.Name
+	})
 }
 
 //WorkflowNodeJoin aims to joins multiple node into multiple triggers
