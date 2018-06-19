@@ -455,6 +455,7 @@ func (a *API) Serve(ctx context.Context) error {
 	var errDB error
 	a.DBConnectionFactory, errDB = database.Init(
 		a.Config.Database.User,
+		a.Config.Database.Role,
 		a.Config.Database.Password,
 		a.Config.Database.Name,
 		a.Config.Database.Host,
