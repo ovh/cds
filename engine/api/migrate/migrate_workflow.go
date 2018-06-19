@@ -79,10 +79,6 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 			}
 			newW.Root.Hooks = []sdk.WorkflowNodeHook{*h}
 
-			if err := workflow.HookRegistration(db, store, nil, newW, proj); err != nil {
-				return nil, sdk.WrapError(err, "migratePipeline> Cannot register hook")
-			}
-
 			oldW, errO := workflow.Load(db, store, proj, newW.Name, u, workflow.LoadOptions{})
 			if errO != nil {
 				return nil, sdk.WrapError(errO, "migratePipeline> Unable to load old workflow")

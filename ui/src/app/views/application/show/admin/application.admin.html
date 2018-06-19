@@ -32,11 +32,11 @@
                             <sm-checkbox label="Keep current cds.version" [control]="withCurrentVersion" type="toggle"></sm-checkbox>
                         </div>                        
                         <div class="four field">
-                            <div *ngIf="application.workflow_migration == 'STARTED'">
+                            <div *ngIf="application.workflow_migration ==== 'STARTED'">
                                 <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
                                 <button class="ui red button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
                             </div>
-                            <div *ngIf="application.workflow_migration != 'STARTED'">
+                            <div *ngIf="application.workflow_migration !== 'STARTED'">
                                     <button class="ui green button" (click)="generateWorkflow(false)" [class.loading]="loading" [disabled]="loading" >{{ 'application_migration_generate' | translate }}</button>
                             </div>
                         </div>

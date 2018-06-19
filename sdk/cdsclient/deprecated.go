@@ -22,8 +22,12 @@ func (c *client) ApplicationPipelinesAttach(projectKey string, appName string, p
 }
 
 func (c *client) ApplicationDoMigrationWorkflow(projectKey string, appName string, force, disablePrefix, withCurrentVersion, withRepositoryWebHook bool) error {
-	uri := fmt.Sprintf("/project/%s/application/%s/workflow/migrate", projectKey, appName)
-	uri += fmt.Sprintf("?force=%t&disablePrefix=%t&withCurrentVersion=%t&withRepositoryWebHook=%t", force, disablePrefix, withCurrentVersion, withRepositoryWebHook)
+	params := url.Values{}
+	params.Add("force", fmt.Sprintf("%t", force))
+	params.Add("disablePrefix", fmt.Sprintf("%t", disablePrefix))
+	params.Add("withCurrentVersion", fmt.Sprintf("%t", withCurrentVersion))
+	params.Add("withRepositoryWebHook", fmt.Sprintf("%t", withRepositoryWebHook))
+	uri := fmt.Sprintf("/project/%s/application/%s/workflow/migrate?%s", projectKey, appName, params.Encode())
 
 	code, err := c.PostJSON(uri, nil, nil)
 	if err != nil {
