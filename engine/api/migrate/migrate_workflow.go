@@ -63,7 +63,7 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 			return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
 		}
 
-		if withRepositoryWebHook {
+		if withRepositoryWebHook && newW.Root.Context.Application != nil && newW.Root.Context.Application.VCSServer != "" && newW.Root.Context.Application.RepositoryFullname != "" {
 			h := &sdk.WorkflowNodeHook{}
 			m, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 			if err != nil {
