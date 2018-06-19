@@ -85,13 +85,15 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 			}
 
 			newW.ID = oldW.ID
-			if err := workflow.Update(db, store, &newW, oldW, proj, u); err != nil {
-				return nil, sdk.WrapError(err, "migratePipeline> Unable to update workflow 2")
-			}
 
 			if errHr := workflow.HookRegistration(db, store, oldW, newW, proj); errHr != nil {
 				return nil, sdk.WrapError(errHr, "migratePipeline> Cannot register hook 2")
 			}
+
+			if err := workflow.Update(db, store, &newW, oldW, proj, u); err != nil {
+				return nil, sdk.WrapError(err, "migratePipeline> Unable to update workflow 2")
+			}
+
 		}
 
 		if withCurrentVersion {
