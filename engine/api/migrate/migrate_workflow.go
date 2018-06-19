@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"database/sql"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -102,7 +103,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 				pipeline.LoadPipelineBuildOpts.WithStatus(sdk.StatusSuccess.String()),
 			}
 			pbs, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, oldW.Application.ID, oldW.Pipeline.ID, oldW.Environment.ID, 1, opts...)
-			if errPB != nil {
+			if errPB != nil && errPB != sql.ErrNoRows {
 				return nil, sdk.WrapError(err, "migratePipeline> Cannot load pipeline")
 			}
 			if len(pbs) == 1 {
