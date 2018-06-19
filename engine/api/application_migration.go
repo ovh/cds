@@ -112,7 +112,7 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 			app.WorkflowMigration = migrate.STATUS_CLEANING
 		} else {
 			var errM error
-			wfs, errM = migrate.MigrateToWorkflow(tx, api.Cache, cdTree, p, getUser(ctx), force, disablePrefix, withCurrentVersion, withRepositoryWebHook)
+			wfs, errM = migrate.ToWorkflow(tx, api.Cache, cdTree, p, getUser(ctx), force, disablePrefix, withCurrentVersion, withRepositoryWebHook)
 			if errM != nil {
 				return sdk.WrapError(errM, "migrationApplicationWorkflowHandler")
 			}

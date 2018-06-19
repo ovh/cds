@@ -20,7 +20,8 @@ const (
 	STATUS_DONE     = "DONE"
 )
 
-func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline, proj *sdk.Project, u *sdk.User, force, disablePrefix, withCurrentVersion, withRepositoryWebHook bool) ([]sdk.Workflow, error) {
+// ToWorkflow migrates old workflow to new workflow
+func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline, proj *sdk.Project, u *sdk.User, force, disablePrefix, withCurrentVersion, withRepositoryWebHook bool) ([]sdk.Workflow, error) {
 	workflows := make([]sdk.Workflow, len(cdTree))
 	for i := range cdTree {
 		oldW := cdTree[i]
