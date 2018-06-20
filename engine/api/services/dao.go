@@ -13,6 +13,21 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var servicesCacheByType map[string][]sdk.Service
+var sEvent chan serviceEvent
+
+type serviceEvent struct {
+	Action  string
+	Service sdk.Service
+}
+
+func init() {
+	sEvent = make(chan serviceEvent, 10)
+	servicesCacheByType = make(map[string][]sdk.Service)
+
+	go managerServiceEvent(sEvent)
+}
+
 // Repository is the data persistence layer
 type Repository struct {
 	querier   gorp.SqlExecutor
@@ -86,6 +101,10 @@ func (r *Repository) FindByHash(hash string) (*sdk.Service, error) {
 
 // FindByType services by type
 func (r *Repository) FindByType(t string) ([]sdk.Service, error) {
+	if ss, ok := servicesCacheByType[t]; ok {
+		return ss, nil
+	}
+
 	query := `
 	SELECT name, type, http_url, last_heartbeat, hash 
 	FROM services 
@@ -97,6 +116,7 @@ func (r *Repository) FindByType(t string) ([]sdk.Service, error) {
 		}
 		return nil, sdk.WrapError(err, "FindByType> Unable to find dead services")
 	}
+
 	return services, nil
 }
 
@@ -161,6 +181,11 @@ func (r *Repository) Insert(s *sdk.Service) error {
 		return sdk.WrapError(err, "Insert> error on PostUpdate")
 	}
 	*s = sdk.Service(sdb)
+
+	sEvent <- serviceEvent{
+		Service: *s,
+		Action:  "update",
+	}
 	return nil
 }
 
@@ -176,6 +201,10 @@ func (r *Repository) Update(s *sdk.Service) error {
 		return sdk.WrapError(err, "Update> error on PostUpdate")
 	}
 	*s = sdk.Service(sdb)
+	sEvent <- serviceEvent{
+		Service: *s,
+		Action:  "update",
+	}
 	return nil
 }
 
@@ -184,6 +213,10 @@ func (r *Repository) Delete(s *sdk.Service) error {
 	sdb := service(*s)
 	if _, err := r.Tx().Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "Delete> unable to delete service %s", s.Name)
+	}
+	sEvent <- serviceEvent{
+		Service: *s,
+		Action:  "remove",
 	}
 	return nil
 }
@@ -239,4 +272,52 @@ func (r *Repository) FindDeadServices(t time.Duration) ([]sdk.Service, error) {
 		return nil, sdk.WrapError(err, "FindDeadServices> Unable to find dead services")
 	}
 	return services, nil
+}
+
+func managerServiceEvent(c <-chan serviceEvent) {
+	for se := range c {
+		switch se.Action {
+		case "update":
+			updateCache(se.Service)
+		case "remove":
+			removeFromCache(se.Service)
+		}
+	}
+}
+
+func updateCache(s sdk.Service) {
+	ss, ok := servicesCacheByType[s.Type]
+	indexToUpdate := -1
+	if !ok {
+		ss = make([]sdk.Service, 0, 1)
+	} else {
+		for i, sub := range ss {
+			if sub.Name == s.Name {
+				indexToUpdate = i
+				break
+			}
+		}
+	}
+	if indexToUpdate == -1 {
+		ss = append(ss, s)
+	} else {
+		ss[indexToUpdate] = s
+	}
+	servicesCacheByType[s.Type] = ss
+}
+
+func removeFromCache(s sdk.Service) {
+	ss, ok := servicesCacheByType[s.Type]
+	if !ok || len(ss) == 0 {
+		return
+	}
+	indexToSplit := 0
+	for i, sub := range ss {
+		if sub.Name == s.Name {
+			indexToSplit = i
+			break
+		}
+	}
+	ss = append(ss[:indexToSplit], ss[indexToSplit+1:]...)
+	servicesCacheByType[s.Type] = ss
 }
