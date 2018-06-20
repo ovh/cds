@@ -93,7 +93,7 @@ func (s *Service) Serve(c context.Context) error {
 		select {
 		case <-ctx.Done():
 			log.Info("ElasticSearch> Shutdown HTTP Server")
-			server.Shutdown(ctx)
+			_ = server.Shutdown(ctx)
 		}
 	}()
 
