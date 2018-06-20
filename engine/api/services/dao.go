@@ -275,7 +275,7 @@ func updateCache(s sdk.Service) {
 
 func removeFromCache(s sdk.Service) {
 	ss, ok := servicesCacheByType[s.Type]
-	if !ok {
+	if !ok || len(ss) == 0 {
 		return
 	}
 	indexToSplit := 0
