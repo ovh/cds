@@ -14,9 +14,18 @@ import (
 )
 
 var servicesCacheByType map[string][]sdk.Service
+var sEvent chan serviceEvent
+
+type serviceEvent struct {
+	Action  string
+	Service sdk.Service
+}
 
 func init() {
+	sEvent = make(chan serviceEvent, 10)
 	servicesCacheByType = make(map[string][]sdk.Service)
+
+	go managerServiceEvent(sEvent)
 }
 
 // Repository is the data persistence layer
@@ -173,7 +182,10 @@ func (r *Repository) Insert(s *sdk.Service) error {
 	}
 	*s = sdk.Service(sdb)
 
-	updateCache(*s)
+	sEvent <- serviceEvent{
+		Service: *s,
+		Action:  "update",
+	}
 	return nil
 }
 
@@ -189,7 +201,10 @@ func (r *Repository) Update(s *sdk.Service) error {
 		return sdk.WrapError(err, "Update> error on PostUpdate")
 	}
 	*s = sdk.Service(sdb)
-	updateCache(*s)
+	sEvent <- serviceEvent{
+		Service: *s,
+		Action:  "update",
+	}
 	return nil
 }
 
@@ -199,7 +214,10 @@ func (r *Repository) Delete(s *sdk.Service) error {
 	if _, err := r.Tx().Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "Delete> unable to delete service %s", s.Name)
 	}
-	removeFromCache(*s)
+	sEvent <- serviceEvent{
+		Service: *s,
+		Action:  "remove",
+	}
 	return nil
 }
 
@@ -256,6 +274,17 @@ func (r *Repository) FindDeadServices(t time.Duration) ([]sdk.Service, error) {
 	return services, nil
 }
 
+func managerServiceEvent(c <-chan serviceEvent) {
+	for se := range c {
+		switch se.Action {
+		case "update":
+			updateCache(se.Service)
+		case "remove":
+			removeFromCache(se.Service)
+		}
+	}
+}
+
 func updateCache(s sdk.Service) {
 	ss, ok := servicesCacheByType[s.Type]
 	indexToUpdate := -1
@@ -265,6 +294,7 @@ func updateCache(s sdk.Service) {
 		for i, sub := range ss {
 			if sub.Name == s.Name {
 				indexToUpdate = i
+				break
 			}
 		}
 	}
@@ -285,6 +315,7 @@ func removeFromCache(s sdk.Service) {
 	for i, sub := range ss {
 		if sub.Name == s.Name {
 			indexToSplit = i
+			break
 		}
 	}
 	ss = append(ss[:indexToSplit], ss[indexToSplit+1:]...)
