@@ -2,8 +2,6 @@ package event
 
 import (
 	"context"
-	"encoding/json"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -16,9 +14,10 @@ import (
 // PushInElasticSearch pushes event to an elasticsearch
 func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Store) {
 	querier := services.Querier(db, store)
-	pubSub := store.Subscribe("events_pubsub")
-	tick := time.NewTicker(50 * time.Millisecond)
-	defer tick.Stop()
+
+	eventChan := make(chan sdk.Event, 10)
+	Subscribe(eventChan)
+
 	for {
 		select {
 		case <-c.Done():
@@ -26,12 +25,7 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 				log.Error("PushInElasticSearch> Exiting: %v", c.Err())
 				return
 			}
-		case <-tick.C:
-			msg, err := store.GetMessageFromSubscription(c, pubSub)
-			if err != nil {
-				log.Warning("PushInElasticSearch> Cannot get message %s: %s", msg, err)
-				continue
-			}
+		case e := <-eventChan:
 
 			esServices, errS := querier.FindByType(services.TypeElasticsearch)
 			if errS != nil {
@@ -40,12 +34,6 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 			}
 
 			if len(esServices) == 0 {
-				continue
-			}
-
-			var e sdk.Event
-			if err := json.Unmarshal([]byte(msg), &e); err != nil {
-				log.Warning("PushInElasticSearch> Cannot unmarshal event %s: %s", msg, err)
 				continue
 			}
 
