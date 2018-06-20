@@ -13,7 +13,6 @@ import {environment} from '../environments/environment';
 import {AppService} from './app.service';
 import {Event} from './model/event.model';
 import {AuthentificationStore} from './service/auth/authentification.store';
-import {EventStore} from './service/event/event.store';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
@@ -50,7 +49,7 @@ export class AppComponent  implements OnInit {
                 private _activatedRoute: ActivatedRoute, private _titleService: Title,
                 private _authStore: AuthentificationStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService,
-                private _toastService: ToastService, private _eventStore: EventStore) {
+                private _toastService: ToastService) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.toasterConfig = this._toastService.getConfig();
         _translate.addLangs(['en', 'fr']);
@@ -102,6 +101,7 @@ export class AppComponent  implements OnInit {
                     route = route.firstChild;
                     Object.assign(params, route.snapshot.params, route.snapshot.queryParams);
                 }
+                this._appService.updateRoute(params);
                 return { route, params: Observable.of(params) };
             }))
             .pipe(filter((event) => event.route.outlet === 'primary'))
@@ -111,7 +111,7 @@ export class AppComponent  implements OnInit {
                     return;
                 }
                 if (routeData[0]['title']) {
-                    let title = format(routeData[0]['title'], routeData[1])
+                    let title = format(routeData[0]['title'], routeData[1]);
                     this._titleService.setTitle(title);
                 } else {
                     this._titleService.setTitle('CDS');
@@ -153,11 +153,7 @@ export class AppComponent  implements OnInit {
                 return;
             }
             this.zone.run(() => {
-                if (e['uuid']) {
-                    this._eventStore.init(this.sseWorker, e['uuid']);
-                } else {
-                    this._appService.manageEvent(<Event>e);
-                }
+                this._appService.manageEvent(<Event>e);
             });
         });
     }

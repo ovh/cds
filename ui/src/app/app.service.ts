@@ -9,22 +9,28 @@ import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
 import {ApplicationStore} from './service/application/application.store';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {BroadcastStore} from './service/broadcast/broadcast.store';
-import {EventStore} from './service/event/event.store';
 import {NotificationService} from './service/notification/notification.service';
 import {PipelineStore} from './service/pipeline/pipeline.store';
 import {ProjectStore} from './service/project/project.store';
-import {RouterService} from './service/router/router.service';
+import {RouterService} from './service/services.module';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
 import {WorkflowStore} from './service/workflow/workflow.store';
 
 @Injectable()
 export class AppService {
 
-    constructor(private _projStore: ProjectStore, private _routeActivated: ActivatedRoute,
+    // Information about current route
+    routeParams: {};
+
+    constructor(private _projStore: ProjectStore, private _routerService: RouterService, private _routeActivated: ActivatedRoute,
                 private _appStore: ApplicationStore, private _notif: NotificationService, private _authStore: AuthentificationStore,
                 private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
-                private _wfStore: WorkflowStore, private _routerService: RouterService, private _eventStore: EventStore,
-                private _broadcastStore: BroadcastStore) {
+                private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore) {
+        this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
+    }
+
+    updateRoute(params: {}) {
+        this.routeParams = params;
     }
 
     manageEvent(event: Event): void {
@@ -60,11 +66,8 @@ export class AppService {
                 return;
             }
 
-            // Get current route
-            let params = this._routerService.getRouteParams({}, this._routeActivated);
-
             // If working on project or sub resources
-            if (params['key'] && params['key'] === projectInCache.key) {
+            if (this.routeParams['key'] && this.routeParams['key'] === projectInCache.key) {
                 // if modification from another user, display a notification
                 if (event.username !== this._authStore.getUser().username) {
                     this._projStore.externalModification(projectInCache.key);
@@ -100,7 +103,8 @@ export class AppService {
             } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
                 opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
             }
-            this._projStore.resync(projectInCache.key, opts).pipe(first()).subscribe(() => {});
+            this._projStore.resync(projectInCache.key, opts).pipe(first()).subscribe(() => {
+            });
         });
     }
 
@@ -120,11 +124,9 @@ export class AppService {
                 return;
             }
 
-            // Get current route
-            let params = this._routerService.getRouteParams({}, this._routeActivated);
-
             // If working on the application
-            if (params['key'] && params['key'] === event.project_key && params['appName'] === event.application_name) {
+            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+                && this.routeParams['appName'] === event.application_name) {
                 // modification by another user
                 if (event.username !== this._authStore.getUser().username) {
                     this._appStore.externalModification(appKey);
@@ -158,10 +160,9 @@ export class AppService {
                 return;
             }
 
-            let params = this._routerService.getRouteParams({}, this._routeActivated);
-
             // update pipeline
-            if (params['key'] && params['key'] === event.project_key && params['pipName'] === event.pipeline_name) {
+            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+                && this.routeParams['pipName'] === event.pipeline_name) {
                 if (event.username !== this._authStore.getUser().username) {
                     this._pipStore.externalModification(pipKey);
                     this._notif.create(this._translate.instant('warning_pipeline', {username: event.username}));
@@ -191,10 +192,9 @@ export class AppService {
                 return;
             }
 
-            let params = this._routerService.getRouteParams({}, this._routeActivated);
-
             // update workflow
-            if (params['key'] && params['key'] === event.project_key && params['workflowName'] === event.workflow_name) {
+            if (this.routeParams['key'] && this.routeParams['key'] === event.project_key
+                && this.routeParams['workflowName'] === event.workflow_name) {
                 if (event.username !== this._authStore.getUser().username) {
                     this._wfStore.externalModification(wfKey);
                     this._notif.create(this._translate.instant('warning_workflow', {username: event.username}));
@@ -210,17 +210,22 @@ export class AppService {
     }
 
     updateWorkflowRunCache(event: Event): void {
+        if (this.routeParams['key'] !== event.project_key || this.routeParams['workflowName'] !== event.workflow_name) {
+            return;
+        }
+
         switch (event.type_event) {
             case EventType.RUN_WORKFLOW_PREFIX:
                 let wr = WorkflowRun.fromEventRunWorkflow(event);
                 this._workflowEventStore.broadcastWorkflowRun(event.project_key, event.workflow_name, wr);
                 break;
             case EventType.RUN_WORKFLOW_NODE:
-                let wnr = WorkflowNodeRun.fromEventRunWorkflowNode(event);
-                this._workflowEventStore.broadcastNodeRunEvents(wnr);
+                if (this.routeParams['number'] === event.workflow_run_num.toString()) {
+                    let wnr = WorkflowNodeRun.fromEventRunWorkflowNode(event);
+                    this._workflowEventStore.broadcastNodeRunEvents(wnr);
+                }
                 break;
         }
-        this._eventStore._eventFilter.getValue();
     }
 
     updateBroadcastCache(event: Event): void {

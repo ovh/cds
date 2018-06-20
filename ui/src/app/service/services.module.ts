@@ -18,7 +18,6 @@ import {BroadcastStore} from './broadcast/broadcast.store';
 import {DownloadService} from './download/download.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {EnvironmentService} from './environment/environment.service';
-import {EventStore} from './event/event.store';
 import {GroupService} from './group/group.service';
 import {HookService} from './hook/hook.service';
 import {ImportAsCodeService} from './import-as-code/import.service';
@@ -82,7 +81,6 @@ export class ServicesModule {
                 CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 EnvironmentService,
-                EventStore,
                 GroupService,
                 HookService,
                 ImportAsCodeService,
@@ -153,7 +151,6 @@ export {
     CanActivateAuthAdminRoute,
     DownloadService,
     EnvironmentAuditService,
-    EventStore,
     GroupService,
     HookService,
     ImportAsCodeService,

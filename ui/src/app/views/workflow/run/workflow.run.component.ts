@@ -8,7 +8,6 @@ import {PipelineStatus} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {Workflow, WorkflowNode} from '../../../model/workflow.model';
 import {WorkflowRun} from '../../../model/workflow.run.model';
-import {EventStore} from '../../../service/event/event.store';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
@@ -44,7 +43,7 @@ export class WorkflowRunComponent implements OnInit {
     // copy of root node to send it into run modal
     nodeToRun: WorkflowNode;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _eventStore: EventStore,
+    constructor(private _activatedRoute: ActivatedRoute,
                 private _workflowStore: WorkflowStore, private _notification: NotificationService,
                 private _translate: TranslateService, private _workflowEventStore: WorkflowEventStore,
                 private _workflowRunService: WorkflowRunService) {
@@ -112,7 +111,6 @@ export class WorkflowRunComponent implements OnInit {
             s.workflow_name = this.workflowName;
             s.runs = true;
             s.num = wr.num;
-            this._eventStore.changeFilter(s, true);
         });
     }
 

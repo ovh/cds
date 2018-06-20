@@ -7,7 +7,6 @@ import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
-import {EventStore} from '../../../../service/event/event.store';
 import {RouterService} from '../../../../service/router/router.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
@@ -40,7 +39,7 @@ export class WorkflowNodeRunComponent {
     constructor(private _activatedRoute: ActivatedRoute,
                 private _router: Router, private _routerService: RouterService, private _workflowRunService: WorkflowRunService,
                 private _durationService: DurationService,
-                private _workflowEventStore: WorkflowEventStore, private _eventStore: EventStore) {
+                private _workflowEventStore: WorkflowEventStore) {
 
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -81,7 +80,6 @@ export class WorkflowNodeRunComponent {
             s.workflow_name = this.workflowName;
             s.runs = true;
             s.num = wr.num;
-            this._eventStore.changeFilter(s, true);
 
             let historyChecked = false;
             this.subNodeRun = this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
@@ -114,7 +112,6 @@ export class WorkflowNodeRunComponent {
                 f.workflow_name = this.workflowName;
                 f.num = this.workflowRun.num;
                 f.runs = true;
-                this._eventStore.changeFilter(f, true);
             });
         });
     }

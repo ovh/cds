@@ -7,7 +7,6 @@ import {finalize} from 'rxjs/operators';
 import {EventSubscription} from '../../model/event.model';
 import {Project} from '../../model/project.model';
 import {Workflow} from '../../model/workflow.model';
-import {EventStore} from '../../service/event/event.store';
 import {ProjectStore} from '../../service/project/project.store';
 import {WorkflowRunService} from '../../service/workflow/run/workflow.run.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
@@ -56,8 +55,7 @@ export class WorkflowComponent implements OnInit {
                 public _sidebarStore: WorkflowSidebarStore,
                 private _workflowCore: WorkflowCoreService,
                 private _toast: ToastService,
-                private _translate: TranslateService,
-                private _eventStore: EventStore) {
+                private _translate: TranslateService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -134,7 +132,6 @@ export class WorkflowComponent implements OnInit {
             f.key = key;
             f.workflow_name = workflowName;
             f.runs = true;
-            this._eventStore.changeFilter(f, true);
         });
     }
 
