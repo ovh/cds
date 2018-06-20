@@ -13,6 +13,12 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var servicesCacheByType map[string][]sdk.Service
+
+func init() {
+	servicesCacheByType = make(map[string][]sdk.Service)
+}
+
 // Repository is the data persistence layer
 type Repository struct {
 	querier   gorp.SqlExecutor
@@ -86,6 +92,10 @@ func (r *Repository) FindByHash(hash string) (*sdk.Service, error) {
 
 // FindByType services by type
 func (r *Repository) FindByType(t string) ([]sdk.Service, error) {
+	if ss, ok := servicesCacheByType[t]; ok {
+		return ss, nil
+	}
+
 	query := `
 	SELECT name, type, http_url, last_heartbeat, hash 
 	FROM services 
@@ -97,6 +107,7 @@ func (r *Repository) FindByType(t string) ([]sdk.Service, error) {
 		}
 		return nil, sdk.WrapError(err, "FindByType> Unable to find dead services")
 	}
+
 	return services, nil
 }
 
@@ -161,6 +172,8 @@ func (r *Repository) Insert(s *sdk.Service) error {
 		return sdk.WrapError(err, "Insert> error on PostUpdate")
 	}
 	*s = sdk.Service(sdb)
+
+	updateCache(*s)
 	return nil
 }
 
@@ -176,6 +189,7 @@ func (r *Repository) Update(s *sdk.Service) error {
 		return sdk.WrapError(err, "Update> error on PostUpdate")
 	}
 	*s = sdk.Service(sdb)
+	updateCache(*s)
 	return nil
 }
 
@@ -185,6 +199,7 @@ func (r *Repository) Delete(s *sdk.Service) error {
 	if _, err := r.Tx().Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "Delete> unable to delete service %s", s.Name)
 	}
+	removeFromCache(*s)
 	return nil
 }
 
@@ -239,4 +254,36 @@ func (r *Repository) FindDeadServices(t time.Duration) ([]sdk.Service, error) {
 		return nil, sdk.WrapError(err, "FindDeadServices> Unable to find dead services")
 	}
 	return services, nil
+}
+
+func updateCache(s sdk.Service) {
+	ss, ok := servicesCacheByType[s.Type]
+	indexToUpdate := 0
+	if !ok {
+		ss = make([]sdk.Service, 1, 1)
+	} else {
+		for i, sub := range ss {
+			if sub.Name == s.Name {
+				indexToUpdate = i
+			}
+		}
+	}
+
+	ss[indexToUpdate] = s
+	servicesCacheByType[s.Type] = ss
+}
+
+func removeFromCache(s sdk.Service) {
+	ss, ok := servicesCacheByType[s.Type]
+	if !ok {
+		return
+	}
+	indexToSplit := 0
+	for i, sub := range ss {
+		if sub.Name == s.Name {
+			indexToSplit = i
+		}
+	}
+	ss = append(ss[:indexToSplit], ss[indexToSplit+1:]...)
+	servicesCacheByType[s.Type] = ss
 }

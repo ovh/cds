@@ -15,8 +15,7 @@ import (
 
 // PushInElasticSearch pushes event to an elasticsearch
 func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Store) {
-	var esServices []sdk.Service
-
+	querier := services.Querier(db, store)
 	pubSub := store.Subscribe("events_pubsub")
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
@@ -34,14 +33,14 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 				continue
 			}
 
-			if esServices == nil {
-				querier := services.Querier(db, store)
-				var errS error
-				esServices, errS = querier.FindByType(services.TypeElasticsearch)
-				if errS != nil {
-					log.Warning("PushInElasticSearch> Unable to get elasticsearch service")
-					continue
-				}
+			esServices, errS := querier.FindByType(services.TypeElasticsearch)
+			if errS != nil {
+				log.Warning("PushInElasticSearch> Unable to get elasticsearch service")
+				continue
+			}
+
+			if len(esServices) == 0 {
+				continue
 			}
 
 			var e sdk.Event
@@ -60,7 +59,6 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 				log.Warning("PushInElasticSearch> Unable to send event to elasticsearch [%d]: %v", code, errD)
 				continue
 			}
-			log.Warning("Event send")
 		}
 	}
 }
