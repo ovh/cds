@@ -31,6 +31,11 @@ type Event struct {
 	WorkflowRunNum  int64                  `json:"workflow_run_num,omitempty"`
 }
 
+// EventFilter represents filters when getting events
+type EventFilter struct {
+	ProjectKeys []string `json:"project_keys"`
+}
+
 // EventSubscription data send to api to subscribe to an event
 type EventSubscription struct {
 	UUID         string `json:"uuid"`

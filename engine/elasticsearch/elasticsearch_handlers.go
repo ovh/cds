@@ -13,12 +13,19 @@ import (
 func (s *Service) getEventsHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-		boolQuery := elastic.NewBoolQuery().Should(
-			elastic.NewMatchQuery("ProjectKey", "*"),
-		)
-		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.Index).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("Timestamp", false).Do(context.Background())
+		var filters sdk.EventFilter
+		if err := api.UnmarshalBody(r, &filters); err != nil {
+			return sdk.WrapError(err, "getEventsHandler> Unable to read body")
+		}
+
+		boolQuery := elastic.NewBoolQuery()
+		for _, p := range filters.ProjectKeys {
+			boolQuery.Should(elastic.NewMatchQuery("project_key", p))
+		}
+
+		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.Index).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).Do(context.Background())
 		if errR != nil {
-			return sdk.WrapError(errR, "getEventsHandler> Cannot get result")
+			return sdk.WrapError(errR, "getEventsHandler> Cannot get result on index: %s", s.Cfg.ElasticSearch.Index)
 		}
 		return api.WriteJSON(w, result.Hits.Hits, http.StatusOK)
 	}

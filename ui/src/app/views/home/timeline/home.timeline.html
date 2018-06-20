@@ -1,0 +1,19 @@
+<h3>{{'navbar_timeline' | translate}}</h3>
+<div class="ui secondary pointing menu">
+    <a class="active item">Timeline</a>
+</div>
+<div class="ui relaxed divided list">
+    <div class="item" *ngFor="let e of events">
+        <div class="content">
+            <div class="header">
+                [<a [routerLink]="['/project', e.project_key]">{{ e.project_key  }}</a>]
+                <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name]">{{ e.workflow_name }}</a>
+                <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name, 'run', e.workflow_run_num]">#{{ e.workflow_run_num }}</a>
+                {{ e.status }}
+            </div>
+            <div class="description">
+                {{e.timestamp | amTimeAgo}}
+            </div>
+        </div>
+    </div>
+</div>
