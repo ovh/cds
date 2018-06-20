@@ -8,14 +8,13 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) getEventsHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		boolQuery := elastic.NewBoolQuery().Should(
-			elastic.NewMatchQuery("ProjectKey", "CDS"),
+			elastic.NewMatchQuery("ProjectKey", "*"),
 		)
 		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.Index).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("Timestamp", false).Do(context.Background())
 		if errR != nil {
@@ -32,11 +31,10 @@ func (s *Service) postEventHandler() api.Handler {
 			return sdk.WrapError(err, "postEventHandler> Unable to read body")
 		}
 
-		results, errI := esClient.Index().Index(s.Cfg.ElasticSearch.Index).Type(e.EventType).BodyJson(e).Do(context.Background())
+		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.Index).Type(e.EventType).BodyJson(e).Do(context.Background())
 		if errI != nil {
 			return sdk.WrapError(errI, "postEventHandler> Unable to insert event")
 		}
-		log.Warning("%+v", results)
 		return nil
 	}
 }

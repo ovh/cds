@@ -53,14 +53,14 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 func (s *Service) CheckConfiguration(config interface{}) error {
 	sConfig, ok := config.(Configuration)
 	if !ok {
-		return fmt.Errorf("CheckConfiguration> Invalid Repositories configuration")
+		return fmt.Errorf("CheckConfiguration> Invalid Elasticsearch configuration")
 	}
 
 	if sConfig.URL == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
 	if sConfig.Name == "" {
-		return fmt.Errorf("please enter a name in your repositories configuration")
+		return fmt.Errorf("please enter a name in your Elasticsearch configuration")
 	}
 
 	return nil
