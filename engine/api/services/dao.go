@@ -258,9 +258,9 @@ func (r *Repository) FindDeadServices(t time.Duration) ([]sdk.Service, error) {
 
 func updateCache(s sdk.Service) {
 	ss, ok := servicesCacheByType[s.Type]
-	indexToUpdate := 0
+	indexToUpdate := -1
 	if !ok {
-		ss = make([]sdk.Service, 1, 1)
+		ss = make([]sdk.Service, 0, 1)
 	} else {
 		for i, sub := range ss {
 			if sub.Name == s.Name {
@@ -268,8 +268,11 @@ func updateCache(s sdk.Service) {
 			}
 		}
 	}
-
-	ss[indexToUpdate] = s
+	if indexToUpdate == -1 {
+		ss = append(ss, s)
+	} else {
+		ss[indexToUpdate] = s
+	}
 	servicesCacheByType[s.Type] = ss
 }
 
