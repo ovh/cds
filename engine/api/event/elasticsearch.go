@@ -29,7 +29,7 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 
 			esServices, errS := querier.FindByType(services.TypeElasticsearch)
 			if errS != nil {
-				log.Error("PushInElasticSearch> Unable to get elasticsearch service")
+				log.Error("PushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
 			}
 
