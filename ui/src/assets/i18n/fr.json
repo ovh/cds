@@ -554,7 +554,6 @@
   "platform_configuration": "Configuration de la plateforme",
   "platform_official_tooltip": "Platforme publique",
 
-
   "provider_hook": "hook",
   "provider_deployment": "déploiement",
 
@@ -637,6 +636,8 @@
   "step_title_duration": "Début: {{start}}, Fin: {{end}}",
 
   "timeline_loading": "Chargement de la timeline...",
+  "timeline_no": "La file d'actualité est vide",
+  "timeline_title": "File d'actualité",
 
   "trigger_added": "Trigger ajouté",
   "trigger_add_prerequisite_title": "Ajouter une condition de lancement",
@@ -696,6 +697,7 @@
   "warning_goto_project_variable": "variables du projet",
   "warning_modal_title": "Attention - accès concurrents",
   "warning_modal_body": "Un autre utilisateur vient de modifier cette ressource. Vous risquez d'écraser ses modifications.",
+  "warning_no": "Aucun warning",
   "warning_project": "Un autre utilisateur vient de modifier le projet.",
   "warning_project_title": "Liste des warnings sur le projet",
   "warning_pipeline_title": "Liste des warnings sur le pipeline {{pip}}",
