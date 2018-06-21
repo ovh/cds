@@ -1,4 +1,5 @@
 import {Component, OnInit} from '@angular/core';
+import {finalize, first} from 'rxjs/operators';
 import {Event} from '../../../model/event.model';
 import {TimelineStore} from '../../../service/timeline/timeline.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
@@ -11,6 +12,7 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 @AutoUnsubscribe()
 export class HomeTimelineComponent implements OnInit {
 
+    loading = true;
     events: Array<Event>;
 
 
@@ -19,7 +21,7 @@ export class HomeTimelineComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this._timelineStore.alltimeline().subscribe(es => {
+        this._timelineStore.alltimeline().pipe(first(), finalize(() => this.loading = false )).subscribe(es => {
             this.events = es.toArray();
         });
     }

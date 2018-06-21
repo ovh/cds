@@ -635,6 +635,8 @@
   "step_updated": "Step updated",
   "step_title_duration": "Start: {{start}}, End: {{end}}",
 
+  "timeline_loading": "Loading timeline...",
+
   "trigger_added": "Trigger added",
   "trigger_add_prerequisite_title": "Add a run condition",
   "trigger_create_title": "Create a new trigger from {{app}} / {{pip}} {{env}}",

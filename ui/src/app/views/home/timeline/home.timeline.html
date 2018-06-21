@@ -2,7 +2,7 @@
 <div class="ui secondary pointing menu">
     <a class="active item">Timeline</a>
 </div>
-<div class="ui relaxed divided list">
+<div class="ui relaxed divided list" *ngIf="!loading">
     <div class="item" *ngFor="let e of events">
         <div class="content">
             <div class="header">
@@ -17,3 +17,4 @@
         </div>
     </div>
 </div>
+<div class="ui text active loader" *ngIf="loading">{{ 'timeline_loading' | translate }}</div>
