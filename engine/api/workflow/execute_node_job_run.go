@@ -484,6 +484,18 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.H
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
+//FreeNodeJobRun  Free a job for a hatchery
+func FreeNodeJobRun(store cache.Store, id int64) error {
+	k := keyBookJob(id)
+	h := sdk.Hatchery{}
+	if store.Get(k, &h) {
+		// job not already booked, book it for 2 min
+		store.Delete(k)
+		return nil
+	}
+	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)
+}
+
 //AddNodeJobAttempt add an hatchery attempt to spawn a job
 func AddNodeJobAttempt(db gorp.SqlExecutor, id, hatcheryID int64) ([]int64, error) {
 	var ids []int64

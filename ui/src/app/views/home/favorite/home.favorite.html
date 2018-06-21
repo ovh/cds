@@ -1,0 +1,21 @@
+<div class="ui relaxed divided list" *ngIf="bookmarks && bookmarks.length">
+    <div class="item" *ngFor="let b of bookmarks">
+        <i class="large browser middle aligned icon" *ngIf="b.type === 'project'"></i>
+        <i class="large share alternate middle aligned icon" *ngIf="b.type === 'workflow'"></i>
+        <div class="content">
+            <ng-container *ngIf="b.type === 'project'">
+                <a class="header" [routerLink]="['/project', b.key]">
+                    {{b.key}}
+                </a>
+                <div class="description">{{'common_project' | translate}}</div>
+            </ng-container>
+            <ng-container *ngIf="b.type === 'workflow'">
+                <a class="header" [routerLink]="['/project', b.key, 'workflow', b.workflow_name]">
+                    {{b.workflow_name}}
+                </a>
+                <div class="description">
+                    {{'navbar_workflow_in' | translate}} <a class="projectLink" href="" [routerLink]="['/project', b.key]">{{b.key}}</a></div>
+            </ng-container>
+        </div>
+    </div>
+</div>

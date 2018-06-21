@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -32,6 +34,31 @@ func (c *client) ApplicationDeploymentStrategyUpdate(projectKey, applicationName
 		return err
 	}
 	return nil
+}
+
+func (c *client) ApplicationMetadataUpdate(projectKey, applicationName, key, value string) error {
+	path := fmt.Sprintf("/project/%s/application/%s/metadata/%s", projectKey, applicationName, url.PathEscape(key))
+	if _, _, _, err := c.Request("POST", path, strings.NewReader(value)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) WorkflowsList(projectKey string) ([]sdk.Workflow, error) {
+	ws := []sdk.Workflow{}
+	if _, err := c.GetJSON("/project/"+projectKey+"/workflows", &ws); err != nil {
+		return nil, err
+	}
+	return ws, nil
+}
+
+func (c *client) WorkflowLoad(projectKey, workflowName string) (*sdk.Workflow, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s?withDeepPipelines=true", projectKey, workflowName)
+	w := &sdk.Workflow{}
+	if _, err := c.GetJSON(url, &w); err != nil {
+		return nil, err
+	}
+	return w, nil
 }
 
 func (c *client) ProjectPlatformGet(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error) {

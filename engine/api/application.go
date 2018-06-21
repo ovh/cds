@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,6 +35,7 @@ func (api *API) getApplicationsHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 		withPermissions := r.FormValue("permission")
+		withUsage := FormBool(r, "withUsage")
 
 		var u = getUser(ctx)
 		requestedUserName := r.Header.Get("X-Cds-Username")
@@ -43,6 +46,9 @@ func (api *API) getApplicationsHandler() Handler {
 			//Load the specific user
 			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
 			if err != nil {
+				if err == sql.ErrNoRows {
+					return sdk.ErrUserNotFound
+				}
 				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s'", requestedUserName)
 			}
 			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
@@ -63,6 +69,16 @@ func (api *API) getApplicationsHandler() Handler {
 				}
 			}
 			applications = res
+		}
+
+		if withUsage {
+			for i := range applications {
+				usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applications[i].Name)
+				if errU != nil {
+					return sdk.WrapError(errU, "getApplicationHandler> Cannot load application usage")
+				}
+				applications[i].Usage = &usage
+			}
 		}
 
 		return WriteJSON(w, applications, http.StatusOK)
@@ -739,5 +755,43 @@ func (api *API) updateApplicationHandler() Handler {
 
 		return WriteJSON(w, app, http.StatusOK)
 
+	}
+}
+
+func (api *API) postApplicationMetadataHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get pipeline and action name in URL
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		applicationName := vars["permApplicationName"]
+
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "postApplicationMetadataHandler")
+		}
+
+		m := vars["metadata"]
+		v, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.WrapError(err, "postApplicationMetadataHandler")
+		}
+		defer r.Body.Close()
+
+		app.Metadata[m] = string(v)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "postApplicationMetadataHandler> unable to start tx")
+		}
+		defer tx.Rollback() // nolint
+
+		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "postApplicationMetadataHandler> unable to update application")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postApplicationMetadataHandler> unable to commit tx")
+		}
+
+		return nil
 	}
 }

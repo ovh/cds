@@ -267,7 +267,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	test.NoError(t, err)
 	assert.Len(t, projs, 1)
 
-	apps, err := sdkclient.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username))
+	apps, err := sdkclient.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username), cdsclient.WithUsage())
 	test.NoError(t, err)
 	assert.Len(t, apps, 1)
 

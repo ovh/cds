@@ -24,6 +24,7 @@ import (
 var (
 	DBDriver      string
 	dbUser        string
+	dbRole        string
 	dbPassword    string
 	dbName        string
 	dbHost        string
@@ -47,6 +48,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	cfg := LoadTestingConf(t)
 	DBDriver = cfg["dbDriver"]
 	dbUser = cfg["dbUser"]
+	dbRole = cfg["dbRole"]
 	dbPassword = cfg["dbPassword"]
 	dbName = cfg["dbName"]
 	dbHost = cfg["dbHost"]
@@ -67,7 +69,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	}
 	if DBConnectionFactory == nil {
 		var err error
-		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
+		DBConnectionFactory, err = database.Init(dbUser, dbRole, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
 			return nil, nil
@@ -85,7 +87,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	if err != nil {
 		t.Fatalf("Unable to connect to redis: %v", err)
 	}
-	event.Cache = store
+	event.Initialize(event.KafkaConfig{}, store)
 
 	return DBConnectionFactory.GetDBMap(), store
 }

@@ -14,6 +14,7 @@ import (
 func (s *dbmigservice) doMigrate() error {
 	dbConn, err := database.Init(
 		s.cfg.DB.User,
+		s.cfg.DB.Role,
 		s.cfg.DB.Password,
 		s.cfg.DB.Name,
 		s.cfg.DB.Host,
@@ -36,6 +37,7 @@ func (s *dbmigservice) doMigrate() error {
 func (s *dbmigservice) getMigrate() ([]dbmigrate.MigrationStatus, error) {
 	dbConn, err := database.Init(
 		s.cfg.DB.User,
+		s.cfg.DB.Role,
 		s.cfg.DB.Password,
 		s.cfg.DB.Name,
 		s.cfg.DB.Host,

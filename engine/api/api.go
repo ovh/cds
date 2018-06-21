@@ -455,6 +455,7 @@ func (a *API) Serve(ctx context.Context) error {
 	var errDB error
 	a.DBConnectionFactory, errDB = database.Init(
 		a.Config.Database.User,
+		a.Config.Database.Role,
 		a.Config.Database.Password,
 		a.Config.Database.Name,
 		a.Config.Database.Host,
@@ -506,9 +507,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
-	//Init events package
-	event.Cache = a.Cache
-
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
 
@@ -556,7 +554,7 @@ func (a *API) Serve(ctx context.Context) error {
 		Topic:           a.Config.Events.Kafka.Topic,
 		MaxMessageByte:  a.Config.Events.Kafka.MaxMessageBytes,
 	}
-	if err := event.Initialize(kafkaOptions); err != nil {
+	if err := event.Initialize(kafkaOptions, a.Cache); err != nil {
 		log.Error("error while initializing event system: %s", err)
 	} else {
 		go event.DequeueEvent(ctx)
@@ -602,6 +600,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 	go workflow.Initialize(ctx, a.Cache, a.Config.URL.UI, a.DBConnectionFactory.GetDBMap)
+	go event.PushInElasticSearch(ctx, a.mustDB(), a.Cache)
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),

@@ -56,7 +56,7 @@ func Create(h Interface) error {
 	var nRoutines, workersStarted, nRegister int64
 
 	go func(ctx context.Context) {
-		if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued); err != nil {
+		if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, nil); err != nil {
 			log.Error("Queues polling stopped: %v", err)
 			cancel()
 		}

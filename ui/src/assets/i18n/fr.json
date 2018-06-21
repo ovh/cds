@@ -636,6 +636,8 @@
   "step_updated": "Etape mise à jour",
   "step_title_duration": "Début: {{start}}, Fin: {{end}}",
 
+  "timeline_loading": "Chargement de la timeline...",
+
   "trigger_added": "Trigger ajouté",
   "trigger_add_prerequisite_title": "Ajouter une condition de lancement",
   "trigger_create_title": "Création d'un nouveau trigger depuis {{app}} / {{pip}} {{env}}",

@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 func Test_getWorkflowsHandler(t *testing.T) {
@@ -62,6 +63,56 @@ func Test_getWorkflowHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 404, w.Code)
+}
+
+func Test_getWorkflowHandler_AsProvider(t *testing.T) {
+	api, tsURL, tsClose := newTestServer(t)
+	defer tsClose()
+
+	api.Config.Providers = append(api.Config.Providers, ProviderConfiguration{
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	u, _ := assets.InsertLambdaUser(api.mustDB())
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+
+	proj, _ = project.LoadByID(api.mustDB(), api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	wf := sdk.Workflow{
+		Name:       "workflow1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+		},
+	}
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &wf, proj, u))
+
+	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
+		Host:  tsURL,
+		Name:  "test-provider",
+		Token: "my-token",
+	})
+
+	w, err := sdkclient.WorkflowLoad(pkey, wf.Name)
+	test.NoError(t, err)
+	t.Logf("%+v", w)
+
+	///
 }
 
 func Test_getWorkflowHandler_withUsage(t *testing.T) {
