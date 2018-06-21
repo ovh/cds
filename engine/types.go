@@ -49,7 +49,7 @@ type Configuration struct {
 	Hooks           hooks.Configuration          `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################"`
 	VCS             vcs.Configuration            `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################"`
 	Repositories    repositories.Configuration   `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################"`
-	ElasticSearch   elasticsearch.Configuration  `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n######################"`
+	ElasticSearch   elasticsearch.Configuration  `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n This is use for CDS timeline and is optional\n######################"`
 	DatabaseMigrate migrateservice.Configuration `toml:"databaseMigrate" comment:"######################\n CDS DB Migrate Service Settings \n######################"`
 }
 

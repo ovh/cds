@@ -456,7 +456,7 @@ func ProcessError(target error, al string) (string, Error) {
 	// will recursively retrieve the topmost error which does not implement causer, which is assumed to be the original cause
 	target = errors.Cause(target)
 	cdsErr, ok := target.(Error)
-	if !ok {
+	if !ok || cdsErr.ID == 0 {
 		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
 	}
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
