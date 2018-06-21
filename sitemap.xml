@@ -690,10 +690,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/api/events/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/executions/</loc>
   </url>
   
@@ -1251,6 +1247,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/worker/tag/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/timeline/</loc>
   </url>
   
   <url>
