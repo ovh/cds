@@ -54,6 +54,7 @@ func Create(h Interface) error {
 	wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
 	errs := make(chan error, 1)
 	var nRoutines, workersStarted, nRegister int64
+	lastSpawnWorker := time.Now()
 
 	go func(ctx context.Context) {
 		if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, nil); err != nil {
@@ -94,11 +95,14 @@ func Create(h Interface) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-tickerCountWorkersStarted.C:
-			workersStarted = int64(h.WorkersStarted())
-			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
-				log.Debug("max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
+			// we refresh workersStarted 30" after the last spawn
+			if lastSpawnWorker.Add(30*time.Second).Unix() < time.Now().Unix() {
+				workersStarted = int64(h.WorkersStarted())
+				if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
+					log.Debug("max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
+				}
+				log.Debug("workers already started:%d", workersStarted)
 			}
-			log.Debug("workers already started:%d", workersStarted)
 		case <-tickerGetModels.C:
 			var errwm error
 			models, errwm = h.CDSClient().WorkerModelsEnabled()
@@ -110,8 +114,9 @@ func Create(h Interface) error {
 				log.Debug("maxWorkersReached:%d", workersStarted)
 				continue
 			}
+			lastSpawnWorker = time.Now()
+			atomic.AddInt64(&workersStarted, 1)
 			go func(job sdk.PipelineBuildJob) {
-				atomic.AddInt64(&workersStarted, 1)
 				if isRun, _, _ := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, []int64{}, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				} else {
@@ -124,6 +129,7 @@ func Create(h Interface) error {
 				continue
 			}
 			atomic.AddInt64(&workersStarted, 1)
+			lastSpawnWorker = time.Now()
 			go func(job sdk.WorkflowNodeJobRun) {
 				// count + 1 here, and remove -1 if worker is not started
 				// this avoid to spawn to many workers compare
