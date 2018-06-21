@@ -123,12 +123,11 @@ func Create(h Interface) error {
 				log.Debug("maxWorkersReached:%d", workersStarted)
 				continue
 			}
+			atomic.AddInt64(&workersStarted, 1)
 			go func(job sdk.WorkflowNodeJobRun) {
 				// count + 1 here, and remove -1 if worker is not started
 				// this avoid to spawn to many workers compare
-				atomic.AddInt64(&workersStarted, 1)
 				if isRun, temptToSpawn, _ := receiveJob(h, true, job.ExecGroups, job.ID, job.QueuedSeconds, job.SpawnAttempts, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
-					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				} else if temptToSpawn {
 					atomic.AddInt64(&workersStarted, -1)
