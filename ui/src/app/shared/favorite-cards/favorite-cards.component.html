@@ -68,14 +68,6 @@
               {{'navbar_workflow_in' | translate}} <a class="projectLink" href="" [routerLink]="['/project', favorite.key]">{{favorite.key}}</a>
             </div>
           </ng-container>
-          <ng-container *ngSwitchCase="'application'">
-            <a class="header" sm-item href="#" [routerLink]="['/project', favorite.key, 'application', favorite.application_name]">
-              {{favorite.application_name}}}
-            </a>
-            <div class="description">
-              {{'navbar_application_in' | translate}} <a class="projectLink" href="" [routerLink]="['/project', favorite.key]">{{favorite.key}}</a>
-            </div>
-          </ng-container>
           <ng-container *ngSwitchDefault>
             <div class="right floated">
               <i class="browser icon"></i>

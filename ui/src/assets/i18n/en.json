@@ -635,6 +635,10 @@
   "step_updated": "Step updated",
   "step_title_duration": "Start: {{start}}, End: {{end}}",
 
+  "timeline_loading": "Loading timeline...",
+  "timeline_no": "Timeline is empty",
+  "timeline_title": "Timeline",
+
   "trigger_added": "Trigger added",
   "trigger_add_prerequisite_title": "Add a run condition",
   "trigger_create_title": "Create a new trigger from {{app}} / {{pip}} {{env}}",
@@ -693,6 +697,7 @@
   "warning_message": "Message",
   "warning_modal_title": "Warning - concurrent access",
   "warning_modal_body": "Another use has just updated this resource. You may overwrite his update.",
+  "warning_no": "No warning",
   "warning_project": "Another user has just updated the project.",
   "warning_project_title": "Project warning list",
   "warning_pipeline_title": "Warnings list for pipeline {{pip}}",

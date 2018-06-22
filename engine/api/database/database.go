@@ -15,6 +15,7 @@ import (
 // DBConnectionFactory is a database connection factory on postgres with gorp
 type DBConnectionFactory struct {
 	dbDriver         string
+	dbRole           string
 	dbUser           string
 	dbPassword       string
 	dbName           string
@@ -34,7 +35,7 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 		if f.dbName == "" {
 			return nil
 		}
-		newF, err := Init(f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbConnectTimeout, f.dbTimeout, f.dbMaxConn)
+		newF, err := Init(f.dbUser, f.dbRole, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbConnectTimeout, f.dbTimeout, f.dbMaxConn)
 		if err != nil {
 			log.Error("Database> cannot init db connection : %s", err)
 			return nil
@@ -60,9 +61,10 @@ func (f *DBConnectionFactory) Set(d *sql.DB) {
 }
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
-func Init(user, password, name, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
+func Init(user, role, password, name, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
 	f := &DBConnectionFactory{
 		dbDriver:         "postgres",
+		dbRole:           role,
 		dbUser:           user,
 		dbPassword:       password,
 		dbName:           name,
@@ -109,7 +111,7 @@ func Init(user, password, name, host string, port int, sslmode string, connectTi
 	f.db, err = sql.Open(f.dbDriver, dsn)
 	if err != nil {
 		f.db = nil
-		log.Error("Cannot open database: %s", err)
+		log.Error("cannot open database: %s", err)
 		return nil, err
 	}
 
@@ -120,6 +122,15 @@ func Init(user, password, name, host string, port int, sslmode string, connectTi
 
 	f.db.SetMaxOpenConns(f.dbMaxConn)
 	f.db.SetMaxIdleConns(int(f.dbMaxConn / 2))
+
+	// Set role if specified
+	if role != "" {
+		log.Debug("database> setting role %s on database", role)
+		if _, err := f.db.Exec("SET ROLE '" + role + "'"); err != nil {
+			log.Error("unable to set role %s on database: %s", role, err)
+			return nil, sdk.WrapError(err, "unable to set role %s", role)
+		}
+	}
 
 	return f, nil
 }

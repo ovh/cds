@@ -326,6 +326,8 @@ type InterfaceDeprecated interface {
 	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
 	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
 	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
+	ApplicationDoMigrationWorkflow(projectKey, appName string, force, disablePrefixW, withCurrentVersion, withRepositoryWebHook bool) error
+	ApplicationCleanOldWorkflow(projectKey, appName string) error
 }
 
 // Raw is a low-level interface exposing HTTP functions

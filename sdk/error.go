@@ -148,6 +148,7 @@ var (
 	ErrWorkerModelNoAdmin                     = Error{ID: 133, Status: http.StatusForbidden}
 	ErrWorkerModelNoPattern                   = Error{ID: 134, Status: http.StatusForbidden}
 	ErrJobNotBooked                           = Error{ID: 135, Status: http.StatusBadRequest}
+	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -284,6 +285,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkerModelNoAdmin.ID:                     "Forbidden: you are neither a CDS administrator or the administrator for the group in which you want to create the worker model",
 	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scrips. If you have specific needs, please contact a CDS administrator",
 	ErrJobNotBooked.ID:                           "Job already released",
+	ErrUserNotFound.ID:                           "User not found",
 }
 
 var errorsFrench = map[int]string{
@@ -420,6 +422,7 @@ var errorsFrench = map[int]string{
 	ErrWorkerModelNoAdmin.ID:                     "Accès refusé: vous n'êtes ni un administrateur CDS ni un administrateur du groupe pour lequel vous tentez de créer votre modèle",
 	ErrWorkerModelNoPattern.ID:                   "Accès refusé: vous devez obligatoirement sélectionner un pattern de script de configuration. Si vous souhaitez ajouter un pattern particulier, veuillez contacter un administrateur CDS",
 	ErrJobNotBooked.ID:                           "Le job est déjà libéré",
+	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
 }
 
 var errorsLanguages = []map[int]string{
@@ -453,7 +456,7 @@ func ProcessError(target error, al string) (string, Error) {
 	// will recursively retrieve the topmost error which does not implement causer, which is assumed to be the original cause
 	target = errors.Cause(target)
 	cdsErr, ok := target.(Error)
-	if !ok {
+	if !ok || cdsErr.ID == 0 {
 		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
 	}
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)

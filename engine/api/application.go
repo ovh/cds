@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -45,6 +46,9 @@ func (api *API) getApplicationsHandler() Handler {
 			//Load the specific user
 			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
 			if err != nil {
+				if err == sql.ErrNoRows {
+					return sdk.ErrUserNotFound
+				}
 				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s'", requestedUserName)
 			}
 			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {

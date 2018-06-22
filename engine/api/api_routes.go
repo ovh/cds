@@ -412,9 +412,11 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook/model/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
-	r.Handle("/events/subscribe", r.POST(api.eventSubscribeHandler))
 	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
+
+	// Timeline
+	r.Handle("/timeline", r.GET(api.getTimelineHandler))
 
 	// Feature
 	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))

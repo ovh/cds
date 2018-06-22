@@ -1,4 +1,5 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {FormControl} from '@angular/forms';
 import {Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
@@ -31,6 +32,10 @@ export class ApplicationAdminComponent implements OnInit {
     migrationModal: ActiveModal<boolean, boolean, void>;
     migrationText: string;
 
+    disablePrefix: FormControl
+    withRepositoryWebHook: FormControl
+    withCurrentVersion: FormControl
+
     user: User;
 
     newName: string;
@@ -49,10 +54,15 @@ export class ApplicationAdminComponent implements OnInit {
                 { queryParams: {tab: 'workflow'}});
         }
         this.migrationText = this._translate.instant('application_workflow_migration_modal_content');
+
+        this.disablePrefix = new FormControl(false);
+        this.withRepositoryWebHook = new FormControl(false);
+        this.withCurrentVersion = new FormControl(true);
     }
 
     generateWorkflow(force: boolean): void {
-        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name, force)
+        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name,
+            force, this.disablePrefix.value, this.withRepositoryWebHook.value, this.withCurrentVersion.value)
             .pipe(
               first(),
               finalize(() => this.loading = true)

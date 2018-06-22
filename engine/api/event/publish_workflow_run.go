@@ -11,19 +11,21 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, u *sdk.User) {
+func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string, u *sdk.User) {
 	event := sdk.Event{
-		Timestamp:       time.Now(),
-		Hostname:        hostname,
-		CDSName:         cdsname,
-		EventType:       fmt.Sprintf("%T", payload),
-		Payload:         structs.Map(payload),
-		ProjectKey:      key,
-		ApplicationName: appName,
-		PipelineName:    pipName,
-		WorkflowName:    workflowName,
-		EnvironmentName: envName,
-		WorkflowRunNum:  num,
+		Timestamp:         time.Now(),
+		Hostname:          hostname,
+		CDSName:           cdsname,
+		EventType:         fmt.Sprintf("%T", payload),
+		Payload:           structs.Map(payload),
+		ProjectKey:        key,
+		ApplicationName:   appName,
+		PipelineName:      pipName,
+		WorkflowName:      workflowName,
+		EnvironmentName:   envName,
+		WorkflowRunNum:    num,
+		WorkflowRunNumSub: sub,
+		Status:            status,
 	}
 	if u != nil {
 		event.Username = u.Username
@@ -43,7 +45,7 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		LastModified:  wr.LastModified.Unix(),
 		Tags:          wr.Tags,
 	}
-	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, nil)
+	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, nil)
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
@@ -98,5 +100,5 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
-	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nil)
+	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status, nil)
 }

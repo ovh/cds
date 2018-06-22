@@ -46,6 +46,8 @@ import {RequirementService} from './requirement/requirement.service';
 import {RequirementStore} from './requirement/requirement.store';
 import {RouterService} from './router/router.service';
 import {LastUpdateService} from './sse/lastupdate.sservice';
+import {TimelineService} from './timeline/timeline.service';
+import {TimelineStore} from './timeline/timeline.store';
 import {UserService} from './user/user.service';
 import {VariableService} from './variable/variable.service';
 import {WarningService} from './warning/warning.service';
@@ -106,6 +108,8 @@ export class ServicesModule {
                 RequirementStore,
                 RequirementService,
                 RouterService,
+                TimelineService,
+                TimelineStore,
                 UserService,
                 VariableService,
                 WarningService,
@@ -169,6 +173,7 @@ export {
     RepoManagerService,
     RequirementStore,
     RouterService,
+    TimelineStore,
     UserService,
     VariableService,
     WarningStore,

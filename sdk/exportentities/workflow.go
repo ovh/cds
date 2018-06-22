@@ -386,6 +386,8 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 		wf.Groups = append(wf.Groups, perm)
 	}
 
+	wf.Sort()
+
 	return wf, nil
 }
 

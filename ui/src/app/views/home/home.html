@@ -15,11 +15,17 @@
           <div class="one wide column">
           </div>
           <div class="ten wide column border-right">
-              <h3>{{'navbar_favorites' | translate}}</h3>
-              <div class="ui raised padded text container segment" *ngIf="!loading && (!favorites || !favorites.length)">
-                  {{'common_no_favorites' | translate}}
-              </div>
-              <app-favorite-cards [favorites]="favorites" [centered]="false"></app-favorite-cards>
+              <ng-container *ngIf="!user.admin">
+                  <h3>{{'navbar_favorites' | translate}}</h3>
+                  <div class="ui raised padded text container segment" *ngIf="!loading && (!favorites || !favorites.length)">
+                      {{'common_no_favorites' | translate}}
+                  </div>
+                  <app-favorite-cards [favorites]="favorites" [centered]="false"></app-favorite-cards>
+              </ng-container>
+              <ng-container *ngIf="user.admin">
+                  <app-home-timeline></app-home-timeline>
+              </ng-container>
+
           </div>
           <div class="five wide column">
               <div>
@@ -32,36 +38,18 @@
                       <i class="bell icon"></i>{{'broadcast_list_title' | translate}}
                   </a>
               </div>
-              <div class="ui active centered inline loader mt25" *ngIf="loadingBroadcasts"></div>
-              <div class="ui relaxed divided list" *ngIf="!loadingBroadcasts && broadcasts && broadcasts.length">
-                  <div class="item" *ngFor="let broadcast of broadcasts">
-                    <i class="large bell outline middle aligned icon pointing"
-                        *ngIf="!broadcast.updating"
-                        suiPopup
-                        [popupText]="'navbar_mark_read' | translate"
-                        [popupInverted]="true"
-                        popupPlacement="bottom center"
-                        (click)="markAsRead(broadcast.id)"
-                        [class.orange]="broadcast.level === 'warning'" [class.blue]="broadcast.level === 'info'">
-                    </i>
-                    <i class="large spinner middle aligned icon animated rotateOut infinite"
-                        *ngIf="broadcast.updating">
-                    </i>
-                    <div class="content">
-                      <a class="header" [routerLink]="['/broadcast', broadcast.id]">
-                          {{broadcast.title}}
-                          <span *ngIf="broadcast.project_key">({{'common_project' | translate}} {{broadcast.project_key}})</span>
-                      </a>
-                      <div class="description">{{broadcast.updated | amTimeAgo}}</div>
-                    </div>
-                  </div>
+              <app-home-broadcast [loading]="loadingBroadcasts" [broadcasts]="broadcasts"></app-home-broadcast>
+              <div>
+                  <a class="fluid ui blue basic button link mt5" href="" [routerLink]="['/favorite']">
+                      <i class="book icon"></i>{{'navbar_favorites' | translate}}
+                  </a>
               </div>
+              <ng-container *ngIf="user.admin">
+                  <app-home-favorite [bookmarks]="favorites"></app-home-favorite>
+              </ng-container>
           </div>
         </div>
-
       </div>
     </div>
-
     <div class="ui active text loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
-
 </div>
