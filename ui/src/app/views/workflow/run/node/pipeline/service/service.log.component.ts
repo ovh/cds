@@ -18,6 +18,8 @@ export class WorkflowServiceLogComponent implements OnInit {
 
     logsSplitted: Array<string> = [];
 
+    showLog = false;
+
     constructor() { }
 
     ngOnInit(): void {
