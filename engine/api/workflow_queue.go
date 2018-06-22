@@ -13,8 +13,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/worker"
@@ -471,6 +473,73 @@ func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
 
 		if err := workflow.AddLog(api.mustDB(), pbJob, &logs); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobLogsHandler")
+		}
+
+		return nil
+	}
+}
+
+func (api *API) postWorkflowJobServiceLogsHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
+		var logs []sdk.ServiceLog
+		if err := UnmarshalBody(r, &logs); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobServiceLogsHandler> Unable to parse body")
+		}
+		db := api.mustDB()
+		u := getUser(ctx)
+
+		if len(u.Groups) == 0 || u.Groups[0].ID == 0 {
+			return sdk.ErrForbidden
+		}
+
+		globalErr := &sdk.MultiError{}
+		errorOccured := false
+		for _, log := range logs {
+			nodeRunJob, errJob := workflow.LoadNodeJobRun(db, api.Cache, log.WorkflowNodeJobRunID)
+			if errJob != nil {
+				errorOccured = true
+				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get job run %d : %v", log.WorkflowNodeJobRunID, errJob))
+				continue
+			}
+			log.WorkflowNodeRunID = nodeRunJob.WorkflowNodeRunID
+
+			pip, errL := pipeline.LoadByNodeRunID(db, log.WorkflowNodeRunID)
+			if errL != nil {
+				errorOccured = true
+				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get pipeline for node run id %d : %v", log.WorkflowNodeRunID, errL))
+				continue
+			}
+
+			if pip == nil {
+				errorOccured = true
+				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get pipeline for node run id %d : Not found", log.WorkflowNodeRunID))
+				continue
+			}
+
+			if group.SharedInfraGroup != nil && u.Groups[0].ID != group.SharedInfraGroup.ID {
+				role, errG := group.LoadRoleGroupInPipeline(db, pip.ID, u.Groups[0].ID)
+				if errG != nil {
+					errorOccured = true
+					globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get group in pipeline id %d : %v", pip.ID, errG))
+					continue
+				}
+
+				if role < permission.PermissionReadExecute {
+					errorOccured = true
+					globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Forbidden, you have no execution rights on pipeline %s : current right %d", pip.Name, role))
+					continue
+				}
+			}
+
+			if err := workflow.AddServiceLog(db, nodeRunJob, &log); err != nil {
+				errorOccured = true
+				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> %v", err))
+			}
+		}
+
+		if errorOccured {
+			log.Error(globalErr.Error())
+			return globalErr
 		}
 
 		return nil

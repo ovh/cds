@@ -210,6 +210,7 @@ type QueueClient interface {
 	QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error)
 	QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error
 	QueueJobIncAttempts(jobID int64) ([]int64, error)
+	QueueServiceLogs(logs []sdk.ServiceLog) error
 }
 
 // UserClient exposes users functions
