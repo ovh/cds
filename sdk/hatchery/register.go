@@ -110,7 +110,7 @@ func Create(h Interface) error {
 				log.Error("error on h.CDSClient().WorkerModelsEnabled(): %v", errwm)
 			}
 		case j := <-pbjobs:
-			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
+			if workersStarted >= int64(h.Configuration().Provision.MaxWorker) {
 				log.Debug("maxWorkersReached:%d", workersStarted)
 				continue
 			}
@@ -124,7 +124,7 @@ func Create(h Interface) error {
 				}
 			}(j)
 		case j := <-wjobs:
-			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
+			if workersStarted >= int64(h.Configuration().Provision.MaxWorker) {
 				log.Debug("maxWorkersReached:%d", workersStarted)
 				continue
 			}
