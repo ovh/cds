@@ -636,9 +636,9 @@
   "step_updated": "Etape mise à jour",
   "step_title_duration": "Début: {{start}}, Fin: {{end}}",
 
-  "timeline_loading": "Chargement de la timeline...",
-  "timeline_no": "La file d'actualité est vide",
-  "timeline_title": "File d'actualité",
+  "timeline_loading": "Chargement du fil d'actualité...",
+  "timeline_no": "Le fil d'actualité est vide",
+  "timeline_title": "Fil d'actualité",
 
   "trigger_added": "Trigger ajouté",
   "trigger_add_prerequisite_title": "Ajouter une condition de lancement",
