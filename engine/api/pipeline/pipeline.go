@@ -137,6 +137,24 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, er
 	return pips, nil
 }
 
+// LoadByNodeRunID loads pipelines from database for a given workflow id
+func LoadByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) (*sdk.Pipeline, error) {
+	var pip sdk.Pipeline
+	query := `SELECT pipeline.* FROM pipeline
+	JOIN workflow_node ON pipeline.id = workflow_node.pipeline_id
+	JOIN workflow_node_run ON workflow_node.id = workflow_node_run.workflow_node_id
+	WHERE workflow_node_run.id = $1`
+
+	if err := db.SelectOne(&pip, query, nodeRunID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByNodeRunID> Unable to load pipelines linked to node run id %d", nodeRunID)
+	}
+
+	return &pip, nil
+}
+
 // LoadByEnvName loads pipelines from database for a given project key and environment name
 func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Pipeline, error) {
 	pips := []sdk.Pipeline{}

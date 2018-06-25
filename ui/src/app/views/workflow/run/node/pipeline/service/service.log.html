@@ -1,0 +1,28 @@
+<div class="log">
+    <div class="logHeader pointing" (click)="showLog = !showLog">
+        <div class="title">
+            <i class="chevron down icon" *ngIf="showLog"></i>
+            <i class="chevron right icon" *ngIf="!showLog"></i>
+            {{serviceLog.requirement_service_name}}
+        </div>
+    </div>
+    <div class="logs" *ngIf="showLog">
+        <div class="right floated">
+          <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate" (click)="copyRawLog(getLogs())">
+            <i class="copy icon"></i>
+          </button>
+        </div>
+        <!-- Pay attention ! Don't write any spaces, tabs or line between <pre> and <table> -->
+        <pre><table class="ui very basic table">
+            <tbody>
+              <ng-container *ngFor="let logLine of logsSplitted; let index = index; let last = last;">
+                <tr *ngIf="!last">
+                  <td class="number yellow right aligned">{{index + 1}}</td>
+                  <td [innerHTML]="logLine"></td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table></pre>
+        <textarea class="fakeInput" name="fakeInput" #logsContent></textarea>
+    </div>
+</div>

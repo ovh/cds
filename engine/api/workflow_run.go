@@ -990,6 +990,23 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 	}
 }
 
+func (api *API) getWorkflowNodeRunJobServiceLogsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		runJobID, errJ := requestVarInt(r, "runJobId")
+		if errJ != nil {
+			return sdk.WrapError(errJ, "getWorkflowNodeRunJobServiceLogsHandler> runJobId: invalid number")
+		}
+		db := api.mustDB()
+
+		logsServices, err := workflow.LoadServicesLogsByJob(db, runJobID)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowNodeRunJobServiceLogsHandler> cannot load service logs for node run job id %d", runJobID)
+		}
+
+		return WriteJSON(w, logsServices, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
