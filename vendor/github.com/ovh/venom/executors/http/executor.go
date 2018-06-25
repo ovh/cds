@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,6 +45,7 @@ type Executor struct {
 	BasicAuthPassword string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
 	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
 	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
+	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -100,6 +102,13 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: e.IgnoreVerifySSL},
+	}
+	if len(e.Proxy) > 0 {
+		proxyURL, err := url.Parse(e.Proxy)
+		if err != nil {
+			return nil, err
+		}
+		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 	client := &http.Client{Transport: tr}
 
