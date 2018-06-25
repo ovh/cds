@@ -43,11 +43,13 @@ export class WorkflowNodeRunParamComponent {
 
     @Input('nodeToRun')
     set nodeToRun(data: WorkflowNode) {
-        this._nodeToRun = cloneDeep(data);
         if (data) {
+            this._nodeToRun = cloneDeep(data);
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
+                this.linkedToRepo = this._nodeToRun.context.application != null
+                    && this._nodeToRun.context.application.repository_fullname != null;
             }
         }
     }
@@ -72,6 +74,7 @@ export class WorkflowNodeRunParamComponent {
     loadingCommits = false;
     loadingBranches = false;
     readOnly = false;
+    linkedToRepo = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
                 private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService,
@@ -162,26 +165,27 @@ export class WorkflowNodeRunParamComponent {
             return;
         }
 
-        // TODO delete .repository_fullname condition and update handler to get history branches of node_run (issue: #1815)
-        if (this.nodeToRun.context.application.repository_fullname) {
-            this.loadingBranches = true;
-            this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
-                .pipe(finalize(() => this.loadingBranches = false))
-                .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
-        }
+        if (this.linkedToRepo) {
+            if (this.nodeToRun.context.application.repository_fullname) {
+                this.loadingBranches = true;
+                this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
+                    .pipe(finalize(() => this.loadingBranches = false))
+                    .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
+            }
 
-        if (this.num == null) {
-            this.loadingCommits = true;
-            this._workflowRunService.getRunNumber(this.project.key, this.workflow)
-                .pipe(first())
-                .subscribe(n => {
-                    this.lastNum = n.num + 1;
-                    this.getCommits(n.num + 1, false);
-                });
-        }
+            if (this.num == null) {
+                this.loadingCommits = true;
+                this._workflowRunService.getRunNumber(this.project.key, this.workflow)
+                    .pipe(first())
+                    .subscribe(n => {
+                        this.lastNum = n.num + 1;
+                        this.getCommits(n.num + 1, false);
+                    });
+            }
 
-        if (this.num != null) {
-            this.getCommits(this.num, false);
+            if (this.num != null) {
+                this.getCommits(this.num, false);
+            }
         }
     }
 

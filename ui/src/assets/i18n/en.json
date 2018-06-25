@@ -148,6 +148,7 @@
 
   "common_action": "Action",
   "common_search": "Search",
+  "common_run": "Run",
   "common_project": "Project",
   "common_preview": "Preview",
   "common_details": "Details",
