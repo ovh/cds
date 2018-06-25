@@ -41,6 +41,21 @@ func (c *client) ApplicationDoMigrationWorkflow(projectKey string, appName strin
 	return nil
 }
 
+func (c *client) ApplicationCleanOldWorkflow(projectKey string, appName string) error {
+	uri := fmt.Sprintf("/project/%s/application/%s/workflow/clean", projectKey, appName)
+
+	code, err := c.PostJSON(uri, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	if code >= 300 {
+		return fmt.Errorf("cds: api error (%d)", code)
+	}
+
+	return nil
+}
+
 func (c *client) ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error {
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/trigger", t.SrcProject.Key, t.SrcApplication.Name, t.SrcPipeline.Name)
 

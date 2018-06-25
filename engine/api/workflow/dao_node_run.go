@@ -442,7 +442,6 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			}
 
 			//and return the last commit of the branch
-			log.Debug("get the last commit : %s", br.LatestCommit)
 			cm, errcm := client.Commit(repo, br.LatestCommit)
 			if errcm != nil {
 				return nil, cur, sdk.WrapError(errcm, "GetNodeRunBuildCommits> Cannot get commits with cur.Hash %s", cur.Hash)
@@ -452,7 +451,6 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 	}
 
-	log.Debug("GetNodeRunBuildCommits> Before PreviousNodeRunVCSInfos %s current: %+v appId: %d envId: %d", wNodeName, cur, app.ID, envID)
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
 	prev, errcurr := PreviousNodeRunVCSInfos(db, p.Key, wf, wNodeName, cur, app.ID, envID)
 	if errcurr != nil {
@@ -461,16 +459,11 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	if prev.Hash == "" {
 		log.Warning("GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
-	} else {
-		log.Info("GetNodeRunBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
 	}
 
-	//TODO: to delete after debug commits
-	log.Debug("GetNodeRunBuildCommits> current : %+v , previous: %+v", cur, prev)
 	if prev.Hash != "" && cur.Hash == prev.Hash {
 		log.Info("GetNodeRunBuildCommits> there is not difference between the previous build and the current build for node %s", nodeRun.WorkflowNodeName)
 	} else if prev.Hash != "" {
-		log.Debug("GetNodeRunBuildCommits> Previous hash is NOT empty, node %s and current hash %v ", nodeRun.WorkflowNodeName, cur)
 		if cur.Hash == "" {
 			br, err := client.Branch(repo, cur.Branch)
 			if err != nil {
@@ -485,7 +478,6 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 		res = commits
 	} else if prev.Hash == "" {
-		log.Debug("GetNodeRunBuildCommits> Previous hash is empty, return just the last commit for node %s ", nodeRun.WorkflowNodeName)
 		if lastCommit.Hash != "" {
 			res = []sdk.VCSCommit{lastCommit}
 		}

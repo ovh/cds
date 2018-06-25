@@ -148,6 +148,7 @@
 
   "common_action": "Action",
   "common_search": "Search",
+  "common_run": "Run",
   "common_project": "Project",
   "common_preview": "Preview",
   "common_details": "Details",
@@ -636,6 +637,8 @@
   "step_title_duration": "Start: {{start}}, End: {{end}}",
 
   "timeline_loading": "Loading timeline...",
+  "timeline_no": "Timeline is empty",
+  "timeline_title": "Timeline",
 
   "trigger_added": "Trigger added",
   "trigger_add_prerequisite_title": "Add a run condition",
@@ -695,6 +698,7 @@
   "warning_message": "Message",
   "warning_modal_title": "Warning - concurrent access",
   "warning_modal_body": "Another use has just updated this resource. You may overwrite his update.",
+  "warning_no": "No warning",
   "warning_project": "{{username}} has just updated the project.",
   "warning_project_title": "Project warning list",
   "warning_pipeline_title": "Warnings list for pipeline {{pip}}",

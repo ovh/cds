@@ -49,7 +49,7 @@
                 </ng-container>
             </div>
         </div>
-        <div class="ui wide" *ngIf="nodeToRun.context.application">
+        <div class="ui wide" *ngIf="linkedToRepo">
             <h3>{{ 'pipeline_parent_commit_to_deploy' | translate}}</h3>
             <div class="scrollable" *ngIf="!loadingCommits && commits != null && commits.length !== 0">
                 <app-commit-list [commits]="commits"></app-commit-list>
@@ -67,7 +67,7 @@
         </div>
     </div>
     <div class="actions">
-        <button class="ui red button" [disabled]="loading" (click)="modal.approve(false)">Cancel</button>
-        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="run()" autofocus>OK</button>
+        <button class="ui button" [disabled]="loading" (click)="modal.approve(false)">{{'common_cancel' | translate}}</button>
+        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="run()" autofocus>{{'common_run' | translate}}</button>
     </div>
 </ng-template>
