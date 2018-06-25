@@ -143,8 +143,8 @@ type Configuration struct {
 	} `toml:"vault"`
 	Providers   []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
 	Tracing     tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
-	DefaultOS   string                  `toml:"defaultOS" default:"linux" comment:"if no model is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
-	DefaultArch string                  `toml:"defaultArch" default:"amd64" comment:"if no model is specified in your job's requirements then spawn worker on this architecture"`
+	DefaultOS   string                  `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
+	DefaultArch string                  `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
