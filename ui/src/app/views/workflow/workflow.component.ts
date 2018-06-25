@@ -4,7 +4,6 @@ import {TranslateService} from '@ngx-translate/core';
 import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
-import {EventSubscription} from '../../model/event.model';
 import {Project} from '../../model/project.model';
 import {Workflow} from '../../model/workflow.model';
 import {ProjectStore} from '../../service/project/project.store';
@@ -128,10 +127,6 @@ export class WorkflowComponent implements OnInit {
             this._workflowEventStore.setListingRuns(false);
             this._workflowEventStore.pushWorkflowRuns(wrs);
             this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
-            let f = new EventSubscription();
-            f.key = key;
-            f.workflow_name = workflowName;
-            f.runs = true;
         });
     }
 

@@ -3,7 +3,6 @@ import {ActivatedRoute} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
-import {EventSubscription} from '../../../model/event.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {Workflow, WorkflowNode} from '../../../model/workflow.model';
@@ -104,13 +103,6 @@ export class WorkflowRunComponent implements OnInit {
 
             this._workflowEventStore.setSelectedRun(this.workflowRun);
             this.loadingRun = false;
-
-            // subscribe to run event
-            let s = new EventSubscription();
-            s.key = this.project.key;
-            s.workflow_name = this.workflowName;
-            s.runs = true;
-            s.num = wr.num;
         });
     }
 

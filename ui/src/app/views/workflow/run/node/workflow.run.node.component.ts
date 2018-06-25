@@ -2,7 +2,6 @@ import {Component} from '@angular/core';
 import {ActivatedRoute, NavigationExtras, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
-import {EventSubscription} from '../../../../model/event.model';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
@@ -74,13 +73,6 @@ export class WorkflowNodeRunComponent {
             this.workflowRun = wr;
             this._workflowEventStore.setSelectedRun(this.workflowRun);
 
-            // subscribe to run event
-            let s = new EventSubscription();
-            s.key = this.project.key;
-            s.workflow_name = this.workflowName;
-            s.runs = true;
-            s.num = wr.num;
-
             let historyChecked = false;
             this.subNodeRun = this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
                 .pipe(first()).subscribe(nodeRun => {
@@ -107,11 +99,6 @@ export class WorkflowNodeRunComponent {
                         this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
                     }
                 });
-                let f = new EventSubscription();
-                f.key = this.project.key;
-                f.workflow_name = this.workflowName;
-                f.num = this.workflowRun.num;
-                f.runs = true;
             });
         });
     }
