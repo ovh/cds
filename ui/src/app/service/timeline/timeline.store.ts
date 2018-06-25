@@ -12,12 +12,20 @@ export class TimelineStore {
 
     constructor(private _timelineService: TimelineService) {}
 
-    alltimeline(): Observable<List<Event>> {
+    alltimeline(currentItem: number): Observable<List<Event>> {
         if (this._alltimeline.getValue().size === 0) {
-            this._timelineService.get().subscribe(events => {
-               this._alltimeline.next(this._alltimeline.getValue().push(...events));
-            });
+            this.getMore(currentItem);
         }
         return new Observable<List<Event>>(fn => this._alltimeline.subscribe(fn));
+    }
+
+    getMore(currentItem: number): void {
+        this._timelineService.get(currentItem).subscribe(events => {
+            this._alltimeline.next(this._alltimeline.getValue().push(...events));
+        });
+    }
+
+    add(e: Event): void {
+        this._alltimeline.next(this._alltimeline.getValue().unshift(e));
     }
 }

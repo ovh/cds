@@ -17,18 +17,25 @@ export class HomeTimelineComponent implements OnInit {
 
     timelineSub: Subscription;
 
+    currentItem = 0;
 
     constructor(private _timelineStore: TimelineStore) {
 
     }
 
     ngOnInit(): void {
-        this.timelineSub = this._timelineStore.alltimeline().subscribe(es => {
+        this.timelineSub = this._timelineStore.alltimeline(this.currentItem).subscribe(es => {
             if (!es) {
                 return;
             }
             this.loading = false;
             this.events = es.toArray();
+            this.currentItem = this.events.length;
         });
+    }
+
+    onScroll() {
+        this._timelineStore.getMore(this.currentItem + 1);
+        console.log('scrolled!!');
     }
 }

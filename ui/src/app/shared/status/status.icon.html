@@ -1,11 +1,19 @@
 <ng-container [ngSwitch]="status">
-    <div class="ui small active inline blue loader" *ngSwitchCase="pipelineStatusEnum.BUILDING">
-        <span class="">{{value}}</span>
-    </div>
+    <ng-container *ngSwitchCase="pipelineStatusEnum.BUILDING">
+        <ng-container *ngIf="loader">
+            <div class="ui small active inline blue loader">
+                <span class="">{{value}}</span>
+            </div>
+        </ng-container>
+        <ng-container *ngIf="!loader">
+            <i class="blue circle outline icon"></i>
+        </ng-container>
+
+    </ng-container>
     <i class="check green icon" *ngSwitchCase="pipelineStatusEnum.SUCCESS"></i>
     <ng-container *ngSwitchCase="pipelineStatusEnum.FAIL">
-      <i class="remove red icon" *ngIf="!optional"></i>
-      <i class="warning sign icon orange" *ngIf="optional"></i>
+        <i class="remove red icon" *ngIf="!optional"></i>
+        <i class="warning sign icon orange" *ngIf="optional"></i>
     </ng-container>
     <i class="remove red icon" *ngSwitchCase="pipelineStatusEnum.STOPPED"></i>
     <i class="ban grey icon" *ngSwitchCase="pipelineStatusEnum.DISABLED"></i>

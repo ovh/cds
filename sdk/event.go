@@ -35,6 +35,7 @@ type Event struct {
 
 // EventFilter represents filters when getting events
 type EventFilter struct {
+	CurrentItem int      `json:"currentItem"`
 	ProjectKeys []string `json:"project_keys"`
 }
 

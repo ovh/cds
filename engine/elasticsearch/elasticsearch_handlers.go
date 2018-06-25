@@ -23,7 +23,7 @@ func (s *Service) getEventsHandler() api.Handler {
 			boolQuery.Should(elastic.NewMatchQuery("project_key", p))
 		}
 
-		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.Index).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).Do(context.Background())
+		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.Index).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
 		if errR != nil {
 			return sdk.WrapError(errR, "getEventsHandler> Cannot get result on index: %s", s.Cfg.ElasticSearch.Index)
 		}
