@@ -701,8 +701,8 @@
     "executors/ssh",
     "executors/web"
   ]
-  revision = "8628bb641f222a54afd1e3f8b7aa23e36d0c445d"
-  version = "v0.18.0"
+  revision = "0e6718ac3b499c35242a6cd11b11d867aba1a310"
+  version = "v0.19.0"
 
 [[projects]]
   branch = "master"
@@ -1328,6 +1328,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b5fc5ffd5d9dadf4639b7db96180f6694c8918a109d8b8872f43ec2a0c1cff18"
+  inputs-digest = "0102549c63fc023f8139781f334da8c517745c8ad3966ec78c0710e9df3b2658"
   solver-name = "gps-cdcl"
   solver-version = 1
