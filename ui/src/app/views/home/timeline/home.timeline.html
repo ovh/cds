@@ -1,6 +1,5 @@
-<h3>{{'timeline_title' | translate}}</h3>
 <div class="ui secondary pointing menu">
-    <a class="active item">Timeline</a>
+    <a class="active item">{{'timeline_title' | translate}}</a>
 </div>
 <div class="ui relaxed divided list" *ngIf="!loading && events.length > 0">
     <div class="item" *ngFor="let e of events">
