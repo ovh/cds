@@ -282,10 +282,10 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if aConfig.DefaultArch == "" {
-		log.Warning(`You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model requirement on your job then spawn on a worker based on this architecture`)
+		log.Warning(`You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
 	}
 	if aConfig.DefaultOS == "" {
-		log.Warning(`You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model requirement on your job then spawn on a worker based on this OS`)
+		log.Warning(`You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
 	}
 
 	if (aConfig.DefaultOS == "" && aConfig.DefaultArch != "") || (aConfig.DefaultOS != "" && aConfig.DefaultArch == "") {
