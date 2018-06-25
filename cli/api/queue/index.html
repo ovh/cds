@@ -1992,8 +1992,8 @@
 <li><a href="#post-queue-id-take">POST <code>/queue/&lt;id&gt;/take</code></a></li>
 <li><a href="#get-queue-workflows">GET <code>/queue/workflows</code></a></li>
 <li><a href="#post-queue-workflows-id-attempt">POST <code>/queue/workflows/&lt;id&gt;/attempt</code></a></li>
-<li><a href="#post-queue-workflows-id-book">POST <code>/queue/workflows/&lt;id&gt;/book</code></a></li>
 <li><a href="#delete-queue-workflows-id-book">DELETE <code>/queue/workflows/&lt;id&gt;/book</code></a></li>
+<li><a href="#post-queue-workflows-id-book">POST <code>/queue/workflows/&lt;id&gt;/book</code></a></li>
 <li><a href="#get-queue-workflows-id-infos">GET <code>/queue/workflows/&lt;id&gt;/infos</code></a></li>
 <li><a href="#post-queue-workflows-id-spawn-infos">POST <code>/queue/workflows/&lt;id&gt;/spawn/infos</code></a></li>
 <li><a href="#post-queue-workflows-id-take">POST <code>/queue/workflows/&lt;id&gt;/take</code></a></li>
@@ -2007,6 +2007,7 @@
 <li><a href="#postexecute-queue-workflows-token-test">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/test</code></a></li>
 <li><a href="#postexecute-queue-workflows-token-variable">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/variable</code></a></li>
 <li><a href="#get-queue-workflows-count">GET <code>/queue/workflows/count</code></a></li>
+<li><a href="#postexecute-queue-workflows-log-service">POSTEXECUTE <code>/queue/workflows/log/service</code></a></li>
 <li><a href="#deprecated">DEPRECATED</a></li>
 </ul></li>
 </ul></li>
@@ -2255,34 +2256,6 @@
 </tbody>
 </table>
 
-<h3 id="post-queue-workflows-id-book">POST <code>/queue/workflows/&lt;id&gt;/book</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/queue/workflows/&lt;id&gt;/book</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedHatchery:  -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postBookWorkflowJobHandler%22">postBookWorkflowJobHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="delete-queue-workflows-id-book">DELETE <code>/queue/workflows/&lt;id&gt;/book</code></h3>
 
 <table>
@@ -2307,6 +2280,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBookWorkflowJobHandler%22">deleteBookWorkflowJobHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-queue-workflows-id-book">POST <code>/queue/workflows/&lt;id&gt;/book</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/queue/workflows/&lt;id&gt;/book</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedHatchery:  -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postBookWorkflowJobHandler%22">postBookWorkflowJobHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2671,6 +2672,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+countWorkflowJobQueueHandler%22">countWorkflowJobQueueHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="postexecute-queue-workflows-log-service">POSTEXECUTE <code>/queue/workflows/log/service</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/queue/workflows/log/service</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POSTEXECUTE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedHatchery:  -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowJobServiceLogsHandler%22">postWorkflowJobServiceLogsHandler</a></td>
 </tr>
 </tbody>
 </table>
