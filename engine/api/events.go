@@ -275,12 +275,21 @@ func (b *eventsBroker) ServeHTTP() Handler {
 				b.cleanClient(messageChan)
 				break leave
 			case <-tick.C:
-				f.Flush()
+				flush(f)
 			}
 		}
 
 		return nil
 	}
+}
+
+func flush(f http.Flusher) {
+	defer func() {
+		if re := recover(); re != nil {
+			log.Info("Unable to flush, maybe connection is closed: %v", re)
+		}
+	}()
+	f.Flush()
 }
 
 func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
