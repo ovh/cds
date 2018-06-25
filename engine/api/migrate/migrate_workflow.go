@@ -61,10 +61,6 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 			}
 		}
 
-		if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
-			return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
-		}
-
 		if withRepositoryWebHook && newW.Root.Context.Application != nil && newW.Root.Context.Application.VCSServer != "" && newW.Root.Context.Application.RepositoryFullname != "" {
 			h := &sdk.WorkflowNodeHook{}
 			m, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
@@ -81,6 +77,10 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 			}
 			newW.Root.Hooks = []sdk.WorkflowNodeHook{*h}
 
+			if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
+				return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
+			}
+
 			oldW, errO := workflow.Load(db, store, proj, newW.Name, u, workflow.LoadOptions{})
 			if errO != nil {
 				return nil, sdk.WrapError(errO, "migratePipeline> Unable to load old workflow")
@@ -88,14 +88,14 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 
 			newW.ID = oldW.ID
 
-			if errHr := workflow.HookRegistration(db, store, oldW, newW, proj); errHr != nil {
+			// then register (node is updated in HookRegistration)
+			if errHr := workflow.HookRegistration(db, store, nil, *oldW, proj); errHr != nil {
 				return nil, sdk.WrapError(errHr, "migratePipeline> Cannot register hook 2")
 			}
-
-			if err := workflow.Update(db, store, &newW, oldW, proj, u); err != nil {
-				return nil, sdk.WrapError(err, "migratePipeline> Unable to update workflow 2")
+		} else {
+			if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
+				return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
 			}
-
 		}
 
 		if withCurrentVersion {
