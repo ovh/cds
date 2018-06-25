@@ -228,6 +228,17 @@ export interface Log {
     done: LogDate;
 }
 
+export interface ServiceLog {
+    id: number;
+    workflow_node_run_id: number;
+    workflow_node_run_job_id: number;
+    requirement_id: number;
+    requirement_service_name: number;
+    val: string;
+    start: LogDate;
+    last_modified: LogDate;
+}
+
 export class LogDate {
     seconds: number;
 }

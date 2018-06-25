@@ -106,6 +106,21 @@ func CheckGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) (bool,
 	return false, nil
 }
 
+// LoadRoleGroupInPipeline load role from group linked to the pipeline
+func LoadRoleGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) (int64, error) {
+	query := `SELECT role FROM pipeline_group WHERE pipeline_id = $1 AND group_id = $2`
+
+	var nb int64
+	role, err := db.SelectInt(query, pipelineID, groupID)
+	if err != nil {
+		return role, err
+	}
+	if nb != 0 {
+		return role, nil
+	}
+	return role, nil
+}
+
 func deleteGroupPipelineByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	pipelineIDs := []int64{}
 	if _, err := db.Select(&pipelineIDs, "SELECT pipeline_id from pipeline_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {

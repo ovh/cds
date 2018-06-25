@@ -24,7 +24,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
 	pbjobsTicker := time.NewTicker(delay)
-	oldJobsTicker := time.NewTicker(delay * 60)
+	oldJobsTicker := time.NewTicker(delay * 10)
 
 	for {
 		select {
@@ -436,5 +436,14 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 func (c *client) QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error {
 	path := fmt.Sprintf("/queue/workflows/%d/tag", jobID)
 	_, err := c.PostJSON(path, tags, nil)
+	return err
+}
+
+func (c *client) QueueServiceLogs(logs []sdk.ServiceLog) error {
+	status, err := c.PostJSON("/queue/workflows/log/service", logs, nil)
+	if status >= 400 {
+		return fmt.Errorf("Error: HTTP code %d", status)
+	}
+
 	return err
 }

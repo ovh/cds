@@ -546,6 +546,34 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 	return nil
 }
 
+//AddServiceLog adds a service log
+func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.ServiceLog) error {
+	if job != nil {
+		logs.WorkflowNodeJobRunID = job.ID
+		logs.WorkflowNodeRunID = job.WorkflowNodeRunID
+	}
+
+	existingLogs, errLog := LoadServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
+	if errLog != nil && errLog != sql.ErrNoRows {
+		return sdk.WrapError(errLog, "AddServiceLog> Cannot load existing logs")
+	}
+
+	if existingLogs == nil {
+		if err := insertServiceLog(db, logs); err != nil {
+			return sdk.WrapError(err, "AddServiceLog> Cannot insert log")
+		}
+	} else {
+		logbuf := bytes.NewBufferString(existingLogs.Val)
+		logbuf.WriteString(logs.Val)
+		existingLogs.Val = logbuf.String()
+		existingLogs.LastModified = logs.LastModified
+		if err := updateServiceLog(db, existingLogs); err != nil {
+			return sdk.WrapError(err, "AddServiceLog> Cannot update log")
+		}
+	}
+	return nil
+}
+
 // RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
 func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
 	var end func()

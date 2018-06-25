@@ -47,7 +47,8 @@ func (h *HatcherySwarm) Init() error {
 		return errPing
 	}
 
-	go h.killAwolWorkerRoutine()
+	go h.routines(context.Background())
+
 	return nil
 }
 
@@ -121,6 +122,12 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					"service_worker": name,
 					"service_name":   serviceName,
 					"hatchery":       h.Config.Name,
+				}
+
+				if spawnArgs.IsWorkflowJob {
+					labels["service_job_id"] = fmt.Sprintf("%d", spawnArgs.JobID)
+					labels["service_id"] = fmt.Sprintf("%d", r.ID)
+					labels["service_req_name"] = r.Name
 				}
 
 				//Start the services
@@ -472,10 +479,27 @@ func (h *HatcherySwarm) ID() int64 {
 	return h.hatch.ID
 }
 
-func (h *HatcherySwarm) killAwolWorkerRoutine() {
+func (h *HatcherySwarm) routines(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
 	for {
-		time.Sleep(10 * time.Second)
-		h.killAwolWorker()
+		select {
+		case <-ticker.C:
+			go func() {
+				if err := h.getServicesLogs(); err != nil {
+					log.Error("Hatchery> swarm> Cannot get service logs : %v", err)
+				}
+			}()
+			go func() {
+				_ = h.killAwolWorker()
+			}()
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error("Hatchery> Swarm> Exiting routines")
+			}
+			return
+		}
 	}
 }
 

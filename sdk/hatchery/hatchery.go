@@ -325,6 +325,11 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 			continue
 		}
 
+		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != "" && model.RegisteredArch != "" && r.Value != (model.RegisteredOS+"/"+model.RegisteredArch) {
+			log.Debug("canRunJob> %d - job %d - job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", timestamp, jobID, model.RegisteredOS, model.RegisteredArch)
+			return false
+		}
+
 		if !containsModelRequirement && !containsHostnameRequirement {
 			if r.Type == sdk.BinaryRequirement {
 				found := false

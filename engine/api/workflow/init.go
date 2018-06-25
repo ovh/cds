@@ -10,11 +10,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var baseUIURL string
+var baseUIURL, defaultOS, defaultArch string
 
 //Initialize starts goroutines for workflows
-func Initialize(c context.Context, store cache.Store, uiURL string, DBFunc func() *gorp.DbMap) {
+func Initialize(c context.Context, store cache.Store, uiURL, confDefaultOS, confDefaultArch string, DBFunc func() *gorp.DbMap) {
 	baseUIURL = uiURL
+	defaultOS = confDefaultOS
+	defaultArch = confDefaultArch
 	tickPurge := time.NewTicker(30 * time.Minute)
 	defer tickPurge.Stop()
 

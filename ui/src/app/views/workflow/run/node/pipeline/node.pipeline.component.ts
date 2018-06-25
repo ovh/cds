@@ -1,10 +1,12 @@
 import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
+import {finalize} from 'rxjs/operators';
 import {Job, StepStatus} from '../../../../../model/job.model';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
+import {PipelineStatus, ServiceLog} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
 
 @Component({
@@ -37,10 +39,28 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     previousStatus: string;
     manual = false;
+    serviceLogsLoading = true;
+    serviceLogs: Array<ServiceLog> = [];
+    _displayServiceLogs = false;
+    set displayServiceLogs(data: boolean) {
+        this._displayServiceLogs = data;
+        if (data) {
+            this.getServicesLogs();
+        }
+    }
+    get displayServiceLogs(): boolean {
+        return this._displayServiceLogs;
+    }
 
     durationIntervalID: number;
 
-    constructor(private _durationService: DurationService, private _route: ActivatedRoute, private _router: Router) {
+    constructor(
+        private _durationService: DurationService,
+        private _route: ActivatedRoute,
+        private _router: Router,
+        private _workflowRunService: WorkflowRunService
+    ) {
+
 
     }
 
@@ -84,6 +104,10 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 }
             }
         });
+    }
+
+    refreshServiceLogs() {
+        this.displayServiceLogs = this.selectedRunJob.job.action.requirements.some((req) => req.type === 'service');
     }
 
     refreshNodeRun(data: WorkflowNodeRun): void {
@@ -175,7 +199,19 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         this.deleteInterval();
      }
 
-     deleteInterval(): void {
+    getServicesLogs() {
+        this.serviceLogsLoading = true;
+        this._workflowRunService.getWorkflowNodeRunServiceLogs(
+            this.project.key,
+            this.workflowName,
+            this.nodeRun.num,
+            this.nodeRun.id,
+            this.selectedRunJob.id
+        ).pipe(finalize(() => this.serviceLogsLoading = false))
+        .subscribe((logs) => this.serviceLogs = logs);
+    }
+
+    deleteInterval(): void {
         if (this.durationIntervalID) {
             clearInterval(this.durationIntervalID);
             this.durationIntervalID = 0;
