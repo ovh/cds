@@ -24,7 +24,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
 	pbjobsTicker := time.NewTicker(delay)
-	oldJobsTicker := time.NewTicker(delay * 60)
+	oldJobsTicker := time.NewTicker(delay * 10)
 
 	for {
 		select {
