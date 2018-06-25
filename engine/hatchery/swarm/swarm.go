@@ -487,7 +487,10 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			go func() {
-				_ = h.getServicesLogs()
+				err := h.getServicesLogs()
+				if err != nil {
+					log.Error("Hatchery> swarm> Cannot get service logs : %v", err)
+				}
 			}()
 			go func() {
 				_ = h.killAwolWorker()

@@ -80,7 +80,7 @@ func LoadServiceLog(db gorp.SqlExecutor, nodeRunJobID int64, serviceName string)
 	`
 	var start, lastModified time.Time
 	var log sdk.ServiceLog
-	err := db.QueryRow(query, nodeRunJobID, serviceName).Scan(&log.Id, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &start, &lastModified)
+	err := db.QueryRow(query, nodeRunJobID, serviceName).Scan(&log.Id, &log.WorkflowNodeJobRunID, &log.WorkflowNodeRunID, &log.ServiceRequirementName, &start, &lastModified, &log.Val)
 	if err != nil {
 		return nil, err
 	}
