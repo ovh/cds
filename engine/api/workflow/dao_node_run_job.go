@@ -300,6 +300,26 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "PostGet> cannot get spawn_attempts")
 	}
 
+	if defaultOS != "" && defaultArch != "" {
+		var modelFound, osArchFound bool
+		for _, req := range j.Job.Action.Requirements {
+			if req.Type == sdk.ModelRequirement {
+				modelFound = true
+			}
+			if req.Type == sdk.OSArchRequirement {
+				osArchFound = true
+			}
+		}
+
+		if !modelFound && !osArchFound {
+			j.Job.Action.Requirements = append(j.Job.Action.Requirements, sdk.Requirement{
+				Name:  defaultOS + "/" + defaultArch,
+				Type:  sdk.OSArchRequirement,
+				Value: defaultOS + "/" + defaultArch,
+			})
+		}
+	}
+
 	var hID int64
 	defer rows.Close()
 	for rows.Next() {

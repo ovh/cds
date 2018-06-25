@@ -141,8 +141,10 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
-	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
-	Tracing   tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
+	Providers   []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+	Tracing     tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
+	DefaultOS   string                  `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
+	DefaultArch string                  `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
@@ -278,6 +280,18 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	if len(aConfig.Secrets.Key) != 32 {
 		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
 	}
+
+	if aConfig.DefaultArch == "" {
+		log.Warning(`You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
+	}
+	if aConfig.DefaultOS == "" {
+		log.Warning(`You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
+	}
+
+	if (aConfig.DefaultOS == "" && aConfig.DefaultArch != "") || (aConfig.DefaultOS != "" && aConfig.DefaultArch == "") {
+		return fmt.Errorf("You can't specify just defaultArch without defaultOS in your configuration and vice versa")
+	}
+
 	return nil
 }
 
@@ -599,7 +613,7 @@ func (a *API) Serve(ctx context.Context) error {
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
-	go workflow.Initialize(ctx, a.Cache, a.Config.URL.UI, a.DBConnectionFactory.GetDBMap)
+	go workflow.Initialize(ctx, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.DBConnectionFactory.GetDBMap)
 	go event.PushInElasticSearch(ctx, a.mustDB(), a.Cache)
 
 	s := &http.Server{
