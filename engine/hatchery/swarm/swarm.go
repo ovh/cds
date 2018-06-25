@@ -486,8 +486,12 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			go h.getServicesLogs()
-			go h.killAwolWorker()
+			go func() {
+				_ = h.getServicesLogs()
+			}()
+			go func() {
+				_ = h.killAwolWorker()
+			}()
 		case <-ctx.Done():
 			if ctx.Err() != nil {
 				log.Error("Hatchery> Swarm> Exiting routines")
@@ -496,13 +500,6 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 		}
 	}
 }
-
-// func (h *HatcherySwarm) killAwolWorkerRoutine() {
-// 	for {
-// 		time.Sleep(10 * time.Second)
-// 		h.killAwolWorker()
-// 	}
-// }
 
 func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 	apiworkers, err := h.CDSClient().WorkerList()
