@@ -77,13 +77,13 @@
                             </li>
                         </ng-container>
                         <ng-container *ngIf="displayServiceLogs">
-                            <ng-container *ngIf="!serviceLogsLoading">
-                                <li *ngFor="let serviceLog of serviceLogs; let i = index">
-                                    <app-workflow-service-log [serviceLog]="serviceLog">
-                                    </app-workflow-service-log>
-                                </li>
-                            </ng-container>
-                            <div class="ui active centered inline loader" *ngIf="serviceLogsLoading"></div>
+                            <app-workflow-service-log
+                              [project]="project"
+                              [workflowName]="workflowName"
+                              [nodeRun]="nodeRun"
+                              [job]="selectedRunJob.job"
+                              [nodeJobRun]="selectedRunJob">
+                            </app-workflow-service-log>
                         </ng-container>
                     </ul>
                 </div>
