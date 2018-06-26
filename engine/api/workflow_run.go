@@ -689,7 +689,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 		sdk.GoRoutine(
 			"workflow.PurgeWorkflowRun",
 			func() {
-				workflow.PurgeWorkflowRun(api.mustDB(), *wf)
+				if err := workflow.PurgeWorkflowRun(api.mustDB(), *wf); err != nil {
+					log.Error("workflow.PurgeWorkflowRun> error %v", err)
+				}
 			})
 
 		var wr *sdk.WorkflowRun
