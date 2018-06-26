@@ -85,7 +85,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy {
                 this.loading = false;
                 this.deleteInverval();
                 this.duration = this.getDuration();
-                this.durationIntervalID = setInterval(() => {
+                this.durationIntervalID = window.setInterval(() => {
                     this.duration = this.getDuration();
                 }, 5000);
                 // If not the same run => display loading

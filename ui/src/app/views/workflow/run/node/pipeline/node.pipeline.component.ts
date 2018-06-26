@@ -27,7 +27,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
          this.deleteInterval();
          this.updateTime();
-         this.durationIntervalID = setInterval(() => {
+         this.durationIntervalID = window.setInterval(() => {
              this.updateTime();
          }, 5000);
     }

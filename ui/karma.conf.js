@@ -21,6 +21,7 @@ module.exports = function (config) {
             {pattern: './node_modules/semantic-ui/dist/semantic.js', watch: false, included: true, served: true},
             {pattern: './node_modules/codemirror/lib/codemirror.js', watch: false, included: true, served: true},
             {pattern: './node_modules/dragula/dist/dragula.js', watch: false, included: true, served: true}
+
         ],
         client: {
             clearContext: false // leave Jasmine Spec Runner output visible in browser
