@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -92,53 +90,15 @@ func (b *eventsBroker) getUser(username string) *sdk.User {
 //Init the eventsBroker
 func (b *eventsBroker) Init(c context.Context) {
 	// Start cache Subscription
-	go func() {
-		defer func() {
-			if re := recover(); re != nil {
-				var err error
-				switch t := re.(type) {
-				case string:
-					err = errors.New(t)
-				case error:
-					err = re.(error)
-				case sdk.Error:
-					err = re.(sdk.Error)
-				default:
-					err = sdk.ErrUnknownError
-				}
-				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> recover %s", err)
-				trace := make([]byte, 4096)
-				count := runtime.Stack(trace, true)
-				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> Stacktrace of %d bytes\n%s\n", count, trace)
-			}
-		}()
+	subscribeFunc := func() {
 		cacheSubscribe(c, b.messages, b.cache)
-	}()
+	}
+	sdk.GoRoutine("eventsBroker.Init.CacheSubscribe", subscribeFunc)
 
-	go func() {
-		defer func() {
-			b.mutex.Unlock()
-			if re := recover(); re != nil {
-				var err error
-				switch t := re.(type) {
-				case string:
-					err = errors.New(t)
-				case error:
-					err = re.(error)
-				case sdk.Error:
-					err = re.(sdk.Error)
-				default:
-					err = sdk.ErrUnknownError
-				}
-				log.Error("[PANIC] eventsBroker.Init.Start> recover %s", err)
-				trace := make([]byte, 4096)
-				count := runtime.Stack(trace, false)
-				log.Error("[PANIC] eventsBroker.Init.Start> Stacktrace of %d bytes\n%s\n", count, trace)
-				fmt.Println(string(trace))
-			}
-		}()
+	startFunc := func() {
 		b.Start(c)
-	}()
+	}
+	sdk.GoRoutine("eventsBroker.Init.Start", startFunc)
 }
 
 func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
@@ -249,7 +209,7 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		fmt.Fprintf(w, "data: ACK: %s \n\n", uuid)
 		f.Flush()
 
-		go func() {
+		pushMessage := func() {
 			for msg := range messageChan.Queue {
 				var buffer bytes.Buffer
 				buffer.WriteString("data: ")
@@ -260,7 +220,8 @@ func (b *eventsBroker) ServeHTTP() Handler {
 				}
 				f.Flush()
 			}
-		}()
+		}
+		sdk.GoRoutine("Events.SendMessage", pushMessage)
 
 		tick := time.NewTicker(time.Second)
 		defer tick.Stop()
