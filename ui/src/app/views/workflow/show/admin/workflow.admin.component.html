@@ -24,6 +24,20 @@
             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
         </app-zone-content>
     </app-zone>
+    <app-zone header="{{ 'common_description' | translate }}">
+        <app-zone-content class="bottom">
+            <div class="ui form">
+                <div class="fields">
+                    <div class="fourteen wide field">
+                        <textarea name="description" class="ui" [(ngModel)]="_tagWorkflow.description"></textarea>
+                    </div>
+                    <div class="two wide right aligned field">
+                        <button id="descButton" class="ui selection green button" name="btnsavedesc" (click)="updateWorkflow()" [class.loading]="loading" [disabled]="loading  || (workflow.from_repository && workflow.from_repository.length > 0)">{{ 'btn_save' | translate }}</button>
+                    </div>
+                </div>
+            </div>
+        </app-zone-content>
+    </app-zone>
     <app-zone header="{{ 'workflow_sidebar_tag_zone' | translate }}">
         <app-zone-content class="bottom">
             <div class="ui form">
