@@ -1,12 +1,10 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
-import {finalize} from 'rxjs/operators';
 import {Job, StepStatus} from '../../../../../model/job.model';
 import {PipelineStatus, ServiceLog} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
-import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
 
 @Component({
@@ -36,22 +34,12 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
     manual = false;
     serviceLogsLoading = true;
     serviceLogs: Array<ServiceLog> = [];
-    _displayServiceLogs = false;
-    set displayServiceLogs(data: boolean) {
-        this._displayServiceLogs = data;
-        if (data) {
-            this.getServicesLogs();
-        }
-    }
-    get displayServiceLogs(): boolean {
-        return this._displayServiceLogs;
-    }
+    displayServiceLogs = false;
 
     constructor(
         private _durationService: DurationService,
         private _route: ActivatedRoute,
-        private _router: Router,
-        private _workflowRunService: WorkflowRunService
+        private _router: Router
     ) {
 
     }
@@ -183,18 +171,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
             });
         }
      }
-
-    getServicesLogs() {
-        this.serviceLogsLoading = true;
-        this._workflowRunService.getWorkflowNodeRunServiceLogs(
-            this.project.key,
-            this.workflowName,
-            this.nodeRun.num,
-            this.nodeRun.id,
-            this.selectedRunJob.id
-        ).pipe(finalize(() => this.serviceLogsLoading = false))
-        .subscribe((logs) => this.serviceLogs = logs);
-    }
 
     getTriggeredNodeRun() {
 
