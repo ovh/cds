@@ -61,6 +61,13 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 			}
 		}
 
+		if newW.Root != nil && newW.Root.Context != nil && (newW.Root.Context.Application != nil || newW.Root.Context.ApplicationID != 0) {
+			var err error
+			if newW.Root.Context.DefaultPayload, err = workflow.DefaultPayload(db, store, proj, u, &newW); err != nil {
+				return nil, sdk.WrapError(err, "migratePipeline> error compute defaut payload: %s", err)
+			}
+		}
+
 		if withRepositoryWebHook && newW.Root.Context.Application != nil && newW.Root.Context.Application.VCSServer != "" && newW.Root.Context.Application.RepositoryFullname != "" {
 			h := &sdk.WorkflowNodeHook{}
 			m, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
@@ -76,13 +83,6 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 				}
 			}
 			newW.Root.Hooks = []sdk.WorkflowNodeHook{*h}
-
-			if newW.Root != nil && newW.Root.Context != nil && (newW.Root.Context.Application != nil || newW.Root.Context.ApplicationID != 0) {
-				var err error
-				if newW.Root.Context.DefaultPayload, err = workflow.DefaultPayload(db, store, proj, u, &newW); err != nil {
-					return nil, sdk.WrapError(err, "migratePipeline> error compute defaut payload: %s", err)
-				}
-			}
 
 			if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
 				return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
