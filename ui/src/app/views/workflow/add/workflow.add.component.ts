@@ -68,7 +68,6 @@ workflow:
                 private _translate: TranslateService, private _toast: ToastService, private _repoManSerivce: RepoManagerService) {
         this.workflow = new Workflow();
         this.selectedStrategy = new VCSStrategy();
-        this.selectedStrategy.branch = 'master';
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });

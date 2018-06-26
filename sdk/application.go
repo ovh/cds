@@ -67,8 +67,8 @@ type RepositoryStrategy struct {
 	SSHKeyContent  string `json:"ssh_key_content,omitempty"`
 	User           string `json:"user"`
 	Password       string `json:"password"`
-	Branch         string `json:"branch"`
-	DefaultBranch  string `json:"default_branch"`
+	Branch         string `json:"branch,omitempty"`
+	DefaultBranch  string `json:"default_branch,omitempty"`
 	PGPKey         string `json:"pgp_key"`
 }
 

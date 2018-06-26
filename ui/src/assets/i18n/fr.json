@@ -82,6 +82,8 @@
   "application_poller_form_title": "Ajouter un poller : ",
   "application_poller_list_title": "Liste des pollers : ",
   "application_rename_title": "Renommer l'application",
+  "application_repo_missing_conf": "Configurations manquantes",
+  "application_repo_missing_conf_details": "Presque terminé ! Vous devez configurer le protocole de connexion à votre repository ci-dessous et sauvegarder vos changements",
   "application_repo_choose": "Choisir un dépôt",
   "application_repo_attach_ok": "Le dépôt est désormais lié à l'application",
   "application_repo_detach_ok": "Le dépôt n'est désormais  plus lié à l'application",
