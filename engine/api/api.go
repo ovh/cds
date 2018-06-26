@@ -419,6 +419,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.TLS,
 		a.Config.SMTP.Disable)
 
+	if err := warning.Init(); err != nil {
+		return fmt.Errorf("Unable to init warning package: %v", err)
+	}
+
 	// Initialize feature packages
 	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.ApiURL)
 	if a.Config.Features.Izanami.ApiURL != "" {
