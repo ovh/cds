@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"regexp"
 )
 
 func TestMissingProjectVariablePipelineJob(t *testing.T) {
@@ -574,7 +573,7 @@ func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
 		NewVariable: sdk.Variable{
 			Name:  "foo",
 			Type:  "string",
-			Value: fmt.Sprintf("Welcome all", v.Name),
+			Value: "Welcome all",
 		},
 	}
 	eUpdate := sdk.Event{
@@ -660,13 +659,4 @@ func TestUnusedProjectVariableWarning(t *testing.T) {
 	warnsDelete, errAfterDelete := GetByProject(db, proj.Key)
 	test.NoError(t, errAfterDelete)
 	assert.Equal(t, 0, len(warnsDelete))
-}
-
-func TestToto(t *testing.T) {
-	re, err := regexp.Compile("cds\\.proj\\.[a-zA-Z\\-_]+")
-	assert.NoError(t, err)
-	stringToTest := "Hi {{.cds.proj.user-rr}}, welcome to {{.cds.proj.title_fr}}"
-	result := re.FindAllString(stringToTest, -1)
-	t.Logf("%v", result)
-
 }

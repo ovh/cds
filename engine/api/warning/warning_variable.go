@@ -1,6 +1,10 @@
 package warning
 
 import (
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -9,9 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"regexp"
-	"strings"
-	"time"
 )
 
 var projVarRegexp *regexp.Regexp
