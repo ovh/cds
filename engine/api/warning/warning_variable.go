@@ -19,7 +19,7 @@ var projVarRegexp *regexp.Regexp
 
 func Init() error {
 	var err error
-	projVarRegexp, err = regexp.Compile("cds\\.proj\\.[a-zA-Z0-9\\-_]+")
+	projVarRegexp, err = regexp.Compile(`cds\.proj\.[a-zA-Z0-9\-_]+`)
 	if err != nil {
 		return sdk.WrapError(err, "warning.Init> Unable to compile project variable regexp")
 	}
