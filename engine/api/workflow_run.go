@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"runtime"
 	"sort"
 	"strconv"
 	"sync"
@@ -687,16 +686,11 @@ func (api *API) postWorkflowRunHandler() Handler {
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
 		// Purge workflow run
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					buf := make([]byte, 1<<16)
-					runtime.Stack(buf, true)
-					log.Error("[PANIC] workflow.PurgeWorkflowRun> %s", string(buf))
-				}
-			}()
-			workflow.PurgeWorkflowRun(api.mustDB(), *wf)
-		}()
+		sdk.GoRoutine(
+			"workflow.PurgeWorkflowRun",
+			func() {
+				workflow.PurgeWorkflowRun(api.mustDB(), *wf)
+			})
 
 		var wr *sdk.WorkflowRun
 		if len(workflowRuns) > 0 {
