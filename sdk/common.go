@@ -12,8 +12,11 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"runtime"
 
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/sdk/log"
 )
 
 // EncryptFunc is a common type
@@ -94,4 +97,20 @@ func FileSHA512sum(filePath string) (string, error) {
 	hashInBytes := hash.Sum(nil)[:64]
 	sum := hex.EncodeToString(hashInBytes)
 	return sum, nil
+}
+
+// GoRoutine runs the function within a goroutine with a panic recovery
+func GoRoutine(name string, fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				buf := make([]byte, 1<<16)
+				runtime.Stack(buf, true)
+				log.Error("[PANIC] %s Failed", name)
+				log.Error("[PANIC] %s> %s", name, string(buf))
+			}
+		}()
+		fn()
+	}()
+
 }
