@@ -82,7 +82,7 @@
   "application_poller_form_title": "Add a poller: ",
   "application_poller_list_title": "List of application pollers : ",
   "application_rename_title": "Rename the application",
-  "application_repo_missing_conf": "Missing configurations",
+  "application_repo_missing_conf": "Missing configuration",
   "application_repo_missing_conf_details": "Almost done ! You have to configure at least the connection protocol to your repository just below and save your changes",
   "application_repo_choose": "Choose a repository",
   "application_repo_attach_ok": "The repository is linked to the application",
