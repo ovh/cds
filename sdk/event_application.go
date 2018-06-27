@@ -92,3 +92,30 @@ func (e Event) ToEventApplicationRepositoryDelete() (EventApplicationRepositoryD
 	}
 	return vcsEvent, nil
 }
+
+// ToEventApplicationVariableAdd get the payload as EventApplicationVariableAdd
+func (e Event) ToEventApplicationVariableAdd() (EventApplicationVariableAdd, error) {
+	var varEvent EventApplicationVariableAdd
+	if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
+		return varEvent, WrapError(err, "ToEventApplicationVariableAdd> Unable to decode EventApplicationVariableAdd")
+	}
+	return varEvent, nil
+}
+
+// ToEventApplicationVariableUpdate get the payload as EventApplicationVariableUpdate
+func (e Event) ToEventApplicationVariableUpdate() (EventApplicationVariableUpdate, error) {
+	var varEvent EventApplicationVariableUpdate
+	if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
+		return varEvent, WrapError(err, "ToEventApplicationVariableUpdate> Unable to decode EventApplicationVariableUpdate")
+	}
+	return varEvent, nil
+}
+
+// ToEventApplicationVariableDelete get the payload as EventApplicationVariableDelete
+func (e Event) ToEventApplicationVariableDelete() (EventApplicationVariableDelete, error) {
+	var varEvent EventApplicationVariableDelete
+	if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {
+		return varEvent, WrapError(err, "ToEventApplicationVariableDelete> Unable to decode EventApplicationVariableDelete")
+	}
+	return varEvent, nil
+}

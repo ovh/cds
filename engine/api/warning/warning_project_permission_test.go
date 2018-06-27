@@ -80,6 +80,30 @@ func TestMissingProjectPermissionEnvWarning(t *testing.T) {
 	warnsAdd, errAfterDelete := GetByProject(db, proj.Key)
 	test.NoError(t, errAfterDelete)
 	assert.Equal(t, 0, len(warnsAdd))
+
+	// add warning
+	test.NoError(t, warnToTest.compute(db, e))
+
+	// Check warning exist
+	warnsAfter2, errAfter2 := GetByProject(db, proj.Key)
+	test.NoError(t, errAfter2)
+	assert.Equal(t, 1, len(warnsAfter2))
+
+	// Delete group on environment event
+	// Create Add key event
+	ePayloadDelEnv := sdk.EventEnvironmentPermissionDelete{
+		Permission: gp,
+	}
+	eDelEvn := sdk.Event{
+		ProjectKey: proj.Key,
+		EventType:  fmt.Sprintf("%T", ePayloadDelEnv),
+		Payload:    structs.Map(ePayloadDelEnv),
+	}
+	test.NoError(t, warnToTest.compute(db, eDelEvn))
+
+	warnsDelEnv, errDelEnv := GetByProject(db, proj.Key)
+	test.NoError(t, errDelEnv)
+	assert.Equal(t, 0, len(warnsDelEnv))
 }
 
 func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
@@ -158,4 +182,28 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 	warnsAdd, errAfterDelete := GetByProject(db, proj.Key)
 	test.NoError(t, errAfterDelete)
 	assert.Equal(t, 0, len(warnsAdd))
+
+	// add warning
+	test.NoError(t, warnToTest.compute(db, e))
+
+	// Check warning exist
+	warnsAfter2, errAfter2 := GetByProject(db, proj.Key)
+	test.NoError(t, errAfter2)
+	assert.Equal(t, 1, len(warnsAfter2))
+
+	// Delete group on workflow event
+	// Create Add key event
+	ePayloadDelWorkflow := sdk.EventWorkflowPermissionDelete{
+		Permission: gp,
+	}
+	eDelWorkflow := sdk.Event{
+		ProjectKey: proj.Key,
+		EventType:  fmt.Sprintf("%T", ePayloadDelWorkflow),
+		Payload:    structs.Map(ePayloadDelWorkflow),
+	}
+	test.NoError(t, warnToTest.compute(db, eDelWorkflow))
+
+	warnsDelEnv, errDelEnv := GetByProject(db, proj.Key)
+	test.NoError(t, errDelEnv)
+	assert.Equal(t, 0, len(warnsDelEnv))
 }
