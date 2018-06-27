@@ -78,14 +78,14 @@ func Workflows(db *gorp.DbMap, store cache.Store) error {
 	}
 
 	for _, w := range wrkflws {
-		tx, err := db.Begin()
-		if err != nil {
-			return sdk.WrapError(err, "purge.Workflows> unable to start tx")
-		}
-
 		proj, has := projects[w.ProjectID]
 		if !has {
 			continue
+		}
+
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WrapError(err, "purge.Workflows> unable to start tx")
 		}
 
 		if err := workflow.Delete(tx, store, &proj, &w); err != nil {
@@ -96,6 +96,7 @@ func Workflows(db *gorp.DbMap, store cache.Store) error {
 
 		if err := tx.Commit(); err != nil {
 			log.Error("purge.Workflows> unable to commit tx: %v", err)
+			_ = tx.Rollback()
 			continue
 		}
 	}
