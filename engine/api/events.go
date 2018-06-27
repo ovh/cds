@@ -218,11 +218,11 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Warning("events.Http: context done")
+				log.Info("events.Http: context done")
 				b.cleanClient(messageChan)
 				break leave
 			case <-r.Context().Done():
-				log.Warning("events.Http: client deconnected")
+				log.Info("events.Http: client disconnected")
 				b.cleanClient(messageChan)
 				break leave
 			case msg := <-messageChan.Queue:
