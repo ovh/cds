@@ -654,17 +654,6 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	return nil
 }
 
-// deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
-func deleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
-	query := `DELETE FROM workflow_run WHERE workflow_run.id IN (SELECT id FROM workflow_run WHERE to_delete = true LIMIT 30)`
-
-	if _, err := db.Exec(query); err != nil {
-		log.Warning("deleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
-		return err
-	}
-	return nil
-}
-
 // syncNodeRuns load the workflow node runs for a workflow run
 func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOptions) error {
 	var testsField string

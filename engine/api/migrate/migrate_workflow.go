@@ -55,7 +55,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 		if force {
 			w, err := workflow.Load(db, store, proj, newW.Name, u, workflow.LoadOptions{})
 			if err == nil {
-				if errD := workflow.Delete(db, store, proj, w, u); errD != nil {
+				if errD := workflow.Delete(db, store, proj, w); errD != nil {
 					return nil, sdk.WrapError(errD, "MigrateToWorkflow workflow.Load>")
 				}
 			}
