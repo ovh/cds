@@ -17,10 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+var badKey int64
+
 // GitClonePrivateKey is temporary code
 func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 	log.Info("GitClonePrivateKey> Begin")
-	defer log.Info("GitClonePrivateKey> End")
+	defer log.Info("GitClonePrivateKey> End with key errors %d", badKey)
 
 	pipelines, err := action.GetPipelineUsingAction(DBFunc(), sdk.GitCloneAction)
 	if err != nil {
@@ -148,6 +150,7 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 						privateKey.Value = kname
 						privateKey.Type = sdk.KeySSHParameter
 					} else {
+						badKey++
 						log.Warning("migrateActionGitCloneJob> KEY NOT FOUND in project %s with key named %s", proj.Key, kname)
 						continue
 					}
@@ -165,6 +168,7 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 						privateKey.Value = kname
 						privateKey.Type = sdk.KeySSHParameter
 					} else {
+						badKey++
 						log.Warning("migrateActionGitCloneJob> KEY NOT FOUND in environment id %d with key named %s", env.ID, kname)
 						continue
 					}
@@ -184,12 +188,14 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 						privateKey.Value = kname
 						privateKey.Type = sdk.KeySSHParameter
 					} else {
+						badKey++
 						log.Warning("migrateActionGitCloneJob> KEY NOT FOUND in application %s/%s with key named %s", pkey, appName, kname)
 						continue
 					}
 				}
 			default:
-				log.Warning("migrateActionGitCloneJob> Skipping %s (%s) : can't find suitable key", pipName, j.Action.Name)
+				badKey++
+				log.Warning("migrateActionGitCloneJob> Skipping %s/%s (%s) : can't find suitable key", pkey, pipName, j.Action.Name)
 				continue
 			}
 
