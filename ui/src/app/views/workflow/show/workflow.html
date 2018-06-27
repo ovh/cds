@@ -47,7 +47,7 @@
                                             <div class="content">
                                                 <div class="ui grid">
                                                     <div class="row">
-                                                        <div class="five wide column" title="{{'common_orientation' | translate}}">
+                                                        <div class="one wide column" title="{{'common_orientation' | translate}}">
                                                             <button class="ui icon button"
                                                                     *ngIf="direction === 'TB'"
                                                                     (click)="changeDirection()">
@@ -58,6 +58,11 @@
                                                                     (click)="changeDirection()">
                                                                 <i class="resize vertical icon"></i>
                                                             </button>
+                                                        </div>
+                                                        <div class="four wide column centered">
+                                                            <span *ngIf="detailedWorkflow.from_repository" id="fromRepositoryInfo">
+                                                                {{'workflow_from_repository' | translate: {repo: detailedWorkflow.from_repository} }}
+                                                            </span>
                                                         </div>
                                                         <div class="six wide column centered">
                                                             <div class="ui buttons">
