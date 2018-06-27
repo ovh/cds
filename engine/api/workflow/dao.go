@@ -945,6 +945,11 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		if !opts.IsDefaultBranch {
 			wf.DerivationBranch = opts.Branch
 		}
+		if wf.Root.Context.Application != nil {
+			wf.Root.Context.Application.VCSServer = opts.VCSServer
+			wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
+			wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
+		}
 
 		if wf.FromRepository != "" {
 			if len(wf.Root.Hooks) == 0 {
@@ -959,9 +964,6 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 			}
 
 			if wf.Root.Context.Application != nil {
-				wf.Root.Context.Application.VCSServer = opts.VCSServer
-				wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
-				wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
 				if err := application.Update(tx, store, wf.Root.Context.Application, u); err != nil {
 					return nil, nil, sdk.WrapError(err, "Push> Unable to update application vcs datas")
 				}
