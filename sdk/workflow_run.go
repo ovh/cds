@@ -311,13 +311,13 @@ Unit Tests Report
 {{- end}}
 `
 
-func (w WorkflowNodeRun) Report() (string, error) {
+func (nr WorkflowNodeRun) Report() (string, error) {
 	t := template.New("")
 	t, err := t.Parse(workflowNodeRunReport)
 	if err != nil {
 		return "", err
 	}
 	out := new(bytes.Buffer)
-	errE := t.Execute(out, w)
+	errE := t.Execute(out, nr)
 	return out.String(), errE
 }

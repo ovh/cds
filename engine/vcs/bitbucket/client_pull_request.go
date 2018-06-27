@@ -86,6 +86,7 @@ func (b *bitbucketClient) PullRequests(repo string) ([]sdk.VCSPullRequest, error
 	return prs, nil
 }
 
+// PullRequestComment push a new comment on a pull request
 func (b *bitbucketClient) PullRequestComment(repo string, prID int, text string) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
