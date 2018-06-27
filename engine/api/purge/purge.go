@@ -16,7 +16,7 @@ import (
 
 //Initialize starts goroutines for workflows
 func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) {
-	tickPurge := time.NewTicker(30 * time.Second)
+	tickPurge := time.NewTicker(30 * time.Minute)
 	defer tickPurge.Stop()
 
 	for {
