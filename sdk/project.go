@@ -35,7 +35,17 @@ type Project struct {
 	Favorite          bool               `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 }
 
-// SSHKeys returns the slice of ssh key for an application
+// SSHKeys returns a ssh key given his name
+func (a Project) GetSSHKey(name string) *ProjectKey {
+	for _, k := range a.Keys {
+		if k.Type == KeyTypeSSH && k.Name == name {
+			return &k
+		}
+	}
+	return nil
+}
+
+// SSHKeys returns the slice of ssh key for a project
 func (a Project) SSHKeys() []ProjectKey {
 	keys := []ProjectKey{}
 	for _, k := range a.Keys {
@@ -46,7 +56,7 @@ func (a Project) SSHKeys() []ProjectKey {
 	return keys
 }
 
-// PGPKeys returns the slice of pgp key for an application
+// PGPKeys returns the slice of pgp key for a project
 func (a Project) PGPKeys() []ProjectKey {
 	keys := []ProjectKey{}
 	for _, k := range a.Keys {

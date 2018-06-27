@@ -2,6 +2,7 @@ import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angula
 import {cloneDeep} from 'lodash';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {Action} from '../../model/action.model';
+import {AllKeys} from '../../model/keys.model';
 import {Parameter} from '../../model/parameter.model';
 import {Pipeline} from '../../model/pipeline.model';
 import {Project} from '../../model/project.model';
@@ -24,6 +25,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     publicActions: Array<Action>;
 
     @Input() project: Project;
+    @Input() keys: AllKeys;
     @Input() pipeline: Pipeline;
     @Input() edit = false;
     @Input() suggest: Array<string>;

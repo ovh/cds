@@ -41,6 +41,7 @@ Parse given file to extract Unit Test results.`
 	}
 
 	// ----------------------------------- Git clone    -----------------------
+	// TODO: WRITE SQL TO UPDATE ACTION
 	gitclone := sdk.NewAction(sdk.GitCloneAction)
 	gitclone.Type = sdk.BuiltinAction
 	gitclone.Description = `CDS Builtin Action.
@@ -55,11 +56,11 @@ If your application is linked to a repository, you can use {{.git.url}} (clone o
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:  "privateKey",
-		Value: "{{.cds.app.key}}",
+		Value: "",
 		Description: `Set the private key to be able to git clone from ssh.
-You can create an application variable named 'key' of type 'key' and use it as {{.cds.app.key}} in this action.
+You can create an application key named 'app-key' and use it in this action.
 The public key have to be granted on your repository`,
-		Type: sdk.StringParameter,
+		Type: sdk.KeySSHParameter,
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "user",

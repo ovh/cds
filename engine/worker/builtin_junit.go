@@ -15,7 +15,7 @@ import (
 )
 
 func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
 		res.Status = sdk.StatusFail.String()
 

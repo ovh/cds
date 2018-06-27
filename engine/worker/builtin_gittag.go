@@ -16,7 +16,7 @@ import (
 )
 
 func runGitTag(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		tagPrerelease := sdk.ParameterFind(&a.Parameters, "tagPrerelease")
 		tagMetadata := sdk.ParameterFind(&a.Parameters, "tagMetadata")
 		tagLevel := sdk.ParameterFind(&a.Parameters, "tagLevel")
@@ -39,7 +39,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		gitURL, auth, errR := extractVCSInformations(*params)
+		gitURL, auth, errR := extractVCSInformations(*params, secrets)
 		if errR != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),

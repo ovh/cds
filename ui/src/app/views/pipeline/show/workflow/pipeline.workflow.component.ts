@@ -6,10 +6,12 @@ import {DragulaService} from 'ng2-dragula';
 import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
 import {Job} from '../../../../model/job.model';
+import {AllKeys} from '../../../../model/keys.model';
 import {PermissionValue} from '../../../../model/permission.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Stage} from '../../../../model/stage.model';
+import {KeyService} from '../../../../service/keys/keys.service';
 import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {VariableService} from '../../../../service/variable/variable.service';
@@ -53,6 +55,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     suggest: Array<string>;
     permissionValue = PermissionValue;
     originalPipeline: Pipeline;
+    keys: AllKeys;
     previewMode = false;
 
     loadingStage = false;
@@ -61,8 +64,15 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     asCodeEditorSubscription: Subscription;
     dragulaSubscription: Subscription;
 
-    constructor(private _pipelineStore: PipelineStore, private _toast: ToastService, private _dragularService: DragulaService,
-                private _translate: TranslateService, private _varService: VariableService, private _pipCoreService: PipelineCoreService) {
+    constructor(
+        private _pipelineStore: PipelineStore,
+        private _toast: ToastService,
+        private _dragularService: DragulaService,
+        private _translate: TranslateService,
+        private _varService: VariableService,
+        private _pipCoreService: PipelineCoreService,
+        private _keyService: KeyService
+    ) {
         this._dragularService.setOptions('bag-stage', {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
@@ -136,6 +146,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         if (this.pipeline.stages && this.pipeline.stages.length > 0 && !this.selectedStage) {
             this.selectedStage = cloneDeep(this.pipeline.stages[0]);
         }
+
+        this._keyService.getAllKeys(this.project.key).subscribe(k => {
+            this.keys = k;
+        })
 
         this._varService.getContextVariable(this.project.key, this.pipeline.id).pipe(first()).subscribe(s => this.suggest = s);
 

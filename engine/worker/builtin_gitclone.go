@@ -16,7 +16,7 @@ import (
 )
 
 func runGitClone(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		url := sdk.ParameterFind(&a.Parameters, "url")
 		privateKey := sdk.ParameterFind(&a.Parameters, "privateKey")
 		user := sdk.ParameterFind(&a.Parameters, "user")
@@ -35,9 +35,10 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		if privateKey != nil {
+		privateKeyVar := sdk.VariableFind(secrets, "cds.key."+privateKey.Value+".priv")
+		if privateKeyVar != nil {
 			//Setup the key
-			if err := vcs.SetupSSHKey(nil, keysDirectory, privateKey); err != nil {
+			if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
 					Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
@@ -48,7 +49,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		}
 
 		//Get the key
-		key, errK := vcs.GetSSHKey(*params, keysDirectory, privateKey)
+		key, errK := vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
 		if errK != nil && errK != sdk.ErrKeyNotFound {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),

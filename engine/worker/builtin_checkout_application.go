@@ -10,7 +10,7 @@ import (
 )
 
 func runCheckoutApplication(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		// Load action param
 		directory := sdk.ParameterFind(&a.Parameters, "directory")
 
@@ -19,7 +19,7 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
 		commit := sdk.ParameterFind(params, "git.commit")
 
-		gitURL, auth, err := extractVCSInformations(*params)
+		gitURL, auth, err := extractVCSInformations(*params, secrets)
 		if err != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),

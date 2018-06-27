@@ -10,7 +10,7 @@ import (
 )
 
 func runRelease(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		artifactList := sdk.ParameterFind(&a.Parameters, "artifacts")
 		tag := sdk.ParameterFind(&a.Parameters, "tag")
 		title := sdk.ParameterFind(&a.Parameters, "title")
