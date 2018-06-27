@@ -38,6 +38,7 @@ type VCSAuthorizedClient interface {
 
 	// PullRequests
 	PullRequests(string) ([]VCSPullRequest, error)
+	PullRequestComment(string, int, string) error
 
 	//Hooks
 	CreateHook(repo string, hook *VCSHook) error

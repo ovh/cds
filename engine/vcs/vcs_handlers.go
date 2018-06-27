@@ -384,6 +384,45 @@ func (s *Service) getPullRequestsHandler() api.Handler {
 	}
 }
 
+func (s *Service) postPullRequestCommentHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+		sid := muxVar(r, "id")
+		id, err := strconv.Atoi(sid)
+		if err != nil {
+			return sdk.ErrWrongRequest
+		}
+
+		var body string
+		if err := api.UnmarshalBody(r, &body); err != nil {
+			return sdk.WrapError(err, "VCS> postPullRequestCommentHandler")
+		}
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postPullRequestCommentHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postPullRequestCommentHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postPullRequestCommentHandler> Unable to get authorized client")
+		}
+
+		if err := client.PullRequestComment(fmt.Sprintf("%s/%s", owner, repo), id, body); err != nil {
+			return sdk.WrapError(err, "VCS> postPullRequestCommentHandler> Unable to create new PR comment")
+		}
+
+		return nil
+	}
+}
+
 func (s *Service) getEventsHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")

@@ -63,7 +63,7 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := New(clientID, clientSecret, "http://localhost", "", "", cache, true, true)
+	ghConsummer := New(clientID, clientSecret, "http://localhost", "", "", cache, false, false)
 	cli, err := ghConsummer.GetAuthorizedClient(accessToken, "")
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
