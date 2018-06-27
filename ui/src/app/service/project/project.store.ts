@@ -21,7 +21,7 @@ import {ProjectPlatform} from '../../model/platform.model';
 export class ProjectStore {
 
     // List of all project. Use by Navbar
-    private _projectNav: BehaviorSubject<List<Project>> = new BehaviorSubject(List([]));
+    private _projectNav: BehaviorSubject<List<Project>> = new BehaviorSubject(null);
 
     // List of all project + dependencies:  List of variables, List of Env, List of App, List of Pipeline.
     private _projectCache: BehaviorSubject<Map<string, Project>> = new BehaviorSubject(Map<string, Project>());
@@ -41,14 +41,9 @@ export class ProjectStore {
      */
     getProjectsList(): Observable<List<Project>> {
         // If Store not empty, get from it
-        if (this._projectNav.getValue().size === 0) {
-            // Get from localstorage
-            let localProjects: Array<Project> = JSON.parse(localStorage.getItem('CDS-PROJECT-LIST'));
-            this._projectNav.next(this._projectNav.getValue().push(...localProjects));
-
+        if (!this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
             // Get from API
-            this._projectService.getProjects(true).subscribe(res => {
-                localStorage.setItem('CDS-PROJECT-LIST', JSON.stringify(res));
+            this._projectService.getProjects().subscribe(res => {
                 this._projectNav.next(List(res));
             });
         }

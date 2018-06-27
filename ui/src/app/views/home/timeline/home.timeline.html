@@ -1,30 +1,45 @@
 <div class="ui secondary pointing menu">
-    <a class="active item">{{'timeline_title' | translate}}</a>
+    <a class="item" [class.active]="selectedTab === 'timeline'" (click)="selectTab('timeline')">{{'timeline_title' | translate}}</a>
+    <a class="item" [class.active]="selectedTab === 'filter'" (click)="selectTab('filter')"><i class="filter icon"></i></a>
 </div>
-<ng-container *ngIf="!loading && events.length > 0">
-    <div class="ui relaxed divided list"
-         infiniteScroll
-         [infiniteScrollDistance]="2"
-         [infiniteScrollThrottle]="50"
-         [scrollWindow]="false"
-         (scrolled)="onScroll()">
-        <div class="item" *ngFor="let e of events">
-            <div class="content">
-                <div class="header">
-                    <app-status-icon [status]="e.status" [loader]="false"></app-status-icon>
-                    [<a [routerLink]="['/project', e.project_key]">{{ e.project_key  }}</a>]
-                    <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name]">{{ e.workflow_name }}</a>
-                    <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name, 'run', e.workflow_run_num]">#{{ e.workflow_run_num }}</a>
-                </div>
-                <div class="description">
-                    {{e.timestamp | amTimeAgo}}
+<ng-container [ngSwitch]="selectedTab">
+    <ng-container *ngSwitchCase="'timeline'">
+        <ng-container *ngIf="!loading && events.length > 0">
+            <div class="ui relaxed divided list"
+                 infiniteScroll
+                 [infiniteScrollDistance]="2"
+                 [infiniteScrollThrottle]="50"
+                 [scrollWindow]="false"
+                 (scrolled)="onScroll()">
+                <div class="item" *ngFor="let e of events">
+                    <div class="content">
+                        <div class="header">
+                            <div class="ui label"
+                                 [class.green]="e.status === pipelineStatus.SUCCESS"
+                                 [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING"
+                                 [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
+                                 [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT"
+                            >
+                                {{ e.status }}
+                            </div>
+                            [<a [routerLink]="['/project', e.project_key]">{{ e.project_key  }}</a>]
+                            <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name]">{{ e.workflow_name }}</a>
+                            <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name, 'run', e.workflow_run_num]">#{{ e.workflow_run_num }}</a>
+                        </div>
+                        <div class="description">
+                            {{e.timestamp | amTimeAgo}}
+                        </div>
+                    </div>
                 </div>
             </div>
+        </ng-container>
+        <div class="ui info message" *ngIf="!loading && events.length === 0">
+            {{ 'timeline_no' | translate }}
         </div>
-    </div>
+    </ng-container>
+    <ng-container *ngSwitchCase="'filter'">
+        <app-home-timeline-filter [filter]="filter"></app-home-timeline-filter>
+    </ng-container>
 </ng-container>
 
-<div class="ui info message" *ngIf="!loading && events.length === 0">
-    {{ 'timeline_no' | translate }}
-</div>
 <div class="ui text active loader" *ngIf="loading">{{ 'timeline_loading' | translate }}</div>

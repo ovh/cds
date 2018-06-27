@@ -1,0 +1,24 @@
+<ul>
+    <li *ngFor="let p of projects">
+        <input type="checkbox" class="ui checkbox" [checked]="filter.allProjects">
+        <span (click)="loadProjectWorkflow(p); p.show = !p.show">{{ p.name }}</span>
+        <ul [hidden]="!p.show">
+            <li *ngIf="p.loading">
+                Loading workflows
+            </li>
+            <ng-container *ngIf="!p.loading && p.workflow_names && p.workflow_names.length > 0">
+                <li *ngFor="let w of p.workflow_names">
+                    <input type="checkbox" class="ui checkbox" [checked]="p.allWorkflows">
+                    {{ w.name }}
+                </li>
+            </ng-container>
+            <ng-container *ngIf="!p.loading && (!p.workflow_names || p.workflow_names.length === 0)">
+                <li>
+                    <div class="ui info message">
+                        <span>{{ 'project_no_workflow' | translate }}</span>
+                    </div>
+                </li>
+            </ng-container>
+        </ul>
+    </li>
+</ul>

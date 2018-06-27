@@ -4,6 +4,7 @@ import {HomeBroadcastComponent} from './broadcast/home.broadcast.component';
 import {HomeFavoriteComponent} from './favorite/home.favorite.component';
 import {HomeComponent} from './home.component';
 import { homeRouting } from './home.routing';
+import {HomeTimelineFilterComponent} from './timeline/filter/home.timeline.filter.component';
 import {HomeTimelineComponent} from './timeline/home.timeline.component';
 
 @NgModule({
@@ -11,7 +12,8 @@ import {HomeTimelineComponent} from './timeline/home.timeline.component';
         HomeComponent,
         HomeBroadcastComponent,
         HomeFavoriteComponent,
-        HomeTimelineComponent
+        HomeTimelineComponent,
+        HomeTimelineFilterComponent
     ],
     imports: [
         SharedModule,
