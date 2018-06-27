@@ -174,11 +174,11 @@ func (b *eventsBroker) Start(c context.Context) {
 
 func (b *eventsBroker) ServeHTTP() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
-			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-			return nil
+			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
 		uuidSK, errS := sessionstore.NewSessionKey()
@@ -206,51 +206,45 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("X-Accel-Buffering", "no")
 
-		fmt.Fprintf(w, "data: ACK: %s \n\n", uuid)
-		f.Flush()
-
-		pushMessage := func() {
-			for msg := range messageChan.Queue {
-				var buffer bytes.Buffer
-				buffer.WriteString("data: ")
-				buffer.WriteString(msg)
-				buffer.WriteString("\n\n")
-				if _, err := w.Write(buffer.Bytes()); err != nil {
-					continue
-				}
-				f.Flush()
-			}
+		if _, err := w.Write([]byte(fmt.Sprintf("data: ACK: %s \n\n", uuid))); err != nil {
+			return sdk.WrapError(err, "events.write> Unable to send ACK to client")
 		}
-		sdk.GoRoutine("Events.SendMessage", pushMessage)
+		f.Flush()
 
 		tick := time.NewTicker(time.Second)
 		defer tick.Stop()
+
 	leave:
 		for {
 			select {
 			case <-ctx.Done():
+				log.Info("events.Http: context done")
 				b.cleanClient(messageChan)
 				break leave
-			case <-w.(http.CloseNotifier).CloseNotify():
-				log.Info("events.Http: client deconnected")
+			case <-r.Context().Done():
+				log.Info("events.Http: client disconnected")
 				b.cleanClient(messageChan)
 				break leave
+			case msg := <-messageChan.Queue:
+				var buffer bytes.Buffer
+				buffer.WriteString("data: ")
+				buffer.WriteString(msg)
+				buffer.WriteString("\n\n")
+
+				if _, err := w.Write(buffer.Bytes()); err != nil {
+					return sdk.WrapError(err, "events.write> Unable to write to client")
+				}
+				f.Flush()
 			case <-tick.C:
-				flush(f)
+				if _, err := w.Write([]byte("")); err != nil {
+					return sdk.WrapError(err, "events.write> Unable to ping client")
+				}
+				f.Flush()
 			}
 		}
 
 		return nil
 	}
-}
-
-func flush(f http.Flusher) {
-	defer func() {
-		if re := recover(); re != nil {
-			log.Info("Unable to flush, maybe connection is closed: %v", re)
-		}
-	}()
-	f.Flush()
 }
 
 func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
