@@ -24,9 +24,6 @@ type HatcheryConfiguration struct {
 	// MarathonPassword "marathon-password"
 	MarathonPassword string `mapstructure:"password" toml:"password" default:"" commented:"false" comment:"Marathon Password, you need a marathon User to use it"`
 
-	// MarathonMaxConcurrentSpawn "marathon-max-deployments"
-	MarathonMaxConcurrentSpawn int `mapstructure:"maxConcurrentSpawn" toml:"maxConcurrentSpawn" default:"10" commented:"false" comment:"Max elements in deployment queue. The hatchery will wait less than x elements in deployment queue before spawning new CDS worker."`
-
 	// MarathonLabelsStr "marathon-labels"
 	MarathonLabels string `mapstructure:"labels" toml:"labels" default:"" commented:"false" comment:"Use this option if you want to add labels on workers spawned by this hatchery.\n Format: MarathonLabels = \"A_LABEL=value-of-label,B_LABEL=value-of-label-b\""`
 
