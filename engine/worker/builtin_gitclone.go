@@ -35,12 +35,17 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		deprecatedKey := true
+
+		if privateKey != nil && (strings.HasPrefix(privateKey.Value, "app-") || strings.HasPrefix(privateKey.Value, "proj-") || strings.HasPrefix(privateKey.Value, "env-")) {
+			deprecatedKey = false
+		}
 		var key *vcs.SSHKey
 		var errK error
 		var privateKeyVar *sdk.Variable
 		if privateKey != nil {
 			privateKeyVar = sdk.VariableFind(secrets, "cds.key."+privateKey.Value+".priv")
-			if privateKey.Type == sdk.StringParameter {
+			if deprecatedKey {
 				//Setup the key
 				if err := vcs.SetupSSHKeyDEPRECATED(nil, keysDirectory, privateKey); err != nil {
 					res := sdk.Result{
@@ -62,7 +67,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				}
 			}
 
-			if privateKey.Type == sdk.StringParameter {
+			if deprecatedKey {
 				//TODO: to delete
 				//Get the key
 				key, errK = vcs.GetSSHKeyDEPRECATED(*params, keysDirectory, privateKey)
