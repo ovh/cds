@@ -59,18 +59,7 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		log.Debug("GitClonePrivateKey> Migrate %s/%s DONE", p.ProjKey, p.PipName)
 	}
 
-	queryUpdate := `
-	UPDATE action_parameter
-		SET type = 'ssh-key', value = ''
-	WHERE action_id = (
-		SELECT id
-			FROM action
-			WHERE name = $1 AND type = $2
-	) AND name = 'privateKey'
-	`
-	_, errUpd := db.Exec(queryUpdate, sdk.GitCloneAction, sdk.BuiltinAction)
-
-	return sdk.WrapError(errUpd, "GitClonePrivateKey> cannot execute migrate action query")
+	return nil
 }
 
 // migrateActionGitClonePipeline is the unitary function

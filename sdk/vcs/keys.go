@@ -25,6 +25,23 @@ func SetupSSHKey(vars []sdk.Variable, path string, key *sdk.Variable) error {
 	return write(path, key.Name, key.Value)
 }
 
+//TODO: To delete after gitclone migration
+// SetupSSHKeyDEPRECATED writes all the keys in the path, or just the specified key it not nil
+func SetupSSHKeyDEPRECATED(vars []sdk.Variable, path string, key *sdk.Parameter) error {
+	if key == nil {
+		for _, v := range vars {
+			if v.Type != sdk.KeyVariable && v.Type != sdk.KeySSHParameter {
+				continue
+			}
+			if err := write(path, v.Name, v.Value); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return write(path, key.Name, key.Value)
+}
+
 // SSHKey is a type for a ssh key
 type SSHKey struct {
 	Filename string
@@ -54,6 +71,46 @@ func GetSSHKey(vars []sdk.Variable, path string, key *sdk.Variable) (*SSHKey, er
 			} else if strings.HasPrefix(v.Name, "cds.key.app") {
 				keyprio = 2
 			} else if strings.HasPrefix(v.Name, "cds.key.env") {
+				keyprio = 3
+			}
+			if keyprio > prio {
+				k = v
+			}
+		}
+	} else {
+		k.Name = key.Name
+		k.Value = key.Value
+	}
+
+	if k.Name == "" {
+		return nil, sdk.ErrKeyNotFound
+	}
+
+	p := filepath.Join(path, key.Name)
+	b, err := ioutil.ReadFile(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SSHKey{Filename: p, Content: b}, nil
+}
+
+//TODO: To delete after gitclone migration
+// GetSSHKeyDEPRECATED get a key in the path. If the key is nil, it will choose a default key among project, application and env variables
+func GetSSHKeyDEPRECATED(vars []sdk.Parameter, path string, key *sdk.Parameter) (*SSHKey, error) {
+	var k sdk.Parameter
+	if key == nil {
+		var prio int
+		for _, v := range vars {
+			if v.Type != sdk.KeyVariable {
+				continue
+			}
+			var keyprio int
+			if strings.HasPrefix(v.Name, "cds.proj.") {
+				keyprio = 1
+			} else if strings.HasPrefix(v.Name, "cds.app.") {
+				keyprio = 2
+			} else if strings.HasPrefix(v.Name, "cds.env.") {
 				keyprio = 3
 			}
 			if keyprio > prio {

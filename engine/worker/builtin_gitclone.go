@@ -37,26 +37,56 @@ func runGitClone(w *currentWorker) BuiltInAction {
 
 		privateKeyVar := sdk.VariableFind(secrets, "cds.key."+privateKey.Value+".priv")
 		if privateKeyVar != nil {
-			//Setup the key
-			if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
+
+			// TODO: to delete after migration
+			if privateKey.Type == sdk.StringParameter {
+				//Setup the key
+				if err := vcs.SetupSSHKeyDEPRECATED(nil, keysDirectory, privateKey); err != nil {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
+					}
+					sendLog(res.Reason)
+					return res
+				}
+			} else {
+				//Setup the key
+				if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
+					}
+					sendLog(res.Reason)
+					return res
+				}
+			}
+		}
+
+		var key *vcs.SSHKey
+		var errK error
+		if privateKey.Type == sdk.StringParameter {
+			//TODO: to delete
+			//Get the key
+			key, errK = vcs.GetSSHKeyDEPRECATED(secrets, keysDirectory, privateKeyVar)
+			if errK != nil && errK != sdk.ErrKeyNotFound {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
+					Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
 				}
 				sendLog(res.Reason)
 				return res
 			}
-		}
-
-		//Get the key
-		key, errK := vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
-		if errK != nil && errK != sdk.ErrKeyNotFound {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
+		} else {
+			//Get the key
+			key, errK = vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
+			if errK != nil && errK != sdk.ErrKeyNotFound {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
+				}
+				sendLog(res.Reason)
+				return res
 			}
-			sendLog(res.Reason)
-			return res
 		}
 
 		//If url is not http(s), a key must be found
