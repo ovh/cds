@@ -104,15 +104,6 @@ func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p act
 func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipName, appName string, envID int64, j sdk.Job) error {
 	mapReplacement := make(map[int]sdk.Action)
 
-	var err error
-	//Load the builtin gitclone action is needed
-	if originalGitClone == nil {
-		originalGitClone, err = action.LoadPublicAction(db, sdk.GitCloneAction)
-		if err != nil {
-			return err
-		}
-	}
-
 	//Load the first admin we can
 	if anAdminID == 0 {
 		users, err := user.LoadUsers(db)
@@ -195,7 +186,7 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 				}
 			default:
 				badKey++
-				log.Warning("migrateActionGitCloneJob> Skipping %s/%s (%s) : can't find suitable key", pkey, pipName, j.Action.Name)
+				log.Warning("migrateActionGitCloneJob> Skipping %s/%s (%s) : can't find suitable key (%s)", pkey, pipName, j.Action.Name, privateKey.Value)
 				continue
 			}
 
