@@ -1,7 +1,10 @@
 package github
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -52,6 +55,7 @@ func (g *githubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, erro
 	prResults := []sdk.VCSPullRequest{}
 	for _, pullr := range pullRequests {
 		pr := sdk.VCSPullRequest{
+			ID: pullr.Number,
 			Base: sdk.VCSPushEvent{
 				Repo: pullr.Base.Repo.FullName,
 				Branch: sdk.VCSBranch{
@@ -101,4 +105,37 @@ func (g *githubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, erro
 	}
 
 	return prResults, nil
+}
+
+// PullRequestComment push a new comment on a pull request
+func (g *githubClient) PullRequestComment(repo string, id int, text string) error {
+	if g.DisableStatus {
+		log.Warning("github.PullRequestComment>  ⚠ Github statuses are disabled")
+		return nil
+	}
+
+	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, id)
+	payload := map[string]string{
+		"body": text,
+	}
+	values, _ := json.Marshal(payload)
+	res, err := g.post(path, "application/json", bytes.NewReader(values), false)
+	if err != nil {
+		return sdk.WrapError(err, "github.PullRequestComment> Unable to post status")
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return sdk.WrapError(err, "github.PullRequestComment> Unable to read body")
+	}
+
+	log.Debug("%v", string(body))
+
+	if res.StatusCode != 201 {
+		return sdk.WrapError(err, "github.PullRequestComment>  Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
+	}
+
+	return nil
 }

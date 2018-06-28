@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -92,53 +90,15 @@ func (b *eventsBroker) getUser(username string) *sdk.User {
 //Init the eventsBroker
 func (b *eventsBroker) Init(c context.Context) {
 	// Start cache Subscription
-	go func() {
-		defer func() {
-			if re := recover(); re != nil {
-				var err error
-				switch t := re.(type) {
-				case string:
-					err = errors.New(t)
-				case error:
-					err = re.(error)
-				case sdk.Error:
-					err = re.(sdk.Error)
-				default:
-					err = sdk.ErrUnknownError
-				}
-				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> recover %s", err)
-				trace := make([]byte, 4096)
-				count := runtime.Stack(trace, true)
-				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> Stacktrace of %d bytes\n%s\n", count, trace)
-			}
-		}()
+	subscribeFunc := func() {
 		cacheSubscribe(c, b.messages, b.cache)
-	}()
+	}
+	sdk.GoRoutine("eventsBroker.Init.CacheSubscribe", subscribeFunc)
 
-	go func() {
-		defer func() {
-			b.mutex.Unlock()
-			if re := recover(); re != nil {
-				var err error
-				switch t := re.(type) {
-				case string:
-					err = errors.New(t)
-				case error:
-					err = re.(error)
-				case sdk.Error:
-					err = re.(sdk.Error)
-				default:
-					err = sdk.ErrUnknownError
-				}
-				log.Error("[PANIC] eventsBroker.Init.Start> recover %s", err)
-				trace := make([]byte, 4096)
-				count := runtime.Stack(trace, false)
-				log.Error("[PANIC] eventsBroker.Init.Start> Stacktrace of %d bytes\n%s\n", count, trace)
-				fmt.Println(string(trace))
-			}
-		}()
+	startFunc := func() {
 		b.Start(c)
-	}()
+	}
+	sdk.GoRoutine("eventsBroker.Init.Start", startFunc)
 }
 
 func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
@@ -214,11 +174,11 @@ func (b *eventsBroker) Start(c context.Context) {
 
 func (b *eventsBroker) ServeHTTP() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
-			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-			return nil
+			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
 		uuidSK, errS := sessionstore.NewSessionKey()
@@ -246,50 +206,45 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("X-Accel-Buffering", "no")
 
-		fmt.Fprintf(w, "data: ACK: %s \n\n", uuid)
+		if _, err := w.Write([]byte(fmt.Sprintf("data: ACK: %s \n\n", uuid))); err != nil {
+			return sdk.WrapError(err, "events.write> Unable to send ACK to client")
+		}
 		f.Flush()
-
-		go func() {
-			for msg := range messageChan.Queue {
-				var buffer bytes.Buffer
-				buffer.WriteString("data: ")
-				buffer.WriteString(msg)
-				buffer.WriteString("\n\n")
-				if _, err := w.Write(buffer.Bytes()); err != nil {
-					continue
-				}
-				f.Flush()
-			}
-		}()
 
 		tick := time.NewTicker(time.Second)
 		defer tick.Stop()
+
 	leave:
 		for {
 			select {
 			case <-ctx.Done():
+				log.Info("events.Http: context done")
 				b.cleanClient(messageChan)
 				break leave
-			case <-w.(http.CloseNotifier).CloseNotify():
-				log.Info("events.Http: client deconnected")
+			case <-r.Context().Done():
+				log.Info("events.Http: client disconnected")
 				b.cleanClient(messageChan)
 				break leave
+			case msg := <-messageChan.Queue:
+				var buffer bytes.Buffer
+				buffer.WriteString("data: ")
+				buffer.WriteString(msg)
+				buffer.WriteString("\n\n")
+
+				if _, err := w.Write(buffer.Bytes()); err != nil {
+					return sdk.WrapError(err, "events.write> Unable to write to client")
+				}
+				f.Flush()
 			case <-tick.C:
-				flush(f)
+				if _, err := w.Write([]byte("")); err != nil {
+					return sdk.WrapError(err, "events.write> Unable to ping client")
+				}
+				f.Flush()
 			}
 		}
 
 		return nil
 	}
-}
-
-func flush(f http.Flusher) {
-	defer func() {
-		if re := recover(); re != nil {
-			log.Info("Unable to flush, maybe connection is closed: %v", re)
-		}
-	}()
-	f.Flush()
 }
 
 func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
