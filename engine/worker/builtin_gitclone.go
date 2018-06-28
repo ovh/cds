@@ -35,10 +35,11 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		privateKeyVar := sdk.VariableFind(secrets, "cds.key."+privateKey.Value+".priv")
-		if privateKeyVar != nil {
-
-			// TODO: to delete after migration
+		var key *vcs.SSHKey
+		var errK error
+		var privateKeyVar *sdk.Variable
+		if privateKey != nil {
+			privateKeyVar = sdk.VariableFind(secrets, "cds.key."+privateKey.Value+".priv")
 			if privateKey.Type == sdk.StringParameter {
 				//Setup the key
 				if err := vcs.SetupSSHKeyDEPRECATED(nil, keysDirectory, privateKey); err != nil {
@@ -48,44 +49,42 @@ func runGitClone(w *currentWorker) BuiltInAction {
 					}
 					sendLog(res.Reason)
 					return res
+				} else if privateKeyVar != nil {
+					// TODO: to delete after migration
+					if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
+						res := sdk.Result{
+							Status: sdk.StatusFail.String(),
+							Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
+						}
+						sendLog(res.Reason)
+						return res
+					}
 				}
-			} else {
-				//Setup the key
-				if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
+			}
+
+			if privateKey.Type == sdk.StringParameter {
+				//TODO: to delete
+				//Get the key
+				key, errK = vcs.GetSSHKeyDEPRECATED(*params, keysDirectory, privateKey)
+				if errK != nil && errK != sdk.ErrKeyNotFound {
 					res := sdk.Result{
 						Status: sdk.StatusFail.String(),
-						Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
+						Reason: fmt.Sprintf("Unable to get ssh key. %s", errK),
 					}
 					sendLog(res.Reason)
 					return res
 				}
-			}
-		}
-
-		var key *vcs.SSHKey
-		var errK error
-		if privateKey.Type == sdk.StringParameter {
-			//TODO: to delete
-			//Get the key
-			key, errK = vcs.GetSSHKeyDEPRECATED(*params, keysDirectory, privateKey)
-			if errK != nil && errK != sdk.ErrKeyNotFound {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
+			} else {
+				//Get the key
+				key, errK = vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
+				if errK != nil && errK != sdk.ErrKeyNotFound {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable to get ssh key. %s", errK),
+					}
+					sendLog(res.Reason)
+					return res
 				}
-				sendLog(res.Reason)
-				return res
-			}
-		} else {
-			//Get the key
-			key, errK = vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
-			if errK != nil && errK != sdk.ErrKeyNotFound {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
-				}
-				sendLog(res.Reason)
-				return res
 			}
 		}
 
