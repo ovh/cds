@@ -41,7 +41,6 @@ Parse given file to extract Unit Test results.`
 	}
 
 	// ----------------------------------- Git clone    -----------------------
-	// TODO: WRITE SQL TO UPDATE ACTION
 	gitclone := sdk.NewAction(sdk.GitCloneAction)
 	gitclone.Type = sdk.BuiltinAction
 	gitclone.Description = `CDS Builtin Action.
