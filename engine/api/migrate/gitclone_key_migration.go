@@ -45,6 +45,7 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 			tx.Rollback()
 			continue
 		}
+
 		_ = id // we don't care about it
 		if err := migrateActionGitClonePipeline(tx, store, p); err != nil {
 			log.Error("GitClonePrivateKey> %v", err)
@@ -59,7 +60,16 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		log.Debug("GitClonePrivateKey> Migrate %s/%s DONE", p.ProjKey, p.PipName)
 	}
 
-	return nil
+	_, errEx := db.Exec(`
+		UPDATE action_parameter
+		  SET type = 'ssh-key', value = ''
+		WHERE action_id = (
+		  SELECT id
+		    FROM action
+		    WHERE name = 'GitClone' AND type = 'Builtin'
+		) AND name = 'privateKey'`)
+
+	return sdk.WrapError(errEx, "GitClonePrivateKey> cannot update action table builtin")
 }
 
 // migrateActionGitClonePipeline is the unitary function
@@ -162,7 +172,7 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 			case strings.HasPrefix(privateKey.Value, "{{.cds.env."):
 				regx := regexp.MustCompile(`{{\.cds\.env\.(.+)}}`)
 				subMatch := regx.FindAllStringSubmatch(privateKey.Value, -1)
-				if len(subMatch) > 0 && len(subMatch[0]) > 1 {
+				if len(subMatch) > 0 && len(subMatch[0]) > 1 && envID != 0 {
 					env := sdk.Environment{ID: envID}
 					if err := environment.LoadAllKeys(db, &env); err != nil {
 						return err
@@ -173,7 +183,7 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 						privateKey.Type = sdk.KeySSHParameter
 					} else {
 						badKey++
-						log.Warning("migrateActionGitCloneJob> KEY NOT FOUND in environment id %d with key named %s", env.ID, kname)
+						log.Warning("migrateActionGitCloneJob> KEY NOT FOUND %s/%s in environment id %d with key named %s", pkey, pipName, env.ID, kname)
 						continue
 					}
 
@@ -181,7 +191,7 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 			case strings.HasPrefix(privateKey.Value, "{{.cds.app."):
 				regx := regexp.MustCompile(`{{\.cds\.app\.(.+)}}`)
 				subMatch := regx.FindAllStringSubmatch(privateKey.Value, -1)
-				if len(subMatch) > 0 && len(subMatch[0]) > 1 {
+				if len(subMatch) > 0 && len(subMatch[0]) > 1 && appName != "" {
 					app, err := application.LoadByName(db, store, pkey, appName, nil, application.LoadOptions.WithKeys)
 					if err != nil {
 						return err
@@ -212,6 +222,6 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 		j.Action.Actions[i] = a
 	}
 
-	//Updte in database
+	//Update in database
 	return action.UpdateActionDB(db, &j.Action, anAdminID)
 }
