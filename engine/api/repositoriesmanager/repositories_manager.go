@@ -312,6 +312,14 @@ func (c *vcsClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) 
 	return prs, nil
 }
 
+func (c *vcsClient) PullRequestComment(fullname string, id int, body string) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests/%d/comments", c.name, fullname, id)
+	if _, err := c.doJSONRequest("POST", path, body, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *vcsClient) CreateHook(fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
 	_, err := c.doJSONRequest("POST", path, hook, hook)

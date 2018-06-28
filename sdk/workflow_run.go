@@ -1,7 +1,9 @@
 package sdk
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/url"
 	"strings"
 	"time"
@@ -287,4 +289,35 @@ func (w *WorkflowNodeRunArtifact) GetPath() string {
 	container = url.QueryEscape(container)
 	container = strings.Replace(container, "/", "-", -1)
 	return container
+}
+
+const workflowNodeRunReport = `CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}}
+{{range $s := .Stages}}
+* {{$s.Name}}
+{{- range $j := $s.RunJobs}}
+  * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+{{- end}}
+{{end}}
+
+{{- if gt .Tests.TotalKO 0}}
+Unit Tests Report
+
+{{- range $ts := .Tests.TestSuites}}
+* {{ $ts.Name }}
+{{range $tc := $ts.TestCases}}
+  {{- if or ($tc.Errors) ($tc.Failures) }}  * {{ $tc.Name }} ✘ {{- end}}
+{{end}}
+{{- end}}
+{{- end}}
+`
+
+func (nr WorkflowNodeRun) Report() (string, error) {
+	t := template.New("")
+	t, err := t.Parse(workflowNodeRunReport)
+	if err != nil {
+		return "", err
+	}
+	out := new(bytes.Buffer)
+	errE := t.Execute(out, nr)
+	return out.String(), errE
 }
