@@ -42,14 +42,14 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		// Lock the job (action)
 		if err := tx.QueryRow("select id from action where id = $1 for update nowait", p.ActionID).Scan(&id); err != nil {
 			log.Debug("GitClonePrivateKey> unable to take lock on action table: %v", err)
-			tx.Rollback()
+			_ = tx.Rollback()
 			continue
 		}
 
 		_ = id // we don't care about it
 		if err := migrateActionGitClonePipeline(tx, store, p); err != nil {
 			log.Error("GitClonePrivateKey> %v", err)
-			tx.Rollback()
+			_ = tx.Rollback()
 			continue
 		}
 
