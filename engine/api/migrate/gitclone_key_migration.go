@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -79,6 +80,25 @@ func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p act
 		return sdk.WrapError(err, "unable to load pipeline")
 	}
 
+	//Override the appname with the application in workflow node context if needed
+	if p.AppName == "" && p.WorkflowName != "" {
+		proj, err := project.Load(db, store, p.ProjKey, nil, project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return err
+		}
+		w, err := workflow.Load(db, store, proj, p.WorkflowName, nil, workflow.LoadOptions{})
+		if err != nil {
+			return err
+		}
+		node := w.GetNodeByName(p.WorkflowNodeName)
+		if node == nil {
+			return sdk.ErrWorkflowNodeNotFound
+		}
+		if node.Context != nil && node.Context.Application != nil {
+			p.AppName = node.Context.Application.Name
+		}
+	}
+
 	for _, s := range pip.Stages {
 		for _, j := range s.Jobs {
 			var migrateJob bool
@@ -125,6 +145,10 @@ func migrateActionGitCloneJob(db gorp.SqlExecutor, store cache.Store, pkey, pipN
 
 		if step.Name == sdk.GitCloneAction {
 			privateKey := sdk.ParameterFind(&step.Parameters, "privateKey")
+
+			if privateKey.Value == "" || strings.HasPrefix(privateKey.Value, "proj-") || strings.HasPrefix(privateKey.Value, "app-") || strings.HasPrefix(privateKey.Value, "env-") {
+				continue
+			}
 
 			switch {
 			case strings.HasPrefix(privateKey.Value, "{{.cds.proj."):
