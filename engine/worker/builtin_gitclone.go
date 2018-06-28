@@ -67,7 +67,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		if privateKey.Type == sdk.StringParameter {
 			//TODO: to delete
 			//Get the key
-			key, errK = vcs.GetSSHKeyDEPRECATED(secrets, keysDirectory, privateKeyVar)
+			key, errK = vcs.GetSSHKeyDEPRECATED(*params, keysDirectory, privateKey)
 			if errK != nil && errK != sdk.ErrKeyNotFound {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
