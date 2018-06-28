@@ -601,7 +601,13 @@ func (api *API) postWorkflowRunHandler() Handler {
 		u := getUser(ctx)
 
 		_, next := tracing.Span(ctx, "project.Load")
-		p, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures, project.LoadOptions.WithPlatforms)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
+			project.LoadOptions.WithVariables,
+			project.LoadOptions.WithFeatures,
+			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithApplicationVariables,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		)
 		next()
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
@@ -649,10 +655,12 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 				proj, errp := project.Load(api.mustDB(), api.Cache, key, u,
 					project.LoadOptions.WithGroups,
-					project.LoadOptions.WithApplications,
+					project.LoadOptions.WithApplicationVariables,
+					project.LoadOptions.WithApplicationWithDeploymentStrategies,
 					project.LoadOptions.WithEnvironments,
 					project.LoadOptions.WithPipelines,
 					project.LoadOptions.WithClearKeys,
+					project.LoadOptions.WithClearPlatforms,
 				)
 
 				if errp != nil {
