@@ -49,16 +49,16 @@ func runGitClone(w *currentWorker) BuiltInAction {
 					}
 					sendLog(res.Reason)
 					return res
-				} else if privateKeyVar != nil {
-					// TODO: to delete after migration
-					if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
-						res := sdk.Result{
-							Status: sdk.StatusFail.String(),
-							Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
-						}
-						sendLog(res.Reason)
-						return res
+				}
+			} else if privateKeyVar != nil {
+				// TODO: to delete after migration
+				if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
 					}
+					sendLog(res.Reason)
+					return res
 				}
 			}
 
