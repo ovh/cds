@@ -1,9 +1,13 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
 import {LoadOpts, Project} from '../../../../model/project.model';
 import {ProjectFilter, TimelineFilter} from '../../../../model/timeline.model';
 import {ProjectStore} from '../../../../service/project/project.store';
+import {TimelineStore} from '../../../../service/timeline/timeline.store';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-home-timeline-filter',
@@ -13,38 +17,107 @@ import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 @AutoUnsubscribe()
 export class HomeTimelineFilterComponent {
 
-    @Input() filter: TimelineFilter;
+    _filter: TimelineFilter;
+    filterToEdit: TimelineFilter;
+    @Input('filter')
+    set filter(data: TimelineFilter) {
+        if (data) {
+            this._filter = data;
+            this.filterToEdit = cloneDeep(data);
+        }
+    }
+    get filter() {
+        return this.filterToEdit;
+    }
 
     projects: Array<Project>;
 
-    constructor(private _projectStore: ProjectStore) {
+    selectedProjectKey: string;
+    selectedWorkflow: string;
+
+    loading = false;
+
+    constructor(private _projectStore: ProjectStore, private _timelineStore: TimelineStore, private _translate: TranslateService,
+                private _toast: ToastService) {
         this._projectStore.getProjectsList().subscribe(ps => {
             if (ps) {
                 this.projects = ps.toArray();
-                this.projects.forEach(p => {
-                   let pf = new ProjectFilter();
-                   pf.key = p.key;
-                   this.filter.projects.set(pf.key, pf);
-                });
             }
         });
     }
 
-    loadProjectWorkflow(p: Project) {
-        if (p.workflow_names) {
+    addProject(): void {
+        if (!this.selectedProjectKey || this.selectedProjectKey === '') {
             return;
         }
-        p.loading = true;
+        if (this.filter.projects) {
+            let exist = this.filter.projects.find(p => p.key === this.selectedProjectKey);
+            if (exist) {
+                return;
+            }
+        } else {
+            this.filter.projects = new Array<ProjectFilter>();
+        }
+
+
+        let projFilter = new ProjectFilter();
+        projFilter.key = this.selectedProjectKey;
+        this.filter.projects.push(projFilter);
+
+        this.loadProjectWorkflow(projFilter);
+
+        this.filter.all_projects = false;
+        this.selectedProjectKey = '';
+    }
+
+    removeProject(pf: ProjectFilter): void {
+        this.filter.projects = this.filter.projects.filter(p => p.key !== pf.key);
+    }
+
+    removeWorkflow(pf: ProjectFilter, wname: string): void {
+        pf.workflow_names = pf.workflow_names.filter(w => w !== wname);
+    }
+
+    addWorkflow(projFilter: ProjectFilter): void {
+        if (!this.selectedWorkflow || this.selectedWorkflow === '') {
+            return;
+        }
+
+        if (projFilter.workflow_names) {
+            let exist = projFilter.workflow_names.find(w => w === this.selectedWorkflow);
+            if (exist) {
+                return;
+            }
+        } else {
+            projFilter.workflow_names = new Array<string>();
+        }
+        projFilter.workflow_names.push(this.selectedWorkflow);
+        projFilter.all_workflows = false;
+        this.selectedWorkflow = '';
+    }
+
+    openProject(projFilter: ProjectFilter): void {
+        projFilter.display = !projFilter.display;
+        this.loadProjectWorkflow(projFilter);
+    }
+
+    loadProjectWorkflow(projFilter: ProjectFilter) {
+        if (projFilter.project) {
+            return
+        }
+        projFilter.loading = true;
+
         let opts = new Array<LoadOpts>();
         opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
-        this._projectStore.resync(p.key, opts).pipe(first(), finalize(() => p.loading = false)).subscribe(proj => {
-           p.workflow_names = proj.workflow_names;
-           let pf = this.filter.projects.get(p.key);
-           if (proj.workflow_names && pf.allWorkflows) {
-               proj.workflow_names.forEach(w => {
-                  pf.workflowName.push(w.name);
-               });
-           }
+        this._projectStore.resync(projFilter.key, opts).pipe(first(), finalize(() => projFilter.loading = false)).subscribe(proj => {
+            projFilter.project = proj;
+        });
+    }
+
+    saveFilter(): void {
+        this.loading = true;
+        this._timelineStore.saveFilter(this.filter).pipe(finalize(() => this.loading = false)).subscribe(() => {
+           this._toast.success('', this._translate.instant('timeline_filter_updated'));
         });
     }
 

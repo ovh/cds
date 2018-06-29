@@ -24,19 +24,29 @@ export class HomeTimelineComponent implements OnInit {
     pipelineStatus = PipelineStatus;
 
     filter: TimelineFilter;
+    filterSub: Subscription;
 
     constructor(private _timelineStore: TimelineStore) {
         this.filter = new TimelineFilter();
     }
 
     ngOnInit(): void {
-        this.timelineSub = this._timelineStore.alltimeline(this.currentItem).subscribe(es => {
-            if (!es) {
-                return;
+        this.filterSub = this._timelineStore.getFilter().subscribe(f => {
+            this.filter = f;
+
+            if (this.timelineSub) {
+                this.timelineSub.unsubscribe();
             }
-            this.loading = false;
-            this.events = es.toArray();
-            this.currentItem = this.events.length;
+            if (f) {
+                this.timelineSub = this._timelineStore.alltimeline().subscribe(es => {
+                    if (!es) {
+                        return;
+                    }
+                    this.loading = false;
+                    this.events = es.toArray();
+                    this.currentItem = this.events.length;
+                });
+            }
         });
     }
 
@@ -45,7 +55,7 @@ export class HomeTimelineComponent implements OnInit {
     }
 
     onScroll() {
-        this._timelineStore.getMore(this.currentItem + 1);
+        this._timelineStore.getMore(this.currentItem + 1, false);
     }
 
     updateFilter(): void {

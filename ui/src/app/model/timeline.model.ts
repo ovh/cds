@@ -1,27 +1,25 @@
+import {Project} from './project.model';
+
 export class TimelineFilter {
-    projects: { [key: string]: ProjectFilter; };
-    allProjects = true;
+    projects: Array<ProjectFilter>;
+    all_projects = true;
 
     constructor() {
-        this.projects = {};
+        this.projects = new Array<ProjectFilter>();
     }
 }
 
 export class ProjectFilter {
     key: string;
-    workflowName: { [key: string]: boolean; };
-    allWorkflows = true;
-    applicationName: { [key: string]: boolean; };
-    allApplications = true;
-    pipelineName: { [key: string]: boolean; };
-    allPipelines = true;
-    environmentName: { [key: string]: boolean; };
-    allEnvironments = true;
+    workflow_names:  Array<string>;
+    all_workflows: boolean;
+
+    loading = false;
+    project: Project;
+    display: boolean;
 
     constructor() {
-        this.workflowName = {};
-        this.applicationName = {};
-        this.pipelineName = {};
-        this.environmentName = {};
+        this.workflow_names = new Array<string>();
+        this.all_workflows = true;
     }
 }

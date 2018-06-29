@@ -1,7 +1,5 @@
 import { Component } from '@angular/core';
-import {finalize} from 'rxjs/operators';
 import {Project} from '../../../model/project.model';
-import {ProjectService} from '../../../service/project/project.service';
 import {ProjectStore} from '../../../service/project/project.store';
 
 @Component({
