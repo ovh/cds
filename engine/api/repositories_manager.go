@@ -578,7 +578,9 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 				if errTx != nil {
 					return sdk.WrapError(errTx, "detachRepositoriesManager> Cannot create delete transaction")
 				}
-				defer txDel.Rollback()
+				defer func() {
+					_ = txDel.Rollback()
+				}()
 
 				for _, nodeHook := range hookToDelete {
 					if err := workflow.DeleteHook(txDel, &nodeHook); err != nil {
