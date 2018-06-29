@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -377,20 +378,22 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 		appName := vars["permApplicationName"]
 		rmName := vars["name"]
 		fullname := r.FormValue("fullname")
+		db := api.mustDB()
+		u := getUser(ctx)
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		app, err := application.LoadByName(db, api.Cache, projectKey, appName, u)
 		if err != nil {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot load application %s", appName)
 		}
 
 		//Load the repositoriesManager for the project
-		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s: %s", projectKey, rmName, err)
 		}
 
 		//Get an authorized Client
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		client, err := repositoriesmanager.AuthorizedClient(db, api.Cache, rm)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
@@ -402,7 +405,7 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 		app.VCSServer = rm.Name
 		app.RepositoryFullname = fullname
 
-		tx, errT := api.mustDB().Begin()
+		tx, errT := db.Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "attachRepositoriesManager> Cannot start transaction")
 		}
@@ -412,7 +415,7 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot insert for application")
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, u); err != nil {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot update application last modified date")
 		}
 
@@ -420,7 +423,52 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot commit transaction")
 		}
 
-		event.PublishApplicationRepositoryAdd(projectKey, *app, getUser(ctx))
+		usage, errU := loadApplicationUsage(db, projectKey, appName)
+		if errU != nil {
+			return sdk.WrapError(errU, "attachRepositoriesManager> Cannot load application usage")
+		}
+
+		// Update default payload of linked workflow root
+		if len(usage.Workflows) > 0 {
+			proj, errP := project.Load(db, api.Cache, projectKey, u)
+			if errP != nil {
+				return sdk.WrapError(errP, "attachRepositoriesManager> Cannot load project")
+			}
+
+			for _, wf := range usage.Workflows {
+				rootCtx, errNc := workflow.LoadNodeContext(db, api.Cache, proj, wf.RootID, u, workflow.LoadOptions{})
+				if errNc != nil {
+					return sdk.WrapError(errNc, "attachRepositoriesManager> Cannot DefaultPayloadToMap")
+				}
+
+				if rootCtx.ApplicationID != app.ID {
+					continue
+				}
+
+				wf.Root = &sdk.WorkflowNode{
+					Context: rootCtx,
+				}
+				payload, errD := rootCtx.DefaultPayloadToMap()
+				if errD != nil {
+					return sdk.WrapError(errP, "attachRepositoriesManager> Cannot DefaultPayloadToMap")
+				}
+
+				if _, ok := payload["git.branch"]; ok && payload["git.repository"] == app.RepositoryFullname {
+					continue
+				}
+
+				defaultPayload, errPay := workflow.DefaultPayload(db, api.Cache, proj, u, &wf)
+				if errPay != nil {
+					return sdk.WrapError(errPay, "attachRepositoriesManager> Cannot get defaultPayload")
+				}
+				wf.Root.Context.DefaultPayload = defaultPayload
+				if err := workflow.UpdateNodeContext(db, wf.Root.Context); err != nil {
+					return sdk.WrapError(err, "attachRepositoriesManager> Cannot update node context %d", wf.Root.Context.ID)
+				}
+			}
+		}
+
+		event.PublishApplicationRepositoryAdd(projectKey, *app, u)
 
 		return WriteJSON(w, app, http.StatusOK)
 	}
@@ -432,26 +480,28 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
 		rmName := vars["name"]
+		db := api.mustDB()
+		u := getUser(ctx)
 
-		app, errl := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		app, errl := application.LoadByName(db, api.Cache, projectKey, appName, u, application.LoadOptions.WithHooks)
 		if errl != nil {
 			return sdk.WrapError(errl, "detachRepositoriesManager> error on load project %s", projectKey)
 		}
 
 		//Load the repositoriesManager for the project
-		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s: %s", projectKey, rmName, err)
 		}
 
 		//Get an authorized Client
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		client, err := repositoriesmanager.AuthorizedClient(db, api.Cache, rm)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
 
 		//Remove all the things in a transaction
-		tx, errT := api.mustDB().Begin()
+		tx, errT := db.Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "detachRepositoriesManager> Cannot start transaction")
 		}
@@ -461,6 +511,7 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete for application")
 		}
 
+		//TODO: to delete after DEPRECATED workflows are deleted
 		for _, h := range app.Hooks {
 			s := api.Config.URL.API + hook.HookLink
 			link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
@@ -487,7 +538,7 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "detachRepositoriesManager> error on poller.DeleteAll")
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, u); err != nil {
 			return sdk.WrapError(err, "detachRepositoriesManager> Cannot update application last modified date")
 		}
 
@@ -495,7 +546,56 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit transaction")
 		}
 
-		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, getUser(ctx))
+		usage, errU := loadApplicationUsage(db, projectKey, appName)
+		if errU != nil {
+			return sdk.WrapError(errU, "detachRepositoriesManager> Cannot load application usage")
+		}
+
+		// Update default payload of linked workflow root
+		if len(usage.Workflows) > 0 {
+			proj, errP := project.Load(db, api.Cache, projectKey, u)
+			if errP != nil {
+				return sdk.WrapError(errP, "detachRepositoriesManager> Cannot load project")
+			}
+
+			hookToDelete := map[string]sdk.WorkflowNodeHook{}
+			for _, wf := range usage.Workflows {
+				nodeHooks, err := workflow.LoadHooksByNodeID(db, wf.RootID)
+				if err != nil {
+					return sdk.WrapError(err, "detachRepositoriesManager> Cannot load node hook by nodeID %d", wf.RootID)
+				}
+
+				for _, nodeHook := range nodeHooks {
+					if nodeHook.WorkflowHookModel.Name != sdk.RepositoryWebHookModelName && nodeHook.WorkflowHookModel.Name != sdk.GitPollerModelName {
+						continue
+					}
+					hookToDelete[nodeHook.UUID] = nodeHook
+				}
+			}
+
+			if len(hookToDelete) > 0 {
+				txDel, errTx := db.Begin()
+				if errTx != nil {
+					return sdk.WrapError(errTx, "detachRepositoriesManager> Cannot create delete transaction")
+				}
+				defer txDel.Rollback()
+
+				for _, nodeHook := range hookToDelete {
+					if err := workflow.DeleteHook(txDel, &nodeHook); err != nil {
+						return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete hooks")
+					}
+				}
+				if err := workflow.DeleteHookConfiguration(txDel, api.Cache, proj, hookToDelete); err != nil {
+					return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete hooks vcs configuration")
+				}
+
+				if err := txDel.Commit(); err != nil {
+					return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit delete transaction")
+				}
+			}
+		}
+
+		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, u)
 
 		return WriteJSON(w, app, http.StatusOK)
 	}

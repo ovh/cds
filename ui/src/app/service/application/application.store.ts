@@ -1,4 +1,3 @@
-
 import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 
 import {Injectable} from '@angular/core';
@@ -15,6 +14,7 @@ import {Scheduler} from '../../model/scheduler.model';
 import {Trigger} from '../../model/trigger.model';
 import {Variable} from '../../model/variable.model';
 import {ProjectStore} from '../project/project.store';
+import {WorkflowStore} from '../workflow/workflow.store';
 import {ApplicationService} from './application.service';
 
 import {Key} from '../../model/keys.model';
@@ -33,7 +33,10 @@ export class ApplicationStore {
         new BehaviorSubject(immutable.List<NavbarRecentData>());
 
 
-    constructor(private _applicationService: ApplicationService, private _projectStore: ProjectStore) {
+    constructor(
+      private _applicationService: ApplicationService,
+      private _projectStore: ProjectStore,
+      private _workflowStore: WorkflowStore) {
         this.loadRecentApplication();
 
     }
@@ -227,6 +230,9 @@ export class ApplicationStore {
                     appToUpdate.vcs_server = app.vcs_server;
                     appToUpdate.repository_fullname = app.repository_fullname;
                     this._application.next(cache.set(appKey, appToUpdate));
+                    if (appToUpdate.usage && Array.isArray(appToUpdate.usage.workflows)) {
+                        appToUpdate.usage.workflows.forEach((wf) => this._workflowStore.removeFromStore(key + '-' + wf.name));
+                    }
                 }
                 return app;
             }));
@@ -248,6 +254,9 @@ export class ApplicationStore {
                     delete pToUpdate.vcs_server;
                     delete pToUpdate.repository_fullname;
                     this._application.next(cache.set(appKey, pToUpdate));
+                    if (pToUpdate.usage && Array.isArray(pToUpdate.usage.workflows)) {
+                        pToUpdate.usage.workflows.forEach((wf) => this._workflowStore.removeFromStore(key + '-' + wf.name));
+                    }
                 }
                 return app;
             }));
