@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -123,6 +124,9 @@ func (api *API) addWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "addWorkerModel> cannot add worker model")
 		}
 
+		key := cache.Key("api:workermodels:*")
+		api.Cache.DeleteAll(key)
+
 		return WriteJSON(w, model, http.StatusOK)
 	}
 }
@@ -170,6 +174,9 @@ func (api *API) spawnErrorWorkerModelHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Cannot commit tx")
 		}
+
+		key := cache.Key("api:workermodels:*")
+		api.Cache.DeleteAll(key)
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -376,6 +383,9 @@ func (api *API) updateWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "updateWorkerModel> unable to commit transaction")
 		}
 
+		key := cache.Key("api:workermodels:*")
+		api.Cache.DeleteAll(key)
+
 		return WriteJSON(w, model, http.StatusOK)
 	}
 }
@@ -400,6 +410,9 @@ func (api *API) deleteWorkerModelHandler() Handler {
 			return sdk.WrapError(err, "deleteWorkerModel> Cannot commit transaction")
 		}
 
+		key := cache.Key("api:workermodels:*")
+		api.Cache.DeleteAll(key)
+
 		return nil
 	}
 }
@@ -417,7 +430,7 @@ func (api *API) getWorkerModelsEnabledHandler() Handler {
 		if getHatchery(ctx) == nil || getHatchery(ctx).GroupID == 0 {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModelsEnabled> this route can be called only by hatchery")
 		}
-		models, errgroup := worker.LoadWorkerModelsUsableOnGroup(api.mustDB(), getHatchery(ctx).GroupID, group.SharedInfraGroup.ID)
+		models, errgroup := worker.LoadWorkerModelsUsableOnGroup(api.mustDB(), api.Cache, getHatchery(ctx).GroupID, group.SharedInfraGroup.ID)
 		if errgroup != nil {
 			return sdk.WrapError(errgroup, "getWorkerModelsEnabled> cannot load worker models for hatchery %d with group %d", getHatchery(ctx).ID, getHatchery(ctx).GroupID)
 		}
@@ -452,12 +465,12 @@ func (api *API) getWorkerModelsHandler() Handler {
 		if binary != "" {
 			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), getUser(ctx), binary)
 		} else {
-			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), getUser(ctx))
+			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getUser(ctx))
 		}
 		if errbyuser != nil {
 			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
 		}
-		log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", getUser(ctx).ID, getUser(ctx).Username, getUser(ctx).Admin, models)
+		log.Debug("getWorkerModels> for user %d named %s (admin:%t)", getUser(ctx).ID, getUser(ctx).Username, getUser(ctx).Admin)
 
 		return WriteJSON(w, models, http.StatusOK)
 	}
