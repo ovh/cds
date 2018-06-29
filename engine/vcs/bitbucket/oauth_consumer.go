@@ -75,6 +75,8 @@ func (g *bitbucketConsumer) GetAuthorizedClient(accessToken, accessTokenSecret s
 			consumer:          *g,
 			accessToken:       accessToken,
 			accessTokenSecret: accessTokenSecret,
+			token:             g.token,
+			username:          g.username,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}

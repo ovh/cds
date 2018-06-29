@@ -119,7 +119,7 @@ func (g *githubClient) PullRequestComment(repo string, id int, text string) erro
 		"body": text,
 	}
 	values, _ := json.Marshal(payload)
-	res, err := g.post(path, "application/json", bytes.NewReader(values), false)
+	res, err := g.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
 		return sdk.WrapError(err, "github.PullRequestComment> Unable to post status")
 	}

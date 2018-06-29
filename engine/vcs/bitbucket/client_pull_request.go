@@ -27,7 +27,7 @@ func (b *bitbucketClient) PullRequests(repo string) ([]sdk.VCSPullRequest, error
 		}
 
 		var response PullRequestResponse
-		if err := b.do("GET", "core", path, params, nil, &response); err != nil {
+		if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> Unable to get repos")
 		}
 
@@ -98,5 +98,5 @@ func (b *bitbucketClient) PullRequestComment(repo string, prID int, text string)
 	values, _ := json.Marshal(payload)
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prID)
 
-	return b.do("POST", "core", path, nil, values, nil)
+	return b.do("POST", "core", path, nil, values, nil, &options{asUser: true})
 }
