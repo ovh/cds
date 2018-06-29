@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -22,13 +23,22 @@ func (api *API) getTimelineHandler() Handler {
 		if errS != nil {
 			return sdk.WrapError(errS, "getTimelineHandler> Invalid format for current item")
 		}
-		filter := sdk.EventFilter{
-			CurrentItem: currentItem,
-			ProjectKeys: make([]string, 0, len(u.Permissions.ProjectsPerm)),
+
+		timelineFilter, errT := user.LoadTimelineFilter(api.mustDB(), u)
+		if errT != nil {
+			return sdk.WrapError(errT, "getTimelineHandler> Unable to load timeline filter")
 		}
 
-		for k := range u.Permissions.ProjectsPerm {
-			filter.ProjectKeys = append(filter.ProjectKeys, k)
+		if timelineFilter.AllProjects {
+			timelineFilter.Projects = make([]sdk.ProjectFilter, 0, len(u.Permissions.ProjectsPerm))
+			for k := range u.Permissions.ProjectsPerm {
+				timelineFilter.Projects = append(timelineFilter.Projects, sdk.ProjectFilter{Key: k})
+			}
+		}
+
+		filter := sdk.EventFilter{
+			CurrentItem: currentItem,
+			Filter:      timelineFilter,
 		}
 
 		events, err := event.GetEvents(api.mustDB(), api.Cache, filter)

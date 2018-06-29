@@ -6,6 +6,7 @@ import (
 
 	"gopkg.in/olivere/elastic.v5"
 
+	"fmt"
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 )
@@ -19,8 +20,15 @@ func (s *Service) getEventsHandler() api.Handler {
 		}
 
 		boolQuery := elastic.NewBoolQuery()
-		for _, p := range filters.ProjectKeys {
-			boolQuery.Should(elastic.NewMatchQuery("project_key", p))
+		for _, p := range filters.Filter.Projects {
+			if p.AllWorkflows {
+				boolQuery.Should(elastic.NewMatchQuery("project_key", p.Key))
+			} else {
+				for _, w := range p.WorkflowNames {
+					boolQuery.Should(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
+				}
+
+			}
 		}
 
 		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.Index).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
