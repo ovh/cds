@@ -107,3 +107,20 @@ func (b *bitbucketClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 
 	return repo, nil
 }
+
+func (b *bitbucketClient) GrantReadPermission(repo string) error {
+	if b.username == "" {
+		return nil
+	}
+
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return sdk.WrapError(err, "vcs> bitbucket> GrantReadPermission>")
+	}
+	path := fmt.Sprintf("/projects/%s/repos/%s/permissions/users", project, slug)
+	params := url.Values{}
+	params.Add("name", b.username)
+	params.Add("permission", "REPO_WRITE")
+
+	return b.do("PUT", "core", path, params, nil, nil, nil)
+}

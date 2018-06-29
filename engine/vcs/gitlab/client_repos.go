@@ -77,3 +77,7 @@ func (c *gitlabClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 
 	return repo, nil
 }
+
+func (c *gitlabClient) GrantReadPermission(repo string) error {
+	return nil
+}

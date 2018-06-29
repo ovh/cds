@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // postImportAsCodeHandler
@@ -158,6 +159,17 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 
 		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
 			return sdk.WrapError(err, "workflowPush> Unable to update project")
+		}
+
+		// Grant CDS as a repository collaborator
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, ope.VCSServer)
+		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		if erra != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
+		}
+		if err := client.GrantReadPermission(ope.RepoFullName); err != nil {
+			log.Error("postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, erra)
+			//TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
 		}
 
 		if wrkflw != nil {
