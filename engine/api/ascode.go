@@ -162,14 +162,15 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		}
 
 		// Grant CDS as a repository collaborator
+		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, ope.VCSServer)
 		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 		if erra != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
-		}
-		if err := client.GrantReadPermission(ope.RepoFullName); err != nil {
-			log.Error("postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, erra)
-			//TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
+			log.Error("postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
+		} else {
+			if err := client.GrantReadPermission(ope.RepoFullName); err != nil {
+				log.Error("postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
+			}
 		}
 
 		if wrkflw != nil {
