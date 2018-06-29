@@ -37,7 +37,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		if _, has := n.Application(); !has {
 			return
 		}
-		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
+		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u, application.LoadOptions.WithClearDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
 			log.Warning("workflow.Import> %s > Application %s not found: %v", w.Name, n.Context.Application.Name, err)
 			mError.Append(fmt.Errorf("application %s/%s not found", proj.Key, n.Context.Application.Name))

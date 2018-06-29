@@ -502,6 +502,93 @@ func TestMissingProjectVariableEnv(t *testing.T) {
 	assert.Equal(t, 0, len(warnsAdd))
 }
 
+func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	assert.NoError(t, Init())
+
+	v := sdk.Variable{
+		Name:  sdk.RandomString(10),
+		Type:  "string",
+		Value: "foo",
+	}
+
+	// Create delete application variable event
+	ePayload := sdk.EventApplicationVariableDelete{
+		Variable: sdk.Variable{
+			Name:  "foo",
+			Type:  "string",
+			Value: fmt.Sprintf("Welcome {{.cds.proj.%s}}", v.Name),
+		},
+	}
+	e := sdk.Event{
+		ProjectKey: proj.Key,
+		EventType:  fmt.Sprintf("%T", ePayload),
+		Payload:    structs.Map(ePayload),
+	}
+
+	// Compute event
+	warnToTest := unusedProjectVariableWarning{}
+	test.NoError(t, warnToTest.compute(db, e))
+
+	// Check warning exist
+	warnsDeleteVar, errDelVar := GetByProject(db, proj.Key)
+	test.NoError(t, errDelVar)
+	assert.Equal(t, 1, len(warnsDeleteVar))
+
+	(&warnsDeleteVar[0]).ComputeMessage("en")
+	t.Logf("%s", warnsDeleteVar[0].Message)
+	t.Logf("%+v", warnsDeleteVar[0])
+
+	// Create add variable evenT
+	ePayloadAdd := sdk.EventApplicationVariableAdd{
+		Variable: sdk.Variable{
+			Name:  "foo",
+			Type:  "string",
+			Value: fmt.Sprintf("Welcome {{.cds.proj.%s}}", v.Name),
+		},
+	}
+	eAdd := sdk.Event{
+		ProjectKey: proj.Key,
+		EventType:  fmt.Sprintf("%T", ePayloadAdd),
+		Payload:    structs.Map(ePayloadAdd),
+	}
+	test.NoError(t, warnToTest.compute(db, eAdd))
+
+	// Check warning
+	warnsAddVar, errAddVar := GetByProject(db, proj.Key)
+	test.NoError(t, errAddVar)
+	assert.Equal(t, 0, len(warnsAddVar))
+
+	// Update variable event
+	ePayloadUpdate := sdk.EventApplicationVariableUpdate{
+		OldVariable: sdk.Variable{
+			Name:  "foo",
+			Type:  "string",
+			Value: fmt.Sprintf("Welcome {{.cds.proj.%s}}", v.Name),
+		},
+		NewVariable: sdk.Variable{
+			Name:  "foo",
+			Type:  "string",
+			Value: "Welcome all",
+		},
+	}
+	eUpdate := sdk.Event{
+		ProjectKey: proj.Key,
+		EventType:  fmt.Sprintf("%T", ePayloadUpdate),
+		Payload:    structs.Map(ePayloadUpdate),
+	}
+	test.NoError(t, warnToTest.compute(db, eUpdate))
+
+	// Check warning
+	warnsUpdateVar, errUpdateVar := GetByProject(db, proj.Key)
+	test.NoError(t, errUpdateVar)
+	assert.Equal(t, 1, len(warnsUpdateVar))
+}
+
 func TestUnusedProjectVariableWarning(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)

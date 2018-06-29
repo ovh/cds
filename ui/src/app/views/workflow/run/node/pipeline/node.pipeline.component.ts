@@ -41,16 +41,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     manual = false;
     serviceLogsLoading = true;
     serviceLogs: Array<ServiceLog> = [];
-    _displayServiceLogs = false;
-    set displayServiceLogs(data: boolean) {
-        this._displayServiceLogs = data;
-        if (data) {
-            this.getServicesLogs();
-        }
-    }
-    get displayServiceLogs(): boolean {
-        return this._displayServiceLogs;
-    }
+    displayServiceLogs = false;
 
     durationIntervalID: number;
 

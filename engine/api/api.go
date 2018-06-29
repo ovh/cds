@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/poller"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
@@ -419,6 +420,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.TLS,
 		a.Config.SMTP.Disable)
 
+	if err := warning.Init(); err != nil {
+		return fmt.Errorf("Unable to init warning package: %v", err)
+	}
+
 	// Initialize feature packages
 	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.ApiURL)
 	if a.Config.Features.Izanami.ApiURL != "" {
@@ -613,8 +618,10 @@ func (a *API) Serve(ctx context.Context) error {
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
-	go workflow.Initialize(ctx, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch, a.DBConnectionFactory.GetDBMap)
-	go event.PushInElasticSearch(ctx, a.mustDB(), a.Cache)
+
+	workflow.Initialize(a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+	sdk.GoRoutine("PushInElasticSearch", func() { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
+	sdk.GoRoutine("Purge", func() { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),

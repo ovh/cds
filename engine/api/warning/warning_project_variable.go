@@ -22,6 +22,18 @@ func (warn unusedProjectVariableWarning) events() []string {
 		fmt.Sprintf("%T", sdk.EventProjectVariableAdd{}),
 		fmt.Sprintf("%T", sdk.EventProjectVariableUpdate{}),
 		fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}),
+		fmt.Sprintf("%T", sdk.EventApplicationVariableAdd{}),
+		fmt.Sprintf("%T", sdk.EventApplicationVariableUpdate{}),
+		fmt.Sprintf("%T", sdk.EventApplicationVariableDelete{}),
+		fmt.Sprintf("%T", sdk.EventPipelineJobAdd{}),
+		fmt.Sprintf("%T", sdk.EventPipelineJobUpdate{}),
+		fmt.Sprintf("%T", sdk.EventPipelineJobDelete{}),
+		fmt.Sprintf("%T", sdk.EventEnvironmentVariableAdd{}),
+		fmt.Sprintf("%T", sdk.EventEnvironmentVariableUpdate{}),
+		fmt.Sprintf("%T", sdk.EventEnvironmentVariableDelete{}),
+		fmt.Sprintf("%T", sdk.EventWorkflowAdd{}),
+		fmt.Sprintf("%T", sdk.EventWorkflowUpdate{}),
+		fmt.Sprintf("%T", sdk.EventWorkflowDelete{}),
 	}
 }
 
@@ -32,28 +44,18 @@ func (warn unusedProjectVariableWarning) name() string {
 func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Event) error {
 	switch e.EventType {
 	case fmt.Sprintf("%T", sdk.EventProjectVariableAdd{}):
+
 		payload, err := e.ToEventProjectVariableAdd()
 		if err != nil {
 			return sdk.WrapError(err, "unusedProjectVariableWarning.compute> Unable to get payload from EventProjectVariableAdd")
 		}
 		varName := fmt.Sprintf("cds.proj.%s", payload.Variable.Name)
-		ws, envs, apps, pips, pipJobs := variableIsUsed(db, e.ProjectKey, varName)
-		if len(ws) == 0 && len(envs) == 0 && len(apps) == 0 && len(pips) == 0 && len(pipJobs) == 0 {
-			w := sdk.Warning{
-				Key:     e.ProjectKey,
-				Element: varName,
-				Created: time.Now(),
-				Type:    warn.name(),
-				MessageParams: map[string]string{
-					"VarName":    varName,
-					"ProjectKey": e.ProjectKey,
-				},
-			}
-			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "unusedProjectVariableWarning> Unable to Insert warning")
-			}
+		if err := checkUnusedProjectVariable(db, e.ProjectKey, varName, warn.name()); err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.checkProjectVariable>EventProjectVariableAdd")
 		}
+
 	case fmt.Sprintf("%T", sdk.EventProjectVariableUpdate{}):
+
 		payload, err := e.ToEventProjectVariableUpdate()
 		if err != nil {
 			return sdk.WrapError(err, "unusedProjectVariableWarning.compute> Unable to get payload from EventProjectVariableUpdate")
@@ -62,30 +64,74 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 			return sdk.WrapError(err, "unusedProjectVariableWarning.compute> Unable to remove warning from EventProjectVariableUpdate")
 		}
 		varName := fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name)
-		ws, envs, apps, pips, pipJobs := variableIsUsed(db, e.ProjectKey, varName)
-		if len(ws) == 0 && len(envs) == 0 && len(apps) == 0 && len(pips) == 0 && len(pipJobs) == 0 {
-			w := sdk.Warning{
-				Key:     e.ProjectKey,
-				Element: varName,
-				Created: time.Now(),
-				Type:    warn.name(),
-				MessageParams: map[string]string{
-					"VarName":    varName,
-					"ProjectKey": e.ProjectKey,
-				},
-			}
-			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "unusedProjectVariableWarning> Unable to Insert warning on event EventProjectVariableUpdate")
-			}
+		if err := checkUnusedProjectVariable(db, e.ProjectKey, varName, warn.name()); err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.checkProjectVariable>EventProjectVariableUpdate")
 		}
+
 	case fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}):
+
 		payload, err := e.ToEventProjectVariableDelete()
 		if err != nil {
 			return sdk.WrapError(err, "unusedProjectVariableWarning.compute> Unable to get payload from EventProjectVariableDelete")
 		}
-		if err := removeProjectWarning(db, warn.name(), fmt.Sprintf("cds.proj.%s", payload.Variable.Name), e.ProjectKey); err != nil {
+		varName := fmt.Sprintf("cds.proj.%s", payload.Variable.Name)
+		if err := removeProjectWarning(db, warn.name(), varName, e.ProjectKey); err != nil {
 			return sdk.WrapError(err, "unusedProjectVariableWarning.compute> Unable to remove warning from EventProjectVariableDelete")
 		}
+
+	case fmt.Sprintf("%T", sdk.EventApplicationVariableAdd{}):
+
+		payload, err := e.ToEventApplicationVariableAdd()
+		if err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.compute.EventApplicationVariableAdd> Unable to get payload")
+		}
+
+		if err := checkContentValueToRemoveUnusedWarning(db, e.ProjectKey, payload.Variable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.compute.EventApplicationVariableAdd> Unable to ckeck content and remove warning: %v", err)
+		}
+
+	case fmt.Sprintf("%T", sdk.EventApplicationVariableUpdate{}):
+
+		payload, err := e.ToEventApplicationVariableUpdate()
+		if err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.compute.EventApplicationVariableUpdate> Unable to get payload")
+		}
+
+		if err := checkContentValueToAddUnusedWarning(db, e.ProjectKey, payload.OldVariable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.compute.EventApplicationVariableUpdate> Unable to check content value to add unused warning")
+		}
+
+		if err := checkContentValueToRemoveUnusedWarning(db, e.ProjectKey, payload.NewVariable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.compute.EventApplicationVariableUpdate> Unable to ckeck content and remove warning: %v", err)
+		}
+
+	case fmt.Sprintf("%T", sdk.EventApplicationVariableDelete{}):
+		payload, err := e.ToEventApplicationVariableDelete()
+		if err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.compute.EventApplicationVariableDelete> Unable to get payload")
+		}
+
+		if err := checkContentValueToAddUnusedWarning(db, e.ProjectKey, payload.Variable.Value, "cds.proj", projVarRegexp, warn.name()); err != nil {
+			return sdk.WrapError(err, "unusedProjectVariableWarning.compute.EventApplicationVariableDelete> Unable to check content value to add unused warning")
+		}
+	case fmt.Sprintf("%T", sdk.EventPipelineJobAdd{}):
+		// TODO
+	case fmt.Sprintf("%T", sdk.EventPipelineJobUpdate{}):
+		// TODO
+	case fmt.Sprintf("%T", sdk.EventPipelineJobDelete{}):
+		// TODO
+	case fmt.Sprintf("%T", sdk.EventEnvironmentVariableAdd{}):
+		// TODO
+	case fmt.Sprintf("%T", sdk.EventEnvironmentVariableUpdate{}):
+		// TODO
+	case fmt.Sprintf("%T", sdk.EventEnvironmentVariableDelete{}):
+		// TODO
+	case fmt.Sprintf("%T", sdk.EventWorkflowAdd{}):
+		// TODO
+	case fmt.Sprintf("%T", sdk.EventWorkflowUpdate{}):
+		// TODO
+	case fmt.Sprintf("%T", sdk.EventWorkflowDelete{}):
+		// TODO
 	}
 	return nil
 }

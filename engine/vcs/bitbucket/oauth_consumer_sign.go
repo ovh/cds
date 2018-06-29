@@ -68,12 +68,6 @@ func (c *bitbucketConsumer) SignParams(req *http.Request, token Token, params ma
 	// add the authorization header string
 	req.Header.Add("Authorization", authorizationString(params)) //params))
 
-	// ensure the appropriate content-type is set for POST,
-	// assuming the field is not populated
-	if (req.Method == "POST" || req.Method == "PUT") && len(req.Header.Get("Content-Type")) == 0 {
-		req.Header.Set("Content-Type", "application/json")
-	}
-
 	return nil
 }
 

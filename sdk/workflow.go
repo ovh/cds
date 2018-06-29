@@ -36,6 +36,7 @@ type Workflow struct {
 	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
 	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
 	Audits                  []AuditWorklflow       `json:"audits" db:"-"`
+	ToDelete                bool                   `json:"to_delete" db:"to_delete" cli:"-"`
 }
 
 // WorkflowNotification represents notifications on a workflow

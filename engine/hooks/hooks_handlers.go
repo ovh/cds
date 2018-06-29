@@ -442,9 +442,9 @@ func (s *Service) Status() sdk.MonitoringStatus {
 			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Todo " + t.UUID, Value: fmt.Sprintf("%d", nbTodo), Status: status})
 		}
 
-		if nbTotal >= s.Cfg.ExecutionHistory*5 {
+		if nbTotal >= s.Cfg.ExecutionHistory*10 {
 			status = sdk.MonitoringStatusAlert
-		} else if nbTotal >= s.Cfg.ExecutionHistory*2 {
+		} else if nbTotal >= s.Cfg.ExecutionHistory*5 {
 			status = sdk.MonitoringStatusWarn
 		}
 

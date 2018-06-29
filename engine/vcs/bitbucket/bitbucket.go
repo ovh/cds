@@ -14,6 +14,8 @@ type bitbucketClient struct {
 	accessToken       string
 	accessTokenSecret string
 	proxyURL          string
+	username          string
+	token             string
 }
 
 //bitbucketConsumer implements vcs.Server and it's used to instanciate a bitbucketClient
@@ -30,10 +32,12 @@ type bitbucketConsumer struct {
 	uiURL            string
 	proxyURL         string
 	disableStatus    bool
+	username         string
+	token            string
 }
 
 //New creates a new bitbucketConsumer
-func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus bool) sdk.VCSServer {
+func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus bool) sdk.VCSServer {
 	return &bitbucketConsumer{
 		ConsumerKey:      consumerKey,
 		PrivateKey:       privateKey,
@@ -47,6 +51,8 @@ func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL, proxyURL str
 		accessTokenURL:   URL + "/plugins/servlet/oauth/access-token",
 		callbackURL:      oauth1OOB,
 		disableStatus:    disableStatus,
+		username:         username,
+		token:            token,
 	}
 }
 

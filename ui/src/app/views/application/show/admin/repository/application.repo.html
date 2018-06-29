@@ -51,6 +51,15 @@
             </div>
         </form>
         <div *ngIf="application.repository_fullname" class="strategy">
+            <div class="ui orange icon message mt5" *ngIf="!application.vcs_strategy || !application.vcs_strategy.connection_type">
+              <i class="warning sign icon"></i>
+              <div class="content">
+                <div class="header">
+                  {{'application_repo_missing_conf' | translate}}
+                </div>
+                <p>{{'application_repo_missing_conf_details' | translate}}</p>
+              </div>
+            </div>
             <h4 class="pointing" (click)="displayVCSStrategy = !displayVCSStrategy">
                 <i class="right caret icon" *ngIf="!displayVCSStrategy"></i>
                 <i class="down caret icon" *ngIf="displayVCSStrategy"></i>

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"runtime"
 	"sort"
 	"strconv"
 	"sync"
@@ -602,7 +601,13 @@ func (api *API) postWorkflowRunHandler() Handler {
 		u := getUser(ctx)
 
 		_, next := tracing.Span(ctx, "project.Load")
-		p, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures, project.LoadOptions.WithPlatforms)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
+			project.LoadOptions.WithVariables,
+			project.LoadOptions.WithFeatures,
+			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithApplicationVariables,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		)
 		next()
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
@@ -650,10 +655,12 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 				proj, errp := project.Load(api.mustDB(), api.Cache, key, u,
 					project.LoadOptions.WithGroups,
-					project.LoadOptions.WithApplications,
+					project.LoadOptions.WithApplicationVariables,
+					project.LoadOptions.WithApplicationWithDeploymentStrategies,
 					project.LoadOptions.WithEnvironments,
 					project.LoadOptions.WithPipelines,
 					project.LoadOptions.WithClearKeys,
+					project.LoadOptions.WithClearPlatforms,
 				)
 
 				if errp != nil {
@@ -687,16 +694,13 @@ func (api *API) postWorkflowRunHandler() Handler {
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
 		// Purge workflow run
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					buf := make([]byte, 1<<16)
-					runtime.Stack(buf, true)
-					log.Error("[PANIC] workflow.PurgeWorkflowRun> %s", string(buf))
+		sdk.GoRoutine(
+			"workflow.PurgeWorkflowRun",
+			func() {
+				if err := workflow.PurgeWorkflowRun(api.mustDB(), *wf); err != nil {
+					log.Error("workflow.PurgeWorkflowRun> error %v", err)
 				}
-			}()
-			workflow.PurgeWorkflowRun(api.mustDB(), *wf)
-		}()
+			})
 
 		var wr *sdk.WorkflowRun
 		if len(workflowRuns) > 0 {

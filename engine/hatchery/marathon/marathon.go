@@ -198,8 +198,13 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 		log.Info("CanSpawn> Error on h.marathonClient.Deployments() : %s", errd)
 		return false
 	}
-	// Do not DOS marathon, if deployment queue is longer than MarathonMaxConcurrentSpawn (default 10)
-	if h.Config.MarathonMaxConcurrentSpawn > 0 && len(deployments) >= h.Config.MarathonMaxConcurrentSpawn {
+	// Do not DOS marathon, if deployment queue is longer than MaxConcurrentProvisioning (default 10)
+	maxProvisionning := h.Configuration().Provision.MaxConcurrentProvisioning
+	if maxProvisionning == 0 {
+		maxProvisionning = 10
+	}
+
+	if len(deployments) >= maxProvisionning {
 		log.Info("CanSpawn> %d item in deployment queue, waiting", len(deployments))
 		return false
 	}

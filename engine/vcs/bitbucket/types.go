@@ -223,3 +223,91 @@ type User struct {
 	DisplayName  string `json:"displayName"`
 	Slug         string `json:"slug"`
 }
+
+type PullRequest struct {
+	ID          int    `json:"id"`
+	Version     int    `json:"version"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	State       string `json:"state"`
+	Open        bool   `json:"open"`
+	Closed      bool   `json:"closed"`
+	CreatedDate int    `json:"createdDate"`
+	UpdatedDate int    `json:"updatedDate"`
+	FromRef     struct {
+		ID         string `json:"id"`
+		Repository struct {
+			Slug    string      `json:"slug"`
+			Name    interface{} `json:"name"`
+			Project struct {
+				Key string `json:"key"`
+			} `json:"project"`
+		} `json:"repository"`
+	} `json:"fromRef"`
+	ToRef struct {
+		ID         string `json:"id"`
+		Repository struct {
+			Slug    string      `json:"slug"`
+			Name    interface{} `json:"name"`
+			Project struct {
+				Key string `json:"key"`
+			} `json:"project"`
+		} `json:"repository"`
+	} `json:"toRef"`
+	Locked bool `json:"locked"`
+	Author struct {
+		User struct {
+			Name         string `json:"name"`
+			EmailAddress string `json:"emailAddress"`
+			ID           int    `json:"id"`
+			DisplayName  string `json:"displayName"`
+			Active       bool   `json:"active"`
+			Slug         string `json:"slug"`
+			Type         string `json:"type"`
+		} `json:"user"`
+		Role     string `json:"role"`
+		Approved bool   `json:"approved"`
+		Status   string `json:"status"`
+	} `json:"author"`
+	Reviewers []struct {
+		User struct {
+			Name         string `json:"name"`
+			EmailAddress string `json:"emailAddress"`
+			ID           int    `json:"id"`
+			DisplayName  string `json:"displayName"`
+			Active       bool   `json:"active"`
+			Slug         string `json:"slug"`
+			Type         string `json:"type"`
+		} `json:"user"`
+		LastReviewedCommit string `json:"lastReviewedCommit"`
+		Role               string `json:"role"`
+		Approved           bool   `json:"approved"`
+		Status             string `json:"status"`
+	} `json:"reviewers"`
+	Participants []struct {
+		User struct {
+			Name         string `json:"name"`
+			EmailAddress string `json:"emailAddress"`
+			ID           int    `json:"id"`
+			DisplayName  string `json:"displayName"`
+			Active       bool   `json:"active"`
+			Slug         string `json:"slug"`
+			Type         string `json:"type"`
+		} `json:"user"`
+		Role     string `json:"role"`
+		Approved bool   `json:"approved"`
+		Status   string `json:"status"`
+	} `json:"participants"`
+	Links struct {
+		Self []struct {
+			Href string `json:"href"`
+		} `json:"self"`
+	} `json:"links"`
+}
+
+type PullRequestResponse struct {
+	Values        []PullRequest `json:"values"`
+	Size          int           `json:"size"`
+	NextPageStart int           `json:"nextPageStart"`
+	IsLastPage    bool          `json:"isLastPage"`
+}

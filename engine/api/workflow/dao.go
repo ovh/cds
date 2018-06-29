@@ -173,6 +173,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
+		and workflow.to_delete = false
 		order by workflow.name asc`
 
 	if _, err := db.Select(&dbRes, query, projectKey); err != nil {
@@ -199,6 +200,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 		SELECT workflow.name, workflow.id, workflow.description
 		FROM workflow
 		WHERE workflow.project_id = $1
+		AND workflow.to_delete = false
 		ORDER BY workflow.name ASC`
 
 	var res []sdk.IDName
@@ -251,6 +253,7 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 		join workflow_node on workflow_node.workflow_id = workflow.id
 		join pipeline on pipeline.id = workflow_node.pipeline_id
 		where project.projectkey = $1 and pipeline.name = $2
+		and workflow.to_delete = false
 		order by workflow.name asc`
 
 	if _, err := db.Select(&dbRes, query, projectKey, pipName); err != nil {
@@ -280,6 +283,7 @@ func LoadByApplicationName(db gorp.SqlExecutor, projectKey string, appName strin
 		join workflow_node_context on workflow_node_context.workflow_node_id = workflow_node.id
 		join application on workflow_node_context.application_id = application.id
 		where project.projectkey = $1 and application.name = $2
+		and workflow.to_delete = false
 		order by workflow.name asc`
 
 	if _, err := db.Select(&dbRes, query, projectKey, appName); err != nil {
@@ -309,6 +313,7 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 		join workflow_node_context on workflow_node_context.workflow_node_id = workflow_node.id
 		join environment on workflow_node_context.environment_id = environment.id
 		where project.projectkey = $1 and environment.name = $2
+		and workflow.to_delete = false
 		order by workflow.name asc`
 
 	if _, err := db.Select(&dbRes, query, projectKey, envName); err != nil {
@@ -583,7 +588,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
 			return sdk.WrapError(err, "Delete> Unable to detach workflow root")
 		}
-		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root, u); err != nil {
+		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root); err != nil {
 			return sdk.WrapError(err, "Update> unable to delete root node on workflow(%d)", w.ID)
 		}
 	}
@@ -629,11 +634,21 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	return updateLastModified(db, store, w, u)
 }
 
+// MarkAsDelete marks a workflow to be deleted
+func MarkAsDelete(db gorp.SqlExecutor, w *sdk.Workflow) error {
+	if _, err := db.Exec("update workflow set to_delete = true where id = $1", w.ID); err != nil {
+		return sdk.WrapError(err, "MarkAsDelete> Unable to mark as delete workflow id %d", w.ID)
+	}
+	return nil
+}
+
 // Delete workflow
-func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, u *sdk.User) error {
+func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow) error {
+	log.Debug("Delete> deleting workflow %d", w.ID)
+
 	//Detach root from workflow
 	if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
-		return sdk.WrapError(err, "Delete> Unable to detache workflow root")
+		return sdk.WrapError(err, "Delete> Unable to detach workflow root")
 	}
 
 	hooks := w.GetHooks()
@@ -645,12 +660,12 @@ func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workf
 	// Delete all JOINs
 	for _, j := range w.Joins {
 		if err := deleteJoin(db, j); err != nil {
-			return sdk.WrapError(err, "Update> unable to delete all join on workflow(%d)", w.ID)
+			return sdk.WrapError(err, "Delete> unable to delete all join on workflow(%d)", w.ID)
 		}
 	}
 
 	//Delete root
-	if err := deleteNode(db, w, w.Root, u); err != nil {
+	if err := deleteNode(db, w, w.Root); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow root")
 	}
 
@@ -945,6 +960,11 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		if !opts.IsDefaultBranch {
 			wf.DerivationBranch = opts.Branch
 		}
+		if wf.Root.Context.Application != nil {
+			wf.Root.Context.Application.VCSServer = opts.VCSServer
+			wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
+			wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
+		}
 
 		if wf.FromRepository != "" {
 			if len(wf.Root.Hooks) == 0 {
@@ -959,9 +979,6 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 			}
 
 			if wf.Root.Context.Application != nil {
-				wf.Root.Context.Application.VCSServer = opts.VCSServer
-				wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
-				wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
 				if err := application.Update(tx, store, wf.Root.Context.Application, u); err != nil {
 					return nil, nil, sdk.WrapError(err, "Push> Unable to update application vcs datas")
 				}

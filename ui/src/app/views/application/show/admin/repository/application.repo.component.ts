@@ -27,6 +27,7 @@ export class ApplicationRepositoryComponent implements OnInit {
     repos: Repository[];
     reposFiltered: Repository[];
     model: string;
+    displayVCSStrategy = false;
 
     @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
     @ViewChild('linkWarning') linkWarningModal: WarningModalComponent;
@@ -39,6 +40,7 @@ export class ApplicationRepositoryComponent implements OnInit {
         if (this.project.vcs_servers && this.project.vcs_servers.length > 0) {
             this.selectedRepoManager = this.project.vcs_servers[0].name;
         }
+        this.displayVCSStrategy = !this.application.vcs_strategy || !this.application.vcs_strategy.connection_type;
         this.updateListRepo(false);
     }
 
@@ -93,6 +95,7 @@ export class ApplicationRepositoryComponent implements OnInit {
             this.loadingBtn = true;
             this._appStore.connectRepository(this.project.key, this.application.name, this.selectedRepoManager, this.selectedRepo)
                 .subscribe(() => {
+                    this.displayVCSStrategy = !this.application.vcs_strategy || !this.application.vcs_strategy.connection_type;
                     this.loadingBtn = false;
                     this._toast.success('', this._translate.instant('application_repo_attach_ok'));
                 }, () => {
