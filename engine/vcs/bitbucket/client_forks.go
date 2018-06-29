@@ -22,7 +22,7 @@ func (b *bitbucketClient) ListForks(repo string) ([]sdk.VCSRepo, error) {
 		}
 
 		var response Response
-		if err := b.do("GET", "core", path, params, nil, &response); err != nil {
+		if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> ListForks> Unable to get repos")
 		}
 

@@ -70,7 +70,11 @@ func (c *bitbucketClient) getFullAPIURL(api string) string {
 	return url
 }
 
-func (c *bitbucketClient) do(method, api, path string, params url.Values, values []byte, v interface{}) error {
+type options struct {
+	asUser bool
+}
+
+func (c *bitbucketClient) do(method, api, path string, params url.Values, values []byte, v interface{}, opts *options) error {
 	// Sad hack to get username
 	var username = false
 	if path == "username" {
@@ -109,8 +113,18 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 	}
 
 	// sign the request
-	if err := c.consumer.Sign(req, token); err != nil {
-		return err
+	if opts != nil && opts.asUser && c.token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+	} else {
+		if err := c.consumer.Sign(req, token); err != nil {
+			return err
+		}
+	}
+
+	// ensure the appropriate content-type is set for POST,
+	// assuming the field is not populated
+	if (req.Method == "POST" || req.Method == "PUT") && len(req.Header.Get("Content-Type")) == 0 {
+		req.Header.Set("Content-Type", "application/json")
 	}
 
 	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token.Token())
