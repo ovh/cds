@@ -39,6 +39,11 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	app.Name = eapp.Name
 	app.VCSServer = eapp.VCSServer
 	app.RepositoryFullname = eapp.RepositoryName
+	if oldApp != nil {
+		app.WorkflowMigration = oldApp.WorkflowMigration
+	} else {
+		app.WorkflowMigration = "DONE"
+	}
 
 	//Inherit permissions from project
 	if len(eapp.Permissions) == 0 {
