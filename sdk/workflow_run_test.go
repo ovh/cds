@@ -69,6 +69,38 @@ func TestWorkflowRunReport(t *testing.T) {
 			},
 		},
 	}
+
+	wfr = WorkflowNodeRun{
+		Stages: []Stage{
+			{
+				Name: "stage 1",
+				RunJobs: []WorkflowNodeJobRun{
+					{
+						Job: ExecutedJob{
+							Job: Job{
+								Action: Action{
+									Name: "job 1",
+								},
+							},
+						},
+						Status: StatusSuccess.String(),
+					},
+					{
+						Job: ExecutedJob{
+							Job: Job{
+								Action: Action{
+									Name: "job 2",
+								},
+							},
+						},
+						Status: StatusFail.String(),
+					},
+				},
+			},
+		},
+		Tests: nil,
+	}
+
 	s, err := wfr.Report()
 	assert.NoError(t, err)
 	t.Log(s)

@@ -299,6 +299,7 @@ const workflowNodeRunReport = `CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.S
 {{- end}}
 {{end}}
 
+{{- if .Tests }} 
 {{- if gt .Tests.TotalKO 0}}
 Unit Tests Report
 
@@ -307,6 +308,7 @@ Unit Tests Report
 {{range $tc := $ts.TestCases}}
   {{- if or ($tc.Errors) ($tc.Failures) }}  * {{ $tc.Name }} ✘ {{- end}}
 {{end}}
+{{- end}}
 {{- end}}
 {{- end}}
 `
