@@ -24,6 +24,15 @@ func UpdateHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
 	return nil
 }
 
+// DeleteHook Delete a workflow node hook
+func DeleteHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
+	dbhook := NodeHook(*h)
+	if _, err := db.Delete(&dbhook); err != nil {
+		return sdk.WrapError(err, "updateHook> Cannot update hook")
+	}
+	return nil
+}
+
 // insertHook inserts a hook
 func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeHook) error {
 	hook.WorkflowNodeID = node.ID
@@ -192,4 +201,30 @@ func LoadHookByUUID(db gorp.SqlExecutor, uuid string) (*sdk.WorkflowNodeHook, er
 	wNodeHook := sdk.WorkflowNodeHook(res)
 
 	return &wNodeHook, nil
+}
+
+// LoadHooksByNodeID loads hooks linked to a nodeID
+func LoadHooksByNodeID(db gorp.SqlExecutor, nodeID int64) ([]sdk.WorkflowNodeHook, error) {
+	query := `
+		SELECT id, uuid, ref, workflow_hook_model_id, workflow_node_id
+			FROM workflow_node_hook
+		WHERE workflow_node_id = $1`
+
+	res := []NodeHook{}
+	if _, err := db.Select(&res, query, nodeID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadHookByNodeID>")
+	}
+
+	nodeHooks := make([]sdk.WorkflowNodeHook, len(res))
+	for i, nh := range res {
+		if err := nh.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadHookByNodeID> cannot load postget")
+		}
+		nodeHooks[i] = sdk.WorkflowNodeHook(nh)
+	}
+
+	return nodeHooks, nil
 }

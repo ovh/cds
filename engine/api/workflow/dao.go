@@ -653,7 +653,7 @@ func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workf
 
 	hooks := w.GetHooks()
 	// Delete all hooks
-	if err := deleteHookConfiguration(db, store, p, hooks); err != nil {
+	if err := DeleteHookConfiguration(db, store, p, hooks); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete hooks from workflow")
 	}
 

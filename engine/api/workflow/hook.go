@@ -155,14 +155,15 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 	}
 
 	if len(hookToDelete) > 0 {
-		if err := deleteHookConfiguration(db, store, p, hookToDelete); err != nil {
+		if err := DeleteHookConfiguration(db, store, p, hookToDelete); err != nil {
 			return sdk.WrapError(err, "HookRegistration> Cannot remove hook configuration")
 		}
 	}
 	return nil
 }
 
-func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {
+// DeleteHookConfiguration delete hooks configuration (and their vcs configuration)
+func DeleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {
 	// Delete from vcs configuration if needed
 	for _, h := range hookToDelete {
 		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName {
