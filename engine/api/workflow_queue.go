@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -25,27 +24,6 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
-
-//DEPRECATED
-func (api *API) postWorkflowJobRequirementsErrorHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return sdk.WrapError(err, "requirementsErrorHandler> cannot read body")
-		}
-
-		if getWorker(ctx).ID != "" {
-			// Load calling worker
-			caller, err := worker.LoadWorker(api.mustDB(), getWorker(ctx).ID)
-			if err != nil {
-				return sdk.WrapError(sdk.ErrWrongRequest, "requirementsErrorHandler> cannot load calling worker: %s", err)
-			}
-
-			log.Warning("%s (%s) > %s", getWorker(ctx).ID, caller.Name, string(body))
-		}
-		return nil
-	}
-}
 
 func (api *API) postTakeWorkflowJobHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
