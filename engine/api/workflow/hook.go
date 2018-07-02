@@ -254,6 +254,16 @@ func mergeAndDiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[str
 			if oldHooks[o].Ref == newHooks[n].Ref {
 				nh := newHooks[n]
 				nh.UUID = oldHooks[o].UUID
+				if nh.Config == nil {
+					nh.Config = sdk.WorkflowNodeHookConfig{}
+				}
+				//Useful for RepositoryWebHook
+				if webhookID, ok := oldHooks[o].Config["webHookID"]; ok {
+					nh.Config["webHookID"] = webhookID
+				}
+				if oldIcon, ok := oldHooks[o].Config["hookIcon"]; oldHooks[o].WorkflowHookModelID == newHooks[n].WorkflowHookModelID && ok {
+					nh.Config["hookIcon"] = oldIcon
+				}
 				newHooks[n] = nh
 			}
 		}
@@ -268,9 +278,16 @@ func mergeAndDiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[str
 		}
 	}
 
-	for key := range oldHooks {
-		if _, ok := newHooks[key]; !ok {
-			hookToDelete[key] = oldHooks[key]
+	for _, oldH := range oldHooks {
+		var exist bool
+		for _, newH := range newHooks {
+			if oldH.UUID == newH.UUID {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			hookToDelete[oldH.UUID] = oldH
 		}
 	}
 	return
