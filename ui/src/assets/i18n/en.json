@@ -313,6 +313,7 @@
   "group_deleted": "Group deleted",
   "group_create_title": "Create a group",
   "group_name": "Group name",
+  "group_none": "No group",
   "group_permission": "Group permission",
   "group_list_title": "Groups",
   "group_load_groups": "Loading groups...",
