@@ -62,7 +62,8 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 	from workflow_node_run_job
 	where workflow_node_run_job.queued >= $1
 	and workflow_node_run_job.queued <= $2
-	and workflow_node_run_job.status = ANY(string_to_array($3, ','))`
+	and workflow_node_run_job.status = ANY(string_to_array($3, ','))
+	order by workflow_node_run_job.queued ASC`
 
 	args := []interface{}{*since, *until, strings.Join(statuses, ",")}
 
@@ -84,6 +85,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 		AND workflow_node_run_job.queued >= $1
 		AND workflow_node_run_job.queued <= $2
 		AND workflow_node_run_job.status = ANY(string_to_array($3, ','))
+		ORDER BY workflow_node_run_job.queued ASC
 		`
 
 		var groupID string
