@@ -73,3 +73,49 @@ func TestWorkflowRunReport(t *testing.T) {
 	assert.NoError(t, err)
 	t.Log(s)
 }
+
+func TestWorkflowQueue_Sort(t *testing.T) {
+	tests := []struct {
+		name     string
+		q        WorkflowQueue
+		expected WorkflowQueue
+	}{
+		{
+			name: "test sort 1",
+			q: WorkflowQueue{
+				{
+					ProjectID: 1,
+					ID:        1,
+				},
+				{
+					ProjectID: 1,
+					ID:        2,
+				},
+				{
+					ProjectID: 2,
+					ID:        3,
+				},
+			},
+			expected: WorkflowQueue{
+				{
+					ProjectID: 2,
+					ID:        3,
+				},
+				{
+					ProjectID: 1,
+					ID:        1,
+				},
+				{
+					ProjectID: 1,
+					ID:        2,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.q.Sort()
+			assert.Equal(t, tt.expected, tt.q)
+		})
+	}
+}
