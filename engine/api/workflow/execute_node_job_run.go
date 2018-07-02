@@ -96,8 +96,7 @@ func (r *ProcessorReport) Errors() []error {
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
 func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) (*ProcessorReport, error) {
-	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.UpdateNodeJobRunStatus",
+	cctx, end := tracing.Span(ctx, "workflow.UpdateNodeJobRunStatus",
 		tracing.Tag("workflow_node_run_job", job.ID),
 		tracing.Tag("workflow_node_run_job_status", status),
 	)
@@ -160,7 +159,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		}
 	}
 
-	if err := UpdateNodeJobRun(ctx, db, store, job); err != nil {
+	if err := UpdateNodeJobRun(cctx, db, store, job); err != nil {
 		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
@@ -172,11 +171,11 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		if errNR != nil {
 			return nil, sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot LoadNodeRunByID node run %d", node.ID)
 		}
-		return report.Merge(syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex))
+		return report.Merge(syncTakeJobInNodeRun(cctx, db, nodeRun, job, stageIndex))
 	}
 
 	var errReport error
-	report, errReport = report.Merge(execute(ctx, dbCopy, db, store, proj, node))
+	report, errReport = report.Merge(execute(cctx, dbCopy, db, store, proj, node))
 
 	wr, err := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true})
 	if err != nil {
