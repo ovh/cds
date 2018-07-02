@@ -409,34 +409,6 @@ func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64, jo
 	return err
 }
 
-// LoadWorkerModelsUsableOnGroup returns worker models for a group
-func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
-	var err error
-	models := []sdk.Model{}
-
-	// note about restricted field on worker model:
-	// if restricted = true, worker model can be launched by a user hatchery only
-	// so, a 'shared.infra' hatchery need all worker models, with restricted = false
-
-	if sharedinfraGroupID == groupID { // shared infra, return all models, excepts restricted
-		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND restricted = FALSE ORDER by name`)
-	} else { // not shared infra, returns only selected worker models
-		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND group_id = $1 ORDER by name`, groupID)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
-			return nil, err
-		}
-		models = append(models, sdk.Model(ms[i]))
-	}
-	return models, nil
-}
-
 // UpdateWorkerStatus changes worker status to Disabled
 func UpdateWorkerStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE id = $2`
