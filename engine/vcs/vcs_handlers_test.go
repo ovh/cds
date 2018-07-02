@@ -448,3 +448,48 @@ func checkConfigGithub(cfg map[string]string, t *testing.T) {
 		t.SkipNow()
 	}
 }
+
+func Test_postRepoGrantHandler(t *testing.T) {
+	cfg := test.LoadTestingConf(t)
+
+	//Bootstrap the service
+	s, err := newTestService(t)
+	test.NoError(t, err)
+
+	checkConfigGithub(cfg, t)
+
+	t.Logf("Testing grant with %s", cfg["githubUsername"])
+
+	err = s.addServerConfiguration("github", ServerConfiguration{
+		URL: "https://github.com",
+		Github: &GithubServerConfiguration{
+			ClientID:     cfg["githubClientID"],
+			ClientSecret: cfg["githubClientSecret"],
+			Username:     cfg["githubUsername"],
+			Token:        cfg["githubPassword"],
+		},
+	})
+	test.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"name":  "github",
+		"owner": "fsamin",
+		"repo":  "go-dump",
+	}
+	uri := s.Router.GetRoute("POST", s.postRepoGrantHandler, vars)
+	test.NotEmpty(t, uri)
+	req := newRequest(t, s, "POST", uri, nil)
+
+	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
+	req.Header.Set(HeaderXAccessToken, token)
+	//accessTokenSecret is useless for github, let's give the same token
+	req.Header.Set(HeaderXAccessTokenSecret, token)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+
+	//Asserts
+	assert.Equal(t, 204, rec.Code)
+}

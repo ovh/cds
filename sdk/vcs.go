@@ -63,6 +63,9 @@ type VCSAuthorizedClient interface {
 
 	// Forks
 	ListForks(repo string) ([]VCSRepo, error)
+
+	// Permissions
+	GrantReadPermission(repo string) error
 }
 
 // GetDefaultBranch return the default branch
