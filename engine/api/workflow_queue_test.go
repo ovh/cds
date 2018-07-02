@@ -300,29 +300,6 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	assert.Equal(t, 10, n.Num)
 }
 
-func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
-	ctx := testRunWorkflow(t, api, router, db)
-
-	uri := router.GetRoute("POST", api.postWorkflowJobRequirementsErrorHandler, nil)
-	test.NotEmpty(t, uri)
-
-	//This will check the needWorker() auth
-	req := assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "POST", uri, "This is a requirement log error")
-	rec := httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 403, rec.Code)
-
-	//Register the worker
-	testRegisterWorker(t, api, router, &ctx)
-
-	//This call must work
-	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, "This is a requirement log error")
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 204, rec.Code)
-
-}
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := testRunWorkflow(t, api, router, db)
