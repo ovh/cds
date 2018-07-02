@@ -361,6 +361,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
+			ProjectID:              wr.ProjectID,
 			WorkflowNodeRunID:      run.ID,
 			Start:                  time.Time{},
 			Queued:                 time.Now(),

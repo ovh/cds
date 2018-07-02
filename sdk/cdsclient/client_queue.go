@@ -45,10 +45,11 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			}
 
 			if jobs != nil {
-				queue := []sdk.WorkflowNodeJobRun{}
+				queue := sdk.WorkflowQueue{}
 				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load old jobs")
 				}
+				queue.Sort()
 				for _, j := range queue {
 					jobs <- j
 				}
