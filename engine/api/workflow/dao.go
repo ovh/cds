@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -115,6 +116,11 @@ func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User,
 	return nil
 }
 
+// PreInsert is a db hook
+func (w *Workflow) PreInsert(db gorp.SqlExecutor) error {
+	return w.PreUpdate(db)
+}
+
 // PostInsert is a db hook
 func (w *Workflow) PostInsert(db gorp.SqlExecutor) error {
 	return w.PostUpdate(db)
@@ -142,6 +148,20 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 		return err
 	}
 	w.PurgeTags = purgeTags
+
+	return nil
+}
+
+// PreUpdate is a db hook
+func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
+	if w.FromRepository != "" && strings.HasPrefix(w.FromRepository, "http") {
+		fromRepoURL, err := url.Parse(w.FromRepository)
+		if err != nil {
+			return sdk.WrapError(err, "Workflow.PreUpdate> Cannot parse url %s", w.FromRepository)
+		}
+		fromRepoURL.User = nil
+		w.FromRepository = fromRepoURL.String()
+	}
 
 	return nil
 }
