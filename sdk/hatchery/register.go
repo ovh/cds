@@ -101,7 +101,6 @@ func Create(h Interface) error {
 				if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
 					log.Debug("max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
 				}
-				log.Debug("workers already started:%d", workersStarted)
 			}
 		case <-tickerGetModels.C:
 			var errwm error

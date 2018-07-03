@@ -522,7 +522,6 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	if err != nil {
 		return 0, sdk.WrapError(err, "nextRunNumber")
 	}
-	log.Debug("nextRunNumber> %s/%s %d", w.ProjectKey, w.Name, i)
 	return int64(i), nil
 }
 
