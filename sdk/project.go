@@ -14,6 +14,7 @@ type Project struct {
 	ID                int64              `json:"-" yaml:"-" db:"id" cli:"-"`
 	Key               string             `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
 	Name              string             `json:"name" yaml:"name" db:"name" cli:"name"`
+	Description       string             `json:"description" yaml:"description" db:"description" cli:"description"`
 	Workflows         []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
 	WorkflowNames     []IDName           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
 	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
