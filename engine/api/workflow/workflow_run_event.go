@@ -238,6 +238,9 @@ func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 	//Send comment on pull request
 	for _, pr := range prs {
 		if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash {
+			if nodeRun.Status != sdk.StatusFail.String() {
+				continue
+			}
 			report, err := nodeRun.Report()
 			if err != nil {
 				log.Error("sendVCSEventStatus> unable to compute node run report%v", err)

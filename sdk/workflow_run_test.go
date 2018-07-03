@@ -69,6 +69,9 @@ func TestWorkflowRunReport(t *testing.T) {
 			},
 		},
 	}
+	s, err := wfr.Report()
+	assert.NoError(t, err)
+	t.Log(s)
 
 	wfr = WorkflowNodeRun{
 		Stages: []Stage{
@@ -98,10 +101,24 @@ func TestWorkflowRunReport(t *testing.T) {
 				},
 			},
 		},
+		Tests:  nil,
+		Status: StatusSuccess.String(),
+	}
+
+	s, err = wfr.Report()
+	assert.NoError(t, err)
+	t.Log(s)
+
+	wfr = WorkflowNodeRun{
+		Stages: []Stage{
+			{
+				Name: "stage 1",
+			},
+		},
 		Tests: nil,
 	}
 
-	s, err := wfr.Report()
+	s, err = wfr.Report()
 	assert.NoError(t, err)
 	t.Log(s)
 }
