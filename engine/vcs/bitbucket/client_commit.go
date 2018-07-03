@@ -38,6 +38,9 @@ func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSC
 			}
 
 			if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
+				if err == sdk.ErrNotFound {
+					return nil, nil
+				}
 				return nil, sdk.WrapError(err, "vcs> bitbucket> commits> Unable to get commits %s", path)
 			}
 
