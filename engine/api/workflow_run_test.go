@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
@@ -104,7 +105,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		test.NoError(t, errMR)
 	}
 
-	_, _, errMR2 := workflow.ManualRunFromNode(nil, db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID)
+	_, _, errMR2 := workflow.ManualRunFromNode(context.TODO(), db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID)
 	if errMR2 != nil {
 		test.NoError(t, errMR2)
 	}

@@ -126,7 +126,7 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, 2, len(jobs))
 
 	//TestprocessWorkflowRun
-	wr2, _, err := workflow.ManualRunFromNode(nil, db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	wr2, _, err := workflow.ManualRunFromNode(context.TODO(), db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 	assert.NotNil(t, wr2)
 
@@ -229,7 +229,7 @@ func TestManualRun2(t *testing.T) {
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
-	_, _, err = workflow.ManualRunFromNode(nil, db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	_, _, err = workflow.ManualRunFromNode(context.TODO(), db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 
 	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil)
@@ -369,7 +369,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TakeNodeJobRun
-		j, _, err = workflow.TakeNodeJobRun(nil, func() *gorp.DbMap { return db }, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		j, _, _ = workflow.TakeNodeJobRun(nil, func() *gorp.DbMap { return db }, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -378,7 +378,6 @@ func TestManualRun3(t *testing.T) {
 				},
 			},
 		})
-		assert.NoError(t, err)
 
 		//Load workflow node run
 		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID, workflow.LoadRunOptions{})
