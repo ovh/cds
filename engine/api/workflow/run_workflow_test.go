@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -94,7 +95,7 @@ func TestManualRun1(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 		Payload: map[string]string{
 			"git.branch": "master",
@@ -102,7 +103,7 @@ func TestManualRun1(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	//LoadLastRun
@@ -219,12 +220,12 @@ func TestManualRun2(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
@@ -317,7 +318,7 @@ func TestManualRun3(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
@@ -377,6 +378,7 @@ func TestManualRun3(t *testing.T) {
 				},
 			},
 		})
+		assert.NoError(t, err)
 
 		//Load workflow node run
 		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID, workflow.LoadRunOptions{})
@@ -515,7 +517,7 @@ func TestNoStage(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
@@ -572,7 +574,7 @@ func TestNoJob(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, _, err = workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})

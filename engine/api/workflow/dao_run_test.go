@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -109,7 +110,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		_, _, errWr := workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		_, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
@@ -183,7 +184,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, errWr := workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 		Payload: map[string]string{
 			"git.branch": "master",
@@ -193,7 +194,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	test.NoError(t, errWr)
 
 	for i := 0; i < 5; i++ {
-		wfr, _, errWr := workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		wfr, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
@@ -275,7 +276,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	test.NoError(t, err)
 
 	for i := 0; i < 5; i++ {
-		wfr, _, errWr := workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		wfr, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
@@ -353,7 +354,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		_, _, errWr := workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		_, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": branches[i],
@@ -428,7 +429,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 
 	branches := []string{"master", "master", "master", "develop", "develop", "testBr", "testBr", "testBr", "testBr", "test4"}
 	for i := 0; i < 10; i++ {
-		_, _, errWr := workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		_, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": branches[i],
