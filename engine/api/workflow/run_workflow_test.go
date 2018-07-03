@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -93,7 +94,7 @@ func TestManualRun1(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 		Payload: map[string]string{
 			"git.branch": "master",
@@ -101,7 +102,7 @@ func TestManualRun1(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	//LoadLastRun
@@ -124,7 +125,7 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, 2, len(jobs))
 
 	//TestprocessWorkflowRun
-	wr2, _, err := workflow.ManualRunFromNode(nil, db, db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	wr2, _, err := workflow.ManualRunFromNode(nil, db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 	assert.NotNil(t, wr2)
 
@@ -218,16 +219,16 @@ func TestManualRun2(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
-	_, _, err = workflow.ManualRunFromNode(nil, db, db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	_, _, err = workflow.ManualRunFromNode(nil, db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 
 	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil)
@@ -316,7 +317,7 @@ func TestManualRun3(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
@@ -367,7 +368,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TakeNodeJobRun
-		j, _, err = workflow.TakeNodeJobRun(nil, db, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		j, _, err = workflow.TakeNodeJobRun(nil, func() *gorp.DbMap { return db }, db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -410,7 +411,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TestUpdateNodeJobRunStatus
-		_, err = workflow.UpdateNodeJobRunStatus(nil, db, db, cache, proj, j, sdk.StatusSuccess)
+		_, err = workflow.UpdateNodeJobRunStatus(nil, func() *gorp.DbMap { return db }, db, cache, proj, j, sdk.StatusSuccess)
 		assert.NoError(t, err)
 		if t.Failed() {
 			tx.Rollback()
@@ -514,7 +515,7 @@ func TestNoStage(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
@@ -571,7 +572,7 @@ func TestNoJob(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(nil, db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	_, _, err = workflow.ManualRun(nil, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", workflow.LoadRunOptions{})
