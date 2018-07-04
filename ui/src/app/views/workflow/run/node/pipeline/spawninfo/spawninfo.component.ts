@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {Job} from '../../../../../../model/job.model';
 import {Parameter} from '../../../../../../model/parameter.model';
 import {SpawnInfo} from '../../../../../../model/pipeline.model';
@@ -11,11 +11,18 @@ declare var ansi_up: any;
     templateUrl: './spawninfo.html',
     styleUrls: ['./spawninfo.scss']
 })
-export class WorkflowRunJobSpawnInfoComponent implements OnInit {
+export class WorkflowRunJobSpawnInfoComponent {
 
     @Input() spawnInfos: Array<SpawnInfo>;
     @Input() variables: Array<Parameter>;
-    @Input() job: Job;
+    @Input('job')
+    set job(data: Job) {
+        this._job = data;
+        this.refreshDisplayServiceLogsLink();
+    }
+    get job(): Job {
+        return this._job
+    }
     @Input('displayServiceLogs')
     set displayServiceLogs(data: boolean) {
         this._displayServiceLogs = data;
@@ -32,14 +39,15 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit {
 
     show = true;
     displayServiceLogsLink = false;
+    _job: Job;
     _displayServiceLogs: boolean;
 
     constructor() { }
 
-    ngOnInit() {
-        if (this.job && this.job.action && Array.isArray(this.job.action.requirements)) {
-            this.displayServiceLogsLink = this.job.action.requirements.some((req) => req.type === 'service');
-        }
+    refreshDisplayServiceLogsLink() {
+      if (this.job && this.job.action && Array.isArray(this.job.action.requirements)) {
+          this.displayServiceLogsLink = this.job.action.requirements.some((req) => req.type === 'service');
+      }
     }
 
     toggle() {
