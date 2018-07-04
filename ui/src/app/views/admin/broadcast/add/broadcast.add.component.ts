@@ -5,7 +5,7 @@ import {Broadcast} from 'app/model/broadcast.model';
 import {NavbarProjectData} from 'app/model/navbar.model';
 import {User} from 'app/model/user.model';
 import {AuthentificationStore} from 'app/service/auth/authentification.store';
-import {BroadcastService} from 'app/service/broadcast/broadcast.service';
+import {BroadcastStore} from 'app/service/broadcast/broadcast.store';
 import {NavbarService} from 'app/service/navbar/navbar.service';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
@@ -31,7 +31,7 @@ export class BroadcastAddComponent {
 
     constructor(
         private _navbarService: NavbarService,
-        private _broadcastService: BroadcastService,
+        private _broadcastStore: BroadcastStore,
         private _toast: ToastService, private _translate: TranslateService,
         private _route: ActivatedRoute, private _router: Router,
         private _authentificationStore: AuthentificationStore, _broadcastLevelService: BroadcastLevelService
@@ -58,7 +58,7 @@ export class BroadcastAddComponent {
         }
 
         this.loading = true;
-        this._broadcastService.createBroadcast(this.broadcast)
+        this._broadcastStore.create(this.broadcast)
         .pipe(finalize(() => this.loading = false))
         .subscribe( bc => {
             this._toast.success('', this._translate.instant('broadcast_saved'));

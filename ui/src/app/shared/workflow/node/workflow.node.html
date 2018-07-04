@@ -4,7 +4,7 @@
          [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
          [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
          [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
-         [class.active]="node.id === selectedNodeId"
+         [class.active]="isSelected"
          (click)="goToNodeRun()"
          (dblclick)="goToLogs()">
 

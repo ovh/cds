@@ -11,7 +11,7 @@ import {NavbarRecentData} from '../../model/navbar.model';
 import {User} from '../../model/user.model';
 import {ApplicationStore} from '../../service/application/application.store';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
-import {BroadcastService} from '../../service/broadcast/broadcast.service';
+import {BroadcastStore} from '../../service/broadcast/broadcast.store';
 import {LanguageStore} from '../../service/language/language.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
 import {RouterService} from '../../service/router/router.service';
@@ -37,9 +37,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     searchItems: Array<NavbarSearchItem> = [];
     recentItems: Array<NavbarSearchItem> = [];
     items: Array<NavbarSearchItem> = [];
-    broadcasts: Array<Broadcast> = [];
-    recentBroadcastsToDisplay: Array<Broadcast> = [];
-    previousBroadcastsToDisplay: Array<Broadcast> = [];
+    broadcasts: Array<Broadcast> = new Array<Broadcast>();
+    recentBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
+    previousBroadcastsToDisplay: Array<Broadcast> = new Array<Broadcast>();
     loading = true;
 
     listWorkflows: List<NavbarRecentData>;
@@ -60,7 +60,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
                 private _workflowStore: WorkflowStore,
-                private _broadcastService: BroadcastService,
+                private _broadcastStore: BroadcastStore,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
                 private _translate: TranslateService,
                 private _authentificationStore: AuthentificationStore,
@@ -195,10 +195,10 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             this.loading = false;
         });
 
-        this.broadcastSubscription = this._broadcastService.getBroadcastsListener()
+        this.broadcastSubscription = this._broadcastStore.getBroadcasts()
             .subscribe((broadcasts) => {
-                let broadcastsToRead = broadcasts.filter((br) => !br.read && !br.archived)
-                let previousBroadcasts = broadcasts.filter((br) => br.read && !br.archived)
+                let broadcastsToRead = broadcasts.toArray().filter((br) => !br.read && !br.archived);
+                let previousBroadcasts = broadcasts.toArray().filter((br) => br.read && !br.archived);
                 this.recentBroadcastsToDisplay = broadcastsToRead.slice(0, 4);
                 this.previousBroadcastsToDisplay = previousBroadcasts.slice(0, 4);
                 this.broadcasts = broadcastsToRead;
@@ -265,7 +265,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     markAsRead(event: Event, id: number) {
         event.stopPropagation();
-        this._broadcastService.markAsRead(id)
+        this._broadcastStore.markAsRead(id)
             .subscribe();
     }
 }

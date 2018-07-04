@@ -14,6 +14,16 @@ export class WorkflowRunService {
     }
 
     /**
+     * List workflow runs for the given workflow
+     */
+    runs(key: string, workflowName: string, limit: string): Observable<Array<WorkflowRun>> {
+        let url = '/project/' + key + '/workflows/' + workflowName + '/runs';
+        let params = new HttpParams();
+        params = params.append('limit', limit);
+        return this._http.get<Array<WorkflowRun>>(url, {params: params});
+    }
+
+    /**
      * Call API to create a run workflow
      * @param key Project unique key
      * @param workflow Workflow to create
@@ -47,6 +57,19 @@ export class WorkflowRunService {
     }
 
     /**
+     * Get workflow node run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {number} number Run number
+     * @param nodeRunID Node run Identifier
+     * @returns {Observable<WorkflowNodeRun>}
+     */
+    getWorkflowNodeRun(key: string, workflowName: string, number: number, nodeRunID): Observable<WorkflowNodeRun> {
+        return this._http.get<WorkflowNodeRun>('/project/' + key + '/workflows/' + workflowName +
+            '/runs/' + number + '/nodes/' + nodeRunID);
+    }
+
+    /**
      * Stop a workflow run
      * @param {string} key Project unique key
      * @param {string} workflowName Workflow name
@@ -55,18 +78,6 @@ export class WorkflowRunService {
      */
     stopWorkflowRun(key: string, workflowName: string, num: number): Observable<boolean> {
         return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/stop', null).pipe(map(() => true));
-    }
-
-    /**
-     * Get workflow Node Run
-     * @param {string} key Project unique key
-     * @param {string} workflowName Workflow name
-     * @param {number} num Number of the workflow run
-     * @param {number} id of the node run
-     * @returns {Observable<WorkflowNodeRun>}
-     */
-    getWorkflowNodeRun(key: string, workflowName: string, num: number, id: number): Observable<WorkflowNodeRun> {
-        return this._http.get<WorkflowNodeRun>('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/nodes/' + id);
     }
 
     /**

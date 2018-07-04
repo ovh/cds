@@ -2,8 +2,10 @@ import {Component, Input, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {Subscription} from 'rxjs/Subscription';
 import {Project} from '../../../../../model/project.model';
 import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../../../model/workflow.model';
+import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../../shared/toast/ToastService';
@@ -20,8 +22,9 @@ export class WorkflowSidebarEditJoinComponent {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() join: WorkflowNodeJoin;
-    @Input() readonly = false;
+
+    join: WorkflowNodeJoin;
+    joinSub: Subscription;
 
     disabled = false;
     loading = false;
@@ -33,8 +36,9 @@ export class WorkflowSidebarEditJoinComponent {
 
     newTrigger = new WorkflowNodeJoinTrigger();
 
-    constructor(private _workflowStore: WorkflowStore, private _toast: ToastService, private _translate: TranslateService) {
-
+    constructor(private _workflowStore: WorkflowStore, private _toast: ToastService, private _translate: TranslateService,
+                private _workflowEventStore: WorkflowEventStore) {
+        this.joinSub = this._workflowEventStore.selectedJoin().subscribe(j => this.join = j);
     }
 
     openDeleteJoinModal(): void {
@@ -67,6 +71,7 @@ export class WorkflowSidebarEditJoinComponent {
             if (modal) {
                 modal.approve(true);
             }
+            this._workflowEventStore.unselectAll();
         }, () => {
             this.loading = false;
         });

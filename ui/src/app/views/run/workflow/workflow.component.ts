@@ -131,12 +131,14 @@ export class PipelineRunWorkflowComponent {
     handleNotification(pipelineBuild: PipelineBuild): void {
         switch (pipelineBuild.status) {
         case PipelineStatus.SUCCESS:
-            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
+            this.notificationSubscription =
+                this._notification.create(this._translate.instant('notification_on_pipeline_success', {
                 pipelineName: pipelineBuild.pipeline.name
             }), { icon: 'assets/images/checked.png' }).subscribe();
             break;
         case PipelineStatus.FAIL:
-            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
+            this.notificationSubscription =
+                this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
                 pipelineName: pipelineBuild.pipeline.name
             }), { icon: 'assets/images/close.png' }).subscribe();
             break;
