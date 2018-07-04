@@ -164,16 +164,6 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) error {
 	log.Debug("Send status for node run %d", nodeRun.ID)
 
-	//Reload the workflow node run to get the tests
-	var err error
-	nodeRunID := nodeRun.ID
-	nodeRun, err = LoadNodeRunByID(db, nodeRunID, LoadRunOptions{
-		WithTests: true,
-	})
-	if err != nil {
-		return sdk.WrapError(err, "sendVCSEventStatus> Unable to reload noderun %d", nodeRunID)
-	}
-
 	node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
 	if !node.IsLinkedToRepo() {
 		return nil
@@ -248,6 +238,9 @@ func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 	//Send comment on pull request
 	for _, pr := range prs {
 		if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash {
+			if nodeRun.Status != sdk.StatusFail.String() {
+				continue
+			}
 			report, err := nodeRun.Report()
 			if err != nil {
 				log.Error("sendVCSEventStatus> unable to compute node run report%v", err)

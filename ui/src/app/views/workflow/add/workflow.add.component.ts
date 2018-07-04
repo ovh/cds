@@ -204,4 +204,16 @@ workflow:
     fileEvent(event) {
         this.wfToImport = event;
     }
+
+    resyncRepos() {
+      if (this.selectedRepoManager) {
+          this.loading = true;
+          this._repoManSerivce.getRepositories(this.project.key, this.selectedRepoManager, true)
+            .pipe(
+              first(),
+              finalize(() => this.loading = false)
+            )
+            .subscribe(repos => this.repos = repos);
+      }
+    }
 }

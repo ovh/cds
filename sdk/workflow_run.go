@@ -293,13 +293,17 @@ func (w *WorkflowNodeRunArtifact) GetPath() string {
 	return container
 }
 
-const workflowNodeRunReport = `CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}}
-{{range $s := .Stages}}
+const workflowNodeRunReport = `{{- if .Stages }} 
+CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+{{- range $s := .Stages}}
+{{- if $s.RunJobs }}
 * {{$s.Name}}
 {{- range $j := $s.RunJobs}}
   * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
 {{- end}}
-{{end}}
+{{- end}}
+{{- end}}
+{{- end}}
 
 {{- if .Tests }} 
 {{- if gt .Tests.TotalKO 0}}
