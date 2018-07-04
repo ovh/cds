@@ -151,8 +151,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                                 if (this.workflowComponentList && this.workflowComponentList.length > 0) {
                                     this.workflowComponentList.first.switchApplication(this.application);
                                 }
-                            } else if (updatedApplication && updatedApplication.externalChange) {
-                                this._toast.info('', this._translate.instant('warning_application'));
                             }
                         }
                     }, () => {

@@ -146,8 +146,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                         this.workflows = pipelineUpdated.usage.workflows || [];
                         this.environments = pipelineUpdated.usage.environments || [];
                         this.usageCount = this.applications.length + this.environments.length + this.workflows.length;
-                    } else if (pipelineUpdated && pipelineUpdated.externalChange) {
-                        this._toast.info('', this._translate.instant('warning_pipeline'));
                     }
                 }
             }, () => {
