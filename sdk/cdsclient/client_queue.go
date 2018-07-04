@@ -20,7 +20,9 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func shkringQueue(queue *sdk.WorkflowQueue, l int) time.Time {
+// shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
+// it returns as reference date the date of the last element in the shrinkked queue
+func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
 	if len(*queue) == 0 {
 		return time.Time{}
 	}
@@ -30,7 +32,9 @@ func shkringQueue(queue *sdk.WorkflowQueue, l int) time.Time {
 	}
 	l = l * 2
 	t0 := (*queue)[len(*queue)-1].Queued
+
 	queue.Sort()
+
 	if len(*queue) > l {
 		t0 = (*queue)[l].Queued
 		newQueue := (*queue)[:l]
@@ -73,9 +77,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 					fmt.Println("Old Jobs Queue size: ", len(queue))
 				}
 
-				shkringQueue(&queue, cap(jobs))
-				// If we get too much jobs from the queue, don't take all of them but only 200% of the channel capacity
-				// and set the reference time to the last job we consider
+				shrinkQueue(&queue, cap(jobs))
 				for _, j := range queue {
 					jobs <- j
 				}
@@ -102,12 +104,10 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 					continue
 				}
 
-				// If we get too much jobs from the queue, don't take all of them but only 200% of the channel capacity
-				// and set the reference time to the last job we consider
 				if c.config.Verbose {
 					fmt.Println("Queue size: ", len(queue))
 				}
-				t0 = shkringQueue(&queue, cap(jobs))
+				t0 = shrinkQueue(&queue, cap(jobs))
 
 				// Gracetime to remove, see https://github.com/ovh/cds/issues/1214
 				t0 = t0.Add(-time.Duration(graceTime) * time.Second)
