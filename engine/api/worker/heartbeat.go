@@ -9,7 +9,7 @@ import (
 )
 
 // WorkerHeartbeatTimeout defines the number of seconds allowed for workers to refresh their beat
-var WorkerHeartbeatTimeout = 600.0
+var WorkerHeartbeatTimeout = 300.0
 
 // CheckHeartbeat runs in a goroutine and check last beat from all workers
 func CheckHeartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
