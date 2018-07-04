@@ -9,7 +9,7 @@ import {AuthentificationStore} from '../../../service/auth/authentification.stor
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {CDSWorker} from '../../../shared/worker/worker';
+import {CDSWebWorker} from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-queue',
@@ -19,7 +19,7 @@ import {CDSWorker} from '../../../shared/worker/worker';
 @AutoUnsubscribe()
 export class QueueComponent implements OnDestroy {
 
-    queueWorker: CDSWorker;
+    queueWorker: CDSWebWorker;
     zone: NgZone;
     queueSubscription: Subscription;
 
@@ -55,7 +55,7 @@ export class QueueComponent implements OnDestroy {
             this.queueSubscription.unsubscribe();
         }
         // Start web worker
-        this.queueWorker = new CDSWorker('./assets/worker/web/queue.js');
+        this.queueWorker = new CDSWebWorker('./assets/worker/web/queue.js');
         this.queueWorker.start({
             'user': this._authStore.getUser(),
             'session': this._authStore.getSessionToken(),

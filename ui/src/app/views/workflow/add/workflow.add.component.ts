@@ -16,7 +16,7 @@ import {RepoManagerService} from '../../../service/repomanager/project.repomanag
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {CDSWorker} from '../../../shared/worker/worker';
+import {CDSWebWorker} from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-workflow-add',
@@ -167,7 +167,7 @@ workflow:
     startOperationWorker(uuid: string): void {
         // poll operation
         let zone = new NgZone({enableLongStackTrace: false});
-        let webworker = new CDSWorker('./assets/worker/web/import-as-code.js')
+        let webworker = new CDSWebWorker('./assets/worker/web/import-as-code.js')
         webworker.start({
             'user': this._authStore.getUser(),
             'session': this._authStore.getSessionToken(),
