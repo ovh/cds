@@ -19,7 +19,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	//Transform payload to a sdk.Pipeline
 	pip, errP := epip.Pipeline()
 	if errP != nil {
-		return pip, nil, sdk.WrapError(errP, "importPipelineHandler> Unable to parse pipeline")
+		return pip, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, errP), "importPipelineHandler> Unable to parse pipeline")
 	}
 
 	// Check if pipeline exists

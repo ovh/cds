@@ -67,7 +67,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		case sdk.SecretVariable:
 			secret, err := decryptFunc(db, proj.ID, v.Value)
 			if err != nil {
-				return app, nil, sdk.WrapError(err, "ParseAndImport>> Unable to decrypt secret variable")
+				return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "ParseAndImport>> Unable to decrypt secret variable")
 			}
 			v.Value = secret
 		}
@@ -104,7 +104,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
-			return app, nil, sdk.WrapError(err, "ParseAndImport>> Unable to parse key")
+			return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "ParseAndImport>> Unable to parse key")
 		}
 
 		k := sdk.ApplicationKey{
@@ -132,7 +132,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	if eapp.VCSPassword != "" {
 		clearPWD, err := decryptFunc(db, proj.ID, eapp.VCSPassword)
 		if err != nil {
-			return app, nil, sdk.WrapError(err, "ParseAndImport> Unable to decrypt vcs password")
+			return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "ParseAndImport> Unable to decrypt vcs password")
 		}
 		app.RepositoryStrategy.Password = clearPWD
 		if errE := EncryptVCSStrategyPassword(app); errE != nil {
@@ -146,7 +146,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 			if v.Type == sdk.SecretVariable {
 				clearPWD, err := decryptFunc(db, proj.ID, v.Value)
 				if err != nil {
-					return app, nil, sdk.WrapError(err, "ParseAndImport> Unable to decrypt deployment strategy password")
+					return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "ParseAndImport> Unable to decrypt deployment strategy password")
 				}
 				v.Value = clearPWD
 			}
