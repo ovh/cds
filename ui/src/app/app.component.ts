@@ -17,6 +17,8 @@ import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
 import {ToastService} from './shared/toast/ToastService';
+import {CDSSharedWorker} from './shared/worker/shared.worker';
+import {CDSWebWorker} from './shared/worker/web.worker';
 import {CDSWorker} from './shared/worker/worker';
 
 @Component({
@@ -29,8 +31,10 @@ export class AppComponent  implements OnInit {
 
     open: boolean;
     isConnected = false;
-    versionWorker: CDSWorker;
+    versionWorker: CDSWebWorker;
+
     sseWorker: CDSWorker;
+
     zone: NgZone;
 
     currentVersion = 0;
@@ -140,7 +144,13 @@ export class AppComponent  implements OnInit {
             authKey = 'Authorization';
             authValue = 'Basic ' + this._authStore.getUser().token;
         }
-        this.sseWorker = new CDSWorker('./assets/worker/webWorker.js');
+
+        if (window['SharedWorker']) {
+            this.sseWorker = new CDSSharedWorker('./assets/worker/sharedWorker.js');
+        } else {
+            this.sseWorker = new CDSWebWorker('./assets/worker/webWorker.js');
+        }
+
         this.sseWorker.start({
             headAuthKey: authKey,
             headAuthValue: authValue,
@@ -161,7 +171,7 @@ export class AppComponent  implements OnInit {
 
     startVersionWorker(): void {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
-        this.versionWorker = new CDSWorker('./assets/worker/web/version.js');
+        this.versionWorker = new CDSWebWorker('./assets/worker/web/version.js');
         this.versionWorker.start({});
         this.versionWorker.response().subscribe( msg => {
             if (msg) {

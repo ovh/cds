@@ -7,7 +7,7 @@ import {Project} from '../../../../../../model/project.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
 import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
 import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
-import {CDSWorker} from '../../../../../../shared/worker/worker';
+import {CDSWebWorker} from '../../../../../../shared/worker/web.worker';
 
 declare var ansi_up: any;
 
@@ -41,7 +41,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
 
     serviceLogs: Array<ServiceLog>;
 
-    worker: CDSWorker;
+    worker: CDSWebWorker;
     workerSubscription: Subscription;
 
     showLog = {};
@@ -70,7 +70,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
         }
 
         if (!this.worker) {
-            this.worker = new CDSWorker('./assets/worker/web/workflow-service-log.js');
+            this.worker = new CDSWebWorker('./assets/worker/web/workflow-service-log.js');
             this.worker.start({
                 user: this._authStore.getUser(),
                 session: this._authStore.getSessionToken(),

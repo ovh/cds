@@ -18,7 +18,7 @@ import {WarningModalComponent} from '../../../shared/modal/warning/warning.compo
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
-import {CDSWorker} from '../../../shared/worker/worker';
+import {CDSWebWorker} from '../../../shared/worker/web.worker';
 import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
 import {NotificationEvent} from './notifications/notification.event';
 import {ApplicationWorkflowComponent} from './workflow/application.workflow.component';
@@ -46,7 +46,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     applicationSubscription: Subscription;
     projectSubscription: Subscription;
     workerSubscription: Subscription;
-    worker: CDSWorker;
+    worker: CDSWebWorker;
 
     // Selected tab
     selectedTab = 'workflow';
@@ -212,7 +212,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 'version': this.appFilter.version
             };
 
-            this.worker = new CDSWorker('assets/worker/web/workflow.js?appName=' + this.application.name);
+            this.worker = new CDSWebWorker('assets/worker/web/workflow.js?appName=' + this.application.name);
             this.workerSubscription = this.worker.response().subscribe(msg => {
                 if (this.application.workflows && this.workflowComponentList
                     && this.workflowComponentList.length > 0 && msg && msg !== '') {
