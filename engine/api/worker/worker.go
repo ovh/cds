@@ -63,7 +63,7 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 	if errb != nil {
 		return fmt.Errorf("DisableWorker> Cannot start tx: %s", errb)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	query := `SELECT name, status, action_build_id, job_type FROM worker WHERE id = $1 FOR UPDATE`
 	var st, name string
