@@ -476,7 +476,9 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
 		}
-		res = commits
+		if commits != nil {
+			res = commits
+		}
 	} else if prev.Hash == "" {
 		if lastCommit.Hash != "" {
 			res = []sdk.VCSCommit{lastCommit}
@@ -488,7 +490,9 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
 		}
-		res = c
+		if c != nil {
+			res = c
+		}
 	}
 
 	return res, cur, nil
