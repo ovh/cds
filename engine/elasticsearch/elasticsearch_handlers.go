@@ -2,11 +2,11 @@ package elasticsearch
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"gopkg.in/olivere/elastic.v5"
 
-	"fmt"
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 )

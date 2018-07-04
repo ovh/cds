@@ -57,8 +57,4 @@ export class HomeTimelineComponent implements OnInit {
     onScroll() {
         this._timelineStore.getMore(this.currentItem + 1, false);
     }
-
-    updateFilter(): void {
-        console.log('BIM');
-    }
 }

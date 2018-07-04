@@ -1,16 +1,21 @@
 import { Component } from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
 import {Project} from '../../../model/project.model';
 import {ProjectStore} from '../../../service/project/project.store';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-project-list',
     templateUrl: './project.list.component.html',
     styleUrls: ['./project.list.component.scss']
 })
+@AutoUnsubscribe()
 export class ProjectListComponent {
     projects: Array<Project> = [];
     filteredProjects: Array<Project> = [];
     loading = true;
+
+    projectSub: Subscription;
 
     set filter(filter: string) {
         let filterLower = filter.toLowerCase();
@@ -20,8 +25,7 @@ export class ProjectListComponent {
     }
 
     constructor(private _projectStore: ProjectStore) {
-        // TODO NEVER CALL ProjectSERVICE
-        this._projectStore.getProjects()
+        this.projectSub = this._projectStore.getProjects()
             .subscribe((projects) => {
                 if (projects) {
                     this.loading = false;

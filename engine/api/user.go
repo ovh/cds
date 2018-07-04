@@ -162,7 +162,7 @@ func (api *API) getTimelineFilterHandler() Handler {
 		u := getUser(ctx)
 		filter, err := user.LoadTimelineFilter(api.mustDB(), u)
 		if err != nil {
-			return sdk.WrapError(err, "timelineFilterHandler")
+			return sdk.WrapError(err, "getTimelineFilterHandler")
 		}
 		return WriteJSON(w, filter, http.StatusOK)
 	}
