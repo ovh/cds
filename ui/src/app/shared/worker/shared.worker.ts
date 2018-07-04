@@ -2,11 +2,24 @@ import {BehaviorSubject, Observable} from 'rxjs';
 import {environment} from '../../../environments/environment';
 import {CDSWorker} from './worker';
 
+declare module SharedWorker {
+    interface AbstractWorker extends EventTarget {
+        onerror: (ev: ErrorEvent) => any;
+    }
+    export interface SharedWorker extends AbstractWorker {
+        port: MessagePort;
+        onconnect: (messageEvent: MessageEvent) => void;
+    }
+}
+declare var SharedWorker: {
+    prototype: SharedWorker.SharedWorker;
+    new(stringUrl: string, name?: string): SharedWorker.SharedWorker;
+};
 
 export class CDSSharedWorker implements CDSWorker {
 
     // Webworker
-    sharedWorker: any;
+    sharedWorker: SharedWorker.SharedWorker;
 
     sharedWorkerScript: string;
 
@@ -25,7 +38,6 @@ export class CDSSharedWorker implements CDSWorker {
      * @param msgToSend Message to send to worker to start it.
      */
     start(msgToSend: any) {
-        // Use web worker for safari, and edge. Web Workers are not shared between tabs
         if (!this.sharedWorker) {
             this.sharedWorker = new SharedWorker(this.sharedWorkerScript, 'cds-' + environment.name);
             this.sharedWorker.port.onmessage = ((e) => {
