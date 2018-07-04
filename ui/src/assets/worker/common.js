@@ -52,3 +52,31 @@ function fibonacci (retry) {
     }
     return fibonacci(retry - 1) + fibonacci(retry - 2);
 }
+
+function connectSSE(url, headAuthKey, headAuthValue) {
+    var headers = {};
+    headers[headAuthKey] = headAuthValue;
+    return new EventSourcePolyfill(url, {headers: headers, errorOnTimeout: false, checkActivity: false, heartbeatTimeout: 600000});
+}
+
+function unsubscribeEvent(url, headAuthKey, headAuthValue, filter) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, false, null, null);
+    xhr.setRequestHeader(headAuthKey, headAuthValue);
+    xhr.send(filter);
+    if (xhr.status === 401 || xhr.status === 403 || xhr.status === 404) {
+        close();
+    }
+    return xhr;
+}
+
+function subscribeEvent(url, headAuthKey, headAuthValue, filter) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, false, null, null);
+    xhr.setRequestHeader(headAuthKey, headAuthValue);
+    xhr.send(JSON.stringify(filter));
+    if (xhr.status === 401 || xhr.status === 403 || xhr.status === 404) {
+        close();
+    }
+    return xhr;
+}

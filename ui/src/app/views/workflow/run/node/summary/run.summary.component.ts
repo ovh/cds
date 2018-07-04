@@ -38,12 +38,6 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
         this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflow);
     }
 
-    getName(): string {
-        if (this.nodeRun && this.node) {
-            return this.node.pipeline.name + ' ' + this.nodeRun.num + '.' + this.nodeRun.subnumber;
-        }
-    }
-
     getAuthor(): string {
         if (this.nodeRun) {
             return '';

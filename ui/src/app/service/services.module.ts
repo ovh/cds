@@ -14,6 +14,7 @@ import {CanActivateAuthAdminRoute} from './auth/authenAdminRouteActivate';
 import {CanActivateAuthRoute} from './auth/authenRouteActivate';
 import {AuthentificationStore} from './auth/authentification.store';
 import {BroadcastService} from './broadcast/broadcast.service';
+import {BroadcastStore} from './broadcast/broadcast.store';
 import {DownloadService} from './download/download.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {EnvironmentService} from './environment/environment.service';
@@ -45,7 +46,6 @@ import {RepoManagerService} from './repomanager/project.repomanager.service';
 import {RequirementService} from './requirement/requirement.service';
 import {RequirementStore} from './requirement/requirement.store';
 import {RouterService} from './router/router.service';
-import {LastUpdateService} from './sse/lastupdate.sservice';
 import {TimelineService} from './timeline/timeline.service';
 import {TimelineStore} from './timeline/timeline.store';
 import {UserService} from './user/user.service';
@@ -55,7 +55,9 @@ import {WarningStore} from './warning/warning.store';
 import {WorkerModelService} from './worker-model/worker-model.service';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
 import {WorkflowCoreService} from './workflow/workflow.core.service';
+import {WorkflowEventStore} from './workflow/workflow.event.store';
 import {WorkflowService} from './workflow/workflow.service';
+import {WorkflowSidebarStore} from './workflow/workflow.sidebar.store';
 import {WorkflowStore} from './workflow/workflow.store';
 
 @NgModule({})
@@ -85,9 +87,9 @@ export class ServicesModule {
                 HookService,
                 ImportAsCodeService,
                 BroadcastService,
+                BroadcastStore,
                 KeyService,
                 LanguageStore,
-                LastUpdateService,
                 NavbarService,
                 NotificationService,
                 ParameterService,
@@ -115,6 +117,8 @@ export class ServicesModule {
                 WarningService,
                 WarningStore,
                 WorkerModelService,
+                WorkflowEventStore,
+                WorkflowSidebarStore,
                 WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
                     provide: HTTP_INTERCEPTORS,
@@ -154,10 +158,9 @@ export {
     GroupService,
     HookService,
     ImportAsCodeService,
-    BroadcastService,
+    BroadcastStore,
     KeyService,
     LanguageStore,
-    LastUpdateService,
     ParameterService,
     MonitoringService,
     PipelineResolver,
@@ -180,5 +183,7 @@ export {
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,
-    WorkflowCoreService
+    WorkflowCoreService,
+    WorkflowSidebarStore,
+    WorkflowEventStore
 }

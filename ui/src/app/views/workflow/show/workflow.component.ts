@@ -9,6 +9,7 @@ import {PermissionValue} from '../../../model/permission.model';
 import {Project} from '../../../model/project.model';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
+import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
@@ -56,7 +57,7 @@ export class WorkflowShowComponent {
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
                 private _translate: TranslateService, private _toast: ToastService,
-                private _workflowCoreService: WorkflowCoreService) {
+                private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -74,6 +75,7 @@ export class WorkflowShowComponent {
 
             this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
+            this._workflowEventStore.unselectAll();
             if (projkey && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
@@ -106,8 +108,6 @@ export class WorkflowShowComponent {
                 });
             }
         });
-
-        this._workflowCoreService.setCurrentWorkflowRun(null);
 
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {

@@ -1,4 +1,4 @@
-<div class="sidebar-node-edit">
+<div class="sidebar-node-edit" *ngIf="node">
     <h3 class="ui header ml5">
         <i class="settings icon"></i>
         <div class="content">
@@ -56,6 +56,7 @@
       </a>
     </div>
 </div>
+<div class="ui text active loader" *ngIf="!node">{{ 'workflow_loading' | translate }}</div>
 
 <ng-container *ngIf="project && node">
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>
@@ -87,7 +88,7 @@
 <ng-template let-context let-modal="modal" #nodeNameWarningModal>
     <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>
     <div class="content">
-        <ng-container *ngIf="nameWarning && nameWarning.hooks.length > 0">
+        <ng-container *ngIf="nameWarning && nameWarning.hooks && nameWarning.hooks.length > 0">
             <h3>{{'workflow_node_name_warning_modal_hooks' | translate }}</h3>
             <ul>
                 <li *ngFor="let h of nameWarning.hooks">

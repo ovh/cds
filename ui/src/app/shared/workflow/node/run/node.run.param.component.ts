@@ -14,7 +14,7 @@ import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/wor
 import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {ToastService} from '../../../toast/ToastService';
 declare var CodeMirror: any;
@@ -77,7 +77,7 @@ export class WorkflowNodeRunParamComponent {
     linkedToRepo = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
-                private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService,
+                private _workflowEventStore: WorkflowEventStore, private _translate: TranslateService, private _toast: ToastService,
                 private _appWorkflowService: ApplicationWorkflowService) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -320,7 +320,7 @@ export class WorkflowNodeRunParamComponent {
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 {queryParams: {subnum: wr.last_subnumber}});
             wr.force_update = true;
-            this._workflowCoreService.setCurrentWorkflowRun(wr);
+            this._workflowEventStore.setSelectedRun(wr);
         });
     }
 

@@ -1,18 +1,16 @@
-import {Component, NgZone, OnDestroy} from '@angular/core';
+import {Component} from '@angular/core';
 import {ActivatedRoute, NavigationExtras, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
-import {environment} from '../../../../../environments/environment';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
+import {Workflow} from '../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {RouterService} from '../../../../service/router/router.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {DurationService} from '../../../../shared/duration/duration.service';
-import {CDSWorker} from '../../../../shared/worker/worker';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -20,34 +18,33 @@ import {CDSWorker} from '../../../../shared/worker/worker';
     styleUrls: ['./node.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeRunComponent implements OnDestroy {
+export class WorkflowNodeRunComponent {
 
-    nodeRunWorker: CDSWorker;
     nodeRun: WorkflowNodeRun;
-    zone: NgZone;
-    runSubscription: Subscription;
+    subNodeRun: Subscription;
 
     // Context info
     project: Project;
     workflowName: string;
+
     duration: string;
 
     workflowRun: WorkflowRun;
+
     // History
     nodeRunsHistory = new Array<WorkflowNodeRun>();
-
     selectedTab: string;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
+    constructor(private _activatedRoute: ActivatedRoute,
                 private _router: Router, private _routerService: RouterService, private _workflowRunService: WorkflowRunService,
-                private _durationService: DurationService, private _workflowCoreService: WorkflowCoreService) {
-        this.zone = new NgZone({enableLongStackTrace: false});
+                private _durationService: DurationService,
+                private _workflowEventStore: WorkflowEventStore) {
 
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
-
+        // Tab selection
         this._activatedRoute.queryParams.subscribe(q => {
             if (q['tab']) {
                 this.selectedTab = q['tab'];
@@ -56,6 +53,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
             }
         });
 
+        // Get workflow name
         this.workflowName = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root)['workflowName'];
 
         this._activatedRoute.params.subscribe(params => {
@@ -65,50 +63,20 @@ export class WorkflowNodeRunComponent implements OnDestroy {
 
             if (this.project && this.project.key && this.workflowName && number && nodeRunId) {
                 // Get workflow Run
-                this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, number)
-                    .pipe(first())
-                    .subscribe(wr => {
-                        this.workflowRun = wr;
-                        this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
-                    });
-
-                this.startWorker(number, nodeRunId);
+                this.initWorkflowNodeRun(number, nodeRunId);
             }
         });
     }
 
-    ngOnDestroy(): void {
-        if (this.nodeRunWorker) {
-            this.nodeRunWorker.stop();
-        }
-    }
+    initWorkflowNodeRun(number, nodeRunId): void {
+        this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, number).pipe(first()).subscribe(wr => {
+            this.workflowRun = wr;
+            this._workflowEventStore.setSelectedRun(this.workflowRun);
 
-    startWorker(number: number, nodeRunId: number) {
-        if (this.nodeRunWorker) {
-            this.nodeRunWorker.stop();
-        }
-        if (this.runSubscription) {
-            this.runSubscription.unsubscribe();
-        }
-        // Start web worker
-        this.nodeRunWorker = new CDSWorker('./assets/worker/web/noderun.js');
-        this.nodeRunWorker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL,
-            key: this.project.key,
-            workflowName: this.workflowName,
-            number: number,
-            nodeRunId: nodeRunId
-        });
-
-        this.runSubscription = this.nodeRunWorker.response().subscribe(wrString => {
-            if (!wrString) {
-                return;
-            }
             let historyChecked = false;
-            this.zone.run(() => {
-                this.nodeRun = <WorkflowNodeRun>JSON.parse(wrString);
+            this.subNodeRun = this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
+                .pipe(first()).subscribe(nodeRun => {
+                this.nodeRun = nodeRun;
                 if (!historyChecked) {
                     historyChecked = true;
                     this._workflowRunService.nodeRunHistory(
@@ -118,14 +86,19 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                         .subscribe(nrs => this.nodeRunsHistory = nrs);
                 }
 
-                if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
-                    this.nodeRunWorker.stop();
-                    this.nodeRunWorker = undefined;
-                    this.runSubscription.unsubscribe();
-                    this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
-                }
+                this._workflowEventStore.setSelectedNodeRun(this.nodeRun);
+                this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
+                    this.nodeRun = wnr;
+                    if (this.nodeRun) {
+                        this._workflowEventStore.setSelectedNode(
+                            Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow),
+                            false);
+                    }
 
-                this._workflowCoreService.setCurrentNodeRun(this.nodeRun);
+                    if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
+                        this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
+                    }
+                });
             });
         });
     }

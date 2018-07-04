@@ -1,4 +1,4 @@
-<div class="sidebar-join-edit">
+<div class="sidebar-join-edit" *ngIf="join">
     <h3 class="ui header ml5">
         <i class="settings icon"></i>
         <div class="content">
@@ -17,6 +17,7 @@
       </a>
     </div>
 </div>
+<div class="ui text active loader" *ngIf="!join">{{ 'workflow_loading' | translate }}</div>
 <ng-container *ngIf="join">
     <app-workflow-join-delete [join]="join" [loading]="loading" (deleteEvent)="deleteJoin($event)" #workflowDeleteJoin></app-workflow-join-delete>
 </ng-container>

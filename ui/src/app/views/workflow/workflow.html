@@ -1,64 +1,43 @@
 <div class="CDSbreadcrumb">
-    <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name" [run]="number" [nodeName]="currentNodeName"></app-worflow-breadcrumb>
+    <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name"></app-worflow-breadcrumb>
     <div class="right floated" [title]="'favorite_add_btn' | translate">
         <div class="ui active small inline loader" *ngIf="loadingFav"></div>
         <i class="pointing star icon" *ngIf="!loadingFav" [class.pointing]="!loading" [ngClass]="{'animated infinite pulse' : loadingFav}" [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
     </div>
 </div>
-<aside class="sidebar scrollable" [class.expanded]="sidebarOpen">
+<aside class="sidebar scrollable expanded">
     <div class="floated right">
-        <button class="ui large icon button transparent close-button" (click)="closeEditSidebar()" *ngIf="selectedNode != null || selectedJoin != null || selectedNodeRunNum != null || selectedHook != null">
+        <button class="ui large icon button transparent close-button" (click)="changeToRunsMode()" *ngIf="sidebarMode !== sidebarModes.RUNS">
             <i class="black close icon"></i>
         </button>
     </div>
     <div class="sidebar-toggle">
-        <ng-container *ngIf="project != null && workflow != null && selectedNode == null && selectedJoin == null && selectedNodeRunNum == null && selectedHook == null">
-            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [open]="sidebarOpen" [runNumber]="number"></app-workflow-sidebar-run-list>
+        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
+            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-list>
         </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && (selectedNode != null || selectedJoin != null || selectedHook != null) && number == null && selectedNodeRunNum == null">
+        <ng-container *ngIf="project != null && workflow != null && (sidebarMode === sidebarModes.EDIT_HOOK || sidebarMode === sidebarModes.EDIT_JOIN ||sidebarMode === sidebarModes.EDIT_NODE)">
             <app-workflow-sidebar-edit
               [project]="project"
-              [workflow]="workflow"
-              [node]="selectedNode"
-              [join]="selectedJoin"
-              [hook]="selectedHook"
-              [open]="sidebarOpen">
+              [workflow]="workflow">
             </app-workflow-sidebar-edit>
         </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && selectedNodeId != null && selectedNodeRunId != null && selectedNodeRunNum != null && selectedHookId == null && number != null">
+        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_NODE">
             <app-workflow-sidebar-run-node
-                [project]="project"
-                [workflow]="workflow"
-                [runId]="selectedNodeRunId"
-                [runNumber]="selectedNodeRunNum"
-                [number]="number"
-                [nodeId]="selectedNodeId"
-                [open]="sidebarOpen">
+                [project]="project" [workflow]="workflow">
             </app-workflow-sidebar-run-node>
         </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && selectedNodeId == null && selectedNodeRunId == null && selectedNodeRunNum == null && selectedHookId != null && number != null">
+        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_HOOK">
           <app-workflow-sidebar-run-hook
-            [project]="project"
-            [open]="sidebarOpen"
-            [runNumber]="number"
-            [workflow]="workflow"
-            [hook]="selectedHook">
+            [project]="project">
         </app-workflow-sidebar-run-hook>
         </ng-container>
     </div>
 </aside>
-<section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && workflow != null">
-    <button class="ui small icon blue" [class.open]="displayToggleButton()" [class.button]="displayToggleButton()" (click)="toggleSidebar()"
-      [hidden]="!displayToggleButton()">
-        <i class="content icon"></i>
-    </button>
+<section class="content-wrap" *ngIf="!loading && workflow != null">
     <router-outlet></router-outlet>
     <app-workflow-sidebar-code
         [project]="project"
         [workflow]="workflow"
         [open]="asCodeEditorOpen">
     </app-workflow-sidebar-code>
-</section>
-<section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!workflow">
-    <div class="ui active text loader">{{ 'common_loading_workflow' | translate }}</div>
 </section>

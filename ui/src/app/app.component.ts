@@ -9,12 +9,12 @@ import {Observable} from 'rxjs';
 import {filter, map, mergeMap} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
+import {environment} from '../environments/environment';
 import {AppService} from './app.service';
-import {LastModification} from './model/lastupdate.model';
+import {Event} from './model/event.model';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
-import {LastUpdateService} from './service/sse/lastupdate.sservice';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
 import {ToastService} from './shared/toast/ToastService';
 import {CDSWorker} from './shared/worker/worker';
@@ -29,16 +29,16 @@ export class AppComponent  implements OnInit {
 
     open: boolean;
     isConnected = false;
-    warningWorker: CDSWorker;
     versionWorker: CDSWorker;
+    sseWorker: CDSWorker;
     zone: NgZone;
 
     currentVersion = 0;
     showUIUpdatedBanner = false;
 
-    warningWorkerSubscription: Subscription;
     languageSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
+    sseWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
 
@@ -49,7 +49,7 @@ export class AppComponent  implements OnInit {
                 private _activatedRoute: ActivatedRoute, private _titleService: Title,
                 private _authStore: AuthentificationStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService,
-                private _last: LastUpdateService, private _toastService: ToastService) {
+                private _toastService: ToastService) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.toasterConfig = this._toastService.getConfig();
         _translate.addLangs(['en', 'fr']);
@@ -73,10 +73,10 @@ export class AppComponent  implements OnInit {
         this._authStore.getUserlst().subscribe(user => {
             if (!user) {
                 this.isConnected = false;
-                this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
+                this.stopWorker(this.sseWorker, this.sseWorkerSubscription);
             } else {
                 this.isConnected = true;
-                this.startLastUpdateSSE();
+                this.startSSE();
             }
             this.startVersionWorker();
         });
@@ -101,6 +101,7 @@ export class AppComponent  implements OnInit {
                     route = route.firstChild;
                     Object.assign(params, route.snapshot.params, route.snapshot.queryParams);
                 }
+                this._appService.updateRoute(params);
                 return { route, params: Observable.of(params) };
             }))
             .pipe(filter((event) => event.route.outlet === 'primary'))
@@ -110,7 +111,7 @@ export class AppComponent  implements OnInit {
                     return;
                 }
                 if (routeData[0]['title']) {
-                    let title = format(routeData[0]['title'], routeData[1])
+                    let title = format(routeData[0]['title'], routeData[1]);
                     this._titleService.setTitle(title);
                 } else {
                     this._titleService.setTitle('CDS');
@@ -127,13 +128,33 @@ export class AppComponent  implements OnInit {
         }
     }
 
-    startLastUpdateSSE(): void {
-        this._last.getLastUpdate().subscribe(msg => {
-            if (msg === 'ACK') {
+    startSSE(): void {
+        let authKey: string;
+        let authValue: string;
+        // ADD user AUTH
+        let sessionToken = this._authStore.getSessionToken();
+        if (sessionToken) {
+            authKey = this._authStore.localStorageSessionKey;
+            authValue = sessionToken;
+        } else {
+            authKey = 'Authorization';
+            authValue = 'Basic ' + this._authStore.getUser().token;
+        }
+        this.sseWorker = new CDSWorker('./assets/worker/webWorker.js');
+        this.sseWorker.start({
+            headAuthKey: authKey,
+            headAuthValue: authValue,
+            urlSubscribe: environment.apiURL + '/events/subscribe',
+            urlUnsubscribe: environment.apiURL + 'events/unsubscribe',
+            sseURL: environment.apiURL + '/events'
+        });
+        this.sseWorker.response().subscribe(e => {
+            if (e == null) {
                 return;
             }
-            let lastUpdateEvent: LastModification = JSON.parse(msg);
-            this._appService.updateCache(lastUpdateEvent);
+            this.zone.run(() => {
+                this._appService.manageEvent(<Event>e);
+            });
         });
     }
 

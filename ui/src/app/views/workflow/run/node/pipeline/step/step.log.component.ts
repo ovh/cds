@@ -181,6 +181,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.stepStatus || PipelineStatus.neverRun(this.currentStatus)) {
             return;
         }
+
         if (this.stepStatus.start && this.stepStatus.start.indexOf('0001-01-01') !== -1) {
             return;
         }
@@ -188,11 +189,13 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
         if (this.stepStatus.done && this.stepStatus.done.indexOf('0001-01-01') !== -1) {
             this.doneExec = new Date();
-        } else {
+        } else if (this.stepStatus.done) {
             this.doneExec = new Date(this.stepStatus.done);
         }
 
-        this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
+        if (this.doneExec) {
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
+        }
     }
 
     toggleLogs() {
