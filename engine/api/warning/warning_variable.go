@@ -1,14 +1,80 @@
 package warning
 
 import (
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+var projVarRegexp *regexp.Regexp
+
+func Init() error {
+	var err error
+	projVarRegexp, err = regexp.Compile(`cds\.proj\.[a-zA-Z0-9\-_]+`)
+	if err != nil {
+		return sdk.WrapError(err, "warning.Init> Unable to compile project variable regexp")
+	}
+	return nil
+}
+
+func checkContentValueToAddUnusedWarning(db gorp.SqlExecutor, projKey string, varValue string, varPrefix string, reg *regexp.Regexp, warName string) error {
+	// check if value contains a project variable
+	if strings.Contains(varValue, varPrefix) {
+		variables := reg.FindAllString(varValue, -1)
+		for _, v := range variables {
+			switch varPrefix {
+			case "cds.proj":
+				if err := checkUnusedProjectVariable(db, projKey, v, warName); err != nil {
+					return sdk.WrapError(err, "checkContentValueToAddUnusedWarning> Unable to check porject var for unused warning")
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func checkContentValueToRemoveUnusedWarning(db gorp.SqlExecutor, projKey string, varValue string, varPrefix string, reg *regexp.Regexp, warName string) error {
+	// check if value contains a project variable
+	if strings.Contains(varValue, varPrefix) {
+		// extract all project var
+		variables := reg.FindAllString(varValue, -1)
+		for _, v := range variables {
+			if err := removeProjectWarning(db, warName, v, projKey); err != nil {
+				return sdk.WrapError(err, "checkContentValueToRemoveUnusedWarning> Unable to remove warning from %s", warName)
+			}
+		}
+	}
+	return nil
+}
+
+func checkUnusedProjectVariable(db gorp.SqlExecutor, projectKey string, varName string, warnName string) error {
+	ws, envs, apps, pips, pipJobs := variableIsUsed(db, projectKey, varName)
+	if len(ws) == 0 && len(envs) == 0 && len(apps) == 0 && len(pips) == 0 && len(pipJobs) == 0 {
+		w := sdk.Warning{
+			Key:     projectKey,
+			Element: varName,
+			Created: time.Now(),
+			Type:    warnName,
+			MessageParams: map[string]string{
+				"VarName":    varName,
+				"ProjectKey": projectKey,
+			},
+		}
+		if err := Insert(db, w); err != nil {
+			return sdk.WrapError(err, "checkProjectVariable> Unable to Insert warning")
+		}
+	}
+	return nil
+}
 
 func variableIsUsed(db gorp.SqlExecutor, key string, varName string) ([]workflow.CountVarInWorkflowData, []string, []string, []string, []pipeline.CountInPipelineData) {
 

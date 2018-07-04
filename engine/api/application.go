@@ -342,6 +342,7 @@ func (api *API) getApplicationHandler() Handler {
 	}
 }
 
+// loadApplicationUsage return usage of application
 func loadApplicationUsage(db gorp.SqlExecutor, projKey, appName string) (sdk.Usage, error) {
 	usage := sdk.Usage{}
 

@@ -1,8 +1,11 @@
 package sdk
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -197,6 +200,7 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 //WorkflowNodeJobRun represents an job to be run
 //easyjson:json
 type WorkflowNodeJobRun struct {
+	ProjectID              int64              `json:"project_id" db:"project_id"`
 	ID                     int64              `json:"id" db:"id"`
 	WorkflowNodeRunID      int64              `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
 	Job                    ExecutedJob        `json:"job" db:"-"`
@@ -287,4 +291,60 @@ func (w *WorkflowNodeRunArtifact) GetPath() string {
 	container = url.QueryEscape(container)
 	container = strings.Replace(container, "/", "-", -1)
 	return container
+}
+
+const workflowNodeRunReport = `{{- if .Stages }} 
+CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+{{- range $s := .Stages}}
+{{- if $s.RunJobs }}
+* {{$s.Name}}
+{{- range $j := $s.RunJobs}}
+  * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
+
+{{- if .Tests }} 
+{{- if gt .Tests.TotalKO 0}}
+Unit Tests Report
+
+{{- range $ts := .Tests.TestSuites}}
+* {{ $ts.Name }}
+{{range $tc := $ts.TestCases}}
+  {{- if or ($tc.Errors) ($tc.Failures) }}  * {{ $tc.Name }} ✘ {{- end}}
+{{end}}
+{{- end}}
+{{- end}}
+{{- end}}
+`
+
+func (nr WorkflowNodeRun) Report() (string, error) {
+	t := template.New("")
+	t, err := t.Parse(workflowNodeRunReport)
+	if err != nil {
+		return "", err
+	}
+	out := new(bytes.Buffer)
+	errE := t.Execute(out, nr)
+	return out.String(), errE
+}
+
+type WorkflowQueue []WorkflowNodeJobRun
+
+func (q WorkflowQueue) Sort() {
+	//Count the number of WorkflowNodeJobRun per project_id
+	n := make(map[int64]int, len(q))
+	for _, j := range q {
+		nb := n[j.ProjectID]
+		nb++
+		n[j.ProjectID] = nb
+	}
+
+	sort.Slice(q, func(i, j int) bool {
+		p1 := n[q[i].ProjectID]
+		p2 := n[q[j].ProjectID]
+		return p1 < p2
+	})
+
 }

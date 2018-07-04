@@ -19,6 +19,7 @@ func (warn missingProjectPermissionEnvWarning) events() []string {
 	return []string{
 		fmt.Sprintf("%T", sdk.EventProjectPermissionAdd{}),
 		fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}),
+		fmt.Sprintf("%T", sdk.EventEnvironmentPermissionDelete{}),
 	}
 }
 
@@ -63,7 +64,16 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 				return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to Insert environment warning %s", warn.name())
 			}
 		}
+	case fmt.Sprintf("%T", sdk.EventEnvironmentPermissionDelete{}):
+		payload, err := e.ToEventEnvironmentPermissionDelete()
+		if err != nil {
+			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute.EventEnvironmentPermissionDelete> Unable to get payload")
+		}
+		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
+			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute.EventEnvironmentPermissionDelete> Unable to remove warning")
+		}
 	}
+
 	return nil
 }
 
@@ -75,6 +85,7 @@ func (warn missingProjectPermissionWorkflowWarning) events() []string {
 	return []string{
 		fmt.Sprintf("%T", sdk.EventProjectPermissionAdd{}),
 		fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}),
+		fmt.Sprintf("%T", sdk.EventWorkflowPermissionDelete{}),
 	}
 }
 
@@ -117,6 +128,14 @@ func (warn missingProjectPermissionWorkflowWarning) compute(db gorp.SqlExecutor,
 			if err := Insert(db, w); err != nil {
 				return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to Insert warning %s", warn.name())
 			}
+		}
+	case fmt.Sprintf("%T", sdk.EventWorkflowPermissionDelete{}):
+		payload, err := e.ToEventWorkflowPermissionDelete()
+		if err != nil {
+			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute.EventWorkflowPermissionDelete> Unable to get payload")
+		}
+		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
+			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute.EventWorkflowPermissionDelete> Unable to remove warning")
 		}
 	}
 	return nil

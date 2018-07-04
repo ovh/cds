@@ -31,7 +31,7 @@ func (api *API) getRequirementTypeValuesHandler() Handler {
 			return WriteJSON(w, req.Values(), http.StatusOK)
 
 		case sdk.ModelRequirement:
-			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), getUser(ctx))
+			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getUser(ctx))
 			if err != nil {
 				return sdk.WrapError(err, "getRequirementTypeValuesHandler> Cannot load worker models")
 			}

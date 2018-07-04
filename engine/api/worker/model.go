@@ -164,7 +164,13 @@ func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, erro
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
-func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
+func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User) ([]sdk.Model, error) {
+	key := cache.Key("api:workermodels", user.Username)
+	models := []sdk.Model{}
+	if store.Get(key, &models) {
+		return models, nil
+	}
+
 	wms := []dbResultWMS{}
 	if user.Admin {
 		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, modelColumns)
@@ -184,7 +190,50 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, e
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
 		}
 	}
-	return scanWorkerModels(db, wms)
+	var err error
+	models, err = scanWorkerModels(db, wms)
+	if err != nil {
+		return nil, sdk.WrapError(err, "LoadWorkerModelsByUser")
+	}
+
+	store.SetWithTTL(key, models, 30)
+	return models, nil
+}
+
+// LoadWorkerModelsUsableOnGroup returns worker models for a group
+func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
+	key := cache.Key("api:workermodels:bygroup", fmt.Sprintf("%d", groupID))
+
+	ms := []WorkerModel{}
+	var err error
+	models := []sdk.Model{}
+	if store.Get(key, &models) {
+		return models, nil
+	}
+
+	// note about restricted field on worker model:
+	// if restricted = true, worker model can be launched by a user hatchery only
+	// so, a 'shared.infra' hatchery need all worker models, with restricted = false
+
+	if sharedinfraGroupID == groupID { // shared infra, return all models, excepts restricted
+		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND restricted = FALSE ORDER by name`)
+	} else { // not shared infra, returns only selected worker models
+		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND group_id = $1 ORDER by name`, groupID)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range ms {
+		if err := ms[i].PostSelect(db); err != nil {
+			return nil, err
+		}
+		models = append(models, sdk.Model(ms[i]))
+	}
+
+	store.SetWithTTL(key, models, 30)
+
+	return models, nil
 }
 
 // LoadWorkerModelsByUserAndBinary returns worker models list according to user's groups and binary capability

@@ -159,13 +159,6 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 		if n.Context.Application.RepositoryStrategy.User != "" {
 			vars["git.http.user"] = n.Context.Application.RepositoryStrategy.User
 		}
-
-		if _, ok := vars["git.branch"]; !ok && n.Context.Application.RepositoryStrategy.Branch != "" {
-			vars["git.branch"] = n.Context.Application.RepositoryStrategy.Branch
-		}
-		if _, ok := vars["git.default_branch"]; !ok && n.Context.Application.RepositoryStrategy.DefaultBranch != "" {
-			vars["git.default_branch"] = n.Context.Application.RepositoryStrategy.Branch
-		}
 	} else {
 		// remove vcs strategy variable
 		delete(vars, "git.ssh.key")

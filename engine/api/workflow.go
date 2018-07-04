@@ -292,7 +292,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Delete(tx, api.Cache, p, oldW, getUser(ctx)); err != nil {
+		if err := workflow.MarkAsDelete(tx, oldW); err != nil {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 
@@ -305,6 +305,13 @@ func (api *API) deleteWorkflowHandler() Handler {
 		}
 
 		event.PublishWorkflowDelete(key, *oldW, getUser(ctx))
+
+		sdk.GoRoutine("deleteWorkflowHandler",
+			func() {
+				if err := workflow.Delete(api.mustDB(), api.Cache, p, oldW); err != nil {
+					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
+				}
+			})
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}

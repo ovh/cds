@@ -237,6 +237,9 @@ export interface ServiceLog {
     val: string;
     start: LogDate;
     last_modified: LogDate;
+
+    // UI
+    logsSplitted: Array<string>;
 }
 
 export class LogDate {

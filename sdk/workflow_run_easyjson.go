@@ -36,6 +36,8 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *WorkflowNod
 			continue
 		}
 		switch key {
+		case "project_id":
+			out.ProjectID = int64(in.Int64())
 		case "id":
 			out.ID = int64(in.Int64())
 		case "workflow_node_run_id":
@@ -193,6 +195,16 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in WorkflowNo
 	out.RawByte('{')
 	first := true
 	_ = first
+	{
+		const prefix string = ",\"project_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ProjectID))
+	}
 	{
 		const prefix string = ",\"id\":"
 		if first {
@@ -1766,7 +1778,7 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk2(out *jwriter.Writer, in Parameter
 		}
 		out.String(string(in.Value))
 	}
-	{
+	if in.Description != "" {
 		const prefix string = ",\"description\":"
 		if first {
 			first = false

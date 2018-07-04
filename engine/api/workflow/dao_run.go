@@ -522,7 +522,6 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	if err != nil {
 		return 0, sdk.WrapError(err, "nextRunNumber")
 	}
-	log.Debug("nextRunNumber> %s/%s %d", w.ProjectKey, w.Name, i)
 	return int64(i), nil
 }
 
@@ -649,17 +648,6 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id = ANY(string_to_array($1, ',')::bigint[])`
 	if _, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ",")); err != nil {
 		log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
-		return err
-	}
-	return nil
-}
-
-// deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
-func deleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
-	query := `DELETE FROM workflow_run WHERE workflow_run.id IN (SELECT id FROM workflow_run WHERE to_delete = true LIMIT 30)`
-
-	if _, err := db.Exec(query); err != nil {
-		log.Warning("deleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
 		return err
 	}
 	return nil

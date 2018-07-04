@@ -39,6 +39,11 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	app.Name = eapp.Name
 	app.VCSServer = eapp.VCSServer
 	app.RepositoryFullname = eapp.RepositoryName
+	if oldApp != nil {
+		app.WorkflowMigration = oldApp.WorkflowMigration
+	} else {
+		app.WorkflowMigration = "DONE"
+	}
 
 	//Inherit permissions from project
 	if len(eapp.Permissions) == 0 {
@@ -120,8 +125,6 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		User:           eapp.VCSUser,
 		SSHKey:         eapp.VCSSSHKey,
 		PGPKey:         eapp.VCSPGPKey,
-		DefaultBranch:  eapp.VCSDefaultBranch,
-		Branch:         eapp.VCSBranch,
 	}
 	if app.RepositoryStrategy.ConnectionType == "" {
 		app.RepositoryStrategy.ConnectionType = "https"

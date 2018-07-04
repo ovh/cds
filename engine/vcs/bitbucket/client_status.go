@@ -55,7 +55,7 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to marshall status")
 	}
-	return b.do("POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil)
+	return b.do("POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil)
 }
 
 func (b *bitbucketClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
@@ -70,7 +70,7 @@ func (b *bitbucketClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommit
 		}
 
 		var response ResponseStatus
-		if err := b.do("GET", "build-status", path, nil, nil, &response); err != nil {
+		if err := b.do("GET", "build-status", path, nil, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> Repos> Unable to get statuses")
 		}
 

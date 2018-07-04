@@ -47,6 +47,5 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 	api.InitRouter()
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)
-	url.Path = url.Path
 	return api, url.String(), ts.Close
 }

@@ -105,6 +105,7 @@ type workerModelFile struct {
 	Type          string            `json:"type" yaml:"type"`
 	Flavor        string            `json:"flavor,omitempty" yaml:"flavor,omitempty"`
 	Envs          map[string]string `json:"envs,omitempty" yaml:"envs,omitempty"`
+	PatternName   string            `json:"pattern_name,omitempty" yaml:"pattern_name,omitempty"`
 	Shell         string            `json:"shell,omitempty" yaml:"shell,omitempty"`
 	PreCmd        string            `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
 	Cmd           string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`
@@ -158,12 +159,15 @@ func workerModelImportRun(c cli.Values) error {
 			modelDocker.Shell = modelInfos.Shell
 			modelDocker.Image = modelInfos.Image
 			modelDocker.Cmd = modelInfos.Cmd
-			if modelDocker.Shell == "" {
-				sdk.Exit("Error: main shell command not provided\n")
+			if modelInfos.PatternName == "" {
+				if modelDocker.Shell == "" {
+					sdk.Exit("Error: main shell command not provided\n")
+				}
+				if modelDocker.Cmd == "" {
+					sdk.Exit("Error: main worker command not provided\n")
+				}
 			}
-			if modelDocker.Cmd == "" {
-				sdk.Exit("Error: main worker command not provided\n")
-			}
+
 			break
 		case sdk.Openstack:
 			t = sdk.Openstack
@@ -180,8 +184,10 @@ func workerModelImportRun(c cli.Values) error {
 			if d.Flavor == "" {
 				return fmt.Errorf("Error: Openstack flavor not provided")
 			}
-			if d.Cmd == "" {
-				return fmt.Errorf("Error: Openstack command not provided")
+			if modelInfos.PatternName == "" {
+				if d.Cmd == "" {
+					return fmt.Errorf("Error: Openstack command not provided")
+				}
 			}
 			modelVM = d
 			break
@@ -197,9 +203,10 @@ func workerModelImportRun(c cli.Values) error {
 			if d.Image == "" {
 				return fmt.Errorf("Error: VSphere image not provided")
 			}
-
-			if d.Cmd == "" {
-				return fmt.Errorf("Error: VSphere main worker command empty")
+			if modelInfos.PatternName == "" {
+				if d.Cmd == "" {
+					return fmt.Errorf("Error: VSphere main worker command empty")
+				}
 			}
 
 			modelVM = d
@@ -223,7 +230,7 @@ func workerModelImportRun(c cli.Values) error {
 
 		if force {
 			if existingWm, err := client.WorkerModel(modelInfos.Name); err != nil {
-				if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errAdd != nil {
+				if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, modelInfos.PatternName, &modelDocker, &modelVM, g.ID); errAdd != nil {
 					return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
 				}
 				fmt.Printf("Worker model %s added with success", modelInfos.Name)
@@ -234,7 +241,7 @@ func workerModelImportRun(c cli.Values) error {
 				fmt.Printf("Worker model %s updated with success", modelInfos.Name)
 			}
 		} else {
-			if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errAdd != nil {
+			if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, modelInfos.PatternName, &modelDocker, &modelVM, g.ID); errAdd != nil {
 				return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
 			}
 			fmt.Printf("Worker model %s added with success", modelInfos.Name)

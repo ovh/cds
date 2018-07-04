@@ -283,7 +283,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrBroadcastNotFound.ID:                      "Broadcast not found",
 	ErrInvalidPatternModel.ID:                    "Invalid worker model pattern: name, type and main command are mandatory",
 	ErrWorkerModelNoAdmin.ID:                     "Forbidden: you are neither a CDS administrator or the administrator for the group in which you want to create the worker model",
-	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scrips. If you have specific needs, please contact a CDS administrator",
+	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scripts. If you have specific needs, please contact a CDS administrator",
 	ErrJobNotBooked.ID:                           "Job already released",
 	ErrUserNotFound.ID:                           "User not found",
 }

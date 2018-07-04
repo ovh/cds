@@ -38,6 +38,7 @@ type VCSAuthorizedClient interface {
 
 	// PullRequests
 	PullRequests(string) ([]VCSPullRequest, error)
+	PullRequestComment(string, int, string) error
 
 	//Hooks
 	CreateHook(repo string, hook *VCSHook) error
@@ -62,6 +63,9 @@ type VCSAuthorizedClient interface {
 
 	// Forks
 	ListForks(repo string) ([]VCSRepo, error)
+
+	// Permissions
+	GrantReadPermission(repo string) error
 }
 
 // GetDefaultBranch return the default branch

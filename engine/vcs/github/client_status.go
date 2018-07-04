@@ -69,7 +69,7 @@ func (g *githubClient) SetStatus(event sdk.Event) error {
 	}
 	buf := bytes.NewBuffer(b)
 
-	res, err := g.post(path, "application/json", buf, false)
+	res, err := g.post(path, "application/json", buf, nil)
 	if err != nil {
 		return sdk.WrapError(err, "github.SetStatus> Unable to post status")
 	}

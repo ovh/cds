@@ -3,7 +3,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
-import {Pipeline} from '../../../../model/pipeline.model';
+import {Pipeline, PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
 import {PipelineService} from '../../../../service/pipeline/pipeline.service';
@@ -48,6 +48,7 @@ export class PipelineAsCodeEditorComponent {
     updated = false;
     loading = false;
     loadingGet = true;
+    statusEnum = PipelineStatus;
 
     constructor(
         private _pipCoreService: PipelineCoreService,

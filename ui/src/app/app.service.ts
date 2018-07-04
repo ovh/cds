@@ -27,6 +27,7 @@ export class AppService {
                 private _appStore: ApplicationStore, private _notif: NotificationService, private _authStore: AuthentificationStore,
                 private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
                 private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _timelineStore: TimelineStore) {
+
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
 

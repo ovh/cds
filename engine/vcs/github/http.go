@@ -118,8 +118,16 @@ func withETag(c *githubClient, req *http.Request, path string) {
 }
 func withoutETag(c *githubClient, req *http.Request, path string) {}
 
-func (c *githubClient) post(path string, bodyType string, body io.Reader, skipDefaultBaseURL bool) (*http.Response, error) {
-	if !skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
+type postOptions struct {
+	skipDefaultBaseURL bool
+	asUser             bool
+}
+
+func (c *githubClient) post(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
+	if opts == nil {
+		opts = new(postOptions)
+	}
+	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
 		path = APIURL + path
 	}
 
@@ -131,7 +139,64 @@ func (c *githubClient) post(path string, bodyType string, body io.Reader, skipDe
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+	if opts.asUser && c.token != "" {
+		req.SetBasicAuth(c.username, c.token)
+	} else {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+	}
+
+	log.Debug("Github API>> Request URL %s", req.URL.String())
+
+	return httpClient.Do(req)
+}
+
+func (c *githubClient) patch(path string, opts *postOptions) (*http.Response, error) {
+	if opts == nil {
+		opts = new(postOptions)
+	}
+	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
+		path = APIURL + path
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
+	req.Header.Add("Accept", "application/json")
+	if opts.asUser && c.token != "" {
+		req.SetBasicAuth(c.username, c.token)
+	} else {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+	}
+
+	log.Debug("Github API>> Request URL %s", req.URL.String())
+
+	return httpClient.Do(req)
+}
+
+func (c *githubClient) put(path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
+	if opts == nil {
+		opts = new(postOptions)
+	}
+	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
+		path = APIURL + path
+	}
+
+	req, err := http.NewRequest(http.MethodPut, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", bodyType)
+	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
+	req.Header.Add("Accept", "application/json")
+	if opts.asUser && c.token != "" {
+		req.SetBasicAuth(c.username, c.token)
+	} else {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+	}
 
 	log.Debug("Github API>> Request URL %s", req.URL.String())
 

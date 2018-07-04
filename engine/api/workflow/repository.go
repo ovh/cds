@@ -77,7 +77,7 @@ func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.W
 	}
 	opt := &PushOption{
 		VCSServer:          ope.VCSServer,
-		RepositoryName:     ope.RepositoryInfo.Name,
+		RepositoryName:     ope.RepoFullName,
 		RepositoryStrategy: ope.RepositoryStrategy,
 		Branch:             ope.Setup.Checkout.Branch,
 		FromRepository:     ope.RepositoryInfo.FetchURL,

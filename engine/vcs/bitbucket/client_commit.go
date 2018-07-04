@@ -37,7 +37,10 @@ func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSC
 				params.Set("start", fmt.Sprintf("%d", response.NextPageStart))
 			}
 
-			if err := b.do("GET", "core", path, params, nil, &response); err != nil {
+			if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
+				if err == sdk.ErrNotFound {
+					return nil, nil
+				}
 				return nil, sdk.WrapError(err, "vcs> bitbucket> commits> Unable to get commits %s", path)
 			}
 
@@ -105,7 +108,7 @@ func (b *bitbucketClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 
 	sc := Commit{}
 	path := fmt.Sprintf("/projects/%s/repos/%s/commits/%s", project, slug, hash)
-	if err := b.do("GET", "core", path, nil, nil, &sc); err != nil {
+	if err := b.do("GET", "core", path, nil, nil, &sc, nil); err != nil {
 		return commit, sdk.WrapError(err, "vcs> bitbucket> commits> Unable to get commit %s", path)
 	}
 

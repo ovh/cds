@@ -37,12 +37,13 @@ type CommonConfiguration struct {
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
 	} `toml:"api"`
 	Provision struct {
-		Disabled          bool `toml:"disabled" default:"false" comment:"Disabled provisioning. Format:true or false"`
-		Frequency         int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds"`
-		MaxWorker         int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers"`
-		GraceTimeQueued   int  `toml:"graceTimeQueued" default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`
-		RegisterFrequency int  `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds"`
-		WorkerLogsOptions struct {
+		Disabled                  bool `toml:"disabled" default:"false" comment:"Disabled provisioning. Format:true or false"`
+		Frequency                 int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds"`
+		MaxWorker                 int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers"`
+		MaxConcurrentProvisioning int  `toml:"maxConcurrentProvisioning" default:"10" comment:"Maximum allowed simultaneous workers provisioning"`
+		GraceTimeQueued           int  `toml:"graceTimeQueued" default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`
+		RegisterFrequency         int  `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds"`
+		WorkerLogsOptions         struct {
 			Graylog struct {
 				Host       string `toml:"host" comment:"Example: thot.ovh.com"`
 				Port       int    `toml:"port" comment:"Example: 12202"`
@@ -130,8 +131,13 @@ func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID i
 		return false, false, nil
 	}
 
+	maxProvisionning := h.Configuration().Provision.MaxConcurrentProvisioning
+	if maxProvisionning == 0 {
+		maxProvisionning = 10
+	}
+
 	n := atomic.LoadInt64(nRoutines)
-	if n > 10 {
+	if int(n) > maxProvisionning {
 		log.Info("too many routines in same time %d", n)
 		return false, false, nil
 	}
