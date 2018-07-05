@@ -261,6 +261,9 @@ func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
 }
 
 func (b *eventsBroker) handleEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscribe) {
+	if strings.HasPrefix(event.EventType, "sdk.EventAction") {
+		subscriber.Queue <- eventS
+	}
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
 		if subscriber.User.Admin || permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
 			subscriber.Queue <- eventS
