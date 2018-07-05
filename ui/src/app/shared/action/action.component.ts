@@ -1,12 +1,14 @@
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {cloneDeep} from 'lodash';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
+import {Subscription} from 'rxjs/Subscription';
 import {Action} from '../../model/action.model';
 import {Parameter} from '../../model/parameter.model';
 import {Pipeline} from '../../model/pipeline.model';
 import {Project} from '../../model/project.model';
 import {Requirement} from '../../model/requirement.model';
 import {ActionStore} from '../../service/action/action.store';
+import {AutoUnsubscribe} from '../decorator/autoUnsubscribe';
 import {ParameterEvent} from '../parameter/parameter.event.model';
 import {RequirementEvent} from '../requirements/requirement.event.model';
 import {SharedService} from '../shared.service';
@@ -18,6 +20,7 @@ import {StepEvent} from './step/step.event';
     templateUrl: './action.html',
     styleUrls: ['./action.scss']
 })
+@AutoUnsubscribe()
 export class ActionComponent implements OnDestroy, OnInit {
     editableAction: Action;
     steps: Array<Action> = new Array<Action>();
@@ -47,6 +50,9 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     collapsed = true;
     configRequirements: {disableModel?: boolean, disableHostname?: boolean} = {};
+
+    actionSub: Subscription;
+
     constructor(private sharedService: SharedService, private _actionStore: ActionStore, private dragulaService: DragulaService) {
         dragulaService.setOptions('bag-nonfinal', {
             moves: function (el, source, handle) {
@@ -65,7 +71,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        this._actionStore.getActions().subscribe(mapActions => {
+        this.actionSub = this._actionStore.getActions().subscribe(mapActions => {
             this.publicActions = mapActions.toArray().filter((action) => action.name !== this.editableAction.name);
         });
     }
