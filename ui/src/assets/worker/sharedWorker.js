@@ -3,7 +3,8 @@ importScripts('./eventsource.js');
 
 var sse;
 const connections = [];
-
+var lastEventData;
+var nbEvents = 0;
 onconnect = function(e) {
     var port = e.ports[0];
     connections.push(port);
@@ -16,7 +17,8 @@ onconnect = function(e) {
                     return;
                 }
                 let jsonEvent = JSON.parse(evt.data);
-
+                nbEvents++;
+                lastEventData = new Date();
                 connections.forEach(p => {
                    p.postMessage(jsonEvent);
                 });
@@ -25,3 +27,8 @@ onconnect = function(e) {
         }
     };
 };
+
+setInterval(() => {
+    console.log('Last Event: ', lastEventData);
+    console.log('Total events: ', nbEvents);
+}, 10000);
