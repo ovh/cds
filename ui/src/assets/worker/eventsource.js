@@ -206,202 +206,231 @@ var EventSourcePolyfill = (function (global) {
         }
 
         function onEvent (type) {
-            var responseText = "";
-            if (currentState === OPEN || currentState === CONNECTING) {
-                try {
-                    responseText = xhr.responseText;
-                } catch (error) {
-                    // IE 8 - 9 with XMLHttpRequest
+            if (xhr.status >= 500) {
+                setTimeout(function () {
+                    if (errorOnTimeout) {
+                        throw new Error("Reconnecting");
+                    }
+                    return;
+                }, 0);
+                currentState = WAITING;
+                xhr.abort();
+                if (timeout !== 0) {
+                    clearTimeout(timeout);
+                    timeout = 0;
                 }
-            }
+                if (retry > initialRetry * 16) {
+                    retry = initialRetry * 16;
+                }
+                if (retry > MAXIMUM_DURATION) {
+                    retry = MAXIMUM_DURATION;
+                }
+                timeout = setTimeout(onTimeout, retry);
+                retry = retry * 2 + 1;
 
-            var event = undefined;
-            var isWrongStatusCodeOrContentType = false;
-
-            if (currentState === CONNECTING) {
-                var status = 0;
-                var statusText = "";
-                var contentType = undefined;
-                if (!("contentType" in xhr)) {
-                    try {
-                        status = xhr.status;
-                        statusText = xhr.statusText;
-                        contentType = xhr.getResponseHeader("Content-Type");
-                    } catch (error) {
-                        // https://bugs.webkit.org/show_bug.cgi?id=29121
-                        status = 0;
-                        statusText = "";
-                        contentType = undefined;
-                        // FF < 14, WebKit
-                        // https://bugs.webkit.org/show_bug.cgi?id=29658
-                        // https://bugs.webkit.org/show_bug.cgi?id=77854
-                    }
-                } else if (type !== "" && type !== "error") {
-                    status = 200;
-                    statusText = "OK";
-                    contentType = xhr.contentType;
-                }
-                if (contentType == undefined) {
-                    contentType = "";
-                }
-                if (status === 0 && statusText === "" && type === "load" && responseText !== "") {
-                    status = 200;
-                    statusText = "OK";
-                    if (contentType === "") { // Opera 12
-                        var tmp = (/^data\:([^,]*?)(?:;base64)?,[\S]*$/).exec(url);
-                        if (tmp != undefined) {
-                            contentType = tmp[1];
-                        }
-                    }
-                }
-                if (status === 200 && contentTypeRegExp.test(contentType)) {
-                    currentState = OPEN;
-                    wasActivity = true;
-                    retry = initialRetry;
-                    that.readyState = OPEN;
-                    event = new Event("open");
-                    that.dispatchEvent(event);
-                    fire(that, that.onopen, event);
-                    if (currentState === CLOSED) {
-                        return;
-                    }
-                } else {
-                    // Opera 12
-                    if (status !== 0 && (status !== 200 || contentType !== "")) {
-                        var message = "";
-                        if (status !== 200) {
-                            message = "EventSource's response has a status " + status + " " + statusText.replace(/\s+/g, " ") + " that is not 200. Aborting the connection.";
-                        } else {
-                            message = "EventSource's response has a Content-Type specifying an unsupported type: " + contentType.replace(/\s+/g, " ") + ". Aborting the connection.";
-                        }
-                        setTimeout(function () {
-                            throw new Error(message);
-                        }, 0);
-                        isWrongStatusCodeOrContentType = true;
-                    }
-                }
-            }
-
-            if (currentState === OPEN) {
-                if (responseText.length > charOffset) {
-                    wasActivity = true;
-                }
-                var i = charOffset - 1;
-                var length = responseText.length;
-                var c = "\n";
-                while (++i < length) {
-                    c = responseText.charAt(i);
-                    if (state === AFTER_CR && c === "\n") {
-                        state = FIELD_START;
-                    } else {
-                        if (state === AFTER_CR) {
-                            state = FIELD_START;
-                        }
-                        if (c === "\r" || c === "\n") {
-                            if (field === "data") {
-                                dataBuffer.push(value);
-                            } else if (field === "id") {
-                                lastEventIdBuffer = value;
-                            } else if (field === "event") {
-                                eventTypeBuffer = value;
-                            } else if (field === "retry") {
-                                initialRetry = getDuration(Number(value), initialRetry);
-                                retry = initialRetry;
-                            } else if (field === "heartbeatTimeout") {
-                                heartbeatTimeout = getDuration(Number(value), heartbeatTimeout);
-                                if (timeout !== 0) {
-                                    clearTimeout(timeout);
-                                    timeout = setTimeout(onTimeout, heartbeatTimeout);
-                                }
-                            }
-                            value = "";
-                            field = "";
-                            if (state === FIELD_START) {
-                                if (dataBuffer.length !== 0) {
-                                    lastEventId = lastEventIdBuffer;
-                                    if (eventTypeBuffer === "") {
-                                        eventTypeBuffer = "message";
-                                    }
-                                    event = new MessageEvent(eventTypeBuffer, {
-                                        data: dataBuffer.join("\n"),
-                                        lastEventId: lastEventIdBuffer
-                                    });
-                                    that.dispatchEvent(event);
-                                    if (eventTypeBuffer === "message") {
-                                        fire(that, that.onmessage, event);
-                                    }
-                                    if (currentState === CLOSED) {
-                                        return;
-                                    }
-                                }
-                                dataBuffer.length = 0;
-                                eventTypeBuffer = "";
-                            }
-                            state = c === "\r" ? AFTER_CR : FIELD_START;
-                        } else {
-                            if (state === FIELD_START) {
-                                state = FIELD;
-                            }
-                            if (state === FIELD) {
-                                if (c === ":") {
-                                    state = VALUE_START;
-                                } else {
-                                    field += c;
-                                }
-                            } else if (state === VALUE_START) {
-                                if (c !== " ") {
-                                    value += c;
-                                }
-                                state = VALUE;
-                            } else if (state === VALUE) {
-                                value += c;
-                            }
-                        }
-                    }
-                }
-                charOffset = length;
-            }
-
-            if ((currentState === OPEN || currentState === CONNECTING) &&
-                (type === "load" || type === "error" || isWrongStatusCodeOrContentType || (timeout === 0 && (!wasActivity || !checkActivity)))) {
-                console.log(currentState, type, isWrongStatusCodeOrContentType, charOffset, timeout, wasActivity, checkActivity);
-                if (isWrongStatusCodeOrContentType) {
-                    close();
-                } else {
-                    if (type === "" && timeout === 0 && (!wasActivity || !checkActivity)) {
-                        setTimeout(function () {
-                            if (errorOnTimeout) {
-                                throw new Error("No activity within " + heartbeatTimeout + " milliseconds. Reconnecting.");
-                            }
-                            return;
-                        }, 0);
-                    }
-                    currentState = WAITING;
-                    xhr.abort();
-                    if (timeout !== 0) {
-                        clearTimeout(timeout);
-                        timeout = 0;
-                    }
-                    if (retry > initialRetry * 16) {
-                        retry = initialRetry * 16;
-                    }
-                    if (retry > MAXIMUM_DURATION) {
-                        retry = MAXIMUM_DURATION;
-                    }
-                    timeout = setTimeout(onTimeout, retry);
-                    retry = retry * 2 + 1;
-
-                    that.readyState = CONNECTING;
-                }
+                that.readyState = CONNECTING;
                 event = new Event("error");
                 that.dispatchEvent(event);
                 fire(that, that.onerror, event);
             } else {
-                if (timeout === 0) {
-                    wasActivity = false;
-                    timeout = setTimeout(onTimeout, heartbeatTimeout);
+                var responseText = "";
+                if (currentState === OPEN || currentState === CONNECTING) {
+                    try {
+                        responseText = xhr.responseText;
+                    } catch (error) {
+                        // IE 8 - 9 with XMLHttpRequest
+                    }
+                }
+
+                var event = undefined;
+                var isWrongStatusCodeOrContentType = false;
+
+                if (currentState === CONNECTING) {
+                    var status = 0;
+                    var statusText = "";
+                    var contentType = undefined;
+                    if (!("contentType" in xhr)) {
+                        try {
+                            status = xhr.status;
+                            statusText = xhr.statusText;
+                            contentType = xhr.getResponseHeader("Content-Type");
+                        } catch (error) {
+                            // https://bugs.webkit.org/show_bug.cgi?id=29121
+                            status = 0;
+                            statusText = "";
+                            contentType = undefined;
+                            // FF < 14, WebKit
+                            // https://bugs.webkit.org/show_bug.cgi?id=29658
+                            // https://bugs.webkit.org/show_bug.cgi?id=77854
+                        }
+                    } else if (type !== "" && type !== "error") {
+                        status = 200;
+                        statusText = "OK";
+                        contentType = xhr.contentType;
+                    }
+                    if (contentType == undefined) {
+                        contentType = "";
+                    }
+                    if (status === 0 && statusText === "" && type === "load" && responseText !== "") {
+                        status = 200;
+                        statusText = "OK";
+                        if (contentType === "") { // Opera 12
+                            var tmp = (/^data\:([^,]*?)(?:;base64)?,[\S]*$/).exec(url);
+                            if (tmp != undefined) {
+                                contentType = tmp[1];
+                            }
+                        }
+                    }
+                    if (status === 200 && contentTypeRegExp.test(contentType)) {
+                        currentState = OPEN;
+                        wasActivity = true;
+                        retry = initialRetry;
+                        that.readyState = OPEN;
+                        event = new Event("open");
+                        that.dispatchEvent(event);
+                        fire(that, that.onopen, event);
+                        if (currentState === CLOSED) {
+                            return;
+                        }
+                    } else {
+                        // Opera 12
+                        if (status !== 0 && (status !== 200 || contentType !== "")) {
+                            var message = "";
+                            if (status !== 200) {
+                                message = "EventSource's response has a status " + status + " " + statusText.replace(/\s+/g, " ") + " that is not 200. Aborting the connection.";
+                            } else {
+                                message = "EventSource's response has a Content-Type specifying an unsupported type: " + contentType.replace(/\s+/g, " ") + ". Aborting the connection.";
+                            }
+                            setTimeout(function () {
+                                throw new Error(message);
+                            }, 0);
+                            isWrongStatusCodeOrContentType = true;
+                        }
+                    }
+                }
+
+                if (currentState === OPEN) {
+                    if (responseText.length > charOffset) {
+                        wasActivity = true;
+                    }
+                    var i = charOffset - 1;
+                    var length = responseText.length;
+                    var c = "\n";
+                    while (++i < length) {
+                        c = responseText.charAt(i);
+                        if (state === AFTER_CR && c === "\n") {
+                            state = FIELD_START;
+                        } else {
+                            if (state === AFTER_CR) {
+                                state = FIELD_START;
+                            }
+                            if (c === "\r" || c === "\n") {
+                                if (field === "data") {
+                                    dataBuffer.push(value);
+                                } else if (field === "id") {
+                                    lastEventIdBuffer = value;
+                                } else if (field === "event") {
+                                    eventTypeBuffer = value;
+                                } else if (field === "retry") {
+                                    initialRetry = getDuration(Number(value), initialRetry);
+                                    retry = initialRetry;
+                                } else if (field === "heartbeatTimeout") {
+                                    heartbeatTimeout = getDuration(Number(value), heartbeatTimeout);
+                                    if (timeout !== 0) {
+                                        clearTimeout(timeout);
+                                        timeout = setTimeout(onTimeout, heartbeatTimeout);
+                                    }
+                                }
+                                value = "";
+                                field = "";
+                                if (state === FIELD_START) {
+                                    if (dataBuffer.length !== 0) {
+                                        lastEventId = lastEventIdBuffer;
+                                        if (eventTypeBuffer === "") {
+                                            eventTypeBuffer = "message";
+                                        }
+                                        event = new MessageEvent(eventTypeBuffer, {
+                                            data: dataBuffer.join("\n"),
+                                            lastEventId: lastEventIdBuffer
+                                        });
+                                        that.dispatchEvent(event);
+                                        if (eventTypeBuffer === "message") {
+                                            fire(that, that.onmessage, event);
+                                        }
+                                        if (currentState === CLOSED) {
+                                            return;
+                                        }
+                                    }
+                                    dataBuffer.length = 0;
+                                    eventTypeBuffer = "";
+                                }
+                                state = c === "\r" ? AFTER_CR : FIELD_START;
+                            } else {
+                                if (state === FIELD_START) {
+                                    state = FIELD;
+                                }
+                                if (state === FIELD) {
+                                    if (c === ":") {
+                                        state = VALUE_START;
+                                    } else {
+                                        field += c;
+                                    }
+                                } else if (state === VALUE_START) {
+                                    if (c !== " ") {
+                                        value += c;
+                                    }
+                                    state = VALUE;
+                                } else if (state === VALUE) {
+                                    value += c;
+                                }
+                            }
+                        }
+                    }
+                    charOffset = length;
+                }
+
+                if ((currentState === OPEN || currentState === CONNECTING) &&
+                    (type === "load" || type === "error" || isWrongStatusCodeOrContentType || (timeout === 0 && (!wasActivity || !checkActivity)))) {
+                    console.log(currentState, type, isWrongStatusCodeOrContentType, charOffset, timeout, wasActivity, checkActivity);
+                    if (isWrongStatusCodeOrContentType) {
+                        close();
+                    } else {
+                        if (type === "" && timeout === 0 && (!wasActivity || !checkActivity)) {
+                            setTimeout(function () {
+                                if (errorOnTimeout) {
+                                    throw new Error("No activity within " + heartbeatTimeout + " milliseconds. Reconnecting.");
+                                }
+                                return;
+                            }, 0);
+                        }
+                        currentState = WAITING;
+                        xhr.abort();
+                        if (timeout !== 0) {
+                            clearTimeout(timeout);
+                            timeout = 0;
+                        }
+                        if (retry > initialRetry * 16) {
+                            retry = initialRetry * 16;
+                        }
+                        if (retry > MAXIMUM_DURATION) {
+                            retry = MAXIMUM_DURATION;
+                        }
+                        timeout = setTimeout(onTimeout, retry);
+                        retry = retry * 2 + 1;
+
+                        that.readyState = CONNECTING;
+                    }
+                    event = new Event("error");
+                    that.dispatchEvent(event);
+                    fire(that, that.onerror, event);
+                } else {
+                    if (timeout === 0) {
+                        wasActivity = false;
+                        timeout = setTimeout(onTimeout, heartbeatTimeout);
+                    }
                 }
             }
+
         }
 
         function onProgress () {
