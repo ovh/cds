@@ -108,7 +108,7 @@ func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context, r *http.Reques
 		usr = nil
 	}
 
-	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, nil, nil); err != nil {
+	if _, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, nil, nil, nil); err != nil {
 		return fmt.Sprintf("getMonDBTimesDBQueueWorkflow> Unable to load queue:: %s", err)
 	}
 	return elapsed("getMonDBTimesDBQueueWorkflow", s1)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -617,7 +618,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 
 func (api *API) countWorkflowJobQueueHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		since, until := getSinceUntilHeader(ctx, w, r)
+		since, until, _ := getSinceUntilLimitHeader(ctx, w, r)
 		groupsID := []int64{}
 		usr := getUser(ctx)
 		for _, g := range usr.Groups {
@@ -638,7 +639,7 @@ func (api *API) countWorkflowJobQueueHandler() Handler {
 
 func (api *API) getWorkflowJobQueueHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		since, until := getSinceUntilHeader(ctx, w, r)
+		since, until, limit := getSinceUntilLimitHeader(ctx, w, r)
 		groupsID := make([]int64, len(getUser(ctx).Groups))
 		usr := getUser(ctx)
 		for i, g := range usr.Groups {
@@ -652,7 +653,7 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 			usr = nil
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until)
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until, &limit)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
@@ -661,7 +662,7 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 	}
 }
 
-func getSinceUntilHeader(ctx context.Context, w http.ResponseWriter, r *http.Request) (time.Time, time.Time) {
+func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *http.Request) (time.Time, time.Time, int) {
 	sinceHeader := r.Header.Get("If-Modified-Since")
 	since := time.Unix(0, 0)
 	if sinceHeader != "" {
@@ -674,7 +675,13 @@ func getSinceUntilHeader(ctx context.Context, w http.ResponseWriter, r *http.Req
 		until, _ = time.Parse(time.RFC1123, untilHeader)
 	}
 
-	return since, until
+	limitHeader := r.Header.Get("X-CDS-Limit")
+	var limit int
+	if limitHeader != "" {
+		limit, _ = strconv.Atoi(limitHeader)
+	}
+
+	return since, until, limit
 }
 
 func (api *API) postWorkflowJobTestsResultsHandler() Handler {

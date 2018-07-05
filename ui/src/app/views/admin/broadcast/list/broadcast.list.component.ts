@@ -20,7 +20,7 @@ export class BroadcastListComponent extends Table {
     constructor(private _broadcastStore: BroadcastStore) {
         super();
         this._broadcastStore.getBroadcasts().subscribe( broadcasts => {
-            this.broadcasts = broadcasts.toArray();
+            this.broadcasts = broadcasts.toArray().sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
         });
     }
 
