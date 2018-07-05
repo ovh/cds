@@ -150,6 +150,7 @@ var (
 	ErrJobNotBooked                           = Error{ID: 135, Status: http.StatusBadRequest}
 	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
 	ErrInvalidNumber                          = Error{ID: 137, Status: http.StatusBadRequest}
+	ErrKeyAlreadyExist                        = Error{ID: 138, Status: http.StatusConflict}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -288,6 +289,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrJobNotBooked.ID:                           "Job already released",
 	ErrUserNotFound.ID:                           "User not found",
 	ErrInvalidNumber.ID:                          "Invalid number",
+	ErrKeyAlreadyExist.ID:                        "Key already exists",
 }
 
 var errorsFrench = map[int]string{
@@ -426,6 +428,7 @@ var errorsFrench = map[int]string{
 	ErrJobNotBooked.ID:                           "Le job est déjà libéré",
 	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
 	ErrInvalidNumber.ID:                          "Nombre non valide",
+	ErrKeyAlreadyExist.ID:                        "La clé existe déjà",
 }
 
 var errorsLanguages = []map[int]string{
