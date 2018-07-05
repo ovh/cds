@@ -232,7 +232,7 @@ export class WorkflowNodeRunParamComponent {
         if (this.nodeRun && this.nodeRun.payload) {
             currentContext = this.nodeRun.payload;
         } else if (this.workflowRun) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflow.root.id];
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id];
             if (rootNodeRun) {
                 currentContext = rootNodeRun[0].payload;
             }

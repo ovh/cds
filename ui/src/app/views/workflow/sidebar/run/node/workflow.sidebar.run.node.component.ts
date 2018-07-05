@@ -107,7 +107,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy {
         let pip = this.node.pipeline.name;
         this._router.navigate([
             '/project', this.project.key,
-            'workflow', this.currentWorkflowRun.workflow.name,
+            'workflow', this.workflow.name,
             'run', this.currentWorkflowRun.num,
             'node', this.currentWorkflowNodeRun.id], {queryParams: {name: pip}});
     }
@@ -189,13 +189,13 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy {
 
     stopNodeRun(): void {
         this.loading = true;
-        this._wrService.stopNodeRun(this.project.key, this.currentWorkflowRun.workflow.name,
+        this._wrService.stopNodeRun(this.project.key, this.workflow.name,
             this.currentWorkflowRun.num, this.currentWorkflowNodeRun.id)
             .pipe(first())
             .subscribe(() => {
                 this._router.navigate([
                     '/project', this.project.key,
-                    'workflow', this.currentWorkflowRun.workflow.name,
+                    'workflow', this.workflow.name,
                     'run', this.currentWorkflowRun.num]);
             });
     }
