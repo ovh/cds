@@ -34,8 +34,10 @@ export class BroadcastListComponent {
       this._broadcastSub = this._broadcastStore.getBroadcasts()
         .subscribe((broadcasts) => {
             this.loading = false;
-            this.recentBroadcasts = broadcasts.toArray().filter((br) => !br.read && !br.archived);
-            this.oldBroadcasts = broadcasts.toArray().filter((br) => br.read || br.archived);
+            this.recentBroadcasts = broadcasts.toArray().filter((br) => !br.read && !br.archived)
+                .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
+            this.oldBroadcasts = broadcasts.toArray().filter((br) => br.read || br.archived)
+                .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
             this.filteredBroadcasts = this.recentBroadcasts;
         }, () => this.loading = false);
     }

@@ -97,10 +97,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         });
     }
 
-    refreshServiceLogs() {
-        this.displayServiceLogs = this.selectedRunJob.job.action.requirements.some((req) => req.type === 'service');
-    }
-
     refreshNodeRun(data: WorkflowNodeRun): void {
         let previousRun = this.nodeRun;
         this.nodeRun = data;

@@ -93,7 +93,10 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked {
     ngAfterViewChecked(): void {
         if (this.codemirror && this.codemirror.instance && !this.alreadyRefreshed) {
             this.alreadyRefreshed = true;
-            this.codemirror.instance.refresh();
+            setTimeout(() => {
+                this.codemirror.instance.refresh();
+            }, 1);
+
         }
     }
 

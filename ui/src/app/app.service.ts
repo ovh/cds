@@ -10,12 +10,12 @@ import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
 import {ApplicationStore} from './service/application/application.store';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {BroadcastStore} from './service/broadcast/broadcast.store';
-import {NotificationService} from './service/notification/notification.service';
 import {PipelineStore} from './service/pipeline/pipeline.store';
 import {ProjectStore} from './service/project/project.store';
 import {RouterService, TimelineStore} from './service/services.module';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
 import {WorkflowStore} from './service/workflow/workflow.store';
+import {ToastService} from './shared/toast/ToastService';
 
 @Injectable()
 export class AppService {
@@ -24,10 +24,10 @@ export class AppService {
     routeParams: {};
 
     constructor(private _projStore: ProjectStore, private _routerService: RouterService, private _routeActivated: ActivatedRoute,
-                private _appStore: ApplicationStore, private _notif: NotificationService, private _authStore: AuthentificationStore,
+                private _appStore: ApplicationStore, private _authStore: AuthentificationStore,
                 private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
-                private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _timelineStore: TimelineStore) {
-
+                private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _timelineStore: TimelineStore,
+                private _toast: ToastService) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
 
@@ -73,7 +73,7 @@ export class AppService {
                 // if modification from another user, display a notification
                 if (event.username !== this._authStore.getUser().username) {
                     this._projStore.externalModification(projectInCache.key);
-                    this._notif.create(this._translate.instant('warning_project', {username: event.username}));
+                    this._toast.info('', this._translate.instant('warning_project', {username: event.username}));
                     return;
                 }
             } else {
@@ -132,7 +132,7 @@ export class AppService {
                 // modification by another user
                 if (event.username !== this._authStore.getUser().username) {
                     this._appStore.externalModification(appKey);
-                    this._notif.create(this._translate.instant('warning_application', {username: event.username}));
+                    this._toast.info('', this._translate.instant('warning_application', {username: event.username}));
                     return;
                 }
             } else {
@@ -167,7 +167,7 @@ export class AppService {
                 && this.routeParams['pipName'] === event.pipeline_name) {
                 if (event.username !== this._authStore.getUser().username) {
                     this._pipStore.externalModification(pipKey);
-                    this._notif.create(this._translate.instant('warning_pipeline', {username: event.username}));
+                    this._toast.info('', this._translate.instant('warning_pipeline', {username: event.username}));
                     return;
                 }
             } else {
@@ -199,7 +199,7 @@ export class AppService {
                 && this.routeParams['workflowName'] === event.workflow_name) {
                 if (event.username !== this._authStore.getUser().username) {
                     this._wfStore.externalModification(wfKey);
-                    this._notif.create(this._translate.instant('warning_workflow', {username: event.username}));
+                    this._toast.info('', this._translate.instant('warning_workflow', {username: event.username}));
                     return
                 }
             } else {

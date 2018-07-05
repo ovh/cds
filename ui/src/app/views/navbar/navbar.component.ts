@@ -199,9 +199,12 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             .subscribe((broadcasts) => {
                 let broadcastsToRead = broadcasts.toArray().filter((br) => !br.read && !br.archived);
                 let previousBroadcasts = broadcasts.toArray().filter((br) => br.read && !br.archived);
-                this.recentBroadcastsToDisplay = broadcastsToRead.slice(0, 4);
-                this.previousBroadcastsToDisplay = previousBroadcasts.slice(0, 4);
-                this.broadcasts = broadcastsToRead;
+                this.recentBroadcastsToDisplay = broadcastsToRead
+                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime()).slice(0, 4);
+                this.previousBroadcastsToDisplay = previousBroadcasts
+                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime()).slice(0, 4);
+                this.broadcasts = broadcastsToRead
+                    .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
             });
     }
 

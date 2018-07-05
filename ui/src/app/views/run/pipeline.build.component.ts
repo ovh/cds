@@ -9,7 +9,7 @@ import {ApplicationPipelineService} from '../../service/application/pipeline/app
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {RouterService} from '../../service/router/router.service';
 import {DurationService} from '../../shared/duration/duration.service';
-import {CDSWorker} from '../../shared/worker/worker';
+import {CDSWebWorker} from '../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-pipeline-build',
@@ -37,7 +37,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     zone: NgZone;
 
     // Worker CDS that pull data
-    worker: CDSWorker;
+    worker: CDSWebWorker;
 
     // Worker subscription
     workerSubscription: Subscription;
@@ -100,7 +100,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
         if (this.worker) {
             this.worker.stop();
         }
-        this.worker = new CDSWorker('./assets/worker/web/runpipeline.js');
+        this.worker = new CDSWebWorker('./assets/worker/web/runpipeline.js');
         this.worker.start({
             user: this._authStore.getUser(),
             session: this._authStore.getSessionToken(),
