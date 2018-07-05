@@ -642,6 +642,13 @@
   "timeline_loading": "Loading timeline...",
   "timeline_no": "Timeline is empty",
   "timeline_title": "Timeline",
+  "timeline_filter_all_project": "All projects",
+  "timeline_filter_project": "Receive events on: ",
+  "timeline_filter_all_workflow": "All workflows",
+  "timeline_filter_updated": "Filter updated",
+  "timeline_filter_project_select": "Select a project",
+  "timeline_filter_workflow_select": "Select a workflow",
+  "timeline_filter_workflow_title": "Workflow list:",
 
   "trigger_added": "Trigger added",
   "trigger_add_prerequisite_title": "Add a run condition",

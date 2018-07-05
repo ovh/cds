@@ -93,7 +93,7 @@
 <div class="ui text active loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
 <ng-container *ngIf="project && node">
     <app-workflow-node-run-param
-        [workflow]="currentWorkflowRun.workflow"
+        [workflow]="workflow"
         [project]="project"
         [nodeRun]="currentWorkflowNodeRun"
         [workflowRun]="currentWorkflowRun"

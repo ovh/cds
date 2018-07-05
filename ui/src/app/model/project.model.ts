@@ -31,6 +31,7 @@ export class Project {
     favorite: boolean;
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
+    loading: boolean;
 }
 
 export class LoadOpts {

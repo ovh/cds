@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"gopkg.in/olivere/elastic.v5"
@@ -19,11 +20,18 @@ func (s *Service) getEventsHandler() api.Handler {
 		}
 
 		boolQuery := elastic.NewBoolQuery()
-		for _, p := range filters.ProjectKeys {
-			boolQuery.Should(elastic.NewMatchQuery("project_key", p))
+		for _, p := range filters.Filter.Projects {
+			if p.AllWorkflows {
+				boolQuery.Should(elastic.NewMatchQuery("project_key", p.Key))
+			} else {
+				for _, w := range p.WorkflowNames {
+					boolQuery.Should(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
+				}
+
+			}
 		}
 
-		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.Index).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).Do(context.Background())
+		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.Index).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
 		if errR != nil {
 			return sdk.WrapError(errR, "getEventsHandler> Cannot get result on index: %s", s.Cfg.ElasticSearch.Index)
 		}

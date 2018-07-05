@@ -62,6 +62,7 @@
     "ng2-semantic-ui": "git+https://git@github.com/bnjjj/ng2-semantic-ui.git#dist",
     "ngx-auto-scroll": "1.1.0",
     "ngx-clipboard": "^10.0.0",
+    "ngx-infinite-scroll": "^6.0.1",
     "ngx-md": "3.1.0",
     "rxjs": "^6.2.0",
     "rxjs-compat": "^6.2.0",

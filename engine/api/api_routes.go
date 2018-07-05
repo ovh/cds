@@ -376,6 +376,8 @@ func (api *API) InitRouter() {
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
 	r.Handle("/user/favorite", r.POST(api.postUserFavoriteHandler))
+	r.Handle("/user/timeline", r.GET(api.getTimelineHandler))
+	r.Handle("/user/timeline/filter", r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
 	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
@@ -413,9 +415,6 @@ func (api *API) InitRouter() {
 	// SSE
 	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
-
-	// Timeline
-	r.Handle("/timeline", r.GET(api.getTimelineHandler))
 
 	// Feature
 	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))

@@ -149,6 +149,7 @@ var (
 	ErrWorkerModelNoPattern                   = Error{ID: 134, Status: http.StatusForbidden}
 	ErrJobNotBooked                           = Error{ID: 135, Status: http.StatusBadRequest}
 	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
+	ErrInvalidNumber                          = Error{ID: 137, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -286,6 +287,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scripts. If you have specific needs, please contact a CDS administrator",
 	ErrJobNotBooked.ID:                           "Job already released",
 	ErrUserNotFound.ID:                           "User not found",
+	ErrInvalidNumber.ID:                          "Invalid number",
 }
 
 var errorsFrench = map[int]string{
@@ -423,6 +425,7 @@ var errorsFrench = map[int]string{
 	ErrWorkerModelNoPattern.ID:                   "Accès refusé: vous devez obligatoirement sélectionner un pattern de script de configuration. Si vous souhaitez ajouter un pattern particulier, veuillez contacter un administrateur CDS",
 	ErrJobNotBooked.ID:                           "Le job est déjà libéré",
 	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
+	ErrInvalidNumber.ID:                          "Nombre non valide",
 }
 
 var errorsLanguages = []map[int]string{

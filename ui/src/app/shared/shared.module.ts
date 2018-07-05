@@ -11,6 +11,7 @@ import {DragulaModule} from 'ng2-dragula/ng2-dragula';
 import {SuiModule} from 'ng2-semantic-ui';
 import {NgxAutoScroll, NgxAutoScrollModule} from 'ngx-auto-scroll';
 import {ClipboardModule} from 'ngx-clipboard';
+import {InfiniteScrollModule} from 'ngx-infinite-scroll';
 import {MarkdownModule} from 'ngx-md';
 import {ActionComponent} from './action/action.component';
 import {ActionStepFormComponent} from './action/step/form/step.form.component';
@@ -90,7 +91,8 @@ import {ZoneComponent} from './zone/zone.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
-        CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, SuiModule, NgxAutoScrollModule ],
+        CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, SuiModule, NgxAutoScrollModule,
+        InfiniteScrollModule],
     declarations: [
         ActionComponent,
         ActionStepComponent,
@@ -193,6 +195,7 @@ import {ZoneComponent} from './zone/zone.component';
         KeysPipe,
         KeysFormComponent,
         KeysListComponent,
+        InfiniteScrollModule,
         MarkdownModule,
         MomentModule,
         NgForNumber,

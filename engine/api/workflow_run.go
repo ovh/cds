@@ -633,6 +633,10 @@ func (api *API) postWorkflowRunHandler() Handler {
 		var wf *sdk.Workflow
 		if lastRun != nil {
 			wf = &lastRun.Workflow
+			// Check workflow name in case of rename
+			if wf.Name != name {
+				wf.Name = name
+			}
 		} else {
 			// Test workflow as code or not
 			options := workflow.LoadOptions{
