@@ -608,6 +608,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
 			return sdk.WrapError(err, "Delete> Unable to detach workflow root")
 		}
+
 		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root); err != nil {
 			return sdk.WrapError(err, "Update> unable to delete root node on workflow(%d)", w.ID)
 		}
