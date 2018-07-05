@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/user"
@@ -19,7 +18,7 @@ func (api *API) getTimelineHandler() Handler {
 			currentItemString = "0"
 		}
 
-		currentItem, errS := strconv.Atoi(currentItemString)
+		currentItem, errS := FormInt(r, "currentItem")
 		if errS != nil {
 			return sdk.WrapError(errS, "getTimelineHandler> Invalid format for current item")
 		}
