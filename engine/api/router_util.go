@@ -150,6 +150,19 @@ func FormString(r *http.Request, s string) string {
 	return r.FormValue(s)
 }
 
+// FormInt return a int from query params
+func FormInt(r *http.Request, s string) (int, error) {
+	stringValue := FormString(r, s)
+	if stringValue == "" {
+		return 0, nil
+	}
+	i, err := strconv.Atoi(stringValue)
+	if err != nil {
+		return i, sdk.WrapError(sdk.ErrInvalidNumber, "FormInt> %s is not a integer", stringValue)
+	}
+	return i, nil
+}
+
 // requestVarInt return int value for a var in Request
 func requestVarInt(r *http.Request, s string) (int64, error) {
 	vars := mux.Vars(r)
