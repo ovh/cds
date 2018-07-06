@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
@@ -260,7 +261,7 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 	if err != nil {
 		pqerr, ok := err.(*pq.Error)
 		if ok {
-			if pqerr.Code == "23000" || pqerr.Code == "23505" || pqerr.Code == "23514" {
+			if pqerr.Code == "23000" || pqerr.Code == database.ViolateUniqueKeyPGCode || pqerr.Code == "23514" {
 				return sdk.ErrEnvironmentExist
 			}
 		}

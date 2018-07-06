@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -115,7 +116,7 @@ func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamNa
 	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$4 WHERE pipeline_id=$5 AND name=$6`
 	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
 	if err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
 			return sdk.ErrParameterExists
 		}
 		return err

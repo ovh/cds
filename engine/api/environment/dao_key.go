@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -23,7 +24,7 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
 	dbEnvironmentKey.Private = string(s)
 
 	if err := db.Insert(&dbEnvironmentKey); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
 			err = sdk.ErrKeyAlreadyExist
 		}
 		return sdk.WrapError(err, "InsertKey> Cannot insert project key")
