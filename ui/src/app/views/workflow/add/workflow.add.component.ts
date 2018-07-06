@@ -62,6 +62,7 @@ workflow:
     loadingRepo = false;
     currentStep = 0;
     duplicateWorkflowName = false;
+    fileTooLarge = false;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
                 private _router: Router, private _workflowStore: WorkflowStore, private _import: ImportAsCodeService,
@@ -215,5 +216,13 @@ workflow:
             )
             .subscribe(repos => this.repos = repos);
       }
+    }
+
+    fileEventIcon(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000
+        if (this.fileTooLarge) {
+          return;
+        }
+        this.workflow.icon = event.content;
     }
 }

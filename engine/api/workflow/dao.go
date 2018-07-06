@@ -34,6 +34,7 @@ type LoadOptions struct {
 	Base64Keys    bool
 	OnlyRootNode  bool
 	WithFavorites bool
+	WithIcon      bool
 }
 
 // CountVarInWorkflowData represents the result of CountVariableInWorkflow function
@@ -217,7 +218,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 // LoadAllNames loads all workflow names for a project.
 func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName, error) {
 	query := `
-		SELECT workflow.name, workflow.id, workflow.description
+		SELECT workflow.name, workflow.id, workflow.description, workflow.icon
 		FROM workflow
 		WHERE workflow.project_id = $1
 		AND workflow.to_delete = false
@@ -236,12 +237,30 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string, u *sdk.User, opts LoadOptions) (*sdk.Workflow, error) {
-	query := `
-		select workflow.*
+	var icon string
+	if opts.WithIcon {
+		icon = "workflow.icon,"
+	}
+	query := fmt.Sprintf(`
+		select workflow.id,
+		workflow.project_id,
+		workflow.name,
+		workflow.description,
+		%s
+		workflow.last_modified,
+		workflow.root_node_id,
+		workflow.metadata,
+		workflow.history_length,
+		workflow.purge_tags,
+		workflow.from_repository,
+		workflow.derived_from_workflow_id,
+		workflow.derived_from_workflow_name,
+		workflow.derivation_branch,
+		workflow.to_delete
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
-		and workflow.name = $2`
+		and workflow.name = $2`, icon)
 	res, err := load(db, store, proj, opts, u, query, proj.Key, name)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow %s in project %s", name, proj.Key)
@@ -443,7 +462,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 
 	w.LastModified = time.Now()
-	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id, history_length, from_repository) VALUES ($1, $2, $3, $4, $5) RETURNING id", w.Name, w.Description, w.ProjectID, w.HistoryLength, w.FromRepository).Scan(&w.ID); err != nil {
+	if err := db.QueryRow("INSERT INTO workflow (name, description, icon, project_id, history_length, from_repository) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
@@ -645,6 +664,10 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		}
 	}
 	w.PurgeTags = filteredPurgeTags
+
+	if w.Icon == "" {
+		w.Icon = oldWorkflow.Icon
+	}
 
 	w.LastModified = time.Now()
 	dbw := Workflow(*w)

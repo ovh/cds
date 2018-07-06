@@ -128,8 +128,8 @@ export class ApplicationAddComponent implements OnInit {
     }
 
     fileEvent(event: {content: string, file: File}) {
-        if (event.file.size > 100000) {
-          this.fileTooLarge = true;
+        this.fileTooLarge = event.file.size > 100000
+        if (this.fileTooLarge) {
           return;
         }
         this.img = event.content;
