@@ -1,5 +1,10 @@
 package database
 
+const (
+	// ViolateUniqueKeyPGCode is the pg code when duplicating unique key
+	ViolateUniqueKeyPGCode = "23505"
+)
+
 // DBConfiguration is the exposed type for database API configuration
 type DBConfiguration struct {
 	User           string `toml:"user" default:"cds"`
