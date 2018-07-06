@@ -517,6 +517,7 @@
 
   "project_list": "All projects",
   "project_description": "Project description",
+  "project_icon": "Project icon",
   "project_list_card_updated": "Updated the {{date}}",
   "project_advanced_title": "Project administration",
   "project_added": "Project has just been created",

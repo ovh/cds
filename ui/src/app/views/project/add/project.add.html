@@ -22,6 +22,18 @@
                     {{ 'project_key_error' | translate }}
                 </div>
 
+                <div class="field center aligned">
+                    <label>{{ 'project_icon' | translate }} ({{'common_optional' | translate}})</label>
+                    <div>
+                        <div *ngIf="!fileTooLarge && project.icon">
+                            <img class="proj-icon" [src]="project.icon" alt="icon"/>
+                        </div>
+                        <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
+                        </app-upload-button>
+                    </div>
+                </div>
+                <div class="ui red message field" *ngIf="fileTooLarge"  [textContent]="'common_file_too_large' | translate"></div>
+
                 <hr>
 
                 <div class="ui message">

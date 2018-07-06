@@ -281,6 +281,7 @@ type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
 	Default                                 LoadOptionFunc
+	WithIcon                                LoadOptionFunc
 	WithApplications                        LoadOptionFunc
 	WithApplicationNames                    LoadOptionFunc
 	WithVariables                           LoadOptionFunc
@@ -305,6 +306,7 @@ var LoadOptions = struct {
 	WithFeatures                            LoadOptionFunc
 }{
 	Default:                                 &loadDefault,
+	WithIcon:                                &loadIcon,
 	WithPipelines:                           &loadPipelines,
 	WithPipelineNames:                       &loadPipelineNames,
 	WithEnvironments:                        &loadEnvironments,

@@ -57,6 +57,7 @@ export class ProjectService {
         if (withApplication) {
           params = params.append('application', 'true');
         }
+        params = params.append('withIcon', 'true');
         return this._http.get<Project[]>('/project', {params: params});
     }
 

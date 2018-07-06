@@ -50,6 +50,26 @@
             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitProjectUpdate(true)" #updateWarning></app-warning-modal>
         </app-zone-content>
     </app-zone>
+    <app-zone header="{{ 'project_icon' | translate }}">
+        <app-zone-content class="bottom">
+            <form class="ui form">
+                <div class="fields">
+                    <div class="fourteen wide field center aligned" *ngIf="!fileTooLarge">
+                        <div>
+                            <img class="proj-icon" [src]="project.icon" alt="project icon" *ngIf="project.icon">
+                        </div>
+                        <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
+                        </app-upload-button>
+                    </div>
+                    <div class="ui fourteen wide red message field center aligned" *ngIf="fileTooLarge" [textContent]="'common_file_too_large' | translate"></div>
+                    <div class="two wide right aligned field">
+                        <button class="ui green button" [class.loading]="loading" name="updateiconButton" (click)="onSubmitProjectUpdate()" [disabled]="loading">{{ 'btn_save' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </app-zone-content>
+    </app-zone>
     <app-zone>
         <h4 class="ui top attached segment">
             <app-warning-mark-list [warnings]="missingWarnings"></app-warning-mark-list>
