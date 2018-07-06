@@ -25,7 +25,7 @@ export class ProjectListComponent {
     }
 
     constructor(private _projectStore: ProjectStore) {
-        this.projectSub = this._projectStore.getProjects()
+        this.projectSub = this._projectStore.getProjectsList()
             .subscribe((projects) => {
                 if (projects) {
                     this.loading = false;
