@@ -22,14 +22,7 @@ export class AuthentificationInterceptor implements  HttpInterceptor {
     addAuthHeader(): any {
         if (this._authStore.isConnected()) {
             let sessionToken = this._authStore.getSessionToken();
-            if (sessionToken) {
-                return { 'Session-Token': sessionToken };
-            } else {
-                let user = this._authStore.getUser();
-                if (user != null) {
-                    return { 'Authorization': 'Basic ' + user.token};
-                }
-            }
+            return { 'Session-Token': sessionToken };
         }
         return {}
     }

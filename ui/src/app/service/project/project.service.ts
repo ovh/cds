@@ -52,13 +52,10 @@ export class ProjectService {
      * Get all projects that the user can access.
      * @returns {Observable<Project[]>}
      */
-    getProjects(withApplication: boolean): Observable<Project[]> {
+    getProjects(): Observable<Project[]> {
         let params = new HttpParams();
-        if (withApplication) {
-          params = params.append('application', 'true');
-        }
         params = params.append('withIcon', 'true');
-        return this._http.get<Project[]>('/project', {params: params});
+        return this._http.get<Project[]>('/project', {params});
     }
 
     /**

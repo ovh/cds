@@ -35,7 +35,8 @@ type Event struct {
 
 // EventFilter represents filters when getting events
 type EventFilter struct {
-	ProjectKeys []string `json:"project_keys"`
+	CurrentItem int            `json:"current_item"`
+	Filter      TimelineFilter `json:"filter"`
 }
 
 // EventSubscription data send to api to subscribe to an event

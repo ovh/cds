@@ -12,6 +12,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -89,6 +90,8 @@ func (api *API) deleteActionHandler() Handler {
 			return sdk.WrapError(err, "deleteAction> Cannot commit transaction")
 		}
 
+		event.PublishActionDelete(*a, getUser(ctx))
+
 		return nil
 	}
 }
@@ -127,6 +130,8 @@ func (api *API) updateActionHandler() Handler {
 			return sdk.WrapError(err, "updateAction> Cannot commit transaction")
 		}
 
+		event.PublishActionUpdate(*actionDB, a, getUser(ctx))
+
 		return WriteJSON(w, a, http.StatusOK)
 	}
 }
@@ -162,6 +167,8 @@ func (api *API) addActionHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return err
 		}
+
+		event.PublishActionAdd(a, getUser(ctx))
 
 		return WriteJSON(w, a, http.StatusOK)
 	}
@@ -293,6 +300,12 @@ func (api *API) importActionHandler() Handler {
 
 		if err := tx.Commit(); err != nil {
 			return err
+		}
+
+		if exist {
+			event.PublishActionUpdate(*existingAction, *a, getUser(ctx))
+		} else {
+			event.PublishActionAdd(*a, getUser(ctx))
 		}
 
 		return WriteJSON(w, a, code)

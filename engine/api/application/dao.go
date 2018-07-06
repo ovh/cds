@@ -10,6 +10,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
@@ -288,7 +289,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 	app.LastModified = time.Now()
 	dbApp := dbApplication(*app)
 	if err := db.Insert(&dbApp); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
 			err = sdk.ErrApplicationExist
 		}
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)

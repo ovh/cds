@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
 import {first} from 'rxjs/operators';
 import {Broadcast, BroadcastEvent} from './model/broadcast.model';
 import {Event, EventType} from './model/event.model';
@@ -11,7 +12,7 @@ import {AuthentificationStore} from './service/auth/authentification.store';
 import {BroadcastStore} from './service/broadcast/broadcast.store';
 import {PipelineStore} from './service/pipeline/pipeline.store';
 import {ProjectStore} from './service/project/project.store';
-import {RouterService} from './service/services.module';
+import {ActionStore, RouterService, TimelineStore} from './service/services.module';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
 import {WorkflowStore} from './service/workflow/workflow.store';
 import {ToastService} from './shared/toast/ToastService';
@@ -23,9 +24,10 @@ export class AppService {
     routeParams: {};
 
     constructor(private _projStore: ProjectStore, private _routerService: RouterService, private _routeActivated: ActivatedRoute,
-                private _appStore: ApplicationStore, private _authStore: AuthentificationStore,
+                private _appStore: ApplicationStore, private _authStore: AuthentificationStore, private _actionStore: ActionStore,
                 private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
-                private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _toast: ToastService) {
+                private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _timelineStore: TimelineStore,
+                private _toast: ToastService) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
 
@@ -34,6 +36,9 @@ export class AppService {
     }
 
     manageEvent(event: Event): void {
+        if (event.type_event.indexOf(EventType.ACTION_PREFIX) === 0) {
+            this._actionStore.resync();
+        }
         if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||
             event.type_event === EventType.APPLICATION_ADD || event.type_event === EventType.APPLICATION_UPDATE ||
             event.type_event === EventType.APPLICATION_DELETE ||
@@ -210,10 +215,13 @@ export class AppService {
     }
 
     updateWorkflowRunCache(event: Event): void {
+        if (event.type_event === EventType.RUN_WORKFLOW_PREFIX) {
+            let e = cloneDeep(event);
+            this._timelineStore.add(e);
+        }
         if (this.routeParams['key'] !== event.project_key || this.routeParams['workflowName'] !== event.workflow_name) {
             return;
         }
-
         switch (event.type_event) {
             case EventType.RUN_WORKFLOW_PREFIX:
                 let wr = WorkflowRun.fromEventRunWorkflow(event);

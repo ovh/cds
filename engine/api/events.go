@@ -23,23 +23,25 @@ import (
 type eventsBrokerSubscribe struct {
 	UUID  string
 	User  *sdk.User
-	Queue chan string
+	Queue chan sdk.Event
 }
 
 // lastUpdateBroker keeps connected client of the current route,
 type eventsBroker struct {
-	clients  map[string]eventsBrokerSubscribe
-	messages chan sdk.Event
-	mutex    *sync.Mutex
-	dbFunc   func() *gorp.DbMap
-	cache    cache.Store
+	clients           map[string]eventsBrokerSubscribe
+	messages          chan sdk.Event
+	mutex             *sync.Mutex
+	disconnected      map[string]bool
+	disconnectedMutex *sync.Mutex
+	dbFunc            func() *gorp.DbMap
+	cache             cache.Store
 }
 
 // AddClient add a client to the client map
-func (b *eventsBroker) addClient(uuid string, messageChan eventsBrokerSubscribe) {
+func (b *eventsBroker) addClient(client eventsBrokerSubscribe) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
-	b.clients[uuid] = messageChan
+	b.clients[client.UUID] = client
 }
 
 // CleanAll cleans all clients
@@ -54,37 +56,10 @@ func (b *eventsBroker) cleanAll() {
 	}
 }
 
-// CleanClient cleans a client
-func (b *eventsBroker) cleanClient(client eventsBrokerSubscribe) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-
-	// Close channel
-	close(client.Queue)
-	// Delete client from map
-	delete(b.clients, client.UUID)
-}
-
-func (b *eventsBroker) setUser(user *sdk.User) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	for _, c := range b.clients {
-		if c.User.Username == user.Username {
-			c.User = user
-			break
-		}
-	}
-}
-
-func (b *eventsBroker) getUser(username string) *sdk.User {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	for _, c := range b.clients {
-		if c.User.Username == username {
-			return c.User
-		}
-	}
-	return nil
+func (b *eventsBroker) disconnectClient(uuid string) {
+	b.disconnectedMutex.Lock()
+	defer b.disconnectedMutex.Unlock()
+	b.disconnected[uuid] = true
 }
 
 //Init the eventsBroker
@@ -133,24 +108,6 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 	}
 }
 
-func (b *eventsBroker) UpdateUserPermissions(username string) {
-	var user *sdk.User
-
-	user = b.getUser(username)
-
-	if user == nil {
-		return
-	}
-	// load permission without being in the mutex lock
-	if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
-		log.Error("eventsBroker.UpdateUserPermissions> Cannot load user permission:%s", err)
-	}
-
-	// then, relock map and update user
-	b.setUser(user)
-
-}
-
 // Start the broker
 func (b *eventsBroker) Start(c context.Context) {
 	for {
@@ -162,12 +119,7 @@ func (b *eventsBroker) Start(c context.Context) {
 				return
 			}
 		case receivedEvent := <-b.messages:
-			bEvent, err := json.Marshal(receivedEvent)
-			if err != nil {
-				log.Warning("eventsBroker.Start> Unable to marshal event: %+v", receivedEvent)
-				continue
-			}
-			b.manageEvent(receivedEvent, string(bEvent))
+			b.manageEvent(receivedEvent)
 		}
 	}
 }
@@ -191,14 +143,14 @@ func (b *eventsBroker) ServeHTTP() Handler {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}
 
-		messageChan := eventsBrokerSubscribe{
+		client := eventsBrokerSubscribe{
 			UUID:  uuid,
 			User:  user,
-			Queue: make(chan string, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
+			Queue: make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.addClient(uuid, messageChan)
+		b.addClient(client)
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -219,16 +171,26 @@ func (b *eventsBroker) ServeHTTP() Handler {
 			select {
 			case <-ctx.Done():
 				log.Info("events.Http: context done")
-				b.cleanClient(messageChan)
+				b.disconnectClient(client.UUID)
 				break leave
 			case <-r.Context().Done():
 				log.Info("events.Http: client disconnected")
-				b.cleanClient(messageChan)
+				b.disconnectClient(client.UUID)
 				break leave
-			case msg := <-messageChan.Queue:
+			case event := <-client.Queue:
+				if ok := client.manageEvent(event); !ok {
+					continue
+				}
+
+				msg, errJ := json.Marshal(event)
+				if errJ != nil {
+					log.Warning("sendevent> Unavble to marshall event: %v", errJ)
+					continue
+				}
+
 				var buffer bytes.Buffer
 				buffer.WriteString("data: ")
-				buffer.WriteString(msg)
+				buffer.Write(msg)
 				buffer.WriteString("\n\n")
 
 				if _, err := w.Write(buffer.Bytes()); err != nil {
@@ -247,54 +209,64 @@ func (b *eventsBroker) ServeHTTP() Handler {
 	}
 }
 
-func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
+func (b *eventsBroker) manageEvent(receivedEvent sdk.Event) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	for _, i := range b.clients {
-		if i.Queue != nil {
-			b.handleEvent(receivedEvent, eventS, i)
-		} else {
-			log.Warning("eventsBroker.manageEvent > Queue is null for client %+v/%s", i.User, i.UUID)
+		if b.canSend(i) {
+			i.Queue <- receivedEvent
 		}
-
 	}
 }
 
-func (b *eventsBroker) handleEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscribe) {
+// canSend Test if client is connected. If not, close channel and remove client from map
+func (b *eventsBroker) canSend(client eventsBrokerSubscribe) bool {
+	b.disconnectedMutex.Lock()
+	defer b.disconnectedMutex.Unlock()
+	if _, ok := b.disconnected[client.UUID]; !ok {
+		return true
+	}
+	close(client.Queue)
+	delete(b.clients, client.UUID)
+	return false
+}
+
+func (s *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if subscriber.User.Admin || permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+		if s.User.Admin || permission.ProjectPermission(event.ProjectKey, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
-		if subscriber.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+		if s.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if subscriber.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+		if s.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if subscriber.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+		if s.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if subscriber.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+		if s.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		if subscriber.User.Admin || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, subscriber.User, permission.PermissionRead) {
-			subscriber.Queue <- eventS
+		if s.User.Admin || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, s.User, permission.PermissionRead) {
+			return true
 		}
-		return
+		return false
 	}
+	return false
 }
