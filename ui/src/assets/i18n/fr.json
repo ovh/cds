@@ -50,6 +50,8 @@
   "application_delete_description": "Une fois l'application supprimée, il n'y a pas de retour possible.",
   "application_detach_pipeline": "Détacher le pipeline de l'application",
   "application_name": "Nom de l'application",
+  "application_icon": "Icone de l'application",
+  "application_description": "Description de l'application",
   "application_name_error": "Le nom de l'application est invalide. Pattern autorisé : a-zA-Z0-9._-",
   "application_hook_form_title": "Ajouter un hook : ",
   "application_hook_list_title": "Liste des hooks : ",
@@ -245,6 +247,7 @@
   "common_favorites_delete": "Supprimer des favoris",
   "common_no_favorites": "Vous n'avez pas encore ajouté de projets ou de workflows dans vos favoris.",
   "common_favorites_all": "Tous les favoris",
+  "common_file_too_large": "Votre fichier est trop volumineux (max 100Ko)",
 
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",
@@ -466,6 +469,7 @@
   "pipeline_label_stop": "Arrêter le pipeline",
   "pipeline_loading": "Chargement du pipeline...",
   "pipeline_name": "Nom du pipeline",
+  "pipeline_description": "Description du pipeline",
   "pipeline_name_new": "Nom du nouveau pipeline",
   "pipeline_name_error": "Le nom du pipeline est invalide. Pattern autorisé : a-zA-Z0-9._-",
   "pipeline_parameters_list_title": "Liste des paramètres du pipeline : ",
@@ -511,6 +515,7 @@
   "prerequisite_value": "Valeur attendue",
 
   "project_list": "Tous les projets",
+  "project_description": "Description du projet",
   "project_list_card_updated": "Mis à jour le {{date}}",
   "project_advanced_title": "Administration du projet",
   "project_added": "Projet créé",

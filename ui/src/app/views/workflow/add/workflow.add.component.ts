@@ -201,8 +201,8 @@ workflow:
         this._router.navigate(['/project', this.project.key, 'workflow', this.asCodeResult.workflowName]);
     }
 
-    fileEvent(event) {
-        this.wfToImport = event;
+    fileEvent(event: {content: string, file: File}) {
+        this.wfToImport = event.content;
     }
 
     resyncRepos() {

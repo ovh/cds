@@ -22,8 +22,9 @@ var (
 	t1_1 = pipelineTestCase{
 		name: "Pipeline with 1 stage and 1 job",
 		arg: sdk.Pipeline{
-			Name: "MyPipeline t1_1",
-			Type: sdk.BuildPipeline,
+			Name:        "MyPipeline t1_1",
+			Description: "my description",
+			Type:        sdk.BuildPipeline,
 			Stages: []sdk.Stage{
 				{
 					BuildOrder: 1,
@@ -113,8 +114,9 @@ var (
 			},
 		},
 		expected: Pipeline{
-			Name: "MyPipeline",
-			Type: "build",
+			Name:        "MyPipeline",
+			Description: "my description",
+			Type:        "build",
 		},
 	}
 
@@ -443,6 +445,7 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 		t.Log(string(b))
 
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
+		assert.Equal(t, tc.arg.Description, transformedP.Description)
 		assert.Equal(t, tc.arg.Type, transformedP.Type)
 		test.EqualValuesWithoutOrder(t, tc.arg.GroupPermission, transformedP.GroupPermission)
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)

@@ -14,6 +14,10 @@
                     <label>{{ 'project_key' | translate }}</label>
                     <input type="text" name="projectkey" [(ngModel)]="project.key">
                 </div>
+                <div class="field">
+                    <label>{{ 'project_description' | translate }}</label>
+                    <textarea type="text" name="projectdescription" [(ngModel)]="project.description"></textarea>
+                </div>
                 <div class="ui error message" *ngIf="keyError">
                     {{ 'project_key_error' | translate }}
                 </div>

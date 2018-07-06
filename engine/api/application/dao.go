@@ -388,14 +388,14 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 
 	if u == nil || u.Admin {
 		query = `
-		SELECT application.id, application.name
+		SELECT application.id, application.name, application.description, application.icon
 		FROM application
 		WHERE application.project_id= $1
 		ORDER BY application.name ASC`
 		args = []interface{}{projID}
 	} else {
 		query = `
-			SELECT distinct(application.id) AS id, application.name
+			SELECT distinct(application.id) AS id, application.name, application.description, application.icon
 			FROM application
 			WHERE application.id IN (
 				SELECT application_group.application_id

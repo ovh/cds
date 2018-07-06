@@ -27,6 +27,7 @@ type IDName struct {
 	ID          string `json:"id" db:"id"`
 	Name        string `json:"name" db:"name"`
 	Description string `json:"description,omitempty" db:"description"`
+	Icon        string `json:"icon,omitempty" db:"icon"`
 }
 
 // NamePattern  Pattern for project/application/pipeline/group name

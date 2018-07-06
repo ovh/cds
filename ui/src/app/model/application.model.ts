@@ -16,6 +16,8 @@ export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$')
 export class Application {
     id: number;
     name: string;
+    description: string;
+    icon: string;
     groups: Array<GroupPermission>;
     variables: Array<Variable>;
     pipelines: Array<ApplicationPipeline>;

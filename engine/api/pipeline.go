@@ -318,6 +318,7 @@ func (api *API) updatePipelineHandler() Handler {
 
 		oldName := pipelineDB.Name
 		pipelineDB.Name = p.Name
+		pipelineDB.Description = p.Description
 		pipelineDB.Type = p.Type
 
 		if err := pipeline.UpdatePipeline(tx, pipelineDB); err != nil {

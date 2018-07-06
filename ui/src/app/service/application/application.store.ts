@@ -172,6 +172,7 @@ export class ApplicationStore {
                 let pToUpdate = cache.get(appKey);
                 pToUpdate.last_modified = app.last_modified;
                 pToUpdate.name = app.name;
+                pToUpdate.description = app.description;
                 this._application.next(cache.set(key + '-' + app.name, pToUpdate).remove(appKey));
             }
             if (oldName !== appli.name) {

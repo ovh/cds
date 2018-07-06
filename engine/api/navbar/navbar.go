@@ -27,7 +27,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (dat
 	query := `
 	(
 		SELECT DISTINCT
-			project.projectkey, project.name  AS project_name, NULL AS name,
+			project.projectkey, project.name AS project_name, project.description, NULL AS name,
 			CASE
 				WHEN (SELECT project_id FROM project_favorite WHERE user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
 				ELSE false
@@ -39,7 +39,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (dat
 	UNION
 	(
 		SELECT DISTINCT
-			project.projectkey, project.name  AS project_name, application.name,
+			project.projectkey, project.name AS project_name, application.description, application.name,
 			false AS favorite,
 			'application' AS type
 		FROM project
@@ -49,7 +49,7 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (dat
 	UNION
 	(
 		SELECT DISTINCT
-			project.projectkey, project.name AS project_name, workflow.name,
+			project.projectkey, project.name AS project_name, workflow.description, workflow.name,
 			CASE
 				WHEN (SELECT workflow_id FROM workflow_favorite WHERE user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
 				ELSE false
@@ -68,18 +68,19 @@ func loadNavbarAsAdmin(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (dat
 	defer rows.Close()
 
 	for rows.Next() {
-		var key, projectName, eltType string
+		var key, projectName, projectDescription, eltType string
 		var favorite bool
 		var name sql.NullString
-		if err := rows.Scan(&key, &projectName, &name, &favorite, &eltType); err != nil {
+		if err := rows.Scan(&key, &projectName, &projectDescription, &name, &favorite, &eltType); err != nil {
 			return data, err
 		}
 
 		projData := sdk.NavbarProjectData{
-			Key:      key,
-			Name:     projectName,
-			Favorite: favorite,
-			Type:     eltType,
+			Key:         key,
+			Name:        projectName,
+			Description: projectDescription,
+			Favorite:    favorite,
+			Type:        eltType,
 		}
 
 		if name.Valid {
@@ -101,7 +102,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data
 	query := `
 	(
 		SELECT DISTINCT
-			project.projectkey, project.name  AS project_name, NULL AS name,
+			project.projectkey, project.name AS project_name, project.description, NULL AS name,
 			CASE
 				WHEN (SELECT project_id FROM project_favorite WHERE user_id = $1 AND project_id = project.id) IS NOT NULL THEN true
 				ELSE false
@@ -121,7 +122,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data
 	UNION
 	(
 		SELECT DISTINCT
-			project.projectkey, project.name  AS project_name, application.name,
+			project.projectkey, project.name  AS project_name, application.description, application.name,
 			false AS favorite,
 			'application' AS type
 		FROM project
@@ -139,7 +140,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data
 	UNION
 	(
 		SELECT DISTINCT
-			project.projectkey, project.name AS project_name, workflow.name,
+			project.projectkey, project.name AS project_name, workflow.description, workflow.name,
 			CASE
 				WHEN (SELECT workflow_id FROM workflow_favorite WHERE user_id = $1 AND workflow_id = workflow.id) IS NOT NULL THEN true
 				ELSE false
@@ -175,18 +176,19 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data
 	defer rows.Close()
 
 	for rows.Next() {
-		var key, projectName, eltType string
+		var key, projectName, projectDescription, eltType string
 		var favorite bool
 		var name sql.NullString
-		if err := rows.Scan(&key, &projectName, &name, &favorite, &eltType); err != nil {
+		if err := rows.Scan(&key, &projectName, &projectDescription, &name, &favorite, &eltType); err != nil {
 			return data, err
 		}
 
 		projData := sdk.NavbarProjectData{
-			Key:      key,
-			Name:     projectName,
-			Favorite: favorite,
-			Type:     eltType,
+			Key:         key,
+			Name:        projectName,
+			Description: projectDescription,
+			Favorite:    favorite,
+			Type:        eltType,
 		}
 
 		if name.Valid {

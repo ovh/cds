@@ -23,7 +23,7 @@
                             <app-warning-mark-list [warnings]="warnMap?.get(wf.name)"></app-warning-mark-list>
                         </div>
                         <div class="meta" *ngIf="wf.description">
-                            <span [innerText]="wf.description.slice(0, 70)"></span><span *ngIf="wf.description.length > 70">...</span>
+                            <span [innerText]="wf.description.slice(0, 90)"></span><span *ngIf="wf.description.length > 90">...</span>
                         </div>
                         <div class="meta" *ngIf="!wf.description" [innerText]="'common_no_description' | translate"></div>
                     </div>
