@@ -24,11 +24,13 @@ func (api *API) InitRouter() {
 	api.lastUpdateBroker.Init(api.Router.Background)
 
 	api.eventsBroker = &eventsBroker{
-		cache:    api.Cache,
-		clients:  make(map[string]eventsBrokerSubscribe),
-		dbFunc:   api.DBConnectionFactory.GetDBMap,
-		messages: make(chan sdk.Event),
-		mutex:    &sync.Mutex{},
+		cache:             api.Cache,
+		clients:           make(map[string]eventsBrokerSubscribe),
+		dbFunc:            api.DBConnectionFactory.GetDBMap,
+		messages:          make(chan sdk.Event),
+		mutex:             &sync.Mutex{},
+		disconnectedMutex: &sync.Mutex{},
+		disconnected:      make(map[string]bool),
 	}
 	api.eventsBroker.Init(context.Background())
 
