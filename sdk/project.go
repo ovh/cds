@@ -56,10 +56,20 @@ func (proj Project) IsValid() error {
 	return nil
 }
 
+// SSHKeys returns a ssh key given his name
+func (proj Project) GetSSHKey(name string) *ProjectKey {
+	for _, k := range proj.Keys {
+		if k.Type == KeyTypeSSH && k.Name == name {
+			return &k
+		}
+	}
+	return nil
+}
+
 // SSHKeys returns the slice of ssh key for an application
-func (a Project) SSHKeys() []ProjectKey {
+func (proj Project) SSHKeys() []ProjectKey {
 	keys := []ProjectKey{}
-	for _, k := range a.Keys {
+	for _, k := range proj.Keys {
 		if k.Type == KeyTypeSSH {
 			keys = append(keys, k)
 		}
@@ -67,10 +77,10 @@ func (a Project) SSHKeys() []ProjectKey {
 	return keys
 }
 
-// PGPKeys returns the slice of pgp key for an application
-func (a Project) PGPKeys() []ProjectKey {
+// PGPKeys returns the slice of pgp key for a project
+func (proj Project) PGPKeys() []ProjectKey {
 	keys := []ProjectKey{}
-	for _, k := range a.Keys {
+	for _, k := range proj.Keys {
 		if k.Type == KeyTypePGP {
 			keys = append(keys, k)
 		}
@@ -79,20 +89,20 @@ func (a Project) PGPKeys() []ProjectKey {
 }
 
 // GetPlatform returns the ProjectPlatform given a name
-func (a Project) GetPlatform(pfName string) (ProjectPlatform, bool) {
-	for i := range a.Platforms {
-		if a.Platforms[i].Name == pfName {
-			return a.Platforms[i], true
+func (proj Project) GetPlatform(pfName string) (ProjectPlatform, bool) {
+	for i := range proj.Platforms {
+		if proj.Platforms[i].Name == pfName {
+			return proj.Platforms[i], true
 		}
 	}
 	return ProjectPlatform{}, false
 }
 
 // GetPlatformByID returns the ProjectPlatform given a name
-func (a Project) GetPlatformByID(id int64) *ProjectPlatform {
-	for i := range a.Platforms {
-		if a.Platforms[i].ID == id {
-			return &a.Platforms[i]
+func (proj Project) GetPlatformByID(id int64) *ProjectPlatform {
+	for i := range proj.Platforms {
+		if proj.Platforms[i].ID == id {
+			return &proj.Platforms[i]
 		}
 	}
 	return nil

@@ -74,6 +74,12 @@ export class WorkflowTriggerComponent {
     }
 
     nextStep() {
-      this.nodeWizard.goToNextSection().subscribe((section) => this.currentSection = section);
+      this.nodeWizard.goToNextSection().subscribe((section) => {
+        if (section === 'done') {
+          this.saveTrigger();
+        } else {
+          this.currentSection = section;
+        }
+      });
     }
 }

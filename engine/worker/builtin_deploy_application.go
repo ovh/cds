@@ -12,7 +12,7 @@ import (
 )
 
 func runDeployApplication(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		pfName := sdk.ParameterFind(params, "cds.platform")
 		if pfName == nil {
 			res := sdk.Result{

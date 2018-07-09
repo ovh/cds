@@ -206,6 +206,7 @@
   "common_pipeline": "Pipeline",
   "common_pipelines": "Pipelines",
   "common_platforms": "Platforms",
+  "common_platform": "Platform",
   "common_project_title": "Project : ",
   "common_requirements": "Requirements",
   "common_status": "Status",

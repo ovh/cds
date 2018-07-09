@@ -31,6 +31,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	w.nbActionsDone++
 	// Set build variables
 	w.currentJob.wJob = &info.NodeJobRun
+	w.currentJob.secrets = info.Secrets
 	// Reset build variables
 	w.currentJob.gitsshPath = ""
 	w.currentJob.pkey = ""
