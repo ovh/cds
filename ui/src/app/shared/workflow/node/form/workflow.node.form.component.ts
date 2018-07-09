@@ -55,11 +55,7 @@ export class WorkflowNodeFormComponent implements OnInit {
         if (appName && appName !== ' ') {
             this._appStore.getDeploymentStrategies(this.project.key, appName).pipe(
                 first(),
-                finalize(
-                    () => {
-                        this.initPlatformList();
-                    }
-                )
+                finalize(() => this.initPlatformList())
             ).subscribe(
                 data => {
                     this.platforms = [];
