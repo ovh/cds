@@ -206,6 +206,10 @@ var EventSourcePolyfill = (function (global) {
         }
 
         function onEvent (type) {
+            if (currentState === CLOSED) {
+                xhr.abort();
+                return;
+            }
             if (xhr.status >= 500) {
                 setTimeout(function () {
                     if (errorOnTimeout) {
