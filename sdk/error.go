@@ -151,6 +151,8 @@ var (
 	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
 	ErrInvalidNumber                          = Error{ID: 137, Status: http.StatusBadRequest}
 	ErrKeyAlreadyExist                        = Error{ID: 138, Status: http.StatusConflict}
+	ErrPipelineNameImport                     = Error{ID: 139, Status: http.StatusBadRequest}
+	ErrWorkflowNameImport                     = Error{ID: 140, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -290,6 +292,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUserNotFound.ID:                           "User not found",
 	ErrInvalidNumber.ID:                          "Invalid number",
 	ErrKeyAlreadyExist.ID:                        "Key already exists",
+	ErrPipelineNameImport.ID:                     "Pipeline name doesn't correspond in your code",
+	ErrWorkflowNameImport.ID:                     "Workflow name doesn't correspond in your code",
 }
 
 var errorsFrench = map[int]string{
@@ -429,6 +433,8 @@ var errorsFrench = map[int]string{
 	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
 	ErrInvalidNumber.ID:                          "Nombre non valide",
 	ErrKeyAlreadyExist.ID:                        "La clé existe déjà",
+	ErrPipelineNameImport.ID:                     "Le nom du pipeline dans le code ne correspond pas au nom du pipeline que vous voulez éditer",
+	ErrWorkflowNameImport.ID:                     "Le nom du workflow dans le code ne correspond pas au nom du workflow que vous voulez éditer",
 }
 
 var errorsLanguages = []map[int]string{

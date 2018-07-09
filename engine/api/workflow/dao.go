@@ -940,7 +940,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 
 	for filename, pip := range pips {
 		log.Debug("Push> Parsing %s", filename)
-		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, true, u)
+		pipDB, msgList, err := pipeline.ParseAndImport(tx, store, proj, &pip, u, pipeline.ImportOptions{Force: true})
 		if err != nil {
 			err = fmt.Errorf("unable to import pipeline %s: %v", pip.Name, err)
 			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
@@ -968,7 +968,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		dryRun = opts.DryRun
 	}
 
-	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, true, u, dryRun)
+	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
 	if err != nil {
 		log.Error("Push> Unable to import workflow: %v", err)
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)

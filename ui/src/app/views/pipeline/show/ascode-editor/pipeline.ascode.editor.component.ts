@@ -86,7 +86,7 @@ export class PipelineAsCodeEditorComponent {
 
     save() {
         this.loading = true;
-        this._pipStore.importPipeline(this.project.key, this.pipeline.name, this.exportedPip, true)
+        this._pipStore.importPipeline(this.project.key, this.pipeline.name, this.exportedPip)
             .pipe(finalize(() => this.loading = false))
             .subscribe((pip) => {
                 this._pipCoreService.toggleAsCodeEditor({open: false, save: false});
