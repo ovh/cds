@@ -11,23 +11,45 @@
                  [infiniteScrollThrottle]="50"
                  [scrollWindow]="false"
                  (scrolled)="onScroll()">
-                <div class="item" *ngFor="let e of events">
+                <div class="item" *ngFor="let e of events" (mouseenter) ="e.bell = true"  (mouseleave) ="e.bell = false">
                     <div class="content">
                         <div class="header">
-                            <div class="ui label"
-                                 [class.green]="e.status === pipelineStatus.SUCCESS"
-                                 [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING"
-                                 [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
-                                 [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT"
-                            >
-                                {{ e.status }}
+                            <div class="right floated content">
+                                <div class="ui label"
+                                     [class.green]="e.status === pipelineStatus.SUCCESS"
+                                     [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING"
+                                     [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
+                                     [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT"
+                                >
+                                    {{ e.status }}
+                                </div>
+                                <!--div class="ui dropdown icon" suiDropdown>
+                                    <i class="settings icon"></i>
+                                    <div class="left menu" suiDropdownMenu>
+                                        <div class="item">
+                                            <div class="ui red empty circular label"></div>
+                                            Important
+                                        </div>
+                                        <div class="item">
+                                            <div class="ui blue empty circular label"></div>
+                                            Announcement
+                                        </div>
+                                        <div class="item">
+                                            <div class="ui black empty circular label"></div>
+                                            Discussion
+                                        </div>
+                                    </div>
+                                </div-->
                             </div>
+                            <span [hidden]="!e.bell">
+                                <i class="bell slash icon" title="{{ 'timeline_filter_mute' | translate }}" (click)="addFilter(e)"></i>
+                            </span>
                             [<a [routerLink]="['/project', e.project_key]">{{ e.project_key  }}</a>]
                             <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name]">{{ e.workflow_name }}</a>
                             <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name, 'run', e.workflow_run_num]">#{{ e.workflow_run_num }}</a>
                         </div>
                         <div class="description">
-                            {{e.timestamp | amTimeAgo}}
+                                {{e.timestamp | amTimeAgo}}
                         </div>
                     </div>
                 </div>

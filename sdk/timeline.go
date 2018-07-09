@@ -8,13 +8,11 @@ type UserTimelineFilter struct {
 
 // TimelineFilter represents a user filter for the cds timeline
 type TimelineFilter struct {
-	Projects    []ProjectFilter `json:"projects"`
-	AllProjects bool            `json:"all_projects"`
+	Projects []ProjectFilter `json:"projects"`
 }
 
 // ProjectFilter represents filter on a project
 type ProjectFilter struct {
 	Key           string   `json:"key"`
 	WorkflowNames []string `json:"workflow_names"`
-	AllWorkflows  bool     `json:"all_workflows"`
 }
