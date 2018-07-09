@@ -1,11 +1,8 @@
 import {Component, Input} from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
 import {Project} from '../../../../model/project.model';
-import {
-    Workflow,
-    WorkflowNode,
-    WorkflowNodeHook,
-    WorkflowNodeJoin
-} from '../../../../model/workflow.model';
+import { Workflow} from '../../../../model/workflow.model';
+import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../../../service/workflow/workflow.sidebar.store';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 
 @Component({
@@ -19,14 +16,16 @@ export class WorkflowSidebarEditComponent {
     // Project that contains the workflow
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() node: WorkflowNode;
-    @Input() join: WorkflowNodeJoin;
-    @Input() hook: WorkflowNodeHook;
-    // Flag indicate if sidebar is open
-    @Input() open: boolean;
 
-    constructor() {
+    mode: string;
+    modes = WorkflowSidebarMode;
 
+    subs: Subscription;
+
+    constructor(private _workflowSidebarStore: WorkflowSidebarStore) {
+        this.subs = this._workflowSidebarStore.sidebarMode().subscribe(m => {
+            this.mode = m;
+        });
     }
 
 }

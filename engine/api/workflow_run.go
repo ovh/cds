@@ -330,7 +330,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 			return sdk.WrapError(errP, "stopWorkflowRunHandler> Unable to load project")
 		}
 
-		report, err := stopWorkflowRun(ctx, api.mustDB(), api.Cache, proj, run, getUser(ctx))
+		report, err := stopWorkflowRun(ctx, api.mustDB, api.Cache, proj, run, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "stopWorkflowRun> Unable to stop workflow")
 		}
@@ -342,10 +342,10 @@ func (api *API) stopWorkflowRunHandler() Handler {
 	}
 }
 
-func stopWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, run *sdk.WorkflowRun, u *sdk.User) (*workflow.ProcessorReport, error) {
+func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, run *sdk.WorkflowRun, u *sdk.User) (*workflow.ProcessorReport, error) {
 	report := new(workflow.ProcessorReport)
 
-	tx, errTx := db.Begin()
+	tx, errTx := dbFunc().Begin()
 	if errTx != nil {
 		return nil, sdk.WrapError(errTx, "stopWorkflowRunHandler> Unable to create transaction")
 	}
@@ -369,7 +369,7 @@ func stopWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 				continue
 			}
 
-			r1, errS := workflow.StopWorkflowNodeRun(ctx, db, store, p, wnr, stopInfos)
+			r1, errS := workflow.StopWorkflowNodeRun(ctx, dbFunc, store, p, wnr, stopInfos)
 			if errS != nil {
 				return nil, sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
 			}
@@ -522,7 +522,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
 
-		report, err := stopWorkflowNodeRun(ctx, api.mustDB(), api.Cache, p, nodeRun, name, getUser(ctx))
+		report, err := stopWorkflowNodeRun(ctx, api.mustDB, api.Cache, p, nodeRun, name, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to stop workflow run")
 		}
@@ -534,8 +534,8 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 	}
 }
 
-func stopWorkflowNodeRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) (*workflow.ProcessorReport, error) {
-	tx, errTx := db.Begin()
+func stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) (*workflow.ProcessorReport, error) {
+	tx, errTx := dbFunc().Begin()
 	if errTx != nil {
 		return nil, sdk.WrapError(errTx, "stopWorkflowNodeRunHandler> Unable to create transaction")
 	}
@@ -546,7 +546,7 @@ func stopWorkflowNodeRun(ctx context.Context, db *gorp.DbMap, store cache.Store,
 		RemoteTime: time.Now(),
 		Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}},
 	}
-	report, errS := workflow.StopWorkflowNodeRun(ctx, db, store, p, *nodeRun, stopInfos)
+	report, errS := workflow.StopWorkflowNodeRun(ctx, dbFunc, store, p, *nodeRun, stopInfos)
 	if errS != nil {
 		return nil, sdk.WrapError(errS, "stopWorkflowNodeRunHandler> Unable to stop workflow node run")
 	}
@@ -601,7 +601,13 @@ func (api *API) postWorkflowRunHandler() Handler {
 		u := getUser(ctx)
 
 		_, next := tracing.Span(ctx, "project.Load")
-		p, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithVariables, project.LoadOptions.WithFeatures, project.LoadOptions.WithPlatforms)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
+			project.LoadOptions.WithVariables,
+			project.LoadOptions.WithFeatures,
+			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithApplicationVariables,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		)
 		next()
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
@@ -627,6 +633,10 @@ func (api *API) postWorkflowRunHandler() Handler {
 		var wf *sdk.Workflow
 		if lastRun != nil {
 			wf = &lastRun.Workflow
+			// Check workflow name in case of rename
+			if wf.Name != name {
+				wf.Name = name
+			}
 		} else {
 			// Test workflow as code or not
 			options := workflow.LoadOptions{
@@ -649,10 +659,12 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 				proj, errp := project.Load(api.mustDB(), api.Cache, key, u,
 					project.LoadOptions.WithGroups,
-					project.LoadOptions.WithApplications,
+					project.LoadOptions.WithApplicationVariables,
+					project.LoadOptions.WithApplicationWithDeploymentStrategies,
 					project.LoadOptions.WithEnvironments,
 					project.LoadOptions.WithPipelines,
 					project.LoadOptions.WithClearKeys,
+					project.LoadOptions.WithClearPlatforms,
 				)
 
 				if errp != nil {
@@ -797,7 +809,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 	}
 
 	if lastRun == nil {
-		_, r1, errmr := workflow.ManualRun(ctx, db, tx, store, p, wf, opts.Manual, asCodeInfos)
+		_, r1, errmr := workflow.ManualRun(ctx, tx, store, p, wf, opts.Manual, asCodeInfos)
 		if errmr != nil {
 			return nil, sdk.WrapError(errmr, "startWorkflowRun> Unable to run workflow")
 		}
@@ -846,7 +858,7 @@ func runFromNode(ctx context.Context, db *gorp.DbMap, store cache.Store, opts sd
 
 	//Manual run
 	if lastRun != nil {
-		_, r1, errmr := workflow.ManualRunFromNode(ctx, db, tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID)
+		_, r1, errmr := workflow.ManualRunFromNode(ctx, tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID)
 		if errmr != nil {
 			return nil, sdk.WrapError(errmr, "runFromNode> Unable to run workflow from node")
 		}

@@ -88,7 +88,7 @@ func (api *API) disableWorkerHandler() Handler {
 
 		if err := worker.UpdateWorkerStatus(tx, id, sdk.StatusDisabled); err != nil {
 			if err == worker.ErrNoWorker || err == sql.ErrNoRows {
-				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> handler %s does not exists", id)
+				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exists", id)
 			}
 			return sdk.WrapError(err, "disableWorkerHandler> cannot update worker status")
 		}
@@ -116,7 +116,7 @@ func (api *API) refreshWorkerHandler() Handler {
 
 func (api *API) unregisterWorkerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := worker.DeleteWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
+		if err := worker.DisableWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
 			return sdk.WrapError(err, "unregisterWorkerHandler> cannot delete worker %s", getWorker(ctx).ID)
 		}
 		return nil

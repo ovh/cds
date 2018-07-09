@@ -522,7 +522,6 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	if err != nil {
 		return 0, sdk.WrapError(err, "nextRunNumber")
 	}
-	log.Debug("nextRunNumber> %s/%s %d", w.ProjectKey, w.Name, i)
 	return int64(i), nil
 }
 
@@ -567,9 +566,10 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 			UPDATE workflow_run SET to_delete = true
 			WHERE workflow_run.id IN (
 				SELECT workflow_run.id
-					FROM workflow_run
+				FROM workflow_run
 				WHERE workflow_run.workflow_id = $1
 				AND workflow_run.id < $2
+				LIMIT 100
 			)
 		`
 		if _, err := db.Exec(qDelete, wf.ID, lastWfrID); err != nil {
@@ -644,6 +644,11 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 			}
 			idsToUpdate = append(idsToUpdate, strings.Join(idsStr, ","))
 		}
+	}
+
+	//Don't mark as to_delete more than 100 workflow_runs
+	if len(idsToUpdate) > 100 {
+		idsToUpdate = idsToUpdate[:100]
 	}
 
 	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id = ANY(string_to_array($1, ',')::bigint[])`

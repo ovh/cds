@@ -801,3 +801,32 @@ func (s *Service) statusHandler() api.Handler {
 		return api.WriteJSON(w, s.Status(), status)
 	}
 }
+
+func (s *Service) postRepoGrantHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postRepoGrantHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postRepoGrantHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postRepoGrantHandler> Unable to get authorized client")
+		}
+
+		if err := client.GrantReadPermission(owner + "/" + repo); err != nil {
+			return sdk.WrapError(err, "VCS> postRepoGrantHandler> unable to grant %s/%s on %s", owner, repo, name)
+		}
+
+		return nil
+	}
+}

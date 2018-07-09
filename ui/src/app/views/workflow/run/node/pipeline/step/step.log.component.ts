@@ -10,7 +10,7 @@ import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workf
 import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
 import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
 import {DurationService} from '../../../../../../shared/duration/duration.service';
-import {CDSWorker} from '../../../../../../shared/worker/worker';
+import {CDSWebWorker} from '../../../../../../shared/worker/web.worker';
 
 declare var ansi_up: any;
 
@@ -67,7 +67,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
       return this._showLog;
     }
 
-    worker: CDSWorker;
+    worker: CDSWebWorker;
     workerSubscription: Subscription;
     queryParamsSubscription: Subscription;
     loading = true;
@@ -135,7 +135,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
 
         if (!this.worker) {
-            this.worker = new CDSWorker('./assets/worker/web/workflow-log.js');
+            this.worker = new CDSWebWorker('./assets/worker/web/workflow-log.js');
             this.worker.start({
                 user: this._authStore.getUser(),
                 session: this._authStore.getSessionToken(),
@@ -181,6 +181,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.stepStatus || PipelineStatus.neverRun(this.currentStatus)) {
             return;
         }
+
         if (this.stepStatus.start && this.stepStatus.start.indexOf('0001-01-01') !== -1) {
             return;
         }
@@ -188,11 +189,13 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
         if (this.stepStatus.done && this.stepStatus.done.indexOf('0001-01-01') !== -1) {
             this.doneExec = new Date();
-        } else {
+        } else if (this.stepStatus.done) {
             this.doneExec = new Date(this.stepStatus.done);
         }
 
-        this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
+        if (this.doneExec) {
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
+        }
     }
 
     toggleLogs() {

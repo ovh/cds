@@ -8,7 +8,7 @@ import {BuildResult, Log, Pipeline, PipelineBuild, PipelineStatus} from '../../.
 import {Project} from '../../../../model/project.model';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {DurationService} from '../../../../shared/duration/duration.service';
-import {CDSWorker} from '../../../../shared/worker/worker';
+import {CDSWebWorker} from '../../../../shared/worker/web.worker';
 
 declare var ansi_up: any;
 
@@ -60,7 +60,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
       return this._showLog;
     }
 
-    worker: CDSWorker;
+    worker: CDSWebWorker;
     workerSubscription: Subscription;
 
     zone: NgZone;
@@ -94,7 +94,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
             this.loading = true;
         }
         if (!this.worker) {
-            this.worker = new CDSWorker('./assets/worker/web/log.js');
+            this.worker = new CDSWebWorker('./assets/worker/web/log.js');
             this.worker.start({
                 user: this._authStore.getUser(),
                 session: this._authStore.getSessionToken(),

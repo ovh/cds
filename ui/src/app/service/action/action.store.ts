@@ -19,16 +19,20 @@ export class ActionStore {
      */
     getActions(): Observable<OrderedMap<string, Action>> {
         if (this._actions.getValue().size === 0) {
-            this._actionService.getActions().subscribe(res => {
-                let map = OrderedMap<string, Action>();
-                if (res && res.length > 0) {
-                    res.forEach(a => {
-                        map = map.set(a.name, a);
-                    });
-                }
-                this._actions.next(map);
-            });
+            this.resync();
         }
         return new Observable<OrderedMap<string, Action>>(fn => this._actions.subscribe(fn));
+    }
+
+    resync(): void {
+        this._actionService.getActions().subscribe(res => {
+            let map = OrderedMap<string, Action>();
+            if (res && res.length > 0) {
+                res.forEach(a => {
+                    map = map.set(a.name, a);
+                });
+            }
+            this._actions.next(map);
+        });
     }
 }

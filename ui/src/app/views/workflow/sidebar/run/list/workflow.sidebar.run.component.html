@@ -1,4 +1,4 @@
-<div id="WorkflowSidebar" *ngIf="open">
+<div id="WorkflowSidebar">
     <sui-multi-select class="selection"
                       [(ngModel)]="selectedTags"
                       [options]="tagsSelectable"
@@ -14,7 +14,7 @@
       <div class="item padding pointing"
           *ngFor="let r of filteredWorkflowRuns"
           (click)="changeRun(r.num)"
-          [class.active]="runNumber === r.num">
+          [class.active]="selectedWorkfowRun?.num === r.num">
           <div class="floated right mr" *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
               <app-status-icon [status]="r.status"></app-status-icon>
           </div>
@@ -55,4 +55,4 @@
       </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!ready && open">{{ 'workflow_run_loading' | translate }}</div>
+<div class="ui text active loader" *ngIf="!ready">{{ 'workflow_run_loading' | translate }}</div>

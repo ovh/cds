@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -115,6 +116,11 @@ func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User,
 	return nil
 }
 
+// PreInsert is a db hook
+func (w *Workflow) PreInsert(db gorp.SqlExecutor) error {
+	return w.PreUpdate(db)
+}
+
 // PostInsert is a db hook
 func (w *Workflow) PostInsert(db gorp.SqlExecutor) error {
 	return w.PostUpdate(db)
@@ -142,6 +148,20 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 		return err
 	}
 	w.PurgeTags = purgeTags
+
+	return nil
+}
+
+// PreUpdate is a db hook
+func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
+	if w.FromRepository != "" && strings.HasPrefix(w.FromRepository, "http") {
+		fromRepoURL, err := url.Parse(w.FromRepository)
+		if err != nil {
+			return sdk.WrapError(err, "Workflow.PreUpdate> Cannot parse url %s", w.FromRepository)
+		}
+		fromRepoURL.User = nil
+		w.FromRepository = fromRepoURL.String()
+	}
 
 	return nil
 }
@@ -588,6 +608,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
 			return sdk.WrapError(err, "Delete> Unable to detach workflow root")
 		}
+
 		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root); err != nil {
 			return sdk.WrapError(err, "Update> unable to delete root node on workflow(%d)", w.ID)
 		}
@@ -653,7 +674,7 @@ func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workf
 
 	hooks := w.GetHooks()
 	// Delete all hooks
-	if err := deleteHookConfiguration(db, store, p, hooks); err != nil {
+	if err := DeleteHookConfiguration(db, store, p, hooks); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete hooks from workflow")
 	}
 

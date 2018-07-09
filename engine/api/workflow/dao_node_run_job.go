@@ -28,7 +28,7 @@ func isSharedInfraGroup(groupsID []int64) bool {
 func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
 	c := sdk.WorkflowNodeJobRunCount{}
 
-	queue, err := LoadNodeJobRunQueue(db, store, permission.PermissionRead, groupsID, usr, since, until, statuses...)
+	queue, err := LoadNodeJobRunQueue(db, store, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
 	if err != nil {
 		return c, sdk.WrapError(err, "CountNodeJobRunQueue> unable to load queue")
 	}
@@ -44,7 +44,7 @@ func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	if since == nil {
 		since = new(time.Time)
 	}
@@ -62,7 +62,8 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 	from workflow_node_run_job
 	where workflow_node_run_job.queued >= $1
 	and workflow_node_run_job.queued <= $2
-	and workflow_node_run_job.status = ANY(string_to_array($3, ','))`
+	and workflow_node_run_job.status = ANY(string_to_array($3, ','))
+	order by workflow_node_run_job.queued ASC`
 
 	args := []interface{}{*since, *until, strings.Join(statuses, ",")}
 
@@ -84,6 +85,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 		AND workflow_node_run_job.queued >= $1
 		AND workflow_node_run_job.queued <= $2
 		AND workflow_node_run_job.status = ANY(string_to_array($3, ','))
+		ORDER BY workflow_node_run_job.queued ASC
 		`
 
 		var groupID string
@@ -95,6 +97,11 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 			}
 		}
 		args = append(args, groupID, group.SharedInfraGroup.ID)
+	}
+
+	if limit != nil && *limit > 0 {
+		query += `
+		LIMIT ` + strconv.Itoa(*limit)
 	}
 
 	isSharedInfraGroup := isSharedInfraGroup(groupsID)

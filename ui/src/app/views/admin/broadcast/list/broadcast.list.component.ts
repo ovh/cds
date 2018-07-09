@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
 import {Broadcast} from '../../../../model/broadcast.model';
-import {BroadcastService} from '../../../../service/broadcast/broadcast.service';
+import {BroadcastStore} from '../../../../service/broadcast/broadcast.store';
 import {Table} from '../../../../shared/table/table';
 
 @Component({
@@ -17,10 +17,10 @@ export class BroadcastListComponent extends Table {
         this.nbElementsByPage = data;
     };
 
-    constructor(private _broadcastService: BroadcastService) {
+    constructor(private _broadcastStore: BroadcastStore) {
         super();
-        this._broadcastService.getBroadcasts().subscribe( broadcasts => {
-            this.broadcasts = broadcasts;
+        this._broadcastStore.getBroadcasts().subscribe( broadcasts => {
+            this.broadcasts = broadcasts.toArray().sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
         });
     }
 

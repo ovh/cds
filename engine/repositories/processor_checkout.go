@@ -32,11 +32,6 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 		}
 	}
 
-	n, err := gitRepo.Name()
-	if err != nil {
-		log.Error("Repositories> processCheckout> gitRepo.Name> [%s] Error: %v", op.UUID, err)
-		return err
-	}
 	f, err := gitRepo.FetchURL()
 	if err != nil {
 		log.Error("Repositories> processCheckout> gitRepo.FetchURL> [%s] Error: %v", op.UUID, err)
@@ -49,7 +44,7 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 	}
 
 	op.RepositoryInfo = &sdk.OperationRepositoryInfo{
-		Name:          n,
+		Name:          op.RepoFullName,
 		FetchURL:      f,
 		DefaultBranch: d,
 	}

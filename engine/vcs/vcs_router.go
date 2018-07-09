@@ -32,6 +32,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/branches/commits", r.GET(s.getCommitsHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}", r.GET(s.getCommitHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}/statuses", r.GET(s.getCommitStatusHandler))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/grant", r.POST(s.postRepoGrantHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests", r.GET(s.getPullRequestsHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests/{id}/comments", r.POST(s.postPullRequestCommentHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/events", r.GET(s.getEventsHandler), r.POST(s.postFilterEventsHandler))

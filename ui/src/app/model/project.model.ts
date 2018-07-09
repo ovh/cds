@@ -27,9 +27,11 @@ export class Project {
     keys: Array<Key>;
     platforms: Array<ProjectPlatform>;
     features: {};
+    metadata: {};
     favorite: boolean;
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
+    loading: boolean;
 }
 
 export class LoadOpts {

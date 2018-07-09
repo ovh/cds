@@ -111,10 +111,6 @@ export class ProjectShowComponent implements OnInit {
                             goToDefaultTab = false;
                         }
                     }
-                } else if (proj && proj.externalChange) {
-                    if (this.project.externalChange) {
-                        this._toast.info('', this._translate.instant('warning_project'));
-                    }
                 }
             }
         }, () => {

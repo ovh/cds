@@ -114,6 +114,8 @@ func (g *githubConsumer) GetAuthorizedClient(accessToken, accessTokenSecret stri
 			DisableStatusDetail: g.disableStatusDetail,
 			apiURL:              g.apiURL,
 			proxyURL:            g.proxyURL,
+			username:            g.username,
+			token:               g.token,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}

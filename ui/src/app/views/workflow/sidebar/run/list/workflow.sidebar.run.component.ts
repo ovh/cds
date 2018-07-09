@@ -1,17 +1,15 @@
-import {Component, ElementRef, Input, NgZone, OnDestroy, ViewChild} from '@angular/core';
+import {Component, ElementRef, Input, OnDestroy, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
-import {environment} from '../../../../../../environments/environment';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {Workflow} from '../../../../../model/workflow.model';
 import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
-import {AuthentificationStore} from '../../../../../service/auth/authentification.store';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
+import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {DurationService} from '../../../../../shared/duration/duration.service';
-import {CDSWorker} from '../../../../../shared/worker/worker';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',
@@ -23,44 +21,37 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
-    @Input() runNumber: number;
 
     // Workflow
     _workflow: Workflow;
     @Input('workflow')
     set workflow(data: Workflow) {
         if (data) {
-            let haveToStar = false;
+            let haveToStart = false;
             if (!this._workflow || (this._workflow && data.name !== this._workflow.name)) {
-                haveToStar = true;
+                haveToStart = true;
             }
 
-            if (this._workflow && this._workflow.id !== data.id) {
-                this.ready = false;
-            }
             this._workflow = data;
             this.initSelectableTags();
-            if (haveToStar) {
-                this.startWorker();
+            if (haveToStart) {
+                this.eventSubscription = this._eventStore.workflowRuns().subscribe(m => {
+                    this.workflowRuns = Array.from(m.valueSeq().toArray()).sort((a, b) => {
+                        return b.num - a.num;
+                    });
+                    this.refreshRun();
+                });
             }
         }
     }
     get workflow() { return this._workflow; }
-    // Flag indicate if sidebar is open
-    @Input() open: boolean;
 
     @ViewChild('tagsList') tagsList: ElementRef;
 
-    // List of workflow run, updated by  webworker
+    eventSubscription: Subscription;
+    // List of workflow run
     workflowRuns: Array<WorkflowRun>;
     filteredWorkflowRuns: Array<WorkflowRun>;
-
-    // Webworker
-    runWorker: CDSWorker;
-    runWorkerSubscription: Subscription;
-
-    // Angular zone to update model with webworker data
-    zone: NgZone;
 
     // search part
     selectedTags: Array<string>;
@@ -68,43 +59,23 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     tagToDisplay: Array<string>;
     pipelineStatusEnum = PipelineStatus;
     ready = false;
+    listingSub: Subscription;
     filteredTags: {[key: number]: WorkflowRunTags[]} = {};
 
-    constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService,
-      private _duration: DurationService, private _router: Router) {
-        this.zone = new NgZone({enableLongStackTrace: false});
-    }
+    durationIntervalID: number;
 
-    startWorker(): void {
-        // Start webworker
-        if (this.runWorkerSubscription) {
-            this.runWorkerSubscription.unsubscribe();
-        }
-        if (this.runWorker) {
-            this.runWorker.stop();
-        }
+    selectedWorkfowRun: WorkflowRun;
+    subWorkflowRun: Subscription;
 
-        this.runWorker = new CDSWorker('./assets/worker/web/workflow-run.js');
-        this.runWorker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL,
-            key: this.project.key,
-            workflowName: this.workflow.name,
-            limit: 50
+    constructor(private _workflowRunService: WorkflowRunService,
+      private _duration: DurationService, private _router: Router, private _eventStore: WorkflowEventStore) {
+
+        this.subWorkflowRun = this._eventStore.selectedRun().subscribe(wr => {
+            this.selectedWorkfowRun = wr;
         });
 
-        // Listening to web worker responses
-        this.runWorkerSubscription = this.runWorker.response().subscribe(msg => {
-            this.zone.run(() => {
-                if (!msg) {
-                    return;
-                }
-                this.workflowRuns = <Array<WorkflowRun>>JSON.parse(msg);
-                this.refreshRun();
-                this.ready = true;
-            });
-
+        this.listingSub = this._eventStore.isListingRuns().subscribe(b => {
+            this.ready = !b;
         });
     }
 
@@ -140,22 +111,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
           .sort((tga, tgb) => this.tagToDisplay.indexOf(tga.tag) - this.tagToDisplay.indexOf(tgb.tag));
     }
 
-    getFilteredTagsString(tags: WorkflowRunTags[]): string {
-        if (!Array.isArray(tags) || !this.tagToDisplay) {
-            return '';
-        }
-        let tagsFormatted = '';
-        for (let i = 0; i < tags.length; i++) {
-            if (i === 0) {
-                tagsFormatted += tags[i].value;
-            } else {
-                tagsFormatted += (' , ' + tags[i].value);
-            }
-        }
-
-        return tagsFormatted;
-    }
-
     getDuration(status: string, start: string, done: string): string {
         if (status === PipelineStatus.BUILDING || status === PipelineStatus.WAITING) {
             return this._duration.duration(new Date(start), new Date());
@@ -183,21 +138,45 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
                   });
               });
             }
-            this.filteredWorkflowRuns.forEach((r) => {
-              this.filteredTags[r.id] = this.getFilteredTags(r.tags);
-              r.duration = this.getDuration(r.status, r.start, r.last_execution);
-            });
+            if (this.durationIntervalID) {
+                this.deleteInterval();
+            }
+            this.refreshDuration();
+            this.durationIntervalID = window.setInterval(() => {
+                this.refreshDuration();
+            }, 5000);
         }
     }
 
+    refreshDuration(): void {
+        if (this.filteredWorkflowRuns) {
+            let stillWorking = false;
+            this.filteredWorkflowRuns.forEach((r) => {
+                if (PipelineStatus.isActive(r.status)) {
+                    stillWorking = true;
+                }
+                this.filteredTags[r.id] = this.getFilteredTags(r.tags);
+                r.duration = this.getDuration(r.status, r.start, r.last_execution);
+            });
+            if (!stillWorking) {
+                this.deleteInterval();
+            }
+        }
+
+    }
+
     changeRun(num: number) {
-        this.runNumber = num;
         this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', num]);
     }
 
     ngOnDestroy(): void {
-        if (this.runWorker) {
-            this.runWorker.stop();
+        this.deleteInterval();
+    }
+
+    deleteInterval(): void {
+        if (this.durationIntervalID) {
+            clearInterval(this.durationIntervalID);
+            this.durationIntervalID = 0;
         }
     }
 }

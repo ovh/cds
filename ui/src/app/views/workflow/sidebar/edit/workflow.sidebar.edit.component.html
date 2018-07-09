@@ -1,9 +1,9 @@
-<ng-container *ngIf="node != null && join == null && hook == null">
-  <app-workflow-sidebar-edit-node [project]="project" [open]="open" [workflow]="workflow" [node]="node"></app-workflow-sidebar-edit-node>
+<ng-container *ngIf="mode === modes.EDIT_NODE">
+  <app-workflow-sidebar-edit-node [project]="project" [workflow]="workflow"></app-workflow-sidebar-edit-node>
 </ng-container>
-<ng-container *ngIf="node == null && join != null && hook == null">
-  <app-workflow-sidebar-edit-join [project]="project" [open]="open" [workflow]="workflow" [join]="join"></app-workflow-sidebar-edit-join>
+<ng-container *ngIf="mode === modes.EDIT_JOIN">
+  <app-workflow-sidebar-edit-join [project]="project" [workflow]="workflow"></app-workflow-sidebar-edit-join>
 </ng-container>
-<ng-container *ngIf="node == null && join == null && hook != null">
-  <app-workflow-sidebar-hook [project]="project" [open]="open" [workflow]="workflow" [hook]="hook"></app-workflow-sidebar-hook>
+<ng-container *ngIf="mode === modes.EDIT_HOOK">
+  <app-workflow-sidebar-hook [project]="project" [workflow]="workflow"></app-workflow-sidebar-hook>
 </ng-container>

@@ -9,7 +9,7 @@
         </div>
     </h3>
     <div class="ui fluid vertical menu noborder">
-      <a class="item noborder" (click)="openHookConfigModal()" [class.disabled]="readonly">
+      <a class="item noborder" (click)="openHookConfigModal()">
         Configuration <i class="angle right icon"></i>
       </a>
     </div>
@@ -49,7 +49,7 @@
 <ng-container *ngIf="hook && node">
     <app-workflow-node-hook-form
       [project]="project"
-      [workflow]="workflow"
+      [workflow]="wr.workflow"
       [node]="node"
       (hookEvent)="updateHook($event)"
       [loading]="loading"

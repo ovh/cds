@@ -51,7 +51,7 @@ func Create(h Interface) error {
 	go hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
 
 	pbjobs := make(chan sdk.PipelineBuildJob, 1)
-	wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
+	wjobs := make(chan sdk.WorkflowNodeJobRun, 10)
 	errs := make(chan error, 1)
 	var nRoutines, workersStarted, nRegister int64
 	lastSpawnWorker := time.Now()
@@ -99,9 +99,8 @@ func Create(h Interface) error {
 			if lastSpawnWorker.Add(30*time.Second).Unix() < time.Now().Unix() {
 				workersStarted = int64(h.WorkersStarted())
 				if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
-					log.Debug("max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
+					log.Debug("hatchery> max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
 				}
-				log.Debug("workers already started:%d", workersStarted)
 			}
 		case <-tickerGetModels.C:
 			var errwm error
@@ -111,7 +110,7 @@ func Create(h Interface) error {
 			}
 		case j := <-pbjobs:
 			if workersStarted >= int64(h.Configuration().Provision.MaxWorker) {
-				log.Debug("maxWorkersReached:%d", workersStarted)
+				log.Debug("hatchery> maxWorkersReached:%d", workersStarted)
 				continue
 			}
 			lastSpawnWorker = time.Now()
@@ -125,7 +124,7 @@ func Create(h Interface) error {
 			}(j)
 		case j := <-wjobs:
 			if workersStarted >= int64(h.Configuration().Provision.MaxWorker) {
-				log.Debug("maxWorkersReached:%d", workersStarted)
+				log.Debug("hatchery> maxWorkersReached:%d", workersStarted)
 				continue
 			}
 			atomic.AddInt64(&workersStarted, 1)

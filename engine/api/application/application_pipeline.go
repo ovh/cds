@@ -9,6 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -35,7 +36,7 @@ func AttachPipeline(db gorp.SqlExecutor, appID, pipelineID int64) (int64, error)
 	query := `INSERT INTO application_pipeline(application_id, pipeline_id, args) VALUES($1, $2, $3) RETURNING id`
 	var id int64
 	if err := db.QueryRow(query, appID, pipelineID, "[]").Scan(&id); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
 			return 0, sdk.ErrPipelineAlreadyAttached
 		}
 	}

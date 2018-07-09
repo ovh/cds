@@ -24,11 +24,13 @@ func (api *API) InitRouter() {
 	api.lastUpdateBroker.Init(api.Router.Background)
 
 	api.eventsBroker = &eventsBroker{
-		cache:    api.Cache,
-		clients:  make(map[string]eventsBrokerSubscribe),
-		dbFunc:   api.DBConnectionFactory.GetDBMap,
-		messages: make(chan sdk.Event),
-		mutex:    &sync.Mutex{},
+		cache:             api.Cache,
+		clients:           make(map[string]eventsBrokerSubscribe),
+		dbFunc:            api.DBConnectionFactory.GetDBMap,
+		messages:          make(chan sdk.Event),
+		mutex:             &sync.Mutex{},
+		disconnectedMutex: &sync.Mutex{},
+		disconnected:      make(map[string]bool),
 	}
 	api.eventsBroker.Init(context.Background())
 
@@ -320,7 +322,6 @@ func (api *API) InitRouter() {
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler))
 	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler))
-	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker(), DEPRECATED, EnableTracing()))
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing()), r.DELETE(api.deleteBookWorkflowJobHandler, NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))
@@ -377,6 +378,8 @@ func (api *API) InitRouter() {
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
 	r.Handle("/user/favorite", r.POST(api.postUserFavoriteHandler))
+	r.Handle("/user/timeline", r.GET(api.getTimelineHandler))
+	r.Handle("/user/timeline/filter", r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
 	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
@@ -414,9 +417,6 @@ func (api *API) InitRouter() {
 	// SSE
 	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
-
-	// Timeline
-	r.Handle("/timeline", r.GET(api.getTimelineHandler))
 
 	// Feature
 	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))

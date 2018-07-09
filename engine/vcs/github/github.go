@@ -15,6 +15,8 @@ type githubClient struct {
 	apiURL              string
 	uiURL               string
 	proxyURL            string
+	username            string
+	token               string
 }
 
 //GithubConsumer implements vcs.Server and it's used to instanciate a githubClient
@@ -27,10 +29,12 @@ type githubConsumer struct {
 	proxyURL            string
 	disableStatus       bool
 	disableStatusDetail bool
+	username            string
+	token               string
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret string, apiURL, uiURL, proxyURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
+func New(ClientID, ClientSecret string, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	return &githubConsumer{
 		ClientID:            ClientID,
 		ClientSecret:        ClientSecret,
@@ -40,5 +44,7 @@ func New(ClientID, ClientSecret string, apiURL, uiURL, proxyURL string, store ca
 		proxyURL:            proxyURL,
 		disableStatus:       disableStatus,
 		disableStatusDetail: disableStatusDetail,
+		username:            username,
+		token:               token,
 	}
 }

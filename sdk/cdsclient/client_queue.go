@@ -20,10 +20,33 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
+// it returns as reference date the date of the last element in the shrinkked queue
+func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
+	if len(*queue) == 0 {
+		return time.Time{}
+	}
+
+	if l < 1 {
+		l = 1
+	}
+	l = l * 2
+	t0 := (*queue)[len(*queue)-1].Queued
+
+	queue.Sort()
+
+	if len(*queue) > l {
+		t0 = (*queue)[l].Queued
+		newQueue := (*queue)[:l]
+		*queue = newQueue
+	}
+	return t0
+}
+
 func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, exceptWfJobID *int64) error {
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
-	pbjobsTicker := time.NewTicker(delay)
+	pbjobsTicker := time.NewTicker(delay * 5)
 	oldJobsTicker := time.NewTicker(delay * 10)
 
 	for {
@@ -45,10 +68,16 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			}
 
 			if jobs != nil {
-				queue := []sdk.WorkflowNodeJobRun{}
+				queue := sdk.WorkflowQueue{}
 				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load old jobs")
 				}
+
+				if c.config.Verbose {
+					fmt.Println("Old Jobs Queue size: ", len(queue))
+				}
+
+				shrinkQueue(&queue, cap(jobs))
 				for _, j := range queue {
 					jobs <- j
 				}
@@ -59,7 +88,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			}
 
 			if jobs != nil {
-				queue := []sdk.WorkflowNodeJobRun{}
+				queue := sdk.WorkflowQueue{}
 				_, header, _, errReq := c.RequestJSON(http.MethodGet, "/queue/workflows", nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
 				if errReq != nil {
 					errs <- sdk.WrapError(errReq, "Unable to load jobs")
@@ -67,14 +96,21 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				}
 
 				apiTimeHeader := header.Get(ResponseAPITimeHeader)
-				apiTime, errParse := time.Parse(time.RFC3339, apiTimeHeader)
+
+				var errParse error
+				t0, errParse = time.Parse(time.RFC3339, apiTimeHeader)
 				if errParse != nil {
 					errs <- sdk.WrapError(errParse, "Unable to load jobs, failed to parse API Time")
 					continue
 				}
 
+				if c.config.Verbose {
+					fmt.Println("Queue size: ", len(queue))
+				}
+				t0 = shrinkQueue(&queue, cap(jobs))
+
 				// Gracetime to remove, see https://github.com/ovh/cds/issues/1214
-				t0 = apiTime.Add(-time.Duration(graceTime) * time.Second)
+				t0 = t0.Add(-time.Duration(graceTime) * time.Second)
 
 				for _, j := range queue {
 					// if there is a grace time, check it

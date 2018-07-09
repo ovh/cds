@@ -149,6 +149,8 @@ var (
 	ErrWorkerModelNoPattern                   = Error{ID: 134, Status: http.StatusForbidden}
 	ErrJobNotBooked                           = Error{ID: 135, Status: http.StatusBadRequest}
 	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
+	ErrInvalidNumber                          = Error{ID: 137, Status: http.StatusBadRequest}
+	ErrKeyAlreadyExist                        = Error{ID: 138, Status: http.StatusConflict}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -283,9 +285,11 @@ var errorsAmericanEnglish = map[int]string{
 	ErrBroadcastNotFound.ID:                      "Broadcast not found",
 	ErrInvalidPatternModel.ID:                    "Invalid worker model pattern: name, type and main command are mandatory",
 	ErrWorkerModelNoAdmin.ID:                     "Forbidden: you are neither a CDS administrator or the administrator for the group in which you want to create the worker model",
-	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scrips. If you have specific needs, please contact a CDS administrator",
+	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scripts. If you have specific needs, please contact a CDS administrator",
 	ErrJobNotBooked.ID:                           "Job already released",
 	ErrUserNotFound.ID:                           "User not found",
+	ErrInvalidNumber.ID:                          "Invalid number",
+	ErrKeyAlreadyExist.ID:                        "Key already exists",
 }
 
 var errorsFrench = map[int]string{
@@ -423,6 +427,8 @@ var errorsFrench = map[int]string{
 	ErrWorkerModelNoPattern.ID:                   "Accès refusé: vous devez obligatoirement sélectionner un pattern de script de configuration. Si vous souhaitez ajouter un pattern particulier, veuillez contacter un administrateur CDS",
 	ErrJobNotBooked.ID:                           "Le job est déjà libéré",
 	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
+	ErrInvalidNumber.ID:                          "Nombre non valide",
+	ErrKeyAlreadyExist.ID:                        "La clé existe déjà",
 }
 
 var errorsLanguages = []map[int]string{

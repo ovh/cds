@@ -46,12 +46,17 @@ func extract(rsp imap.Response, l venom.Logger) (*Mail, error) {
 	}
 	tm.Subject, err = decodeHeader(mmsg, "Subject")
 	if err != nil {
-		log.Warnf("Cannot decode subject: %s", err)
+		log.Warnf("Cannot decode Subject header: %s", err)
 		return nil, nil
 	}
 	tm.From, err = decodeHeader(mmsg, "From")
 	if err != nil {
-		log.Warnf("Cannot decode from: %s", err)
+		log.Warnf("Cannot decode From header: %s", err)
+		return nil, nil
+	}
+	tm.To, err = decodeHeader(mmsg, "To")
+	if err != nil {
+		log.Warnf("Cannot decode To header: %s", err)
 		return nil, nil
 	}
 

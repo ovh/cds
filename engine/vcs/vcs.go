@@ -80,6 +80,8 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			s.Cfg.API.HTTP.URL,
 			s.Cfg.UI.HTTP.URL,
 			serverCfg.Github.ProxyWebhook,
+			serverCfg.Github.Username,
+			serverCfg.Github.Token,
 			s.Cache,
 			serverCfg.Github.Status.Disable,
 			!serverCfg.Github.Status.ShowDetail,
@@ -92,6 +94,8 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			s.Cfg.API.HTTP.URL,
 			s.Cfg.UI.HTTP.URL,
 			serverCfg.Bitbucket.ProxyWebhook,
+			serverCfg.Bitbucket.Username,
+			serverCfg.Bitbucket.Token,
 			s.Cache,
 			serverCfg.Bitbucket.Status.Disable,
 		), nil

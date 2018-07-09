@@ -1,11 +1,14 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize} from 'rxjs/operators';
+import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../../model/permission.model';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
+import {Workflow} from '../../../../model/workflow.model';
 import {WorkflowRun} from '../../../../model/workflow.run.model';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../shared/toast/ToastService';
 
@@ -17,7 +20,7 @@ declare var ansi_up: any;
     styleUrls: ['./workflow.run.summary.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowRunSummaryComponent implements OnInit {
+export class WorkflowRunSummaryComponent {
     @Input('direction')
     set direction(val) {
       this._direction = val;
@@ -27,7 +30,9 @@ export class WorkflowRunSummaryComponent implements OnInit {
         return this._direction;
     }
     @Input() project: Project;
-    @Input() workflowRun: WorkflowRun;
+    @Input() workflow: Workflow;
+    workflowRun: WorkflowRun;
+    subWR: Subscription;
     @Input() workflowName: string;
     @Output() directionChange = new EventEmitter();
     @Output() relaunch = new EventEmitter();
@@ -40,17 +45,18 @@ export class WorkflowRunSummaryComponent implements OnInit {
     pipelineStatusEnum = PipelineStatus;
     permissionEnum = PermissionValue;
 
-    constructor(private _workflowRunService: WorkflowRunService,
+    constructor(private _workflowRunService: WorkflowRunService, private _workflowEventStore: WorkflowEventStore,
         private _toast: ToastService, private _translate: TranslateService) {
+        this.subWR = this._workflowEventStore.selectedRun().subscribe(wr => {
+            this.workflowRun = wr;
+            if (this.workflowRun) {
+                let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
 
-    }
-
-    ngOnInit() {
-        let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
-
-        if (tagTriggeredBy) {
-            this.author = tagTriggeredBy.value;
-        }
+                if (tagTriggeredBy) {
+                    this.author = tagTriggeredBy.value;
+                }
+            }
+        });
     }
 
     getSpawnInfos() {

@@ -73,7 +73,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -110,7 +110,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	group.InsertGroup(db, g)
 	group.InsertUserInGroup(db, g.ID, u.ID, false)
 
-	m3, err := LoadWorkerModelsByUser(db, u)
+	m3, err := LoadWorkerModelsByUser(db, store, u)
 	if err != nil {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}

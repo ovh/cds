@@ -62,6 +62,8 @@ type GithubServerConfiguration struct {
 	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	Username        string `toml:"username" comment:"Username" json:"username"`
+	Token           string `toml:"token" comment:"Token" json:"-"`
 }
 
 func (s GithubServerConfiguration) check() error {
@@ -109,6 +111,8 @@ type BitbucketServerConfiguration struct {
 	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
+	Username        string `toml:"username" comment:"Username" json:"username"`
+	Token           string `toml:"token" comment:"Token" json:"-"`
 }
 
 func (s BitbucketServerConfiguration) check() error {
