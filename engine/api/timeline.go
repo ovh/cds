@@ -90,7 +90,6 @@ type timelineFilterJob struct {
 func haveToFilter(jobs <-chan timelineFilterJob, results chan<- timelineFilterJob, filter sdk.TimelineFilter) {
 	for j := range jobs {
 		projectFound := false
-		workflowFound := false
 		insert := false
 	projLoop:
 		for _, pf := range filter.Projects {
@@ -98,13 +97,10 @@ func haveToFilter(jobs <-chan timelineFilterJob, results chan<- timelineFilterJo
 				projectFound = true
 				for _, wName := range pf.WorkflowNames {
 					if wName == j.WorkflowName {
-						workflowFound = true
 						break projLoop
 					}
 				}
-				if !workflowFound {
-					insert = true
-				}
+				insert = true
 				break
 			}
 		}
