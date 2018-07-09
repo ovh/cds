@@ -151,6 +151,8 @@ var (
 	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
 	ErrInvalidNumber                          = Error{ID: 137, Status: http.StatusBadRequest}
 	ErrKeyAlreadyExist                        = Error{ID: 138, Status: http.StatusConflict}
+	ErrIconBadFormat                          = Error{ID: 139, Status: http.StatusBadRequest}
+	ErrIconBadSize                            = Error{ID: 140, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -290,6 +292,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUserNotFound.ID:                           "User not found",
 	ErrInvalidNumber.ID:                          "Invalid number",
 	ErrKeyAlreadyExist.ID:                        "Key already exists",
+	ErrIconBadFormat.ID:                          "Bad icon format. Must be an image",
+	ErrIconBadSize.ID:                            "Bad icon size. Must be lower than 100Ko",
 }
 
 var errorsFrench = map[int]string{
@@ -429,6 +433,8 @@ var errorsFrench = map[int]string{
 	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
 	ErrInvalidNumber.ID:                          "Nombre non valide",
 	ErrKeyAlreadyExist.ID:                        "La clé existe déjà",
+	ErrIconBadFormat.ID:                          "Mauvais format d'icône, doit être une image",
+	ErrIconBadSize.ID:                            "Taille de l'icône trop importante. (max 100Ko)",
 }
 
 var errorsLanguages = []map[int]string{

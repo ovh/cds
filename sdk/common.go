@@ -19,6 +19,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// MaxIconSize is the maximum size of the icon in octet
+const MaxIconSize = 120000
+
+// IconFormat is the format prefix accepted for icon
+const IconFormat = "data:image/"
+
 // EncryptFunc is a common type
 type EncryptFunc func(gorp.SqlExecutor, int64, string, string) (string, error)
 

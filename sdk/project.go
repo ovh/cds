@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
@@ -35,6 +36,24 @@ type Project struct {
 	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
 	Features          map[string]bool    `json:"features" yaml:"features" db:"-" cli:"-"`
 	Favorite          bool               `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
+}
+
+// IsValid returns error if the project is not valid
+func (proj Project) IsValid() error {
+	if !NamePatternRegex.MatchString(proj.Key) {
+		return NewError(ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", NamePattern))
+	}
+
+	if proj.Icon != "" {
+		if !strings.HasPrefix(proj.Icon, IconFormat) {
+			return ErrIconBadFormat
+		}
+		if len(proj.Icon) > MaxIconSize {
+			return ErrIconBadSize
+		}
+	}
+
+	return nil
 }
 
 // SSHKeys returns the slice of ssh key for an application

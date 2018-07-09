@@ -742,6 +742,15 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
 	}
 
+	if w.Icon != "" {
+		if !strings.HasPrefix(w.Icon, sdk.IconFormat) {
+			return sdk.ErrIconBadFormat
+		}
+		if len(w.Icon) > sdk.MaxIconSize {
+			return sdk.ErrIconBadSize
+		}
+	}
+
 	//Check workflow name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(w.Name) {
