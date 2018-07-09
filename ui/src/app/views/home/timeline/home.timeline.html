@@ -23,23 +23,6 @@
                                 >
                                     {{ e.status }}
                                 </div>
-                                <!--div class="ui dropdown icon" suiDropdown>
-                                    <i class="settings icon"></i>
-                                    <div class="left menu" suiDropdownMenu>
-                                        <div class="item">
-                                            <div class="ui red empty circular label"></div>
-                                            Important
-                                        </div>
-                                        <div class="item">
-                                            <div class="ui blue empty circular label"></div>
-                                            Announcement
-                                        </div>
-                                        <div class="item">
-                                            <div class="ui black empty circular label"></div>
-                                            Discussion
-                                        </div>
-                                    </div>
-                                </div-->
                             </div>
                             <span [hidden]="!e.bell">
                                 <i class="bell slash icon" title="{{ 'timeline_filter_mute' | translate }}" (click)="addFilter(e)"></i>
