@@ -44,6 +44,7 @@ type currentWorker struct {
 		pkey           string
 		gitsshPath     string
 		params         []sdk.Parameter
+		secrets        []sdk.Variable
 	}
 	status struct {
 		Name   string `json:"name"`

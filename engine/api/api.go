@@ -613,6 +613,16 @@ func (a *API) Serve(ctx context.Context) error {
 			}
 		}()
 	}
+
+	// TODO: to delete after migration
+	if os.Getenv("CDS_MIGRATE_GIT_CLONE") == "true" {
+		go func() {
+			if err := migrate.GitClonePrivateKey(a.mustDB, a.Cache); err != nil {
+				log.Error("Bootstrap Error: %v", err)
+			}
+		}()
+	}
+
 	if !a.Config.Schedulers.Disabled {
 		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {

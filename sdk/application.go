@@ -102,3 +102,13 @@ func (a Application) GetKey(kname string) *ApplicationKey {
 	}
 	return nil
 }
+
+// GetSSHKey return a key by name
+func (a Application) GetSSHKey(kname string) *ApplicationKey {
+	for i := range a.Keys {
+		if a.Keys[i].Type == KeyTypeSSH && a.Keys[i].Name == kname {
+			return &a.Keys[i]
+		}
+	}
+	return nil
+}

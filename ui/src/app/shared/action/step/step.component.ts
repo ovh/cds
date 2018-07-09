@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import {Action} from '../../../model/action.model';
+import {AllKeys} from '../../../model/keys.model';
 import {Parameter} from '../../../model/parameter.model';
 import {StepEvent} from './step.event';
 
@@ -14,6 +15,7 @@ export class ActionStepComponent {
     @Input() step: Action;
     @Input() edit: boolean;
     @Input() suggest: Array<string>;
+    @Input() keys: AllKeys;
     @Input('publicActions')
     set publicActions(data: Array<Action>) {
         if (data) {

@@ -43,6 +43,38 @@ func (e Environment) GetKey(kname string) *EnvironmentKey {
 	return nil
 }
 
+// GetSSHKey return a key by name
+func (e Environment) GetSSHKey(kname string) *EnvironmentKey {
+	for i := range e.Keys {
+		if e.Keys[i].Type == KeyTypeSSH && e.Keys[i].Name == kname {
+			return &e.Keys[i]
+		}
+	}
+	return nil
+}
+
+// SSHKeys returns the slice of ssh key for an environment
+func (e Environment) SSHKeys() []EnvironmentKey {
+	keys := []EnvironmentKey{}
+	for _, k := range e.Keys {
+		if k.Type == KeyTypeSSH {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// PGPKeys returns the slice of pgp key for an environment
+func (e Environment) PGPKeys() []EnvironmentKey {
+	keys := []EnvironmentKey{}
+	for _, k := range e.Keys {
+		if k.Type == KeyTypePGP {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
 // NewEnvironment instanciate a new Environment
 func NewEnvironment(name string) *Environment {
 	e := &Environment{
