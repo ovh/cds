@@ -50,9 +50,7 @@ func LoadTimelineFilter(db gorp.SqlExecutor, u *sdk.User) (sdk.TimelineFilter, e
 		return filter, sdk.WrapError(err, "user.timeline.load> Unable to load timeline filter")
 	}
 	if err != nil && err == sql.ErrNoRows {
-		filter = sdk.TimelineFilter{
-			AllProjects: true,
-		}
+		filter = sdk.TimelineFilter{}
 	}
 	if err == nil {
 		if err := gorpmapping.JSONNullString(filterS, &filter); err != nil {

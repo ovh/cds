@@ -66,7 +66,6 @@ export class HomeTimelineFilterComponent {
 
         this.loadProjectWorkflow(projFilter);
 
-        this.filter.all_projects = false;
         this.selectedProjectKey = '';
     }
 
@@ -92,7 +91,6 @@ export class HomeTimelineFilterComponent {
             projFilter.workflow_names = new Array<string>();
         }
         projFilter.workflow_names.push(this.selectedWorkflow);
-        projFilter.all_workflows = false;
         this.selectedWorkflow = '';
     }
 

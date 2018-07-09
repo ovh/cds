@@ -3,9 +3,11 @@ import {ActivatedRoute} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {first} from 'rxjs/operators';
+import {Subscription} from 'rxjs/Subscription';
 import {Broadcast, BroadcastEvent} from './model/broadcast.model';
 import {Event, EventType} from './model/event.model';
 import {LoadOpts} from './model/project.model';
+import {TimelineFilter} from './model/timeline.model';
 import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
 import {ApplicationStore} from './service/application/application.store';
 import {AuthentificationStore} from './service/auth/authentification.store';
@@ -23,12 +25,18 @@ export class AppService {
     // Information about current route
     routeParams: {};
 
+    filterSub: Subscription;
+    filter: TimelineFilter;
+
     constructor(private _projStore: ProjectStore, private _routerService: RouterService, private _routeActivated: ActivatedRoute,
                 private _appStore: ApplicationStore, private _authStore: AuthentificationStore, private _actionStore: ActionStore,
                 private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
                 private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _timelineStore: TimelineStore,
                 private _toast: ToastService) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
+        this.filterSub = this._timelineStore.getFilter().subscribe(f => {
+            this.filter = f;
+        });
     }
 
     updateRoute(params: {}) {
@@ -60,6 +68,29 @@ export class AppService {
             this.updateWorkflowRunCache(event);
         } else if (event.type_event.indexOf(EventType.BROADCAST_PREFIX) === 0) {
             this.updateBroadcastCache(event);
+        }
+        this.manageEventForTimeline(event);
+    }
+
+    manageEventForTimeline(event: Event) {
+        if (event.type_event === EventType.RUN_WORKFLOW_PREFIX) {
+            let mustAdd = true;
+            // Check if we have to mute it
+            if (this.filter) {
+                let workflowList = this.filter.projects.find(p => p.key === event.project_key);
+                if (workflowList) {
+                    let w = workflowList.workflow_names.find(wname => wname === event.workflow_name);
+                    if (w) {
+                        mustAdd = false;
+                    }
+                }
+            }
+
+            if (mustAdd) {
+                let e = cloneDeep(event);
+                this._timelineStore.add(e);
+            }
+
         }
     }
 
@@ -215,10 +246,6 @@ export class AppService {
     }
 
     updateWorkflowRunCache(event: Event): void {
-        if (event.type_event === EventType.RUN_WORKFLOW_PREFIX) {
-            let e = cloneDeep(event);
-            this._timelineStore.add(e);
-        }
         if (this.routeParams['key'] !== event.project_key || this.routeParams['workflowName'] !== event.workflow_name) {
             return;
         }
