@@ -60,6 +60,6 @@ publish:
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add arsenal-deployment-plugin $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			cdsctl -k -f $HOME/.cdsrclocal admin plugins binary-add arsenal-deployment-plugin $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done
