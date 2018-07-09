@@ -56,7 +56,7 @@ func (proj Project) IsValid() error {
 	return nil
 }
 
-// SSHKeys returns a ssh key given his name
+// GetSSHKey returns a ssh key given his name
 func (proj Project) GetSSHKey(name string) *ProjectKey {
 	for _, k := range proj.Keys {
 		if k.Type == KeyTypeSSH && k.Name == name {
