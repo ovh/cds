@@ -34,6 +34,7 @@ export class Project {
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
     loading: boolean;
+    mute: boolean;
 }
 
 export class LoadOpts {
@@ -48,4 +49,6 @@ export class IdName {
   name: string;
   description?: string;
   icon?: string;
+  // ui params
+  mute: boolean;
 }

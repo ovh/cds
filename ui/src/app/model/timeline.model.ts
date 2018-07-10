@@ -2,7 +2,6 @@ import {Project} from './project.model';
 
 export class TimelineFilter {
     projects: Array<ProjectFilter>;
-    all_projects = true;
 
     constructor() {
         this.projects = new Array<ProjectFilter>();
@@ -12,7 +11,6 @@ export class TimelineFilter {
 export class ProjectFilter {
     key: string;
     workflow_names:  Array<string>;
-    all_workflows: boolean;
 
     loading = false;
     project: Project;
@@ -20,6 +18,5 @@ export class ProjectFilter {
 
     constructor() {
         this.workflow_names = new Array<string>();
-        this.all_workflows = true;
     }
 }

@@ -449,7 +449,7 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 
 	//Update pipeline
 	query := `UPDATE pipeline SET name=$1, description = $2, type=$3 WHERE id=$4`
-	_, err := db.Exec(query, p.Name, p.Description, string(p.Type), p.ID)
+	_, err := db.Exec(query, p.Name, p.Description, p.Type, p.ID)
 	return err
 }
 
@@ -470,7 +470,7 @@ func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p
 		return sdk.WrapError(sdk.ErrInvalidProject, "InsertPipeline>")
 	}
 
-	if err := db.QueryRow(query, p.Name, p.Description, p.ProjectID, string(p.Type)).Scan(&p.ID); err != nil {
+	if err := db.QueryRow(query, p.Name, p.Description, p.ProjectID, p.Type).Scan(&p.ID); err != nil {
 		return err
 	}
 
