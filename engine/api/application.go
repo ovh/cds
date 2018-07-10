@@ -727,7 +727,7 @@ func (api *API) updateApplicationHandler() Handler {
 		//Update name and Metadata
 		app.Name = appPost.Name
 		app.Description = appPost.Description
-		if app.Icon != "" {
+		if appPost.Icon != "" {
 			app.Icon = appPost.Icon
 		}
 		app.Metadata = appPost.Metadata
