@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync/atomic"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -35,6 +36,8 @@ func Register(h Interface) error {
 // each ticker can trigger 5 worker models (maximum)
 // and 5 worker models can be spawned in same time, in the case of a spawn takes longer
 // than a tick.
+var nbRegisteringWorkerModels int64
+
 func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) error {
 	if len(models) == 0 {
 		return fmt.Errorf("workerRegister> No model returned by GetWorkerModels")
@@ -45,9 +48,13 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 		log.Error("hatchery> workerRegister> %v", err)
 	}
 
-	nbRegisteringWorkerModels := len(currentRegistering)
+	if !checkProvisioning(h) {
+		return nil
+	}
+
+	atomic.StoreInt64(&nbRegisteringWorkerModels, int64(len(currentRegistering)))
 	for k := range models {
-		if nbRegisteringWorkerModels > 5 {
+		if atomic.LoadInt64(&nbRegisteringWorkerModels) > 5 {
 			log.Debug("max registering worker reached")
 			return nil
 		}
@@ -75,8 +82,6 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 				log.Debug("workerRegister> WorkerModelBook on model %s err: %v", models[k].Name, err)
 			} else {
 				log.Info("workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
-				nbRegisteringWorkerModels++
-
 				//Ask for the creation
 				startWorkerChan <- workerStarterRequest{
 					registerWorkerModel: &models[k],

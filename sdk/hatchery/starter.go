@@ -72,6 +72,7 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 			}
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
+			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			if _, errSpawn := h.SpawnWorker(SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, errSpawn)
 				if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("cannot spawn worker for register: %s", errSpawn)); err != nil {
@@ -79,6 +80,7 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 				}
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
+			atomic.AddInt64(&nbRegisteringWorkerModels, -1)
 		}
 	}
 }
@@ -90,7 +92,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	if maxProv < 1 {
 		maxProv = defaultMaxProvisioning
 	}
-	if atomic.LoadInt64(&nbWorkerToStart) > int64(maxProv) {
+	if atomic.LoadInt64(&nbWorkerToStart) >= int64(maxProv) {
 		return false, nil
 	}
 
