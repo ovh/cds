@@ -67,7 +67,7 @@ func (h *HatcheryVSphere) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
 
 	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	}
 	return m
 }
@@ -162,14 +162,15 @@ func (h *HatcheryVSphere) WorkersStartedByModel(model *sdk.Model) int {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryVSphere) WorkersStarted() int {
-	var x int
-	for _, s := range h.getServers() {
+func (h *HatcheryVSphere) WorkersStarted() []string {
+	srvs := h.getServers()
+	res := make([]string, len(srvs))
+	for i, s := range srvs {
 		if strings.Contains(strings.ToLower(s.Name), "worker") {
-			x++
+			res[i] = s.Name
 		}
 	}
-	return x
+	return res
 }
 
 //Hatchery returns hatchery instance

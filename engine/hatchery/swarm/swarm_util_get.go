@@ -9,7 +9,6 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //This a embeded cache for containers list
@@ -35,9 +34,6 @@ func (h *HatcherySwarm) getContainers(options types.ContainerListOptions) ([]typ
 		containersCache.list = s
 		containersCache.mu.Unlock()
 
-		for _, v := range s {
-			log.Debug("getContainers> container ID:%s names:%+v image:%s created:%d state:%s, status:%s", v.ID, v.Names, v.Image, v.Created, v.State, v.Status)
-		}
 		//Remove data from the cache after 2 seconds
 		go func() {
 			time.Sleep(2 * time.Second)
@@ -58,7 +54,6 @@ func (h *HatcherySwarm) getContainer(name string, options types.ContainerListOpt
 
 	for i := range containers {
 		if strings.Replace(containers[i].Names[0], "/", "", 1) == strings.Replace(name, "/", "", 1) {
-			log.Debug("getContainer> found container %s", containers[i].ID)
 			return &containers[i], nil
 		}
 	}
