@@ -25,47 +25,39 @@ func (api *API) getTimelineHandler() Handler {
 			return sdk.WrapError(errT, "getTimelineHandler> Unable to load timeline filter")
 		}
 
-		allPerm := make(map[string][]string)
-
-		jobs := make(chan timelineFilterJob, 50)
-		results := make(chan timelineFilterJob, 50)
-
-		for w := 1; w <= 3; w++ {
-			go haveToFilter(jobs, results, timelineFilter)
+		// Add all workflows to mute in a map
+		muteFilter := make(map[string]bool, len(timelineFilter.Projects))
+		for _, pf := range timelineFilter.Projects {
+			for _, wn := range pf.WorkflowNames {
+				muteFilter[pf.Key+"/"+wn] = true
+			}
 		}
 
+		permToRequest := make(map[string][]string, len(u.Permissions.WorkflowsPerm))
 		for k := range u.Permissions.WorkflowsPerm {
+			if _, ok := muteFilter[k]; ok {
+				continue
+			}
+
 			keySplitted := strings.Split(k, "/")
 			pKey := keySplitted[0]
 			wName := keySplitted[1]
-			j := timelineFilterJob{
-				Key:          pKey,
-				WorkflowName: wName,
-			}
-			jobs <- j
-		}
-		close(jobs)
 
-		for a := 0; a < len(u.Permissions.WorkflowsPerm); a++ {
-			item := <-results
-			if !item.Add {
-				continue
-			}
-			workflows, ok := allPerm[item.Key]
+			pFilter, ok := permToRequest[pKey]
 			if !ok {
-				workflows = make([]string, 0, 1)
+				pFilter = make([]string, 0, 1)
 			}
-			workflows = append(workflows, item.WorkflowName)
-			allPerm[item.Key] = workflows
+			pFilter = append(pFilter, wName)
+			permToRequest[pKey] = pFilter
 		}
 
 		request := sdk.EventFilter{
 			CurrentItem: currentItem,
 			Filter: sdk.TimelineFilter{
-				Projects: make([]sdk.ProjectFilter, 0, len(allPerm)),
+				Projects: make([]sdk.ProjectFilter, 0, len(permToRequest)),
 			},
 		}
-		for k, v := range allPerm {
+		for k, v := range permToRequest {
 			pFilter := sdk.ProjectFilter{
 				Key:           k,
 				WorkflowNames: v,
@@ -78,39 +70,5 @@ func (api *API) getTimelineHandler() Handler {
 			return sdk.WrapError(err, "getTimelineHandler> Unable to load events")
 		}
 		return WriteJSON(w, events, http.StatusOK)
-	}
-}
-
-type timelineFilterJob struct {
-	Key          string
-	WorkflowName string
-	Add          bool
-}
-
-func haveToFilter(jobs <-chan timelineFilterJob, results chan<- timelineFilterJob, filter sdk.TimelineFilter) {
-	for j := range jobs {
-		projectFound := false
-		insert := false
-	projLoop:
-		for _, pf := range filter.Projects {
-			if pf.Key == j.Key {
-				projectFound = true
-				for _, wName := range pf.WorkflowNames {
-					if wName == j.WorkflowName {
-						break projLoop
-					}
-				}
-				insert = true
-				break
-			}
-		}
-		if !projectFound {
-			insert = true
-		}
-		if insert {
-			j.Add = true
-		}
-
-		results <- j
 	}
 }
