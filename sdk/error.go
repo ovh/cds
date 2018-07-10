@@ -151,8 +151,10 @@ var (
 	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
 	ErrInvalidNumber                          = Error{ID: 137, Status: http.StatusBadRequest}
 	ErrKeyAlreadyExist                        = Error{ID: 138, Status: http.StatusConflict}
-	ErrIconBadFormat                          = Error{ID: 139, Status: http.StatusBadRequest}
-	ErrIconBadSize                            = Error{ID: 140, Status: http.StatusBadRequest}
+	ErrPipelineNameImport                     = Error{ID: 139, Status: http.StatusBadRequest}
+	ErrWorkflowNameImport                     = Error{ID: 140, Status: http.StatusBadRequest}
+	ErrIconBadFormat                          = Error{ID: 141, Status: http.StatusBadRequest}
+	ErrIconBadSize                            = Error{ID: 142, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -292,6 +294,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUserNotFound.ID:                           "User not found",
 	ErrInvalidNumber.ID:                          "Invalid number",
 	ErrKeyAlreadyExist.ID:                        "Key already exists",
+	ErrPipelineNameImport.ID:                     "Pipeline name doesn't correspond in your code",
+	ErrWorkflowNameImport.ID:                     "Workflow name doesn't correspond in your code",
 	ErrIconBadFormat.ID:                          "Bad icon format. Must be an image",
 	ErrIconBadSize.ID:                            "Bad icon size. Must be lower than 100Ko",
 }
@@ -433,6 +437,8 @@ var errorsFrench = map[int]string{
 	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
 	ErrInvalidNumber.ID:                          "Nombre non valide",
 	ErrKeyAlreadyExist.ID:                        "La clé existe déjà",
+	ErrPipelineNameImport.ID:                     "Le nom du pipeline dans le code ne correspond pas au nom du pipeline que vous voulez éditer",
+	ErrWorkflowNameImport.ID:                     "Le nom du workflow dans le code ne correspond pas au nom du workflow que vous voulez éditer",
 	ErrIconBadFormat.ID:                          "Mauvais format d'icône, doit être une image",
 	ErrIconBadSize.ID:                            "Taille de l'icône trop importante. (max 100Ko)",
 }

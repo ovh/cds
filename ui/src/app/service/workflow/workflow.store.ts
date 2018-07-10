@@ -149,7 +149,7 @@ export class WorkflowStore {
      * @param workflow workflow to update
      */
     importWorkflow(key: string, workflowName: string, workflowCode: string): Observable<Workflow> {
-        return this._workflowService.importWorkflow(key, workflowCode)
+        return this._workflowService.importWorkflow(key, workflowName, workflowCode)
             .pipe(
                 mergeMap(() => {
                   if (workflowName) {

@@ -81,6 +81,49 @@ workflow:
 
 }
 
+func Test_putWorkflowImportHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey":   proj.Key,
+		"permWorkflowName": "testtest",
+	}
+	uri := api.Router.GetRoute("PUT", api.putWorkflowImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
+
+	body := `name: test_1
+version: v1.0
+workflow:
+  pip1:
+    pipeline: pip1
+    parameters:
+      name: value
+  pip1_2:
+    depends_on:
+      - pip1
+    pipeline: pip1`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 400, rec.Code)
+}
+
 func Test_getWorkflowPushHandler(t *testing.T) {
 	api, _, _ := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(api.mustDB())
