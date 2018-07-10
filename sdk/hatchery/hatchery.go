@@ -9,9 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	cache "github.com/patrickmn/go-cache"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	cache "github.com/patrickmn/go-cache"
 )
 
 var (
@@ -111,6 +112,7 @@ func Create(h Interface) error {
 				for _, hID := range startWorkerRes.request.spawnAttempts {
 					if hID == h.ID() {
 						found = true
+						break
 					}
 				}
 				if !found {
@@ -215,7 +217,7 @@ func Create(h Interface) error {
 
 			log.Debug("Analyzing job %d", j.ID)
 
-			//Check if hatchery if able to provision
+			//Check if hatchery is able to provision
 			if !checkProvisioning(h) {
 				receivedIDs.Delete(string(j.ID))
 				continue

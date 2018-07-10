@@ -23,7 +23,7 @@ func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
 	}
 
 	// Make the union of the two slices
-	allWorkers := []sdk.Worker{}
+	allWorkers := make([]sdk.Worker, 0, len(startedWorkers)+len(registeredWorkers))
 
 	// Consider the registered worker
 	for _, w := range registeredWorkers {
