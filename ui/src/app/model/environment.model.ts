@@ -10,4 +10,6 @@ export class Environment {
     permission: number;
     last_modified: number;
     usage: Usage;
+
+    mute: boolean;
 }

@@ -576,15 +576,12 @@ func TestTimelineFilter(t *testing.T) {
 	//Check result
 	var filter sdk.TimelineFilter
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &filter))
-	assert.True(t, filter.AllProjects)
 	assert.Len(t, filter.Projects, 0)
 
 	tf := sdk.TimelineFilter{
-		AllProjects: false,
 		Projects: []sdk.ProjectFilter{
 			{
-				Key:          "CDS",
-				AllWorkflows: true,
+				Key: "CDS",
 			},
 		},
 	}
@@ -601,12 +598,10 @@ func TestTimelineFilter(t *testing.T) {
 
 	tfInserted, err := user.LoadTimelineFilter(api.mustDB(), u)
 	assert.NoError(t, err)
-	assert.False(t, tfInserted.AllProjects)
 	assert.Len(t, tfInserted.Projects, 1)
 
 	pf := sdk.ProjectFilter{
-		Key:          "FOO",
-		AllWorkflows: true,
+		Key: "FOO",
 	}
 	tf.Projects = append(tf.Projects, pf)
 

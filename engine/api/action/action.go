@@ -460,6 +460,7 @@ type PipelineUsingAction struct {
 	ActionName       string `json:"action_name"`
 	PipName          string `json:"pipeline_name"`
 	AppName          string `json:"application_name"`
+	EnvID            int64  `json:"environment_id"`
 	ProjName         string `json:"project_name"`
 	ProjKey          string `json:"key"`
 	StageID          int64  `json:"stage_id"`

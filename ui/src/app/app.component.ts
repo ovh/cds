@@ -156,7 +156,8 @@ export class AppComponent  implements OnInit {
             headAuthValue: authValue,
             urlSubscribe: environment.apiURL + '/events/subscribe',
             urlUnsubscribe: environment.apiURL + 'events/unsubscribe',
-            sseURL: environment.apiURL + '/events'
+            sseURL: environment.apiURL + '/events',
+            pingURL: environment.apiURL + '/mon/version'
         });
         this.sseWorker.response().subscribe(e => {
             if (e == null) {

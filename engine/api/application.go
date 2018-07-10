@@ -726,6 +726,10 @@ func (api *API) updateApplicationHandler() Handler {
 
 		//Update name and Metadata
 		app.Name = appPost.Name
+		app.Description = appPost.Description
+		if appPost.Icon != "" {
+			app.Icon = appPost.Icon
+		}
 		app.Metadata = appPost.Metadata
 		app.RepositoryStrategy = appPost.RepositoryStrategy
 

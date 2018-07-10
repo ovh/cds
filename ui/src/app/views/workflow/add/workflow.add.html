@@ -60,7 +60,7 @@
                                                 </div>
                                                 <div class="fourteen wide column" *ngIf="creationMode === 'graphical'">
                                                     <div class="field" [class.error]="name.invalid || duplicateWorkflowName">
-                                                        <label>{{ 'workflow_name' | translate}}</label>
+                                                        <label>{{ 'workflow_name' | translate}} *</label>
                                                         <input
                                                                 name="name"
                                                                 class="ui input"
@@ -77,6 +77,18 @@
                                                         <textarea name="description" class="ui"
                                                                   [(ngModel)]="workflow.description"></textarea>
                                                     </div>
+                                                    <div class="field center aligned">
+                                                          <label>{{ 'workflow_icon' | translate }} ({{'common_optional' | translate}})</label>
+                                                          <div>
+                                                              <div *ngIf="!fileTooLarge && workflow.icon">
+                                                                  <img class="app-icon" [src]="workflow.icon" alt="icon"/>
+                                                              </div>
+                                                              <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEventIcon($event)">
+                                                              </app-upload-button>
+                                                          </div>
+                                                      </div>
+                                                      <div class="ui red message field" *ngIf="fileTooLarge"  [textContent]="'common_file_too_large' | translate"></div>
+
                                                     <div class="field">
                                                         <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' |
                                                             translate }}

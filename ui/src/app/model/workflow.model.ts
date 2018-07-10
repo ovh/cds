@@ -14,6 +14,7 @@ export class Workflow {
     id: number;
     name: string;
     description: string;
+    icon: string;
     project_id: number;
     project_key: string;
     root: WorkflowNode;

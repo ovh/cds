@@ -57,6 +57,8 @@ export class PipelineAuditDiff {
 export class Pipeline {
     id: number;
     name: string;
+    description: string;
+    icon: string;
     type: string;
     last_pipeline_build: PipelineBuild;
     stages: Array<Stage>;

@@ -47,6 +47,7 @@ export class WorkflowAdminComponent implements OnInit {
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;
+    fileTooLarge = false;
 
     constructor(public _translate: TranslateService, private _toast: ToastService, private _workflowStore: WorkflowStore,
         private _router: Router, private _workflowRunService: WorkflowRunService) { }
@@ -123,5 +124,13 @@ export class WorkflowAdminComponent implements OnInit {
             this._toast.success('', this._translate.instant('workflow_deleted'));
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows' } });
         });
+    }
+
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000;
+        if (this.fileTooLarge) {
+            return;
+        }
+        this._tagWorkflow.icon = event.content;
     }
 }

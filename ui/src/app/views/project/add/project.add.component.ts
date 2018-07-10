@@ -29,6 +29,7 @@ export class ProjectAddComponent {
     nameError = false;
     keyError = false;
     sshError = false;
+    fileTooLarge = false;
 
     groupList: Group[];
 
@@ -146,5 +147,13 @@ export class ProjectAddComponent {
             this.loading = false;
             this.newGroup = new Group();
         });
+    }
+
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000
+        if (this.fileTooLarge) {
+          return;
+        }
+        this.project.icon = event.content;
     }
 }

@@ -16,7 +16,7 @@ Documentation is available [here](https://ovh.github.io/cds/)
 
 ## Overview
 
-CDS is composend of several components
+CDS is composed of several components
 
 ### Engine
 

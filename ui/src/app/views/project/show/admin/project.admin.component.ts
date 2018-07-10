@@ -38,6 +38,7 @@ export class ProjectAdminComponent implements OnInit {
         private warningUpdateModal: WarningModalComponent;
 
     loading = false;
+    fileTooLarge = false;
     migrationValue = 0;
     user: User;
 
@@ -84,4 +85,11 @@ export class ProjectAdminComponent implements OnInit {
         });
     }
 
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000;
+        if (this.fileTooLarge) {
+            return;
+        }
+        this.project.icon = event.content;
+    }
 }

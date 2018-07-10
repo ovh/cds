@@ -31,6 +31,16 @@
                   <div class="description">{{'common_optional' | translate}}</div>
                 </div>
               </div>
+              <div class="step pointing"
+                [class.disabled]="node == null || !node.pipeline_id || !node.context.application_id"
+                [class.active]="pipelineSection === 'platform'"
+                (click)="pipelineSection = 'platform'">
+                <i class="plug icon"></i>
+                <div class="content">
+                  <div class="title">{{'common_platform' | translate}} <i class="green check icon" *ngIf="node.context.project_platform_id && node.context.project_platform_id > 0"></i></div>
+                  <div class="description">{{'common_optional' | translate}}</div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="thirteen wide column">
@@ -207,6 +217,37 @@
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
                             [disabled]="!node.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment">
+                            <span *ngIf="node.context.application_id">{{ 'btn_next' | translate }}</span>
+                            <span *ngIf="!node.context.application_id">{{ 'btn_finish' | translate }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- ############### PLATFORM SECTION ############## -->
+              <div *ngSwitchCase="'platform'">
+                <div class="ui row">
+                  <div class="ui sixteen wide column">
+                      <div class="fields">
+                        <div class="six wide field">
+                            <label>{{'common_platform' | translate}}</label>
+                              <sm-select
+                                  class="search"
+                                  placeholder="{{ 'common_platform' | translate }}"
+                                  [(model)]="node.context.project_platform_id"
+                                  [options]="{'fullTextSearch': true}"
+                                  id="WorkflowEnvironmentSelect">
+                                  <option> </option>
+                                  <option *ngFor="let platform of project.platforms" [value]="platform.id">{{ platform.name }}</option>
+                              </sm-select>
+                        </div>
+                      </div>
+                  </div>
+                </div>
+                <div class="ui row">
+                  <div class="ui sixteen wide column">
+                    <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
+                    <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
+                            [disabled]="!node.pipeline_id && !newPipeline.name">
                             {{ 'btn_finish' | translate }}
                     </button>
                   </div>

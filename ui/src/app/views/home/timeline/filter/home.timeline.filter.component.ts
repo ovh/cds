@@ -2,7 +2,7 @@ import {Component, Input} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
-import {LoadOpts, Project} from '../../../../model/project.model';
+import {IdName, LoadOpts, Project} from '../../../../model/project.model';
 import {ProjectFilter, TimelineFilter} from '../../../../model/timeline.model';
 import {ProjectStore} from '../../../../service/project/project.store';
 import {TimelineStore} from '../../../../service/timeline/timeline.store';
@@ -19,6 +19,7 @@ export class HomeTimelineFilterComponent {
 
     _filter: TimelineFilter;
     filterToEdit: TimelineFilter;
+
     @Input('filter')
     set filter(data: TimelineFilter) {
         if (data) {
@@ -26,6 +27,7 @@ export class HomeTimelineFilterComponent {
             this.filterToEdit = cloneDeep(data);
         }
     }
+
     get filter() {
         return this.filterToEdit;
     }
@@ -63,10 +65,8 @@ export class HomeTimelineFilterComponent {
         let projFilter = new ProjectFilter();
         projFilter.key = this.selectedProjectKey;
         this.filter.projects.push(projFilter);
+        this.loadProjectWorkflow(projFilter, true);
 
-        this.loadProjectWorkflow(projFilter);
-
-        this.filter.all_projects = false;
         this.selectedProjectKey = '';
     }
 
@@ -74,34 +74,8 @@ export class HomeTimelineFilterComponent {
         this.filter.projects = this.filter.projects.filter(p => p.key !== pf.key);
     }
 
-    removeWorkflow(pf: ProjectFilter, wname: string): void {
-        pf.workflow_names = pf.workflow_names.filter(w => w !== wname);
-    }
-
-    addWorkflow(projFilter: ProjectFilter): void {
-        if (!this.selectedWorkflow || this.selectedWorkflow === '') {
-            return;
-        }
-
-        if (projFilter.workflow_names) {
-            let exist = projFilter.workflow_names.find(w => w === this.selectedWorkflow);
-            if (exist) {
-                return;
-            }
-        } else {
-            projFilter.workflow_names = new Array<string>();
-        }
-        projFilter.workflow_names.push(this.selectedWorkflow);
-        projFilter.all_workflows = false;
-        this.selectedWorkflow = '';
-    }
-
-    openProject(projFilter: ProjectFilter): void {
-        projFilter.display = !projFilter.display;
-        this.loadProjectWorkflow(projFilter);
-    }
-
-    loadProjectWorkflow(projFilter: ProjectFilter) {
+    // load workflow when opening dropdown
+    loadProjectWorkflow(projFilter: ProjectFilter, mute: boolean) {
         if (projFilter.project) {
             return
         }
@@ -111,13 +85,49 @@ export class HomeTimelineFilterComponent {
         opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
         this._projectStore.resync(projFilter.key, opts).pipe(first(), finalize(() => projFilter.loading = false)).subscribe(proj => {
             projFilter.project = proj;
+            if (projFilter.project && projFilter.project.workflow_names) {
+                projFilter.project.workflow_names.forEach(wn => {
+                    if (mute) {
+                        wn.mute = true;
+                    } else {
+                        let index = projFilter.workflow_names.findIndex(wwnn => wwnn === wn.name);
+                        if (index >= 0) {
+                            wn.mute = true;
+                        } else {
+                            wn.mute = false;
+                        }
+                    }
+                });
+                if (mute) {
+                    projFilter.workflow_names = projFilter.project.workflow_names.map(idname => idname.name);
+                }
+            }
+
         });
+    }
+
+    updateWorkflowInFilter(w: IdName, projFilter: ProjectFilter): void {
+        if (!projFilter.workflow_names) {
+            projFilter.workflow_names = new Array<string>();
+        }
+        w.mute = !w.mute;
+        if (!w.mute) {
+            let index = projFilter.workflow_names.findIndex(wn => wn === w.name);
+            if (index >= 0) {
+                projFilter.workflow_names.splice(index, 1);
+            }
+        } else {
+            let index = projFilter.workflow_names.findIndex(wn => wn === w.name);
+            if (index === -1) {
+                projFilter.workflow_names.push(w.name);
+            }
+        }
     }
 
     saveFilter(): void {
         this.loading = true;
         this._timelineStore.saveFilter(this.filter).pipe(finalize(() => this.loading = false)).subscribe(() => {
-           this._toast.success('', this._translate.instant('timeline_filter_updated'));
+            this._toast.success('', this._translate.instant('timeline_filter_updated'));
         });
     }
 

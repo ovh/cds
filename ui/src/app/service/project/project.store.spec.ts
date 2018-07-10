@@ -1,19 +1,19 @@
 /* tslint:disable:no-unused-variable */
 
-import {async, TestBed} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
-import {AppModule} from '../../app.module';
+import {async, TestBed} from '@angular/core/testing';
 import {RouterModule} from '@angular/router';
-import {ProjectStore} from './project.store';
-import {LoadOpts, Project} from '../../model/project.model';
-import {Variable} from '../../model/variable.model';
-import {Group, GroupPermission} from '../../model/group.model';
-import {Environment} from '../../model/environment.model';
-import {Application} from '../../model/application.model';
-import {RepositoriesManager} from '../../model/repositories.model';
-import {first} from 'rxjs/operators';
 import {Observable} from 'rxjs/Observable';
+import {first} from 'rxjs/operators';
+import {AppModule} from '../../app.module';
+import {Application} from '../../model/application.model';
+import {Environment} from '../../model/environment.model';
+import {Group, GroupPermission} from '../../model/group.model';
+import {LoadOpts, Project} from '../../model/project.model';
+import {RepositoriesManager} from '../../model/repositories.model';
+import {Variable} from '../../model/variable.model';
 import {ProjectService} from './project.service';
+import {ProjectStore} from './project.store';
 
 describe('CDS: project Store', () => {
 

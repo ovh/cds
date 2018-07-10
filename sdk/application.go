@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -15,6 +17,7 @@ type Application struct {
 	ID                   int64                     `json:"id" db:"id"`
 	Name                 string                    `json:"name" db:"name" cli:"name,key"`
 	Description          string                    `json:"description"  db:"description"`
+	Icon                 string                    `json:"icon"  db:"icon"`
 	ProjectID            int64                     `json:"-" db:"project_id"`
 	ProjectKey           string                    `json:"project_key" db:"-" cli:"project_key"`
 	ApplicationGroups    []GroupPermission         `json:"groups,omitempty" db:"-"`
@@ -38,10 +41,28 @@ type Application struct {
 	DeploymentStrategies map[string]PlatformConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`
 }
 
+// IsValid returns error if the application is not valid
+func (app Application) IsValid() error {
+	if !NamePatternRegex.MatchString(app.Name) {
+		return NewError(ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", NamePattern))
+	}
+
+	if app.Icon != "" {
+		if !strings.HasPrefix(app.Icon, IconFormat) {
+			return ErrIconBadFormat
+		}
+		if len(app.Icon) > MaxIconSize {
+			return ErrIconBadSize
+		}
+	}
+
+	return nil
+}
+
 // SSHKeys returns the slice of ssh key for an application
-func (a Application) SSHKeys() []ApplicationKey {
+func (app Application) SSHKeys() []ApplicationKey {
 	keys := []ApplicationKey{}
-	for _, k := range a.Keys {
+	for _, k := range app.Keys {
 		if k.Type == KeyTypeSSH {
 			keys = append(keys, k)
 		}
@@ -50,9 +71,9 @@ func (a Application) SSHKeys() []ApplicationKey {
 }
 
 // PGPKeys returns the slice of pgp key for an application
-func (a Application) PGPKeys() []ApplicationKey {
+func (app Application) PGPKeys() []ApplicationKey {
 	keys := []ApplicationKey{}
-	for _, k := range a.Keys {
+	for _, k := range app.Keys {
 		if k.Type == KeyTypePGP {
 			keys = append(keys, k)
 		}
@@ -97,6 +118,16 @@ type ApplicationPipeline struct {
 func (a Application) GetKey(kname string) *ApplicationKey {
 	for i := range a.Keys {
 		if a.Keys[i].Name == kname {
+			return &a.Keys[i]
+		}
+	}
+	return nil
+}
+
+// GetSSHKey return a key by name
+func (a Application) GetSSHKey(kname string) *ApplicationKey {
+	for i := range a.Keys {
+		if a.Keys[i].Type == KeyTypeSSH && a.Keys[i].Name == kname {
 			return &a.Keys[i]
 		}
 	}

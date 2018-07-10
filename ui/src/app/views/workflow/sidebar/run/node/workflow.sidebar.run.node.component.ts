@@ -1,4 +1,4 @@
-import {Component, Input, OnDestroy, ViewChild} from '@angular/core';
+import {Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import 'rxjs/add/observable/zip';
@@ -24,7 +24,7 @@ import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node
     styleUrls: ['./workflow.sidebar.run.node.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunNodeComponent implements OnDestroy {
+export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
     // Project that contains the workflow
     @Input() project: Project;
@@ -48,6 +48,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy {
     displaySummary = true;
     duration: string;
     canBeRun = false;
+    perm = PermissionValue;
     pipelineStatusEnum = PipelineStatus;
 
     durationIntervalID: number;
@@ -55,6 +56,9 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy {
     constructor(private _wrService: WorkflowRunService, private _router: Router,
                private _durationService: DurationService,
                 private _workflowEventStore: WorkflowEventStore) {
+    }
+
+    ngOnInit(): void {
         this.subNode = this._workflowEventStore.selectedNode().subscribe(n => {
             this.node = n;
             this.refreshData();

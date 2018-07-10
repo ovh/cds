@@ -5,6 +5,7 @@ export class NavbarData {
 export class NavbarProjectData {
     key: string;
     name: string;
+    description: string;
     application_name: string;
     workflow_name: string;
     type: string;

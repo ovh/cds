@@ -16,7 +16,7 @@ import (
 )
 
 func runGitClone(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		url := sdk.ParameterFind(&a.Parameters, "url")
 		privateKey := sdk.ParameterFind(&a.Parameters, "privateKey")
 		user := sdk.ParameterFind(&a.Parameters, "user")
@@ -35,27 +35,62 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		if privateKey != nil {
-			//Setup the key
-			if err := vcs.SetupSSHKey(nil, keysDirectory, privateKey); err != nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-		}
+		deprecatedKey := true
 
-		//Get the key
-		key, errK := vcs.GetSSHKey(*params, keysDirectory, privateKey)
-		if errK != nil && errK != sdk.ErrKeyNotFound {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
+		if privateKey != nil && (strings.HasPrefix(privateKey.Value, "app-") || strings.HasPrefix(privateKey.Value, "proj-") || strings.HasPrefix(privateKey.Value, "env-")) {
+			deprecatedKey = false
+		}
+		var key *vcs.SSHKey
+		var errK error
+		var privateKeyVar *sdk.Variable
+		if privateKey != nil {
+			privateKeyVar = sdk.VariableFind(secrets, "cds.key."+privateKey.Value+".priv")
+			if deprecatedKey {
+				//Setup the key
+				if err := vcs.SetupSSHKeyDEPRECATED(nil, keysDirectory, privateKey); err != nil {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
+					}
+					sendLog(res.Reason)
+					return res
+				}
+			} else if privateKeyVar != nil {
+				// TODO: to delete after migration
+				if err := vcs.SetupSSHKey(nil, keysDirectory, privateKeyVar); err != nil {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
+					}
+					sendLog(res.Reason)
+					return res
+				}
 			}
-			sendLog(res.Reason)
-			return res
+
+			if deprecatedKey {
+				//TODO: to delete
+				//Get the key
+				key, errK = vcs.GetSSHKeyDEPRECATED(*params, keysDirectory, privateKey)
+				if errK != nil && errK != sdk.ErrKeyNotFound {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable to get ssh key. %s", errK),
+					}
+					sendLog(res.Reason)
+					return res
+				}
+			} else {
+				//Get the key
+				key, errK = vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
+				if errK != nil && errK != sdk.ErrKeyNotFound {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable to get ssh key. %s", errK),
+					}
+					sendLog(res.Reason)
+					return res
+				}
+			}
 		}
 
 		//If url is not http(s), a key must be found
