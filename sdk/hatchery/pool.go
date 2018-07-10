@@ -40,9 +40,9 @@ func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
 			if err := h.CDSClient().WorkerDisable(w.ID); err != nil {
 				log.Error("Hatchery > WorkerPool> Unable to disable worker [%d]%s", w.ID, w.Name)
 			}
-		} else {
-			allWorkers = append(allWorkers, w)
+			w.Status = sdk.StatusDisabled
 		}
+		allWorkers = append(allWorkers, w)
 	}
 
 	// And add the other worker with status pending of registering

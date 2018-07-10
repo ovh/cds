@@ -3,13 +3,17 @@ package hatchery
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-var checkProvisioningMutex = sync.Mutex{}
+var (
+	checkProvisioningMutex = sync.Mutex{}
+	nbWorkerToStart        int64
+)
 
 func checkProvisioning(h Interface) bool {
 	t := time.Now()
@@ -26,6 +30,11 @@ func checkProvisioning(h Interface) bool {
 
 	if len(workerPool) >= h.Configuration().Provision.MaxWorker {
 		log.Debug("hatchery> %s has reached the max worker: %d (max: %d)", h.Hatchery().Name, len(workerPool), h.Configuration().Provision.MaxWorker)
+		if len(workerPool) > h.Configuration().Provision.MaxWorker {
+			for _, w := range workerPool {
+				log.Debug("hatchery> %s > pool > %s (status=%v)", h.Hatchery().Name, w.Name, w.Status)
+			}
+		}
 		return false
 	}
 
@@ -40,7 +49,7 @@ func checkProvisioning(h Interface) bool {
 	if maxProv < 1 {
 		maxProv = defaultMaxProvisioning
 	}
-	if nbPending > maxProv {
+	if nbPending+int(atomic.LoadInt64(&nbWorkerToStart)) > maxProv {
 		log.Info("hatchery> too many pending worker in pool: %d", nbPending)
 		return false
 	}

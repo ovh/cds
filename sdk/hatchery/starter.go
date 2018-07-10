@@ -3,6 +3,7 @@ package hatchery
 import (
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -29,9 +30,27 @@ type workerStarterResult struct {
 	err          error
 }
 
+// Start all goroutines which manage the hatchery worker spawning routine.
+// the purpose is to avoid go routines leak when there is a bunch of worker to start
+func startWorkerStarters(h Interface) (chan<- workerStarterRequest, <-chan workerStarterResult) {
+	jobs := make(chan workerStarterRequest, 1)
+	results := make(chan workerStarterResult, 1)
+
+	maxProv := h.Configuration().Provision.MaxConcurrentProvisioning
+	if maxProv < 1 {
+		maxProv = defaultMaxProvisioning
+	}
+	for i := 0; i < maxProv; i++ {
+		sdk.GoRoutine("workerStarter", func() {
+			workerStarter(h, jobs, results)
+		})
+	}
+
+	return jobs, results
+}
+
 func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<- workerStarterResult) {
 	for j := range jobs {
-		checkProvisioningMutex.Lock()
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
 			//Try to start the worker
@@ -45,40 +64,41 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 			}
 			//Send the result back
 			results <- res
+
 		} else { // Start a worker for registering
 			log.Debug("Spawning worker for register model %s", m.Name)
+			if atomic.LoadInt64(&nbWorkerToStart) > int64(h.Configuration().Provision.MaxConcurrentProvisioning) {
+				continue
+			}
+
+			atomic.AddInt64(&nbWorkerToStart, 1)
 			if _, errSpawn := h.SpawnWorker(SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, errSpawn)
 				if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("cannot spawn worker for register: %s", errSpawn)); err != nil {
 					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 				}
 			}
+			atomic.AddInt64(&nbWorkerToStart, -1)
 		}
-		checkProvisioningMutex.Unlock()
 	}
 }
 
-// Start all goroutines which manage the hatchery worker spawning routine.
-// the purpose is to avoid go routines leak when there is a bunch of worker to start
-func startWorkerStarters(h Interface) (chan<- workerStarterRequest, <-chan workerStarterResult) {
-	jobs := make(chan workerStarterRequest, 1)
-	results := make(chan workerStarterResult, 1)
-
+func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
+	log.Debug("spawnWorkerForJob> %d", j.id)
+	defer logTime(h, fmt.Sprintf("spawnWorkerForJob> %d elapsed", j.timestamp), time.Now())
 	maxProv := h.Configuration().Provision.MaxConcurrentProvisioning
 	if maxProv < 1 {
 		maxProv = defaultMaxProvisioning
 	}
-	for i := 1; i <= maxProv; i++ {
-		sdk.GoRoutine("workerStarter", func() {
-			workerStarter(h, jobs, results)
-		})
+	if atomic.LoadInt64(&nbWorkerToStart) > int64(maxProv) {
+		return false, nil
 	}
 
-	return jobs, results
-}
+	atomic.AddInt64(&nbWorkerToStart, 1)
+	defer func(i *int64) {
+		atomic.AddInt64(i, -1)
+	}(&nbWorkerToStart)
 
-func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
-	defer logTime(h, fmt.Sprintf("routine> %d", j.timestamp), time.Now())
 	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
 		log.Debug("Create> continue")
 		return false, nil
