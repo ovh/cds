@@ -68,37 +68,22 @@ func (api *API) disableWorkerHandler() Handler {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "disabledWorkerHandler> Cannot start tx")
-		}
-		defer tx.Rollback()
-
-		wor, err := worker.LoadWorker(tx, id)
-		if err != nil {
+		if _, err := worker.LoadWorker(api.mustDB(), id); err != nil {
 			if err != sql.ErrNoRows {
 				return sdk.WrapError(err, "disabledWorkerHandler> Cannot load worker %s", id)
 			}
 			return sdk.WrapError(sdk.ErrNotFound, "disabledWorkerHandler> Cannot load worker %s", id)
 		}
 
-		if wor.Status == sdk.StatusBuilding || wor.Status == sdk.StatusChecking {
-			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wor.Status)
-		}
-
-		if err := worker.UpdateWorkerStatus(tx, id, sdk.StatusDisabled); err != nil {
+		if err := worker.DisableWorker(api.mustDB(), id); err != nil {
 			if err == worker.ErrNoWorker || err == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exists", id)
 			}
 			return sdk.WrapError(err, "disableWorkerHandler> cannot update worker status")
 		}
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "disableWorkerHandler> cannot commit tx")
-		}
-
 		//Remove the worker from the cache
-		key := cache.Key("worker", wor.ID)
+		key := cache.Key("worker", id)
 		api.Cache.Delete(key)
 
 		return nil
@@ -129,11 +114,6 @@ func (api *API) workerCheckingHandler() Handler {
 		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)
 		if errW != nil {
 			return sdk.WrapError(errW, "workerCheckingHandler> Unable to load worker %s", workerC.ID)
-		}
-
-		if wk.Status != sdk.StatusWaiting {
-			log.Debug("workerCheckingHandler> Worker %s cannot be Checking. Current status: %s", wk.Name, wk.Status)
-			return nil
 		}
 
 		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusChecking); err != nil {
