@@ -161,5 +161,4 @@ func (wk *currentWorker) keyInstallHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	writeJSON(w, keyResponse{PKey: wk.currentJob.pkey}, http.StatusOK)
-	return
 }
