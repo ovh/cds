@@ -40,7 +40,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 
 		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
 		if errP != nil {
-			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project nodeJobRunID:%d", id)
+			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project by nodeJobRunID:%d", id)
 		}
 
 		//Load worker model
@@ -134,7 +134,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 
 	//Change worker status
 	if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
-		return nil, sdk.WrapError(err, "takeJob> Cannot update worker status")
+		return nil, sdk.WrapError(err, "takeJob> Cannot update worker %s status", getWorker(ctx).Name)
 	}
 
 	//Load the node run

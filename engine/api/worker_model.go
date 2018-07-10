@@ -470,7 +470,6 @@ func (api *API) getWorkerModelsHandler() Handler {
 		if errbyuser != nil {
 			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
 		}
-		log.Debug("getWorkerModels> for user %d named %s (admin:%t)", getUser(ctx).ID, getUser(ctx).Username, getUser(ctx).Admin)
 
 		return WriteJSON(w, models, http.StatusOK)
 	}
