@@ -88,7 +88,7 @@ jobs:
             });
     }
 
-    fileEvent(event) {
-        this.pipToImport = event;
+    fileEvent(event: {content: string, file: File}) {
+        this.pipToImport = event.content;
     }
 }

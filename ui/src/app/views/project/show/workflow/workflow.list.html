@@ -18,12 +18,13 @@
             <div class="ui stackable four cards" *ngIf="project && project.workflow_names && project.workflow_names.length > 0">
                 <a [routerLink]="['./workflow', wf.name]" class="ui link card" *ngFor="let wf of filteredWorkflows">
                     <div class="content">
+                        <img *ngIf="wf.icon" class="right floated mini ui image" [src]="wf.icon">
                         <div class="header">
                             <span [innerText]="wf.name"></span>
                             <app-warning-mark-list [warnings]="warnMap?.get(wf.name)"></app-warning-mark-list>
                         </div>
                         <div class="meta" *ngIf="wf.description">
-                            <span [innerText]="wf.description.slice(0, 70)"></span><span *ngIf="wf.description.length > 70">...</span>
+                            <span [innerText]="wf.description.slice(0, 90)"></span><span *ngIf="wf.description.length > 90">...</span>
                         </div>
                         <div class="meta" *ngIf="!wf.description" [innerText]="'common_no_description' | translate"></div>
                     </div>

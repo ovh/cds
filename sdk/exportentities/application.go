@@ -8,6 +8,7 @@ import (
 type Application struct {
 	Version              string                              `json:"version,omitempty" yaml:"version,omitempty"`
 	Name                 string                              `json:"name" yaml:"name"`
+	Description          string                              `json:"description" yaml:"description"`
 	VCSServer            string                              `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
 	RepositoryName       string                              `json:"repo,omitempty" yaml:"repo,omitempty"`
 	Permissions          map[string]int                      `json:"permissions,omitempty" yaml:"permissions,omitempty"`
@@ -40,6 +41,7 @@ type EncryptedKey struct {
 func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedKey) (a Application, err error) {
 	a.Version = ApplicationVersion1
 	a.Name = app.Name
+	a.Description = app.Description
 
 	if app.VCSServer != "" {
 		a.VCSServer = app.VCSServer

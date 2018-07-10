@@ -117,13 +117,13 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       }
 
       if (Array.isArray(this.project.application_names)) {
-          let voidApp = new Application();
+          let voidApp = new IdName();
           voidApp.id = 0;
           voidApp.name = ' ';
           this.applicationsName = [voidApp, ...this.project.application_names];
       }
       if (Array.isArray(this.project.environments)) {
-          let voidEnv = new Environment();
+          let voidEnv = new IdName();
           voidEnv.id = 0;
           voidEnv.name = ' ';
           this.environmentsName = [voidEnv, ...this.project.environments];

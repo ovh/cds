@@ -272,10 +272,8 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOpti
 
 // Insert add an application id database
 func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
-	// check application name pattern
-	regexp := sdk.NamePatternRegex
-	if !regexp.MatchString(app.Name) {
-		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Insert: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
+	if err := app.IsValid(); err != nil {
+		return sdk.WrapError(err, "application.Insert> application is not valid")
 	}
 
 	switch proj.WorkflowMigration {
@@ -287,6 +285,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 	app.ProjectID = proj.ID
 	app.ProjectKey = proj.Key
 	app.LastModified = time.Now()
+
 	dbApp := dbApplication(*app)
 	if err := db.Insert(&dbApp); err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
@@ -300,9 +299,8 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 // Update updates application id database
 func Update(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
-	rx := sdk.NamePatternRegex
-	if !rx.MatchString(app.Name) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid application name. It should match %s", sdk.NamePattern))
+	if err := app.IsValid(); err != nil {
+		return sdk.WrapError(err, "application.Update> application is not valid")
 	}
 
 	app.LastModified = time.Now()
@@ -389,14 +387,14 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 
 	if u == nil || u.Admin {
 		query = `
-		SELECT application.id, application.name
+		SELECT application.id, application.name, application.description, application.icon
 		FROM application
 		WHERE application.project_id= $1
 		ORDER BY application.name ASC`
 		args = []interface{}{projID}
 	} else {
 		query = `
-			SELECT distinct(application.id) AS id, application.name
+			SELECT distinct(application.id) AS id, application.name, application.description, application.icon
 			FROM application
 			WHERE application.id IN (
 				SELECT application_group.application_id

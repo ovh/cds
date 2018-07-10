@@ -10,4 +10,8 @@
       align-items:flex-end;
     }
   }
+  textarea {
+    min-height: 4em;
+    max-height: 8em;
+  }
 }

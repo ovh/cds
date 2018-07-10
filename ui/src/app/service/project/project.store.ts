@@ -271,8 +271,10 @@ export class ProjectStore {
     createProject(project: Project): Observable<Project> {
         return this._projectService.addProject(project).pipe(map(res => {
             let projects = this._projectNav.getValue();
+            if (!projects) {
+                projects = List();
+            }
             this._projectNav.next(projects.push(project));
-
             return res;
         }));
     }

@@ -28,6 +28,7 @@ func (api *API) getProjectsHandler() Handler {
 		withWorkflows := FormBool(r, "workflow")
 		filterByRepo := r.FormValue("repo")
 		withPermissions := r.FormValue("permission")
+		withIcon := FormBool(r, "withIcon")
 
 		var u = getUser(ctx)
 		requestedUserName := r.Header.Get("X-Cds-Username")
@@ -48,10 +49,13 @@ func (api *API) getProjectsHandler() Handler {
 		opts := []project.LoadOptionFunc{
 			project.LoadOptions.WithPermission,
 		}
+
+		if withIcon {
+			opts = append(opts, project.LoadOptions.WithIcon)
+		}
 		if withApplications {
 			opts = append(opts, project.LoadOptions.WithApplications)
 		}
-
 		if withWorkflows {
 			opts = append(opts, project.LoadOptions.WithPlatforms, project.LoadOptions.WithWorkflows)
 		}
@@ -149,13 +153,16 @@ func (api *API) updateProjectHandler() Handler {
 		}
 
 		// Check is project exist
-		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithIcon)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 		}
 		// Update in DB is made given the primary key
 		proj.ID = p.ID
 		proj.VCSServers = p.VCSServers
+		if proj.Icon == "" {
+			p.Icon = proj.Icon
+		}
 		if errUp := project.Update(api.mustDB(), api.Cache, proj, getUser(ctx)); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
@@ -187,6 +194,7 @@ func (api *API) getProjectHandler() Handler {
 
 		opts := []project.LoadOptionFunc{
 			project.LoadOptions.WithFavorites,
+			project.LoadOptions.WithIcon,
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)

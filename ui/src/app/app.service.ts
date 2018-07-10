@@ -76,7 +76,7 @@ export class AppService {
         if (event.type_event === EventType.RUN_WORKFLOW_PREFIX) {
             let mustAdd = true;
             // Check if we have to mute it
-            if (this.filter) {
+            if (this.filter && this.filter.projects) {
                 let workflowList = this.filter.projects.find(p => p.key === event.project_key);
                 if (workflowList) {
                     let w = workflowList.workflow_names.find(wname => wname === event.workflow_name);

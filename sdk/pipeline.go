@@ -14,6 +14,7 @@ import (
 type Pipeline struct {
 	ID                int64             `json:"id" yaml:"-"`
 	Name              string            `json:"name" cli:"name"`
+	Description       string            `json:"description" cli:"description"`
 	Type              string            `json:"type"`
 	ProjectKey        string            `json:"projectKey"`
 	ProjectID         int64             `json:"-"`

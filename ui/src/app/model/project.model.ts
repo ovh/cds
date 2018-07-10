@@ -11,6 +11,8 @@ import {Workflow} from './workflow.model';
 export class Project {
     key: string;
     name: string;
+    description: string;
+    icon: string;
     workflows: Array<Workflow>;
     workflow_names: Array<IdName>;
     pipelines: Array<Pipeline>;
@@ -32,6 +34,7 @@ export class Project {
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
     loading: boolean;
+    mute: boolean;
 }
 
 export class LoadOpts {
@@ -45,4 +48,7 @@ export class IdName {
   id: number;
   name: string;
   description?: string;
+  icon?: string;
+  // ui params
+  mute: boolean;
 }

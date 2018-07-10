@@ -31,7 +31,7 @@
                         </div>
                         <div class="field">
                             <sm-checkbox label="Keep current cds.version" [control]="withCurrentVersion" type="toggle"></sm-checkbox>
-                        </div>                        
+                        </div>
                     </div>
                     <ng-container *ngIf="application.workflow_migration === 'STARTED'">
                         <button class="ui submit green button" [class.loading]="loading" [disabled]="loading" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
@@ -61,6 +61,43 @@
                         <button class="ui green button" [class.loading]="loading" name="updateNameButton" (click)="onSubmitApplicationUpdate()" [disabled]="applicationUpdateFrom.invalid">{{ 'btn_rename' | translate }}
                         </button>
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitApplicationUpdate(true)" #updateWarning></app-warning-modal>
+                    </div>
+                </div>
+            </form>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'application_description' | translate }}">
+        <app-zone-content class="bottom">
+            <form class="ui form" #applicationUpdateForm="ngForm">
+                <div class="fields">
+                    <div class="fourteen wide field">
+                        <textarea class="app-description" type="text" name="formApplicationUpdateDescription" [(ngModel)]="application.description" required #formApplicationUpdateDescription="ngModel"
+                               [disabled]="loading">
+                        </textarea>
+                    </div>
+                    <div class="two wide right aligned field">
+                        <button class="ui green button" [class.loading]="loading" name="updateDescriptionButton" (click)="onSubmitApplicationUpdate()" [disabled]="loading">{{ 'btn_save' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'application_icon' | translate }}">
+        <app-zone-content class="bottom">
+            <form class="ui form" #applicationUpdateForm="ngForm">
+                <div class="fields">
+                    <div class="fourteen wide field center aligned" *ngIf="!fileTooLarge">
+                        <div>
+                            <img class="app-icon" [src]="application.icon" alt="application icon" *ngIf="application.icon">
+                        </div>
+                        <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
+                        </app-upload-button>
+                    </div>
+                    <div class="ui fourteen wide red message field center aligned" *ngIf="fileTooLarge" [textContent]="'common_file_too_large' | translate"></div>
+                    <div class="two wide right aligned field">
+                        <button class="ui green button" [class.loading]="loading" name="updateDescriptionButton" (click)="onSubmitApplicationUpdate()" [disabled]="loading">{{ 'btn_save' | translate }}
+                        </button>
                     </div>
                 </div>
             </form>
