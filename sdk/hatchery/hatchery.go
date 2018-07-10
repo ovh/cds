@@ -28,7 +28,7 @@ func Create(h Interface) error {
 
 	// Gracefully shutdown connections
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	defer func() {
 		signal.Stop(c)
 		cancel()
@@ -76,7 +76,7 @@ func Create(h Interface) error {
 
 	tickerProvision := time.NewTicker(time.Duration(h.Configuration().Provision.Frequency) * time.Second)
 	tickerRegister := time.NewTicker(time.Duration(h.Configuration().Provision.RegisterFrequency) * time.Second)
-	tickerGetModels := time.NewTicker(time.Duration(3 * time.Second))
+	tickerGetModels := time.NewTicker(3 * time.Second)
 
 	defer func() {
 		tickerProvision.Stop()

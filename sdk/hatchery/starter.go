@@ -121,7 +121,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 			infos := []sdk.SpawnInfo{
 				{
 					RemoteTime: start,
-					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
+					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{h.Hatchery().Name, fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
 				},
 			}
 			workerName, errSpawn := h.SpawnWorker(SpawnArguments{Model: *model, IsWorkflowJob: j.isWorkflowJob, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
@@ -129,7 +129,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 				log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", j.timestamp, model.Name, j.id, errSpawn)
 				infos = append(infos, sdk.SpawnInfo{
 					RemoteTime: time.Now(),
-					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
+					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{h.Hatchery().Name, fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
 				})
 				if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
 					log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", j.timestamp, j.id, err)
@@ -144,9 +144,9 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 				RemoteTime: time.Now(),
 				Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
 					Args: []interface{}{
-						fmt.Sprintf("%s", h.Hatchery().Name),
+						h.Hatchery().Name,
 						fmt.Sprintf("%d", h.Hatchery().ID),
-						fmt.Sprintf("%s", workerName),
+						workerName,
 						sdk.Round(time.Since(start), time.Second).String()},
 				},
 			})
@@ -172,7 +172,7 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 		return false
 	}
 
-	if execGroups != nil && len(execGroups) > 0 {
+	if len(execGroups) > 0 {
 		checkGroup := false
 		for _, g := range execGroups {
 			if g.ID == model.GroupID {
