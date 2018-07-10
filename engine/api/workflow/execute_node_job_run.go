@@ -482,6 +482,9 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.H
 		store.SetWithTTL(k, hatchery, 120)
 		return nil, nil
 	}
+	if h.ID == hatchery.ID {
+		return nil, nil
+	}
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
