@@ -42,6 +42,7 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	r.HandleFunc("/log", w.logHandler)
 	r.HandleFunc("/cache/{ref}/push", w.cachePushHandler)
 	r.HandleFunc("/cache/{ref}/pull", w.cachePullHandler)
+	r.HandleFunc("/key/{key}/install", w.keyInstallHandler)
 	r.HandleFunc("/exit", w.exitHandler)
 
 	srv := &http.Server{
