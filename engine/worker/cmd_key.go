@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -77,7 +78,10 @@ func keyInstallCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Error: worker key install > cannot post worker key install (Request): %s\n", errRequest)
 		}
 
-		resp, errDo := http.DefaultClient.Do(req)
+		client := http.DefaultClient
+		client.Timeout = time.Minute
+
+		resp, errDo := client.Do(req)
 		if errDo != nil {
 			sdk.Exit("Error: worker key install > cannot post worker key install (Do): %s\n", errDo)
 		}
@@ -89,7 +93,7 @@ func keyInstallCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("Error: worker key install> HTTP error %v\n", err)
 			}
 			cdsError := sdk.DecodeError(body)
-			sdk.Exit("Error: worker key install> http code %d : %v\n", resp.StatusCode, cdsError)
+			sdk.Exit("Error: worker key install> %v\n", cdsError)
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
