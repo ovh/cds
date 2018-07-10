@@ -25,6 +25,28 @@ func SetupSSHKey(vars []sdk.Variable, path string, key *sdk.Variable) error {
 	return write(path, key.Name, key.Value)
 }
 
+// CleanSSHKeys erase all the keys in the path, or just the specified key it not nil
+func CleanSSHKeys(path string, key *sdk.Variable) error {
+	if key == nil {
+		dirRead, errO := os.Open(path)
+		if errO != nil {
+			return sdk.WrapError(errO, "CleanSSHKeys> Cannot open path %s", path)
+		}
+		dirFiles, errR := dirRead.Readdir(0)
+		if errR != nil {
+			return sdk.WrapError(errR, "CleanSSHKeys> Cannot read path %s", path)
+		}
+
+		for i := range dirFiles {
+			if err := os.RemoveAll(path + dirFiles[i].Name()); err != nil {
+				return sdk.WrapError(err, "CleanSSHKeys> Cannot remote file %s", path+dirFiles[i].Name())
+			}
+		}
+		return nil
+	}
+	return os.RemoveAll(filepath.Join(path, "cds.key."+key.Name+".priv"))
+}
+
 //TODO: To delete after gitclone migration
 // SetupSSHKeyDEPRECATED writes all the keys in the path, or just the specified key it not nil
 func SetupSSHKeyDEPRECATED(vars []sdk.Variable, path string, key *sdk.Parameter) error {

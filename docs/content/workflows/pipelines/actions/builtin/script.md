@@ -63,6 +63,12 @@ You can use [CDS Variables]({{< relref "workflows/pipelines/variables.md" >}}) i
 
 ![img](/images/workflows.pipelines.actions.builtin.script-bash.png)
 
+#### Using CDS keys in a script
+
+You can use CDS SSH keys in a step script with the [worker key command]({{< relref "cli/worker/key/_index.md" >}}). Just use `worker key install proj-mykey` and it will install the SSH environment and private SSH key of your key in your project named **mykey**.
+
+The command `worker key install proj-mykey` will return the path where the private key is stored. In that way you can save this value in a variable and use it for a ssh command like this `ssh -i $MY_VAR_WITH_PATH_TO_MY_PRIVATEK_EY`
+
 #### Using worker cli in a script
 
 You can use worker cli to make different actions
@@ -73,6 +79,7 @@ You can use worker cli to make different actions
 + [worker tag]({{< relref "cli/worker/tag.md" >}})
 + [worker cache]({{< relref "cli/worker/cache/_index.md" >}})
 + [worker tmpl]({{< relref "cli/worker/tmpl.md" >}})
++ [worker key]({{< relref "cli/worker/key/_index.md" >}})
 
 ### Example
 
