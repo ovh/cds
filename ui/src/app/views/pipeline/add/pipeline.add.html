@@ -49,6 +49,10 @@
                         </div>
                     </div>
                     <div class="field">
+                        <label>{{'pipeline_description' | translate}}</label>
+                        <textarea type="text" name="pipdescription" [(ngModel)]="newPipeline.description"></textarea>
+                    </div>
+                    <div class="field">
                         <label>{{'pipeline_type' | translate}}</label>
                         <sm-select [(model)]="newPipeline.type">
                             <option *ngFor="let t of pipelineType" value="{{t}}">{{t}}</option>

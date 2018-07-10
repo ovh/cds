@@ -39,6 +39,7 @@ export class ApplicationAdminComponent implements OnInit {
     user: User;
 
     newName: string;
+    fileTooLarge = false;
     public loading = false;
 
     constructor(private _applicationStore: ApplicationStore, private _toast: ToastService, private _modalService: SuiModalService,
@@ -115,5 +116,13 @@ export class ApplicationAdminComponent implements OnInit {
         }, () => {
             this.loading = false;
         });
+    }
+
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000;
+        if (this.fileTooLarge) {
+            return;
+        }
+        this.application.icon = event.content;
     }
 }

@@ -22,8 +22,12 @@
                         <div class="ui stackable four cards">
                             <a [routerLink]="['/project', proj.key]" class="ui link card" *ngFor="let proj of filteredProjects">
                                 <div class="content">
+                                    <img *ngIf="proj.icon" class="right floated mini ui image" [src]="proj.icon">
                                     <div class="header" [innerText]="proj.name"></div>
-                                    <div class="meta" translate="project_list_card_updated" [translateParams]="{date: (proj.last_modified | date:'short')}"></div>
+                                    <div class="meta" *ngIf="proj.description">
+                                        <span [innerText]="proj.description.slice(0, 90)"></span><span *ngIf="proj.description.length > 90">...</span>
+                                    </div>
+                                    <div class="meta" *ngIf="!proj.description" [innerText]="'common_no_description' | translate"></div>
                                 </div>
                             </a>
                         </div>

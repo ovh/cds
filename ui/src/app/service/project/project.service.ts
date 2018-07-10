@@ -53,7 +53,9 @@ export class ProjectService {
      * @returns {Observable<Project[]>}
      */
     getProjects(): Observable<Project[]> {
-        return this._http.get<Project[]>('/project');
+        let params = new HttpParams();
+        params = params.append('withIcon', 'true');
+        return this._http.get<Project[]>('/project', {params});
     }
 
     /**

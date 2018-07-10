@@ -9,12 +9,29 @@
                     </div>
                     <div class="fourteen wide column">
                         <div class="field">
-                            <label>{{'application_name' | translate}}</label>
+                            <label>{{'application_name' | translate}} *</label>
                             <input type="text" name="appname" [(ngModel)]="selectedName">
                             <div class="ui error message" *ngIf="appPatternError">
                                 {{ 'application_name_error' | translate }}
                             </div>
                         </div>
+
+                        <div class="field">
+                            <label>{{ 'application_description' | translate }}</label>
+                            <textarea type="text" name="applicationdescription" [(ngModel)]="description"></textarea>
+                        </div>
+
+                        <div class="field center aligned">
+                            <label>{{ 'application_icon' | translate }} ({{'common_optional' | translate}})</label>
+                            <div>
+                                <div *ngIf="!fileTooLarge && img">
+                                    <img class="app-icon" [src]="img" alt="icon"/>
+                                </div>
+                                <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
+                                </app-upload-button>
+                            </div>
+                        </div>
+                        <div class="ui red message field" *ngIf="fileTooLarge"  [textContent]="'common_file_too_large' | translate"></div>
 
                         <div class="grouped fields">
                             <label>{{ 'application_new_title' | translate }}</label>

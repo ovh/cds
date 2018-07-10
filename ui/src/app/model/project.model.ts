@@ -11,6 +11,8 @@ import {Workflow} from './workflow.model';
 export class Project {
     key: string;
     name: string;
+    description: string;
+    icon: string;
     workflows: Array<Workflow>;
     workflow_names: Array<IdName>;
     pipelines: Array<Pipeline>;
@@ -46,7 +48,7 @@ export class IdName {
   id: number;
   name: string;
   description?: string;
-
+  icon?: string;
   // ui params
   mute: boolean;
 }

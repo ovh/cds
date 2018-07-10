@@ -162,9 +162,8 @@ const BuiltinGPGKey = "builtin"
 
 // Insert a new project in database
 func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-	rx := sdk.NamePatternRegex
-	if !rx.MatchString(proj.Key) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", sdk.NamePattern))
+	if err := proj.IsValid(); err != nil {
+		return sdk.WrapError(err, "project.Insert> project is not valid")
 	}
 
 	if proj.WorkflowMigration == "" {
@@ -201,9 +200,8 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 
 // Update a new project in database
 func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-	rx := sdk.NamePatternRegex
-	if !rx.MatchString(proj.Key) {
-		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", sdk.NamePattern))
+	if err := proj.IsValid(); err != nil {
+		return sdk.WrapError(err, "project.Update> project is not valid")
 	}
 
 	proj.LastModified = time.Now()
@@ -281,6 +279,7 @@ type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
 	Default                                 LoadOptionFunc
+	WithIcon                                LoadOptionFunc
 	WithApplications                        LoadOptionFunc
 	WithApplicationNames                    LoadOptionFunc
 	WithVariables                           LoadOptionFunc
@@ -305,6 +304,7 @@ var LoadOptions = struct {
 	WithFeatures                            LoadOptionFunc
 }{
 	Default:                                 &loadDefault,
+	WithIcon:                                &loadIcon,
 	WithPipelines:                           &loadPipelines,
 	WithPipelineNames:                       &loadPipelineNames,
 	WithEnvironments:                        &loadEnvironments,

@@ -184,6 +184,15 @@ var (
 		return nil
 	}
 
+	loadIcon = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		icon, err := db.SelectStr("SELECT icon FROM project WHERE id = $1", proj.ID)
+		if err != nil {
+			return sdk.WrapError(err, "project.loadIcon")
+		}
+		proj.Icon = icon
+		return nil
+	}
+
 	loadPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		pipelines, errPip := pipeline.LoadPipelines(db, proj.ID, false, nil)
 		if errPip != nil && errPip != sql.ErrNoRows && errPip != sdk.ErrPipelineNotFound && errPip != sdk.ErrPipelineNotAttached {
