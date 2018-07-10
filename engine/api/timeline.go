@@ -26,15 +26,14 @@ func (api *API) getTimelineHandler() Handler {
 		}
 
 		// Add all workflows to mute in a map
-		muteFilter := make(map[string]bool)
+		muteFilter := make(map[string]bool, len(timelineFilter.Projects))
 		for _, pf := range timelineFilter.Projects {
 			for _, wn := range pf.WorkflowNames {
 				muteFilter[pf.Key+"/"+wn] = true
 			}
 		}
 
-		permToRequest := make(map[string][]string)
-
+		permToRequest := make(map[string][]string, len(u.Permissions.WorkflowsPerm))
 		for k := range u.Permissions.WorkflowsPerm {
 			if _, ok := muteFilter[k]; ok {
 				continue
