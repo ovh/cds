@@ -45,4 +45,7 @@ export class IdName {
   id: number;
   name: string;
   description?: string;
+
+  // ui params
+  mute: boolean;
 }
