@@ -237,7 +237,9 @@ func (api *API) putImportPipelineHandler() Handler {
 			return sdk.WrapError(errBegin, "putImportPipelineHandler: Cannot start transaction")
 		}
 
-		defer tx.Rollback()
+		defer func() {
+			_ = tx.Rollback()
+		}()
 
 		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)

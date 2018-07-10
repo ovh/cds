@@ -199,7 +199,9 @@ func (api *API) putWorkflowImportHandler() Handler {
 		if errtx != nil {
 			return sdk.WrapError(errtx, "postWorkflowImportHandler> Unable to start tx")
 		}
-		defer tx.Rollback()
+		defer func() {
+			_ = tx.Rollback()
+		}()
 
 		wrkflw, msgList, globalError := workflow.ParseAndImport(tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)

@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// ImportOptions is option to parse a workflow
 type ImportOptions struct {
 	DryRun       bool
 	Force        bool
