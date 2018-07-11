@@ -395,7 +395,7 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/mode", r.GET(api.authModeHandler, Auth(false)))
 
 	// Workers
-	r.Handle("/worker", r.GET(api.getWorkersHandler, Auth(false)), r.POST(api.registerWorkerHandler, Auth(false)))
+	r.Handle("/worker", r.GET(api.getWorkersHandler), r.POST(api.registerWorkerHandler, Auth(false)))
 	r.Handle("/worker/refresh", r.POST(api.refreshWorkerHandler))
 	r.Handle("/worker/checking", r.POST(api.workerCheckingHandler))
 	r.Handle("/worker/waiting", r.POST(api.workerWaitingHandler))

@@ -144,12 +144,19 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 }
 
 // LoadWorkers load all workers in db
-func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
+func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE 1 = 1 ORDER BY name ASC`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker ORDER BY name ASC`
+	args := []interface{}{}
 
-	rows, err := db.Query(query)
+	if hatcheryName != "" {
+		// TODO: remove the hatchery name from worker worker table !
+		query = `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE hatchery_name = $1 ORDER BY name ASC`
+		args = []interface{}{hatcheryName}
+	}
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
