@@ -53,7 +53,12 @@ func (api *API) getWorkersHandler() Handler {
 			return sdk.WrapError(err, "getWorkerModels> cannot parse form")
 		}
 
-		workers, errl := worker.LoadWorkers(api.mustDB())
+		var hatcheryName string
+		h := getHatchery(ctx)
+		if h != nil {
+			hatcheryName = h.Name
+		}
+		workers, errl := worker.LoadWorkers(api.mustDB(), hatcheryName)
 		if errl != nil {
 			return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
 		}
