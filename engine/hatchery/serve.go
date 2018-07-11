@@ -99,4 +99,17 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Middlewares = append(r.Middlewares, c.AuthMiddleware)
 
 	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/workers", r.GET(getWorkersPoolHandler(h), api.Auth(false)))
+}
+
+func getWorkersPoolHandler(h hatchery.Interface) api.HandlerFunc {
+	return func() api.Handler {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			pool, err := hatchery.WorkerPool(h)
+			if err != nil {
+				return sdk.WrapError(err, "getWorkersPoolHandler")
+			}
+			return api.WriteJSON(w, pool, http.StatusOK)
+		}
+	}
 }

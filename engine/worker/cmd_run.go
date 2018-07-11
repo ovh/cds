@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -167,6 +168,10 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				select {
 				case err := <-errs:
 					log.Error("An error has occured: %v", err)
+					if strings.Contains(err.Error(), "not authenticated") {
+						endFunc()
+						return
+					}
 				}
 			}
 		}(errs)

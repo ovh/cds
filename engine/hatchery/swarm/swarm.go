@@ -47,7 +47,7 @@ func (h *HatcherySwarm) Init() error {
 		return errPing
 	}
 
-	go h.routines(context.Background())
+	sdk.GoRoutine("swarm", func() { h.routines(context.Background()) })
 
 	return nil
 }
@@ -206,11 +206,13 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	cmds := strings.Fields(spawnArgs.Model.ModelDocker.Shell)
 	cmds = append(cmds, buffer.String())
 
-	if spawnArgs.Model.ModelDocker.Envs == nil {
-		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
+	// copy envs to avoid data race
+	modelEnvs := make(map[string]string, len(spawnArgs.Model.ModelDocker.Envs))
+	for k, v := range spawnArgs.Model.ModelDocker.Envs {
+		modelEnvs[k] = v
 	}
 
-	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	envsWm, errEnv := sdk.TemplateEnvs(udataParam, modelEnvs)
 	if errEnv != nil {
 		return "", errEnv
 	}
@@ -321,8 +323,6 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 	}
 
-	log.Debug("CanSpawn> %s need %v", model.Name, links)
-
 	// If one image have a "latest" tag, we don't have to listImage
 	listImagesToDoForLinkedImages := true
 	for _, i := range links {
@@ -431,9 +431,13 @@ func (h *HatcherySwarm) getWorkerContainers(containers []types.Container, option
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcherySwarm) WorkersStarted() int {
+func (h *HatcherySwarm) WorkersStarted() []string {
 	workers, _ := h.getWorkerContainers(nil, types.ContainerListOptions{})
-	return len(workers)
+	res := make([]string, len(workers))
+	for i, w := range workers {
+		res[i] = w.Labels["worker_name"]
+	}
+	return res
 }
 
 // WorkersStartedByModel returns the number of started workers
@@ -486,14 +490,15 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			go func() {
+			sdk.GoRoutine("getServicesLogs", func() {
 				if err := h.getServicesLogs(); err != nil {
 					log.Error("Hatchery> swarm> Cannot get service logs : %v", err)
 				}
-			}()
-			go func() {
+			})
+
+			sdk.GoRoutine("killAwolWorker", func() {
 				_ = h.killAwolWorker()
-			}()
+			})
 		case <-ctx.Done():
 			if ctx.Err() != nil {
 				log.Error("Hatchery> Swarm> Exiting routines")
@@ -517,8 +522,8 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 	//Checking workers
 	oldContainers := []types.Container{}
 	for _, c := range containers {
-		if time.Now().Add(-1*time.Minute).Unix() < c.Created {
-			log.Debug("listAwolWorkers> container %s is too young", c.Names[0])
+		if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
+			log.Debug("listAwolWorkers> container %s(status=%s) is too young", c.Names[0], c.Status)
 			continue
 		}
 
@@ -547,7 +552,6 @@ func (h *HatcherySwarm) listAwolWorkers() ([]types.Container, error) {
 		}
 	}
 
-	log.Debug("listAwolWorkers> oldContainers: %d", len(oldContainers))
 	return oldContainers, nil
 }
 
