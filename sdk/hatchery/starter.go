@@ -93,7 +93,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		maxProv = defaultMaxProvisioning
 	}
 	if atomic.LoadInt64(&nbWorkerToStart) >= int64(maxProv) {
-		log.Debug("spawnWorkerForJob> mac concurrent provisioning reached")
+		log.Debug("spawnWorkerForJob> max concurrent provisioning reached")
 		return false, nil
 	}
 
