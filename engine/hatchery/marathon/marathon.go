@@ -103,14 +103,6 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Marathon ID Prefix is mandatory")
 	}
 
-	if hconfig.MarathonUser == "" {
-		return fmt.Errorf("Marathon User is mandatory")
-	}
-
-	if hconfig.MarathonPassword == "" {
-		return fmt.Errorf("Marathon Password is mandatory")
-	}
-
 	if hconfig.Name == "" {
 		return fmt.Errorf("please enter a name in your marathon hatchery configuration")
 	}
@@ -463,6 +455,9 @@ func (h *HatcheryMarathon) WorkersStarted() []string {
 	res := make([]string, len(apps))
 	for i, s := range apps {
 		res[i] = strings.Replace(s, h.Config.MarathonIDPrefix, "", 1)
+		if strings.HasPrefix(res[i], "/") {
+			res[i] = res[i][1:]
+		}
 	}
 	return res
 }

@@ -414,14 +414,14 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 // SetStatus sets action_build_id and status to building on given worker
 func SetStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 	query := `UPDATE worker SET status = $1 WHERE id = $2`
-
-	res, errE := db.Exec(query, status.String(), workerID)
-	if errE != nil {
-		return errE
+	if status == sdk.StatusDisabled {
+		query = `UPDATE worker SET status = $1, action_build_id = NULL WHERE id = $2`
 	}
 
-	_, err := res.RowsAffected()
-	return err
+	if _, errE := db.Exec(query, status.String(), workerID); errE != nil {
+		return sdk.WrapError(errE, "SetStatus")
+	}
+	return nil
 }
 
 // SetToBuilding sets action_build_id and status to building on given worker

@@ -93,6 +93,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		maxProv = defaultMaxProvisioning
 	}
 	if atomic.LoadInt64(&nbWorkerToStart) >= int64(maxProv) {
+		log.Debug("spawnWorkerForJob> mac concurrent provisioning reached")
 		return false, nil
 	}
 
@@ -102,22 +103,22 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	}(&nbWorkerToStart)
 
 	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
-		log.Debug("Create> continue")
+		log.Debug("spawnWorkerForJob> continue")
 		return false, nil
 	}
 
 	if len(j.models) == 0 {
-		return false, fmt.Errorf("routine> %d - No model returned by CDS api", j.timestamp)
+		return false, fmt.Errorf("spawnWorkerForJob> %d - No model returned by CDS api", j.timestamp)
 	}
 	for i := range j.models {
 		model := &j.models[i]
 		if canRunJob(h, j.timestamp, j.execGroups, j.id, j.requirements, model, j.hostname) {
 			if err := h.CDSClient().QueueJobBook(j.isWorkflowJob, j.id); err != nil {
 				// perhaps already booked by another hatchery
-				log.Debug("routine> %d - cannot book job %d %s: %s", j.timestamp, j.id, model.Name, err)
+				log.Debug("spawnWorkerForJob> %d - cannot book job %d %s: %s", j.timestamp, j.id, model.Name, err)
 				break // go to next job
 			}
-			log.Debug("routine> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", j.timestamp, j.id, model.Name, h.Hatchery().ID, j.isWorkflowJob)
+			log.Debug("spawnWorkerForJob> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", j.timestamp, j.id, model.Name, h.Hatchery().ID, j.isWorkflowJob)
 
 			start := time.Now()
 			infos := []sdk.SpawnInfo{
@@ -128,16 +129,16 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 			}
 			workerName, errSpawn := h.SpawnWorker(SpawnArguments{Model: *model, IsWorkflowJob: j.isWorkflowJob, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
 			if errSpawn != nil {
-				log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", j.timestamp, model.Name, j.id, errSpawn)
+				log.Warning("spawnWorkerForJob> %d - cannot spawn worker %s for job %d: %s", j.timestamp, model.Name, j.id, errSpawn)
 				infos = append(infos, sdk.SpawnInfo{
 					RemoteTime: time.Now(),
 					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{h.Hatchery().Name, fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
 				})
 				if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
-					log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", j.timestamp, j.id, err)
+					log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", j.timestamp, j.id, err)
 				}
 				if err := h.CDSClient().WorkerModelSpawnError(model.ID, fmt.Sprintf("hatchery %s cannot spawn worker %s for job %d: %v", h.Hatchery().Name, model.Name, j.id, errSpawn)); err != nil {
-					log.Error("routine> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model.Name, errSpawn)
+					log.Error("spawnWorkerForJob> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model.Name, errSpawn)
 				}
 				continue // try another model
 			}
@@ -154,7 +155,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 			})
 
 			if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
-				log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", j.timestamp, j.id, err)
+				log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", j.timestamp, j.id, err)
 			}
 			return true, nil // ok for this job
 		}
@@ -251,6 +252,7 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 
 	// If the model needs registration, don't spawn for now
 	if h.NeedRegistration(model) {
+		log.Debug("canRunJob> model %s needs registration", model.Name)
 		return false
 	}
 
