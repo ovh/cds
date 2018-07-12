@@ -8,7 +8,7 @@ import (
 )
 
 // KillDeadServices must be run as a goroutine. It Deletes all dead workers
-func KillDeadServices(ctx context.Context, r *Repository) error {
+func KillDeadServices(ctx context.Context, r *Repository) {
 	tick := time.NewTicker(30 * time.Second)
 	for {
 		select {
@@ -25,7 +25,9 @@ func KillDeadServices(ctx context.Context, r *Repository) error {
 				}
 			}
 		case <-ctx.Done():
-			return ctx.Err()
+			if err := ctx.Err(); err != nil {
+				log.Error("Exiting KillDeadServices: %v", err)
+			}
 		}
 	}
 }
