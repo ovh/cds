@@ -455,9 +455,7 @@ func (h *HatcheryMarathon) WorkersStarted() []string {
 	res := make([]string, len(apps))
 	for i, s := range apps {
 		res[i] = strings.Replace(s, h.Config.MarathonIDPrefix, "", 1)
-		if strings.HasPrefix(res[i], "/") {
-			res[i] = res[i][1:]
-		}
+		res[i] = strings.TrimPrefix(res[i], "/")
 	}
 	return res
 }
