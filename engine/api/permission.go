@@ -80,12 +80,12 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 			return ok
 		}
 
-		node, err := workflow.LoadNodeJobRun(db, api.Cache, id)
+		runNodeJob, err := workflow.LoadNodeJobRun(db, api.Cache, id)
 		if err != nil {
 			log.Error("checkWorkerPermission> Unable to load job %d err:%v", id, err)
 			return false
 		}
-		ok = node.Job.WorkerName == getWorker(ctx).Name && node.Job.WorkerID == getWorker(ctx).ID
+		ok = runNodeJob.ID == getWorker(ctx).ActionBuildID
 		api.Cache.SetWithTTL(k, ok, 60*15)
 		return ok
 	}

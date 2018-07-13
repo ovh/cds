@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/venom"
+	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
@@ -682,6 +683,54 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 
 	return since, until, limit
+}
+
+func (api *API) postWorkflowJobCoverageResultsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Load and lock Existing workflow Run Job
+		id, errI := requestVarInt(r, "permID")
+		if errI != nil {
+			return sdk.WrapError(errI, "postWorkflowJobCoverageResultsHandler> Invalid node job run ID")
+		}
+
+		var report coverage.Report
+		if err := UnmarshalBody(r, &report); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> cannot unmarshal request")
+		}
+
+		wnr, errL := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{})
+		if errL != nil {
+			return sdk.WrapError(errL, "postWorkflowJobCoverageResultsHandler> Unable to load node run")
+		}
+
+		existingReport, errLoad := workflow.LoadCoverageReport(api.mustDB(), wnr.ID, wnr.VCSRepository, wnr.VCSBranch)
+		if errLoad != nil && errLoad != sdk.ErrNotFound {
+			return sdk.WrapError(errLoad, "postWorkflowJobCoverageResultsHandler> Unable to load coverage report")
+		}
+
+		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowJobCoverageResultsHandler> Cannot load project by nodeJobRunID:%d", id)
+		}
+		if errLoad == sdk.ErrNotFound {
+			if err := workflow.ComputeNewReport(api.mustDB(), api.Cache, report, wnr, p); err != nil {
+				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Cannot compute new coverage report")
+			}
+
+		} else {
+			// update
+			existingReport.Report = report
+			if err := workflow.ComputeLatestDefaultBranchReport(api.mustDB(), api.Cache, p, wnr, &existingReport); err != nil {
+				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Cannot compute default branch coverage report")
+			}
+
+			if err := workflow.UpdateCoverage(api.mustDB(), existingReport); err != nil {
+				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Unable to update code coverage")
+			}
+		}
+
+		return nil
+	}
 }
 
 func (api *API) postWorkflowJobTestsResultsHandler() Handler {

@@ -24,6 +24,7 @@ func init() {
 	mapBuiltinActions[sdk.ReleaseAction] = runRelease
 	mapBuiltinActions[sdk.CheckoutApplicationAction] = runCheckoutApplication
 	mapBuiltinActions[sdk.DeployApplicationAction] = runDeployApplication
+	mapBuiltinActions[sdk.CoverageAction] = runParseCoverageResultAction
 }
 
 // BuiltInAction defines builtin action signature

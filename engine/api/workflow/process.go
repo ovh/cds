@@ -351,6 +351,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	copy(stages, n.Pipeline.Stages)
 
 	run := &sdk.WorkflowNodeRun{
+		WorkflowID:       w.WorkflowID,
 		LastModified:     time.Now(),
 		Start:            time.Now(),
 		Number:           w.Number,
@@ -698,6 +699,7 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos, 
 	run.VCSRepository = vcsInfos.repository
 	run.VCSBranch = vcsInfos.branch
 	run.VCSHash = vcsInfos.hash
+	run.VCSServer = vcsInfos.server
 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository+suffix, sdk.StringParameter, run.VCSRepository)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch+suffix, sdk.StringParameter, run.VCSBranch)

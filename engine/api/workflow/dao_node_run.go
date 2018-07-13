@@ -19,6 +19,7 @@ import (
 )
 
 const nodeRunFields string = `
+workflow_node_run.workflow_id,
 workflow_node_run.workflow_run_id,
 workflow_node_run.id,
 workflow_node_run.workflow_node_id,
@@ -40,6 +41,7 @@ workflow_node_run.triggers_run,
 workflow_node_run.vcs_repository,
 workflow_node_run.vcs_hash,
 workflow_node_run.vcs_branch,
+workflow_node_run.vcs_server,
 workflow_node_run.workflow_node_name
 `
 
@@ -68,6 +70,45 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 
 	if err := db.SelectOne(&rr, query, projectkey, workflowname, number, id); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadNodeRun> Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
+	}
+
+	r, err := fromDBNodeRun(rr, loadOpts)
+	if err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeRun>")
+	}
+
+	if loadOpts.WithArtifacts {
+		arts, errA := loadArtifactByNodeRunID(db, r.ID)
+		if errA != nil {
+			return nil, sdk.WrapError(errA, "LoadNodeRun>Error loading artifacts for run %d", r.ID)
+		}
+		r.Artifacts = arts
+	}
+
+	return r, nil
+
+}
+
+//LoadNodeRunByNodeJobID load a specific node run on a workflow from a node job run id
+func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+	var rr = NodeRun{}
+	var testsField string
+	if loadOpts.WithTests {
+		testsField = nodeRunTestsField
+	} else if loadOpts.WithLightTests {
+		testsField = withLightNodeRunTestsField
+	}
+
+	query := fmt.Sprintf(`select %s %s
+	from workflow_node_run
+	join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+  join workflow_node_run_job on workflow_node_run_job.workflow_node_run_id = workflow_node_run.id
+	join project on project.id = workflow_run.project_id
+	join workflow on workflow.id = workflow_run.workflow_id
+	where workflow_node_run_job.id = $1`, nodeRunFields, testsField)
+
+	if err := db.SelectOne(&rr, query, nodeJobRunID); err != nil {
+		return nil, sdk.WrapError(err, "workflow.LoadNodeRunByNodeJobID> Unable to load workflow_node_run node_job_id=%d", nodeJobRunID)
 	}
 
 	r, err := fromDBNodeRun(rr, loadOpts)
@@ -163,6 +204,7 @@ func nodeRunExist(db gorp.SqlExecutor, nodeID, num int64, subnumber int) (bool, 
 
 func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	r := new(sdk.WorkflowNodeRun)
+	r.WorkflowID = rr.WorkflowID
 	r.WorkflowRunID = rr.WorkflowRunID
 	r.ID = rr.ID
 	r.WorkflowNodeID = rr.WorkflowNodeID
@@ -182,6 +224,9 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 	}
 	if rr.VCSBranch.Valid {
 		r.VCSBranch = rr.VCSBranch.String
+	}
+	if rr.VCSServer.Valid {
+		r.VCSServer = rr.VCSServer.String
 	}
 
 	if err := gorpmapping.JSONNullString(rr.TriggersRun, &r.TriggersRun); err != nil {
@@ -246,6 +291,7 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB := new(NodeRun)
 	nodeRunDB.ID = n.ID
+	nodeRunDB.WorkflowID = n.WorkflowID
 	nodeRunDB.WorkflowRunID = n.WorkflowRunID
 	nodeRunDB.WorkflowNodeID = n.WorkflowNodeID
 	nodeRunDB.WorkflowNodeName = n.WorkflowNodeName
@@ -256,6 +302,8 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB.Done = n.Done
 	nodeRunDB.LastModified = n.LastModified
 
+	nodeRunDB.VCSServer.Valid = true
+	nodeRunDB.VCSServer.String = n.VCSServer
 	nodeRunDB.VCSHash.Valid = true
 	nodeRunDB.VCSHash.String = n.VCSHash
 	nodeRunDB.VCSBranch.Valid = true

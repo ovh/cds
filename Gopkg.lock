@@ -838,6 +838,12 @@
   revision = "760f8913c0483b776294e1bee43f1d687527127b"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/sguiheux/go-coverage"
+  packages = ["."]
+  revision = "6a8eac16bbb64711d6285507db1f6e30637d59eb"
+
+[[projects]]
   name = "github.com/shirou/gopsutil"
   packages = [
     "internal/common",
@@ -1328,6 +1334,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "05b17cf08ea2e0f5190f60d1d27c4343730d928fb61591f3f853b7bc0c25da70"
+  inputs-digest = "51982cf84643513d3a1ee208e554e6f9a6779f11b2e0a3a9d07b34678ca75d6d"
   solver-name = "gps-cdcl"
   solver-version = 1

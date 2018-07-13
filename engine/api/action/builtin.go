@@ -40,6 +40,23 @@ Parse given file to extract Unit Test results.`
 		return err
 	}
 
+	// ----------------------------------- Coverage ---------------------------
+	cover := sdk.NewAction(sdk.CoverageAction)
+	cover.Type = sdk.BuiltinAction
+	cover.Description = `CDS Builtin Action.
+Parse given file to extract coverage results.`
+	cover.Parameter(sdk.Parameter{
+		Name:        "format",
+		Description: `Coverage report format.`,
+		Type:        sdk.ListParameter,
+		Value:       "lcov;cobertura",
+	})
+	cover.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: `Path of the coverage report file.`,
+		Type:        sdk.ListParameter,
+	})
+
 	// ----------------------------------- Git clone    -----------------------
 	gitclone := sdk.NewAction(sdk.GitCloneAction)
 	gitclone.Type = sdk.BuiltinAction

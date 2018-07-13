@@ -75,7 +75,6 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 		tracing.Tag("workflow_node_run_status", n.Status),
 	)
 	defer end()
-
 	wr, errWr := LoadRunByID(db, n.WorkflowRunID, LoadRunOptions{})
 	if errWr != nil {
 		return nil, sdk.WrapError(errWr, "workflow.execute> unable to load workflow run ID %d", n.WorkflowRunID)
@@ -754,6 +753,7 @@ type vcsInfos struct {
 	message    string
 	url        string
 	httpurl    string
+	server     string
 }
 
 func getVCSInfos(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
@@ -774,6 +774,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *
 	if vcsServer == nil {
 		return vcsInfos, nil
 	}
+	vcsInfos.server = vcsServer.Name
 
 	//Get the RepositoriesManager Client
 	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
