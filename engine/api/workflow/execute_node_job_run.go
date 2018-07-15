@@ -161,7 +161,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		}
 	}
 
-	if err := UpdateNodeJobRun(ctx, db, store, job); err != nil {
+	if err := UpdateNodeJobRun(ctx, db, job); err != nil {
 		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
