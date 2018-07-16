@@ -54,8 +54,11 @@ Parse given file to extract coverage results.`
 	cover.Parameter(sdk.Parameter{
 		Name:        "path",
 		Description: `Path of the coverage report file.`,
-		Type:        sdk.ListParameter,
+		Type:        sdk.StringParameter,
 	})
+	if err := checkBuiltinAction(db, cover); err != nil {
+		return err
+	}
 
 	// ----------------------------------- Git clone    -----------------------
 	gitclone := sdk.NewAction(sdk.GitCloneAction)

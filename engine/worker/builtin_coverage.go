@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/sdk"
+
 	"github.com/sguiheux/go-coverage"
+
+	"github.com/ovh/cds/sdk"
 )
 
 func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
@@ -56,7 +58,7 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 
 		uri := fmt.Sprintf("/queue/workflows/%d/coverage", w.currentJob.wJob.ID)
 
-		_, code, err := sdk.Request("POST", uri, []byte(data))
+		_, code, err := sdk.Request("POST", uri, data)
 		if err == nil && code > 300 {
 			err = fmt.Errorf("HTTP %d", code)
 		}
@@ -68,6 +70,7 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		res.Status = sdk.StatusSuccess.String()
 		return res
 	}
 }

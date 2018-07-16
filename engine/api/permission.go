@@ -77,7 +77,9 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 	if rc.Options["isExecution"] == "true" {
 		k := cache.Key("workers", getWorker(ctx).ID, "perm", idS)
 		if api.Cache.Get(k, &ok) {
-			return ok
+			if ok {
+				return ok
+			}
 		}
 
 		runNodeJob, err := workflow.LoadNodeJobRun(db, api.Cache, id)
@@ -85,6 +87,7 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 			log.Error("checkWorkerPermission> Unable to load job %d err:%v", id, err)
 			return false
 		}
+
 		ok = runNodeJob.ID == getWorker(ctx).ActionBuildID
 		api.Cache.SetWithTTL(k, ok, 60*15)
 		return ok
