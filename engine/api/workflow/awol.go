@@ -34,12 +34,14 @@ func loadAwolJobRuns(db gorp.SqlExecutor) ([]sdk.WorkflowNodeJobRun, error) {
 		return nil, err
 	}
 
-	jobs := make([]sdk.WorkflowNodeJobRun, len(jobRuns))
+	jobs := make([]sdk.WorkflowNodeJobRun, 0, len(jobRuns))
 	for i := range jobRuns {
-		if err := jobRuns[i].PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "workflow.LoadAwolJobRuns> Unable to load job runs (PostGet)")
+		j, err := jobRuns[i].WorkflowNodeRunJob()
+		if err != nil {
+			log.Error("loadAwolJobRuns> Error> %v", err)
+			continue
 		}
-		jobs[i] = sdk.WorkflowNodeJobRun(jobRuns[i])
+		jobs = append(jobs, j)
 	}
 
 	return jobs, nil

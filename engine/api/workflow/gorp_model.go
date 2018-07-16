@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 
 	"github.com/ovh/cds/sdk"
@@ -61,7 +63,105 @@ type NodeRun struct {
 }
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
-type JobRun sdk.WorkflowNodeJobRun
+type JobRun struct {
+	ProjectID              int64          `db:"project_id"`
+	ID                     int64          `db:"id"`
+	WorkflowNodeRunID      int64          `db:"workflow_node_run_id"`
+	Job                    sql.NullString `db:"job"`
+	Parameters             sql.NullString `db:"variables"`
+	Status                 string         `db:"status"`
+	Retry                  int            `db:"retry"`
+	SpawnAttempts          *pq.Int64Array `db:"spawn_attempts"`
+	Queued                 time.Time      `db:"queued"`
+	Start                  time.Time      `db:"start"`
+	Done                   time.Time      `db:"done"`
+	Model                  string         `db:"model"`
+	ExecGroups             sql.NullString `db:"exec_groups"`
+	PlatformPluginBinaries sql.NullString `db:"platform_plugin_binaries"`
+	BookedBy               sdk.Hatchery   `db:"-"`
+}
+
+// ToJobRun transform the JobRun with data of the provided sdk.WorkflowNodeJobRun
+func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
+	j.ProjectID = jr.ProjectID
+	j.ID = jr.ID
+	j.WorkflowNodeRunID = jr.WorkflowNodeRunID
+	j.Job, err = gorpmapping.JSONToNullString(jr.Job)
+	if err != nil {
+		return sdk.WrapError(err, "column job")
+	}
+	j.Parameters, err = gorpmapping.JSONToNullString(jr.Parameters)
+	if err != nil {
+		return sdk.WrapError(err, "column variables")
+	}
+	j.Status = jr.Status
+	j.Retry = jr.Retry
+	array := pq.Int64Array(jr.SpawnAttempts)
+	j.SpawnAttempts = &array
+	j.Queued = jr.Queued
+	j.Start = jr.Start
+	j.Done = jr.Done
+	j.Model = jr.Model
+	j.ExecGroups, err = gorpmapping.JSONToNullString(jr.ExecGroups)
+	if err != nil {
+		return sdk.WrapError(err, "column exec_groups")
+	}
+	j.PlatformPluginBinaries, err = gorpmapping.JSONToNullString(jr.PlatformPluginBinaries)
+	if err != nil {
+		return sdk.WrapError(err, "column platform_plugin_binaries")
+	}
+	return nil
+}
+
+// WorkflowNodeRunJob returns a sdk.WorkflowNodeRunJob
+func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
+	jr := sdk.WorkflowNodeJobRun{
+		ProjectID:         j.ProjectID,
+		ID:                j.ID,
+		WorkflowNodeRunID: j.WorkflowNodeRunID,
+		Status:            j.Status,
+		Retry:             j.Retry,
+		Queued:            j.Queued,
+		QueuedSeconds:     time.Now().Unix() - j.Queued.Unix(),
+		Start:             j.Start,
+		Done:              j.Done,
+	}
+	if j.SpawnAttempts != nil {
+		jr.SpawnAttempts = *j.SpawnAttempts
+	}
+	if err := gorpmapping.JSONNullString(j.Job, &jr.Job); err != nil {
+		return jr, sdk.WrapError(err, "column job")
+	}
+	if err := gorpmapping.JSONNullString(j.Parameters, &jr.Parameters); err != nil {
+		return jr, sdk.WrapError(err, "column variables")
+	}
+	if err := gorpmapping.JSONNullString(j.ExecGroups, &jr.ExecGroups); err != nil {
+		return jr, sdk.WrapError(err, "column exec_groups")
+	}
+	if err := gorpmapping.JSONNullString(j.PlatformPluginBinaries, &jr.PlatformPluginBinaries); err != nil {
+		return jr, sdk.WrapError(err, "platform_plugin_binaries")
+	}
+	if defaultOS != "" && defaultArch != "" {
+		var modelFound, osArchFound bool
+		for _, req := range jr.Job.Action.Requirements {
+			if req.Type == sdk.ModelRequirement {
+				modelFound = true
+			}
+			if req.Type == sdk.OSArchRequirement {
+				osArchFound = true
+			}
+		}
+
+		if !modelFound && !osArchFound {
+			jr.Job.Action.Requirements = append(jr.Job.Action.Requirements, sdk.Requirement{
+				Name:  defaultOS + "/" + defaultArch,
+				Type:  sdk.OSArchRequirement,
+				Value: defaultOS + "/" + defaultArch,
+			})
+		}
+	}
+	return jr, nil
+}
 
 // NodeRunArtifact is a gorp wrapper around sdk.WorkflowNodeRunArtifact
 type NodeRunArtifact sdk.WorkflowNodeRunArtifact

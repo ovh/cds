@@ -11,11 +11,11 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // loadPrepareGroup returns true if groupsID contains shareInfraGroup
@@ -110,10 +110,12 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
 	}
 
-	jobs := []sdk.WorkflowNodeJobRun{}
+	jobs := make([]sdk.WorkflowNodeJobRun, 0, len(sqlJobs))
 	for i := range sqlJobs {
-		if err := sqlJobs[i].PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (PostGet)")
+		getHatcheryInfo(store, &sqlJobs[i])
+		jr, err := sqlJobs[i].WorkflowNodeRunJob()
+		if err != nil {
+			log.Error("LoadNodeJobRunQueue> WorkflowNodeRunJob error: %v", err)
 		}
 
 		var keepJobInQueue bool
@@ -123,7 +125,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 			keepJobInQueue = true
 		} else {
 			// if no shared.infra, we have to filter only executable jobs for worker or hatchery
-			for _, g := range sqlJobs[i].ExecGroups {
+			for _, g := range jr.ExecGroups {
 				if sdk.IsInInt64Array(g.ID, groupsID) {
 					keepJobInQueue = true
 					break
@@ -134,8 +136,8 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 		if !keepJobInQueue {
 			continue
 		}
-		getHatcheryInfo(store, &sqlJobs[i])
-		jobs = append(jobs, sdk.WorkflowNodeJobRun(sqlJobs[i]))
+
+		jobs = append(jobs, jr)
 	}
 
 	return jobs, nil
@@ -173,8 +175,11 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 	if store != nil {
 		getHatcheryInfo(store, &j)
 	}
-	job := sdk.WorkflowNodeJobRun(j)
-	return &job, nil
+	jr, err := j.WorkflowNodeRunJob()
+	if err != nil {
+		return nil, err
+	}
+	return &jr, nil
 }
 
 //LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
@@ -185,8 +190,11 @@ func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64)
 		return nil, err
 	}
 	getHatcheryInfo(store, &j)
-	job := sdk.WorkflowNodeJobRun(j)
-	return &job, nil
+	jr, err := j.WorkflowNodeRunJob()
+	if err != nil {
+		return nil, err
+	}
+	return &jr, nil
 }
 
 //LoadAndLockNodeJobRunNoWait load for update a NodeJobRun given its ID
@@ -201,13 +209,20 @@ func LoadAndLockNodeJobRunNoWait(ctx context.Context, db gorp.SqlExecutor, store
 		return nil, err
 	}
 	getHatcheryInfo(store, &j)
-	job := sdk.WorkflowNodeJobRun(j)
-	return &job, nil
+	jr, err := j.WorkflowNodeRunJob()
+	if err != nil {
+		return nil, err
+	}
+	return &jr, nil
 }
 
 func insertWorkflowNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
-	dbj := JobRun(*j)
-	if err := db.Insert(&dbj); err != nil {
+	dbj := new(JobRun)
+	err := dbj.ToJobRun(j)
+	if err != nil {
+		return err
+	}
+	if err := db.Insert(dbj); err != nil {
 		return err
 	}
 	j.ID = dbj.ID
@@ -222,13 +237,17 @@ func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 }
 
 //UpdateNodeJobRun updates a workflow_node_run_job
-func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, j *sdk.WorkflowNodeJobRun) error {
+func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	var end func()
 	_, end = tracing.Span(ctx, "workflow.UpdateNodeJobRun")
 	defer end()
 
-	dbj := JobRun(*j)
-	if _, err := db.Update(&dbj); err != nil {
+	dbj := new(JobRun)
+	err := dbj.ToJobRun(j)
+	if err != nil {
+		return err
+	}
+	if _, err := db.Update(dbj); err != nil {
 		return err
 	}
 	return nil
@@ -238,106 +257,11 @@ func keyBookJob(id int64) string {
 	return cache.Key("book", "job", strconv.FormatInt(id, 10))
 }
 
-// PostInsert is a db hook on workflow_node_run_job
-func (j *JobRun) PostInsert(s gorp.SqlExecutor) error {
-	return j.PostUpdate(s)
-}
-
-// PostUpdate is a db hook on workflow_node_run_job
-func (j *JobRun) PostUpdate(s gorp.SqlExecutor) error {
-	jobJSON, err := gorpmapping.JSONToNullString(j.Job)
-	if err != nil {
-		return err
-	}
-
-	paramsJSON, errP := gorpmapping.JSONToNullString(j.Parameters)
-	if errP != nil {
-		return errP
-	}
-
-	execGroupsJSON, errG := gorpmapping.JSONToNullString(j.ExecGroups)
-	if errG != nil {
-		return sdk.WrapError(errG, "PostUpdate> err on marshal j.ExecGroups")
-	}
-
-	platformPluginBinaries, errP := gorpmapping.JSONToNullString(j.PlatformPluginBinaries)
-	if errP != nil {
-		return sdk.WrapError(errP, "PostUpdate> err on marshal j.PlatformPluginRequirement")
-	}
-
-	query := "update workflow_node_run_job set job = $2, variables = $3, exec_groups = $4, platform_plugin_binaries = $5 where id = $1"
-	if n, err := s.Exec(query, j.ID, jobJSON, paramsJSON, execGroupsJSON, platformPluginBinaries); err != nil {
-		return err
-	} else if n, _ := n.RowsAffected(); n == 0 {
-		return fmt.Errorf("Unable to update workflow_node_run_job id = %d", j.ID)
-	}
-
-	return nil
-}
-
 func getHatcheryInfo(store cache.Store, j *JobRun) {
 	h := sdk.Hatchery{}
 	if store.Get(keyBookJob(j.ID), &h) {
 		j.BookedBy = h
 	}
-}
-
-// PostGet is a db hook on workflow_node_run_job
-func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
-	query := "SELECT job, variables, exec_groups, platform_plugin_binaries FROM workflow_node_run_job WHERE id = $1"
-	var params, job, execGroups, platformPluginBinaries sql.NullString
-	if err := s.QueryRow(query, j.ID).Scan(&job, &params, &execGroups, &platformPluginBinaries); err != nil {
-		return sdk.WrapError(err, "PostGet> s.QueryRow id:%d", j.ID)
-	}
-	if err := gorpmapping.JSONNullString(job, &j.Job); err != nil {
-		return sdk.WrapError(err, "PostGet> json.Unmarshal job")
-	}
-	if err := gorpmapping.JSONNullString(params, &j.Parameters); err != nil {
-		return sdk.WrapError(err, "PostGet> json.Unmarshal params")
-	}
-	if err := gorpmapping.JSONNullString(execGroups, &j.ExecGroups); err != nil {
-		return sdk.WrapError(err, "PostGet> error on unmarshal exec_groups")
-	}
-	if err := gorpmapping.JSONNullString(platformPluginBinaries, &j.PlatformPluginBinaries); err != nil {
-		return sdk.WrapError(err, "PostGet> error on unmarshal platform_plugin_binaries")
-	}
-
-	rows, err := s.Query("SELECT DISTINCT UNNEST(spawn_attempts) FROM workflow_node_run_job WHERE id = $1", j.ID)
-	if err != nil && err != sql.ErrNoRows {
-		return sdk.WrapError(err, "PostGet> cannot get spawn_attempts")
-	}
-
-	if defaultOS != "" && defaultArch != "" {
-		var modelFound, osArchFound bool
-		for _, req := range j.Job.Action.Requirements {
-			if req.Type == sdk.ModelRequirement {
-				modelFound = true
-			}
-			if req.Type == sdk.OSArchRequirement {
-				osArchFound = true
-			}
-		}
-
-		if !modelFound && !osArchFound {
-			j.Job.Action.Requirements = append(j.Job.Action.Requirements, sdk.Requirement{
-				Name:  defaultOS + "/" + defaultArch,
-				Type:  sdk.OSArchRequirement,
-				Value: defaultOS + "/" + defaultArch,
-			})
-		}
-	}
-
-	var hID int64
-	defer rows.Close()
-	for rows.Next() {
-		if err := rows.Scan(&hID); err != nil {
-			return sdk.WrapError(err, "PostGet> cannot scan spawn_attempts")
-		}
-		j.SpawnAttempts = append(j.SpawnAttempts, hID)
-	}
-
-	j.QueuedSeconds = time.Now().Unix() - j.Queued.Unix()
-	return nil
 }
 
 // replaceWorkflowJobRunInQueue restart workflow node job
