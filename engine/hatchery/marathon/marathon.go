@@ -540,7 +540,6 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 }
 
 func (h *HatcheryMarathon) killAwolWorkers() error {
-	log.Debug("killAwolWorkers>")
 	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
@@ -554,8 +553,6 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 	if err != nil {
 		return err
 	}
-
-	log.Debug("killAwolWorkers> check %d apps", len(apps.Apps))
 
 	var found bool
 	// then for each RUNNING marathon application
