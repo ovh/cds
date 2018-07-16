@@ -270,5 +270,11 @@ func replaceWorkflowJobRunInQueue(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNode
 	if _, err := db.Exec(query, sdk.StatusWaiting.String(), wNodeJob.Retry+1, wNodeJob.ID); err != nil {
 		return sdk.WrapError(err, "replaceWorkflowJobRunInQueue> Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting.String())
 	}
+
+	query = "UPDATE worker SET status = $2, action_build_id = NULL where action_build_id = $1"
+	if _, err := db.Exec(query, wNodeJob.ID, sdk.StatusDisabled); err != nil {
+		return sdk.WrapError(err, "replaceWorkflowJobRunInQueue> Unable to set workers")
+	}
+
 	return nil
 }
