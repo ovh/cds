@@ -987,9 +987,8 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
 
-	covDB, errL := workflow.LoadCoverageReport(db, wrToTest.WorkflowNodeRuns[w.RootID][0].ID, wrToTest.WorkflowNodeRuns[w.RootID][0].VCSRepository, wrToTest.WorkflowNodeRuns[w.RootID][0].VCSBranch)
+	covDB, errL := workflow.LoadCoverageReport(db, wrToTest.WorkflowNodeRuns[w.RootID][0].ID)
 	assert.NoError(t, errL)
 
-	t.Logf("%+v", covDB)
 	assert.Equal(t, coverateReportDefaultBranch.Report.CoveredBranches, covDB.Trend.DefaultBranch.CoveredBranches)
 }

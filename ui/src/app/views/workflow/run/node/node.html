@@ -13,7 +13,7 @@
                 <span *ngIf="nodeRun.commits && nodeRun.commits.length > 1">{{ 'common_commits' | translate }}</span>
                 <span *ngIf="!nodeRun.commits || (nodeRun.commits && nodeRun.commits.length < 2)">{{ 'common_commit' | translate }}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRun.tests && nodeRun.tests.total !== 0 && showTab('test')" [class.disabled]="!nodeRun || !nodeRun.tests || nodeRun.tests.total === 0">
+            <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRun.tests && nodeRun.tests.total !== 0 && showTab('test')" [class.disabled]="!nodeRun.tests || nodeRun.tests.total === 0">
                 <span *ngIf="nodeRun && nodeRun.tests && nodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
                 <span *ngIf="!nodeRun || !nodeRun.tests || nodeRun.tests.total < 2">{{ 'common_test' | translate }}</span>
                 <span *ngIf="nodeRun && nodeRun.tests ">{{ ' (' +nodeRun.tests.total + ')'}}</span>
@@ -42,7 +42,7 @@
                     <app-commit-list [commits]="nodeRun.commits"></app-commit-list>
                 </div>
                 <div *ngSwitchCase="'test'">
-                    <app-workflow-tests-result [tests]="nodeRun.tests"></app-workflow-tests-result>
+                    <app-workflow-tests-result [tests]="nodeRun.tests" [coverage]="nodeRun.coverage"></app-workflow-tests-result>
                 </div>
                 <div *ngSwitchCase="'history'">
                     <app-workflow-node-run-history [run]="workflowRun" [project]="project" [currentBuild]="nodeRun" [history]="nodeRunsHistory" [workflowName]="workflowName"></app-workflow-node-run-history>

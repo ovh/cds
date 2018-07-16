@@ -51,13 +51,13 @@ func loadLatestCoverageReport(db gorp.SqlExecutor, workflowID int64, repository 
 }
 
 // LoadCoverageReport loads a coverage report
-func LoadCoverageReport(db gorp.SqlExecutor, workflowNodeRunID int64, repository string, branch string) (sdk.WorkflowNodeRunCoverage, error) {
+func LoadCoverageReport(db gorp.SqlExecutor, workflowNodeRunID int64) (sdk.WorkflowNodeRunCoverage, error) {
 	query := `
     SELECT * from workflow_node_run_coverage
-    WHERE workflow_node_run_id = $1 AND repository = $2 AND branch = $3
+    WHERE workflow_node_run_id = $1
   `
 	var cov Coverage
-	if err := db.SelectOne(&cov, query, workflowNodeRunID, repository, branch); err != nil {
+	if err := db.SelectOne(&cov, query, workflowNodeRunID); err != nil {
 		if err == sql.ErrNoRows {
 			return sdk.WorkflowNodeRunCoverage{}, sdk.ErrNotFound
 		}

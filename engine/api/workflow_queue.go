@@ -703,7 +703,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() Handler {
 			return sdk.WrapError(errL, "postWorkflowJobCoverageResultsHandler> Unable to load node run")
 		}
 
-		existingReport, errLoad := workflow.LoadCoverageReport(api.mustDB(), wnr.ID, wnr.VCSRepository, wnr.VCSBranch)
+		existingReport, errLoad := workflow.LoadCoverageReport(api.mustDB(), wnr.ID)
 		if errLoad != nil && errLoad != sdk.ErrNotFound {
 			return sdk.WrapError(errLoad, "postWorkflowJobCoverageResultsHandler> Unable to load coverage report")
 		}
