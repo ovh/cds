@@ -79,8 +79,6 @@ func Create(h Interface) error {
 	// Create a cache with a default expiration time of 3 second, and which
 	// purges expired items every minute
 	spawnIDs := cache.New(10*time.Second, 60*time.Second)
-	// This is a local cache to avoid analysing a job twice at the same time
-	receivedIDs := cache.New(5*time.Second, 60*time.Second)
 
 	sdk.GoRoutine("heartbeat", func() {
 		hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
@@ -106,7 +104,6 @@ func Create(h Interface) error {
 	// read the result channel in another goroutine to let the main goroutine start new workers
 	sdk.GoRoutine("checkStarterResult", func() {
 		for startWorkerRes := range workerStartResultChan {
-			receivedIDs.Delete(string(startWorkerRes.request.id))
 			if startWorkerRes.err != nil {
 				errs <- startWorkerRes.err
 			}
@@ -209,13 +206,6 @@ func Create(h Interface) error {
 				continue
 			}
 
-			// Check if the jobs has been received less than 10s ago
-			if _, exist := receivedIDs.Get(string(j.ID)); exist {
-				log.Debug("job %d is alrealy being analyzed", j.ID)
-				continue
-			}
-			receivedIDs.SetDefault(string(j.ID), j.ID)
-
 			//Check if the jobs is concerned by a pending worker creation
 			if _, exist := spawnIDs.Get(string(j.ID)); exist {
 				log.Debug("job %d already spawned in previous routine", j.ID)
@@ -231,7 +221,6 @@ func Create(h Interface) error {
 			//Check gracetime
 			if j.QueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
 				log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID)
-				receivedIDs.Delete(string(j.ID))
 				continue
 			}
 
