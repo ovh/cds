@@ -25,12 +25,14 @@ func loadAwolJobRuns(db gorp.SqlExecutor) ([]sdk.WorkflowNodeJobRun, error) {
 	FROM workflow_node_run_job 
 	JOIN workflow_node_run_job_logs ON workflow_node_run_job.id = workflow_node_run_job_logs.workflow_node_run_job_id
 	WHERE workflow_node_run_job.status = 'Building'
-    AND workflow_node_run_job_logs.last_modified < $1
+	AND workflow_node_run_job_logs.last_modified < $1
+	AND workflow_node_run_job.queued > $2
 	`
 
 	t0 := time.Now().Add(-15 * time.Minute)
+	t1 := time.Now().Add(-48 * time.Hour)
 	jobRuns := []JobRun{}
-	if _, err := db.Select(&jobRuns, query, t0); err != nil {
+	if _, err := db.Select(&jobRuns, query, t0, t1); err != nil {
 		return nil, err
 	}
 
@@ -50,6 +52,7 @@ func loadAwolJobRuns(db gorp.SqlExecutor) ([]sdk.WorkflowNodeJobRun, error) {
 // RestartAwolJobs runs with a ticker within a context.
 // it loads all workflow_node_run_job which are linked to a worker that doesn't exist anymore
 // and the all workflow_node_run_job at status 'Building' but without any logs since more than 15 minutes
+// and queued since less than 48h
 // each of those workflow_node_run_job is restart by RestartWorkflowNodeJob
 func RestartAwolJobs(ctx context.Context, store cache.Store, dbFunc func() *gorp.DbMap) {
 	ticker := time.NewTicker(30 * time.Second)
