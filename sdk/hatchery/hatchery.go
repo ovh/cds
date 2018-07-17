@@ -72,7 +72,7 @@ func Create(h Interface) error {
 		tickerGetModels.Stop()
 	}()
 
-	pbjobs := make(chan sdk.PipelineBuildJob, 1)
+	pbjobs := make(chan sdk.PipelineBuildJob, 10)
 	wjobs := make(chan sdk.WorkflowNodeJobRun, 10)
 	errs := make(chan error, 1)
 
@@ -146,6 +146,8 @@ func Create(h Interface) error {
 			}
 
 		case j := <-pbjobs:
+			t0 := time.Now()
+			log.Info("hatchery> received pipeline build job %d", j.ID)
 			if j.ID == 0 {
 				continue
 			}
@@ -197,7 +199,7 @@ func Create(h Interface) error {
 			}
 
 			workerRequest.model = *chosenModel
-
+			log.Info("hatchery> Request a worker for pipeline build job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 			workersStartChan <- workerRequest
 
 		case j := <-wjobs:
