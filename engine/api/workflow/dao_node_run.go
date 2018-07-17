@@ -86,7 +86,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	}
 	if loadOpts.WithCoverage {
 		cov, errCov := LoadCoverageReport(db, r.ID)
-		if errCov != nil {
+		if errCov != nil && errCov != sdk.ErrNotFound {
 			return nil, sdk.WrapError(errCov, "LoadNodeRun>Error loading coverage for run %d", r.ID)
 		}
 		r.Coverage = cov

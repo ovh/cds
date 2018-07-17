@@ -14,11 +14,10 @@ import (
 
 func loadPreviousCoverageReport(db gorp.SqlExecutor, workflowID int64, runNumber int64, repository string, branch string) (sdk.WorkflowNodeRunCoverage, error) {
 	query := `
-    SELECT * FROM (
       SELECT * from workflow_node_run_coverage
       WHERE run_number < $1 AND repository = $2 AND branch = $3 AND workflow_id = $4
       ORDER BY run_number DESC
-    ) tmp LIMIT 1
+      LIMIT 1
   `
 	var cov Coverage
 	if err := db.SelectOne(&cov, query, runNumber, repository, branch, workflowID); err != nil {
@@ -33,11 +32,10 @@ func loadPreviousCoverageReport(db gorp.SqlExecutor, workflowID int64, runNumber
 
 func loadLatestCoverageReport(db gorp.SqlExecutor, workflowID int64, repository string, branch string) (sdk.WorkflowNodeRunCoverage, error) {
 	query := `
-    SELECT * FROM (
       SELECT * from workflow_node_run_coverage
       WHERE workflow_id = $1 AND repository = $2 AND branch = $3
       ORDER BY run_number DESC
-    ) tmp LIMIT 1
+      LIMIT 1
   `
 	var cov Coverage
 	if err := db.SelectOne(&cov, query, workflowID, repository, branch); err != nil {
