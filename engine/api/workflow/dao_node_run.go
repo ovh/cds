@@ -119,13 +119,13 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 
 	r, err := fromDBNodeRun(rr, loadOpts)
 	if err != nil {
-		return nil, sdk.WrapError(err, "LoadNodeRun>")
+		return nil, sdk.WrapError(err, "LoadNodeRunByNodeJobID>")
 	}
 
 	if loadOpts.WithArtifacts {
 		arts, errA := loadArtifactByNodeRunID(db, r.ID)
 		if errA != nil {
-			return nil, sdk.WrapError(errA, "LoadNodeRun>Error loading artifacts for run %d", r.ID)
+			return nil, sdk.WrapError(errA, "LoadNodeRunByNodeJobID>Error loading artifacts for run %d", r.ID)
 		}
 		r.Artifacts = arts
 	}
