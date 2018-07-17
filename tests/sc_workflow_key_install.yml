@@ -2,7 +2,7 @@ name: Workflow (ITSCWRKFLW5) should use the worker cache command
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
-  - script: '[ -f ./tests/fixtures/ITSCWRKFLW5/tag-push-pull.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW5/key-install.pip.yml ]'
   - script: '[ -f ./tests/fixtures/ITSCWRKFLW5/ITSCWRKFLW5.yml ]'
 
 - name: prepare test
