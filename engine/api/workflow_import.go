@@ -153,7 +153,7 @@ func (api *API) putWorkflowImportHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars["key"]
 		wfName := vars["permWorkflowName"]
 
 		//Load project

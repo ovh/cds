@@ -216,7 +216,7 @@ func (api *API) InitRouter() {
 	// Import pipeline
 	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
 	// Import pipeline (ONLY USE FOR UI)
-	r.Handle("/project/{permProjectKey}/import/pipeline/{permPipelineKey}", r.PUT(api.putImportPipelineHandler))
+	r.Handle("/project/{key}/import/pipeline/{permPipelineKey}", r.PUT(api.putImportPipelineHandler))
 	// Export pipeline
 	r.Handle("/project/{key}/export/pipeline/{permPipelineKey}", r.GET(api.getPipelineExportHandler))
 
@@ -235,7 +235,7 @@ func (api *API) InitRouter() {
 	// Import workflows
 	r.Handle("/project/{permProjectKey}/import/workflows", r.POST(api.postWorkflowImportHandler))
 	// Import workflows (ONLY USE FOR UI EDIT AS CODE)
-	r.Handle("/project/{permProjectKey}/import/workflows/{permWorkflowName}", r.PUT(api.putWorkflowImportHandler))
+	r.Handle("/project/{key}/import/workflows/{permWorkflowName}", r.PUT(api.putWorkflowImportHandler))
 	// Export workflows
 	r.Handle("/project/{key}/export/workflows/{permWorkflowName}", r.GET(api.getWorkflowExportHandler))
 	// Pull workflows
