@@ -145,13 +145,13 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 
 	// RegisterOnly = true, this will pull image if image is not found
 	spawnArgs := hatchery.SpawnArguments{RegisterOnly: true}
-	err := h.createAndStartContainer(args, spawnArgs)
+	err := h.createAndStartContainer(h.dockerClients["default"], args, spawnArgs)
 	test.NoError(t, err)
 
-	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
+	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
 	test.NoError(t, err)
 
-	err = h.killAndRemove(cntr.ID)
+	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
 	test.NoError(t, err)
 }
 
@@ -179,17 +179,17 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 		},
 	}
 
-	err := h.pullImage(args.image, timeoutPullImage)
+	err := h.pullImage(h.dockerClients["default"], args.image, timeoutPullImage)
 	test.NoError(t, err)
 
 	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
-	err = h.createAndStartContainer(args, spawnArgs)
+	err = h.createAndStartContainer(h.dockerClients["default"], args, spawnArgs)
 	test.NoError(t, err)
 
-	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
+	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
 	test.NoError(t, err)
 
-	err = h.killAndRemove(cntr.ID)
+	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
 	test.NoError(t, err)
 }
 
@@ -206,16 +206,16 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 		networkAlias: "my-container",
 	}
 
-	err := h.createNetwork(args.network)
+	err := h.createNetwork(h.dockerClients["default"], args.network)
 	test.NoError(t, err)
 
 	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
-	err = h.createAndStartContainer(args, spawnArgs)
+	err = h.createAndStartContainer(h.dockerClients["default"], args, spawnArgs)
 	test.NoError(t, err)
 
-	cntr, err := h.getContainer(args.name, types.ContainerListOptions{})
+	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
 	test.NoError(t, err)
 
-	err = h.killAndRemove(cntr.ID)
+	err = h.killAndRemove(h.dockerClients["default"], cntr.ID)
 	test.NoError(t, err)
 }

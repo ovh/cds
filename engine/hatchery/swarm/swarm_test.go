@@ -1,6 +1,7 @@
 package swarm
 
 import (
+	"sync"
 	"testing"
 
 	docker "github.com/docker/docker/client"
@@ -14,19 +15,20 @@ func init() {
 
 func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 	log.SetLogger(t)
-	dockerClient, err := docker.NewEnvClient()
+	c, err := docker.NewEnvClient()
 	if err != nil {
 		t.Skipf("unable to get docker client: %v. Skipping this test", err)
 		return nil
 	}
 
-	if _, err := dockerClient.Info(context.Background()); err != nil {
+	if _, err := c.Info(context.Background()); err != nil {
 		t.Skipf("unable to ping docker client: %v. Skipping this test", err)
 		return nil
 	}
 
 	h := &HatcherySwarm{
-		dockerClient: dockerClient,
+		dockerClients: map[string]*dockerClient{},
 	}
+	h.dockerClients["default"] = &dockerClient{*c, 2, "default", &sync.Mutex{}}
 	return h
 }

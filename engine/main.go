@@ -145,6 +145,11 @@ Comming soon...`,
 		conf.Hatchery.Openstack.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
+		conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
+			"sample-docker-engine": swarm.DockerEngineConfiguration{
+				Host: "///var/run/docker.sock",
+			},
+		}
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Repositories.API.Token = conf.API.Auth.SharedInfraToken
