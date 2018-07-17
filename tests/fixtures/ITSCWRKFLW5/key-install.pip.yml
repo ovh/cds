@@ -8,5 +8,5 @@ jobs:
   steps:
   - script:
     - set -e
-    - $PKEY=`worker key install proj-testkey`
+    - PKEY=`worker key install proj-testkey`
     - ls -la $PKEY

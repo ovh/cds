@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -103,8 +104,11 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 		if errE != nil {
 			return sdk.WrapError(errE, "addKeyInEnvironmentHandler> Cannot load environment")
 		}
-
 		newKey.EnvironmentID = env.ID
+
+		if !strings.HasPrefix(newKey.Name, "env-") {
+			newKey.Name = "env-" + newKey.Name
+		}
 
 		switch newKey.Type {
 		case sdk.KeyTypeSSH:

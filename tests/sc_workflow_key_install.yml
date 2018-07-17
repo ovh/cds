@@ -1,4 +1,4 @@
-name: Workflow (ITSCWRKFLW5) should use the worker cache command
+name: Workflow (ITSCWRKFLW5) should use the worker key install command
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
@@ -8,13 +8,13 @@ testcases:
 - name: prepare test
   steps:
   - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW5"
-  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW5 "
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW5"
   - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW5 ITSCWRKFLW5"
   - script: "{{.cds.build.cdsctl}} project keys add ITSCWRKFLW5 testkey ssh"
 
 - name: import workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow push ITSCWRKFLW5 ./tests/fixtures/ITSCWRKFLW5/*.yml --skip-update-files
+  - script: {{.cds.build.cdsctl}} workflow push ITSCWRKFLW5 ./tests/fixtures/ITSCWRKFLW5/*.yml --skip-update-files
 
 - name: run workflow
   steps:
