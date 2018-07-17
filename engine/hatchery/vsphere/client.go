@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -147,6 +149,16 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 	}
 
 	for _, vm := range vms {
+		// If its a worker "register", check registration before deleting it
+		var annot = annotation{}
+		if err := json.Unmarshal([]byte(s.Config.Annotation), &annot); err != nil {
+			log.Error("deleteServer> unable to get server annotation")
+		} else {
+			if strings.Contains(s.Name, "register-") {
+				hatchery.CheckWorkerModelRegister(h, annot.WorkerModelID)
+			}
+		}
+
 		ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
 		defer cancelC()
 		task, errOff := vm.PowerOff(ctxC)

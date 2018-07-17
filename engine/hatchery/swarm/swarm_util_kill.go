@@ -1,12 +1,14 @@
 package swarm
 
 import (
+	"strconv"
 	"strings"
 
 	types "github.com/docker/docker/api/types"
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -24,7 +26,18 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			return nil
 		}
 		log.Info("killAndRemove> cannot InspectContainer: %v", err)
+	} else {
+		// If its a worker "register", check registration before deleting it
+		if strings.Contains(container.Name, "register-") {
+			modelID, err := strconv.ParseInt(container.Config.Labels["worker_model"], 10, 64)
+			if err != nil {
+				log.Error("killAndRemove> unable to get model from registering container %s", container.Name)
+			} else {
+				hatchery.CheckWorkerModelRegister(h, modelID)
+			}
+		}
 	}
+
 	if err := h.killAndRemoveContainer(ID); err != nil {
 		return sdk.WrapError(err, "killAndRemove> %s", ID[:7])
 	}

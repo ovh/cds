@@ -53,7 +53,7 @@ func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
 
 	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 
 		status := sdk.MonitoringStatusOK
 		images, err := h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})

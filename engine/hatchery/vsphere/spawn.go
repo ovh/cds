@@ -23,6 +23,7 @@ type annotation struct {
 	WorkerName              string    `json:"worker_name"`
 	RegisterOnly            bool      `json:"register_only"`
 	WorkerModelName         string    `json:"worker_model_name"`
+	WorkerModelID           int64     `json:"worker_model_id"`
 	WorkerModelLastModified string    `json:"worker_model_last_modified"`
 	Model                   bool      `json:"model"`
 	ToDelete                bool      `json:"to_delete"`
@@ -59,6 +60,7 @@ func (h *HatcheryVSphere) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string
 		RegisterOnly:            spawnArgs.RegisterOnly,
 		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 		WorkerModelName:         spawnArgs.Model.Name,
+		WorkerModelID:           spawnArgs.Model.ID,
 		Created:                 time.Now(),
 	}
 

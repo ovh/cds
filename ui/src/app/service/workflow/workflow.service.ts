@@ -91,13 +91,11 @@ export class WorkflowService {
      * @param key Project unique key
      * @param workflow WorkflowCode to import
      */
-    importWorkflow(key: string, workflowCode: string): Observable<Workflow> {
+    importWorkflow(key: string, workflowName: string, workflowCode: string): Observable<Workflow> {
         let headers = new HttpHeaders();
         headers = headers.append('Content-Type', 'application/x-yaml');
-        let params = new HttpParams();
-        params = params.append('force', 'true');
 
-        return this._http.post<Workflow>(`/project/${key}/import/workflows`, workflowCode, {headers, params});
+        return this._http.put<Workflow>(`/project/${key}/import/workflows/${workflowName}`, workflowCode, {headers});
     }
 
     /**

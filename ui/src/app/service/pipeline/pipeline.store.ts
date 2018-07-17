@@ -102,8 +102,8 @@ export class PipelineStore {
      * @param key Project unique key
      * @param workflow pipelineCode to import
      */
-    importPipeline(key: string, pipName: string, pipelineCode: string, force?: boolean): Observable<Array<string>> {
-        return this._pipelineService.importPipeline(key, pipelineCode, force)
+    importPipeline(key: string, pipName: string, pipelineCode: string): Observable<Array<string>> {
+        return this._pipelineService.importPipeline(key, pipName, pipelineCode)
         .pipe(
             mergeMap(() => {
               if (pipName) {

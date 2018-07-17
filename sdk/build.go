@@ -147,16 +147,18 @@ func (t Status) String() string {
 
 // Action status in queue
 const (
-	StatusWaiting    Status = "Waiting"
-	StatusChecking   Status = "Checking"
-	StatusBuilding   Status = "Building"
-	StatusSuccess    Status = "Success"
-	StatusFail       Status = "Fail"
-	StatusDisabled   Status = "Disabled"
-	StatusNeverBuilt Status = "Never Built"
-	StatusUnknown    Status = "Unknown"
-	StatusSkipped    Status = "Skipped"
-	StatusStopped    Status = "Stopped"
+	StatusWaiting           Status = "Waiting"
+	StatusChecking          Status = "Checking"
+	StatusBuilding          Status = "Building"
+	StatusSuccess           Status = "Success"
+	StatusFail              Status = "Fail"
+	StatusDisabled          Status = "Disabled"
+	StatusNeverBuilt        Status = "Never Built"
+	StatusUnknown           Status = "Unknown"
+	StatusSkipped           Status = "Skipped"
+	StatusStopped           Status = "Stopped"
+	StatusWorkerPending     Status = "Pending"
+	StatusWorkerRegistering Status = "Registering"
 )
 
 // Translate translates messages in pipelineBuildJob

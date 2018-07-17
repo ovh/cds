@@ -103,14 +103,6 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Marathon ID Prefix is mandatory")
 	}
 
-	if hconfig.MarathonUser == "" {
-		return fmt.Errorf("Marathon User is mandatory")
-	}
-
-	if hconfig.MarathonPassword == "" {
-		return fmt.Errorf("Marathon Password is mandatory")
-	}
-
 	if hconfig.Name == "" {
 		return fmt.Errorf("please enter a name in your marathon hatchery configuration")
 	}
@@ -454,13 +446,18 @@ func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryMarathon) WorkersStarted() int {
+func (h *HatcheryMarathon) WorkersStarted() []string {
 	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
 		log.Warning("WorkersStarted> error on list applications err:%s", err)
-		return 0
+		return nil
 	}
-	return len(apps)
+	res := make([]string, len(apps))
+	for i, s := range apps {
+		res[i] = strings.Replace(s, h.Config.MarathonIDPrefix, "", 1)
+		res[i] = strings.TrimPrefix(res[i], "/")
+	}
+	return res
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but
@@ -543,7 +540,6 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 }
 
 func (h *HatcheryMarathon) killAwolWorkers() error {
-	log.Debug("killAwolWorkers>")
 	workers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
@@ -558,21 +554,21 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 		return err
 	}
 
-	log.Debug("killAwolWorkers> check %d apps", len(apps.Apps))
-
 	var found bool
 	// then for each RUNNING marathon application
 	for _, app := range apps.Apps {
 		log.Debug("killAwolWorkers> check app %s", app.ID)
-		// Worker is deploying, leave him alone
-		if app.TasksRunning == 0 {
-			log.Debug("killAwolWorkers> app %s is deploying, do nothing", app.ID)
-			continue
-		}
+
 		t, err := time.Parse(time.RFC3339, app.Version)
 		if err != nil {
 			log.Warning("killAwolWorkers> app %s - Cannot parse last update: %s", app.ID, err)
 			break
+		}
+
+		// We let 2 minutes to worker to start and 5 minutes to a worker to register
+		var maxDeploymentDuration = time.Duration(2) * time.Minute
+		if strings.Contains(app.ID, "register-") {
+			maxDeploymentDuration = time.Duration(5) * time.Minute
 		}
 
 		// check that there is a worker matching
@@ -586,8 +582,17 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 		}
 
 		// then if it's not found, kill it !
-		if !found && time.Since(t) > 1*time.Minute {
+		if !found && time.Since(t) > maxDeploymentDuration {
 			log.Debug("killAwolWorkers> killing awol worker %s", app.ID)
+			// If its a worker "register", check registration before deleting it
+			if strings.Contains(app.ID, "register-") && app.Env != nil {
+				modelID, err := strconv.ParseInt((*app.Env)["CDS_MODEL"], 10, 64)
+				if err != nil {
+					log.Error("killAndRemove> unable to get model from registering container %s", app.ID)
+				} else {
+					hatchery.CheckWorkerModelRegister(h, modelID)
+				}
+			}
 			if _, err := h.marathonClient.DeleteApplication(app.ID, true); err != nil {
 				log.Warning("killAwolWorkers> Error while delete app %s err:%s", app.ID, err)
 				// continue to next app
