@@ -53,7 +53,12 @@ func (h *HatcherySwarm) Init() error {
 			log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 			return errPing
 		}
-		h.dockerClients["default"] = &dockerClient{*d, h.Configuration().Provision.MaxWorker, "default", &sync.Mutex{}}
+		h.dockerClients["default"] = &dockerClient{
+			Client:         *d,
+			MaxContainers:  h.Configuration().Provision.MaxWorker,
+			name:           "default",
+			pullImageMutex: &sync.Mutex{},
+		}
 
 	} else {
 		for hostName, cfg := range h.Config.DockerEngines {
@@ -120,7 +125,12 @@ func (h *HatcherySwarm) Init() error {
 			}
 			log.Info("hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
 
-			h.dockerClients[hostName] = &dockerClient{*d, cfg.MaxContainers, hostName, &sync.Mutex{}}
+			h.dockerClients[hostName] = &dockerClient{
+				Client:         *d,
+				MaxContainers:  cfg.MaxContainers,
+				name:           hostName,
+				pullImageMutex: &sync.Mutex{},
+			}
 		}
 	}
 

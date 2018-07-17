@@ -29,6 +29,6 @@ func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 	h := &HatcherySwarm{
 		dockerClients: map[string]*dockerClient{},
 	}
-	h.dockerClients["default"] = &dockerClient{*c, 2, "default", &sync.Mutex{}}
+	h.dockerClients["default"] = &dockerClient{Client: *c, MaxContainers: 2, name: "default", pullImageMutex: &sync.Mutex{}}
 	return h
 }
