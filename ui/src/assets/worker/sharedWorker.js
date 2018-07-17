@@ -7,8 +7,6 @@ var pingUrl;
 var headerKey;
 var headerValue;
 const connections = [];
-var lastEventData;
-var nbEvents = 0;
 var offline = false;
 onconnect = function(e) {
     var port = e.ports[0];
@@ -32,8 +30,6 @@ function initSSE(force) {
                 return;
             }
             let jsonEvent = JSON.parse(evt.data);
-            nbEvents++;
-            lastEventData = new Date();
             connections.forEach(p => {
                 p.postMessage(jsonEvent);
             });
@@ -70,9 +66,3 @@ setInterval(() => {
 
     }
 }, 5000);
-
-setInterval(() => {
-    console.log('Offline: ', offline);
-    console.log('Last Event: ', lastEventData);
-    console.log('Total events: ', nbEvents);
-}, 10000);

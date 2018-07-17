@@ -251,6 +251,9 @@
   "common_favorites_all": "Tous les favoris",
   "common_file_too_large": "Votre fichier est trop volumineux (max 100Ko)",
 
+  "coverage_trend_default_branch": "Tendance par rapport à la branche par défaut",
+  "coverage_trend_current_branch": "Tendance par rapport au build précédent",
+
   "keys_added": "La clé a été ajoutée",
   "keys_add_title": "Ajouter une clé",
   "keys_name": "Nom de la clé",

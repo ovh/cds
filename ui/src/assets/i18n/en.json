@@ -251,6 +251,9 @@
   "common_favorites_all": "All bookmarks",
   "common_file_too_large": "Your file is too large (max 100Ko)",
 
+  "coverage_trend_default_branch": "Trend compared to default branch",
+  "coverage_trend_current_branch": "Trend compared to previous run",
+
   "keys_added": "Key added",
   "keys_add_title": "Add a key",
   "keys_name": "Key name",

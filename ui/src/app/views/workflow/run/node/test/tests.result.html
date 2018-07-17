@@ -2,7 +2,51 @@
     <div class="summary">
         <div class="ui grid">
             <div class="ui row" *ngIf="coverage">
-                {{ coverage.report.covered_lines*100/coverage.report.total_lines | number: 1.0-2}}%
+                <div class="right aligned five wide column">
+                    <span *ngIf="coverage.report.total_lines > 0" suiPopup popupText="{{coverage.report.covered_lines}}/{{coverage.report.total_lines}}">
+                        Covered lines: {{percentLines}}%
+                        <span *ngIf="currentBranchTrendLines" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="currentBranchTrendLines > percentLines" [class.red]="currentBranchTrendLines > percentLines"
+                                [class.up]="currentBranchTrendLines < percentLines" [class.green]="currentBranchTrendLines < percentLines"
+                            ></i>
+                        </span>
+                        <span *ngIf="!currentBranchTrendLines && defaultBranchTrendLines" suiPopup popupText="{{'coverage_trend_default_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="defaultBranchTrendLines > percentLines" [class.red]="defaultBranchTrendLines > percentLines"
+                               [class.up]="defaultBranchTrendLines < percentLines" [class.green]="defaultBranchTrendLines < percentLines"
+                            ></i>
+                        </span>
+                    </span>
+                </div>
+                <div class="centered five wide column">
+                    <span *ngIf="coverage.report.total_functions > 0" suiPopup popupText="{{coverage.report.covered_functions}}/{{coverage.report.total_functions}}">
+                        Covered functions: {{percentFunctions}}%
+                        <span *ngIf="currentBranchTrendFunctions" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="currentBranchTrendFunctions > percentFunctions" [class.red]="currentBranchTrendFunctions > percentFunctions"
+                               [class.up]="currentBranchTrendFunctions < percentFunctions" [class.green]="currentBranchTrendFunctions < percentFunctions"
+                            ></i>
+                        </span>
+                        <span *ngIf="!currentBranchTrendFunctions && defaultBranchTrendFunctions" suiPopup popupText="{{'coverage_trend_default_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="defaultBranchTrendLines > percentFunctions" [class.red]="defaultBranchTrendLines > percentFunctions"
+                               [class.up]="defaultBranchTrendLines < percentFunctions" [class.green]="defaultBranchTrendLines < percentFunctions"
+                            ></i>
+                        </span>
+                    </span>
+                </div>
+                <div class="five wide column">
+                    <span *ngIf="coverage.report.total_branches > 0" suiPopup popupText="{{coverage.report.covered_branches}}/{{coverage.report.total_branches}}">
+                        Covered branches: {{percentBranches}}%
+                         <span *ngIf="currentBranchTrendBranches" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="currentBranchTrendBranches > percentBranches" [class.red]="currentBranchTrendBranches > percentBranches"
+                               [class.up]="currentBranchTrendBranches < percentBranches" [class.green]="currentBranchTrendBranches < percentBranches"
+                            ></i>
+                        </span>
+                        <span *ngIf="!currentBranchTrendBranches && defaultBranchTrendBranches" suiPopup popupText="{{'coverage_trend_default_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="defaultBranchTrendBranches > percentBranches" [class.red]="defaultBranchTrendBranches > percentBranches"
+                               [class.up]="defaultBranchTrendBranches < percentBranches" [class.green]="defaultBranchTrendBranches < percentBranches"
+                            ></i>
+                        </span>
+                    </span>
+                </div>
             </div>
             <div class="ui row">
                 <div class="right aligned five wide column">
