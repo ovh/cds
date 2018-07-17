@@ -190,6 +190,7 @@ func Create(h Interface) error {
 			for i := range models {
 				if canRunJob(h, workerRequest, models[i]) {
 					chosenModel = &models[i]
+					break
 				}
 			}
 
@@ -248,6 +249,7 @@ func Create(h Interface) error {
 			for i := range models {
 				if canRunJob(h, workerRequest, models[i]) {
 					chosenModel = &models[i]
+					break
 				}
 			}
 
