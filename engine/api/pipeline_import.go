@@ -161,7 +161,7 @@ func (api *API) importPipelineHandler() Handler {
 func (api *API) putImportPipelineHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 		format := r.FormValue("format")
 
