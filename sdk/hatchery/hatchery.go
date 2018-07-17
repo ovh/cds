@@ -152,26 +152,26 @@ func Create(h Interface) error {
 				continue
 			}
 
+			//Check spawnsID
+			if _, exist := spawnIDs.Get(string(j.ID)); exist {
+				log.Debug("pipeline build job %d already spawned in previous routine", j.ID)
+				continue
+			}
+
 			//Check bookedBy current hatchery
-			if j.BookedBy.ID == 0 || j.BookedBy.ID != h.ID() {
+			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
 				continue
 			}
 
 			//Check gracetime
 			if j.QueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
-				log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID, j.QueuedSeconds)
+				log.Debug("pipeline build  job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID, j.QueuedSeconds)
 				continue
 			}
 
 			//Check if hatchery if able to start a new worker
 			if !checkCapacities(h) {
 				log.Info("hatchery %s is not able to provision new worker", h.Hatchery().Name)
-				continue
-			}
-
-			//Check spawnsID
-			if _, exist := spawnIDs.Get(string(j.ID)); exist {
-				log.Debug("job %d already spawned in previous routine", j.ID)
 				continue
 			}
 
