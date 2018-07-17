@@ -1,11 +1,13 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path"
@@ -15,9 +17,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/venom"
+	"github.com/sguiheux/go-coverage"
 	"github.com/stretchr/testify/assert"
 
-	"bytes"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
@@ -33,8 +35,6 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/sguiheux/go-coverage"
-	"net/http"
 )
 
 type testRunWorkflowCtx struct {
@@ -734,7 +734,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	// add group
-	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
+	assert.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	// Add repo manager
@@ -816,7 +816,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		return db
 	}, api.Cache)
 	mockVCSservice := &sdk.Service{Name: "TestInsertNewCodeCoverageReport", Type: services.TypeVCS}
-	repositoryService.Delete(mockVCSservice)
+	assert.NoError(t, repositoryService.Delete(mockVCSservice))
 	test.NoError(t, repositoryService.Insert(mockVCSservice))
 
 	//This is a mock for the repositories service
@@ -953,6 +953,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, errT)
 
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
+	assert.NoError(t, err)
 
 	// Call post coverage report handler
 	//Prepare request
