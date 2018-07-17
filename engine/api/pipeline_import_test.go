@@ -66,7 +66,7 @@ func Test_putPipelineImportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey":  proj.Key,
+		"key":             proj.Key,
 		"permPipelineKey": "testest",
 	}
 	uri := api.Router.GetRoute("PUT", api.putImportPipelineHandler, vars)
