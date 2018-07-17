@@ -146,7 +146,7 @@ Comming soon...`,
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
-			"sample-docker-engine": swarm.DockerEngineConfiguration{
+			"sample-docker-engine": {
 				Host: "///var/run/docker.sock",
 			},
 		}

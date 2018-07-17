@@ -117,11 +117,11 @@ func (h *HatcherySwarm) Init() error {
 			d, errc := docker.NewClient(cfg.Host, cfg.APIVersion, httpClient, nil)
 			if errc != nil {
 				log.Error("hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
-				return errc
+				continue
 			}
 			if _, errPing := d.Ping(context.Background()); errPing != nil {
 				log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
-				return errPing
+				continue
 			}
 			log.Info("hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
 
@@ -154,16 +154,24 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	// Choose a dockerEngine
 	var dockerClient *dockerClient
 	var foundDockerClient bool
-	// Roundrobin to choose a docker client
+	//  To choose a docker client by the number of containers
 	nbContainers := 0
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelList()
+
 		containers, errc := dclient.ContainerList(ctxList, types.ContainerListOptions{All: true})
 		if errc != nil {
 			log.Error("hatchery> swarm> SpawnWorker> unable to list containers on %s: %v", dname, errc)
 			continue
 		}
+
+		if len(containers) == 0 {
+			dockerClient = h.dockerClients[dname]
+			foundDockerClient = true
+			break
+		}
+
 		if nbContainers == 0 || len(containers) < nbContainers {
 			nbContainers = len(containers)
 			dockerClient = h.dockerClients[dname]
