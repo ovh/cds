@@ -53,7 +53,12 @@ func (api *API) getWorkersHandler() Handler {
 			return sdk.WrapError(err, "getWorkerModels> cannot parse form")
 		}
 
-		workers, errl := worker.LoadWorkers(api.mustDB())
+		var hatcheryName string
+		h := getHatchery(ctx)
+		if h != nil {
+			hatcheryName = h.Name
+		}
+		workers, errl := worker.LoadWorkers(api.mustDB(), hatcheryName)
 		if errl != nil {
 			return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
 		}
@@ -68,11 +73,16 @@ func (api *API) disableWorkerHandler() Handler {
 		vars := mux.Vars(r)
 		id := vars["id"]
 
-		if _, err := worker.LoadWorker(api.mustDB(), id); err != nil {
+		wor, err := worker.LoadWorker(api.mustDB(), id)
+		if err != nil {
 			if err != sql.ErrNoRows {
 				return sdk.WrapError(err, "disabledWorkerHandler> Cannot load worker %s", id)
 			}
 			return sdk.WrapError(sdk.ErrNotFound, "disabledWorkerHandler> Cannot load worker %s", id)
+		}
+
+		if wor.Status == sdk.StatusBuilding || wor.Status == sdk.StatusChecking {
+			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wor.Status)
 		}
 
 		if err := worker.DisableWorker(api.mustDB(), id); err != nil {

@@ -30,7 +30,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
 	if l < 1 {
 		l = 1
 	}
-	l = l * 2
+	l = l * 3
 	t0 := (*queue)[len(*queue)-1].Queued
 
 	queue.Sort()

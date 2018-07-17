@@ -54,8 +54,13 @@ export class WorkflowNodeComponent implements OnInit {
 
     selectedNodeID: number;
 
-    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore, private _router: Router,
-        private _activatedRoute: ActivatedRoute, private _location: Location) {
+    constructor(
+        private elementRef: ElementRef,
+        private _workflowEventStore: WorkflowEventStore,
+        private _router: Router,
+        private _activatedRoute: ActivatedRoute,
+        private _location: Location
+    ) {
         this._activatedRoute.queryParams.subscribe(params => {
             if (params['nodeID']) {
                 this.selectedNodeID = params['nodeID'];
@@ -154,7 +159,6 @@ export class WorkflowNodeComponent implements OnInit {
         }
 
         let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute, queryParams: { nodeID: this.node.id}});
-        // this._router.navigate(['./'], { relativeTo: this._activatedRoute, queryParams: { nodeID: this.node.id}});
         this._location.go(url.toString());
     }
 
@@ -162,11 +166,8 @@ export class WorkflowNodeComponent implements OnInit {
         if (this._workflowEventStore.isRunSelected() && this.currentNodeRun) {
             this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun);
             this._router.navigate([
-                '/project', this.project.key,
-                'workflow', this.workflow.name,
-                'run', this.currentNodeRun.num,
                 'node', this.currentNodeRun.id
-            ], {queryParams: {name: this.node.name}});
+            ], {relativeTo: this._activatedRoute, queryParams: {name: this.node.name}});
         } else {
             this._workflowEventStore.setSelectedNode(this.node, true);
             this._router.navigate([

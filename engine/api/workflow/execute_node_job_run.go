@@ -161,7 +161,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		}
 	}
 
-	if err := UpdateNodeJobRun(ctx, db, store, job); err != nil {
+	if err := UpdateNodeJobRun(ctx, db, job); err != nil {
 		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
@@ -234,11 +234,11 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	// first load without FOR UPDATE WAIT to quick check status
 	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
 	if errS != nil {
-		return nil, report, sdk.WrapError(errS, "TakeNodeJobRun> Cannot select status from workflow_node_run_job node job run %d", jobID)
+		return nil, nil, sdk.WrapError(errS, "TakeNodeJobRun> Cannot select status from workflow_node_run_job node job run %d", jobID)
 	}
 
 	if err := checkStatusWaiting(store, jobID, currentStatus); err != nil {
-		return nil, report, err
+		return nil, nil, err
 	}
 
 	// reload and recheck status
@@ -247,7 +247,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 		if errPG, ok := errl.(*pq.Error); ok && errPG.Code == "55P03" {
 			errl = sdk.ErrJobAlreadyBooked
 		}
-		return nil, report, sdk.WrapError(errl, "TakeNodeJobRun> Cannot load node job run (WAIT) %d", jobID)
+		return nil, nil, sdk.WrapError(errl, "TakeNodeJobRun> Cannot load node job run (WAIT) %d", jobID)
 	}
 	if err := checkStatusWaiting(store, jobID, job.Status); err != nil {
 		return nil, report, err
@@ -258,15 +258,20 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	job.Job.WorkerID = workerID
 	job.Start = time.Now()
 
+	_, errExec := db.Exec("UPDATE workflow_node_run_job SET worker_id = $2 WHERE id = $1", job.ID, workerID)
+	if errExec != nil {
+		return nil, nil, sdk.WrapError(errl, "TakeNodeJobRun> Cannot update worker_id in node job run %d", jobID)
+	}
+
 	if err := AddSpawnInfosNodeJobRun(db, jobID, PrepareSpawnInfos(infos)); err != nil {
-		return nil, report, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
+		return nil, nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
 	}
 
 	var err error
 	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, db, store, p, job, sdk.StatusBuilding))
 	if err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
-		return nil, report, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", jobID)
+		return nil, nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", jobID)
 	}
 
 	return job, report, nil

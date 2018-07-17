@@ -114,8 +114,12 @@ export class WorkflowGraphComponent implements AfterViewInit {
     nodeWidth: number;
     nodeHeight: number;
 
-    constructor(private componentFactoryResolver: ComponentFactoryResolver, private _cd: ChangeDetectorRef,
-                private _workflowStore: WorkflowStore, private _workflowCore: WorkflowCoreService) {
+    constructor(
+        private componentFactoryResolver: ComponentFactoryResolver,
+        private _cd: ChangeDetectorRef,
+        private _workflowStore: WorkflowStore,
+        private _workflowCore: WorkflowCoreService
+    ) {
         this.linkJoinSubscription = this._workflowCore.getLinkJoinEvent().subscribe(n => {
             if (n) {
                 this.nodeToLink = n;

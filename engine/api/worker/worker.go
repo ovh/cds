@@ -144,12 +144,19 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 }
 
 // LoadWorkers load all workers in db
-func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
+func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE 1 = 1 ORDER BY name ASC`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker ORDER BY name ASC`
+	args := []interface{}{}
 
-	rows, err := db.Query(query)
+	if hatcheryName != "" {
+		// TODO: remove the hatchery name from worker worker table !
+		query = `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE hatchery_name = $1 ORDER BY name ASC`
+		args = []interface{}{hatcheryName}
+	}
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -407,14 +414,14 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 // SetStatus sets action_build_id and status to building on given worker
 func SetStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 	query := `UPDATE worker SET status = $1 WHERE id = $2`
-
-	res, errE := db.Exec(query, status.String(), workerID)
-	if errE != nil {
-		return errE
+	if status == sdk.StatusDisabled {
+		query = `UPDATE worker SET status = $1, action_build_id = NULL WHERE id = $2`
 	}
 
-	_, err := res.RowsAffected()
-	return err
+	if _, errE := db.Exec(query, status.String(), workerID); errE != nil {
+		return sdk.WrapError(errE, "SetStatus")
+	}
+	return nil
 }
 
 // SetToBuilding sets action_build_id and status to building on given worker

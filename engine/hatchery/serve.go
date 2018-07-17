@@ -58,6 +58,10 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 	log.Info("%s> Starting service %s...", c.Name, sdk.VERSION)
 	c.StartupTime = time.Now()
 
+	if err := hatchery.Create(h); err != nil {
+		return err
+	}
+
 	//Init the http server
 	c.initRouter(ctx, h)
 	server := &http.Server{
@@ -82,10 +86,6 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 			server.Shutdown(ctx)
 		}
 	}()
-
-	if err := hatchery.Create(h); err != nil {
-		return err
-	}
 
 	return ctx.Err()
 }

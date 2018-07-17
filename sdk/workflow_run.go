@@ -222,35 +222,35 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 //WorkflowNodeJobRun represents an job to be run
 //easyjson:json
 type WorkflowNodeJobRun struct {
-	ProjectID              int64              `json:"project_id" db:"project_id"`
-	ID                     int64              `json:"id" db:"id"`
-	WorkflowNodeRunID      int64              `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
-	Job                    ExecutedJob        `json:"job" db:"-"`
-	Parameters             []Parameter        `json:"parameters,omitempty" db:"-"`
-	Status                 string             `json:"status"  db:"status"`
-	Retry                  int                `json:"retry"  db:"retry"`
-	SpawnAttempts          []int64            `json:"spawn_attempts,omitempty"  db:"-"`
-	Queued                 time.Time          `json:"queued,omitempty" db:"queued"`
-	QueuedSeconds          int64              `json:"queued_seconds,omitempty" db:"-"`
-	Start                  time.Time          `json:"start,omitempty" db:"start"`
-	Done                   time.Time          `json:"done,omitempty" db:"done"`
-	Model                  string             `json:"model,omitempty" db:"model"`
-	BookedBy               Hatchery           `json:"bookedby" db:"-"`
-	SpawnInfos             []SpawnInfo        `json:"spawninfos" db:"-"`
-	ExecGroups             []Group            `json:"exec_groups" db:"-"`
-	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries" db:"-"`
+	ProjectID              int64              `json:"project_id"`
+	ID                     int64              `json:"id"`
+	WorkflowNodeRunID      int64              `json:"workflow_node_run_id,omitempty"`
+	Job                    ExecutedJob        `json:"job"`
+	Parameters             []Parameter        `json:"parameters,omitempty"`
+	Status                 string             `json:"status"`
+	Retry                  int                `json:"retry"`
+	SpawnAttempts          []int64            `json:"spawn_attempts,omitempty"`
+	Queued                 time.Time          `json:"queued,omitempty"`
+	QueuedSeconds          int64              `json:"queued_seconds,omitempty"`
+	Start                  time.Time          `json:"start,omitempty"`
+	Done                   time.Time          `json:"done,omitempty"`
+	Model                  string             `json:"model,omitempty"`
+	BookedBy               Hatchery           `json:"bookedby"`
+	SpawnInfos             []SpawnInfo        `json:"spawninfos"`
+	ExecGroups             []Group            `json:"exec_groups"`
+	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries"`
 }
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
 type WorkflowNodeJobRunSummary struct {
-	ID                int64              `json:"id" db:"id"`
-	WorkflowNodeRunID int64              `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
-	Status            string             `json:"status"  db:"status"`
-	Queued            int64              `json:"queued,omitempty" db:"queued"`
-	Start             int64              `json:"start,omitempty" db:"start"`
-	Done              int64              `json:"done,omitempty" db:"done"`
+	ID                int64              `json:"id"`
+	WorkflowNodeRunID int64              `json:"workflow_node_run_id,omitempty"`
+	Status            string             `json:"status"`
+	Queued            int64              `json:"queued,omitempty"`
+	Start             int64              `json:"start,omitempty"`
+	Done              int64              `json:"done,omitempty"`
 	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
-	SpawnInfos        []SpawnInfo        `json:"spawninfos" db:"-"`
+	SpawnInfos        []SpawnInfo        `json:"spawninfos"`
 }
 
 // ToSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary

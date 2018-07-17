@@ -126,9 +126,9 @@ func LoadDeadHatcheries(db gorp.SqlExecutor, timeout float64) ([]sdk.Hatchery, e
 // LoadHatchery fetch hatchery info from database given UID
 func LoadHatchery(db gorp.SqlExecutor, uid, name string) (*sdk.Hatchery, error) {
 	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
-							FROM hatchery
-							LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
-							WHERE uid = $1 AND name = $2`
+	FROM hatchery
+	LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
+	WHERE uid = $1 AND name = $2`
 
 	var h sdk.Hatchery
 	var wmID sql.NullInt64

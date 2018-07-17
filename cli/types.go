@@ -46,7 +46,11 @@ func (v *Values) GetBool(s string) bool {
 
 // GetStringSlice returns a string slice
 func (v *Values) GetStringSlice(s string) []string {
-	return strings.Split((*v)[s], "||")
+	res := strings.Split((*v)[s], "||")
+	if len(res) == 1 && strings.Contains(res[0], ",") {
+		return strings.Split(res[0], ",")
+	}
+	return res
 }
 
 // Arg represent a command argument
