@@ -107,9 +107,9 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		// start queue polling
 		var pbjobs chan sdk.PipelineBuildJob
 		if !w.disableOldWorkflows {
-			pbjobs = make(chan sdk.PipelineBuildJob, 1)
+			pbjobs = make(chan sdk.PipelineBuildJob, 50)
 		}
-		wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
+		wjobs := make(chan sdk.WorkflowNodeJobRun, 50)
 		errs := make(chan error, 1)
 
 		//Before start the loop, take the bookJobID
