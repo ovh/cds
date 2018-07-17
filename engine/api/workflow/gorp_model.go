@@ -42,6 +42,7 @@ type Coverage sdk.WorkflowNodeRunCoverage
 type NodeRun struct {
 	WorkflowID         int64          `db:"workflow_id"`
 	WorkflowRunID      int64          `db:"workflow_run_id"`
+	ApplicationID      int64          `db:"application_id"`
 	ID                 int64          `db:"id"`
 	WorkflowNodeID     int64          `db:"workflow_node_id"`
 	WorkflowNodeName   string         `db:"workflow_node_name"`

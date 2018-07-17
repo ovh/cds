@@ -121,6 +121,7 @@ type WorkflowRunTag struct {
 type WorkflowNodeRun struct {
 	WorkflowRunID      int64                            `json:"workflow_run_id"`
 	WorkflowID         int64                            `json:"workflow_id"`
+	ApplicationID      int64                            `json:"application_id"`
 	ID                 int64                            `json:"id"`
 	WorkflowNodeID     int64                            `json:"workflow_node_id"`
 	WorkflowNodeName   string                           `json:"workflow_node_name"`
@@ -154,6 +155,7 @@ type WorkflowNodeRunCoverage struct {
 	WorkflowID        int64                         `json:"workflow_id" db:"workflow_id"`
 	WorkflowNodeRunID int64                         `json:"workflow_node_run_id" db:"workflow_node_run_id"`
 	WorkflowRunID     int64                         `json:"workflow_run_id" db:"workflow_run_id"`
+	ApplicationID     int64                         `json:"application_id" db:"application_id"`
 	Num               int64                         `json:"run_number" db:"run_number"`
 	Repository        string                        `json:"repository" db:"repository"`
 	Branch            string                        `json:"branch" db:"branch"`

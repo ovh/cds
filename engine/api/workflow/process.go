@@ -362,6 +362,11 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		Status:           string(sdk.StatusWaiting),
 		Stages:           stages,
 	}
+	if n.Context != nil && n.Context.ApplicationID != 0 {
+		run.ApplicationID = n.Context.ApplicationID
+	} else if n.Context != nil && n.Context.Application != nil {
+		run.ApplicationID = n.Context.Application.ID
+	}
 
 	runPayload := map[string]string{}
 

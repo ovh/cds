@@ -19,6 +19,7 @@ import (
 )
 
 const nodeRunFields string = `
+workflow_node_run.application_id,
 workflow_node_run.workflow_id,
 workflow_node_run.workflow_run_id,
 workflow_node_run.id,
@@ -211,6 +212,7 @@ func nodeRunExist(db gorp.SqlExecutor, nodeID, num int64, subnumber int) (bool, 
 func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	r := new(sdk.WorkflowNodeRun)
 	r.WorkflowID = rr.WorkflowID
+	r.ApplicationID = rr.ApplicationID
 	r.WorkflowRunID = rr.WorkflowRunID
 	r.ID = rr.ID
 	r.WorkflowNodeID = rr.WorkflowNodeID
@@ -298,6 +300,7 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB := new(NodeRun)
 	nodeRunDB.ID = n.ID
 	nodeRunDB.WorkflowID = n.WorkflowID
+	nodeRunDB.ApplicationID = n.ApplicationID
 	nodeRunDB.WorkflowRunID = n.WorkflowRunID
 	nodeRunDB.WorkflowNodeID = n.WorkflowNodeID
 	nodeRunDB.WorkflowNodeName = n.WorkflowNodeName

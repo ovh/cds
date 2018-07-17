@@ -12,15 +12,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func loadPreviousCoverageReport(db gorp.SqlExecutor, workflowID int64, runNumber int64, repository string, branch string) (sdk.WorkflowNodeRunCoverage, error) {
+func loadPreviousCoverageReport(db gorp.SqlExecutor, workflowID int64, runNumber int64, repository string, branch string, appID int64) (sdk.WorkflowNodeRunCoverage, error) {
 	query := `
       SELECT * from workflow_node_run_coverage
-      WHERE run_number < $1 AND repository = $2 AND branch = $3 AND workflow_id = $4
+      WHERE run_number < $1 AND repository = $2 AND branch = $3 AND workflow_id = $4 AND application_id = $5
       ORDER BY run_number DESC
       LIMIT 1
   `
 	var cov Coverage
-	if err := db.SelectOne(&cov, query, runNumber, repository, branch, workflowID); err != nil {
+	if err := db.SelectOne(&cov, query, runNumber, repository, branch, workflowID, appID); err != nil {
 		if err == sql.ErrNoRows {
 			return sdk.WorkflowNodeRunCoverage{}, sdk.ErrNotFound
 		}
@@ -30,15 +30,15 @@ func loadPreviousCoverageReport(db gorp.SqlExecutor, workflowID int64, runNumber
 	return sdk.WorkflowNodeRunCoverage(cov), nil
 }
 
-func loadLatestCoverageReport(db gorp.SqlExecutor, workflowID int64, repository string, branch string) (sdk.WorkflowNodeRunCoverage, error) {
+func loadLatestCoverageReport(db gorp.SqlExecutor, workflowID int64, repository string, branch string, appID int64) (sdk.WorkflowNodeRunCoverage, error) {
 	query := `
       SELECT * from workflow_node_run_coverage
-      WHERE workflow_id = $1 AND repository = $2 AND branch = $3
+      WHERE workflow_id = $1 AND repository = $2 AND branch = $3 AND application_id = $4
       ORDER BY run_number DESC
       LIMIT 1
   `
 	var cov Coverage
-	if err := db.SelectOne(&cov, query, workflowID, repository, branch); err != nil {
+	if err := db.SelectOne(&cov, query, workflowID, repository, branch, appID); err != nil {
 		if err == sql.ErrNoRows {
 			return sdk.WorkflowNodeRunCoverage{}, sdk.ErrNotFound
 		}
@@ -118,8 +118,8 @@ func (c *Coverage) PostUpdate(s gorp.SqlExecutor) error {
 	query := `
     UPDATE workflow_node_run_coverage 
     SET report=$1, trend=$2
-    WHERE repository=$3 AND branch=$4 AND workflow_node_run_id=$5`
-	if _, err := s.Exec(query, reportS, trendS, c.Repository, c.Branch, c.WorkflowNodeRunID); err != nil {
+    WHERE workflow_node_run_id=$3`
+	if _, err := s.Exec(query, reportS, trendS, c.WorkflowNodeRunID); err != nil {
 		return sdk.WrapError(err, "workflow.coverage.postupdate> Unable to update report and trend")
 	}
 
@@ -132,6 +132,7 @@ func ComputeNewReport(db gorp.SqlExecutor, cache cache.Store, report coverage.Re
 		WorkflowID:        wnr.WorkflowID,
 		WorkflowRunID:     wnr.WorkflowRunID,
 		WorkflowNodeRunID: wnr.ID,
+		ApplicationID:     wnr.ApplicationID,
 		Num:               wnr.Number,
 		Repository:        wnr.VCSRepository,
 		Branch:            wnr.VCSBranch,
@@ -140,7 +141,7 @@ func ComputeNewReport(db gorp.SqlExecutor, cache cache.Store, report coverage.Re
 	}
 
 	// Get previous report
-	previousReport, errP := loadPreviousCoverageReport(db, wnr.WorkflowID, wnr.Number, wnr.VCSRepository, wnr.VCSBranch)
+	previousReport, errP := loadPreviousCoverageReport(db, wnr.WorkflowID, wnr.Number, wnr.VCSRepository, wnr.VCSBranch, covReport.ApplicationID)
 	if errP != nil && errP != sdk.ErrNotFound {
 		return sdk.WrapError(errP, "computeNewReport> Unable to load previous report")
 	}
@@ -184,7 +185,7 @@ func ComputeLatestDefaultBranchReport(db gorp.SqlExecutor, cache cache.Store, pr
 	}
 
 	if defaultBranch != wnr.VCSBranch {
-		defaultCoverage, errD := loadLatestCoverageReport(db, wnr.WorkflowID, wnr.VCSRepository, defaultBranch)
+		defaultCoverage, errD := loadLatestCoverageReport(db, wnr.WorkflowID, wnr.VCSRepository, defaultBranch, covReport.ApplicationID)
 		if errD != nil && errD != sdk.ErrNotFound {
 			return sdk.WrapError(errD, "ComputeLatestDefaultBranchReport> Cannot get latest report on default branch")
 		}
