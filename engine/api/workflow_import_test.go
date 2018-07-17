@@ -97,7 +97,7 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey":   proj.Key,
+		"key":              proj.Key,
 		"permWorkflowName": "testtest",
 	}
 	uri := api.Router.GetRoute("PUT", api.putWorkflowImportHandler, vars)
