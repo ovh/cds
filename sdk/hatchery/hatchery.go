@@ -147,7 +147,6 @@ func Create(h Interface) error {
 
 		case j := <-pbjobs:
 			t0 := time.Now()
-			log.Info("hatchery> received pipeline build job %d", j.ID)
 			if j.ID == 0 {
 				continue
 			}
