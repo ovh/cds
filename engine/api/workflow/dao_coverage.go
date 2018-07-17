@@ -164,6 +164,7 @@ func ComputeNewReport(db gorp.SqlExecutor, cache cache.Store, report coverage.Re
 	return nil
 }
 
+// ComputeLatestDefaultBranchReport add the default branch coverage report into  the given report
 func ComputeLatestDefaultBranchReport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, wnr *sdk.WorkflowNodeRun, covReport *sdk.WorkflowNodeRunCoverage) error {
 	// Get report latest report on previous branch
 	var defaultBranch string
