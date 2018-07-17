@@ -75,6 +75,17 @@ func newSteps(a sdk.Action) []Step {
 				if script != nil {
 					s["script"] = strings.SplitN(script.Value, "\n", -1)
 				}
+			case sdk.CoverageAction:
+				coverageArgs := map[string]string{}
+				path := sdk.ParameterFind(&act.Parameters, "path")
+				if path != nil {
+					coverageArgs["path"] = path.Value
+				}
+				format := sdk.ParameterFind(&act.Parameters, "format")
+				if format != nil {
+					coverageArgs["format"] = format.Value
+				}
+				s["coverage"] = coverageArgs
 			case sdk.ArtifactDownload:
 				artifactDownloadArgs := map[string]string{}
 				path := sdk.ParameterFind(&act.Parameters, "path")
@@ -169,7 +180,7 @@ func newSteps(a sdk.Action) []Step {
 //AsScript returns the step a sdk.Action
 func (s Step) AsScript() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("Malformatted Step")
+		return nil, false, fmt.Errorf("AsScript.Malformatted Step")
 	}
 
 	bI, ok := s["script"]
@@ -218,7 +229,7 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 //AsAction returns the step a sdk.Action
 func (s Step) AsAction() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("Malformatted Step")
+		return nil, false, fmt.Errorf("AsAction.Malformatted Step")
 	}
 
 	actionName := s.key()
@@ -234,7 +245,7 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "Malformatted Step")
+		return nil, true, sdk.WrapError(err, "AsAction.decode.Malformatted Step")
 	}
 
 	a, err := sdk.NewStepDefault(actionName, argss)
@@ -260,7 +271,7 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 //AsJUnitReport returns the step a sdk.Action
 func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("Malformatted Step")
+		return nil, false, fmt.Errorf("AsJUnitReport.Malformatted Step")
 	}
 
 	bI, ok := s["jUnitReport"]
@@ -295,7 +306,7 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 //AsGitClone returns the step a sdk.Action
 func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("Malformatted Step")
+		return nil, false, fmt.Errorf("AsGitClone.Malformatted Step")
 	}
 
 	bI, ok := s["gitClone"]
@@ -309,7 +320,7 @@ func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "Malformatted Step")
+		return nil, true, sdk.WrapError(err, "AsGitClone.Malformatted Step")
 	}
 
 	a := sdk.NewStepGitClone(argss)
@@ -334,7 +345,7 @@ func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 //AsArtifactUpload returns the step a sdk.Action
 func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("Malformatted Step")
+		return nil, false, fmt.Errorf("AsArtifactUpload.Malformatted Step")
 	}
 
 	bI, ok := s["artifactUpload"]
@@ -352,7 +363,7 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	} else if m, ok := bI.(map[interface{}]interface{}); ok {
 		argss := map[string]string{}
 		if err := mapstructure.Decode(m, &argss); err != nil {
-			return nil, true, sdk.WrapError(err, "Malformatted Step")
+			return nil, true, sdk.WrapError(err, "AsArtifactUpload.decode>Malformatted Step")
 		}
 		a = sdk.NewStepArtifactUpload(argss)
 	} else {
@@ -379,7 +390,7 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 //AsArtifactDownload returns the step a sdk.Action
 func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("Malformatted Step")
+		return nil, false, fmt.Errorf("AsArtifactDownload.Malformatted Step")
 	}
 
 	bI, ok := s["artifactDownload"]
@@ -389,7 +400,7 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "Malformatted Step")
+		return nil, true, sdk.WrapError(err, "AsArtifactDownload.decode> Malformatted Step")
 	}
 	a := sdk.NewStepArtifactDownload(argss)
 
@@ -413,7 +424,7 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 //AsCheckoutApplication returns the step as a sdk.Action
 func (s Step) AsCheckoutApplication() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("Malformatted Step")
+		return nil, false, fmt.Errorf("AsCheckoutApplication> Malformatted Step")
 	}
 	bI, ok := s["checkout"]
 	if !ok {
@@ -443,10 +454,43 @@ func (s Step) AsCheckoutApplication() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsCoverageAction returns the step as a sdk.Action
+func (s Step) AsCoverageAction() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("AsCoverageAction> Malformatted Step")
+	}
+	bI, ok := s["coverage"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	argss := map[string]string{}
+	if err := mapstructure.Decode(bI, &argss); err != nil {
+		return nil, true, sdk.WrapError(err, "AsCoverageAction.decode> Malformatted Step")
+	}
+	a := sdk.NewCoverage(argss)
+
+	var err error
+	a.Enabled, err = s.IsFlagged("enabled")
+	if err != nil {
+		return nil, true, err
+	}
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
 //AsDeployApplication returns the step as a sdk.Action
 func (s Step) AsDeployApplication() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
-		return nil, false, fmt.Errorf("Malformatted Step")
+		return nil, false, fmt.Errorf("AsDeployApplication> Malformatted Step")
 	}
 	bI, ok := s["deploy"]
 	if !ok {
