@@ -211,8 +211,16 @@ func nodeRunExist(db gorp.SqlExecutor, nodeID, num int64, subnumber int) (bool, 
 
 func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	r := new(sdk.WorkflowNodeRun)
-	r.WorkflowID = rr.WorkflowID
-	r.ApplicationID = rr.ApplicationID
+	if rr.WorkflowID.Valid {
+		r.WorkflowID = rr.WorkflowID.Int64
+	} else {
+		r.WorkflowID = 0
+	}
+	if rr.ApplicationID.Valid {
+		r.ApplicationID = rr.ApplicationID.Int64
+	} else {
+		r.ApplicationID = 0
+	}
 	r.WorkflowRunID = rr.WorkflowRunID
 	r.ID = rr.ID
 	r.WorkflowNodeID = rr.WorkflowNodeID
@@ -299,8 +307,10 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB := new(NodeRun)
 	nodeRunDB.ID = n.ID
-	nodeRunDB.WorkflowID = n.WorkflowID
-	nodeRunDB.ApplicationID = n.ApplicationID
+	nodeRunDB.WorkflowID.Valid = true
+	nodeRunDB.WorkflowID.Int64 = n.WorkflowID
+	nodeRunDB.ApplicationID.Int64 = n.ApplicationID
+	nodeRunDB.ApplicationID.Valid = true
 	nodeRunDB.WorkflowRunID = n.WorkflowRunID
 	nodeRunDB.WorkflowNodeID = n.WorkflowNodeID
 	nodeRunDB.WorkflowNodeName = n.WorkflowNodeName
