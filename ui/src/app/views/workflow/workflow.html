@@ -5,7 +5,12 @@
         <i class="pointing star icon" *ngIf="!loadingFav" [class.pointing]="!loading" [ngClass]="{'animated infinite pulse' : loadingFav}" [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
     </div>
 </div>
-<aside class="sidebar scrollable expanded">
+<aside class="sidebar scrollable expanded"
+   infiniteScroll
+   [infiniteScrollDistance]="2"
+   [infiniteScrollThrottle]="50"
+   [scrollWindow]="false"
+   (scrolled)="onScroll.emit(true)">
     <div class="floated right">
         <button class="ui large icon button transparent close-button" (click)="changeToRunsMode()" *ngIf="sidebarMode !== sidebarModes.RUNS">
             <i class="black close icon"></i>
@@ -13,7 +18,7 @@
     </div>
     <div class="sidebar-toggle">
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
-            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-list>
+            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [scrolled]="onScroll"></app-workflow-sidebar-run-list>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && (sidebarMode === sidebarModes.EDIT_HOOK || sidebarMode === sidebarModes.EDIT_JOIN ||sidebarMode === sidebarModes.EDIT_NODE)">
             <app-workflow-sidebar-edit
@@ -22,8 +27,7 @@
             </app-workflow-sidebar-edit>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_NODE">
-            <app-workflow-sidebar-run-node
-                [project]="project" [workflow]="workflow">
+            <app-workflow-sidebar-run-node [project]="project" [workflow]="workflow">
             </app-workflow-sidebar-run-node>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_HOOK">
