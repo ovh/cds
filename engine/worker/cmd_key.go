@@ -45,9 +45,9 @@ func cmdKeyInstall(w *currentWorker) *cobra.Command {
 		Aliases: []string{"i", "add"},
 		Short:   "worker key install <key-name>",
 		Long: `
-Inside a step script you can install a SSH key generated in CDS in your ssh environment and return the PKEY variable (only for SSH)
+Inside a step script you can install a SSH/PGP key generated in CDS in your ssh environment and return the PKEY variable (only for SSH)
 
-So if you want to update your PKEY variable, which is the variable with the path to the ssh private key you just can write ` + "PKEY=`worker key install proj-mykey`" + ` (only for SSH)
+So if you want to update your PKEY variable, which is the variable with the path to the SSH private key you just can write ` + "PKEY=`worker key install proj-mykey`" + ` (only for SSH)
 		`,
 		Example: "worker key install proj-test",
 		Run:     keyInstallCmd(w),
@@ -176,6 +176,23 @@ func (wk *currentWorker) keyInstallHandler(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, keyResponse{PKey: wk.currentJob.pkey, Type: sdk.KeyTypeSSH}, http.StatusOK)
 
 	case sdk.KeyTypePGP:
+		gpg2Found := false
+
+		if _, err := exec.LookPath("gpg2"); err == nil {
+			gpg2Found = true
+		}
+
+		if !gpg2Found {
+			if _, err := exec.LookPath("gpg"); err != nil {
+				errBinary := sdk.Error{
+					Message: fmt.Sprintf("Cannot use gpg in your worker because you haven't gpg or gpg2 binary"),
+					Status:  http.StatusBadRequest,
+				}
+				log.Error("%v", errBinary)
+				writeJSON(w, errBinary, errBinary.Status)
+				return
+			}
+		}
 		content := []byte(key.Value)
 		tmpfile, errTmpFile := ioutil.TempFile("", key.Name)
 		if errTmpFile != nil {
@@ -211,7 +228,11 @@ func (wk *currentWorker) keyInstallHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		cmd := exec.Command("gpg", "--import", tmpfile.Name())
+		gpgBin := "gpg"
+		if gpg2Found {
+			gpgBin = "gpg2"
+		}
+		cmd := exec.Command(gpgBin, "--import", tmpfile.Name())
 		var out bytes.Buffer
 		cmd.Stdout = &out
 		if err := cmd.Run(); err != nil {
