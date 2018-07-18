@@ -395,7 +395,6 @@ var EventSourcePolyfill = (function (global) {
 
                 if ((currentState === OPEN || currentState === CONNECTING) &&
                     (type === "load" || type === "error" || isWrongStatusCodeOrContentType || (timeout === 0 && (!wasActivity || !checkActivity)))) {
-                    console.log(currentState, type, isWrongStatusCodeOrContentType, charOffset, timeout, wasActivity, checkActivity);
                     if (isWrongStatusCodeOrContentType) {
                         close();
                     } else {

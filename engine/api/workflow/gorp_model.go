@@ -35,9 +35,14 @@ type Notification sdk.WorkflowNotification
 // Run is a gorp wrapper around sdk.WorkflowRun
 type Run sdk.WorkflowRun
 
+// Coverage is a gorp wrapper around sdk.WorkflowNodeRunCoverage
+type Coverage sdk.WorkflowNodeRunCoverage
+
 // NodeRun is a gorp wrapper around sdk.WorkflowNodeRun
 type NodeRun struct {
+	WorkflowID         int64          `db:"workflow_id"`
 	WorkflowRunID      int64          `db:"workflow_run_id"`
+	ApplicationID      int64          `db:"application_id"`
 	ID                 int64          `db:"id"`
 	WorkflowNodeID     int64          `db:"workflow_node_id"`
 	WorkflowNodeName   string         `db:"workflow_node_name"`
@@ -60,6 +65,7 @@ type NodeRun struct {
 	VCSRepository      sql.NullString `db:"vcs_repository"`
 	VCSBranch          sql.NullString `db:"vcs_branch"`
 	VCSHash            sql.NullString `db:"vcs_hash"`
+	VCSServer          sql.NullString `db:"vcs_server"`
 }
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
@@ -194,4 +200,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(NodeHookModel{}, "workflow_hook_model", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Notification{}, "workflow_notification", true, "id"))
 	gorpmapping.Register(gorpmapping.New(auditWorkflow{}, "workflow_audit", true, "id"))
+	gorpmapping.Register(gorpmapping.New(Coverage{}, "workflow_node_run_coverage", false, "workflow_id", "workflow_run_id", "workflow_node_run_id", "repository", "branch"))
 }

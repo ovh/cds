@@ -97,8 +97,8 @@ func GetWorker(db *gorp.DbMap, store cache.Store, workerID, workerName string) (
 	var w = &sdk.Worker{}
 
 	key := cache.Key("worker", workerID)
-	// Else load it from DB
-	if !store.Get(key, w) {
+	b := store.Get(key, w)
+	if !b || w.ActionBuildID == 0 {
 		var err error
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
@@ -106,7 +106,6 @@ func GetWorker(db *gorp.DbMap, store cache.Store, workerID, workerName string) (
 		}
 		store.Set(key, w)
 	}
-
 	return w, nil
 }
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/venom"
+	"github.com/sguiheux/go-coverage"
 )
 
 //WorkflowRun is an execution instance of a run
@@ -119,6 +120,8 @@ type WorkflowRunTag struct {
 //WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
 type WorkflowNodeRun struct {
 	WorkflowRunID      int64                            `json:"workflow_run_id"`
+	WorkflowID         int64                            `json:"workflow_id"`
+	ApplicationID      int64                            `json:"application_id"`
 	ID                 int64                            `json:"id"`
 	WorkflowNodeID     int64                            `json:"workflow_node_id"`
 	WorkflowNodeName   string                           `json:"workflow_node_name"`
@@ -136,13 +139,34 @@ type WorkflowNodeRun struct {
 	PipelineParameters []Parameter                      `json:"pipeline_parameters,omitempty"`
 	BuildParameters    []Parameter                      `json:"build_parameters,omitempty"`
 	Artifacts          []WorkflowNodeRunArtifact        `json:"artifacts,omitempty"`
+	Coverage           WorkflowNodeRunCoverage          `json:"coverage,omitempty"`
 	Tests              *venom.Tests                     `json:"tests,omitempty"`
 	Commits            []VCSCommit                      `json:"commits,omitempty"`
 	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
 	VCSRepository      string                           `json:"vcs_repository"`
 	VCSBranch          string                           `json:"vcs_branch"`
 	VCSHash            string                           `json:"vcs_hash"`
+	VCSServer          string                           `json:"vcs_server"`
 	CanBeRun           bool                             `json:"can_be_run"`
+}
+
+// WorkflowNodeRunCoverage represents the code coverage report
+type WorkflowNodeRunCoverage struct {
+	WorkflowID        int64                         `json:"workflow_id" db:"workflow_id"`
+	WorkflowNodeRunID int64                         `json:"workflow_node_run_id" db:"workflow_node_run_id"`
+	WorkflowRunID     int64                         `json:"workflow_run_id" db:"workflow_run_id"`
+	ApplicationID     int64                         `json:"application_id" db:"application_id"`
+	Num               int64                         `json:"run_number" db:"run_number"`
+	Repository        string                        `json:"repository" db:"repository"`
+	Branch            string                        `json:"branch" db:"branch"`
+	Report            coverage.Report               `json:"report" db:"-"`
+	Trend             WorkflowNodeRunCoverageTrends `json:"trend" db:"-"`
+}
+
+// WorkflowNodeRunCoverageTrends represents code coverage trend with current branch and default branch
+type WorkflowNodeRunCoverageTrends struct {
+	CurrentBranch coverage.Report `json:"current_branch_report"`
+	DefaultBranch coverage.Report `json:"default_branch_report"`
 }
 
 // WorkflowNodeTriggerRun Represent the state of a trigger

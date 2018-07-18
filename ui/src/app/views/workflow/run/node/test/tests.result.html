@@ -1,26 +1,81 @@
 <div class="test" *ngIf="tests">
     <div class="summary">
         <div class="ui grid">
-            <div class="right aligned five wide column">
-                <a class="pointing" (click)="filter='all'">
-                    {{tests.total}}
-                    <span *ngIf="tests.total > 1">{{'pipeline_run_test_total_title_s' | translate}}</span>
-                    <span *ngIf="tests.total < 2">{{'pipeline_run_test_total_title' | translate}}</span>
-                </a>
+            <div class="ui row" *ngIf="coverage">
+                <div class="right aligned five wide column">
+                    <ng-container *ngIf="coverage.report.total_lines > 0">
+                        <span suiPopup popupText="{{coverage.report.covered_lines}}/{{coverage.report.total_lines}}">{{ 'coverage_lines_title' | translate}}{{percentLines}}%</span>
+                        <span *ngIf="currentBranchTrendLines" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="currentBranchTrendLines > percentLines" [class.red]="currentBranchTrendLines > percentLines"
+                                [class.up]="currentBranchTrendLines < percentLines" [class.green]="currentBranchTrendLines < percentLines"
+                               *ngIf="currentBranchTrendLines !== percentLines"></i>
+                            <i class="blue minus icon" *ngIf="currentBranchTrendLines === percentLines"></i>
+                        </span>
+                        <span *ngIf="!currentBranchTrendLines && defaultBranchTrendLines" suiPopup popupText="{{'coverage_trend_default_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="defaultBranchTrendLines > percentLines" [class.red]="defaultBranchTrendLines > percentLines"
+                               [class.up]="defaultBranchTrendLines < percentLines" [class.green]="defaultBranchTrendLines < percentLines"
+                               *ngIf="defaultBranchTrendLines !== percentLines"></i>
+                            <i class="blue minus icon" *ngIf="defaultBranchTrendLines === percentLines"></i>
+                        </span>
+                    </ng-container>
+                </div>
+                <div class="centered five wide column">
+                    <ng-container *ngIf="coverage.report.total_functions > 0">
+                        <span suiPopup popupText="{{coverage.report.covered_functions}}/{{coverage.report.total_functions}}">{{ 'coverage_functions_title' | translate}}: {{percentFunctions}}%</span>
+                        <span *ngIf="currentBranchTrendFunctions" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="currentBranchTrendFunctions > percentFunctions" [class.red]="currentBranchTrendFunctions > percentFunctions"
+                               [class.up]="currentBranchTrendFunctions < percentFunctions" [class.green]="currentBranchTrendFunctions < percentFunctions"
+                               *ngIf="currentBranchTrendFunctions !== percentFunctions"></i>
+                            <i class="blue minus icon" *ngIf="currentBranchTrendFunctions === percentFunctions"></i>
+                        </span>
+                        <span *ngIf="!currentBranchTrendFunctions && defaultBranchTrendFunctions" suiPopup popupText="{{'coverage_trend_default_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="defaultBranchTrendFunctions > percentFunctions" [class.red]="defaultBranchTrendFunctions > percentFunctions"
+                               [class.up]="defaultBranchTrendFunctions < percentFunctions" [class.green]="defaultBranchTrendFunctions < percentFunctions"
+                               *ngIf="defaultBranchTrendFunctions !== percentFunctions"></i>
+                            <i class="blue minus icon" *ngIf="defaultBranchTrendFunctions === percentFunctions"></i>
+                        </span>
+                    </ng-container>
+                </div>
+                <div class="five wide column">
+                    <ng-container *ngIf="coverage.report.total_branches > 0">
+                        <span suiPopup popupText="{{coverage.report.covered_branches}}/{{coverage.report.total_branches}}">{{ 'coverage_branches_title' | translate}}: {{percentBranches}}%</span>
+                         <span *ngIf="currentBranchTrendBranches" suiPopup popupText="{{'coverage_trend_current_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="currentBranchTrendBranches > percentBranches" [class.red]="currentBranchTrendBranches > percentBranches"
+                               [class.up]="currentBranchTrendBranches < percentBranches" [class.green]="currentBranchTrendBranches < percentBranches"
+                               *ngIf="currentBranchTrendBranches !== percentBranches"></i>
+                             <i class="blue minus icon" *ngIf="currentBranchTrendBranches === percentBranches"></i>
+                        </span>
+                        <span *ngIf="!currentBranchTrendBranches && defaultBranchTrendBranches" suiPopup popupText="{{'coverage_trend_default_branch' | translate }}">
+                            <i class="arrow icon" [class.down]="defaultBranchTrendBranches > percentBranches" [class.red]="defaultBranchTrendBranches > percentBranches"
+                               [class.up]="defaultBranchTrendBranches < percentBranches" [class.green]="defaultBranchTrendBranches < percentBranches"
+                               *ngIf="defaultBranchTrendBranches !== percentBranches"></i>
+                            <i class="blue minus icon" *ngIf="defaultBranchTrendBranches === percentBranches"></i>
+                        </span>
+                    </ng-container>
+                </div>
             </div>
-            <div class="centered five wide column">
-                <a class="pointing" (click)="filter='error'">
-                    {{ tests.ko }}
-                    <span *ngIf="tests.ko > 1">{{'pipeline_run_test_failed_title_s' | translate}}</span>
-                    <span *ngIf="tests.ko < 2">{{'pipeline_run_test_failed_title' | translate}}</span>
-                </a>
-            </div>
-            <div class="five wide column">
-                <a class="pointing" (click)="filter='skipped'">
-                    {{ tests.skipped }}
-                    <span *ngIf="tests.skipped > 1">{{'pipeline_run_test_skipped_title_s' | translate}}</span>
-                    <span *ngIf="tests.skipped < 2">{{'pipeline_run_test_skipped_title' | translate}}</span>
-                </a>
+            <div class="ui row">
+                <div class="right aligned five wide column">
+                    <a class="pointing" (click)="filter='all'">
+                        {{tests.total}}
+                        <span *ngIf="tests.total > 1">{{'pipeline_run_test_total_title_s' | translate}}</span>
+                        <span *ngIf="tests.total < 2">{{'pipeline_run_test_total_title' | translate}}</span>
+                    </a>
+                </div>
+                <div class="centered five wide column">
+                    <a class="pointing" (click)="filter='error'">
+                        {{ tests.ko }}
+                        <span *ngIf="tests.ko > 1">{{'pipeline_run_test_failed_title_s' | translate}}</span>
+                        <span *ngIf="tests.ko < 2">{{'pipeline_run_test_failed_title' | translate}}</span>
+                    </a>
+                </div>
+                <div class="five wide column">
+                    <a class="pointing" (click)="filter='skipped'">
+                        {{ tests.skipped }}
+                        <span *ngIf="tests.skipped > 1">{{'pipeline_run_test_skipped_title_s' | translate}}</span>
+                        <span *ngIf="tests.skipped < 2">{{'pipeline_run_test_skipped_title' | translate}}</span>
+                    </a>
+                </div>
             </div>
         </div>
 

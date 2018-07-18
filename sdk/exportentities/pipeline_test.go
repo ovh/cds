@@ -106,6 +106,23 @@ var (
 											},
 										},
 									},
+									{
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.CoverageAction,
+										Enabled: true,
+										Parameters: []sdk.Parameter{
+											{
+												Name:  "path",
+												Type:  sdk.StringParameter,
+												Value: "lcov.info",
+											},
+											{
+												Name:  "format",
+												Type:  sdk.StringParameter,
+												Value: "lcov",
+											},
+										},
+									},
 								},
 							},
 						},

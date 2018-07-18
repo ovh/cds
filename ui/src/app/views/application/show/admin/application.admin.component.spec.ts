@@ -1,33 +1,34 @@
 /* tslint:disable:no-unused-variable */
 
-import {RouterTestingModule} from '@angular/router/testing';
+import {HttpRequest} from '@angular/common/http';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {Component, Injector} from '@angular/core';
 import {getTestBed, TestBed} from '@angular/core/testing';
 import {Router} from '@angular/router';
-import {Component, Injector} from '@angular/core';
-import {Application} from '../../../../model/application.model';
-import {ApplicationStore} from '../../../../service/application/application.store';
-import {ApplicationAdminComponent} from './application.admin.component';
-import {ApplicationService} from '../../../../service/application/application.service';
-import {SharedModule} from '../../../../shared/shared.module';
-import {TranslateLoader, TranslateModule, TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../../shared/toast/ToastService';
-import {Project} from '../../../../model/project.model';
-import {RepoManagerService} from '../../../../service/repomanager/project.repomanager.service';
-import {ApplicationModule} from '../../application.module';
-import {ServicesModule} from '../../../../service/services.module';
-import {Pipeline} from '../../../../model/pipeline.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {ProjectService} from '../../../../service/project/project.service';
-import {PipelineService} from '../../../../service/pipeline/pipeline.service';
-import {EnvironmentService} from '../../../../service/environment/environment.service';
-import {VariableService} from '../../../../service/variable/variable.service';
+import {RouterTestingModule} from '@angular/router/testing';
 import {TranslateParser} from '@ngx-translate/core';
+import {TranslateLoader, TranslateModule, TranslateService} from '@ngx-translate/core';
+import {Application} from '../../../../model/application.model';
+import {Pipeline} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
 import {RepositoriesManager} from '../../../../model/repositories.model';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
 import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
+import {ApplicationService} from '../../../../service/application/application.service';
+import {ApplicationStore} from '../../../../service/application/application.store';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {EnvironmentService} from '../../../../service/environment/environment.service';
 import {NavbarService} from '../../../../service/navbar/navbar.service';
+import {PipelineService} from '../../../../service/pipeline/pipeline.service';
+import {ProjectService} from '../../../../service/project/project.service';
+import {ProjectStore} from '../../../../service/project/project.store';
+import {RepoManagerService} from '../../../../service/repomanager/project.repomanager.service';
+import {ServicesModule, WorkflowStore} from '../../../../service/services.module';
+import {VariableService} from '../../../../service/variable/variable.service';
+import {WorkflowService} from '../../../../service/workflow/workflow.service';
+import {SharedModule} from '../../../../shared/shared.module';
+import {ToastService} from '../../../../shared/toast/ToastService';
+import {ApplicationModule} from '../../application.module';
+import {ApplicationAdminComponent} from './application.admin.component';
 
 @Component({
     template: ''
@@ -61,7 +62,9 @@ describe('CDS: Application Admin Component', () => {
                 TranslateParser,
                 RepoManagerService,
                 ApplicationMigrateService,
-                AuthentificationStore
+                AuthentificationStore,
+                WorkflowStore,
+                WorkflowService
             ],
             imports: [
                 RouterTestingModule.withRoutes([

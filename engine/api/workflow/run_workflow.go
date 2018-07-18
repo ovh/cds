@@ -190,5 +190,10 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 		report.Add(wr)
 		return wr, report, UpdateWorkflowRun(ctx, db, wr)
 	}
+
+	wrUpdated, errReload := LoadRunByID(db, wr.ID, LoadRunOptions{})
+	if errReload == nil {
+		return wrUpdated, report, nil
+	}
 	return wr, report, nil
 }

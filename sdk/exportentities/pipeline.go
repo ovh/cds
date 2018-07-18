@@ -462,7 +462,7 @@ func computeSteps(steps []Step) ([]sdk.Action, error) {
 
 func computeStep(s Step) (a *sdk.Action, e error) {
 	if !s.IsValid() {
-		e = fmt.Errorf("Malformatted step")
+		e = fmt.Errorf("computeStep> Malformatted step")
 		return
 	}
 
@@ -493,6 +493,11 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 	}
 
 	a, ok, e = s.AsDeployApplication()
+	if ok {
+		return
+	}
+
+	a, ok, e = s.AsCoverageAction()
 	if ok {
 		return
 	}

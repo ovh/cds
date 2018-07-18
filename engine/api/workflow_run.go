@@ -583,9 +583,9 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true})
+		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true, WithCoverage: true})
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
+			return sdk.WrapError(err, "getWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
 
 		run.Translate(r.Header.Get("Accept-Language"))
