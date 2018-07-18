@@ -21,9 +21,7 @@
                 {{ k.type }}
             </td>
             <td>
-                <pre>
-                {{ k.public }}
-                    </pre>
+                <pre>{{ k.public }}</pre>
             </td>
             <td *ngIf="edit === permission.READ_WRITE_EXECUTE">
                 <app-delete-button [loading]="loading" (event)="deleteKey(k)"></app-delete-button>

@@ -10,3 +10,4 @@ jobs:
     - set -e
     - PKEY=`worker key install proj-testkey`
     - ls -la $PKEY
+    - worker key install proj-testkeypgp
