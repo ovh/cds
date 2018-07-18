@@ -2091,13 +2091,15 @@ exit 0
 
 <h4 id="using-cds-keys-in-a-script">Using CDS keys in a script</h4>
 
-<p>You can use CDS SSH keys in a step script with the <a href="https://ovh.github.io/cds/cli/worker/key/">worker key command</a>. Just use <code>worker key install proj-mykey</code> and it will install the SSH environment and private SSH key of your key in your project named <strong>mykey</strong>.</p>
+<p>You can use CDS SSH keys and PGP keys in a step script with the <a href="https://ovh.github.io/cds/cli/worker/key/">worker key command</a>. Just use <code>worker key install proj-mykey</code> and it will install the SSH/PGP environment and private SSH/PGP key of your key in your project named <strong>mykey</strong>.</p>
 
 <p>The command <code>worker key install proj-mykey</code> will return the path where the private key is stored. In that way you can save this value in a variable and use it for a ssh command like this:</p>
 
 <pre><code class="language-bash">PKEY=`worker key install proj-mykey`
-ssh -i $PKEY myuser@myhost echo &quot;test&quot;
+ssh -i $PKEY myuser@myhost echo &quot;test&quot; #PKEY only works with SSH key
 </code></pre>
+
+<p>Pay attention, to use a PGP key, please add in your pipeline requirements the binary named <code>gpg</code>.</p>
 
 <h4 id="using-worker-cli-in-a-script">Using worker cli in a script</h4>
 
