@@ -10,7 +10,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -54,38 +53,6 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 		tmp := sdk.ParametersFromApplicationVariables(app)
 		for k, v := range tmp {
 			vars[k] = v
-		}
-
-		// Get GitUrl
-		projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		if projectVCSServer != nil {
-			client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
-			if errclient != nil {
-				return nil, sdk.WrapError(errclient, "GetNodeBuildParameters> Cannot connect get repository manager client")
-			}
-			_, next := tracing.Span(ctx, "workflow.GetNodeBuildParameters.vcs.RepoByFullname")
-			r, errR := client.RepoByFullname(app.RepositoryFullname)
-			next()
-
-			if errR != nil {
-				return nil, sdk.WrapError(errR, "GetNodeBuildParameters> Cannot get git.url")
-			}
-			vars["git.url"] = r.SSHCloneURL
-			vars["git.http_url"] = r.HTTPCloneURL
-
-			_, next = tracing.Span(ctx, "workflow.GetNodeBuildParameters.vcs.Branches")
-			branches, errB := client.Branches(r.Fullname)
-			next()
-
-			if errB != nil {
-				return nil, sdk.WrapError(errB, "GetNodeBuildParameters> Cannot get branches on %s, app:%s", r.SSHCloneURL, n.Context.Application.Name)
-			}
-			for _, b := range branches {
-				if b.Default {
-					vars["git.default_branch"] = b.DisplayID
-					break
-				}
-			}
 		}
 	}
 
@@ -175,6 +142,7 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {
+	repos := w.Workflow.GetRepositories()
 	params := make([]sdk.Parameter, 0, len(nodeRunIds))
 	for _, nodeRunID := range nodeRunIds {
 		parentNodeRun, errNR := LoadNodeRunByID(db, nodeRunID, LoadRunOptions{})
@@ -199,6 +167,13 @@ func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.Workf
 
 			// Do not duplicate variable from payload
 			if _, ok := payload[p.Name]; ok {
+				if !strings.HasPrefix(p.Name, "git.") {
+					continue
+				}
+			}
+
+			// We inherite git variables is there is more than one repositories in the whole workflow
+			if strings.HasPrefix(p.Name, "git.") && len(repos) == 1 {
 				continue
 			}
 
