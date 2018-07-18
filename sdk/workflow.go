@@ -395,6 +395,24 @@ func (w *Workflow) GetPipelines() []Pipeline {
 	return withoutDuplicates
 }
 
+// GetRepositoriesFullName returns the list of repositories from applications
+func (w *Workflow) GetRepositories() []string {
+	apps := w.GetApplications()
+	repos := map[string]struct{}{}
+	for _, a := range apps {
+		if a.RepositoryFullname != "" {
+			repos[a.RepositoryFullname] = struct{}{}
+		}
+	}
+	res := make([]string, len(repos))
+	var i int
+	for repo := range repos {
+		res[i] = repo
+		i++
+	}
+	return res
+}
+
 //InvolvedEnvironments returns all environments used in the workflow
 func (w *Workflow) InvolvedEnvironments() []int64 {
 	if w.Root == nil {
