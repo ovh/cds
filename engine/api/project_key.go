@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -143,6 +144,10 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
 		}
 		newKey.ProjectID = p.ID
+
+		if !strings.HasPrefix(newKey.Name, "proj-") {
+			newKey.Name = "proj-" + newKey.Name
+		}
 
 		switch newKey.Type {
 		case sdk.KeyTypeSSH:

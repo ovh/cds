@@ -1,0 +1,12 @@
+version: v1.0
+name: key-install
+stages:
+- Stage 1
+jobs:
+- job: New Job
+  stage: Stage 1
+  steps:
+  - script:
+    - set -e
+    - PKEY=`worker key install proj-testkey`
+    - ls -la $PKEY
