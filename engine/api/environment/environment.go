@@ -3,6 +3,7 @@ package environment
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -493,6 +494,10 @@ func CountEnvironmentByVarValue(db gorp.SqlExecutor, projectKey string, value st
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
 func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.User) error {
+	if !strings.HasPrefix(keyname, "env-") {
+		keyname = "env-" + keyname
+	}
+
 	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return errGenerate
