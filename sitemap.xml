@@ -862,6 +862,14 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/worker/key/install/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/worker/key/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/keys/</loc>
   </url>
   

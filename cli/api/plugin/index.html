@@ -88,70 +88,6 @@
           <span>Build &amp; Deploy a standard application</span>
         </a>
     </li>
-    <li data-nav-id="/gettingstarted/concepts/" class="dd-item">
-      <a href="https://ovh.github.io/cds/gettingstarted/concepts/">
-        <span>Concepts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/gettingstarted/concepts/why_cds/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/why_cds/">
-          <span>CDS - The origins</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/workflow/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/workflow/">
-          <span>Workflow</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/pipeline/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/pipeline/">
-          <span>Pipeline</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/stage/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/stage/">
-          <span>Stage</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/job/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/job/">
-          <span>Job</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/step/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/step/">
-          <span>Step</span>
-        </a>
-    </li>
-        </ul>
-    </li>
-    <li data-nav-id="/gettingstarted/scopes/" class="dd-item">
-      <a href="https://ovh.github.io/cds/gettingstarted/scopes/">
-        <span>Scopes &amp; ACLs</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/gettingstarted/scopes/project/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/scopes/project/">
-          <span>Project</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/scopes/application/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/scopes/application/">
-          <span>Application</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/scopes/environment/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/scopes/environment/">
-          <span>Environment</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/scopes/permissions/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/scopes/permissions/">
-          <span>Permissions</span>
-        </a>
-    </li>
-        </ul>
-    </li>
         </ul>
     </li>
           
@@ -1763,6 +1699,18 @@
           <span>export</span>
         </a>
     </li>
+    <li data-nav-id="/cli/worker/key/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/worker/key/">
+        <span>key</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/worker/key/install/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/key/install/">
+          <span>install</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/worker/register/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/register/">
           <span>register</span>
@@ -1979,8 +1927,8 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-plugin">POST <code>/plugin</code></a></li>
 <li><a href="#put-plugin">PUT <code>/plugin</code></a></li>
+<li><a href="#post-plugin">POST <code>/plugin</code></a></li>
 <li><a href="#delete-plugin-name">DELETE <code>/plugin/&lt;name&gt;</code></a></li>
 <li><a href="#get-plugin-download-name">GET <code>/plugin/download/&lt;name&gt;</code></a></li>
 </ul></li>
@@ -2006,34 +1954,6 @@
 
 
 
-<h3 id="post-plugin">POST <code>/plugin</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/plugin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addPluginHandler%22">addPluginHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-plugin">PUT <code>/plugin</code></h3>
 
 <table>
@@ -2058,6 +1978,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updatePluginHandler%22">updatePluginHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-plugin">POST <code>/plugin</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/plugin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addPluginHandler%22">addPluginHandler</a></td>
 </tr>
 </tbody>
 </table>

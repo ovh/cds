@@ -1765,6 +1765,18 @@
           <span>export</span>
         </a>
     </li>
+    <li data-nav-id="/cli/worker/key/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/worker/key/">
+        <span>key</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/worker/key/install/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/key/install/">
+          <span>install</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/worker/register/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/register/">
           <span>register</span>
@@ -1994,6 +2006,7 @@
 <li>
 <ul>
 <li><a href="#using-cds-variables-in-a-script">Using CDS variables in a script</a></li>
+<li><a href="#using-cds-keys-in-a-script">Using CDS keys in a script</a></li>
 <li><a href="#using-worker-cli-in-a-script">Using worker cli in a script</a></li>
 </ul></li>
 <li><a href="#example">Example</a></li>
@@ -2076,6 +2089,16 @@ exit 0
 
 <p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.script-bash.png" alt="img" /></p>
 
+<h4 id="using-cds-keys-in-a-script">Using CDS keys in a script</h4>
+
+<p>You can use CDS SSH keys in a step script with the <a href="https://ovh.github.io/cds/cli/worker/key/">worker key command</a>. Just use <code>worker key install proj-mykey</code> and it will install the SSH environment and private SSH key of your key in your project named <strong>mykey</strong>.</p>
+
+<p>The command <code>worker key install proj-mykey</code> will return the path where the private key is stored. In that way you can save this value in a variable and use it for a ssh command like this:</p>
+
+<pre><code class="language-bash">PKEY=`worker key install proj-mykey`
+ssh -i $PKEY myuser@myhost echo &quot;test&quot;
+</code></pre>
+
 <h4 id="using-worker-cli-in-a-script">Using worker cli in a script</h4>
 
 <p>You can use worker cli to make different actions</p>
@@ -2087,6 +2110,7 @@ exit 0
 <li><a href="https://ovh.github.io/cds/cli/worker/tag/">worker tag</a></li>
 <li><a href="https://ovh.github.io/cds/cli/worker/cache/">worker cache</a></li>
 <li><a href="https://ovh.github.io/cds/cli/worker/tmpl/">worker tmpl</a></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/key/">worker key</a></li>
 </ul>
 
 <h3 id="example">Example</h3>
