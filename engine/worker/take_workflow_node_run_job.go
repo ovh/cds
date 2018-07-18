@@ -40,6 +40,8 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 	start := time.Now()
 
+	log.Info("%+v\n", info.Secrets)
+
 	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
 	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)

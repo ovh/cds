@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"strconv"
 	"time"
@@ -22,6 +23,7 @@ import (
 
 type keyResponse struct {
 	PKey string `json:"pkey"`
+	Type string `json:"type"`
 }
 
 func cmdKey(w *currentWorker) *cobra.Command {
@@ -43,9 +45,9 @@ func cmdKeyInstall(w *currentWorker) *cobra.Command {
 		Aliases: []string{"i", "add"},
 		Short:   "worker key install <key-name>",
 		Long: `
-Inside a step script you can install a ssh key generated in CDS in your ssh environment and return the PKEY variable
+Inside a step script you can install a SSH key generated in CDS in your ssh environment and return the PKEY variable (only for SSH)
 
-So if you want to update your PKEY variable, which is the variable with the path to the ssh private key you just can write ` + "PKEY=`worker key install proj-mykey`" + `
+So if you want to update your PKEY variable, which is the variable with the path to the ssh private key you just can write ` + "PKEY=`worker key install proj-mykey`" + ` (only for SSH)
 		`,
 		Example: "worker key install proj-test",
 		Run:     keyInstallCmd(w),
@@ -106,7 +108,13 @@ func keyInstallCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Error: worker key install> cannot unmarshall key response")
 		}
 
-		fmt.Println(keyResp.PKey)
+		switch keyResp.Type {
+		case sdk.KeyTypeSSH:
+			fmt.Println(keyResp.PKey)
+		case sdk.KeyTypePGP:
+			fmt.Println("Your PGP key is imported with success")
+		}
+
 	}
 }
 
@@ -142,27 +150,86 @@ func (wk *currentWorker) keyInstallHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	wk.currentJob.pkey = path.Join(keysDirectory, key.Name)
-
-	if err := vcs.CleanSSHKeys(keysDirectory, nil); err != nil {
-		errClean := sdk.Error{
-			Message: fmt.Sprintf("Cannot clean ssh keys : %v", err),
-			Status:  http.StatusInternalServerError,
+	switch key.Type {
+	case sdk.KeyTypeSSH:
+		wk.currentJob.pkey = path.Join(keysDirectory, key.Name)
+		if err := vcs.CleanSSHKeys(keysDirectory, nil); err != nil {
+			errClean := sdk.Error{
+				Message: fmt.Sprintf("Cannot clean ssh keys : %v", err),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error("%v", errClean)
+			writeJSON(w, errClean, errClean.Status)
+			return
 		}
-		log.Error("%v", errClean)
-		writeJSON(w, errClean, errClean.Status)
-		return
-	}
 
-	if err := vcs.SetupSSHKey(wk.currentJob.secrets, keysDirectory, key); err != nil {
-		errSetup := sdk.Error{
-			Message: fmt.Sprintf("Cannot setup ssh key %s : %v", keyName, err),
-			Status:  http.StatusInternalServerError,
+		if err := vcs.SetupSSHKey(wk.currentJob.secrets, keysDirectory, key); err != nil {
+			errSetup := sdk.Error{
+				Message: fmt.Sprintf("Cannot setup ssh key %s : %v", keyName, err),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error("%v", errSetup)
+			writeJSON(w, errSetup, errSetup.Status)
+			return
 		}
-		log.Error("%v", errSetup)
-		writeJSON(w, errSetup, errSetup.Status)
-		return
-	}
 
-	writeJSON(w, keyResponse{PKey: wk.currentJob.pkey}, http.StatusOK)
+		writeJSON(w, keyResponse{PKey: wk.currentJob.pkey, Type: sdk.KeyTypeSSH}, http.StatusOK)
+
+	case sdk.KeyTypePGP:
+		content := []byte(key.Value)
+		tmpfile, errTmpFile := ioutil.TempFile("", key.Name)
+		if errTmpFile != nil {
+			errFile := sdk.Error{
+				Message: fmt.Sprintf("Cannot setup pgp key %s : %v", key.Name, errTmpFile),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error("%v", errFile)
+			writeJSON(w, errFile, errFile.Status)
+			return
+		}
+		defer func() {
+			_ = os.Remove(tmpfile.Name())
+		}()
+
+		if _, err := tmpfile.Write(content); err != nil {
+			errW := sdk.Error{
+				Message: fmt.Sprintf("Cannot setup pgp key file %s : %v", key.Name, err),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error("%v", errW)
+			writeJSON(w, errW, errW.Status)
+			return
+		}
+
+		if err := tmpfile.Close(); err != nil {
+			errC := sdk.Error{
+				Message: fmt.Sprintf("Cannot setup pgp key file %s (close) : %v", key.Name, err),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error("%v", errC)
+			writeJSON(w, errC, errC.Status)
+			return
+		}
+
+		cmd := exec.Command("gpg", "--import", tmpfile.Name())
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		if err := cmd.Run(); err != nil {
+			errR := sdk.Error{
+				Message: fmt.Sprintf("Cannot import pgp key %s : %v", key.Name, err),
+				Status:  http.StatusInternalServerError,
+			}
+			log.Error("%v", errR)
+			writeJSON(w, errR, errR.Status)
+			return
+		}
+		writeJSON(w, keyResponse{Type: sdk.KeyTypePGP}, http.StatusOK)
+	default:
+		err := sdk.Error{
+			Message: fmt.Sprintf("Type key %s is not implemented", key.Type),
+			Status:  http.StatusNotImplemented,
+		}
+		log.Error("%v", err)
+		writeJSON(w, err, err.Status)
+	}
 }
