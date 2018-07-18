@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 
 	types "github.com/docker/docker/api/types"
 	context "golang.org/x/net/context"
-
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeout time.Duration) error {
