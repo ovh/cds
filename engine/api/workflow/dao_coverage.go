@@ -84,8 +84,8 @@ func UpdateCoverage(db gorp.SqlExecutor, cov sdk.WorkflowNodeRunCoverage) error 
 // PostGet is a db hook on workflow_node_run_coverage
 func (c *Coverage) PostGet(s gorp.SqlExecutor) error {
 	var report, trend sql.NullString
-	query := "SELECT report, trend FROM workflow_node_run_coverage WHERE repository=$1 AND branch=$2 AND workflow_node_run_id=$3"
-	if err := s.QueryRow(query, c.Repository, c.Branch, c.WorkflowNodeRunID).Scan(&report, &trend); err != nil {
+	query := "SELECT report, trend FROM workflow_node_run_coverage WHERE workflow_node_run_id=$1"
+	if err := s.QueryRow(query, c.WorkflowNodeRunID).Scan(&report, &trend); err != nil {
 		return sdk.WrapError(err, "workflow.coverage.postget> Unable to get report and trend")
 	}
 
