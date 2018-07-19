@@ -144,7 +144,7 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 		if err := UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}
-		if newVar.Name != varName {
+		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
 			return sdk.ErrWrongRequest
 		}
 

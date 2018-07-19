@@ -117,9 +117,8 @@ func (api *API) updateVariableInProjectHandler() Handler {
 		if err := UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}
-		if newVar.Name != varName {
+		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
 			return sdk.ErrWrongRequest
-
 		}
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
