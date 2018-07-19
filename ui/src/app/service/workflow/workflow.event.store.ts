@@ -10,7 +10,7 @@ import {WorkflowSidebarMode, WorkflowSidebarStore} from './workflow.sidebar.stor
 @Injectable()
 export class WorkflowEventStore {
 
-    private _currentWorkflowRuns: BehaviorSubject<Map<number, WorkflowRun>> = new BehaviorSubject(Map<number, WorkflowRun>());
+    private _currentWorkflowRuns: BehaviorSubject<Map<number, WorkflowRun>> = new BehaviorSubject(null);
     private _currentWorkflowRun: BehaviorSubject<WorkflowRun> = new BehaviorSubject(null);
     private _currentWorkflowNodeRun: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
     private _nodeRunEvents: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);

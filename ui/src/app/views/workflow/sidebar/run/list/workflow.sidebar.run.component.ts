@@ -1,8 +1,7 @@
 import {Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
-import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
+import {filter, finalize} from 'rxjs/operators';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {Workflow} from '../../../../../model/workflow.model';
@@ -36,12 +35,15 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
             this._workflow = data;
             this.initSelectableTags();
             if (haveToStart) {
-                this.eventSubscription = this._eventStore.workflowRuns().subscribe(m => {
-                    this.workflowRuns = Array.from(m.valueSeq().toArray()).sort((a, b) => {
-                        return b.num - a.num;
+                this.eventSubscription = this._eventStore.workflowRuns()
+                    .pipe(filter((runs) => runs != null))
+                    .subscribe(m => {
+                        this.workflowRuns = Array.from(m.valueSeq().toArray()).sort((a, b) => {
+                            return b.num - a.num;
+                        });
+                        console.log(this.workflowRuns);
+                        this.refreshRun();
                     });
-                    this.refreshRun();
-                });
             }
         }
     }
@@ -55,7 +57,6 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     scrolledSub: Subscription;
     // List of workflow run
     workflowRuns: Array<WorkflowRun>;
-    filteredWorkflowRuns: Array<WorkflowRun>;
 
     // search part
     selectedTags: Array<string>;
@@ -72,6 +73,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     subWorkflowRun: Subscription;
     offset = 0;
     loading = false;
+    loadingMore = false;
 
     constructor(
         private _workflowRunService: WorkflowRunService,
@@ -93,10 +95,10 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
         this.scrolledSub = this.scrolled.subscribe((scrolled) => {
             if (scrolled) {
                 this.offset += 50;
-                this.loading = true;
+                this.loadingMore = true;
                 this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
                     .pipe(
-                        finalize(() => this.loading = false)
+                        finalize(() => this.loadingMore = false)
                     )
                     .subscribe((runs) => {
                         this.workflowRuns = this.workflowRuns.concat(runs);
@@ -148,23 +150,34 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
         return this._duration.duration(new Date(start), new Date(done));
     }
 
+    filterRuns(): void {
+        this.offset = 0;
+        let filters;
+
+        if (Array.isArray(this.selectedTags) && this.selectedTags.length) {
+            filters = this.selectedTags.reduce((prev, cur) => {
+              let splitted = cur.split(':');
+              if (splitted.length === 2) {
+                prev[splitted[0]] = splitted[1];
+              }
+
+              return prev;
+            }, {});
+        }
+
+        this.loading = true;
+        this._workflowRunService.runs(this.project.key, this.workflow.name, '50', null, filters)
+            .pipe(
+                finalize(() => this.loading = false)
+            )
+            .subscribe((runs) => {
+                this.workflowRuns = runs;
+                this.refreshRun();
+            });
+    }
+
     refreshRun(): void {
         if (this.workflowRuns) {
-            this.filteredTags = {};
-            this.filteredWorkflowRuns = cloneDeep(this.workflowRuns);
-
-            if (this.selectedTags) {
-              this.selectedTags.forEach(t => {
-                  let splitted = t.split(':');
-                  let key = splitted.shift();
-                  let value = splitted.join(':');
-                  this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
-                      return r.tags.find(tag => {
-                          return tag.tag === key && tag.value.indexOf(value) !== -1;
-                      });
-                  });
-              });
-            }
             if (this.durationIntervalID) {
                 this.deleteInterval();
             }
@@ -176,9 +189,9 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     }
 
     refreshDuration(): void {
-        if (this.filteredWorkflowRuns) {
+        if (this.workflowRuns) {
             let stillWorking = false;
-            this.filteredWorkflowRuns.forEach((r) => {
+            this.workflowRuns.forEach((r) => {
                 if (PipelineStatus.isActive(r.status)) {
                     stillWorking = true;
                 }

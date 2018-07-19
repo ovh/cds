@@ -25,6 +25,7 @@ function initSSE(force) {
         console.log('Start SSE');
         sse = connectSSE(sseURL, headerKey, headerValue);
         sse.onmessage = function(evt) {
+            console.log(evt);
             // if ack get UUID
             if (evt.data.indexOf('ACK: ') === 0) {
                 return;
@@ -49,7 +50,7 @@ setInterval(() => {
                     console.log('Closing SSE');
                     sse.close();
                     offline = true;
-                }   
+                }
             } else {
                 if (offline) {
                     initSSE(true);
