@@ -41,7 +41,6 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
                         this.workflowRuns = Array.from(m.valueSeq().toArray()).sort((a, b) => {
                             return b.num - a.num;
                         });
-                        console.log(this.workflowRuns);
                         this.refreshRun();
                     });
             }

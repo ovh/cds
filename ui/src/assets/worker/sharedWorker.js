@@ -25,7 +25,6 @@ function initSSE(force) {
         console.log('Start SSE');
         sse = connectSSE(sseURL, headerKey, headerValue);
         sse.onmessage = function(evt) {
-            console.log(evt);
             // if ack get UUID
             if (evt.data.indexOf('ACK: ') === 0) {
                 return;
