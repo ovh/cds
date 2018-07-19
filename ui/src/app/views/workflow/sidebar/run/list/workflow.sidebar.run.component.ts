@@ -1,7 +1,8 @@
-import {Component, ElementRef, Input, OnDestroy, ViewChild} from '@angular/core';
+import {Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
+import {finalize} from 'rxjs/operators';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {Workflow} from '../../../../../model/workflow.model';
@@ -17,7 +18,7 @@ import {DurationService} from '../../../../../shared/duration/duration.service';
     styleUrls: ['./workflow.sidebar.run.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunListComponent implements OnDestroy {
+export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
@@ -46,9 +47,12 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     }
     get workflow() { return this._workflow; }
 
+    @Input() scrolled: EventEmitter<boolean>;
+
     @ViewChild('tagsList') tagsList: ElementRef;
 
     eventSubscription: Subscription;
+    scrolledSub: Subscription;
     // List of workflow run
     workflowRuns: Array<WorkflowRun>;
     filteredWorkflowRuns: Array<WorkflowRun>;
@@ -66,9 +70,15 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     selectedWorkfowRun: WorkflowRun;
     subWorkflowRun: Subscription;
+    offset = 0;
+    loading = false;
 
-    constructor(private _workflowRunService: WorkflowRunService,
-      private _duration: DurationService, private _router: Router, private _eventStore: WorkflowEventStore) {
+    constructor(
+        private _workflowRunService: WorkflowRunService,
+        private _duration: DurationService,
+        private _router: Router,
+        private _eventStore: WorkflowEventStore
+    ) {
 
         this.subWorkflowRun = this._eventStore.selectedRun().subscribe(wr => {
             this.selectedWorkfowRun = wr;
@@ -76,6 +86,23 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
         this.listingSub = this._eventStore.isListingRuns().subscribe(b => {
             this.ready = !b;
+        });
+    }
+
+    ngOnInit() {
+        this.scrolledSub = this.scrolled.subscribe((scrolled) => {
+            if (scrolled) {
+                this.offset += 50;
+                this.loading = true;
+                this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
+                    .pipe(
+                        finalize(() => this.loading = false)
+                    )
+                    .subscribe((runs) => {
+                        this.workflowRuns = this.workflowRuns.concat(runs);
+                        this.refreshRun();
+                    });
+            }
         });
     }
 

@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, EventEmitter, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
@@ -44,6 +44,8 @@ export class WorkflowComponent implements OnInit {
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
+
+    onScroll = new EventEmitter<boolean>();
 
     constructor(private _activatedRoute: ActivatedRoute,
                 private _workflowStore: WorkflowStore,

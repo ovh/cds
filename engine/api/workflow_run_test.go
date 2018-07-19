@@ -274,9 +274,11 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	//Do the request
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 400, rec.Code)
-	assert.Equal(t, "", rec.Header().Get("Content-Range"))
-
+	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, "0-100/10", rec.Header().Get("Content-Range"))
+	runs := make([]sdk.WorkflowRun, 0)
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &runs))
+	assert.Equal(t, 10, len(runs))
 }
 
 func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
