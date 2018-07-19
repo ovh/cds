@@ -16,12 +16,15 @@ export class WorkflowRunService {
     /**
      * List workflow runs for the given workflow
      */
-    runs(key: string, workflowName: string, limit: string, offset?: string): Observable<Array<WorkflowRun>> {
+    runs(key: string, workflowName: string, limit: string, offset?: string, filters?: {}): Observable<Array<WorkflowRun>> {
         let url = '/project/' + key + '/workflows/' + workflowName + '/runs';
         let params = new HttpParams();
         params = params.append('limit', limit);
         if (offset) {
             params = params.append('offset', offset);
+        }
+        if (filters) {
+            Object.keys(filters).forEach((tag) => params = params.append(tag, filters[tag]));
         }
 
         return this._http.get<Array<WorkflowRun>>(url, {params: params});

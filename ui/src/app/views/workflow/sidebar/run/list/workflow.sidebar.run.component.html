@@ -3,7 +3,7 @@
                       [(ngModel)]="selectedTags"
                       [options]="tagsSelectable"
                       [isSearchable]="true"
-                      (ngModelChange)="refreshRun()"
+                      (ngModelChange)="filterRuns()"
                       #multiSelect>
         <sui-select-option
             *ngFor="let option of multiSelect.filteredOptions"
@@ -12,7 +12,7 @@
     </sui-multi-select>
     <div class="ui list divided no-mrt" #tagsList>
       <div class="item padding pointing"
-          *ngFor="let r of filteredWorkflowRuns"
+          *ngFor="let r of workflowRuns"
           (click)="changeRun(r.num)"
           [class.active]="selectedWorkfowRun?.num === r.num">
           <div class="floated right mr" *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">

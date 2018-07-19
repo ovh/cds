@@ -49,7 +49,7 @@ setInterval(() => {
                     console.log('Closing SSE');
                     sse.close();
                     offline = true;
-                }   
+                }
             } else {
                 if (offline) {
                     initSSE(true);
