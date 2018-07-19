@@ -1,7 +1,7 @@
 import {Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
-import {filter, finalize} from 'rxjs/operators';
+import {finalize} from 'rxjs/operators';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {Workflow} from '../../../../../model/workflow.model';
@@ -36,8 +36,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
             this.initSelectableTags();
             if (haveToStart) {
                 this.eventSubscription = this._eventStore.workflowRuns()
-                    .pipe(filter((runs) => runs != null))
-                    .subscribe(m => {
+                    .subscribe((m) => {
                         this.workflowRuns = Array.from(m.valueSeq().toArray()).sort((a, b) => {
                             return b.num - a.num;
                         });
@@ -92,7 +91,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.scrolledSub = this.scrolled.subscribe((scrolled) => {
-            if (scrolled) {
+            if (scrolled && (!Array.isArray(this.selectedTags) || !this.selectedTags.length)) {
                 this.offset += 50;
                 this.loadingMore = true;
                 this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())

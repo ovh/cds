@@ -3,7 +3,7 @@ import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
 import {Subscription} from 'rxjs';
-import {filter, finalize} from 'rxjs/operators';
+import {finalize} from 'rxjs/operators';
 import {Project} from '../../model/project.model';
 import {Workflow} from '../../model/workflow.model';
 import {ProjectStore} from '../../service/project/project.store';
@@ -126,7 +126,6 @@ export class WorkflowComponent implements OnInit {
     initRuns(key: string, workflowName: string): void {
         this._workflowEventStore.setListingRuns(true);
         this._workflowRunService.runs(key, workflowName, '50')
-          .pipe(filter((wrs) => wrs != null))
           .subscribe(wrs => {
               this._workflowEventStore.setListingRuns(false);
               this._workflowEventStore.pushWorkflowRuns(wrs);
