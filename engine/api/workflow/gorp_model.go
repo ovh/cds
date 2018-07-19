@@ -40,9 +40,9 @@ type Coverage sdk.WorkflowNodeRunCoverage
 
 // NodeRun is a gorp wrapper around sdk.WorkflowNodeRun
 type NodeRun struct {
-	WorkflowID         int64          `db:"workflow_id"`
+	WorkflowID         sql.NullInt64  `db:"workflow_id"`
 	WorkflowRunID      int64          `db:"workflow_run_id"`
-	ApplicationID      int64          `db:"application_id"`
+	ApplicationID      sql.NullInt64  `db:"application_id"`
 	ID                 int64          `db:"id"`
 	WorkflowNodeID     int64          `db:"workflow_node_id"`
 	WorkflowNodeName   string         `db:"workflow_node_name"`
