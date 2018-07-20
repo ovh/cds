@@ -3,6 +3,7 @@ package workflow
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -22,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -236,7 +238,17 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 }
 
 // Load loads a workflow for a given user (ie. checking permissions)
-func Load(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string, u *sdk.User, opts LoadOptions) (*sdk.Workflow, error) {
+func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string, u *sdk.User, opts LoadOptions) (*sdk.Workflow, error) {
+	ctx, end := tracing.Span(ctx, "workflow.Load",
+		tracing.Tag("workflow", name),
+		tracing.Tag("project_key", proj.Key),
+		tracing.Tag("with_pipeline", opts.DeepPipeline),
+		tracing.Tag("only_root", opts.OnlyRootNode),
+		tracing.Tag("with_base64_keys", opts.Base64Keys),
+		tracing.Tag("without_node", opts.WithoutNode),
+	)
+	defer end()
+
 	var icon string
 	if opts.WithIcon {
 		icon = "workflow.icon,"
@@ -261,7 +273,7 @@ func Load(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
 		and workflow.name = $2`, icon)
-	res, err := load(db, store, proj, opts, u, query, proj.Key, name)
+	res, err := load(ctx, db, store, proj, opts, u, query, proj.Key, name)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow %s in project %s", name, proj.Key)
 	}
@@ -275,7 +287,7 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int6
 		select *
 		from workflow
 		where id = $1`
-	res, err := load(db, store, proj, opts, u, query, id)
+	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow %d", id)
 	}
@@ -371,31 +383,45 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 	return res, nil
 }
 
-func load(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOptions, u *sdk.User, query string, args ...interface{}) (*sdk.Workflow, error) {
+func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOptions, u *sdk.User, query string, args ...interface{}) (*sdk.Workflow, error) {
 	t0 := time.Now()
 	dbRes := Workflow{}
+
+	_, next := tracing.Span(ctx, "workflow.load.selectOne")
 	if err := db.SelectOne(&dbRes, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow")
 	}
+	next()
 
 	res := sdk.Workflow(dbRes)
-	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
+	if proj.Key == "" {
+		res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
+	} else {
+		res.ProjectKey = proj.Key
+	}
+
 	if u != nil {
 		res.Permission = permission.WorkflowPermission(res.ProjectKey, res.Name, u)
 	}
 
 	// Load groups
+	_, next = tracing.Span(ctx, "workflow.load.loadWorkflowGroups")
 	gps, err := loadWorkflowGroups(db, res)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow groups")
 	}
 	res.Groups = gps
+	next()
 
 	if !opts.WithoutNode {
-		if err := loadWorkflowRoot(db, store, proj, &res, u, opts); err != nil {
+		_, next = tracing.Span(ctx, "workflow.load.loadNodes")
+		err := loadWorkflowRoot(db, store, proj, &res, u, opts)
+		next()
+
+		if err != nil {
 			return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
 		}
 		// Load joins
@@ -407,14 +433,20 @@ func load(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOp
 	}
 
 	if opts.WithFavorites {
+		_, next = tracing.Span(ctx, "workflow.load.loadFavorite")
 		fav, errF := loadFavorite(db, &res, u)
+		next()
+
 		if errF != nil {
 			return nil, sdk.WrapError(errF, "Load> unable to load favorite")
 		}
 		res.Favorite = fav
 	}
 
+	_, next = tracing.Span(ctx, "workflow.load.loadNotifications")
 	notifs, errN := loadNotifications(db, &res)
+	next()
+
 	if errN != nil {
 		return nil, sdk.WrapError(errN, "Load> Unable to load workflow notification")
 	}
@@ -425,7 +457,9 @@ func load(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOp
 	log.Debug("Load> Load workflow (%s/%s)%d took %.3f seconds", res.ProjectKey, res.Name, res.ID, delta)
 	w := &res
 	if !opts.WithoutNode {
+		_, next = tracing.Span(ctx, "workflow.load.Sort")
 		Sort(w)
+		next()
 	}
 	return w, nil
 }
@@ -846,7 +880,10 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 }
 
 // Push push a workflow from cds files
-func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
+func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
+	ctx, end := tracing.Span(ctx, "workflow.Push")
+	defer end()
+
 	apps := make(map[string]exportentities.Application)
 	pips := make(map[string]exportentities.PipelineV1)
 	envs := make(map[string]exportentities.Environment)
@@ -1000,7 +1037,7 @@ func Push(db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, 
 		dryRun = opts.DryRun
 	}
 
-	wf, msgList, err := ParseAndImport(tx, store, proj, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
+	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
 	if err != nil {
 		log.Error("Push> Unable to import workflow: %v", err)
 		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)

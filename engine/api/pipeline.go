@@ -416,18 +416,6 @@ func (api *API) postPipelineRollbackHandler() Handler {
 			return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot update pipeline last modified date")
 		}
 
-		// Update applications
-		apps, errA := application.LoadByPipeline(tx, api.Cache, audit.Pipeline.ID, u)
-		if errA != nil {
-			return sdk.WrapError(errA, "postPipelineRollbackHandler> Cannot load application using pipeline %s", audit.Pipeline.Name)
-		}
-
-		for _, app := range apps {
-			if err := application.UpdateLastModified(tx, api.Cache, &app, u); err != nil {
-				return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot update application last modified date")
-			}
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot commit transaction")
 		}

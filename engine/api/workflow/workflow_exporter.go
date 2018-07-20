@@ -3,6 +3,7 @@ package workflow
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 
@@ -12,13 +13,17 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
 // Export a workflow
-func Export(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
-	wf, errload := Load(db, cache, proj, name, u, LoadOptions{})
+func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
+	ctx, end := tracing.Span(ctx, "workflow.Export")
+	defer end()
+
+	wf, errload := Load(ctx, db, cache, proj, name, u, LoadOptions{})
 	if errload != nil {
 		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
 	}
@@ -47,11 +52,14 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, withPermissions bo
 }
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
-func Pull(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer) error {
+func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer) error {
+	ctx, end := tracing.Span(ctx, "workflow.Pull")
+	defer end()
+
 	options := LoadOptions{
 		DeepPipeline: true,
 	}
-	wf, errload := Load(db, cache, proj, name, u, options)
+	wf, errload := Load(ctx, db, cache, proj, name, u, options)
 	if errload != nil {
 		return sdk.WrapError(errload, "workflow.Pull> Cannot load workflow %s", name)
 	}

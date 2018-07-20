@@ -35,7 +35,7 @@ func (api *API) getWorkflowExportHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowExportHandler> unable to load projet")
 		}
-		if _, err := workflow.Export(api.mustDB(), api.Cache, proj, name, f, withPermissions, getUser(ctx), w); err != nil {
+		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, withPermissions, getUser(ctx), w); err != nil {
 			return sdk.WrapError(err, "getWorkflowExportHandler>")
 		}
 
@@ -58,7 +58,7 @@ func (api *API) getWorkflowPullHandler() Handler {
 		}
 
 		buf := new(bytes.Buffer)
-		if err := workflow.Pull(api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, withPermissions, project.EncryptWithBuiltinKey, getUser(ctx), buf); err != nil {
+		if err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, withPermissions, project.EncryptWithBuiltinKey, getUser(ctx), buf); err != nil {
 			return sdk.WrapError(err, "getWorkflowPullHandler")
 		}
 

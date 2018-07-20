@@ -125,11 +125,12 @@ export class WorkflowComponent implements OnInit {
 
     initRuns(key: string, workflowName: string): void {
         this._workflowEventStore.setListingRuns(true);
-        this._workflowRunService.runs(key, workflowName, '50').subscribe(wrs => {
-            this._workflowEventStore.setListingRuns(false);
-            this._workflowEventStore.pushWorkflowRuns(wrs);
-            this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
-        });
+        this._workflowRunService.runs(key, workflowName, '50')
+          .subscribe(wrs => {
+              this._workflowEventStore.setListingRuns(false);
+              this._workflowEventStore.pushWorkflowRuns(wrs);
+              this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
+          });
     }
 
     initSidebar(): void {
