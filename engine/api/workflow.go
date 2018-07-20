@@ -341,9 +341,8 @@ func (api *API) getWorkflowHookHandler() Handler {
 		}
 
 		//Push the hook to hooks µService
-		dao := services.Querier(api.mustDB(), api.Cache)
 		//Load service "hooks"
-		srvs, errS := dao.FindByType("hooks")
+		srvs, errS := services.FindByType(api.mustDB(), services.TypeHooks)
 		if errS != nil {
 			return sdk.WrapError(errS, "getWorkflowHookHandler> Unable to load hooks services")
 		}

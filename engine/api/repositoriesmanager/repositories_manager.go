@@ -21,8 +21,7 @@ import (
 
 //LoadAll Load all RepositoriesManager from the database
 func LoadAll(db *gorp.DbMap, store cache.Store) ([]string, error) {
-	serviceDAO := services.NewRepository(func() *gorp.DbMap { return db }, store)
-	srvs, err := serviceDAO.FindByType(services.TypeVCS)
+	srvs, err := services.FindByType(db, services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WrapError(err, "repositoriesmanager.LoadAll> Unable to load services")
 	}
@@ -77,8 +76,7 @@ func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name str
 }
 
 func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
-	srvDAO := services.Querier(c.dbFunc(), c.cache)
-	srv, err := srvDAO.FindByType(services.TypeVCS)
+	srv, err := services.FindByType(c.dbFunc(), services.TypeVCS)
 	if err != nil {
 		return "", "", err
 	}
@@ -94,8 +92,7 @@ func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
 }
 
 func (c *vcsConsumer) AuthorizeToken(token string, secret string) (string, string, error) {
-	srvDAO := services.Querier(c.dbFunc(), c.cache)
-	srv, err := srvDAO.FindByType(services.TypeVCS)
+	srv, err := services.FindByType(c.dbFunc(), services.TypeVCS)
 	if err != nil {
 		return "", "", err
 	}
@@ -120,8 +117,7 @@ func (c *vcsConsumer) GetAuthorizedClient(token string, secret string) (sdk.VCSA
 		return nil, sdk.ErrNoReposManagerClientAuth
 	}
 
-	servicesDao := services.Querier(c.dbFunc(), c.cache)
-	srvs, err := servicesDao.FindByType(services.TypeVCS)
+	srvs, err := services.FindByType(c.dbFunc(), services.TypeVCS)
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +170,7 @@ func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectV
 		return vcs, nil
 	}
 
-	servicesDao := services.Querier(db, store)
-	srvs, err := servicesDao.FindByType(services.TypeVCS)
+	srvs, err := services.FindByType(db, services.TypeVCS)
 	if err != nil {
 		return nil, err
 	}

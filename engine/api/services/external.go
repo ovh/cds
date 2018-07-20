@@ -78,16 +78,15 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 }
 
 func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.ExternalService) error {
-	repo := NewRepository(dbFunc, store)
 	db := dbFunc()
 	for _, s := range ss {
-		oldSrv, errOldSrv := repo.FindByName(s.Name)
+		oldSrv, errOldSrv := FindByName(db, s.Name)
 		if errOldSrv != nil && errOldSrv != sdk.ErrNotFound {
 			return fmt.Errorf("InitExternal> unable to find service %s", s.Name)
 		}
 
 		if oldSrv == nil {
-			if err := repo.Insert(&s.Service); err != nil {
+			if err := Insert(db, &s.Service); err != nil {
 				return fmt.Errorf("InitExternal> unable to insert external service")
 			}
 		} else {
@@ -97,14 +96,14 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 			}
 			var serv service
 			query := `select * from services where name = $1 for update nowait`
-			if err := db.SelectOne(&serv, query, s.Name); err != nil && err != sql.ErrNoRows {
+			if err := tx.SelectOne(&serv, query, s.Name); err != nil && err != sql.ErrNoRows {
 				log.Warning("services.ping> Unable to lock service %s: %v", s.Name, err)
 				_ = tx.Rollback()
 				return err
 			}
 			s.Service.LastHeartbeat = oldSrv.LastHeartbeat
 			s.Service.MonitoringStatus = oldSrv.MonitoringStatus
-			if err := repo.Update(&s.Service); err != nil {
+			if err := Update(tx, &s.Service); err != nil {
 				_ = tx.Rollback()
 				return fmt.Errorf("InitExternal> unable to update external service")
 			}

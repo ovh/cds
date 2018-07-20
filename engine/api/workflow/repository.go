@@ -212,8 +212,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 
 // PostRepositoryOperation creates a new repository operation
 func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation) error {
-	querier := services.Querier(db, cache)
-	srvs, err := querier.FindByType(services.TypeRepositories)
+	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "PostRepositoryOperation> Unable to found repositories service")
 	}
@@ -234,8 +233,7 @@ func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Pro
 
 // GetRepositoryOperation get repository operation status
 func GetRepositoryOperation(db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
-	querier := services.Querier(db, store)
-	srvs, err := querier.FindByType(services.TypeRepositories)
+	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "GetRepositoryOperation> Unable to found repositories service")
 	}
