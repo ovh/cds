@@ -50,7 +50,7 @@ func (api *API) getWorkflowHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowHandler> unable to load projet")
 		}
 
-		w1, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines, WithIcon: true})
+		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines, WithIcon: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}
@@ -188,7 +188,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{WithIcon: true})
+		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{WithIcon: true})
 		if errW != nil {
 			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
 		}
@@ -281,7 +281,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{})
+		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}
@@ -329,7 +329,7 @@ func (api *API) getWorkflowHookHandler() Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookHandler> Cannot load Workflow %s/%s", key, name)
 		}

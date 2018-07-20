@@ -209,7 +209,7 @@ func (api *API) postUserFavoriteHandler() Handler {
 
 		switch params.Type {
 		case "workflow":
-			wf, errW := workflow.Load(api.mustDB(), api.Cache, p, params.WorkflowName, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
+			wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, params.WorkflowName, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
 			if errW != nil {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}

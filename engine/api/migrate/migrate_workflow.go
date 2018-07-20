@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -53,7 +54,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 		newW.Root = n
 
 		if force {
-			w, err := workflow.Load(db, store, proj, newW.Name, u, workflow.LoadOptions{})
+			w, err := workflow.Load(context.TODO(), db, store, proj, newW.Name, u, workflow.LoadOptions{})
 			if err == nil {
 				if errD := workflow.Delete(db, store, proj, w); errD != nil {
 					return nil, sdk.WrapError(errD, "MigrateToWorkflow workflow.Load>")
@@ -88,7 +89,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 				return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
 			}
 
-			oldW, errO := workflow.Load(db, store, proj, newW.Name, u, workflow.LoadOptions{})
+			oldW, errO := workflow.Load(context.TODO(), db, store, proj, newW.Name, u, workflow.LoadOptions{})
 			if errO != nil {
 				return nil, sdk.WrapError(errO, "migratePipeline> Unable to load old workflow")
 			}

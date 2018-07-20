@@ -151,7 +151,7 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
 
-		allMsg, wrkflw, err := workflow.Push(api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "postPerformImportAsCodeHandler.workflowPush> Unable to push workflow")
 		}

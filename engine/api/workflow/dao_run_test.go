@@ -104,7 +104,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -179,7 +179,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -270,7 +270,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -347,7 +347,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -422,7 +422,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)

@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -98,7 +99,7 @@ func Test_ToWorkflow(t *testing.T) {
 	test.NoError(t, errA)
 	assert.Equal(t, "CLEANING", app2DB.WorkflowMigration)
 
-	wf, errW := workflow.Load(db, cache, proj, "w"+app1.Name, u, workflow.LoadOptions{})
+	wf, errW := workflow.Load(context.TODO(), db, cache, proj, "w"+app1.Name, u, workflow.LoadOptions{})
 	test.NoError(t, errW)
 
 	assert.Equal(t, pip1.ID, wf.Root.Pipeline.ID)

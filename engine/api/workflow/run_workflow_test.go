@@ -90,7 +90,7 @@ func TestManualRun1(t *testing.T) {
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -215,7 +215,7 @@ func TestManualRun2(t *testing.T) {
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -313,7 +313,7 @@ func TestManualRun3(t *testing.T) {
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -511,7 +511,7 @@ func TestNoStage(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
@@ -568,7 +568,7 @@ func TestNoJob(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
 	})
 	test.NoError(t, err)
