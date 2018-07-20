@@ -76,7 +76,7 @@ func (a addWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 		ProjectKey:  e.ProjectKey,
 		DataType:    "yaml",
 	}
-	return insertAudit(db, audit)
+	return InsertAudit(db, audit)
 }
 
 type updateWorkflowAudit struct{}
@@ -107,7 +107,7 @@ func (u updateWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 		ProjectKey:  e.ProjectKey,
 		DataType:    "yaml",
 	}
-	return insertAudit(db, a)
+	return InsertAudit(db, a)
 }
 
 type deleteWorkflowAudit struct{}
@@ -132,7 +132,7 @@ func (d deleteWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 		ProjectKey:  e.ProjectKey,
 		DataType:    "yaml",
 	}
-	return insertAudit(db, a)
+	return InsertAudit(db, a)
 }
 
 type addWorkflowPermissionAudit struct{}
@@ -157,7 +157,7 @@ func (a addWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) er
 		ProjectKey:  e.ProjectKey,
 		DataType:    "json",
 	}
-	return insertAudit(db, audit)
+	return InsertAudit(db, audit)
 }
 
 type updateWorkflowPermissionAudit struct{}
@@ -188,7 +188,7 @@ func (u updateWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 		ProjectKey:  e.ProjectKey,
 		DataType:    "json",
 	}
-	return insertAudit(db, audit)
+	return InsertAudit(db, audit)
 }
 
 type deleteWorkflowPermissionAudit struct{}
@@ -213,5 +213,5 @@ func (a deleteWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event)
 		ProjectKey:  e.ProjectKey,
 		DataType:    "json",
 	}
-	return insertAudit(db, audit)
+	return InsertAudit(db, audit)
 }

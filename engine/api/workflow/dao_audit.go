@@ -6,8 +6,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// insertAudit insert a workflow audit
-func insertAudit(db gorp.SqlExecutor, a sdk.AuditWorklflow) error {
+// InsertAudit insert a workflow audit
+func InsertAudit(db gorp.SqlExecutor, a sdk.AuditWorklflow) error {
 	audit := auditWorkflow(a)
 	return db.Insert(&audit)
 }

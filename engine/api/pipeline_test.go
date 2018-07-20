@@ -3,8 +3,11 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -308,6 +311,79 @@ func Test_deletePipelineHandler(t *testing.T) {
 	pip2, err := pipeline.LoadPipeline(db, proj.Key, pip.Name, false)
 	assert.Nil(t, pip2)
 	assert.Error(t, err)
+}
+
+func Test_postPipelineRollbackHandler(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	//1. Create admin user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	//2. Create project
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	//3. Create Pipeline
+	pipelineKey := sdk.RandomString(10)
+	body := fmt.Sprintf(`version: v1.0
+name: %s
+jobs:
+- job: New Job
+  steps:
+  - script: 'echo coucou'`, pipelineKey)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("POST", api.importPipelineHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri+"?format=yaml&forceUpdate=true", nil)
+
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	body = fmt.Sprintf(`version: v1.0
+name: %s
+jobs:
+- job: My Job
+  steps:
+  - script: 'echo coucou'`, pipelineKey)
+
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	audits, err := pipeline.LoadAudit(api.mustDB(), proj.Key, pipelineKey)
+	test.NoError(t, err)
+
+	vars = map[string]string{
+		"key":             proj.Key,
+		"permPipelineKey": pipelineKey,
+		"auditID":         fmt.Sprintf("%d", audits[0].ID),
+	}
+	uri = router.GetRoute("POST", api.postPipelineRollbackHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var pipRollback sdk.Pipeline
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &pipRollback))
+	test.Equal(t, 1, len(pipRollback.Stages))
+	test.Equal(t, 1, len(pipRollback.Stages[0].Jobs))
+	test.Equal(t, 1, len(pipRollback.Stages[0].Jobs[0].Action.Actions))
+	test.Equal(t, "My Job", pipRollback.Stages[0].Jobs[0].Action.Name)
 }
 
 func Test_deletePipelineHandlerShouldReturnError(t *testing.T) {
