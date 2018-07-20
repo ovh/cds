@@ -6,7 +6,7 @@
             <th class="four wide">{{ 'audit_modification_type' | translate}}</th>
             <th class="four wide">{{ 'audit_time_author' | translate }}</th>
             <th class="four wide">{{ 'audit_username' | translate }}</th>
-            <th class="two wide"></th>
+            <th class="three wide"></th>
         </tr>
         </thead>
         <tbody>
@@ -21,9 +21,12 @@
                 {{a.triggered_by}}
             </td>
             <td class="middle-aligned border">
-                <button class="ui primary button" (click)="rollback.emit(a.id); $event.stopPropagation()" *ngIf="rollback">
-                  Rollback
-                </button>
+                <ng-container *ngIf="rollback">
+                    <app-confirm-button
+                      (event)="rollback.emit(a.id)"
+                      title="Rollback">
+                    </app-confirm-button>
+                </ng-container>
             </td>
         </tr>
         </tbody>

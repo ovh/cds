@@ -20,9 +20,10 @@
                 {{a.versionned | date:'short' }}
             </td>
             <td>
-                <button class="ui primary button" (click)="rollback(a.id); $event.stopPropagation()">
-                  Rollback
-                </button>
+                <app-confirm-button
+                  (event)="rollback(a.id); $event.stopPropagation()"
+                  title="Rollback">
+                </app-confirm-button>
             </td>
         </tr>
         </tbody>
