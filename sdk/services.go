@@ -14,3 +14,10 @@ type Service struct {
 	Token            string           `json:"token" db:"-"`
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-" cli:"-"`
 }
+
+// ExternalService represents an external service
+type ExternalService struct {
+	Service
+	HealthPath string
+	HealthPort int
+}

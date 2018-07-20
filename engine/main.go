@@ -141,6 +141,7 @@ Comming soon...`,
 		conf.API.Auth.SharedInfraToken = sdk.RandomString(128)
 		conf.API.Secrets.Key = sdk.RandomString(32)
 		conf.API.Providers = append(conf.API.Providers, api.ProviderConfiguration{"sample-provider", sdk.RandomString(32)})
+		conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{"sample-service", "http://127.0.0.1", 1234, "/health", 1235, "sample-type"})
 		conf.Hatchery.Local.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Openstack.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
