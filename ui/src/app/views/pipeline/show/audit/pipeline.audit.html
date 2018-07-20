@@ -5,6 +5,7 @@
             <th class="four wide">{{ 'audit_action' | translate}}</th>
             <th class="four wide">{{ 'audit_username' | translate }}</th>
             <th class="three wide">{{ 'audit_time_author' | translate }}</th>
+            <th class="three wide"></th>
         </tr>
         </thead>
         <tbody>
@@ -18,11 +19,16 @@
             <td>
                 {{a.versionned | date:'short' }}
             </td>
+            <td>
+                <button class="ui primary button" (click)="rollback(a.id); $event.stopPropagation()">
+                  Rollback
+                </button>
+            </td>
         </tr>
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
         <tr>
-            <th colspan="3">
+            <th colspan="4">
                 <div class="ui right floated pagination menu">
                     <a class="icon item" (click)="downPage()">
                         <i class="left chevron icon"></i>

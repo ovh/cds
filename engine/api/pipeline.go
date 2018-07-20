@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -354,6 +355,86 @@ func (api *API) updatePipelineHandler() Handler {
 		event.PublishPipelineUpdate(key, p.Name, oldName, getUser(ctx))
 
 		return WriteJSON(w, pipelineDB, http.StatusOK)
+	}
+}
+
+func (api *API) postPipelineRollbackHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permPipelineKey"]
+		auditID, errConv := strconv.ParseInt(vars["auditID"], 10, 64)
+		if errConv != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelineRollbackHandler> cannot convert auditID to int")
+		}
+
+		db := api.mustDB()
+		u := getUser(ctx)
+
+		proj, errP := project.Load(db, api.Cache, key, u)
+		if errP != nil {
+			return sdk.WrapError(errP, "postPipelineRollbackHandler> Cannot load project")
+		}
+
+		audit, errA := pipeline.LoadAuditByID(db, auditID)
+		if errA != nil {
+			return sdk.WrapError(errA, "postPipelineRollbackHandler> Cannot load audit %d", auditID)
+		}
+
+		if err := pipeline.LoadGroupByPipeline(db, audit.Pipeline); err != nil {
+			return sdk.WrapError(err, "postPipelineRollbackHandler> cannot load group by pipeline")
+		}
+
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "postPipelineRollbackHandler> cannot begin transaction")
+		}
+		defer func() {
+			_ = tx.Rollback()
+		}()
+
+		done := new(sync.WaitGroup)
+		done.Add(1)
+		msgChan := make(chan sdk.Message)
+		msgList := []sdk.Message{}
+		go func(array *[]sdk.Message) {
+			defer done.Done()
+			for m := range msgChan {
+				*array = append(*array, m)
+			}
+		}(&msgList)
+
+		if err := pipeline.ImportUpdate(tx, proj, audit.Pipeline, msgChan, u); err != nil {
+			return sdk.WrapError(err, "postPipelineRollbackHandler> cannot import pipeline")
+		}
+
+		close(msgChan)
+		done.Wait()
+
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, audit.Pipeline, u); err != nil {
+			return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot update pipeline last modified date")
+		}
+
+		// Update applications
+		apps, errA := application.LoadByPipeline(tx, api.Cache, audit.Pipeline.ID, u)
+		if errA != nil {
+			return sdk.WrapError(errA, "postPipelineRollbackHandler> Cannot load application using pipeline %s", audit.Pipeline.Name)
+		}
+
+		for _, app := range apps {
+			if err := application.UpdateLastModified(tx, api.Cache, &app, u); err != nil {
+				return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot update application last modified date")
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot commit transaction")
+		}
+
+		event.PublishPipelineUpdate(key, audit.Pipeline.Name, name, u)
+
+		return WriteJSON(w, *audit.Pipeline, http.StatusOK)
 	}
 }
 

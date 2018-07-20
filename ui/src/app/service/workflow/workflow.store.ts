@@ -169,6 +169,26 @@ export class WorkflowStore {
     }
 
     /**
+     * Rollback a workflow
+     * @param key Project unique key
+     * @param workflow workflow to update
+     * @param auditId audit id to rollback
+     */
+    rollbackWorkflow(key: string, workflowName: string, auditId: number): Observable<Workflow> {
+        return this._workflowService.rollbackWorkflow(key, workflowName, auditId)
+            .pipe(
+                map((wf) => {
+                    if (wf) {
+                      let workflowKey = key + '-' + wf.name;
+                      let store = this._workflows.getValue();
+                      this._workflows.next(store.set(workflowKey, wf));
+                    }
+                    return wf;
+                })
+            );
+    }
+
+    /**
      * Delete the given workflow
      * @param key Project unique key
      * @param workflow Workflow name
