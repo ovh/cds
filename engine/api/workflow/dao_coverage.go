@@ -65,6 +65,7 @@ func LoadCoverageReport(db gorp.SqlExecutor, workflowNodeRunID int64) (sdk.Workf
 	return sdk.WorkflowNodeRunCoverage(cov), nil
 }
 
+// InsertCoverage insert a coverage report for a workflow run
 func InsertCoverage(db gorp.SqlExecutor, cov sdk.WorkflowNodeRunCoverage) error {
 	c := Coverage(cov)
 	if err := db.Insert(&c); err != nil {
@@ -73,6 +74,7 @@ func InsertCoverage(db gorp.SqlExecutor, cov sdk.WorkflowNodeRunCoverage) error 
 	return nil
 }
 
+// UpdateCoverage update a coverage report for a workflow run
 func UpdateCoverage(db gorp.SqlExecutor, cov sdk.WorkflowNodeRunCoverage) error {
 	c := Coverage(cov)
 	if _, err := db.Update(&c); err != nil {

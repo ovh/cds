@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"regexp"
 	"strings"
 
@@ -85,7 +86,7 @@ func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p act
 		if err != nil {
 			return err
 		}
-		w, err := workflow.Load(db, store, proj, p.WorkflowName, nil, workflow.LoadOptions{})
+		w, err := workflow.Load(context.TODO(), db, store, proj, p.WorkflowName, nil, workflow.LoadOptions{})
 		if err != nil {
 			return err
 		}

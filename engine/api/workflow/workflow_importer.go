@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -11,12 +12,16 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //Import is able to create a new workflow and all its components
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message, dryRun bool) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message, dryRun bool) error {
+	ctx, end := tracing.Span(ctx, "workflow.Import")
+	defer end()
+
 	w.ProjectKey = proj.Key
 	w.ProjectID = proj.ID
 
@@ -129,7 +134,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		return sdk.NewError(sdk.ErrConflict, fmt.Errorf("Workflow exists"))
 	}
 
-	oldW, errO := Load(db, store, proj, w.Name, u, LoadOptions{})
+	oldW, errO := Load(ctx, db, store, proj, w.Name, u, LoadOptions{})
 	if errO != nil {
 		return sdk.WrapError(errO, "Import> Unable to load old workflow")
 	}

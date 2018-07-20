@@ -29,7 +29,7 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
 		}
@@ -97,7 +97,7 @@ func (api *API) putWorkflowGroupHandler() Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler")
 		}
@@ -158,7 +158,7 @@ func (api *API) postWorkflowGroupHandler() Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}

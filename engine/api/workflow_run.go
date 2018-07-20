@@ -208,7 +208,7 @@ func (api *API) postWorkflowRunNumHandler() Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "postWorkflowRunNumHandler > Cannot load workflow")
 		}
@@ -429,7 +429,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project %s", key)
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow %s", name)
 		}
@@ -638,7 +638,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			}
 			var errW error
 			_, next := tracing.Span(ctx, "workflow.Load")
-			wf, errW = workflow.Load(api.mustDB(), api.Cache, p, name, u, options)
+			wf, errW = workflow.Load(ctx, api.mustDB(), api.Cache, p, name, u, options)
 			next()
 			if errW != nil {
 				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
@@ -674,7 +674,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 					DeepPipeline: true,
 					Base64Keys:   true,
 				}
-				wf, errl = workflow.Load(api.mustDB(), api.Cache, p, name, u, options)
+				wf, errl = workflow.Load(ctx, api.mustDB(), api.Cache, p, name, u, options)
 				if errl != nil {
 					return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow %s/%s", key, name)
 				}
@@ -914,7 +914,7 @@ func (api *API) getDownloadArtifactHandler() Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		work, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		work, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")
 		}
