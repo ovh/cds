@@ -43,13 +43,14 @@ func (api *API) getWorkflowHandler() Handler {
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
 		withAudits := FormBool(r, "withAudits")
+		withDeepPipelines := FormBool(r, "withDeepPipelines")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> unable to load projet")
 		}
 
-		w1, err := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
+		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines, WithIcon: true})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}
@@ -187,7 +188,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{})
+		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{WithIcon: true})
 		if errW != nil {
 			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
 		}
@@ -280,7 +281,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{})
+		oldW, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}
@@ -291,7 +292,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Delete(tx, api.Cache, p, oldW, getUser(ctx)); err != nil {
+		if err := workflow.MarkAsDelete(tx, oldW); err != nil {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 
@@ -304,6 +305,13 @@ func (api *API) deleteWorkflowHandler() Handler {
 		}
 
 		event.PublishWorkflowDelete(key, *oldW, getUser(ctx))
+
+		sdk.GoRoutine("deleteWorkflowHandler",
+			func() {
+				if err := workflow.Delete(api.mustDB(), api.Cache, p, oldW); err != nil {
+					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
+				}
+			})
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -321,7 +329,7 @@ func (api *API) getWorkflowHookHandler() Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookHandler> Cannot load Workflow %s/%s", key, name)
 		}

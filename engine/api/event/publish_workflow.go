@@ -27,7 +27,7 @@ func publishWorkflowEvent(payload interface{}, key, workflowName string, u *sdk.
 	publishEvent(event)
 }
 
-// PublishAddWorkflow publishes an event for the creation of the given Workflow
+// PublishWorkflowAdd publishes an event for the creation of the given Workflow
 func PublishWorkflowAdd(projKey string, w sdk.Workflow, u *sdk.User) {
 	e := sdk.EventWorkflowAdd{
 		Workflow: w,

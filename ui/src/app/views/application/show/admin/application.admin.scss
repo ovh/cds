@@ -5,6 +5,16 @@
   border-color: #DB2828;
 }
 
+.app-description {
+  min-height: 4em !important;
+  max-height: 6em !important;
+}
+
+.app-icon {
+  height: 5em;
+  width: 5em;
+}
+
 .ui.grid {
   .column {
     .title {
@@ -12,8 +22,4 @@
       font-weight: 600;
     }
   }
-}
-
-.ui.form .fields {
-  margin-bottom: 0px;
 }

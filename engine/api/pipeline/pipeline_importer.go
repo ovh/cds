@@ -219,7 +219,10 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		}
 	}
 
-	return nil
+	pip.Type = oldPipeline.Type
+	errU := UpdatePipeline(db, pip)
+
+	return sdk.WrapError(errU, "ImportUpdate> cannot update pipeline")
 }
 
 //Import insert the pipeline in the project

@@ -40,7 +40,7 @@ func LoadAllBinaryRequirements(db gorp.SqlExecutor) (sdk.RequirementList, error)
 func LoadActionRequirements(db gorp.SqlExecutor, actionID int64) (sdk.RequirementList, error) {
 	var req sdk.RequirementList
 
-	query := `SELECT name, type, value FROM action_requirement WHERE action_id = $1 ORDER BY name`
+	query := `SELECT id, name, type, value FROM action_requirement WHERE action_id = $1 ORDER BY name`
 	rows, errQ := db.Query(query, actionID)
 	if errQ != nil {
 		return nil, errQ
@@ -49,7 +49,7 @@ func LoadActionRequirements(db gorp.SqlExecutor, actionID int64) (sdk.Requiremen
 
 	for rows.Next() {
 		var r sdk.Requirement
-		if err := rows.Scan(&r.Name, &r.Type, &r.Value); err != nil {
+		if err := rows.Scan(&r.ID, &r.Name, &r.Type, &r.Value); err != nil {
 			return nil, err
 		}
 		req = append(req, r)

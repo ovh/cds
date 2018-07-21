@@ -147,6 +147,14 @@ var (
 	ErrInvalidPatternModel                    = Error{ID: 132, Status: http.StatusBadRequest}
 	ErrWorkerModelNoAdmin                     = Error{ID: 133, Status: http.StatusForbidden}
 	ErrWorkerModelNoPattern                   = Error{ID: 134, Status: http.StatusForbidden}
+	ErrJobNotBooked                           = Error{ID: 135, Status: http.StatusBadRequest}
+	ErrUserNotFound                           = Error{ID: 136, Status: http.StatusNotFound}
+	ErrInvalidNumber                          = Error{ID: 137, Status: http.StatusBadRequest}
+	ErrKeyAlreadyExist                        = Error{ID: 138, Status: http.StatusConflict}
+	ErrPipelineNameImport                     = Error{ID: 139, Status: http.StatusBadRequest}
+	ErrWorkflowNameImport                     = Error{ID: 140, Status: http.StatusBadRequest}
+	ErrIconBadFormat                          = Error{ID: 141, Status: http.StatusBadRequest}
+	ErrIconBadSize                            = Error{ID: 142, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -281,7 +289,15 @@ var errorsAmericanEnglish = map[int]string{
 	ErrBroadcastNotFound.ID:                      "Broadcast not found",
 	ErrInvalidPatternModel.ID:                    "Invalid worker model pattern: name, type and main command are mandatory",
 	ErrWorkerModelNoAdmin.ID:                     "Forbidden: you are neither a CDS administrator or the administrator for the group in which you want to create the worker model",
-	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scrips. If you have specific needs, please contact a CDS administrator",
+	ErrWorkerModelNoPattern.ID:                   "Forbidden: you must select a pattern of configuration scripts. If you have specific needs, please contact a CDS administrator",
+	ErrJobNotBooked.ID:                           "Job already released",
+	ErrUserNotFound.ID:                           "User not found",
+	ErrInvalidNumber.ID:                          "Invalid number",
+	ErrKeyAlreadyExist.ID:                        "Key already exists",
+	ErrPipelineNameImport.ID:                     "Pipeline name doesn't correspond in your code",
+	ErrWorkflowNameImport.ID:                     "Workflow name doesn't correspond in your code",
+	ErrIconBadFormat.ID:                          "Bad icon format. Must be an image",
+	ErrIconBadSize.ID:                            "Bad icon size. Must be lower than 100Ko",
 }
 
 var errorsFrench = map[int]string{
@@ -417,6 +433,14 @@ var errorsFrench = map[int]string{
 	ErrInvalidPatternModel.ID:                    "Pattern de modèle de worker invalide: le nom, type et commande principale sont requis",
 	ErrWorkerModelNoAdmin.ID:                     "Accès refusé: vous n'êtes ni un administrateur CDS ni un administrateur du groupe pour lequel vous tentez de créer votre modèle",
 	ErrWorkerModelNoPattern.ID:                   "Accès refusé: vous devez obligatoirement sélectionner un pattern de script de configuration. Si vous souhaitez ajouter un pattern particulier, veuillez contacter un administrateur CDS",
+	ErrJobNotBooked.ID:                           "Le job est déjà libéré",
+	ErrUserNotFound.ID:                           "Utilisateur non trouvé",
+	ErrInvalidNumber.ID:                          "Nombre non valide",
+	ErrKeyAlreadyExist.ID:                        "La clé existe déjà",
+	ErrPipelineNameImport.ID:                     "Le nom du pipeline dans le code ne correspond pas au nom du pipeline que vous voulez éditer",
+	ErrWorkflowNameImport.ID:                     "Le nom du workflow dans le code ne correspond pas au nom du workflow que vous voulez éditer",
+	ErrIconBadFormat.ID:                          "Mauvais format d'icône, doit être une image",
+	ErrIconBadSize.ID:                            "Taille de l'icône trop importante. (max 100Ko)",
 }
 
 var errorsLanguages = []map[int]string{
@@ -450,7 +474,7 @@ func ProcessError(target error, al string) (string, Error) {
 	// will recursively retrieve the topmost error which does not implement causer, which is assumed to be the original cause
 	target = errors.Cause(target)
 	cdsErr, ok := target.(Error)
-	if !ok {
+	if !ok || cdsErr.ID == 0 {
 		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
 	}
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
@@ -560,7 +584,7 @@ func ErrorIs(err error, t Error) bool {
 		return false
 	}
 	for _, l := range errorsLanguages {
-		if l[t.ID] == err.Error() {
+		if l[t.ID] == err.Error() || l[t.ID] == errors.Cause(err).Error() {
 			return true
 		}
 	}

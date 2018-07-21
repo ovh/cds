@@ -1,6 +1,6 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {SpawnInfo} from '../../../../model/pipeline.model';
 import {Parameter} from '../../../../model/parameter.model';
+import {SpawnInfo} from '../../../../model/pipeline.model';
 import {JobVariableComponent} from '../variables/job.variables.component';
 
 declare var ansi_up: any;

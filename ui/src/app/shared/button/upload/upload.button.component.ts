@@ -1,4 +1,4 @@
-import {EventEmitter, Output, Input, Component} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 
 @Component({
     selector: 'app-upload-button',
@@ -8,9 +8,10 @@ import {EventEmitter, Output, Input, Component} from '@angular/core';
 export class UploadButtonComponent  {
 
     @Input() accept: string;
+    @Input() image: boolean;
 
     @Input() size: string;
-    @Output() event = new EventEmitter<string>();
+    @Output() event = new EventEmitter<{content: string, file: File}>();
 
     showConfirmation = false;
 
@@ -25,9 +26,13 @@ export class UploadButtonComponent  {
       let that = this;
 
       reader.onloadend = function(e: any) {
-        that.event.emit(e.target.result);
+        that.event.emit({content: e.target.result, file});
       };
 
-      reader.readAsText(file);
+      if (this.image) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.readAsText(file);
+      }
     }
 }

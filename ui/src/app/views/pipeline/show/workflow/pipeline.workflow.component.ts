@@ -1,21 +1,23 @@
-import {Component, Input, OnInit, OnDestroy, ViewChild} from '@angular/core';
+import {Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {DragulaService} from 'ng2-dragula';
+import {Subscription} from 'rxjs';
+import {first} from 'rxjs/operators';
+import {Job} from '../../../../model/job.model';
+import {AllKeys} from '../../../../model/keys.model';
+import {PermissionValue} from '../../../../model/permission.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
 import {Stage} from '../../../../model/stage.model';
-import {ToastService} from '../../../../shared/toast/ToastService';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {TranslateService} from '@ngx-translate/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {KeyService} from '../../../../service/keys/keys.service';
+import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
+import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {VariableService} from '../../../../service/variable/variable.service';
-import {cloneDeep} from 'lodash';
-import {Job} from '../../../../model/job.model';
 import {ActionEvent} from '../../../../shared/action/action.event.model';
-import {DragulaService} from 'ng2-dragula';
-import {PermissionValue} from '../../../../model/permission.model';
-import {first} from 'rxjs/operators';
-import {Subscription} from 'rxjs';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-workflow',
@@ -53,6 +55,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     suggest: Array<string>;
     permissionValue = PermissionValue;
     originalPipeline: Pipeline;
+    keys: AllKeys;
     previewMode = false;
 
     loadingStage = false;
@@ -61,8 +64,15 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     asCodeEditorSubscription: Subscription;
     dragulaSubscription: Subscription;
 
-    constructor(private _pipelineStore: PipelineStore, private _toast: ToastService, private _dragularService: DragulaService,
-                private _translate: TranslateService, private _varService: VariableService, private _pipCoreService: PipelineCoreService) {
+    constructor(
+        private _pipelineStore: PipelineStore,
+        private _toast: ToastService,
+        private _dragularService: DragulaService,
+        private _translate: TranslateService,
+        private _varService: VariableService,
+        private _pipCoreService: PipelineCoreService,
+        private _keyService: KeyService
+    ) {
         this._dragularService.setOptions('bag-stage', {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
@@ -136,6 +146,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         if (this.pipeline.stages && this.pipeline.stages.length > 0 && !this.selectedStage) {
             this.selectedStage = cloneDeep(this.pipeline.stages[0]);
         }
+
+        this._keyService.getAllKeys(this.project.key).subscribe(k => {
+            this.keys = k;
+        })
 
         this._varService.getContextVariable(this.project.key, this.pipeline.id).pipe(first()).subscribe(s => this.suggest = s);
 

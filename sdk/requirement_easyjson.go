@@ -36,6 +36,8 @@ func easyjson48f3ebbbDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *Requirement
 			continue
 		}
 		switch key {
+		case "id":
+			out.ID = int64(in.Int64())
 		case "name":
 			out.Name = string(in.String())
 		case "type":
@@ -56,6 +58,16 @@ func easyjson48f3ebbbEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in Requiremen
 	out.RawByte('{')
 	first := true
 	_ = first
+	{
+		const prefix string = ",\"id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.ID))
+	}
 	{
 		const prefix string = ",\"name\":"
 		if first {

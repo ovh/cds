@@ -60,7 +60,7 @@
                                                 </div>
                                                 <div class="fourteen wide column" *ngIf="creationMode === 'graphical'">
                                                     <div class="field" [class.error]="name.invalid || duplicateWorkflowName">
-                                                        <label>{{ 'workflow_name' | translate}}</label>
+                                                        <label>{{ 'workflow_name' | translate}} *</label>
                                                         <input
                                                                 name="name"
                                                                 class="ui input"
@@ -77,6 +77,18 @@
                                                         <textarea name="description" class="ui"
                                                                   [(ngModel)]="workflow.description"></textarea>
                                                     </div>
+                                                    <div class="field center aligned">
+                                                          <label>{{ 'workflow_icon' | translate }} ({{'common_optional' | translate}})</label>
+                                                          <div>
+                                                              <div *ngIf="!fileTooLarge && workflow.icon">
+                                                                  <img class="app-icon" [src]="workflow.icon" alt="icon"/>
+                                                              </div>
+                                                              <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEventIcon($event)">
+                                                              </app-upload-button>
+                                                          </div>
+                                                      </div>
+                                                      <div class="ui red message field" *ngIf="fileTooLarge"  [textContent]="'common_file_too_large' | translate"></div>
+
                                                     <div class="field">
                                                         <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' |
                                                             translate }}
@@ -146,25 +158,33 @@
                                                                 <app-repomanager-form [project]="project"></app-repomanager-form>
                                                             </div>
                                                         </div>
-                                                        <div class="ui field" *ngIf="selectedRepoManager">
-                                                            <label>{{ 'workflow_wizard_select_repo' | translate}}</label>
-                                                            <div class="ui info message" *ngIf="loadingRepo">
-                                                                {{'workflow_wizard_select_repo_loading' | translate }}
-                                                            </div>
-                                                            <ng-container *ngIf="!loadingRepo">
-                                                                <sui-select class="selection"
-                                                                            name="repo"
-                                                                            [(ngModel)]="selectedRepo"
-                                                                            [options]="repos"
-                                                                            [optionsFilter]="filterRepo"
-                                                                            labelField="fullname"
-                                                                            [isSearchable]="true" #repositorySelect>
-                                                                    <sui-select-option *ngFor="let r of repositorySelect.filteredOptions"
-                                                                                       [value]="r">
+                                                        <div class="ui fields" *ngIf="selectedRepoManager">
+                                                          <div class="ui eleven wide field">
+                                                              <label>{{ 'workflow_wizard_select_repo' | translate}}</label>
+                                                              <div class="ui info message" *ngIf="loadingRepo">
+                                                                  {{'workflow_wizard_select_repo_loading' | translate }}
+                                                              </div>
+                                                              <ng-container *ngIf="!loadingRepo">
+                                                                  <sui-select class="selection"
+                                                                              name="repo"
+                                                                              [(ngModel)]="selectedRepo"
+                                                                              [options]="repos"
+                                                                              [optionsFilter]="filterRepo"
+                                                                              labelField="fullname"
+                                                                              [isSearchable]="true" #repositorySelect>
+                                                                      <sui-select-option *ngFor="let r of repositorySelect.filteredOptions"
+                                                                                         [value]="r">
 
-                                                                    </sui-select-option>
-                                                                </sui-select>
-                                                            </ng-container>
+                                                                      </sui-select-option>
+                                                                  </sui-select>
+                                                              </ng-container>
+                                                          </div>
+                                                          <div class="ui one wide field">
+                                                            <button class="ui blue button resync" name="resync" type="button" [class.loading]="loading"
+                                                                    [disabled]="loading" (click)="resyncRepos()">
+                                                                    {{'btn_resync_repo' | translate }}
+                                                            </button>
+                                                          </div>
                                                         </div>
                                                         <div class="ui field" *ngIf="selectedRepo">
                                                             <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy" [createOnProject]="true"
@@ -186,8 +206,7 @@
                                                             <div class="ui error message" *ngIf="pollingResponse.status === 3">
                                                                 {{pollingResponse.error}}
                                                             </div>
-                                                            <ng-container
-                                                                    *ngIf="pollingResponse && pollingResponse.load_files && pollingResponse.load_files.results">
+                                                            <ng-container *ngIf="pollingResponse && pollingResponse.load_files && pollingResponse.load_files.results">
                                                                 {{ 'wizard_repo_files' | translate}}
                                                                 <ul>
                                                                     <li *ngFor="let f of pollingResponse.load_files.results | keys">

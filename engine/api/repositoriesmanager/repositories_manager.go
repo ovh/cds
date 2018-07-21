@@ -312,6 +312,14 @@ func (c *vcsClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) 
 	return prs, nil
 }
 
+func (c *vcsClient) PullRequestComment(fullname string, id int, body string) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests/%d/comments", c.name, fullname, id)
+	if _, err := c.doJSONRequest("POST", path, body, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *vcsClient) CreateHook(fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
 	_, err := c.doJSONRequest("POST", path, hook, hook)
@@ -446,6 +454,14 @@ func (c *vcsClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus
 		return nil, err
 	}
 	return statuses, nil
+}
+
+func (c *vcsClient) GrantReadPermission(repo string) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/grant", c.name, repo)
+	if _, err := c.doJSONRequest("POST", path, nil, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 // WebhooksInfos is a set of info about webhooks

@@ -1,7 +1,7 @@
 import {Component, Input, ViewChild} from '@angular/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Variable} from '../../../../../../model/variable.model';
 import {Parameter} from '../../../../../../model/parameter.model';
+import {Variable} from '../../../../../../model/variable.model';
 
 @Component({
     selector: 'app-workflow-run-job-variable',

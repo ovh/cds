@@ -1,0 +1,92 @@
+@import "../../../../../../../common";
+
+$squareSize: 32px;
+
+.logHeader {
+  display:  flex;
+  background-color: #444;
+
+  .status {
+    width: $squareSize;
+    height: $squareSize;
+    padding-top: 4px;
+    padding-left: 8px;
+    color: white;
+  }
+  .status.icon {
+      padding-top: 6px;
+  }
+
+  .title {
+    height: $squareSize;
+    width: 100%;
+    padding-top: 6px;
+    padding-left: 5px;
+    font-weight: 600;
+    color: #FFFF91;
+  }
+  .flags {
+    height: $squareSize;
+    padding-top: 6px;
+    padding-left: 5px;
+    padding-right: 5px;
+    font-weight: 600;
+    color: #FFFF91;
+  }
+  .stepWarn {
+    display: inline;
+  }
+}
+
+.logs {
+  background-color: #222;
+  color: white;
+  clear: both;
+  padding: 10px $squareSize 10px $squareSize;
+  padding-left: 0px;
+
+  .yellow {
+    color: #FFFF91;
+  }
+
+  .fakeInput {
+    display: block;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    opacity: 0;
+  }
+
+  pre {
+    font-size: 0.8em;
+    line-height: 1.1em;
+    overflow-y: auto;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    table {
+      color: white;
+      tr {
+        &:hover {
+          background-color: #444;
+        }
+        &.active {
+          background-color: #444 !important;
+          color: inherit !important;
+        }
+      }
+      td {
+        padding-top: 1px;
+        padding-bottom: 1px;
+        &.number {
+            width: 40px;
+        }
+        &.active {
+          background-color: #444 !important;
+          color: inherit !important;
+        }
+      }
+    }
+  }
+}

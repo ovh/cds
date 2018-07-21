@@ -1,14 +1,14 @@
-import {Parameter} from './parameter.model';
-import {Stage} from './stage.model';
-import {GroupPermission} from './group.model';
-import {User} from './user.model';
-import {Application} from './application.model';
-import {Environment} from './environment.model';
-import {Artifact} from './artifact.model';
 import {ActionWarning} from './action.model';
+import {Application} from './application.model';
+import {Artifact} from './artifact.model';
+import {Environment} from './environment.model';
+import {GroupPermission} from './group.model';
 import {Job} from './job.model';
+import {Parameter} from './parameter.model';
 import {Commit} from './repositories.model';
+import {Stage} from './stage.model';
 import {Usage} from './usage.model';
+import {User} from './user.model';
 
 export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -57,6 +57,8 @@ export class PipelineAuditDiff {
 export class Pipeline {
     id: number;
     name: string;
+    description: string;
+    icon: string;
     type: string;
     last_pipeline_build: PipelineBuild;
     stages: Array<Stage>;
@@ -226,6 +228,20 @@ export interface Log {
     start: LogDate;
     last_modified: LogDate;
     done: LogDate;
+}
+
+export interface ServiceLog {
+    id: number;
+    workflow_node_run_id: number;
+    workflow_node_run_job_id: number;
+    requirement_id: number;
+    requirement_service_name: number;
+    val: string;
+    start: LogDate;
+    last_modified: LogDate;
+
+    // UI
+    logsSplitted: Array<string>;
 }
 
 export class LogDate {

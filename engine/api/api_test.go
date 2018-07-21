@@ -27,7 +27,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Config:              Configuration{},
 		Cache:               cache,
 	}
-	event.Cache = api.Cache
+	_ = event.Initialize(event.KafkaConfig{}, api.Cache)
 	api.InitRouter()
 	return api, db, router
 }
@@ -43,10 +43,9 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 		Config:              Configuration{},
 		Cache:               cache,
 	}
-	event.Cache = api.Cache
+	_ = event.Initialize(event.KafkaConfig{}, api.Cache)
 	api.InitRouter()
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)
-	url.Path = url.Path
 	return api, url.String(), ts.Close
 }

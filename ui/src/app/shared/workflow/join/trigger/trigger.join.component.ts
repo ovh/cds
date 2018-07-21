@@ -1,19 +1,19 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {
-    Workflow,
-    WorkflowNode,
-    WorkflowNodeJoin,
-    WorkflowNodeJoinTrigger,
-    WorkflowNodeContext,
-    WorkflowNodeCondition,
-    WorkflowNodeConditions
-} from '../../../../model/workflow.model';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {WorkflowNodeAddWizardComponent} from '../../../../shared/workflow/node/wizard/node.wizard.component';
-import {Project} from '../../../../model/project.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {finalize} from 'rxjs/operators';
+import {PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
+import {
+    Workflow,
+    WorkflowNode,
+    WorkflowNodeCondition,
+    WorkflowNodeConditions,
+    WorkflowNodeContext,
+    WorkflowNodeJoin,
+    WorkflowNodeJoinTrigger
+} from '../../../../model/workflow.model';
+import {WorkflowNodeAddWizardComponent} from '../../../../shared/workflow/node/wizard/node.wizard.component';
 
 @Component({
     selector: 'app-workflow-trigger-join',
@@ -76,7 +76,13 @@ export class WorkflowTriggerJoinComponent {
     }
 
     nextStep() {
-        this.nodeWizard.goToNextSection().subscribe((section) => this.currentSection = section);
+      this.nodeWizard.goToNextSection().subscribe((section) => {
+        if (section === 'done') {
+          this.saveTrigger();
+        } else {
+          this.currentSection = section;
+        }
+      });
     }
 
     hide(): void {

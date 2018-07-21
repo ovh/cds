@@ -1,11 +1,10 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Project, IdName} from '../../../../model/project.model';
-import {Application} from '../../../../model/application.model';
-import {Environment} from '../../../../model/environment.model';
-import {WorkflowNode} from '../../../../model/workflow.model';
-import {cloneDeep} from 'lodash';
 import { ApplicationStore } from 'app/service/services.module';
+import {cloneDeep} from 'lodash';
 import { finalize, first } from 'rxjs/operators';
+import {Environment} from '../../../../model/environment.model';
+import {IdName, Project} from '../../../../model/project.model';
+import {WorkflowNode} from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-node-form',
@@ -31,7 +30,7 @@ export class WorkflowNodeFormComponent implements OnInit {
         this.environments = cloneDeep(this.project.environments) || [];
         this.environments.unshift(voidEnv);
 
-        let voidApp = new Application();
+        let voidApp = new IdName();
         voidApp.id = 0;
         voidApp.name = ' ';
         this.applications = cloneDeep(this.project.application_names) || [];
@@ -55,11 +54,7 @@ export class WorkflowNodeFormComponent implements OnInit {
         if (appName && appName !== ' ') {
             this._appStore.getDeploymentStrategies(this.project.key, appName).pipe(
                 first(),
-                finalize(
-                    () => {
-                        this.initPlatformList();
-                    }
-                )
+                finalize(() => this.initPlatformList())
             ).subscribe(
                 data => {
                     this.platforms = [];

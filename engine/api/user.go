@@ -157,6 +157,43 @@ func (api *API) getUsersHandler() Handler {
 	}
 }
 
+func (api *API) getTimelineFilterHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		u := getUser(ctx)
+		filter, err := user.LoadTimelineFilter(api.mustDB(), u)
+		if err != nil {
+			return sdk.WrapError(err, "getTimelineFilterHandler")
+		}
+		return WriteJSON(w, filter, http.StatusOK)
+	}
+}
+
+func (api *API) postTimelineFilterHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		u := getUser(ctx)
+		var timelineFilter sdk.TimelineFilter
+		if err := UnmarshalBody(r, &timelineFilter); err != nil {
+			return sdk.WrapError(err, "postTimelineFilterHandler> Unable to read body")
+		}
+
+		// Try to load
+		count, errLoad := user.CountTimelineFilter(api.mustDB(), u)
+		if errLoad != nil {
+			return sdk.WrapError(errLoad, "postTimelineFilterHandler> Cannot load filter")
+		}
+		if count == 0 {
+			if err := user.InsertTimelineFilter(api.mustDB(), timelineFilter, u); err != nil {
+				return sdk.WrapError(err, "postTimelineFilterHandler> Cannot insert filter")
+			}
+		} else {
+			if err := user.UpdateTimelineFilter(api.mustDB(), timelineFilter, u); err != nil {
+				return sdk.WrapError(err, "postTimelineFilterHandler> Unable to update filter")
+			}
+		}
+		return nil
+	}
+}
+
 // postUserFavoriteHandler post favorite user for workflow or project
 func (api *API) postUserFavoriteHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -172,7 +209,7 @@ func (api *API) postUserFavoriteHandler() Handler {
 
 		switch params.Type {
 		case "workflow":
-			wf, errW := workflow.Load(api.mustDB(), api.Cache, p, params.WorkflowName, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
+			wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, params.WorkflowName, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
 			if errW != nil {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}

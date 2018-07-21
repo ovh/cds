@@ -1,6 +1,8 @@
 @import '../../../../common';
 
 pre {
+  white-space: pre;
   word-break: break-all;
-  white-space: normal;
+  word-wrap: break-word;
+  overflow: auto;
 }

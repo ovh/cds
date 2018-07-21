@@ -135,7 +135,7 @@ func (api *API) importPipelineHandler() Handler {
 
 		defer tx.Rollback()
 
-		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, forceUpdate, getUser(ctx))
+		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx), pipeline.ImportOptions{Force: forceUpdate})
 		msgListString := translate(r, allMsg)
 
 		if globalError != nil {
@@ -152,6 +152,108 @@ func (api *API) importPipelineHandler() Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, msgListString, http.StatusOK)
+	}
+}
+
+func (api *API) putImportPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		pipelineName := vars["permPipelineKey"]
+		format := r.FormValue("format")
+
+		// Load project
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		if errp != nil {
+			return sdk.WrapError(errp, "putImportPipelineHandler> Unable to load project %s", key)
+		}
+
+		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
+			return sdk.WrapError(err, "putImportPipelineHandler> Unable to load project permissions %s", key)
+		}
+
+		// Get body
+		data, errRead := ioutil.ReadAll(r.Body)
+		if errRead != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "putImportPipelineHandler> Unable to read body")
+		}
+
+		// Compute format
+		f, errF := exportentities.GetFormat(format)
+		if errF != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "putImportPipelineHandler> Unable to get format : %s", errF)
+		}
+
+		rawPayload := map[string]interface{}{}
+		var errorParse error
+		switch f {
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, &rawPayload)
+		case exportentities.FormatYAML:
+			errorParse = yaml.Unmarshal(data, &rawPayload)
+		}
+
+		if errorParse != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
+		}
+
+		//Parse the data once to retrieve the version
+		var pipelineV1Format bool
+		if v, ok := rawPayload["version"]; ok {
+			if v.(string) == exportentities.PipelineVersion1 {
+				pipelineV1Format = true
+			}
+		}
+
+		//Depending on the version, we will use different struct
+		type pipeliner interface {
+			Pipeline() (*sdk.Pipeline, error)
+		}
+
+		var payload pipeliner
+		// Parse the pipeline
+		if pipelineV1Format {
+			payload = &exportentities.PipelineV1{}
+		} else {
+			payload = &exportentities.Pipeline{}
+		}
+
+		switch f {
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, payload)
+		case exportentities.FormatYAML:
+			errorParse = yaml.Unmarshal(data, payload)
+		}
+
+		if errorParse != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "putImportPipelineHandler> Cannot parsing: %s", errorParse)
+		}
+
+		tx, errBegin := api.mustDB().Begin()
+		if errBegin != nil {
+			return sdk.WrapError(errBegin, "putImportPipelineHandler: Cannot start transaction")
+		}
+
+		defer func() {
+			_ = tx.Rollback()
+		}()
+
+		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
+		msgListString := translate(r, allMsg)
+
+		if globalError != nil {
+			return sdk.WrapError(globalError, "putImportPipelineHandler> Unable import pipeline")
+		}
+
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
+			return sdk.WrapError(err, "putImportPipelineHandler> Unable to update project")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "putImportPipelineHandler> Cannot commit transaction")
 		}
 
 		return WriteJSON(w, msgListString, http.StatusOK)

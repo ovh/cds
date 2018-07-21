@@ -63,6 +63,31 @@ You can use [CDS Variables]({{< relref "workflows/pipelines/variables.md" >}}) i
 
 ![img](/images/workflows.pipelines.actions.builtin.script-bash.png)
 
+#### Using CDS keys in a script
+
+You can use CDS SSH keys and PGP keys in a step script with the [worker key command]({{< relref "cli/worker/key/_index.md" >}}). Just use `worker key install proj-mykey` and it will install the SSH/PGP environment and private SSH/PGP key of your key in your project named **mykey**.
+
+The command `worker key install proj-mykey` will return the path where the private key is stored. In that way you can save this value in a variable and use it for a ssh command like this:
+
+```bash
+PKEY=`worker key install proj-mykey`
+ssh -i $PKEY myuser@myhost echo "test" #PKEY only works with SSH key
+```
+
+Pay attention, to use a PGP key, please add in your pipeline requirements the binary named `gpg`.
+
+#### Using worker cli in a script
+
+You can use worker cli to make different actions
+
++ [worker artifacts]({{< relref "cli/worker/artifacts.md" >}})
++ [worker download]({{< relref "cli/worker/download.md" >}})
++ [worker export]({{< relref "cli/worker/export.md" >}})
++ [worker tag]({{< relref "cli/worker/tag.md" >}})
++ [worker cache]({{< relref "cli/worker/cache/_index.md" >}})
++ [worker tmpl]({{< relref "cli/worker/tmpl.md" >}})
++ [worker key]({{< relref "cli/worker/key/_index.md" >}})
+
 ### Example
 
 * Job Configuration, a step with perl, another with bash

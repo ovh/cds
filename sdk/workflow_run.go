@@ -1,12 +1,16 @@
 package sdk
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/ovh/venom"
+	"github.com/sguiheux/go-coverage"
 )
 
 //WorkflowRun is an execution instance of a run
@@ -116,6 +120,8 @@ type WorkflowRunTag struct {
 //WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
 type WorkflowNodeRun struct {
 	WorkflowRunID      int64                            `json:"workflow_run_id"`
+	WorkflowID         int64                            `json:"workflow_id"`
+	ApplicationID      int64                            `json:"application_id"`
 	ID                 int64                            `json:"id"`
 	WorkflowNodeID     int64                            `json:"workflow_node_id"`
 	WorkflowNodeName   string                           `json:"workflow_node_name"`
@@ -133,13 +139,34 @@ type WorkflowNodeRun struct {
 	PipelineParameters []Parameter                      `json:"pipeline_parameters,omitempty"`
 	BuildParameters    []Parameter                      `json:"build_parameters,omitempty"`
 	Artifacts          []WorkflowNodeRunArtifact        `json:"artifacts,omitempty"`
+	Coverage           WorkflowNodeRunCoverage          `json:"coverage,omitempty"`
 	Tests              *venom.Tests                     `json:"tests,omitempty"`
 	Commits            []VCSCommit                      `json:"commits,omitempty"`
 	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
 	VCSRepository      string                           `json:"vcs_repository"`
 	VCSBranch          string                           `json:"vcs_branch"`
 	VCSHash            string                           `json:"vcs_hash"`
+	VCSServer          string                           `json:"vcs_server"`
 	CanBeRun           bool                             `json:"can_be_run"`
+}
+
+// WorkflowNodeRunCoverage represents the code coverage report
+type WorkflowNodeRunCoverage struct {
+	WorkflowID        int64                         `json:"workflow_id" db:"workflow_id"`
+	WorkflowNodeRunID int64                         `json:"workflow_node_run_id" db:"workflow_node_run_id"`
+	WorkflowRunID     int64                         `json:"workflow_run_id" db:"workflow_run_id"`
+	ApplicationID     int64                         `json:"application_id" db:"application_id"`
+	Num               int64                         `json:"run_number" db:"run_number"`
+	Repository        string                        `json:"repository" db:"repository"`
+	Branch            string                        `json:"branch" db:"branch"`
+	Report            coverage.Report               `json:"report" db:"-"`
+	Trend             WorkflowNodeRunCoverageTrends `json:"trend" db:"-"`
+}
+
+// WorkflowNodeRunCoverageTrends represents code coverage trend with current branch and default branch
+type WorkflowNodeRunCoverageTrends struct {
+	CurrentBranch coverage.Report `json:"current_branch_report"`
+	DefaultBranch coverage.Report `json:"default_branch_report"`
 }
 
 // WorkflowNodeTriggerRun Represent the state of a trigger
@@ -164,6 +191,7 @@ type WorkflowNodeRunArtifact struct {
 	ID                int64     `json:"id" db:"id"`
 	Name              string    `json:"name" db:"name" cli:"name"`
 	Tag               string    `json:"tag" db:"tag" cli:"tag"`
+	Ref               string    `json:"ref" db:"ref" cli:"ref"`
 	DownloadHash      string    `json:"download_hash" db:"download_hash"`
 	Size              int64     `json:"size,omitempty" db:"size"`
 	Perm              uint32    `json:"perm,omitempty" db:"perm"`
@@ -196,33 +224,35 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 //WorkflowNodeJobRun represents an job to be run
 //easyjson:json
 type WorkflowNodeJobRun struct {
-	ID                     int64              `json:"id" db:"id"`
-	WorkflowNodeRunID      int64              `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
-	Job                    ExecutedJob        `json:"job" db:"-"`
-	Parameters             []Parameter        `json:"parameters,omitempty" db:"-"`
-	Status                 string             `json:"status"  db:"status"`
-	Retry                  int                `json:"retry"  db:"retry"`
-	SpawnAttempts          []int64            `json:"spawn_attempts,omitempty"  db:"-"`
-	Queued                 time.Time          `json:"queued,omitempty" db:"queued"`
-	QueuedSeconds          int64              `json:"queued_seconds,omitempty" db:"-"`
-	Start                  time.Time          `json:"start,omitempty" db:"start"`
-	Done                   time.Time          `json:"done,omitempty" db:"done"`
-	Model                  string             `json:"model,omitempty" db:"model"`
-	BookedBy               Hatchery           `json:"bookedby" db:"-"`
-	SpawnInfos             []SpawnInfo        `json:"spawninfos" db:"-"`
-	ExecGroups             []Group            `json:"exec_groups" db:"-"`
-	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries" db:"-"`
+	ProjectID              int64              `json:"project_id"`
+	ID                     int64              `json:"id"`
+	WorkflowNodeRunID      int64              `json:"workflow_node_run_id,omitempty"`
+	Job                    ExecutedJob        `json:"job"`
+	Parameters             []Parameter        `json:"parameters,omitempty"`
+	Status                 string             `json:"status"`
+	Retry                  int                `json:"retry"`
+	SpawnAttempts          []int64            `json:"spawn_attempts,omitempty"`
+	Queued                 time.Time          `json:"queued,omitempty"`
+	QueuedSeconds          int64              `json:"queued_seconds,omitempty"`
+	Start                  time.Time          `json:"start,omitempty"`
+	Done                   time.Time          `json:"done,omitempty"`
+	Model                  string             `json:"model,omitempty"`
+	BookedBy               Hatchery           `json:"bookedby"`
+	SpawnInfos             []SpawnInfo        `json:"spawninfos"`
+	ExecGroups             []Group            `json:"exec_groups"`
+	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries"`
 }
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
 type WorkflowNodeJobRunSummary struct {
-	ID                int64              `json:"id" db:"id"`
-	WorkflowNodeRunID int64              `json:"workflow_node_run_id,omitempty" db:"workflow_node_run_id"`
-	Status            string             `json:"status"  db:"status"`
-	Queued            int64              `json:"queued,omitempty" db:"queued"`
-	Start             int64              `json:"start,omitempty" db:"start"`
-	Done              int64              `json:"done,omitempty" db:"done"`
+	ID                int64              `json:"id"`
+	WorkflowNodeRunID int64              `json:"workflow_node_run_id,omitempty"`
+	Status            string             `json:"status"`
+	Queued            int64              `json:"queued,omitempty"`
+	Start             int64              `json:"start,omitempty"`
+	Done              int64              `json:"done,omitempty"`
 	Job               ExecutedJobSummary `json:"job_summary,omitempty"`
+	SpawnInfos        []SpawnInfo        `json:"spawninfos"`
 }
 
 // ToSummary transforms a WorkflowNodeJobRun into a WorkflowNodeJobRunSummary
@@ -235,6 +265,7 @@ func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
 		Queued:            wnjr.Queued.Unix(),
 		Start:             wnjr.Start.Unix(),
 		Job:               wnjr.Job.ToSummary(),
+		SpawnInfos:        wnjr.SpawnInfos,
 	}
 	return sum
 }
@@ -276,8 +307,68 @@ func (w *WorkflowNodeRunArtifact) GetName() string {
 
 //GetPath returns the path of the artifact
 func (w *WorkflowNodeRunArtifact) GetPath() string {
-	container := fmt.Sprintf("%d-%d-%s", w.WorkflowID, w.WorkflowNodeRunID, w.Tag)
+	ref := w.Ref
+	if ref == "" {
+		ref = w.Tag
+	}
+	container := fmt.Sprintf("%d-%d-%s", w.WorkflowID, w.WorkflowNodeRunID, ref)
 	container = url.QueryEscape(container)
 	container = strings.Replace(container, "/", "-", -1)
 	return container
+}
+
+const workflowNodeRunReport = `{{- if .Stages }} 
+CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+{{- range $s := .Stages}}
+{{- if $s.RunJobs }}
+* {{$s.Name}}
+{{- range $j := $s.RunJobs}}
+  * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
+
+{{- if .Tests }} 
+{{- if gt .Tests.TotalKO 0}}
+Unit Tests Report
+
+{{- range $ts := .Tests.TestSuites}}
+* {{ $ts.Name }}
+{{range $tc := $ts.TestCases}}
+  {{- if or ($tc.Errors) ($tc.Failures) }}  * {{ $tc.Name }} ✘ {{- end}}
+{{end}}
+{{- end}}
+{{- end}}
+{{- end}}
+`
+
+func (nr WorkflowNodeRun) Report() (string, error) {
+	t := template.New("")
+	t, err := t.Parse(workflowNodeRunReport)
+	if err != nil {
+		return "", err
+	}
+	out := new(bytes.Buffer)
+	errE := t.Execute(out, nr)
+	return out.String(), errE
+}
+
+type WorkflowQueue []WorkflowNodeJobRun
+
+func (q WorkflowQueue) Sort() {
+	//Count the number of WorkflowNodeJobRun per project_id
+	n := make(map[int64]int, len(q))
+	for _, j := range q {
+		nb := n[j.ProjectID]
+		nb++
+		n[j.ProjectID] = nb
+	}
+
+	sort.Slice(q, func(i, j int) bool {
+		p1 := n[q[i].ProjectID]
+		p2 := n[q[j].ProjectID]
+		return p1 < p2
+	})
+
 }

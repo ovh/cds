@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {Action} from '../../../../model/action.model';
 import {StepEvent} from '../step.event';
 

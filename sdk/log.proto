@@ -7,8 +7,8 @@ import "google/protobuf/timestamp.proto";
 
 
 //Log represents an execution log
-//Generate *.pb.go files with: 
-// 	protoc --go_out=plugins=grpc:. ./log.pb.go 
+//Generate *.pb.go files with:
+// 	protoc --go_out=plugins=grpc:. ./log.proto
 // 	protoc-go-inject-tag -input=./log.pb.go
 //	=> github.com/favadi/protoc-go-inject-tag
 message Log {
@@ -26,6 +26,30 @@ message Log {
 	google.protobuf.Timestamp done = 6;
 	// @inject_tag: db:"step_order"
 	int64 stepOrder = 7;
+	// @inject_tag: db:"value"
+	string val = 8;
+}
+
+//ServiceLog represents an execution log
+//Generate *.pb.go files with:
+// 	protoc --go_out=plugins=grpc:. ./log.proto
+// 	protoc-go-inject-tag -input=./log.pb.go
+//	=> github.com/favadi/protoc-go-inject-tag
+message ServiceLog {
+	// @inject_tag: db:"id"
+	int64 id = 1;
+	// @inject_tag: db:"workflow_node_run_job_id" json:"workflow_node_run_job_id"
+	int64 workflowNodeJobRunID = 2;
+	// @inject_tag: db:"workflow_node_run_id" json:"workflow_node_run_id"
+	int64 workflowNodeRunID = 3;
+	// @inject_tag: db:"start",json:"start"
+	google.protobuf.Timestamp start = 4;
+	// @inject_tag: db:"last_modified" json:"last_modified"
+	google.protobuf.Timestamp lastModified = 5;
+	// @inject_tag: db:"-" json:"requirement_id"
+	int64 serviceRequirementID = 6;
+	// @inject_tag: db:"requirement_service_name" json:"requirement_service_name"
+	string serviceRequirementName = 7;
 	// @inject_tag: db:"value"
 	string val = 8;
 }

@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -62,7 +63,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -167,7 +168,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -289,7 +290,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -438,10 +439,10 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	w1old, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1old, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
@@ -461,7 +462,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	assert.Equal(t, app2.ID, w2.Root.Context.Application.ID)
 	assert.Equal(t, env.ID, w2.Root.Context.Environment.ID)
 
-	test.NoError(t, workflow.Delete(db, cache, proj, w2, u))
+	test.NoError(t, workflow.Delete(db, cache, proj, w2))
 }
 
 func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
@@ -609,7 +610,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -889,7 +890,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	workflow.Sort(&w)
@@ -973,7 +974,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	w1old := w1
@@ -1026,7 +1027,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		}
 	}
 
-	test.NoError(t, workflow.Delete(db, cache, proj, w2, u))
+	test.NoError(t, workflow.Delete(db, cache, proj, w2))
 }
 
 func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
@@ -1091,7 +1092,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -1119,5 +1120,5 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	fmt.Println(string(btes))
 
-	test.NoError(t, workflow.Delete(db, cache, proj, &w, u))
+	test.NoError(t, workflow.Delete(db, cache, proj, &w))
 }

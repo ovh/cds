@@ -19,12 +19,12 @@ import (
 
 // GetWorkflowRunEventData read channel to get elements to push
 // TODO: refactor this useless function
-func GetWorkflowRunEventData(report *ProcessorReport, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun) {
-	return report.workflows, report.nodes, report.jobs
+func GetWorkflowRunEventData(report *ProcessorReport, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun) {
+	return report.workflows, report.nodes
 }
 
 // SendEvent Send event on workflow run
-func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNodeRun, wnjrs []sdk.WorkflowNodeJobRun, key string) {
+func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNodeRun, key string) {
 	for _, wr := range wrs {
 		event.PublishWorkflowRun(wr, key)
 	}
@@ -54,26 +54,7 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 			}
 		}
 
-		event.PublishWorkflowNodeRun(db, wnr, *wr, &previousNodeRun, key)
-	}
-	for _, wnjr := range wnjrs {
-		wnr, errWNR := LoadNodeRunByID(db, wnjr.WorkflowNodeRunID, LoadRunOptions{
-			WithLightTests: true,
-		})
-		if errWNR != nil {
-			log.Warning("SendEvent.workflow.wnjrs > Unable to find workflow node run %d: %s", wnjr.WorkflowNodeRunID, errWNR)
-			continue
-		}
-
-		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
-			WithLightTests: true,
-		})
-		if errWR != nil {
-			log.Warning("SendEvent.workflow.wnjrs> Unable to load workflow run %d: %s", wnr.WorkflowRunID, errWR)
-			continue
-		}
-		event.PublishWorkflowNodeRun(db, *wnr, *wr, nil, key)
-		event.PublishWorkflowNodeJobRun(key, wnjr, *wnr, *wr)
+		event.PublishWorkflowNodeRun(db, wnr, wr.Workflow, &previousNodeRun)
 	}
 }
 
@@ -195,7 +176,7 @@ func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 	//Get the RepositoriesManager Client
 	client, errClient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
 	if errClient != nil {
-		return sdk.WrapError(errClient, "sendEvent> Cannot get client")
+		return sdk.WrapError(errClient, "sendVCSEventStatus> Cannot get client")
 	}
 
 	var eventWNR = sdk.EventRunWorkflowNode{
@@ -246,5 +227,31 @@ func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 		repositoriesmanager.RetryEvent(&evt, err, store)
 		return fmt.Errorf("sendEvent> err:%s", err)
 	}
+
+	//Check if this branch and this commit is a pullrequest
+	prs, err := client.PullRequests(node.Context.Application.RepositoryFullname)
+	if err != nil {
+		log.Error("sendVCSEventStatus> unable to get pull requests on repo %s: %v", node.Context.Application.RepositoryFullname, err)
+		return nil
+	}
+
+	//Send comment on pull request
+	for _, pr := range prs {
+		if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash {
+			if nodeRun.Status != sdk.StatusFail.String() {
+				continue
+			}
+			report, err := nodeRun.Report()
+			if err != nil {
+				log.Error("sendVCSEventStatus> unable to compute node run report%v", err)
+				return nil
+			}
+			if err := client.PullRequestComment(node.Context.Application.RepositoryFullname, pr.ID, report); err != nil {
+				log.Error("sendVCSEventStatus> unable to send PR report%v", err)
+				return nil
+			}
+		}
+	}
+
 	return nil
 }

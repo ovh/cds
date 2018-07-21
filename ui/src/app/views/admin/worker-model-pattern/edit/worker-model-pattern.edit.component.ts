@@ -1,13 +1,13 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {TranslateService} from '@ngx-translate/core';
+import {omit} from 'lodash';
+import {finalize} from 'rxjs/operators';
+import {User} from '../../../../model/user.model';
 import {ModelPattern} from '../../../../model/worker-model.model';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {User} from '../../../../model/user.model';
-import {finalize} from 'rxjs/operators';
-import {omit} from 'lodash';
 
 @Component({
     selector: 'app-worker-model-pattern-edit',

@@ -13,6 +13,7 @@
 
     "eofline": true,
     "forin": true,
+    "ordered-imports": true,
     "import-blacklist": [true],
     "import-spacing": true,
     "indent": [

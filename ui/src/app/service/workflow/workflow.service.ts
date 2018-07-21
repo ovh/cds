@@ -1,11 +1,11 @@
 
-import {map} from 'rxjs/operators';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
-import {HttpClient, HttpParams, HttpHeaders} from '@angular/common/http';
-import {GroupPermission} from '../../model/group.model';
 import {deepClone} from 'fast-json-patch/lib/core';
+import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
+import {GroupPermission} from '../../model/group.model';
+import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 
 @Injectable()
 export class WorkflowService {
@@ -91,13 +91,11 @@ export class WorkflowService {
      * @param key Project unique key
      * @param workflow WorkflowCode to import
      */
-    importWorkflow(key: string, workflowCode: string): Observable<Workflow> {
+    importWorkflow(key: string, workflowName: string, workflowCode: string): Observable<Workflow> {
         let headers = new HttpHeaders();
         headers = headers.append('Content-Type', 'application/x-yaml');
-        let params = new HttpParams();
-        params = params.append('force', 'true');
 
-        return this._http.post<Workflow>(`/project/${key}/import/workflows`, workflowCode, {headers, params});
+        return this._http.put<Workflow>(`/project/${key}/import/workflows/${workflowName}`, workflowCode, {headers});
     }
 
     /**

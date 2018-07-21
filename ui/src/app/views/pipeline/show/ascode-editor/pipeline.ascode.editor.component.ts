@@ -1,15 +1,15 @@
 import {Component, Input, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {Subscription} from 'rxjs';
+import {finalize} from 'rxjs/operators';
+import {Pipeline, PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
-import {Pipeline} from '../../../../model/pipeline.model';
 import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
 import {PipelineService} from '../../../../service/pipeline/pipeline.service';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-pipeline-ascode-editor',
@@ -48,6 +48,7 @@ export class PipelineAsCodeEditorComponent {
     updated = false;
     loading = false;
     loadingGet = true;
+    statusEnum = PipelineStatus;
 
     constructor(
         private _pipCoreService: PipelineCoreService,
@@ -85,7 +86,7 @@ export class PipelineAsCodeEditorComponent {
 
     save() {
         this.loading = true;
-        this._pipStore.importPipeline(this.project.key, this.pipeline.name, this.exportedPip, true)
+        this._pipStore.importPipeline(this.project.key, this.pipeline.name, this.exportedPip)
             .pipe(finalize(() => this.loading = false))
             .subscribe((pip) => {
                 this._pipCoreService.toggleAsCodeEditor({open: false, save: false});

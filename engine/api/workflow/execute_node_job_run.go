@@ -95,7 +95,8 @@ func (r *ProcessorReport) Errors() []error {
 }
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) (*ProcessorReport, error) {
+// the dbFunc parameter is only used to send status to the repository manager
+func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.UpdateNodeJobRunStatus",
 		tracing.Tag("workflow_node_run_job", job.ID),
@@ -160,7 +161,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		}
 	}
 
-	if err := UpdateNodeJobRun(ctx, db, store, job); err != nil {
+	if err := UpdateNodeJobRun(ctx, db, job); err != nil {
 		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
@@ -176,9 +177,9 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	}
 
 	var errReport error
-	report, errReport = report.Merge(execute(ctx, dbCopy, db, store, proj, node))
+	report, errReport = report.Merge(execute(ctx, db, store, proj, node))
 
-	wr, err := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true})
+	wr, err := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true, WithTests: true})
 	if err != nil {
 		return report, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", node.WorkflowRunID)
 	}
@@ -187,7 +188,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	go func(wfRun *sdk.WorkflowRun) {
 		if sdk.StatusIsTerminated(wfRun.Status) {
 			wr.LastExecution = time.Now()
-			if err := ResyncCommitStatus(ctx, dbCopy, store, proj, wfRun); err != nil {
+			if err := ResyncCommitStatus(context.Background(), dbFunc(), store, proj, wfRun); err != nil {
 				log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
 			}
 		}
@@ -223,7 +224,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
+func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.TakeNodeJobRun")
 	defer end()
@@ -233,11 +234,11 @@ func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor
 	// first load without FOR UPDATE WAIT to quick check status
 	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
 	if errS != nil {
-		return nil, report, sdk.WrapError(errS, "TakeNodeJobRun> Cannot select status from workflow_node_run_job node job run %d", jobID)
+		return nil, nil, sdk.WrapError(errS, "TakeNodeJobRun> Cannot select status from workflow_node_run_job node job run %d", jobID)
 	}
 
 	if err := checkStatusWaiting(store, jobID, currentStatus); err != nil {
-		return nil, report, err
+		return nil, nil, err
 	}
 
 	// reload and recheck status
@@ -246,7 +247,7 @@ func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor
 		if errPG, ok := errl.(*pq.Error); ok && errPG.Code == "55P03" {
 			errl = sdk.ErrJobAlreadyBooked
 		}
-		return nil, report, sdk.WrapError(errl, "TakeNodeJobRun> Cannot load node job run (WAIT) %d", jobID)
+		return nil, nil, sdk.WrapError(errl, "TakeNodeJobRun> Cannot load node job run (WAIT) %d", jobID)
 	}
 	if err := checkStatusWaiting(store, jobID, job.Status); err != nil {
 		return nil, report, err
@@ -257,15 +258,20 @@ func TakeNodeJobRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor
 	job.Job.WorkerID = workerID
 	job.Start = time.Now()
 
+	_, errExec := db.Exec("UPDATE workflow_node_run_job SET worker_id = $2 WHERE id = $1", job.ID, workerID)
+	if errExec != nil {
+		return nil, nil, sdk.WrapError(errl, "TakeNodeJobRun> Cannot update worker_id in node job run %d", jobID)
+	}
+
 	if err := AddSpawnInfosNodeJobRun(db, jobID, PrepareSpawnInfos(infos)); err != nil {
-		return nil, report, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
+		return nil, nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
 	}
 
 	var err error
-	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, dbCopy, db, store, p, job, sdk.StatusBuilding))
+	report, err = report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, db, store, p, job, sdk.StatusBuilding))
 	if err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
-		return nil, report, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", jobID)
+		return nil, nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", jobID)
 	}
 
 	return job, report, nil
@@ -301,7 +307,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 		})
 		secrets = append(secrets, sdk.Variable{
 			Name:  "cds.key." + k.Name + ".priv",
-			Type:  "string",
+			Type:  k.Type,
 			Value: k.Private,
 		})
 	}
@@ -334,7 +340,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
-				Type:  "string",
+				Type:  k.Type,
 				Value: string(decrypted),
 			})
 		}
@@ -363,7 +369,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
-				Type:  "string",
+				Type:  k.Type,
 				Value: string(decrypted),
 			})
 		}
@@ -481,7 +487,22 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.H
 		store.SetWithTTL(k, hatchery, 120)
 		return nil, nil
 	}
+	if h.ID == hatchery.ID {
+		return nil, nil
+	}
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
+}
+
+//FreeNodeJobRun  Free a job for a hatchery
+func FreeNodeJobRun(store cache.Store, id int64) error {
+	k := keyBookJob(id)
+	h := sdk.Hatchery{}
+	if store.Get(k, &h) {
+		// job not already booked, book it for 2 min
+		store.Delete(k)
+		return nil
+	}
+	return sdk.WrapError(sdk.ErrJobNotBooked, "BookNodeJobRun> job %d already released", id)
 }
 
 //AddNodeJobAttempt add an hatchery attempt to spawn a job
@@ -529,6 +550,34 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 		existingLogs.Done = logs.Done
 		if err := updateLog(db, existingLogs); err != nil {
 			return sdk.WrapError(err, "AddLog> Cannot update log")
+		}
+	}
+	return nil
+}
+
+//AddServiceLog adds a service log
+func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.ServiceLog) error {
+	if job != nil {
+		logs.WorkflowNodeJobRunID = job.ID
+		logs.WorkflowNodeRunID = job.WorkflowNodeRunID
+	}
+
+	existingLogs, errLog := LoadServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
+	if errLog != nil && errLog != sql.ErrNoRows {
+		return sdk.WrapError(errLog, "AddServiceLog> Cannot load existing logs")
+	}
+
+	if existingLogs == nil {
+		if err := insertServiceLog(db, logs); err != nil {
+			return sdk.WrapError(err, "AddServiceLog> Cannot insert log")
+		}
+	} else {
+		logbuf := bytes.NewBufferString(existingLogs.Val)
+		logbuf.WriteString(logs.Val)
+		existingLogs.Val = logbuf.String()
+		existingLogs.LastModified = logs.LastModified
+		if err := updateServiceLog(db, existingLogs); err != nil {
+			return sdk.WrapError(err, "AddServiceLog> Cannot update log")
 		}
 	}
 	return nil

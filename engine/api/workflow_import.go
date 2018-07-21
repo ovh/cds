@@ -125,7 +125,85 @@ func (api *API) postWorkflowImportHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(tx, api.Cache, proj, ew, force, getUser(ctx), false)
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
+		msgListString := translate(r, msgList)
+
+		if globalError != nil {
+			return sdk.WrapError(globalError, "postWorkflowImportHandler> Unable import workflow %s", ew.Name)
+		}
+
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectWorkflowLastModificationType); err != nil {
+			return sdk.WrapError(err, "postWorkflowImportHandler> Unable to update project")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postWorkflowImportHandler> Cannot commit transaction")
+		}
+
+		if wrkflw != nil {
+			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
+			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
+		}
+
+		return WriteJSON(w, msgListString, http.StatusOK)
+	}
+}
+
+func (api *API) putWorkflowImportHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars["key"]
+		wfName := vars["permWorkflowName"]
+
+		//Load project
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithApplications,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPlatforms,
+		)
+		if errp != nil {
+			return sdk.WrapError(errp, "postWorkflowImportHandler>> Unable load project")
+		}
+
+		body, errr := ioutil.ReadAll(r.Body)
+		if errr != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errr)
+		}
+		defer r.Body.Close()
+
+		contentType := r.Header.Get("Content-Type")
+		if contentType == "" {
+			contentType = http.DetectContentType(body)
+		}
+
+		var ew = new(exportentities.Workflow)
+		var errw error
+		switch contentType {
+		case "application/json":
+			errw = json.Unmarshal(body, ew)
+		case "application/x-yaml", "text/x-yaml":
+			errw = yaml.Unmarshal(body, ew)
+		default:
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
+		}
+
+		if errw != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errw)
+		}
+
+		tx, errtx := api.mustDB().Begin()
+		if errtx != nil {
+			return sdk.WrapError(errtx, "postWorkflowImportHandler> Unable to start tx")
+		}
+		defer func() {
+			_ = tx.Rollback()
+		}()
+
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {
@@ -189,7 +267,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
 		}
 
-		allMsg, wrkflw, err := workflow.Push(api.mustDB(), api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Cannot push workflow")
 		}

@@ -1,12 +1,12 @@
-import {Component, Input, Output, EventEmitter, ViewChild, AfterViewInit, OnDestroy} from '@angular/core';
-import {Table} from '../../../../../shared/table/table';
-import {Project} from '../../../../../model/project.model';
+import {AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewChild} from '@angular/core';
+import {cloneDeep} from 'lodash';
+import {Subscription} from 'rxjs';
 import {Application} from '../../../../../model/application.model';
 import {Notification} from '../../../../../model/notification.model';
-import {NotificationEvent} from '../notification.event';
+import {Project} from '../../../../../model/project.model';
+import {Table} from '../../../../../shared/table/table';
 import {ApplicationNotificationFormModalComponent} from '../form/notification.form.component';
-import {Subscription} from 'rxjs';
-import {cloneDeep} from 'lodash';
+import {NotificationEvent} from '../notification.event';
 
 @Component({
     selector: 'app-notification-list',

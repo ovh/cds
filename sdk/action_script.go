@@ -109,6 +109,16 @@ func NewStepArtifactUpload(i interface{}) Action {
 	return newAction
 }
 
+// NewCoverage returns an action of coverage type
+func NewCoverage(v map[string]string) Action {
+	newAction := Action{
+		Name:       CoverageAction,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
+	}
+	return newAction
+}
+
 // NewStepArtifactDownload returns an action (basically used as a step of a job) of artifact download type
 func NewStepArtifactDownload(v map[string]string) Action {
 	newAction := Action{

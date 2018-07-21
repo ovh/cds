@@ -2,14 +2,14 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
+import {cloneDeep} from 'lodash';
+import {finalize, first} from 'rxjs/operators';
 import { Project } from '../../../../model/project.model';
 import { Workflow } from '../../../../model/workflow.model';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import { WorkflowStore } from '../../../../service/workflow/workflow.store';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-admin',
@@ -47,6 +47,7 @@ export class WorkflowAdminComponent implements OnInit {
     private warningUpdateModal: WarningModalComponent;
 
     loading = false;
+    fileTooLarge = false;
 
     constructor(public _translate: TranslateService, private _toast: ToastService, private _workflowStore: WorkflowStore,
         private _router: Router, private _workflowRunService: WorkflowRunService) { }
@@ -123,5 +124,13 @@ export class WorkflowAdminComponent implements OnInit {
             this._toast.success('', this._translate.instant('workflow_deleted'));
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows' } });
         });
+    }
+
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000;
+        if (this.fileTooLarge) {
+            return;
+        }
+        this._tagWorkflow.icon = event.content;
     }
 }

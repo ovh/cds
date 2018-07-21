@@ -6,8 +6,16 @@
         <div class="title">
             {{ 'job_spawn_title' | translate }}
         </div>
+        <div class="variables" *ngIf="displayServiceLogsLink">
+            <a class="pointing" *ngIf="!displayServiceLogs" (click)="displayServiceLogs = true; $event.stopPropagation()">
+                 Display services logs
+            </a>
+            <a class="pointing" *ngIf="displayServiceLogs" (click)="displayServiceLogs = false; $event.stopPropagation()">
+                 Display job logs
+            </a>
+        </div>
         <div class="variables">
-            <a class="pointing" (click)="openVariableModal()">
+            <a class="pointing" (click)="openVariableModal($event)">
                 {{ 'pipeline_job_variables_show_title' | translate }}
             </a>
         </div>

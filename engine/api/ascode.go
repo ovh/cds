@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // postImportAsCodeHandler
@@ -111,7 +112,9 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithFeatures)
+			project.LoadOptions.WithFeatures,
+			project.LoadOptions.WithClearPlatforms,
+		)
 		if errp != nil {
 			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
 		}
@@ -136,7 +139,8 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to read cds files")
 		}
 
-		ope.RepositoryStrategy.Branch = "{{git.branch}}"
+		//TODO: Delete branch and default branch
+		ope.RepositoryStrategy.Branch = "{{.git.branch}}"
 		ope.RepositoryStrategy.DefaultBranch = ope.RepositoryInfo.DefaultBranch
 		opt := &workflow.PushOption{
 			VCSServer:          ope.VCSServer,
@@ -147,7 +151,7 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
 
-		allMsg, wrkflw, err := workflow.Push(api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "postPerformImportAsCodeHandler.workflowPush> Unable to push workflow")
 		}
@@ -155,6 +159,18 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 
 		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
 			return sdk.WrapError(err, "workflowPush> Unable to update project")
+		}
+
+		// Grant CDS as a repository collaborator
+		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, ope.VCSServer)
+		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		if erra != nil {
+			log.Error("postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
+		} else {
+			if err := client.GrantReadPermission(ope.RepoFullName); err != nil {
+				log.Error("postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
+			}
 		}
 
 		if wrkflw != nil {

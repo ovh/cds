@@ -16,7 +16,7 @@ import (
 
 func runArtifactUpload(w *currentWorker) BuiltInAction {
 	if w.currentJob.wJob == nil {
-		return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+		return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 			res := sdk.Result{Status: sdk.StatusSuccess.String()}
 
 			pipeline := sdk.ParameterValue(*params, "cds.pipeline")
@@ -90,7 +90,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 		}
 	}
 
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		res := sdk.Result{Status: sdk.StatusSuccess.String()}
 
 		path := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "path"))
@@ -105,8 +105,6 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			sendLog(res.Reason)
 			return res
 		}
-		tag.Value = strings.Replace(tag.Value, "/", "-", -1)
-		tag.Value = url.QueryEscape(tag.Value)
 
 		// Global all files matching filePath
 		filesPath, err := filepath.Glob(path)

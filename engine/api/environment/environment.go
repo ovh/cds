@@ -3,6 +3,7 @@ package environment
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
@@ -260,7 +262,7 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 	if err != nil {
 		pqerr, ok := err.(*pq.Error)
 		if ok {
-			if pqerr.Code == "23000" || pqerr.Code == "23505" || pqerr.Code == "23514" {
+			if pqerr.Code == "23000" || pqerr.Code == database.ViolateUniqueKeyPGCode || pqerr.Code == "23514" {
 				return sdk.ErrEnvironmentExist
 			}
 		}
@@ -492,6 +494,10 @@ func CountEnvironmentByVarValue(db gorp.SqlExecutor, projectKey string, value st
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
 func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.User) error {
+	if !strings.HasPrefix(keyname, "env-") {
+		keyname = "env-" + keyname
+	}
+
 	k, errGenerate := keys.GenerateSSHKey(keyname)
 	if errGenerate != nil {
 		return errGenerate

@@ -13,8 +13,9 @@ import (
 
 // Workflow is the "as code" representation of a sdk.Workflow
 type Workflow struct {
-	Name    string `json:"name" yaml:"name"`
-	Version string `json:"version,omitempty" yaml:"version,omitempty"`
+	Name        string `json:"name" yaml:"name"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Version     string `json:"version,omitempty" yaml:"version,omitempty"`
 	// This will be filled for complex workflows
 	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty"`
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty"`
@@ -69,6 +70,7 @@ const (
 func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
+	exportedWorkflow.Description = w.Description
 	exportedWorkflow.Version = WorkflowVersion1
 	exportedWorkflow.Workflow = map[string]NodeEntry{}
 	exportedWorkflow.Hooks = map[string][]HookEntry{}
@@ -336,6 +338,7 @@ nextDep:
 func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	var wf = new(sdk.Workflow)
 	wf.Name = w.Name
+	wf.Description = w.Description
 	if err := w.checkValidity(); err != nil {
 		return nil, err
 	}
@@ -385,6 +388,8 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 		perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
 		wf.Groups = append(wf.Groups, perm)
 	}
+
+	wf.Sort()
 
 	return wf, nil
 }

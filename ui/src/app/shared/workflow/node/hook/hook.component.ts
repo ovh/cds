@@ -1,8 +1,8 @@
 import {AfterViewInit, Component, ElementRef, Input} from '@angular/core';
-import {Router, ActivatedRoute} from '@angular/router';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
+import {Subscription} from 'rxjs/Subscription';
 import {Project} from '../../../../model/project.model';
-import {cloneDeep} from 'lodash';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -33,18 +33,17 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
 
     icon: string;
     loading = false;
-    selectedHookId: number;
+    isSelected = false;
+    subSelect: Subscription;
 
-    constructor(private elementRef: ElementRef,
-        private _route: ActivatedRoute,
-        private _router: Router) {
+    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore) {
 
-        this._route.queryParams.subscribe((qp) => {
-            if (qp['selectedHookId']) {
-                this.selectedHookId = parseInt(qp['selectedHookId'], 10);
-            } else {
-                this.selectedHookId = null;
+        this.subSelect = this._workflowEventStore.selectedHook().subscribe(h => {
+            if (this.hook && h) {
+                this.isSelected = h.id === this.hook.id;
+                return;
             }
+            this.isSelected = false;
         });
     }
 
@@ -57,37 +56,6 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
         if (this.workflow.previewMode) {
           return;
         }
-
-        let qps = cloneDeep(this._route.snapshot.queryParams);
-        qps['selectedJoinId'] = null;
-        qps['selectedNodeId'] = null;
-
-        if (!this._route.snapshot.params['number']) {
-            qps['selectedNodeRunId'] = null;
-            qps['selectedNodeRunNum'] = null;
-            qps['selectedJoinRunId'] = null;
-            qps['selectedJoinRunNum'] = null;
-
-            this._router.navigate([
-                '/project', this.project.key,
-                'workflow', this.workflow.name
-            ], { queryParams: Object.assign({}, qps, {selectedHookId: this.hook.id })});
-        } else {
-            qps['selectedJoinId'] = null;
-            qps['selectedNodeId'] = null;
-            qps['selectedNodeRunId'] = null;
-            qps['selectedNodeRunNum'] = null;
-            qps['selectedJoinRunId'] = null;
-            qps['selectedJoinRunNum'] = null;
-
-            this._router.navigate([
-                '/project', this.project.key,
-                'workflow', this.workflow.name,
-                'run', this._route.snapshot.params['number']], {
-                    queryParams: Object.assign({}, qps, {
-                        selectedHookId: this.hook.id
-                    })
-                });
-        }
+        this._workflowEventStore.setSelectedHook(this.hook);
     }
 }

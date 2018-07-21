@@ -1,15 +1,24 @@
 package workflow
 
 import (
+	"context"
 	"sync"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
+
+// ImportOptions is option to parse a workflow
+type ImportOptions struct {
+	DryRun       bool
+	Force        bool
+	WorkflowName string
+}
 
 // Parse parse an exportentities.workflow and return the parsed workflow
 func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
@@ -42,13 +51,20 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, force bool, u *sdk.User, dryRun bool) (*sdk.Workflow, []sdk.Message, error) {
-	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, force)
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, u *sdk.User, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+	ctx, end := tracing.Span(ctx, "workflow.ParseAndImport")
+	defer end()
+
+	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
 	//Parse workflow
 	w, errW := Parse(proj, ew)
 	if errW != nil {
 		return nil, nil, errW
+	}
+
+	if opts.WorkflowName != "" && w.Name != opts.WorkflowName {
+		return nil, nil, sdk.ErrWorkflowNameImport
 	}
 
 	//Import
@@ -67,7 +83,7 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, e
 		}
 	}(&msgList)
 
-	globalError := Import(db, store, proj, w, u, force, msgChan, dryRun)
+	globalError := Import(ctx, db, store, proj, w, u, opts.Force, msgChan, opts.DryRun)
 	close(msgChan)
 	done.Wait()
 

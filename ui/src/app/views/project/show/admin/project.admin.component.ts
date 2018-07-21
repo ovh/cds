@@ -1,13 +1,13 @@
-import {Input, ViewChild, OnInit, Component} from '@angular/core';
-import {Project} from '../../../../model/project.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../../shared/toast/ToastService';
-import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import {Project} from '../../../../model/project.model';
 import {User} from '../../../../model/user.model';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {Warning} from '../../../../model/warning.model';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {ProjectStore} from '../../../../service/project/project.store';
+import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-admin',
@@ -38,6 +38,7 @@ export class ProjectAdminComponent implements OnInit {
         private warningUpdateModal: WarningModalComponent;
 
     loading = false;
+    fileTooLarge = false;
     migrationValue = 0;
     user: User;
 
@@ -84,4 +85,11 @@ export class ProjectAdminComponent implements OnInit {
         });
     }
 
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000;
+        if (this.fileTooLarge) {
+            return;
+        }
+        this.project.icon = event.content;
+    }
 }

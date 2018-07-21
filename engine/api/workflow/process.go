@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -19,7 +18,7 @@ import (
 
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
-func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
+func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.processWorkflowRun",
 		tracing.Tag("workflow_run", w.Number),
@@ -67,7 +66,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 				return report, false, sdk.ErrWorkflowNodeParentNotRun
 			}
 		}
-		r1, conditionOK, errP := processWorkflowNodeRun(ctx, dbCopy, db, store, proj, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual)
+		r1, conditionOK, errP := processWorkflowNodeRun(ctx, db, store, proj, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual)
 		if errP != nil {
 			return report, false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -89,7 +88,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 			},
 		})
 
-		r1, conditionOK, errP := processWorkflowNodeRun(ctx, dbCopy, db, store, proj, w, w.Workflow.Root, 0, nil, hookEvent, manual)
+		r1, conditionOK, errP := processWorkflowNodeRun(ctx, db, store, proj, w, w.Workflow.Root, 0, nil, hookEvent, manual)
 		if errP != nil {
 			return report, false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -106,7 +105,6 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 
 			haveToUpdate := false
 
-			log.Debug("processWorkflowRun> last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
 				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
@@ -135,7 +133,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 
 					if !abortTrigger {
 						//Keep the subnumber of the previous node in the graph
-						r1, conditionOk, errPwnr := processWorkflowNodeRun(ctx, dbCopy, db, store, proj, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil)
+						r1, conditionOk, errPwnr := processWorkflowNodeRun(ctx, db, store, proj, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil)
 						if errPwnr != nil {
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, errPwnr)
 							AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
@@ -253,7 +251,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 
 				if !abortTrigger {
 					//Keep the subnumber of the previous node in the graph
-					r1, conditionOK, err := processWorkflowNodeRun(ctx, dbCopy, db, store, proj, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil)
+					r1, conditionOK, err := processWorkflowNodeRun(ctx, db, store, proj, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil)
 					if err != nil {
 						AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 							ID:   sdk.MsgWorkflowError.ID,
@@ -326,7 +324,7 @@ func processWorkflowRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExec
 }
 
 //processWorkflowNodeRun triggers execution of a node run
-func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	exist, errN := nodeRunExist(db, n.ID, w.Number, subnumber)
 	if errN != nil {
 		return nil, true, sdk.WrapError(errN, "processWorkflowNodeRun> unable to check if node run exist")
@@ -352,6 +350,7 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	copy(stages, n.Pipeline.Stages)
 
 	run := &sdk.WorkflowNodeRun{
+		WorkflowID:       w.WorkflowID,
 		LastModified:     time.Now(),
 		Start:            time.Now(),
 		Number:           w.Number,
@@ -361,6 +360,11 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		WorkflowNodeName: n.Name,
 		Status:           string(sdk.StatusWaiting),
 		Stages:           stages,
+	}
+	if n.Context != nil && n.Context.ApplicationID != 0 {
+		run.ApplicationID = n.Context.ApplicationID
+	} else if n.Context != nil && n.Context.Application != nil {
+		run.ApplicationID = n.Context.Application.ID
 	}
 
 	runPayload := map[string]string{}
@@ -546,15 +550,10 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 		return report, false, nil
 	}
 
-	sanitizedRepositoryFullname := getSanitizeRepofullname(vcsInfos.repository)
-
 	// only if it's the root pipeline, we put the git... in the build parameters
 	// this allow user to write some run conditions with .git.var on the root pipeline
 	if isRoot {
-		setValuesGitInBuildParameters(run, vcsInfos, "")
-		if sanitizedRepositoryFullname != "" {
-			setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", sanitizedRepositoryFullname))
-		}
+		setValuesGitInBuildParameters(run, vcsInfos)
 	}
 
 	// Check Run Conditions
@@ -585,10 +584,7 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	}
 
 	if !isRoot {
-		setValuesGitInBuildParameters(run, vcsInfos, "")
-		if sanitizedRepositoryFullname != "" {
-			setValuesGitInBuildParameters(run, vcsInfos, fmt.Sprintf(".%s", sanitizedRepositoryFullname))
-		}
+		setValuesGitInBuildParameters(run, vcsInfos)
 	}
 
 	// Tag VCS infos : add in tag only if it does not exist
@@ -683,7 +679,7 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	}
 
 	//Execute the node run !
-	r1, err := execute(ctx, dbCopy, db, store, p, run)
+	r1, err := execute(ctx, db, store, p, run)
 	if err != nil {
 		return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to execute workflow run")
 	}
@@ -691,22 +687,19 @@ func processWorkflowNodeRun(ctx context.Context, dbCopy *gorp.DbMap, db gorp.Sql
 	return report, true, nil
 }
 
-func getSanitizeRepofullname(repositoryFullname string) string {
-	return strings.Replace(repositoryFullname, "/", "-", -1)
-}
-
-func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos, suffix string) {
+func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
 	run.VCSRepository = vcsInfos.repository
 	run.VCSBranch = vcsInfos.branch
 	run.VCSHash = vcsInfos.hash
+	run.VCSServer = vcsInfos.server
 
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository+suffix, sdk.StringParameter, run.VCSRepository)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch+suffix, sdk.StringParameter, run.VCSBranch)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash+suffix, sdk.StringParameter, run.VCSHash)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor+suffix, sdk.StringParameter, vcsInfos.author)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage+suffix, sdk.StringParameter, vcsInfos.message)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL+suffix, sdk.StringParameter, vcsInfos.url)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL+suffix, sdk.StringParameter, vcsInfos.httpurl)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.url)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.httpurl)
 }
 
 func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []sdk.Parameter) bool {

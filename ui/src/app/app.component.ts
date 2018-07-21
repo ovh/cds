@@ -1,23 +1,25 @@
-import { Title } from '@angular/platform-browser';
 import {registerLocaleData} from '@angular/common';
-import {Component, OnInit, NgZone} from '@angular/core';
+import localeEN from '@angular/common/locales/en';
+import localeFR from '@angular/common/locales/fr';
+import {Component, NgZone, OnInit} from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import {ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
-import {AuthentificationStore} from './service/auth/authentification.store';
-import {ResolveEnd, ResolveStart, Router, ActivatedRoute, NavigationEnd} from '@angular/router';
-import {CDSWorker} from './shared/worker/worker';
-import {Subscription} from 'rxjs/Subscription';
 import {Observable} from 'rxjs';
-import {map, filter, mergeMap} from 'rxjs/operators';
+import {filter, map, mergeMap} from 'rxjs/operators';
+import {Subscription} from 'rxjs/Subscription';
+import * as format from 'string-format-obj';
+import {environment} from '../environments/environment';
+import {AppService} from './app.service';
+import {Event} from './model/event.model';
+import {AuthentificationStore} from './service/auth/authentification.store';
 import {LanguageStore} from './service/language/language.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
 import {ToastService} from './shared/toast/ToastService';
-import {AppService} from './app.service';
-import {LastUpdateService} from './service/sse/lastupdate.sservice';
-import {LastModification} from './model/lastupdate.model';
-import * as format from 'string-format-obj';
-import localeFR from '@angular/common/locales/fr';
-import localeEN from '@angular/common/locales/en';
+import {CDSSharedWorker} from './shared/worker/shared.worker';
+import {CDSWebWorker} from './shared/worker/web.worker';
+import {CDSWorker} from './shared/worker/worker';
 
 @Component({
     selector: 'app-root',
@@ -29,16 +31,18 @@ export class AppComponent  implements OnInit {
 
     open: boolean;
     isConnected = false;
-    warningWorker: CDSWorker;
-    versionWorker: CDSWorker;
+    versionWorker: CDSWebWorker;
+
+    sseWorker: CDSWorker;
+
     zone: NgZone;
 
     currentVersion = 0;
     showUIUpdatedBanner = false;
 
-    warningWorkerSubscription: Subscription;
     languageSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
+    sseWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
 
@@ -49,7 +53,7 @@ export class AppComponent  implements OnInit {
                 private _activatedRoute: ActivatedRoute, private _titleService: Title,
                 private _authStore: AuthentificationStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService,
-                private _last: LastUpdateService, private _toastService: ToastService) {
+                private _toastService: ToastService) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.toasterConfig = this._toastService.getConfig();
         _translate.addLangs(['en', 'fr']);
@@ -73,10 +77,10 @@ export class AppComponent  implements OnInit {
         this._authStore.getUserlst().subscribe(user => {
             if (!user) {
                 this.isConnected = false;
-                this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
+                this.stopWorker(this.sseWorker, this.sseWorkerSubscription);
             } else {
                 this.isConnected = true;
-                this.startLastUpdateSSE();
+                this.startSSE();
             }
             this.startVersionWorker();
         });
@@ -101,6 +105,7 @@ export class AppComponent  implements OnInit {
                     route = route.firstChild;
                     Object.assign(params, route.snapshot.params, route.snapshot.queryParams);
                 }
+                this._appService.updateRoute(params);
                 return { route, params: Observable.of(params) };
             }))
             .pipe(filter((event) => event.route.outlet === 'primary'))
@@ -110,7 +115,7 @@ export class AppComponent  implements OnInit {
                     return;
                 }
                 if (routeData[0]['title']) {
-                    let title = format(routeData[0]['title'], routeData[1])
+                    let title = format(routeData[0]['title'], routeData[1]);
                     this._titleService.setTitle(title);
                 } else {
                     this._titleService.setTitle('CDS');
@@ -127,20 +132,47 @@ export class AppComponent  implements OnInit {
         }
     }
 
-    startLastUpdateSSE(): void {
-        this._last.getLastUpdate().subscribe(msg => {
-            if (msg === 'ACK') {
+    startSSE(): void {
+        let authKey: string;
+        let authValue: string;
+        // ADD user AUTH
+        let sessionToken = this._authStore.getSessionToken();
+        if (sessionToken) {
+            authKey = this._authStore.localStorageSessionKey;
+            authValue = sessionToken;
+        } else {
+            authKey = 'Authorization';
+            authValue = 'Basic ' + this._authStore.getUser().token;
+        }
+
+        if (window['SharedWorker']) {
+            this.sseWorker = new CDSSharedWorker('./assets/worker/sharedWorker.js');
+        } else {
+            this.sseWorker = new CDSWebWorker('./assets/worker/webWorker.js');
+        }
+
+        this.sseWorker.start({
+            headAuthKey: authKey,
+            headAuthValue: authValue,
+            urlSubscribe: environment.apiURL + '/events/subscribe',
+            urlUnsubscribe: environment.apiURL + 'events/unsubscribe',
+            sseURL: environment.apiURL + '/events',
+            pingURL: environment.apiURL + '/mon/version'
+        });
+        this.sseWorker.response().subscribe(e => {
+            if (e == null) {
                 return;
             }
-            let lastUpdateEvent: LastModification = JSON.parse(msg);
-            this._appService.updateCache(lastUpdateEvent);
+            this.zone.run(() => {
+                this._appService.manageEvent(<Event>e);
+            });
         });
     }
 
 
     startVersionWorker(): void {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);
-        this.versionWorker = new CDSWorker('./assets/worker/web/version.js');
+        this.versionWorker = new CDSWebWorker('./assets/worker/web/version.js');
         this.versionWorker.start({});
         this.versionWorker.response().subscribe( msg => {
             if (msg) {

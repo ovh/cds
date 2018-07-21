@@ -199,7 +199,7 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 				isInError = true
 				return
 			}
-			sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", a.Name, projectKey, reqArgs.Workflow, reqArgs.Number))
+			sendLog(fmt.Sprintf("downloading artifact %s with tag %s from workflow %s/%s on run %d...", a.Name, a.Tag, projectKey, reqArgs.Workflow, reqArgs.Number))
 			if err := wk.client.WorkflowNodeRunArtifactDownload(projectKey, reqArgs.Workflow, *a, f); err != nil {
 				sendLog(fmt.Sprintf("Cannot download artifact %s: %s", a.Name, err))
 				isInError = true

@@ -1,15 +1,16 @@
 import {Component, Input, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {Subscription} from 'rxjs';
+import {finalize} from 'rxjs/operators';
+import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-sidebar-code',
@@ -48,6 +49,7 @@ export class WorkflowSidebarCodeComponent {
     updated = false;
     loading = false;
     loadingGet = true;
+    permissionEnum = PipelineStatus;
 
     constructor(
         private _workflowCore: WorkflowCoreService,

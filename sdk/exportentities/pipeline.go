@@ -13,6 +13,7 @@ import (
 type PipelineV1 struct {
 	Version      string                    `json:"version,omitempty" yaml:"version,omitempty"`
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Stages       []string                  `json:"stages,omitempty" yaml:"stages,omitempty"` //Here Stage.Jobs will NEVER be set
 	StageOptions map[string]Stage          `json:"options,omitempty" yaml:"options,omitempty"`
@@ -31,6 +32,7 @@ const (
 // Pipeline represents exported sdk.Pipeline
 type Pipeline struct {
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
 	Type         string                    `json:"type,omitempty" yaml:"type,omitempty"`
 	Permissions  map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -103,6 +105,7 @@ type ServiceRequirement struct {
 //NewPipelineV1 creates an exportable pipeline from a sdk.Pipeline
 func NewPipelineV1(pip sdk.Pipeline, withPermission bool) (p PipelineV1) {
 	p.Name = pip.Name
+	p.Description = pip.Description
 	p.Version = PipelineVersion1
 	if withPermission {
 		p.Permissions = make(map[string]int, len(pip.GroupPermission))
@@ -177,6 +180,10 @@ func NewPipeline(pip sdk.Pipeline, withPermission bool) (p *Pipeline) {
 	// Default name is like the type
 	if strings.ToLower(pip.Name) != pip.Type {
 		p.Name = pip.Name
+	}
+
+	if pip.Description != "" {
+		p.Description = pip.Description
 	}
 
 	// We consider build pipeline are default
@@ -315,6 +322,7 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 	}
 
 	pip.Name = p.Name
+	pip.Description = p.Description
 	pip.Type = p.Type
 
 	//Compute permissions
@@ -454,7 +462,7 @@ func computeSteps(steps []Step) ([]sdk.Action, error) {
 
 func computeStep(s Step) (a *sdk.Action, e error) {
 	if !s.IsValid() {
-		e = fmt.Errorf("Malformatted step")
+		e = fmt.Errorf("computeStep> Malformatted step")
 		return
 	}
 
@@ -485,6 +493,11 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 	}
 
 	a, ok, e = s.AsDeployApplication()
+	if ok {
+		return
+	}
+
+	a, ok, e = s.AsCoverageAction()
 	if ok {
 		return
 	}
@@ -574,6 +587,7 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	pip = new(sdk.Pipeline)
 	pip.Name = p.Name
+	pip.Description = p.Description
 	pip.Type = sdk.BuildPipeline
 	pip.GroupPermission = make([]sdk.GroupPermission, 0, len(p.Permissions))
 	//Compute permissions

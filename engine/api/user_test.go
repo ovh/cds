@@ -554,3 +554,68 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 	}
 	test.Equal(t, res3.Favorite, true)
 }
+
+// TestVerifyResetExpired test validating reset token when time expired
+func TestTimelineFilter(t *testing.T) {
+	api, _, _ := newTestAPI(t)
+	u, passUser := assets.InsertAdminUser(api.mustDB())
+	t.Logf("%s", passUser)
+
+	//Prepare request
+	vars := map[string]string{}
+
+	uri := api.Router.GetRoute("GET", api.getTimelineFilterHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, passUser, "GET", uri, nil)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	var filter sdk.TimelineFilter
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &filter))
+	assert.Len(t, filter.Projects, 0)
+
+	tf := sdk.TimelineFilter{
+		Projects: []sdk.ProjectFilter{
+			{
+				Key: "CDS",
+			},
+		},
+	}
+
+	// Insert
+	uriInsert := api.Router.GetRoute("POST", api.postTimelineFilterHandler, vars)
+	test.NotEmpty(t, uriInsert)
+	reqInsert := assets.NewAuthentifiedRequest(t, u, passUser, "POST", uriInsert, tf)
+
+	//Do the request
+	recInsert := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(recInsert, reqInsert)
+	assert.Equal(t, 204, recInsert.Code)
+
+	tfInserted, err := user.LoadTimelineFilter(api.mustDB(), u)
+	assert.NoError(t, err)
+	assert.Len(t, tfInserted.Projects, 1)
+
+	pf := sdk.ProjectFilter{
+		Key: "FOO",
+	}
+	tf.Projects = append(tf.Projects, pf)
+
+	// Update
+	uriUpdate := api.Router.GetRoute("POST", api.postTimelineFilterHandler, vars)
+	test.NotEmpty(t, uriInsert)
+	reqUpdate := assets.NewAuthentifiedRequest(t, u, passUser, "POST", uriUpdate, tf)
+
+	//Do the request
+	recUpdate := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(recUpdate, reqUpdate)
+	assert.Equal(t, 204, recInsert.Code)
+
+	tfUpdated, err := user.LoadTimelineFilter(api.mustDB(), u)
+	assert.NoError(t, err)
+	assert.Len(t, tfUpdated.Projects, 2)
+}

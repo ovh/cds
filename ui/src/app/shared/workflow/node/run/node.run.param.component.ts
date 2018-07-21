@@ -1,21 +1,21 @@
 import {Component, Input, ViewChild} from '@angular/core';
+import {Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
-import {Project} from '../../../../model/project.model';
+import {debounceTime, finalize, first} from 'rxjs/operators';
 import {Parameter} from '../../../../model/parameter.model';
-import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
 import {Commit} from '../../../../model/repositories.model';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
-import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest, WorkflowRun} from '../../../../model/workflow.run.model';
-import {Router} from '@angular/router';
-import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {finalize, first, debounceTime} from 'rxjs/operators';
-import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../toast/ToastService';
 declare var CodeMirror: any;
 
@@ -43,11 +43,13 @@ export class WorkflowNodeRunParamComponent {
 
     @Input('nodeToRun')
     set nodeToRun(data: WorkflowNode) {
-        this._nodeToRun = cloneDeep(data);
         if (data) {
+            this._nodeToRun = cloneDeep(data);
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
+                this.linkedToRepo = this._nodeToRun.context.application != null
+                    && this._nodeToRun.context.application.repository_fullname != null;
             }
         }
     }
@@ -72,9 +74,10 @@ export class WorkflowNodeRunParamComponent {
     loadingCommits = false;
     loadingBranches = false;
     readOnly = false;
+    linkedToRepo = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
-                private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService,
+                private _workflowEventStore: WorkflowEventStore, private _translate: TranslateService, private _toast: ToastService,
                 private _appWorkflowService: ApplicationWorkflowService) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -162,26 +165,27 @@ export class WorkflowNodeRunParamComponent {
             return;
         }
 
-        // TODO delete .repository_fullname condition and update handler to get history branches of node_run (issue: #1815)
-        if (this.nodeToRun.context.application.repository_fullname) {
-            this.loadingBranches = true;
-            this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
-                .pipe(finalize(() => this.loadingBranches = false))
-                .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
-        }
+        if (this.linkedToRepo) {
+            if (this.nodeToRun.context.application.repository_fullname) {
+                this.loadingBranches = true;
+                this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
+                    .pipe(finalize(() => this.loadingBranches = false))
+                    .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
+            }
 
-        if (this.num == null) {
-            this.loadingCommits = true;
-            this._workflowRunService.getRunNumber(this.project.key, this.workflow)
-                .pipe(first())
-                .subscribe(n => {
-                    this.lastNum = n.num + 1;
-                    this.getCommits(n.num + 1, false);
-                });
-        }
+            if (this.num == null) {
+                this.loadingCommits = true;
+                this._workflowRunService.getRunNumber(this.project.key, this.workflow)
+                    .pipe(first())
+                    .subscribe(n => {
+                        this.lastNum = n.num + 1;
+                        this.getCommits(n.num + 1, false);
+                    });
+            }
 
-        if (this.num != null) {
-            this.getCommits(this.num, false);
+            if (this.num != null) {
+                this.getCommits(this.num, false);
+            }
         }
     }
 
@@ -228,7 +232,7 @@ export class WorkflowNodeRunParamComponent {
         if (this.nodeRun && this.nodeRun.payload) {
             currentContext = this.nodeRun.payload;
         } else if (this.workflowRun) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflow.root.id];
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id];
             if (rootNodeRun) {
                 currentContext = rootNodeRun[0].payload;
             }
@@ -316,7 +320,7 @@ export class WorkflowNodeRunParamComponent {
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 {queryParams: {subnum: wr.last_subnumber}});
             wr.force_update = true;
-            this._workflowCoreService.setCurrentWorkflowRun(wr);
+            this._workflowEventStore.setSelectedRun(wr);
         });
     }
 

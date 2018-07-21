@@ -2,11 +2,15 @@
     <app-zone header="{{ 'pipeline_administration' | translate }}">
         <app-zone-content>
             <form class="ui form" (ngSubmit)="updatePipeline()" #projectUpdateFrom="ngForm">
-                <div class="fields">
-                    <div class="eight wide field">
-                        <label>{{ 'pipeline_name' | translate}}</label>
-                        <input type="text" [(ngModel)]="editablePipeline.name" name="pipname" [disabled]="loading">
-                    </div>
+
+                <div class="eight wide field">
+                  <label>{{ 'pipeline_name' | translate}}</label>
+                  <input type="text" [(ngModel)]="editablePipeline.name" name="pipname" [disabled]="loading">
+                </div>
+                <div class="sixteen wide field">
+                  <label>{{ 'pipeline_description' | translate}}</label>
+                  <textarea type="text" [(ngModel)]="editablePipeline.description" name="pipdesc" [disabled]="loading">
+                  </textarea>
                 </div>
                 <div class="fields">
                     <div class="eight wide field">

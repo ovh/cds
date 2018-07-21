@@ -1,7 +1,7 @@
 import {Component, Input} from '@angular/core';
 import {Group} from '../../../../model/group.model';
-import {Table} from '../../../../shared/table/table';
 import {GroupService} from '../../../../service/group/group.service';
+import {Table} from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-group-list',

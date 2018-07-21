@@ -1,11 +1,11 @@
 import {Component, Input} from '@angular/core';
-import {Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../../../shared/toast/ToastService';
+import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
 import {Project} from '../../../../../model/project.model';
-import {cloneDeep} from 'lodash';
+import {Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
+import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
+import {ToastService} from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-notification-list',

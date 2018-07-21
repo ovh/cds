@@ -1,0 +1,24 @@
+<div class="ui active centered inline loader mt25" *ngIf="loading"></div>
+<div class="ui relaxed divided list" *ngIf="!loading && broadcasts && broadcasts.length">
+    <div class="item" *ngFor="let broadcast of broadcasts">
+        <i class="large bell outline middle aligned icon pointing"
+           *ngIf="!broadcast.updating"
+           suiPopup
+           [popupText]="'navbar_mark_read' | translate"
+           [popupInverted]="true"
+           popupPlacement="bottom center"
+           (click)="markAsRead(broadcast.id)"
+           [class.orange]="broadcast.level === 'warning'" [class.blue]="broadcast.level === 'info'">
+        </i>
+        <i class="large spinner middle aligned icon animated rotateOut infinite"
+           *ngIf="broadcast.updating">
+        </i>
+        <div class="content">
+            <a class="header" [routerLink]="['/broadcast', broadcast.id]">
+                {{broadcast.title}}
+                <span *ngIf="broadcast.project_key">({{'common_project' | translate}} {{broadcast.project_key}})</span>
+            </a>
+            <div class="description">{{broadcast.updated | amTimeAgo}}</div>
+        </div>
+    </div>
+</div>

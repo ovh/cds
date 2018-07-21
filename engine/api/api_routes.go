@@ -24,11 +24,13 @@ func (api *API) InitRouter() {
 	api.lastUpdateBroker.Init(api.Router.Background)
 
 	api.eventsBroker = &eventsBroker{
-		cache:    api.Cache,
-		clients:  make(map[string]eventsBrokerSubscribe),
-		dbFunc:   api.DBConnectionFactory.GetDBMap,
-		messages: make(chan sdk.Event),
-		mutex:    &sync.Mutex{},
+		cache:             api.Cache,
+		clients:           make(map[string]eventsBrokerSubscribe),
+		dbFunc:            api.DBConnectionFactory.GetDBMap,
+		messages:          make(chan sdk.Event),
+		mutex:             &sync.Mutex{},
+		disconnectedMutex: &sync.Mutex{},
+		disconnected:      make(map[string]bool),
 	}
 	api.eventsBroker.Init(context.Background())
 
@@ -107,7 +109,6 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/db/times", r.GET(api.getMonDBTimesDBHandler, NeedAdmin(true)))
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
-	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 
 	r.Handle("/navbar", r.GET(api.getNavbarHandler))
@@ -141,6 +142,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/export/application/{permApplicationName}", r.GET(api.getApplicationExportHandler))
 
 	r.Handle("/warning/{permProjectKey}", r.GET(api.getWarningsHandler))
+	r.Handle("/warning/{permProjectKey}/{hash}", r.PUT(api.putWarningsHandler))
 
 	// Application
 	r.Handle("/project/{key}/application/{permApplicationName}", r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
@@ -171,6 +173,7 @@ func (api *API) InitRouter() {
 	// Application deployment
 	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config/{platform}", r.POST(api.postApplicationDeploymentStrategyConfigHandler, AllowProvider(true)), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config", r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/metadata/{metadata}", r.POST(api.postApplicationMetadataHandler, AllowProvider(true)))
 
 	// Application workflow migration
 	r.Handle("/project/{key}/application/{permApplicationName}/workflow/migrate", r.POST(api.migrationApplicationWorkflowHandler))
@@ -212,14 +215,16 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/preview/pipeline", r.POST(api.postPipelinePreviewHandler))
 	// Import pipeline
 	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
+	// Import pipeline (ONLY USE FOR UI)
+	r.Handle("/project/{key}/import/pipeline/{permPipelineKey}", r.PUT(api.putImportPipelineHandler))
 	// Export pipeline
 	r.Handle("/project/{key}/export/pipeline/{permPipelineKey}", r.GET(api.getPipelineExportHandler))
 
 	// Workflows
 	r.Handle("/workflow/artifact/{hash}", r.GET(api.downloadworkflowArtifactDirectHandler, Auth(false)))
 
-	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler, EnableTracing()), r.GET(api.getWorkflowsHandler, AllowProvider(true), EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler, AllowProvider(true), EnableTracing()), r.PUT(api.putWorkflowHandler, EnableTracing()), r.DELETE(api.deleteWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", r.GET(api.getWorkflowHookHandler))
@@ -229,6 +234,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/preview/workflows", r.POST(api.postWorkflowPreviewHandler))
 	// Import workflows
 	r.Handle("/project/{permProjectKey}/import/workflows", r.POST(api.postWorkflowImportHandler))
+	// Import workflows (ONLY USE FOR UI EDIT AS CODE)
+	r.Handle("/project/{key}/import/workflows/{permWorkflowName}", r.PUT(api.putWorkflowImportHandler))
 	// Export workflows
 	r.Handle("/project/{key}/export/workflows/{permWorkflowName}", r.GET(api.getWorkflowExportHandler))
 	// Pull workflows
@@ -237,20 +244,21 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/push/workflows", r.POST(api.postWorkflowPushHandler))
 
 	// Workflows run
-	r.Handle("/project/{permProjectKey}/runs", r.GET(api.getWorkflowAllRunsHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true), EnableTracing()))
+	r.Handle("/project/{permProjectKey}/runs", r.GET(api.getWorkflowAllRunsHandler, EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler, EnableTracing()), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true), EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POSTEXECUTE(api.stopWorkflowRunHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", r.POST(api.postResyncVCSWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POSTEXECUTE(api.stopWorkflowRunHandler, EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", r.POSTEXECUTE(api.postResyncVCSWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}", r.GET(api.getWorkflowNodeRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", r.POSTEXECUTE(api.stopWorkflowNodeRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeID}/history", r.GET(api.getWorkflowNodeRunHistoryHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/{nodeName}/commits", r.GET(api.getWorkflowCommitsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/log/service", r.GET(api.getWorkflowNodeRunJobServiceLogsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
@@ -318,21 +326,22 @@ func (api *API) InitRouter() {
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler))
 	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler))
-	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker(), DEPRECATED, EnableTracing()))
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing()))
+	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing()), r.DELETE(api.deleteBookWorkflowJobHandler, NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1), NeedWorker()))
+	r.Handle("/queue/workflows/log/service", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), NeedHatchery()))
+	r.Handle("/queue/workflows/{permID}/coverage", r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(api.postWorkflowJobTagsHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/artifact/{tag}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/artifact/{ref}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", r.GET(api.getParameterTypeHandler))
@@ -374,6 +383,8 @@ func (api *API) InitRouter() {
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
 	r.Handle("/user/favorite", r.POST(api.postUserFavoriteHandler))
+	r.Handle("/user/timeline", r.GET(api.getTimelineHandler))
+	r.Handle("/user/timeline/filter", r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
 	r.Handle("/user/token", r.GET(api.getUserTokenListHandler))
 	r.Handle("/user/token/{token}", r.GET(api.getUserTokenHandler))
 	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
@@ -385,7 +396,7 @@ func (api *API) InitRouter() {
 	r.Handle("/auth/mode", r.GET(api.authModeHandler, Auth(false)))
 
 	// Workers
-	r.Handle("/worker", r.GET(api.getWorkersHandler, Auth(false)), r.POST(api.registerWorkerHandler, Auth(false)))
+	r.Handle("/worker", r.GET(api.getWorkersHandler), r.POST(api.registerWorkerHandler, Auth(false)))
 	r.Handle("/worker/refresh", r.POST(api.refreshWorkerHandler))
 	r.Handle("/worker/checking", r.POST(api.workerCheckingHandler))
 	r.Handle("/worker/waiting", r.POST(api.workerWaitingHandler))
@@ -409,7 +420,6 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook/model/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
-	r.Handle("/events/subscribe", r.POST(api.eventSubscribeHandler))
 	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
 

@@ -1,18 +1,20 @@
-import {Component, Input, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
-import {WorkflowHookTask, HookStatus, TaskExecution} from '../../../../../model/workflow.hook.model';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
+import {finalize} from 'rxjs/operators';
+import {Subscription} from 'rxjs/Subscription';
+import {Project} from '../../../../../model/project.model';
+import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
+import {HookService} from '../../../../../service/hook/hook.service';
+import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
+import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {DeleteModalComponent} from '../../../../../shared/modal/delete/delete.component';
+import {ToastService} from '../../../../../shared/toast/ToastService';
 import {WorkflowNodeHookDetailsComponent} from '../../../../../shared/workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
-import {DeleteModalComponent} from '../../../../../shared/modal/delete/delete.component';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {Project} from '../../../../../model/project.model';
-import {ToastService} from '../../../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {HookService} from '../../../../../service/hook/hook.service';
-import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-sidebar-hook',
@@ -20,21 +22,13 @@ import {finalize} from 'rxjs/operators';
     styleUrls: ['./workflow.sidebar.hook.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarHookComponent {
+export class WorkflowSidebarHookComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() readonly = false;
-    @Input('hook')
-    set hook(data: WorkflowNodeHook) {
-        this._hook = data;
-        if (data) {
-            this.loadHookDetails();
-        }
-    }
-    get hook() {
-      return this._hook;
-    }
+
+    hook: WorkflowNodeHook;
+    subHook: Subscription;
 
     @ViewChild('workflowEditHook')
     workflowEditHook: WorkflowNodeHookFormComponent;
@@ -53,9 +47,18 @@ export class WorkflowSidebarHookComponent {
         private _workflowStore: WorkflowStore,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _hookService: HookService
+        private _hookService: HookService,
+        private _workflowEventStore: WorkflowEventStore
     ) {
+    }
 
+    ngOnInit(): void {
+        this.subHook = this._workflowEventStore.selectedHook().subscribe(h => {
+            this.hook = h;
+            if (this.hook) {
+                this.loadHookDetails();
+            }
+        });
     }
 
     openHookEditModal() {
@@ -114,7 +117,7 @@ export class WorkflowSidebarHookComponent {
                 if (this.workflowEditHook && this.workflowEditHook.modal) {
                     this.workflowEditHook.modal.approve(true);
                 }
-
+                this._workflowEventStore.unselectAll();
                 this._toast.success('', this._translate.instant('workflow_updated'));
             });
     }

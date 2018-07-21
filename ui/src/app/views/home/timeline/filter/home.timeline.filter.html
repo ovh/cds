@@ -1,0 +1,63 @@
+<h4>{{'timeline_filter_project' | translate}}</h4>
+<div class="ui stackable four cards">
+    <div class="ui card">
+        <div class="content">
+            <div class="description">
+                <div class="ui form">
+                    <div class="fields">
+                        <div class="field">
+                            <sui-select class="selection"
+                                        name="project"
+                                        placeholder="{{'timeline_filter_project_select' | translate}}"
+                                        labelField="name"
+                                        valueField="key"
+                                        [options]="projects"
+                                        [isSearchable]="true"
+                                        [(ngModel)]="selectedProjectKey" #selectProj>
+                                <sui-select-option *ngFor="let option of selectProj.filteredOptions"
+                                                   [value]="option"></sui-select-option>
+                            </sui-select>
+                        </div>
+                        <button class="ui blue button" type="button" (click)="addProject()">{{'btn_add' | translate}}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui card" *ngFor="let p of filter.projects">
+        <div class="content">
+            <div class="header">
+                {{p.key}}
+                <div class="ui right floated">
+                    <i class="close icon" (click)="removeProject(p)"></i>
+                </div>
+            </div>
+            <div class="meta">
+                <div class="ui dropdown" suiDropdown (isOpenChange)="loadProjectWorkflow(p, false)" autoClose="outsideClick">
+                    <div class="text">
+                        <span *ngIf="!p.workflow_names || p.workflow_names.length === 0"> All workflows</span>
+                        <span *ngIf="p.workflow_names && p.workflow_names.length > 0">{{ p.workflow_names.length }}  workflows</span>
+                    </div>
+                    <div class="menu" suiDropdownMenu>
+                        <div class="item" *ngFor="let w of p?.project?.workflow_names" (click)="updateWorkflowInFilter(w, p)">
+                            <i class="microphone icon" [class.slash]="w.mute"></i>{{w.name}}
+                        </div>
+                        <div class="item" *ngIf="p.loading">
+                            <div class="ui active loader"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="ui form mt25">
+    <div class="right aligned field">
+        <button class="ui green button" type="button" (click)="saveFilter()">{{'btn_save' | translate }}</button>
+    </div>
+
+</div>
+
+

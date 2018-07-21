@@ -1,15 +1,15 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Project} from '../../../model/project.model';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {first} from 'rxjs/operators';
 import {Application} from '../../../model/application.model';
+import {Project} from '../../../model/project.model';
 import {Variable} from '../../../model/variable.model';
 import {ApplicationStore} from '../../../service/application/application.store';
 import {ProjectStore} from '../../../service/project/project.store';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../shared/toast/ToastService';
 import {VariableService} from '../../../service/variable/variable.service';
-import {cloneDeep} from 'lodash';
-import {first} from 'rxjs/operators';
+import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-add',
@@ -23,6 +23,7 @@ export class ApplicationAddComponent implements OnInit {
     typeofCreation = 'empty';
 
     selectedName: string;
+    description: string;
     variables: Array<Variable>;
     selectedApplication: Application;
     selectedApplicationName: string;
@@ -33,6 +34,8 @@ export class ApplicationAddComponent implements OnInit {
     appPatternError = false;
 
     suggestion: Array<string>;
+    img: string;
+    fileTooLarge = false;
 
     constructor(private _activatedRoute: ActivatedRoute, private _projectStore: ProjectStore,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
@@ -97,6 +100,8 @@ export class ApplicationAddComponent implements OnInit {
 
         let newApplication = new Application();
         newApplication.name = this.selectedName;
+        newApplication.description = this.description;
+        newApplication.icon = this.img;
 
         this.loadingCreate = true;
         switch (this.typeofCreation) {
@@ -120,5 +125,13 @@ export class ApplicationAddComponent implements OnInit {
                     this.loadingCreate = false;
                 });
         }
+    }
+
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000
+        if (this.fileTooLarge) {
+          return;
+        }
+        this.img = event.content;
     }
 }

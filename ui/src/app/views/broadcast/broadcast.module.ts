@@ -1,8 +1,8 @@
 import {NgModule} from '@angular/core';
-import {BroadcastListComponent} from './list/broadcast.list.component';
-import {BroadcastDetailsComponent} from './details/broadcast.details.component';
-import { broadcastRouting } from './broadcast.routing';
 import {SharedModule} from '../../shared/shared.module';
+import { broadcastRouting } from './broadcast.routing';
+import {BroadcastDetailsComponent} from './details/broadcast.details.component';
+import {BroadcastListComponent} from './list/broadcast.list.component';
 
 @NgModule({
     declarations: [

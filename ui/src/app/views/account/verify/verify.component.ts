@@ -1,10 +1,10 @@
-import {ActivatedRoute, Params, Router} from '@angular/router';
-import {UserService} from '../../../service/user/user.service';
 import {Component, OnInit} from '@angular/core';
-import {User} from '../../../model/user.model';
-import {AccountComponent} from '../account.component';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {ActivatedRoute, Params, Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
+import {User} from '../../../model/user.model';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {UserService} from '../../../service/user/user.service';
+import {AccountComponent} from '../account.component';
 
 @Component({
     selector: 'app-account-verify',

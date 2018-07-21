@@ -58,30 +58,6 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 
-	req, err := h.CDSClient().Requirements()
-	if err != nil {
-		return fmt.Errorf("Cannot fetch requirements: %s", err)
-	}
-
-	capa, err := checkCapabilities(req)
-	if err != nil {
-		return fmt.Errorf("Cannot check local capabilities: %s", err)
-	}
-
-	h.hatch = &sdk.Hatchery{
-		Name: genname,
-		Model: sdk.Model{
-			Name: genname,
-			Type: sdk.HostProcess,
-			ModelVirtualMachine: sdk.ModelVirtualMachine{
-				Image: genname,
-			},
-			RegisteredCapabilities: capa,
-			Provision:              int64(h.Config.NbProvision),
-		},
-		Version: sdk.VERSION,
-	}
-
 	return nil
 }
 
@@ -140,6 +116,30 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	req, err := h.CDSClient().Requirements()
+	if err != nil {
+		return fmt.Errorf("Cannot fetch requirements: %s", err)
+	}
+
+	capa, err := checkCapabilities(req)
+	if err != nil {
+		return fmt.Errorf("Cannot check local capabilities: %s", err)
+	}
+
+	h.hatch = &sdk.Hatchery{
+		Name: h.Name,
+		Model: sdk.Model{
+			Name: h.Name,
+			Type: sdk.HostProcess,
+			ModelVirtualMachine: sdk.ModelVirtualMachine{
+				Image: h.Name,
+			},
+			RegisteredCapabilities: capa,
+			Provision:              int64(h.Config.NbProvision),
+		},
+		Version: sdk.VERSION,
+	}
+
 	return h.CommonServe(ctx, h)
 }
 
@@ -174,24 +174,13 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 }
 
 // killWorker kill a local process
-func (h *HatcheryLocal) killWorker(worker sdk.Worker) error {
-	for name, workerCmd := range h.workers {
-		if worker.Name == name {
-			log.Info("KillLocalWorker> Killing %s", worker.Name)
-			return workerCmd.cmd.Process.Kill()
-		}
-	}
-	return fmt.Errorf("Worker %s not found", worker.Name)
+func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
+	log.Info("KillLocalWorker> Killing %s", name)
+	return workerCmd.cmd.Process.Kill()
 }
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
-	var err error
-
-	if len(h.workers) >= h.Config.Provision.MaxWorker {
-		return "", fmt.Errorf("Max capacity reached (%d)", h.Config.Provision.MaxWorker)
-	}
-
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
 	if spawnArgs.RegisterOnly {
 		wName = "register-" + wName
@@ -271,16 +260,21 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		}
 	}
 
-	if err = cmd.Start(); err != nil {
+	if err := cmd.Start(); err != nil {
+		log.Error("hatchery> local> %v", err)
 		return "", err
 	}
+
+	log.Debug("worker %s has been spawned by %s", wName, h.Name)
 
 	h.Lock()
 	h.workers[wName] = workerCmd{cmd: cmd, created: time.Now()}
 	h.Unlock()
 	// Wait in a goroutine so that when process exits, Wait() update cmd.ProcessState
 	go func() {
-		cmd.Wait()
+		if err := cmd.Wait(); err != nil {
+			log.Error("hatchery> local> %v", err)
+		}
 	}()
 
 	return wName, nil
@@ -288,8 +282,16 @@ func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryLocal) WorkersStarted() int {
-	return len(h.workers)
+func (h *HatcheryLocal) WorkersStarted() []string {
+	h.Mutex.Lock()
+	defer h.Mutex.Unlock()
+	workers := make([]string, len(h.workers))
+	var i int
+	for n := range h.workers {
+		workers[i] = n
+		i++
+	}
+	return workers
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but
@@ -297,6 +299,9 @@ func (h *HatcheryLocal) WorkersStarted() int {
 func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
 	h.localWorkerIndexCleanup()
 	var x int
+
+	h.Mutex.Lock()
+	defer h.Mutex.Unlock()
 	for name := range h.workers {
 		if strings.Contains(name, model.Name) {
 			x++
@@ -339,7 +344,7 @@ func (h *HatcheryLocal) Init() error {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
 
-	go h.startKillAwolWorkerRoutine()
+	sdk.GoRoutine("startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
 	return nil
 }
 
@@ -401,21 +406,18 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 			}
 			w.Name = name
 			log.Info("Killing AWOL worker %s", w.Name)
-			if err := h.killWorker(w); err != nil {
+			if err := h.killWorker(name, workerCmd); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)
-			continue
-		}
-		// Worker is disabled. kill it
-		if w.Status == sdk.StatusDisabled {
+		} else if w.Status == sdk.StatusDisabled {
+			// Worker is disabled. kill it
 			log.Info("Killing disabled worker %s", w.Name)
 
-			if err := h.killWorker(w); err != nil {
+			if err := h.killWorker(name, workerCmd); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)
-			continue
 		}
 	}
 

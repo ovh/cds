@@ -1,21 +1,21 @@
+import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 
-import {of as observableOf, Observable, BehaviorSubject} from 'rxjs';
-
-import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import * as immutable from 'immutable';
+import {map} from 'rxjs/operators';
 import {Application} from '../../model/application.model';
-import {ApplicationService} from './application.service';
-import {RepositoryPoller} from '../../model/polling.model';
-import {Project} from '../../model/project.model';
-import {Hook} from '../../model/hook.model';
-import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
-import {ProjectStore} from '../project/project.store';
-import {Trigger} from '../../model/trigger.model';
+import {Hook} from '../../model/hook.model';
 import {NavbarRecentData} from '../../model/navbar.model';
 import {Notification} from '../../model/notification.model';
+import {RepositoryPoller} from '../../model/polling.model';
+import {Project} from '../../model/project.model';
 import {Scheduler} from '../../model/scheduler.model';
+import {Trigger} from '../../model/trigger.model';
+import {Variable} from '../../model/variable.model';
+import {ProjectStore} from '../project/project.store';
+import {WorkflowStore} from '../workflow/workflow.store';
+import {ApplicationService} from './application.service';
 
 import {Key} from '../../model/keys.model';
 
@@ -33,7 +33,10 @@ export class ApplicationStore {
         new BehaviorSubject(immutable.List<NavbarRecentData>());
 
 
-    constructor(private _applicationService: ApplicationService, private _projectStore: ProjectStore) {
+    constructor(
+      private _applicationService: ApplicationService,
+      private _projectStore: ProjectStore,
+      private _workflowStore: WorkflowStore) {
         this.loadRecentApplication();
 
     }
@@ -169,6 +172,7 @@ export class ApplicationStore {
                 let pToUpdate = cache.get(appKey);
                 pToUpdate.last_modified = app.last_modified;
                 pToUpdate.name = app.name;
+                pToUpdate.description = app.description;
                 this._application.next(cache.set(key + '-' + app.name, pToUpdate).remove(appKey));
             }
             if (oldName !== appli.name) {
@@ -227,6 +231,9 @@ export class ApplicationStore {
                     appToUpdate.vcs_server = app.vcs_server;
                     appToUpdate.repository_fullname = app.repository_fullname;
                     this._application.next(cache.set(appKey, appToUpdate));
+                    if (appToUpdate.usage && Array.isArray(appToUpdate.usage.workflows)) {
+                        appToUpdate.usage.workflows.forEach((wf) => this._workflowStore.removeFromStore(key + '-' + wf.name));
+                    }
                 }
                 return app;
             }));
@@ -248,6 +255,9 @@ export class ApplicationStore {
                     delete pToUpdate.vcs_server;
                     delete pToUpdate.repository_fullname;
                     this._application.next(cache.set(appKey, pToUpdate));
+                    if (pToUpdate.usage && Array.isArray(pToUpdate.usage.workflows)) {
+                        pToUpdate.usage.workflows.forEach((wf) => this._workflowStore.removeFromStore(key + '-' + wf.name));
+                    }
                 }
                 return app;
             }));

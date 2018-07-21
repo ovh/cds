@@ -1,16 +1,33 @@
-
-import {map} from 'rxjs/operators';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {Workflow} from '../../../model/workflow.model';
+import {map} from 'rxjs/operators';
+import {ServiceLog} from '../../../model/pipeline.model';
 import {Commit} from '../../../model/repositories.model';
+import {Workflow} from '../../../model/workflow.model';
 import {RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
-import {HttpClient, HttpParams} from '@angular/common/http';
 
 @Injectable()
 export class WorkflowRunService {
 
     constructor(private _http: HttpClient) {
+    }
+
+    /**
+     * List workflow runs for the given workflow
+     */
+    runs(key: string, workflowName: string, limit: string, offset?: string, filters?: {}): Observable<Array<WorkflowRun>> {
+        let url = '/project/' + key + '/workflows/' + workflowName + '/runs';
+        let params = new HttpParams();
+        params = params.append('limit', limit);
+        if (offset) {
+            params = params.append('offset', offset);
+        }
+        if (filters) {
+            Object.keys(filters).forEach((tag) => params = params.append(tag, filters[tag]));
+        }
+
+        return this._http.get<Array<WorkflowRun>>(url, {params: params});
     }
 
     /**
@@ -47,6 +64,19 @@ export class WorkflowRunService {
     }
 
     /**
+     * Get workflow node run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {number} number Run number
+     * @param nodeRunID Node run Identifier
+     * @returns {Observable<WorkflowNodeRun>}
+     */
+    getWorkflowNodeRun(key: string, workflowName: string, number: number, nodeRunID): Observable<WorkflowNodeRun> {
+        return this._http.get<WorkflowNodeRun>('/project/' + key + '/workflows/' + workflowName +
+            '/runs/' + number + '/nodes/' + nodeRunID);
+    }
+
+    /**
      * Stop a workflow run
      * @param {string} key Project unique key
      * @param {string} workflowName Workflow name
@@ -58,15 +88,22 @@ export class WorkflowRunService {
     }
 
     /**
-     * Get workflow Node Run
+     * Get workflow Node Run Job service logs
      * @param {string} key Project unique key
      * @param {string} workflowName Workflow name
      * @param {number} num Number of the workflow run
      * @param {number} id of the node run
-     * @returns {Observable<WorkflowNodeRun>}
+     * @param {number} id of the job node run
+     * @returns {Observable<Array<ServiceLog>>}
      */
-    getWorkflowNodeRun(key: string, workflowName: string, num: number, id: number): Observable<WorkflowNodeRun> {
-        return this._http.get<WorkflowNodeRun>('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/nodes/' + id);
+    getWorkflowNodeRunServiceLogs(
+      key: string,
+      workflowName: string,
+      num: number,
+      nodeId: number,
+      jobId: number): Observable<Array<ServiceLog>> {
+        return this._http
+          .get<Array<ServiceLog>>(`/project/${key}/workflows/${workflowName}/runs/${num}/nodes/${nodeId}/job/${jobId}/log/service`);
     }
 
     /**

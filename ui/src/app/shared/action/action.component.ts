@@ -1,29 +1,34 @@
-import {Component, Input, Output, EventEmitter, OnDestroy, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
+import {cloneDeep} from 'lodash';
+import {DragulaService} from 'ng2-dragula/components/dragula.provider';
+import {Subscription} from 'rxjs/Subscription';
 import {Action} from '../../model/action.model';
-import {SharedService} from '../shared.service';
-import {RequirementEvent} from '../requirements/requirement.event.model';
-import {Requirement} from '../../model/requirement.model';
-import {ParameterEvent} from '../parameter/parameter.event.model';
+import {AllKeys} from '../../model/keys.model';
 import {Parameter} from '../../model/parameter.model';
 import {Pipeline} from '../../model/pipeline.model';
-import {ActionEvent} from './action.event.model';
-import {ActionStore} from '../../service/action/action.store';
-import {DragulaService} from 'ng2-dragula/components/dragula.provider';
 import {Project} from '../../model/project.model';
+import {Requirement} from '../../model/requirement.model';
+import {ActionStore} from '../../service/action/action.store';
+import {AutoUnsubscribe} from '../decorator/autoUnsubscribe';
+import {ParameterEvent} from '../parameter/parameter.event.model';
+import {RequirementEvent} from '../requirements/requirement.event.model';
+import {SharedService} from '../shared.service';
+import {ActionEvent} from './action.event.model';
 import {StepEvent} from './step/step.event';
-import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-action',
     templateUrl: './action.html',
     styleUrls: ['./action.scss']
 })
+@AutoUnsubscribe()
 export class ActionComponent implements OnDestroy, OnInit {
     editableAction: Action;
     steps: Array<Action> = new Array<Action>();
     publicActions: Array<Action>;
 
     @Input() project: Project;
+    @Input() keys: AllKeys;
     @Input() pipeline: Pipeline;
     @Input() edit = false;
     @Input() suggest: Array<string>;
@@ -47,6 +52,9 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     collapsed = true;
     configRequirements: {disableModel?: boolean, disableHostname?: boolean} = {};
+
+    actionSub: Subscription;
+
     constructor(private sharedService: SharedService, private _actionStore: ActionStore, private dragulaService: DragulaService) {
         dragulaService.setOptions('bag-nonfinal', {
             moves: function (el, source, handle) {
@@ -65,7 +73,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit() {
-        this._actionStore.getActions().subscribe(mapActions => {
+        this.actionSub = this._actionStore.getActions().subscribe(mapActions => {
             this.publicActions = mapActions.toArray().filter((action) => action.name !== this.editableAction.name);
         });
     }

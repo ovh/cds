@@ -97,7 +97,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 func (h *HatcheryKubernetes) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
 	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	}
 	return m
 }
@@ -202,6 +202,8 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		name = "register-" + name
 		label = "register"
 	}
+
+	log.Debug("hatchery> kubernetes> SpawnWorker> %s", name)
 
 	var logJob string
 	if spawnArgs.JobID > 0 {
@@ -349,25 +351,27 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 
 	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&podSchema)
 
+	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", name)
+
 	return pod.Name, err
 }
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryKubernetes) WorkersStarted() int {
-	workersLen := 0
+func (h *HatcheryKubernetes) WorkersStarted() []string {
 	list, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
 	if err != nil {
-		return workersLen
+		log.Warning("WorkersStarted> unable to list pods on namespace %s", h.Config.KubernetesNamespace)
+		return nil
 	}
+	workerNames := make([]string, 0, list.Size())
 	for _, pod := range list.Items {
 		labels := pod.GetLabels()
 		if labels[LABEL_HATCHERY_NAME] == h.Configuration().Name {
-			workersLen++
+			workerNames = append(workerNames, pod.GetName())
 		}
 	}
-
-	return workersLen
+	return workerNames
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but
@@ -423,6 +427,21 @@ func (h *HatcheryKubernetes) killAwolWorkers() error {
 			}
 		}
 		if toDelete {
+			// If its a worker "register", check registration before deleting it
+			if strings.Contains(pod.Name, "register-") {
+				var modelIDS string
+				for _, e := range pod.Spec.Containers[0].Env {
+					if e.Name == "CDS_MODEL" {
+						modelIDS = e.Value
+					}
+				}
+				modelID, err := strconv.ParseInt(modelIDS, 10, 64)
+				if err != nil {
+					log.Error("killAndRemove> unable to get model from registering container %s", pod.Name)
+				} else {
+					hatchery.CheckWorkerModelRegister(h, modelID)
+				}
+			}
 			if err := h.k8sClient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
 				globalErr = err
 				log.Error("hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)

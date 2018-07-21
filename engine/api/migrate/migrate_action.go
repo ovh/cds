@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -68,7 +69,7 @@ func MigrateActionDEPRECATEDGitClonePipeline(db gorp.SqlExecutor, store cache.St
 		if err != nil {
 			return err
 		}
-		w, err := workflow.Load(db, store, proj, p.WorkflowName, nil, workflow.LoadOptions{})
+		w, err := workflow.Load(context.TODO(), db, store, proj, p.WorkflowName, nil, workflow.LoadOptions{})
 		if err != nil {
 			return err
 		}

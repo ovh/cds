@@ -1,18 +1,19 @@
-import {Component, OnInit, ViewChild, Input} from '@angular/core';
-import {Application} from '../../../../model/application.model';
-import {ApplicationStore} from '../../../../service/application/application.store';
-import {TranslateService} from '@ngx-translate/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {FormControl} from '@angular/forms';
 import {Router} from '@angular/router';
-import {ToastService} from '../../../../shared/toast/ToastService';
-import {Project} from '../../../../model/project.model';
-import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
-import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {User} from '../../../../model/user.model';
 import {finalize, first} from 'rxjs/operators';
-import {cloneDeep} from 'lodash';
+import {Application} from '../../../../model/application.model';
+import {Project} from '../../../../model/project.model';
+import {User} from '../../../../model/user.model';
+import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
+import {ApplicationStore} from '../../../../service/application/application.store';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-admin',
@@ -31,9 +32,14 @@ export class ApplicationAdminComponent implements OnInit {
     migrationModal: ActiveModal<boolean, boolean, void>;
     migrationText: string;
 
+    disablePrefix: FormControl
+    withRepositoryWebHook: FormControl
+    withCurrentVersion: FormControl
+
     user: User;
 
     newName: string;
+    fileTooLarge = false;
     public loading = false;
 
     constructor(private _applicationStore: ApplicationStore, private _toast: ToastService, private _modalService: SuiModalService,
@@ -49,10 +55,15 @@ export class ApplicationAdminComponent implements OnInit {
                 { queryParams: {tab: 'workflow'}});
         }
         this.migrationText = this._translate.instant('application_workflow_migration_modal_content');
+
+        this.disablePrefix = new FormControl(false);
+        this.withRepositoryWebHook = new FormControl(false);
+        this.withCurrentVersion = new FormControl(true);
     }
 
     generateWorkflow(force: boolean): void {
-        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name, force)
+        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name,
+            force, this.disablePrefix.value, this.withRepositoryWebHook.value, this.withCurrentVersion.value)
             .pipe(
               first(),
               finalize(() => this.loading = true)
@@ -105,5 +116,13 @@ export class ApplicationAdminComponent implements OnInit {
         }, () => {
             this.loading = false;
         });
+    }
+
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000;
+        if (this.fileTooLarge) {
+            return;
+        }
+        this.application.icon = event.content;
     }
 }

@@ -1,0 +1,14 @@
+.header {
+  a:not(:first-of-type) {
+    margin-left: 5px;
+  }
+}
+
+.ui.relaxed.divided.list {
+  height: 590px;
+  overflow-y: auto;
+}
+
+.right.floated.content {
+  padding-right: 10px;
+}

@@ -44,6 +44,7 @@ type currentWorker struct {
 		pkey           string
 		gitsshPath     string
 		params         []sdk.Parameter
+		secrets        []sdk.Variable
 	}
 	status struct {
 		Name   string `json:"name"`
@@ -73,6 +74,7 @@ func main() {
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister(w))
 	cmd.AddCommand(cmdCache(w))
+	cmd.AddCommand(cmdKey(w))
 
 	// last command: doc, this command is hidden
 	cmd.AddCommand(cmdDoc(cmd))

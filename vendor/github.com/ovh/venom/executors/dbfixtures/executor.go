@@ -77,8 +77,9 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 	} else if e.Migrations != "" {
 		l.Debugf("loading migrations from folder %s\n", e.Migrations)
 
+		dir := path.Join(workdir, e.Migrations)
 		migrations := &migrate.FileMigrationSource{
-			Dir: e.Migrations,
+			Dir: dir,
 		}
 		n, errMigrate := migrate.Exec(db, e.Database, migrations, migrate.Up)
 		if errMigrate != nil {

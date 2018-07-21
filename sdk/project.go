@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/hashstructure"
@@ -14,6 +15,8 @@ type Project struct {
 	ID                int64              `json:"-" yaml:"-" db:"id" cli:"-"`
 	Key               string             `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
 	Name              string             `json:"name" yaml:"name" db:"name" cli:"name"`
+	Description       string             `json:"description" yaml:"description" db:"description" cli:"description"`
+	Icon              string             `json:"icon" yaml:"icon" db:"icon" cli:"-"`
 	Workflows         []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
 	WorkflowNames     []IDName           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
 	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
@@ -35,10 +38,38 @@ type Project struct {
 	Favorite          bool               `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 }
 
+// IsValid returns error if the project is not valid
+func (proj Project) IsValid() error {
+	if !NamePatternRegex.MatchString(proj.Key) {
+		return NewError(ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", NamePattern))
+	}
+
+	if proj.Icon != "" {
+		if !strings.HasPrefix(proj.Icon, IconFormat) {
+			return ErrIconBadFormat
+		}
+		if len(proj.Icon) > MaxIconSize {
+			return ErrIconBadSize
+		}
+	}
+
+	return nil
+}
+
+// GetSSHKey returns a ssh key given his name
+func (proj Project) GetSSHKey(name string) *ProjectKey {
+	for _, k := range proj.Keys {
+		if k.Type == KeyTypeSSH && k.Name == name {
+			return &k
+		}
+	}
+	return nil
+}
+
 // SSHKeys returns the slice of ssh key for an application
-func (a Project) SSHKeys() []ProjectKey {
+func (proj Project) SSHKeys() []ProjectKey {
 	keys := []ProjectKey{}
-	for _, k := range a.Keys {
+	for _, k := range proj.Keys {
 		if k.Type == KeyTypeSSH {
 			keys = append(keys, k)
 		}
@@ -46,10 +77,10 @@ func (a Project) SSHKeys() []ProjectKey {
 	return keys
 }
 
-// PGPKeys returns the slice of pgp key for an application
-func (a Project) PGPKeys() []ProjectKey {
+// PGPKeys returns the slice of pgp key for a project
+func (proj Project) PGPKeys() []ProjectKey {
 	keys := []ProjectKey{}
-	for _, k := range a.Keys {
+	for _, k := range proj.Keys {
 		if k.Type == KeyTypePGP {
 			keys = append(keys, k)
 		}
@@ -58,20 +89,20 @@ func (a Project) PGPKeys() []ProjectKey {
 }
 
 // GetPlatform returns the ProjectPlatform given a name
-func (a Project) GetPlatform(pfName string) (ProjectPlatform, bool) {
-	for i := range a.Platforms {
-		if a.Platforms[i].Name == pfName {
-			return a.Platforms[i], true
+func (proj Project) GetPlatform(pfName string) (ProjectPlatform, bool) {
+	for i := range proj.Platforms {
+		if proj.Platforms[i].Name == pfName {
+			return proj.Platforms[i], true
 		}
 	}
 	return ProjectPlatform{}, false
 }
 
 // GetPlatformByID returns the ProjectPlatform given a name
-func (a Project) GetPlatformByID(id int64) *ProjectPlatform {
-	for i := range a.Platforms {
-		if a.Platforms[i].ID == id {
-			return &a.Platforms[i]
+func (proj Project) GetPlatformByID(id int64) *ProjectPlatform {
+	for i := range proj.Platforms {
+		if proj.Platforms[i].ID == id {
+			return &proj.Platforms[i]
 		}
 	}
 	return nil

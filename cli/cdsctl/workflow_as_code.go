@@ -317,13 +317,10 @@ func workflowInitRun(c cli.Values) error {
 		if strings.HasPrefix(fetchURL, "https") {
 			connectionType = "https"
 		}
-		defaultBranch, _ := gitRepo.DefaultBranch()
 		app := exportentities.Application{
 			Name:              appName,
 			RepositoryName:    repoName,
 			VCSServer:         repoManagerName,
-			VCSBranch:         "{{.git.branch}}",
-			VCSDefaultBranch:  defaultBranch,
 			VCSConnectionType: connectionType,
 			VCSPGPKey:         "app-pgp-" + repoManagerName,
 			Keys: map[string]exportentities.KeyValue{

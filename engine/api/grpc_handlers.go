@@ -3,6 +3,8 @@ package api
 import (
 	"io"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 
@@ -94,15 +96,18 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	if errW != nil {
 		return new(empty.Empty), sdk.WrapError(errW, "SendResult> Cannot load worker info")
 	}
-	report, err := postJobResult(c, db, h.store, p, wr, res)
+	dbFunc := func(c context.Context) *gorp.DbMap {
+		return h.dbConnectionFactory.GetDBMap()
+	}
+	report, err := postJobResult(c, dbFunc, h.store, p, wr, res)
 	if err != nil {
 		return new(empty.Empty), sdk.WrapError(err, "SendResult> Cannot post job result")
 	}
 
-	workflowRuns, workflowNodeRuns, workflowNodeJobRuns := workflow.GetWorkflowRunEventData(report, p.Key)
+	workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 	workflow.ResyncNodeRunsWithCommits(db, h.store, p, workflowNodeRuns)
 
-	go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
+	go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, p.Key)
 
 	return new(empty.Empty), nil
 }

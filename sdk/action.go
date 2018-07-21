@@ -81,6 +81,7 @@ const (
 const (
 	ScriptAction              = "Script"
 	JUnitAction               = "JUnit"
+	CoverageAction            = "Coverage"
 	GitCloneAction            = "GitClone"
 	GitTagAction              = "GitTag"
 	ReleaseAction             = "Release"

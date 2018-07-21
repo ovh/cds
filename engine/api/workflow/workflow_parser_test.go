@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -74,14 +75,14 @@ func TestParseAndImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := workflow.ParseAndImport(db, cache, proj, tt.input, true, u, false)
+			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, tt.input, u, workflow.ImportOptions{DryRun: false, Force: true})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseAndImport() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if err == nil {
-				w, _ := workflow.Load(db, cache, proj, tt.input.Name, u, workflow.LoadOptions{})
+				w, _ := workflow.Load(context.TODO(), db, cache, proj, tt.input.Name, u, workflow.LoadOptions{})
 				if w != nil {
 					b, _ := json.Marshal(w)
 					t.Logf("Workflow = \n%s", string(b))

@@ -38,7 +38,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, p, workflowName, getUser(ctx), workflow.LoadOptions{})
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, workflowName, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
 		}

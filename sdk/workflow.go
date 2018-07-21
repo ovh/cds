@@ -3,6 +3,7 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -16,6 +17,7 @@ type Workflow struct {
 	ID                      int64                  `json:"id" db:"id" cli:"-"`
 	Name                    string                 `json:"name" db:"name" cli:"name,key"`
 	Description             string                 `json:"description,omitempty" db:"description" cli:"description"`
+	Icon                    string                 `json:"icon,omitempty" db:"icon" cli:"-"`
 	LastModified            time.Time              `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	ProjectID               int64                  `json:"project_id,omitempty" db:"project_id" cli:"-"`
 	ProjectKey              string                 `json:"project_key" db:"-" cli:"-"`
@@ -35,6 +37,7 @@ type Workflow struct {
 	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
 	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
 	Audits                  []AuditWorklflow       `json:"audits" db:"-"`
+	ToDelete                bool                   `json:"to_delete" db:"to_delete" cli:"-"`
 }
 
 // WorkflowNotification represents notifications on a workflow
@@ -392,6 +395,24 @@ func (w *Workflow) GetPipelines() []Pipeline {
 	return withoutDuplicates
 }
 
+// GetRepositoriesFullName returns the list of repositories from applications
+func (w *Workflow) GetRepositories() []string {
+	apps := w.GetApplications()
+	repos := map[string]struct{}{}
+	for _, a := range apps {
+		if a.RepositoryFullname != "" {
+			repos[a.RepositoryFullname] = struct{}{}
+		}
+	}
+	res := make([]string, len(repos))
+	var i int
+	for repo := range repos {
+		res[i] = repo
+		i++
+	}
+	return res
+}
+
 //InvolvedEnvironments returns all environments used in the workflow
 func (w *Workflow) InvolvedEnvironments() []int64 {
 	if w.Root == nil {
@@ -433,6 +454,18 @@ func (w *Workflow) Visit(visitor func(*WorkflowNode)) {
 	}
 }
 
+//Sort sorts the workflow
+func (w *Workflow) Sort() {
+	w.Visit(func(n *WorkflowNode) {
+		n.Sort()
+	})
+	for _, join := range w.Joins {
+		sort.Slice(join.Triggers, func(i, j int) bool {
+			return join.Triggers[i].WorkflowDestNode.Name < join.Triggers[j].WorkflowDestNode.Name
+		})
+	}
+}
+
 //Visit all the workflow and apply the visitor func on the current node and the children
 func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
 	visitor(n)
@@ -440,6 +473,13 @@ func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
 		d := &n.Triggers[i].WorkflowDestNode
 		d.Visit(visitor)
 	}
+}
+
+//Sort sorts the workflow node
+func (n *WorkflowNode) Sort() {
+	sort.Slice(n.Triggers, func(i, j int) bool {
+		return n.Triggers[i].WorkflowDestNode.Name < n.Triggers[j].WorkflowDestNode.Name
+	})
 }
 
 //WorkflowNodeJoin aims to joins multiple node into multiple triggers

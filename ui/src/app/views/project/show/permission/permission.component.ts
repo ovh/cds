@@ -1,14 +1,14 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
-import {Project} from '../../../../model/project.model';
-import {PermissionValue} from '../../../../model/permission.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {ToastService} from '../../../../shared/toast/ToastService';
-import {EnvironmentPermissionEvent, PermissionEvent} from '../../../../shared/permission/permission.event.model';
-import {Environment} from '../../../../model/environment.model';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize, first} from 'rxjs/operators';
+import {Environment} from '../../../../model/environment.model';
+import {PermissionValue} from '../../../../model/permission.model';
+import {Project} from '../../../../model/project.model';
 import {Warning} from '../../../../model/warning.model';
+import {ProjectStore} from '../../../../service/project/project.store';
+import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
+import {EnvironmentPermissionEvent, PermissionEvent} from '../../../../shared/permission/permission.event.model';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-permissions',

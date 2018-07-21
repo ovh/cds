@@ -16,6 +16,7 @@ var True = true
 func TestWorkflow_checkDependencies(t *testing.T) {
 	type fields struct {
 		Name                string
+		Description         string
 		Version             string
 		Workflow            map[string]NodeEntry
 		Hooks               map[string][]HookEntry
@@ -47,6 +48,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 			name: "Simple Workflow with an invalid dependency should raise an error",
 			fields: fields{
 				PipelineName: "pipeline",
+				Description:  "here is my description",
 			},
 			wantErr: false,
 		},
@@ -93,6 +95,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			w := Workflow{
 				Name:                tt.fields.Name,
+				Description:         tt.fields.Description,
 				Version:             tt.fields.Version,
 				Workflow:            tt.fields.Workflow,
 				Hooks:               tt.fields.Hooks,
@@ -200,6 +203,7 @@ func TestWorkflow_checkValidity(t *testing.T) {
 func TestWorkflow_GetWorkflow(t *testing.T) {
 	type fields struct {
 		Name                string
+		Description         string
 		Version             string
 		Workflow            map[string]NodeEntry
 		Hooks               map[string][]HookEntry
@@ -225,6 +229,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			name: "Simple workflow should not raise an error",
 			fields: fields{
 				PipelineName: "pipeline",
+				Description:  "this is my description",
 				PipelineHooks: []HookEntry{
 					{
 						Model: "Scheduler",
@@ -237,6 +242,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				Description: "this is my description",
 				Root: &sdk.WorkflowNode{
 					Name: "pipeline",
 					Ref:  "pipeline",
@@ -591,6 +597,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			w := Workflow{
 				Name:                tt.fields.Name,
+				Description:         tt.fields.Description,
 				Version:             tt.fields.Version,
 				Workflow:            tt.fields.Workflow,
 				Hooks:               tt.fields.Hooks,

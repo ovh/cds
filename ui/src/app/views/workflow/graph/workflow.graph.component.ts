@@ -14,17 +14,16 @@ import {
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
+import {Subscription} from 'rxjs';
 import {Project} from '../../../model/project.model';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {CDSWorker} from '../../../shared/worker/worker';
 import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
 import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook.component';
 import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
-import {Subscription} from 'rxjs';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -41,7 +40,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     workflow: Workflow;
     _workflowRun: WorkflowRun;
-    sidebarOpen: boolean;
     creationMode = 'graphical';
 
     @Input('workflowData')
@@ -74,7 +72,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     @Input() project: Project;
-    @Input() webworker: CDSWorker;
 
     @Input('direction')
     set direction(data: string) {
@@ -112,21 +109,17 @@ export class WorkflowGraphComponent implements AfterViewInit {
     joinsComponent = new Map<string, ComponentRef<WorkflowJoinComponent>>();
     hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
 
-    sideBarSubscription: Subscription;
     linkJoinSubscription: Subscription;
 
     nodeWidth: number;
     nodeHeight: number;
 
-    constructor(private componentFactoryResolver: ComponentFactoryResolver, private _cd: ChangeDetectorRef,
-                private _workflowStore: WorkflowStore, private _workflowCore: WorkflowCoreService) {
-        this.sideBarSubscription = this._workflowCore.getSidebarStatus().subscribe(b => {
-            this.sidebarOpen = b;
-            if (this.ready) {
-                this.changeDisplay();
-                window.dispatchEvent(new Event('resize'));
-            }
-        });
+    constructor(
+        private componentFactoryResolver: ComponentFactoryResolver,
+        private _cd: ChangeDetectorRef,
+        private _workflowStore: WorkflowStore,
+        private _workflowCore: WorkflowCoreService
+    ) {
         this.linkJoinSubscription = this._workflowCore.getLinkJoinEvent().subscribe(n => {
             if (n) {
                 this.nodeToLink = n;
@@ -252,11 +245,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 break;
         }
 
-
-        let windowsWidth = window.innerWidth;
-        if (this.sidebarOpen) {
-            windowsWidth -= 250;
-        }
+        let windowsWidth = window.innerWidth - 250; // sidebar width
 
         this.nodeWidth = Math.floor(windowsWidth * .75 / nbofNodes);
         if (this.nodeWidth < 200) {
@@ -279,7 +268,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
             componentRef.instance.project = this.project;
             componentRef.instance.disabled = this.linkWithJoin;
 
-            if (this.webworker || this._workflowRun) {
+            if (this._workflowRun) {
                 componentRef.instance.readonly = true;
             }
 
@@ -355,10 +344,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 componentRef.instance.workflow = this.workflow;
                 componentRef.instance.project = this.project;
                 componentRef.instance.node = node;
-
-                if (this.webworker) {
-                    componentRef.instance.readonly = true;
-                }
                 this.hooksComponent.set(hookId, componentRef);
             }
 

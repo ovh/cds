@@ -1,14 +1,14 @@
 
-import {map} from 'rxjs/operators';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {Pipeline} from '../../model/pipeline.model';
+import {map} from 'rxjs/operators';
 import {Application} from '../../model/application.model';
 import {GroupPermission} from '../../model/group.model';
-import {Stage} from '../../model/stage.model';
 import {Job} from '../../model/job.model';
 import {Parameter} from '../../model/parameter.model';
-import {HttpClient, HttpParams, HttpHeaders} from '@angular/common/http';
+import {Pipeline} from '../../model/pipeline.model';
+import {Stage} from '../../model/stage.model';
 
 /**
  * Service to access Pipeline from API.
@@ -56,16 +56,13 @@ export class PipelineService {
      * @param key Project unique key
      * @param workflow pipelineCode to import
      */
-    importPipeline(key: string, pipelineCode: string, force?: boolean): Observable<Array<string>> {
+    importPipeline(key: string, pipName: string, pipelineCode: string, force?: boolean): Observable<Array<string>> {
         let headers = new HttpHeaders();
         headers = headers.append('Content-Type', 'application/x-yaml');
         let params = new HttpParams();
         params = params.append('format', 'yaml');
-        if (force) {
-            params = params.append('forceUpdate', 'true');
-        }
 
-        return this._http.post<Array<string>>(`/project/${key}/import/pipeline`, pipelineCode, {headers, params});
+        return this._http.put<Array<string>>(`/project/${key}/import/pipeline/${pipName}`, pipelineCode, {headers, params});
     }
 
     /**

@@ -11,20 +11,21 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// PublishRunWorkflow
-func PublishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, u *sdk.User) {
+func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string, u *sdk.User) {
 	event := sdk.Event{
-		Timestamp:       time.Now(),
-		Hostname:        hostname,
-		CDSName:         cdsname,
-		EventType:       fmt.Sprintf("%T", payload),
-		Payload:         structs.Map(payload),
-		ProjectKey:      key,
-		ApplicationName: appName,
-		PipelineName:    pipName,
-		WorkflowName:    workflowName,
-		EnvironmentName: envName,
-		WorkflowRunNum:  num,
+		Timestamp:         time.Now(),
+		Hostname:          hostname,
+		CDSName:           cdsname,
+		EventType:         fmt.Sprintf("%T", payload),
+		Payload:           structs.Map(payload),
+		ProjectKey:        key,
+		ApplicationName:   appName,
+		PipelineName:      pipName,
+		WorkflowName:      workflowName,
+		EnvironmentName:   envName,
+		WorkflowRunNum:    num,
+		WorkflowRunNumSub: sub,
+		Status:            status,
 	}
 	if u != nil {
 		event.Username = u.Username
@@ -44,14 +45,15 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		LastModified:  wr.LastModified.Unix(),
 		Tags:          wr.Tags,
 	}
-	PublishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, nil)
+	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, nil)
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
-func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, previousWR *sdk.WorkflowNodeRun, projectKey string) {
+func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.Workflow, previousWR *sdk.WorkflowNodeRun) {
+
 	// get and send all user notifications
 	if previousWR != nil {
-		for _, event := range notification.GetUserWorkflowEvents(db, wr, *previousWR, nr) {
+		for _, event := range notification.GetUserWorkflowEvents(db, w, *previousWR, nr) {
 			Publish(event, nil)
 		}
 	}
@@ -78,7 +80,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.
 	}
 
 	var pipName string
-	node := wr.Workflow.GetNode(nr.WorkflowNodeID)
+	node := w.GetNode(nr.WorkflowNodeID)
 	if node != nil {
 		pipName = node.Pipeline.Name
 		e.NodeName = node.Name
@@ -95,42 +97,8 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.
 			envName = node.Context.Environment.Name
 		}
 	}
-
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
-	PublishRunWorkflow(e, projectKey, wr.Workflow.Name, appName, pipName, envName, wr.Number, nil)
-}
-
-// PublishWorkflowNodeJobRun publish event on a workflow node job run
-func PublishWorkflowNodeJobRun(prokectKey string, njr sdk.WorkflowNodeJobRun, wnr sdk.WorkflowNodeRun, wr sdk.WorkflowRun) {
-	e := sdk.EventRunWorkflowNodeJob{
-		ID:                njr.ID,
-		Status:            njr.Status,
-		WorkflowNodeRunID: njr.WorkflowNodeRunID,
-		Start:             njr.Start.Unix(),
-		Model:             njr.Model,
-		Queued:            njr.Queued.Unix(),
-	}
-	if njr.Status != sdk.StatusBuilding.String() && njr.Status != sdk.StatusWaiting.String() {
-		e.Done = njr.Done.Unix()
-	}
-
-	var pipName string
-	node := wr.Workflow.GetNode(wnr.WorkflowNodeID)
-	if node != nil {
-		pipName = node.Pipeline.Name
-	}
-	var envName string
-	var appName string
-	if node.Context != nil {
-		if node.Context.Application != nil {
-			appName = node.Context.Application.Name
-		}
-		if node.Context.Environment != nil {
-			envName = node.Context.Environment.Name
-		}
-	}
-
-	PublishRunWorkflow(e, prokectKey, wr.Workflow.Name, appName, pipName, envName, wr.Number, nil)
+	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status, nil)
 }

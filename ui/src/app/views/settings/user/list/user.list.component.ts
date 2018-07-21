@@ -1,9 +1,9 @@
 import {Component, Input} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {User} from '../../../../model/user.model';
-import {Table} from '../../../../shared/table/table';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {UserService} from '../../../../service/user/user.service';
+import {Table} from '../../../../shared/table/table';
 import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({

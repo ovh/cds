@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -21,47 +19,29 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var (
-	locksKey           = cache.Key("sseevents", "locks")
-	eventsKey          = cache.Key("sseevents")
-	errLockUnavailable = fmt.Errorf("errLockUnavailable")
-)
-
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
 	UUID  string
 	User  *sdk.User
-	Queue chan string
+	Queue chan sdk.Event
 }
 
 // lastUpdateBroker keeps connected client of the current route,
 type eventsBroker struct {
-	clients  map[string]eventsBrokerSubscribe
-	messages chan sdk.Event
-	mutex    *sync.Mutex
-	dbFunc   func() *gorp.DbMap
-	cache    cache.Store
+	clients           map[string]eventsBrokerSubscribe
+	messages          chan sdk.Event
+	mutex             *sync.Mutex
+	disconnected      map[string]bool
+	disconnectedMutex *sync.Mutex
+	dbFunc            func() *gorp.DbMap
+	cache             cache.Store
 }
 
 // AddClient add a client to the client map
-func (b *eventsBroker) addClient(uuid string, messageChan eventsBrokerSubscribe) {
+func (b *eventsBroker) addClient(client eventsBrokerSubscribe) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
-	b.clients[uuid] = messageChan
-}
-
-func (b *eventsBroker) getSubEvents(uuid string) (map[string][]sdk.EventSubscription, bool) {
-	var subEvents map[string][]sdk.EventSubscription
-	is := b.cache.Get(cache.Key(eventsKey, uuid), &subEvents)
-	return subEvents, is
-}
-
-func (b *eventsBroker) setSubEvents(uuid string, subEvents map[string][]sdk.EventSubscription) {
-	b.cache.SetWithTTL(cache.Key(eventsKey, uuid), subEvents, 600)
-}
-
-func (b *eventsBroker) deleteSubEvents(uuid string) {
-	b.cache.Delete(cache.Key(eventsKey, uuid))
+	b.clients[client.UUID] = client
 }
 
 // CleanAll cleans all clients
@@ -72,119 +52,28 @@ func (b *eventsBroker) cleanAll() {
 		for c, v := range b.clients {
 			close(v.Queue)
 			delete(b.clients, c)
-			// Clean cache subscription
-			if !b.lockCache(v.UUID) {
-				log.Warning("CleanAll> Cannot get lock for %s", cache.Key(locksKey, v.UUID))
-				continue
-			}
-			log.Info("CleanALL store subscribe for %s", v.UUID)
-			b.deleteSubEvents(v.UUID)
-			b.unlockCache(v.UUID)
 		}
 	}
 }
 
-func (b *eventsBroker) lockCache(uuid string) bool {
-	return b.cache.Lock(cache.Key(locksKey, uuid), 5*time.Second, 100, 10)
-}
-
-func (b *eventsBroker) unlockCache(uuid string) {
-	b.cache.Unlock(cache.Key(locksKey, uuid))
-}
-
-// CleanClient cleans a client
-func (b *eventsBroker) cleanClient(client eventsBrokerSubscribe) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-
-	// Close channel
-	close(client.Queue)
-	// Delete client from map
-	delete(b.clients, client.UUID)
-
-	// Clean cache subscription
-	if !b.lockCache(client.UUID) {
-		log.Warning("CleanClient> Cannot get lock for %s", cache.Key(locksKey, client.UUID))
-		return
-	}
-
-	defer b.unlockCache(client.UUID)
-	log.Info("Clean store subscribe for %s", client.UUID)
-	b.deleteSubEvents(client.UUID)
-}
-
-func (b *eventsBroker) setUser(user *sdk.User) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	for _, c := range b.clients {
-		if c.User.Username == user.Username {
-			c.User = user
-			break
-		}
-	}
-}
-
-func (b *eventsBroker) getUser(username string) *sdk.User {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	for _, c := range b.clients {
-		if c.User.Username == username {
-			return c.User
-		}
-	}
-	return nil
+func (b *eventsBroker) disconnectClient(uuid string) {
+	b.disconnectedMutex.Lock()
+	defer b.disconnectedMutex.Unlock()
+	b.disconnected[uuid] = true
 }
 
 //Init the eventsBroker
 func (b *eventsBroker) Init(c context.Context) {
 	// Start cache Subscription
-	go func() {
-		defer func() {
-			if re := recover(); re != nil {
-				var err error
-				switch t := re.(type) {
-				case string:
-					err = errors.New(t)
-				case error:
-					err = re.(error)
-				case sdk.Error:
-					err = re.(sdk.Error)
-				default:
-					err = sdk.ErrUnknownError
-				}
-				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> recover %s", err)
-				trace := make([]byte, 4096)
-				count := runtime.Stack(trace, true)
-				log.Error("[PANIC] eventsBroker.Init.cacheSubscribe> Stacktrace of %d bytes\n%s\n", count, trace)
-			}
-		}()
+	subscribeFunc := func() {
 		cacheSubscribe(c, b.messages, b.cache)
-	}()
+	}
+	sdk.GoRoutine("eventsBroker.Init.CacheSubscribe", subscribeFunc)
 
-	go func() {
-		defer func() {
-			b.mutex.Unlock()
-			if re := recover(); re != nil {
-				var err error
-				switch t := re.(type) {
-				case string:
-					err = errors.New(t)
-				case error:
-					err = re.(error)
-				case sdk.Error:
-					err = re.(sdk.Error)
-				default:
-					err = sdk.ErrUnknownError
-				}
-				log.Error("[PANIC] eventsBroker.Init.Start> recover %s", err)
-				trace := make([]byte, 4096)
-				count := runtime.Stack(trace, false)
-				log.Error("[PANIC] eventsBroker.Init.Start> Stacktrace of %d bytes\n%s\n", count, trace)
-				fmt.Println(string(trace))
-			}
-		}()
+	startFunc := func() {
 		b.Start(c)
-	}()
+	}
+	sdk.GoRoutine("eventsBroker.Init.Start", startFunc)
 }
 
 func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
@@ -219,24 +108,6 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 	}
 }
 
-func (b *eventsBroker) UpdateUserPermissions(username string) {
-	var user *sdk.User
-
-	user = b.getUser(username)
-
-	if user == nil {
-		return
-	}
-	// load permission without being in the mutex lock
-	if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
-		log.Error("eventsBroker.UpdateUserPermissions> Cannot load user permission:%s", err)
-	}
-
-	// then, relock map and update user
-	b.setUser(user)
-
-}
-
 // Start the broker
 func (b *eventsBroker) Start(c context.Context) {
 	for {
@@ -248,23 +119,18 @@ func (b *eventsBroker) Start(c context.Context) {
 				return
 			}
 		case receivedEvent := <-b.messages:
-			bEvent, err := json.Marshal(receivedEvent)
-			if err != nil {
-				log.Warning("eventsBroker.Start> Unable to marshal event: %+v", receivedEvent)
-				continue
-			}
-			b.manageEvent(receivedEvent, string(bEvent))
+			b.manageEvent(receivedEvent)
 		}
 	}
 }
 
 func (b *eventsBroker) ServeHTTP() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
-			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
-			return nil
+			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
 		uuidSK, errS := sessionstore.NewSessionKey()
@@ -277,14 +143,14 @@ func (b *eventsBroker) ServeHTTP() Handler {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}
 
-		messageChan := eventsBrokerSubscribe{
+		client := eventsBrokerSubscribe{
 			UUID:  uuid,
 			User:  user,
-			Queue: make(chan string, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
+			Queue: make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.addClient(uuid, messageChan)
+		b.addClient(client)
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -292,35 +158,49 @@ func (b *eventsBroker) ServeHTTP() Handler {
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("X-Accel-Buffering", "no")
 
-		fmt.Fprintf(w, "data: ACK: %s \n\n", uuid)
+		if _, err := w.Write([]byte(fmt.Sprintf("data: ACK: %s \n\n", uuid))); err != nil {
+			return sdk.WrapError(err, "events.write> Unable to send ACK to client")
+		}
 		f.Flush()
-
-		go func() {
-			for msg := range messageChan.Queue {
-				var buffer bytes.Buffer
-				buffer.WriteString("data: ")
-				buffer.WriteString(msg)
-				buffer.WriteString("\n\n")
-				if _, err := w.Write(buffer.Bytes()); err != nil {
-					continue
-				}
-				f.Flush()
-			}
-		}()
 
 		tick := time.NewTicker(time.Second)
 		defer tick.Stop()
+
 	leave:
 		for {
 			select {
 			case <-ctx.Done():
-				b.cleanClient(messageChan)
+				log.Info("events.Http: context done")
+				b.disconnectClient(client.UUID)
 				break leave
-			case <-w.(http.CloseNotifier).CloseNotify():
-				log.Info("events.Http: client deconnected")
-				b.cleanClient(messageChan)
+			case <-r.Context().Done():
+				log.Info("events.Http: client disconnected")
+				b.disconnectClient(client.UUID)
 				break leave
+			case event := <-client.Queue:
+				if ok := client.manageEvent(event); !ok {
+					continue
+				}
+
+				msg, errJ := json.Marshal(event)
+				if errJ != nil {
+					log.Warning("sendevent> Unavble to marshall event: %v", errJ)
+					continue
+				}
+
+				var buffer bytes.Buffer
+				buffer.WriteString("data: ")
+				buffer.Write(msg)
+				buffer.WriteString("\n\n")
+
+				if _, err := w.Write(buffer.Bytes()); err != nil {
+					return sdk.WrapError(err, "events.write> Unable to write to client")
+				}
+				f.Flush()
 			case <-tick.C:
+				if _, err := w.Write([]byte("")); err != nil {
+					return sdk.WrapError(err, "events.write> Unable to ping client")
+				}
 				f.Flush()
 			}
 		}
@@ -329,182 +209,64 @@ func (b *eventsBroker) ServeHTTP() Handler {
 	}
 }
 
-func (b *eventsBroker) manageEvent(receivedEvent sdk.Event, eventS string) {
+func (b *eventsBroker) manageEvent(receivedEvent sdk.Event) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	for _, i := range b.clients {
-		if i.Queue != nil {
-			b.handleEvent(receivedEvent, eventS, i)
-		} else {
-			log.Warning("eventsBroker.manageEvent > Queue is null for client %+v/%s", i.User, i.UUID)
+		if b.canSend(i) {
+			i.Queue <- receivedEvent
 		}
-
 	}
 }
 
-func (b *eventsBroker) handleEvent(event sdk.Event, eventS string, subscriber eventsBrokerSubscribe) {
-	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if subscriber.User.Admin || permission.ProjectPermission(event.ProjectKey, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
-		}
-		return
+// canSend Test if client is connected. If not, close channel and remove client from map
+func (b *eventsBroker) canSend(client eventsBrokerSubscribe) bool {
+	b.disconnectedMutex.Lock()
+	defer b.disconnectedMutex.Unlock()
+	if _, ok := b.disconnected[client.UUID]; !ok {
+		return true
 	}
-	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") {
-		if subscriber.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+	close(client.Queue)
+	delete(b.clients, client.UUID)
+	return false
+}
+
+func (s *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
+	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
+		if s.User.Admin || permission.ProjectPermission(event.ProjectKey, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
+	}
+	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
+		if s.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, s.User) >= permission.PermissionRead {
+			return true
+		}
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if subscriber.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+		if s.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if subscriber.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+		if s.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if subscriber.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, subscriber.User) >= permission.PermissionRead {
-			subscriber.Queue <- eventS
+		if s.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, s.User) >= permission.PermissionRead {
+			return true
 		}
-		return
+		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		if subscriber.User.Admin || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, subscriber.User, permission.PermissionRead) {
-			subscriber.Queue <- eventS
+		if s.User.Admin || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, s.User, permission.PermissionRead) {
+			return true
 		}
-		return
+		return false
 	}
-
-	if !b.lockCache(subscriber.UUID) {
-		log.Warning("manageEvent> Cannot get lock for %s", cache.Key(locksKey, subscriber.UUID))
-		return
-	}
-	defer b.unlockCache(subscriber.UUID)
-
-	events, ok := b.getSubEvents(subscriber.UUID)
-	if !ok {
-		log.Debug("Nothing in cache for uuid: %s", subscriber.UUID)
-		return
-	}
-
-	if strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
-		key := event.ProjectKey
-		name := event.WorkflowName
-
-		s, ok := events[sdk.EventSubsWorkflowRuns]
-		if ok && event.EventType == "sdk.EventRunWorkflow" {
-			sent := false
-			for _, e := range s {
-				if e.ProjectKey == key && e.WorkflowName == name {
-					sent = true
-					subscriber.Queue <- eventS
-					break
-				}
-			}
-			if sent {
-				return
-			}
-		}
-		// check if user has subscribed to this specific run
-		num := event.WorkflowRunNum
-		s, ok = events[sdk.EventSubWorkflowRun]
-		if ok && (event.EventType == "sdk.EventRunWorkflowNode" || event.EventType == "sdk.EventRunWorkflowNodeJob") {
-			for _, e := range s {
-				if e.ProjectKey == key && e.WorkflowName == name && e.WorkflowNum == num {
-					subscriber.Queue <- eventS
-					break
-				}
-			}
-		}
-		return
-	}
-}
-
-func (api *API) eventSubscribeHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var payload sdk.EventSubscription
-		if err := UnmarshalBody(r, &payload); err != nil {
-			return sdk.WrapError(err, "eventSubscribeHandler> Unable to get body")
-		}
-		u := getUser(ctx)
-
-		// check permission
-		if b := permission.AccessToProject(payload.ProjectKey, u, permission.PermissionRead); !b {
-			return sdk.WrapError(sdk.ErrForbidden, "eventSubscribeHandler> cannot access to project %s", payload.ProjectKey)
-		}
-		if payload.WorkflowName != "" {
-			if b := permission.AccessToWorkflow(payload.ProjectKey, payload.WorkflowName, u, permission.PermissionRead); !b {
-				return sdk.WrapError(sdk.ErrForbidden, "eventSubscribeHandler> cannot access to workflow")
-			}
-		}
-
-		if !api.eventsBroker.lockCache(payload.UUID) {
-			return sdk.WrapError(fmt.Errorf("unable to get lock"), "eventSubscribeHandler")
-		}
-		defer api.eventsBroker.unlockCache(payload.UUID)
-
-		events, ok := api.eventsBroker.getSubEvents(payload.UUID)
-		if !ok {
-			events = make(map[string][]sdk.EventSubscription)
-		}
-
-		if payload.WorkflowName != "" {
-			if payload.WorkflowRuns {
-				// Subscribe to all workflow run
-				runs, ok := events[sdk.EventSubsWorkflowRuns]
-				if !ok && !payload.Overwrite {
-					runs = make([]sdk.EventSubscription, 0)
-				}
-				if payload.Overwrite {
-					runs = make([]sdk.EventSubscription, 1)
-					runs[0] = payload
-				} else {
-					found := false
-					for _, es := range runs {
-						if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName {
-							found = true
-							break
-						}
-					}
-					if !found {
-						runs = append(runs, payload)
-					}
-				}
-				events[sdk.EventSubsWorkflowRuns] = runs
-			}
-
-			if payload.WorkflowNum > 0 {
-				// Subscribe to the given workflow run
-				runs, ok := events[sdk.EventSubWorkflowRun]
-				if !ok {
-					runs = make([]sdk.EventSubscription, 0)
-				}
-				if payload.Overwrite {
-					runs = make([]sdk.EventSubscription, 1)
-					runs[0] = payload
-				} else {
-					found := false
-					for _, es := range runs {
-						if es.ProjectKey == payload.ProjectKey && es.WorkflowName == payload.WorkflowName &&
-							es.WorkflowNum == payload.WorkflowNum {
-							found = true
-							break
-						}
-					}
-					if !found {
-						runs = append(runs, payload)
-					}
-				}
-				events[sdk.EventSubWorkflowRun] = runs
-			}
-		}
-
-		api.eventsBroker.setSubEvents(payload.UUID, events)
-		return nil
-	}
+	return false
 }

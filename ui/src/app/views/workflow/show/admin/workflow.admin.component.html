@@ -24,11 +24,45 @@
             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
         </app-zone-content>
     </app-zone>
+    <app-zone header="{{ 'common_description' | translate }}">
+        <app-zone-content class="bottom">
+            <div class="ui form">
+                <div class="fields">
+                    <div class="thirteen wide field">
+                        <textarea name="description" class="ui" [(ngModel)]="_tagWorkflow.description"></textarea>
+                    </div>
+                    <div class="two wide right aligned field">
+                        <button id="descButton" class="ui selection green button" name="btnsavedesc" (click)="updateWorkflow()" [class.loading]="loading" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)">{{ 'btn_save' | translate }}</button>
+                    </div>
+                </div>
+            </div>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'common_icon' | translate }}">
+        <app-zone-content class="bottom">
+            <div class="ui form">
+              <div class="fields">
+                  <div class="eleven wide field center aligned" *ngIf="!fileTooLarge">
+                      <div>
+                          <img class="app-icon" [src]="_tagWorkflow.icon" alt="application icon" *ngIf="_tagWorkflow.icon">
+                      </div>
+                      <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)">
+                      </app-upload-button>
+                  </div>
+                  <div class="ui sixteen wide red message field center aligned" *ngIf="fileTooLarge" [textContent]="'common_file_too_large' | translate"></div>
+                  <div class="five wide right aligned field" *ngIf="!fileTooLarge">
+                      <button class="ui green button" [class.loading]="loading" name="updateiconButton" (click)="updateWorkflow()" [class.loading]="loading" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)">{{ 'btn_save' | translate }}
+                      </button>
+                  </div>
+              </div>
+            </div>
+        </app-zone-content>
+    </app-zone>
     <app-zone header="{{ 'workflow_sidebar_tag_zone' | translate }}">
         <app-zone-content class="bottom">
             <div class="ui form">
                 <div class="fields">
-                    <div class="fourteen wide field">
+                    <div class="thirteen wide field">
                         <sui-multi-select class="selection" *ngIf="existingTags.length > 0"
                            [(ngModel)]="selectedTags"
                            [options]="existingTags"
@@ -60,7 +94,7 @@
                                min="1"
                                max="500">
                     </div>
-                    <div class="eleven wide field">
+                    <div class="ten wide field">
                         <sui-select  class="selection" *ngIf="existingTags.length > 0"
                            [(ngModel)]="purgeTag"
                            [options]="existingTags"

@@ -1,16 +1,16 @@
 import {Component, ViewChild} from '@angular/core';
-import {Project} from '../../../model/project.model';
-import {PermissionService} from '../../../shared/permission/permission.service';
-import {Group, GroupPermission} from '../../../model/group.model';
-import {ProjectStore} from '../../../service/project/project.store';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
 import {Router} from '@angular/router';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {GroupService} from '../../../service/group/group.service';
-import {first} from 'rxjs/operators';
-import {Key, KeyType} from '../../../model/keys.model';
+import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
+import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {first} from 'rxjs/operators';
+import {Group, GroupPermission} from '../../../model/group.model';
+import {Key, KeyType} from '../../../model/keys.model';
+import {Project} from '../../../model/project.model';
+import {GroupService} from '../../../service/group/group.service';
+import {ProjectStore} from '../../../service/project/project.store';
+import {PermissionService} from '../../../shared/permission/permission.service';
+import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-add',
@@ -29,6 +29,7 @@ export class ProjectAddComponent {
     nameError = false;
     keyError = false;
     sshError = false;
+    fileTooLarge = false;
 
     groupList: Group[];
 
@@ -146,5 +147,13 @@ export class ProjectAddComponent {
             this.loading = false;
             this.newGroup = new Group();
         });
+    }
+
+    fileEvent(event: {content: string, file: File}) {
+        this.fileTooLarge = event.file.size > 100000
+        if (this.fileTooLarge) {
+          return;
+        }
+        this.project.icon = event.content;
     }
 }

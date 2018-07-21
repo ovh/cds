@@ -67,7 +67,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	return report, nil
 }
 
-func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, n *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, n *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.execute",
 		tracing.Tag("workflow_run", n.Number),
@@ -75,7 +75,6 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 		tracing.Tag("workflow_node_run_status", n.Status),
 	)
 	defer end()
-
 	wr, errWr := LoadRunByID(db, n.WorkflowRunID, LoadRunOptions{})
 	if errWr != nil {
 		return nil, sdk.WrapError(errWr, "workflow.execute> unable to load workflow run ID %d", n.WorkflowRunID)
@@ -194,7 +193,6 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 		}
 	}
 
-	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
 
 	if sdk.StatusIsTerminated(n.Status) && n.Status != sdk.StatusNeverBuilt.String() {
@@ -219,7 +217,7 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 		report.Add(*n)
 		if n.Status != sdk.StatusStopped.String() {
 
-			r1, _, err := processWorkflowRun(ctx, dbCopy, db, store, proj, updatedWorkflowRun, nil, nil, nil)
+			r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 			if err != nil {
 				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 			}
@@ -282,7 +280,7 @@ func execute(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store
 
 			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
 			var err error
-			report, err = report.Merge(execute(ctx, dbCopy, db, store, proj, waitingRun))
+			report, err = report.Merge(execute(ctx, db, store, proj, waitingRun))
 			if err != nil {
 				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
 			}
@@ -362,6 +360,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
+			ProjectID:              wr.ProjectID,
 			WorkflowNodeRunID:      run.ID,
 			Start:                  time.Time{},
 			Queued:                 time.Now(),
@@ -598,7 +597,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 }
 
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.StopWorkflowNodeRun")
 	defer end()
@@ -608,7 +607,7 @@ func StopWorkflowNodeRun(ctx context.Context, db *gorp.DbMap, store cache.Store,
 	const stopWorkflowNodeRunNBWorker = 5
 	var wg sync.WaitGroup
 	// Load node job run ID
-	ids, errIDS := LoadNodeJobRunIDByNodeRunID(db, nodeRun.ID)
+	ids, errIDS := LoadNodeJobRunIDByNodeRunID(dbFunc(), nodeRun.ID)
 	if errIDS != nil {
 		return report, sdk.WrapError(errIDS, "StopWorkflowNodeRun> Cannot load node jobs run ids ")
 	}
@@ -619,7 +618,7 @@ func StopWorkflowNodeRun(ctx context.Context, db *gorp.DbMap, store cache.Store,
 	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
 		go func() {
 			//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
-			_, _ = report.Merge(stopWorkflowNodeJobRun(ctx, db, store, proj, &nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
+			_, _ = report.Merge(stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, &nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
 		}()
 	}
 
@@ -662,14 +661,14 @@ func StopWorkflowNodeRun(ctx context.Context, db *gorp.DbMap, store cache.Store,
 
 	nodeRun.Status = sdk.StatusStopped.String()
 	nodeRun.Done = time.Now()
-	if errU := UpdateNodeRun(db, &nodeRun); errU != nil {
+	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
 	}
 
 	return report, nil
 }
 
-func stopWorkflowNodeJobRun(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) *ProcessorReport {
+func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) *ProcessorReport {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.stopWorkflowNodeJobRun")
 	defer end()
@@ -677,7 +676,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, db *gorp.DbMap, store cache.Sto
 	report := new(ProcessorReport)
 
 	for njrID := range chanNjrID {
-		tx, errTx := db.Begin()
+		tx, errTx := dbFunc().Begin()
 		if errTx != nil {
 			chanErr <- sdk.WrapError(errTx, "StopWorkflowNodeRun> Cannot create transaction")
 			wg.Done()
@@ -700,7 +699,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, db *gorp.DbMap, store cache.Sto
 		}
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
-		if _, err := report.Merge(UpdateNodeJobRunStatus(ctx, db, tx, store, proj, njr, sdk.StatusStopped)); err != nil {
+		if _, err := report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, tx, store, proj, njr, sdk.StatusStopped)); err != nil {
 			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
 			tx.Rollback()
 			wg.Done()
@@ -754,6 +753,7 @@ type vcsInfos struct {
 	message    string
 	url        string
 	httpurl    string
+	server     string
 }
 
 func getVCSInfos(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
@@ -774,6 +774,7 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *
 	if vcsServer == nil {
 		return vcsInfos, nil
 	}
+	vcsInfos.server = vcsServer.Name
 
 	//Get the RepositoriesManager Client
 	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)

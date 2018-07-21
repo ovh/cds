@@ -1,11 +1,11 @@
 import {Component} from '@angular/core';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
-import {Pipeline} from '../../../model/pipeline.model';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../shared/toast/ToastService';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Project} from '../../../model/project.model';
+import {TranslateService} from '@ngx-translate/core';
 import {finalize} from 'rxjs/operators';
+import {Pipeline} from '../../../model/pipeline.model';
+import {Project} from '../../../model/project.model';
+import {PipelineStore} from '../../../service/pipeline/pipeline.store';
+import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-add',
@@ -88,7 +88,7 @@ jobs:
             });
     }
 
-    fileEvent(event) {
-        this.pipToImport = event;
+    fileEvent(event: {content: string, file: File}) {
+        this.pipToImport = event.content;
     }
 }

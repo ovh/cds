@@ -1,22 +1,23 @@
 import {Component, ViewChild} from '@angular/core';
-import {Project} from '../../../model/project.model';
 import {ActivatedRoute, Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';
+import {finalize, first} from 'rxjs/operators';
+import {PermissionValue} from '../../../model/permission.model';
+import {Project} from '../../../model/project.model';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
+import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {cloneDeep} from 'lodash';
-import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
-import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {PermissionValue} from '../../../model/permission.model';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {finalize, first} from 'rxjs/operators';
+import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {ToastService} from '../../../shared/toast/ToastService';
+import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
+import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
+import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 
 @Component({
     selector: 'app-workflow',
@@ -56,7 +57,7 @@ export class WorkflowShowComponent {
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
                 private _translate: TranslateService, private _toast: ToastService,
-                private _workflowCoreService: WorkflowCoreService) {
+                private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -74,6 +75,7 @@ export class WorkflowShowComponent {
 
             this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
+            this._workflowEventStore.unselectAll();
             if (projkey && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
@@ -106,8 +108,6 @@ export class WorkflowShowComponent {
                 });
             }
         });
-
-        this._workflowCoreService.setCurrentWorkflowRun(null);
 
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {

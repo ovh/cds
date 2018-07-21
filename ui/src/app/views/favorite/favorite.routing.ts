@@ -1,7 +1,7 @@
-import {Routes, RouterModule} from '@angular/router';
 import {ModuleWithProviders} from '@angular/core';
-import {FavoriteComponent} from './favorite.component';
+import {RouterModule, Routes} from '@angular/router';
 import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
+import {FavoriteComponent} from './favorite.component';
 
 const routes: Routes = [
     {

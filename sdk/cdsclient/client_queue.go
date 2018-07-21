@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -19,11 +20,34 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int) error {
+// shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
+// it returns as reference date the date of the last element in the shrinkked queue
+func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
+	if len(*queue) == 0 {
+		return time.Time{}
+	}
+
+	if l < 1 {
+		l = 1
+	}
+	l = l * 3
+	t0 := (*queue)[len(*queue)-1].Queued
+
+	queue.Sort()
+
+	if len(*queue) > l {
+		t0 = (*queue)[l].Queued
+		newQueue := (*queue)[:l]
+		*queue = newQueue
+	}
+	return t0
+}
+
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, exceptWfJobID *int64) error {
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
-	pbjobsTicker := time.NewTicker(delay)
-	oldJobsTicker := time.NewTicker(delay * 60)
+	pbjobsTicker := time.NewTicker(delay * 5)
+	oldJobsTicker := time.NewTicker(delay * 10)
 
 	for {
 		select {
@@ -44,10 +68,16 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			}
 
 			if jobs != nil {
-				queue := []sdk.WorkflowNodeJobRun{}
+				queue := sdk.WorkflowQueue{}
 				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load old jobs")
 				}
+
+				if c.config.Verbose {
+					fmt.Println("Old Jobs Queue size: ", len(queue))
+				}
+
+				shrinkQueue(&queue, cap(jobs))
 				for _, j := range queue {
 					jobs <- j
 				}
@@ -58,7 +88,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			}
 
 			if jobs != nil {
-				queue := []sdk.WorkflowNodeJobRun{}
+				queue := sdk.WorkflowQueue{}
 				_, header, _, errReq := c.RequestJSON(http.MethodGet, "/queue/workflows", nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
 				if errReq != nil {
 					errs <- sdk.WrapError(errReq, "Unable to load jobs")
@@ -66,14 +96,21 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				}
 
 				apiTimeHeader := header.Get(ResponseAPITimeHeader)
-				apiTime, errParse := time.Parse(time.RFC3339, apiTimeHeader)
+
+				var errParse error
+				t0, errParse = time.Parse(time.RFC3339, apiTimeHeader)
 				if errParse != nil {
 					errs <- sdk.WrapError(errParse, "Unable to load jobs, failed to parse API Time")
 					continue
 				}
 
+				if c.config.Verbose {
+					fmt.Println("Queue size: ", len(queue))
+				}
+				t0 = shrinkQueue(&queue, cap(jobs))
+
 				// Gracetime to remove, see https://github.com/ovh/cds/issues/1214
-				t0 = apiTime.Add(-time.Duration(graceTime) * time.Second)
+				t0 = t0.Add(-time.Duration(graceTime) * time.Second)
 
 				for _, j := range queue {
 					// if there is a grace time, check it
@@ -81,7 +118,10 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 						if c.config.Verbose {
 							fmt.Printf("job %d send on chan\n", j.ID)
 						}
-						jobs <- j
+						// Useful to not relaunch a job on a worker with bad requirements
+						if exceptWfJobID == nil || *exceptWfJobID != j.ID {
+							jobs <- j
+						}
 					} else {
 						if c.config.Verbose {
 							fmt.Printf("job %d too new\n", j.ID)
@@ -198,6 +238,18 @@ func (c *client) QueueJobBook(isWorkflowJob bool, id int64) error {
 	return err
 }
 
+// QueueJobRelease release a job for a worker
+func (c *client) QueueJobRelease(isWorkflowJob bool, id int64) error {
+	path := fmt.Sprintf("/queue/workflows/%d/book", id)
+	if !isWorkflowJob {
+		// DEPRECATED code -> it's for pipelineBuildJob
+		return fmt.Errorf("Not implemented")
+	}
+
+	_, err := c.DeleteJSON(path, nil)
+	return err
+}
+
 func (c *client) QueueSendResult(id int64, res sdk.Result) error {
 	path := fmt.Sprintf("/queue/workflows/%d/result", id)
 	_, err := c.PostJSON(path, res, nil)
@@ -216,10 +268,11 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) (bool, time
 	return false, time.Since(t0), err
 }
 
-func (c *client) queueIndirectArtifactTempURL(id int64, tag string, art *sdk.WorkflowNodeRunArtifact) error {
+func (c *client) queueIndirectArtifactTempURL(id int64, art *sdk.WorkflowNodeRunArtifact) error {
 	var retryURL = 10
 	var globalURLErr error
-	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, tag)
+	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, art.Ref)
+
 	for i := 0; i < retryURL; i++ {
 		var code int
 		code, globalURLErr = c.PostJSON(uri, art, art)
@@ -296,9 +349,11 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 
 	_, name := filepath.Split(filePath)
 
+	ref := base64.RawURLEncoding.EncodeToString([]byte(tag))
 	art := sdk.WorkflowNodeRunArtifact{
 		Name:      name,
 		Tag:       tag,
+		Ref:       ref,
 		Size:      stat.Size(),
 		Perm:      uint32(stat.Mode().Perm()),
 		MD5sum:    md5sum,
@@ -306,7 +361,7 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		Created:   time.Now(),
 	}
 
-	if err := c.queueIndirectArtifactTempURL(id, tag, &art); err != nil {
+	if err := c.queueIndirectArtifactTempURL(id, &art); err != nil {
 		return err
 	}
 
@@ -323,7 +378,7 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 	if err := c.queueIndirectArtifactTempURLPost(art.TempURL, fileContent); err != nil {
 		// If we got a 401 error from the objectstore, ask for a fresh temporary url and repost the artifact
 		if strings.Contains(err.Error(), "401 Unauthorized: Temp URL invalid") {
-			if err := c.queueIndirectArtifactTempURL(id, tag, &art); err != nil {
+			if err := c.queueIndirectArtifactTempURL(id, &art); err != nil {
 				return err
 			}
 
@@ -338,7 +393,7 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 	var callbackErr error
 	retry := 50
 	for i := 0; i < retry; i++ {
-		uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url/callback", id, tag)
+		uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url/callback", id, art.Ref)
 		_, callbackErr = c.PostJSON(uri, &art, nil)
 		if callbackErr == nil {
 			return nil
@@ -398,7 +453,8 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 	}
 
 	var err error
-	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s", id, tag)
+	ref := base64.RawURLEncoding.EncodeToString([]byte(tag))
+	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s", id, ref)
 	for i := 0; i <= c.config.Retry; i++ {
 		var code int
 		_, code, err = c.UploadMultiPart("POST", uri, body,
@@ -416,5 +472,14 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 func (c *client) QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error {
 	path := fmt.Sprintf("/queue/workflows/%d/tag", jobID)
 	_, err := c.PostJSON(path, tags, nil)
+	return err
+}
+
+func (c *client) QueueServiceLogs(logs []sdk.ServiceLog) error {
+	status, err := c.PostJSON("/queue/workflows/log/service", logs, nil)
+	if status >= 400 {
+		return fmt.Errorf("Error: HTTP code %d", status)
+	}
+
 	return err
 }

@@ -1,15 +1,15 @@
 import {Component, NgZone, OnDestroy} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../shared/toast/ToastService';
+import {environment} from '../../../../environments/environment';
 import {User} from '../../../model/user.model';
 import {WorkflowNodeJobRun} from '../../../model/workflow.run.model';
-import {CDSWorker} from '../../../shared/worker/worker';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
-import {environment} from '../../../../environments/environment';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../shared/toast/ToastService';
+import {CDSWebWorker} from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-queue',
@@ -19,7 +19,7 @@ import {environment} from '../../../../environments/environment';
 @AutoUnsubscribe()
 export class QueueComponent implements OnDestroy {
 
-    queueWorker: CDSWorker;
+    queueWorker: CDSWebWorker;
     zone: NgZone;
     queueSubscription: Subscription;
 
@@ -55,7 +55,7 @@ export class QueueComponent implements OnDestroy {
             this.queueSubscription.unsubscribe();
         }
         // Start web worker
-        this.queueWorker = new CDSWorker('./assets/worker/web/queue.js');
+        this.queueWorker = new CDSWebWorker('./assets/worker/web/queue.js');
         this.queueWorker.start({
             'user': this._authStore.getUser(),
             'session': this._authStore.getSessionToken(),

@@ -32,6 +32,7 @@ workflow_run.to_delete
 
 // LoadRunOptions are options for loading a run (node or workflow)
 type LoadRunOptions struct {
+	WithCoverage            bool
 	WithArtifacts           bool
 	WithTests               bool
 	WithLightTests          bool
@@ -85,6 +86,19 @@ func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", wr.ID, wr.Status)
 	}
 	return nil
+}
+
+// LoadWorkflowFromWorkflowRunID loads the workflow for the given workfloxw run id
+func LoadWorkflowFromWorkflowRunID(db gorp.SqlExecutor, wrID int64) (sdk.Workflow, error) {
+	var workflow sdk.Workflow
+	wNS, err := db.SelectNullStr("SELECT workflow FROM workflow_run WHERE id = $1", wrID)
+	if err != nil {
+		return workflow, sdk.WrapError(err, "LoadWorkflowFromWorkflowRunID> Unable to load workflow for workflow run %d", wrID)
+	}
+	if err := gorpmapping.JSONNullString(wNS, &workflow); err != nil {
+		return workflow, sdk.WrapError(err, "LoadWorkflowFromWorkflowRunID> Unable to write into workflow struct")
+	}
+	return workflow, nil
 }
 
 //PostInsert is a db hook on WorkflowRun
@@ -509,7 +523,6 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	if err != nil {
 		return 0, sdk.WrapError(err, "nextRunNumber")
 	}
-	log.Debug("nextRunNumber> %s/%s %d", w.ProjectKey, w.Name, i)
 	return int64(i), nil
 }
 
@@ -554,9 +567,10 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 			UPDATE workflow_run SET to_delete = true
 			WHERE workflow_run.id IN (
 				SELECT workflow_run.id
-					FROM workflow_run
+				FROM workflow_run
 				WHERE workflow_run.workflow_id = $1
 				AND workflow_run.id < $2
+				LIMIT 100
 			)
 		`
 		if _, err := db.Exec(qDelete, wf.ID, lastWfrID); err != nil {
@@ -633,20 +647,14 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		}
 	}
 
+	//Don't mark as to_delete more than 100 workflow_runs
+	if len(idsToUpdate) > 100 {
+		idsToUpdate = idsToUpdate[:100]
+	}
+
 	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id = ANY(string_to_array($1, ',')::bigint[])`
 	if _, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ",")); err != nil {
 		log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
-		return err
-	}
-	return nil
-}
-
-// deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
-func deleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
-	query := `DELETE FROM workflow_run WHERE workflow_run.id IN (SELECT id FROM workflow_run WHERE to_delete = true LIMIT 30)`
-
-	if _, err := db.Exec(query); err != nil {
-		log.Warning("deleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
 		return err
 	}
 	return nil
@@ -680,9 +688,17 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 		if loadOpts.WithArtifacts {
 			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
 			if errA != nil {
-				return sdk.WrapError(errA, "syncNodeRuns>Error loading artifacts for run %d", wnr.ID)
+				return sdk.WrapError(errA, "syncNodeRuns>Error loading artifacts for node run %d", wnr.ID)
 			}
 			wnr.Artifacts = arts
+		}
+
+		if loadOpts.WithCoverage {
+			cov, errCov := LoadCoverageReport(db, wnr.ID)
+			if errCov != nil && errCov != sdk.ErrNotFound {
+				return sdk.WrapError(errCov, "syncNodeRuns> Error loading code coverage report for node run %d", wnr.ID)
+			}
+			wnr.Coverage = cov
 		}
 
 		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)

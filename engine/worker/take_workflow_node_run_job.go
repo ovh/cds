@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -31,6 +32,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	w.nbActionsDone++
 	// Set build variables
 	w.currentJob.wJob = &info.NodeJobRun
+	w.currentJob.secrets = info.Secrets
 	// Reset build variables
 	w.currentJob.gitsshPath = ""
 	w.currentJob.pkey = ""
@@ -42,6 +44,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
+		var nbConnrefused int
 		for {
 			select {
 			case <-ctx.Done():
@@ -59,6 +62,16 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 						return
 					}
 					log.Error("takeWorkflowJob> Unable to load workflow job (Request) %d: %v", jobID, err)
+
+					// If we got a "connection refused", retry 5 times
+					if strings.Contains(err.Error(), "connection refused") {
+						nbConnrefused++
+					}
+					if nbConnrefused >= 5 {
+						cancel()
+						return
+					}
+
 					continue // do not kill the worker here, could be a timeout
 				}
 

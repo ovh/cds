@@ -1,20 +1,20 @@
 
-import {of as observableOf, Observable} from 'rxjs';
+import {Observable, of as observableOf} from 'rxjs';
 
-import {map, first, finalize} from 'rxjs/operators';
-import {Component, Input, Output, EventEmitter, OnInit} from '@angular/core';
-import {WorkflowNode} from '../../../../model/workflow.model';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Router} from '@angular/router';
-import {Project, IdName} from '../../../../model/project.model';
-import {Application} from '../../../../model/application.model';
-import {Pipeline} from '../../../../model/pipeline.model';
-import {Environment} from '../../../../model/environment.model';
-import {ApplicationStore} from '../../../../service/application/application.store';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../../shared/toast/ToastService';
 import {cloneDeep} from 'lodash';
+import {finalize, first, map} from 'rxjs/operators';
+import {Application} from '../../../../model/application.model';
+import {Environment} from '../../../../model/environment.model';
+import {Pipeline} from '../../../../model/pipeline.model';
+import {IdName, Project} from '../../../../model/project.model';
+import {WorkflowNode} from '../../../../model/workflow.model';
+import {ApplicationStore} from '../../../../service/application/application.store';
+import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
+import {ProjectStore} from '../../../../service/project/project.store';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-workflow-node-add-wizard',
@@ -55,14 +55,14 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     errorPipelineNamePattern = false;
     loadingCreatePipeline = false;
     newPipeline: Pipeline = new Pipeline();
-    set pipelineSection(data: 'pipeline'|'application'|'environment') {
+    set pipelineSection(data: 'pipeline'|'application'|'environment'|'platform') {
         this._pipelineSection = data;
         this.pipelineSectionChanged.emit(data);
     }
     get pipelineSection() {
         return this._pipelineSection;
     }
-    _pipelineSection: 'pipeline'|'application'|'environment' = 'pipeline';
+    _pipelineSection: 'pipeline'|'application'|'environment'|'platform' = 'pipeline';
     _createNewPipeline = false;
 
     // Application details
@@ -117,13 +117,13 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       }
 
       if (Array.isArray(this.project.application_names)) {
-          let voidApp = new Application();
+          let voidApp = new IdName();
           voidApp.id = 0;
           voidApp.name = ' ';
           this.applicationsName = [voidApp, ...this.project.application_names];
       }
       if (Array.isArray(this.project.environments)) {
-          let voidEnv = new Environment();
+          let voidEnv = new IdName();
           voidEnv.id = 0;
           voidEnv.name = ' ';
           this.environmentsName = [voidEnv, ...this.project.environments];
@@ -144,6 +144,9 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
         }
         if (this.node.context.environment_id) {
             this.node.context.environment_id = Number(this.node.context.environment_id);
+        }
+        if (this.node.context.project_platform_id) {
+            this.node.context.project_platform_id = Number(this.node.context.project_platform_id);
         }
 
         this.nodeCreated.emit(this.node);
@@ -218,7 +221,11 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
           map((proj) => {
               this._toast.success('', this._translate.instant('environment_created'));
               this.node.context.environment_id = proj.environments.find((env) => env.name === this.newEnvironment.name).id;
-              this.createNode();
+              if (!this.node.context.application_id) {
+                  this.createNode();
+              } else {
+                  this.pipelineSection = 'platform';
+              }
               return proj;
           }));
     }
@@ -226,8 +233,17 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     selectOrCreateEnvironment() {
       if (this.createNewEnvironment && this.newEnvironment.name) {
         return this.createEnvironment().pipe(
-          map(() => 'done'));
+          map(() => 'platform'));
       }
+      if (!this.node.context.application_id) {
+          this.createNode();
+          return observableOf('done');
+      }
+      this.pipelineSection = 'platform';
+      return observableOf('platform');
+    }
+
+    selectOrCreatePlatform() {
       this.createNode();
       return observableOf('done');
     }
@@ -240,6 +256,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
           return this.selectOrCreateApplication();
         case 'environment':
           return this.selectOrCreateEnvironment();
+        case 'platform':
+          return this.selectOrCreatePlatform();
       }
     }
 }

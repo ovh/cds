@@ -1,5 +1,7 @@
 package sdk
 
+import "github.com/mitchellh/mapstructure"
+
 // EventEnvironmentAdd represents the event when adding an environment
 type EventEnvironmentAdd struct {
 	Environment
@@ -55,4 +57,22 @@ type EventEnvironmentKeyAdd struct {
 // EventEnvironmentKeyDelete represents the event when deleting an environment key
 type EventEnvironmentKeyDelete struct {
 	Key EnvironmentKey `json:"key"`
+}
+
+// ToEventEnvironmentPermissionAdd get the payload as EventEnvironmentPermissionAdd
+func (e Event) ToEventEnvironmentPermissionAdd() (EventEnvironmentPermissionAdd, error) {
+	var permEvent EventEnvironmentPermissionAdd
+	if err := mapstructure.Decode(e.Payload, &permEvent); err != nil {
+		return permEvent, WrapError(err, "ToEventEnvironmentPermissionAdd> Unable to decode EventEnvironmentPermissionAdd")
+	}
+	return permEvent, nil
+}
+
+// ToEventEnvironmentPermissionDelete get the payload as EventEnvironmentPermissionDelete
+func (e Event) ToEventEnvironmentPermissionDelete() (EventEnvironmentPermissionDelete, error) {
+	var permEvent EventEnvironmentPermissionDelete
+	if err := mapstructure.Decode(e.Payload, &permEvent); err != nil {
+		return permEvent, WrapError(err, "ToEventEnvironmentPermissionDelete> Unable to decode EventEnvironmentPermissionAdd")
+	}
+	return permEvent, nil
 }

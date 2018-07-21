@@ -17,14 +17,14 @@
 [[projects]]
   name = "github.com/Shopify/sarama"
   packages = ["."]
-  revision = "0fb560e5f7fbcaee2f75e3c34174320709f69944"
-  version = "v1.11.0"
+  revision = "35324cf48e33d8260e1c7c18854465a904ade249"
+  version = "v1.17.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/aokoli/goutils"
   packages = ["."]
   revision = "3391d3790d23d03408670993e957e8f408993c34"
-  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -526,12 +526,6 @@
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
-  name = "github.com/klauspost/crc32"
-  packages = ["."]
-  revision = "cb6bfca970f6908083f26f39a79009d608efd5cd"
-  version = "v1.1"
-
-[[projects]]
   branch = "master"
   name = "github.com/kr/fs"
   packages = ["."]
@@ -707,8 +701,8 @@
     "executors/ssh",
     "executors/web"
   ]
-  revision = "8628bb641f222a54afd1e3f8b7aa23e36d0c445d"
-  version = "v0.18.0"
+  revision = "641c8686090d24f946223480170373890163426c"
+  version = "v0.20.0"
 
 [[projects]]
   branch = "master"
@@ -842,6 +836,12 @@
   name = "github.com/sethgrid/pester"
   packages = ["."]
   revision = "760f8913c0483b776294e1bee43f1d687527127b"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/sguiheux/go-coverage"
+  packages = ["."]
+  revision = "6a8eac16bbb64711d6285507db1f6e30637d59eb"
 
 [[projects]]
   name = "github.com/shirou/gopsutil"
@@ -1175,6 +1175,16 @@
   version = "v2.3.0"
 
 [[projects]]
+  name = "gopkg.in/olivere/elastic.v5"
+  packages = [
+    ".",
+    "config",
+    "uritemplates"
+  ]
+  revision = "b708306d715bea9b983685e94ab4602cdc9f988b"
+  version = "v5.0.69"
+
+[[projects]]
   name = "gopkg.in/testfixtures.v2"
   packages = ["."]
   revision = "e34263135c9fc3e6710268b1ba3a9b73fb7104d2"
@@ -1324,6 +1334,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7427d4229507cb094756a1a4e1d8f1e25d62a408f9ab059648951d134e48e7ca"
+  inputs-digest = "51982cf84643513d3a1ee208e554e6f9a6779f11b2e0a3a9d07b34678ca75d6d"
   solver-name = "gps-cdcl"
   solver-version = 1

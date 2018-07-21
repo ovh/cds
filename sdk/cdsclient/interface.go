@@ -200,15 +200,17 @@ type QueueClient interface {
 	QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
-	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
+	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int, *int64) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
 	QueueJobBook(isWorkflowJob bool, id int64) error
+	QueueJobRelease(isWorkflowJob bool, id int64) error
 	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
 	QueueSendResult(int64, sdk.Result) error
 	QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error)
 	QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error
 	QueueJobIncAttempts(jobID int64) ([]int64, error)
+	QueueServiceLogs(logs []sdk.ServiceLog) error
 }
 
 // UserClient exposes users functions
@@ -230,7 +232,7 @@ type WorkerClient interface {
 	WorkerModelBook(id int64) error
 	WorkerList() ([]sdk.Worker, error)
 	WorkerDisable(id string) error
-	WorkerModelAdd(name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
+	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(name string) (sdk.Model, error)
 	WorkerModelDelete(name string) error
@@ -267,8 +269,8 @@ type WorkflowClient interface {
 	WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
-	WorkflowCachePush(projectKey, tag string, tarContent io.Reader) error
-	WorkflowCachePull(projectKey, tag string) (io.Reader, error)
+	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
+	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
 }
 
 // MonitoringClient exposes monitoring functions
@@ -324,6 +326,8 @@ type InterfaceDeprecated interface {
 	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
 	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
 	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
+	ApplicationDoMigrationWorkflow(projectKey, appName string, force, disablePrefixW, withCurrentVersion, withRepositoryWebHook bool) error
+	ApplicationCleanOldWorkflow(projectKey, appName string) error
 }
 
 // Raw is a low-level interface exposing HTTP functions
@@ -361,9 +365,12 @@ type GRPCPluginsClient interface {
 	...
 */
 type ProviderClient interface {
-	ProjectsList(opts ...RequestModifier) ([]sdk.Project, error)
 	ApplicationsList(projectKey string, opts ...RequestModifier) ([]sdk.Application, error)
 	ApplicationDeploymentStrategyUpdate(projectKey, applicationName, platformName string, config sdk.PlatformConfig) error
+	ApplicationMetadataUpdate(projectKey, applicationName, key, value string) error
+	ProjectsList(opts ...RequestModifier) ([]sdk.Project, error)
+	WorkflowsList(projectKey string) ([]sdk.Workflow, error)
+	WorkflowLoad(projectKey, workflowName string) (*sdk.Workflow, error)
 }
 
 // FilterByUser allow a provider to perform a request as a user identified by its username
@@ -378,6 +385,15 @@ func FilterByWritablePermission() RequestModifier {
 	return func(r *http.Request) {
 		q := r.URL.Query()
 		q.Set("permission", "W")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+// WithUsage allow a provider to retrieve an application with its usage
+func WithUsage() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withUsage", "true")
 		r.URL.RawQuery = q.Encode()
 	}
 }

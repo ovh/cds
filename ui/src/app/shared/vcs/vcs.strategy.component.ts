@@ -1,15 +1,15 @@
 import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {VCSConnections, VCSStrategy} from '../../model/vcs.model';
-import {Project} from '../../model/project.model';
-import {KeyService} from '../../service/keys/keys.service';
-import {AllKeys} from '../../model/keys.model';
+import {TranslateService} from '@ngx-translate/core';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {KeyEvent} from '../keys/key.event';
 import {finalize, first} from 'rxjs/operators';
-import {ToastService} from '../toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
+import {AllKeys} from '../../model/keys.model';
+import {Project} from '../../model/project.model';
+import {VCSConnections, VCSStrategy} from '../../model/vcs.model';
+import {KeyService} from '../../service/keys/keys.service';
 import {ProjectStore} from '../../service/project/project.store';
+import {KeyEvent} from '../keys/key.event';
+import {ToastService} from '../toast/ToastService';
 
 @Component({
     selector: 'app-vcs-strategy',

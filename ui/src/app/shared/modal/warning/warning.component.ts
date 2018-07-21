@@ -1,4 +1,4 @@
-import {Component, Output, EventEmitter, Input, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 
 @Component({

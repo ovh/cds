@@ -3,6 +3,7 @@ package openstack
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -81,7 +82,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 func (h *HatcheryOpenstack) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
 	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	}
 	return m
 }
@@ -286,10 +287,7 @@ func (h *HatcheryOpenstack) killAwolServers() {
 			}
 
 			log.Debug("killAwolServers> Deleting server %s status: %s last update: %s registerOnly:%s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), registerOnly, toDeleteKilled, inWorkersList)
-			if err := servers.Delete(h.openstackClient, s.ID).ExtractErr(); err != nil {
-				log.Warning("killAwolServers> Cannot remove server %s: %s", s.Name, err)
-				continue
-			}
+			_ = h.deleteServer(s)
 		}
 	}
 	// then clean workersAlive map
@@ -377,25 +375,13 @@ func (h *HatcheryOpenstack) killErrorServers() {
 		//Remove server without IP Address
 		if s.Status == "ACTIVE" {
 			if len(s.Addresses) == 0 && time.Since(s.Updated) > 10*time.Minute {
-				log.Info("Deleting server %s without IP Address", s.Name)
-
-				r := servers.Delete(h.openstackClient, s.ID)
-				if err := r.ExtractErr(); err != nil {
-					log.Warning("killErrorServers> Cannot remove worker %s: %s", s.Name, err)
-					continue
-				}
+				_ = h.deleteServer(s)
 			}
 		}
 
 		//Remove Error server
 		if s.Status == "ERROR" {
-			log.Info("Deleting server %s in error", s.Name)
-
-			r := servers.Delete(h.openstackClient, s.ID)
-			if err := r.ExtractErr(); err != nil {
-				log.Warning("killErrorServers> Cannot remove worker in error %s: %s", s.Name, err)
-				continue
-			}
+			_ = h.deleteServer(s)
 		}
 	}
 }
@@ -416,21 +402,42 @@ func (h *HatcheryOpenstack) killDisabledWorkers() {
 
 		for _, s := range srvs {
 			if s.Name == w.Name {
-				log.Info("Deleting disabled worker %s", w.Name)
-				r := servers.Delete(h.openstackClient, s.ID)
-				if err := r.ExtractErr(); err != nil {
-					log.Warning("killDisabledWorkers> Cannot disabled worker %s: %s", s.Name, err)
-					continue
-				}
+				_ = h.deleteServer(s)
 			}
 		}
 	}
 }
 
+func (h *HatcheryOpenstack) deleteServer(s servers.Server) error {
+	log.Info("Deleting worker %s", s.Name)
+
+	// If its a worker "register", check registration before deleting it
+	if strings.Contains(s.Name, "register-") {
+		modelID, err := strconv.ParseInt(s.Metadata["worker_model_id"], 10, 64)
+		if err != nil {
+			log.Error("killAndRemove> unable to get model from registering server %s", s.Name)
+		} else {
+			hatchery.CheckWorkerModelRegister(h, modelID)
+		}
+	}
+
+	r := servers.Delete(h.openstackClient, s.ID)
+	if err := r.ExtractErr(); err != nil {
+		log.Warning("deleteServer> Cannot delete worker %s: %s", s.Name, err)
+		return err
+	}
+	return nil
+}
+
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
-func (h *HatcheryOpenstack) WorkersStarted() int {
-	return len(h.getServers())
+func (h *HatcheryOpenstack) WorkersStarted() []string {
+	srvs := h.getServers()
+	res := make([]string, len(srvs))
+	for i, s := range srvs {
+		res[i] = s.Metadata["worker"]
+	}
+	return res
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but

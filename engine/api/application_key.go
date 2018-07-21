@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -101,6 +102,10 @@ func (api *API) addKeyInApplicationHandler() Handler {
 			return sdk.WrapError(errA, "addKeyInApplicationHandler> Cannot load application")
 		}
 		newKey.ApplicationID = app.ID
+
+		if !strings.HasPrefix(newKey.Name, "app-") {
+			newKey.Name = "app-" + newKey.Name
+		}
 
 		switch newKey.Type {
 		case sdk.KeyTypeSSH:

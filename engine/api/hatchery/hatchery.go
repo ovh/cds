@@ -49,7 +49,7 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	h.Model.UserLastModified = time.Now()
 	h.Model.ModelVirtualMachine = sdk.ModelVirtualMachine{
 		Image: h.Model.Name,
-		Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --single-use --force-exit",
+		Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
 	}
 
 	if err := worker.InsertWorkerModel(tx, &h.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
@@ -126,9 +126,9 @@ func LoadDeadHatcheries(db gorp.SqlExecutor, timeout float64) ([]sdk.Hatchery, e
 // LoadHatchery fetch hatchery info from database given UID
 func LoadHatchery(db gorp.SqlExecutor, uid, name string) (*sdk.Hatchery, error) {
 	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
-							FROM hatchery
-							LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
-							WHERE uid = $1 AND name = $2`
+	FROM hatchery
+	LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
+	WHERE uid = $1 AND name = $2`
 
 	var h sdk.Hatchery
 	var wmID sql.NullInt64

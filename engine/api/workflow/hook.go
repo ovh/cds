@@ -21,7 +21,6 @@ import (
 func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) error {
 	var hookToUpdate map[string]sdk.WorkflowNodeHook
 	var hookToDelete map[string]sdk.WorkflowNodeHook
-
 	if oldW != nil {
 		hookToUpdate, hookToDelete = mergeAndDiffHook(oldW.GetHooks(), wf.GetHooks())
 	} else {
@@ -59,49 +58,77 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 
 			if h.WorkflowHookModel.Name == sdk.SchedulerModelName {
 				// Add git.branch in scheduler payload
-				if wf.Root.IsLinkedToRepo() && h.Config["payload"].Value != "" {
-					var bodyJSON interface{}
-					//Try to parse the body as an array
-					bodyJSONArray := []interface{}{}
-					if err := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONArray); err != nil {
-						//Try to parse the body as a map
-						bodyJSONMap := map[string]interface{}{}
-						if err2 := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONMap); err2 == nil {
-							bodyJSON = bodyJSONMap
+				if wf.Root.IsLinkedToRepo() {
+					var payloadValues map[string]string
+					if h.Config["payload"].Value != "" {
+						var bodyJSON interface{}
+						//Try to parse the body as an array
+						bodyJSONArray := []interface{}{}
+						if err := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONArray); err != nil {
+							//Try to parse the body as a map
+							bodyJSONMap := map[string]interface{}{}
+							if err2 := json.Unmarshal([]byte(h.Config["payload"].Value), &bodyJSONMap); err2 == nil {
+								bodyJSON = bodyJSONMap
+							}
+						} else {
+							bodyJSON = bodyJSONArray
 						}
-					} else {
-						bodyJSON = bodyJSONArray
+
+						//Go Dump
+						e := dump.NewDefaultEncoder(new(bytes.Buffer))
+						e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+						e.ExtraFields.DetailedMap = false
+						e.ExtraFields.DetailedStruct = false
+						e.ExtraFields.DeepJSON = true
+						e.ExtraFields.Len = false
+						e.ExtraFields.Type = false
+						var errDump error
+						payloadValues, errDump = e.ToStringMap(bodyJSON)
+						if errDump != nil {
+							return sdk.WrapError(errDump, "HookRegistration> Cannot dump payload %+v", h.Config["payload"].Value)
+						}
 					}
 
-					//Go Dump
-					e := dump.NewDefaultEncoder(new(bytes.Buffer))
-					e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-					e.ExtraFields.DetailedMap = false
-					e.ExtraFields.DetailedStruct = false
-					e.ExtraFields.DeepJSON = true
-					e.ExtraFields.Len = false
-					e.ExtraFields.Type = false
-					payloadValues, errDump := e.ToStringMap(bodyJSON)
-					if errDump != nil {
-						return sdk.WrapError(errDump, "HookRegistration> Cannot dump payload %+v", h.Config["payload"].Value)
-					}
-
+					// try get git.branch on defaultPayload
 					if payloadValues["git.branch"] == "" {
 						defaultPayloadMap, errP := wf.Root.Context.DefaultPayloadToMap()
 						if errP != nil {
 							return sdk.WrapError(errP, "HookRegistration> Cannot read node default payload")
 						}
-						payloadValues["git.branch"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"]
-
-						payloadStr, errM := json.MarshalIndent(&payloadValues, "", "  ")
-						if errM != nil {
-							return sdk.WrapError(errM, "HookRegistration> Cannot marshal hook config payload : %s", errM)
+						if defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"] != "" {
+							payloadValues["git.branch"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitBranch"]
 						}
-						pl := h.Config["payload"]
-						pl.Value = string(payloadStr)
-						h.Config["payload"] = pl
-						hookToUpdate[i] = h
+						if defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitRepository"] != "" {
+							payloadValues["git.repository"] = defaultPayloadMap["WorkflowNodeContextDefaultPayloadVCS.GitRepository"]
+						}
 					}
+
+					// try get git.branch on repo linked
+					if payloadValues["git.branch"] == "" {
+						defaultPayload, errDefault := DefaultPayload(db, store, p, nil, &wf)
+						if errDefault != nil {
+							return sdk.WrapError(errDefault, "HookRegistration> Unable to get default payload")
+						}
+						dumper := dump.NewDefaultEncoder(nil)
+						dumper.ExtraFields.DetailedMap = false
+						dumper.ExtraFields.DetailedStruct = false
+						dumper.ExtraFields.Len = false
+						dumper.ExtraFields.Type = false
+						var errDump error
+						payloadValues, errDump = dumper.ToStringMap(defaultPayload)
+						if errDump != nil {
+							return sdk.WrapError(errDump, "HookRegistration> Cannot dump payload %+v", h.Config["payload"].Value)
+						}
+					}
+
+					payloadStr, errM := json.MarshalIndent(&payloadValues, "", "  ")
+					if errM != nil {
+						return sdk.WrapError(errM, "HookRegistration> Cannot marshal hook config payload : %s", errM)
+					}
+					pl := h.Config["payload"]
+					pl.Value = string(payloadStr)
+					h.Config["payload"] = pl
+					hookToUpdate[i] = h
 				}
 			}
 		}
@@ -121,7 +148,6 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 					return sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
 			}
-
 			if err := UpdateHook(db, &h); err != nil {
 				return sdk.WrapError(err, "HookRegistration> Cannot update hook")
 			}
@@ -129,14 +155,15 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 	}
 
 	if len(hookToDelete) > 0 {
-		if err := deleteHookConfiguration(db, store, p, hookToDelete); err != nil {
+		if err := DeleteHookConfiguration(db, store, p, hookToDelete); err != nil {
 			return sdk.WrapError(err, "HookRegistration> Cannot remove hook configuration")
 		}
 	}
 	return nil
 }
 
-func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {
+// DeleteHookConfiguration delete hooks configuration (and their vcs configuration)
+func DeleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {
 	// Delete from vcs configuration if needed
 	for _, h := range hookToDelete {
 		if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName {
@@ -228,6 +255,16 @@ func mergeAndDiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[str
 			if oldHooks[o].Ref == newHooks[n].Ref {
 				nh := newHooks[n]
 				nh.UUID = oldHooks[o].UUID
+				if nh.Config == nil {
+					nh.Config = sdk.WorkflowNodeHookConfig{}
+				}
+				//Useful for RepositoryWebHook
+				if webhookID, ok := oldHooks[o].Config["webHookID"]; ok {
+					nh.Config["webHookID"] = webhookID
+				}
+				if oldIcon, ok := oldHooks[o].Config["hookIcon"]; oldHooks[o].WorkflowHookModelID == newHooks[n].WorkflowHookModelID && ok {
+					nh.Config["hookIcon"] = oldIcon
+				}
 				newHooks[n] = nh
 			}
 		}
@@ -242,9 +279,16 @@ func mergeAndDiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[str
 		}
 	}
 
-	for key := range oldHooks {
-		if _, ok := newHooks[key]; !ok {
-			hookToDelete[key] = oldHooks[key]
+	for _, oldH := range oldHooks {
+		var exist bool
+		for _, newH := range newHooks {
+			if oldH.UUID == newH.UUID {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			hookToDelete[oldH.UUID] = oldH
 		}
 	}
 	return

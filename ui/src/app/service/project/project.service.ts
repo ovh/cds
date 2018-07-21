@@ -1,16 +1,16 @@
 
-import {map} from 'rxjs/operators';
-import {Injectable} from '@angular/core';
-import {Project, LoadOpts} from '../../model/project.model';
-import {Application} from '../../model/application.model';
-import {Observable} from 'rxjs';
-import {Variable} from '../../model/variable.model';
-import {GroupPermission} from '../../model/group.model';
-import {Environment} from '../../model/environment.model';
-import {Notification} from '../../model/notification.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import {map} from 'rxjs/operators';
+import {Application} from '../../model/application.model';
+import {Environment} from '../../model/environment.model';
+import {GroupPermission} from '../../model/group.model';
 import {Key} from '../../model/keys.model';
+import {Notification} from '../../model/notification.model';
 import {ProjectPlatform} from '../../model/platform.model';
+import {LoadOpts, Project} from '../../model/project.model';
+import {Variable} from '../../model/variable.model';
 
 /**
  * Service to access Project from API.
@@ -52,12 +52,10 @@ export class ProjectService {
      * Get all projects that the user can access.
      * @returns {Observable<Project[]>}
      */
-    getProjects(withApplication: boolean): Observable<Project[]> {
+    getProjects(): Observable<Project[]> {
         let params = new HttpParams();
-        if (withApplication) {
-          params = params.append('application', 'true');
-        }
-        return this._http.get<Project[]>('/project', {params: params});
+        params = params.append('withIcon', 'true');
+        return this._http.get<Project[]>('/project', {params});
     }
 
     /**

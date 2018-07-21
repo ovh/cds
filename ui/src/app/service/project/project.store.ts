@@ -1,17 +1,17 @@
 
-import {of as observableOf, Observable, BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 
-import {map} from 'rxjs/operators';
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
-import {Project, LoadOpts} from '../../model/project.model';
-import {ProjectService} from './project.service';
-import {EnvironmentService} from '../environment/environment.service';
-import {VariableService} from '../variable/variable.service';
-import {NavbarService} from '../navbar/navbar.service';
-import {Variable} from '../../model/variable.model';
-import {GroupPermission} from '../../model/group.model';
+import {map} from 'rxjs/operators';
 import {Environment} from '../../model/environment.model';
+import {GroupPermission} from '../../model/group.model';
+import {LoadOpts, Project} from '../../model/project.model';
+import {Variable} from '../../model/variable.model';
+import {EnvironmentService} from '../environment/environment.service';
+import {NavbarService} from '../navbar/navbar.service';
+import {VariableService} from '../variable/variable.service';
+import {ProjectService} from './project.service';
 
 import {Key} from '../../model/keys.model';
 import {ProjectPlatform} from '../../model/platform.model';
@@ -21,7 +21,7 @@ import {ProjectPlatform} from '../../model/platform.model';
 export class ProjectStore {
 
     // List of all project. Use by Navbar
-    private _projectNav: BehaviorSubject<List<Project>> = new BehaviorSubject(List([]));
+    private _projectNav: BehaviorSubject<List<Project>> = new BehaviorSubject(null);
 
     // List of all project + dependencies:  List of variables, List of Env, List of App, List of Pipeline.
     private _projectCache: BehaviorSubject<Map<string, Project>> = new BehaviorSubject(Map<string, Project>());
@@ -41,14 +41,9 @@ export class ProjectStore {
      */
     getProjectsList(): Observable<List<Project>> {
         // If Store not empty, get from it
-        if (this._projectNav.getValue().size === 0) {
-            // Get from localstorage
-            let localProjects: Array<Project> = JSON.parse(localStorage.getItem('CDS-PROJECT-LIST'));
-            this._projectNav.next(this._projectNav.getValue().push(...localProjects));
-
+        if (!this._projectNav.getValue() || this._projectNav.getValue().size === 0) {
             // Get from API
-            this._projectService.getProjects(true).subscribe(res => {
-                localStorage.setItem('CDS-PROJECT-LIST', JSON.stringify(res));
+            this._projectService.getProjects().subscribe(res => {
                 this._projectNav.next(List(res));
             });
         }
@@ -276,8 +271,10 @@ export class ProjectStore {
     createProject(project: Project): Observable<Project> {
         return this._projectService.addProject(project).pipe(map(res => {
             let projects = this._projectNav.getValue();
+            if (!projects) {
+                projects = List();
+            }
             this._projectNav.next(projects.push(project));
-
             return res;
         }));
     }

@@ -283,11 +283,11 @@ type VCSBranch struct {
 
 //VCSPullRequest represents a pull request
 type VCSPullRequest struct {
-	URL    string       `json:"url"`
-	User   VCSAuthor    `json:"user"`
-	Head   VCSPushEvent `json:"head"`
-	Base   VCSPushEvent `json:"base"`
-	Branch VCSBranch    `json:"branch"`
+	ID   int          `json:"id"`
+	URL  string       `json:"url"`
+	User VCSAuthor    `json:"user"`
+	Head VCSPushEvent `json:"head"`
+	Base VCSPushEvent `json:"base"`
 }
 
 //VCSPushEvent represents a push events for polling

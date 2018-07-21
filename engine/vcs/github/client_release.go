@@ -25,7 +25,7 @@ func (g *githubClient) Release(fullname string, tagName string, title string, re
 		return nil, sdk.WrapError(err, "github.Release > Cannot marshal body %+v", req)
 	}
 
-	res, err := g.post(url, "application/json", bytes.NewBuffer(b), false)
+	res, err := g.post(url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
 		return nil, sdk.WrapError(err, "github.Release > Cannot create release on github")
 	}
@@ -57,7 +57,7 @@ func (g *githubClient) Release(fullname string, tagName string, title string, re
 // UploadReleaseFile Attach a file into the release
 func (g *githubClient) UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
 	var url = strings.Split(uploadURL, "{")[0] + "?name=" + artifactName
-	res, err := g.post(url, "application/octet-stream", r, true)
+	res, err := g.post(url, "application/octet-stream", r, &postOptions{skipDefaultBaseURL: true})
 	if err != nil {
 		return err
 	}

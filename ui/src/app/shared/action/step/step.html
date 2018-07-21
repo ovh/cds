@@ -84,7 +84,7 @@
             </label>
         </div>
         <div class="fourteen wide column">
-            <app-parameter-value [edit]="edit" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
+            <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value" [editList]="false" [suggest]="suggest"
                                  (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)"></app-parameter-value>
         </div>
     </div>

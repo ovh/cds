@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func extractVCSInformations(params []sdk.Parameter) (string, *git.AuthOpts, error) {
+func extractVCSInformations(params []sdk.Parameter, secrets []sdk.Variable) (string, *git.AuthOpts, error) {
 	var gitURL string
 	var auth *git.AuthOpts
 
@@ -29,10 +29,15 @@ func extractVCSInformations(params []sdk.Parameter) (string, *git.AuthOpts, erro
 		if privateKey == nil || privateKey.Value == "" {
 			return gitURL, nil, fmt.Errorf("ssh key not found. Nothing to perform")
 		}
-		if err := vcs.SetupSSHKey(nil, keysDirectory, privateKey); err != nil {
+		privateKeyVar := sdk.Variable{
+			Name:  "cds.key." + keyName.Value + ".priv",
+			Type:  "string",
+			Value: privateKey.Value,
+		}
+		if err := vcs.SetupSSHKey(nil, keysDirectory, &privateKeyVar); err != nil {
 			return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", err)
 		}
-		key, errK := vcs.GetSSHKey(params, keysDirectory, privateKey)
+		key, errK := vcs.GetSSHKey(secrets, keysDirectory, &privateKeyVar)
 		if errK != nil && errK != sdk.ErrKeyNotFound {
 			return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", errK)
 		}

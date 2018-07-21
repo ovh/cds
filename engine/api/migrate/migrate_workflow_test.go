@@ -1,6 +1,7 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -15,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_MigrateToWorkflow(t *testing.T) {
+func Test_ToWorkflow(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -90,13 +91,15 @@ func Test_MigrateToWorkflow(t *testing.T) {
 	proj2, errP := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithEnvironments, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines)
 	fmt.Printf("%+v", proj2)
 	test.NoError(t, errP)
-	test.NoError(t, MigrateToWorkflow(db, cache, oldW, proj2, u, true))
+	wfs, err := ToWorkflow(db, cache, oldW, proj2, u, true, false, true, true)
+	test.NoError(t, err)
+	assert.Equal(t, 1, len(wfs))
 
 	app2DB, errA := application.LoadByName(db, cache, proj2.Key, app2.Name, u)
 	test.NoError(t, errA)
 	assert.Equal(t, "CLEANING", app2DB.WorkflowMigration)
 
-	wf, errW := workflow.Load(db, cache, proj, "w"+app1.Name, u, workflow.LoadOptions{})
+	wf, errW := workflow.Load(context.TODO(), db, cache, proj, "w"+app1.Name, u, workflow.LoadOptions{})
 	test.NoError(t, errW)
 
 	assert.Equal(t, pip1.ID, wf.Root.Pipeline.ID)

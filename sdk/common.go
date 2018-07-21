@@ -12,9 +12,18 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"runtime"
 
 	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/sdk/log"
 )
+
+// MaxIconSize is the maximum size of the icon in octet
+const MaxIconSize = 120000
+
+// IconFormat is the format prefix accepted for icon
+const IconFormat = "data:image/"
 
 // EncryptFunc is a common type
 type EncryptFunc func(gorp.SqlExecutor, int64, string, string) (string, error)
@@ -24,6 +33,7 @@ type IDName struct {
 	ID          string `json:"id" db:"id"`
 	Name        string `json:"name" db:"name"`
 	Description string `json:"description,omitempty" db:"description"`
+	Icon        string `json:"icon,omitempty" db:"icon"`
 }
 
 // NamePattern  Pattern for project/application/pipeline/group name
@@ -94,4 +104,20 @@ func FileSHA512sum(filePath string) (string, error) {
 	hashInBytes := hash.Sum(nil)[:64]
 	sum := hex.EncodeToString(hashInBytes)
 	return sum, nil
+}
+
+// GoRoutine runs the function within a goroutine with a panic recovery
+func GoRoutine(name string, fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				buf := make([]byte, 1<<16)
+				runtime.Stack(buf, true)
+				log.Error("[PANIC] %s Failed", name)
+				log.Error("[PANIC] %s> %s", name, string(buf))
+			}
+		}()
+		fn()
+	}()
+
 }

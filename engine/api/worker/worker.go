@@ -45,12 +45,32 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 	}
 	defer tx.Rollback()
 
+	query := `DELETE FROM worker WHERE id = $1`
+	if _, err := tx.Exec(query, id); err != nil {
+		return sdk.WrapError(err, "DeleteWorker")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "DeleteWorker> unable to commit tx")
+	}
+
+	return nil
+}
+
+// DisableWorker disable a worker
+func DisableWorker(db *gorp.DbMap, id string) error {
+	tx, errb := db.Begin()
+	if errb != nil {
+		return fmt.Errorf("DisableWorker> Cannot start tx: %s", errb)
+	}
+	defer tx.Rollback() // nolint
+
 	query := `SELECT name, status, action_build_id, job_type FROM worker WHERE id = $1 FOR UPDATE`
 	var st, name string
 	var jobID sql.NullInt64
 	var jobType sql.NullString
 	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID, &jobType); err != nil {
-		log.Debug("DeleteWorker[%d]> Cannot lock worker: %s", id, err)
+		log.Debug("DisableWorker[%d]> Cannot lock worker: %s", id, err)
 		return nil
 	}
 
@@ -60,28 +80,29 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		switch jobType.String {
 		case sdk.JobTypePipeline:
 			if err := pipeline.RestartPipelineBuildJob(tx, jobID.Int64); err != nil {
-				log.Error("DeleteWorker[%s]> Cannot restart pipeline build job: %s", name, err)
+				log.Error("DisableWorker[%s]> Cannot restart pipeline build job: %s", name, err)
 			} else {
-				log.Info("DeleteWorker[%s]> PipelineBuildJob %d restarted after crash", name, jobID.Int64)
+				log.Info("DisableWorker[%s]> PipelineBuildJob %d restarted after crash", name, jobID.Int64)
 			}
 		case sdk.JobTypeWorkflowNode:
 			wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)
 			if errL == nil && wNodeJob.Retry < 3 {
 				if err := workflow.RestartWorkflowNodeJob(nil, db, *wNodeJob); err != nil {
-					log.Warning("DeleteWorker[%s]> Cannot restart workflow node run : %s", name, err)
+					log.Warning("DisableWorker[%s]> Cannot restart workflow node run : %s", name, err)
 				} else {
-					log.Info("DeleteWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
+					log.Info("DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
 				}
 			}
 		}
 
-		log.Info("DeleteWorker> Worker %s crashed while building %d !", name, jobID.Int64)
+		log.Info("DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
 	}
 
-	// Well then, let's remove this loser
-	query = `DELETE FROM worker WHERE id = $1`
-	if _, err := tx.Exec(query, id); err != nil {
-		return err
+	if err := SetStatus(tx, id, sdk.StatusDisabled); err != nil {
+		if err == ErrNoWorker || err == sql.ErrNoRows {
+			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exists", id)
+		}
+		return sdk.WrapError(err, "DisableWorker> cannot update worker status")
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -123,12 +144,19 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 }
 
 // LoadWorkers load all workers in db
-func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
+func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE 1 = 1 ORDER BY name ASC`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker ORDER BY name ASC`
+	args := []interface{}{}
 
-	rows, err := db.Query(query)
+	if hatcheryName != "" {
+		// TODO: remove the hatchery name from worker worker table !
+		query = `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE hatchery_name = $1 ORDER BY name ASC`
+		args = []interface{}{hatcheryName}
+	}
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -386,14 +414,14 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 // SetStatus sets action_build_id and status to building on given worker
 func SetStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 	query := `UPDATE worker SET status = $1 WHERE id = $2`
-
-	res, errE := db.Exec(query, status.String(), workerID)
-	if errE != nil {
-		return errE
+	if status == sdk.StatusDisabled {
+		query = `UPDATE worker SET status = $1, action_build_id = NULL WHERE id = $2`
 	}
 
-	_, err := res.RowsAffected()
-	return err
+	if _, errE := db.Exec(query, status.String(), workerID); errE != nil {
+		return sdk.WrapError(errE, "SetStatus")
+	}
+	return nil
 }
 
 // SetToBuilding sets action_build_id and status to building on given worker
@@ -407,34 +435,6 @@ func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64, jo
 
 	_, err := res.RowsAffected()
 	return err
-}
-
-// LoadWorkerModelsUsableOnGroup returns worker models for a group
-func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, groupID, sharedinfraGroupID int64) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
-	var err error
-	models := []sdk.Model{}
-
-	// note about restricted field on worker model:
-	// if restricted = true, worker model can be launched by a user hatchery only
-	// so, a 'shared.infra' hatchery need all worker models, with restricted = false
-
-	if sharedinfraGroupID == groupID { // shared infra, return all models, excepts restricted
-		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND restricted = FALSE ORDER by name`)
-	} else { // not shared infra, returns only selected worker models
-		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND group_id = $1 ORDER by name`, groupID)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
-			return nil, err
-		}
-		models = append(models, sdk.Model(ms[i]))
-	}
-	return models, nil
 }
 
 // UpdateWorkerStatus changes worker status to Disabled

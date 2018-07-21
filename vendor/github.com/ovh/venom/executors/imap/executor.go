@@ -35,6 +35,7 @@ type Executor struct {
 	MBoxOnSuccess   string `json:"mboxonsuccess,omitempty" yaml:"mboxonsuccess,omitempty"`
 	DeleteOnSuccess bool   `json:"deleteonsuccess,omitempty" yaml:"deleteonsuccess,omitempty"`
 	SearchFrom      string `json:"searchfrom,omitempty" yaml:"searchfrom,omitempty"`
+	SearchTo        string `json:"searchto,omitempty" yaml:"searchto,omitempty"`
 	SearchSubject   string `json:"searchsubject,omitempty" yaml:"searchsubject,omitempty"`
 	SearchBody      string `json:"searchbody,omitempty" yaml:"searchbody,omitempty"`
 }
@@ -42,6 +43,7 @@ type Executor struct {
 // Mail contains an analyzed mail
 type Mail struct {
 	From    string
+	To      string
 	Subject string
 	UID     uint32
 	Body    string
@@ -98,8 +100,8 @@ func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestSt
 }
 
 func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
-	if e.SearchFrom == "" && e.SearchSubject == "" && e.SearchBody == "" {
-		return nil, fmt.Errorf("You have to use searchfrom and/or searchsubject and/or searchbody")
+	if e.SearchFrom == "" && e.SearchSubject == "" && e.SearchBody == "" && e.SearchTo == "" {
+		return nil, fmt.Errorf("You have to use one of searchfrom, searchto, searchsubject or subjectbody parameters.")
 	}
 
 	c, errc := connect(e.IMAPHost, e.IMAPPort, e.IMAPUser, e.IMAPPassword)
@@ -167,6 +169,12 @@ func (e *Executor) isSearched(m *Mail) (bool, error) {
 	if e.SearchFrom != "" {
 		ma, erra := regexp.MatchString(e.SearchFrom, m.From)
 		if erra != nil || !ma {
+			return false, erra
+		}
+	}
+	if e.SearchTo != "" {
+		mt, erra := regexp.MatchString(e.SearchTo, m.To)
+		if erra != nil || !mt {
 			return false, erra
 		}
 	}

@@ -90,11 +90,13 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 	linesGlobal := []sdk.MonitoringStatusLine{}
 
 	resume := map[string]computeGlobalNumbers{
-		services.TypeAPI:          computeGlobalNumbers{},
-		services.TypeRepositories: computeGlobalNumbers{},
-		services.TypeVCS:          computeGlobalNumbers{},
-		services.TypeHooks:        computeGlobalNumbers{},
-		services.TypeHatchery:     computeGlobalNumbers{},
+		services.TypeAPI:           {},
+		services.TypeRepositories:  {},
+		services.TypeVCS:           {},
+		services.TypeHooks:         {},
+		services.TypeHatchery:      {},
+		services.TypeDBMigrate:     {},
+		services.TypeElasticsearch: {},
 	}
 	var nbg computeGlobalNumbers
 	for _, s := range srvs {

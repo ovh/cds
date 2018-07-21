@@ -1,19 +1,19 @@
 
+import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {cloneDeep} from 'lodash';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {zip as observableZip} from 'rxjs';
-import {Component, EventEmitter, Input, Output, ViewChild, OnInit} from '@angular/core';
+import {finalize, first} from 'rxjs/operators';
+import {ProjectPlatform} from '../../../../../model/platform.model';
+import {Project} from '../../../../../model/project.model';
+import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {
     Workflow, WorkflowNode, WorkflowNodeHook
 } from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
-import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {cloneDeep} from 'lodash';
-import {Project} from '../../../../../model/project.model';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {HookEvent} from '../hook.event';
-import {first, finalize} from 'rxjs/operators';
-import {ProjectPlatform} from '../../../../../model/platform.model';
 
 @Component({
     selector: 'app-workflow-node-hook-form',

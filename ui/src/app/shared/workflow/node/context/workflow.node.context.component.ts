@@ -1,18 +1,18 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {Project} from '../../../../model/project.model';
-import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {VariableService} from '../../../../service/variable/variable.service';
-import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {ParameterEvent} from '../../../parameter/parameter.event.model';
-import {Subscription} from 'rxjs';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 import {Pipeline} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
+import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
+import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
+import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
+import {VariableService} from '../../../../service/variable/variable.service';
+import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {ParameterEvent} from '../../../parameter/parameter.event.model';
 declare var CodeMirror: any;
 
 @Component({

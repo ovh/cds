@@ -450,7 +450,7 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 }
 
 //deleteNode deletes nodes and all its children
-func deleteNode(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User) error {
+func deleteNode(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode) error {
 	log.Debug("deleteNode> Delete node %d", node.ID)
 
 	dbwn := Node(*node)

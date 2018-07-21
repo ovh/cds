@@ -1,16 +1,16 @@
 import {Component, Input} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs';
-import {Pipeline, PipelineBuild, PipelineBuildJob, PipelineStatus} from '../../../model/pipeline.model';
-import {Stage} from '../../../model/stage.model';
-import {Job} from '../../../model/job.model';
-import {Project} from '../../../model/project.model';
+import {first} from 'rxjs/operators';
 import {Application} from '../../../model/application.model';
-import {DurationService} from '../../../shared/duration/duration.service';
+import {Job} from '../../../model/job.model';
+import {Pipeline, PipelineBuild, PipelineBuildJob, PipelineStatus} from '../../../model/pipeline.model';
+import {Project} from '../../../model/project.model';
+import {Stage} from '../../../model/stage.model';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
-import {first} from 'rxjs/operators';
+import {DurationService} from '../../../shared/duration/duration.service';
 
 
 @Component({
@@ -131,12 +131,14 @@ export class PipelineRunWorkflowComponent {
     handleNotification(pipelineBuild: PipelineBuild): void {
         switch (pipelineBuild.status) {
         case PipelineStatus.SUCCESS:
-            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
+            this.notificationSubscription =
+                this._notification.create(this._translate.instant('notification_on_pipeline_success', {
                 pipelineName: pipelineBuild.pipeline.name
             }), { icon: 'assets/images/checked.png' }).subscribe();
             break;
         case PipelineStatus.FAIL:
-            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
+            this.notificationSubscription =
+                this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
                 pipelineName: pipelineBuild.pipeline.name
             }), { icon: 'assets/images/close.png' }).subscribe();
             break;

@@ -1,15 +1,15 @@
-import {Component, OnDestroy, NgZone} from '@angular/core';
+import {Component, NgZone, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Application} from '../../model/application.model';
-import {Project} from '../../model/project.model';
-import {Pipeline, PipelineBuild, PipelineStatus} from '../../model/pipeline.model';
 import {Subscription} from 'rxjs';
 import {environment} from '../../../environments/environment';
-import {AuthentificationStore} from '../../service/auth/authentification.store';
-import {CDSWorker} from '../../shared/worker/worker';
+import {Application} from '../../model/application.model';
+import {Pipeline, PipelineBuild, PipelineStatus} from '../../model/pipeline.model';
+import {Project} from '../../model/project.model';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
-import {DurationService} from '../../shared/duration/duration.service';
+import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {RouterService} from '../../service/router/router.service';
+import {DurationService} from '../../shared/duration/duration.service';
+import {CDSWebWorker} from '../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-pipeline-build',
@@ -37,7 +37,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     zone: NgZone;
 
     // Worker CDS that pull data
-    worker: CDSWorker;
+    worker: CDSWebWorker;
 
     // Worker subscription
     workerSubscription: Subscription;
@@ -100,7 +100,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
         if (this.worker) {
             this.worker.stop();
         }
-        this.worker = new CDSWorker('./assets/worker/web/runpipeline.js');
+        this.worker = new CDSWebWorker('./assets/worker/web/runpipeline.js');
         this.worker.start({
             user: this._authStore.getUser(),
             session: this._authStore.getSessionToken(),

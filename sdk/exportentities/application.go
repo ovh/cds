@@ -8,6 +8,7 @@ import (
 type Application struct {
 	Version              string                              `json:"version,omitempty" yaml:"version,omitempty"`
 	Name                 string                              `json:"name" yaml:"name"`
+	Description          string                              `json:"description" yaml:"description"`
 	VCSServer            string                              `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
 	RepositoryName       string                              `json:"repo,omitempty" yaml:"repo,omitempty"`
 	Permissions          map[string]int                      `json:"permissions,omitempty" yaml:"permissions,omitempty"`
@@ -17,8 +18,6 @@ type Application struct {
 	VCSSSHKey            string                              `json:"vcs_ssh_key,omitempty" yaml:"vcs_ssh_key,omitempty"`
 	VCSUser              string                              `json:"vcs_user,omitempty" yaml:"vcs_user,omitempty"`
 	VCSPassword          string                              `json:"vcs_password,omitempty" yaml:"vcs_password,omitempty"`
-	VCSBranch            string                              `json:"vcs_branch,omitempty" yaml:"vcs_branch,omitempty"`
-	VCSDefaultBranch     string                              `json:"vcs_default_branch,omitempty" yaml:"vcs_default_branch,omitempty"`
 	VCSPGPKey            string                              `json:"vcs_pgp_key,omitempty" yaml:"vcs_pgp_key,omitempty"`
 	DeploymentStrategies map[string]map[string]VariableValue `json:"deployments,omitempty" yaml:"deployments,omitempty"`
 }
@@ -42,6 +41,7 @@ type EncryptedKey struct {
 func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedKey) (a Application, err error) {
 	a.Version = ApplicationVersion1
 	a.Name = app.Name
+	a.Description = app.Description
 
 	if app.VCSServer != "" {
 		a.VCSServer = app.VCSServer
@@ -75,11 +75,9 @@ func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedK
 		}
 	}
 
-	a.VCSBranch = app.RepositoryStrategy.Branch
 	if app.RepositoryStrategy.ConnectionType != "https" {
 		a.VCSConnectionType = app.RepositoryStrategy.ConnectionType
 	}
-	a.VCSDefaultBranch = app.RepositoryStrategy.DefaultBranch
 	a.VCSPGPKey = app.RepositoryStrategy.PGPKey
 	a.VCSSSHKey = app.RepositoryStrategy.SSHKey
 	a.VCSUser = app.RepositoryStrategy.User

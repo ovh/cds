@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
@@ -27,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/poller"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
@@ -61,18 +63,8 @@ type Configuration struct {
 	Secrets struct {
 		Key string `toml:"key"`
 	} `toml:"secrets"`
-	Database struct {
-		User           string `toml:"user" default:"cds"`
-		Password       string `toml:"password" default:"cds"`
-		Name           string `toml:"name" default:"cds"`
-		Host           string `toml:"host" default:"localhost"`
-		Port           int    `toml:"port" default:"5432"`
-		SSLMode        string `toml:"sslmode" default:"disable" comment:"DB SSL Mode: require (default), verify-full, or disable"`
-		MaxConn        int    `toml:"maxconn" default:"20" comment:"DB Max connection"`
-		ConnectTimeout int    `toml:"connectTimeout" default:"10" comment:"Maximum wait for connection, in seconds"`
-		Timeout        int    `toml:"timeout" default:"3000" comment:"Statement timeout value in milliseconds"`
-	} `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
-	Cache struct {
+	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
+	Cache    struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`
@@ -150,8 +142,10 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
-	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
-	Tracing   tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
+	Providers   []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+	Tracing     tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
+	DefaultOS   string                  `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
+	DefaultArch string                  `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
@@ -287,6 +281,18 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	if len(aConfig.Secrets.Key) != 32 {
 		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
 	}
+
+	if aConfig.DefaultArch == "" {
+		log.Warning(`You should add a default architecture in your configuration (example: defaultArch: "amd64"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this architecture`)
+	}
+	if aConfig.DefaultOS == "" {
+		log.Warning(`You should add a default operating system in your configuration (example: defaultOS: "linux"). It means if there is no model and os/arch requirement on your job then spawn on a worker based on this OS`)
+	}
+
+	if (aConfig.DefaultOS == "" && aConfig.DefaultArch != "") || (aConfig.DefaultOS != "" && aConfig.DefaultArch == "") {
+		return fmt.Errorf("You can't specify just defaultArch without defaultOS in your configuration and vice versa")
+	}
+
 	return nil
 }
 
@@ -414,6 +420,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.TLS,
 		a.Config.SMTP.Disable)
 
+	if err := warning.Init(); err != nil {
+		return fmt.Errorf("Unable to init warning package: %v", err)
+	}
+
 	// Initialize feature packages
 	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.ApiURL)
 	if a.Config.Features.Izanami.ApiURL != "" {
@@ -464,6 +474,7 @@ func (a *API) Serve(ctx context.Context) error {
 	var errDB error
 	a.DBConnectionFactory, errDB = database.Init(
 		a.Config.Database.User,
+		a.Config.Database.Role,
 		a.Config.Database.Password,
 		a.Config.Database.Name,
 		a.Config.Database.Host,
@@ -515,9 +526,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
-	//Init events package
-	event.Cache = a.Cache
-
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
 
@@ -565,7 +573,7 @@ func (a *API) Serve(ctx context.Context) error {
 		Topic:           a.Config.Events.Kafka.Topic,
 		MaxMessageByte:  a.Config.Events.Kafka.MaxMessageBytes,
 	}
-	if err := event.Initialize(kafkaOptions); err != nil {
+	if err := event.Initialize(kafkaOptions, a.Cache); err != nil {
 		log.Error("error while initializing event system: %s", err)
 	} else {
 		go event.DequeueEvent(ctx)
@@ -575,28 +583,30 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("error while initializing workers routine: %s", err)
 	}
 
-	log.Info("Initializing internal routines...")
-	go queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	go hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap)
-	go auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
-	go metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
-	go repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
-	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	go services.KillDeadServices(ctx, services.NewRepository(a.mustDB, a.Cache))
-	go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
-	go migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
-	go migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
-
 	a.warnChan = make(chan sdk.Event)
 	event.Subscribe(a.warnChan)
-	go workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
-	go warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)
-	go a.serviceAPIHeartbeat(ctx)
+
+	log.Info("Initializing internal routines...")
+	sdk.GoRoutine("workflow.ComputeAudit", func() { workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine("warning.Start", func() { warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan) })
+	sdk.GoRoutine("queue.Pipelines", func() { queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine("pipeline.AWOLPipelineKiller", func() { pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
+	sdk.GoRoutine("hatchery.Heartbeat", func() { hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine("auditCleanerRoutine(ctx", func() { auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine("metrics.Initialize", func() { metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name) })
+	sdk.GoRoutine("repositoriesmanager.ReceiveEvents", func() { repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
+	sdk.GoRoutine("action.RequirementsCacheLoader", func() { action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache) })
+	sdk.GoRoutine("hookRecoverer(ctx", func() { hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
+	sdk.GoRoutine("services.KillDeadServices", func() { services.KillDeadServices(ctx, services.NewRepository(a.mustDB, a.Cache)) })
+	sdk.GoRoutine("poller.Initialize", func() { poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine("migrate.CleanOldWorkflow", func() { migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API) })
+	sdk.GoRoutine("migrate.KeyMigration", func() { migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true}) })
+	sdk.GoRoutine("broadcast.Initialize", func() { broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap) })
+	//sdk.GoRoutine("workflow.RestartAwolJobs", func() { workflow.RestartAwolJobs(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine("a.serviceAPIHeartbeat(ctx", func() { a.serviceAPIHeartbeat(ctx) })
 
 	//Temporary migration code
-	go migrate.HatcheryCmdMigration(a.Cache, a.DBConnectionFactory.GetDBMap)
+	go migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
 		go func() {
 			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
@@ -604,12 +614,25 @@ func (a *API) Serve(ctx context.Context) error {
 			}
 		}()
 	}
+
+	// TODO: to delete after migration
+	if os.Getenv("CDS_MIGRATE_GIT_CLONE") == "true" {
+		go func() {
+			if err := migrate.GitClonePrivateKey(a.mustDB, a.Cache); err != nil {
+				log.Error("Bootstrap Error: %v", err)
+			}
+		}()
+	}
+
 	if !a.Config.Schedulers.Disabled {
 		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
-	go workflow.Initialize(ctx, a.Cache, a.Config.URL.UI, a.DBConnectionFactory.GetDBMap)
+
+	workflow.Initialize(a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+	sdk.GoRoutine("PushInElasticSearch", func() { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
+	sdk.GoRoutine("Purge", func() { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),

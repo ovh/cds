@@ -1,12 +1,12 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeConditions} from '../../../../model/workflow.model';
-import {Project} from '../../../../model/project.model';
-import {WorkflowStore} from '../../../../service/workflow/workflow.store';
-import {VariableService} from '../../../../service/variable/variable.service';
-import {PermissionValue} from '../../../../model/permission.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {first, finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
+import {PermissionValue} from '../../../../model/permission.model';
+import {Project} from '../../../../model/project.model';
+import {Workflow, WorkflowNode, WorkflowNodeConditions} from '../../../../model/workflow.model';
+import {VariableService} from '../../../../service/variable/variable.service';
+import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 
 @Component({
     selector: 'app-workflow-node-conditions',

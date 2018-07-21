@@ -40,6 +40,26 @@ Parse given file to extract Unit Test results.`
 		return err
 	}
 
+	// ----------------------------------- Coverage ---------------------------
+	cover := sdk.NewAction(sdk.CoverageAction)
+	cover.Type = sdk.BuiltinAction
+	cover.Description = `CDS Builtin Action.
+Parse given file to extract coverage results.`
+	cover.Parameter(sdk.Parameter{
+		Name:        "format",
+		Description: `Coverage report format.`,
+		Type:        sdk.ListParameter,
+		Value:       "lcov;cobertura",
+	})
+	cover.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: `Path of the coverage report file.`,
+		Type:        sdk.StringParameter,
+	})
+	if err := checkBuiltinAction(db, cover); err != nil {
+		return err
+	}
+
 	// ----------------------------------- Git clone    -----------------------
 	gitclone := sdk.NewAction(sdk.GitCloneAction)
 	gitclone.Type = sdk.BuiltinAction
@@ -55,11 +75,11 @@ If your application is linked to a repository, you can use {{.git.url}} (clone o
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:  "privateKey",
-		Value: "{{.cds.app.key}}",
+		Value: "",
 		Description: `Set the private key to be able to git clone from ssh.
-You can create an application variable named 'key' of type 'key' and use it as {{.cds.app.key}} in this action.
+You can create an application key named 'app-key' and use it in this action.
 The public key have to be granted on your repository`,
-		Type: sdk.StringParameter,
+		Type: sdk.KeySSHParameter,
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "user",

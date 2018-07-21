@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
@@ -11,12 +12,16 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //Import is able to create a new workflow and all its components
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message, dryRun bool) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message, dryRun bool) error {
+	ctx, end := tracing.Span(ctx, "workflow.Import")
+	defer end()
+
 	w.ProjectKey = proj.Key
 	w.ProjectID = proj.ID
 
@@ -37,7 +42,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		if _, has := n.Application(); !has {
 			return
 		}
-		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u, application.LoadOptions.WithClearDeploymentStrategies)
+		app, err := application.LoadByName(db, store, proj.Key, n.Context.Application.Name, u, application.LoadOptions.WithClearDeploymentStrategies, application.LoadOptions.WithVariables)
 		if err != nil {
 			log.Warning("workflow.Import> %s > Application %s not found: %v", w.Name, n.Context.Application.Name, err)
 			mError.Append(fmt.Errorf("application %s/%s not found", proj.Key, n.Context.Application.Name))
@@ -81,7 +86,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 	}
 	w.Visit(hookLoad)
 
-	var projectPlatfoformLoad = func(n *sdk.WorkflowNode) {
+	var projectPlatformLoad = func(n *sdk.WorkflowNode) {
 		if _, has := n.ProjectPlatform(); !has {
 			return
 		}
@@ -93,7 +98,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		}
 		n.Context.ProjectPlatform = &ppf
 	}
-	w.Visit(projectPlatfoformLoad)
+	w.Visit(projectPlatformLoad)
 
 	if !mError.IsEmpty() {
 		return sdk.NewError(sdk.ErrWrongRequest, mError)
@@ -106,7 +111,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 
 	doUpdate, errE := Exists(db, proj.Key, w.Name)
 	if errE != nil {
-		return sdk.WrapError(errE, "Import> Cannot check if workflow exist")
+		return sdk.WrapError(errE, "Import> Cannot check if workflow exists")
 	}
 
 	if !doUpdate {
@@ -129,7 +134,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Wo
 		return sdk.NewError(sdk.ErrConflict, fmt.Errorf("Workflow exists"))
 	}
 
-	oldW, errO := Load(db, store, proj, w.Name, u, LoadOptions{})
+	oldW, errO := Load(ctx, db, store, proj, w.Name, u, LoadOptions{})
 	if errO != nil {
 		return sdk.WrapError(errO, "Import> Unable to load old workflow")
 	}

@@ -49,22 +49,22 @@ var (
 
 	// OSArchRequirementValues comes from go tool dist list
 	OSArchRequirementValues = RequirementList{
-		{"linux/amd64", OSArchRequirement, "linux/amd64"},
-		{"linux/386", OSArchRequirement, "linux/386"},
+		{Name: "linux/amd64", Type: OSArchRequirement, Value: "linux/amd64"},
+		{Name: "linux/386", Type: OSArchRequirement, Value: "linux/386"},
 		//{"android/386", OSArchRequirement, "android/386"},
 		//{"android/amd64", OSArchRequirement, "android/amd64"},
 		//{"android/arm", OSArchRequirement, "android/arm"},
 		//{"android/arm64", OSArchRequirement, "android/arm64"},
 		//{"darwin/386", OSArchRequirement, "darwin/386"},
-		{"darwin/amd64", OSArchRequirement, "darwin/amd64"},
+		{Name: "darwin/amd64", Type: OSArchRequirement, Value: "darwin/amd64"},
 		//{"darwin/arm", OSArchRequirement, "darwin/arm"},
 		//{"darwin/arm64", OSArchRequirement, "darwin/arm64"},
 		//{"dragonfly/amd64", OSArchRequirement, "dragonfly/amd64"},
-		{"freebsd/386", OSArchRequirement, "freebsd/386"},
-		{"freebsd/amd64", OSArchRequirement, "freebsd/amd64"},
+		{Name: "freebsd/386", Type: OSArchRequirement, Value: "freebsd/386"},
+		{Name: "freebsd/amd64", Type: OSArchRequirement, Value: "freebsd/amd64"},
 		//{"freebsd/arm", OSArchRequirement, "freebsd/arm"},
 		//{"linux/arm", OSArchRequirement, "linux/arm"},
-		{"linux/arm64", OSArchRequirement, "linux/arm64"},
+		{Name: "linux/arm64", Type: OSArchRequirement, Value: "linux/arm64"},
 		//{"linux/mips", OSArchRequirement, "linux/mips"},
 		//{"linux/mips64", OSArchRequirement, "linux/mips64"},
 		//{"linux/mips64le", OSArchRequirement, "linux/mips64le"},
@@ -75,18 +75,18 @@ var (
 		//{"nacl/386", OSArchRequirement, "nacl/386"},
 		//{"nacl/amd64p32", OSArchRequirement, "nacl/amd64p32"},
 		//{"nacl/arm", OSArchRequirement, "nacl/arm"},
-		{"netbsd/386", OSArchRequirement, "netbsd/386"},
-		{"netbsd/amd64", OSArchRequirement, "netbsd/amd64"},
+		{Name: "netbsd/386", Type: OSArchRequirement, Value: "netbsd/386"},
+		{Name: "netbsd/amd64", Type: OSArchRequirement, Value: "netbsd/amd64"},
 		//{"netbsd/arm", OSArchRequirement, "netbsd/arm"},
-		{"openbsd/386", OSArchRequirement, "openbsd/386"},
-		{"openbsd/amd64", OSArchRequirement, "openbsd/amd64"},
+		{Name: "openbsd/386", Type: OSArchRequirement, Value: "openbsd/386"},
+		{Name: "openbsd/amd64", Type: OSArchRequirement, Value: "openbsd/amd64"},
 		//{"openbsd/arm", OSArchRequirement, "openbsd/arm"},
 		//{"plan9/386", OSArchRequirement, "plan9/386"},
 		//{"plan9/amd64", OSArchRequirement, "plan9/amd64"},
 		//{"plan9/arm", OSArchRequirement, "plan9/arm"},
 		//{"solaris/amd64", OSArchRequirement, "solaris/amd64"},
-		{"windows/386", OSArchRequirement, "windows/386"},
-		{"windows/amd64", OSArchRequirement, "windows/amd64"},
+		{Name: "windows/386", Type: OSArchRequirement, Value: "windows/386"},
+		{Name: "windows/amd64", Type: OSArchRequirement, Value: "windows/amd64"},
 	}
 )
 
@@ -95,6 +95,7 @@ var (
 // - a network access "telnet google.com 443"
 //easyjson:json
 type Requirement struct {
+	ID    int64  `json:"id"`
 	Name  string `json:"name"`
 	Type  string `json:"type" yaml:"-"`
 	Value string `json:"value" yaml:"-"`

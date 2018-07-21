@@ -1,14 +1,14 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
-import {WorkflowNodeRun, WorkflowRunRequest} from '../../../../../model/workflow.run.model';
-import {Project} from '../../../../../model/project.model';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
-import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {TranslateService} from '@ngx-translate/core';
+import {finalize, first} from 'rxjs/operators';
+import {PipelineStatus} from '../../../../../model/pipeline.model';
+import {Project} from '../../../../../model/project.model';
+import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowRunRequest} from '../../../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
-import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-run-summary',
@@ -36,12 +36,6 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
 
     ngOnInit(): void {
         this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflow);
-    }
-
-    getName(): string {
-        if (this.nodeRun && this.node) {
-            return this.node.pipeline.name + ' ' + this.nodeRun.num + '.' + this.nodeRun.subnumber;
-        }
     }
 
     getAuthor(): string {

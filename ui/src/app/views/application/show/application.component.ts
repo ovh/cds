@@ -1,27 +1,27 @@
 import {Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import {Subscription} from 'rxjs';
+import {finalize} from 'rxjs/operators';
+import {environment} from '../../../../environments/environment';
 import {Application, ApplicationFilter} from '../../../model/application.model';
-import {ApplicationStore} from '../../../service/application/application.store';
-import {ProjectStore} from '../../../service/project/project.store';
+import {Environment} from '../../../model/environment.model';
+import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {User} from '../../../model/user.model';
-import {Pipeline} from '../../../model/pipeline.model';
 import {Workflow} from '../../../model/workflow.model';
-import {Environment} from '../../../model/environment.model';
-import {environment} from '../../../../environments/environment';
+import {ApplicationStore} from '../../../service/application/application.store';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {ApplicationWorkflowComponent} from './workflow/application.workflow.component';
-import {VariableEvent} from '../../../shared/variable/variable.event.model';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {Subscription} from 'rxjs';
-import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {CDSWorker} from '../../../shared/worker/worker';
-import {NotificationEvent} from './notifications/notification.event';
-import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
+import {ProjectStore} from '../../../service/project/project.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {finalize} from 'rxjs/operators';
+import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
+import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {ToastService} from '../../../shared/toast/ToastService';
+import {VariableEvent} from '../../../shared/variable/variable.event.model';
+import {CDSWebWorker} from '../../../shared/worker/web.worker';
+import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
+import {NotificationEvent} from './notifications/notification.event';
+import {ApplicationWorkflowComponent} from './workflow/application.workflow.component';
 
 @Component({
     selector: 'app-application-show',
@@ -46,7 +46,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     applicationSubscription: Subscription;
     projectSubscription: Subscription;
     workerSubscription: Subscription;
-    worker: CDSWorker;
+    worker: CDSWebWorker;
 
     // Selected tab
     selectedTab = 'workflow';
@@ -151,8 +151,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                                 if (this.workflowComponentList && this.workflowComponentList.length > 0) {
                                     this.workflowComponentList.first.switchApplication(this.application);
                                 }
-                            } else if (updatedApplication && updatedApplication.externalChange) {
-                                this._toast.info('', this._translate.instant('warning_application'));
                             }
                         }
                     }, () => {
@@ -212,7 +210,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 'version': this.appFilter.version
             };
 
-            this.worker = new CDSWorker('assets/worker/web/workflow.js?appName=' + this.application.name);
+            this.worker = new CDSWebWorker('assets/worker/web/workflow.js?appName=' + this.application.name);
             this.workerSubscription = this.worker.response().subscribe(msg => {
                 if (this.application.workflows && this.workflowComponentList
                     && this.workflowComponentList.length > 0 && msg && msg !== '') {

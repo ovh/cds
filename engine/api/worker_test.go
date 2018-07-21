@@ -20,7 +20,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, err := worker.LoadWorkers(api.mustDB())
+	workers, err := worker.LoadWorkers(api.mustDB(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 
 	assert.Equal(t, 204, w.Code)
 
-	workers, err = worker.LoadWorkers(api.mustDB())
+	workers, err = worker.LoadWorkers(api.mustDB(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +115,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, errlw := worker.LoadWorkers(api.mustDB())
+	workers, errlw := worker.LoadWorkers(api.mustDB(), "")
 	if errlw != nil {
 		t.Fatal(errlw)
 	}
@@ -197,7 +197,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	assert.Equal(t, 204, w.Code)
 
-	workers, err = worker.LoadWorkers(api.mustDB())
+	workers, err = worker.LoadWorkers(api.mustDB(), "")
 	if err != nil {
 		t.Fatal(err)
 	}

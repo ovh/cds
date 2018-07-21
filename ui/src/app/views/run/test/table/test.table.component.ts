@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
+import {TestCase, TestSuite} from '../../../../model/pipeline.model';
 import {Table} from '../../../../shared/table/table';
-import {TestSuite, TestCase} from '../../../../model/pipeline.model';
 
 declare var ansi_up: any;
 

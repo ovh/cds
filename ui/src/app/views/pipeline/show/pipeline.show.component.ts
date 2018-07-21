@@ -1,23 +1,23 @@
-import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Params, Router} from '@angular/router';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {PipelineCoreService} from '../../../service/pipeline/pipeline.core.service';
-import {User} from '../../../model/user.model';
-import {Workflow} from '../../../model/workflow.model';
+import {TranslateService} from '@ngx-translate/core';
+import {Subscription} from 'rxjs';
+import {finalize, first} from 'rxjs/operators';
+import {Application} from '../../../model/application.model';
 import {Environment} from '../../../model/environment.model';
+import {AllKeys} from '../../../model/keys.model';
 import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
-import {Subscription} from 'rxjs';
-import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
-import {Application} from '../../../model/application.model';
-import {finalize, first} from 'rxjs/operators';
-import {AllKeys} from '../../../model/keys.model';
+import {User} from '../../../model/user.model';
+import {Workflow} from '../../../model/workflow.model';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {KeyService} from '../../../service/keys/keys.service';
+import {PipelineCoreService} from '../../../service/pipeline/pipeline.core.service';
+import {PipelineStore} from '../../../service/pipeline/pipeline.store';
+import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
+import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
+import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -146,8 +146,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                         this.workflows = pipelineUpdated.usage.workflows || [];
                         this.environments = pipelineUpdated.usage.environments || [];
                         this.usageCount = this.applications.length + this.environments.length + this.workflows.length;
-                    } else if (pipelineUpdated && pipelineUpdated.externalChange) {
-                        this._toast.info('', this._translate.instant('warning_pipeline'));
                     }
                 }
             }, () => {

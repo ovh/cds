@@ -1,29 +1,31 @@
 import {Component, Input, ViewChild} from '@angular/core';
+import {Router} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import {cloneDeep} from 'lodash';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {Subscription} from 'rxjs';
 import {Project} from '../../../../../model/project.model';
 import {
     Workflow,
     WorkflowNode,
-    WorkflowNodeTrigger,
     WorkflowNodeHook,
     WorkflowNodeJoin,
+    WorkflowNodeTrigger,
     WorkflowPipelineNameImpact
 } from '../../../../../model/workflow.model';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {WorkflowTriggerComponent} from '../../../../../shared/workflow/trigger/workflow.trigger.component';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/node/delete/workflow.node.delete.component';
-import {WorkflowNodeContextComponent} from '../../../../../shared/workflow/node/context/workflow.node.context.component';
 import {PipelineStore} from '../../../../../service/pipeline/pipeline.store';
-import {TranslateService} from '@ngx-translate/core';
+import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
+import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
+import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../../shared/toast/ToastService';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/node/conditions/node.conditions.component';
+import {WorkflowNodeContextComponent} from '../../../../../shared/workflow/node/context/workflow.node.context.component';
+import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/node/delete/workflow.node.delete.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
-import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/node/conditions/node.conditions.component';
-import {Subscription} from 'rxjs';
-import {cloneDeep} from 'lodash';
+import {WorkflowTriggerComponent} from '../../../../../shared/workflow/trigger/workflow.trigger.component';
 
 @Component({
     selector: 'app-workflow-sidebar-edit-node',
@@ -36,16 +38,9 @@ export class WorkflowSidebarEditNodeComponent {
     // Project that contains the workflow
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input('node')
-    set node(data: WorkflowNode) {
-        this._node = data;
-        if (!this.displayInputName && data) {
-            this.previousNodeName = data.name
-        }
-    }
-    get node() { return this._node; }
-    // Flag indicate if sidebar is open
-    @Input() open: boolean;
+
+    nodeSub: Subscription;
+
     // Child component
     @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
@@ -66,7 +61,7 @@ export class WorkflowSidebarEditNodeComponent {
     newParentNode: WorkflowNode;
     modalParentNode: ActiveModal<boolean, boolean, void>;
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
-    _node: WorkflowNode;
+    node: WorkflowNode;
     previousNodeName: string;
     pipelineSubscription: Subscription;
     displayInputName = false;
@@ -75,8 +70,16 @@ export class WorkflowSidebarEditNodeComponent {
 
     constructor(private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
                 private _pipelineStore: PipelineStore, private _modalService: SuiModalService,
-                private _workflowCoreService: WorkflowCoreService) {
-
+                private _router: Router,
+                private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {
+        this.nodeSub = this._workflowEventStore.selectedNode().subscribe(n => {
+            if (n) {
+                if (!this.displayInputName) {
+                    this.previousNodeName = n.name
+                }
+            }
+            this.node = n;
+        });
     }
 
     openAddHookModal(): void {
@@ -249,15 +252,17 @@ export class WorkflowSidebarEditNodeComponent {
         this._workflowStore.deleteWorkflow(this.project.key, w).subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_deleted'));
             modal.approve(true);
+            this._workflowEventStore.unselectAll();
+            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows'}});
         });
     }
 
     updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
-
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
             this.loading = false;
             this._toast.success('', this._translate.instant('workflow_updated'));
+            this._workflowEventStore.unselectAll();
             if (modal) {
                 modal.approve(null);
             }

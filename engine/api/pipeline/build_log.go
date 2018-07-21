@@ -55,10 +55,9 @@ func LoadLogs(db gorp.SqlExecutor, pipelineJobID int64) ([]sdk.Log, error) {
 	if _, err := db.Select(&logGorp, query, pipelineJobID); err != nil {
 		return nil, err
 	}
-	var logs []sdk.Log
-	for _, l := range logGorp {
-		newLog := sdk.Log(l)
-		logs = append(logs, newLog)
+	logs := make([]sdk.Log, len(logGorp))
+	for i, l := range logGorp {
+		logs[i] = sdk.Log(l)
 	}
 	return logs, nil
 }

@@ -1,11 +1,11 @@
 import {Component, Input} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import {finalize, first} from 'rxjs/operators';
-import {PlatformService} from '../../../../../service/platform/platform.service';
 import {PlatformModel, ProjectPlatform} from '../../../../../model/platform.model';
 import {Project} from '../../../../../model/project.model';
+import {PlatformService} from '../../../../../service/platform/platform.service';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ToastService} from '../../../../../shared/toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
 
 @Component({
     selector: 'app-project-platform-form',
