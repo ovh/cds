@@ -491,7 +491,7 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 				var hType string
 				switch h.Model {
 				case sdk.KafkaHookModelName:
-					if k == sdk.KafkaHookModelPlatform {
+					if k == sdk.HookModelPlatform {
 						hType = sdk.HookConfigTypePlatform
 					} else {
 						hType = sdk.HookConfigTypeString
