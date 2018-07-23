@@ -79,14 +79,14 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		if err != nil {
 			return "", err
 		}
-		if nl, err := getContainerNetworks(h.dockerClient, hn); err != nil {
+		nl, err := getContainerNetworks(h.dockerClient, hn)
+		if err != nil {
 			return "", err
-		} else {
-			if len(nl) == 0 {
-				return "", sdk.ErrNoVariable
-			}
-			network = nl[0]
 		}
+		if len(nl) == 0 {
+			return "", sdk.ErrNoVariable
+		}
+		network = nl[0]
 	}
 	if networkAlias == "" {
 		networkAlias = name
@@ -621,14 +621,14 @@ func (h *HatcherySwarm) NeedRegistration(m *sdk.Model) bool {
 	return false
 }
 
-func getContainerNetworks(client *docker.Client, containerId string) ([]string, error) {
+func getContainerNetworks(client *docker.Client, containerID string) ([]string, error) {
 	var cj types.ContainerJSON
 	var err error
-	if cj, err = client.ContainerInspect(context.Background(), containerId); err != nil {
+	if cj, err = client.ContainerInspect(context.Background(), containerID); err != nil {
 		return nil, sdk.WrapError(err, "Unable to fetch container info")
 	}
 	nets := make([]string, 0, 4)
-	for name, _ := range cj.NetworkSettings.Networks {
+	for name := range cj.NetworkSettings.Networks {
 		nets = append(nets, name)
 	}
 	return nets, nil
