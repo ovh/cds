@@ -370,7 +370,6 @@ export class Workflow {
     }
 
     static getPipeline(workflow: Workflow, node: WorkflowNode): Pipeline {
-        console.log(workflow);
         return workflow.pipelines[node.pipeline_id]
     }
 
