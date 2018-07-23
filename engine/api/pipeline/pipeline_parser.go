@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type pipeliner interface {
@@ -71,6 +72,12 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	close(msgChan)
 	done.Wait()
+
+	if globalError == nil {
+		if err := CreateAudit(db, pip, AuditUpdatePipeline, u); err != nil {
+			log.Error("%v", sdk.WrapError(err, "ParseAndImport> Cannot create audit"))
+		}
+	}
 
 	return pip, msgList, globalError
 }

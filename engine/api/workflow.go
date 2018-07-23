@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -17,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -101,6 +104,69 @@ func loadWorkflowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error)
 	usage.Applications = apps
 
 	return usage, nil
+}
+
+// postWorkflowRollbackHandler rollback to a specific audit id
+func (api *API) postWorkflowRollbackHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		auditID, errConv := strconv.ParseInt(vars["auditID"], 10, 64)
+		if errConv != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowRollbackHandler> cannot convert auditID to int")
+		}
+		db := api.mustDB()
+		u := getUser(ctx)
+
+		proj, errP := project.Load(db, api.Cache, key, u,
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithApplications,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		)
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowRollbackHandler> cannot load project %s", key)
+		}
+
+		wf, errW := workflow.Load(ctx, db, api.Cache, proj, workflowName, u, workflow.LoadOptions{WithoutNode: true})
+		if errW != nil {
+			return sdk.WrapError(errW, "postWorkflowRollbackHandler> cannot load workflow %s/%s", key, workflowName)
+		}
+
+		audit, errA := workflow.LoadAudit(db, auditID)
+		if errA != nil {
+			return sdk.WrapError(errA, "postWorkflowRollbackHandler> cannot load workflow audit %s/%s", key, workflowName)
+		}
+
+		var exportWf exportentities.Workflow
+		if err := yaml.Unmarshal([]byte(audit.DataBefore), &exportWf); err != nil {
+			return sdk.WrapError(err, "postWorkflowRollbackHandler> Cannot unmarshall data before")
+		}
+
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "postWorkflowRollbackHandler> Cannot begin transaction")
+		}
+		defer func() {
+			_ = tx.Rollback()
+		}()
+
+		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, proj, &exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowRollbackHandler> cannot parse and import previous workflow")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postWorkflowRollbackHandler> cannot commit transaction")
+		}
+
+		event.PublishWorkflowUpdate(key, *wf, *newWf, getUser(ctx))
+
+		return WriteJSON(w, *newWf, http.StatusOK)
+	}
 }
 
 // postWorkflowHandler creates a new workflow

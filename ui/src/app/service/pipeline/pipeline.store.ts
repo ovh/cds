@@ -104,23 +104,47 @@ export class PipelineStore {
      */
     importPipeline(key: string, pipName: string, pipelineCode: string): Observable<Array<string>> {
         return this._pipelineService.importPipeline(key, pipName, pipelineCode)
-        .pipe(
-            mergeMap(() => {
-              if (pipName) {
-                return this._pipelineService.getPipeline(key, pipName);
-              }
-              return observableOf(null);
-            }),
-            map((pip) => {
-                if (pip) {
-                  pip.forceRefresh = true;
-                  let pipKey = key + '-' + pip.name;
-                  let store = this._pipeline.getValue();
-                  this._pipeline.next(store.set(pipKey, pip));
-                }
-                return pip;
-            })
-        );
+            .pipe(
+                mergeMap(() => {
+                  if (pipName) {
+                    return this._pipelineService.getPipeline(key, pipName);
+                  }
+                  return observableOf(null);
+                }),
+                map((pip) => {
+                    if (pip) {
+                      pip.forceRefresh = true;
+                      let pipKey = key + '-' + pip.name;
+                      let store = this._pipeline.getValue();
+                      this._pipeline.next(store.set(pipKey, pip));
+                    }
+                    return pip;
+                })
+            );
+    }
+
+    /**
+     * Rollback a pipeline
+     * @param key Project unique key
+     * @param pipName pipeline name to rollback
+     * @param auditId audit id to rollback
+     */
+    rollbackPipeline(key: string, pipName: string, auditId: number): Observable<Pipeline> {
+        return this._pipelineService.rollbackPipeline(key, pipName, auditId)
+            .pipe(
+                map((pip) => {
+                    if (pip) {
+                      pip.forceRefresh = true;
+                      let pipKey = key + '-' + pip.name;
+                      let store = this._pipeline.getValue();
+                      let oldPip = store.get(pipKey);
+                      oldPip.stages = pip.stages;
+
+                      this._pipeline.next(store.set(pipKey, oldPip));
+                    }
+                    return pip;
+                })
+            );
     }
 
     /**

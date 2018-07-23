@@ -66,6 +66,16 @@ export class PipelineService {
     }
 
     /**
+     * Rollback a pipeline
+     * @param key Project unique key
+     * @param pipName pipeline name to rollback
+     * @param auditId audit id to rollback
+     */
+    rollbackPipeline(key: string, pipName: string, auditId: number): Observable<Pipeline> {
+        return this._http.post<Pipeline>(`/project/${key}/pipeline/${pipName}/rollback/${auditId}`, {});
+    }
+
+    /**
      * Delete a pipeline
      * @param key Project unique key
      * @param pipName Pipeline name to delete
