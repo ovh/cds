@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
@@ -58,15 +57,12 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 		},
 	}))
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
-		return db
-	}, api.Cache)
 	mockService := &sdk.Service{Name: "Test_postImportAsCodeHandler", Type: services.TypeRepositories}
-	repositoryService.Delete(mockService)
-	test.NoError(t, repositoryService.Insert(mockService))
+	_ = services.Delete(api.mustDB(), mockService)
+	test.NoError(t, services.Insert(api.mustDB(), mockService))
 
 	mockVCSservice := &sdk.Service{Name: "Test_VCSService", Type: services.TypeVCS}
-	test.NoError(t, repositoryService.Insert(mockVCSservice))
+	test.NoError(t, services.Insert(api.mustDB(), mockVCSservice))
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -167,12 +163,9 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(db)
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
-		return db
-	}, api.Cache)
 	mockService := &sdk.Service{Name: "Test_getImportAsCodeHandler", Type: services.TypeRepositories}
-	repositoryService.Delete(mockService)
-	test.NoError(t, repositoryService.Insert(mockService))
+	_ = services.Delete(db, mockService)
+	test.NoError(t, services.Insert(db, mockService))
 
 	UUID := sdk.UUID()
 
@@ -233,16 +226,13 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
-		return db
-	}, api.Cache)
 	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_Repo", Type: services.TypeRepositories}
-	repositoryService.Delete(mockService)
-	test.NoError(t, repositoryService.Insert(mockService))
+	_ = services.Delete(db, mockService)
+	test.NoError(t, services.Insert(db, mockService))
 
 	mockService = &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_VCS", Type: services.TypeHooks}
-	repositoryService.Delete(mockService)
-	test.NoError(t, repositoryService.Insert(mockService))
+	services.Delete(db, mockService)
+	test.NoError(t, services.Insert(db, mockService))
 
 	UUID := sdk.UUID()
 

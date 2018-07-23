@@ -45,13 +45,12 @@ func (api *API) deleteAdminMaintenanceHandler() Handler {
 
 func (api *API) getAdminServicesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		q := services.Querier(api.mustDB(), api.Cache)
 		srvs := []sdk.Service{}
 		var err error
 		if r.FormValue("type") != "" {
-			srvs, err = q.FindByType(r.FormValue("type"))
+			srvs, err = services.FindByType(api.mustDB(), r.FormValue("type"))
 		} else {
-			srvs, err = q.All()
+			srvs, err = services.All(api.mustDB())
 		}
 
 		if err != nil {
@@ -65,8 +64,7 @@ func (api *API) getAdminServiceHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		q := services.Querier(api.mustDB(), api.Cache)
-		srv, err := q.FindByName(name)
+		srv, err := services.FindByName(api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "getAdminServiceHandler")
 		}
@@ -92,8 +90,7 @@ func (api *API) putAdminServiceCallHandler() Handler {
 
 func selectDeleteAdminServiceCallHandler(api *API, method string) Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		q := services.Querier(api.mustDB(), api.Cache)
-		srvs, err := q.FindByType(r.FormValue("type"))
+		srvs, err := services.FindByType(api.mustDB(), r.FormValue("type"))
 		if err != nil {
 			return sdk.WrapError(err, "selectDeleteAdminServiceCallHandler")
 		}
@@ -117,8 +114,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) Handler {
 
 func putPostAdminServiceCallHandler(api *API, method string) Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		q := services.Querier(api.mustDB(), api.Cache)
-		srvs, err := q.FindByType(r.FormValue("type"))
+		srvs, err := services.FindByType(api.mustDB(), r.FormValue("type"))
 		if err != nil {
 			return sdk.WrapError(err, "putPostAdminServiceCallHandler")
 		}
