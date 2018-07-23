@@ -109,7 +109,7 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 		log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
 		return
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	srv := &sdk.Service{
 		Name:             event.GetCDSName(),

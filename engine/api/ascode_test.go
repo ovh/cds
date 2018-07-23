@@ -58,7 +58,7 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	}))
 
 	mockService := &sdk.Service{Name: "Test_postImportAsCodeHandler", Type: services.TypeRepositories}
-	services.Delete(api.mustDB(), mockService)
+	_ = services.Delete(api.mustDB(), mockService)
 	test.NoError(t, services.Insert(api.mustDB(), mockService))
 
 	mockVCSservice := &sdk.Service{Name: "Test_VCSService", Type: services.TypeVCS}
@@ -164,7 +164,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 
 	mockService := &sdk.Service{Name: "Test_getImportAsCodeHandler", Type: services.TypeRepositories}
-	services.Delete(db, mockService)
+	_ = services.Delete(db, mockService)
 	test.NoError(t, services.Insert(db, mockService))
 
 	UUID := sdk.UUID()
@@ -227,7 +227,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	_ = assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	mockService := &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_Repo", Type: services.TypeRepositories}
-	services.Delete(db, mockService)
+	_ = services.Delete(db, mockService)
 	test.NoError(t, services.Insert(db, mockService))
 
 	mockService = &sdk.Service{Name: "Test_postPerformImportAsCodeHandler_VCS", Type: services.TypeHooks}
