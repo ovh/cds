@@ -2046,6 +2046,16 @@
 return cds_status == &quot;Success&quot; and (git_branch == &quot;master&quot; or cds_manual == &quot;true&quot;)
 </code></pre>
 
+<p>Another use case is to enable auto-prod only if you are in a work week day (not saterday and sunday):</p>
+
+<pre><code class="language-lua">return os.date(&quot;%w&quot;) &lt; &quot;5&quot;
+</code></pre>
+
+<p>Or if you also want to block deployment on your production after 6pm:</p>
+
+<pre><code class="language-lua">return os.date(&quot;%w&quot;) &lt; &quot;5&quot; and os.date(&quot;%H&quot;) &lt; &quot;18&quot;
+</code></pre>
+
 <p><img src="https://ovh.github.io/cds/images/workflow_pipeline_run_conditions_advanced.png" alt="Pipeline basic run conditions" /></p>
 
 <p>You can also use regular expression in your Lua condition, for instance:</p>
