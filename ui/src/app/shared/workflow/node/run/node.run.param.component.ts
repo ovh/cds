@@ -47,7 +47,10 @@ export class WorkflowNodeRunParamComponent {
             this._nodeToRun = cloneDeep(data);
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
-                this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
+                if ((!this.nodeRun || !this.nodeRun.payload ) &&
+                    (!this.workflowRun || !this.workflowRun.nodes[this.workflowRun.workflow.root.id])) {
+                        this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
+                }
                 this.linkedToRepo = this._nodeToRun.context.application != null
                     && this._nodeToRun.context.application.repository_fullname != null;
             }
