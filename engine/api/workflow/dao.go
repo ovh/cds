@@ -427,7 +427,10 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 			return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
 		}
 		// Load joins
+		_, next = tracing.Span(ctx, "workflow.load.loadJoins")
 		joins, errJ := loadJoins(ctx, db, store, proj, &res, u, opts)
+		next()
+
 		if errJ != nil {
 			return nil, sdk.WrapError(errJ, "Load> Unable to load workflow joins")
 		}
