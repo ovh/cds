@@ -558,7 +558,7 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	maxNumberByPipeline := map[int64]int64{}
 
 	// browse node
-	if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, w.Root); err != nil {
+	if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, w.Root, w); err != nil {
 		return err
 	}
 
@@ -566,7 +566,7 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	for i := range w.Joins {
 		join := &w.Joins[i]
 		for j := range join.Triggers {
-			if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &join.Triggers[j].WorkflowDestNode); err != nil {
+			if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &join.Triggers[j].WorkflowDestNode, w); err != nil {
 				return err
 			}
 		}
@@ -590,15 +590,23 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	return nil
 }
 
-func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, n *sdk.WorkflowNode) error {
+func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, n *sdk.WorkflowNode, w *sdk.Workflow) error {
 	// Load pipeline to have name
-	if n.PipelineName == "" {
-		pip, errorP := pipeline.LoadPipelineByID(db, n.PipelineID, false)
+	pip, has := w.Pipelines[n.PipelineID]
+	if !has {
+		pip2, errorP := pipeline.LoadPipelineByID(db, n.PipelineID, false)
 		if errorP != nil {
 			return sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", n.PipelineID)
 		}
-		n.PipelineName = pip.Name
+		if w.Pipelines == nil {
+			w.Pipelines = map[int64]sdk.Pipeline{}
+		}
+		w.Pipelines[n.PipelineID] = *pip2
+		pip = *pip2
 	}
+	n.PipelineName = pip.Name
+
+	log.Info("saveNodeByPipeline> pipname: %s", n.PipelineName)
 
 	// Save node in pipeline node map
 	if _, ok := (*dict)[n.PipelineID]; !ok {
@@ -623,7 +631,7 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 	}
 
 	for k := range n.Triggers {
-		if err := saveNodeByPipeline(db, dict, mapMaxNumber, &n.Triggers[k].WorkflowDestNode); err != nil {
+		if err := saveNodeByPipeline(db, dict, mapMaxNumber, &n.Triggers[k].WorkflowDestNode, w); err != nil {
 			return err
 		}
 	}

@@ -39,7 +39,7 @@ func updateWorkflowTriggerJoinSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 }
 
 func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
-	log.Debug("insertNode> insert or update node %s %d (%s) on %s", n.Name, n.ID, n.Ref, n.PipelineID)
+	log.Debug("insertNode> insert or update node %s %d (%s) on %d", n.Name, n.ID, n.Ref, n.PipelineID)
 
 	if !nodeNamePattern.MatchString(n.Name) {
 		return sdk.WrapError(sdk.ErrInvalidNodeNamePattern, "insertNode> node has a wrong name %s", n.Name)
