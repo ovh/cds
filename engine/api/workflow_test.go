@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -16,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func Test_getWorkflowsHandler(t *testing.T) {
@@ -343,6 +346,137 @@ func Test_putWorkflowHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
+}
+
+func Test_postWorkflowRollbackHandler(t *testing.T) {
+	// Init database
+	api, db, router := newTestAPI(t)
+
+	// Init user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	// Init pipeline
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+		Type:      sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+
+	var wf = &sdk.Workflow{
+		Name:        "Name",
+		Description: "Description",
+		Root: &sdk.WorkflowNode{
+			PipelineID: pip.ID,
+		},
+	}
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	//Prepare request
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": "Name",
+	}
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+
+	// Insert application
+	app := sdk.Application{
+		Name:               "app1",
+		RepositoryFullname: "test/app1",
+		VCSServer:          "github",
+	}
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app, u))
+
+	var workflow1 = &sdk.Workflow{
+		ID:          wf.ID,
+		Name:        "Name",
+		Description: "Description 2",
+		Root: &sdk.WorkflowNode{
+			PipelineID: pip.ID,
+			Context: &sdk.WorkflowNodeContext{
+				ApplicationID: app.ID,
+				Application:   &app,
+			},
+		},
+	}
+
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &workflow1)
+	//Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow1))
+
+	assert.NotEqual(t, 0, workflow1.ID)
+	assert.Equal(t, "Description 2", workflow1.Description)
+
+	assert.NotNil(t, workflow1.Root.Context.Application)
+	assert.NotNil(t, workflow1.Root.Context.DefaultPayload)
+
+	payload, err := workflow1.Root.Context.DefaultPayloadToMap()
+	test.NoError(t, err)
+
+	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
+
+	eWf, err := exportentities.NewWorkflow(*wf, false)
+	test.NoError(t, err)
+	wfBts, err := yaml.Marshal(eWf)
+	test.NoError(t, err)
+	eWfUpdate, err := exportentities.NewWorkflow(*workflow1, false)
+	test.NoError(t, err)
+	wfUpdatedBts, err := yaml.Marshal(eWfUpdate)
+	test.NoError(t, err)
+
+	wfAudit := sdk.AuditWorklflow{
+		Created:     time.Now(),
+		DataBefore:  string(wfBts),
+		DataAfter:   string(wfUpdatedBts),
+		EventType:   "WorkflowUpdate",
+		DataType:    "yaml",
+		ProjectKey:  proj.Key,
+		WorkflowID:  wf.ID,
+		TriggeredBy: u.Username,
+	}
+	test.NoError(t, workflow.InsertAudit(api.mustDB(), wfAudit))
+
+	//Prepare request
+	vars = map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": "Name",
+		"auditID":          "1",
+	}
+	uri = router.GetRoute("POST", api.postWorkflowRollbackHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	//Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var wfRollback sdk.Workflow
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfRollback))
+
+	test.Equal(t, nil, wfRollback.Root.Context.Application)
 }
 
 func Test_deleteWorkflowHandler(t *testing.T) {

@@ -99,6 +99,16 @@ export class WorkflowService {
     }
 
     /**
+     * Rollback a workflow
+     * @param key Project unique key
+     * @param workflow WorkflowCode to import
+     * @param auditId audit id to rollback
+     */
+    rollbackWorkflow(key: string, workflowName: string, auditId: number): Observable<Workflow> {
+        return this._http.post<Workflow>(`/project/${key}/workflows/${workflowName}/rollback/${auditId}`, {});
+    }
+
+    /**
      * Delete workflow
      * @param key Project unique key
      * @param workflow Workflow to delete
