@@ -125,7 +125,7 @@ func (api *API) postWorkflowImportHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {
@@ -203,7 +203,7 @@ func (api *API) putWorkflowImportHandler() Handler {
 			_ = tx.Rollback()
 		}()
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {
@@ -267,7 +267,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
 		}
 
-		allMsg, wrkflw, err := workflow.Push(api.mustDB(), api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Cannot push workflow")
 		}

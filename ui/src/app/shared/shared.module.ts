@@ -19,6 +19,7 @@ import {ActionStepComponent} from './action/step/step.component';
 import {AuditListComponent} from './audit/list/audit.list.component';
 import {BreadcrumbComponent} from './breadcrumb/breadcrumb.component';
 import {BroadcastLevelService} from './broadcast/broadcast.level.service';
+import {ConfirmButtonComponent} from './button/confirm/confirm.button';
 import {DeleteButtonComponent} from './button/delete/delete.button';
 import {UploadButtonComponent} from './button/upload/upload.button.component';
 import {CommitListComponent} from './commit/commit.list.component';
@@ -102,6 +103,7 @@ import {ZoneComponent} from './zone/zone.component';
         CommitListComponent,
         CutPipe,
         DeleteButtonComponent,
+        ConfirmButtonComponent,
         UploadButtonComponent,
         ForMapPipe,
         GroupFormComponent,
@@ -186,6 +188,7 @@ import {ZoneComponent} from './zone/zone.component';
         ClipboardModule,
         CutPipe,
         DeleteButtonComponent,
+        ConfirmButtonComponent,
         UploadButtonComponent,
         DragulaModule,
         ForMapPipe,

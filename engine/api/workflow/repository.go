@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -35,7 +36,10 @@ type PushOption struct {
 }
 
 // CreateFromRepository a workflow from a repository
-func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
+func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
+	ctx, end := tracing.Span(ctx, "workflow.CreateFromRepository")
+	defer end()
+
 	ope, err := createOperationRequest(*w, opts)
 	if err != nil {
 		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to create operation request")
@@ -53,7 +57,7 @@ func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to post repository operation")
 	}
 
-	if err := pollRepositoryOperation(c, db, store, &ope); err != nil {
+	if err := pollRepositoryOperation(ctx, db, store, &ope); err != nil {
 		return nil, sdk.WrapError(err, "CreateFromRepository> Cannot analyse repository")
 	}
 
@@ -61,7 +65,7 @@ func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, 
 	if opts.Hook != nil {
 		uuid = opts.Hook.WorkflowNodeHookUUID
 	}
-	allMsg, errE := extractWorkflow(db, store, p, w, ope, u, decryptFunc, uuid)
+	allMsg, errE := extractWorkflow(ctx, db, store, p, w, ope, u, decryptFunc, uuid)
 	if errE != nil {
 		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to extract workflow")
 	}
@@ -69,7 +73,10 @@ func CreateFromRepository(c context.Context, db *gorp.DbMap, store cache.Store, 
 	return allMsg, nil
 }
 
-func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
+func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
+	ctx, end := tracing.Span(ctx, "workflow.extractWorkflow")
+	defer end()
+
 	// Read files
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
@@ -86,7 +93,7 @@ func extractWorkflow(db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.W
 		HookUUID:           hookUUID,
 	}
 
-	allMsg, workflowPushed, errP := Push(db, store, p, tr, opt, u, decryptFunc)
+	allMsg, workflowPushed, errP := Push(ctx, db, store, p, tr, opt, u, decryptFunc)
 	if errP != nil {
 		return nil, sdk.WrapError(errP, "extractWorkflow> Unable to get workflow from file")
 	}
@@ -205,8 +212,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 
 // PostRepositoryOperation creates a new repository operation
 func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation) error {
-	querier := services.Querier(db, cache)
-	srvs, err := querier.FindByType(services.TypeRepositories)
+	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "PostRepositoryOperation> Unable to found repositories service")
 	}
@@ -227,8 +233,7 @@ func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Pro
 
 // GetRepositoryOperation get repository operation status
 func GetRepositoryOperation(db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
-	querier := services.Querier(db, store)
-	srvs, err := querier.FindByType(services.TypeRepositories)
+	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "GetRepositoryOperation> Unable to found repositories service")
 	}

@@ -2,12 +2,11 @@ package workflow_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"testing"
-
-	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -33,12 +32,9 @@ func TestImport(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
-		return db
-	}, cache)
 	mockService := &sdk.Service{Name: "service_test", Type: "hooks"}
-	repositoryService.Delete(mockService)
-	test.NoError(t, repositoryService.Insert(mockService))
+	services.Delete(db, mockService)
+	test.NoError(t, services.Insert(db, mockService))
 
 	//Mock HTTPClient from services package
 	services.HTTPClient = &mockHTTPClient{}
@@ -417,7 +413,7 @@ func TestImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := workflow.Import(db, cache, proj, tt.args.w, u, tt.args.force, nil, false); err != nil {
+			if err := workflow.Import(context.TODO(), db, cache, proj, tt.args.w, u, tt.args.force, nil, false); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
 				} else {

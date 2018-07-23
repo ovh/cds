@@ -42,6 +42,9 @@ $(GO_GOVERALLS):
 $(GO_GO2XUNIT):
 	go get -u github.com/tebeka/go2xunit
 
+$(GO_COBERTURA):
+	go get -u github.com/t-yuki/gocover-cobertura
+
 default: build
 
 clean:
@@ -87,8 +90,9 @@ test: test-config clean
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 
-test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR)
+test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@$(GO_COV_MERGE) ./**/*.coverprofile > $(TARGET_DIR)/cover.out
+	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 ifneq ($(VERSION), snapshot)
 	echo "Pushing results to coveralls"

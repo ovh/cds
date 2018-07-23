@@ -2,7 +2,8 @@ package sdk
 
 // This is the buitin platform model
 const (
-	KafkaPlatformModel = "Kafka"
+	KafkaPlatformModel    = "Kafka"
+	RabbitMQPlatformModel = "RabbitMQ"
 )
 
 // Here are the default hooks
@@ -13,10 +14,12 @@ var (
 		&GitPollerModel,
 		&SchedulerModel,
 		&KafkaHookModel,
+		&RabbitMQHookModel,
 	}
 
 	BuiltinPlatformModels = []*PlatformModel{
 		&KafkaPlatform,
+		&RabbitMQPlatform,
 	}
 	// KafkaPlatform represent a kafka platform
 	KafkaPlatform = PlatformModel{
@@ -26,6 +29,26 @@ var (
 		Icon:       "",
 		DefaultConfig: PlatformConfig{
 			"broker url": PlatformConfigValue{
+				Type: PlatformConfigTypeString,
+			},
+			"username": PlatformConfigValue{
+				Type: PlatformConfigTypeString,
+			},
+			"password": PlatformConfigValue{
+				Type: PlatformConfigTypePassword,
+			},
+		},
+		Disabled: false,
+		Hook:     true,
+	}
+	// RabbitMQPlatform represent a kafka platform
+	RabbitMQPlatform = PlatformModel{
+		Name:       RabbitMQPlatformModel,
+		Author:     "CDS",
+		Identifier: "github.com/ovh/cds/platform/builtin/rabbitmq",
+		Icon:       "",
+		DefaultConfig: PlatformConfig{
+			"uri": PlatformConfigValue{
 				Type: PlatformConfigTypeString,
 			},
 			"username": PlatformConfigValue{

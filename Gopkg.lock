@@ -1144,6 +1144,12 @@
   version = "v1.0.2"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/streadway/amqp"
+  packages = ["."]
+  revision = "e5adc2ada8b8efff032bf61173a233d143e9318e"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "d77da356e56a7428ad25149ca77381849a6a5232"
@@ -1602,6 +1608,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c5b70ee92bb2234373c083981570d766d5542ba1ef59efafa2dfa3d7e5833465"
+  inputs-digest = "bea562e511da2feeaa59495ec4d2d6f7784a80ef48f35068ccd0bd2aae32b4c0"
   solver-name = "gps-cdcl"
   solver-version = 1

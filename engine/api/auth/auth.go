@@ -118,8 +118,7 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 	// Else load it from DB
 	if !store.Get(key, srv) {
 		var err error
-		repo := services.NewRepository(func() *gorp.DbMap { return db }, store)
-		srv, err = repo.FindByHash(hash)
+		srv, err = services.FindByHash(db, hash)
 		if err != nil {
 			return nil, fmt.Errorf("cannot load service: %s", err)
 		}

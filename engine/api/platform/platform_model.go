@@ -11,6 +11,7 @@ var (
 	// BuiltinModels list available platform models
 	BuiltinModels = []sdk.PlatformModel{
 		sdk.KafkaPlatform,
+		sdk.RabbitMQPlatform,
 	}
 )
 

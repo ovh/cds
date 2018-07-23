@@ -1,0 +1,9 @@
+<button class="ui {{color}} button {{class}}" [class.loading]="loading" [class.disabled]="loading || disabled" (click)="showConfirmation = true" *ngIf="!showConfirmation" [disabled]="disabled">
+    <i *ngIf="icon" class="{{icon}} icon"></i>
+    <span>{{title}}</span>
+</button>
+<div class="ui buttons {{class}}" *ngIf="showConfirmation">
+    <button class="ui grey button" [class.disabled]="loading" (click)="showConfirmation = false"><i class="ban icon"></i></button>
+    <div class="or"></div>
+    <button class="ui green button active" [class.disabled]="loading" (click)="confirmEvent()"><i class="check icon"></i></button>
+</div>

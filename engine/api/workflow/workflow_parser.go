@@ -1,11 +1,13 @@
 package workflow
 
 import (
+	"context"
 	"sync"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -49,7 +51,10 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, u *sdk.User, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, u *sdk.User, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+	ctx, end := tracing.Span(ctx, "workflow.ParseAndImport")
+	defer end()
+
 	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
 	//Parse workflow
@@ -78,7 +83,7 @@ func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, e
 		}
 	}(&msgList)
 
-	globalError := Import(db, store, proj, w, u, opts.Force, msgChan, opts.DryRun)
+	globalError := Import(ctx, db, store, proj, w, u, opts.Force, msgChan, opts.DryRun)
 	close(msgChan)
 	done.Wait()
 

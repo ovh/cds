@@ -15,8 +15,6 @@ import (
 
 // PushInElasticSearch pushes event to an elasticsearch
 func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Store) {
-	querier := services.Querier(db, store)
-
 	eventChan := make(chan sdk.Event, 10)
 	Subscribe(eventChan)
 
@@ -28,8 +26,7 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 				return
 			}
 		case e := <-eventChan:
-
-			esServices, errS := querier.FindByType(services.TypeElasticsearch)
+			esServices, errS := services.FindByType(db, services.TypeElasticsearch)
 			if errS != nil {
 				log.Error("PushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
@@ -55,8 +52,7 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 
 // GetEvent retrieves events from elasticsearch
 func GetEvents(db gorp.SqlExecutor, store cache.Store, filters sdk.EventFilter) ([]json.RawMessage, error) {
-	querier := services.Querier(db, store)
-	srvs, err := querier.FindByType(services.TypeElasticsearch)
+	srvs, err := services.FindByType(db, services.TypeElasticsearch)
 	if err != nil {
 		return nil, sdk.WrapError(err, "GetEvent> Unable to get elasticsearch service")
 	}

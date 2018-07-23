@@ -3,6 +3,7 @@ package workflow_test
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 	"testing"
@@ -114,13 +115,13 @@ func TestPull(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 	test.Equal(t, w.Metadata, w1.Metadata)
 	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
 	buff := new(bytes.Buffer)
-	test.NoError(t, workflow.Pull(db, cache, proj, w1.Name, exportentities.FormatYAML, false, project.EncryptWithBuiltinKey, u, buff))
+	test.NoError(t, workflow.Pull(context.TODO(), db, cache, proj, w1.Name, exportentities.FormatYAML, false, project.EncryptWithBuiltinKey, u, buff))
 
 	// Open the tar archive for reading.
 	r := bytes.NewReader(buff.Bytes())

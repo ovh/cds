@@ -224,4 +224,17 @@ export class WorkflowShowComponent {
             this.runWithParamComponent.show();
         }
     }
+
+    rollback(auditId: number): void {
+      this.loading = true;
+      this._workflowStore.rollbackWorkflow(this.project.key, this.detailedWorkflow.name, auditId)
+        .pipe(
+          finalize(() => this.loading = false),
+          first()
+        )
+        .subscribe((wf) => {
+          this._toast.success('', this._translate.instant('workflow_updated'));
+          this._router.navigate(['/project', this.project.key, 'workflow', wf.name]);
+        });
+    }
 }

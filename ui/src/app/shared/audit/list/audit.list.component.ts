@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {AuditWorkflow} from '../../../model/audit.model';
 import {Table} from '../../table/table';
 
@@ -10,6 +10,7 @@ import {Table} from '../../table/table';
 export class AuditListComponent extends Table {
 
     @Input() audits: Array<AuditWorkflow>;
+    @Output() rollback: EventEmitter<number> = new EventEmitter();
 
     codeMirrorConfig: any;
     selectedAudit: AuditWorkflow;

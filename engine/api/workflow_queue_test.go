@@ -98,7 +98,7 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	test.NoError(t, workflow.AddGroup(api.mustDB(), &w, proj.ProjectGroups[0]))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -812,12 +812,9 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	repositoryService := services.NewRepository(func() *gorp.DbMap {
-		return db
-	}, api.Cache)
 	mockVCSservice := &sdk.Service{Name: "TestInsertNewCodeCoverageReport", Type: services.TypeVCS}
-	assert.NoError(t, repositoryService.Delete(mockVCSservice))
-	test.NoError(t, repositoryService.Insert(mockVCSservice))
+	assert.NoError(t, services.Delete(db, mockVCSservice))
+	test.NoError(t, services.Insert(db, mockVCSservice))
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(

@@ -59,6 +59,23 @@ func LoadAudit(db gorp.SqlExecutor, key string, pipName string) ([]sdk.PipelineA
 	return audits, nil
 }
 
+// LoadAuditByID load audit for the given audit id
+func LoadAuditByID(db gorp.SqlExecutor, id int64) (sdk.PipelineAudit, error) {
+	var pipAudit sdk.PipelineAudit
+	query := `
+		SELECT pipeline_audit.*
+			FROM pipeline_audit
+			WHERE pipeline_audit.id = $1
+	`
+	var auditGorp PipelineAudit
+	if err := db.SelectOne(&auditGorp, query, id); err != nil {
+		return pipAudit, err
+	}
+	pipAudit = sdk.PipelineAudit(auditGorp)
+
+	return pipAudit, nil
+}
+
 // DeleteAudit delete audit related to given pipeline
 func DeleteAudit(db gorp.SqlExecutor, pipID int64) error {
 	_, err := db.Exec("DELETE FROM pipeline_audit WHERE pipeline_id = $1", pipID)

@@ -54,7 +54,7 @@ func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 	}
 
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
-	res, code, err := doRequest(srv, method, path, b, mods...)
+	res, code, err := doRequest(srv.HTTPURL, srv.Hash, method, path, b, mods...)
 	if err != nil {
 		return code, sdk.WrapError(err, "services.doJSONRequest> Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
@@ -90,7 +90,7 @@ func PostMultipart(srvs []sdk.Service, path string, filename string, fileContent
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, code, err := doRequest(srv, "POST", path, body.Bytes(), mods...)
+			res, code, err := doRequest(srv.HTTPURL, srv.Hash, "POST", path, body.Bytes(), mods...)
 			lastCode = code
 			lastErr = err
 
@@ -120,7 +120,7 @@ func DoRequest(srvs []sdk.Service, method, path string, args []byte, mods ...sdk
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			btes, code, err := doRequest(srv, method, path, args, mods...)
+			btes, code, err := doRequest(srv.HTTPURL, srv.Hash, method, path, args, mods...)
 			if err == nil {
 				return btes, code, nil
 			}
@@ -135,14 +135,14 @@ func DoRequest(srvs []sdk.Service, method, path string, args []byte, mods ...sdk
 }
 
 // doRequest performs an http request on service
-func doRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func doRequest(httpURL string, hash string, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,
 		}
 	}
 
-	callURL, err := url.ParseRequestURI(srv.HTTPURL + path)
+	callURL, err := url.ParseRequestURI(httpURL + path)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -167,8 +167,10 @@ func doRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 	}
 
 	// Authentify the request with the hash
-	basedHash := base64.StdEncoding.EncodeToString([]byte(srv.Hash))
-	req.Header.Set(sdk.AuthHeader, basedHash)
+	if hash != "" {
+		basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
+		req.Header.Set(sdk.AuthHeader, basedHash)
+	}
 
 	log.Debug("services.DoRequest> request %v", req.URL)
 

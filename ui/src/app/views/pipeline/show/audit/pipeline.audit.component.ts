@@ -1,14 +1,17 @@
 import {Component, Input, OnInit} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import {compare} from 'fast-json-patch'
 import {cloneDeep} from 'lodash';
-import {first} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 import {Action} from '../../../../model/action.model';
 import {Job} from '../../../../model/job.model';
 import {Pipeline, PipelineAudit, PipelineAuditDiff} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Stage} from '../../../../model/stage.model';
 import {PipelineAuditService} from '../../../../service/pipeline/pipeline.audit.service';
+import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {Table} from '../../../../shared/table/table';
+import {ToastService} from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-audit',
@@ -26,8 +29,14 @@ export class PipelineAuditComponent extends Table implements OnInit {
 
     indexSelected: number;
     codeMirrorConfig: any;
+    loading = false;
 
-    constructor(private _auditService: PipelineAuditService) {
+    constructor(
+        private _auditService: PipelineAuditService,
+        private _pipStore: PipelineStore,
+        private _toast: ToastService,
+        private _translate: TranslateService
+    ) {
         super();
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -283,5 +292,18 @@ export class PipelineAuditComponent extends Table implements OnInit {
             diff.type = 'json';
         }
         return diff;
+    }
+
+    rollback(auditId: number): void {
+        this.loading = true;
+        this._pipStore.rollbackPipeline(this.project.key, this.pipeline.name, auditId)
+            .pipe(
+                first(),
+                finalize(() => this.loading = false)
+            )
+            .subscribe((pip) => {
+                this.pipeline = pip;
+                this._toast.success('', this._translate.instant('pipeline_updated'));
+            });
     }
 }

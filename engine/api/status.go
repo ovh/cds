@@ -64,8 +64,7 @@ func (api *API) statusHandler() Handler {
 			status = http.StatusServiceUnavailable
 		}
 
-		q := services.Querier(api.mustDB(), api.Cache)
-		srvs, err := q.All()
+		srvs, err := services.All(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "statusHandler> error on q.All()")
 		}
