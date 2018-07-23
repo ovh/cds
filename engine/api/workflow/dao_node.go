@@ -91,6 +91,9 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		n.ID = dbwn.ID
 	}
 
+	if w.Pipelines == nil {
+		w.Pipelines = map[int64]sdk.Pipeline{}
+	}
 	pip, has := w.Pipelines[n.PipelineID]
 	//Load the pipeline if not found
 	if !has {
@@ -323,8 +326,11 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	wn.Hooks = hooks
 
 	//Load pipeline
-	pip, ok := w.Pipelines[wn.PipelineID]
-	if !ok {
+	if w.Pipelines == nil {
+		w.Pipelines = map[int64]sdk.Pipeline{}
+	}
+	pip, has := w.Pipelines[wn.PipelineID]
+	if !has {
 		_, next := tracing.Span(c, "pipeline.LoadPipelineByID",
 			tracing.Tag("pipeline_id", wn.PipelineID),
 		)
