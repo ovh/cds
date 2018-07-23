@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +19,8 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //HTTP Constants
@@ -155,6 +158,49 @@ type Log struct {
 	Done               *timestamp.Timestamp `json:"done"`
 	StepOrder          int                  `json:"stepOrder"`
 	Value              string               `json:"val"`
+}
+
+// GetExternalServices call worker to get external service configuration
+func GetExternalServices(j IJob, serviceType string) (sdk.ExternalService, error) {
+
+	if j == nil {
+		return sdk.ExternalService{}, nil
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/services", j.WorkerHTTPPort()), nil)
+	if err != nil {
+		e := fmt.Errorf("get service from worker /services: %s", err)
+		Trace.Println(e)
+		return sdk.ExternalService{}, e
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		e := fmt.Errorf("cannot get service from worker /services: %s", err)
+		Trace.Println(e)
+		return sdk.ExternalService{}, e
+	}
+
+	if resp.StatusCode >= 300 {
+		e := fmt.Errorf("cannot get services from worker /services: HTTP %d", resp.StatusCode)
+		Trace.Println(e)
+		return sdk.ExternalService{}, e
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		e := fmt.Errorf("cannot read body /services: %v", err)
+		Trace.Println(e)
+		return sdk.ExternalService{}, e
+	}
+
+	var serv sdk.ExternalService
+	if err := json.Unmarshal(b, &serv); err != nil {
+		e := fmt.Errorf("cannot unmarshal body /services: %v", err)
+		Trace.Println(e)
+		return serv, e
+	}
+	return serv, nil
 }
 
 //SendLog send logs to CDS engine for the current

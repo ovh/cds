@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -15,6 +16,20 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+func (api *API) getExternalServiceHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		typeService := vars["type"]
+
+		for _, s := range api.Config.Services {
+			if s.Type == typeService {
+				return WriteJSON(w, s, http.StatusOK)
+			}
+		}
+		return sdk.WrapError(sdk.ErrNotFound, "getExternalServiceHandler> Service %s not found", typeService)
+	}
+}
 
 func (api *API) postServiceRegisterHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

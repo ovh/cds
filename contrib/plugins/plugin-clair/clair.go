@@ -2,6 +2,7 @@ package plugin_clair
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/docker/distribution"
@@ -9,8 +10,9 @@ import (
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
-
 	"github.com/json-iterator/go"
+	"github.com/spf13/viper"
+
 	"github.com/ovh/cds/sdk/plugin"
 )
 
@@ -43,27 +45,42 @@ func (d ClairPlugin) Parameters() plugin.Parameters {
 
 // Run execute the action
 func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
+	// get clair configuration
+	_ = plugin.SendLog(a, "Retrieve clair configuration..")
+	serv, err := plugin.GetExternalServices(a, "clair")
+	if err != nil {
+		_ = plugin.SendLog(a, "Unable to get clair configuration: %s", err)
+		return plugin.Fail
+	}
+	viper.Set("clair.uri", serv.URLWithoutPort)
+	viper.Set("clair.port", strconv.Itoa(serv.Port))
+	viper.Set("clair.healthPort", strconv.Itoa(serv.HealthPort))
+	viper.Set("clair.report.path", ".")
+	viper.Set("clair.report.format", "json")
+	clair.Config()
+
 	dockerImage := a.Arguments().Get("image")
 
+	_ = plugin.SendLog(a, "Pushing image %s into clair", dockerImage)
 	image, manifest, err := pushImage(dockerImage)
 	if err != nil {
-		plugin.SendLog(a, "Unable to push image on Clair: %s", err)
+		_ = plugin.SendLog(a, "Unable to push image on Clair: %s", err)
 		return plugin.Fail
 	}
 
+	_ = plugin.SendLog(a, "Running analysis")
 	analysis := clair.Analyze(image, manifest)
 
 	img := strings.Replace(analysis.ImageName, "/", "-", -1)
 	if analysis.Tag != "" {
 		img += "-" + analysis.Tag
 	}
-
 	json, err := jsoniter.Marshal(analysis)
 	if err != nil {
-		plugin.SendLog(a, "Unable to push image on Clair: %s", err)
+		_ = plugin.SendLog(a, "Unable to push image on Clair: %s", err)
 		return plugin.Fail
 	}
-	plugin.SendLog(a, "Report: %s", string(json))
+	_ = plugin.SendLog(a, "Report: %s", string(json))
 	return plugin.Success
 }
 
