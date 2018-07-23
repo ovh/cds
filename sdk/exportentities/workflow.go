@@ -490,7 +490,7 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 			for k, v := range h.Config {
 				var hType string
 				switch h.Model {
-				case sdk.KafkaHookModelName:
+				case sdk.KafkaHookModelName, sdk.RabbitMQHookModelName:
 					if k == sdk.HookModelPlatform {
 						hType = sdk.HookConfigTypePlatform
 					} else {
