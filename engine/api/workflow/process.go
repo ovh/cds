@@ -78,7 +78,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	//Checks the root
 	if len(w.WorkflowNodeRuns) == 0 {
-		log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", w.Workflow.Root.ID, w.Workflow.Root.Pipeline.Name)
+		log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", w.Workflow.Root.ID, w.Workflow.Root.PipelineName)
 		//Run the root: manual or from an event
 		AddWorkflowRunInfo(w, false, sdk.SpawnMsg{
 			ID: sdk.MsgWorkflowStarting.ID,
@@ -346,8 +346,12 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	//TODO: Check user for manual done but check permission also for automatic trigger and hooks (with system to authenticate a webhook)
 
 	//Recopy stages
-	stages := make([]sdk.Stage, len(n.Pipeline.Stages))
-	copy(stages, n.Pipeline.Stages)
+	pip, has := w.Workflow.Pipelines[n.PipelineID]
+	if !has {
+		return nil, false, fmt.Errorf("pipeline %d not found in workflow", n.PipelineID)
+	}
+	stages := make([]sdk.Stage, len(pip.Stages))
+	copy(stages, pip.Stages)
 
 	run := &sdk.WorkflowNodeRun{
 		WorkflowID:       w.WorkflowID,
@@ -370,8 +374,8 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	runPayload := map[string]string{}
 
 	//If the pipeline has parameter but none are defined on context, use the defaults
-	if len(n.Pipeline.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
-		n.Context.DefaultPipelineParameters = n.Pipeline.Parameter
+	if len(pip.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
+		n.Context.DefaultPipelineParameters = pip.Parameter
 	}
 
 	parentStatus := sdk.StatusSuccess.String()
@@ -705,7 +709,7 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []sdk.Parameter) bool {
 	//Check conditions
 	//Define specific destination parameters
-	sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, node.Pipeline.Name)
+	sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, wr.Workflow.Pipelines[node.PipelineID].Name)
 	if node.Context.Application != nil {
 		sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, node.Context.Application.Name)
 	}

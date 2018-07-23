@@ -74,11 +74,11 @@ workflow:
 	m, _ := dump.ToStringMap(w)
 	assert.Equal(t, "test_1", m["Workflow.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Name"])
-	assert.Equal(t, "pip1", m["Workflow.Root.Pipeline.Name"])
+	assert.Equal(t, "pip1", m["Workflow.Root.PipelineName"])
 	assert.Equal(t, "name", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Name"])
 	assert.Equal(t, "value", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Value"])
 	assert.Equal(t, "pip1_2", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.Name"])
-	assert.Equal(t, "pip1", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.Pipeline.Name"])
+	assert.Equal(t, "pip1", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.PipelineName"])
 
 }
 
@@ -221,14 +221,16 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Context: &sdk.WorkflowNodeContext{
 				ApplicationID: app.ID,
 			},
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},

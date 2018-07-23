@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func loadJoins(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeJoin, error) {
+func loadJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeJoin, error) {
 	joinIDs := []int64{}
 	_, err := db.Select(&joinIDs, "select id from workflow_node_join where workflow_id = $1", w.ID)
 	if err != nil {
@@ -23,7 +24,7 @@ func loadJoins(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk
 
 	joins := []sdk.WorkflowNodeJoin{}
 	for _, id := range joinIDs {
-		j, errJ := loadJoin(db, store, proj, w, id, u, opts)
+		j, errJ := loadJoin(ctx, db, store, proj, w, id, u, opts)
 		if errJ != nil {
 			return nil, sdk.WrapError(errJ, "loadJoins> Unable to load join %d on workflow %d", id, w.ID)
 		}
@@ -33,7 +34,7 @@ func loadJoins(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk
 	return joins, nil
 }
 
-func loadJoin(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeJoin, error) {
+func loadJoin(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeJoin, error) {
 	dbjoin := Join{}
 	//Load the join
 	if err := db.SelectOne(&dbjoin, "select * from workflow_node_join where id = $1 and workflow_id = $2", id, w.ID); err != nil {
@@ -62,7 +63,7 @@ func loadJoin(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.
 
 	//Load trigegrs
 	for _, t := range triggerIDs {
-		jt, err := loadJoinTrigger(db, store, proj, w, &j, t, u, opts)
+		jt, err := loadJoinTrigger(ctx, db, store, proj, w, &j, t, u, opts)
 		if err != nil {
 			return nil, sdk.WrapError(err, "loadJoin> Unable to load join trigger %d", t)
 		}
@@ -78,7 +79,7 @@ func loadJoin(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.
 	return &j, nil
 }
 
-func loadJoinTrigger(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNodeJoin, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeJoinTrigger, error) {
+func loadJoinTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNodeJoin, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeJoinTrigger, error) {
 	dbtrigger := JoinTrigger{}
 	//Load the trigger
 	if err := db.SelectOne(&dbtrigger, "select * from workflow_node_join_trigger where workflow_node_join_id = $1 and id = $2", node.ID, id); err != nil {
@@ -91,7 +92,7 @@ func loadJoinTrigger(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, 
 	t := sdk.WorkflowNodeJoinTrigger(dbtrigger)
 	//Load node destination
 	if t.WorkflowDestNodeID != 0 {
-		dest, err := loadNode(db, store, proj, w, t.WorkflowDestNodeID, u, opts)
+		dest, err := loadNode(ctx, db, store, proj, w, t.WorkflowDestNodeID, u, opts)
 		if err != nil {
 			return nil, sdk.WrapError(err, "loadJoinTrigger> Unable to load destination node %d", t.WorkflowDestNodeID)
 		}
@@ -128,9 +129,9 @@ func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		if foundRef == nil {
 			return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertOrUpdateJoin> Invalid joins references %s", s)
 		}
-		log.Debug("insertOrUpdateJoin> Found reference %s : %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
+		log.Debug("insertOrUpdateJoin> Found reference %s : %d on %s", s, foundRef.ID, foundRef.PipelineID)
 		if foundRef.ID == 0 {
-			log.Debug("insertOrUpdateJoin> insert or update reference node (%s) %d on %s/%s", s, foundRef.ID, foundRef.Name, foundRef.Pipeline.Name)
+			log.Debug("insertOrUpdateJoin> insert or update reference node (%s) %d on %s/%s", s, foundRef.ID, foundRef.Name, foundRef.PipelineID)
 			if errN := insertNode(db, store, w, foundRef, u, true); errN != nil {
 				return sdk.WrapError(errN, "insertOrUpdateJoin> Unable to insert or update source node %s", foundRef.Name)
 			}

@@ -75,7 +75,7 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 func (h *HatcheryMarathon) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
 	if h.IsInitialized() {
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", h.WorkersStarted(), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
 	}
 	return m
 }

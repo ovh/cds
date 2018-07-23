@@ -155,6 +155,15 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	for i := range w.Joins {
 		w.Joins[i].Ref = fmt.Sprintf("%d", w.Joins[i].ID)
 	}
+	// This is usefull for oldserialized workflows...
+	//TODO: delete this after a while
+	if len(w.Pipelines) == 0 {
+		w.Pipelines = map[int64]sdk.Pipeline{}
+		w.Visit(func(n *sdk.WorkflowNode) {
+			w.Pipelines[n.PipelineID] = n.DeprecatedPipeline
+			n.PipelineName = n.DeprecatedPipeline.Name
+		})
+	}
 	r.Workflow = w
 
 	i := []sdk.WorkflowRunInfo{}

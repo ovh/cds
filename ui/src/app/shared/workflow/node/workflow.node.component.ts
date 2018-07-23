@@ -172,7 +172,7 @@ export class WorkflowNodeComponent implements OnInit {
             this._workflowEventStore.setSelectedNode(this.node, true);
             this._router.navigate([
                 '/project', this.project.key,
-                'pipeline', this.node.pipeline.name
+                'pipeline', this.node.pipeline_name
             ], {queryParams: {workflow: this.workflow.name}});
         }
     }

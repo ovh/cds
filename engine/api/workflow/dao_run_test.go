@@ -89,11 +89,11 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID: pip.ID,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID: pip.ID,
 					},
 				},
 			},
@@ -164,11 +164,11 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID: pip.ID,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID: pip.ID,
 					},
 				},
 			},
@@ -255,11 +255,11 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID: pip.ID,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID: pip.ID,
 					},
 				},
 			},
@@ -333,11 +333,11 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID: pip.ID,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID: pip.ID,
 					},
 				},
 			},
@@ -408,11 +408,11 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID: pip.ID,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID: pip.ID,
 					},
 				},
 			},

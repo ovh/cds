@@ -131,8 +131,8 @@ export class WorkflowSidebarEditNodeComponent {
 
     openEditContextModal(): void {
         let sub = this.pipelineSubscription =
-            this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
-                if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
+            this._pipelineStore.getPipelines(this.project.key, this.node.pipeline_name).subscribe(pips => {
+                if (pips.get(this.project.key + '-' + this.node.pipeline_name)) {
                     setTimeout(() => {
                         this.workflowContext.show();
                         sub.unsubscribe();

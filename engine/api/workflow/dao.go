@@ -416,16 +416,21 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	res.Groups = gps
 	next()
 
+	res.Pipelines = map[int64]sdk.Pipeline{}
+
 	if !opts.WithoutNode {
 		_, next = tracing.Span(ctx, "workflow.load.loadNodes")
-		err := loadWorkflowRoot(db, store, proj, &res, u, opts)
+		err := loadWorkflowRoot(ctx, db, store, proj, &res, u, opts)
 		next()
 
 		if err != nil {
 			return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
 		}
 		// Load joins
-		joins, errJ := loadJoins(db, store, proj, &res, u, opts)
+		_, next = tracing.Span(ctx, "workflow.load.loadJoins")
+		joins, errJ := loadJoins(ctx, db, store, proj, &res, u, opts)
+		next()
+
 		if errJ != nil {
 			return nil, sdk.WrapError(errJ, "Load> Unable to load workflow joins")
 		}
@@ -464,9 +469,9 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	return w, nil
 }
 
-func loadWorkflowRoot(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, opts LoadOptions) error {
+func loadWorkflowRoot(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, opts LoadOptions) error {
 	var err error
-	w.Root, err = loadNode(db, store, proj, w, w.RootID, u, opts)
+	w.Root, err = loadNode(ctx, db, store, proj, w, w.RootID, u, opts)
 	if err != nil {
 		if err == sdk.ErrWorkflowNodeNotFound {
 			log.Debug("Load> Unable to load root %d for workflow %d", w.RootID, w.ID)
@@ -556,7 +561,7 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	maxNumberByPipeline := map[int64]int64{}
 
 	// browse node
-	if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, w.Root); err != nil {
+	if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, w.Root, w); err != nil {
 		return err
 	}
 
@@ -564,7 +569,7 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	for i := range w.Joins {
 		join := &w.Joins[i]
 		for j := range join.Triggers {
-			if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &join.Triggers[j].WorkflowDestNode); err != nil {
+			if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &join.Triggers[j].WorkflowDestNode, w); err != nil {
 				return err
 			}
 		}
@@ -574,13 +579,13 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	for _, v := range nameByPipeline {
 		for _, n := range v {
 			if n.Name == "" {
-				nextNumber := maxNumberByPipeline[n.Pipeline.ID] + 1
+				nextNumber := maxNumberByPipeline[n.PipelineID] + 1
 				if nextNumber > 1 {
-					n.Name = fmt.Sprintf("%s_%d", n.Pipeline.Name, nextNumber)
+					n.Name = fmt.Sprintf("%s_%d", w.Pipelines[n.PipelineID].Name, nextNumber)
 				} else {
-					n.Name = n.Pipeline.Name
+					n.Name = w.Pipelines[n.PipelineID].Name
 				}
-				maxNumberByPipeline[n.Pipeline.ID] = nextNumber
+				maxNumberByPipeline[n.PipelineID] = nextNumber
 			}
 		}
 	}
@@ -588,22 +593,21 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	return nil
 }
 
-func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, n *sdk.WorkflowNode) error {
-	// get pipeline ID
-	if n.Pipeline.ID == 0 {
-		n.Pipeline.ID = n.PipelineID
-	} else if n.PipelineID == 0 {
-		n.PipelineID = n.Pipeline.ID
-	}
-
+func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, n *sdk.WorkflowNode, w *sdk.Workflow) error {
 	// Load pipeline to have name
-	if n.Pipeline.Name == "" {
-		pip, errorP := pipeline.LoadPipelineByID(db, n.PipelineID, false)
+	pip, has := w.Pipelines[n.PipelineID]
+	if !has {
+		pip2, errorP := pipeline.LoadPipelineByID(db, n.PipelineID, true)
 		if errorP != nil {
 			return sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", n.PipelineID)
 		}
-		n.Pipeline = *pip
+		if w.Pipelines == nil {
+			w.Pipelines = map[int64]sdk.Pipeline{}
+		}
+		w.Pipelines[n.PipelineID] = *pip2
+		pip = *pip2
 	}
+	n.PipelineName = pip.Name
 
 	// Save node in pipeline node map
 	if _, ok := (*dict)[n.PipelineID]; !ok {
@@ -612,10 +616,10 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 	(*dict)[n.PipelineID] = append((*dict)[n.PipelineID], n)
 
 	// Check max number for current pipeline
-	if n.Name == n.Pipeline.Name || (n.Name != "" && strings.HasPrefix(n.Name, n.Pipeline.Name+"_")) {
-		pipNumber, errI := strconv.ParseInt(strings.Replace(n.Name, n.Pipeline.Name+"_", "", 1), 10, 64)
+	if n.Name == n.PipelineName || (n.Name != "" && strings.HasPrefix(n.Name, n.PipelineName+"_")) {
+		pipNumber, errI := strconv.ParseInt(strings.Replace(n.Name, n.PipelineName+"_", "", 1), 10, 64)
 
-		if n.Name == n.Pipeline.Name {
+		if n.Name == n.PipelineName {
 			pipNumber = 1
 		}
 
@@ -628,7 +632,7 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 	}
 
 	for k := range n.Triggers {
-		if err := saveNodeByPipeline(db, dict, mapMaxNumber, &n.Triggers[k].WorkflowDestNode); err != nil {
+		if err := saveNodeByPipeline(db, dict, mapMaxNumber, &n.Triggers[k].WorkflowDestNode, w); err != nil {
 			return err
 		}
 	}

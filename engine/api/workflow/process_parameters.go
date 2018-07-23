@@ -113,7 +113,7 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
-	vars["cds.pipeline"] = n.Pipeline.Name
+	vars["cds.pipeline"] = w.Pipelines[n.PipelineID].Name
 
 	if n.Context != nil && n.Context.Application != nil && n.Context.Application.RepositoryStrategy.ConnectionType != "" {
 		vars["git.connection.type"] = n.Context.Application.RepositoryStrategy.ConnectionType

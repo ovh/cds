@@ -80,11 +80,13 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -189,11 +191,13 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -337,12 +341,13 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
-					},
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name},
 				},
 			},
 		},
@@ -437,12 +442,13 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
-					},
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name},
 				},
 			},
 		},
@@ -557,11 +563,13 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -658,11 +666,13 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -745,11 +755,13 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -782,7 +794,7 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
-	assert.Equal(t, "stage 1", wr.Workflow.Root.Pipeline.Stages[0].Name)
+	assert.Equal(t, "stage 1", wr.Workflow.Pipelines[pip.ID].Stages[0].Name)
 
 	pip.Stages[0].Name = "New awesome stage"
 	errS := pipeline.UpdateStage(db, &pip.Stages[0])
@@ -806,7 +818,7 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	workflowRun, errWR := workflow.LoadRunByID(db, wr.ID, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, errWR)
 
-	assert.Equal(t, "New awesome stage", workflowRun.Workflow.Root.Pipeline.Stages[0].Name)
+	assert.Equal(t, "New awesome stage", workflowRun.Workflow.Pipelines[pip.ID].Stages[0].Name)
 }
 
 func Test_postWorkflowRunHandler(t *testing.T) {
@@ -865,11 +877,13 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -978,15 +992,16 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
-			Context: &sdk.WorkflowNodeContext{
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name, Context: &sdk.WorkflowNodeContext{
 				EnvironmentID: env.ID,
 				Environment:   &env,
 			},
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -1047,7 +1062,8 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 		},
 		FromRepository: "ovh/cds",
 	}
@@ -1116,7 +1132,8 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Context: &sdk.WorkflowNodeContext{
 				Environment: env,
 			},
@@ -1201,11 +1218,13 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},

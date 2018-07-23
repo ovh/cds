@@ -57,7 +57,8 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 		},
 	}
 
@@ -69,8 +70,8 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.ProjectID, w1.ProjectID)
 	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.Pipeline.ID, w1.Root.Pipeline.ID)
-	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
+	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
+	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
 	assertEqualNode(t, w.Root, w1.Root)
 
 	assert.False(t, w1.Root.Context.Mutex)
@@ -111,7 +112,8 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 		},
 	}
 
@@ -157,7 +159,8 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Context: &sdk.WorkflowNodeContext{
 				Application: &app,
 				Environment: &env,
@@ -228,13 +231,15 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Name:     "Root",
-			Pipeline: pip1,
+			Name:         "Root",
+			PipelineID:   pip1.ID,
+			PipelineName: pip1.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Name:     "First",
-						Pipeline: pip2,
+						Name:         "First",
+						PipelineID:   pip2.ID,
+						PipelineName: pip2.Name,
 						Context: &sdk.WorkflowNodeContext{
 							Conditions: sdk.WorkflowNodeConditions{
 								PlainConditions: []sdk.WorkflowNodeCondition{
@@ -249,8 +254,9 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 						Triggers: []sdk.WorkflowNodeTrigger{
 							sdk.WorkflowNodeTrigger{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name:     "Second",
-									Pipeline: pip3,
+									Name:         "Second",
+									PipelineID:   pip3.ID,
+									PipelineName: pip3.Name,
 									Context: &sdk.WorkflowNodeContext{
 										Conditions: sdk.WorkflowNodeConditions{
 											PlainConditions: []sdk.WorkflowNodeCondition{
@@ -269,8 +275,9 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 				},
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Name:     "Last",
-						Pipeline: pip4,
+						Name:         "Last",
+						PipelineID:   pip4.ID,
+						PipelineName: pip4.Name,
 						Context: &sdk.WorkflowNodeContext{
 							Conditions: sdk.WorkflowNodeConditions{
 								PlainConditions: []sdk.WorkflowNodeCondition{
@@ -296,8 +303,8 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.ProjectID, w1.ProjectID)
 	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.Pipeline.ID, w1.Root.Pipeline.ID)
-	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
+	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
+	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
 	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
 
 	workflow.Sort(&w)
@@ -313,7 +320,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 }
 
 func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
-	t.Logf("assertEqualNode : %d(%s) on %s", n2.ID, n2.Ref, n2.Pipeline.Name)
+	t.Logf("assertEqualNode : %d(%s) on %s", n2.ID, n2.Ref, n2.PipelineName)
 	workflow.SortNode(n1)
 	workflow.SortNode(n2)
 	t.Logf("assertEqualNode : Checking hooks")
@@ -321,8 +328,7 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 	t.Logf("assertEqualNode : Checking triggers")
 	test.Equal(t, len(n1.Triggers), len(n2.Triggers))
 
-	assert.Equal(t, n1.Pipeline.Name, n2.Pipeline.Name)
-	assert.Equal(t, n1.Pipeline.ProjectKey, n2.Pipeline.ProjectKey)
+	assert.Equal(t, n1.PipelineName, n2.PipelineName)
 	for i, t1 := range n1.Triggers {
 		t2 := n2.Triggers[i]
 		test.Equal(t, len(t1.WorkflowDestNode.Context.Conditions.PlainConditions), len(t2.WorkflowDestNode.Context.Conditions.PlainConditions), "Number of conditions on node does not match")
@@ -408,7 +414,8 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Context: &sdk.WorkflowNodeContext{
 				Application: &app,
 				Environment: &env,
@@ -523,11 +530,13 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip1,
+			PipelineID:   pip1.ID,
+			PipelineName: pip1.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip2,
+						PipelineID:   pip2.ID,
+						PipelineName: pip2.Name,
 						Context: &sdk.WorkflowNodeContext{
 							Conditions: sdk.WorkflowNodeConditions{
 								PlainConditions: []sdk.WorkflowNodeCondition{
@@ -542,8 +551,9 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 						Triggers: []sdk.WorkflowNodeTrigger{
 							sdk.WorkflowNodeTrigger{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Ref:      "pip3",
-									Pipeline: pip3,
+									Ref:          "pip3",
+									PipelineID:   pip3.ID,
+									PipelineName: pip3.Name,
 									Context: &sdk.WorkflowNodeContext{
 										Conditions: sdk.WorkflowNodeConditions{
 											PlainConditions: []sdk.WorkflowNodeCondition{
@@ -558,8 +568,9 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 									Triggers: []sdk.WorkflowNodeTrigger{
 										sdk.WorkflowNodeTrigger{
 											WorkflowDestNode: sdk.WorkflowNode{
-												Ref:      "pip4",
-												Pipeline: pip4,
+												Ref:          "pip4",
+												PipelineID:   pip4.ID,
+												PipelineName: pip4.Name,
 												Context: &sdk.WorkflowNodeContext{
 													Conditions: sdk.WorkflowNodeConditions{
 														PlainConditions: []sdk.WorkflowNodeCondition{
@@ -589,7 +600,8 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 				Triggers: []sdk.WorkflowNodeJoinTrigger{
 					sdk.WorkflowNodeJoinTrigger{
 						WorkflowDestNode: sdk.WorkflowNode{
-							Pipeline: pip5,
+							PipelineID:   pip5.ID,
+							PipelineName: pip5.Name,
 							Context: &sdk.WorkflowNodeContext{
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
@@ -616,8 +628,8 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.ProjectID, w1.ProjectID)
 	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.Pipeline.ID, w1.Root.Pipeline.ID)
-	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
+	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
+	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
 	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
 
 	workflow.Sort(&w)
@@ -648,17 +660,17 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	assertEqualNode(t, w.Root, w1.Root)
 
 	assert.EqualValues(t, w.Joins[0].Triggers[0].WorkflowDestNode.Context.Conditions, w1.Joins[0].Triggers[0].WorkflowDestNode.Context.Conditions)
-	assert.Equal(t, w.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.ID, w1.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.ID)
+	assert.Equal(t, w.Joins[0].Triggers[0].WorkflowDestNode.PipelineID, w1.Joins[0].Triggers[0].WorkflowDestNode.PipelineID)
 
-	assert.Equal(t, pip1.Name, w.Root.Pipeline.Name)
-	assert.Equal(t, pip2.Name, w.Root.Triggers[0].WorkflowDestNode.Pipeline.Name)
-	assert.Equal(t, pip3.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Pipeline.Name)
-	assert.Equal(t, pip4.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Pipeline.Name)
+	assert.Equal(t, pip1.Name, w.Root.PipelineName)
+	assert.Equal(t, pip2.Name, w.Root.Triggers[0].WorkflowDestNode.PipelineName)
+	assert.Equal(t, pip3.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.PipelineName)
+	assert.Equal(t, pip4.Name, w.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.PipelineName)
 	test.EqualValuesWithoutOrder(t, []int64{
 		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
 		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
 	}, w1.Joins[0].SourceNodeIDs)
-	assert.Equal(t, pip5.Name, w.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.Name)
+	assert.Equal(t, pip5.Name, w.Joins[0].Triggers[0].WorkflowDestNode.PipelineName)
 
 	exp, err := exportentities.NewWorkflow(*w1, false)
 	test.NoError(t, err)
@@ -745,11 +757,13 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip1,
+			PipelineID:   pip1.ID,
+			PipelineName: pip1.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
+				{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip2,
+						PipelineID:   pip2.ID,
+						PipelineName: pip2.Name,
 						Context: &sdk.WorkflowNodeContext{
 							Conditions: sdk.WorkflowNodeConditions{
 								PlainConditions: []sdk.WorkflowNodeCondition{
@@ -764,8 +778,9 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 						Triggers: []sdk.WorkflowNodeTrigger{
 							sdk.WorkflowNodeTrigger{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Ref:      "pip3",
-									Pipeline: pip3,
+									Ref:          "pip3",
+									PipelineID:   pip3.ID,
+									PipelineName: pip3.Name,
 									Context: &sdk.WorkflowNodeContext{
 										Conditions: sdk.WorkflowNodeConditions{
 											PlainConditions: []sdk.WorkflowNodeCondition{
@@ -780,8 +795,9 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 									Triggers: []sdk.WorkflowNodeTrigger{
 										sdk.WorkflowNodeTrigger{
 											WorkflowDestNode: sdk.WorkflowNode{
-												Ref:      "pip4",
-												Pipeline: pip4,
+												Ref:          "pip4",
+												PipelineID:   pip4.ID,
+												PipelineName: pip4.Name,
 												Context: &sdk.WorkflowNodeContext{
 													Conditions: sdk.WorkflowNodeConditions{
 														PlainConditions: []sdk.WorkflowNodeCondition{
@@ -811,8 +827,9 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 				Triggers: []sdk.WorkflowNodeJoinTrigger{
 					sdk.WorkflowNodeJoinTrigger{
 						WorkflowDestNode: sdk.WorkflowNode{
-							Pipeline: pip5,
-							Ref:      "pip5",
+							PipelineID:   pip5.ID,
+							PipelineName: pip5.Name,
+							Ref:          "pip5",
 							Context: &sdk.WorkflowNodeContext{
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
@@ -828,8 +845,9 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 					},
 					sdk.WorkflowNodeJoinTrigger{
 						WorkflowDestNode: sdk.WorkflowNode{
-							Pipeline: pip6,
-							Ref:      "pip6",
+							PipelineID:   pip6.ID,
+							PipelineName: pip6.Name,
+							Ref:          "pip6",
 							Context: &sdk.WorkflowNodeContext{
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
@@ -852,7 +870,8 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 				Triggers: []sdk.WorkflowNodeJoinTrigger{
 					sdk.WorkflowNodeJoinTrigger{
 						WorkflowDestNode: sdk.WorkflowNode{
-							Pipeline: pip7,
+							PipelineID:   pip7.ID,
+							PipelineName: pip7.Name,
 							Context: &sdk.WorkflowNodeContext{
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
@@ -980,7 +999,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	w1old := w1
 	w1.Name = "test_2"
 	w1.Root.PipelineID = pip2.ID
-	w1.Root.Pipeline = pip2
+	w1.Root.PipelineName = pip2.Name
 	w1.Joins = []sdk.WorkflowNodeJoin{
 		sdk.WorkflowNodeJoin{
 			SourceNodeRefs: []string{
@@ -1054,7 +1073,8 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Context: &sdk.WorkflowNodeContext{
 				Conditions: sdk.WorkflowNodeConditions{
 					PlainConditions: []sdk.WorkflowNodeCondition{
@@ -1098,8 +1118,8 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.ProjectID, w1.ProjectID)
 	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.Pipeline.ID, w1.Root.Pipeline.ID)
-	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
+	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
+	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
 	assertEqualNode(t, w.Root, w1.Root)
 
 	ws, err := workflow.LoadAll(db, proj.Key)

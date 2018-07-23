@@ -99,7 +99,8 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 		},
 	}
 
@@ -151,7 +152,8 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 		},
 	}
 
@@ -569,9 +571,9 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 			ProjectKey: proj.Key,
 			Name:       sdk.RandomString(10),
 			Root: &sdk.WorkflowNode{
-				Name:       "root",
-				PipelineID: pip.ID,
-				Pipeline:   pip,
+				Name:         "root",
+				PipelineID:   pip.ID,
+				PipelineName: pip.Name,
 				Context: &sdk.WorkflowNodeContext{
 					Application:   &app,
 					ApplicationID: app.ID,
@@ -639,9 +641,9 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 			Name:       sdk.RandomString(10),
 			Groups:     proj.ProjectGroups,
 			Root: &sdk.WorkflowNode{
-				Name:       "root",
-				PipelineID: pip.ID,
-				Pipeline:   pip,
+				Name:         "root",
+				PipelineID:   pip.ID,
+				PipelineName: pip.Name,
 				Context: &sdk.WorkflowNodeContext{
 					Application:   &app,
 					ApplicationID: app.ID,

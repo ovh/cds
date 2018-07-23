@@ -5,6 +5,7 @@ type EventWarningAdd struct {
 	Warning
 }
 
+// EventWarningUpdate represents the event when updating a warning
 type EventWarningUpdate struct {
 	Warning
 }

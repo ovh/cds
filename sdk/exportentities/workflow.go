@@ -112,7 +112,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 		sort.Strings(ancestors)
 		entry.DependsOn = ancestors
-		entry.PipelineName = n.Pipeline.Name
+		entry.PipelineName = w.Pipelines[n.PipelineID].Name
 		conditions := []sdk.WorkflowNodeCondition{}
 		for _, c := range n.Context.Conditions.PlainConditions {
 			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
@@ -396,11 +396,9 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 
 func (e *NodeEntry) getNode(name string) (*sdk.WorkflowNode, error) {
 	node := &sdk.WorkflowNode{
-		Name: name,
-		Ref:  name,
-		Pipeline: sdk.Pipeline{
-			Name: e.PipelineName,
-		},
+		Name:         name,
+		Ref:          name,
+		PipelineName: e.PipelineName,
 	}
 
 	if e.ApplicationName != "" {

@@ -18,7 +18,7 @@
               </div>
             </ng-container>
             <div class="sub header">
-              <span>{{ 'common_pipeline' | translate }} : {{node.pipeline.name}}</span>
+              <span>{{ 'common_pipeline' | translate }} : {{node.pipeline_name}}</span>
               <div class="inline pointing ml5" (click)="openWarningModal()" *ngIf="displayInputName && nameWarning &&
               nameWarning.nodes?.length > 0">
                 <i class="orange warning sign icon  animated infinite tada"></i>
@@ -33,7 +33,7 @@
       <a class="item noborder" (click)="openEditRunConditions()">
         {{ 'workflow_node_condition_edit' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">
+      <a class="item noborder" [routerLink]="['/project', project.key, 'pipeline', node.pipeline_name]" [queryParams]="{workflow: workflow.name }">
         {{ 'pipeline_label_edit' | translate }} <i class="angle right icon"></i>
       </a>
       <a class="item noborder" (click)="openAddHookModal()" *ngIf="workflow && workflow.root.id === node.id &&  !(workflow.from_repository && workflow.from_repository.length > 0)">

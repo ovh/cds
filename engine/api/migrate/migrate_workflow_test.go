@@ -102,9 +102,9 @@ func Test_ToWorkflow(t *testing.T) {
 	wf, errW := workflow.Load(context.TODO(), db, cache, proj, "w"+app1.Name, u, workflow.LoadOptions{})
 	test.NoError(t, errW)
 
-	assert.Equal(t, pip1.ID, wf.Root.Pipeline.ID)
+	assert.Equal(t, pip1.ID, wf.Root.PipelineID)
 	assert.Equal(t, 1, len(wf.Root.Triggers))
-	assert.Equal(t, pip2.ID, wf.Root.Triggers[0].WorkflowDestNode.Pipeline.ID)
+	assert.Equal(t, pip2.ID, wf.Root.Triggers[0].WorkflowDestNode.PipelineID)
 	assert.Equal(t, env1.ID, wf.Root.Triggers[0].WorkflowDestNode.Context.Environment.ID)
 	assert.Equal(t, "master", wf.Root.Triggers[0].WorkflowDestNode.Context.Conditions.PlainConditions[0].Value)
 	assert.Equal(t, "git.branch", wf.Root.Triggers[0].WorkflowDestNode.Context.Conditions.PlainConditions[0].Variable)

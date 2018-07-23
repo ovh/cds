@@ -90,8 +90,8 @@ export class WorkflowNodeContextComponent {
             this.modalConfig.mustScroll = true;
             this.modal = this._modalService.open(this.modalConfig);
 
-            this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
-                let pip = pips.get(this.project.key + '-' + this.node.pipeline.name);
+            this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline_name).subscribe(pips => {
+                let pip = pips.get(this.project.key + '-' + this.node.pipeline_name);
                 if (pip) {
                     this.currentPipeline = pip;
                     this.pipParamsReady = true;
