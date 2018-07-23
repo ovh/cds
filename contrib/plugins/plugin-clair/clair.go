@@ -2,7 +2,6 @@ package plugin_clair
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/docker/distribution"
@@ -52,9 +51,9 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 		_ = plugin.SendLog(a, "Unable to get clair configuration: %s", err)
 		return plugin.Fail
 	}
-	viper.Set("clair.uri", serv.URLWithoutPort)
-	viper.Set("clair.port", strconv.Itoa(serv.Port))
-	viper.Set("clair.healthPort", strconv.Itoa(serv.HealthPort))
+	viper.Set("clair.uri", serv.URL)
+	viper.Set("clair.port", serv.Port)
+	viper.Set("clair.healthPort", serv.HealthPort)
 	viper.Set("clair.report.path", ".")
 	viper.Set("clair.report.format", "json")
 	clair.Config()
