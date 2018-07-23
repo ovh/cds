@@ -2,22 +2,28 @@ package sdk
 
 // These are constants about hooks
 const (
-	WebHookModelName             = "WebHook"
-	RepositoryWebHookModelName   = "RepositoryWebHook"
-	SchedulerModelName           = "Scheduler"
-	GitPollerModelName           = "Git Repository Poller"
-	KafkaHookModelName           = "Kafka hook"
-	HookConfigProject            = "project"
-	HookConfigWorkflow           = "workflow"
-	HookConfigWorkflowID         = "workflow_id"
-	WebHookModelConfigMethod     = "method"
-	RepositoryWebHookModelMethod = "method"
-	SchedulerModelCron           = "cron"
-	SchedulerModelTimezone       = "timezone"
-	SchedulerModelPayload        = "payload"
-	KafkaHookModelPlatform       = "platform"
-	KafkaHookModelConsumerGroup  = "consumer group"
-	KafkaHookModelTopic          = "topic"
+	WebHookModelName              = "WebHook"
+	RepositoryWebHookModelName    = "RepositoryWebHook"
+	SchedulerModelName            = "Scheduler"
+	GitPollerModelName            = "Git Repository Poller"
+	KafkaHookModelName            = "Kafka hook"
+	RabbitMQHookModelName         = "RabbitMQ hook"
+	HookConfigProject             = "project"
+	HookConfigWorkflow            = "workflow"
+	HookConfigWorkflowID          = "workflow_id"
+	WebHookModelConfigMethod      = "method"
+	RepositoryWebHookModelMethod  = "method"
+	SchedulerModelCron            = "cron"
+	SchedulerModelTimezone        = "timezone"
+	SchedulerModelPayload         = "payload"
+	HookModelPlatform             = "platform"
+	KafkaHookModelConsumerGroup   = "consumer group"
+	KafkaHookModelTopic           = "topic"
+	RabbitMQHookModelQueue        = "queue"
+	RabbitMQHookModelBindingKey   = "binding_key"
+	RabbitMQHookModelExchangeType = "exchange_type"
+	RabbitMQHookModelExchangeName = "exchange_name"
+	RabbitMQHookModelConsumerTag  = "consumer_tag"
 )
 
 // KafkaHookModel is the builtin hooks
@@ -29,7 +35,7 @@ var (
 		Name:       KafkaHookModelName,
 		Icon:       "Linkify",
 		DefaultConfig: WorkflowNodeHookConfig{
-			KafkaHookModelPlatform: {
+			HookModelPlatform: {
 				Value:        "",
 				Configurable: true,
 				Type:         HookConfigTypePlatform,
@@ -40,6 +46,46 @@ var (
 				Type:         HookConfigTypeString,
 			},
 			KafkaHookModelTopic: {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+		},
+	}
+
+	RabbitMQHookModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/rabbitmq",
+		Name:       RabbitMQHookModelName,
+		Icon:       "Linkify",
+		DefaultConfig: WorkflowNodeHookConfig{
+			HookModelPlatform: {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypePlatform,
+			},
+			RabbitMQHookModelQueue: {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+			RabbitMQHookModelExchangeType: {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+			RabbitMQHookModelExchangeName: {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+			RabbitMQHookModelBindingKey: {
+				Value:        "",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+			RabbitMQHookModelConsumerTag: {
 				Value:        "",
 				Configurable: true,
 				Type:         HookConfigTypeString,

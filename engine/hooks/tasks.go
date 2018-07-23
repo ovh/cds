@@ -27,6 +27,7 @@ const (
 	TypeScheduler          = "Scheduler"
 	TypeRepoPoller         = "RepoPoller"
 	TypeKafka              = "Kafka"
+	TypeRabbitMQ           = "RabbitMQ"
 
 	GithubHeader    = "X-Github-Event"
 	GitlabHeader    = "X-Gitlab-Event"
@@ -118,6 +119,12 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 			Type:   TypeKafka,
 			Config: h.Config,
 		}, nil
+	case sdk.RabbitMQHookModelName:
+		return &sdk.Task{
+			UUID:   h.UUID,
+			Type:   TypeRabbitMQ,
+			Config: h.Config,
+		}, nil
 	case sdk.WebHookModelName:
 		h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
 			Value:        fmt.Sprintf("%s/webhook/%s", s.Cfg.URLPublic, h.UUID),
@@ -205,6 +212,8 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) error {
 		return s.prepareNextScheduledTaskExecution(t)
 	case TypeKafka:
 		return s.startKafkaHook(t)
+	case TypeRabbitMQ:
+		return s.startRabbitMQHook(t)
 	default:
 		return fmt.Errorf("Unsupported task type %s", t.Type)
 	}
@@ -313,6 +322,8 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 		hs, err = s.doPollerTaskExecution(t, e)
 	case e.Kafka != nil:
 		h, err = s.doKafkaTaskExecution(e)
+	case e.RabbitMQ != nil:
+		h, err = s.doRabbitMQTaskExecution(e)
 	default:
 		err = fmt.Errorf("Unsupported task type %s", e.Type)
 	}

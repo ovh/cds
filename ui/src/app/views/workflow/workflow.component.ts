@@ -20,7 +20,7 @@ import {ToastService} from '../../shared/toast/ToastService';
     templateUrl: './workflow.html',
     styleUrls: ['./workflow.scss']
 })
-@AutoUnsubscribe()
+@AutoUnsubscribe(['onScroll'])
 export class WorkflowComponent implements OnInit {
 
     project: Project;

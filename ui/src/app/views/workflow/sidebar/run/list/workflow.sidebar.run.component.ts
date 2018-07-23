@@ -16,7 +16,7 @@ import {DurationService} from '../../../../../shared/duration/duration.service';
     templateUrl: './workflow.sidebar.run.component.html',
     styleUrls: ['./workflow.sidebar.run.component.scss']
 })
-@AutoUnsubscribe()
+@AutoUnsubscribe(['scrolled'])
 export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
 
     // Project that contains the workflow
@@ -52,7 +52,6 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     @ViewChild('tagsList') tagsList: ElementRef;
 
     eventSubscription: Subscription;
-    scrolledSub: Subscription;
     // List of workflow run
     workflowRuns: Array<WorkflowRun>;
 
@@ -90,7 +89,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.scrolledSub = this.scrolled.subscribe((scrolled) => {
+        this.scrolled.subscribe((scrolled) => {
             if (scrolled && (!Array.isArray(this.selectedTags) || !this.selectedTags.length)) {
                 this.offset += 50;
                 this.loadingMore = true;

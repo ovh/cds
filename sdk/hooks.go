@@ -23,6 +23,7 @@ type TaskExecution struct {
 	Config              WorkflowNodeHookConfig  `json:"config" cli:"-"`
 	WebHook             *WebHookExecution       `json:"webhook,omitempty" cli:"-"`
 	Kafka               *KafkaTaskExecution     `json:"kafka,omitempty" cli:"-"`
+	RabbitMQ            *RabbitMQTaskExecution  `json:"rabbitmq,omitempty" cli:"-"`
 	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty" cli:"-"`
 	Status              string                  `json:"status" cli:"status"`
 }
@@ -36,6 +37,11 @@ type WebHookExecution struct {
 
 // KafkaTaskExecution contains specific data for a kafka hook
 type KafkaTaskExecution struct {
+	Message []byte
+}
+
+// RabbitMQTaskExecution contains specific data for a kafka hook
+type RabbitMQTaskExecution struct {
 	Message []byte
 }
 
