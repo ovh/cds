@@ -99,7 +99,7 @@ func (e Event) ToEventProjectVariableAdd() (EventProjectVariableAdd, error) {
 	return varEvent, nil
 }
 
-// ToEventProjectVariableAdd get the payload as EventProjectVariableUpdate
+// ToEventProjectVariableUpdate get the payload as EventProjectVariableUpdate
 func (e Event) ToEventProjectVariableUpdate() (EventProjectVariableUpdate, error) {
 	var varEvent EventProjectVariableUpdate
 	if err := mapstructure.Decode(e.Payload, &varEvent); err != nil {

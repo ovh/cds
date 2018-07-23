@@ -89,7 +89,8 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 		},
 	}
 
@@ -801,8 +802,9 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Name:     "node1",
-			Pipeline: *pip,
+			Name:         "node1",
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Context: &sdk.WorkflowNodeContext{
 				Application: &app,
 			},

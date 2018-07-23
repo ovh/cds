@@ -115,20 +115,20 @@ type ApplicationPipeline struct {
 }
 
 // GetKey return a key by name
-func (a Application) GetKey(kname string) *ApplicationKey {
-	for i := range a.Keys {
-		if a.Keys[i].Name == kname {
-			return &a.Keys[i]
+func (app Application) GetKey(kname string) *ApplicationKey {
+	for i := range app.Keys {
+		if app.Keys[i].Name == kname {
+			return &app.Keys[i]
 		}
 	}
 	return nil
 }
 
 // GetSSHKey return a key by name
-func (a Application) GetSSHKey(kname string) *ApplicationKey {
-	for i := range a.Keys {
-		if a.Keys[i].Type == KeyTypeSSH && a.Keys[i].Name == kname {
-			return &a.Keys[i]
+func (app Application) GetSSHKey(kname string) *ApplicationKey {
+	for i := range app.Keys {
+		if app.Keys[i].Type == KeyTypeSSH && app.Keys[i].Name == kname {
+			return &app.Keys[i]
 		}
 	}
 	return nil

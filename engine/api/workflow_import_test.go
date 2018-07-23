@@ -221,14 +221,16 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Context: &sdk.WorkflowNodeContext{
 				ApplicationID: app.ID,
 			},
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},

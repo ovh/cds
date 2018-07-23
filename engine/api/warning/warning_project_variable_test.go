@@ -336,7 +336,8 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Context: &sdk.WorkflowNodeContext{
 				DefaultPipelineParameters: []sdk.Parameter{
 					{
