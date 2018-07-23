@@ -645,7 +645,7 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := services.InitExternal(a.mustDB, a.Cache, externalServices); err != nil {
 		return fmt.Errorf("unable to init external service: %v", err)
 	}
-	go services.Pings(ctx, a.mustDB, externalServices)
+	sdk.GoRoutine("pings-external-services", func() { services.Pings(ctx, a.mustDB, externalServices) })
 
 	// TODO: to delete after migration
 	if os.Getenv("CDS_MIGRATE_GIT_CLONE") == "true" {

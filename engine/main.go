@@ -140,8 +140,18 @@ Comming soon...`,
 
 		conf.API.Auth.SharedInfraToken = sdk.RandomString(128)
 		conf.API.Secrets.Key = sdk.RandomString(32)
-		conf.API.Providers = append(conf.API.Providers, api.ProviderConfiguration{"sample-provider", sdk.RandomString(32)})
-		conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{"sample-service", "https://ovh.github.io", 443, "/cds", 443, "doc"})
+		conf.API.Providers = append(conf.API.Providers, api.ProviderConfiguration{
+			Name:  "sample-provider",
+			Token: sdk.RandomString(32),
+		})
+		conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{
+			Name:       "sample-service",
+			URL:        "https://ovh.github.io",
+			Port:       443,
+			HealthPath: "/cds",
+			HealthPort: 443,
+			Type:       "doc",
+		})
 		conf.Hatchery.Local.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Openstack.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken

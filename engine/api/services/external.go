@@ -14,7 +14,7 @@ import (
 )
 
 // Pings browses all external services and ping them
-func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalService) error {
+func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalService) {
 	tickPing := time.NewTicker(1 * time.Minute)
 	db := dbFunc()
 	for {
@@ -22,7 +22,7 @@ func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalServ
 		case <-ctx.Done():
 			if ctx.Err() != nil {
 				log.Error("services.Ping> Exiting scheduler.Cleaner: %v", ctx.Err())
-				return nil
+				return
 			}
 		case <-tickPing.C:
 			for _, s := range ss {
