@@ -97,11 +97,9 @@ func TestImport(t *testing.T) {
 					Metadata:  sdk.Metadata{"triggered_by": "bla"},
 					PurgeTags: []string{"aa", "bb"},
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline",
 					},
 				},
 				force: false,
@@ -114,11 +112,9 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-1",
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline",
 					},
 				},
 				force: false,
@@ -131,11 +127,9 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-1",
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline",
 					},
 				},
 				force: true,
@@ -148,11 +142,9 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-2",
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline",
 						Context: &sdk.WorkflowNodeContext{
 							Application: &sdk.Application{
 								Name: app.Name,
@@ -173,19 +165,15 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-3",
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline",
 						Triggers: []sdk.WorkflowNodeTrigger{
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "child",
-									Ref:  "child",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
+									Name:         "child",
+									Ref:          "child",
+									PipelineName: "pipeline",
 								},
 							},
 						},
@@ -201,28 +189,22 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-3",
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline",
 						Triggers: []sdk.WorkflowNodeTrigger{
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "child",
-									Ref:  "child",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
+									Name:         "child",
+									Ref:          "child",
+									PipelineName: "pipeline",
 								},
 							},
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "second-child",
-									Ref:  "second-child",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
+									Name:         "second-child",
+									Ref:          "second-child",
+									PipelineName: "pipeline",
 									Context: &sdk.WorkflowNodeContext{
 										Application: &sdk.Application{
 											Name: app.Name,
@@ -245,28 +227,22 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-4",
 					Root: &sdk.WorkflowNode{
-						Name: "A",
-						Ref:  "A",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline",
-						},
+						Name:         "A",
+						Ref:          "A",
+						PipelineName: "pipeline",
 						Triggers: []sdk.WorkflowNodeTrigger{
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "B",
-									Ref:  "B",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
+									Name:         "B",
+									Ref:          "B",
+									PipelineName: "pipeline",
 								},
 							},
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "C",
-									Ref:  "C",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
+									Name:         "C",
+									Ref:          "C",
+									PipelineName: "pipeline",
 								},
 							},
 						},
@@ -294,29 +270,23 @@ func TestImport(t *testing.T) {
 							Triggers: []sdk.WorkflowNodeJoinTrigger{
 								{
 									WorkflowDestNode: sdk.WorkflowNode{
-										Name: "D",
-										Ref:  "D",
-										Pipeline: sdk.Pipeline{
-											Name: "pipeline",
-										},
+										Name:         "D",
+										Ref:          "D",
+										PipelineName: "pipeline",
 									},
 								},
 								{
 									WorkflowDestNode: sdk.WorkflowNode{
-										Name: "E",
-										Ref:  "E",
-										Pipeline: sdk.Pipeline{
-											Name: "pipeline",
-										},
+										Name:         "E",
+										Ref:          "E",
+										PipelineName: "pipeline",
 									},
 								},
 								{
 									WorkflowDestNode: sdk.WorkflowNode{
-										Name: "F",
-										Ref:  "F",
-										Pipeline: sdk.Pipeline{
-											Name: "pipeline",
-										},
+										Name:         "F",
+										Ref:          "F",
+										PipelineName: "pipeline",
 									},
 								},
 							},
@@ -326,11 +296,9 @@ func TestImport(t *testing.T) {
 							Triggers: []sdk.WorkflowNodeJoinTrigger{
 								{
 									WorkflowDestNode: sdk.WorkflowNode{
-										Name: "G",
-										Ref:  "G",
-										Pipeline: sdk.Pipeline{
-											Name: "pipeline",
-										},
+										Name:         "G",
+										Ref:          "G",
+										PipelineName: "pipeline",
 									},
 								},
 							},
@@ -346,11 +314,9 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-5",
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline-error",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline-error",
 						Context: &sdk.WorkflowNodeContext{
 							Application: &sdk.Application{
 								Name: "app-error",
@@ -371,11 +337,9 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-6",
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline-with-param",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline-with-param",
 						Context: &sdk.WorkflowNodeContext{
 							DefaultPipelineParameters: []sdk.Parameter{
 								{
@@ -396,11 +360,9 @@ func TestImport(t *testing.T) {
 				w: &sdk.Workflow{
 					Name: "test-1",
 					Root: &sdk.WorkflowNode{
-						Name: "pipeline",
-						Ref:  "pipeline",
-						Pipeline: sdk.Pipeline{
-							Name: "pipeline",
-						},
+						Name:         "pipeline",
+						Ref:          "pipeline",
+						PipelineName: "pipeline",
 						Context: &sdk.WorkflowNodeContext{
 							DefaultPipelineParameters: []sdk.Parameter{
 								{
