@@ -60,7 +60,7 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 			},
 		},
 	}
-	_, code, err := doRequest(fmt.Sprintf("%s:%s", s.HTTPURL, s.HealthPort), "", "GET", s.HealthPath, nil)
+	_, code, err := doRequest(fmt.Sprintf("%s:%d", s.URLWithoutPort, s.HealthPort), "", "GET", s.HealthPath, nil)
 	if err != nil || code >= 400 {
 		mon.Lines[0].Status = sdk.MonitoringStatusWarn
 		mon.Lines[0].Value = "Health: KO"
@@ -69,6 +69,7 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 		mon.Lines[0].Value = "Health: OK"
 	}
 
+	serv.LastHeartbeat = time.Now()
 	serv.MonitoringStatus = mon
 	if _, err := db.Update(&serv); err != nil {
 		log.Warning("service.ping> unable to update monitoring status: %s")
@@ -86,6 +87,7 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 		}
 
 		if oldSrv == nil {
+			s.Service.LastHeartbeat = time.Now()
 			if err := Insert(db, &s.Service); err != nil {
 				return fmt.Errorf("InitExternal> unable to insert external service")
 			}

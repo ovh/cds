@@ -82,9 +82,6 @@ func findOne(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Servi
 		}
 		return nil, sdk.WrapError(err, "findOne> service not found")
 	}
-	if err := PostGet(db, &sdb); err != nil {
-		return nil, sdk.WrapError(err, "findOne> postGet")
-	}
 	s := sdk.Service(sdb)
 	if s.Name == "" {
 		return nil, sdk.ErrNotFound
@@ -102,7 +99,8 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 	}
 	ss := make([]sdk.Service, len(sdbs))
 	for i := 0; i < len(sdbs); i++ {
-		if err := PostGet(db, &sdbs[i]); err != nil {
+		s := &sdbs[i]
+		if err := s.PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "findAll> postGet")
 		}
 		ss[i] = sdk.Service(sdbs[i])
@@ -115,9 +113,6 @@ func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service(*s)
 	if err := db.Insert(&sdb); err != nil {
 		return sdk.WrapError(err, "Insert> unable to insert service %s", s.Name)
-	}
-	if err := PostUpdate(db, &sdb); err != nil {
-		return sdk.WrapError(err, "Insert> error on PostUpdate")
 	}
 	*s = sdk.Service(sdb)
 
@@ -135,9 +130,6 @@ func Update(db gorp.SqlExecutor, s *sdk.Service) error {
 		return sdk.WrapError(err, "Update> unable to update service %s", s.Name)
 	} else if n == 0 {
 		return sdk.WrapError(sdk.ErrNotFound, "Update> unable to update service %s", s.Name)
-	}
-	if err := PostUpdate(db, &sdb); err != nil {
-		return sdk.WrapError(err, "Update> error on PostUpdate")
 	}
 	*s = sdk.Service(sdb)
 	sEvent <- serviceEvent{
@@ -161,7 +153,7 @@ func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 }
 
 // PostGet is a dbHook on Select to get json column
-func PostGet(db gorp.SqlExecutor, s *service) error {
+func (s *service) PostGet(db gorp.SqlExecutor) error {
 	query := "SELECT monitoring_status FROM services WHERE name = $1"
 	var content []byte
 	if err := db.QueryRow(query, s.Name).Scan(&content); err != nil {
@@ -183,8 +175,13 @@ func PostGet(db gorp.SqlExecutor, s *service) error {
 	return nil
 }
 
+// PostInsert is a DB Hook
+func (s *service) PostInsert(db gorp.SqlExecutor) error {
+	return s.PostUpdate(db)
+}
+
 // PostUpdate is a DB Hook on PostUpdate to store monitoring_status JSON in DB
-func PostUpdate(db gorp.SqlExecutor, s *service) error {
+func (s *service) PostUpdate(db gorp.SqlExecutor) error {
 	content, err := json.Marshal(s.MonitoringStatus)
 	if err != nil {
 		return err
