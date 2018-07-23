@@ -27,7 +27,9 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	mError := new(sdk.MultiError)
 
+	w.Pipelines = map[int64]sdk.Pipeline{}
 	var pipelineLoader = func(n *sdk.WorkflowNode) {
+		log.Info("loading pipeline %s", n.PipelineName)
 		pip, err := pipeline.LoadPipeline(db, proj.Key, n.PipelineName, true)
 		if err != nil {
 			log.Warning("workflow.Import> %s > Pipeline %s not found: %v", w.Name, n.PipelineName, err)
@@ -35,6 +37,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 			return
 		}
 		w.Pipelines[n.PipelineID] = *pip
+		n.PipelineID = pip.ID
 	}
 	w.Visit(pipelineLoader)
 
