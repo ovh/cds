@@ -33,6 +33,7 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 		}
 	}
 
+	//Resync pipelines
 	wr.Workflow.Pipelines = wf.Pipelines
 
 	return UpdateWorkflowRun(nil, db, wr)
