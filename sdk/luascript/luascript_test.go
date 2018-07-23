@@ -29,6 +29,17 @@ func TestLuaCheckStrings(t *testing.T) {
 	assert.True(t, l.Result)
 }
 
+func TestLuaCheckWeekOfDay(t *testing.T) {
+	l, err := NewCheck()
+	test.NoError(t, err)
+	l.SetVariables(map[string]string{
+		"cds.application": "mon-appli",
+	})
+	test.NoError(t, l.Perform(`return os.date("%w") < "8"`))
+	assert.False(t, l.IsError)
+	assert.True(t, l.Result)
+}
+
 func TestLuaCheckRegularExpression(t *testing.T) {
 	l, err := NewCheck()
 	test.NoError(t, err)

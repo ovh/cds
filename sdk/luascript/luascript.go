@@ -39,6 +39,7 @@ func NewCheck() (*Check, error) {
 		{lua.BaseLibName, lua.OpenBase},
 		{lua.TabLibName, lua.OpenTable},
 		{lua.StringLibName, lua.OpenString},
+		{lua.OsLibName, lua.OpenOs},
 	} {
 		if err := state.CallByParam(lua.P{
 			Fn:      state.NewFunction(pair.f),
@@ -53,7 +54,7 @@ func NewCheck() (*Check, error) {
 	state.PreloadModule("re", gluare.Loader)
 
 	// Sandboxing lua engine
-	if err := state.DoString("coroutine=nil;debug=nil;io=nil;open=nil;os=nil"); err != nil {
+	if err := state.DoString("coroutine=nil;debug=nil;io=nil;open=nil;os.rename=nil;os.remove=nil;os.exit=nil;os.clock=nil;os.execute=nil;os.getenv=nil;os.setlocale=nil;os.tmpname=nil"); err != nil {
 		return nil, err
 	}
 
