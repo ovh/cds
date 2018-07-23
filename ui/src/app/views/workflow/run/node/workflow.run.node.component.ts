@@ -90,15 +90,6 @@ export class WorkflowNodeRunComponent {
                 this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
                     this.nodeRun = wnr;
                     if (this.nodeRun) {
-                        if (PipelineStatus.isDone(wnr.status)) {
-                            // Usefull to load tests and artifacts
-                            this._workflowRunService.getWorkflowNodeRun(
-                                this.project.key,
-                                this.workflowName,
-                                this.nodeRun.num,
-                                this.nodeRun.id
-                            ).subscribe((wfNodeRun) => this.nodeRun = wfNodeRun);
-                        }
                         this._workflowEventStore.setSelectedNode(
                             Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow),
                             false);
