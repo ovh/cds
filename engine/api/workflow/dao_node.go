@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -37,18 +39,13 @@ func updateWorkflowTriggerJoinSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 }
 
 func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
-	log.Debug("insertNode> insert or update node %s %d (%s) on %s", n.Name, n.ID, n.Ref, n.Pipeline.Name)
+	log.Debug("insertNode> insert or update node %s %d (%s) on %s", n.Name, n.ID, n.Ref, n.PipelineID)
 
 	if !nodeNamePattern.MatchString(n.Name) {
 		return sdk.WrapError(sdk.ErrInvalidNodeNamePattern, "insertNode> node has a wrong name %s", n.Name)
 	}
 
 	n.WorkflowID = w.ID
-
-	// Set pipeline ID
-	if n.PipelineID == 0 {
-		n.PipelineID = n.Pipeline.ID
-	}
 
 	// Init context
 	if n.Context == nil {
@@ -72,7 +69,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		for i := range n.Context.DefaultPipelineParameters {
 			var paramFound bool
 			param := &n.Context.DefaultPipelineParameters[i]
-			for _, pipParam := range n.Pipeline.Parameter {
+			for _, pipParam := range w.Pipelines[n.PipelineID].Parameter {
 				if pipParam.Name == param.Name {
 					param.Type = pipParam.Type
 					paramFound = true
@@ -267,7 +264,17 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 }
 
 // loadNode loads a node in a workflow
-func loadNode(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
+func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
+	c, end := tracing.Span(c, "workflow.loadNode",
+		tracing.Tag("workflow", w.Name),
+		tracing.Tag("project_key", proj.Key),
+		tracing.Tag("with_pipeline", opts.DeepPipeline),
+		tracing.Tag("only_root", opts.OnlyRootNode),
+		tracing.Tag("with_base64_keys", opts.Base64Keys),
+		tracing.Tag("without_node", opts.WithoutNode),
+	)
+	defer end()
+
 	dbwn := Node{}
 	if err := db.SelectOne(&dbwn, "select * from workflow_node where workflow_id = $1 and id = $2", w.ID, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -282,7 +289,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.
 
 	if !opts.OnlyRootNode {
 		//Load triggers
-		triggers, errTrig := loadTriggers(db, store, proj, w, &wn, u, opts)
+		triggers, errTrig := loadTriggers(c, db, store, proj, w, &wn, u, opts)
 		if errTrig != nil {
 			return nil, sdk.WrapError(errTrig, "LoadNode> Unable to load triggers of %d", id)
 		}
@@ -304,11 +311,21 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.
 	wn.Hooks = hooks
 
 	//Load pipeline
-	pip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, opts.DeepPipeline)
-	if err != nil {
-		return nil, sdk.WrapError(err, "LoadNode> Unable to load pipeline of %d", id)
+	pip, ok := w.Pipelines[wn.PipelineID]
+	if !ok {
+		_, next := tracing.Span(c, "pipeline.LoadPipelineByID",
+			tracing.Tag("pipeline_id", wn.PipelineID),
+		)
+		newPip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, opts.DeepPipeline)
+		next()
+		if err != nil {
+			return nil, sdk.WrapError(err, "LoadNode> Unable to load pipeline of %d", id)
+		}
+
+		w.Pipelines[wn.PipelineID] = *newPip
+		pip = *newPip
 	}
-	wn.Pipeline = *pip
+	wn.PipelineName = pip.Name
 
 	if wn.Name == "" {
 		wn.Name = pip.Name

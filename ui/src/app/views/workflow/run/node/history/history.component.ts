@@ -32,7 +32,7 @@ export class WorkflowNodeRunHistoryComponent extends Table {
     goToSubNumber(nodeRun: WorkflowNodeRun): void {
         let node = Workflow.getNodeByID(nodeRun.workflow_node_id, this.run.workflow);
         this._router.navigate(['/project', this.project.key, 'workflow', this.workflowName, 'run', nodeRun.num, 'node',
-            nodeRun.id], {queryParams: {sub: nodeRun.subnumber, name: node.pipeline.name}});
+            nodeRun.id], {queryParams: {sub: nodeRun.subnumber, name: node.pipeline_name}});
     }
 
     getTriggerSource(nr: WorkflowNodeRun): string {

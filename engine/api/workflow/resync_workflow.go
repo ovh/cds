@@ -47,7 +47,6 @@ func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
 
 	node.Name = newNode.Name
 	node.Context = newNode.Context
-	node.Pipeline = newNode.Pipeline
 
 	for i := range node.Triggers {
 		t := &node.Triggers[i]

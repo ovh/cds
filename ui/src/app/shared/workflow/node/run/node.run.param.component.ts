@@ -267,12 +267,14 @@ export class WorkflowNodeRunParamComponent {
     }
 
     private updateDefaultPipelineParameters() {
+        let pipToRun = Workflow.getPipeline(this.workflow, this._nodeToRun);
+
         if (this._nodeToRun.context) {
             this._nodeToRun.context.default_pipeline_parameters =
-                Pipeline.mergeParams(this._nodeToRun.pipeline.parameters, this._nodeToRun.context.default_pipeline_parameters);
+                Pipeline.mergeParams(pipToRun.parameters, this._nodeToRun.context.default_pipeline_parameters);
         } else {
             this._nodeToRun.context = new WorkflowNodeContext();
-            this._nodeToRun.context.default_pipeline_parameters = this._nodeToRun.pipeline.parameters;
+            this._nodeToRun.context.default_pipeline_parameters = pipToRun.parameters;
         }
 
     }
