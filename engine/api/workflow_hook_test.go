@@ -71,7 +71,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	//Check result
 	models := []sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &models))
-	assert.Len(t, models, 2, "")
+	assert.Len(t, models, 3, "")
 }
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
@@ -135,7 +135,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	//Check result
 	models := []sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &models))
-	assert.Len(t, models, 2, "")
+	assert.Len(t, models, 3, "")
 }
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
@@ -204,7 +204,6 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &model))
 	assert.Equal(t, sdk.WebHookModelName, model.Name)
 	assert.Equal(t, false, model.Disabled)
-
 }
 
 func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
