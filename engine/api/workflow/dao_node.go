@@ -97,7 +97,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	pip, has := w.Pipelines[n.PipelineID]
 	//Load the pipeline if not found
 	if !has {
-		loadedPip, err := pipeline.LoadPipelineByID(db, n.PipelineID, false)
+		loadedPip, err := pipeline.LoadPipelineByID(db, n.PipelineID, true)
 		if err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to load pipeline for workflow node %s-%s", n.Name, n.Ref)
 		}

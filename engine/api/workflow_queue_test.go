@@ -960,7 +960,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Call post coverage report handler
-	//Prepare request
+	// Prepare request
 	vars := map[string]string{
 		"permID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID),
 	}
