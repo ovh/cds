@@ -37,6 +37,14 @@ export class PipelineStatus {
 
       return false;
     }
+
+    static isDone(status: string) {
+      if (status === this.SUCCESS || status === this.STOPPED || status === this.FAIL) {
+        return true;
+      }
+
+      return false;
+    }
 }
 
 export class PipelineAudit {
