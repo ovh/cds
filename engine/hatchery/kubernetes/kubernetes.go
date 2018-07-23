@@ -338,7 +338,8 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 
 	if len(services) > 0 {
 		podSchema.Spec.HostAliases = make([]apiv1.HostAlias, 1)
-		podSchema.Spec.HostAliases[0] = apiv1.HostAlias{IP: "127.0.0.1", Hostnames: make([]string, len(services))}
+		podSchema.Spec.HostAliases[0] = apiv1.HostAlias{IP: "127.0.0.1", Hostnames: make([]string, len(services)+1)}
+		podSchema.Spec.HostAliases[0].Hostnames[0] = "worker"
 	}
 
 	for i, serv := range services {
@@ -373,7 +374,7 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		}
 
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
-		podSchema.Spec.HostAliases[0].Hostnames[i] = serv.Name
+		podSchema.Spec.HostAliases[0].Hostnames[i+1] = serv.Name
 	}
 
 	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&podSchema)
