@@ -23,26 +23,12 @@ type rabbitMQConsumer struct {
 	done    chan error
 }
 
-func (s *Service) saveRabbitMQExecution(t *sdk.Task, error string, nbError int64) {
-	exec := &sdk.TaskExecution{
-		Timestamp:           time.Now().UnixNano(),
-		Type:                t.Type,
-		UUID:                t.UUID,
-		Config:              t.Config,
-		Status:              TaskExecutionDone,
-		LastError:           error,
-		NbErrors:            nbError,
-		ProcessingTimestamp: time.Now().UnixNano(),
-	}
-	s.Dao.SaveTaskExecution(exec)
-}
-
 func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 	projectKey := t.Config[sdk.HookConfigProject].Value
 	platformName := t.Config[sdk.HookModelPlatform].Value
 	pf, err := s.Client.ProjectPlatformGet(projectKey, platformName, true)
 	if err != nil {
-		s.stopTask(t)
+		_ = s.stopTask(t)
 		return sdk.WrapError(err, "startTask> Cannot get rabbitMQ configuration for %s/%s", projectKey, platformName)
 	}
 
@@ -59,7 +45,7 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 		t.Config[sdk.RabbitMQHookModelConsumerTag].Value,
 	)
 	if err != nil {
-		s.stopTask(t)
+		_ = s.stopTask(t)
 		return fmt.Errorf("startRabbitMQHook>Error creating consumer: (%s %s %+v): %v", pf.Config["uri"].Value, username, t.Config, err)
 	}
 
@@ -73,23 +59,21 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 		nil,                                        // arguments
 	)
 	if errConsume != nil {
-		s.stopTask(t)
+		_ = s.stopTask(t)
 		return fmt.Errorf("startRabbitMQHook> Queue Consume: %s", errConsume)
 	}
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
-		select {
-		case <-sigs:
-			log.Info("RabbitMQ> shutdown")
-			consumer.Shutdown()
-		}
+		<-sigs
+		log.Info("RabbitMQ> shutdown")
+		_ = consumer.Shutdown()
 	}()
 
 	go func() {
 		for d := range deliveries {
-			d.Ack(false)
+			_ = d.Ack(false)
 			exec := sdk.TaskExecution{
 				ProcessingTimestamp: time.Now().UnixNano(),
 				Status:              TaskExecutionDoing,
@@ -222,11 +206,4 @@ func (c *rabbitMQConsumer) Shutdown() error {
 	log.Info("RabbitMQ> Shutdown> Wait for handle to exit...")
 	// wait for handle() to exit
 	return <-c.done
-}
-
-func handle(deliveries <-chan amqp.Delivery, done chan error) {
-	for d := range deliveries {
-		d.Ack(false)
-	}
-	done <- nil
 }
