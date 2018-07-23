@@ -40,7 +40,7 @@ func (api *API) postServiceRegisterHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "postServiceRegisterHandler")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		//Try to find the service, and keep; else generate a new one
 		oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
