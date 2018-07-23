@@ -61,7 +61,24 @@
             <td class="center" *ngIf="mode === 'edit'">
                 <div *ngIf="v.hasChanged;then save;else remove"></div>
                 <ng-template #save>
-                    <button class="ui green button" [class.loading]="v.updating" [class.disabled]="v.updating" name="btnupdatevar" (click)="sendEvent('update', v)">
+                    <div suiPopup *ngIf="v.type === 'key'"
+                        [popupText]="'action_always_executed_details' | translate"
+                        popupPlacement="top center">
+                        <button class="ui green button"
+                            [class.loading]="v.updating"
+                            [class.disabled]="v.updating || v.type === 'key'"
+                            name="btnupdatevar"
+                            (click)="sendEvent('update', v)">
+                            <i class="save icon"></i>
+                            {{ 'btn_save' | translate}}
+                        </button>
+                    </div>
+                    <button class="ui green button"
+                        *ngIf="v.type !== 'key'"
+                        [class.loading]="v.updating"
+                        [class.disabled]="v.updating || v.type === 'key'"
+                        name="btnupdatevar"
+                        (click)="sendEvent('update', v)">
                         <i class="save icon"></i>
                         {{ 'btn_save' | translate}}
                     </button>
@@ -69,7 +86,6 @@
                 <ng-template #remove>
                     <app-delete-button (event)="sendEvent('delete', v)" [loading]="v.updating"></app-delete-button>
                 </ng-template>
-
             </td>
         </tr>
         </tbody>
