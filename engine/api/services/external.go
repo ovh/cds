@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Pings browses all external services and ping them
 func Pings(ctx context.Context, dbFunc func() *gorp.DbMap, ss []sdk.ExternalService) error {
 	tickPing := time.NewTicker(1 * time.Minute)
 	db := dbFunc()
@@ -78,6 +79,7 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	return nil
 }
 
+// InitExternal initializes external services
 func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.ExternalService) error {
 	db := dbFunc()
 	for _, s := range ss {
