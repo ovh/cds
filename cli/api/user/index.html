@@ -206,6 +206,11 @@
           <span>Kafka hook</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/design/hooks/rabbitmq-hook/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/design/hooks/rabbitmq-hook/">
+          <span>RabbitMQ hook</span>
+        </a>
+    </li>
         </ul>
     </li>
       <li data-nav-id="/workflows/design/run-conditions/" class="dd-item">
@@ -2002,8 +2007,8 @@
 <li><a href="#post-user-import">POST <code>/user/import</code></a></li>
 <li><a href="#adduser-creates-a-new-user-and-generate-verification-email">AddUser creates a new user and generate verification email</a></li>
 <li><a href="#get-user-timeline">GET <code>/user/timeline</code></a></li>
-<li><a href="#get-user-timeline-filter">GET <code>/user/timeline/filter</code></a></li>
 <li><a href="#post-user-timeline-filter">POST <code>/user/timeline/filter</code></a></li>
+<li><a href="#get-user-timeline-filter">GET <code>/user/timeline/filter</code></a></li>
 <li><a href="#get-user-token">GET <code>/user/token</code></a></li>
 <li><a href="#get-user-token-token">GET <code>/user/token/&lt;token&gt;</code></a></li>
 </ul></li>
@@ -2337,34 +2342,6 @@
 </tbody>
 </table>
 
-<h3 id="get-user-timeline-filter">GET <code>/user/timeline/filter</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/user/timeline/filter</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22">getTimelineFilterHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-user-timeline-filter">POST <code>/user/timeline/filter</code></h3>
 
 <table>
@@ -2389,6 +2366,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTimelineFilterHandler%22">postTimelineFilterHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-user-timeline-filter">GET <code>/user/timeline/filter</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/timeline/filter</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22">getTimelineFilterHandler</a></td>
 </tr>
 </tbody>
 </table>
