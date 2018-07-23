@@ -609,8 +609,6 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 	}
 	n.PipelineName = pip.Name
 
-	log.Info("saveNodeByPipeline> pipname: %s", n.PipelineName)
-
 	// Save node in pipeline node map
 	if _, ok := (*dict)[n.PipelineID]; !ok {
 		(*dict)[n.PipelineID] = []*sdk.WorkflowNode{}
