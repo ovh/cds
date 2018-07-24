@@ -112,7 +112,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 		sort.Strings(ancestors)
 		entry.DependsOn = ancestors
-		entry.PipelineName = w.Pipelines[n.PipelineID].Name
+		entry.PipelineName = n.PipelineName
 		conditions := []sdk.WorkflowNodeCondition{}
 		for _, c := range n.Context.Conditions.PlainConditions {
 			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
