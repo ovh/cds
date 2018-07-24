@@ -135,9 +135,9 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		client := http.DefaultClient
-		client.Timeout = 10 * time.Minute
+		client.Timeout = 30 * time.Minute
 
-		resp, errDo := client.Do(req)
+		resp, errDo := http.DefaultClient.Do(req)
 		if errDo != nil {
 			sdk.Exit("worker cache push > cannot post worker cache push (Do): %s\n", errDo)
 		}
@@ -212,15 +212,22 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := wk.client.WorkflowCachePush(projectKey, vars["ref"], res); err != nil {
-		err = sdk.Error{
-			Message: "worker cache push > Cannot push cache : " + err.Error(),
-			Status:  http.StatusInternalServerError,
+	var errPush error
+	for i := 0; i < 10; i++ {
+		if errPush = wk.client.WorkflowCachePush(projectKey, vars["ref"], res); errPush == nil {
+			return
 		}
-		log.Error("%v", err)
-		writeError(w, r, err)
-		return
+		time.Sleep(3 * time.Second)
+		log.Error("worker cache push > cannot push cache (retry x%d) : %v", i, errPush)
 	}
+
+	err := sdk.Error{
+		Message: "worker cache push > Cannot push cache : " + errPush.Error(),
+		Status:  http.StatusInternalServerError,
+	}
+	log.Error("%v", err)
+	writeError(w, r, err)
+	return
 }
 
 func cmdCachePull(w *currentWorker) *cobra.Command {
