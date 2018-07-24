@@ -1,4 +1,4 @@
-package plugin_clair
+package main
 
 import (
 	"fmt"
