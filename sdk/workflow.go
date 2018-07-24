@@ -38,7 +38,7 @@ type Workflow struct {
 	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
 	Audits                  []AuditWorklflow       `json:"audits" db:"-"`
 	ToDelete                bool                   `json:"to_delete" db:"to_delete" cli:"-"`
-	Pipelines               map[int64]Pipeline     `json:"pipelines" db:"-" cli:"-"`
+	Pipelines               map[int64]Pipeline     `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
 }
 
 // WorkflowNotification represents notifications on a workflow
