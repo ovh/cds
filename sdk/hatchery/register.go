@@ -78,7 +78,7 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 			continue
 		}
 
-		if h.NeedRegistration(&models[k]) {
+		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
 			if err := h.CDSClient().WorkerModelBook(models[k].ID); err != nil {
 				log.Debug("hatchery> workerRegister> WorkerModelBook on model %s err: %v", models[k].Name, err)
 			} else {

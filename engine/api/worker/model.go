@@ -146,6 +146,7 @@ func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, erro
 		worker_model.group_id,
 		worker_model.last_registration,
 		worker_model.need_registration,
+		worker_model.check_registration,
 		worker_model.disabled,
 		worker_model.template,
 		worker_model.communication,
@@ -342,7 +343,7 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.Requirement
 				}
 			}
 			if !exist {
-				return updateAllToNeedRegistration(db)
+				return updateAllToCheckRegistration(db)
 			}
 		case sdk.OSArchRequirement:
 			nbOSArchReq++
@@ -366,18 +367,19 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.Requirement
 	return nil
 }
 
-func updateAllToNeedRegistration(db gorp.SqlExecutor) error {
-	query := `UPDATE worker_model SET need_registration = $1`
+// updateAllToCheckRegistration is like need_registration but without exclusive mode
+func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
+	query := `UPDATE worker_model SET check_registration = $1`
 	res, err := db.Exec(query, true)
 	if err != nil {
-		return sdk.WrapError(err, "updateAllToNeedRegistration>")
+		return sdk.WrapError(err, "updateAllToCheckRegistration>")
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return sdk.WrapError(err, "updateAllToNeedRegistration>")
+		return sdk.WrapError(err, "updateAllToCheckRegistration>")
 	}
-	log.Debug("updateAllToNeedRegistration> %d worker model(s) need registration", rows)
+	log.Debug("updateAllToCheckRegistration> %d worker model(s) check registration", rows)
 	return nil
 }
 
@@ -399,7 +401,7 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, info string
 
 // updateRegistration updates need_registration to false and last_registration time, reset err registration
 func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
-	query := `UPDATE worker_model SET need_registration=$1, last_registration = $2, nb_spawn_err=$3, last_spawn_err=$4 WHERE id = $5`
+	query := `UPDATE worker_model SET need_registration=$1, check_registration=$1, last_registration = $2, nb_spawn_err=$3, last_spawn_err=$4 WHERE id = $5`
 	res, err := db.Exec(query, false, time.Now(), 0, "", modelID)
 	if err != nil {
 		return sdk.WrapError(err, "updateRegistration>")
