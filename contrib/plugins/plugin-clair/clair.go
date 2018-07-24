@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/reference"
 	"github.com/jgsqware/clairctl/clair"
@@ -70,10 +68,6 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 	_ = plugin.SendLog(a, "Running analysis")
 	analysis := clair.Analyze(image, manifest)
 
-	img := strings.Replace(analysis.ImageName, "/", "-", -1)
-	if analysis.Tag != "" {
-		img = fmt.Sprintf("%s-%s", img, analysis.Tag)
-	}
 	json, err := jsoniter.Marshal(analysis)
 	if err != nil {
 		_ = plugin.SendLog(a, "Unable to push image on Clair: %s", err)
