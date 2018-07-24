@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -73,6 +74,23 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 	var network, networkAlias string
 	services := []string{}
+	if network == "" {
+		hn, err := os.Hostname()
+		if err != nil {
+			return "", err
+		}
+		nl, err := getContainerNetworks(h.dockerClient, hn)
+		if err != nil {
+			return "", err
+		}
+		if len(nl) == 0 {
+			return "", sdk.ErrNoVariable
+		}
+		network = nl[0]
+	}
+	if networkAlias == "" {
+		networkAlias = name
+	}
 
 	if spawnArgs.JobID > 0 {
 		for _, r := range spawnArgs.Requirements {
@@ -260,6 +278,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		env:          envs,
 	}
 
+	log.Debug("SpawnWorker> create container with network %s and networkAlias %s", network, networkAlias)
 	//start the worker
 	if err := h.createAndStartContainer(args, spawnArgs); err != nil {
 		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.ModelDocker.Image, err)
@@ -600,4 +619,17 @@ func (h *HatcherySwarm) NeedRegistration(m *sdk.Model) bool {
 		return true
 	}
 	return false
+}
+
+func getContainerNetworks(client *docker.Client, containerID string) ([]string, error) {
+	var cj types.ContainerJSON
+	var err error
+	if cj, err = client.ContainerInspect(context.Background(), containerID); err != nil {
+		return nil, sdk.WrapError(err, "Unable to fetch container info")
+	}
+	nets := make([]string, 0, 4)
+	for name := range cj.NetworkSettings.Networks {
+		nets = append(nets, name)
+	}
+	return nets, nil
 }

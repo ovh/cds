@@ -134,6 +134,10 @@
   branch = "go1.10"
   source = "https://github.com/yesnault/docker-credential-helpers.git"
 
+[[override]]
+  name = "github.com/docker/docker"
+  source = "https://github.com/moby/moby.git"
+
 [[constraint]]
   name = "github.com/Microsoft/go-winio"
   version = "0.4.7"
