@@ -24,7 +24,7 @@ func (wk *currentWorker) serviceHandler(w http.ResponseWriter, r *http.Request) 
 		log.Info("serviceHandler> Getting service configuration...")
 		resp, code, lasterr = sdk.Request("GET", uri, nil)
 		if lasterr == nil && code < 300 {
-			writeJSON(w, resp, http.StatusOK)
+			writeByteArray(w, resp, http.StatusOK)
 			return
 		}
 		log.Warning("serviceHandler> Cannot get serviceconfiguration: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)

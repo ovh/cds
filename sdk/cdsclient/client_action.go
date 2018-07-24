@@ -41,7 +41,7 @@ func (c *client) ActionList() ([]sdk.Action, error) {
 	return actions, nil
 }
 
-func (c *client) ActionAddPlugin(file io.Reader, filePath string) error {
+func (c *client) ActionAddPlugin(file io.Reader, filePath string, update bool) error {
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -58,6 +58,9 @@ func (c *client) ActionAddPlugin(file io.Reader, filePath string) error {
 		return err
 	}
 	method := "POST"
+	if update {
+		method = "PUT"
+	}
 
 	mods := []RequestModifier{
 		func(r *http.Request) {

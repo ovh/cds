@@ -5,8 +5,8 @@ VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 TARGET_DIR = ./dist
 TARGET_BINARY = cds-
 TARGET_LDFLAGS = -ldflags "-X main.VERSION=$(VERSION)"
-TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
+TARGET_OS = $(if ${OS},${OS},linux)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64)
 
 GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter

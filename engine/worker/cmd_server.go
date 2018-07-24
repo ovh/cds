@@ -69,6 +69,12 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	return int(port), nil
 }
 
+func writeByteArray(w http.ResponseWriter, data []byte, status int) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write(data)
+}
+
 func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 	b, _ := json.Marshal(data)
 	w.Header().Add("Content-Type", "application/json")
