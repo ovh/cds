@@ -664,6 +664,7 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
 	}
+	report.Add(nodeRun)
 
 	return report, nil
 }

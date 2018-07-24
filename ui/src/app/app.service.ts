@@ -6,6 +6,7 @@ import {first} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
 import {Broadcast, BroadcastEvent} from './model/broadcast.model';
 import {Event, EventType} from './model/event.model';
+import {PipelineStatus} from './model/pipeline.model';
 import {LoadOpts} from './model/project.model';
 import {TimelineFilter} from './model/timeline.model';
 import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
@@ -15,6 +16,7 @@ import {BroadcastStore} from './service/broadcast/broadcast.store';
 import {PipelineStore} from './service/pipeline/pipeline.store';
 import {ProjectStore} from './service/project/project.store';
 import {ActionStore, RouterService, TimelineStore} from './service/services.module';
+import {WorkflowRunService} from './service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from './service/workflow/workflow.event.store';
 import {WorkflowStore} from './service/workflow/workflow.store';
 import {ToastService} from './shared/toast/ToastService';
@@ -32,7 +34,7 @@ export class AppService {
                 private _appStore: ApplicationStore, private _authStore: AuthentificationStore, private _actionStore: ActionStore,
                 private _translate: TranslateService, private _pipStore: PipelineStore, private _workflowEventStore: WorkflowEventStore,
                 private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _timelineStore: TimelineStore,
-                private _toast: ToastService) {
+                private _toast: ToastService, private _workflowRunService: WorkflowRunService) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
             this.filter = f;
@@ -257,7 +259,18 @@ export class AppService {
             case EventType.RUN_WORKFLOW_NODE:
                 if (this.routeParams['number'] === event.workflow_run_num.toString()) {
                     let wnr = WorkflowNodeRun.fromEventRunWorkflowNode(event);
-                    this._workflowEventStore.broadcastNodeRunEvents(wnr);
+                    if (PipelineStatus.isDone(wnr.status)) {
+                        // Usefull to load tests and artifacts
+                        this._workflowRunService.getWorkflowNodeRun(
+                            event.project_key,
+                            event.workflow_name,
+                            wnr.num,
+                            wnr.id
+                        ).subscribe((wfNodeRun) => this._workflowEventStore.broadcastNodeRunEvents(wfNodeRun));
+                    } else {
+                        this._workflowEventStore.broadcastNodeRunEvents(wnr);
+                    }
+
                 }
                 break;
         }
