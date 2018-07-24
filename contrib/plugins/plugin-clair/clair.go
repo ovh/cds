@@ -22,7 +22,7 @@ type ClairPlugin struct {
 
 //Name return plugin name. It must me the same as the binary file
 func (d ClairPlugin) Name() string {
-	return "plugin-clairctl"
+	return "plugin-clair"
 }
 
 //Description explains the purpose of the plugin
@@ -72,7 +72,7 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 
 	img := strings.Replace(analysis.ImageName, "/", "-", -1)
 	if analysis.Tag != "" {
-		img += "-" + analysis.Tag
+		img = fmt.Sprintf("%s-%s", img, analysis.Tag)
 	}
 	json, err := jsoniter.Marshal(analysis)
 	if err != nil {
@@ -83,7 +83,7 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 	return plugin.Success
 }
 
-func main() {
+func main() { // nolint
 	plugin.Main(&ClairPlugin{})
 }
 

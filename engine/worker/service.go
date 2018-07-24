@@ -31,5 +31,4 @@ func (wk *currentWorker) serviceHandler(w http.ResponseWriter, r *http.Request) 
 		time.Sleep(5 * time.Second)
 	}
 	writeError(w, r, fmt.Errorf("serviceHandler> Unable to get service configuration"))
-	return
 }
