@@ -227,7 +227,6 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 	}
 	log.Error("%v", err)
 	writeError(w, r, err)
-	return
 }
 
 func cmdCachePull(w *currentWorker) *cobra.Command {
