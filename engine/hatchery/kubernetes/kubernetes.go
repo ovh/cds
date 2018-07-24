@@ -186,11 +186,6 @@ func (*HatcheryKubernetes) ModelType() string {
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	for _, r := range requirements {
-		if r.Type == sdk.ServiceRequirement {
-			return false
-		}
-	}
 	return true
 }
 
@@ -304,7 +299,7 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 	}
 
 	var gracePeriodSecs int64
-	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&apiv1.Pod{
+	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
@@ -332,7 +327,57 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 				},
 			},
 		},
-	})
+	}
+
+	var services []sdk.Requirement
+	for _, req := range spawnArgs.Requirements {
+		if req.Type == sdk.ServiceRequirement {
+			services = append(services, req)
+		}
+	}
+
+	if len(services) > 0 {
+		podSchema.Spec.HostAliases = make([]apiv1.HostAlias, 1)
+		podSchema.Spec.HostAliases[0] = apiv1.HostAlias{IP: "127.0.0.1", Hostnames: make([]string, len(services)+1)}
+		podSchema.Spec.HostAliases[0].Hostnames[0] = "worker"
+	}
+
+	for i, serv := range services {
+		//name= <alias> => the name of the host put in /etc/hosts of the worker
+		//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
+		tuple := strings.Split(serv.Value, " ")
+		img := tuple[0]
+
+		servContainer := apiv1.Container{
+			Name:  fmt.Sprintf("service-%d-%s", serv.ID, serv.Name),
+			Image: img,
+		}
+
+		if len(tuple) > 1 {
+			servContainer.Env = make([]apiv1.EnvVar, 0, len(tuple)-1)
+			for _, servEnv := range tuple[1:] {
+				envSplitted := strings.Split(servEnv, "=")
+				if len(envSplitted) < 2 {
+					continue
+				}
+				if envSplitted[0] == "CDS_SERVICE_MEMORY" {
+					servContainer.Resources = apiv1.ResourceRequirements{
+						Requests: apiv1.ResourceList{
+							apiv1.ResourceMemory: resource.MustParse(envSplitted[1]),
+						},
+					}
+					continue
+				}
+				servContainer.Env = append(servContainer.Env, apiv1.EnvVar{Name: envSplitted[0], Value: envSplitted[1]})
+			}
+			podSchema.ObjectMeta.Labels["service_job_id"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		}
+
+		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
+		podSchema.Spec.HostAliases[0].Hostnames[i+1] = serv.Name
+	}
+
+	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&podSchema)
 
 	log.Debug("hatchery> kubernetes> SpawnWorker> %s > Pod created", name)
 

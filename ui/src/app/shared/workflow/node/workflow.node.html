@@ -25,7 +25,6 @@
                  [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
                  [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
                  [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
-
                  *ngIf="(node.context.application && node.context.application.name) || (node.context.environment && node.context.environment.name)">
                 <!-- application name on a semantic ui ribbon -->
                 <div class="node application link" [class.all]="!node.context.environment && !node.context.project_platform" *ngIf="node.context.application && node.context.application.name">
