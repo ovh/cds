@@ -167,7 +167,7 @@ func GetExternalServices(j IJob, serviceType string) (sdk.ExternalService, error
 		return sdk.ExternalService{}, nil
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/services", j.WorkerHTTPPort()), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/services/%s", j.WorkerHTTPPort(), serviceType), nil)
 	if err != nil {
 		e := fmt.Errorf("get service from worker /services: %s", err)
 		Trace.Println(e)
