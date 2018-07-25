@@ -2,6 +2,7 @@ import {Component, Input, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {PipelineStatus} from '../../../../../../../model/pipeline.model';
 import {Stage} from '../../../../../../../model/stage.model';
+import {WorkflowNode} from '../../../../../../../model/workflow.model';
 import {WorkflowNodeJobRun, WorkflowRun} from '../../../../../../../model/workflow.run.model';
 
 @Component({
@@ -13,6 +14,7 @@ export class JobStepSummaryComponent implements OnInit {
 
     @Input() job: WorkflowNodeJobRun;
     @Input() workflowRun: WorkflowRun;
+    @Input() workflowNode: WorkflowNode;
     @Input() stage: Stage;
 
     open = false;
@@ -46,7 +48,8 @@ export class JobStepSummaryComponent implements OnInit {
                 actionId: this.job.job.pipeline_action_id,
                 selectedNodeRunId: this.job.workflow_node_run_id,
                 selectedNodeRunNum: this.workflowRun.num,
-                selectedNodeId: this._route.snapshot.queryParams['selectedNodeId']
+                selectedNodeId: this._route.snapshot.queryParams['selectedNodeId'],
+                name: this.workflowNode.name
             }
         });
     }
