@@ -137,7 +137,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		client := http.DefaultClient
 		client.Timeout = 30 * time.Minute
 
-		resp, errDo := http.DefaultClient.Do(req)
+		resp, errDo := client.Do(req)
 		if errDo != nil {
 			sdk.Exit("worker cache push > cannot post worker cache push (Do): %s\n", errDo)
 		}
