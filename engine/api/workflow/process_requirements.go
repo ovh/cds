@@ -30,7 +30,7 @@ func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Workflow
 			errm.Append(errValue)
 			continue
 		}
-		sdk.AddRequirement(&requirements, name, v.Type, value)
+		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
 	}
 
 	if errm.IsEmpty() {

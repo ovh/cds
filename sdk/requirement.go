@@ -102,8 +102,9 @@ type Requirement struct {
 }
 
 // AddRequirement append a requirement in a requirement array
-func AddRequirement(array *RequirementList, name string, requirementType string, value string) {
+func AddRequirement(array *RequirementList, id int64, name string, requirementType string, value string) {
 	requirements := append(*array, Requirement{
+		ID:    id,
 		Name:  name,
 		Value: value,
 		Type:  requirementType,
