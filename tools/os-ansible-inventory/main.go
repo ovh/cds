@@ -204,6 +204,8 @@ func render(l *ServerList, groupBy string, net string) error {
 var iniFile = `
 {{- range $key, $value := .Groups }}
 [{{$key}}]
-{{ range $value.Hosts}}{{ .Name }} ansible_connection=ssh ansible_host={{ .Address }} {{- range $ekey, $evalue := .Extra }} {{$ekey}}={{$evalue}} {{ end -}}{{ end }}
+{{ range $value.Hosts}}
+{{ .Name }} ansible_connection=ssh ansible_host={{ .Address }} {{- range $ekey, $evalue := .Extra }} {{$ekey}}={{$evalue}} {{ end -}}
+{{ end }}
 {{ end -}}
 `
