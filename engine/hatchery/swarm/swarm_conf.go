@@ -54,15 +54,15 @@ func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 
 	if h.IsInitialized() {
 		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
-
-		status := sdk.MonitoringStatusOK
-		images, err := h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
-		if err != nil {
-			log.Warning("%d> Status> Unable to list images: %s", h.Name, err)
-			status = sdk.MonitoringStatusAlert
+		for dockerName, dockerClient := range h.dockerClients {
+			status := sdk.MonitoringStatusOK
+			images, err := dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+			if err != nil {
+				log.Warning("hatchery> swarm> %s> Status> Unable to list images on %s: %s", h.Name, dockerName, err)
+				status = sdk.MonitoringStatusAlert
+			}
+			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images-" + dockerName, Value: fmt.Sprintf("%d", len(images)), Status: status})
 		}
-
-		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Images", Value: fmt.Sprintf("%d", len(images)), Status: status})
 	}
 
 	return m
