@@ -19,9 +19,9 @@ import (
 )
 
 //create the docker bridge
-func (h *HatcherySwarm) createNetwork(name string) error {
-	log.Debug("createNetwork> Create network %s", name)
-	_, err := h.dockerClient.NetworkCreate(context.Background(), name, types.NetworkCreate{
+func (h *HatcherySwarm) createNetwork(dockerClient *dockerClient, name string) error {
+	log.Debug("hatchery> swarm> createNetwork> Create network %s", name)
+	_, err := dockerClient.NetworkCreate(context.Background(), name, types.NetworkCreate{
 		Driver:         "bridge",
 		Internal:       false,
 		CheckDuplicate: true,
@@ -46,12 +46,12 @@ type containerArgs struct {
 }
 
 //shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
+func (h *HatcherySwarm) createAndStartContainer(dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
 	//Memory is set to 1GB by default
 	if cArgs.memory <= 4 {
 		cArgs.memory = 1024
 	}
-	log.Debug("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
+	log.Info("hatchery> swarm> createAndStartContainer> Create container %s on %s from %s (memory=%dMB)", cArgs.name, dockerClient.name, cArgs.image, cArgs.memory)
 
 	var exposedPorts nat.PortSet
 
@@ -89,40 +89,40 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs, spawnArgs h
 		}
 	}
 
-	// ensure that image exists for register
-	if spawnArgs.RegisterOnly {
-		var images []types.ImageSummary
-		var errl error
-		images, errl = h.dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
-		if errl != nil {
-			log.Warning("createAndStartContainer> Unable to list images: %s", errl)
-		}
+	// Check the images to know if we had to pull or not
+	images, errl := dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+	if errl != nil {
+		log.Warning("createAndStartContainer> Unable to list images: %s", errl)
+	}
 
-		var imageFound bool
-	checkImage:
-		for _, img := range images {
-			for _, t := range img.RepoTags {
-				if cArgs.image == t {
-					imageFound = true
-					break checkImage
-				}
-			}
-		}
-
-		if !imageFound {
-			if err := h.pullImage(cArgs.image, timeoutPullImage); err != nil {
-				return sdk.WrapError(err, "createAndStartContainer> Unable to pull image %s", cArgs.image)
+	var imageFound bool
+checkImage:
+	for _, img := range images {
+		for _, t := range img.RepoTags {
+			if cArgs.image == t {
+				imageFound = true
+				break checkImage
 			}
 		}
 	}
 
-	c, err := h.dockerClient.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, name)
+	if strings.HasSuffix(cArgs.image, ":latest") {
+		imageFound = false
+	}
+
+	if !imageFound {
+		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage); err != nil {
+			return sdk.WrapError(err, "createAndStartContainer> Unable to pull image %s on %s", cArgs.image, dockerClient.name)
+		}
+	}
+
+	c, err := dockerClient.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, name)
 	if err != nil {
 		return sdk.WrapError(err, "createAndStartContainer> Unable to create container %s", name)
 	}
 
-	if err := h.dockerClient.ContainerStart(context.Background(), c.ID, types.ContainerStartOptions{}); err != nil {
-		return sdk.WrapError(err, "createAndStartContainer> Unable to start container %v %s", c.ID[:12])
+	if err := dockerClient.ContainerStart(context.Background(), c.ID, types.ContainerStartOptions{}); err != nil {
+		return sdk.WrapError(err, "createAndStartContainer> Unable to start container on %s: %s", dockerClient.name, c.ID[:12])
 	}
 	return nil
 }
