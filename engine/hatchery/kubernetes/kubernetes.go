@@ -43,7 +43,10 @@ func (h *HatcheryKubernetes) Init() error {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
 
-	go h.routines(context.Background())
+	sdk.GoRoutine("hatchery kubernetes routines", func() {
+		h.routines(context.Background())
+	})
+
 	return nil
 }
 
