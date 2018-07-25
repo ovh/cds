@@ -100,6 +100,7 @@ type Model struct {
 	RegisteredArch         string              `json:"registered_arch"  db:"-" cli:"-"`
 	NeedRegistration       bool                `json:"need_registration"  db:"need_registration" cli:"-"`
 	LastRegistration       time.Time           `json:"last_registration"  db:"last_registration" cli:"-"`
+	CheckRegistration      bool                `json:"check_registration"  db:"check_registration" cli:"-"`
 	UserLastModified       time.Time           `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
 	CreatedBy              User                `json:"created_by" db:"-" cli:"-"`
 	Provision              int64               `json:"provision" db:"provision" cli:"provision"`

@@ -300,6 +300,19 @@
             <h3>{{'worker_model_last_modified' | translate}}</h3>
               {{workerModel.user_last_modified}}
           </div>
+          <div class="field" *ngIf="workerModel.last_registration !== ''">
+            <h3>{{'worker_model_last_registration' | translate}}</h3>
+              {{workerModel.last_registration}}
+          </div>
+          <div class="field">
+            <h3>Registration infos</h3>
+            <div>
+              Need registration : {{workerModel.need_registration}}
+            </div>
+            <div>
+              Check registration : {{workerModel.check_registration}}
+            </div>
+          </div>
         </div>
 
       </div>

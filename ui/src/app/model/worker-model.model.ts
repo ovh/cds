@@ -16,6 +16,9 @@ export class WorkerModel {
     owner_id: number;
     group_id: number;
     restricted: boolean;
+    check_registration: boolean;
+    need_registration: boolean;
+    last_registration: string;
     group: Group;
     is_official: boolean;
     is_deprecated: boolean;
