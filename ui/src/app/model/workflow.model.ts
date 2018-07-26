@@ -675,6 +675,10 @@ export class WorkflowNode {
     constructor() {
         this.context = new WorkflowNodeContext();
     }
+
+    isLinkedToRepo(): boolean {
+      return this.context.application_id === 0 || !this.context.application || !this.context.application.repository_fullname;
+    }
 }
 
 export class WorkflowPipelineNameImpact {

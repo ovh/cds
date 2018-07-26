@@ -24,6 +24,7 @@ export class ParameterListComponent extends Table {
         } else {
             this._parameters = newP;
         }
+        this.data = this.getDataForCurrentPage();
     }
     get parameters() {
         return this._parameters;
@@ -41,6 +42,7 @@ export class ParameterListComponent extends Table {
 
     public ready = false;
     public parameterTypes: string[];
+    public data: Array<any> = [];
 
     private _parameters: Array<Parameter>;
 
@@ -65,7 +67,14 @@ export class ParameterListComponent extends Table {
     }
 
     getData(): any[] {
-        return this.parameters;
+        if (!this.parameters) {
+            return [];
+        }
+
+        return this.parameters.map((p) => {
+            p.ref = this.getRef(p);
+            return p;
+        });
     }
 
     /**
@@ -93,5 +102,4 @@ export class ParameterListComponent extends Table {
         }
         return null;
     }
-
 }
