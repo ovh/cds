@@ -244,12 +244,10 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			want: sdk.Workflow{
 				Description: "this is my description",
 				Root: &sdk.WorkflowNode{
-					Name: "pipeline",
-					Ref:  "pipeline",
-					Pipeline: sdk.Pipeline{
-						Name: "pipeline",
-					},
-					Context: &sdk.WorkflowNodeContext{},
+					Name:         "pipeline",
+					Ref:          "pipeline",
+					PipelineName: "pipeline",
+					Context:      &sdk.WorkflowNodeContext{},
 					Hooks: []sdk.WorkflowNodeHook{
 						{
 							WorkflowHookModel: sdk.WorkflowHookModel{
@@ -295,20 +293,16 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			wantErr: false,
 			want: sdk.Workflow{
 				Root: &sdk.WorkflowNode{
-					Name: "root",
-					Ref:  "root",
-					Pipeline: sdk.Pipeline{
-						Name: "pipeline-root",
-					},
-					Context: &sdk.WorkflowNodeContext{},
+					Name:         "root",
+					Ref:          "root",
+					PipelineName: "pipeline-root",
+					Context:      &sdk.WorkflowNodeContext{},
 					Triggers: []sdk.WorkflowNodeTrigger{
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
-								Name: "child",
-								Ref:  "child",
-								Pipeline: sdk.Pipeline{
-									Name: "pipeline-child",
-								},
+								Name:         "child",
+								Ref:          "child",
+								PipelineName: "pipeline-child",
 								Context: &sdk.WorkflowNodeContext{
 									Mutex: true,
 								},
@@ -336,21 +330,17 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			wantErr: false,
 			want: sdk.Workflow{
 				Root: &sdk.WorkflowNode{
-					Name: "root",
-					Ref:  "root",
-					Pipeline: sdk.Pipeline{
-						Name: "pipeline-root",
-					},
-					Context: &sdk.WorkflowNodeContext{},
+					Name:         "root",
+					Ref:          "root",
+					PipelineName: "pipeline-root",
+					Context:      &sdk.WorkflowNodeContext{},
 					Triggers: []sdk.WorkflowNodeTrigger{
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
-								Name: "child",
-								Ref:  "child",
-								Pipeline: sdk.Pipeline{
-									Name: "pipeline-child",
-								},
-								Context: &sdk.WorkflowNodeContext{},
+								Name:         "child",
+								Ref:          "child",
+								PipelineName: "pipeline-child",
+								Context:      &sdk.WorkflowNodeContext{},
 							},
 						},
 					},
@@ -379,31 +369,25 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			wantErr: false,
 			want: sdk.Workflow{
 				Root: &sdk.WorkflowNode{
-					Name: "root",
-					Ref:  "root",
-					Pipeline: sdk.Pipeline{
-						Name: "pipeline-root",
-					},
-					Context: &sdk.WorkflowNodeContext{},
+					Name:         "root",
+					Ref:          "root",
+					PipelineName: "pipeline-root",
+					Context:      &sdk.WorkflowNodeContext{},
 					Triggers: []sdk.WorkflowNodeTrigger{
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
-								Name: "first",
-								Ref:  "first",
-								Pipeline: sdk.Pipeline{
-									Name: "pipeline-child",
-								},
-								Context: &sdk.WorkflowNodeContext{},
+								Name:         "first",
+								Ref:          "first",
+								PipelineName: "pipeline-child",
+								Context:      &sdk.WorkflowNodeContext{},
 
 								Triggers: []sdk.WorkflowNodeTrigger{
 									{
 										WorkflowDestNode: sdk.WorkflowNode{
-											Name: "second",
-											Ref:  "second",
-											Pipeline: sdk.Pipeline{
-												Name: "pipeline-child",
-											},
-											Context: &sdk.WorkflowNodeContext{},
+											Name:         "second",
+											Ref:          "second",
+											PipelineName: "pipeline-child",
+											Context:      &sdk.WorkflowNodeContext{},
 										},
 									},
 								},
@@ -463,31 +447,25 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			wantErr: false,
 			want: sdk.Workflow{
 				Root: &sdk.WorkflowNode{
-					Name: "A",
-					Ref:  "A",
-					Pipeline: sdk.Pipeline{
-						Name: "pipeline",
-					},
-					Context: &sdk.WorkflowNodeContext{},
+					Name:         "A",
+					Ref:          "A",
+					PipelineName: "pipeline",
+					Context:      &sdk.WorkflowNodeContext{},
 					Triggers: []sdk.WorkflowNodeTrigger{
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
-								Name: "B",
-								Ref:  "B",
-								Pipeline: sdk.Pipeline{
-									Name: "pipeline",
-								},
-								Context: &sdk.WorkflowNodeContext{},
+								Name:         "B",
+								Ref:          "B",
+								PipelineName: "pipeline",
+								Context:      &sdk.WorkflowNodeContext{},
 							},
 						},
 						{
 							WorkflowDestNode: sdk.WorkflowNode{
-								Name: "C",
-								Ref:  "C",
-								Pipeline: sdk.Pipeline{
-									Name: "pipeline",
-								},
-								Context: &sdk.WorkflowNodeContext{},
+								Name:         "C",
+								Ref:          "C",
+								PipelineName: "pipeline",
+								Context:      &sdk.WorkflowNodeContext{},
 							},
 						},
 					},
@@ -522,32 +500,26 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						Triggers: []sdk.WorkflowNodeJoinTrigger{
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "D",
-									Ref:  "D",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
-									Context: &sdk.WorkflowNodeContext{},
+									Name:         "D",
+									Ref:          "D",
+									PipelineName: "pipeline",
+									Context:      &sdk.WorkflowNodeContext{},
 								},
 							},
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "E",
-									Ref:  "E",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
-									Context: &sdk.WorkflowNodeContext{},
+									Name:         "E",
+									Ref:          "E",
+									PipelineName: "pipeline",
+									Context:      &sdk.WorkflowNodeContext{},
 								},
 							},
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "F",
-									Ref:  "F",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
-									Context: &sdk.WorkflowNodeContext{},
+									Name:         "F",
+									Ref:          "F",
+									PipelineName: "pipeline",
+									Context:      &sdk.WorkflowNodeContext{},
 								},
 							},
 						},
@@ -557,12 +529,10 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						Triggers: []sdk.WorkflowNodeJoinTrigger{
 							{
 								WorkflowDestNode: sdk.WorkflowNode{
-									Name: "G",
-									Ref:  "G",
-									Pipeline: sdk.Pipeline{
-										Name: "pipeline",
-									},
-									Context: &sdk.WorkflowNodeContext{},
+									Name:         "G",
+									Ref:          "G",
+									PipelineName: "pipeline",
+									Context:      &sdk.WorkflowNodeContext{},
 								},
 							},
 						},
@@ -579,11 +549,9 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			wantErr: false,
 			want: sdk.Workflow{
 				Root: &sdk.WorkflowNode{
-					Name: "pipeline",
-					Ref:  "pipeline",
-					Pipeline: sdk.Pipeline{
-						Name: "pipeline",
-					},
+					Name:         "pipeline",
+					Ref:          "pipeline",
+					PipelineName: "pipeline",
 					Context: &sdk.WorkflowNodeContext{
 						ProjectPlatform: &sdk.ProjectPlatform{
 							Name: "platform",

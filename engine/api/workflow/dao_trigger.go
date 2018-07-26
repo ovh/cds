@@ -1,20 +1,17 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // insertTrigger inserts a trigger
 func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
-	defer func() {
-		log.Debug("insertTrigger> insert or update node %d (%s) on %s trigger %d", node.ID, node.Ref, node.Pipeline.Name, trigger.ID)
-	}()
 	trigger.WorkflowNodeID = node.ID
 	trigger.ID = 0
 	trigger.WorkflowDestNodeID = 0
@@ -42,7 +39,7 @@ func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node
 }
 
 // LoadTriggers loads trigger from a node
-func loadTriggers(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeTrigger, error) {
+func loadTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeTrigger, error) {
 	dbtriggers := []NodeTrigger{}
 	if _, err := db.Select(&dbtriggers, "select * from workflow_node_trigger where workflow_node_id = $1 ORDER by workflow_node_trigger.id ASC", node.ID); err != nil {
 		if err == sql.ErrNoRows {
@@ -60,7 +57,7 @@ func loadTriggers(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *
 		t := sdk.WorkflowNodeTrigger(dbt)
 		if t.WorkflowDestNodeID != 0 {
 			//Load destination node
-			dest, err := loadNode(db, store, proj, w, t.WorkflowDestNodeID, u, opts)
+			dest, err := loadNode(ctx, db, store, proj, w, t.WorkflowDestNodeID, u, opts)
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadTriggers> Unable to load destination node %d", t.WorkflowDestNodeID)
 			}

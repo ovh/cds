@@ -2,6 +2,7 @@ package hatchery
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -53,8 +54,8 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 		if models[k].Type != h.ModelType() {
 			continue
 		}
-
-		if atomic.LoadInt64(&nbRegisteringWorkerModels) > 5 {
+		maxRegistration := int64(math.Floor(float64(h.Configuration().Provision.MaxWorker) / 4))
+		if atomic.LoadInt64(&nbRegisteringWorkerModels) > maxRegistration {
 			log.Debug("hatchery> workerRegister> max registering worker reached")
 			return nil
 		}
@@ -77,7 +78,7 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 			continue
 		}
 
-		if h.NeedRegistration(&models[k]) {
+		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
 			if err := h.CDSClient().WorkerModelBook(models[k].ID); err != nil {
 				log.Debug("hatchery> workerRegister> WorkerModelBook on model %s err: %v", models[k].Name, err)
 			} else {

@@ -60,11 +60,13 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -154,11 +156,13 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		ProjectKey:    proj.Key,
 		HistoryLength: 25,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},
@@ -250,11 +254,13 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
+						PipelineID:   pip.ID,
+						PipelineName: pip.Name,
 					},
 				},
 			},

@@ -33,6 +33,16 @@ For example if you want to launch the pipeline if the value of `cds_status` is `
 return cds_status == "Success" and (git_branch == "master" or cds_manual == "true")
 ```
 
+Another use case is to enable auto-prod only if you are in a work week day (not saterday and sunday):
+```lua
+return os.date("%w") < "5"
+```
+
+Or if you also want to block deployment on your production after 6pm:
+```lua
+return os.date("%w") < "5" and os.date("%H") < "18"
+```
+
 ![Pipeline basic run conditions](/images/workflow_pipeline_run_conditions_advanced.png)
 
 You can also use regular expression in your Lua condition, for instance:
@@ -45,4 +55,3 @@ return re.match(cds_application, "abc.*") == cds_application
 ```
 
 Functions `re.find` , `re.gsub`, `re.match`, `re.gmatch` are available. These functions have the same API as Lua pattern match. Under the hood, it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.
-

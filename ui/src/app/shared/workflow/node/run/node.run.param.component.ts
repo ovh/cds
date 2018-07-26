@@ -47,7 +47,10 @@ export class WorkflowNodeRunParamComponent {
             this._nodeToRun = cloneDeep(data);
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
-                this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
+                if ((!this.nodeRun || !this.nodeRun.payload ) &&
+                    (!this.workflowRun || !this.workflowRun.nodes[this.workflowRun.workflow.root.id])) {
+                        this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
+                }
                 this.linkedToRepo = this._nodeToRun.context.application != null
                     && this._nodeToRun.context.application.repository_fullname != null;
             }
@@ -267,12 +270,14 @@ export class WorkflowNodeRunParamComponent {
     }
 
     private updateDefaultPipelineParameters() {
+        let pipToRun = Workflow.getPipeline(this.workflow, this._nodeToRun);
+
         if (this._nodeToRun.context) {
             this._nodeToRun.context.default_pipeline_parameters =
-                Pipeline.mergeParams(this._nodeToRun.pipeline.parameters, this._nodeToRun.context.default_pipeline_parameters);
+                Pipeline.mergeParams(pipToRun.parameters, this._nodeToRun.context.default_pipeline_parameters);
         } else {
             this._nodeToRun.context = new WorkflowNodeContext();
-            this._nodeToRun.context.default_pipeline_parameters = this._nodeToRun.pipeline.parameters;
+            this._nodeToRun.context.default_pipeline_parameters = pipToRun.parameters;
         }
 
     }

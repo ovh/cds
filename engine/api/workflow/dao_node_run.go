@@ -577,7 +577,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 	var nodeRun sdk.WorkflowNodeRun
 	var rr = NodeRun{}
 	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
-		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run on workflow %d node %s", query, workflowID, n.Name)
+		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run on workflow %d node %s", workflowID, n.Name)
 	}
 	pNodeRun, errF := fromDBNodeRun(rr, LoadRunOptions{})
 	if errF != nil {

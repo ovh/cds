@@ -204,7 +204,7 @@ func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 
 	var pipName, appName, envName string
 
-	pipName = node.Pipeline.Name
+	pipName = node.PipelineName
 	appName = node.Context.Application.Name
 	eventWNR.RepositoryManagerName = node.Context.Application.VCSServer
 	eventWNR.RepositoryFullName = node.Context.Application.RepositoryFullname

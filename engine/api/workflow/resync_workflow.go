@@ -33,6 +33,9 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 		}
 	}
 
+	//Resync pipelines
+	wr.Workflow.Pipelines = wf.Pipelines
+
 	return UpdateWorkflowRun(nil, db, wr)
 }
 
@@ -47,7 +50,6 @@ func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
 
 	node.Name = newNode.Name
 	node.Context = newNode.Context
-	node.Pipeline = newNode.Pipeline
 
 	for i := range node.Triggers {
 		t := &node.Triggers[i]

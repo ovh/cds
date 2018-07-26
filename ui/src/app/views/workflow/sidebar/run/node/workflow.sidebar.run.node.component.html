@@ -9,7 +9,7 @@
               <i class="pencil icon float"></i>
             </a>
             <div class="sub header">
-              <span>{{ 'common_pipeline' | translate }} : {{node.pipeline.name}}</span>
+              <span>{{ 'common_pipeline' | translate }} : {{node.pipeline_name}}</span>
             </div>
         </div>
     </h3>
@@ -82,6 +82,7 @@
                 <app-stage-step-summary
                   [stage]="stage"
                   [workflowRun]="currentWorkflowRun"
+                  [workflowNode]="node"
                   [workflowNodeRun]="currentWorkflowNodeRun">
                 </app-stage-step-summary>
               </ng-container>

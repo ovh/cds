@@ -136,7 +136,8 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
 		},
 	}
 

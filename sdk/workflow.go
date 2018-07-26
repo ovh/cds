@@ -38,6 +38,7 @@ type Workflow struct {
 	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
 	Audits                  []AuditWorklflow       `json:"audits" db:"-"`
 	ToDelete                bool                   `json:"to_delete" db:"to_delete" cli:"-"`
+	Pipelines               map[int64]Pipeline     `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
 }
 
 // WorkflowNotification represents notifications on a workflow
@@ -371,31 +372,16 @@ func (w *Workflow) GetPipelines() []Pipeline {
 		return nil
 	}
 
-	res := w.Root.GetPipelines()
-	for _, j := range w.Joins {
-		for _, t := range j.Triggers {
-			res = append(res, t.WorkflowDestNode.GetPipelines()...)
-		}
+	res := make([]Pipeline, len(w.Pipelines))
+	var i int
+	for _, p := range w.Pipelines {
+		res[i] = p
+		i++
 	}
-
-	withoutDuplicates := []Pipeline{}
-	for _, a := range res {
-		var found bool
-		for _, d := range withoutDuplicates {
-			if a.Name == d.Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			withoutDuplicates = append(withoutDuplicates, a)
-		}
-	}
-
-	return withoutDuplicates
+	return res
 }
 
-// GetRepositoriesFullName returns the list of repositories from applications
+// GetRepositories returns the list of repositories from applications
 func (w *Workflow) GetRepositories() []string {
 	apps := w.GetApplications()
 	repos := map[string]struct{}{}
@@ -502,17 +488,18 @@ type WorkflowNodeJoinTrigger struct {
 
 //WorkflowNode represents a node in w workflow tree
 type WorkflowNode struct {
-	ID               int64                 `json:"id" db:"id"`
-	Name             string                `json:"name" db:"name"`
-	Ref              string                `json:"ref,omitempty" db:"-"`
-	WorkflowID       int64                 `json:"workflow_id" db:"workflow_id"`
-	PipelineID       int64                 `json:"pipeline_id" db:"pipeline_id"`
-	Pipeline         Pipeline              `json:"pipeline" db:"-"`
-	Context          *WorkflowNodeContext  `json:"context" db:"-"`
-	TriggerSrcID     int64                 `json:"-" db:"-"`
-	TriggerJoinSrcID int64                 `json:"-" db:"-"`
-	Hooks            []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
-	Triggers         []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+	ID                 int64                 `json:"id" db:"id"`
+	Name               string                `json:"name" db:"name"`
+	Ref                string                `json:"ref,omitempty" db:"-"`
+	WorkflowID         int64                 `json:"workflow_id" db:"workflow_id"`
+	PipelineID         int64                 `json:"pipeline_id" db:"pipeline_id"`
+	PipelineName       string                `json:"pipeline_name" db:"-"`
+	DeprecatedPipeline Pipeline              `json:"pipeline" db:"-"`
+	Context            *WorkflowNodeContext  `json:"context" db:"-"`
+	TriggerSrcID       int64                 `json:"-" db:"-"`
+	TriggerJoinSrcID   int64                 `json:"-" db:"-"`
+	Hooks              []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
+	Triggers           []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
 }
 
 // IsLinkedToRepo returns boolean to know if the node is linked to an application which is also linked to a repository
@@ -772,23 +759,8 @@ func (n *WorkflowNode) InvolvedApplications() []int64 {
 //InvolvedPipelines returns all pipelines used in the workflow
 func (n *WorkflowNode) InvolvedPipelines() []int64 {
 	res := []int64{}
-
-	if n.PipelineID == 0 {
-		n.PipelineID = n.Pipeline.ID
-	}
-	res = []int64{n.PipelineID}
-
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedPipelines()...)
-	}
-	return res
-}
-
-//GetPipelines returns all pipelines used in the workflow
-func (n *WorkflowNode) GetPipelines() []Pipeline {
-	res := []Pipeline{n.Pipeline}
-	for _, t := range n.Triggers {
-		res = append(res, t.WorkflowDestNode.GetPipelines()...)
 	}
 	return res
 }

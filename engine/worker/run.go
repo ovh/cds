@@ -155,7 +155,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 		return sdk.Result{
 			Status:  sdk.StatusFail.String(),
 			BuildID: buildID,
-			Reason:  "Unable to interpolate action parameters",
+			Reason:  err.Error(),
 		}
 	}
 	// Set the params

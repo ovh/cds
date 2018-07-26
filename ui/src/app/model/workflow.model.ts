@@ -30,6 +30,7 @@ export class Workflow {
     notifications: Array<WorkflowNotification>;
     from_repository: string;
     favorite: boolean;
+    pipelines: {[key: number]: Pipeline; };
 
     // UI params
     externalChange: boolean;
@@ -368,6 +369,10 @@ export class Workflow {
         return {found: false};
     }
 
+    static getPipeline(workflow: Workflow, node: WorkflowNode): Pipeline {
+        return workflow.pipelines[node.pipeline_id]
+    }
+
     static removeNodeInNotifications(workflow: Workflow, node: WorkflowNode): Workflow {
         if (!Array.isArray(workflow.notifications) || !workflow.notifications.length) {
             return workflow;
@@ -415,7 +420,6 @@ export class Workflow {
         this.root = new WorkflowNode();
     }
 
-
 }
 
 export class WorkflowNodeJoin {
@@ -449,7 +453,7 @@ export class WorkflowNode {
     ref: string;
     workflow_id: number;
     pipeline_id: number;
-    pipeline: Pipeline;
+    pipeline_name: string;
     context: WorkflowNodeContext;
     hooks: Array<WorkflowNodeHook>;
     triggers: Array<WorkflowNodeTrigger>;
@@ -653,10 +657,6 @@ export class WorkflowNode {
 
     static prepareRequestForAPI(n: WorkflowNode) {
         n.id = 0;
-        if (n.pipeline_id === 0 && n.pipeline) {
-            n.pipeline_id = n.pipeline.id;
-        }
-        delete n.pipeline;
         if (n.context.application && n.context.application.id > 0) {
             n.context.application_id = n.context.application.id;
             delete n.context.application;

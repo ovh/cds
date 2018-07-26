@@ -108,7 +108,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     }
 
     displayLogs() {
-        let pip = this.node.pipeline.name;
+        let pip = this.node.pipeline_name;
         this._router.navigate([
             '/project', this.project.key,
             'workflow', this.workflow.name,

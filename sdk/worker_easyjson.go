@@ -1497,6 +1497,8 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk9(in *jlexer.Lexer, out *Model) {
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.LastRegistration).UnmarshalJSON(data))
 			}
+		case "check_registration":
+			out.CheckRegistration = bool(in.Bool())
 		case "user_last_modified":
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.UserLastModified).UnmarshalJSON(data))
@@ -1705,6 +1707,16 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk9(out *jwriter.Writer, in Model) {
 			out.RawString(prefix)
 		}
 		out.Raw((in.LastRegistration).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"check_registration\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.CheckRegistration))
 	}
 	{
 		const prefix string = ",\"user_last_modified\":"

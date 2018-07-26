@@ -142,6 +142,9 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 		if err := UnmarshalBody(r, &newVar); err != nil {
 			return sdk.ErrWrongRequest
 		}
+		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
+			return sdk.ErrWrongRequest
+		}
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errEnv != nil {

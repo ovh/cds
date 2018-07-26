@@ -75,7 +75,7 @@ func uploadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 
 			client := http.DefaultClient
-			client.Timeout = 5 * time.Minute
+			client.Timeout = 30 * time.Minute
 
 			resp, errDo := client.Do(req)
 			if errDo != nil {

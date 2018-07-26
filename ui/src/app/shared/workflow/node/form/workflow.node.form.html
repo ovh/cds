@@ -3,7 +3,7 @@
         <div class="six wide field">
             <label>{{ 'workflow_root_context_pipeline' | translate}}</label>
             <ng-container *ngIf="node.id > 0;else editPipeline">
-                <div class="ui input">{{node.pipeline.name}}</div>
+                <div class="ui input">{{node.pipeline_name}}</div>
             </ng-container>
             <ng-template #editPipeline>
                 <sm-select

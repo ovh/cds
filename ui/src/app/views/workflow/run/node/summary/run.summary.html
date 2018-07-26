@@ -13,9 +13,9 @@
                         <div class="ui grid">
                             <div class="row">
                                 <div class="five wide column" title="{{ 'common_pipeline' | translate }}">
-                                    <a href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" *ngIf="node"
-                                    [queryParams]="{ workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline.name }">
-                                        <i class="sitemap icon"></i> {{node.pipeline.name + ' ' + nodeRun.num + '.' + nodeRun.subnumber}}
+                                    <a href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline_name]" *ngIf="node"
+                                    [queryParams]="{ workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline_name }">
+                                        <i class="sitemap icon"></i> {{node.pipeline_name + ' ' + nodeRun.num + '.' + nodeRun.subnumber}}
                                     </a>
                                 </div>
                                 <div class="five wide column centered" title="{{ 'common_pipeline_start_title' | translate }}">
@@ -31,7 +31,7 @@
                                 <div class="five wide column" title="{{'common_application' | translate}}">
                                     <ng-container *ngIf="node.context.application">
                                       <a href="#" [routerLink]="['/project', project.key, 'application', node.context.application.name]"
-                                          [queryParams]="{ workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline.name }">
+                                          [queryParams]="{ workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline_name }">
                                           <i class="rocket icon"></i> {{node.context.application.name}}
                                       </a>
                                     </ng-container>
@@ -39,7 +39,7 @@
                                 <div class="five wide column centered" title="{{ 'common_environment' | translate }}">
                                     <ng-container *ngIf="node.context.environment">
                                       <a href="#" [routerLink]="['/project', project.key]"
-                                          [queryParams]="{ tab: 'environments', envName: node.context.environment.name,workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline.name }">
+                                          [queryParams]="{ tab: 'environments', envName: node.context.environment.name,workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline_name }">
                                           <i class="tree icon"></i> {{node.context.environment.name}}
                                       </a>
                                     </ng-container>
