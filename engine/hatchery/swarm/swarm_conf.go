@@ -3,7 +3,6 @@ package swarm
 import (
 	"context"
 	"fmt"
-	"os"
 
 	types "github.com/docker/docker/api/types"
 
@@ -83,9 +82,6 @@ func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("API Token URL is mandatory")
 	}
 
-	if hconfig.MaxContainers <= 0 {
-		return fmt.Errorf("max-containers must be > 0")
-	}
 	if hconfig.WorkerTTL <= 0 {
 		return fmt.Errorf("worker-ttl must be > 0")
 	}
@@ -95,10 +91,6 @@ func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 
 	if hconfig.Name == "" {
 		return fmt.Errorf("please enter a name in your swarm hatchery configuration")
-	}
-
-	if os.Getenv("DOCKER_HOST") == "" {
-		return fmt.Errorf("Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
 	}
 
 	return nil
