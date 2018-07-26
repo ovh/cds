@@ -40,6 +40,7 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	r.HandleFunc("/tmpl", w.tmplHandler)
 	r.HandleFunc("/tag", w.tagHandler)
 	r.HandleFunc("/log", w.logHandler)
+	r.HandleFunc("/services/{type}", w.serviceHandler)
 	r.HandleFunc("/cache/{ref}/push", w.cachePushHandler)
 	r.HandleFunc("/cache/{ref}/pull", w.cachePullHandler)
 	r.HandleFunc("/key/{key}/install", w.keyInstallHandler)
@@ -66,6 +67,12 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	}()
 
 	return int(port), nil
+}
+
+func writeByteArray(w http.ResponseWriter, data []byte, status int) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_, _ = w.Write(data)
 }
 
 func writeJSON(w http.ResponseWriter, data interface{}, status int) {

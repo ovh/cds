@@ -1,9 +1,12 @@
 package cdsclient
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"path/filepath"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -36,6 +39,47 @@ func (c *client) ActionList() ([]sdk.Action, error) {
 		return nil, err
 	}
 	return actions, nil
+}
+
+func (c *client) ActionAddPlugin(file io.Reader, filePath string, update bool) error {
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, errc := writer.CreateFormFile("UploadFile", filepath.Base(filePath))
+	if errc != nil {
+		return errc
+	}
+
+	if _, err := io.Copy(part, file); err != nil {
+		return err
+	}
+
+	if err := writer.Close(); err != nil {
+		return err
+	}
+	method := "POST"
+	if update {
+		method = "PUT"
+	}
+
+	mods := []RequestModifier{
+		func(r *http.Request) {
+			r.Header.Set("Content-Type", writer.FormDataContentType())
+		},
+		func(r *http.Request) {
+			r.Header.Set("uploadfile", filePath)
+		},
+	}
+	_, _, code, err := c.Request(method, "/plugin", body, mods...)
+	if err != nil {
+		return err
+	}
+
+	if code > 400 {
+		return fmt.Errorf("HTTP Code %d", code)
+	}
+
+	return nil
 }
 
 func (c *client) ActionImport(content io.Reader, format string) error {

@@ -18,8 +18,10 @@ type Service struct {
 // ExternalService represents an external service
 type ExternalService struct {
 	Service
-	HealthPath     string `json:"health_path"`
-	HealthPort     int    `json:"health_port"`
-	URLWithoutPort string `json:"url_without_port"`
-	Port           int    `json:"port"`
+	HealthURL  string `json:"health_url"`
+	HealthPort string `json:"health_port"`
+	HealthPath string `json:"health_path"`
+	Port       string `json:"port"`
+	URL        string `json:"url"`
+	Path       string `json:"path"`
 }

@@ -159,9 +159,11 @@ type ProviderConfiguration struct {
 type ServiceConfiguration struct {
 	Name       string `toml:"name"`
 	URL        string `toml:"url"`
-	Port       int    `toml:"port"`
+	Port       string `toml:"port"`
+	Path       string `toml:"path"`
+	HealthURL  string `toml:"healthUrl"`
+	HealthPort string `toml:"healthPort"`
 	HealthPath string `toml:"healthPath"`
-	HealthPort int    `toml:"healthPort"`
 	Type       string `toml:"type"`
 }
 
@@ -633,12 +635,14 @@ func (a *API) Serve(ctx context.Context) error {
 			Service: sdk.Service{
 				Name:    s.Name,
 				Type:    s.Type,
-				HTTPURL: fmt.Sprintf("%s:%d", s.URL, s.Port),
+				HTTPURL: fmt.Sprintf("%s:%s%s", s.URL, s.Port, s.Path),
 			},
-			HealthPort:     s.HealthPort,
-			HealthPath:     s.HealthPath,
-			Port:           s.Port,
-			URLWithoutPort: s.URL,
+			HealthPort: s.HealthPort,
+			HealthPath: s.HealthPath,
+			HealthURL:  s.HealthURL,
+			URL:        s.URL,
+			Path:       s.Path,
+			Port:       s.Port,
 		}
 		externalServices = append(externalServices, serv)
 	}

@@ -430,6 +430,7 @@ func (api *API) InitRouter() {
 
 	// Engine µServices
 	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false)))
+	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)

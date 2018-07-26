@@ -147,9 +147,11 @@ Comming soon...`,
 		conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{
 			Name:       "sample-service",
 			URL:        "https://ovh.github.io",
-			Port:       443,
+			Port:       "443",
+			Path:       "/cds",
 			HealthPath: "/cds",
-			HealthPort: 443,
+			HealthPort: "443",
+			HealthURL:  "https://ovh.github.io",
 			Type:       "doc",
 		})
 		conf.Hatchery.Local.API.Token = conf.API.Auth.SharedInfraToken
