@@ -347,7 +347,6 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		if errReq != nil {
 			errs.Join(*errReq)
 		}
-		job.Action.Requirements = jobRequirements
 
 		// add requirements in job parameters, to use them as {{.job.requirement...}} in job
 		_, next = tracing.Span(ctx, "workflow.prepareRequirementsToNodeJobRunParameters")
@@ -372,6 +371,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 				Job: *job,
 			},
 		}
+		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
 
 		if !stage.Enabled || !wjob.Job.Enabled {
 			wjob.Status = sdk.StatusDisabled.String()
