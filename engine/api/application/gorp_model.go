@@ -15,11 +15,13 @@ import (
 type dbApplication sdk.Application
 type dbApplicationVariableAudit sdk.ApplicationVariableAudit
 type dbApplicationKey sdk.ApplicationKey
+type dbApplicationVulnerability sdk.Vulnerability
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbApplication{}, "application", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationVariableAudit{}, "application_variable_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationKey{}, "application_key", false))
+	gorpmapping.Register(gorpmapping.New(dbApplicationVulnerability{}, "application_vulnerability", true, "id"))
 }
 
 type sqlApplicationJSON struct {

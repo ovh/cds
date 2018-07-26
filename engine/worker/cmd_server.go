@@ -33,18 +33,20 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 
 	log.Info("Export variable HTTP server: %s", listener.Addr().String())
 	r := mux.NewRouter()
-	r.HandleFunc("/var", w.addBuildVarHandler)
+
 	r.HandleFunc("/artifacts", w.artifactsHandler)
-	r.HandleFunc("/upload", w.uploadHandler)
+	r.HandleFunc("/cache/{ref}/pull", w.cachePullHandler)
+	r.HandleFunc("/cache/{ref}/push", w.cachePushHandler)
 	r.HandleFunc("/download", w.downloadHandler)
-	r.HandleFunc("/tmpl", w.tmplHandler)
-	r.HandleFunc("/tag", w.tagHandler)
+	r.HandleFunc("/exit", w.exitHandler)
+	r.HandleFunc("/key/{key}/install", w.keyInstallHandler)
 	r.HandleFunc("/log", w.logHandler)
 	r.HandleFunc("/services/{type}", w.serviceHandler)
-	r.HandleFunc("/cache/{ref}/push", w.cachePushHandler)
-	r.HandleFunc("/cache/{ref}/pull", w.cachePullHandler)
-	r.HandleFunc("/key/{key}/install", w.keyInstallHandler)
-	r.HandleFunc("/exit", w.exitHandler)
+	r.HandleFunc("/tag", w.tagHandler)
+	r.HandleFunc("/tmpl", w.tmplHandler)
+	r.HandleFunc("/upload", w.uploadHandler)
+	r.HandleFunc("/var", w.addBuildVarHandler)
+	r.HandleFunc("/vulnerability", w.vulnerabilityHandler)
 
 	srv := &http.Server{
 		Handler:      r,
