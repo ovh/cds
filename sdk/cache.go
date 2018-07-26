@@ -79,12 +79,6 @@ func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
 }
 
 func tarWrite(cwd, path string, tw *tar.Writer, fi os.FileInfo) error {
-	filR, err := os.Open(path)
-	if err != nil {
-		return WrapError(err, "tarWrite> cannot open path")
-	}
-	defer filR.Close()
-
 	filename, err := filepath.Rel(cwd, path)
 	if err != nil {
 		return WrapError(err, "tarWrite> cannot find relative path")
@@ -101,15 +95,20 @@ func tarWrite(cwd, path string, tw *tar.Writer, fi os.FileInfo) error {
 		hdr.Typeflag = tar.TypeDir
 	}
 
+	// Useful to not copy files like socket or device files
+	if !fi.IsDir() && !fi.Mode().IsRegular() {
+		return nil
+	}
+
 	if fi.Mode()&os.ModeSymlink != 0 {
-		symlink, err := filepath.EvalSymlinks(path)
-		if err != nil {
-			return WrapError(err, "tarWrite> cannot get resolve path %s", path)
+		symlink, errEval := filepath.EvalSymlinks(path)
+		if errEval != nil {
+			return WrapError(errEval, "tarWrite> cannot get resolve path %s", path)
 		}
 
-		fil, err := os.Lstat(symlink)
-		if err != nil {
-			return WrapError(err, "tarWrite> cannot get resolve(lstat) link")
+		fil, errLs := os.Lstat(symlink)
+		if errLs != nil {
+			return WrapError(errLs, "tarWrite> cannot get resolve(lstat) link")
 		}
 
 		hdr.Size = fil.Size()
@@ -119,6 +118,12 @@ func tarWrite(cwd, path string, tw *tar.Writer, fi os.FileInfo) error {
 			return nil
 		}
 	}
+
+	filR, err := os.Open(path)
+	if err != nil {
+		return WrapError(err, "tarWrite> cannot open path")
+	}
+	defer filR.Close()
 
 	if err := tw.WriteHeader(hdr); err != nil {
 		return WrapError(err, "tarWrite> cannot write header")

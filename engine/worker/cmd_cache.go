@@ -149,7 +149,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("cache push HTTP error %v\n", err)
 			}
 			cdsError := sdk.DecodeError(body)
-			sdk.Exit("Error: http cod %d : %v\n", resp.StatusCode, cdsError)
+			sdk.Exit("Error: http code %d : %v\n", resp.StatusCode, cdsError)
 		}
 
 		fmt.Printf("Worker cache push with success (tag: %s)\n", args[0])
