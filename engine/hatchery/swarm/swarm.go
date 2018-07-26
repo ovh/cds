@@ -63,6 +63,7 @@ func (h *HatcherySwarm) Init() error {
 
 	} else {
 		for hostName, cfg := range h.Config.DockerEngines {
+			log.Info("hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
 			httpClient := new(http.Client)
 			if cfg.CertPath != "" {
 				options := tlsconfig.Options{
@@ -132,6 +133,10 @@ func (h *HatcherySwarm) Init() error {
 				name:           hostName,
 				pullImageMutex: &sync.Mutex{},
 			}
+		}
+		if len(h.dockerClients) == 0 {
+			log.Error("hatchery> swarm> no docker host available. Please check errors")
+			return fmt.Errorf("no docker engine available")
 		}
 	}
 
