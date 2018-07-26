@@ -542,7 +542,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	var vcsInfos vcsInfos
 	var errVcs error
-	vcsInfos, errVcs = getVCSInfos(db, store, p, w, gitValues, n, run, !isRoot, previousGitValues[tagGitRepository])
+	vcsInfos, errVcs = getVCSInfos(ctx, db, store, p, w, gitValues, n, run, !isRoot, previousGitValues[tagGitRepository])
 	if errVcs != nil {
 		if isRoot {
 			return report, false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")

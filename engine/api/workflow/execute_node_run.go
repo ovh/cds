@@ -757,7 +757,7 @@ type vcsInfos struct {
 	server     string
 }
 
-func getVCSInfos(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
+func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
 	var vcsInfos vcsInfos
 	vcsInfos.repository = gitValues[tagGitRepository]
 	vcsInfos.branch = gitValues[tagGitBranch]
@@ -770,6 +770,14 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *
 	if node.Context == nil || node.Context.Application == nil || node.Context.Application.VCSServer == "" {
 		return vcsInfos, nil
 	}
+
+	var end func()
+	ctx, end = tracing.Span(ctx, "workflow.getVCSInfos",
+		tracing.Tag("application", node.Context.Application.Name),
+		tracing.Tag("vcs_server", node.Context.Application.VCSServer),
+		tracing.Tag("vcs_repo", node.Context.Application.RepositoryFullname),
+	)
+	defer end()
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
 	if vcsServer == nil {
