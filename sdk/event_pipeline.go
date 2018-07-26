@@ -67,12 +67,12 @@ type EventPipelineStageMove struct {
 type EventPipelineStageUpdate struct {
 	NewName         string         `json:"name"`
 	NewBuildOrder   int            `json:"build_order"`
-	NewEnabled      bool           `json:"enabled"`
 	NewPrerequisite []Prerequisite `json:"prerequisite"`
 	OldName         string         `json:"old_name"`
 	OldBuildOrder   int            `json:"old_build_order"`
-	OldEnabled      bool           `json:"old_enabled"`
 	OldPrerequisite []Prerequisite `json:"old_prerequisite"`
+	NewEnabled      bool           `json:"enabled"`
+	OldEnabled      bool           `json:"old_enabled"`
 }
 
 // EventPipelineStageDelete represents the event when deleting a stage

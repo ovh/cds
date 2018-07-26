@@ -321,12 +321,12 @@ type VCSPullRequestEvent struct {
 type VCSHook struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
-	Disable     bool     `json:"disable"`
 	Events      []string `json:"events"`
 	Method      string   `json:"method"`
 	URL         string   `json:"url"`
 	ContentType string   `json:"content_type"`
 	Body        string   `json:"body"`
+	Disable     bool     `json:"disable"`
 	InsecureSSL bool     `json:"insecure_ssl"`
 	Workflow    bool     `json:"workflow"`
 }
