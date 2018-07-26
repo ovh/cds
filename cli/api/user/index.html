@@ -706,6 +706,11 @@
           <span>requirement</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/services/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/services/">
+          <span>services</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/suggest/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/suggest/">
           <span>suggest</span>
@@ -933,6 +938,23 @@
       <li data-nav-id="/cli/cdsctl/admin/plugins/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/list/">
           <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
+    <li data-nav-id="/cli/cdsctl/admin/plugins-action/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/">
+        <span>plugins-action</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/plugins-action/binary-add/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/binary-add/">
+          <span>binary-add</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/plugins-action/binary-update/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/binary-update/">
+          <span>binary-update</span>
         </a>
     </li>
         </ul>
@@ -2007,8 +2029,8 @@
 <li><a href="#post-user-import">POST <code>/user/import</code></a></li>
 <li><a href="#adduser-creates-a-new-user-and-generate-verification-email">AddUser creates a new user and generate verification email</a></li>
 <li><a href="#get-user-timeline">GET <code>/user/timeline</code></a></li>
-<li><a href="#get-user-timeline-filter">GET <code>/user/timeline/filter</code></a></li>
 <li><a href="#post-user-timeline-filter">POST <code>/user/timeline/filter</code></a></li>
+<li><a href="#get-user-timeline-filter">GET <code>/user/timeline/filter</code></a></li>
 <li><a href="#get-user-token">GET <code>/user/token</code></a></li>
 <li><a href="#get-user-token-token">GET <code>/user/token/&lt;token&gt;</code></a></li>
 </ul></li>
@@ -2342,34 +2364,6 @@
 </tbody>
 </table>
 
-<h3 id="get-user-timeline-filter">GET <code>/user/timeline/filter</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/user/timeline/filter</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22">getTimelineFilterHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-user-timeline-filter">POST <code>/user/timeline/filter</code></h3>
 
 <table>
@@ -2394,6 +2388,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTimelineFilterHandler%22">postTimelineFilterHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-user-timeline-filter">GET <code>/user/timeline/filter</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/timeline/filter</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTimelineFilterHandler%22">getTimelineFilterHandler</a></td>
 </tr>
 </tbody>
 </table>
