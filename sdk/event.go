@@ -44,8 +44,8 @@ type EventSubscription struct {
 	UUID         string `json:"uuid"`
 	ProjectKey   string `json:"key"`
 	WorkflowName string `json:"workflow_name"`
-	WorkflowRuns bool   `json:"runs"`
 	WorkflowNum  int64  `json:"num"`
+	WorkflowRuns bool   `json:"runs"`
 	Overwrite    bool   `json:"overwrite"`
 }
 

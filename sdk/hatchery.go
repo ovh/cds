@@ -11,9 +11,9 @@ type Hatchery struct {
 	Name          string    `json:"name"`
 	Status        string    `json:"status"`
 	GroupID       int64     `json:"group_id"`
-	IsSharedInfra bool      `json:"is_shared_infra"`
 	LastBeat      time.Time `json:"-"`
 	Model         Model     `json:"model"`
-	Uptodate      bool      `json:"up_to_date"`
 	Version       string    `json:"version"`
+	Uptodate      bool      `json:"up_to_date"`
+	IsSharedInfra bool      `json:"is_shared_infra"`
 }
