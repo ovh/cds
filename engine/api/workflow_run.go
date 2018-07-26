@@ -592,6 +592,8 @@ func (api *API) postWorkflowRunHandler() Handler {
 		name := vars["permWorkflowName"]
 		u := getUser(ctx)
 
+		tracing.Current(ctx, tracing.Tag("workflow", name))
+
 		_, next := tracing.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
 			project.LoadOptions.WithVariables,
@@ -637,9 +639,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				Base64Keys:   true,
 			}
 			var errW error
-			_, next := tracing.Span(ctx, "workflow.Load")
 			wf, errW = workflow.Load(ctx, api.mustDB(), api.Cache, p, name, u, options)
-			next()
 			if errW != nil {
 				return sdk.WrapError(errW, "postWorkflowRunHandler> Unable to load workflow %s", name)
 			}
