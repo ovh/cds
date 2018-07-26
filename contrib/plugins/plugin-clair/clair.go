@@ -44,7 +44,7 @@ func (d ClairPlugin) Parameters() plugin.Parameters {
 // Run execute the action
 func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 	// get clair configuration
-	_ = plugin.SendLog(a, "Retrieve clair configuration..")
+	_ = plugin.SendLog(a, "Retrieve clair configuration...")
 	serv, err := plugin.GetExternalServices(a, "clair")
 	if err != nil {
 		_ = plugin.SendLog(a, "Unable to get clair configuration: %s", err)
