@@ -771,8 +771,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		return vcsInfos, nil
 	}
 
-	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.getVCSInfos",
+	_, end := tracing.Span(ctx, "workflow.getVCSInfos",
 		tracing.Tag("application", node.Context.Application.Name),
 		tracing.Tag("vcs_server", node.Context.Application.VCSServer),
 		tracing.Tag("vcs_repo", node.Context.Application.RepositoryFullname),
