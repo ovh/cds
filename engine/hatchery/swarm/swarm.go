@@ -115,6 +115,19 @@ func (h *HatcherySwarm) Init() error {
 				httpClient.Transport = &http.Transport{
 					TLSClientConfig: tlsc,
 				}
+			} else {
+				options := tlsconfig.Options{
+					InsecureSkipVerify: cfg.InsecureSkipTLSVerify,
+				}
+				tlsc, err := tlsconfig.Client(options)
+				if err != nil {
+					log.Error("hatchery> swarm> docker client error: unable to set tlsconfig: %v", err)
+					continue
+				}
+
+				httpClient.Transport = &http.Transport{
+					TLSClientConfig: tlsc,
+				}
 			}
 			d, errc := docker.NewClient(cfg.Host, cfg.APIVersion, httpClient, nil)
 			if errc != nil {
