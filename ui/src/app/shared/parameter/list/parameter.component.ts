@@ -67,6 +67,10 @@ export class ParameterListComponent extends Table {
     }
 
     getData(): any[] {
+        if (!this.parameters) {
+            return [];
+        }
+
         return this.parameters.map((p) => {
             p.ref = this.getRef(p);
             return p;
