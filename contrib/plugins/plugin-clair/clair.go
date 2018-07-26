@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/reference"
 	"github.com/jgsqware/clairctl/clair"
