@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -14,6 +15,9 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/warning"
+	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/sdk"
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
@@ -29,6 +33,12 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 	}
 	_ = event.Initialize(event.KafkaConfig{}, api.Cache)
 	api.InitRouter()
+	api.warnChan = make(chan sdk.Event)
+	event.Subscribe(api.warnChan)
+
+	sdk.GoRoutine("workflow.ComputeAudit", func() { workflow.ComputeAudit(context.Background(), api.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine("warning.Start", func() { warning.Start(context.Background(), api.DBConnectionFactory.GetDBMap, api.warnChan) })
+
 	return api, db, router
 }
 
