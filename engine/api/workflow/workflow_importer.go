@@ -137,7 +137,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return sdk.NewError(sdk.ErrConflict, fmt.Errorf("Workflow exists"))
 	}
 
-	oldW, errO := Load(ctx, db, store, proj, w.Name, u, LoadOptions{})
+	oldW, errO := Load(ctx, db, store, proj, w.Name, u, LoadOptions{WithIcon: true})
 	if errO != nil {
 		return sdk.WrapError(errO, "Import> Unable to load old workflow")
 	}
