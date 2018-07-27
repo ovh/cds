@@ -193,7 +193,7 @@ export class WorkflowNodeRunParamComponent {
     }
 
     getCommits(num: number, change: boolean) {
-        if (!this.nodeToRun.isLinkedToRepo()) {
+        if (!WorkflowNode.isLinkedToRepo(this.nodeToRun)) {
             return;
         }
         let branch, hash;

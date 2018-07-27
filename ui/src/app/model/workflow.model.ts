@@ -672,12 +672,12 @@ export class WorkflowNode {
         }
     }
 
-    constructor() {
-        this.context = new WorkflowNodeContext();
+    static isLinkedToRepo(node: WorkflowNode): boolean {
+      return node.context.application_id !== 0 || node.context.application != null || !!node.context.application.repository_fullname;
     }
 
-    isLinkedToRepo(): boolean {
-      return this.context.application_id === 0 || !this.context.application || !this.context.application.repository_fullname;
+    constructor() {
+        this.context = new WorkflowNodeContext();
     }
 }
 
