@@ -140,6 +140,7 @@ type WorkflowNodeRun struct {
 	BuildParameters    []Parameter                      `json:"build_parameters,omitempty"`
 	Artifacts          []WorkflowNodeRunArtifact        `json:"artifacts,omitempty"`
 	Coverage           WorkflowNodeRunCoverage          `json:"coverage,omitempty"`
+	Vulnerabilities    []Vulnerability                  `json:"vulnerabilities,omitempty"`
 	Tests              *venom.Tests                     `json:"tests,omitempty"`
 	Commits            []VCSCommit                      `json:"commits,omitempty"`
 	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`

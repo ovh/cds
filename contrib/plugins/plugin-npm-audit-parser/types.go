@@ -13,6 +13,7 @@ type Advisory struct {
 	ModuleName      string    `json:"module_name"`
 	Severity        string    `json:"severity"`
 	URL             string    `json:"url"`
+	CWE             string    `json:"cwe"`
 }
 
 type Finding struct {

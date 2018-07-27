@@ -58,10 +58,27 @@ func (d NpmAuditParserPlugin) Run(j plugin.IJob) plugin.Result {
 	summary := make(map[string]int64, 0)
 	for _, a := range npmAudit.Advisories {
 		for _, f := range a.Findings {
-			for _, c := range a.CVES {
+			if len(a.CVES) > 0 {
+				for _, c := range a.CVES {
+					v := sdk.Vulnerability{
+						Component:   a.ModuleName,
+						CVE:         c,
+						Description: a.Overview,
+						FixIn:       a.PatchedVersions,
+						Link:        a.URL,
+						Origin:      strings.Join(f.Paths, "\n"),
+						Severity:    sdk.ToVulnerabilitySeverity(a.Severity),
+						Title:       a.Title,
+						Version:     f.Version,
+					}
+					report.Vulnerabilities = append(report.Vulnerabilities, v)
+					count, _ := summary[v.Severity]
+					summary[v.Severity] = count + 1
+				}
+			} else {
 				v := sdk.Vulnerability{
 					Component:   a.ModuleName,
-					CVE:         c,
+					CVE:         a.CWE,
 					Description: a.Overview,
 					FixIn:       a.PatchedVersions,
 					Link:        a.URL,
@@ -74,6 +91,7 @@ func (d NpmAuditParserPlugin) Run(j plugin.IJob) plugin.Result {
 				count, _ := summary[v.Severity]
 				summary[v.Severity] = count + 1
 			}
+
 		}
 	}
 	if err := plugin.SendVulnerabilityReport(j, report); err != nil {
