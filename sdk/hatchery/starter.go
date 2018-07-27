@@ -131,13 +131,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
 			log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", j.timestamp, j.id, err)
 		}
-
 		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Hatchery().Name, j.model.Name, j.id, errSpawn)
-		if j.model.NeedRegistration {
-			if err := h.CDSClient().WorkerModelSpawnError(j.model.ID, fmt.Sprintf("hatchery %s cannot spawn worker %s for job %d: %v", h.Hatchery().Name, j.model.Name, j.id, errSpawn)); err != nil {
-				log.Error("spawnWorkerForJob> error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, errSpawn)
-			}
-		}
 
 		return false, nil
 	}
