@@ -15,7 +15,7 @@ func init() {
 
 func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 	log.SetLogger(t)
-	c, err := docker.NewEnvClient()
+	c, err := docker.NewClientWithOpts(docker.WithVersion("1.37"))
 	if err != nil {
 		t.Skipf("unable to get docker client: %v. Skipping this test", err)
 		return nil

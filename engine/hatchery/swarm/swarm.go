@@ -44,7 +44,7 @@ func (h *HatcherySwarm) Init() error {
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
-		d, errc := docker.NewEnvClient()
+		d, errc := docker.NewClientWithOpts(docker.WithVersion("1.37"))
 		if errc != nil {
 			log.Error("hatchery> swarm> Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
 			log.Error("hatchery> swarm> unable to connect to a docker client:%s", errc)
