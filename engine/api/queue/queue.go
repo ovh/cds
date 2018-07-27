@@ -393,7 +393,7 @@ func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.Pipel
 		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllVariableByID for env ID %d", pb.Environment.ID)
 	}
 
-	pipelineParameters, err := pipeline.GetAllParametersInPipeline(db, pb.Pipeline.ID)
+	pipelineParameters, err := pipeline.GetAllParametersInPipeline(context.TODO(), db, pb.Pipeline.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllParametersInPipeline for pip %d", pb.Pipeline.ID)
 	}

@@ -1,6 +1,8 @@
 package queue
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -19,7 +21,7 @@ func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecut
 	if err != nil {
 		return nil, sdk.WrapError(err, "queue.Run> Cannot load pipeline %s", pipelineName)
 	}
-	parameters, err := pipeline.GetAllParametersInPipeline(db, p.ID)
+	parameters, err := pipeline.GetAllParametersInPipeline(context.TODO(), db, p.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "queue.Run> Cannot load pipeline %s parameters", pipelineName)
 	}

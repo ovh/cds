@@ -337,7 +337,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 		found = true
 
 		// create pipeline object
-		p, err := pipeline.LoadPipelineByID(tx, hooks[i].Pipeline.ID, true)
+		p, err := pipeline.LoadPipelineByID(context.TODO(), tx, hooks[i].Pipeline.ID, true)
 		if err != nil {
 			return sdk.WrapError(err, "processHook> Cannot load pipeline")
 		}

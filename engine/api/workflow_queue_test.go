@@ -783,7 +783,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	assert.NoError(t, pipeline.InsertJob(db, &j, s.ID, pip))
 
 	var errPip error
-	pip, errPip = pipeline.LoadPipelineByID(db, pip.ID, true)
+	pip, errPip = pipeline.LoadPipelineByID(context.TODO(), db, pip.ID, true)
 	assert.NoError(t, errPip)
 
 	// Create application

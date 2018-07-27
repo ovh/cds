@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/go-gorp/gorp"
@@ -39,7 +40,7 @@ func TriggerPipeline(tx gorp.SqlExecutor, store cache.Store, h sdk.Hook, branch 
 	})
 
 	// Load pipeline Argument
-	parameters, err := pipeline.GetAllParametersInPipeline(tx, p.ID)
+	parameters, err := pipeline.GetAllParametersInPipeline(context.TODO(), tx, p.ID)
 	if err != nil {
 		return nil, err
 	}

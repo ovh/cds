@@ -1,6 +1,7 @@
 package workflowv0
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
@@ -280,7 +281,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 					root.Environment.Permission = permission.EnvironmentPermission(projectkey, root.Environment.Name, user)
 				}
 
-				pipParams, errP := pipeline.GetAllParametersInPipeline(db, root.Pipeline.ID)
+				pipParams, errP := pipeline.GetAllParametersInPipeline(context.TODO(), db, root.Pipeline.ID)
 				if errP != nil {
 					return nil, sdk.WrapError(err, "LoadCDTree> Cannot get pipeline parameters")
 				}
@@ -487,7 +488,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 			child.Pipeline = child.Trigger.DestPipeline
 			child.Environment = child.Trigger.DestEnvironment
 
-			pipParams, errP := pipeline.GetAllParametersInPipeline(db, child.Pipeline.ID)
+			pipParams, errP := pipeline.GetAllParametersInPipeline(context.TODO(), db, child.Pipeline.ID)
 			if errP != nil {
 				return sdk.WrapError(errP, "getChild> Cannot get pipeline parameters")
 			}

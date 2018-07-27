@@ -97,7 +97,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	pip, has := w.Pipelines[n.PipelineID]
 	//Load the pipeline if not found
 	if !has {
-		loadedPip, err := pipeline.LoadPipelineByID(db, n.PipelineID, true)
+		loadedPip, err := pipeline.LoadPipelineByID(context.TODO(), db, n.PipelineID, true)
 		if err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to load pipeline for workflow node %s-%s", n.Name, n.Ref)
 		}
@@ -331,11 +331,7 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 	pip, has := w.Pipelines[wn.PipelineID]
 	if !has {
-		_, next := tracing.Span(c, "pipeline.LoadPipelineByID",
-			tracing.Tag("pipeline_id", wn.PipelineID),
-		)
-		newPip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, opts.DeepPipeline)
-		next()
+		newPip, err := pipeline.LoadPipelineByID(c, db, wn.PipelineID, opts.DeepPipeline)
 		if err != nil {
 			return nil, sdk.WrapError(err, "LoadNode> Unable to load pipeline of %d", id)
 		}

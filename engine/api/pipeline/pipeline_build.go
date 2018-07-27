@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -966,7 +967,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 		return nil, sdk.WrapError(errmarshal, "InsertPipelineBuild> Cannot marshal build parameters")
 	}
 
-	if errL := LoadPipelineStage(tx, p); errL != nil {
+	if errL := LoadPipelineStage(context.TODO(), tx, p); errL != nil {
 		return nil, sdk.WrapError(errL, "InsertPipelineBuild> Unable to load pipeline stages")
 	}
 

@@ -382,7 +382,7 @@ func (api *API) postPipelineRollbackHandler() Handler {
 			return sdk.WrapError(errA, "postPipelineRollbackHandler> Cannot load audit %d", auditID)
 		}
 
-		if err := pipeline.LoadGroupByPipeline(db, audit.Pipeline); err != nil {
+		if err := pipeline.LoadGroupByPipeline(ctx, db, audit.Pipeline); err != nil {
 			return sdk.WrapError(err, "postPipelineRollbackHandler> cannot load group by pipeline")
 		}
 

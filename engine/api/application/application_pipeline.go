@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -109,7 +110,7 @@ func GetAllPipelinesByID(db gorp.SqlExecutor, applicationID int64) ([]sdk.Applic
 	}
 
 	for i := range appPipelines {
-		params, err := pipeline.GetAllParametersInPipeline(db, appPipelines[i].Pipeline.ID)
+		params, err := pipeline.GetAllParametersInPipeline(context.TODO(), db, appPipelines[i].Pipeline.ID)
 		if err != nil {
 			return nil, err
 		}

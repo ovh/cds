@@ -601,7 +601,7 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 	// Load pipeline to have name
 	pip, has := w.Pipelines[n.PipelineID]
 	if !has {
-		pip2, errorP := pipeline.LoadPipelineByID(db, n.PipelineID, true)
+		pip2, errorP := pipeline.LoadPipelineByID(context.TODO(), db, n.PipelineID, true)
 		if errorP != nil {
 			return sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", n.PipelineID)
 		}

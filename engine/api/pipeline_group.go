@@ -45,7 +45,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			return sdk.WrapError(errLoadP, "updateGroupRoleOnPipelineHandler: Cannot load %s", key)
 		}
 
-		if errGP := pipeline.LoadGroupByPipeline(api.mustDB(), p); errGP != nil {
+		if errGP := pipeline.LoadGroupByPipeline(context.TODO(), api.mustDB(), p); errGP != nil {
 			return sdk.WrapError(errGP, "updateGroupRoleOnPipelineHandler: Unable ")
 		}
 
@@ -93,7 +93,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 		groupPipeline.Group = g.Group
 		event.PublishPipelinePermissionUpdate(key, pipelineName, g, groupPipeline, getUser(ctx))
 
-		if err := pipeline.LoadGroupByPipeline(api.mustDB(), p); err != nil {
+		if err := pipeline.LoadGroupByPipeline(context.TODO(), api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s", p.Name)
 		}
 		return WriteJSON(w, p, http.StatusOK)
@@ -157,7 +157,7 @@ func (api *API) addGroupInPipelineHandler() Handler {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadGroupByPipeline(api.mustDB(), p); err != nil {
+		if err := pipeline.LoadGroupByPipeline(context.TODO(), api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot load group")
 		}
 
@@ -334,7 +334,7 @@ func (api *API) deleteGroupFromPipelineHandler() Handler {
 		}
 		event.PublishPipelinePermissionDelete(key, pipelineName, gp, getUser(ctx))
 
-		if err := pipeline.LoadGroupByPipeline(api.mustDB(), p); err != nil {
+		if err := pipeline.LoadGroupByPipeline(context.TODO(), api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot load groups")
 		}
 

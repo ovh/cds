@@ -37,7 +37,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pip); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler>Cannot load stages")
 		}
 
@@ -93,7 +93,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return err
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pip); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
 		}
 
@@ -135,7 +135,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(errl, "updateJobHandler>Cannot load pipeline %s", pipName)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateJobHandler>Cannot load stages")
 		}
 
@@ -194,7 +194,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot load stages")
 		}
 
@@ -221,7 +221,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler>Cannot load stages")
 		}
 
@@ -272,7 +272,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")
 		}
 
