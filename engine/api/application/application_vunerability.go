@@ -2,7 +2,9 @@ package application
 
 import (
 	"database/sql"
+
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/sdk"
 )
 
