@@ -10,6 +10,9 @@ export class Parameter {
     updating: boolean;
     previousName: string;
 
+    // Useful for list on UI
+    ref: Parameter;
+
     static formatForAPI(parameters: Array<Parameter>): Array<Parameter> {
         if (parameters) {
             return parameters.map(this.format);

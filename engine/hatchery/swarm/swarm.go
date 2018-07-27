@@ -44,7 +44,7 @@ func (h *HatcherySwarm) Init() error {
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
-		d, errc := docker.NewEnvClient()
+		d, errc := docker.NewClientWithOpts(docker.FromEnv)
 		if errc != nil {
 			log.Error("hatchery> swarm> Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
 			log.Error("hatchery> swarm> unable to connect to a docker client:%s", errc)
@@ -63,6 +63,7 @@ func (h *HatcherySwarm) Init() error {
 
 	} else {
 		for hostName, cfg := range h.Config.DockerEngines {
+			log.Info("hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
 			httpClient := new(http.Client)
 			if cfg.CertPath != "" {
 				options := tlsconfig.Options{
@@ -114,8 +115,10 @@ func (h *HatcherySwarm) Init() error {
 				httpClient.Transport = &http.Transport{
 					TLSClientConfig: tlsc,
 				}
+			} else {
+				httpClient.Transport = &http.Transport{}
 			}
-			d, errc := docker.NewClient(cfg.Host, cfg.APIVersion, httpClient, nil)
+			d, errc := docker.NewClientWithOpts(docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient))
 			if errc != nil {
 				log.Error("hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
 				continue
@@ -132,6 +135,10 @@ func (h *HatcherySwarm) Init() error {
 				name:           hostName,
 				pullImageMutex: &sync.Mutex{},
 			}
+		}
+		if len(h.dockerClients) == 0 {
+			log.Error("hatchery> swarm> no docker host available. Please check errors")
+			return fmt.Errorf("no docker engine available")
 		}
 	}
 

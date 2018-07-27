@@ -193,6 +193,9 @@ export class WorkflowNodeRunParamComponent {
     }
 
     getCommits(num: number, change: boolean) {
+        if (!WorkflowNode.isLinkedToRepo(this.nodeToRun)) {
+            return;
+        }
         let branch, hash;
         let currentContext = this.getCurrentPayload();
 

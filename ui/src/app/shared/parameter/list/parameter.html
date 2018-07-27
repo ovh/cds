@@ -1,5 +1,5 @@
 <div class="parameter" *ngIf="ready">
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+    <table class="ui fixed celled table" *ngIf="data.length > 0">
         <thead [hidden]="mode === 'launcher' || mode === 'job'">
           <tr>
               <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_name' | translate }}</th>
@@ -10,7 +10,7 @@
           </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let p of getDataForCurrentPage()" class="ui form">
+        <tr *ngFor="let p of data" class="ui form">
             <td class="middle-aligned">
                 <div class="ui fluid input" *ngIf="mode === 'edit'">
                     <input class="ui input" [(ngModel)]="p.name" (keydown)="p.hasChanged = true" [disabled]="p.updating">
@@ -47,7 +47,7 @@
             <td>
             <app-parameter-value [project]="project"
                  [suggest]="suggest"
-                 [ref]="getRef(p)"
+                 [ref]="p.ref"
                  [editList]="mode !== 'launcher'" [edit]="mode !== 'ro' && mode !== 'job'" [keys]="keys"
                  [type]="p.type" [(value)]="p.value" (valueUpdating)="p.hasChanged = true; sendEvent()"></app-parameter-value>
             </td>
@@ -98,7 +98,7 @@
         </tr>
         </tfoot>
     </table>
-    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+    <div class="ui info message" *ngIf="data.length === 0">
         {{ 'parameter_no' | translate }}
     </div>
 </div>
