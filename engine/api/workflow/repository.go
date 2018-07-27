@@ -82,6 +82,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	if err != nil {
 		return nil, sdk.WrapError(err, "extractWorkflow> Unable to read cds files")
 	}
+	ope.RepositoryStrategy.SSHKeyContent = ""
 	opt := &PushOption{
 		VCSServer:          ope.VCSServer,
 		RepositoryName:     ope.RepoFullName,
