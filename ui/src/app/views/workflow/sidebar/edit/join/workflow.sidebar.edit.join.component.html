@@ -9,10 +9,10 @@
         </div>
     </h3>
     <div class="ui fluid vertical menu noborder">
-      <a class="item noborder" (click)="openTriggerJoinModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
+      <a class="item noborder" (click)="openTriggerJoinModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
         {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="openDeleteJoinModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)">
+      <a class="item noborder" (click)="openDeleteJoinModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
         {{ 'workflow_join_delete' | translate }} <i class="angle right icon"></i>
       </a>
     </div>

@@ -3,7 +3,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
-import {PipelineStatus} from '../../../../model/pipeline.model';
+import {PermissionValue} from '../../../../model/permission.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
@@ -49,7 +49,7 @@ export class WorkflowSidebarCodeComponent {
     updated = false;
     loading = false;
     loadingGet = true;
-    permissionEnum = PipelineStatus;
+    permissionEnum = PermissionValue;
 
     constructor(
         private _workflowCore: WorkflowCoreService,

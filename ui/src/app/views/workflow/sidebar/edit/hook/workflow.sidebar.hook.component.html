@@ -10,9 +10,9 @@
     </h3>
     <div class="ui fluid vertical menu noborder">
       <a class="item noborder" (click)="openHookEditModal()">
-        {{'btn_edit' | translate}} <i class="angle right icon"></i>
+        <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{'btn_edit' | translate}}</span><span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">Configuration</span> <i class="angle right icon"></i>
       </a>
-      <a class="item noborder" (click)="openDeleteHookModal()">
+      <a class="item noborder" (click)="openDeleteHookModal()" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
         {{'btn_delete' | translate}} <i class="angle right icon"></i>
       </a>
     </div>
@@ -56,6 +56,7 @@
       [node]="node"
       (hookEvent)="updateHook($event)"
       [loading]="loading"
+      [readonly]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE"
       [hook]="hook" #workflowEditHook>
     </app-workflow-node-hook-form>
 <app-delete-modal
