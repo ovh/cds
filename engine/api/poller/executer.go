@@ -110,7 +110,7 @@ func executerRun(db *gorp.DbMap, store cache.Store, e *sdk.RepositoryPollerExecu
 		return
 	}
 
-	pip, errpip := pipeline.LoadPipelineByID(db, e.PipelineID, true)
+	pip, errpip := pipeline.LoadPipelineByID(context.TODO(), db, e.PipelineID, true)
 	if errpip != nil {
 		log.Warning("poller.ExecuterRun> Unable to load pipeline : %s", errpip)
 		return
@@ -271,7 +271,7 @@ func triggerPipeline(tx gorp.SqlExecutor, store cache.Store, poller *sdk.Reposit
 	var params []sdk.Parameter
 
 	// Load pipeline Argument
-	parameters, errg := pipeline.GetAllParametersInPipeline(tx, poller.Pipeline.ID)
+	parameters, errg := pipeline.GetAllParametersInPipeline(context.TODO(), tx, poller.Pipeline.ID)
 	if errg != nil {
 		return nil, errg
 	}

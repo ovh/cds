@@ -1,12 +1,14 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -30,7 +32,10 @@ func CheckParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, paramName s
 }
 
 // GetAllParametersInPipeline Get all parameters for the given pipeline
-func GetAllParametersInPipeline(db gorp.SqlExecutor, pipelineID int64) ([]sdk.Parameter, error) {
+func GetAllParametersInPipeline(ctx context.Context, db gorp.SqlExecutor, pipelineID int64) ([]sdk.Parameter, error) {
+	_, end := tracing.Span(ctx, "pipeline.GetAllParametersInPipeline")
+	defer end()
+
 	parameters := []sdk.Parameter{}
 	query := `SELECT id, name, value, type, description
 	          FROM pipeline_parameter

@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -107,7 +108,7 @@ func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlEx
 	}
 
 	//Load pipeline
-	pip, err := pipeline.LoadPipelineByID(db, s.PipelineID, true)
+	pip, err := pipeline.LoadPipelineByID(context.TODO(), db, s.PipelineID, true)
 	if err != nil {
 		return nil, sdk.WrapError(err, "executerProcess> Cannot load pipeline")
 	}

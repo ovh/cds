@@ -151,7 +151,7 @@ func migratePipeline(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, old
 	}
 
 	// Check if pipeline use application & env variable
-	pip, err := pipeline.LoadPipelineByID(db, oldPipeline.Pipeline.ID, true)
+	pip, err := pipeline.LoadPipelineByID(context.TODO(), db, oldPipeline.Pipeline.ID, true)
 	if err != nil {
 		return nil, sdk.WrapError(err, "migratePipeline> Cannot load pipeline")
 	}

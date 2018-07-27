@@ -94,7 +94,7 @@ func (api *API) getVariablesHandler() Handler {
 			if err != nil {
 				return sdk.WrapError(sdk.ErrWrongRequest, "getVariablesHandler> Cannot convert pipId to int : %s", err)
 			}
-			pipParams, err := pipeline.GetAllParametersInPipeline(api.mustDB(), pipIDN)
+			pipParams, err := pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), pipIDN)
 
 			if err != nil {
 				return sdk.WrapError(err, "getVariablesHandler> Cannot get all parameters in pipeline")

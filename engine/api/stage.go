@@ -62,7 +62,7 @@ func (api *API) addStageHandler() Handler {
 			return sdk.WrapError(err, "addStageHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "addStageHandler> Cannot load pipeline stages")
 		}
 
@@ -152,7 +152,7 @@ func (api *API) moveStageHandler() Handler {
 			}
 		}
 
-		if err := pipeline.LoadPipelineStage(tx, pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, tx, pipelineData); err != nil {
 			return sdk.WrapError(err, "moveStageHandler> Cannot load stages")
 		}
 
@@ -236,7 +236,7 @@ func (api *API) updateStageHandler() Handler {
 			return sdk.WrapError(err, "updateStageHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateStageHandler> Cannot load stages")
 		}
 
@@ -297,7 +297,7 @@ func (api *API) deleteStageHandler() Handler {
 			return sdk.WrapError(err, "deleteStageHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteStageHandler> Cannot load stages")
 		}
 

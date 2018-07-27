@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -72,11 +74,11 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 	p.ProjectKey = projectKey
 
 	if deep {
-		if err := loadPipelineDependencies(db, &p); err != nil {
+		if err := loadPipelineDependencies(context.TODO(), db, &p); err != nil {
 			return nil, err
 		}
 	} else {
-		parameters, err := GetAllParametersInPipeline(db, p.ID)
+		parameters, err := GetAllParametersInPipeline(context.TODO(), db, p.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +89,14 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 }
 
 // LoadPipelineByID loads a pipeline from database
-func LoadPipelineByID(db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pipeline, error) {
+func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pipeline, error) {
+	var end func()
+	ctx, end = tracing.Span(ctx, "pipeline.LoadPipelineByID",
+		tracing.Tag("pipeline_id", pipelineID),
+		tracing.Tag("deep", deep),
+	)
+	defer end()
+
 	var lastModified time.Time
 	var p sdk.Pipeline
 	query := `SELECT pipeline.name, pipeline.description, pipeline.type, project.projectKey, pipeline.last_modified FROM pipeline
@@ -105,11 +114,11 @@ func LoadPipelineByID(db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pi
 	p.ID = pipelineID
 
 	if deep {
-		if err := loadPipelineDependencies(db, &p); err != nil {
+		if err := loadPipelineDependencies(ctx, db, &p); err != nil {
 			return nil, err
 		}
 	} else {
-		parameters, err := GetAllParametersInPipeline(db, p.ID)
+		parameters, err := GetAllParametersInPipeline(ctx, db, p.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -193,15 +202,15 @@ func LoadByApplicationName(db gorp.SqlExecutor, projKey, appName string) ([]sdk.
 	return pips, nil
 }
 
-func loadPipelineDependencies(db gorp.SqlExecutor, p *sdk.Pipeline) error {
-	if err := LoadPipelineStage(db, p); err != nil {
+func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline) error {
+	if err := LoadPipelineStage(ctx, db, p); err != nil {
 		return err
 	}
-	if err := LoadGroupByPipeline(db, p); err != nil {
+	if err := LoadGroupByPipeline(ctx, db, p); err != nil {
 		return err
 	}
 
-	parameters, err := GetAllParametersInPipeline(db, p.ID)
+	parameters, err := GetAllParametersInPipeline(ctx, db, p.ID)
 	if err != nil {
 		return err
 	}
@@ -324,7 +333,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 
 		if loadDependencies {
 			// load pipeline stages
-			if err := LoadPipelineStage(db, &p); err != nil {
+			if err := LoadPipelineStage(context.TODO(), db, &p); err != nil {
 				return nil, err
 			}
 		}
@@ -333,7 +342,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 	}
 
 	for i := range pip {
-		params, err := GetAllParametersInPipeline(db, pip[i].ID)
+		params, err := GetAllParametersInPipeline(context.TODO(), db, pip[i].ID)
 		if err != nil {
 			return nil, err
 		}
@@ -415,7 +424,10 @@ func updateParamInList(params []sdk.Parameter, paramAction sdk.Parameter) (bool,
 }
 
 // LoadGroupByPipeline load group permission on one pipeline
-func LoadGroupByPipeline(db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
+func LoadGroupByPipeline(ctx context.Context, db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
+	_, end := tracing.Span(ctx, "pipeline.LoadGroupByPipeline")
+	defer end()
+
 	query := `SELECT "group".id,"group".name,pipeline_group.role FROM "group"
 	 		  JOIN pipeline_group ON pipeline_group.group_id = "group".id
 	 		  WHERE pipeline_group.pipeline_id = $1 ORDER BY "group".name ASC`

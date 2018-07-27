@@ -1,6 +1,7 @@
 package poller
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
@@ -49,7 +50,7 @@ func (p *RepositoryPoller) PostGet(db gorp.SqlExecutor) error {
 	if err != nil {
 		return sdk.WrapError(err, "PostGet> error loading application %d", p.ApplicationID)
 	}
-	pip, err := pipeline.LoadPipelineByID(db, p.PipelineID, true)
+	pip, err := pipeline.LoadPipelineByID(context.TODO(), db, p.PipelineID, true)
 	if err != nil {
 		return sdk.WrapError(err, "PostGet> error loading pipeline %d", p.PipelineID)
 	}

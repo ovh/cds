@@ -23,7 +23,7 @@ func (api *API) getParametersInPipelineHandler() Handler {
 			return sdk.WrapError(err, "getParametersInPipelineHandler: Cannot load %s", pipelineName)
 		}
 
-		parameters, err := pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
+		parameters, err := pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "getParametersInPipelineHandler: Cannot get parameters for pipeline %s", pipelineName)
 		}
@@ -69,7 +69,7 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 
 		event.PublishPipelineParameterDelete(key, pipelineName, sdk.Parameter{Name: paramName}, getUser(ctx))
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
+		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load pipeline parameters")
 		}
@@ -125,7 +125,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 
 		event.PublishPipelineParameterUpdate(key, pipelineName, *oldParam, newParam, getUser(ctx))
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
+		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load pipeline parameters")
 		}
@@ -188,7 +188,7 @@ func (api *API) addParameterInPipelineHandler() Handler {
 
 		event.PublishPipelineParameterAdd(key, pipelineName, newParam, getUser(ctx))
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
+		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot get pipeline parameters")
 		}
