@@ -71,6 +71,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 		if err := workflow.PostRepositoryOperation(api.mustDB(), api.Cache, *p, ope); err != nil {
 			return sdk.WrapError(err, "postImportAsCodeHandler> Cannot create repository operation")
 		}
+		ope.RepositoryStrategy.SSHKeyContent = ""
 
 		return WriteJSON(w, ope, http.StatusCreated)
 	}

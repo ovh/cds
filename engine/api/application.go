@@ -732,6 +732,7 @@ func (api *API) updateApplicationHandler() Handler {
 		}
 		app.Metadata = appPost.Metadata
 		app.RepositoryStrategy = appPost.RepositoryStrategy
+		app.RepositoryStrategy.SSHKeyContent = ""
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
