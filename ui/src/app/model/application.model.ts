@@ -69,3 +69,30 @@ export interface ApplicationFilter {
     branch: string;
     version: string;
 }
+
+export class Vulnerability {
+    id: number;
+    application_id: number;
+    workflow_id: number;
+    workflow_node_run_id: number;
+    title: string;
+    description: string;
+    cve: string;
+    link: string;
+    component: string;
+    version: string;
+    origin: string;
+    severity: string;
+    fix_in: string;
+    ignored: boolean;
+}
+
+export class Severity {
+    static UNKNOWN = 'unknown';
+    static NEGLIGIBLE = 'negligible';
+    static LOW = 'low';
+    static MEDIUM = 'medium';
+    static HIGH = 'high';
+    static CRITICAL = 'critical';
+    static DEFCON1 = 'defcon1';
+}
