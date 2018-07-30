@@ -1,12 +1,14 @@
 import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
+import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 import {Job, StepStatus} from '../../../../../model/job.model';
 import {PipelineStatus, ServiceLog} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {DurationService} from '../../../../../shared/duration/duration.service';
 
 @Component({
@@ -14,6 +16,7 @@ import {DurationService} from '../../../../../shared/duration/duration.service';
     templateUrl: './pipeline.html',
     styleUrls: ['./pipeline.scss']
 })
+@AutoUnsubscribe()
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
 
     nodeRun: WorkflowNodeRun;
@@ -32,6 +35,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
          }, 5000);
     }
 
+    queryParamsSub: Subscription;
     pipelineStatusEnum = PipelineStatus;
     selectedRunJob: WorkflowNodeJobRun;
     mapJobStatus: Map<number, {status: string, warnings: number}> = new Map<number, {status: string, warnings: number}>();
@@ -56,14 +60,21 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        if (!this._route.snapshot.queryParams['actionId'] && this._route.snapshot.queryParams['stageId']) {
-          this.selectedStage(parseInt(this._route.snapshot.queryParams['stageId'], 10));
-        } else if (this._route.snapshot.queryParams['actionId']) {
-          let job = new Job();
-          job.pipeline_action_id = parseInt(this._route.snapshot.queryParams['actionId'], 10);
-          this.manual = true;
-          this.selectedJob(job);
-        }
+        this.updateSelectedItems(this._route.snapshot.queryParams);
+        this.queryParamsSub = this._route.queryParams.subscribe((queryParams) => {
+          this.updateSelectedItems(queryParams);
+        });
+    }
+
+    updateSelectedItems(queryParams) {
+      if (!queryParams['actionId'] && queryParams['stageId']) {
+        this.selectedStage(parseInt(queryParams['stageId'], 10));
+      } else if (queryParams['actionId']) {
+        let job = new Job();
+        job.pipeline_action_id = parseInt(queryParams['actionId'], 10);
+        this.manual = true;
+        this.selectedJob(job);
+      }
     }
 
     selectedJobManual(j: Job) {
