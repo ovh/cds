@@ -174,7 +174,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 			continue
 		}
 
-		if nbContainersRatio == 0 {
+		if len(containers) == 0 {
 			dockerClient = h.dockerClients[dname]
 			foundDockerClient = true
 			break
