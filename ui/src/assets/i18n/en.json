@@ -250,6 +250,7 @@
   "common_no_favorites": "You didn't add projects or workflows in your bookmarks yet.",
   "common_favorites_all": "All bookmarks",
   "common_file_too_large": "Your file is too large (max 100Ko)",
+  "common_vulnerabilities": "Vulnerabilities",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
