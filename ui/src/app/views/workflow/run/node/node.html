@@ -13,7 +13,7 @@
                 <span *ngIf="nodeRun.commits && nodeRun.commits.length > 1">{{ 'common_commits' | translate }}</span>
                 <span *ngIf="!nodeRun.commits || (nodeRun.commits && nodeRun.commits.length < 2)">{{ 'common_commit' | translate }}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!nodeRun || !nodeRun.vulnerabilities || nodeRun.vulnerabilities.length ===0" (click)="showTab('vuln')">
+            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!nodeRun || !nodeRun.vulnerabilities || nodeRun.vulnerabilities.length ===0" (click)="showTab('vuln')" *ngIf="isAdmin">
                 <span *ngIf="nodeRun.vulnerabilities">{{ 'common_vulnerabilities' | translate }}</span>
             </a>
             <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRun.tests && nodeRun.tests.total !== 0 && showTab('test')" [class.disabled]="!nodeRun.tests || nodeRun.tests.total === 0">

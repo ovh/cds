@@ -6,6 +6,7 @@ import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {RouterService} from '../../../../service/router/router.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
@@ -35,14 +36,18 @@ export class WorkflowNodeRunComponent {
     nodeRunsHistory = new Array<WorkflowNodeRun>();
     selectedTab: string;
 
+    isAdmin: boolean;
+
     constructor(private _activatedRoute: ActivatedRoute,
                 private _router: Router, private _routerService: RouterService, private _workflowRunService: WorkflowRunService,
-                private _durationService: DurationService,
+                private _durationService: DurationService, private _authStore: AuthentificationStore,
                 private _workflowEventStore: WorkflowEventStore) {
 
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
+
+        this.isAdmin = this._authStore.getUser().admin;
 
         // Tab selection
         this._activatedRoute.queryParams.subscribe(q => {
