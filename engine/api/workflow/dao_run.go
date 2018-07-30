@@ -579,10 +579,13 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 				FROM workflow_run
 				WHERE workflow_run.workflow_id = $1
 				AND workflow_run.id < $2
+				AND workflow_run.status <> $3
+				AND workflow_run.status <> $4
+				AND workflow_run.status <> $5
 				LIMIT 100
 			)
 		`
-		if _, err := db.Exec(qDelete, wf.ID, lastWfrID); err != nil {
+		if _, err := db.Exec(qDelete, wf.ID, lastWfrID, sdk.StatusBuilding.String(), sdk.StatusChecking.String(), sdk.StatusWaiting.String()); err != nil {
 			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 			return err
 		}
@@ -598,12 +601,25 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 						JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
 					WHERE workflow_run.workflow_id = $1
 					AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[])
+					AND workflow_run.status <> $4
+					AND workflow_run.status <> $5
+					AND workflow_run.status <> $6
 				ORDER BY workflow_run.id DESC
 			) as wr
 		GROUP BY tag, value HAVING COUNT(id) > $3
 	`
 
-	if _, errS := db.Select(&ids, queryGetIds, wf.ID, strings.Join(filteredPurgeTags, ","), wf.HistoryLength); errS != nil {
+	_, errS := db.Select(
+		&ids,
+		queryGetIds,
+		wf.ID,
+		strings.Join(filteredPurgeTags, ","),
+		wf.HistoryLength,
+		sdk.StatusWaiting.String(),
+		sdk.StatusBuilding.String(),
+		sdk.StatusChecking.String(),
+	)
+	if errS != nil {
 		log.Warning("PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
 		return errS
 	}
