@@ -62,6 +62,10 @@ export class PipelineService {
         let params = new HttpParams();
         params = params.append('format', 'yaml');
 
+        if (!pipName) {
+          return this._http.post<Array<string>>(`/project/${key}/import/pipeline`, pipelineCode, {headers, params});
+        }
+
         return this._http.put<Array<string>>(`/project/${key}/import/pipeline/${pipName}`, pipelineCode, {headers, params});
     }
 

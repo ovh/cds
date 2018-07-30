@@ -95,7 +95,11 @@ export class WorkflowService {
         let headers = new HttpHeaders();
         headers = headers.append('Content-Type', 'application/x-yaml');
 
-        return this._http.put<Workflow>(`/project/${key}/import/workflows/${workflowName}`, workflowCode, {headers});
+        if (workflowName) {
+          return this._http.put<Workflow>(`/project/${key}/import/workflows/${workflowName}`, workflowCode, {headers});
+        }
+
+        return this._http.post<Workflow>(`/project/${key}/import/workflows`, workflowCode, {headers});
     }
 
     /**

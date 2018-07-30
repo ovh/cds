@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -222,6 +223,10 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 	pip.Type = oldPipeline.Type
 	errU := UpdatePipeline(db, pip)
 
+	if oldPipeline.Name != pip.Name {
+		event.PublishPipelineUpdate(proj.Key, pip.Name, oldPipeline.Name, u)
+	}
+
 	return sdk.WrapError(errU, "ImportUpdate> cannot update pipeline")
 }
 
@@ -266,6 +271,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 	if ok {
 		msgChan <- sdk.NewMessage(sdk.MsgPipelineExists, pip.Name)
 	}
+
 	return nil
 }
 

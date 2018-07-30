@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -557,6 +558,8 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
+	event.PublishWorkflowAdd(p.Key, *w, u)
+
 	return updateLastModified(db, store, w, u)
 }
 
@@ -716,6 +719,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	if _, err := db.Update(&dbw); err != nil {
 		return sdk.WrapError(err, "Update> Unable to update workflow")
 	}
+	event.PublishWorkflowUpdate(p.Key, *w, *oldWorkflow, u)
 
 	return updateLastModified(db, store, w, u)
 }
