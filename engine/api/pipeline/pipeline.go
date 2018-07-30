@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -491,6 +492,8 @@ func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p
 			return sdk.WrapError(err, "InsertPipeline>")
 		}
 	}
+
+	event.PublishPipelineAdd(proj.Key, *p, u)
 
 	return UpdatePipelineLastModified(db, store, proj, p, u)
 }
