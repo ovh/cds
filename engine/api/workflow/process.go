@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -542,16 +544,26 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	var vcsInfos vcsInfos
 	var errVcs error
-	vcsInfos, errVcs = getVCSInfos(ctx, db, store, p, w, gitValues, n, run, !isRoot, previousGitValues[tagGitRepository])
+	app, _ := n.Application()
+	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
+	vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, gitValues, app.Name, app.VCSServer, app.RepositoryFullname, !isRoot, previousGitValues[tagGitRepository])
 	if errVcs != nil {
+		if strings.Contains(errVcs.Error(), "branch has been deleted") {
+			AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
+				Args: []interface{}{vcsInfos.branch},
+			})
+		} else {
+			AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{errVcs.Error()},
+			})
+		}
 		if isRoot {
 			return report, false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
 		}
-		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errVcs.Error()},
-		})
-		return report, false, nil
+
+		return nil, false, nil
 	}
 
 	// only if it's the root pipeline, we put the git... in the build parameters

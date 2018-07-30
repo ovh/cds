@@ -757,7 +757,11 @@ type vcsInfos struct {
 	server     string
 }
 
-func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
+func (i vcsInfos) String() string {
+	return fmt.Sprintf("%s:%s:%s:%s", i.server, i.repository, i.branch, i.hash)
+}
+
+func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string, isChildNode bool, previousGitRepo string) (i vcsInfos, err error) {
 	var vcsInfos vcsInfos
 	vcsInfos.repository = gitValues[tagGitRepository]
 	vcsInfos.branch = gitValues[tagGitBranch]
@@ -767,22 +771,35 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	vcsInfos.url = gitValues[tagGitURL]
 	vcsInfos.httpurl = gitValues[tagGitHTTPURL]
 
-	if node.Context == nil || node.Context.Application == nil || node.Context.Application.VCSServer == "" {
+	if applicationName == "" || applicationVCSServer == "" {
 		return vcsInfos, nil
 	}
 
 	_, end := tracing.Span(ctx, "workflow.getVCSInfos",
-		tracing.Tag("application", node.Context.Application.Name),
-		tracing.Tag("vcs_server", node.Context.Application.VCSServer),
-		tracing.Tag("vcs_repo", node.Context.Application.RepositoryFullname),
+		tracing.Tag("application", applicationName),
+		tracing.Tag("vcs_server", applicationVCSServer),
+		tracing.Tag("vcs_repo", applicationRepositoryFullname),
 	)
 	defer end()
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
 	if vcsServer == nil {
 		return vcsInfos, nil
 	}
 	vcsInfos.server = vcsServer.Name
+
+	// Cache management, kind of memoization form gathered vcsInfos
+	cacheKey := cache.Key("api:workflow:getVCSInfos:", applicationVCSServer, applicationRepositoryFullname, vcsInfos.String(), fmt.Sprintf("%v", isChildNode), previousGitRepo)
+	// Try to get the data from cache
+	if store.Get(cacheKey, &vcsInfos) {
+		log.Debug("getVCSInfos> load from cache: %s", cacheKey)
+		return vcsInfos, nil
+	}
+	// Store the result in the cache
+	defer func() {
+		if err == nil {
+			store.Set(cacheKey, &i)
+		}
+	}()
 
 	//Get the RepositoriesManager Client
 	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
@@ -792,12 +809,12 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// Set default values
 	if vcsInfos.repository == "" {
-		vcsInfos.repository = node.Context.Application.RepositoryFullname
-	} else if vcsInfos.repository != node.Context.Application.RepositoryFullname {
+		vcsInfos.repository = applicationRepositoryFullname
+	} else if vcsInfos.repository != applicationRepositoryFullname {
 		//The input repository is not the same as the application, we have to check if it is a fork
-		forks, err := client.ListForks(node.Context.Application.RepositoryFullname)
+		forks, err := client.ListForks(applicationRepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get forks for %s", node.Context.Application.RepositoryFullname)
+			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get forks for %s", applicationRepositoryFullname)
 		}
 		var forkFound bool
 		for _, fork := range forks {
@@ -812,7 +829,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			if !isChildNode {
 				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.repository))
 			}
-			vcsInfos.repository = node.Context.Application.RepositoryFullname
+			vcsInfos.repository = applicationRepositoryFullname
 		}
 	}
 
@@ -823,10 +840,10 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
 		}
 		//If we ignore errors
-		vcsInfos.repository = node.Context.Application.RepositoryFullname
-		repo, err = client.RepoByFullname(node.Context.Application.RepositoryFullname)
+		vcsInfos.repository = applicationRepositoryFullname
+		repo, err = client.RepoByFullname(applicationRepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get repo %s", node.Context.Application.RepositoryFullname)
+			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get repo %s", applicationRepositoryFullname)
 		}
 	}
 	vcsInfos.url = repo.SSHCloneURL
@@ -844,7 +861,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	if branch == nil {
-		log.Error("computeVCSInfos> unable to get branch %s - repository:%s - project:%s - app:%s", vcsInfos.branch, vcsInfos.repository, proj.Key, node.Context.Application.Name)
+		log.Error("computeVCSInfos> unable to get branch %s - repository:%s - app:%s", vcsInfos.branch, vcsInfos.repository, applicationName)
 		vcsInfos.branch = ""
 	}
 
@@ -860,11 +877,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	//Check if the branch is still valid
-	if branch == nil && previousGitRepo != "" && previousGitRepo == node.Context.Application.RepositoryFullname {
-		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
-			Args: []interface{}{vcsInfos.branch},
-		})
+	if branch == nil && previousGitRepo != "" && previousGitRepo == applicationRepositoryFullname {
 		return vcsInfos, sdk.WrapError(fmt.Errorf("branch has been deleted"), "computeVCSInfos> ")
 	}
 

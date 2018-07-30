@@ -61,6 +61,9 @@ func (c *vcsClient) Cache() *gocache.Cache {
 
 // GetProjectVCSServer returns sdk.ProjectVCSServer for a project
 func GetProjectVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
+	if name == "" {
+		return nil
+	}
 	for _, v := range p.VCSServers {
 		if v.Name == name {
 			return &v
