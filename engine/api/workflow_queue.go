@@ -340,11 +340,13 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		if err := UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
-		customCtx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+		customCtx, cancel := context.WithTimeout(ctx, 180*time.Second)
 		defer cancel()
 		dbWithCtx := api.mustDBWithCtx(customCtx)
 
+		_, next := tracing.Span(ctx, "project.LoadProjectByNodeJobRunID")
 		proj, errP := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		next()
 		if errP != nil {
 			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
 				_, errLn := workflow.LoadNodeJobRun(dbWithCtx, api.Cache, id)
@@ -360,15 +362,28 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project from job %d", id)
 		}
 
+		tracing.Current(ctx,
+			tracing.Tag("project_key", proj.Key),
+		)
+
 		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, getWorker(ctx), &res)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
+
+		if len(workflowRuns) > 0 {
+			tracing.Current(ctx,
+				tracing.Tag("workflow", workflowRuns[0].Workflow.Name),
+			)
+		}
+
 		db := api.mustDB()
 
+		_, next = tracing.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
 		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
+		next()
 
 		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, proj.Key)
 
