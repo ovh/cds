@@ -251,7 +251,7 @@
   "common_no_favorites": "Vous n'avez pas encore ajouté de projets ou de workflows dans vos favoris.",
   "common_favorites_all": "Tous les favoris",
   "common_file_too_large": "Votre fichier est trop volumineux (max 100Ko)",
-  "common_vulnerabilities": "Vulnerabilitées",
+  "common_vulnerabilities": "Vulnérabilités",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -715,6 +715,8 @@
   "vcs_default_branch" : "Branche par défaut : ",
   "vcs_ssh_key" : "Clé SSH",
   "vcs_pgp_key" : "Clé PGP",
+
+  "vulnerability_no" : "Aucune vulnérabilité détectée",
 
   "warning_context": "Contexte",
   "warning_element": "Element",

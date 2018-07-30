@@ -716,6 +716,8 @@
   "vcs_ssh_key" : "SSH key",
   "vcs_pgp_key" : "PGP key",
 
+  "vulnerability_no" : "No vulnerabilities detected",
+
   "warning_context": "Context",
   "warning_element": "Element",
   "warning_goto_application_variables": "application variables",
