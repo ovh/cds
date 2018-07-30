@@ -137,6 +137,84 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	test.Equal(t, 3, toDeleteNb, "Number of workflow runs to be purged isn't correct")
 }
 
+func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_purge_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			PipelineID: pip.ID,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				{
+					WorkflowDestNode: sdk.WorkflowNode{
+						PipelineID: pip.ID,
+					},
+				},
+			},
+		},
+		HistoryLength: 2,
+		PurgeTags:     []string{"git.branch"},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	for i := 0; i < 5; i++ {
+		wfr, _, errWr := workflow.ManualRun(context.TODO(), db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
+			User: *u,
+			Payload: map[string]string{
+				"git.branch": "master",
+				"git.author": "test",
+			},
+		}, nil)
+		test.NoError(t, errWr)
+
+		wfr.Status = sdk.StatusBuilding.String()
+		test.NoError(t, workflow.UpdateWorkflowRunStatus(db, wfr))
+	}
+
+	errP := workflow.PurgeWorkflowRun(db, *w1)
+	test.NoError(t, errP)
+
+	wruns, _, _, count, errRuns := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 10, nil)
+	test.NoError(t, errRuns)
+	test.Equal(t, 5, count, "Number of workflow runs isn't correct")
+
+	toDeleteNb := 0
+	for _, wfRun := range wruns {
+		if wfRun.ToDelete {
+			toDeleteNb++
+		}
+	}
+
+	test.Equal(t, 0, toDeleteNb, "Number of workflow runs to be purged isn't correct")
+}
+
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
