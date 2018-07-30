@@ -302,7 +302,7 @@ func (api *API) getWorkflowJobHandler() Handler {
 
 func (api *API) postVulnerabilityReportHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errc := requestVarInt(r, "id")
+		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
 			return sdk.WrapError(errc, "postVulnerabilityReportHandler> invalid id")
 		}
