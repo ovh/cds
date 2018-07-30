@@ -72,7 +72,7 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 	_ = plugin.SendLog(a, "Creating report")
 
 	var vulnerabilities []sdk.Vulnerability
-	summary := make(map[string]int64, 0)
+	summary := make(map[string]int64)
 	if analysis.MostRecentLayer().Layer != nil {
 		for _, feat := range analysis.MostRecentLayer().Layer.Features {
 			for _, vuln := range feat.Vulnerabilities {
@@ -89,7 +89,7 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 				}
 				vulnerabilities = append(vulnerabilities, v)
 
-				count, _ := summary[v.Severity]
+				count := summary[v.Severity]
 				summary[v.Severity] = count + 1
 
 			}

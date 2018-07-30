@@ -21,7 +21,7 @@ func (d NpmAuditParserPlugin) Name() string {
 
 //Description explains the purpose of the plugin
 func (d NpmAuditParserPlugin) Description() string {
-	return "This is a plugin to run clair analysis"
+	return "This is a plugin to parse npm audit report"
 }
 
 //Author of the plugin
@@ -55,7 +55,7 @@ func (d NpmAuditParserPlugin) Run(j plugin.IJob) plugin.Result {
 	}
 
 	var report sdk.VulnerabilityReport
-	summary := make(map[string]int64, 0)
+	summary := make(map[string]int64)
 	for _, a := range npmAudit.Advisories {
 		for _, f := range a.Findings {
 			if len(a.CVES) > 0 {
@@ -72,7 +72,7 @@ func (d NpmAuditParserPlugin) Run(j plugin.IJob) plugin.Result {
 						Version:     f.Version,
 					}
 					report.Vulnerabilities = append(report.Vulnerabilities, v)
-					count, _ := summary[v.Severity]
+					count := summary[v.Severity]
 					summary[v.Severity] = count + 1
 				}
 			} else {
@@ -88,7 +88,7 @@ func (d NpmAuditParserPlugin) Run(j plugin.IJob) plugin.Result {
 					Version:     f.Version,
 				}
 				report.Vulnerabilities = append(report.Vulnerabilities, v)
-				count, _ := summary[v.Severity]
+				count := summary[v.Severity]
 				summary[v.Severity] = count + 1
 			}
 
