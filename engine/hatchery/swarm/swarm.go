@@ -163,7 +163,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	var dockerClient *dockerClient
 	var foundDockerClient bool
 	//  To choose a docker client by the number of containers
-	nbContainers := 0
+	nbContainersRatio := float64(0)
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelList()
@@ -180,8 +180,9 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 			break
 		}
 
-		if nbContainers == 0 || len(containers) < nbContainers {
-			nbContainers = len(containers)
+		nbContainers := float64(len(containers)) / float64(h.dockerClients[dname].MaxContainers)
+		if nbContainersRatio == 0 || nbContainers < nbContainersRatio {
+			nbContainersRatio = nbContainers
 			dockerClient = h.dockerClients[dname]
 			foundDockerClient = true
 		}
