@@ -747,42 +747,59 @@ func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.Wo
 }
 
 type vcsInfos struct {
-	repository string
-	branch     string
-	hash       string
-	author     string
-	message    string
-	url        string
-	httpurl    string
-	server     string
+	Repository string
+	Branch     string
+	Hash       string
+	Author     string
+	Message    string
+	URL        string
+	HTTPUrl    string
+	Server     string
 }
 
-func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun, isChildNode bool, previousGitRepo string) (vcsInfos, error) {
-	var vcsInfos vcsInfos
-	vcsInfos.repository = gitValues[tagGitRepository]
-	vcsInfos.branch = gitValues[tagGitBranch]
-	vcsInfos.hash = gitValues[tagGitHash]
-	vcsInfos.author = gitValues[tagGitAuthor]
-	vcsInfos.message = gitValues[tagGitMessage]
-	vcsInfos.url = gitValues[tagGitURL]
-	vcsInfos.httpurl = gitValues[tagGitHTTPURL]
+func (i vcsInfos) String() string {
+	return fmt.Sprintf("%s:%s:%s:%s", i.Server, i.Repository, i.Branch, i.Hash)
+}
 
-	if node.Context == nil || node.Context.Application == nil || node.Context.Application.VCSServer == "" {
+func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vcsServer *sdk.ProjectVCSServer, gitValues map[string]string, applicationName, applicationVCSServer, applicationRepositoryFullname string, isChildNode bool, previousGitRepo string) (i vcsInfos, err error) {
+	var vcsInfos vcsInfos
+	vcsInfos.Repository = gitValues[tagGitRepository]
+	vcsInfos.Branch = gitValues[tagGitBranch]
+	vcsInfos.Hash = gitValues[tagGitHash]
+	vcsInfos.Author = gitValues[tagGitAuthor]
+	vcsInfos.Message = gitValues[tagGitMessage]
+	vcsInfos.URL = gitValues[tagGitURL]
+	vcsInfos.HTTPUrl = gitValues[tagGitHTTPURL]
+
+	if applicationName == "" || applicationVCSServer == "" {
 		return vcsInfos, nil
 	}
 
 	_, end := tracing.Span(ctx, "workflow.getVCSInfos",
-		tracing.Tag("application", node.Context.Application.Name),
-		tracing.Tag("vcs_server", node.Context.Application.VCSServer),
-		tracing.Tag("vcs_repo", node.Context.Application.RepositoryFullname),
+		tracing.Tag("application", applicationName),
+		tracing.Tag("vcs_server", applicationVCSServer),
+		tracing.Tag("vcs_repo", applicationRepositoryFullname),
 	)
 	defer end()
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
 	if vcsServer == nil {
 		return vcsInfos, nil
 	}
-	vcsInfos.server = vcsServer.Name
+	vcsInfos.Server = vcsServer.Name
+
+	// Cache management, kind of memoization form gathered vcsInfos
+	cacheKey := cache.Key("api:workflow:getVCSInfos:", applicationVCSServer, applicationRepositoryFullname, vcsInfos.String(), fmt.Sprintf("%v", isChildNode), previousGitRepo)
+	// Try to get the data from cache
+	if store.Get(cacheKey, &vcsInfos) {
+		log.Debug("getVCSInfos> load from cache: %s", cacheKey)
+		return vcsInfos, nil
+	}
+	// Store the result in the cache
+	defer func() {
+		if err == nil {
+			store.Set(cacheKey, &i)
+		}
+	}()
 
 	//Get the RepositoriesManager Client
 	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
@@ -791,17 +808,17 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	// Set default values
-	if vcsInfos.repository == "" {
-		vcsInfos.repository = node.Context.Application.RepositoryFullname
-	} else if vcsInfos.repository != node.Context.Application.RepositoryFullname {
+	if vcsInfos.Repository == "" {
+		vcsInfos.Repository = applicationRepositoryFullname
+	} else if vcsInfos.Repository != applicationRepositoryFullname {
 		//The input repository is not the same as the application, we have to check if it is a fork
-		forks, err := client.ListForks(node.Context.Application.RepositoryFullname)
+		forks, err := client.ListForks(applicationRepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get forks for %s", node.Context.Application.RepositoryFullname)
+			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get forks for %s", applicationRepositoryFullname)
 		}
 		var forkFound bool
 		for _, fork := range forks {
-			if vcsInfos.repository == fork.Fullname {
+			if vcsInfos.Repository == fork.Fullname {
 				forkFound = true
 				break
 			}
@@ -810,33 +827,33 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		//If it's not a fork; reset this value to the application repository
 		if !forkFound {
 			if !isChildNode {
-				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.repository))
+				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.Repository))
 			}
-			vcsInfos.repository = node.Context.Application.RepositoryFullname
+			vcsInfos.Repository = applicationRepositoryFullname
 		}
 	}
 
 	//Get the url and http_url
-	repo, err := client.RepoByFullname(vcsInfos.repository)
+	repo, err := client.RepoByFullname(vcsInfos.Repository)
 	if err != nil {
 		if !isChildNode {
 			return vcsInfos, sdk.NewError(sdk.ErrNotFound, err)
 		}
 		//If we ignore errors
-		vcsInfos.repository = node.Context.Application.RepositoryFullname
-		repo, err = client.RepoByFullname(node.Context.Application.RepositoryFullname)
+		vcsInfos.Repository = applicationRepositoryFullname
+		repo, err = client.RepoByFullname(applicationRepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get repo %s", node.Context.Application.RepositoryFullname)
+			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get repo %s", applicationRepositoryFullname)
 		}
 	}
-	vcsInfos.url = repo.SSHCloneURL
-	vcsInfos.httpurl = repo.HTTPCloneURL
+	vcsInfos.URL = repo.SSHCloneURL
+	vcsInfos.HTTPUrl = repo.HTTPCloneURL
 
-	if vcsInfos.branch == "" && !isChildNode {
+	if vcsInfos.Branch == "" && !isChildNode {
 		return vcsInfos, sdk.WrapError(sdk.ErrBranchNameNotProvided, "computeVCSInfos> should not have an empty branch")
 	}
 
-	branch, err := client.Branch(vcsInfos.repository, vcsInfos.branch)
+	branch, err := client.Branch(vcsInfos.Repository, vcsInfos.Branch)
 	if err != nil {
 		if !isChildNode {
 			return vcsInfos, sdk.NewError(sdk.ErrBranchNameNotProvided, err)
@@ -844,48 +861,44 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	if branch == nil {
-		log.Error("computeVCSInfos> unable to get branch %s - repository:%s - project:%s - app:%s", vcsInfos.branch, vcsInfos.repository, proj.Key, node.Context.Application.Name)
-		vcsInfos.branch = ""
+		log.Error("computeVCSInfos> unable to get branch %s - repository:%s - app:%s", vcsInfos.Branch, vcsInfos.Repository, applicationName)
+		vcsInfos.Branch = ""
 	}
 
 	//Get the default branch
 	if branch == nil {
-		branches, errR := client.Branches(vcsInfos.repository)
+		branches, errR := client.Branches(vcsInfos.Repository)
 		if errR != nil {
-			return vcsInfos, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", vcsInfos.repository)
+			return vcsInfos, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", vcsInfos.Repository)
 		}
 		_branch := sdk.GetDefaultBranch(branches)
 		branch = &_branch
-		vcsInfos.branch = branch.DisplayID
+		vcsInfos.Branch = branch.DisplayID
 	}
 
 	//Check if the branch is still valid
-	if branch == nil && previousGitRepo != "" && previousGitRepo == node.Context.Application.RepositoryFullname {
-		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
-			Args: []interface{}{vcsInfos.branch},
-		})
+	if branch == nil && previousGitRepo != "" && previousGitRepo == applicationRepositoryFullname {
 		return vcsInfos, sdk.WrapError(fmt.Errorf("branch has been deleted"), "computeVCSInfos> ")
 	}
 
-	if branch != nil && vcsInfos.hash == "" {
-		vcsInfos.hash = branch.LatestCommit
+	if branch != nil && vcsInfos.Hash == "" {
+		vcsInfos.Hash = branch.LatestCommit
 	}
 
 	//Get the latest commit
-	commit, errCm := client.Commit(vcsInfos.repository, vcsInfos.hash)
+	commit, errCm := client.Commit(vcsInfos.Repository, vcsInfos.Hash)
 	if errCm != nil {
 		if !isChildNode {
-			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.repository, vcsInfos.hash)
+			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}
-		vcsInfos.hash = branch.LatestCommit
-		commit, errCm = client.Commit(vcsInfos.repository, vcsInfos.hash)
+		vcsInfos.Hash = branch.LatestCommit
+		commit, errCm = client.Commit(vcsInfos.Repository, vcsInfos.Hash)
 		if errCm != nil {
-			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.repository, vcsInfos.hash)
+			return vcsInfos, sdk.WrapError(errCm, "computeVCSInfos> cannot get commit infos for %s %s", vcsInfos.Repository, vcsInfos.Hash)
 		}
 	}
-	vcsInfos.author = commit.Author.Name
-	vcsInfos.message = commit.Message
+	vcsInfos.Author = commit.Author.Name
+	vcsInfos.Message = commit.Message
 
 	return vcsInfos, nil
 }

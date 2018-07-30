@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -542,16 +544,26 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	var vcsInfos vcsInfos
 	var errVcs error
-	vcsInfos, errVcs = getVCSInfos(ctx, db, store, p, w, gitValues, n, run, !isRoot, previousGitValues[tagGitRepository])
+	app, _ := n.Application()
+	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
+	vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, gitValues, app.Name, app.VCSServer, app.RepositoryFullname, !isRoot, previousGitValues[tagGitRepository])
 	if errVcs != nil {
+		if strings.Contains(errVcs.Error(), "branch has been deleted") {
+			AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
+				Args: []interface{}{vcsInfos.Branch},
+			})
+		} else {
+			AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{errVcs.Error()},
+			})
+		}
 		if isRoot {
 			return report, false, sdk.WrapError(errVcs, "processWorkflowNodeRun> Cannot get VCSInfos")
 		}
-		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
-			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errVcs.Error()},
-		})
-		return report, false, nil
+
+		return nil, false, nil
 	}
 
 	// only if it's the root pipeline, we put the git... in the build parameters
@@ -600,7 +612,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		} else {
 			w.Tag(tagGitHash, run.VCSHash)
 		}
-		w.Tag(tagGitAuthor, vcsInfos.author)
+		w.Tag(tagGitAuthor, vcsInfos.Author)
 	}
 
 	// Add env tag
@@ -692,18 +704,18 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 }
 
 func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
-	run.VCSRepository = vcsInfos.repository
-	run.VCSBranch = vcsInfos.branch
-	run.VCSHash = vcsInfos.hash
-	run.VCSServer = vcsInfos.server
+	run.VCSRepository = vcsInfos.Repository
+	run.VCSBranch = vcsInfos.Branch
+	run.VCSHash = vcsInfos.Hash
+	run.VCSServer = vcsInfos.Server
 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.author)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.message)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.url)
-	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.httpurl)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.Author)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.Message)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.URL)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.HTTPUrl)
 }
 
 func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []sdk.Parameter) bool {
