@@ -36,6 +36,20 @@ func New() *HatcheryKubernetes {
 	return s
 }
 
+// Init register local hatchery with its worker model
+func (h *HatcheryKubernetes) Init() error {
+
+	if err := hatchery.Register(h); err != nil {
+		return fmt.Errorf("Cannot register: %s", err)
+	}
+
+	sdk.GoRoutine("hatchery kubernetes routines", func() {
+		h.routines(context.Background())
+	})
+
+	return nil
+}
+
 // ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
@@ -370,9 +384,8 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 				}
 				servContainer.Env = append(servContainer.Env, apiv1.EnvVar{Name: envSplitted[0], Value: envSplitted[1]})
 			}
-			podSchema.ObjectMeta.Labels["service_job_id"] = fmt.Sprintf("%d", spawnArgs.JobID)
 		}
-
+		podSchema.ObjectMeta.Labels[LABEL_SERVICE_JOB_ID] = fmt.Sprintf("%d", spawnArgs.JobID)
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
 		podSchema.Spec.HostAliases[0].Hostnames[i+1] = serv.Name
 	}
@@ -421,68 +434,35 @@ func (h *HatcheryKubernetes) WorkersStartedByModel(model *sdk.Model) int {
 	return workersLen
 }
 
-// Init register local hatchery with its worker model
-func (h *HatcheryKubernetes) Init() error {
-
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
-	go h.startKillAwolWorkerRoutine()
-	return nil
-}
-
-func (h *HatcheryKubernetes) startKillAwolWorkerRoutine() {
-	for {
-		time.Sleep(10 * time.Second)
-		h.killAwolWorkers()
-	}
-}
-
-func (h *HatcheryKubernetes) killAwolWorkers() error {
-	pods, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).List(metav1.ListOptions{LabelSelector: LABEL_WORKER})
-	if err != nil {
-		return err
-	}
-
-	var globalErr error
-	for _, pod := range pods.Items {
-		toDelete := false
-		for _, container := range pod.Status.ContainerStatuses {
-			if (container.State.Terminated != nil && (container.State.Terminated.Reason == "Completed" || container.State.Terminated.Reason == "Error")) ||
-				(container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull") {
-				toDelete = true
-			}
-		}
-		if toDelete {
-			// If its a worker "register", check registration before deleting it
-			if strings.Contains(pod.Name, "register-") {
-				var modelIDS string
-				for _, e := range pod.Spec.Containers[0].Env {
-					if e.Name == "CDS_MODEL" {
-						modelIDS = e.Value
-					}
-				}
-				modelID, err := strconv.ParseInt(modelIDS, 10, 64)
-				if err != nil {
-					log.Error("killAndRemove> unable to get model from registering container %s", pod.Name)
-				} else {
-					hatchery.CheckWorkerModelRegister(h, modelID)
-				}
-			}
-			if err := h.k8sClient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
-				globalErr = err
-				log.Error("hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
-			}
-		}
-	}
-	return globalErr
-}
-
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryKubernetes) NeedRegistration(m *sdk.Model) bool {
 	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
 		return true
 	}
 	return false
+}
+
+func (h *HatcheryKubernetes) routines(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			sdk.GoRoutine("getServicesLogs", func() {
+				if err := h.getServicesLogs(); err != nil {
+					log.Error("Hatchery> Kubernetes> Cannot get service logs : %v", err)
+				}
+			})
+
+			sdk.GoRoutine("killAwolWorker", func() {
+				_ = h.killAwolWorkers()
+			})
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error("Hatchery> Kubernetes> Exiting routines")
+			}
+			return
+		}
+	}
 }

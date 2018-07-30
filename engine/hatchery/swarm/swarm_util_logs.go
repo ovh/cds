@@ -18,7 +18,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 			return sdk.WrapError(err, "hatchery> swarm> getServicesLogs> Cannot get containers list from %s", dockerClient.name)
 		}
 
-		var servicesLogs []sdk.ServiceLog
+		servicesLogs := make([]sdk.ServiceLog, 0, len(containers))
 		for _, cnt := range containers {
 			serviceJobIDStr, isWorkflowService := cnt.Labels["service_job_id"]
 			if !isWorkflowService {
@@ -75,12 +75,11 @@ func (h *HatcherySwarm) getServicesLogs() error {
 				})
 			}
 
-		}
-
-		if len(servicesLogs) > 0 {
-			// Do call api
-			if err := h.Client.QueueServiceLogs(servicesLogs); err != nil {
-				log.Error("Hatchery> Swarm> Cannot send service logs : %v", err)
+			if len(servicesLogs) > 0 {
+				// Do call api
+				if err := h.Client.QueueServiceLogs(servicesLogs); err != nil {
+					log.Error("Hatchery> Swarm> Cannot send service logs : %v", err)
+				}
 			}
 		}
 	}

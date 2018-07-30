@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"os/exec"
+	"regexp"
 	"sync"
 	"time"
 
@@ -14,10 +15,13 @@ import (
 )
 
 const (
-	LABEL_HATCHERY_NAME = "CDS_HATCHERY_NAME"
-	LABEL_WORKER        = "CDS_WORKER"
-	LABEL_WORKER_MODEL  = "CDS_WORKER_MODEL"
+	LABEL_HATCHERY_NAME  = "CDS_HATCHERY_NAME"
+	LABEL_WORKER         = "CDS_WORKER"
+	LABEL_WORKER_MODEL   = "CDS_WORKER_MODEL"
+	LABEL_SERVICE_JOB_ID = "CDS_SERVICE_JOB_ID"
 )
+
+var containerServiceNameRegexp = regexp.MustCompile(`service-([0-9]+)-(.*)`)
 
 // HatcheryConfiguration is the configuration for local hatchery
 type HatcheryConfiguration struct {
