@@ -5,6 +5,7 @@ import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
+import {PermissionValue} from '../../../../model/permission.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
@@ -50,6 +51,7 @@ export class WorkflowNodeContextComponent {
     pipParamsReady = false;
     currentPipeline: Pipeline;
     pipelineSubscription: Subscription;
+    permissionEnum = PermissionValue;
 
     constructor(
       private _pipelineStore: PipelineStore,

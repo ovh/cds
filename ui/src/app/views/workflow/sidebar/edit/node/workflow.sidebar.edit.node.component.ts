@@ -5,6 +5,7 @@ import {cloneDeep} from 'lodash';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';
+import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
 import {
     Workflow,
@@ -67,6 +68,7 @@ export class WorkflowSidebarEditNodeComponent {
     displayInputName = false;
     loading = false;
     nameWarning: WorkflowPipelineNameImpact;
+    permissionEnum = PermissionValue;
 
     constructor(private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
                 private _pipelineStore: PipelineStore, private _modalService: SuiModalService,
@@ -82,13 +84,20 @@ export class WorkflowSidebarEditNodeComponent {
         });
     }
 
+    canEdit(): boolean {
+        return this.workflow.permission === PermissionValue.READ_WRITE_EXECUTE;
+    }
+
     openAddHookModal(): void {
-        if (this.worklflowAddHook) {
+        if (this.canEdit() && this.worklflowAddHook) {
             this.worklflowAddHook.show();
         }
     }
 
     openTriggerModal(): void {
+        if (!this.canEdit()) {
+            return;
+        }
         this.newTrigger = new WorkflowNodeTrigger();
         this.newTrigger.workflow_node_id = this.node.id;
         if (this.workflowTrigger) {
@@ -97,6 +106,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     openAddParentModal(): void {
+        if (!this.canEdit()) {
+            return;
+        }
         this.newParentNode = new WorkflowNode();
         let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.nodeParentModal);
         this.modalParentNode = this._modalService.open(tmpl);
@@ -124,6 +136,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     openDeleteNodeModal(): void {
+        if (!this.canEdit()) {
+            return;
+        }
         if (this.workflowDeleteNode) {
             this.workflowDeleteNode.show();
         }
@@ -146,6 +161,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     saveTrigger(): void {
+        if (!this.canEdit()) {
+            return;
+        }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let currentNode: WorkflowNode;
         if (clonedWorkflow.root.id === this.node.id) {
@@ -166,6 +184,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     updateNodeConditions(n: WorkflowNode): void {
+        if (!this.canEdit()) {
+            return;
+        }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let node = Workflow.getNodeByID(n.id, clonedWorkflow);
         if (!node) {
@@ -176,6 +197,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     updateNode(n: WorkflowNode): void {
+        if (!this.canEdit()) {
+            return;
+        }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let node = Workflow.getNodeByID(n.id, clonedWorkflow);
         if (!node) {
@@ -188,6 +212,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     deleteNode(b: string): void {
+        if (!this.canEdit()) {
+            return;
+        }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         if (b === 'all') {
             // Delete Node with Child
@@ -225,6 +252,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     removeNodeFromJoin(workflow: Workflow, id: number, node: WorkflowNode, parent: WorkflowNodeJoin, index: number) {
+        if (!this.canEdit()) {
+            return;
+        }
         if (node.id === id) {
             parent.triggers.splice(index, 1);
         }
@@ -236,6 +266,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     removeNode(workflow: Workflow, id: number, node: WorkflowNode, parent: WorkflowNode, index: number): Workflow {
+        if (!this.canEdit()) {
+            return;
+        }
         if (node.id === id) {
             parent.triggers.splice(index, 1);
             workflow = Workflow.removeNodeInNotifications(workflow, node);
@@ -275,6 +308,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     createJoin(): void {
+        if (!this.canEdit()) {
+            return;
+        }
         if (!this.node.ref) {
             this.node.ref = this.node.id.toString();
         }
@@ -289,15 +325,24 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     openRenameArea(): void {
+        if (!this.canEdit()) {
+            return;
+        }
         this.nameWarning = Workflow.getNodeNameImpact(this.workflow, this.node.name);
         this.displayInputName = true;
     }
 
     linkJoin(): void {
+        if (!this.canEdit()) {
+            return;
+        }
         this._workflowCoreService.linkJoinEvent(this.node);
     }
 
     addHook(he: HookEvent): void {
+        if (!this.canEdit()) {
+            return;
+        }
         if (!this.node.hooks) {
             this.node.hooks = new Array<WorkflowNodeHook>();
         }
@@ -306,6 +351,9 @@ export class WorkflowSidebarEditNodeComponent {
     }
 
     rename(): void {
+        if (!this.canEdit()) {
+            return;
+        }
         this.updateNode(this.node);
     }
 }

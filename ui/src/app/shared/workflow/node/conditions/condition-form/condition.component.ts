@@ -53,7 +53,6 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
         if (this.conditions.lua_script) {
             this.mode = 'advanced';
         }
-
     }
 
     send(): void {

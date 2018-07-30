@@ -3,6 +3,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
+import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
 import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
@@ -42,6 +43,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
     hookStatus = HookStatus;
     hookDetails: WorkflowHookTask;
     _hook: WorkflowNodeHook;
+    permissionEnum = PermissionValue;
 
     constructor(
         private _workflowStore: WorkflowStore,
@@ -68,6 +70,9 @@ export class WorkflowSidebarHookComponent implements OnInit {
     }
 
     openDeleteHookModal() {
+        if (this.workflow.permission < PermissionValue.READ_WRITE_EXECUTE) {
+          return;
+        }
         if (this.deleteHookModal && this.deleteHookModal.show) {
             this.deleteHookModal.show();
         }

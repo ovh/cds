@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {PermissionValue} from '../../../../../model/permission.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Workflow, WorkflowNodeCondition, WorkflowNodeConditions} from '../../../../../model/workflow.model';
@@ -9,18 +9,38 @@ import {Table} from '../../../../table/table';
     templateUrl: './condition.list.html',
     styleUrls: ['./condition.list.scss']
 })
-export class WorkflowNodeConditionListComponent extends Table {
+export class WorkflowNodeConditionListComponent extends Table implements OnInit {
 
     @Input() conditions: WorkflowNodeConditions;
     @Output() conditionChange = new EventEmitter<WorkflowNodeCondition[]>();
     @Input() workflow: Workflow;
     @Input() operators: {};
 
+    codeMirrorConfig: {};
     permission = PermissionValue;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
+    mode: 'advanced'|'basic' = 'basic';
+    data: any[] = [];
 
     constructor() {
         super();
+        this.codeMirrorConfig = {
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            mode: 'lua',
+            lineWrapping: true,
+            lineNumbers: true,
+            autoRefresh: true,
+            readOnly: true,
+        };
+    }
+
+    ngOnInit() {
+        if (this.conditions.lua_script) {
+            this.mode = 'advanced';
+        }
+
+        this.data = this.getData();
     }
 
     getData(): any[] {
@@ -30,6 +50,7 @@ export class WorkflowNodeConditionListComponent extends Table {
         if (!this.conditions.plain) {
             this.conditions.plain = new Array<WorkflowNodeCondition>();
         }
+
         return this.conditions.plain;
     }
 

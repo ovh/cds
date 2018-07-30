@@ -3,6 +3,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs/Subscription';
+import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
 import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../../../model/workflow.model';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
@@ -28,6 +29,7 @@ export class WorkflowSidebarEditJoinComponent {
 
     disabled = false;
     loading = false;
+    permissionEnum = PermissionValue;
 
     @ViewChild('workflowDeleteJoin')
     workflowDeleteJoin: WorkflowDeleteJoinComponent;
@@ -42,12 +44,18 @@ export class WorkflowSidebarEditJoinComponent {
     }
 
     openDeleteJoinModal(): void {
+        if (this.workflow.permission < PermissionValue.READ_WRITE_EXECUTE) {
+            return;
+        }
         if (this.workflowDeleteJoin) {
             this.workflowDeleteJoin.show();
         }
     }
 
     openTriggerJoinModal(): void {
+        if (this.workflow.permission < PermissionValue.READ_WRITE_EXECUTE) {
+            return;
+        }
         this.newTrigger = new WorkflowNodeJoinTrigger();
         if (this.workflowJoinTrigger) {
             this.workflowJoinTrigger.show();
@@ -55,6 +63,9 @@ export class WorkflowSidebarEditJoinComponent {
     }
 
     deleteJoin(b: boolean): void {
+        if (this.workflow.permission < PermissionValue.READ_WRITE_EXECUTE) {
+            return;
+        }
         if (b) {
             let clonedWorkflow: Workflow = cloneDeep(this.workflow);
             clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !== this.join.id);
@@ -78,6 +89,9 @@ export class WorkflowSidebarEditJoinComponent {
     }
 
     saveTrigger(): void {
+        if (this.workflow.permission < PermissionValue.READ_WRITE_EXECUTE) {
+            return;
+        }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let currentJoin: WorkflowNodeJoin = clonedWorkflow.joins.find(j => j.id === this.join.id);
         if (!currentJoin) {
