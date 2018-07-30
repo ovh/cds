@@ -8,9 +8,9 @@ import (
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
-	"github.com/json-iterator/go"
 	"github.com/spf13/viper"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
@@ -69,12 +69,41 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 	_ = plugin.SendLog(a, "Running analysis")
 	analysis := clair.Analyze(image, manifest)
 
-	json, err := jsoniter.Marshal(analysis)
-	if err != nil {
-		_ = plugin.SendLog(a, "Unable to push image on Clair: %s", err)
+	_ = plugin.SendLog(a, "Creating report")
+
+	var vulnerabilities []sdk.Vulnerability
+	summary := make(map[string]int64)
+	if analysis.MostRecentLayer().Layer != nil {
+		for _, feat := range analysis.MostRecentLayer().Layer.Features {
+			for _, vuln := range feat.Vulnerabilities {
+				v := sdk.Vulnerability{
+					Version:     feat.Version,
+					Component:   feat.Name,
+					Description: vuln.Description,
+					Link:        vuln.Link,
+					FixIn:       vuln.FixedBy,
+					Severity:    sdk.ToVulnerabilitySeverity(vuln.Severity),
+					Origin:      feat.AddedBy,
+					CVE:         vuln.Name,
+					Title:       fmt.Sprintf("%s %s", feat.Name, feat.Version),
+				}
+				vulnerabilities = append(vulnerabilities, v)
+
+				count := summary[v.Severity]
+				summary[v.Severity] = count + 1
+
+			}
+		}
+	}
+
+	report := sdk.VulnerabilityReport{
+		Vulnerabilities: vulnerabilities,
+		Summary:         summary,
+	}
+	if err := plugin.SendVulnerabilityReport(a, report); err != nil {
+		_ = plugin.SendLog(a, "Unable to send report: %s", err)
 		return plugin.Fail
 	}
-	_ = plugin.SendLog(a, "Report: %s", string(json))
 	return plugin.Success
 }
 

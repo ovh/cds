@@ -10,6 +10,7 @@ import (
 	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/feature"
@@ -616,6 +617,13 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
+	// Application
+	app := sdk.Application{
+		ProjectID: proj.ID,
+		Name:      "app",
+	}
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -668,8 +676,11 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Root: &sdk.WorkflowNode{
 			PipelineID:   pip.ID,
 			PipelineName: pip.Name,
+			Context: &sdk.WorkflowNodeContext{
+				ApplicationID: app.ID,
+			},
 			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
+				{
 					WorkflowDestNode: sdk.WorkflowNode{
 						PipelineID:   pip.ID,
 						PipelineName: pip.Name,
@@ -679,7 +690,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		},
 	}
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms, project.LoadOptions.WithApplications)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -693,6 +704,24 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true, WithTests: true})
 	test.NoError(t, err)
+
+	vuln := sdk.Vulnerability{
+		ApplicationID:     app.ID,
+		Ignored:           false,
+		Component:         "lodash",
+		CVE:               "",
+		Description:       "",
+		FixIn:             "",
+		Origin:            "",
+		Severity:          "high",
+		Title:             "",
+		Version:           "",
+		Link:              "",
+		WorkflowID:        lastrun.WorkflowID,
+		WorkflowRunID:     lastrun.ID,
+		WorkflowNodeRunID: lastrun.WorkflowNodeRuns[w1.RootID][0].ID,
+	}
+	assert.NoError(t, application.InsertVulnerability(db, vuln))
 
 	//Prepare request
 	vars := map[string]string{
@@ -709,6 +738,10 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
+
+	var nr sdk.WorkflowNodeRun
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &nr))
+	assert.Equal(t, 1, len(nr.Vulnerabilities))
 }
 
 func Test_resyncWorkflowRunHandler(t *testing.T) {

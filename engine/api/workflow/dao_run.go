@@ -36,6 +36,7 @@ type LoadRunOptions struct {
 	WithArtifacts           bool
 	WithTests               bool
 	WithLightTests          bool
+	WithVulnerabilities     bool
 	DisableDetailledNodeRun bool
 }
 

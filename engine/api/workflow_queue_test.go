@@ -724,6 +724,131 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, "Hi, I am foo", string(body))
 }
 
+func TestPostVulnerabilityReportHandler(t *testing.T) {
+	api, db, router := newTestAPI(t)
+
+	// Create user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+
+	// Create project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	// add group
+	assert.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
+
+	// Create pipeline
+	pip := &sdk.Pipeline{
+		ProjectID: proj.ID,
+		Name:      sdk.RandomString(10),
+		Type:      "build",
+	}
+	assert.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
+
+	s := sdk.Stage{
+		PipelineID: pip.ID,
+		Name:       "foo",
+		Enabled:    true,
+	}
+
+	assert.NoError(t, pipeline.InsertStage(db, &s))
+
+	j := sdk.Job{
+		Enabled:         true,
+		PipelineStageID: s.ID,
+		Action: sdk.Action{
+			Name: "script",
+			Actions: []sdk.Action{
+				{
+					Name: "Script",
+					Parameters: []sdk.Parameter{
+						{
+							Name:  "script",
+							Value: "echo lol",
+						},
+					},
+				},
+			},
+		},
+	}
+	assert.NoError(t, pipeline.InsertJob(db, &j, s.ID, pip))
+
+	var errPip error
+	pip, errPip = pipeline.LoadPipelineByID(db, pip.ID, true)
+	assert.NoError(t, errPip)
+
+	// Create application
+	app := sdk.Application{
+		ProjectID: proj.ID,
+		Name:      sdk.RandomString(10),
+	}
+	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+
+	// Create workflow
+	w := sdk.Workflow{
+		Name:       sdk.RandomString(10),
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Name:         "node1",
+			PipelineID:   pip.ID,
+			PipelineName: pip.Name,
+			Context: &sdk.WorkflowNodeContext{
+				Application: &app,
+			},
+		},
+	}
+	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+	assert.NoError(t, err)
+	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
+
+	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{}, nil)
+	assert.NoError(t, errmr)
+
+	// Call post coverage report handler
+	// Prepare request
+
+	vars := map[string]string{
+		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID),
+	}
+
+	ctx := testRunWorkflowCtx{
+		user:     u,
+		password: pass,
+		project:  proj,
+		workflow: &w,
+		run:      wrDB,
+	}
+	testRegisterWorker(t, api, router, &ctx)
+	ctx.worker.ActionBuildID = wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
+
+	request := sdk.VulnerabilityReport{
+		Vulnerabilities: []sdk.Vulnerability{
+			{
+				Version:     "1.0.0",
+				Title:       "lodash",
+				Severity:    "high",
+				Origin:      "parsejson>lodash",
+				Link:        "",
+				FixIn:       "",
+				Description: "",
+				CVE:         "",
+				Component:   "",
+				Ignored:     false,
+			},
+		},
+	}
+
+	uri := router.GetRoute("POST", api.postVulnerabilityReportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, request)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 204, rec.Code)
+}
+
 func TestInsertNewCodeCoverageReport(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
