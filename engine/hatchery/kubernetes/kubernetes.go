@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
@@ -62,16 +63,42 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
-	if err != nil {
-		return sdk.WrapError(err, "Cannot build config from flags")
-	}
-	// creates the clientset
-	clientset, err := kubernetes.NewForConfig(configK8s)
-	if err != nil {
-		return sdk.WrapError(err, "Cannot create new config")
-	}
+	var errCl error
+	var clientset *kubernetes.Clientset
+	k8sTimeout := time.Second * 5
+	if h.Config.KubernetesConfigFile != "" {
+		cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot build config from flags")
+		}
+		cfg.Timeout = k8sTimeout
 
+		clientset, errCl = kubernetes.NewForConfig(cfg)
+		if errCl != nil {
+			return sdk.WrapError(errCl, "Cannot create client with newForConfig")
+		}
+	} else {
+		configK8s, err := clientcmd.BuildConfigFromKubeconfigGetter(h.Config.KubernetesMasterURL, h.getStartingConfig)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot build config from config getter")
+		}
+		configK8s.Host = h.Config.KubernetesMasterURL
+		configK8s.Timeout = k8sTimeout
+
+		if h.Config.KubernetesCertAuthData != "" {
+			configK8s.TLSClientConfig = rest.TLSClientConfig{
+				CAData:   []byte(h.Config.KubernetesCertAuthData),
+				CertData: []byte(h.Config.KubernetesClientCertData),
+				KeyData:  []byte(h.Config.KubernetesClientKeyData),
+			}
+		}
+
+		// creates the clientset
+		clientset, errCl = kubernetes.NewForConfig(configK8s)
+		if errCl != nil {
+			return sdk.WrapError(errCl, "Cannot create new config")
+		}
+	}
 	h.k8sClient = clientset
 
 	if h.Config.KubernetesNamespace != apiv1.NamespaceDefault {
