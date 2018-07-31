@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	types "github.com/docker/docker/api/types"
@@ -55,10 +54,9 @@ func (h *HatcherySwarm) Init() error {
 			return errPing
 		}
 		h.dockerClients["default"] = &dockerClient{
-			Client:         *d,
-			MaxContainers:  h.Configuration().Provision.MaxWorker,
-			name:           "default",
-			pullImageMutex: &sync.Mutex{},
+			Client:        *d,
+			MaxContainers: h.Configuration().Provision.MaxWorker,
+			name:          "default",
 		}
 
 	} else {
@@ -130,10 +128,9 @@ func (h *HatcherySwarm) Init() error {
 			log.Info("hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
 
 			h.dockerClients[hostName] = &dockerClient{
-				Client:         *d,
-				MaxContainers:  cfg.MaxContainers,
-				name:           hostName,
-				pullImageMutex: &sync.Mutex{},
+				Client:        *d,
+				MaxContainers: cfg.MaxContainers,
+				name:          hostName,
 			}
 		}
 		if len(h.dockerClients) == 0 {

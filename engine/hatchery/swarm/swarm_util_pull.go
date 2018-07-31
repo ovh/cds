@@ -16,10 +16,6 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 	t0 := time.Now()
 	log.Debug("hatchery> swarm> pullImage> pulling image %s on %s", img, dockerClient.name)
 
-	// We use a mutex to avoid pull too much image at the same time
-	dockerClient.pullImageMutex.Lock()
-	defer dockerClient.pullImageMutex.Unlock()
-
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

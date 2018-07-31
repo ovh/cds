@@ -1,8 +1,6 @@
 package swarm
 
 import (
-	"sync"
-
 	docker "github.com/docker/docker/client"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
@@ -42,9 +40,8 @@ type HatcherySwarm struct {
 
 type dockerClient struct {
 	docker.Client
-	MaxContainers  int
-	name           string
-	pullImageMutex *sync.Mutex
+	MaxContainers int
+	name          string
 }
 
 // DockerEngineConfiguration is a configuration to be able to connect to a docker engine
