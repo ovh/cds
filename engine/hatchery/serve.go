@@ -58,10 +58,6 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 	log.Info("%s> Starting service %s...", c.Name, sdk.VERSION)
 	c.StartupTime = time.Now()
 
-	if err := hatchery.Create(h); err != nil {
-		return err
-	}
-
 	//Init the http server
 	c.initRouter(ctx, h)
 	server := &http.Server{
@@ -87,6 +83,10 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		}
 	}()
 
+	if err := hatchery.Create(h); err != nil {
+		return err
+	}
+
 	return ctx.Err()
 }
 
@@ -105,6 +105,9 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 func getWorkersPoolHandler(h hatchery.Interface) api.HandlerFunc {
 	return func() api.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			if h == nil {
+				return nil
+			}
 			pool, err := hatchery.WorkerPool(h)
 			if err != nil {
 				return sdk.WrapError(err, "getWorkersPoolHandler")
