@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {AllKeys} from '../../../model/keys.model';
 import {Parameter} from '../../../model/parameter.model';
 import {Project} from '../../../model/project.model';
@@ -12,7 +12,7 @@ import {ParameterEvent} from '../parameter.event.model';
     templateUrl: './parameter.html',
     styleUrls: ['./parameter.scss']
 })
-export class ParameterListComponent extends Table {
+export class ParameterListComponent extends Table implements OnInit {
 
     @Input('parameters')
     set parameters(newP: Array<Parameter>) {
@@ -24,7 +24,10 @@ export class ParameterListComponent extends Table {
         } else {
             this._parameters = newP;
         }
-        this.data = this.getDataForCurrentPage();
+
+        if (this.ready) {
+            this.data = this.getDataForCurrentPage();
+        }
     }
     get parameters() {
         return this._parameters;
@@ -57,6 +60,10 @@ export class ParameterListComponent extends Table {
         } else {
             this.ready = true;
         }
+    }
+
+    ngOnInit() {
+        this.data = this.getDataForCurrentPage();
     }
 
     getDataForCurrentPage(): any[] {
