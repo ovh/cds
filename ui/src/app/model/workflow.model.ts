@@ -673,7 +673,7 @@ export class WorkflowNode {
     }
 
     static isLinkedToRepo(node: WorkflowNode): boolean {
-      return node.context.application_id !== 0 || node.context.application != null || !!node.context.application.repository_fullname;
+      return node.context.application_id !== 0 && node.context.application != null && !!node.context.application.repository_fullname;
     }
 
     constructor() {
