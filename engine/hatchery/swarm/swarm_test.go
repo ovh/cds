@@ -1,7 +1,6 @@
 package swarm
 
 import (
-	"sync"
 	"testing"
 
 	docker "github.com/docker/docker/client"
@@ -29,6 +28,6 @@ func testSwarmHatchery(t *testing.T) *HatcherySwarm {
 	h := &HatcherySwarm{
 		dockerClients: map[string]*dockerClient{},
 	}
-	h.dockerClients["default"] = &dockerClient{Client: *c, MaxContainers: 2, name: "default", pullImageMutex: &sync.Mutex{}}
+	h.dockerClients["default"] = &dockerClient{Client: *c, MaxContainers: 2, name: "default"}
 	return h
 }
