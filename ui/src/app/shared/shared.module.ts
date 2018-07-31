@@ -67,6 +67,7 @@ import {VariableFormComponent} from './variable/form/variable.form';
 import {VariableComponent} from './variable/list/variable.component';
 import {VariableValueComponent} from './variable/value/variable.value.component';
 import {VCSStrategyComponent} from './vcs/vcs.strategy.component';
+import {VulnerabilitiesListComponent} from './vulnerability/list/vulnerability.list.component';
 import {VulnerabilitiesComponent} from './vulnerability/vulnerabilities.component';
 import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.component';
 import {WarningMarkComponent} from './warning/mark-single/warning.mark.component';
@@ -135,6 +136,7 @@ import {ZoneComponent} from './zone/zone.component';
         VariableFormComponent,
         VariableValueComponent,
         VulnerabilitiesComponent,
+        VulnerabilitiesListComponent,
         WarningModalComponent,
         DeleteModalComponent,
         WarningTabComponent,
@@ -229,6 +231,7 @@ import {ZoneComponent} from './zone/zone.component';
         VariableFormComponent,
         VariableValueComponent,
         VulnerabilitiesComponent,
+        VulnerabilitiesListComponent,
         WarningTabComponent,
         WarningMarkComponent,
         WarningMarkListComponent,
