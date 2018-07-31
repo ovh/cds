@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -210,6 +211,11 @@ func (api *API) putWorkflowImportHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowImportHandler> Cannot commit transaction")
 		}
 
+		oldW, errL := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, getUser(ctx), workflow.LoadOptions{WithoutNode: true})
+		if errL == nil {
+			event.PublishWorkflowUpdate(key, *wrkflw, *oldW, getUser(ctx))
+		}
+
 		if wrkflw != nil {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
@@ -222,6 +228,7 @@ func (api *API) putWorkflowImportHandler() Handler {
 func (api *API) postWorkflowPushHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
+		db := api.mustDB()
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
@@ -248,7 +255,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 		}
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(db, api.Cache, key, getUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -259,7 +266,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
 		}
 
-		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Cannot push workflow")
 		}

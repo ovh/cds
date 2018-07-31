@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -70,8 +69,6 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 	if msgChan != nil {
 		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentCreated, env.Name)
 	}
-
-	event.PublishEnvironmentAdd(proj.Key, *env, u)
 
 	return nil
 }
@@ -193,8 +190,6 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 	}
 
 	log.Debug("ImportInto> Done")
-
-	event.PublishEnvironmentUpdate(proj.Key, *env, *into, u)
 
 	return nil
 }

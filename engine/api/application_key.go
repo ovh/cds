@@ -61,7 +61,6 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 				if err := application.DeleteApplicationKey(tx, app.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot delete key %s", k.Name)
 				}
-				event.PublishApplicationKeyDelete(key, *app, keyToDelete, u)
 			}
 		}
 

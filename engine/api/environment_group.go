@@ -155,7 +155,9 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
 		envUpdated.ProjectKey = key
 
-		event.PublishEnvironmentUpdate(key, *envUpdated, *env, getUser(ctx))
+		for _, gp := range groupPermission {
+			event.PublishEnvironmentPermissionAdd(key, *envUpdated, gp, getUser(ctx))
+		}
 
 		return WriteJSON(w, envUpdated, http.StatusOK)
 	}

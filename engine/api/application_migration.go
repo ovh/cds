@@ -60,11 +60,12 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 		if err := project.Update(tx, api.Cache, p, u); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 		}
-		event.PublishUpdateProject(p, &oldProj, u)
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
 		}
+		event.PublishUpdateProject(p, &oldProj, u)
+
 		return nil
 	}
 }

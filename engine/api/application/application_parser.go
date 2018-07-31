@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -178,7 +177,6 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	globalError := Import(db, cache, proj, app, eapp.VCSServer, u, msgChan)
 	close(msgChan)
 	done.Wait()
-	event.PublishAddApplication(proj.Key, *app, u)
 
 	return app, msgList, globalError
 }

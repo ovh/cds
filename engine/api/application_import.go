@@ -63,7 +63,7 @@ func (api *API) postApplicationImportHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		_, msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, force, project.DecryptWithBuiltinKey, getUser(ctx))
+		newApp, msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, force, project.DecryptWithBuiltinKey, getUser(ctx))
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {
@@ -80,11 +80,7 @@ func (api *API) postApplicationImportHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postApplicationImportHandler> Cannot commit transaction")
 		}
-
-		newApp, errN := application.LoadByName(api.mustDB(), api.Cache, proj.Key, eapp.Name, getUser(ctx), application.LoadOptions.WithVariables, application.LoadOptions.WithGroups, application.LoadOptions.WithKeys)
-		if errN == nil {
-			event.PublishAddApplication(proj.Key, *newApp, getUser(ctx))
-		}
+		event.PublishAddApplication(proj.Key, *newApp, getUser(ctx))
 
 		return WriteJSON(w, msgListString, http.StatusOK)
 	}

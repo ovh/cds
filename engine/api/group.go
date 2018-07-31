@@ -92,6 +92,10 @@ func (api *API) deleteGroupHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupHandler> cannot delete group")
 		}
 
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "deleteGroupHandler> cannot commit transaction")
+		}
+
 		groupPerm := sdk.GroupPermission{Group: *g}
 		for _, pg := range projPerms {
 			event.PublishDeleteProjectPermission(&pg.Project, groupPerm, u)
@@ -109,9 +113,6 @@ func (api *API) deleteGroupHandler() Handler {
 			event.PublishEnvironmentPermissionDelete(pg.Environment.ProjectKey, pg.Environment, groupPerm, u)
 		}
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteGroupHandler> cannot commit transaction")
-		}
 		return nil
 	}
 }

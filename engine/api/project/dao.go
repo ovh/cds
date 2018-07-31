@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/tracing"
@@ -194,7 +193,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 	if err := InsertKey(db, &pk); err != nil {
 		return sdk.WrapError(err, "project.Insert> Unable to insert PGPKeyPair")
 	}
-	event.PublishAddProject(proj, u)
 
 	return nil
 }
