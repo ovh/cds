@@ -77,10 +77,6 @@ func (api *API) postApplicationImportHandler() Handler {
 			return sdk.WrapError(globalError, "postApplicationImportHandler> Unable import application %s", eapp.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-			return sdk.WrapError(err, "postApplicationImportHandler> Unable to update project")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postApplicationImportHandler> Cannot commit transaction")
 		}

@@ -286,11 +286,6 @@ func (api *API) updatePipelineHandler() Handler {
 		key := vars["key"]
 		name := vars["permPipelineKey"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errP != nil {
-			return sdk.WrapError(errP, "updatePipelineHandler> Cannot load project")
-		}
-
 		var p sdk.Pipeline
 		if err := UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot read body")
@@ -324,28 +319,6 @@ func (api *API) updatePipelineHandler() Handler {
 
 		if err := pipeline.UpdatePipeline(tx, pipelineDB); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> cannot update pipeline %s", name)
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineDB, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updatePipelineHandler> Cannot update pipeline last modified date")
-		}
-
-		if oldName != pipelineDB.Name {
-			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-				return sdk.WrapError(err, "updatePipelineHandler> cannot update project last modified date")
-			}
-		}
-
-		// Update applications
-		apps, errA := application.LoadByPipeline(tx, api.Cache, p.ID, getUser(ctx))
-		if errA != nil {
-			return sdk.WrapError(errA, "updatePipelineHandler> Cannot load application using pipeline %s", p.Name)
-		}
-
-		for _, app := range apps {
-			if err := application.UpdateLastModified(tx, api.Cache, &app, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "updatePipelineHandler> Cannot update application last modified date")
-			}
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -411,10 +384,6 @@ func (api *API) postPipelineRollbackHandler() Handler {
 
 		close(msgChan)
 		done.Wait()
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, audit.Pipeline, u); err != nil {
-			return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot update pipeline last modified date")
-		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot commit transaction")
@@ -504,16 +473,9 @@ func (api *API) addPipelineHandler() Handler {
 				if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 					return sdk.WrapError(err, "Cannot attach pipeline %d to %d", app.ID, p.ID)
 				}
-
-				if err := application.UpdateLastModified(tx, api.Cache, &app, getUser(ctx)); err != nil {
-					return sdk.WrapError(err, "Cannot update application last modified date")
-				}
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-			return sdk.WrapError(err, "Cannot update project last modified date")
-		}
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
@@ -756,10 +718,6 @@ func (api *API) deletePipelineHandler() Handler {
 
 		if err := pipeline.DeletePipeline(tx, p.ID, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deletePipeline> Cannot delete pipeline %s", pipelineName)
-		}
-
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-			return sdk.WrapError(err, "deletePipeline> Cannot update project last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

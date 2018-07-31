@@ -102,14 +102,6 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
 		}
 
-		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
-			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update environment last modified date")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 		}
@@ -164,14 +156,6 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 
 		if err := environment.UpdateVariable(api.mustDB(), env.ID, &newVar, varBefore, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
-		}
-
-		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
-			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update environment last modified date")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -233,13 +217,6 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
 		}
 
-		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
-			return sdk.WrapError(err, "addVariableInEnvironmentHandler> Cannot update environment last modified date")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot update last modified date")
-		}
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}

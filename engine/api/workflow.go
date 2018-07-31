@@ -216,14 +216,6 @@ func (api *API) postWorkflowHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
-			return sdk.WrapError(err, "Cannot update project last modified date")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
-			return sdk.WrapError(err, "postWorkflowHandler> Cannot update project workflows last modified")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
@@ -235,8 +227,6 @@ func (api *API) postWorkflowHandler() Handler {
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
-
-		event.PublishWorkflowAdd(key, *wf1, getUser(ctx))
 
 		return WriteJSON(w, wf1, http.StatusCreated)
 	}
@@ -301,16 +291,6 @@ func (api *API) putWorkflowHandler() Handler {
 			}
 		}
 
-		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), p.Key, oldW); err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler> Cannot update last modified date for workflow")
-		}
-
-		if oldW.Name != wf.Name {
-			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
-				return sdk.WrapError(err, "putWorkflowHandler> Cannot update project last modified date")
-			}
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot commit transaction")
 		}
@@ -328,8 +308,6 @@ func (api *API) putWorkflowHandler() Handler {
 
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
-
-		event.PublishWorkflowUpdate(key, *wf1, *oldW, getUser(ctx))
 
 		return WriteJSON(w, wf1, http.StatusOK)
 	}
@@ -360,10 +338,6 @@ func (api *API) deleteWorkflowHandler() Handler {
 
 		if err := workflow.MarkAsDelete(tx, oldW); err != nil {
 			return sdk.WrapError(err, "Cannot delete workflow")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
-			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

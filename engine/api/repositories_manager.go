@@ -157,10 +157,6 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with InsertForProject")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, u, proj, sdk.ProjectLastModificationType); err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
@@ -233,10 +229,6 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectLastModificationType); err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
 		}
@@ -272,10 +264,6 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 
 		if err := repositoriesmanager.DeleteForProject(tx, p, vcsServer); err != nil {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> error deleting %s-%s", projectKey, rmName)
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
-			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot update project last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -415,10 +403,6 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot insert for application")
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, app, u); err != nil {
-			return sdk.WrapError(err, "attachRepositoriesManager> Cannot update application last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot commit transaction")
 		}
@@ -538,10 +522,6 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "detachRepositoriesManager> error on poller.DeleteAll")
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, app, u); err != nil {
-			return sdk.WrapError(err, "detachRepositoriesManager> Cannot update application last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit transaction")
 		}
@@ -653,10 +633,6 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot create hook")
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot update application last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot commit transaction")
 		}
@@ -712,10 +688,6 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 
 		if errdelete := hook.DeleteHook(tx, h.ID); errdelete != nil {
 			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Unable to delete hook %d", h.ID)
-		}
-
-		if errupdate := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); errupdate != nil {
-			return sdk.WrapError(errupdate, "deleteHookOnRepositoriesManagerHandler> Unable to update last modified")
 		}
 
 		if errtx := tx.Commit(); errtx != nil {

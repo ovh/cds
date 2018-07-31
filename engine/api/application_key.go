@@ -37,12 +37,13 @@ func (api *API) getKeysInApplicationHandler() Handler {
 
 func (api *API) deleteKeyInApplicationHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		u := getUser(ctx)
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		keyName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithKeys)
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, u, application.LoadOptions.WithKeys)
 		if errA != nil {
 			return sdk.WrapError(errA, "deleteKeyInApplicationHandler> Cannot load application")
 		}
@@ -60,9 +61,7 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 				if err := application.DeleteApplicationKey(tx, app.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot delete key %s", k.Name)
 				}
-				if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot update application last modified date")
-				}
+				event.PublishApplicationKeyDelete(key, *app, keyToDelete, u)
 			}
 		}
 
@@ -73,8 +72,7 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot commit transaction")
 		}
-
-		event.PublishApplicationKeyDelete(key, *app, keyToDelete, getUser(ctx))
+		event.PublishApplicationKeyDelete(key, *app, keyToDelete, u)
 
 		return WriteJSON(w, nil, http.StatusOK)
 	}
@@ -132,10 +130,6 @@ func (api *API) addKeyInApplicationHandler() Handler {
 
 		if err := application.InsertKey(tx, &newKey); err != nil {
 			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot insert application key")
-		}
-
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot update project last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

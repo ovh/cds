@@ -92,10 +92,6 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot delete %s", varName)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectVariableLastModificationType); err != nil {
-			return sdk.WrapError(err, "deleteVariableFromProject: Cannot update last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot commit transaction")
 		}
@@ -137,10 +133,6 @@ func (api *API) updateVariableInProjectHandler() Handler {
 		previousVar, err := project.GetVariableByID(tx, p.ID, newVar.ID, project.WithClearPassword())
 		if err := project.UpdateVariable(tx, p, &newVar, previousVar, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: Cannot update variable %s in project %s", varName, p.Name)
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectVariableLastModificationType); err != nil {
-			return sdk.WrapError(err, "updateVariableInProject: Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -201,10 +193,6 @@ func (api *API) addVariableInProjectHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "AddVariableInProject: Cannot add variable %s in project %s", varName, p.Name)
 
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectVariableLastModificationType); err != nil {
-			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified")
 		}
 
 		if err := tx.Commit(); err != nil {

@@ -23,7 +23,7 @@ func UpdatePipelineApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.
 // UpdatePipelineApplicationString Update application pipeline parameters
 func UpdatePipelineApplicationString(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, pipelineID int64, data string, u *sdk.User) error {
 	query := `
-		UPDATE application_pipeline SET 
+		UPDATE application_pipeline SET
 		args = $1,
 		last_modified = current_timestamp
 		WHERE application_id=$2 AND pipeline_id=$3
@@ -35,5 +35,5 @@ func UpdatePipelineApplicationString(db gorp.SqlExecutor, store cache.Store, app
 		return err
 	}
 
-	return UpdateLastModified(db, store, app, u)
+	return nil
 }

@@ -132,10 +132,6 @@ func (api *API) postWorkflowImportHandler() Handler {
 			return sdk.WrapError(globalError, "postWorkflowImportHandler> Unable import workflow %s", ew.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectWorkflowLastModificationType); err != nil {
-			return sdk.WrapError(err, "postWorkflowImportHandler> Unable to update project")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postWorkflowImportHandler> Cannot commit transaction")
 		}
@@ -210,10 +206,6 @@ func (api *API) putWorkflowImportHandler() Handler {
 			return sdk.WrapError(globalError, "postWorkflowImportHandler> Unable import workflow %s", ew.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectWorkflowLastModificationType); err != nil {
-			return sdk.WrapError(err, "postWorkflowImportHandler> Unable to update project")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postWorkflowImportHandler> Cannot commit transaction")
 		}
@@ -272,10 +264,6 @@ func (api *API) postWorkflowPushHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Cannot push workflow")
 		}
 		msgListString := translate(r, allMsg)
-
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to update project")
-		}
 
 		if wrkflw != nil {
 			w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wrkflw.ID))

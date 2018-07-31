@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -40,11 +39,6 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		keyName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errP != nil {
-			return sdk.WrapError(errP, "deleteKeyInEnvironmentHandler> Cannot load project")
-		}
-
 		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "deleteKeyInEnvironmentHandler> Cannot load environment")
@@ -61,9 +55,6 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 				envKey = k
 				if err := environment.DeleteEnvironmentKey(tx, env.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot delete key %s", k.Name)
-				}
-				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot update application last modified date")
 				}
 			}
 		}
@@ -93,11 +84,6 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(newKey.Name) {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInEnvironmentHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
-		}
-
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errP != nil {
-			return sdk.WrapError(errP, "addKeyInEnvironmentHandler> Cannot load project")
 		}
 
 		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
@@ -135,10 +121,6 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 
 		if err := environment.InsertKey(tx, &newKey); err != nil {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot insert application key")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot update project last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

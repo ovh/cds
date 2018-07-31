@@ -94,10 +94,6 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
-			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot update last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot commit transaction")
 		}
@@ -168,10 +164,6 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 
 		if err := group.UpdateGroupRoleInProject(tx, p.ID, g.ID, groupProject.Permission); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot add group %s in project %s", g.Name, p.Name)
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
-			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -295,10 +287,6 @@ func (api *API) addGroupInProjectHandler() Handler {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot insert group %s on environment %s", g.Name, env.Name)
 				}
 			}
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
-			return sdk.WrapError(err, "AddGroupInProject: Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

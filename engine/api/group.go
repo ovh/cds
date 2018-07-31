@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -54,6 +55,7 @@ func (api *API) deleteGroupHandler() Handler {
 		// Get group name in URL
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
+		u := getUser(ctx)
 
 		g, errl := group.LoadGroup(api.mustDB(), name)
 		if errl != nil {
@@ -90,31 +92,21 @@ func (api *API) deleteGroupHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupHandler> cannot delete group")
 		}
 
+		groupPerm := sdk.GroupPermission{Group: *g}
 		for _, pg := range projPerms {
-			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), &pg.Project, sdk.ProjectLastModificationType); err != nil {
-				return sdk.WrapError(err, "deleteGroupHandler> Cannot update project last modified date")
-			}
+			event.PublishDeleteProjectPermission(&pg.Project, groupPerm, u)
 		}
 
 		for _, pg := range appPerms {
-			if err := application.UpdateLastModified(tx, api.Cache, &pg.Application, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "deleteGroupHandler> Cannot update application last modified date")
-			}
+			event.PublishApplicationPermissionDelete(pg.Application.ProjectKey, pg.Application, groupPerm, u)
 		}
 
 		for _, pg := range pipPerms {
-			p := &sdk.Project{
-				Key: pg.Pipeline.ProjectKey,
-			}
-			if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, p, &pg.Pipeline, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "deleteGroupHandler> Cannot update pipeline last modified date")
-			}
+			event.PublishPipelinePermissionDelete(pg.Pipeline.ProjectKey, pg.Pipeline.Name, groupPerm, u)
 		}
 
 		for _, pg := range envPerms {
-			if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), &pg.Environment); err != nil {
-				return sdk.WrapError(err, "deleteGroupHandler> Cannot update environment last modified date")
-			}
+			event.PublishEnvironmentPermissionDelete(pg.Environment.ProjectKey, pg.Environment, groupPerm, u)
 		}
 
 		if err := tx.Commit(); err != nil {
