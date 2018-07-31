@@ -108,7 +108,9 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
+	_, next := tracing.Span(ctx, "workflow.LoadRunByID")
 	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
+	next()
 	if errLoad != nil {
 		return nil, sdk.WrapError(errLoad, "workflow.UpdateNodeJobRunStatus> Unable to load node run id %d", job.WorkflowNodeRunID)
 	}
@@ -137,7 +139,9 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		job.Done = time.Now()
 		job.Status = status.String()
 
+		_, next := tracing.Span(ctx, "workflow.LoadRunByID")
 		wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{})
+		next()
 		if errLoadWf != nil {
 			return nil, sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", node.WorkflowRunID)
 		}
@@ -169,7 +173,10 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
+		_, next := tracing.Span(ctx, "workflow.LoadNodeRunByID")
 		nodeRun, errNR := LoadNodeRunByID(db, node.ID, LoadRunOptions{})
+		next()
+
 		if errNR != nil {
 			return nil, sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot LoadNodeRunByID node run %d", node.ID)
 		}
@@ -179,7 +186,9 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 	var errReport error
 	report, errReport = report.Merge(execute(ctx, db, store, proj, node))
 
+	_, next = tracing.Span(ctx, "workflow.LoadRunByID")
 	wr, err := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true, WithTests: true})
+	next()
 	if err != nil {
 		return report, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", node.WorkflowRunID)
 	}
