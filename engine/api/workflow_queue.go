@@ -94,7 +94,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, workflowNodeRuns)
 
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
@@ -425,7 +425,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		db := api.mustDB()
 
 		_, next = tracing.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, workflowNodeRuns)
 		next()
 
 		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, proj.Key)
@@ -771,14 +771,14 @@ func (api *API) postWorkflowJobCoverageResultsHandler() Handler {
 			return sdk.WrapError(errP, "postWorkflowJobCoverageResultsHandler> Cannot load project by nodeJobRunID:%d", id)
 		}
 		if errLoad == sdk.ErrNotFound {
-			if err := workflow.ComputeNewReport(api.mustDB(), api.Cache, report, wnr, p); err != nil {
+			if err := workflow.ComputeNewReport(ctx, api.mustDB(), api.Cache, report, wnr, p); err != nil {
 				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Cannot compute new coverage report")
 			}
 
 		} else {
 			// update
 			existingReport.Report = report
-			if err := workflow.ComputeLatestDefaultBranchReport(api.mustDB(), api.Cache, p, wnr, &existingReport); err != nil {
+			if err := workflow.ComputeLatestDefaultBranchReport(ctx, api.mustDB(), api.Cache, p, wnr, &existingReport); err != nil {
 				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Cannot compute default branch coverage report")
 			}
 

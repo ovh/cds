@@ -67,6 +67,7 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.ServiceName = "cds-hatchery-marathon"
 
 	return nil
 }

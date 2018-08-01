@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -39,7 +40,7 @@ func generateHash() (string, error) {
 
 //AuthorizeRedirect returns the request token, the Authorize URL
 //doc: https://developer.github.com/v3/oauth/#web-application-flow
-func (g *githubConsumer) AuthorizeRedirect() (string, string, error) {
+func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	// GET https://github.com/login/oauth/authorize
 	// with parameters : client_id, redirect_uri, scope, state
 	requestToken, err := generateHash()
@@ -60,7 +61,7 @@ func (g *githubConsumer) AuthorizeRedirect() (string, string, error) {
 
 //AuthorizeToken returns the authorized token (and its secret)
 //from the request token and the verifier got on authorize url
-func (g *githubConsumer) AuthorizeToken(state, code string) (string, string, error) {
+func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
 	log.Debug("AuthorizeToken> Github send code %s for state %s", code, state)
 	//POST https://github.com/login/oauth/access_token
 	//Parameters:
@@ -102,7 +103,7 @@ func (g *githubConsumer) AuthorizeToken(state, code string) (string, string, err
 var instancesAuthorizedClient = map[string]*githubClient{}
 
 //GetAuthorized returns an authorized client
-func (g *githubConsumer) GetAuthorizedClient(accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
+func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
 	c, ok := instancesAuthorizedClient[accessToken]
 	if !ok {
 		c = &githubClient{

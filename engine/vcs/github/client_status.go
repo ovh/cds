@@ -2,6 +2,7 @@ package github
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -28,7 +29,7 @@ type statusData struct {
 
 //SetStatus Users with push access can create commit statuses for a given ref:
 //https://developer.github.com/v3/repos/statuses/#create-a-status
-func (g *githubClient) SetStatus(event sdk.Event) error {
+func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if g.DisableStatus {
 		log.Warning("github.SetStatus>  ⚠ Github statuses are disabled")
 		return nil
@@ -95,7 +96,7 @@ func (g *githubClient) SetStatus(event sdk.Event) error {
 	return nil
 }
 
-func (g *githubClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	url := "/repos/" + repo + "/statuses/" + ref
 	status, body, _, err := g.get(url)
 	if err != nil {

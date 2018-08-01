@@ -10,20 +10,28 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/feature"
+	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
-var traceEnable bool
+var (
+	traceEnable bool
+	exporter    trace.Exporter
+)
 
 // Init the tracer
-func Init(cfg Configuration) error {
+func Init(cfg Configuration, serviceName string) error {
 	if !cfg.Enable {
 		return nil
 	}
 	traceEnable = true
-	exporter, err := jaeger.NewExporter(jaeger.Options{
-		Endpoint:    cfg.Exporter.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
-		ServiceName: cfg.Exporter.Jaeger.ServiceName,           //"cds-tracing"
-	})
+	var err error
+	if exporter == nil {
+		exporter, err = jaeger.NewExporter(jaeger.Options{
+			Endpoint:    cfg.Exporter.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
+			ServiceName: serviceName,                               //"cds-tracing"
+		})
+	}
 	if err != nil {
 		return err
 	}
@@ -37,11 +45,23 @@ func Init(cfg Configuration) error {
 	return nil
 }
 
+// New may start a tracing span
+func New(ctx context.Context, serviceName, name string, sampler trace.Sampler, spanKind int) context.Context {
+	if !traceEnable {
+		return ctx
+	}
+	ctx, _ = trace.StartSpan(ctx, name,
+		trace.WithSampler(sampler),
+		trace.WithSpanKind(spanKind))
+	return ctx
+}
+
 // Start may start a tracing span
-func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
+func Start(ctx context.Context, serviceName string, w http.ResponseWriter, req *http.Request, opt Options, db gorp.SqlExecutor, store cache.Store) (context.Context, error) {
 	if !traceEnable || !opt.Enable {
 		return ctx, nil
 	}
+	log.Info("starting trace %s on %s", opt.Name, serviceName)
 
 	tags := []trace.Attribute{}
 	if opt.Worker != nil {
@@ -55,60 +75,55 @@ func Start(ctx context.Context, w http.ResponseWriter, req *http.Request, opt Op
 	}
 
 	var span *trace.Span
-	rootSpanContext, hasSpanContext := defaultFormat.SpanContextFromRequest(req)
+	rootSpanContext, hasSpanContext := DefaultFormat.SpanContextFromRequest(req)
 
-	type setupFuncSpan func(s *trace.Span, r *http.Request, sc *trace.SpanContext)
-	var setupSpan = []setupFuncSpan{
-		func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
-			s.AddAttributes(
-				trace.StringAttribute(PathAttribute, r.URL.Path),
-				trace.StringAttribute(HostAttribute, r.URL.Host),
-				trace.StringAttribute(MethodAttribute, r.Method),
-				trace.StringAttribute(UserAgentAttribute, r.UserAgent()),
-			)
-		},
-	}
-	if hasSpanContext {
-		setupSpan = append(setupSpan, func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
-			s.AddLink(trace.Link{
-				TraceID:    rootSpanContext.TraceID,
-				SpanID:     rootSpanContext.SpanID,
-				Type:       trace.LinkTypeChild,
-				Attributes: nil,
-			})
-			spanContextToReponse(*sc, r, w)
-		})
-	} else {
-		setupSpan = append(setupSpan, func(s *trace.Span, r *http.Request, sc *trace.SpanContext) {
-			defaultFormat.SpanContextToRequest(*sc, r)
-			spanContextToReponse(*sc, r, w)
-		})
+	var pkey string
+	var ok bool
+	if db != nil && store != nil {
+		pkey, ok = findPrimaryKeyFromRequest(req, db, store)
+		if pkey != "" {
+			tags = append(tags, trace.StringAttribute("project_key", pkey))
+		}
 	}
 
-	pkey, ok := findPrimaryKeyFromRequest(req, db, store)
-	if pkey != "" {
-		tags = append(tags, trace.StringAttribute("project_key", pkey))
+	var traceOpts = []trace.StartOption{
+		trace.WithSpanKind(trace.SpanKindServer),
 	}
 
+	var sampler trace.Sampler
 	switch {
 	case ok && feature.IsEnabled(store, feature.FeatEnableTracing, pkey):
-		ctx, span = trace.StartSpan(ctx, opt.Name,
-			trace.WithSampler(trace.AlwaysSample()),
-			trace.WithSpanKind(trace.SpanKindServer))
-	default:
-		ctx, span = trace.StartSpan(ctx, opt.Name,
-			trace.WithSpanKind(trace.SpanKindServer))
+		sampler = trace.AlwaysSample()
+	case hasSpanContext && rootSpanContext.IsSampled():
+		sampler = trace.AlwaysSample()
 	}
 
-	var sc trace.SpanContext
-	if !hasSpanContext {
-		sc = span.SpanContext()
+	if sampler != nil {
+		traceOpts = append(traceOpts, trace.WithSampler(sampler))
 	}
+
+	if hasSpanContext {
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, opt.Name, rootSpanContext, traceOpts...)
+		span.AddLink(
+			trace.Link{
+				TraceID: rootSpanContext.TraceID,
+				SpanID:  rootSpanContext.SpanID,
+				Type:    trace.LinkTypeChild,
+			},
+		)
+	} else {
+		ctx, span = trace.StartSpan(ctx, opt.Name, traceOpts...)
+	}
+
 	span.AddAttributes(tags...)
-	for _, f := range setupSpan {
-		f(span, req, &sc)
-	}
+	span.AddAttributes(
+		trace.StringAttribute(PathAttribute, req.URL.Path),
+		trace.StringAttribute(HostAttribute, req.URL.Host),
+		trace.StringAttribute(MethodAttribute, req.Method),
+		trace.StringAttribute(UserAgentAttribute, req.UserAgent()),
+	)
 
+	ctx = tracingutils.SpanContextToContext(ctx, span.SpanContext())
 	return ctx, nil
 }
 

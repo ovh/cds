@@ -13,7 +13,7 @@ func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware)
-	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, api.tracingPostMiddleware)
+	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
 	api.lastUpdateBroker = &lastUpdateBroker{
 		clients:  make(map[string]lastUpdateBrokerSubscribe),
 		messages: make(chan string),

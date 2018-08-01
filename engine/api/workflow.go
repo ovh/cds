@@ -194,7 +194,7 @@ func (api *API) postWorkflowHandler() Handler {
 
 		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
-			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
+			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, getUser(ctx), &wf); err != nil {
 				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
 			}
 		}
@@ -203,7 +203,7 @@ func (api *API) postWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
 
-		if errHr := workflow.HookRegistration(tx, api.Cache, nil, wf, p); errHr != nil {
+		if errHr := workflow.HookRegistration(ctx, tx, api.Cache, nil, wf, p); errHr != nil {
 			return sdk.WrapError(errHr, "postWorkflowHandler>Hook registration failed")
 		}
 
@@ -277,7 +277,7 @@ func (api *API) putWorkflowHandler() Handler {
 
 		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
-			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
+			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, getUser(ctx), &wf); err != nil {
 				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
 			}
 		}
@@ -287,7 +287,7 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-		if errHr := workflow.HookRegistration(tx, api.Cache, oldW, wf, p); errHr != nil {
+		if errHr := workflow.HookRegistration(ctx, tx, api.Cache, oldW, wf, p); errHr != nil {
 			return sdk.WrapError(errHr, "putWorkflowHandler> HookRegistration")
 		}
 
@@ -374,7 +374,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 
 		sdk.GoRoutine("deleteWorkflowHandler",
 			func() {
-				if err := workflow.Delete(api.mustDB(), api.Cache, p, oldW); err != nil {
+				if err := workflow.Delete(context.Background(), api.mustDB(), api.Cache, p, oldW); err != nil {
 					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
 				}
 			})
@@ -415,7 +415,7 @@ func (api *API) getWorkflowHookHandler() Handler {
 
 		path := fmt.Sprintf("/task/%s/execution", uuid)
 		task := sdk.Task{}
-		if _, err := services.DoJSONRequest(srvs, "GET", path, nil, &task); err != nil {
+		if _, err := services.DoJSONRequest(ctx, srvs, "GET", path, nil, &task); err != nil {
 			return sdk.WrapError(err, "getWorkflowHookHandler> Unable to get hook %s task and executions", uuid)
 		}
 

@@ -2,6 +2,7 @@ package github
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
+func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	url := "/repos/" + repo + "/hooks"
 	if g.proxyURL != "" {
 		lastIndexSlash := strings.LastIndex(hook.URL, "/")
@@ -56,12 +57,12 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	hook.ID = fmt.Sprintf("%d", r.ID)
 	return nil
 }
-func (g *githubClient) GetHook(repo, id string) (sdk.VCSHook, error) {
+func (g *githubClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, fmt.Errorf("Not yet implemented")
 }
-func (g *githubClient) UpdateHook(repo, id string, hook sdk.VCSHook) error {
+func (g *githubClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
 	return fmt.Errorf("Not yet implemented")
 }
-func (g *githubClient) DeleteHook(repo string, hook sdk.VCSHook) error {
+func (g *githubClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
 	return g.delete("/repos/" + repo + "/hooks/" + hook.ID)
 }

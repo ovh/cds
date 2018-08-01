@@ -387,12 +387,12 @@ func (api *API) getApplicationBranchHandler() Handler {
 		var branches []sdk.VCSBranch
 		if app.RepositoryFullname != "" && app.VCSServer != "" {
 			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
 			}
 			if remote != "" && remote != app.RepositoryFullname {
-				brs, errB := client.Branches(remote)
+				brs, errB := client.Branches(ctx, remote)
 				if errB != nil {
 					return sdk.WrapError(errB, "getApplicationBranchHandler> Cannot get branches from repository %s", remote)
 				}
@@ -401,7 +401,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 				}
 			} else {
 				var errb error
-				branches, errb = client.Branches(app.RepositoryFullname)
+				branches, errb = client.Branches(ctx, app.RepositoryFullname)
 				if errb != nil {
 					return sdk.WrapError(errb, "getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 				}
@@ -440,12 +440,12 @@ func (api *API) getApplicationRemoteHandler() Handler {
 		var prs []sdk.VCSPullRequest
 		if app.RepositoryFullname != "" && app.VCSServer != "" {
 			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
 			}
 			var errb error
-			prs, errb = client.PullRequests(app.RepositoryFullname)
+			prs, errb = client.PullRequests(ctx, app.RepositoryFullname)
 			if errb != nil {
 				return sdk.WrapError(errb, "getApplicationRemoteHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 			}

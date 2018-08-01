@@ -3,6 +3,7 @@ package tracingutils
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	"go.opencensus.io/trace"
 )
@@ -95,6 +96,15 @@ func SpanContextToContext(ctx context.Context, sc trace.SpanContext) context.Con
 	return ctx
 }
 
+// DumpContext is an helper function
+func DumpContext(ctx context.Context) string {
+	return fmt.Sprintf("%s=%v %s=%v %s=%v",
+		TraceIDHeader, ctx.Value(ContextTraceIDHeader),
+		SpanIDHeader, ctx.Value(ContextSpanIDHeader),
+		SampledHeader, ctx.Value(ContextSampledHeader),
+	)
+}
+
 // ContextToSpanContext instanciates a span context from a context.Context
 func ContextToSpanContext(ctx context.Context) (trace.SpanContext, bool) {
 	if ctx == nil {
@@ -105,33 +115,26 @@ func ContextToSpanContext(ctx context.Context) (trace.SpanContext, bool) {
 	if val == nil {
 		return trace.SpanContext{}, false
 	}
-	traceID, ok := val.(trace.TraceID)
-	if !ok {
-		return trace.SpanContext{}, false
-	}
+	traceID := val.(trace.TraceID)
 
 	val = ctx.Value(ContextSpanIDHeader)
 	if val == nil {
 		return trace.SpanContext{}, false
 	}
-	spanID, ok := val.(trace.SpanID)
-	if !ok {
-		return trace.SpanContext{}, false
-	}
+	spanID := val.(trace.SpanID)
 
-	val = ctx.Value(ContextSpanIDHeader)
+	val = ctx.Value(ContextSampledHeader)
 	if val == nil {
 		return trace.SpanContext{}, false
 	}
-	sampled, ok := val.(trace.TraceOptions)
-	if !ok {
-		return trace.SpanContext{}, false
-	}
+	sampled := val.(bool)
 
 	sc := trace.SpanContext{
-		TraceID:      traceID,
-		SpanID:       spanID,
-		TraceOptions: sampled,
+		TraceID: traceID,
+		SpanID:  spanID,
+	}
+	if sampled {
+		sc.TraceOptions = trace.TraceOptions(1)
 	}
 
 	return sc, true

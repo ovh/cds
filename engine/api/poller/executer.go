@@ -142,13 +142,13 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 
 	//get the client for the repositories manager
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rm)
-	client, err := repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(context.Background(), tx, store, vcsServer)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Polling> Unable to get client for %s %s", projectKey, rm)
 	}
 
 	//Check if the polling if disabled
-	if info, err := repositoriesmanager.GetPollingInfos(client, *proj); err != nil {
+	if info, err := repositoriesmanager.GetPollingInfos(context.Background(), client, *proj); err != nil {
 		return nil, err
 	} else if info.PollingDisabled || !info.PollingSupported {
 		log.Info("Polling> %s polling is disabled", vcsServer.Name)
@@ -156,26 +156,26 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 	}
 
 	var events []interface{}
-	events, pollingDelay, err = client.GetEvents(p.Application.RepositoryFullname, p.DateCreation)
+	events, pollingDelay, err = client.GetEvents(context.Background(), p.Application.RepositoryFullname, p.DateCreation)
 	if err != nil && err.Error() != "No new events" {
 		return nil, sdk.WrapError(err, "Polling> Unable to get events for %s %s", projectKey, rm)
 	}
-	e.PushEvents, err = client.PushEvents(p.Application.RepositoryFullname, events)
+	e.PushEvents, err = client.PushEvents(context.Background(), p.Application.RepositoryFullname, events)
 	if err != nil {
 		e.Error = err.Error()
 	}
 
-	e.CreateEvents, err = client.CreateEvents(p.Application.RepositoryFullname, events)
+	e.CreateEvents, err = client.CreateEvents(context.Background(), p.Application.RepositoryFullname, events)
 	if err != nil {
 		e.Error = err.Error()
 	}
 
-	e.DeleteEvents, err = client.DeleteEvents(p.Application.RepositoryFullname, events)
+	e.DeleteEvents, err = client.DeleteEvents(context.Background(), p.Application.RepositoryFullname, events)
 	if err != nil {
 		e.Error = err.Error()
 	}
 
-	e.PullRequestEvents, err = client.PullRequestEvents(p.Application.RepositoryFullname, events)
+	e.PullRequestEvents, err = client.PullRequestEvents(context.Background(), p.Application.RepositoryFullname, events)
 	if err != nil {
 		e.Error = err.Error()
 	}

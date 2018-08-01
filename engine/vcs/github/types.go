@@ -4,6 +4,13 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/ovh/cds/sdk"
+)
+
+var (
+	_ sdk.VCSAuthorizedClient = &githubClient{}
+	_ sdk.VCSServer           = &githubConsumer{}
 )
 
 // Timestamp represents a time that can be unmarshalled from a JSON string

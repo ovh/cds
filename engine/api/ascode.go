@@ -52,12 +52,12 @@ func (api *API) postImportAsCodeHandler() Handler {
 		}
 
 		vcsServer := repositoriesmanager.GetProjectVCSServer(p, ope.VCSServer)
-		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 		if erra != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "postImportAsCodeHandler> Cannot get client for %s %s : %s", key, ope.VCSServer, erra)
 		}
 
-		branches, errB := client.Branches(ope.RepoFullName)
+		branches, errB := client.Branches(ctx, ope.RepoFullName)
 		if errB != nil {
 			return sdk.WrapError(errB, "postImportAsCodeHandler> Cannot list branches for %s/%s", ope.VCSServer, ope.RepoFullName)
 		}
@@ -68,7 +68,7 @@ func (api *API) postImportAsCodeHandler() Handler {
 			}
 		}
 
-		if err := workflow.PostRepositoryOperation(api.mustDB(), api.Cache, *p, ope); err != nil {
+		if err := workflow.PostRepositoryOperation(ctx, api.mustDB(), api.Cache, *p, ope); err != nil {
 			return sdk.WrapError(err, "postImportAsCodeHandler> Cannot create repository operation")
 		}
 		ope.RepositoryStrategy.SSHKeyContent = ""
@@ -89,7 +89,7 @@ func (api *API) getImportAsCodeHandler() Handler {
 
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
-		if err := workflow.GetRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), api.Cache, ope); err != nil {
 			return sdk.WrapError(err, "getImportAsCodeHandler> Cannot get repository operation status")
 		}
 		return WriteJSON(w, ope, http.StatusOK)
@@ -127,7 +127,7 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
 
-		if err := workflow.GetRepositoryOperation(api.mustDB(), api.Cache, ope); err != nil {
+		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), api.Cache, ope); err != nil {
 			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to get repository operation")
 		}
 
@@ -165,11 +165,11 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		// Grant CDS as a repository collaborator
 		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, ope.VCSServer)
-		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 		if erra != nil {
 			log.Error("postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
 		} else {
-			if err := client.GrantReadPermission(ope.RepoFullName); err != nil {
+			if err := client.GrantReadPermission(ctx, ope.RepoFullName); err != nil {
 				log.Error("postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
 			}
 		}

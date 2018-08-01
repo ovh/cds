@@ -86,12 +86,12 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		//Get the RepositoriesManager Client
-		client, errClient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+		client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
 		if errClient != nil {
 			return sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client")
 		}
 
-		statuses, errStatuses := client.ListStatuses(node.Context.Application.RepositoryFullname, nodeRun.VCSHash)
+		statuses, errStatuses := client.ListStatuses(ctx, node.Context.Application.RepositoryFullname, nodeRun.VCSHash)
 		if errStatuses != nil {
 			return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses")
 		}
@@ -109,14 +109,14 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 
 		if statusFound == nil {
-			if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 				log.Error("resyncCommitStatus> Error sending status: %v", err)
 			}
 			continue
 		}
 
 		if statusFound.State == sdk.StatusBuilding.String() {
-			if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 				log.Error("resyncCommitStatus> Error sending status: %v", err)
 			}
 			continue
@@ -128,7 +128,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			case sdk.StatusSuccess.String():
 				continue
 			default:
-				if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 					log.Error("resyncCommitStatus> Error sending status: %v", err)
 				}
 				continue
@@ -139,7 +139,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			case sdk.StatusFail.String():
 				continue
 			default:
-				if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 					log.Error("resyncCommitStatus> Error sending status: %v", err)
 				}
 				continue
@@ -150,7 +150,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			case sdk.StatusDisabled.String(), sdk.StatusNeverBuilt.String(), sdk.StatusSkipped.String():
 				continue
 			default:
-				if err := sendVCSEventStatus(db, store, proj, wr, &nodeRun); err != nil {
+				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
 					log.Error("resyncCommitStatus> Error sending status: %v", err)
 				}
 				continue
@@ -161,7 +161,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 }
 
 // sendVCSEventStatus send status
-func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) error {
+func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) error {
 	log.Debug("Send status for node run %d", nodeRun.ID)
 
 	node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
@@ -174,7 +174,7 @@ func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 		return nil
 	}
 	//Get the RepositoriesManager Client
-	client, errClient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+	client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
 	if errClient != nil {
 		return sdk.WrapError(errClient, "sendVCSEventStatus> Cannot get client")
 	}
@@ -223,13 +223,13 @@ func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 		ApplicationName: appName,
 		EnvironmentName: envName,
 	}
-	if err := client.SetStatus(evt); err != nil {
+	if err := client.SetStatus(ctx, evt); err != nil {
 		repositoriesmanager.RetryEvent(&evt, err, store)
 		return fmt.Errorf("sendEvent> err:%s", err)
 	}
 
 	//Check if this branch and this commit is a pullrequest
-	prs, err := client.PullRequests(node.Context.Application.RepositoryFullname)
+	prs, err := client.PullRequests(ctx, node.Context.Application.RepositoryFullname)
 	if err != nil {
 		log.Error("sendVCSEventStatus> unable to get pull requests on repo %s: %v", node.Context.Application.RepositoryFullname, err)
 		return nil
@@ -246,7 +246,7 @@ func sendVCSEventStatus(db gorp.SqlExecutor, store cache.Store, proj *sdk.Projec
 				log.Error("sendVCSEventStatus> unable to compute node run report%v", err)
 				return nil
 			}
-			if err := client.PullRequestComment(node.Context.Application.RepositoryFullname, pr.ID, report); err != nil {
+			if err := client.PullRequestComment(ctx, node.Context.Application.RepositoryFullname, pr.ID, report); err != nil {
 				log.Error("sendVCSEventStatus> unable to send PR report%v", err)
 				return nil
 			}

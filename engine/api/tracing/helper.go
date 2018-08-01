@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 // LinkTo a traceID
@@ -58,6 +59,8 @@ func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Co
 	if len(tags) > 0 {
 		span.AddAttributes(tags...)
 	}
+	log.Debug("tracing> span> traceID: %v spanID: %v", span.SpanContext().TraceID, span.SpanContext().SpanID)
+	ctx = tracingutils.SpanContextToContext(ctx, span.SpanContext())
 	return ctx, span.End
 }
 
