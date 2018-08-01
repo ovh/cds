@@ -72,6 +72,13 @@ export class PipelineAsCodeEditorComponent {
             });
     }
 
+    keyEvent(event: KeyboardEvent) {
+      if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+          this.save();
+          event.preventDefault();
+      }
+    }
+
     cancel() {
         this._pipCoreService.setPipelinePreview(null);
         this._pipCoreService.toggleAsCodeEditor({open: false, save: false});

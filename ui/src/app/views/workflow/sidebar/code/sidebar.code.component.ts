@@ -73,6 +73,13 @@ export class WorkflowSidebarCodeComponent {
             });
     }
 
+    keyEvent(event: KeyboardEvent) {
+      if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+          this.save();
+          event.preventDefault();
+      }
+    }
+
     cancel() {
         this._workflowCore.setWorkflowPreview(null);
         this._workflowCore.toggleAsCodeEditor({open: false, save: false});
