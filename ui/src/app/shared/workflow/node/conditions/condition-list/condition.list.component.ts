@@ -20,7 +20,7 @@ export class WorkflowNodeConditionListComponent extends Table implements OnInit 
           data.plain = new Array<WorkflowNodeCondition>();
       }
       this._conditions = data;
-      this.data = this.getData();
+      this.getDataForCurrentPage();
     }
     get conditions(): WorkflowNodeConditions {
       return this._conditions;
@@ -54,7 +54,12 @@ export class WorkflowNodeConditionListComponent extends Table implements OnInit 
             this.mode = 'advanced';
         }
 
-        this.data = this.getData();
+        this.getDataForCurrentPage();
+    }
+
+    getDataForCurrentPage(): any[] {
+        this.data = super.getDataForCurrentPage();
+        return this.data;
     }
 
     getData(): any[] {
