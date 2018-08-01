@@ -11,7 +11,20 @@ import {Table} from '../../../../table/table';
 })
 export class WorkflowNodeConditionListComponent extends Table implements OnInit {
 
-    @Input() conditions: WorkflowNodeConditions;
+    @Input('conditions')
+    set conditions(data: WorkflowNodeConditions) {
+      if (!data) {
+          data = new WorkflowNodeConditions();
+      }
+      if (!data.plain) {
+          data.plain = new Array<WorkflowNodeCondition>();
+      }
+      this._conditions = data;
+      this.data = this.getData();
+    }
+    get conditions(): WorkflowNodeConditions {
+      return this._conditions;
+    }
     @Output() conditionChange = new EventEmitter<WorkflowNodeCondition[]>();
     @Input() workflow: Workflow;
     @Input() operators: {};
@@ -21,6 +34,7 @@ export class WorkflowNodeConditionListComponent extends Table implements OnInit 
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
     mode: 'advanced'|'basic' = 'basic';
     data: any[] = [];
+    _conditions: WorkflowNodeConditions;
 
     constructor() {
         super();
@@ -44,13 +58,9 @@ export class WorkflowNodeConditionListComponent extends Table implements OnInit 
     }
 
     getData(): any[] {
-        if (!this.conditions) {
-            this.conditions = new WorkflowNodeConditions();
+        if (!this.conditions || !this.conditions.plain) {
+            return [];
         }
-        if (!this.conditions.plain) {
-            this.conditions.plain = new Array<WorkflowNodeCondition>();
-        }
-
         return this.conditions.plain;
     }
 
