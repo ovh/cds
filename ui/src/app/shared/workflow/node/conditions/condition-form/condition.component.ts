@@ -95,7 +95,7 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
 
     variableChanged(event: any) {
         this.condition.value = null;
-        this.condition.operator = '=';
+        this.condition.operator = 'eq';
         if (event.target.value === 'cds.manual') {
             this.condition.value = 'false';
         }
