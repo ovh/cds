@@ -38,6 +38,7 @@ export abstract class Table {
     upPage(): void {
         let maxPage = this.getNbOfPages();
         this.currentPage = (this.currentPage === maxPage) ? this.currentPage : this.currentPage + 1;
+        this.getDataForCurrentPage();
     }
 
     /**
@@ -45,6 +46,7 @@ export abstract class Table {
      */
     downPage(): void {
         this.currentPage = (this.currentPage === 1) ? this.currentPage : this.currentPage - 1;
+        this.getDataForCurrentPage();
     }
 
     /**
@@ -56,5 +58,6 @@ export abstract class Table {
             return;
         }
         this.currentPage = page;
+        this.getDataForCurrentPage();
     }
 }

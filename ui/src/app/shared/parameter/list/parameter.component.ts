@@ -26,7 +26,7 @@ export class ParameterListComponent extends Table implements OnInit {
         }
 
         if (this.ready) {
-            this.data = this.getDataForCurrentPage();
+            this.getDataForCurrentPage();
         }
     }
     get parameters() {
@@ -63,14 +63,17 @@ export class ParameterListComponent extends Table implements OnInit {
     }
 
     ngOnInit() {
-        this.data = this.getDataForCurrentPage();
+        this.getDataForCurrentPage();
     }
 
     getDataForCurrentPage(): any[] {
         if (this.mode === 'job') {
-            return this.getData();
+            this.data = this.getData();
+            return this.data;
         }
-        return super.getDataForCurrentPage();
+        this.data = super.getDataForCurrentPage();
+
+        return this.data;
     }
 
     getData(): any[] {
