@@ -12,7 +12,7 @@ import {SuiModule} from 'ng2-semantic-ui';
 import {NgxAutoScroll, NgxAutoScrollModule} from 'ngx-auto-scroll';
 import {ClipboardModule} from 'ngx-clipboard';
 import {InfiniteScrollModule} from 'ngx-infinite-scroll';
-import {MarkdownModule} from 'ngx-md';
+import {MarkdownModule} from 'ngx-markdown';
 import {ActionComponent} from './action/action.component';
 import {ActionStepFormComponent} from './action/step/form/step.form.component';
 import {ActionStepComponent} from './action/step/step.component';
@@ -94,7 +94,7 @@ import {ZoneComponent} from './zone/zone.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
-        CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, SuiModule, NgxAutoScrollModule,
+        CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule, SuiModule, NgxAutoScrollModule,
         InfiniteScrollModule],
     declarations: [
         ActionComponent,

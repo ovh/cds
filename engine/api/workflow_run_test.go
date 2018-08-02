@@ -706,22 +706,19 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	vuln := sdk.Vulnerability{
-		ApplicationID:     app.ID,
-		Ignored:           false,
-		Component:         "lodash",
-		CVE:               "",
-		Description:       "",
-		FixIn:             "",
-		Origin:            "",
-		Severity:          "high",
-		Title:             "",
-		Version:           "",
-		Link:              "",
-		WorkflowID:        lastrun.WorkflowID,
-		WorkflowRunID:     lastrun.ID,
-		WorkflowNodeRunID: lastrun.WorkflowNodeRuns[w1.RootID][0].ID,
+		ApplicationID: app.ID,
+		Ignored:       false,
+		Component:     "lodash",
+		CVE:           "",
+		Description:   "",
+		FixIn:         "",
+		Origin:        "",
+		Severity:      "high",
+		Title:         "",
+		Version:       "",
+		Link:          "",
 	}
-	assert.NoError(t, application.InsertVulnerability(db, vuln))
+	assert.NoError(t, application.InsertVulnerabilities(db, []sdk.Vulnerability{vuln}, app.ID))
 
 	//Prepare request
 	vars := map[string]string{
@@ -741,7 +738,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	var nr sdk.WorkflowNodeRun
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &nr))
-	assert.Equal(t, 1, len(nr.Vulnerabilities))
+	assert.Equal(t, 1, len(nr.VulnerabilitiesReport.Report.Vulnerabilities))
 }
 
 func Test_resyncWorkflowRunHandler(t *testing.T) {

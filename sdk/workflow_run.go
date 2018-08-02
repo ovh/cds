@@ -119,36 +119,56 @@ type WorkflowRunTag struct {
 
 //WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
 type WorkflowNodeRun struct {
-	WorkflowRunID      int64                            `json:"workflow_run_id"`
-	WorkflowID         int64                            `json:"workflow_id"`
-	ApplicationID      int64                            `json:"application_id"`
-	ID                 int64                            `json:"id"`
-	WorkflowNodeID     int64                            `json:"workflow_node_id"`
-	WorkflowNodeName   string                           `json:"workflow_node_name"`
-	Number             int64                            `json:"num"`
-	SubNumber          int64                            `json:"subnumber"`
-	Status             string                           `json:"status"`
-	Stages             []Stage                          `json:"stages,omitempty"`
-	Start              time.Time                        `json:"start"`
-	LastModified       time.Time                        `json:"last_modified"`
-	Done               time.Time                        `json:"done"`
-	HookEvent          *WorkflowNodeRunHookEvent        `json:"hook_event,omitempty"`
-	Manual             *WorkflowNodeRunManual           `json:"manual,omitempty"`
-	SourceNodeRuns     []int64                          `json:"source_node_runs,omitempty"`
-	Payload            interface{}                      `json:"payload,omitempty"`
-	PipelineParameters []Parameter                      `json:"pipeline_parameters,omitempty"`
-	BuildParameters    []Parameter                      `json:"build_parameters,omitempty"`
-	Artifacts          []WorkflowNodeRunArtifact        `json:"artifacts,omitempty"`
-	Coverage           WorkflowNodeRunCoverage          `json:"coverage,omitempty"`
-	Vulnerabilities    []Vulnerability                  `json:"vulnerabilities,omitempty"`
-	Tests              *venom.Tests                     `json:"tests,omitempty"`
-	Commits            []VCSCommit                      `json:"commits,omitempty"`
-	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
-	VCSRepository      string                           `json:"vcs_repository"`
-	VCSBranch          string                           `json:"vcs_branch"`
-	VCSHash            string                           `json:"vcs_hash"`
-	VCSServer          string                           `json:"vcs_server"`
-	CanBeRun           bool                             `json:"can_be_run"`
+	WorkflowRunID         int64                              `json:"workflow_run_id"`
+	WorkflowID            int64                              `json:"workflow_id"`
+	ApplicationID         int64                              `json:"application_id"`
+	ID                    int64                              `json:"id"`
+	WorkflowNodeID        int64                              `json:"workflow_node_id"`
+	WorkflowNodeName      string                             `json:"workflow_node_name"`
+	Number                int64                              `json:"num"`
+	SubNumber             int64                              `json:"subnumber"`
+	Status                string                             `json:"status"`
+	Stages                []Stage                            `json:"stages,omitempty"`
+	Start                 time.Time                          `json:"start"`
+	LastModified          time.Time                          `json:"last_modified"`
+	Done                  time.Time                          `json:"done"`
+	HookEvent             *WorkflowNodeRunHookEvent          `json:"hook_event,omitempty"`
+	Manual                *WorkflowNodeRunManual             `json:"manual,omitempty"`
+	SourceNodeRuns        []int64                            `json:"source_node_runs,omitempty"`
+	Payload               interface{}                        `json:"payload,omitempty"`
+	PipelineParameters    []Parameter                        `json:"pipeline_parameters,omitempty"`
+	BuildParameters       []Parameter                        `json:"build_parameters,omitempty"`
+	Artifacts             []WorkflowNodeRunArtifact          `json:"artifacts,omitempty"`
+	Coverage              WorkflowNodeRunCoverage            `json:"coverage,omitempty"`
+	VulnerabilitiesReport WorkflowNodeRunVulnerabilityReport `json:"vulnerabilities_report,omitempty"`
+	Tests                 *venom.Tests                       `json:"tests,omitempty"`
+	Commits               []VCSCommit                        `json:"commits,omitempty"`
+	TriggersRun           map[int64]WorkflowNodeTriggerRun   `json:"triggers_run,omitempty"`
+	VCSRepository         string                             `json:"vcs_repository"`
+	VCSBranch             string                             `json:"vcs_branch"`
+	VCSHash               string                             `json:"vcs_hash"`
+	VCSServer             string                             `json:"vcs_server"`
+	CanBeRun              bool                               `json:"can_be_run"`
+}
+
+// WorkflowNodeRunVulnerability represents vulnerabilities report for the current node run
+type WorkflowNodeRunVulnerabilityReport struct {
+	ID                int64                        `json:"id" db:"id"`
+	ApplicationID     int64                        `json:"application_id" db:"application_id"`
+	WorkflowID        int64                        `json:"workflow_id" db:"workflow_id"`
+	WorkflowRunID     int64                        `json:"workflow_run_id" db:"workflow_run_id"`
+	WorkflowNodeRunID int64                        `json:"workflow_node_run_id" db:"workflow_node_run_id"`
+	Num               int64                        `json:"num" db:"workflow_number"`
+	Branch            string                       `json:"branch" db:"branch"`
+	Report            WorkflowNodeRunVulnerability `json:"report" db:"-"`
+}
+
+// WorkflowNodeRunVulnerability content of the workflow node run vulnerability report
+type WorkflowNodeRunVulnerability struct {
+	Vulnerabilities      []Vulnerability  `json:"vulnerabilities"`
+	Summary              map[string]int64 `json:"summary"`
+	DefaultBranchSummary map[string]int64 `json:"default_branch_summary"`
+	PreviousRunSummary   map[string]int64 `json:"previous_run_summary"`
 }
 
 // WorkflowNodeRunCoverage represents the code coverage report

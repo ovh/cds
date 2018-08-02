@@ -96,7 +96,7 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 		}
 	}
 
-	report := sdk.VulnerabilityReport{
+	report := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: vulnerabilities,
 		Summary:         summary,
 	}

@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/venom"
 	"github.com/sguiheux/go-coverage"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -316,9 +315,14 @@ func (api *API) postVulnerabilityReportHandler() Handler {
 			return sdk.WrapError(sdk.ErrApplicationNotFound, "postVulnerabilityReportHandler> There is no application linked")
 		}
 
-		var report sdk.VulnerabilityReport
+		var report sdk.VulnerabilityWorkerReport
 		if err := UnmarshalBody(r, &report); err != nil {
 			return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to read body")
+		}
+
+		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "postVulnerabilityReportHandler> Cannot load project by nodeJobRunID:%d", id)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -327,17 +331,9 @@ func (api *API) postVulnerabilityReportHandler() Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		// Save vulnerabilities
-		for _, v := range report.Vulnerabilities {
-			v.ApplicationID = nr.ApplicationID
-			v.WorkflowID = nr.WorkflowID
-			v.WorkflowRunID = nr.WorkflowRunID
-			v.WorkflowNodeRunID = nr.ID
-			if err := application.InsertVulnerability(tx, v); err != nil {
-				return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to update vulnerability")
-			}
+		if err := workflow.HandleVulnerabilityReport(tx, api.Cache, p, nr, report); err != nil {
+			return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to handle report")
 		}
-
 		return tx.Commit()
 	}
 }

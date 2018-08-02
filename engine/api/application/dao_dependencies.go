@@ -124,6 +124,15 @@ var (
 		return nil
 	}
 
+	loadVulnerabilities = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		var err error
+		app.Vulnerabilities, err = LoadVulnerabilities(db, app.ID)
+		if err != nil && err != sql.ErrNoRows {
+			return sdk.WrapError(err, "application.loadVulnerabilities> Unable to load vulnerabilities")
+		}
+		return nil
+	}
+
 	loadDeploymentStrategiesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		var err error
 		app.DeploymentStrategies, err = LoadDeploymentStrategies(db, app.ID, true)
