@@ -718,7 +718,16 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Version:       "",
 		Link:          "",
 	}
-	assert.NoError(t, application.InsertVulnerabilities(db, []sdk.Vulnerability{vuln}, app.ID))
+	report := sdk.WorkflowNodeRunVulnerabilityReport{
+		ApplicationID:     app.ID,
+		WorkflowRunID:     lastrun.ID,
+		WorkflowNodeRunID: lastrun.WorkflowNodeRuns[w1.RootID][0].ID,
+		Num:               lastrun.Number,
+		Report: sdk.WorkflowNodeRunVulnerability{
+			Vulnerabilities: []sdk.Vulnerability{vuln},
+		},
+	}
+	assert.NoError(t, workflow.InsertVulnerabilityReport(db, report))
 
 	//Prepare request
 	vars := map[string]string{
