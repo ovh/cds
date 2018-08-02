@@ -28,11 +28,11 @@ export class WorkflowNodeConditionListComponent extends Table implements OnInit 
     @Output() conditionChange = new EventEmitter<WorkflowNodeCondition[]>();
     @Input() workflow: Workflow;
     @Input() operators: {};
+    @Input() mode: 'advanced'|'basic';
 
     codeMirrorConfig: {};
     permission = PermissionValue;
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
-    mode: 'advanced'|'basic' = 'basic';
     data: any[] = [];
     _conditions: WorkflowNodeConditions;
 
@@ -50,10 +50,6 @@ export class WorkflowNodeConditionListComponent extends Table implements OnInit 
     }
 
     ngOnInit() {
-        if (this.conditions.lua_script) {
-            this.mode = 'advanced';
-        }
-
         this.getDataForCurrentPage();
     }
 
