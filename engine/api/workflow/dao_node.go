@@ -250,6 +250,12 @@ func UpdateNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 		sqlContext.DefaultPipelineParameters = sql.NullString{String: string(b), Valid: true}
 	}
 
+	for _, cond := range c.Conditions.PlainConditions {
+		if _, ok := sdk.WorkflowConditionsOperators[cond.Operator]; !ok {
+			return sdk.ErrWorkflowConditionBadOperator
+		}
+	}
+
 	var errC error
 	sqlContext.Conditions, errC = gorpmapping.JSONToNullString(c.Conditions)
 	if errC != nil {
