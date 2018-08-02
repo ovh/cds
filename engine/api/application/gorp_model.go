@@ -21,7 +21,7 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbApplication{}, "application", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationVariableAudit{}, "application_variable_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationKey{}, "application_key", false))
-	gorpmapping.Register(gorpmapping.New(dbApplicationVulnerability{}, "application_vulnerability", false))
+	gorpmapping.Register(gorpmapping.New(dbApplicationVulnerability{}, "application_vulnerability", true, "id"))
 }
 
 type sqlApplicationJSON struct {
