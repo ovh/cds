@@ -354,9 +354,12 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 		}
 		resp.Body.Close()
 
-		if resp.StatusCode >= 300 {
+		if resp.StatusCode >= 500 {
 			globalErrSwift = fmt.Errorf("Unable to upload artifact - try %d: (HTTP %d) %s", i, resp.StatusCode, string(body))
 			continue
+		} else if resp.StatusCode >= 300 {
+			// 300-499 -> should always fail, no need to retry this theses status code
+			return true, time.Since(t0), fmt.Errorf("Unable to upload artifact - try %d: (HTTP %d) %s", i, resp.StatusCode, string(body))
 		}
 	}
 
