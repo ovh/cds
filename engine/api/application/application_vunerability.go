@@ -23,7 +23,7 @@ func InsertVulnerabilities(db gorp.SqlExecutor, vs []sdk.Vulnerability, appID in
 	return nil
 }
 
-// LoadLatestVulnerabilities load vulnerabilities for the given application
+// LoadVulnerabilities load vulnerabilities for the given application
 func LoadVulnerabilities(db gorp.SqlExecutor, appID int64) ([]sdk.Vulnerability, error) {
 	results := make([]dbApplicationVulnerability, 0)
 	query := `SELECT *

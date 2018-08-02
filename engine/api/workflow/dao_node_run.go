@@ -94,7 +94,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	}
 	if loadOpts.WithVulnerabilities {
 		vuln, errV := loadVulnerabilityReport(db, r.ID)
-		if err != nil {
+		if errV != nil {
 			return nil, sdk.WrapError(errV, "LoadNodeRun>Error vulnerability report coverage for run %d", r.ID)
 		}
 		r.VulnerabilitiesReport = vuln
