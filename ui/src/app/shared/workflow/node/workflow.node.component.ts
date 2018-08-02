@@ -106,7 +106,7 @@ export class WorkflowNodeComponent implements OnInit {
             }
             if (this.node && this.selectedNodeID && this.node.id === this.selectedNodeID) {
                 this._workflowEventStore.setSelectedNode(this.node, false);
-                this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, true);
+                this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, false);
             }
             if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
                 this.computeWarnings();

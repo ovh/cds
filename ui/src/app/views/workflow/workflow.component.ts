@@ -6,8 +6,8 @@ import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 import {Project} from '../../model/project.model';
 import {Workflow} from '../../model/workflow.model';
-import {RouterService} from '../../service/router/router.service';
 import {ProjectStore} from '../../service/project/project.store';
+import {RouterService} from '../../service/router/router.service';
 import {WorkflowRunService} from '../../service/workflow/run/workflow.run.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
 import {WorkflowEventStore} from '../../service/workflow/workflow.event.store';
@@ -107,7 +107,6 @@ export class WorkflowComponent implements OnInit {
         });
 
         this._activatedRoute.queryParams.subscribe(qps => {
-            console.log('ici', qps);
             if (qps['node_id']) {
                 this.selectedNodeID = Number(qps['node_id']);
                 if (this.workflow) {
@@ -120,7 +119,6 @@ export class WorkflowComponent implements OnInit {
         this._router.events.subscribe(e => {
             if (e instanceof NavigationStart && this.workflow) {
                 if (e.url.indexOf('/project/' + this.project.key + '/workflow/') === 0 && e.url.indexOf('/run/') === -1) {
-                    console.log('la');
                     this._workflowEventStore.unselectAll();
                 }
             }
@@ -138,9 +136,8 @@ export class WorkflowComponent implements OnInit {
 
     initSidebar(): void {
         // Mode of sidebar
-        this.sideBarModeSubscription = this._sidebarStore.sidebarMode().subscribe(m => {
-            this.sidebarMode = m;
-        })
+        this.sideBarModeSubscription = this._sidebarStore.sidebarMode()
+            .subscribe(m => this.sidebarMode = m);
     }
 
     ngOnInit() {
@@ -165,11 +162,12 @@ export class WorkflowComponent implements OnInit {
 
     changeToRunsMode(): void {
         let activatedRoute = this._routerService.getActivatedRoute(this._activatedRoute);
-        console.log(activatedRoute);
-        this._router.navigate([], {queryParams: {'node_id': null}, relativeTo: activatedRoute});
+        this._router.navigate([], {relativeTo: activatedRoute});
         this.selectedNodeID = null;
         this._workflowEventStore.setSelectedNode(null, false);
-        this._workflowEventStore.setSelectedNodeRun(null, false);
+        if (!activatedRoute.snapshot.params['nodeId']) {
+            this._workflowEventStore.setSelectedNodeRun(null, false);
+        }
         this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
     }
 }

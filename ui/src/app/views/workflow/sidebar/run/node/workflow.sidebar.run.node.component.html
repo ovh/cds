@@ -5,7 +5,7 @@
             <span>{{node.name}}</span>
             <a class="inline pointing ml5"
               *ngIf="displayEditOption"
-              [routerLink]="['/project', project.key, 'workflow', workflow.name]" [queryParams]="{'node_id': node.id}">
+              (click)="goToEditNode()">
               <i class="pencil icon float"></i>
             </a>
             <div class="sub header">
