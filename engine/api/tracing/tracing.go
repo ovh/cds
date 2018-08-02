@@ -46,14 +46,13 @@ func Init(cfg Configuration, serviceName string) error {
 }
 
 // New may start a tracing span
-func New(ctx context.Context, serviceName, name string, sampler trace.Sampler, spanKind int) context.Context {
+func New(ctx context.Context, serviceName, name string, sampler trace.Sampler, spanKind int) (context.Context, *trace.Span) {
 	if !traceEnable {
-		return ctx
+		return ctx, nil
 	}
-	ctx, _ = trace.StartSpan(ctx, name,
+	return trace.StartSpan(ctx, name,
 		trace.WithSampler(sampler),
 		trace.WithSpanKind(spanKind))
-	return ctx
 }
 
 // Start may start a tracing span

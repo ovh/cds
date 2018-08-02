@@ -6,9 +6,14 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/sdk/tracingutils"
+	"go.opencensus.io/trace"
 
 	cache "github.com/patrickmn/go-cache"
 
@@ -107,9 +112,7 @@ func Create(h Interface) error {
 			if startWorkerRes.err != nil {
 				errs <- startWorkerRes.err
 			}
-			if startWorkerRes.isRun {
-				spawnIDs.SetDefault(string(startWorkerRes.request.id), startWorkerRes.request.id)
-			} else if startWorkerRes.temptToSpawn {
+			if startWorkerRes.temptToSpawn {
 				found := false
 				for _, hID := range startWorkerRes.request.spawnAttempts {
 					if hID == h.ID() {
@@ -152,10 +155,13 @@ func Create(h Interface) error {
 			}
 
 			//Check spawnsID
-			if _, exist := spawnIDs.Get(string(j.ID)); exist {
+			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
 				log.Debug("pipeline build job %d already spawned in previous routine", j.ID)
 				continue
 			}
+
+			//Before doing anything, push in cache
+			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
 
 			//Check bookedBy current hatchery
 			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
@@ -208,31 +214,64 @@ func Create(h Interface) error {
 				continue
 			}
 
-			//Check if the jobs is concerned by a pending worker creation
-			if _, exist := spawnIDs.Get(string(j.ID)); exist {
-				log.Debug("job %d already spawned in previous routine", j.ID)
-				continue
+			currentCtx := context.WithValue(ctx, tracing.TagWorkflowNodeJobRun, j.ID)
+			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
+				log.Info("hatchery> enable tracing on job. Headers: %+v", j.Header)
+				currentCtx, _ = tracing.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+
+				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
+				w, _ := j.Header.Get(sdk.WorkflowHeader)
+				p, _ := j.Header.Get(sdk.ProjectKeyHeader)
+
+				tracing.Current(currentCtx,
+					tracing.Tag(tracing.TagWorkflow, w),
+					tracing.Tag(tracing.TagWorkflowRun, r),
+					tracing.Tag(tracing.TagProjectKey, p),
+					tracing.Tag(tracing.TagWorkflowNodeJobRun, j.ID),
+				)
+			}
+			endTrace := func(reason string) {
+				if reason != "" {
+					tracing.Current(currentCtx,
+						tracing.Tag("reason", reason),
+					)
+				}
+				tracing.End(currentCtx, nil, nil)
 			}
 
-			//Check bookedBy current hatchery
-			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
-				log.Debug("hatchery> job %d is booked by someone else (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+			//Check if the jobs is concerned by a pending worker creation
+			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
+				log.Debug("job %d already spawned in previous routine", j.ID)
+				endTrace("already spawned")
 				continue
 			}
 
 			//Check gracetime
 			if j.QueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
 				log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID)
+				endTrace("too fresh")
+				continue
+			}
+
+			//Before doing anything, push in cache
+			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
+
+			//Check bookedBy current hatchery
+			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
+				log.Debug("hatchery> job %d is booked by someone else (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+				endTrace("booked by someone else")
 				continue
 			}
 
 			//Check if hatchery if able to start a new worker
 			if !checkCapacities(h) {
 				log.Info("hatchery %s is not able to provision new worker", h.Hatchery().Name)
+				endTrace("no capacities")
 				continue
 			}
 
 			workerRequest := workerStarterRequest{
+				ctx:               currentCtx,
 				id:                j.ID,
 				isWorkflowJob:     true,
 				execGroups:        j.ExecGroups,
@@ -259,6 +298,8 @@ func Create(h Interface) error {
 					isRun:        false,
 					temptToSpawn: true,
 				}
+				endTrace("no model")
+
 				continue
 			}
 
@@ -268,6 +309,7 @@ func Create(h Interface) error {
 			//Ask to start
 			log.Info("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 			workersStartChan <- workerRequest
+			endTrace("")
 
 		case err := <-errs:
 			log.Error("%v", err)

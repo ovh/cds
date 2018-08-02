@@ -67,7 +67,7 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.ServiceName = "cds-hatchery-marathon"
+	h.Common.Common.ServiceName = "cds-hatchery-marathon"
 
 	return nil
 }
@@ -217,7 +217,7 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
 	if spawnArgs.JobID > 0 {
 		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {

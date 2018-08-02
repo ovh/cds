@@ -191,9 +191,9 @@ func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.Workf
 
 func getNodeRunBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
 	ctx, end := tracing.Span(ctx, "workflow.getNodeRunBuildParameters",
-		tracing.Tag("workflow", w.Workflow.Name),
-		tracing.Tag("workflow_run", w.Number),
-		tracing.Tag("workflow_node_run", run.ID),
+		tracing.Tag(tracing.TagWorkflow, w.Workflow.Name),
+		tracing.Tag(tracing.TagWorkflowRun, w.Number),
+		tracing.Tag(tracing.TagWorkflowNodeRun, run.ID),
 	)
 	defer end()
 

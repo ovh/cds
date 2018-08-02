@@ -592,7 +592,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		name := vars["permWorkflowName"]
 		u := getUser(ctx)
 
-		tracing.Current(ctx, tracing.Tag("workflow", name))
+		tracing.Current(ctx, tracing.Tag(tracing.TagWorkflow, name))
 
 		_, next := tracing.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,

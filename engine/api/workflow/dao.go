@@ -241,8 +241,8 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string, u *sdk.User, opts LoadOptions) (*sdk.Workflow, error) {
 	ctx, end := tracing.Span(ctx, "workflow.Load",
-		tracing.Tag("workflow", name),
-		tracing.Tag("project_key", proj.Key),
+		tracing.Tag(tracing.TagWorkflow, name),
+		tracing.Tag(tracing.TagProjectKey, proj.Key),
 		tracing.Tag("with_pipeline", opts.DeepPipeline),
 		tracing.Tag("only_root", opts.OnlyRootNode),
 		tracing.Tag("with_base64_keys", opts.Base64Keys),

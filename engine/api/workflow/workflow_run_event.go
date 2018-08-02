@@ -61,8 +61,8 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 // ResyncCommitStatus resync commit status for a workflow run
 func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
 	_, end := tracing.Span(ctx, "workflow.resyncCommitStatus",
-		tracing.Tag("workflow", wr.Workflow.Name),
-		tracing.Tag("workflow_run", wr.Number),
+		tracing.Tag(tracing.TagWorkflow, wr.Workflow.Name),
+		tracing.Tag(tracing.TagWorkflowRun, wr.Number),
 	)
 	defer end()
 

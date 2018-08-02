@@ -44,7 +44,8 @@ workflow_node_run.vcs_repository,
 workflow_node_run.vcs_hash,
 workflow_node_run.vcs_branch,
 workflow_node_run.vcs_server,
-workflow_node_run.workflow_node_name
+workflow_node_run.workflow_node_name,
+workflow_node_run.header
 `
 
 const nodeRunTestsField string = ", workflow_node_run.tests"
@@ -207,8 +208,6 @@ func insertWorkflowNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 		return err
 	}
 	n.ID = nodeRunDB.ID
-
-	log.Debug("insertWorkflowNodeRun> new node run: %d (%d)", n.ID, n.WorkflowNodeID)
 	return nil
 }
 
@@ -299,6 +298,12 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 			if err := gorpmapping.JSONNullString(rr.PipelineParameters, &r.PipelineParameters); err != nil {
 				return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: PipelineParameters", r.ID)
 			}
+		}
+	}
+
+	if rr.Header.Valid {
+		if err := gorpmapping.JSONNullString(rr.Header, &r.Header); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Header", r.ID)
 		}
 	}
 
@@ -408,6 +413,11 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 		}
 		nodeRunDB.Commits = s
 	}
+	sh, err := gorpmapping.JSONToNullString(n.Header)
+	if err != nil {
+		return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from header")
+	}
+	nodeRunDB.Header = sh
 
 	return nodeRunDB, nil
 }

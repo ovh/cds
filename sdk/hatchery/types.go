@@ -76,7 +76,7 @@ type SpawnArguments struct {
 // ID returns hatchery id
 type Interface interface {
 	Init() error
-	SpawnWorker(spawnArgs SpawnArguments) (string, error)
+	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) (string, error)
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() []string
@@ -89,4 +89,5 @@ type Interface interface {
 	Serve(ctx context.Context) error
 	IsInitialized() bool
 	SetInitialized()
+	ServiceName() string
 }

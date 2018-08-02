@@ -31,10 +31,9 @@ type annotation struct {
 }
 
 // SpawnWorker creates a new vm instance
-func (h *HatcheryVSphere) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
 	var vm *object.VirtualMachine
 	var errV error
-	ctx := context.Background()
 	name := "worker-" + spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
 	if spawnArgs.RegisterOnly {
 		name = "register-" + name

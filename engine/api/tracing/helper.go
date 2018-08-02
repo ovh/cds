@@ -15,6 +15,20 @@ import (
 	"github.com/ovh/cds/sdk/tracingutils"
 )
 
+// Tags contants
+const (
+	TagWorkflow           = "workflow"
+	TagWorkflowRun        = "workflow_run"
+	TagProjectKey         = "project_key"
+	TagWorkflowNodeRun    = "workflow_node_run"
+	TagWorkflowNodeJobRun = "workflow_node_job_run"
+	TagJob                = "job"
+	TagWorkflowNode       = "workflow_node"
+	TagPipelineID         = "pipeline_id"
+	TagPipelineDeep       = "pipeline_deep"
+	TagWorker             = "worker"
+)
+
 // LinkTo a traceID
 func LinkTo(ctx context.Context, traceID [16]byte) {
 	s := Current(ctx)
@@ -59,7 +73,6 @@ func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Co
 	if len(tags) > 0 {
 		span.AddAttributes(tags...)
 	}
-	log.Debug("tracing> span> traceID: %v spanID: %v", span.SpanContext().TraceID, span.SpanContext().SpanID)
 	ctx = tracingutils.SpanContextToContext(ctx, span.SpanContext())
 	return ctx, span.End
 }

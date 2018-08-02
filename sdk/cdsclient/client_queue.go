@@ -83,9 +83,9 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				}
 			}
 		case <-jobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("jobsTicker")
-			}
+			//if c.config.Verbose {
+			fmt.Println("jobsTicker")
+			//}
 
 			if jobs != nil {
 				queue := sdk.WorkflowQueue{}

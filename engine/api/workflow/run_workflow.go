@@ -158,7 +158,7 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 		return nil, report, sdk.WrapError(err, "ManualRun> Unable to get next number")
 	}
 
-	ctx, end := tracing.Span(ctx, "workflow.ManualRun", tracing.Tag("run_number", number))
+	ctx, end := tracing.Span(ctx, "workflow.ManualRun", tracing.Tag(tracing.TagWorkflowRun, number))
 	defer end()
 
 	wr := &sdk.WorkflowRun{

@@ -281,8 +281,8 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 // loadNode loads a node in a workflow
 func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
 	c, end := tracing.Span(c, "workflow.loadNode",
-		tracing.Tag("workflow", w.Name),
-		tracing.Tag("project_key", proj.Key),
+		tracing.Tag(tracing.TagWorkflow, w.Name),
+		tracing.Tag(tracing.TagProjectKey, proj.Key),
 		tracing.Tag("with_pipeline", opts.DeepPipeline),
 		tracing.Tag("only_root", opts.OnlyRootNode),
 		tracing.Tag("with_base64_keys", opts.Base64Keys),

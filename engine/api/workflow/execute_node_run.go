@@ -46,6 +46,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 			rj.Done = j.Done
 			rj.Model = j.Model
 			rj.Job = j.Job
+			rj.Header = j.Header
 		}
 		if rj.Status != sdk.StatusStopped.String() {
 			isStopped = false
@@ -70,8 +71,8 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, n *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.execute",
-		tracing.Tag("workflow_run", n.Number),
-		tracing.Tag("workflow_node_run", n.ID),
+		tracing.Tag(tracing.TagWorkflowRun, n.Number),
+		tracing.Tag(tracing.TagWorkflowNodeRun, n.ID),
 		tracing.Tag("workflow_node_run_status", n.Status),
 	)
 	defer end()
@@ -370,6 +371,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
+			Header: run.Header,
 		}
 		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
 
@@ -406,10 +408,10 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 		next()
 
-		report.Add(wjob)
-
 		//Put the job run in database
 		stage.RunJobs = append(stage.RunJobs, wjob)
+
+		report.Add(wjob)
 	}
 
 	if skippedOrDisabledJobs == len(stage.Jobs) {

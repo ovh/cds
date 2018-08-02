@@ -13,13 +13,16 @@ import (
 	"github.com/docker/go-connections/nat"
 	context "golang.org/x/net/context"
 
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //create the docker bridge
-func (h *HatcherySwarm) createNetwork(dockerClient *dockerClient, name string) error {
+func (h *HatcherySwarm) createNetwork(ctx context.Context, dockerClient *dockerClient, name string) error {
+	ctx, end := tracing.Span(ctx, "swarm.createNetwork", tracing.Tag("network", name))
+	defer end()
 	log.Debug("hatchery> swarm> createNetwork> Create network %s", name)
 	_, err := dockerClient.NetworkCreate(context.Background(), name, types.NetworkCreate{
 		Driver:         "bridge",
@@ -46,7 +49,10 @@ type containerArgs struct {
 }
 
 //shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
+func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
+	ctx, end := tracing.Span(ctx, "swarm.createAndStartContainer", tracing.Tag(tracing.TagWorker, cArgs.name))
+	defer end()
+
 	//Memory is set to 1GB by default
 	if cArgs.memory <= 4 {
 		cArgs.memory = 1024

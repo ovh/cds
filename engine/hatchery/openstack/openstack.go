@@ -74,7 +74,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
-	h.ServiceName = "cds-hatchery-openstack"
+	h.Common.Common.ServiceName = "cds-hatchery-openstack"
 
 	return nil
 }
