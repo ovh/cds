@@ -17,6 +17,7 @@
                         [(conditions)]="node.context.conditions"
                         [operators]="operators"
                         [names]="conditionNames"
+                        [(mode)]="mode"
                         (changeEvent)="conditionsChange($event)">
                     </app-workflow-node-condition-form>
                 </ng-container>
@@ -32,6 +33,7 @@
                         [workflow]="workflow"
                         [(conditions)]="node.context.conditions"
                         [operators]="operators"
+                        [(mode)]="mode"
                         [names]="conditionNames">
                     </app-workflow-node-condition-list>
                 </ng-container>

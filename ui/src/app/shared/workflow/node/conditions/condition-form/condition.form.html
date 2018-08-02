@@ -9,6 +9,7 @@
             [workflow]="workflow"
             [(conditions)]="conditions"
             [operators]="operators"
+            [mode]="mode"
             (conditionChange)="plainConditionsChange($event)">
         </app-workflow-node-condition-list>
         <h4>{{ 'workflow_node_condition_form' | translate}}</h4>

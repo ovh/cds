@@ -25,6 +25,11 @@ export class WorkflowNodeConditionsComponent {
                 data.context.conditions = new WorkflowNodeConditions();
             }
             this._node = data;
+            if (data.context.conditions.lua_script) {
+                this.mode = 'advanced';
+            } else {
+              this.mode = 'basic';
+            }
         }
     }
     get node() {
@@ -40,6 +45,7 @@ export class WorkflowNodeConditionsComponent {
     conditionNames: Array<string>;
     suggest: Array<string> = [];
     loadingConditions = false;
+    mode: 'advanced'|'basic' = 'basic';
 
     @ViewChild('nodeConditionsModal')
     public nodeConditionModal: ModalTemplate<boolean, boolean, void>;
