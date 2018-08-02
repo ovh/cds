@@ -28,7 +28,7 @@
         <app-zone-content class="bottom">
             <div class="ui form">
                 <div class="fields">
-                    <div class="thirteen wide field">
+                    <div class="fourteen wide field">
                         <textarea name="description" class="ui" [(ngModel)]="_tagWorkflow.description"></textarea>
                     </div>
                     <div class="two wide right aligned field">
@@ -62,7 +62,7 @@
         <app-zone-content class="bottom">
             <div class="ui form">
                 <div class="fields">
-                    <div class="thirteen wide field">
+                    <div class="fourteen wide field">
                         <sui-multi-select class="selection" *ngIf="existingTags.length > 0"
                            [(ngModel)]="selectedTags"
                            [options]="existingTags"
@@ -104,7 +104,7 @@
                             </sui-select-option>
                         </sui-select>
                     </div>
-                    <div class="two wide right aligned field">
+                    <div class="three wide right aligned field">
                         <button class="ui green button" name="btnhistorylength" [class.loading]="loading" [disabled]="loading  || (workflow.from_repository && workflow.from_repository.length > 0)" (click)="updateWorkflow()">
                             {{ 'btn_save' | translate }}
                         </button>

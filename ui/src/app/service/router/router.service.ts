@@ -4,6 +4,18 @@ import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 @Injectable()
 export class RouterService {
 
+    getActivatedRoute(activatedRoute: ActivatedRoute): ActivatedRoute {
+        let activeRoute = activatedRoute;
+        if (activatedRoute) {
+            if (activatedRoute.children) {
+                activatedRoute.children.forEach(c => {
+                    activeRoute = this.getActivatedRoute(c);
+                });
+            }
+        }
+        return activeRoute;
+    }
+
     getRouteParams(params: {}, activatedRoute: ActivatedRoute): {} {
         if (activatedRoute) {
             params = Object.assign({}, params, activatedRoute.snapshot.params);

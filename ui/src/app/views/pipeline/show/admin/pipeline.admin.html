@@ -2,7 +2,6 @@
     <app-zone header="{{ 'pipeline_administration' | translate }}">
         <app-zone-content>
             <form class="ui form" (ngSubmit)="updatePipeline()" #projectUpdateFrom="ngForm">
-
                 <div class="eight wide field">
                   <label>{{ 'pipeline_name' | translate}}</label>
                   <input type="text" [(ngModel)]="editablePipeline.name" name="pipname" [disabled]="loading">

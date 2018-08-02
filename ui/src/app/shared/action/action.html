@@ -5,14 +5,14 @@
                 <div class="six wide inline field">
                     <label>{{'common_name' | translate}}</label>
                     <input *ngIf="edit;" type="text" name="actionName" [(ngModel)]="editableAction.name"
-                           (keydown)="editableAction.hasChanged = true">
+                           (keydown)="editableAction.hasChanged = true; keyEvent($event)">
                     <span *ngIf="!edit;" class="inline">{{editableAction.name}}</span>
                 </div>
                 <div class="seven wide inline field">
                     <label class="labelPadding">{{'common_description' | translate}}</label>
                     <textarea *ngIf="edit;" [disabled]="!edit" name="actionDescription" [(ngModel)]="editableAction.description"
                               rows="{{getDescriptionHeight()}}"
-                              (keydown)="editableAction.hasChanged = true"></textarea>
+                              (keydown)="editableAction.hasChanged = true; keyEvent($event)"></textarea>
                     <markdown *ngIf="!edit;" [data]="editableAction.description"></markdown>
                 </div>
                 <div class="one wide inline field">
@@ -103,6 +103,7 @@
                     [collapsed]="collapsed"
                     [order]="idxStep"
                     [keys]="keys"
+                    (keydown)="keyEvent($event)"
                     (removeEvent)="stepManagement($event)">
                 </app-action-step>
                 <hr>

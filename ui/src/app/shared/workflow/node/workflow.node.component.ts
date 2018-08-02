@@ -62,13 +62,14 @@ export class WorkflowNodeComponent implements OnInit {
         private _location: Location
     ) {
         this._activatedRoute.queryParams.subscribe(params => {
-            if (params['nodeID']) {
-                this.selectedNodeID = params['nodeID'];
+            if (params['node_id']) {
+                this.selectedNodeID = parseInt(params['node_id'], 10);
             }
         });
     }
 
     ngOnInit(): void {
+        this.isSelected = this.selectedNodeID === this.node.id;
         this.subSelect = this._workflowEventStore.selectedNode().subscribe(n => {
             if (n && this.node) {
                 this.isSelected = this.node.id === n.id;
@@ -104,7 +105,8 @@ export class WorkflowNodeComponent implements OnInit {
                 this.workflowRun = null;
             }
             if (this.node && this.selectedNodeID && this.node.id === this.selectedNodeID) {
-                this.goToNodeRun();
+                this._workflowEventStore.setSelectedNode(this.node, false);
+                this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, false);
             }
             if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
                 this.computeWarnings();
@@ -158,7 +160,7 @@ export class WorkflowNodeComponent implements OnInit {
             this._workflowEventStore.setSelectedNode(this.node, true);
         }
 
-        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute, queryParams: { nodeID: this.node.id}});
+        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute, queryParams: { 'node_id': this.node.id}});
         this._location.go(url.toString());
     }
 
