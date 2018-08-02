@@ -94,8 +94,8 @@ import {ZoneComponent} from './zone/zone.component';
 
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
-        CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule, SuiModule, NgxAutoScrollModule,
-        InfiniteScrollModule],
+        CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule,
+        SuiModule, NgxAutoScrollModule, InfiniteScrollModule],
     declarations: [
         ActionComponent,
         ActionStepComponent,
