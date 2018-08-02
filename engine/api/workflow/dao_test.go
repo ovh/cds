@@ -244,6 +244,144 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 							Conditions: sdk.WorkflowNodeConditions{
 								PlainConditions: []sdk.WorkflowNodeCondition{
 									sdk.WorkflowNodeCondition{
+										Operator: "eq",
+										Value:    "master",
+										Variable: ".git.branch",
+									},
+								},
+							},
+						},
+						Triggers: []sdk.WorkflowNodeTrigger{
+							sdk.WorkflowNodeTrigger{
+								WorkflowDestNode: sdk.WorkflowNode{
+									Name:         "Second",
+									PipelineID:   pip3.ID,
+									PipelineName: pip3.Name,
+									Context: &sdk.WorkflowNodeContext{
+										Conditions: sdk.WorkflowNodeConditions{
+											PlainConditions: []sdk.WorkflowNodeCondition{
+												sdk.WorkflowNodeCondition{
+													Operator: "eq",
+													Value:    "master",
+													Variable: ".git.branch",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Name:         "Last",
+						PipelineID:   pip4.ID,
+						PipelineName: pip4.Name,
+						Context: &sdk.WorkflowNodeContext{
+							Conditions: sdk.WorkflowNodeConditions{
+								PlainConditions: []sdk.WorkflowNodeCondition{
+									sdk.WorkflowNodeCondition{
+										Operator: "eq",
+										Value:    "master",
+										Variable: ".git.branch",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
+	test.NoError(t, err)
+
+	assert.Equal(t, w.ID, w1.ID)
+	assert.Equal(t, w.ProjectID, w1.ProjectID)
+	assert.Equal(t, w.Name, w1.Name)
+	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
+	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
+	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
+
+	workflow.Sort(&w)
+
+	assertEqualNode(t, w.Root, w1.Root)
+
+	exp, err := exportentities.NewWorkflow(w, false)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
+}
+
+func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
+	db, cache := test.SetupPG(t)
+
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	pip1 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip1, u))
+
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip2, u))
+
+	pip3 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip3",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip3, u))
+
+	pip4 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip4",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip4, u))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Name:         "Root",
+			PipelineID:   pip1.ID,
+			PipelineName: pip1.Name,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Name:         "First",
+						PipelineID:   pip2.ID,
+						PipelineName: pip2.Name,
+						Context: &sdk.WorkflowNodeContext{
+							Conditions: sdk.WorkflowNodeConditions{
+								PlainConditions: []sdk.WorkflowNodeCondition{
+									sdk.WorkflowNodeCondition{
 										Operator: "=",
 										Value:    "master",
 										Variable: ".git.branch",
@@ -295,28 +433,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-
-	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
-	test.NoError(t, err)
-
-	assert.Equal(t, w.ID, w1.ID)
-	assert.Equal(t, w.ProjectID, w1.ProjectID)
-	assert.Equal(t, w.Name, w1.Name)
-	assert.Equal(t, w.Root.PipelineID, w1.Root.PipelineID)
-	assert.Equal(t, w.Root.PipelineName, w1.Root.PipelineName)
-	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
-
-	workflow.Sort(&w)
-
-	assertEqualNode(t, w.Root, w1.Root)
-
-	exp, err := exportentities.NewWorkflow(w, false)
-	test.NoError(t, err)
-	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
-	test.NoError(t, err)
-
-	fmt.Println(string(btes))
+	assert.Error(t, workflow.Insert(db, cache, &w, proj, u))
 }
 
 func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
@@ -541,7 +658,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 							Conditions: sdk.WorkflowNodeConditions{
 								PlainConditions: []sdk.WorkflowNodeCondition{
 									sdk.WorkflowNodeCondition{
-										Operator: "=",
+										Operator: "eq",
 										Value:    "master",
 										Variable: ".git.branch",
 									},
@@ -558,7 +675,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 										Conditions: sdk.WorkflowNodeConditions{
 											PlainConditions: []sdk.WorkflowNodeCondition{
 												sdk.WorkflowNodeCondition{
-													Operator: "=",
+													Operator: "eq",
 													Value:    "master",
 													Variable: ".git.branch",
 												},
@@ -575,7 +692,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 													Conditions: sdk.WorkflowNodeConditions{
 														PlainConditions: []sdk.WorkflowNodeCondition{
 															sdk.WorkflowNodeCondition{
-																Operator: "=",
+																Operator: "eq",
 																Value:    "master",
 																Variable: ".git.branch",
 															},
@@ -606,7 +723,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
 										sdk.WorkflowNodeCondition{
-											Operator: "=",
+											Operator: "eq",
 											Value:    "master",
 											Variable: ".git.branch",
 										},
@@ -768,7 +885,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 							Conditions: sdk.WorkflowNodeConditions{
 								PlainConditions: []sdk.WorkflowNodeCondition{
 									sdk.WorkflowNodeCondition{
-										Operator: "=",
+										Operator: "eq",
 										Value:    "master",
 										Variable: ".git.branch",
 									},
@@ -785,7 +902,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 										Conditions: sdk.WorkflowNodeConditions{
 											PlainConditions: []sdk.WorkflowNodeCondition{
 												sdk.WorkflowNodeCondition{
-													Operator: "=",
+													Operator: "eq",
 													Value:    "master",
 													Variable: ".git.branch",
 												},
@@ -802,7 +919,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 													Conditions: sdk.WorkflowNodeConditions{
 														PlainConditions: []sdk.WorkflowNodeCondition{
 															sdk.WorkflowNodeCondition{
-																Operator: "=",
+																Operator: "eq",
 																Value:    "master",
 																Variable: ".git.branch",
 															},
@@ -834,7 +951,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
 										sdk.WorkflowNodeCondition{
-											Operator: "=",
+											Operator: "eq",
 											Value:    "master",
 											Variable: ".git.branch",
 										},
@@ -852,7 +969,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
 										sdk.WorkflowNodeCondition{
-											Operator: "=",
+											Operator: "eq",
 											Value:    "master",
 											Variable: ".git.branch",
 										},
@@ -876,7 +993,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
 										sdk.WorkflowNodeCondition{
-											Operator: "=",
+											Operator: "eq",
 											Value:    "master",
 											Variable: ".git.branch",
 										},
@@ -1079,7 +1196,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 				Conditions: sdk.WorkflowNodeConditions{
 					PlainConditions: []sdk.WorkflowNodeCondition{
 						sdk.WorkflowNodeCondition{
-							Operator: "=",
+							Operator: "eq",
 							Value:    "master",
 							Variable: ".git.branch",
 						},
