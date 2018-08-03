@@ -26,8 +26,6 @@ func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store
 		kg := cache.Key("users", username, "groups")
 		store.Delete(kp)
 		store.Delete(kg)
-		// refresh user persmission for Last Update SSE
-		api.lastUpdateBroker.UpdateUserPermissions(username)
 	}
 }
 

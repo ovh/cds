@@ -79,10 +79,6 @@ func (api *API) postEnvironmentImportHandler() Handler {
 			return sdk.WrapError(globalError, "postEnvironmentImportHandler> Unable import environment %s", eenv.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-			return sdk.WrapError(err, "postEnvironmentImportHandler> Unable to update project")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postEnvironmentImportHandler> Cannot commit transaction")
 		}
@@ -258,10 +254,6 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 
 		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
-		}
-
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot update project last modified date")
 		}
 
 		close(msgChan)

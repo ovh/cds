@@ -200,10 +200,6 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot update application last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot commit transaction")
 		}
@@ -294,10 +290,6 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 			}
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot update application last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot commit transaction")
 		}
@@ -345,10 +337,6 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 		//Delete all the things
 		if err := scheduler.Delete(tx, sOld); err != nil {
 			return err
-		}
-
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deleteSchedulerApplicationPipelineHandler> Cannot update application last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

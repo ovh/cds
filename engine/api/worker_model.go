@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -367,15 +366,6 @@ func (api *API) updateWorkerModelHandler() Handler {
 					return sdk.WrapError(err, "updateWorkerModel> cannot get pipeline")
 				}
 				log.Debug("updateWorkerModel> Updating pipeline %d", id)
-				//Load the project
-				proj, errproj := project.LoadByPipelineID(tx, api.Cache, getUser(ctx), id)
-				if errproj != nil {
-					return sdk.WrapError(errproj, "updateWorkerModel> unable to load project")
-				}
-
-				if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, &sdk.Pipeline{ID: id}, getUser(ctx)); err != nil {
-					return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
-				}
 			}
 		}
 

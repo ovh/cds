@@ -2,7 +2,6 @@ package application
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
@@ -294,7 +294,9 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
 	}
 	*app = sdk.Application(dbApp)
-	return UpdateLastModified(db, store, app, u)
+	event.PublishAddApplication(proj.Key, *app, u)
+
+	return nil
 }
 
 // Update updates application id database
@@ -312,41 +314,8 @@ func Update(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk
 	if n == 0 {
 		return sdk.WrapError(sdk.ErrApplicationNotFound, "application.Update %s(%d)", app.Name, app.ID)
 	}
-	return UpdateLastModified(db, store, app, u)
-}
 
-// UpdateLastModified Update last_modified column in application table
-func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
-	query := `
-		UPDATE application SET last_modified = current_timestamp WHERE id = $1 RETURNING last_modified
-	`
-	var lastModified time.Time
-	err := db.QueryRow(query, app.ID).Scan(&lastModified)
-	if err == nil {
-		app.LastModified = lastModified
-	}
-
-	if u != nil {
-		store.SetWithTTL(cache.Key("lastModified", app.ProjectKey, "application", app.Name), sdk.LastModification{
-			Name:         app.Name,
-			Username:     u.Username,
-			LastModified: lastModified.Unix(),
-		}, 0)
-
-		updates := sdk.LastModification{
-			Key:          app.ProjectKey,
-			Name:         app.Name,
-			LastModified: lastModified.Unix(),
-			Username:     u.Username,
-			Type:         sdk.ApplicationLastModificationType,
-		}
-		b, errP := json.Marshal(updates)
-		if errP == nil {
-			store.Publish("lastUpdates", string(b))
-		}
-	}
-
-	return sdk.WrapError(err, "application.UpdateLastModified %s(%d)", app.Name, app.ID)
+	return nil
 }
 
 // LoadAll returns all applications

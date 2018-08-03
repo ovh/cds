@@ -14,14 +14,6 @@ func (api *API) InitRouter() {
 	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, api.tracingPostMiddleware)
-	api.lastUpdateBroker = &lastUpdateBroker{
-		clients:  make(map[string]lastUpdateBrokerSubscribe),
-		messages: make(chan string),
-		mutex:    &sync.Mutex{},
-		cache:    api.Cache,
-		dbFunc:   api.DBConnectionFactory.GetDBMap,
-	}
-	api.lastUpdateBroker.Init(api.Router.Background)
 
 	api.eventsBroker = &eventsBroker{
 		cache:             api.Cache,
@@ -424,7 +416,6 @@ func (api *API) InitRouter() {
 
 	// SSE
 	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
-	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
 
 	// Feature
 	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))

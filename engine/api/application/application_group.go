@@ -4,10 +4,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -112,10 +110,6 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 			if err := group.InsertGroupInProject(db, proj.ID, g.ID, perm); err != nil {
 				return sdk.WrapError(err, "AddGroup> Cannot add group %s in project %s", g.Name, proj.Name)
 			}
-
-			if err := UpdateLastModified(db, store, a, u); err != nil {
-				return sdk.WrapError(err, "AddGroup> Cannot update application %s", a.Name)
-			}
 		}
 
 		//For all attached pipelines
@@ -129,10 +123,6 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 			if !groupAttachedToPipeline {
 				if err := group.InsertGroupInPipeline(db, p.Pipeline.ID, g.ID, perm); err != nil {
 					return sdk.WrapError(err, "AddGroup> Cannot add group %s in pipeline %s", g.Name, p.Pipeline.Name)
-				}
-
-				if err := pipeline.UpdatePipelineLastModified(db, store, proj, &p.Pipeline, u); err != nil {
-					return sdk.WrapError(err, "AddGroup> Cannot update pipeline %s", p.Pipeline.Name)
 				}
 			}
 
@@ -148,10 +138,6 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 						if err := group.InsertGroupInEnvironment(db, t.DestEnvironment.ID, g.ID, perm); err != nil {
 							return sdk.WrapError(err, "AddGroup> Cannot add group %s in env %s", g.Name, t.DestEnvironment.Name)
 						}
-
-						if err := environment.UpdateLastModified(db, store, u, &t.DestEnvironment); err != nil {
-							return sdk.WrapError(err, "AddGroup> Cannot update env %s", t.DestEnvironment.Name)
-						}
 					}
 				}
 				if t.SrcApplication.ID == a.ID {
@@ -163,10 +149,6 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 					if !groupAttachedToEnv && sdk.DefaultEnv.ID != t.SrcEnvironment.ID {
 						if err := group.InsertGroupInEnvironment(db, t.SrcEnvironment.ID, g.ID, perm); err != nil {
 							return sdk.WrapError(err, "AddGroup> Cannot add group %s in env %s", g.Name, t.SrcEnvironment.Name)
-						}
-
-						if err := environment.UpdateLastModified(db, store, u, &t.SrcEnvironment); err != nil {
-							return sdk.WrapError(err, "AddGroup> Cannot update env %s", t.SrcEnvironment.Name)
 						}
 					}
 				}

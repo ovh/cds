@@ -3,7 +3,6 @@ package project
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -195,7 +194,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.WrapError(err, "project.Insert> Unable to insert PGPKeyPair")
 	}
 
-	return UpdateLastModified(db, store, u, proj, sdk.ProjectLastModificationType)
+	return nil
 }
 
 // Update a new project in database
@@ -214,36 +213,6 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.ErrNoProject
 	}
 	*proj = sdk.Project(dbProj)
-	return UpdateLastModified(db, store, u, proj, sdk.ProjectLastModificationType)
-}
-
-// UpdateLastModified updates last_modified date on a project given its key
-func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project, updateTypes ...string) error {
-	var lastModified time.Time
-	query := "update project set last_modified = current_timestamp where projectkey = $1 RETURNING last_modified"
-
-	err := db.QueryRow(query, proj.Key).Scan(&lastModified)
-	if err == nil {
-		proj.LastModified = lastModified
-	}
-
-	if u != nil {
-		lastModifiedU := lastModified.Unix()
-		for _, updateType := range updateTypes {
-			updates := sdk.LastModification{
-				Key:          proj.Key,
-				Name:         proj.Name,
-				LastModified: lastModifiedU,
-				Username:     u.Username,
-				Type:         updateType,
-			}
-			b, errP := json.Marshal(updates)
-			if errP == nil {
-				store.Publish("lastUpdates", string(b))
-			}
-			return err
-		}
-	}
 	return nil
 }
 

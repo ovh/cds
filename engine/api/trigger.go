@@ -48,7 +48,6 @@ func (api *API) addTriggerHandler() Handler {
 		}
 		if !permission.AccessToPipeline(key, sdk.DefaultEnv.Name, t.SrcPipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this pipeline %s", t.SrcPipeline.Name)
-
 		}
 
 		if t.SrcEnvironment.ID == 0 && t.SrcEnvironment.Name != "" && t.SrcEnvironment.Name != sdk.DefaultEnv.Name {
@@ -62,7 +61,6 @@ func (api *API) addTriggerHandler() Handler {
 		}
 		if !permission.AccessToEnvironment(key, t.SrcEnvironment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> No enought right on this environment %s: ", t.SrcEnvironment.Name)
-
 		}
 
 		// load destination ids
@@ -86,7 +84,6 @@ func (api *API) addTriggerHandler() Handler {
 		}
 		if !permission.AccessToPipeline(key, sdk.DefaultEnv.Name, t.DestPipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this pipeline %s", t.DestPipeline.Name)
-
 		}
 
 		if t.DestEnvironment.ID == 0 && t.DestEnvironment.Name != "" && t.DestEnvironment.Name != sdk.DefaultEnv.Name {
@@ -101,24 +98,16 @@ func (api *API) addTriggerHandler() Handler {
 
 		if !permission.AccessToEnvironment(key, t.DestEnvironment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> No enought right on this environment %s: ", t.DestEnvironment.Name)
-
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			return errBegin
-
 		}
 		defer tx.Rollback()
 
 		if err := trigger.InsertTrigger(tx, &t); err != nil {
 			return sdk.WrapError(err, "addTriggerHandler> cannot insert trigger")
-
-		}
-
-		// Update src application
-		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addTriggerHandler> cannot update loast modified date on src application")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -163,7 +152,6 @@ func (api *API) getTriggersHandler() Handler {
 
 		if err := r.ParseForm(); err != nil {
 			return sdk.WrapError(sdk.ErrUnknownError, "getTriggersHandler> Cannot parse form")
-
 		}
 		env := r.Form.Get("env")
 
@@ -187,7 +175,6 @@ func (api *API) getTriggersHandler() Handler {
 
 			if !permission.AccessToEnvironment(key, e.Name, getUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "getTriggersHandler> No enought right on this environment %s: ", e.Name)
-
 			}
 		}
 
@@ -226,14 +213,8 @@ func (api *API) deleteTriggerHandler() Handler {
 			return sdk.WrapError(err, "deleteTriggerHandler> cannot delete trigger")
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deleteTriggerHandler> cannot update src application last modified date")
-
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteTriggerHandler> cannot commit transaction")
-
 		}
 
 		var errWorkflow error
@@ -255,7 +236,6 @@ func (api *API) updateTriggerHandler() Handler {
 		triggerID, errParse := strconv.ParseInt(triggerIDS, 10, 64)
 		if errParse != nil {
 			return sdk.WrapError(sdk.ErrInvalidID, "updateTriggerHandler> invalid id (%s)", errParse)
-
 		}
 
 		var t sdk.PipelineTrigger
@@ -266,23 +246,17 @@ func (api *API) updateTriggerHandler() Handler {
 		if t.SrcApplication.ID == 0 || t.DestApplication.ID == 0 ||
 			t.SrcPipeline.ID == 0 || t.DestPipeline.ID == 0 {
 			return sdk.WrapError(sdk.ErrWrongRequest, "updateTriggerHandler> IDs should not be zero")
-
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateTriggerHandler> cannot start transaction")
-
 		}
 		defer tx.Rollback()
 
 		t.ID = triggerID
 		if err := trigger.UpdateTrigger(tx, &t); err != nil {
 			return sdk.WrapError(err, "updateTriggerHandler> cannot update trigger")
-		}
-
-		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateTriggerHandler> cannot update src application last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

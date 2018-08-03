@@ -168,10 +168,6 @@ func (api *API) addEnvironmentHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "addEnvironmentHandler> Cannot update last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addEnvironmentHandler> Cannot commit transaction")
 		}
@@ -216,10 +212,6 @@ func (api *API) deleteEnvironmentHandler() Handler {
 
 		if err := environment.DeleteEnvironment(tx, env.ID); err != nil {
 			return err
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "deleteEnvironmentHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -270,14 +262,6 @@ func (api *API) updateEnvironmentHandler() Handler {
 
 		if err := environment.UpdateEnvironment(tx, env); err != nil {
 			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update environment %s", environmentName)
-		}
-
-		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
-			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update environment last modified date")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -359,11 +343,6 @@ func (api *API) cloneEnvironmentHandler() Handler {
 			if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
 				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert group in environment")
 			}
-		}
-
-		//Update the poroject
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

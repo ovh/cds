@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
@@ -240,8 +241,9 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "InsertVariable> Cannot insert audit for variable %d", variable.ID)
 	}
+	event.PublishAddVariableApplication(app.ProjectKey, *app, variable, u)
 
-	return UpdateLastModified(db, store, app, u)
+	return nil
 }
 
 // UpdateVariable Update a variable in the given application
@@ -286,9 +288,9 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "UpdateVariable> Cannot insert audit for variable %s", variable.Name)
 	}
+	event.PublishUpdateVariableApplication(app.ProjectKey, *app, *variable, *variableBefore, u)
 
-	// Update application
-	return UpdateLastModified(db, store, app, u)
+	return nil
 }
 
 // DeleteVariable Delete a variable from the given pipeline
@@ -320,8 +322,9 @@ func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "DeleteVariable> Cannot insert audit for variable %s", variable.Name)
 	}
+	event.PublishDeleteVariableApplication(app.ProjectKey, *app, *variable, u)
 
-	return UpdateLastModified(db, store, app, u)
+	return nil
 }
 
 // DeleteAllVariable Delete all variables from the given pipeline

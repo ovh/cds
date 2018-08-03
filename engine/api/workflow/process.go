@@ -34,7 +34,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	defer func(oldStatus string, wr *sdk.WorkflowRun) {
 		if oldStatus != wr.Status {
-			report.Add(wr)
+			report.Add(*wr)
 		}
 	}(w.Status, w)
 
@@ -55,7 +55,6 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		if ok && len(nodeRuns) > 0 {
 			nextSubNumber++
 		}
-
 		log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
 		// Find ancestors
 		nodeIds := start.Ancestors(&w.Workflow, false)

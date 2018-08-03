@@ -79,10 +79,6 @@ func (api *API) putProjectPlatformHandler() Handler {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot update project platform")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectPlatformsLastModificationType); err != nil {
-			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot update project last modification date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot commit transaction")
 		}
@@ -123,10 +119,6 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 				}
 				break
 			}
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectPlatformsLastModificationType); err != nil {
-			return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot update project last modification date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -201,10 +193,6 @@ func (api *API) postProjectPlatformHandler() Handler {
 
 		if err := platform.InsertPlatform(tx, &pp); err != nil {
 			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot insert project platform")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectPlatformsLastModificationType); err != nil {
-			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

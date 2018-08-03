@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -47,15 +46,6 @@ func (api *API) addStageHandler() Handler {
 
 		if err := pipeline.InsertStage(tx, stageData); err != nil {
 			return sdk.WrapError(err, "addStageHandler> Cannot insert stage")
-		}
-
-		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "addStageHandler> unable to load project")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addStageHandler> Cannot update pipeline last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -156,15 +146,6 @@ func (api *API) moveStageHandler() Handler {
 			return sdk.WrapError(err, "moveStageHandler> Cannot load stages")
 		}
 
-		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "moveStageHandler> unable to load project")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "moveStageHandler> Cannot update project last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "moveStageHandler> Cannot commit transaction")
 		}
@@ -222,15 +203,6 @@ func (api *API) updateStageHandler() Handler {
 			return sdk.WrapError(err, "updateStageHandler> Cannot update stage")
 		}
 
-		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "updateStageHandler> unable to load project")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateStageHandler> Cannot update pipeline last_modified")
-		}
-
 		err = tx.Commit()
 		if err != nil {
 			return sdk.WrapError(err, "updateStageHandler> Cannot commit transaction")
@@ -282,15 +254,6 @@ func (api *API) deleteStageHandler() Handler {
 
 		if err := pipeline.DeleteStageByID(tx, s, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deleteStageHandler> Cannot Delete stage")
-		}
-
-		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "deleteStageHandler> unable to load project")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deleteStageHandler> Cannot Update pipeline last_modified")
 		}
 
 		if err := tx.Commit(); err != nil {

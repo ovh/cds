@@ -58,10 +58,6 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot add group")
 		}
 
-		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), key, wf); err != nil {
-			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot update workflow last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot commit transaction")
 		}
@@ -124,10 +120,6 @@ func (api *API) putWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowGroupHandler> Cannot add group")
 		}
 
-		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), key, wf); err != nil {
-			return sdk.WrapError(err, "putWorkflowGroupHandler> Cannot update workflow last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler> Cannot commit transaction")
 		}
@@ -185,10 +177,6 @@ func (api *API) postWorkflowGroupHandler() Handler {
 
 		if err := workflow.AddGroup(tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler> Cannot add group")
-		}
-
-		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), key, wf); err != nil {
-			return sdk.WrapError(err, "postWorkflowGroupHandler> Cannot update workflow last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

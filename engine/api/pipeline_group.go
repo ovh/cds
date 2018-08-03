@@ -35,11 +35,6 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			return sdk.ErrGroupNotFound
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "updateGroupRoleOnPipelineHandler> unable to load project")
-		}
-
 		p, errLoadP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errLoadP != nil {
 			return sdk.WrapError(errLoadP, "updateGroupRoleOnPipelineHandler: Cannot load %s", key)
@@ -82,10 +77,6 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot add group %s in pipeline %s", g.Group.Name, p.Name)
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot update pipeline last_modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot start transaction")
 		}
@@ -105,11 +96,6 @@ func (api *API) addGroupInPipelineHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
-
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "addGroupInPipelineHandler> unable to load project")
-		}
 
 		var groupPermission sdk.GroupPermission
 		if err := UnmarshalBody(r, &groupPermission); err != nil {
@@ -147,10 +133,6 @@ func (api *API) addGroupInPipelineHandler() Handler {
 
 		if err := group.InsertGroupInPipeline(tx, p.ID, g.ID, groupPermission.Permission); err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot add group %s in pipeline %s", g.Name, p.Name)
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addGroupInPipeline: Cannot update pipeline last_modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -312,15 +294,6 @@ func (api *API) deleteGroupFromPipelineHandler() Handler {
 
 		if err := group.DeleteGroupFromPipeline(tx, p.ID, g.ID); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot delete group %s from project %s", g.Name, p.Name)
-		}
-
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "deleteGroupFromPipelineHandler> unable to load project")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot update pipeline last_modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

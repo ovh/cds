@@ -96,30 +96,6 @@ func UpdateMetadata(db gorp.SqlExecutor, workflowID int64, metadata sdk.Metadata
 	return nil
 }
 
-// UpdateLastModifiedDate Update workflow last modified date
-func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User, projKey string, w *sdk.Workflow) error {
-	t := time.Now()
-	_, err := db.Exec(`UPDATE workflow set last_modified = current_timestamp WHERE id = $1 RETURNING last_modified`, w.ID)
-	w.LastModified = t
-
-	if u != nil {
-		updates := sdk.LastModification{
-			Key:          projKey,
-			Name:         w.Name,
-			LastModified: t.Unix(),
-			Username:     u.Username,
-			Type:         sdk.WorkflowLastModificationType,
-		}
-		b, errP := json.Marshal(updates)
-		if errP == nil {
-			store.Publish("lastUpdates", string(b))
-		}
-		return err
-	}
-
-	return nil
-}
-
 // PreInsert is a db hook
 func (w *Workflow) PreInsert(db gorp.SqlExecutor) error {
 	return w.PreUpdate(db)
@@ -560,7 +536,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 
 	event.PublishWorkflowAdd(p.Key, *w, u)
 
-	return updateLastModified(db, store, w, u)
+	return nil
 }
 
 func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
@@ -721,7 +697,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	}
 	event.PublishWorkflowUpdate(p.Key, *w, *oldWorkflow, u)
 
-	return updateLastModified(db, store, w, u)
+	return nil
 }
 
 // MarkAsDelete marks a workflow to be deleted
@@ -765,19 +741,6 @@ func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workf
 		return sdk.WrapError(err, "Delete> Unable to delete workflow")
 	}
 
-	return nil
-}
-
-// UpdateLastModified updates the workflow
-func updateLastModified(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User) error {
-	t := time.Now()
-	if u != nil {
-		store.SetWithTTL(cache.Key("lastModified", "workflow", fmt.Sprintf("%d", w.ID)), sdk.LastModification{
-			Name:         w.Name,
-			Username:     u.Username,
-			LastModified: t.Unix(),
-		}, 0)
-	}
 	return nil
 }
 
