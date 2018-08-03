@@ -75,6 +75,12 @@ type EventApplicationRepositoryDelete struct {
 	Repository string `json:"repository"`
 }
 
+// EventApplicationVulnerabilityUpdate represents the event when updating a vulnerability
+type EventApplicationVulnerabilityUpdate struct {
+	OldVulnerability Vulnerability `json:"old_vulnerability"`
+	NewVulnerability Vulnerability `json:"new_vulnerability"`
+}
+
 // ToEventApplicationRepositoryAdd get the payload as EventApplicationRepositoryAdd
 func (e Event) ToEventApplicationRepositoryAdd() (EventApplicationRepositoryAdd, error) {
 	var vcsEvent EventApplicationRepositoryAdd
