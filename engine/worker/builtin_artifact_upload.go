@@ -80,7 +80,11 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 				}
 				if err != nil {
 					res.Status = sdk.StatusFail.String()
-					res.Reason = fmt.Sprintf("Error while uploading artifact '%s': %v", filename, err)
+					if throughTempURL {
+						res.Reason = fmt.Sprintf("Error while uploading artifact '%s' to object store: %v", filename, err)
+					} else {
+						res.Reason = fmt.Sprintf("Error while uploading artifact '%s' to CDS API: %v", filename, err)
+					}
 					sendLog(res.Reason)
 					return res
 				}
