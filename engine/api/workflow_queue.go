@@ -331,7 +331,7 @@ func (api *API) postVulnerabilityReportHandler() Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.HandleVulnerabilityReport(tx, api.Cache, p, nr, report); err != nil {
+		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, p, nr, report); err != nil {
 			return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to handle report")
 		}
 		return tx.Commit()
