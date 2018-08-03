@@ -3,7 +3,7 @@ import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 import {Injectable} from '@angular/core';
 import * as immutable from 'immutable';
 import {map} from 'rxjs/operators';
-import {Application} from '../../model/application.model';
+import {Application, Vulnerability} from '../../model/application.model';
 import {GroupPermission} from '../../model/group.model';
 import {Hook} from '../../model/hook.model';
 import {NavbarRecentData} from '../../model/navbar.model';
@@ -765,5 +765,9 @@ export class ApplicationStore {
             return appToUpdate;
         }
         return application;
+    }
+
+    ignoreVulnerability(key: string, appName: string, vulnerability: Vulnerability): Observable<Vulnerability> {
+        return this._applicationService.ignoreVulnerability(key, appName, vulnerability);
     }
 }

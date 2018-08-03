@@ -717,6 +717,7 @@
   "vcs_pgp_key" : "PGP key",
 
   "vulnerability_no" : "No vulnerabilities detected",
+  "vulnerability_updated" : "Vulnerability updated",
 
   "warning_context": "Context",
   "warning_element": "Element",

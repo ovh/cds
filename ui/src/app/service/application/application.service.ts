@@ -3,7 +3,7 @@ import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
-import {Application} from '../../model/application.model';
+import {Application, Vulnerability} from '../../model/application.model';
 import {GroupPermission} from '../../model/group.model';
 import {Hook} from '../../model/hook.model';
 import {Key} from '../../model/keys.model';
@@ -470,5 +470,16 @@ export class ApplicationService {
     getDeploymentStrategies(key: string, appName: string): Observable<Map<string, any>> {
         let url = '/project/' + key + '/application/' + appName + '/deployment/config';
         return this._http.get<Map<string, any>>(url);
+    }
+
+    /**
+     * Ignore vulnerability
+     * @param key project unique key
+     * @param appName application name
+     * @param id identifiant of the vulnerability
+     */
+    ignoreVulnerability(key: string, appName: string, v: Vulnerability): Observable<Vulnerability> {
+        let url = '/project/' + key + '/application/' + appName + '/vulnerability/' + v.id;
+        return this._http.post<Vulnerability>(url, v);
     }
 }

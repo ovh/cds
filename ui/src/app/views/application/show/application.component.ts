@@ -6,6 +6,7 @@ import {finalize} from 'rxjs/operators';
 import {environment} from '../../../../environments/environment';
 import {Application, ApplicationFilter} from '../../../model/application.model';
 import {Environment} from '../../../model/environment.model';
+import {PermissionValue} from '../../../model/permission.model';
 import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {User} from '../../../model/user.model';
@@ -83,6 +84,9 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     currentUser: User;
     usageCount = 0;
 
+
+    perm = PermissionValue;
+
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
                 private _router: Router, private _authStore: AuthentificationStore,
                 private _toast: ToastService, public _translate: TranslateService,
@@ -125,7 +129,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.stopWorker();
                 }
                 if (!this.application) {
-                    this.applicationSubscription = this._applicationStore.getApplications(key, appName, this.appFilter).subscribe(apps => {
+                    this.applicationSubscription = this._applicationStore
+                        .getApplications(key, appName, this.appFilter).subscribe(apps => {
                         if (apps) {
                             let updatedApplication = apps.get(key + '-' + appName);
                             if (updatedApplication && !updatedApplication.externalChange) {

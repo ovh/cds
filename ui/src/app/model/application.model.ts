@@ -84,6 +84,9 @@ export class Vulnerability {
     severity: string;
     fix_in: string;
     ignored: boolean;
+
+    // ui param
+    loading: boolean;
 }
 
 export class Severity {
